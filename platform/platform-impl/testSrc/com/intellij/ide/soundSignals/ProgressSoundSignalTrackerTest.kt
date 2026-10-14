@@ -196,7 +196,7 @@ class ProgressSoundSignalTrackerTest {
     player.awaitPlayOf(STAGE_1)
 
     progress.setFraction(0.9)
-    player.awaitPlayOf(STAGE_3)
+    player.awaitPlayOf(STAGE_4)
   }
 
   @Test
@@ -208,15 +208,17 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
-  fun `the fraction picks the stage by thirds`() {
+  fun `the fraction picks the stage by quarters`() {
     assertThat(progressSound(indeterminate = true, fraction = 0.5)).isEqualTo(INDETERMINATE)
     assertThat(progressSound(indeterminate = true, fraction = 1.0)).isEqualTo(INDETERMINATE)
     assertThat(progressSound(indeterminate = false, fraction = 0.0)).isEqualTo(STAGE_1)
-    assertThat(progressSound(indeterminate = false, fraction = 0.33)).isEqualTo(STAGE_1)
-    assertThat(progressSound(indeterminate = false, fraction = 1.0 / 3)).isEqualTo(STAGE_2)
-    assertThat(progressSound(indeterminate = false, fraction = 0.5)).isEqualTo(STAGE_2)
-    assertThat(progressSound(indeterminate = false, fraction = 2.0 / 3)).isEqualTo(STAGE_3)
-    assertThat(progressSound(indeterminate = false, fraction = 1.0)).isEqualTo(STAGE_3)
+    assertThat(progressSound(indeterminate = false, fraction = 0.24)).isEqualTo(STAGE_1)
+    assertThat(progressSound(indeterminate = false, fraction = 0.25)).isEqualTo(STAGE_2)
+    assertThat(progressSound(indeterminate = false, fraction = 0.49)).isEqualTo(STAGE_2)
+    assertThat(progressSound(indeterminate = false, fraction = 0.5)).isEqualTo(STAGE_3)
+    assertThat(progressSound(indeterminate = false, fraction = 0.74)).isEqualTo(STAGE_3)
+    assertThat(progressSound(indeterminate = false, fraction = 0.75)).isEqualTo(STAGE_4)
+    assertThat(progressSound(indeterminate = false, fraction = 1.0)).isEqualTo(STAGE_4)
   }
 
   @Test
@@ -362,5 +364,6 @@ class ProgressSoundSignalTrackerTest {
     const val STAGE_1 = IdeSounds.PROGRESS_DETERMINATE_STAGE_1
     const val STAGE_2 = IdeSounds.PROGRESS_DETERMINATE_STAGE_2
     const val STAGE_3 = IdeSounds.PROGRESS_DETERMINATE_STAGE_3
+    const val STAGE_4 = IdeSounds.PROGRESS_DETERMINATE_STAGE_4
   }
 }

@@ -94,9 +94,10 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
 
 internal fun progressSound(indeterminate: Boolean, fraction: Double): String = when {
   indeterminate -> IdeSounds.PROGRESS_INDETERMINATE
-  fraction < 1.0 / 3 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_1
-  fraction < 2.0 / 3 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_2
-  else -> IdeSounds.PROGRESS_DETERMINATE_STAGE_3
+  fraction < 0.25 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_1
+  fraction < 0.5 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_2
+  fraction < 0.75 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_3
+  else -> IdeSounds.PROGRESS_DETERMINATE_STAGE_4
 }
 
 internal const val INITIAL_DELAY_REGISTRY_KEY: String = "ide.sound.signals.progress.initial.delay.ms"

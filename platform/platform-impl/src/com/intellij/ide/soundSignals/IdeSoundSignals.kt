@@ -35,7 +35,10 @@ object IdeSoundSignals {
   @JvmField
   val PROGRESS: SoundSignal = SoundSignal(
     "progress", IdeBundle.messagePointer("sound.signal.progress"),
-    listOf(IdeSounds.PROGRESS_INDETERMINATE, IdeSounds.PROGRESS_DETERMINATE_STAGE_1, IdeSounds.PROGRESS_DETERMINATE_STAGE_2, IdeSounds.PROGRESS_DETERMINATE_STAGE_3),
+    listOf(
+      IdeSounds.PROGRESS_INDETERMINATE, IdeSounds.PROGRESS_DETERMINATE_STAGE_1, IdeSounds.PROGRESS_DETERMINATE_STAGE_2,
+      IdeSounds.PROGRESS_DETERMINATE_STAGE_3, IdeSounds.PROGRESS_DETERMINATE_STAGE_4,
+    ),
     OWNER, 70, preview = listOf(IdeSounds.PROGRESS_INDETERMINATE),
   )
 
