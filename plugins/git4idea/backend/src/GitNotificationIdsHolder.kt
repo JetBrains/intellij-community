@@ -150,6 +150,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       WORKTREE_ADDITIONAL_SETTINGS_FAILED,
       WORKTREE_TRUST_FAILED,
       WORKTREE_OPEN_PROJECT_FAILED,
+      WORKTREE_CREATED,
       WORKTREE_INCLUDE_FILE_WRITE_FAILED,
       ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT,
       ADD_COMMIT_TO_REMOTE_BRANCH_FAILED,
@@ -302,6 +303,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val WORKTREE_ADDITIONAL_SETTINGS_FAILED: String = "git.worktree.additional.settings.failed"
     const val WORKTREE_TRUST_FAILED: String = "git.worktree.trust.failed"
     const val WORKTREE_OPEN_PROJECT_FAILED: String = "git.worktree.open.project.failed"
+    const val WORKTREE_CREATED: String = "git.worktree.created"
     const val WORKTREE_INCLUDE_FILE_WRITE_FAILED: String = "git.worktree.include.file.write.failed"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT: String = "git.add.commit.to.remote.branch.conflict"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_FAILED: String = "git.add.commit.to.remote.branch.failed"
