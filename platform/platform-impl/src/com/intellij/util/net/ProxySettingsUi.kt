@@ -46,7 +46,6 @@ import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
-// TODO: shouldn't accept services, should instead accept UI model or some temporary mutable representation of the settings
 internal class ProxySettingsUi(
   proxySettings: ProxySettings,
   private val credentialStore: ProxyCredentialStore,
@@ -77,11 +76,10 @@ internal class ProxySettingsUi(
 
   private var lastOverriderProvidedConfiguration: State? = null
   private lateinit var lastUserConfiguration: State
+  private val credentialCache = HashMap<String, Pair<Credentials?, Boolean>>()
 
   private var checkConnectionUrl = "https://example.com/"
   private var lastProxyError: @NlsSafe String = ""
-
-  private fun getMainPanel() = mainPanel
 
   init {
     mainPanel = panel {
@@ -125,10 +123,7 @@ internal class ProxySettingsUi(
           }
           row {
             clearPasswordsButton = button(UIBundle.message("proxy.pac.pw.clear.button")) {
-              credentialStore.clearAllCredentials()
-              Messages.showMessageDialog(
-                getMainPanel(), IdeBundle.message("message.text.proxy.passwords.were.cleared"), IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon()
-              )
+              clearAllCredentials()
             }.component
           }
         }.enabledIf(autoDetectProxyRb.selected and pluginOverrideCheckbox.selected.not())
@@ -198,7 +193,7 @@ internal class ProxySettingsUi(
       }
       row {
         checkButton = button(UIBundle.message("proxy.test.button")) {
-          doCheckConnection()
+          checkConnection()
         }.applyToComponent {
           isVisible = proxySettings === ProxySettings.getInstance()
         }.component
@@ -209,7 +204,44 @@ internal class ProxySettingsUi(
     typeHttpRb.setSelected(true)
   }
 
-  private fun doCheckConnection() {
+  private fun key(host: String, port: Int): String = "${host}:${port}"
+
+  private fun loadCredentials(states: List<State>) {
+    credentialCache.clear()
+    val loaded = runWithModalProgressBlocking(ModalTaskOwner.component(mainPanel), UIBundle.message("proxy.creds.load.progress")) {
+      withContext(Dispatchers.IO) {
+        states.map {
+          val (host, port) = it.PROXY_HOST to it.PROXY_PORT
+          val credentials = credentialStore.getCredentials(host, port)
+          Pair(key(host, port), Pair(credentials, credentials != null && credentialStore.areCredentialsRemembered(host, port)))
+        }
+      }
+    }
+    credentialCache.putAll(loaded)
+  }
+
+  private fun saveCredentials(host: String, port: Int, credentials: Credentials?, remember: Boolean) {
+    runWithModalProgressBlocking(ModalTaskOwner.component(mainPanel), UIBundle.message("proxy.creds.save.progress")) {
+      withContext(Dispatchers.IO) {
+        credentialStore.setCredentials(host, port, credentials, remember)
+      }
+    }
+    credentialCache[key(host, port)] = Pair(credentials, credentials != null && remember)
+  }
+
+  private fun clearAllCredentials() {
+    runWithModalProgressBlocking(ModalTaskOwner.component(mainPanel), UIBundle.message("proxy.creds.save.progress")) {
+      withContext(Dispatchers.IO) {
+        credentialStore.clearAllCredentials()
+      }
+    }
+    credentialCache.clear()
+    Messages.showMessageDialog(
+      mainPanel, IdeBundle.message("message.text.proxy.passwords.were.cleared"), IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon()
+    )
+  }
+
+  private fun checkConnection() {
     parseProxyConfiguration().getOrElse {
       Messages.showErrorDialog(mainPanel, it.message)
       return
@@ -326,9 +358,9 @@ internal class ProxySettingsUi(
       if (uiConf.asProxyConfiguration() != settings.getProxyConfiguration()) return true
     }
     val credentials = parseCredentials().getOrElse { return true }
-    val storeCreds = credentialStore.getCredentials(uiConf.PROXY_HOST, uiConf.PROXY_PORT)
-    if (credentials != storeCreds) return true
-    if (rememberProxyPasswordCheckBox.isSelected != credentialStore.areCredentialsRemembered(uiConf.PROXY_HOST, uiConf.PROXY_PORT)) return true
+    val cached = credentialCache[key(uiConf.PROXY_HOST, uiConf.PROXY_PORT)]
+    if (credentials != cached?.first) return true
+    if (credentials != null && rememberProxyPasswordCheckBox.isSelected != cached?.second) return true
     return false
   }
 
@@ -348,11 +380,12 @@ internal class ProxySettingsUi(
     proxyPortTextField.number = state.PROXY_PORT
     proxyExceptionsField.text = state.PROXY_EXCEPTIONS
 
-    val creds = credentialStore.getCredentials(state.PROXY_HOST, state.PROXY_PORT)
+    val cached = credentialCache[key(state.PROXY_HOST, state.PROXY_PORT)]
+    val creds = cached?.first
     proxyAuthCheckBox.isSelected = creds != null
     proxyLoginTextField.text = creds?.userName
     proxyPasswordTextField.text = creds?.password?.toString().orEmpty()
-    rememberProxyPasswordCheckBox.isSelected = creds != null && credentialStore.areCredentialsRemembered(state.PROXY_HOST, state.PROXY_PORT)
+    rememberProxyPasswordCheckBox.isSelected = creds != null && cached.second
   }
 
   private fun resetByOverrideState(overridden: Boolean) {
@@ -385,16 +418,20 @@ internal class ProxySettingsUi(
         }
         pluginOverrideCheckbox.text = UIBundle.message("proxy.settings.override.by.plugin.checkbox", pluginName)
       }
-    } else {
+    }
+    else {
       lastOverriderProvidedConfiguration = null
       lastUserConfiguration = State().amend(settings.getProxyConfiguration())
     }
+
+    loadCredentials(listOfNotNull(lastUserConfiguration, lastOverriderProvidedConfiguration).distinct())
+
     resetByOverrideState(pluginOverrideCheckbox.isSelected)
 
     errorLabel.isVisible = lastProxyError.isNotEmpty()
     errorLabel.text = lastProxyError
 
-    @Suppress("DEPRECATION") val javaPropsMessage =
+    @Suppress("DEPRECATION", "removal") val javaPropsMessage =
       com.intellij.util.proxy.CommonProxy.getMessageFromProps(com.intellij.util.proxy.CommonProxy.getOldStyleProperties())
     javaPropertiesWarning.isVisible = !javaPropsMessage.isNullOrBlank()
     javaPropertiesWarning.text = javaPropsMessage
@@ -405,6 +442,7 @@ internal class ProxySettingsUi(
 
     val state = parseProxyConfiguration().getOrThrow()
     val credentials = parseCredentials().getOrThrow()
+
     if (settings is OverrideCapableProxySettings) {
       if (settings.overrideProvider != null) {
         settings.isOverrideEnabled = pluginOverrideCheckbox.isSelected
@@ -414,7 +452,8 @@ internal class ProxySettingsUi(
     else {
       settings.setProxyConfiguration(state.asProxyConfiguration())
     }
-    credentialStore.setCredentials(state.PROXY_HOST, state.PROXY_PORT, credentials, rememberProxyPasswordCheckBox.isSelected)
+
+    saveCredentials(state.PROXY_HOST, state.PROXY_PORT, credentials, rememberProxyPasswordCheckBox.isSelected)
 
     disabledPromptsManager.enableAllPromptedAuthentications()
     if (modified) {

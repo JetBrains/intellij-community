@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.WaitForProgressToShow
 import com.intellij.util.net.internal.asDisabledProxyAuthPromptsManager
@@ -138,31 +137,37 @@ class PlatformProxyAuthentication(
     }
     val credentialStore = getCredentialStore()
     val credentials = credentialStore.getCredentials(host, port)
+    val remember = credentials != null && credentialStore.areCredentialsRemembered(host, port)
     if (LOG.isDebugEnabled) {
       LOG.debug(Exception("proxy auth stacktrace")) { "prompting auth for $host:$port" }
     }
-    var result: Credentials? = null
+    var result: Pair<Credentials?, Boolean>? = null
     runAboveAll {
+      val component = PopupUtil.getActiveComponent()
       val dialog = AuthenticationDialog(
-        PopupUtil.getActiveComponent(),
+        component,
         IdeBundle.message("dialog.title.proxy.authentication", host),
         IdeBundle.message("dialog.message.please.enter.credentials.for", prompt),
         /*login =*/ credentials?.userName ?: "",
         /*password =*/ "",
-        /*rememberPassword =*/ credentials?.password != null
+        /*rememberPassword =*/ remember
       )
-      dialog.show()
-      if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-        val credentials = Credentials(dialog.login, dialog.password)
-        credentialStore.setCredentials(host, port, credentials, dialog.isRememberPassword)
-        result = credentials
+      if (dialog.showAndGet()) {
+        result = Credentials(dialog.login, dialog.password) to dialog.isRememberPassword
       }
       else {
         getDisabledPromptsManager().disablePromptedAuthentication(host, port)
       }
     }
-    LOG.debug { if (result != null) "prompted auth for $host:$port: $result" else "prompted auth was canceled" }
-    return result
+    if (result == null) {
+      LOG.debug { "prompted auth was canceled" }
+      return null
+    }
+    else {
+      credentialStore.setCredentials(host, port, result.first, result.second)
+      LOG.debug { "prompted auth for ${host}:${port}: ${result.first}" }
+      return result.first
+    }
   }
 
   override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean =
