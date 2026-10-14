@@ -2,9 +2,10 @@
 //! model. The lane IDE talks to them instead of production, and an in-IDE body steers them through the control route
 //! `/_lane/<service>/` of each one.
 //!
-//! A [Service] owns one loopback listener. One thread accepts, and each connection gets a thread of its own, so an
-//! answer that waits holds only its own request. Each service keeps its state behind one mutex. There is no async
-//! runtime, because the guest agent pins its crate closure.
+//! A [Service] owns one listener, on loopback for a lane service. One thread accepts, and each connection gets a thread
+//! of its own, so an answer that waits holds only its own request. Each service keeps its state behind one mutex. There
+//! is no async runtime, because the guest agent pins its crate closure. The control channel of the lane daemon is a
+//! [Service] too, on the address that the controller names.
 
 use std::io::Write;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
@@ -34,6 +35,9 @@ const SOCKET_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// What a service answers, and what it ends when it stops.
 pub(crate) trait Handler: Send + Sync + 'static {
+    /// The largest request body that the service reads. A larger one gets a 413.
+    const MAX_BODY_BYTES: usize = http::MAX_BODY_BYTES;
+
     /// Answers one request.
     fn handle(&self, request: &Request) -> Response;
 
@@ -41,7 +45,7 @@ pub(crate) trait Handler: Send + Sync + 'static {
     fn stop(&self) {}
 }
 
-/// One lane service on a loopback port. It stops on drop: the listener closes, and every answer that waits ends.
+/// One service on a port. It stops on drop: the listener closes, and every answer that waits ends.
 pub(crate) struct Service<H: Handler> {
     address: SocketAddr,
     handler: Arc<H>,
@@ -53,8 +57,14 @@ impl<H: Handler> Service<H> {
     /// Binds `127.0.0.1:<port>` and serves the handler that `handler` builds for the bound address. The port 0 binds
     /// any free port. `name` names the threads and a refusal.
     pub(crate) fn start(name: &'static str, port: u16, handler: impl FnOnce(SocketAddr) -> H) -> Result<Self, AgentRefusal> {
-        let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, port))
-            .map_err(|error| AgentRefusal::failure(BIND_CODE, format!("the lane {name} cannot bind 127.0.0.1:{port}: {error}")))?;
+        Self::bind(name, SocketAddr::from((Ipv4Addr::LOCALHOST, port)), handler)
+    }
+
+    /// Binds `address` and serves the handler that `handler` builds for the bound address. The port 0 binds any free
+    /// port. `name` names the threads and a refusal.
+    pub(crate) fn bind(name: &'static str, address: SocketAddr, handler: impl FnOnce(SocketAddr) -> H) -> Result<Self, AgentRefusal> {
+        let listener = TcpListener::bind(address)
+            .map_err(|error| AgentRefusal::failure(BIND_CODE, format!("the lane {name} cannot bind {address}: {error}")))?;
         let address = listener
             .local_addr()
             .map_err(|error| AgentRefusal::failure(BIND_CODE, format!("the lane {name} has no bound address: {error}")))?;
@@ -95,8 +105,12 @@ impl<H: Handler> Drop for Service<H> {
     fn drop(&mut self) {
         self.stopping.store(true, Ordering::SeqCst);
         self.handler.stop();
-        // Wakes the accept loop so it sees the flag.
-        let _ = TcpStream::connect_timeout(&self.address, Duration::from_secs(1));
+        // Wakes the accept loop so it sees the flag. A listener on every interface also listens on loopback.
+        let mut wake = self.address;
+        if wake.ip().is_unspecified() {
+            wake.set_ip(Ipv4Addr::LOCALHOST.into());
+        }
+        let _ = TcpStream::connect_timeout(&wake, Duration::from_secs(1));
         if let Some(acceptor) = self.acceptor.take() {
             let _ = acceptor.join();
         }
@@ -117,10 +131,10 @@ fn accept<H: Handler>(name: &'static str, listener: &TcpListener, handler: &Arc<
     }
 }
 
-fn serve(mut stream: TcpStream, handler: &impl Handler) {
+fn serve<H: Handler>(mut stream: TcpStream, handler: &H) {
     let _ = stream.set_read_timeout(Some(SOCKET_TIMEOUT));
     let _ = stream.set_write_timeout(Some(SOCKET_TIMEOUT));
-    let (response, head_only) = match http::read_request(&stream) {
+    let (response, head_only) = match http::read_request(&stream, H::MAX_BODY_BYTES) {
         Ok(request) => (handler.handle(&request), request.method == "HEAD"),
         Err(RequestError::Closed) => return,
         Err(RequestError::Malformed(message)) => (control::refuse(400, "bad_request", &message), false),
@@ -128,12 +142,12 @@ fn serve(mut stream: TcpStream, handler: &impl Handler) {
             control::refuse(
                 413,
                 "body_too_large",
-                &format!("a request body is at most {} bytes", http::MAX_BODY_BYTES),
+                &format!("a request body is at most {} bytes", H::MAX_BODY_BYTES),
             ),
             false,
         ),
     };
-    let _ = http::write_response(&mut stream, &response, head_only);
+    let _ = http::write_response(&mut stream, response, head_only);
     let _ = stream.flush();
     let _ = stream.shutdown(std::net::Shutdown::Both);
 }

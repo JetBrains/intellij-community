@@ -18,7 +18,7 @@ fn read_from(bytes: &'static [u8]) -> Result<Request, RequestError> {
         let _ = stream.read_to_end(&mut rest);
     });
     let (stream, _) = listener.accept().unwrap();
-    let request = read_request(&stream);
+    let request = read_request(&stream, MAX_BODY_BYTES);
     drop(stream);
     client.join().unwrap();
     request
@@ -59,7 +59,7 @@ fn an_expect_continue_gets_the_interim_answer_before_the_body() {
         interim
     });
     let (stream, _) = listener.accept().unwrap();
-    let request = read_request(&stream).unwrap();
+    let request = read_request(&stream, MAX_BODY_BYTES).unwrap();
     assert_eq!(&client.join().unwrap(), b"HTTP/1.1 100 Continue\r\n\r\n");
     assert_eq!(request.body, b"ok");
 }
@@ -82,7 +82,7 @@ fn a_malformed_request_line_and_a_large_body_are_refused_and_a_closed_one_ends()
     ));
 }
 
-fn written(response: &Response, head_only: bool) -> String {
+fn written(response: Response, head_only: bool) -> String {
     let mut bytes = Vec::new();
     write_response(&mut bytes, response, head_only).unwrap();
     String::from_utf8(bytes).unwrap()
@@ -92,16 +92,16 @@ fn written(response: &Response, head_only: bool) -> String {
 fn an_answer_has_its_status_line_headers_and_length_and_closes_the_connection() {
     let response = Response::empty(302).header("Location", "http://127.0.0.1:1/cb?code=c");
     assert_eq!(
-        written(&response, false),
+        written(response, false),
         "HTTP/1.1 302 Found\r\nLocation: http://127.0.0.1:1/cb?code=c\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
     );
-    let response = Response::with_body(200, "application/json", "[]");
+    let json = || Response::with_body(200, "application/json", "[]");
     assert_eq!(
-        written(&response, false),
+        written(json(), false),
         "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]"
     );
     assert_eq!(
-        written(&response, true),
+        written(json(), true),
         "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n"
     );
 }
@@ -111,14 +111,51 @@ fn a_truncated_answer_announces_the_whole_length_and_a_chunked_one_ends_with_the
     let response = Response::truncated(200, "application/zip", 8, b"half".to_vec());
     assert_eq!(response.sent_bytes(), 4);
     assert_eq!(
-        written(&response, false),
+        written(response, false),
         "HTTP/1.1 200 OK\r\nContent-Type: application/zip\r\nContent-Length: 8\r\nConnection: close\r\n\r\nhalf"
     );
     let response = Response::chunked(200, "text/event-stream", b"event: e\n\n".to_vec());
     assert_eq!(
-        written(&response, false),
+        written(response, false),
         "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\na\r\nevent: e\n\n\r\n0\r\n\r\n"
     );
+}
+
+#[test]
+fn a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one() {
+    let response = Response::streamed(
+        200,
+        "application/x-ndjson",
+        Box::new(|chunks| {
+            chunks.write_all(b"{\"a\":1}\n")?;
+            chunks.write_all(b"")?;
+            chunks.write_all(b"{\"b\":2}\n")
+        }),
+    );
+    assert_eq!(response.sent_bytes(), 0);
+    assert_eq!(
+        written(response, false),
+        "HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n\
+         8\r\n{\"a\":1}\n\r\n8\r\n{\"b\":2}\n\r\n0\r\n\r\n"
+    );
+    let unrun = Response::streamed(200, "text/plain", Box::new(|_| panic!("a HEAD answer runs no writer")));
+    assert_eq!(
+        written(unrun, true),
+        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n"
+    );
+}
+
+#[test]
+fn a_body_past_the_bound_of_the_server_is_too_large() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let client = thread::spawn(move || {
+        let mut stream = TcpStream::connect(address).unwrap();
+        stream.write_all(b"PUT /jars/x HTTP/1.1\r\nContent-Length: 5\r\n\r\nhello").unwrap();
+    });
+    let (stream, _) = listener.accept().unwrap();
+    assert!(matches!(read_request(&stream, 4), Err(RequestError::TooLarge)));
+    client.join().unwrap();
 }
 
 #[test]

@@ -1,8 +1,10 @@
-//! The HTTP/1.1 exchange of a lane service: one request per connection, and one answer.
+//! The HTTP/1.1 exchange of a lane service and of the control channel of the lane daemon: one request per connection,
+//! and one answer.
 //!
 //! A request body comes with a `Content-Length` or in the chunked encoding, because the IDE's clients send both. An
 //! `Expect: 100-continue` gets the interim answer before the body. Every answer closes the connection. An answer body
-//! has a `Content-Length`, except a chunked one, which only the Codex event stream uses.
+//! has a `Content-Length`, except a chunked one. The Codex event stream is one chunk, and the run stream of the control
+//! channel is one chunk for each record, written while the run goes on.
 
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
@@ -56,6 +58,9 @@ impl Request {
     }
 }
 
+/// The writer of a streamed body: it gets the connection after the head, and each write is one chunk.
+pub(crate) type StreamedBody = Box<dyn FnOnce(&mut ChunkedWriter<'_>) -> io::Result<()> + Send>;
+
 /// What an answer sends after its head.
 pub(crate) enum Body {
     /// The whole body, with its length.
@@ -64,6 +69,8 @@ pub(crate) enum Body {
     Truncated { announced: usize, sent: Vec<u8> },
     /// The body as one chunk of the chunked encoding, then the last chunk.
     Chunked(Vec<u8>),
+    /// The chunks that a writer sends while it runs, then the last chunk.
+    Streamed(StreamedBody),
 }
 
 /// One answer: the status, the content type, the other headers and the body.
@@ -111,6 +118,14 @@ impl Response {
         }
     }
 
+    /// An answer whose body `writer` sends in the chunked encoding while it runs.
+    pub(crate) fn streamed(status: u16, content_type: &str, writer: StreamedBody) -> Self {
+        Self {
+            body: Body::Streamed(writer),
+            ..Self::with_body(status, content_type, Vec::new())
+        }
+    }
+
     /// The same answer with the header `name: value` too.
     #[must_use]
     pub(crate) fn header(mut self, name: &str, value: &str) -> Self {
@@ -118,11 +133,12 @@ impl Response {
         self
     }
 
-    /// The number of body bytes that the answer sends.
+    /// The number of body bytes that the answer sends. A streamed body counts none, because its writer has not run.
     pub(crate) const fn sent_bytes(&self) -> usize {
         match &self.body {
             Body::Full(bytes) | Body::Chunked(bytes) => bytes.len(),
             Body::Truncated { sent, .. } => sent.len(),
+            Body::Streamed(_) => 0,
         }
     }
 }
@@ -134,13 +150,13 @@ pub(crate) enum RequestError {
     Closed,
     /// The request is not HTTP/1.1 that this server reads. It gets a 400.
     Malformed(String),
-    /// The body is larger than [MAX_BODY_BYTES]. It gets a 413.
+    /// The body is larger than the bound of the server. It gets a 413.
     TooLarge,
 }
 
-/// Reads one request from `stream`. It answers an `Expect: 100-continue` with the interim answer before it reads the
-/// body.
-pub(crate) fn read_request(stream: &TcpStream) -> Result<Request, RequestError> {
+/// Reads one request from `stream`, with a body of at most `max_body` bytes. It answers an `Expect: 100-continue` with
+/// the interim answer before it reads the body.
+pub(crate) fn read_request(stream: &TcpStream, max_body: usize) -> Result<Request, RequestError> {
     let mut reader = BufReader::new(stream);
     let (method, target, headers) = read_head(&mut reader)?;
     let (path, query) = match target.split_once('?') {
@@ -167,7 +183,7 @@ pub(crate) fn read_request(stream: &TcpStream) -> Result<Request, RequestError> 
         .header("Transfer-Encoding")
         .is_some_and(|value| value.to_ascii_lowercase().contains("chunked"));
     request.body = if chunked {
-        read_chunked(&mut reader)?
+        read_chunked(&mut reader, max_body)?
     } else {
         let length = match request.header("Content-Length") {
             Some(value) => value
@@ -175,7 +191,7 @@ pub(crate) fn read_request(stream: &TcpStream) -> Result<Request, RequestError> 
                 .map_err(|_invalid| RequestError::Malformed(format!("the Content-Length {value:?} is not a number")))?,
             None => 0,
         };
-        if length > MAX_BODY_BYTES {
+        if length > max_body {
             return Err(RequestError::TooLarge);
         }
         let mut body = vec![0; length];
@@ -225,7 +241,7 @@ fn read_line(reader: &mut impl BufRead) -> Result<String, RequestError> {
     String::from_utf8(line).map_err(|_invalid| RequestError::Malformed("a line of the request is not UTF-8".to_owned()))
 }
 
-fn read_chunked(reader: &mut impl BufRead) -> Result<Vec<u8>, RequestError> {
+fn read_chunked(reader: &mut impl BufRead, max_body: usize) -> Result<Vec<u8>, RequestError> {
     let mut body = Vec::new();
     loop {
         let line = read_line(&mut reader.take(MAX_HEAD_BYTES))?;
@@ -235,7 +251,7 @@ fn read_chunked(reader: &mut impl BufRead) -> Result<Vec<u8>, RequestError> {
         if size == 0 {
             break;
         }
-        if body.len() + size > MAX_BODY_BYTES {
+        if body.len() + size > max_body {
             return Err(RequestError::TooLarge);
         }
         let start = body.len();
@@ -248,8 +264,8 @@ fn read_chunked(reader: &mut impl BufRead) -> Result<Vec<u8>, RequestError> {
     Ok(body)
 }
 
-/// Writes `response` to `stream`. A `head_only` answer to a `HEAD` request sends no body.
-pub(crate) fn write_response(stream: &mut impl Write, response: &Response, head_only: bool) -> io::Result<()> {
+/// Writes `response` to `stream`. A `head_only` answer to a `HEAD` request sends no body, and its writer does not run.
+pub(crate) fn write_response(stream: &mut impl Write, response: Response, head_only: bool) -> io::Result<()> {
     let mut head = format!("HTTP/1.1 {} {}\r\n", response.status, reason(response.status));
     if let Some(content_type) = &response.content_type {
         head.push_str(&format!("Content-Type: {content_type}\r\n"));
@@ -260,25 +276,52 @@ pub(crate) fn write_response(stream: &mut impl Write, response: &Response, head_
     match &response.body {
         Body::Full(bytes) => head.push_str(&format!("Content-Length: {}\r\n", bytes.len())),
         Body::Truncated { announced, .. } => head.push_str(&format!("Content-Length: {announced}\r\n")),
-        Body::Chunked(_) => head.push_str("Transfer-Encoding: chunked\r\n"),
+        Body::Chunked(_) | Body::Streamed(_) => head.push_str("Transfer-Encoding: chunked\r\n"),
     }
     head.push_str("Connection: close\r\n\r\n");
     stream.write_all(head.as_bytes())?;
     if !head_only {
-        match &response.body {
-            Body::Full(bytes) => stream.write_all(bytes)?,
-            Body::Truncated { sent, .. } => stream.write_all(sent)?,
+        match response.body {
+            Body::Full(bytes) => stream.write_all(&bytes)?,
+            Body::Truncated { sent, .. } => stream.write_all(&sent)?,
             Body::Chunked(bytes) => {
-                if !bytes.is_empty() {
-                    stream.write_all(format!("{:x}\r\n", bytes.len()).as_bytes())?;
-                    stream.write_all(bytes)?;
-                    stream.write_all(b"\r\n")?;
-                }
-                stream.write_all(b"0\r\n\r\n")?;
+                ChunkedWriter { stream: &mut *stream }.write_all(&bytes)?;
+                stream.write_all(LAST_CHUNK)?;
+            }
+            Body::Streamed(writer) => {
+                stream.flush()?;
+                writer(&mut ChunkedWriter { stream: &mut *stream })?;
+                stream.write_all(LAST_CHUNK)?;
             }
         }
     }
     stream.flush()
+}
+
+/// The last chunk of a chunked body, with no trailer.
+const LAST_CHUNK: &[u8] = b"0\r\n\r\n";
+
+/// Writes each buffer it gets as one chunk, and flushes it, so the client reads each record when it is written. An
+/// empty buffer writes nothing, because an empty chunk would end the body.
+pub(crate) struct ChunkedWriter<'a> {
+    stream: &'a mut dyn Write,
+}
+
+impl Write for ChunkedWriter<'_> {
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+        if buffer.is_empty() {
+            return Ok(0);
+        }
+        self.stream.write_all(format!("{:x}\r\n", buffer.len()).as_bytes())?;
+        self.stream.write_all(buffer)?;
+        self.stream.write_all(b"\r\n")?;
+        self.stream.flush()?;
+        Ok(buffer.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.stream.flush()
+    }
 }
 
 /// The reason phrase of `status`.
@@ -291,6 +334,7 @@ const fn reason(status: u16) -> &'static str {
         401 => "Unauthorized",
         404 => "Not Found",
         405 => "Method Not Allowed",
+        409 => "Conflict",
         413 => "Content Too Large",
         500 => "Internal Server Error",
         501 => "Not Implemented",
