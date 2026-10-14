@@ -14,12 +14,13 @@ import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLinePar
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputReplayableLineReader
 import com.intellij.build.output.BuildOutputText
+import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
 import java.nio.file.Path
 import java.util.function.Consumer
+import java.util.regex.Pattern
 
 /**
  * @author Vladislav.Soroka
@@ -37,18 +38,17 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     if (!reader.readLine()?.text.isNullOrBlank()) return false
 
     val location: String?
-    val filter: GradleConsoleFilter?
+    val filePosition: FilePosition?
     var whereOrWhatLine = reader.readLine()?.text
     if (whereOrWhatLine == "* Where:") {
       location = reader.readLine()?.text ?: return false
-      filter = GradleConsoleFilter(null)
-      filter.applyFilter(location, location.length) ?: return false
+      filePosition = parseScriptLocation(location) ?: return false
       if (!reader.readLine()?.text.isNullOrBlank()) return false
       whereOrWhatLine = reader.readLine()?.text
     }
     else {
       location = null
-      filter = null
+      filePosition = null
     }
 
     if (whereOrWhatLine != "* What went wrong:") return false
@@ -114,14 +114,6 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
         reason == "Compilation error. See log for more details" ||
         reason == "Script compilation error:" ||
         reason.contains("compiler failed")) return false
-
-    val filePosition: FilePosition?
-    if (filter != null) {
-      filePosition = FilePosition(Path.of(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
-    }
-    else {
-      filePosition = null
-    }
 
     val errorText = description.toString()
     for (issueChecker in GradleIssueChecker.getKnownIssuesCheckList()) {
@@ -199,6 +191,16 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     return true
   }
 
+  private fun parseScriptLocation(location: String): FilePosition? {
+    val matcher = SCRIPT_LOCATION_PATTERN.matcher(location)
+    if (!matcher.find()) {
+      return null
+    }
+    val path = matcher.group(FILE_GROUP) ?: return null
+    val line = matcher.group(LINE_GROUP)?.toIntOrNull() ?: return null
+    return FilePosition(Path.of(path), line - 1, 0)
+  }
+
   private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any, outputIds: List<OutputId>): BuildEvent? {
     val noCachedVersionPrefix = "No cached version of "
     val couldNotFindPrefix = "Could not find "
@@ -223,6 +225,15 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
       /* buildIssue = */ unresolvedDependencyIssue,
       /* kind = */ MessageEvent.Kind.ERROR
     )
+  }
+
+  private companion object {
+    private const val SCRIPT_LOCATION_EXPRESSION = "(?:[Bb]uild file|[Ss]ettings file|Initialization script|Script) " +
+                                                   "(^|[\\W])(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)'(?: line)?: (?<line>[0-9]+)"
+    private const val FILE_GROUP = "file"
+    private const val LINE_GROUP = "line"
+
+    private val SCRIPT_LOCATION_PATTERN = Pattern.compile(SCRIPT_LOCATION_EXPRESSION, Pattern.MULTILINE)
   }
 }
 

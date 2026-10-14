@@ -17,13 +17,13 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.util.function.BiPredicate
 import java.util.function.Consumer
+import java.util.regex.Pattern
 import kotlin.io.path.isRegularFile
 
 /**
@@ -31,6 +31,9 @@ import kotlin.io.path.isRegularFile
  */
 @Internal
 class GradleDaemonStartupIssueChecker : GradleIssueChecker {
+
+  private val LINE_AND_COLUMN_PATTERN: Pattern = Pattern.compile("line (\\d+), column (\\d+)\\.")
+
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = issueData.failure.rootCause
     val rootCauseText = rootCause.text
@@ -84,12 +87,14 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     }
   }
 
-  override fun consumeBuildOutputFailureMessage(message: String,
-                                                failureCause: String,
-                                                stacktrace: String?,
-                                                location: FilePosition?,
-                                                parentEventId: Any,
-                                                messageConsumer: Consumer<in BuildEvent>): Boolean {
+  override fun consumeBuildOutputFailureMessage(
+    message: String,
+    failureCause: String,
+    stacktrace: String?,
+    location: FilePosition?,
+    parentEventId: Any,
+    messageConsumer: Consumer<in BuildEvent>,
+  ): Boolean {
     if (location == null) return false
 
     if (failureCause == "startup failed:") {
@@ -97,7 +102,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
-      val matchResult = GradleConsoleFilter.Holder.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
+      val matchResult = LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
       val values = matchResult?.groupValues?.drop(1)?.map { it.toInt() } ?: listOf(location.startLine + 1, 0)
       val line = values[0] - 1
       val column = values[1]
