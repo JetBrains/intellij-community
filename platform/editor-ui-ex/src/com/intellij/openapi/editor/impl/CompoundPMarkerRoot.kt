@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -23,6 +24,8 @@ open class CompoundPMarkerRoot private constructor(
   val linesInRangeRoot: PMarkerRoot,
 ) : PMarkerRoot {
   override fun emptyRoot(): CompoundPMarkerRoot = empty()
+
+  override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
     val exactResolution = exactRangeRoot.resolve(markerId, absentRange)
@@ -124,6 +127,10 @@ open class CompoundPMarkerRoot private constructor(
       exactRangeRoot.overlappingIterator(startOffset, endOffset, tastePreference),
       linesInRangeRoot.overlappingIterator(startOffset, endOffset, tastePreference),
     )
+  }
+
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    throw AssertionError("Full traversal is not supported by CompoundPMarkerRoot")
   }
 
   @TestOnly

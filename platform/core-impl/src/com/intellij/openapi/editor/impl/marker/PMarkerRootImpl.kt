@@ -4,11 +4,13 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongIntMap
 import com.intellij.util.containers.Java11Shim
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
 import java.util.function.LongConsumer
@@ -34,6 +36,8 @@ open class PMarkerRootImpl private constructor(
     get() = cachedDelta
 
   override fun emptyRoot(): PMarkerRootImpl = empty()
+
+  override fun isEmpty(): Boolean = rootId == NULL_NODE
 
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
     return when (val state = states.getUnchecked(markerId)) {
@@ -399,10 +403,11 @@ open class PMarkerRootImpl private constructor(
           val childDelta = ancestorDelta + node.lazyOffsetDelta
           pushLeft(node.rightId, childDelta)
 
-          val start = node.entry.nodeStart + ancestorDelta
-          val end = node.entry.nodeEnd + ancestorDelta
-          if (end >= startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
-            return if (ancestorDelta == 0) node.entry else node.entry.copy(nodeStart = start, nodeEnd = end)
+          val entry = node.entry
+          val end = entry.nodeEnd + ancestorDelta
+          if (end >= startOffset && containsAllFlavorFlags(entry.flavorFlags, requiredFlavorFlags)) {
+            val start = entry.nodeStart + ancestorDelta
+            return if (ancestorDelta == 0) entry else entry.copy(nodeStart = start, nodeEnd = end)
           }
         }
         return null
@@ -427,6 +432,20 @@ open class PMarkerRootImpl private constructor(
         }
       }
     }
+  }
+
+  @ApiStatus.Internal
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    return processAllRangeMarkers(rootId, ancestorDelta = 0, processor)
+  }
+
+  private fun processAllRangeMarkers(nodeId: Long, ancestorDelta: Int, processor: MarkerDeltaProcessor): Boolean {
+    if (nodeId == NULL_NODE) return true
+    val node = states.getUnchecked(nodeId) as ValidNode
+    val childDelta = ancestorDelta + node.lazyOffsetDelta
+    return processAllRangeMarkers(node.leftId, childDelta, processor) &&
+           processor.process(node.entry, ancestorDelta) &&
+           processAllRangeMarkers(node.rightId, childDelta, processor)
   }
 
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {

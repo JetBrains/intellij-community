@@ -23,6 +23,26 @@ import java.lang.ref.WeakReference
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
   @Test
+  fun `compound root is empty only when both trees have no valid markers`() {
+    val document = DocumentImpl("one\ntwo", true)
+    val model = MarkupModelImpl(document)
+    try {
+      Assertions.assertThat(CompoundPMarkerRoot.empty().isEmpty()).isTrue()
+      val exact = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+      val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
+      val root = exact.currentRootReference().get()
+
+      Assertions.assertThat(root.isEmpty()).isFalse()
+      Assertions.assertThat(root.remove(exact.id).isEmpty()).isFalse()
+      Assertions.assertThat(root.remove(line.id).isEmpty()).isFalse()
+      Assertions.assertThat(root.remove(exact.id).remove(line.id).isEmpty()).isTrue()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
   fun `after removed listener can remove another highlighter`(@TestDisposable disposable: Disposable) {
     val document = DocumentImpl("abcdef", true)
     val model = MarkupModelImpl(document)

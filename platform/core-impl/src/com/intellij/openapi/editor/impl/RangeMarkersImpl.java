@@ -98,6 +98,16 @@ public final class RangeMarkersImpl implements RangeMarkers {
   }
 
   @Override
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
+    if (myRangeMarkerTree == null) {
+      return SnapshotMarkerEngineImpl.INSTANCE.processAllRangeMarkers(
+        mySnapshotMarkerRootStore, myDocument.getCore().snapshot(), processor
+      );
+    }
+    return processRangeMarkersOverlappingWith(0, myDocument.getTextLength(), processor);
+  }
+
+  @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return processDeliciousRangeMarkersOverlappingWith(start, end, (byte)0, processor);
   }

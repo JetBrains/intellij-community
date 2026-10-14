@@ -236,7 +236,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @Override
   public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
-    return processRangeMarkersOverlappingWith(0, getTextLength(), processor);
+    return rangeMarkers.processRangeMarkers(processor);
   }
 
   @Override

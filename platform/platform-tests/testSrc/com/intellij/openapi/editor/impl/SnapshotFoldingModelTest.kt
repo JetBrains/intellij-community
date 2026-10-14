@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -101,6 +103,28 @@ class SnapshotFoldingModelTest {
   }
 
   @Test
+  fun `full traversal reuses the buffer across groups of different sizes`(): Unit = timeoutRunBlocking {
+    val regions = withEditor("01234567890123456789012345678901234567890123456789") { editor ->
+      editor.foldingModel.runBatchFoldingOperation {
+        for ((start, count) in listOf(0 to 5, 20 to 1, 40 to 3)) {
+          for (length in count + 1 downTo 2) {
+            editor.foldingModel.addFoldRegion(start, start + length, "...")!!
+          }
+        }
+      }
+      editor.document.insertString(0, "ab")
+
+      editor.foldingModel.allFoldRegions.map { it.textRange }
+    }
+
+    assertThat(regions).containsExactly(
+      TextRange(2, 4), TextRange(2, 5), TextRange(2, 6), TextRange(2, 7), TextRange(2, 8),
+      TextRange(22, 24),
+      TextRange(42, 44), TextRange(42, 45), TextRange(42, 46),
+    )
+  }
+
+  @Test
   fun `regular region precedes a custom region with the same range`(): Unit = timeoutRunBlocking {
     val (customRegions, foundRegularRegion) = withEditor("a\nb\nc") { editor ->
       lateinit var regularRegion: FoldRegion
@@ -118,8 +142,36 @@ class SnapshotFoldingModelTest {
   }
 
   @Test
-  fun `region lookup stops before resolving later regions`(): Unit = timeoutRunBlocking {
-    val (foundRegion, referenceReads) = withEditor("0123456789") { editor ->
+  fun `editor disposal removes all regions in order after a shift`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val disposedRegions = ArrayList<FoldRegion>()
+    val regions = withEditor("a\nb\nc\nd\ne") { editor ->
+      lateinit var customRegion: CustomFoldRegion
+      lateinit var regularRegion: FoldRegion
+      lateinit var outerRegion: FoldRegion
+      lateinit var laterRegion: FoldRegion
+      editor.foldingModel.runBatchFoldingOperation {
+        laterRegion = editor.foldingModel.addFoldRegion(6, 9, "...")!!
+        customRegion = editor.foldingModel.addCustomLinesFolding(0, 2, customRenderer)!!
+        outerRegion = editor.foldingModel.addFoldRegion(0, 5, "...")!!
+        regularRegion = editor.foldingModel.addFoldRegion(0, 3, "...")!!
+      }
+      editor.document.insertString(0, "prefix\n")
+      editor.foldingModel.addListener(object : FoldingListener {
+        override fun beforeFoldRegionDisposed(region: FoldRegion) {
+          disposedRegions.add(region)
+        }
+      }, disposable)
+
+      listOf(regularRegion, outerRegion, customRegion, laterRegion)
+    }
+
+    assertThat(disposedRegions).containsExactlyElementsOf(regions)
+    assertThat(regions.map { it.isValid }).containsOnly(false)
+  }
+
+  @Test
+  fun `fold queries stop before resolving later regions`(): Unit = timeoutRunBlocking {
+    val (foundRegion, intersectsRegion, referenceReads) = withEditor("0123456789") { editor ->
       val firstRegion = addFoldRegion(editor, 0, 10)
       val laterRegion = addFoldRegion(editor, 3, 5) as SnapshotRangeMarkerImpl
       val rootStore = editor.foldingModel.rootStore()
@@ -142,10 +194,15 @@ class SnapshotFoldingModelTest {
         )
       }
 
-      (editor.foldingModel.getFoldRegion(0, 10) === firstRegion) to referenceReads
+      Triple(
+        editor.foldingModel.getFoldRegion(0, 10) === firstRegion,
+        editor.foldingModel.intersectsRegion(1, 10),
+        referenceReads,
+      )
     }
 
     assertThat(foundRegion).isTrue()
+    assertThat(intersectsRegion).isTrue()
     assertThat(referenceReads).isZero()
   }
 

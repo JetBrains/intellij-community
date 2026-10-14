@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentPatch;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -9,6 +10,8 @@ import com.intellij.testFramework.junit5.TestApplication;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -20,6 +23,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 @UsePMarkerImplementation
 final class FileMarkerRootTest {
+  @Test
+  void documentFullTraversalIncludesFileMarkersBeyondTheDocumentLength() {
+    var file = new LightVirtualFile("test.txt", "abcdef");
+    var fileMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 10, -1, -1, -1, -1, false);
+    var document = new DocumentImpl("abcdef", true);
+    FileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+    var documentMarker = document.createRangeMarker(1, 2);
+    var visited = new ArrayList<RangeMarker>();
+
+    assertTrue(document.processRangeMarkers(marker -> {
+      visited.add(marker);
+      return true;
+    }));
+
+    assertEquals(List.of(documentMarker, fileMarker), visited);
+  }
+
   @Test
   void restorationComparesResolvedMarkerOffsetsInsteadOfJustMarkerEntryNodeStart() {
     var file = new LightVirtualFile("test.txt", "abcdef");

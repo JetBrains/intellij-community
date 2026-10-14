@@ -54,33 +54,18 @@ internal class SnapshotCustomWrapStorage(
   }
 
   fun collectAll(): List<CustomWrap> {
-    val snapshot = currentSnapshot()
-    return collect(snapshot, 0, snapshot.text().length())
+    val root = rootStore.root(currentSnapshot()) ?: return emptyList()
+    val result = ArrayList<CustomWrap>()
+    root.processAllRangeMarkers { entry, _ ->
+      val wrap = entry.markerReference?.get()
+      if (wrap is SnapshotCustomWrap) result.add(wrap)
+      true
+    }
+    return result
   }
 
   fun collectInRange(startOffset: Int, endOffset: Int): List<CustomWrap> {
-    return collect(currentSnapshot(), startOffset, endOffset)
-  }
-
-  fun hasWraps(): Boolean {
-    val snapshot = currentSnapshot()
-    val root = rootStore.root(snapshot) ?: return false
-    var found = false
-    root.processRangeMarkersOverlappingWith(0, snapshot.text().length(), 0) {
-      found = true
-      false
-    }
-    return found
-  }
-
-  fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
-
-  fun afterDisposed(wrap: SnapshotCustomWrap) {
-    if (wrapsById.remove(wrap.id, wrap)) model.notifyRemoved(wrap)
-  }
-
-  private fun collect(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int): List<CustomWrap> {
-    val root = rootStore.root(snapshot) ?: return emptyList()
+    val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<CustomWrap>()
     root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
       val wrap = entry.markerReference?.get()
@@ -88,6 +73,17 @@ internal class SnapshotCustomWrapStorage(
       true
     }
     return result
+  }
+
+  fun hasWraps(): Boolean {
+    val root = rootStore.root(currentSnapshot()) ?: return false
+    return !root.isEmpty()
+  }
+
+  fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
+
+  fun afterDisposed(wrap: SnapshotCustomWrap) {
+    if (wrapsById.remove(wrap.id, wrap)) model.notifyRemoved(wrap)
   }
 
   private fun processInvalidatedWraps(invalidatedMarkerIds: LongList) {

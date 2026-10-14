@@ -58,12 +58,11 @@ class FileMarkerRoot private constructor(
     val sourceRoot = rootReference.get()
     var restoredRoot = sourceRoot
     val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
-    sourceRoot.processRangeMarkersOverlappingWith(0, Int.MAX_VALUE, 0) { entry ->
-      val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processRangeMarkersOverlappingWith true
-      val range = marker.initialRange(document, tabSize) ?: return@processRangeMarkersOverlappingWith true
-      val resolution = sourceRoot.resolve(entry.markerId, marker.initialRange)
+    sourceRoot.processAllRangeMarkers { entry, ancestorDelta ->
+      val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processAllRangeMarkers true
+      val range = marker.initialRange(document, tabSize) ?: return@processAllRangeMarkers true
       resolvedMarkers.add(marker)
-      if (range.startOffset != resolution.startOffset || range.endOffset != resolution.endOffset) {
+      if (range.startOffset != entry.nodeStart + ancestorDelta || range.endOffset != entry.nodeEnd + ancestorDelta) {
         restoredRoot = restoredRoot.remove(entry.markerId).insert(
           entry.markerId,
           range.startOffset,
