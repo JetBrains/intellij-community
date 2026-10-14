@@ -65,6 +65,19 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         }
     }
 
+    /**
+     * Checks `kotlinc.xml` of a project with no explicit JPS version after a save.
+     * [KotlinJpsPluginSettings.validateSettings] writes the bundled JPS version only when that version has no build number.
+     */
+    private fun checkBundledJpsVersionPresence() {
+        if (KotlinJpsPluginSettings.bundledVersion.buildNumber == null) {
+            checkKotlincPresence(jpsVersionOnly = true)
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.getInstance(project).settings.version)
+        } else {
+            checkKotlincPresence(false)
+        }
+    }
+
     private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
 
     fun testNoKotlincExistsNoSettingsRuntime10() {
@@ -75,7 +88,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
                 saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
             }
         }
-        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
+        checkBundledJpsVersionPresence()
     }
 
     fun testKotlinBundledAdded() {
@@ -189,7 +202,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
                 saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
             }
         }
-        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
+        checkBundledJpsVersionPresence()
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
@@ -219,7 +232,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
                 saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
             }
         }
-        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
+        checkBundledJpsVersionPresence()
     }
 
     fun testProject107InconsistentVersionInConfig() {
@@ -292,7 +305,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
                 saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
             }
         }
-        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
+        checkBundledJpsVersionPresence()
     }
 
     private fun doTestLoadAndSaveProjectWithFacetConfig(valueBefore: String, valueAfter: String) {
