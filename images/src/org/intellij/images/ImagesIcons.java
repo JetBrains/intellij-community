@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -19,8 +21,11 @@ public final class ImagesIcons {
   }
   /** 16x16 */ public static final @NotNull Icon NormalizeImage = load("org/intellij/images/icons/normalizeImage.svg", 690378151, 2);
   /** 16x16 */ public static final @NotNull Icon Rotate = load("org/intellij/images/icons/rotate.svg", 392918290, 2);
-  /** 75x86 */ public static final @NotNull Icon ThumbnailBlank = load("org/intellij/images/icons/ThumbnailBlank.png", 0, 2);
-  /** 75x82 */ public static final @NotNull Icon ThumbnailDirectory = load("org/intellij/images/icons/ThumbnailDirectory.png", 0, 0);
-  /** 13x13 */ public static final @NotNull Icon ThumbnailToolWindow = load("org/intellij/images/icons/ThumbnailToolWindow.svg", 32430216, 2);
   /** 16x16 */ public static final @NotNull Icon ToggleTransparencyChessboard = load("org/intellij/images/icons/ToggleTransparencyChessboard.svg", "org/intellij/images/icons/expui/chessboard.svg", -1782881253, 2);
+
+  /** @deprecated to be removed without replacement */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @ScheduledForRemoval
+  /** 13x13 */ public static final @NotNull Icon ThumbnailToolWindow = load("org/intellij/images/icons/ThumbnailToolWindow.svg", 32430216, 2);
 }

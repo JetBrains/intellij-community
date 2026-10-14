@@ -29,7 +29,6 @@ import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,8 +132,7 @@ public final class ImageEditorImpl implements ImageEditor {
 
   @Override
   public boolean isEnabledForActionPlace(String place) {
-    // Disable for thumbnails action
-    return !ThumbnailViewActions.ACTION_PLACE.equals(place);
+    return true;
   }
 
   @Override

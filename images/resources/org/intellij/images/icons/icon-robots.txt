@@ -1,0 +1,1 @@
+deprecated: ThumbnailToolWindow.svg; to be removed without replacement

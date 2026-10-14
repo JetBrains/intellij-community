@@ -358,7 +358,7 @@ interface Row {
   @Deprecated(
     "Use [Row.textFieldWithBrowseButton(String, Project?, ((VirtualFile) -> String)?)] " +
     "or [Row.textFieldWithBrowseButton(FileChooserDescriptor, Project?, ((VirtualFile) -> String)?)] together with [FileChooserDescriptor.withTitle]",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
   )
   fun textFieldWithBrowseButton(
     @NlsContexts.DialogTitle browseDialogTitle: String? = null,

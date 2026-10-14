@@ -4692,9 +4692,6 @@ f:com.intellij.ui.FontComboBox
 - setFontName(java.lang.String):V
 - setMonospacedOnly(Z):V
 - setupDefaultRenderer(Z,Z):V
-c:com.intellij.ui.FontInfoRenderer
-- com.intellij.ui.ColoredListCellRenderer
-- <init>():V
 f:com.intellij.ui.FontInfoRendererBuilder
 - <init>():V
 - f:build():javax.swing.ListCellRenderer
@@ -5142,7 +5139,6 @@ c:com.intellij.ui.components.BasicOptionButtonUI$MainButton
 - <init>(com.intellij.ui.components.BasicOptionButtonUI):V
 f:com.intellij.ui.components.ComponentsKt
 - sf:RadioButton(java.lang.String):javax.swing.JRadioButton
-- sf:noteComponent(java.lang.String):javax.swing.JComponent
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V
