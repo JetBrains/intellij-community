@@ -1286,6 +1286,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.2.1.jar_copy",
+    src = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http//file",
+    out = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.hypfvieh/dbus-java-core-4.2.1.jar_copy",
+    src = "@com_github_hypfvieh-dbus-java-core-4_2_1_http//file",
+    out = "com.github.hypfvieh/dbus-java-core-4.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "dbus-java",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
+        ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
+    jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http//file",
+    source_jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
+    jar = "@com_github_hypfvieh-dbus-java-core-4_2_1_http//file",
+    source_jar = "@com_github_hypfvieh-dbus-java-core-4_2_1-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.diogen/diogen-analysis-1.0.0.jar_copy",
     src = "@org_jetbrains_diogen-diogen-analysis-1_0_0_http//file",
     out = "org.jetbrains.diogen/diogen-analysis-1.0.0.jar",
@@ -19141,64 +19179,6 @@ jvm_import(
     jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777_http//file",
     source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_777-sources_http//file",
     visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.2.1.jar_copy",
-    src = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http//file",
-    out = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.2.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.hypfvieh/dbus-java-core-4.2.1.jar_copy",
-    src = "@com_github_hypfvieh-dbus-java-core-4_2_1_http//file",
-    out = "com.github.hypfvieh/dbus-java-core-4.2.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "platform-credential_store-impl-dbus-java",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
-        ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
-    jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http//file",
-    source_jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1-sources_http//file",
-)
-
-jvm_import(
-    name = "com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
-    jar = "@com_github_hypfvieh-dbus-java-core-4_2_1_http//file",
-    source_jar = "@com_github_hypfvieh-dbus-java-core-4_2_1-sources_http//file",
-)
-
-java_library(
-    name = "platform-credential_store-impl-kwallet-tests-dbus-java",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
-        ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
-    ],
-)
-
-java_library(
-    name = "platform-credential_store-impl-tests-dbus-java",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
-        ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
-    ],
 )
 
 java_library(

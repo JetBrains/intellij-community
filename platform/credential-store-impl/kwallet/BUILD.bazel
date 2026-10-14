@@ -81,7 +81,7 @@ jvm_library(
         "//libraries/snakeyaml:snakeyaml_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
-        "@lib//:platform-credential_store-impl-kwallet-tests-dbus-java",
+        "@lib//:dbus-java",
         "//libraries/caffeine",
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/testFramework",
