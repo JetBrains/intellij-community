@@ -585,7 +585,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
 
   LibraryLicense("Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
-    .additionalLibraryNames("jackson3", "jackson-core-3")
+    .additionalLibraryNames("jackson3")
     .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -599,7 +599,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
   LibraryLicense("Jackson Databind", libraryName = "jackson-databind", url = "https://github.com/FasterXML/jackson-databind")
-    .additionalLibraryNames("jackson3-databind", "jackson-databind-3")
+    .additionalLibraryNames("jackson3-databind")
     .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
