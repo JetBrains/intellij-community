@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.async.launchNow
@@ -34,7 +34,7 @@ object CodeReviewDetailsTitleComponentFactory {
   ): JComponent {
     val titleLabel = htmlPaneFactory().apply {
       name = "Review details title panel"
-      font = JBFont.h2().asBold()
+      font = JBFont.h3().asBold()
       bindTextHtmlIn(scope, detailsVm.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
