@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
@@ -244,10 +245,8 @@ internal class WeighingContext private constructor(
         context(_: KaSession)
         internal fun getEqualityExpectedType(
             nameExpression: KtElement,
+            binaryExpression: KtBinaryExpression,
         ): KaType? {
-            val binaryExpression = nameExpression.parent as? KtBinaryExpression
-                ?: return null
-
             val isEqualityCheck = when (binaryExpression.operationToken) {
                 KtTokens.EQEQ, KtTokens.EXCLEQ,
                 KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ -> true
@@ -261,9 +260,9 @@ internal class WeighingContext private constructor(
             val right = binaryExpression.right
                 ?: return null
 
-            val expression = when (nameExpression) {
-                left -> right
-                right -> left
+            val expression = when {
+                PsiTreeUtil.isAncestor(binaryExpression.left, nameExpression, false) -> right
+                PsiTreeUtil.isAncestor(binaryExpression.right, nameExpression, false) -> left
                 else -> null
             }
 

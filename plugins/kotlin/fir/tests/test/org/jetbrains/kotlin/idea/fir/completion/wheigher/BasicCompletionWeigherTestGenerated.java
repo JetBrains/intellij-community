@@ -467,9 +467,24 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../../completion/testData/weighers/basic/objectsAsCallables/object.kt");
         }
 
+        @TestMetadata("parenthesizedEquality.kt")
+        public void testParenthesizedEquality() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/parenthesizedEquality.kt");
+        }
+
+        @TestMetadata("parenthesizedQualifiedEquality.kt")
+        public void testParenthesizedQualifiedEquality() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/parenthesizedQualifiedEquality.kt");
+        }
+
         @TestMetadata("qualifiedClassLiteral.kt")
         public void testQualifiedClassLiteral() throws Exception {
             runTest("../../completion/testData/weighers/basic/objectsAsCallables/qualifiedClassLiteral.kt");
+        }
+
+        @TestMetadata("qualifiedEqualityLeft.kt")
+        public void testQualifiedEqualityLeft() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/qualifiedEqualityLeft.kt");
         }
 
         @TestMetadata("typeAlias.kt")
