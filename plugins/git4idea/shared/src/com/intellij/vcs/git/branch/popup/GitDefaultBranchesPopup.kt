@@ -128,7 +128,8 @@ internal class GitDefaultBranchesPopup private constructor(
   }
 
   override fun createShortcutActionDataContext(): DataContext =
-    GitDefaultBranchesPopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
+    GitDefaultBranchesPopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories,
+                                                  openCreatedWorktree = treeStep.openCreatedWorktree)
 
   override fun afterShow() {
     super.afterShow()
@@ -152,8 +153,10 @@ internal class GitDefaultBranchesPopup private constructor(
       preferredSelection: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
       excludedTopLevelActions: Set<String> = emptySet(),
+      openCreatedWorktree: Boolean = true,
     ): GitDefaultBranchesPopup {
-      val step = GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories, excludedTopLevelActions)
+      val step = GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories, excludedTopLevelActions,
+                                                    openCreatedWorktree)
       return GitDefaultBranchesPopup(project, step).also {
         it.setIsMovable(true)
       }

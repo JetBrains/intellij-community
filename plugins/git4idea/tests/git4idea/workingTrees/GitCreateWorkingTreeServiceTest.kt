@@ -1,23 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -30,6 +31,7 @@ import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
 import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.branch
@@ -47,9 +49,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedClass
-import kotlin.io.path.Path
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
+import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -183,6 +188,42 @@ internal class GitCreateWorkingTreeServiceTest {
           }
         }
       }
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  @RegistryKey("git.enable.working.trees.feature", "true")
+  fun `test creation without opening registers the worktree and reports its branch`(createNewBranch: Boolean): Unit = with(context) {
+    val sourceBranch = createBranch(repo, "source")
+    val branchName = if (createNewBranch) "feature" else "source"
+    val branch = if (createNewBranch) WorktreeBranchSpec.CreateNewBranch(sourceBranch, branchName)
+    else WorktreeBranchSpec.CheckoutExisting(sourceBranch)
+    val worktreeDir = testNioRoot.resolve("featureWorktree")
+    val request = GitWorktreeCreationRequest(repo, VcsUtil.getFilePath(worktreeDir, true), branch)
+    val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, "Test", sourceBranch)
+    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
+    val openedProject = CompletableDeferred<Project>()
+
+    try {
+      timeoutRunBlocking(timeout = 120.seconds) {
+        GitCreateWorkingTreeService.getInstance().doCreateWorkingTree(
+          ideActivity, request,
+          onProjectOpened = { openedProject.complete(it) },
+          openAfterCreation = false,
+        )
+      }
+
+      assertThat(worktreeDir).exists()
+      assertThat(openedProject.isCompleted).isFalse()
+      assertThat(recentProjectsManager.getRecentPaths()).contains(worktreeDir.invariantSeparatorsPathString)
+      assertThat(recentProjectsManager.getProjectMetaInfo(worktreeDir)?.opened).isEqualTo(false)
+      val notification = vcsNotifier.notifications.single { it.displayId == GitNotificationIdsHolder.WORKTREE_CREATED }
+      assertThat(notification.content)
+        .isEqualTo(GitBundle.message("notification.content.worktree.created", branchName, worktreeDir.toString()))
+    }
+    finally {
+      recentProjectsManager.removePath(worktreeDir.invariantSeparatorsPathString)
     }
   }
 

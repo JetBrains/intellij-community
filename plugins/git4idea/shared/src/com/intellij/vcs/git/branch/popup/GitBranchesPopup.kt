@@ -26,13 +26,15 @@ interface GitBranchesPopup: TreePopup {
   companion object {
     /**
      * @param excludedTopLevelActions ids of the top level actions to leave out, for a caller that offers only some of them.
+     * @param openCreatedWorktree whether a worktree created from the popup is opened as a project afterward.
      */
     fun createDefaultPopup(
       project: Project,
       preferredSelection: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
       excludedTopLevelActions: Set<String> = emptySet(),
+      openCreatedWorktree: Boolean = true,
     ): GitBranchesPopup =
-      GitDefaultBranchesPopup.create(project, preferredSelection, repositories, excludedTopLevelActions)
+      GitDefaultBranchesPopup.create(project, preferredSelection, repositories, excludedTopLevelActions, openCreatedWorktree)
   }
 }
