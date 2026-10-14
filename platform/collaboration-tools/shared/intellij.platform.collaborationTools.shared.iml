@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" />
   </component>
