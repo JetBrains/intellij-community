@@ -11293,7 +11293,6 @@ c:com.intellij.util.net.HttpConfigurable
 - getGenericPassword(java.lang.String,I):java.net.PasswordAuthentication
 - getGenericPromptedAuthentication(java.lang.String,java.lang.String,java.lang.String,I,Z):java.net.PasswordAuthentication
 - s:getInstance():com.intellij.util.net.HttpConfigurable
-- getJvmProperties(Z,java.net.URI):java.util.List
 - getOnlyBySettingsSelector():java.net.ProxySelector
 - getPlainProxyPassword():java.lang.String
 - getPromptedAuthentication(java.lang.String,java.lang.String):java.net.PasswordAuthentication
@@ -11308,8 +11307,6 @@ c:com.intellij.util.net.HttpConfigurable
 - openConnection(java.lang.String):java.net.URLConnection
 - openHttpConnection(java.lang.String):java.net.HttpURLConnection
 - prepareURL(java.lang.String):V
-- putGenericPassword(java.lang.String,I,java.net.PasswordAuthentication,Z):V
-- removeGeneric(com.intellij.util.proxy.CommonProxy$HostInfo):V
 f:com.intellij.util.net.HttpConnectionUtils
 - sf:INSTANCE:com.intellij.util.net.HttpConnectionUtils
 - sf:openConnection(java.lang.String):java.net.URLConnection

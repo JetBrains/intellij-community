@@ -14,11 +14,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.net.internal.ProxyMigrationService;
-import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -32,26 +30,19 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.swing.JComponent;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 /// @deprecated Use [ProxySettings], [ProxyAuthentication], [HttpConnectionUtils], and [ProxyUtils] instead.
 /// See method deprecation notices for more details.
@@ -199,7 +190,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /// @deprecated use [ProxyCredentialStore#getCredentials(String, int)]
+  /// @deprecated use [ProxyCredentialStore#getCredentials]
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getGenericPassword(@NotNull String host, int port) {
     LOG.error("deprecated; use `ProxyCredentialStore#getCredentials` instead");
@@ -209,15 +200,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       return new PasswordAuthentication(credentials.getUserName(), password != null ? password.toCharArray() : new char[0]);
     }
     return null;
-  }
-
-  /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("WeakerAccess")
-  public void putGenericPassword(String host, int port, @NotNull PasswordAuthentication authentication, boolean remember) {
-    LOG.error("deprecated; use `ProxyCredentialStore#setCredentials` instead");
-    var credentials = authentication.getUserName().isBlank() ? null : new Credentials(authentication.getUserName(), authentication.getPassword());
-    ProxyCredentialStore.getInstance().setCredentials(host, port, credentials, remember);
   }
 
   /// @deprecated use [ProxyCredentialStore#getCredentials] instead
@@ -241,7 +223,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /// @deprecated use [ProxyCredentialStore#getCredentials] instead
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  @Transient
   public @Nullable Credentials readCredentials() {
     try {
       synchronized (myProxyCredentials) {
@@ -262,7 +243,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /// @deprecated use [ProxyCredentialStore#setCredentials] instead
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  @Transient
   public void writeCredentials(@Nullable Credentials credentials) {
     try {
       synchronized (myProxyCredentials) {
@@ -351,71 +331,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !isProxyException(uri.getHost());
   }
 
-  /// @deprecated use [ProxyUtils#getDetectedSettingsAsJvmProperties(URI)].
-  /// If autodetection really needs to be disallowed, check [ProxySettings] first. Keep in mind that
-  /// proxy configuration depends on the URI, so it cannot be null. If you only care about statically configured proxies, see
-  /// [ProxyUtils#getCurrentSettingsAsJvmProperties].
-  /// Also, the new util has different properties for user and password that match JDK system properties
-  /// (see [JavaProxyProperty#HTTP_PROXY_USER]).
-  @Deprecated(forRemoval = true)
-  public @NotNull List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
-    if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {
-      return Collections.emptyList();
-    }
-
-    if (uri != null && isProxyException(uri)) {
-      return Collections.emptyList();
-    }
-
-    List<Pair<String, String>> result = new ArrayList<>();
-    if (USE_HTTP_PROXY) {
-      boolean putCredentials = KEEP_PROXY_PASSWORD && StringUtil.isNotEmpty(getProxyLogin());
-      if (PROXY_TYPE_IS_SOCKS) {
-        result.add(pair(JavaProxyProperty.SOCKS_HOST, PROXY_HOST));
-        result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(PROXY_PORT)));
-        if (putCredentials) {
-          result.add(pair(JavaProxyProperty.SOCKS_USERNAME, getProxyLogin()));
-          result.add(pair(JavaProxyProperty.SOCKS_PASSWORD, getPlainProxyPassword()));
-        }
-      }
-      else {
-        result.add(pair(JavaProxyProperty.HTTP_HOST, PROXY_HOST));
-        result.add(pair(JavaProxyProperty.HTTP_PORT, String.valueOf(PROXY_PORT)));
-        result.add(pair(JavaProxyProperty.HTTPS_HOST, PROXY_HOST));
-        result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(PROXY_PORT)));
-        if (putCredentials) {
-          result.add(pair("proxy.authentication.username", getProxyLogin()));
-          result.add(pair("proxy.authentication.password", getPlainProxyPassword()));
-        }
-      }
-    }
-    else if (withAutodetection && uri != null) {
-      List<Proxy> proxies = com.intellij.util.proxy.CommonProxy.getInstance().select(uri);
-      // we will just take the first returned proxy, but we have an option to test connection through each of them,
-      // for instance, by calling prepareUrl()
-      if (!proxies.isEmpty()) {
-        for (Proxy proxy : proxies) {
-          if (isRealProxy(proxy)) {
-            SocketAddress address = proxy.address();
-            if (address instanceof InetSocketAddress inetSocketAddress) {
-              if (Proxy.Type.SOCKS.equals(proxy.type())) {
-                result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostString()));
-                result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));
-              }
-              else {
-                result.add(pair(JavaProxyProperty.HTTP_HOST, inetSocketAddress.getHostString()));
-                result.add(pair(JavaProxyProperty.HTTP_PORT, String.valueOf(inetSocketAddress.getPort())));
-                result.add(pair(JavaProxyProperty.HTTPS_HOST, inetSocketAddress.getHostString()));
-                result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(inetSocketAddress.getPort())));
-              }
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
-
   /// @deprecated use [ProxyConfiguration#buildProxyExceptionsMatcher(String)]
   @Deprecated(forRemoval = true)
   public boolean isProxyException(URI uri) {
@@ -434,12 +349,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Deprecated(forRemoval = true)
   public static boolean isRealProxy(@NotNull Proxy proxy) {
     return ProxyUtils.isRealProxy(proxy);
-  }
-
-  /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
-  @Deprecated(forRemoval = true)
-  public void removeGeneric(@NotNull com.intellij.util.proxy.CommonProxy.HostInfo info) { // IdeAuthenticatorService
-    ProxyCredentialStore.getInstance().setCredentials(info.getHost(), info.getPort(), null, false);
   }
 
   private void removeSecure() {

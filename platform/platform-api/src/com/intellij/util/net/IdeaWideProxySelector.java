@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector} */
-@SuppressWarnings({"removal", "unused"})
+@SuppressWarnings({"removal", "unused", "UnnecessaryFullyQualifiedName"})
 @Deprecated(forRemoval = true)
 public final class IdeaWideProxySelector extends ProxySelector {
   private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
@@ -34,6 +33,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
 
   public IdeaWideProxySelector(@NotNull HttpConfigurable configurable) {
     myHttpConfigurable = configurable;
+    LOG.error("deprecated; use `JdkProxyProvider#getProxySelector` or `IdeProxySelector` instead");
   }
 
   @Override
@@ -43,18 +43,18 @@ public final class IdeaWideProxySelector extends ProxySelector {
     String scheme = uri.getScheme();
     if (!("http".equals(scheme) || "https".equals(scheme))) {
       LOG.debug("No proxy: not http/https scheme: " + scheme);
-      return CommonProxy.NO_PROXY_LIST;
+      return com.intellij.util.proxy.CommonProxy.NO_PROXY_LIST;
     }
 
     if (myHttpConfigurable.USE_HTTP_PROXY) {
       if (myHttpConfigurable.isProxyException(uri)) {
         LOG.debug("No proxy: URI '", uri, "' matches proxy exceptions [", myHttpConfigurable.PROXY_EXCEPTIONS, "]");
-        return CommonProxy.NO_PROXY_LIST;
+        return com.intellij.util.proxy.CommonProxy.NO_PROXY_LIST;
       }
 
       if (myHttpConfigurable.PROXY_PORT < 0 || myHttpConfigurable.PROXY_PORT > 65535) {
         LOG.debug("No proxy: invalid port: " + myHttpConfigurable.PROXY_PORT);
-        return CommonProxy.NO_PROXY_LIST;
+        return com.intellij.util.proxy.CommonProxy.NO_PROXY_LIST;
       }
 
       Proxy.Type type = myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
@@ -79,7 +79,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
       }
     }
 
-    return CommonProxy.NO_PROXY_LIST;
+    return com.intellij.util.proxy.CommonProxy.NO_PROXY_LIST;
   }
 
   private @NotNull List<Proxy> selectUsingPac(@NotNull URI uri) {
@@ -117,19 +117,18 @@ public final class IdeaWideProxySelector extends ProxySelector {
         LOG.warn("Too large PAC script (JRE-247)");
       }
     }
-    return CommonProxy.NO_PROXY_LIST;
+    return com.intellij.util.proxy.CommonProxy.NO_PROXY_LIST;
   }
 
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      // FIXME bug here! scheme is never used in proxy code, uri.getScheme() -> null
-      myHttpConfigurable.removeGeneric(new CommonProxy.HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
+      ProxyCredentialStore.getInstance().setCredentials(uri.getHost(), uri.getPort(), null, false);
       LOG.debug("generic proxy credentials (if were saved) removed");
       return;
     }
 
-    final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
+    var isa = sa instanceof InetSocketAddress _isa ? _isa : null;
     if (myHttpConfigurable.USE_HTTP_PROXY && isa != null && Objects.equals(myHttpConfigurable.PROXY_HOST, isa.getHostString())) {
       LOG.debug("connection failed message passed to http configurable");
       myHttpConfigurable.LAST_ERROR = ioe.getMessage();
