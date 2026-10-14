@@ -343,7 +343,7 @@ public final class SdkConfigurationUtil {
       }
     }
     for (SdkType sdkType : sdkTypes) {
-      for (String suggestedHomePath : sdkType.suggestHomePaths()) {
+      for (String suggestedHomePath : sdkType.suggestHomePaths(null)) {
         if (sdkType.isValidSdkHome(suggestedHomePath)) {
           Sdk an_sdk = createAndAddSDK(suggestedHomePath, sdkType);
           if (an_sdk != null) return an_sdk;

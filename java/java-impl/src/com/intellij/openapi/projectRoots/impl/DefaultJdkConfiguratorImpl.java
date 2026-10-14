@@ -10,7 +10,7 @@ import java.util.Collection;
 final class DefaultJdkConfiguratorImpl implements DefaultJdkConfigurator {
   @Override
   public String guessJavaHome() {
-    Collection<String> homePaths = JavaSdk.getInstance().suggestHomePaths();
+    Collection<String> homePaths = JavaSdk.getInstance().suggestHomePaths(null);
     return ContainerUtil.getFirstItem(homePaths);
   }
 }
