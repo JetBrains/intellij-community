@@ -96,6 +96,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import com.intellij.xml.util.XmlStringUtil
@@ -202,6 +203,10 @@ class PluginDetailsPageComponent private constructor(
   private var updateButton: JButton? = null
   private var gearButton: JComponent? = null
   private var myEnableDisableButton: JButton? = null
+  private val loadingProblemHint = JBLabel(AllIcons.General.Information).apply {
+    isVisible = false
+    isFocusable = false
+  }
   private var myUninstallButton: JButton? = null
   private var errorComponent: ErrorComponent? = null
   private var version: JTextField? = null
@@ -623,6 +628,7 @@ class PluginDetailsPageComponent private constructor(
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
       { action -> this.createEnableDisableAction(action) },
       createUninstallAction())
+    nameAndButtons.addButtonComponent(loadingProblemHint)
     nameAndButtons.addButtonComponent(enableDisableController!!.button.also { gearButton = it })
     nameAndButtons.addButtonComponent(enableDisableController!!.bundledButton.also { myEnableDisableButton = it })
     nameAndButtons.addButtonComponent(enableDisableController!!.uninstallButton.also { myUninstallButton = it })
@@ -1099,8 +1105,10 @@ class PluginDetailsPageComponent private constructor(
         (component == null || updateDescriptor === component.getUpdatePluginDescriptor()) &&
         readOnlyPreparedUpdate == preparedUpdate) {
       setReadOnlyProgress(readOnlyProgress)
+      updateExpectedExplanations(component?.getExpectedExplanations().orEmpty())
       return
     }
+    updateExpectedExplanations(emptyList())
     setReadOnlyProgress(null)
     if (readOnlyPreparedUpdate != null && preparedUpdate == null) {
       updateButton?.apply {
@@ -1803,6 +1811,7 @@ class PluginDetailsPageComponent private constructor(
       updateEnableForNameAndIcon()
       updateErrors()
     }
+    updateExpectedExplanations(showComponent?.getExpectedExplanations().orEmpty())
   }
 
   private fun updateIcon() {
@@ -1827,12 +1836,38 @@ class PluginDetailsPageComponent private constructor(
 
   private fun updateErrors() {
     val descriptor = descriptorForActions ?: return
+    val component = showComponent
     if (showComponent?.isNotFreeInFreeMode() != true) {
-      PluginModelAsyncOperationsExecutor.updateErrors(coroutineScope, pluginModel.getModel().sessionId, descriptor.pluginId) {
-        updateIcon(it)
-        errorComponent!!.setErrors(it) { this.handleErrors() }
+      PluginModelAsyncOperationsExecutor.updateLoadingProblems(coroutineScope, pluginModel.getModel().sessionId, descriptor.pluginId) {
+        if (showComponent !== component || descriptorForActions?.pluginId != descriptor.pluginId ||
+            showComponent?.isNotFreeInFreeMode() == true) {
+          return@updateLoadingProblems
+        }
+        val errors = MyPluginModel.getErrors(it)
+        updateIcon(errors)
+        errorComponent!!.setErrors(errors) { this.handleErrors() }
+        updateExpectedExplanations(MyPluginModel.getExpectedExplanations(it))
       }
     }
+    else {
+      updateExpectedExplanations(emptyList())
+    }
+  }
+
+  internal fun updateExpectedExplanations(explanations: List<@Nls String>) {
+    val visible = explanations.isNotEmpty() && isPluginAvailable && showComponent?.isNotFreeInFreeMode() != true &&
+                  (gearButton?.isVisible == true || myEnableDisableButton?.isVisible == true)
+    loadingProblemHint.isVisible = visible
+    val description = explanations.takeIf { visible }?.let {
+      AccessibleContextUtil.joinAccessibleStrings(" ", *it.toTypedArray())
+    }
+    loadingProblemHint.setToolTipText(description?.let {
+      HtmlChunk.html().children(explanations.map { HtmlChunk.div().addText(it) })
+    })
+    loadingProblemHint.accessibleContext.accessibleName = description
+    gearButton?.accessibleContext?.accessibleDescription = description
+    myEnableDisableButton?.accessibleContext?.accessibleDescription = description
+    fullRepaint()
   }
 
   private fun handleErrors() {

@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.getUiInspectorContextFor
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
+import com.intellij.ide.setToolTipText
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
@@ -61,6 +62,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -280,6 +282,11 @@ class ListPluginComponent private constructor(
   @JvmField
   var myUpdateButton: JButton? = null
   private var myEnableDisableButton: JToggleButton? = null
+  private val myLoadingProblemHint = JBLabel(AllIcons.General.Information).apply {
+    isVisible = false
+    isFocusable = false
+  }
+  private var myExpectedExplanations: List<@Nls String> = emptyList()
   private var myChooseUpdateButton: JCheckBox? = null
   private var myAlignButton: JComponent? = null
   private var myMetricsPanel: JPanel? = null
@@ -343,6 +350,7 @@ class ListPluginComponent private constructor(
     }
     else {
       updateErrors(listModel.errors.getOrDefault(pluginId, Collections.emptyList()))
+      updateExpectedExplanations(listModel.expectedExplanations[pluginId].orEmpty())
     }
 
     createUnknownUpdateSourceWarningPanel(listModel.updateSources[pluginId], pluginInstallationState)
@@ -585,6 +593,7 @@ class ListPluginComponent private constructor(
       myModelFacade.setEnabledState(Collections.singletonList(pluginToSwitch), action)
     }, myUseToggleForEnablement)
 
+    myLayout.addButtonComponent(myLoadingProblemHint)
     myLayout.addButtonComponent(myEnableDisableButton!!)
     myEventHandler?.add(myEnableDisableButton!!)
     myEnableDisableButton!!.isOpaque = false
@@ -944,6 +953,23 @@ class ListPluginComponent private constructor(
     }
   }
 
+  internal fun updateExpectedExplanations(explanations: List<@Nls String>) {
+    myExpectedExplanations = if (myIsNotFreeInFreeMode) emptyList() else explanations.toList()
+    myLoadingProblemHint.isVisible = myEnableDisableButton?.isVisible == true && myExpectedExplanations.isNotEmpty()
+    val description = myExpectedExplanations.takeIf { myLoadingProblemHint.isVisible }?.let {
+      AccessibleContextUtil.joinAccessibleStrings(" ", *it.toTypedArray())
+    }
+    myLoadingProblemHint.setToolTipText(description?.let {
+      HtmlChunk.html().children(myExpectedExplanations.map { HtmlChunk.div().addText(it) })
+    })
+    myLoadingProblemHint.accessibleContext.accessibleName = description
+    myEnableDisableButton?.accessibleContext?.accessibleDescription = description
+    revalidate()
+    repaint()
+  }
+
+  internal fun getExpectedExplanations(): List<@Nls String> = myExpectedExplanations
+
   private fun createUnknownUpdateSourceWarningPanel(
     pluginUpdateSource: PluginUpdateSource?,
     installationState: PluginInstallationState?,
@@ -988,10 +1014,12 @@ class ListPluginComponent private constructor(
     val plugin = getDescriptorForActions()
     if (myOnlyUpdateMode) {
       updateErrors(emptyList())
+      updateExpectedExplanations(emptyList())
     }
     else {
-      PluginModelAsyncOperationsExecutor.updateErrors(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
-        updateErrors(res)
+      PluginModelAsyncOperationsExecutor.updateLoadingProblems(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
+        updateErrors(MyPluginModel.getErrors(res))
+        updateExpectedExplanations(MyPluginModel.getExpectedExplanations(res))
       }
     }
   }
@@ -1112,6 +1140,8 @@ class ListPluginComponent private constructor(
         if (myEnableDisableButton != null) {
           myLayout.removeButtonComponent(myEnableDisableButton!!)
           myEnableDisableButton = null
+          myLayout.removeButtonComponent(myLoadingProblemHint)
+          updateExpectedExplanations(emptyList())
 
           if (myAlignButton != null) {
             myAlignButton!!.isVisible = true
@@ -1143,6 +1173,8 @@ class ListPluginComponent private constructor(
   }
 
   private fun removeButtons(showRestart: Boolean) {
+    myLayout.removeButtonComponent(myLoadingProblemHint)
+    myLoadingProblemHint.isVisible = false
     if (myInstallButton != null) {
       myLayout.removeButtonComponent(myInstallButton!!)
       myInstallButton = null
@@ -2118,6 +2150,10 @@ class ListPluginComponent private constructor(
       if (isNotNullAndVisible(myEnableDisableButton)) {
         val key = if (myEnableDisableButton!!.isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
         description.add(IdeBundle.message(key))
+      }
+
+      if (myLoadingProblemHint.isVisible) {
+        myExpectedExplanations.forEach(description::add)
       }
 
       if (isNotNullAndVisible(myInstallButton)) {

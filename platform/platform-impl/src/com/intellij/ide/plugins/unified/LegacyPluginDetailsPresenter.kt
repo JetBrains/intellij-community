@@ -65,6 +65,10 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
         preparedUpdate,
       )
     }
+    val selectedRow = selectedRows.singleOrNull()
+    if (selectedRow != null && selectedRow.component.getPluginModel().pluginId == slot.details.descriptorForActions?.pluginId) {
+      slot.details.updateExpectedExplanations(selectedRow.component.getExpectedExplanations())
+    }
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)

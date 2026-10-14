@@ -1161,17 +1161,18 @@ open class MyPluginModel @JvmOverloads constructor(
       val errorCheckResult = UiPluginManager.getInstance().loadErrors(sessionId)
       needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
       val errors = getErrors(errorCheckResult)
+      val expectedExplanations = getExpectedExplanations(errorCheckResult)
       if (myPluginManagerCustomizer != null) {
         myPluginManagerCustomizer.updateAfterModificationAsync {
           hideProgresses(descriptor.pluginId)
-          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled, expectedExplanations)
           myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
           callback?.run()
         }
       }
       else {
         hideProgresses(descriptor.pluginId)
-        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled, expectedExplanations)
         myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
         callback?.run()
       }
@@ -1185,6 +1186,7 @@ open class MyPluginModel @JvmOverloads constructor(
     descriptor: PluginUiModel, needRestartForUninstall: Boolean,
     errors: Map<PluginId, List<HtmlChunk>>,
     completelyUninstalled: Boolean,
+    expectedExplanations: Map<PluginId, List<@Nls String>>,
   ) {
     val pluginId = descriptor.pluginId
     myTopController!!.showProgress(false)
@@ -1216,11 +1218,13 @@ open class MyPluginModel @JvmOverloads constructor(
     }
     for (component in myInstalledPluginComponents) {
       component.updateErrors(errors[component.getPluginModel().pluginId] ?: emptyList())
+      component.updateExpectedExplanations(expectedExplanations[component.getPluginModel().pluginId].orEmpty())
     }
     for (plugins in myMarketplacePluginComponentMap.values) {
       for (plugin in plugins) {
         if (plugin.myInstalledDescriptorForMarketplace != null) {
           plugin.updateErrors(errors[plugin.getPluginModel().pluginId] ?: emptyList())
+          plugin.updateExpectedExplanations(expectedExplanations[plugin.getPluginModel().pluginId].orEmpty())
         }
       }
     }

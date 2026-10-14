@@ -11,6 +11,9 @@ targets:
   - ../../src/com/intellij/ide/plugins/DefaultPluginLoadingProblemsNotificationHandler.kt
   - ../../src/com/intellij/ide/plugins/UltimateDependencyCheckerImpl.kt
   - ../../src/com/intellij/ide/plugins/marketplace/CheckErrorsResult.kt
+  - ../../src/com/intellij/ide/plugins/ListPluginModel.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginRowInput.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
   - ../../src/com/intellij/ide/plugins/newui/DefaultUiPluginManagerController.kt
   - ../../src/com/intellij/ide/plugins/newui/MyPluginModel.kt
   - ../../src/com/intellij/ide/plugins/newui/ErrorComponent.java
@@ -18,17 +21,22 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/PluginDetailsPageComponent.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginRowFactory.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginDetailsPresenter.kt
+  - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProvider.kt
+  - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProvider.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt
 ---
 
 # Plugin Loading Problems
 
 Status: Active
-Date: 2026-10-13
+Date: 2026-10-14
 
 ## Purpose
 
@@ -119,6 +127,27 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
     `an expected product mode problem stays outside the generic error area`
   )
+- Product mode problems show a neutral info icon immediately left of the row's enable/disable control.
+- The details header shows the same explanation beside its enable/disable actions.
+- The tooltip retains each side's explanation. The row and controls expose the explanation to screen readers without hover.
+- These problems do not change the user's enabled setting or enter error sorting.
+- An expected explanation must not hide an unexpected error from the other side.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `product mode hints sit before the toggle and refresh on reused rows`;
+    `a product mode hint keeps an ordinary side error visible`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
+    `a mode change clears row and details hints without reopening`;
+    `selected details refresh hints from reused rows`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
+    `local hints stay separate from errors and clear with replacement data`;
+    `plugins with loading errors appear first in local sections without reordering peers`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
+    `Marketplace hints stay separate from errors and retain both sides`
+  )
+
 - Error text uses the theme's error foreground. Recovery links use the theme's link foreground.
 - Rows and details use the same error formatting and dependency suggestion data.
 
@@ -290,6 +319,17 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   )
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.
+- Reused rows must update or remove obsolete product mode hints and their accessible descriptions.
+- Clearing the selection must remove the previous hint from details.
+- Rows and details must remove the hints after a mode change makes the required module available.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `product mode hints sit before the toggle and refresh on reused rows`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
+    `a mode change clears row and details hints without reopening`;
+    `selected details refresh hints from reused rows`
+  )
+
 - The local notification handler retains the state captured on its first access for notification data and recovery targets.
 
 Untested: No focused test verifies the notification handler's retained state after plugin set replacement.

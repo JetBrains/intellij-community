@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.ide.IdeBundle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -154,6 +155,7 @@ internal class LegacyPluginRowFactoryTest {
             updateDescriptor = null,
             enabled = true,
             restrictedByProduct = restricted,
+            expectedExplanations = listOf("Light mode is not supported"),
           )
           val item = PluginItemState(pluginId, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
           val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
@@ -164,6 +166,8 @@ internal class LegacyPluginRowFactoryTest {
             assertThat(row.component.isNotFreeInFreeMode()).isEqualTo(restricted)
             val errors = componentsOfType(row.component, JEditorPane::class.java).filter { it.text.contains("Loading problem") }
             assertThat(errors).hasSize(if (restricted) 0 else 1)
+            val hints = componentsOfType(row.component, JLabel::class.java).filter { it.icon == AllIcons.General.Information && it.isVisible }
+            assertThat(hints).hasSize(if (restricted) 0 else 1)
           }
         }
       }
@@ -315,6 +319,96 @@ internal class LegacyPluginRowFactoryTest {
     }
     finally {
       host.dispose(closeSession = false)
+    }
+  }
+
+  @Test
+  fun `product mode hints sit before the toggle and refresh on reused rows`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val id = PluginId.getId("mode.hint.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mode Hint Plugin").setIsConverted(true).build()
+        val explanations = listOf("Client: Light mode is not supported.", "Host: Backend mode is not supported.")
+        val input = PluginRowInput(plugin, PluginInstallationState(true), emptyList(), null, true, false,
+                                   expectedExplanations = explanations)
+        val item = PluginItemState(id, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        for (sectionId in listOf(PluginSectionId.Installed, PluginSectionId.Marketplace)) {
+          val section = PluginSectionState(sectionId, items = listOf(item))
+          factory.createReconciler { _, _ -> }.use { reconciler ->
+            val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+            factory.rowsRendered(listOf(binding))
+            val row = (binding.row as LegacyPluginRow).component
+            val toggle = componentsOfType(row, OnOffButton::class.java).single()
+            val hint = componentsOfType(row, JLabel::class.java).single { it.icon == AllIcons.General.Information }
+            assertThat(toggle.isSelected).isTrue()
+            assertThat(toggle.isEnabled).isTrue()
+            assertThat(hint.isVisible).isTrue()
+            assertThat(hint.isFocusable).isFalse()
+            assertThat(hint.toolTipText).contains(explanations[0], explanations[1])
+            assertThat(toggle.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
+            assertThat(row.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
+            assertThat(componentsOfType(row, JEditorPane::class.java)).isEmpty()
+            for (width in listOf(360, 900)) {
+              row.setSize(JBUI.scale(width), row.preferredSize.height)
+              row.doLayout()
+              assertThat(hint.width).isPositive()
+              assertThat(hint.x + hint.width).isLessThanOrEqualTo(toggle.x)
+              assertThat(toggle.x + toggle.width).isLessThanOrEqualTo(row.width)
+            }
+
+            for (next in listOf(listOf("Frontend mode is not supported <here>."), emptyList(), explanations)) {
+              val refreshed = item.copy(rowInput = input.copy(expectedExplanations = next))
+              val refreshedSection = section.copy(items = listOf(refreshed))
+              val refreshedBinding = reconciler.reconcile(listOf(factory.specification(refreshedSection, refreshed))).single()
+              factory.rowsRendered(listOf(refreshedBinding))
+              assertThat(refreshedBinding.row).isSameAs(binding.row)
+              assertThat(componentsOfType(row, OnOffButton::class.java).single()).isSameAs(toggle)
+              assertThat(hint.isVisible).isEqualTo(next.isNotEmpty())
+              if (next.isEmpty()) {
+                assertThat(hint.toolTipText).isNull()
+                assertThat(toggle.accessibleContext.accessibleDescription).isNull()
+                assertThat(row.accessibleContext.accessibleDescription).doesNotContain("mode is not supported")
+              }
+              else {
+                assertThat(hint.toolTipText).contains(next.singleOrNull()?.replace("<here>", "&lt;here&gt;") ?: next.first())
+              }
+            }
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+  }
+
+  @Test
+  fun `a product mode hint keeps an ordinary side error visible`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val id = PluginId.getId("mixed.hint.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mixed Hint Plugin").build()
+        val input = PluginRowInput(plugin, PluginInstallationState(true), listOf(HtmlChunk.text("Host: Missing dependency")), null,
+                                   true, false, expectedExplanations = listOf("Client: Light mode is not supported."))
+        val item = PluginItemState(id, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+        (factory.createRow(specification.occurrenceId, item, specification.renderKey) as LegacyPluginRow).use { row ->
+          row.renderInput(input)
+          val hint = componentsOfType(row.component, JLabel::class.java).single { it.icon == AllIcons.General.Information }
+          assertThat(hint.isVisible).isTrue()
+          assertThat(hint.toolTipText).contains("Client: Light mode is not supported.")
+          val error = componentsOfType(row.component, JEditorPane::class.java).single()
+          assertThat(error.text).contains("Host: Missing dependency").doesNotContain("Light mode")
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
     }
   }
 
@@ -473,7 +567,7 @@ internal class LegacyPluginRowFactoryTest {
             val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
             factory.rowsRendered(listOf(binding))
             val row = (binding.row as LegacyPluginRow).component
-            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null }
+            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null && it.icon != AllIcons.General.Information }
             val normalWidth = icon.icon.iconWidth
 
             row.updateErrors(listOf(HtmlChunk.text("Broken plugin")))
@@ -520,7 +614,7 @@ internal class LegacyPluginRowFactoryTest {
           component.doLayout()
           val button = checkNotNull(component.myInstallButton)
           val title = componentsOfType(component, JBLabel::class.java).single { it.text == model.name }
-          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null }
+          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null && it.icon != AllIcons.General.Information }
           val vendor = componentsOfType(component, JLabel::class.java).single { it.text == "JetBrains" }
           val metadataPanel = vendor.parent
 
