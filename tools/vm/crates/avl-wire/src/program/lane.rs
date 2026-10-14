@@ -1,0 +1,300 @@
+//! The lane document of one lane: every launch input of the lane IDE, `lanes/<lane>.json` beside the suite documents.
+//! `plugins/air/docs/scripts/flowLanes.ts` writes it.
+//!
+//! The config key of a lane hashes the bytes of this document, so a runner reads the launch inputs here and nowhere
+//! else. This side reads every field and refuses an unknown one: a field that a runner does not know is a launch input
+//! that it would not apply. A local agent has an `acp.json` entry with the tokens [`JAVA_TOKEN`] and
+//! [`FAKE_AGENT_JAR_TOKEN`], which the runner resolves. A controlled agent also gets the address and the credential of
+//! the control channel, which derive from the config key and so are not in the document.
+
+use std::collections::{BTreeMap, BTreeSet};
+
+use serde::Deserialize;
+
+#[cfg(test)]
+mod tests;
+
+/// The version of the lane document that this reader reads, `LANE_DOCUMENT_SCHEMA_VERSION` of the generator.
+pub const LANE_DOCUMENT_SCHEMA_VERSION: u32 = 1;
+
+/// The token for the `java` that runs the fake agent, in an `acp.json` entry.
+pub const JAVA_TOKEN: &str = "${java}";
+
+/// The token for the fake agent jar in the home of a context, in an `acp.json` entry.
+pub const FAKE_AGENT_JAR_TOKEN: &str = "${fakeAgentJar}";
+
+vocabulary! {
+    /// When a launch property applies. The IDE runs on the machine that launches it.
+    pub enum LaunchCondition {
+        Linux = "linux",
+        /// A run off TeamCity: `TEAMCITY_VERSION` is unset.
+        NotTeamCity = "notTeamCity",
+        NotWindows = "notWindows",
+    }
+}
+
+vocabulary! {
+    /// How Air is told that a fake agent exists.
+    pub enum Delivery {
+        /// One `acp.json` entry.
+        Local = "local",
+        /// A package of the fake registry.
+        Registry = "registry",
+        /// The Cloud agent of the product, reached through the emulated Agent Spawner.
+        Cloud = "cloud",
+    }
+}
+
+vocabulary! {
+    /// A lane fixture that no agent implies, as `AirLaneRequirement` names it.
+    pub enum Requirement {
+        AcpDebugServer = "ACP_DEBUG_SERVER",
+        AcpTransportCapture = "ACP_TRANSPORT_CAPTURE",
+        FeedbackCapture = "FEEDBACK_CAPTURE",
+        JunieStartupPromo = "JUNIE_STARTUP_PROMO",
+        Workflows = "WORKFLOWS",
+    }
+}
+
+/// The lane document.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LaneDocument {
+    pub schema_version: u32,
+    /// The Kotlin constant of the lane, such as `UI` or `GUI_CHAT`.
+    pub lane: String,
+    /// The digest of the flow vocabulary that the bridge of the lane must serve.
+    pub vocabulary_digest: String,
+    /// The `-D` properties beyond the requirements and the services, in launch order.
+    pub launch_properties: Vec<LaunchProperty>,
+    /// The requirements of the lane, sorted by name.
+    pub requirements: Vec<LaneRequirement>,
+    /// The fake agents of the lane, in launch order: the order of `acp.json` and of the fake registry.
+    pub agents: Vec<LaneAgent>,
+    /// The keys of the registry agents, in publish order.
+    pub registry_agents: Vec<String>,
+    pub disabled_plugin_ids: Vec<String>,
+    /// The names of the declared CLI runtimes.
+    pub cli_runtimes: Vec<String>,
+    /// The identity line of each lane service, by the name of the service.
+    pub services: BTreeMap<String, String>,
+    /// The journey suites that the JVM host still runs, with their agents and requirements.
+    pub journey_suites: Vec<JourneySuite>,
+}
+
+/// One `-D` property.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LaunchProperty {
+    pub key: String,
+    pub value: String,
+    /// When the property applies. Absent means always.
+    #[serde(rename = "when", default, deserialize_with = "crate::json::non_null")]
+    pub condition: Option<LaunchCondition>,
+}
+
+/// One requirement and the launch properties that it is. A requirement that starts a server has none.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LaneRequirement {
+    pub name: Requirement,
+    pub properties: BTreeMap<String, String>,
+}
+
+/// One fake agent.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LaneAgent {
+    pub key: String,
+    pub delivery: Delivery,
+    /// The `acp.json` entry name of a local agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub config_name: Option<String>,
+    /// The production identity of a registry agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub registry_id: Option<String>,
+    pub display_name: String,
+    /// The agent proxies every frame to the control channel of the lane.
+    pub controlled: bool,
+    /// What a deterministic agent answers.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub deterministic: Option<DeterministicAnswer>,
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub required_executable: Option<String>,
+    /// The `acp.json` entry of a local agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub acp_json: Option<AcpJsonEntry>,
+    /// The environment that the fake registry publishes for a registry agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub env: Option<BTreeMap<String, String>>,
+}
+
+/// What a deterministic agent answers: prompt N gets `<response_prefix> N`.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DeterministicAnswer {
+    pub response_prefix: String,
+    pub response_delay_ms: u64,
+    pub asks_permission: bool,
+    pub loads_sessions: bool,
+}
+
+/// The `acp.json` entry of a local agent.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AcpJsonEntry {
+    pub command: String,
+    pub args: Vec<String>,
+    pub env: BTreeMap<String, String>,
+}
+
+/// One journey suite: the agents that it drives and the requirements that it needs.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JourneySuite {
+    pub suite: String,
+    pub agents: Vec<String>,
+    pub requirements: Vec<Requirement>,
+}
+
+/// The facts of a machine that the conditions of the launch properties read.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LaunchHost {
+    pub linux: bool,
+    pub windows: bool,
+    pub team_city: bool,
+}
+
+impl LaunchCondition {
+    /// Whether the condition holds on `host`.
+    pub const fn holds(self, host: LaunchHost) -> bool {
+        match self {
+            Self::Linux => host.linux,
+            Self::NotTeamCity => !host.team_city,
+            Self::NotWindows => !host.windows,
+        }
+    }
+}
+
+/// Reads one lane document from its bytes, and refuses another schema version and a document that does not fit itself.
+pub fn parse_lane_document(content: &[u8]) -> Result<LaneDocument, String> {
+    let document: LaneDocument = serde_json::from_slice(content).map_err(|error| format!("is not a lane document: {error}"))?;
+    if document.schema_version != LANE_DOCUMENT_SCHEMA_VERSION {
+        return Err(format!(
+            "has the schema version {}, and this reader reads {LANE_DOCUMENT_SCHEMA_VERSION}",
+            document.schema_version
+        ));
+    }
+    let refusals = document.refusals();
+    if refusals.is_empty() {
+        Ok(document)
+    } else {
+        Err(refusals.join("; "))
+    }
+}
+
+impl LaneDocument {
+    /// The launch properties that apply on `host`, in document order, then the properties of the requirements.
+    pub fn launch_properties_on(&self, host: LaunchHost) -> Vec<(&str, &str)> {
+        let stated = self
+            .launch_properties
+            .iter()
+            .filter(|property| property.condition.is_none_or(|condition| condition.holds(host)))
+            .map(|property| (property.key.as_str(), property.value.as_str()));
+        let required = self
+            .requirements
+            .iter()
+            .flat_map(|requirement| requirement.properties.iter().map(|(key, value)| (key.as_str(), value.as_str())));
+        stated.chain(required).collect()
+    }
+
+    /// Every way in which this document does not fit itself, one line each. Empty for a document a runner can launch.
+    pub fn refusals(&self) -> Vec<String> {
+        let mut refusals = Vec::new();
+        let mut keys = BTreeSet::new();
+        for agent in &self.agents {
+            if !keys.insert(agent.key.as_str()) {
+                refusals.push(format!("the agent '{}' is stated twice", agent.key));
+            }
+            refusals.extend(agent.refusals());
+        }
+        let registry: Vec<&str> = self
+            .agents
+            .iter()
+            .filter(|agent| agent.delivery == Delivery::Registry)
+            .map(|agent| agent.key.as_str())
+            .collect();
+        if self.registry_agents.iter().map(String::as_str).ne(registry.iter().copied()) {
+            refusals.push(format!(
+                "the registry agents {:?} are not the registry agents {registry:?} of the agents",
+                self.registry_agents
+            ));
+        }
+        if self.agents.iter().filter(|agent| agent.delivery == Delivery::Cloud).count() > 1 {
+            refusals.push("the lane states more than one Cloud agent".to_owned());
+        }
+        let mut properties = BTreeSet::new();
+        for (key, _) in self.launch_properties_on(LaunchHost {
+            linux: true,
+            windows: false,
+            team_city: false,
+        }) {
+            if !properties.insert(key) {
+                refusals.push(format!("the launch property '{key}' is stated twice"));
+            }
+        }
+        for suite in &self.journey_suites {
+            for key in &suite.agents {
+                if !keys.contains(key.as_str()) {
+                    refusals.push(format!(
+                        "the journey suite '{}' names the agent '{key}', which the lane does not state",
+                        suite.suite
+                    ));
+                }
+            }
+            for requirement in &suite.requirements {
+                if !self.requirements.iter().any(|stated| stated.name == *requirement) {
+                    refusals.push(format!(
+                        "the journey suite '{}' needs {requirement}, which the lane does not state",
+                        suite.suite
+                    ));
+                }
+            }
+        }
+        refusals
+    }
+}
+
+impl LaneAgent {
+    fn refusals(&self) -> Vec<String> {
+        let mut refusals = Vec::new();
+        let key = &self.key;
+        if self.controlled == self.deterministic.is_some() {
+            refusals.push(format!("the agent '{key}' must state an answer exactly when it is not controlled"));
+        }
+        let local = self.delivery == Delivery::Local;
+        let registry = self.delivery == Delivery::Registry;
+        if local != self.config_name.is_some() || local != self.acp_json.is_some() {
+            refusals.push(format!(
+                "the agent '{key}' must state an acp.json entry and its name exactly when it is local"
+            ));
+        }
+        if registry != self.registry_id.is_some() || registry != self.env.is_some() {
+            refusals.push(format!(
+                "the agent '{key}' must state a registry id and its environment exactly when the registry delivers it"
+            ));
+        }
+        if self.delivery == Delivery::Cloud && !self.controlled {
+            refusals.push(format!("the Cloud agent '{key}' is controlled"));
+        }
+        if let Some(entry) = &self.acp_json
+            && (entry.command != JAVA_TOKEN || entry.args != ["-jar", FAKE_AGENT_JAR_TOKEN])
+        {
+            refusals.push(format!(
+                "the acp.json entry of '{key}' runs {} {:?}, not {JAVA_TOKEN} -jar {FAKE_AGENT_JAR_TOKEN}",
+                entry.command, entry.args
+            ));
+        }
+        refusals
+    }
+}

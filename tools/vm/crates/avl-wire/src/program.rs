@@ -13,6 +13,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use serde_json::Value;
 
+pub mod lane;
+
 #[cfg(test)]
 mod tests;
 
