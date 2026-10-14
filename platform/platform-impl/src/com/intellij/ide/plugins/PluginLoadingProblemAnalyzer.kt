@@ -218,10 +218,10 @@ internal object PluginLoadingProblemAnalyzer {
     if (exclusionReason is ChainedExclusion) {
       val exclusionChain = exclusionReason.descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason)
       val boundaryExclusion = exclusionChain.windowed(2).firstOrNull { (pluginModule, other) -> other.pluginId != pluginModule.pluginId }
+      val rootCauseDescriptor = exclusionChain.last()
+      val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
       if (boundaryExclusion != null) {
         val excludedRequiredDescriptor = boundaryExclusion[1]
-        val rootCauseDescriptor = exclusionChain.last()
-        val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
         if (rootCause is PluginIsMarkedDisabled) {
           val disabledDependencyId = rootCause.descriptor.pluginId
           registerLoadingError(
@@ -234,8 +234,6 @@ internal object PluginLoadingProblemAnalyzer {
         }
       }
       else {
-        val rootCauseDescriptor = exclusionChain.last()
-        val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
         processRootCause(rootCause)
       }
     }
