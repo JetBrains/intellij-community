@@ -6,6 +6,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
@@ -425,7 +426,7 @@ private fun toPsiMethodForDeserialized(
             TypeOwnerKind.DECLARATION,
             isBoxed = false,
         ) ?: runIf(functionSymbol is KaConstructorSymbol) {
-            LightPsiClassBuilder(context, classId.asFqNameString())
+            fakeContainingClass(context, classId.asFqNameString())
         }
         containingClass?.lookup()?.let { return it }
     }
@@ -458,11 +459,16 @@ private fun toPsiMethodForDeserialized(
     return UastFakeDeserializedSymbolLightMethod(
         functionSymbol.createPointer(),
         functionSymbol.name.identifier,
-        LightPsiClassBuilder(context, facadeFqName),
+        fakeContainingClass(context, facadeFqName),
         context,
         kaCallInfo.typeArgumentsMappingOrEmptyMap()
     )
 }
+
+private fun fakeContainingClass(context: KtElement, name: String): PsiClass =
+    object : LightPsiClassBuilder(context, name) {
+        override fun getContainingFile(): PsiFile = context.containingFile
+    }
 
 private fun KaSimpleCall<*, *>?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
     this?.typeArgumentsMapping
