@@ -129,6 +129,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:OpenNewTab:javax.swing.Icon
 - sf:Pause:javax.swing.Icon
 - sf:PinTab:javax.swing.Icon
+- sf:PlaySound:javax.swing.Icon
 - sf:Play_back:javax.swing.Icon
 - sf:Play_first:javax.swing.Icon
 - sf:Play_forward:javax.swing.Icon

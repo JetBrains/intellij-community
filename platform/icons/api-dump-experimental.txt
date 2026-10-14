@@ -128,6 +128,7 @@
 - sf:getOpenNewTab():com.intellij.platform.icons.IconDescriptor
 - sf:getPause():com.intellij.platform.icons.IconDescriptor
 - sf:getPinTab():com.intellij.platform.icons.IconDescriptor
+- sf:getPlaySound():com.intellij.platform.icons.IconDescriptor
 - sf:getPlay_back():com.intellij.platform.icons.IconDescriptor
 - sf:getPlay_first():com.intellij.platform.icons.IconDescriptor
 - sf:getPlay_forward():com.intellij.platform.icons.IconDescriptor

@@ -139,6 +139,7 @@ object AllIconDescriptors {
     /** 16x16 */ @JvmStatic val Play_first: IconDescriptor = imageIconDescriptor("expui/actions/playFirst.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val Play_forward: IconDescriptor = imageIconDescriptor("expui/actions/playForward.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val Play_last: IconDescriptor = imageIconDescriptor("expui/actions/playLast.svg", AllIconDescriptors::class.java.classLoader)
+    /** 16x16 */ @JvmStatic val PlaySound: IconDescriptor = imageIconDescriptor("expui/actions/playSound.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val PopFrame: IconDescriptor = imageIconDescriptor("expui/actions/popFrame.svg", AllIconDescriptors::class.java.classLoader)
     /** 26x26 */ @JvmStatic val PresentationAssistantSettings: IconDescriptor = imageIconDescriptor("actions/presentationAssistantSettings.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val PreserveCase: IconDescriptor = imageIconDescriptor("expui/inline/preserveCase.svg", AllIconDescriptors::class.java.classLoader)
