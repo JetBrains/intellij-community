@@ -401,6 +401,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Play_last = new IntelliJIconKey("actions/play_last.svg", "expui/actions/playLast.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey PlaySound = new IntelliJIconKey("expui/actions/playSound.svg", "expui/actions/playSound.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey PopFrame = new IntelliJIconKey("actions/popFrame.svg", "expui/actions/popFrame.svg", AllIconsKeys.class);
     /** 26x26 */
     @GeneratedFromIntelliJSources

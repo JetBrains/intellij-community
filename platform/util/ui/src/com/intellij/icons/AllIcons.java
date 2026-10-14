@@ -148,6 +148,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Play_first = load("expui/actions/playFirst.svg", "actions/play_first.svg", -987505166, 2);
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("expui/actions/playForward.svg", "actions/play_forward.svg", 84808551, 2);
     /** 16x16 */ public static final @NotNull Icon Play_last = load("expui/actions/playLast.svg", "actions/play_last.svg", 1200003259, 2);
+    /** 16x16 */ public static final @NotNull Icon PlaySound = load("expui/actions/playSound.svg", 2005648454, 2);
     /** 16x16 */ public static final @NotNull Icon PopFrame = load("expui/actions/popFrame.svg", "actions/popFrame.svg", -2061379356, 2);
     /** 26x26 */ public static final @NotNull Icon PresentationAssistantSettings = load("actions/presentationAssistantSettings.svg", -1777013294, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("expui/inline/preserveCase.svg", "actions/preserveCase.svg", 1309462994, 0);

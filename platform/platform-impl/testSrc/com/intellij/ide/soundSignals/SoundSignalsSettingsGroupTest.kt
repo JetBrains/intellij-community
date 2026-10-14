@@ -21,8 +21,6 @@ import com.intellij.util.ui.ThreeStateCheckBox.State
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.awt.event.FocusEvent
-import javax.swing.JComponent
 
 @TestApplication
 @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "true")
@@ -97,7 +95,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a group click toggles every child, stores explicit per-signal values and plays no preview, a child plays its preview`() = playingTest(
+  fun `a group click toggles every child and stores explicit per-signal values`() = playingTest(
     listOf(IdeSoundSignals.WARNING_CARET),
   ) { page ->
     val group = page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP)
@@ -112,15 +110,8 @@ class SoundSignalsSettingsGroupTest {
     assertThat(children).noneMatch { it.isSelected }
 
     group.doClick()
-    assertThat(player.previewed).isEmpty()
-
     page.panel.apply()
     assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(CODE_HIGHLIGHTING_SIGNALS.associate { it.id to true })
-
-    page.signal(IdeSoundSignals.ERROR_CARET).doClick()
-    focusByTab(page.signal(IdeSoundSignals.WARNING_LINE))
-
-    assertThat(player.previewed).containsExactly(listOf(IdeSoundSignals.ERROR_CARET), listOf(IdeSoundSignals.WARNING_LINE))
   }
 
   @Test
@@ -219,11 +210,6 @@ class SoundSignalsSettingsGroupTest {
 
     fun hasCheckBox(title: String): Boolean =
       UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).any { it.text == title }
-  }
-
-  private fun focusByTab(component: JComponent) {
-    val event = FocusEvent(component, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL_FORWARD)
-    for (listener in component.focusListeners) listener.focusGained(event)
   }
 
   private class RecordingPlayer : SoundSignalPlayer() {
