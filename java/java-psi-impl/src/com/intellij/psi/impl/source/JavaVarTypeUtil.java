@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -138,7 +137,7 @@ public final class JavaVarTypeUtil {
               if (U == null) {
                 targetSubstitutor = targetSubstitutor.put(parameter, unbounded);
               }
-              else if (!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U) ||
+              else if ((!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U)) ||
                        isWrittenNotNullObjectBound(ai, U)) {
                 targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(manager, U));
               }
