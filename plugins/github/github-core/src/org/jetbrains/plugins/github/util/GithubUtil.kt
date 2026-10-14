@@ -11,6 +11,7 @@ import git4idea.remote.hosting.GitHostingUrlUtil.match
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import java.net.UnknownHostException
 
@@ -56,7 +57,10 @@ object GithubUtil {
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
   private fun findGithubRemote(repository: GitRepository): Pair<GitRemote, String>? {
-    val server = GithubAuthenticationManager.getInstance().getSingleOrDefaultAccount(repository.project)?.server ?: return null
+    val server = run {
+      GithubAuthenticationManager.getInstance()
+      GHAccountsUtil.getSingleOrDefaultAccount(repository.project)?.server
+    } ?: return null
 
     var githubRemote: Pair<GitRemote, String>? = null
     for (gitRemote in repository.remotes) {
