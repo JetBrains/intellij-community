@@ -105,7 +105,9 @@ public class WalkingState<T> {
   }
 
   /**
-   * process in the in-order fashion
+   * Processes the root and its descendants in depth-first pre-order.
+   * Visits each element before its children. The guide defines the order of siblings.
+   * Stops and returns {@code false} when {@code processor} returns {@code false}.
    */
   public static <T> boolean processAll(@NotNull T root, @NotNull TreeGuide<T> treeGuide, @NotNull Processor<? super @NotNull T> processor) {
     final boolean[] result = {true};
