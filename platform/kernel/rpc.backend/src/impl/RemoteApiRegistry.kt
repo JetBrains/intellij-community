@@ -4,6 +4,7 @@ package com.intellij.platform.rpc.backend.impl
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.LazyExtension
@@ -162,7 +163,8 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     }
   }
 
-  private fun registerRemoteApi(apiDescriptor: RemoteApiDescriptor<*>, apiImplementation: RemoteApi<*>) {
+  /** @return false when the API is already registered. */
+  private fun registerRemoteApi(apiDescriptor: RemoteApiDescriptor<*>, apiImplementation: RemoteApi<*>): Boolean {
     val apiFqn = apiDescriptor.getApiFqn()
     LOG.debug("Registering remote api $apiFqn - $apiDescriptor")
 
@@ -175,7 +177,9 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
         "either via the 'com.intellij.platform.rpc.backend.remoteApi' extension point or a " +
         "'${RemoteApiProvider::class.java.simpleName}', not both and not more than once."
       )
+      return false
     }
+    return true
   }
 
   private fun unregisterRemoteApi(apiFqn: String) {
@@ -225,13 +229,41 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
     val registeredApis = LinkedHashSet<String>()
     // recorded before the provider runs, so a failing provider is not constructed again on every call
-    materializedProviders.add(MaterializedProvider(extension.pluginDescriptor, extension.implementationClassName, registeredApis))
+    val materialized = MaterializedProvider(extension.pluginDescriptor, extension.implementationClassName, registeredApis)
+    materializedProviders.add(materialized)
     LOG.debug("Processing remote api provider extension - ${extension.implementationClassName}")
+    val createdApis = ArrayList<String>()
+    try {
+      runProvider(extension, declaredApis, registeredApis, createdApis)
+    }
+    catch (e: Throwable) {
+      // a cancellation is not a failure of the provider: the next call runs the provider again
+      if (e.isControlFlowException) {
+        materializedProviders.remove(materialized)
+        createdApis.forEach(::unregisterRemoteApi)
+      }
+      throw e
+    }
+  }
+
+  /**
+   * Constructs the provider and runs `remoteApis()`. Logs a failure of the provider.
+   * Adds the APIs that the provider registers to [registeredApis], and the APIs that got an implementation to [createdApis].
+   */
+  private fun runProvider(
+    extension: LazyExtension<RemoteApiProvider>,
+    declaredApis: Set<String>?,
+    registeredApis: MutableSet<String>,
+    createdApis: MutableList<String>,
+  ) {
     val provider = extension.instance ?: return
     val sink = object : RemoteApiProvider.Sink {
       override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
-        registeredApis.add(descriptor.getApiFqn())
-        registerRemoteApi(apiDescriptor = descriptor, apiImplementation = implementation())
+        val apiFqn = descriptor.getApiFqn()
+        registeredApis.add(apiFqn)
+        if (registerRemoteApi(apiDescriptor = descriptor, apiImplementation = implementation())) {
+          createdApis.add(apiFqn)
+        }
       }
     }
     try {
@@ -259,11 +291,21 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     if (materializedRegistrations.any { it === registration }) {
       return
     }
+    // recorded before the implementation is created, so a failing registration is not created again on every call
     materializedRegistrations.add(registration)
-    registerRemoteApi(
-      apiDescriptor = remoteApiDescriptorOf(registration.loadApiInterface()),
-      apiImplementation = registration.createImplementation()
-    )
+    try {
+      registerRemoteApi(
+        apiDescriptor = remoteApiDescriptorOf(registration.loadApiInterface()),
+        apiImplementation = registration.createImplementation()
+      )
+    }
+    catch (e: Throwable) {
+      // a cancellation is not a failure of the registration: the next call creates the implementation again
+      if (e.isControlFlowException) {
+        materializedRegistrations.remove(registration)
+      }
+      throw e
+    }
   }
 
   override fun <T : RemoteApi<Unit>> tryResolve(descriptor: RemoteApiDescriptor<T>): T? {
