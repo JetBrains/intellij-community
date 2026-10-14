@@ -84,9 +84,10 @@ Untested: Focused analysis tests do not cover all terminal mappings or optional 
   )
 
 - Notification eligibility filters detailed notification text. It does not remove the problem from the plugin problem collection.
-- Dependency problems for implementation detail plugins suppress notification text but retain their recorded problem and recovery targets.
+- Dependency problems for implementation detail plugins retain their recorded problem without notification text or recovery targets.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `implementation detail errors are retained but not reported to the user`
+    `implementation detail errors are retained but not reported to the user`;
+    `a hidden disabled dependency problem has no recovery targets`
   )
 
 - A plugin explicitly disabled without another failure must produce no loading problem or suggested action.
@@ -145,15 +146,18 @@ Untested: No focused reporter test covers global messages, handler aggregation, 
 
 ## Recovery Actions
 
-- The local calculation collects notification Enable and Disable targets separately from message eligibility.
-- A problem registered during resolved-set analysis adds its affected plugin to the Disable targets.
-- A disabled dependency adds an Enable target when initialization marks it disabled and the candidate set contains its descriptor.
+- Notification recovery targets require problem notification eligibility and an affected plugin that initialization does not mark disabled.
+- An eligible problem registered during resolved-set analysis adds its affected plugin to the Disable targets.
+- An eligible disabled dependency adds an Enable target when initialization marks it disabled and the candidate set contains its descriptor.
+- Ultimate must not enter the generic Enable targets.
 - Recovery maps keep one target per plugin ID. Candidate-selection problems do not add targets by themselves.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `loading error is cleared when disabled dependency and dependent are loaded`;
     `transitive disabled dependency reports the disabled root`;
     `missing dependency is exposed as a reason and disable suggestion`;
-    `implementation detail errors are retained but not reported to the user`
+    `implementation detail errors are retained but not reported to the user`;
+    `mixed disabled roots offer only ordinary recovery targets`;
+    `a hidden problem does not add targets beside a visible problem with the same root`
   )
 
 - A nonempty Enable or Disable name collection adds its corresponding notification action.
@@ -192,9 +196,10 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `failed Ultimate is not a disabled Ultimate problem`
   )
 
-- Hidden Ultimate dependency problems still contribute notification recovery targets.
+- Hidden Ultimate dependency problems must not contribute notification recovery targets.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `mixed notification data retains hidden Ultimate recovery targets`
+    `mixed notification data excludes hidden Ultimate recovery targets`;
+    `mixed disabled roots offer only ordinary recovery targets`
   )
 
 - The controller can still supply a generic Enable suggestion for a disabled Ultimate dependency before page restrictions apply.

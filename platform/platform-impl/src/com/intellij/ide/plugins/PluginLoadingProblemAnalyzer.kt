@@ -40,9 +40,12 @@ internal object PluginLoadingProblemAnalyzer {
 
     fun registerLoadingError(loadingError: PluginLoadingProblem) {
       pluginNonLoadReasons[loadingError.plugin.pluginId] = loadingError
+      if (!loadingError.shouldNotifyUser || initContext.isPluginDisabled(loadingError.plugin.pluginId)) {
+        return
+      }
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
       val disabledDependencyId = loadingError.disabledDependencyId
-      if (disabledDependencyId != null) {
+      if (disabledDependencyId != null && disabledDependencyId != PluginManagerCore.ULTIMATE_PLUGIN_ID) {
         if (initContext.isPluginDisabled(disabledDependencyId)) {
           val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
           if (disabledPlugin != null) {

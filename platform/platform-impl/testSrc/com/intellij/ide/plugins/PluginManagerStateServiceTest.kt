@@ -307,7 +307,8 @@ internal class PluginManagerStateServiceTest {
     assertThat(reason!!.shouldNotifyUser).isFalse()
     assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
-    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(pluginId to "Foo"))
+    assertThat(state.pluginsToDisable).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
   }
 
   @Test
@@ -335,8 +336,8 @@ internal class PluginManagerStateServiceTest {
     assertThat(problem.shouldNotifyUser).isFalse()
     assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", ULTIMATE_ID))
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
-    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(ULTIMATE_ID to "Ultimate"))
-    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
   }
 
   @Test
@@ -353,7 +354,8 @@ internal class PluginManagerStateServiceTest {
       assertThat(problem.shouldNotifyUser).isFalse()
     }
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
-    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(ULTIMATE_ID to "Ultimate"))
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
   }
 
   @Test
@@ -368,10 +370,12 @@ internal class PluginManagerStateServiceTest {
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
     assertThat(problem.shouldNotifyUser).isFalse()
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
   }
 
   @Test
-  fun `mixed notification data retains hidden Ultimate recovery targets`() {
+  fun `mixed notification data excludes hidden Ultimate recovery targets`() {
     installUltimateDependency()
     install(plugin("unrelated") {
       name = "Unrelated"
@@ -382,10 +386,71 @@ internal class PluginManagerStateServiceTest {
     val unrelatedProblem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("unrelated")])
 
     assertThat(state.pluginLoadingProblemsForNotification).containsExactly(unrelatedProblem.detailedMessage)
-    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(ULTIMATE_ID to "Ultimate"))
-    assertThat(state.pluginsToDisable).containsExactlyInAnyOrderEntriesOf(
-      mapOf(PluginId.getId("affected") to "Affected", PluginId.getId("unrelated") to "Unrelated"),
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("unrelated") to "Unrelated"))
+  }
+
+  @Test
+  fun `mixed disabled roots offer only ordinary recovery targets`() {
+    installUltimateDependency(transitive = true)
+    install(
+      plugin("root") { name = "Root" },
+      plugin("ordinary") {
+        name = "Ordinary"
+        depends("root")
+      },
     )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString, "root")))
+    val ordinaryProblem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("ordinary")])
+
+    assertThat(state.pluginNonLoadReasons).hasSize(3)
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(ordinaryProblem.detailedMessage)
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("root") to "Root"))
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("ordinary") to "Ordinary"))
+  }
+
+  @Test
+  fun `a hidden problem does not add targets beside a visible problem with the same root`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin("hidden") {
+        name = "Hidden"
+        implementationDetail = true
+        depends("root")
+      },
+      plugin("visible") {
+        name = "Visible"
+        depends("root")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root")))
+    val visibleProblem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("visible")])
+
+    assertThat(state.pluginNonLoadReasons).hasSize(2)
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(visibleProblem.detailedMessage)
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("root") to "Root"))
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("visible") to "Visible"))
+  }
+
+  @Test
+  fun `a hidden disabled dependency problem has no recovery targets`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin("hidden") {
+        name = "Hidden"
+        implementationDetail = true
+        depends("root")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root")))
+
+    assertThat(state.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("hidden"))
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
   }
 
   @Test
