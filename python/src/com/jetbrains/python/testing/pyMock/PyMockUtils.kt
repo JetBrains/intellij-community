@@ -83,7 +83,7 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
 
   // For decorators, use PyKnownDecoratorUtil which resolves via the stub/import chain
   if (callExpr is PyDecorator) {
-    return PyKnownDecoratorUtil.asKnownDecorators(callExpr, context)
+    return PyKnownDecoratorUtil.knownDecoratorsOf(callExpr, context)
       .contains(PyKnownDecorator.UNITTEST_MOCK_PATCH)
   }
 

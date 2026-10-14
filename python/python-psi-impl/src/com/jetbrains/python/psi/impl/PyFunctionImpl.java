@@ -45,8 +45,8 @@ import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementKnownDecorators;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -695,23 +695,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
   private @Nullable PyKnownDecorator getClassOrStaticMethodDecorator() {
-    PyDecoratorList decolist = getDecoratorList();
-    if (decolist != null) {
-      PyDecorator[] decos = decolist.getDecorators();
-      if (decos.length > 0) {
-        for (int i = decos.length - 1; i >= 0; i -= 1) {
-          PyDecorator deco = decos[i];
-          List<PyKnownDecorator> knownDecorators =
-            PyKnownDecoratorUtil.asKnownDecorators(deco, TypeEvalContext.codeInsightFallback(getProject()));
-          for (PyKnownDecorator decorator : knownDecorators) {
-            if (decorator.isClassMethod() || decorator.isStaticMethod()) {
-              return decorator;
-            }
-          }
-        }
-      }
-    }
-    return null;
+    TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+    PyElementKnownDecorators knownDecorators = PyKnownDecoratorUtil.knownDecoratorsOf(this, context);
+    return knownDecorators.findLastWithTrait(decorator -> decorator.isClassMethod() || decorator.isStaticMethod());
   }
 
   @Override

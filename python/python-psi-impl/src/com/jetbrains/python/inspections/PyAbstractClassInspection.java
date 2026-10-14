@@ -97,8 +97,8 @@ public final class PyAbstractClassInspection extends PyInspection {
         if (decoratorList == null) continue;
 
         for (PyDecorator decorator : decoratorList.getDecorators()) {
-          boolean isAbstract = ContainerUtil.exists(PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext),
-                                                    PyKnownDecorator::isAbstract);
+          boolean isAbstract = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, myTypeEvalContext)
+            .hasTrait(PyKnownDecorator::isAbstract);
           if (isAbstract) {
             abstractDecorators.add(decorator);
           }

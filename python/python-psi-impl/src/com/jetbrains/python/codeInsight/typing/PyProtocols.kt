@@ -27,9 +27,8 @@ fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProt
 fun PyClass.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
 fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean =
-  PyKnownDecoratorUtil.getKnownDecorators(pyClass, context).any {
-    it in listOf(TYPING_RUNTIME_CHECKABLE, TYPING_RUNTIME_CHECKABLE_EXT, TYPING_RUNTIME, TYPING_RUNTIME_EXT)
-  }
+  PyKnownDecoratorUtil.knownDecoratorsOf(pyClass, context)
+    .containsAny(TYPING_RUNTIME_CHECKABLE, TYPING_RUNTIME_CHECKABLE_EXT, TYPING_RUNTIME, TYPING_RUNTIME_EXT)
 
 fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean = expected is PyClassLikeType &&
                                                                                                          actual is PyClassLikeType &&

@@ -64,6 +64,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyKnownDecorators;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyPossibleClassMember;
@@ -851,19 +852,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (decoratorList != null) {
           for (PyDecorator deco : decoratorList.getDecorators()) {
             TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
-            List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, context);
-            for (PyKnownDecorator knownDecorator : knownDecorators) {
-              if (knownDecorator.isMutableProperty()) {
-                getter = new Maybe<>(method);
-                setter = new Maybe<>(method);
-                deleter = new Maybe<>(method);
-                break;
-              }
-
-              if (knownDecorator.isProperty()) {
-                getter = new Maybe<>(method);
-                break;
-              }
+            PyKnownDecorators knownDecorators = PyKnownDecoratorUtil.knownDecoratorsOf(deco, context);
+            if (knownDecorators.hasTrait(PyKnownDecorator::isMutableProperty)) {
+              getter = new Maybe<>(method);
+              setter = new Maybe<>(method);
+              deleter = new Maybe<>(method);
+            }
+            else if (knownDecorators.hasTrait(PyKnownDecorator::isProperty)) {
+              getter = new Maybe<>(method);
             }
 
             final QualifiedName qname = deco.getQualifiedName();

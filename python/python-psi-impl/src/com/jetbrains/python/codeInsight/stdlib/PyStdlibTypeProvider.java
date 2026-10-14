@@ -498,7 +498,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   private static boolean isEnumMember(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    return PyKnownDecoratorUtil.getKnownDecorators(decoratable, context).contains(PyKnownDecorator.ENUM_MEMBER);
+    return PyKnownDecoratorUtil.knownDecoratorsOf(decoratable, context).contains(PyKnownDecorator.ENUM_MEMBER);
   }
 
   private static @Nullable PyType getEnumAutoConstructorType(@NotNull PsiElement target,

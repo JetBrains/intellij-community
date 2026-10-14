@@ -186,9 +186,8 @@ class PyOverloadsInspection : PyInspection() {
     private fun isOverride(function: PyFunction): Boolean {
       val decoratorList = function.decoratorList ?: return false
       return decoratorList.decorators.any { decorator ->
-        PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).any {
-          it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
-        }
+        PyKnownDecoratorUtil.knownDecoratorsOf(decorator, myTypeEvalContext)
+          .containsAny(PyKnownDecorator.TYPING_OVERRIDE, PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE)
       }
     }
 

@@ -53,8 +53,8 @@ object PyDisjointBaseUtil {
   }
 
   private fun hasDisjointBaseDecorator(pyClass: PyClass, context: TypeEvalContext): Boolean {
-    val decorators = PyKnownDecoratorUtil.getKnownDecorators(pyClass, context)
-    return decorators.contains(PyKnownDecorator.DISJOINT_BASE) || decorators.contains(PyKnownDecorator.DISJOINT_BASE_EXT)
+    return PyKnownDecoratorUtil.knownDecoratorsOf(pyClass, context)
+      .containsAny(PyKnownDecorator.DISJOINT_BASE, PyKnownDecorator.DISJOINT_BASE_EXT)
   }
 
   private fun hasNonEmptySlots(pyClass: PyClass, context: TypeEvalContext): Boolean {

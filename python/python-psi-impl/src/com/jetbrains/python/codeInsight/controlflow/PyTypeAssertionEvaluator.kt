@@ -469,8 +469,8 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
 
 
     private fun isFinal(classType: PyClassType, context: TypeEvalContext): Boolean {
-      val deco = PyKnownDecoratorUtil.getKnownDecorators(classType.pyClass, context)
-      return deco.contains(PyKnownDecorator.TYPING_FINAL) || deco.contains(PyKnownDecorator.TYPING_FINAL_EXT)
+      return PyKnownDecoratorUtil.knownDecoratorsOf(classType.pyClass, context)
+        .containsAny(PyKnownDecorator.TYPING_FINAL, PyKnownDecorator.TYPING_FINAL_EXT)
     }
 
     private fun isLiteralOrNoneType(type: PyType?): Boolean {

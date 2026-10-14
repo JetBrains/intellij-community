@@ -61,8 +61,8 @@ class PyDisjointBaseInspection : PyInspection() {
     }
 
     override fun visitPyDecorator(node: PyDecorator) {
-      val decorator = PyKnownDecoratorUtil.asKnownDecorators(node, myTypeEvalContext)
-      if (decorator.contains(PyKnownDecorator.DISJOINT_BASE) || decorator.contains(PyKnownDecorator.DISJOINT_BASE_EXT)) {
+      val knownDecorators = PyKnownDecoratorUtil.knownDecoratorsOf(node, myTypeEvalContext)
+      if (knownDecorators.containsAny(PyKnownDecorator.DISJOINT_BASE, PyKnownDecorator.DISJOINT_BASE_EXT)) {
         val parent = node.parentOfType<PyDecoratable>()
         if (parent is PyFunction) {
           registerProblem(node, PyPsiBundle.message("INSP.disjoint.base.on.function"))

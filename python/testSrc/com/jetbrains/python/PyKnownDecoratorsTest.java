@@ -173,4 +173,19 @@ public class PyKnownDecoratorsTest extends PyTestCase {
     assertTrue("Both decorators resolve to a known decorator", decorators.allKnown());
     assertFalse(PyKnownDecoratorUtil.hasUnknownDecorator(function, stubOnlyContext()));
   }
+
+  // The decorator nearest the function decides, so @classmethod wins over the @staticmethod wrapping it.
+  @TestFor(issues = "PY-93003", classes = PyElementKnownDecorators.class)
+  public void testNearestDecoratorWithTraitWins() {
+    PyFunction function = functionOf("f", """
+      @staticmethod
+      @classmethod
+      def f(): ...
+      """);
+    PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
+
+    PyKnownDecorator nearest =
+      decorators.findLastWithTrait(it -> it.isClassMethod() || it.isStaticMethod());
+    assertEquals(PyKnownDecorator.CLASSMETHOD, nearest);
+  }
 }

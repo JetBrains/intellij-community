@@ -1942,9 +1942,8 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     fun isFinal(decoratable: PyDecoratable, context: TypeEvalContext): Boolean {
-      return PyKnownDecoratorUtil
-        .getKnownDecorators(decoratable, context)
-        .any { it === PyKnownDecorator.TYPING_FINAL || it === PyKnownDecorator.TYPING_FINAL_EXT }
+      return PyKnownDecoratorUtil.knownDecoratorsOf(decoratable, context)
+        .containsAny(PyKnownDecorator.TYPING_FINAL, PyKnownDecorator.TYPING_FINAL_EXT)
     }
 
     /**
