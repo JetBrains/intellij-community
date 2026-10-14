@@ -52,7 +52,7 @@ import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation", level = DeprecationLevel.ERROR)
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation", level = DeprecationLevel.HIDDEN)
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
   return createLabelInt(text = text, style = style, fontColor = fontColor, bold = bold, font = null)
 }
@@ -96,8 +96,12 @@ private fun createLabelInt(
   return label
 }
 
+@ApiStatus.Internal
+@Deprecated("Use Kotlin UI DSL")
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
+@ApiStatus.Internal
+@Deprecated("Use Kotlin UI DSL")
 fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Tooltip String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
   toolTip?.let { component.toolTipText = it }
@@ -120,6 +124,7 @@ private fun setTitledBorder(@BorderTitle title: String, panel: JPanel) {
  * Consider using [UI DSL](https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html).
  */
 @JvmOverloads
+@ApiStatus.Internal
 fun dialog(@DialogTitle title: String,
            panel: JComponent,
            resizable: Boolean = false,
@@ -208,6 +213,7 @@ private abstract class MyDialogWrapper(
 }
 
 @JvmOverloads
+@ApiStatus.Internal
 fun <T : JComponent> installFileCompletionAndBrowseDialog(
   project: Project?,
   component: ComponentWithBrowseButton<T>,
@@ -248,6 +254,7 @@ fun textFieldWithHistoryWithBrowseButton(
 }
 
 @JvmOverloads
+@ApiStatus.Internal
 fun textFieldWithBrowseButton(
   project: Project?,
   fileChooserDescriptor: FileChooserDescriptor,
@@ -260,6 +267,7 @@ fun textFieldWithBrowseButton(
 }
 
 @JvmOverloads
+@ApiStatus.Internal
 fun textFieldWithBrowseButton(
   project: Project?,
   textField: JTextField,
@@ -272,6 +280,7 @@ fun textFieldWithBrowseButton(
   return component
 }
 
+@get:ApiStatus.Internal
 val JPasswordField.chars: CharSequence?
   get() {
     val doc = document
