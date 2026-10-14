@@ -1247,15 +1247,15 @@ private fun computeResources(
       val prefix = resolveRelativeToBazelBuildFileDirectory(root.path, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
       val globPrefix = if (prefix.isEmpty()) "" else "$prefix/"
       val excludes = compileExcludesForRoot(packageExcludes = packageExcludes, rootPrefix = prefix)
-      val iconRobots = if (type == JavaResourceRootType.RESOURCE) scanIconRobots(root.path) else IconRobotsScan.NONE
+      val iconRobots = type == JavaResourceRootType.RESOURCE && hasIconRobots(root.path)
       val relativeOutputPath = (root.properties as JavaResourceRootProperties).relativeOutputPath
       ResourceDescriptor(
         baseDirectory = prefix,
         files = listOf("$globPrefix**/*"),
         relativeOutputPath = relativeOutputPath,
         root = root.path,
-        excludes = if (iconRobots == IconRobotsScan.NONE) excludes else excludes + "$globPrefix**/$ICON_ROBOTS_FILE_NAME",
-        allowEmpty = excludes.isNotEmpty() || iconRobots == IconRobotsScan.ONLY,
+        excludes = if (iconRobots) excludes + "$globPrefix**/$ICON_ROBOTS_FILE_NAME" else excludes,
+        allowEmpty = excludes.isNotEmpty() || iconRobots,
       )
     }
     .toList()
@@ -1264,31 +1264,13 @@ private fun computeResources(
 /**
  * The icon-class generator reads `icon-robots.txt`. No jar ships it, so the resource glob leaves it out.
  * The converter adds the exclude only to a production resource root that holds such a file.
+ * The exclude always comes with `allow_empty`, so untracked build output under the root does not change the generated file.
  */
 private const val ICON_ROBOTS_FILE_NAME = "icon-robots.txt"
 
-private enum class IconRobotsScan { NONE, MIXED, ONLY }
-
-/** Walks the resource root once and tells if it holds an `icon-robots.txt` file, and if it holds other files too. */
-private fun scanIconRobots(root: Path): IconRobotsScan {
-  if (!root.isDirectory()) {
-    return IconRobotsScan.NONE
-  }
-
-  var iconRobots = false
-  var otherFile = false
-  for (file in root.walk()) {
-    if (file.fileName.toString() == ICON_ROBOTS_FILE_NAME) {
-      iconRobots = true
-    }
-    else {
-      otherFile = true
-    }
-    if (iconRobots && otherFile) {
-      return IconRobotsScan.MIXED
-    }
-  }
-  return if (iconRobots) IconRobotsScan.ONLY else IconRobotsScan.NONE
+/** Tells if the resource root holds an `icon-robots.txt` file. */
+private fun hasIconRobots(root: Path): Boolean {
+  return root.isDirectory() && root.walk().any { it.fileName.toString() == ICON_ROBOTS_FILE_NAME }
 }
 
 private fun compileExcludesForRoot(packageExcludes: List<String>, rootPrefix: String): List<String> {
