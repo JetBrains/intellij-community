@@ -70,11 +70,20 @@ Remote development extends these rules with side aggregation and action routing.
   )
 
 - A disabled root of a required dependency chain must remain identifiable through intermediate plugins and content modules.
+- Ordinary disabled dependencies use their available names. Recovery retains canonical IDs, including when a dependency uses an alias.
+- Factory messages use an ID fallback when no descriptor is available.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `transitive disabled dependency reports the disabled root`;
     `several intermediate plugins report one disabled root`;
     `a required content module reports the transitive disabled root`;
     `a core content module reports the disabled root instead of IDEA CORE`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
+    `a disabled alias displays its owner name and retains the recovery ID`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
+    `loading problem factories preserve their presentation`;
+    `disabled dependency names remain lazy and recovery uses IDs`
   )
 
 - Missing modules retain their terminal explanation through required plugins and modules, including core modules.

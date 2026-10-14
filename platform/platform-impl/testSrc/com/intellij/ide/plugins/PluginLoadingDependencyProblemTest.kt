@@ -224,6 +224,37 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
+  fun `a disabled alias displays its owner name and retains the recovery ID`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        name = "Friendly Dependency"
+        pluginAliases = listOf("dependency.alias")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency.alias")
+      },
+      configure = { withDisabledPlugins("dependency") },
+    )
+
+    val state = PluginManagerStateService().calculateState(
+      pluginSet, PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
+    )
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+    assertThat(problem.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Friendly Dependency"))
+    assertThat(problem.detailedMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", "Friendly Dependency"))
+    assertThat(problem.disabledDependencyId).isEqualTo(PluginId.getId("dependency"))
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("dependency") to "Friendly Dependency"))
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+  }
+
+  @Test
   fun `a broken installed dependency uses its name`() {
     val pluginSet = buildPluginSet(
       plugin("dependency") {

@@ -255,7 +255,7 @@ internal object PluginLoadingProblemAnalyzer {
             val disabledDependencyId = rootCause.descriptor.pluginId
             registerLoadingError(
               if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
-              else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser)
+              else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser, rootCause.descriptor)
             )
           }
           is ExcludedByEnvironmentConfiguration -> processRootCause(rootCause)

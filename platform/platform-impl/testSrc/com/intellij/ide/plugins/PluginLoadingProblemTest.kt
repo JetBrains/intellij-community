@@ -75,6 +75,10 @@ internal class PluginLoadingProblemTest {
       case("hidden disabled dependency", pluginDependencyIsDisabled(affected, dependencyId, false),
            message("short.depends.on.disabled.plugin", dependencyId),
            message("long.depends.on.disabled.plugin", "Affected", dependencyId), false, dependencyId, DependencyRef.Plugin(dependencyId)),
+      case("named disabled dependency", pluginDependencyIsDisabled(affected, dependencyId, true, dependency),
+           message("short.depends.on.disabled.plugin", "Dependency"),
+           message("long.depends.on.disabled.plugin", "Affected", "Dependency"), disabledDependencyId = dependencyId,
+           dependency = DependencyRef.Plugin(dependencyId)),
       case("custom loading disabled", nonBundledPluginsAreExplicitlyDisabled(affected),
            message("short.custom.plugin.loading.disabled"),
            message("long.custom.plugin.loading.disabled", "Affected"), false),
@@ -194,6 +198,24 @@ internal class PluginLoadingProblemTest {
       assertThat(problem.severity).isEqualTo(severity)
       assertThat(problem.shouldNotifyUser).isEqualTo(notify)
     }
+  }
+
+  @Test
+  fun `disabled dependency names remain lazy and recovery uses IDs`() {
+    val descriptor = PluginNode(PluginId.getId("affected")).apply { name = "Before" }
+    val dependencyId = PluginId.getId("dependency")
+    val dependency = PluginNode(dependencyId).apply { name = "Old Dependency" }
+    val problem = pluginDependencyIsDisabled(descriptor, dependencyId, true, dependency)
+
+    descriptor.name = "After"
+    dependency.name = "New Dependency"
+
+    assertThat(problem.disabledDependencyId).isEqualTo(dependencyId)
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(dependencyId))
+    assertThat(problem.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "New Dependency"))
+    assertThat(problem.detailedMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "After", "New Dependency"))
   }
 
   @Test

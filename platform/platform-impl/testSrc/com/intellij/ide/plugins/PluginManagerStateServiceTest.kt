@@ -61,7 +61,7 @@ internal class PluginManagerStateServiceTest {
     val reason = initialState.pluginNonLoadReasons[dependentId]
 
     assertThat(reason!!.disabledDependencyId).isEqualTo(dependencyId)
-    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId))
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Bar"))
     assertThat(initialState.pluginLoadingProblemsForNotification).containsExactly(reason.detailedMessage)
     assertThat(initialState.pluginsToEnable).containsExactlyEntriesOf(mapOf(dependencyId to "Bar"))
     assertThat(initialState.pluginsToDisable).containsExactlyEntriesOf(mapOf(dependentId to "Foo"))
@@ -102,12 +102,12 @@ internal class PluginManagerStateServiceTest {
     assertThat(affectedReason!!.disabledDependencyId).isEqualTo(rootId)
     assertThat(intermediateReason!!.disabledDependencyId).isEqualTo(rootId)
     assertThat(affectedReason.shortMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Root"))
     assertThat(intermediateReason.shortMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Root"))
     assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrder(
-      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", rootId),
-      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Intermediate", rootId),
+      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", "Root"),
+      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Intermediate", "Root"),
     )
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
     assertThat(state.pluginsToDisable).containsExactlyInAnyOrderEntriesOf(mapOf(affectedId to "Affected", intermediateId to "Intermediate"))
@@ -138,10 +138,10 @@ internal class PluginManagerStateServiceTest {
     assertThat(state.pluginNonLoadReasons).hasSize(3)
     for (problem in state.pluginNonLoadReasons.values) {
       assertThat(problem.disabledDependencyId).isEqualTo(rootId)
-      assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+      assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Root"))
     }
     assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrderElementsOf(
-      (0..2).map { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Dependent $it", rootId) },
+      (0..2).map { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Dependent $it", "Root") },
     )
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
   }
@@ -169,7 +169,7 @@ internal class PluginManagerStateServiceTest {
     val reason = state.pluginNonLoadReasons[PluginId.getId("affected")]
 
     assertThat(reason!!.disabledDependencyId).isEqualTo(rootId)
-    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Root"))
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
   }
 
@@ -204,9 +204,9 @@ internal class PluginManagerStateServiceTest {
       .isInstanceOf(PluginIsMarkedDisabled::class.java)
     assertThat(state.pluginNonLoadReasons).containsOnlyKeys(affectedId)
     assertThat(reason!!.disabledDependencyId).isEqualTo(rootId)
-    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", "Root"))
     assertThat(state.pluginLoadingProblemsForNotification)
-      .containsExactly(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", rootId))
+      .containsExactly(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", "Root"))
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
     assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(affectedId to "Affected"))
   }
