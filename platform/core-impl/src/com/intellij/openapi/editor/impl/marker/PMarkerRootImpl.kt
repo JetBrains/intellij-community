@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongIntMap
 import com.intellij.util.containers.Java11Shim
+import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
@@ -64,30 +65,21 @@ open class PMarkerRootImpl private constructor(
     markerReference: SnapshotMarkerReference?,
     measure: Int,
   ): PMarkerRoot {
-    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
-    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
-    val existingState = states.getUnchecked(markerId)
-    require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
-
     val editor = MapBatchEditor(states, persistentMarkerCount)
-    editor.putValid(
-      markerId,
-      ValidNode(
-        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
-        parentId = NULL_NODE,
-        leftId = NULL_NODE,
-        rightId = NULL_NODE,
-        height = 1,
-        maximumEndOffset = endOffset,
-        lazyOffsetDelta = 0,
-        subtreeFlavorFlags = flavorFlags,
-        subtreeAggregate = measure,
-      )
+    val newRoot = editor.insert(
+      rootId, MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure)
     )
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+  }
 
-    val newRoot = insertAvl(editor, rootId, markerId)
-    editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
+  override fun insertMany(entries: List<MarkerEntry>): PMarkerRoot {
+    if (entries.isEmpty()) return this
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    var newRoot = rootId
+    for (entry in entries) {
+      newRoot = editor.insert(newRoot, entry)
+    }
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -183,6 +175,47 @@ open class PMarkerRootImpl private constructor(
         )
       }
     }
+  }
+
+  override fun removeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = true)
+
+  override fun purgeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = false)
+
+  private fun removeMarkers(markerIds: LongList, retainRange: Boolean): PMarkerRoot {
+    if (markerIds.isEmpty()) return this
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    var newRoot = rootId
+    for (i in markerIds.indices) {
+      val markerId = markerIds.getLong(i)
+      when (val state = editor.state(markerId)) {
+        null -> Unit
+        is AbsentNode -> if (!retainRange) editor.remove(markerId)
+        is InvalidNode -> {
+          if (retainRange) {
+            editor.putAbsent(markerId, state.startOffset, state.endOffset)
+          }
+          else {
+            editor.remove(markerId)
+          }
+        }
+        is ValidNode -> {
+          val offsetDelta = editor.ancestorDelta(state)
+          val startOffset = state.entry.nodeStart + offsetDelta
+          val endOffset = state.entry.nodeEnd + offsetDelta
+          newRoot = removeByKey(editor, newRoot, PositionKey(startOffset, markerId))
+          if (retainRange) {
+            editor.putAbsent(markerId, startOffset, endOffset)
+          }
+          else {
+            editor.remove(markerId)
+          }
+          editor.removePolicy(state.entry.spec.policy)
+          editor.setParent(newRoot, NULL_NODE)
+        }
+      }
+    }
+    val newStates = editor.build()
+    return if (newStates === states) this else PMarkerRootImpl(newRoot, newStates, editor.persistentMarkerCount())
   }
 
   @TestOnly
@@ -615,8 +648,49 @@ open class PMarkerRootImpl private constructor(
     private val builder: PersistentLongMapBuilder<StoredNode> = states.builder()
     private var persistentMarkerCount: Int = initialPersistentMarkerCount
 
+    fun state(markerId: Long): StoredNode? = builder.getUnchecked(markerId)
+
     fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
-                                           ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+
+    fun insert(rootId: Long, entry: MarkerEntry): Long {
+      val markerId = entry.markerId
+      require(entry.nodeStart >= 0) { "startOffset must be non-negative but got: ${entry.nodeStart}" }
+      require(entry.nodeEnd >= entry.nodeStart) {
+        "endOffset must not precede startOffset, but got: (${entry.nodeStart}, ${entry.nodeEnd})"
+      }
+      val existingState = state(markerId)
+      require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
+      putValid(
+        markerId,
+        ValidNode(
+          entry,
+          parentId = NULL_NODE,
+          leftId = NULL_NODE,
+          rightId = NULL_NODE,
+          height = 1,
+          maximumEndOffset = entry.nodeEnd,
+          lazyOffsetDelta = 0,
+          subtreeFlavorFlags = entry.flavorFlags,
+          subtreeAggregate = entry.measure,
+        )
+      )
+      addPolicy(entry.spec.policy)
+      val newRoot = insertAvl(this, rootId, markerId)
+      setParent(newRoot, NULL_NODE)
+      return newRoot
+    }
+
+    fun ancestorDelta(state: ValidNode): Int {
+      var parentId = state.parentId
+      var delta = 0
+      while (parentId != NULL_NODE) {
+        val parent = valid(parentId)
+        delta += parent.lazyOffsetDelta
+        parentId = parent.parentId
+      }
+      return delta
+    }
 
     fun putValid(markerId: Long, node: ValidNode) {
       builder.put(markerId, node)
@@ -652,6 +726,10 @@ open class PMarkerRootImpl private constructor(
 
     fun addPolicy(policy: MarkerPolicy) {
       persistentMarkerCount = incrementPersistentMarkerCount(persistentMarkerCount, policy)
+    }
+
+    fun removePolicy(policy: MarkerPolicy) {
+      persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, policy)
     }
 
     fun setParent(markerId: Long, parentId: Long) {

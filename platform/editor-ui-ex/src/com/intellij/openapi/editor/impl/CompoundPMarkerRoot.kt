@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.LongConsumer
@@ -80,6 +81,23 @@ open class CompoundPMarkerRoot private constructor(
     }
   }
 
+  override fun insertMany(entries: List<MarkerEntry>): PMarkerRoot {
+    if (entries.isEmpty()) return this
+    val exactEntries = ArrayList<MarkerEntry>()
+    val lineEntries = ArrayList<MarkerEntry>()
+    for (entry in entries) {
+      val highlighter = entry.markerReference?.get() as? SnapshotRangeHighlighterImpl
+      require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
+      if (highlighter.targetAreaForStorage() == HighlighterTargetArea.EXACT_RANGE) {
+        exactEntries.add(entry)
+      }
+      else {
+        lineEntries.add(entry)
+      }
+    }
+    return withRoots(exactRangeRoot.insertMany(exactEntries), linesInRangeRoot.insertMany(lineEntries))
+  }
+
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
     return updateMarker { it.updateFlavor(markerId, flavorFlags) }
   }
@@ -96,8 +114,16 @@ open class CompoundPMarkerRoot private constructor(
     return updateMarker { it.remove(markerId) }
   }
 
+  override fun removeMany(markerIds: LongList): PMarkerRoot {
+    return withRoots(exactRangeRoot.removeMany(markerIds), linesInRangeRoot.removeMany(markerIds))
+  }
+
   override fun purge(markerId: Long): PMarkerRoot {
     return updateMarker { it.purge(markerId) }
+  }
+
+  override fun purgeMany(markerIds: LongList): PMarkerRoot {
+    return withRoots(exactRangeRoot.purgeMany(markerIds), linesInRangeRoot.purgeMany(markerIds))
   }
 
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRoot {

@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import it.unimi.dsi.fastutil.longs.LongList
 import java.util.function.LongConsumer
 
 /**
@@ -86,6 +87,13 @@ interface PMarkerRoot {
   ): PMarkerRoot
 
   /**
+   * Inserts [entries] in list order and returns one new root.
+   * The entry offsets are document offsets and must satisfy the preconditions of [insert].
+   * Duplicate IDs cause an exception. An empty list returns the receiver unchanged.
+   */
+  fun insertMany(entries: List<MarkerEntry>): PMarkerRoot
+
+  /**
    * Replaces the flavor flags of a valid marker, preserving its range and specification.
    *
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
@@ -118,12 +126,24 @@ interface PMarkerRoot {
   fun remove(markerId: Long): PMarkerRoot
 
   /**
+   * Removes [markerIds] and retains each marker's last range, as [remove] does.
+   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
+   */
+  fun removeMany(markerIds: LongList): PMarkerRoot
+
+  /**
    * Removes every trace of [markerId], including its stored resolution.
    *
    * This operation is intended for garbage-collected marker handles. Unlike [remove], it does not retain an absent
    * tombstone because no handle remains that could resolve against it.
    */
   fun purge(markerId: Long): PMarkerRoot
+
+  /**
+   * Erases the state of [markerIds], as [purge] does.
+   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
+   */
+  fun purgeMany(markerIds: LongList): PMarkerRoot
 
   /**
    * Keeps this root's marker states and adds valid markers that exist only in [other].

@@ -11,10 +11,13 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ref.GCUtil
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongLists
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import java.lang.ref.WeakReference
@@ -22,6 +25,45 @@ import java.lang.ref.WeakReference
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
+  @Test
+  fun `compound batches preserve both highlighter trees`() {
+    val document = DocumentImpl("one\ntwo", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val exact = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+      val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
+      val original = exact.currentRootReference().get() as CompoundPMarkerRoot
+      val entries = original.overlappingIterator(0, document.textLength, 0).asSequence().toList()
+      val root = CompoundPMarkerRoot.empty().insertMany(entries) as CompoundPMarkerRoot
+      val ids = LongArrayList(longArrayOf(line.id, exact.id, line.id, Long.MAX_VALUE))
+
+      Assertions.assertThat(root.exactRangeRoot.resolve(exact.id, TextRange.EMPTY_RANGE)).isEqualTo(
+        original.exactRangeRoot.resolve(exact.id, TextRange.EMPTY_RANGE)
+      )
+      Assertions.assertThat(root.linesInRangeRoot.resolve(line.id, TextRange.EMPTY_RANGE)).isEqualTo(
+        original.linesInRangeRoot.resolve(line.id, TextRange.EMPTY_RANGE)
+      )
+      val removed = root.removeMany(ids)
+      val purged = root.purgeMany(ids)
+      Assertions.assertThat(removed.isEmpty()).isTrue()
+      Assertions.assertThat(purged.isEmpty()).isTrue()
+      for (entry in entries) {
+        val absentRange = TextRange.EMPTY_RANGE
+        Assertions.assertThat(removed.resolve(entry.markerId, absentRange)).isEqualTo(
+          root.remove(entry.markerId).resolve(entry.markerId, absentRange)
+        )
+        Assertions.assertThat(purged.resolve(entry.markerId, absentRange)).isEqualTo(absentRange)
+      }
+      Assertions.assertThat(root.isEmpty()).isFalse()
+      Assertions.assertThat(root.insertMany(emptyList())).isSameAs(root)
+      Assertions.assertThat(root.removeMany(LongLists.EMPTY_LIST)).isSameAs(root)
+      Assertions.assertThat(root.purgeMany(LongLists.EMPTY_LIST)).isSameAs(root)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
   @Test
   fun `compound root is empty only when both trees have no valid markers`() {
     val document = DocumentImpl("one\ntwo", true)
