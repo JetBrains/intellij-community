@@ -14,6 +14,8 @@ internal object IdeSounds {
   const val PROGRESS_DETERMINATE_STAGE_1: String = "sounds/progress_determinate_stage_1.wav"
   const val PROGRESS_DETERMINATE_STAGE_2: String = "sounds/progress_determinate_stage_2.wav"
   const val PROGRESS_DETERMINATE_STAGE_3: String = "sounds/progress_determinate_stage_3.wav"
+
+  val NOTIFICATION_SOUNDS: List<String> = listOf(NOTIFICATION_INFO, NOTIFICATION_WARNING, NOTIFICATION_ERROR)
 }
 
 internal fun notificationSound(type: NotificationType): String = when (type) {

@@ -19,7 +19,7 @@ class LineStatusTrackerSoundSignalDetectorTest : BaseLineStatusTrackerTestCase()
     assertEquals(listOf("vcs.gutter.inserted", "vcs.gutter.deleted", "vcs.gutter.modified"), signals.map { it.id })
     for (signal in signals) {
       assertTrue(signal.title.isNotBlank())
-      val sound = checkNotNull(signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)) { "No sound for '${signal.id}'" }
+      val sound = checkNotNull(signal.ownerClass.classLoader.getResourceAsStream(signal.sounds.single())) { "No sound for '${signal.id}'" }
       assertTrue(sound.use { it.read() } != -1)
     }
   }

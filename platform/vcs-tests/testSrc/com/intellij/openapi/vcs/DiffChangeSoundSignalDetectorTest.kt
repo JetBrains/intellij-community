@@ -38,7 +38,7 @@ class DiffChangeSoundSignalDetectorTest {
       .containsExactly("diff.line.inserted", "diff.line.deleted", "diff.line.modified", "diff.line.conflict")
     assertThat(signals).allSatisfy { signal ->
       assertThat(signal.title).isNotBlank()
-      val sound = signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)
+      val sound = signal.ownerClass.classLoader.getResourceAsStream(signal.sounds.single())
       assertThat(sound).describedAs("sound of '%s'", signal.id).isNotNull()
       assertThat(sound!!.use { it.read() }).isNotEqualTo(-1)
     }
