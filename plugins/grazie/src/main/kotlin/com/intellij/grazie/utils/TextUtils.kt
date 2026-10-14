@@ -3,6 +3,7 @@ package com.intellij.grazie.utils
 
 import ai.grazie.rules.code.CodeDetector
 import ai.grazie.rules.settings.TextStyle
+import com.intellij.grazie.text.CommitMessageDetector
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.utils.TextStyleDomain.AIPrompt
@@ -11,24 +12,23 @@ import com.intellij.grazie.utils.TextStyleDomain.CodeDocumentation
 import com.intellij.grazie.utils.TextStyleDomain.Commit
 import com.intellij.grazie.utils.TextStyleDomain.Other
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 object Text {
-  fun isNewline(char: Char) = char == '\n'
+  fun isNewline(char: Char): Boolean = char == '\n'
 
   private val PUNCTUATIONS: Set<Byte> = setOf(Character.START_PUNCTUATION, Character.END_PUNCTUATION,
                                               Character.OTHER_PUNCTUATION, Character.CONNECTOR_PUNCTUATION,
                                               Character.DASH_PUNCTUATION, Character.INITIAL_QUOTE_PUNCTUATION,
                                               Character.FINAL_QUOTE_PUNCTUATION)
 
-  fun isPunctuation(char: Char) = when (Character.getType(char).toByte()) {
+  fun isPunctuation(char: Char): Boolean = when (Character.getType(char).toByte()) {
     in PUNCTUATIONS -> true
     else -> false
   }
 
-  fun isQuote(char: Char) = char == '\'' || char == '\"'
+  fun isQuote(char: Char): Boolean = char == '\'' || char == '\"'
 
   @JvmStatic
   fun isSingleSentence(text: CharSequence): Boolean = !text.contains(Regex("[.?!]\\s"))
@@ -76,11 +76,11 @@ object Text {
     private val endSentence = setOf('!', '?', '.')
     private val partSentence = setOf(',', ';')
 
-    fun isEndPunctuation(symbol: Char) = symbol in endSentence
-    fun isEndPunctuation(line: String) = line.trim().lastOrNull() in endSentence
+    fun isEndPunctuation(symbol: Char): Boolean = symbol in endSentence
+    fun isEndPunctuation(line: String): Boolean = line.trim().lastOrNull() in endSentence
 
-    fun isPartPunctuation(symbol: Char) = symbol in partSentence
-    fun isPartPunctuation(line: String) = line.trim().lastOrNull() in partSentence
+    fun isPartPunctuation(symbol: Char): Boolean = symbol in partSentence
+    fun isPartPunctuation(line: String): Boolean = line.trim().lastOrNull() in partSentence
   }
 
   @JvmStatic
@@ -128,7 +128,7 @@ fun TextContent.getTextDomain(): TextStyleDomain {
   }
   if (style != null) return style
   val file = this.containingFile
-  if (CommitMessage.isCommitMessage(file)) return Commit
+  if (CommitMessageDetector.isCommitMessage(file)) return Commit
   if ("ChatInput" == file.getLanguage().id || file.viewProvider.virtualFile.name.startsWith("AirPrompt")) return AIPrompt
   return Other
 }

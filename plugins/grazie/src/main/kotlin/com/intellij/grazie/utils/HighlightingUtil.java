@@ -11,6 +11,7 @@ import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.TextContentRelatedData;
 import com.intellij.grazie.jlanguage.Lang;
+import com.intellij.grazie.text.CommitMessageDetector;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.text.TextContentModificationTrackerProvider;
@@ -22,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -86,7 +86,7 @@ public final class HighlightingUtil {
   }
 
   public static int stripPrefix(TextContent content) {
-    if (CommitMessage.isCommitMessage(content.getContainingFile())) {
+    if (CommitMessageDetector.isCommitMessage(content.getContainingFile())) {
       return PrefixStripper.stripPrefix(content);
     }
     int start = 0;

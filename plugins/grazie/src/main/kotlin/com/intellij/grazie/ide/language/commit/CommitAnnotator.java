@@ -7,6 +7,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.spellcheck.TypoProblem;
 import com.intellij.grazie.text.CheckerRunner;
+import com.intellij.grazie.text.CommitMessageDetector;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.text.TextProblem;
 import com.intellij.grazie.utils.GrazieUtilsKt;
@@ -17,7 +18,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ final class CommitAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!(element instanceof PsiFile)
-        || !CommitMessage.isCommitMessage(element)
+        || !CommitMessageDetector.isCommitMessage(element)
         || !GrazieConfig.Companion.get().getCheckingContext().isCheckInCommitMessagesEnabled()
     ) {
       return;

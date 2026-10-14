@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.ignore;
+package com.intellij.grazie.vcs;
 
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContent.TextDomain;

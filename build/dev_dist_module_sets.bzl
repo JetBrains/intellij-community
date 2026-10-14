@@ -1743,11 +1743,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lucene.common",
             "intellij.spellchecker",
         ],
-        mode_refused = {
-            "frontend": [
-                "intellij.spellchecker",
-            ],
-        },
     ),
     "intellij.moduleSets.split.core": struct(
         modules = [

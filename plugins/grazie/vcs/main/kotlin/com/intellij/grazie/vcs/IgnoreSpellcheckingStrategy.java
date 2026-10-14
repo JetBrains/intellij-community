@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.ignore;
+package com.intellij.grazie.vcs;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;

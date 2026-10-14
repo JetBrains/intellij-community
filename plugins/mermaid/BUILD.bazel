@@ -27,10 +27,7 @@ dev_dist_plugin(
     },
     main_module = "intellij.mermaid",
     mode_refused_content_modules = {
-        "frontend": [
-            "intellij.mermaid.json",
-            "intellij.mermaid.spellchecker",
-        ],
+        "frontend": ["intellij.mermaid.json"],
     },
 )
 ### auto-generated section `dev intellij.mermaid` end

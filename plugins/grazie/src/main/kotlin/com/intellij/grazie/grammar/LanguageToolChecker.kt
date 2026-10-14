@@ -7,6 +7,7 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.text.CommitMessageDetector
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextChecker
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.coroutines.Dispatchers
@@ -225,7 +225,7 @@ internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRul
 private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
   return match.rule.id == "EN_COMPOUNDS_CHERRY_PICKED" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
          (text.domain == TextContent.TextDomain.LITERALS ||
-          text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
+          text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessageDetector.isCommitMessage(text.containingFile) })
 }
 
 private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
