@@ -6,8 +6,8 @@ import com.intellij.ide.soundSignals.SoundSignal
 import com.intellij.ide.soundSignals.findSoundSignal
 import com.intellij.ide.soundSignals.isSoundSignalOn
 import com.intellij.ide.soundSignals.isSoundSignalsFeatureEnabled
+import com.intellij.ide.soundSignals.notificationSound
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -41,11 +41,7 @@ private class NotificationSoundPlayer(private val scope: CoroutineScope) {
   fun play(notification: Notification) {
     val ep = findNotificationSound(notification.groupId)
     val sound = ep?.sound
-    val path = sound ?: when (notification.type) {
-      NotificationType.INFORMATION, NotificationType.IDE_UPDATE -> "sounds/notification_info.wav"
-      NotificationType.WARNING -> "sounds/notification_warning.wav"
-      NotificationType.ERROR -> "sounds/notification_error.wav"
-    }
+    val path = sound ?: notificationSound(notification.type)
     val url = (if (sound == null) javaClass.classLoader else ep.pluginDescriptor?.pluginClassLoader)?.getResource(path)
     scope.launch {
       runCatching {

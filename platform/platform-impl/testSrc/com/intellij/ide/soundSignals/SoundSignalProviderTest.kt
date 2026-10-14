@@ -2,6 +2,7 @@
 package com.intellij.ide.soundSignals
 
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationSoundEP
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -28,6 +29,15 @@ class SoundSignalProviderTest {
       val sound = signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)
       assertThat(sound).describedAs("sound of '%s'", signal.id).isNotNull()
       assertThat(sound!!.use { it.read() }).describedAs("sound of '%s'", signal.id).isNotEqualTo(-1)
+    }
+  }
+
+  @Test
+  fun `every notification type has a readable sound`() {
+    for (type in NotificationType.entries) {
+      val sound = IdeSounds::class.java.classLoader.getResourceAsStream(notificationSound(type))
+      assertThat(sound).describedAs("sound of %s", type).isNotNull()
+      assertThat(sound!!.use { it.read() }).describedAs("sound of %s", type).isNotEqualTo(-1)
     }
   }
 

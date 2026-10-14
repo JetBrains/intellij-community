@@ -194,7 +194,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   private fun registerEventSignal(): SoundSignal {
-    val signal = SoundSignal("test.event", { "Test event" }, "sounds/notification_info.wav", IdeSoundSignals::class.java, 0, IdeSoundSignals.EVENTS_GROUP)
+    val signal = SoundSignal("test.event", { "Test event" }, IdeSounds.NOTIFICATION_INFO, IdeSoundSignals::class.java, 0, IdeSoundSignals.EVENTS_GROUP)
     SoundSignalProvider.EP_NAME.point.registerExtension(object : SoundSignalProvider {
       override val soundSignals: Collection<SoundSignal> = listOf(signal)
     }, DefaultPluginDescriptor("com.example.soundSignals"), disposable)
