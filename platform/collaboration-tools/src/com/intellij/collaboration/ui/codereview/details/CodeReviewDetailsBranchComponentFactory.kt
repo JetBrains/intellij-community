@@ -4,7 +4,6 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindTextIn
@@ -19,52 +18,30 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.SwingConstants
 
 object CodeReviewDetailsBranchComponentFactory {
-  private const val BRANCH_ICON_LINK_GAP = 2
-
   fun create(
     scope: CoroutineScope,
     branchesVm: CodeReviewBranchesViewModel,
-  ): JComponent {
-    val statusIcon = JLabel().apply {
-      scope.launchNow {
-        branchesVm.isCheckedOut.collect { isCheckedOut ->
-          icon = when {
-            !isCheckedOut -> DvcsImplIcons.BranchLabel
-            ExperimentalUI.isNewUI() -> DvcsImplIcons.CurrentBranchLabel
-            else -> DvcsImplIcons.CurrentBranchFavoriteLabel
-          }
-        }
-      }
-    }
-    val sourceBranch = JBLabel().apply {
+  ): JComponent =
+    object : JBLabel() {
+      // the width shrinks to cut a long branch name, the height does not shrink
+      override fun getMinimumSize(): Dimension = Dimension(0, preferredSize.height)
+    }.apply {
       foreground = NamedColorUtil.getInactiveTextColor()
       bindTextIn(scope, branchesVm.sourceBranch)
       bindTooltipTextIn(scope, branchesVm.sourceBranch)
-      minimumSize = Dimension(0, 0)
     }
-
-    val panelWithIcon = HorizontalListPanel(BRANCH_ICON_LINK_GAP).apply {
-      add(statusIcon)
-      add(sourceBranch)
-    }
-
-    return panelWithIcon
-  }
 
   fun createMoreActionsLink(
     scope: CoroutineScope,
