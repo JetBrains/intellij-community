@@ -10,6 +10,8 @@ import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionProblemDescriptor
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.utils.HighlightingUtil.getCheckedFileTexts
+import com.intellij.grazie.utils.HighlightingUtil.isTooLargeFile
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
@@ -27,7 +29,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     val areChecksDisabled = GrazieInspection.getDisabledChecker(file)
     return object : PsiElementVisitor() {
       override fun visitFile(psiFile: PsiFile) {
-        if (areChecksDisabled(file)) return
+        if (areChecksDisabled(file) || isTooLargeFile(getCheckedFileTexts(file.viewProvider))) return
         val context = DetectionContext.Local()
         BatchLangDetector.updateContext(file, context)
 

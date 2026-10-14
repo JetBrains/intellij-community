@@ -41,6 +41,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.grazie.ide.inspection.grammar.GrazieInspection.MAX_TEXT_LENGTH_IN_FILE;
 import static com.intellij.grazie.ide.inspection.grammar.GrazieInspection.MAX_TEXT_LENGTH_IN_PSI_ELEMENT;
 import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
 
@@ -64,8 +65,8 @@ public final class HighlightingUtil {
     return ApplicationManager.getApplication().getService(GrazieConfig.class);
   }
 
-  public static boolean isTooLargeText(List<TextContent> texts) {
-    return texts.stream().mapToInt(t -> t.length()).sum() > MAX_TEXT_LENGTH_IN_PSI_ELEMENT;
+  public static boolean isTooLargeFile(List<TextContent> texts) {
+    return texts.stream().mapToInt(t -> t.length()).sum() > MAX_TEXT_LENGTH_IN_FILE;
   }
 
   public static boolean isTooLargeText(TextContent text) {
