@@ -194,7 +194,7 @@ internal object PluginLoadingProblemAnalyzer {
             })
           }
           is DependencyRef.ContentModule ->
-            registerLoadingError(pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser))
+            registerLoadingError(pluginRequiresUnavailableModule(plugin, dependency.moduleId, shouldNotifyUser))
         }
         is DependencyIsNotVisible -> {
           // TODO bad mapping

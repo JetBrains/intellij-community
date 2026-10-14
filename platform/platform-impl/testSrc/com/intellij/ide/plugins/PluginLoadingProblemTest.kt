@@ -108,6 +108,10 @@ internal class PluginLoadingProblemTest {
            message("short.depends.on.not.installed.plugin", "missing"),
            message("long.depends.on.not.installed.plugin", "Affected", "missing"), false,
            dependency = DependencyRef.Plugin(PluginId.getId("missing"))),
+      case("unavailable module", pluginRequiresUnavailableModule(affected, PluginModuleId("missing.module", "vendor"), false),
+           message("short.depends.on.unavailable.module", "missing.module"),
+           message("long.depends.on.unavailable.module", "Affected", "missing.module"), false,
+           dependency = DependencyRef.ContentModule(PluginModuleId("missing.module", "vendor"))),
       case("explicit subset", pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(affected),
            message("short.not.required.for.explicitly.configured.subset"),
            message("long.not.required.for.explicitly.configured.subset", "Affected"), false),
@@ -143,11 +147,11 @@ internal class PluginLoadingProblemTest {
     val descriptor = PluginNode(PluginId.getId("affected")).apply { name = "Affected" }
     for (namespace in listOf("first", "second")) {
       val dependency = DependencyRef.ContentModule(PluginModuleId("module.name", namespace))
-      val problem = pluginDependencyIsNotInstalled(descriptor, dependency, true)
+      val problem = pluginRequiresUnavailableModule(descriptor, dependency.moduleId, true)
 
       assertThat(problem.dependency).isEqualTo(dependency)
       assertThat(problem.shortMessage)
-        .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "module.name"))
+        .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.unavailable.module", "module.name"))
     }
   }
 
@@ -188,10 +192,13 @@ internal class PluginLoadingProblemTest {
     val descriptor = PluginNode(PluginId.getId("affected")).apply { name = "Before" }
     val dependencyId = PluginId.getId("dependency")
     val problem = pluginDependencyIsDisabled(descriptor, dependencyId, true)
+    val moduleProblem = pluginRequiresUnavailableModule(descriptor, PluginModuleId("missing.module", "vendor"), true)
 
     descriptor.name = "After"
 
     assertThat(problem.detailedMessage)
       .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "After", dependencyId))
+    assertThat(moduleProblem.detailedMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.unavailable.module", "After", "missing.module"))
   }
 }

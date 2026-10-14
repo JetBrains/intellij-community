@@ -241,14 +241,27 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
-  fun `a missing module uses the plugin installation message`() {
+  fun `a missing module has an unavailable module explanation`() {
     val pluginSet = buildPluginSet(plugin("affected") {
       name = "Affected"
       dependencies { module("missing.module") }
     })
 
-    val problem = assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
     assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
+    assertThat(problem.dependencyPluginId).isNull()
+  }
+
+  @Test
+  fun `a missing module retains its explicit namespace`() {
+    val pluginSet = buildPluginSet(plugin("affected") {
+      name = "Affected"
+      dependencies { module("missing.module", namespace = "vendor") }
+    })
+
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "vendor")))
+    assertThat(problem.dependencyPluginId).isNull()
   }
 
   @Test
@@ -262,8 +275,9 @@ internal class PluginLoadingDependencyProblemTest {
       }
     })
 
-    val problem = assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
     assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
+    assertThat(problem.dependencyPluginId).isNull()
   }
 
   @Test
@@ -313,14 +327,20 @@ internal class PluginLoadingDependencyProblemTest {
     assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("core.bridge", "jetbrains")))
   }
 
-  private fun assertDependencyProblem(pluginSet: PluginSet, messageKind: String, dependencyText: String): PluginLoadingProblem {
+  private fun assertDependencyProblem(
+    pluginSet: PluginSet,
+    messageKind: String,
+    dependencyText: String,
+    dependencyType: String = "plugin",
+  ): PluginLoadingProblem {
     val state = PluginManagerStateService().calculateState(
       pluginSet, PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
     )
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
-    assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.$messageKind.plugin", dependencyText))
+    assertThat(problem.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.$messageKind.$dependencyType", dependencyText))
     assertThat(problem.detailedMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.$messageKind.plugin", "Affected", dependencyText))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.$messageKind.$dependencyType", "Affected", dependencyText))
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shouldNotifyUser).isTrue()
     assertThat(state.pluginLoadingProblemsForNotification).contains(problem.detailedMessage)

@@ -86,8 +86,9 @@ Remote development extends these rules with side aggregation and action routing.
 - Several excluded providers for one ID or alias use the first excluded provider's name and owner ID.
 - Dependency explanations retain aliases from superseded bundled plugins when their updates omit those aliases.
 - An excluded content module alias uses its plugin owner's name and ID.
-- An unresolved content module without a cross-plugin boundary still uses the installation message with its module name.
-- For an invisible dependency without a cross-plugin boundary, that message uses the dependency module's plugin ID.
+- An unresolved content module without a cross-plugin boundary uses an unavailable module explanation, not a plugin installation message.
+- The explanation retains the module ID and namespace. It offers no Enable target.
+- An invisible dependency without a cross-plugin boundary still uses a plugin installation message with its owner's ID.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
     `an absent plugin uses the installation message`;
     `an absent modern plugin dependency uses the installation message`;
@@ -99,10 +100,14 @@ Remote development extends these rules with side aggregation and action routing.
     `an alias removed by an update retains its excluded bundled owner`;
     `an excluded content module alias retains its plugin owner`;
     `a broken installed dependency uses its name`;
-    `a missing module uses the plugin installation message`;
+    `a missing module has an unavailable module explanation`;
+    `a missing module retains its explicit namespace`;
     `a required module keeps its missing dependency explanation`;
     `an invisible module uses its owner in the installation message`;
     `a failed core module uses IDEA CORE as a failed plugin`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
+    `module dependency data retains its namespace`
   )
 - Supported compatibility and selection exclusions can also produce plugin explanations.
 - A package-prefix conflict in an optional content module can produce an explanation while the main plugin remains loaded.

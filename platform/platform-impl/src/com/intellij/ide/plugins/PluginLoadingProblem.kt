@@ -342,6 +342,20 @@ internal fun pluginDependencyIsNotInstalled(
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyNameOrId) },
 )
 
+internal fun pluginRequiresUnavailableModule(
+  plugin: IdeaPluginDescriptor,
+  moduleId: PluginModuleId,
+  shouldNotifyUser: Boolean,
+): PluginLoadingProblem = PluginLoadingProblem(
+  plugin = plugin,
+  shouldNotifyUser = shouldNotifyUser,
+  dependency = DependencyRef.ContentModule(moduleId),
+  detailedMessageSupplier = {
+    CoreBundle.message("plugin.loading.error.long.depends.on.unavailable.module", plugin.name, moduleId.name)
+  },
+  shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.unavailable.module", moduleId.name) },
+)
+
 private fun DependencyRef.idText(): @NlsSafe String = when (this) {
   is DependencyRef.Plugin -> pluginId.idString
   is DependencyRef.ContentModule -> moduleId.name
