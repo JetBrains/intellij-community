@@ -443,6 +443,8 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - f:exists():Z
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
+*f:com.intellij.ui.SoundPreviewButtonKt
+- sf:soundPreviewButton(com.intellij.ui.dsl.builder.Row,kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
 *a:com.intellij.ui.ToolbarActionTracker
 - com.intellij.openapi.Disposable
 - sf:ARROW_SHIFT:I
