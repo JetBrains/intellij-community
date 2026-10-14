@@ -2,6 +2,5 @@
 class XXX
 
 fun xxx(x: Any): Boolean {
-    @Suppress("DEPRECATION")
-    return x is XXX
+    @Suppress("DEPRECATION") return x is XXX
 }

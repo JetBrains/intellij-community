@@ -240,7 +240,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 withPsiEntry("declaration", declaration)
             }
 
-            ConvertToBlockBodyUtils.convert(declaration, convertToBlockBodyContext)
+            ConvertToBlockBodyUtils.convert(declaration, convertToBlockBodyContext, false)
 
             return declaration
         }
