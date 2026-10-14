@@ -188,6 +188,8 @@ class SePopupContentPane(
   private val vmState = MutableStateFlow<SePopupVm?>(null)
   private val contentPane = this
 
+  internal var closePopupHandler: () -> Unit = {}
+
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
     project,
     coroutineScope,
@@ -1046,7 +1048,7 @@ class SePopupContentPane(
   // Requires a non-cancellable or blocking context since it calls into dispose stacks
   private fun issueClosePopup() {
     cancelQuickDocPopup()
-    vmState.value?.closePopup()
+    closePopupHandler()
   }
 
   private suspend fun updateEmptyStatus() {
