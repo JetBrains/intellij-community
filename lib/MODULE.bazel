@@ -1982,20 +1982,6 @@ http_file(
 )
 
 http_file(
-    name = "io_github_classgraph-classgraph-4_8_87_http",
-    downloaded_file_path = "classgraph-4.8.87.jar",
-    sha256 = "91d2a2b6048c5cfe19f3982ee84eb5c19cab1d741a45ae1b4360c068331f89e6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar",
-)
-
-http_file(
-    name = "io_github_classgraph-classgraph-4_8_87-sources_http",
-    downloaded_file_path = "classgraph-4.8.87-sources.jar",
-    sha256 = "9d8c36efd9b35d5c86b459df94883839e3e83948ed4146584a4e085656892ff9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87-sources.jar",
-)
-
-http_file(
     name = "org_jeasy-easy-random-core-4_2_0_http",
     downloaded_file_path = "easy-random-core-4.2.0.jar",
     sha256 = "e37f9fd2680da69e6e4e0fef6472b53240a935a18804e957ef60ef20f36281de",

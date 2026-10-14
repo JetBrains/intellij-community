@@ -31,24 +31,7 @@
     <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="io.github.classgraph:classgraph:4.8.87" type="repository">
-        <properties maven-id="io.github.classgraph:classgraph:4.8.87">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar">
-              <sha256sum>91d2a2b6048c5cfe19f3982ee84eb5c19cab1d741a45ae1b4360c068331f89e6</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.classgraph" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jeasy:easy-random-core:4.2.0" type="repository">
         <properties maven-id="org.jeasy:easy-random-core:4.2.0">
