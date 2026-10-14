@@ -16,7 +16,6 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-import org.junit.AssumptionViolatedException;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
@@ -111,35 +110,35 @@ public final class IoTestUtil {
     return linkFile;
   }
 
-  public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
+  public static void assumeSymLinkCreationIsSupported() {
     assumeTrue("Can't create symlinks on " + OS.CURRENT, isSymLinkCreationSupported);
   }
 
-  public static void assumeWindows() throws AssumptionViolatedException {
+  public static void assumeWindows() {
     assumeTrue("Need Windows, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
   }
 
-  public static void assumeMacOS() throws AssumptionViolatedException {
+  public static void assumeMacOS() {
     assumeTrue("Need macOS, can't run on " + OS.CURRENT, OS.CURRENT == OS.macOS);
   }
 
-  public static void assumeLinux() throws AssumptionViolatedException {
+  public static void assumeLinux() {
     assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Linux);
   }
 
-  public static void assumeUnix() throws AssumptionViolatedException {
+  public static void assumeUnix() {
     assumeFalse("Need Unix, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
   }
 
-  public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
+  public static void assumeCaseSensitiveFS() {
     assumeTrue("Assumed case-sensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
+  public static void assumeCaseInsensitiveFS() {
     assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static void assumeCaseInsensitiveFS(@NotNull Path directory) throws AssumptionViolatedException {
+  public static void assumeCaseInsensitiveFS(@NotNull Path directory) {
     try {
       var attributes = Files.readAttributes(directory, BasicFileAttributes.class);
       if (attributes instanceof CaseSensitivityAttribute sensitivity && sensitivity.getCaseSensitivity().isKnown()) {
@@ -154,7 +153,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void assumeWslPresence() throws AssumptionViolatedException {
+  public static void assumeWslPresence() {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 

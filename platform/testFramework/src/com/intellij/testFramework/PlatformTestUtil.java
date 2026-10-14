@@ -1724,7 +1724,7 @@ public final class PlatformTestUtil {
   /**
    * throws if the CPU cores number is too low for parallel tests
    */
-  public static void assumeEnoughParallelism() throws AssumptionViolatedException {
+  public static void assumeEnoughParallelism() {
     var N = Math.min(
       Runtime.getRuntime().availableProcessors(),
       Math.min(ForkJoinPool.getCommonPoolParallelism(), ForkJoinPool.commonPool().getParallelism())
