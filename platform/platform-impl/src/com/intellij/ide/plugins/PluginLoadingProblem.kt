@@ -18,11 +18,18 @@ class PluginLoadingProblem internal constructor(
   val plugin: IdeaPluginDescriptor,
   val shouldNotifyUser: Boolean,
   val disabledDependencyId: PluginId? = null,
+  val kind: Kind = Kind.OTHER,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
   private val shortMessageSupplier: () -> @NlsContexts.Label String,
 ) {
   val detailedMessage: @NlsContexts.DetailedDescription String get() = detailedMessageSupplier()
   val shortMessage: @NlsContexts.Label String get() = shortMessageSupplier()
+
+  @ApiStatus.Internal
+  enum class Kind {
+    OTHER,
+    ULTIMATE_DISABLED,
+  }
 }
 
 @ApiStatus.Internal

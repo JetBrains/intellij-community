@@ -55,6 +55,7 @@ internal class PluginLoadingProblemTest {
       assertThat(problem.detailedMessage).isEqualTo(detailedMessage)
       assertThat(problem.shouldNotifyUser).isEqualTo(shouldNotifyUser)
       assertThat(problem.disabledDependencyId).isEqualTo(disabledDependencyId)
+      assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     }
 
     return listOf(
@@ -113,6 +114,22 @@ internal class PluginLoadingProblemTest {
            message("short.declares.conflicting.id", dependencyId),
            message("long.declares.conflicting.id", "Affected", dependencyId, "Dependency")),
     )
+  }
+
+  @Test
+  fun `problem kind does not infer notification eligibility`() {
+    val problem = PluginLoadingProblem(
+      plugin = PluginNode(PluginId.getId("affected")),
+      kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
+      shouldNotifyUser = true,
+      shortMessageSupplier = { "Short" },
+      detailedMessageSupplier = { "Detailed" },
+    )
+
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(problem.shortMessage).isEqualTo("Short")
+    assertThat(problem.detailedMessage).isEqualTo("Detailed")
   }
 
   @Test
