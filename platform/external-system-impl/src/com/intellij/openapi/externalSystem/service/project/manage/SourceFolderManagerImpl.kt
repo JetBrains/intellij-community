@@ -25,7 +25,7 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -394,7 +394,7 @@ data class SourceFolderModelState(
   constructor() : this("", "", "", null, false)
 }
 
-private class SourceFolderManagerImplBulkFileListener : BulkFileListener {
+private class SourceFolderManagerImplBulkFileListener : BulkFileListenerBackgroundable {
   override fun after(events: List<VFileEvent>) {
     val fileCreateEvents = events.filterIsInstance<VFileCreateEvent>()
     if (fileCreateEvents.isEmpty()) return

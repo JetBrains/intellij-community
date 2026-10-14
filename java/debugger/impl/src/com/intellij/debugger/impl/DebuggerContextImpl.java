@@ -160,9 +160,4 @@ public final class DebuggerContextImpl implements DebuggerContext {
   public boolean isInitialised() {
     return myInitialized;
   }
-
-  public boolean isEvaluationPossible() {
-    final DebugProcessImpl debugProcess = getDebugProcess();
-    return debugProcess != null && debugProcess.isEvaluationPossible();
-  }
 }

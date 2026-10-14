@@ -17087,25 +17087,6 @@ java_library(
     exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2"],
 )
 
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven_archetype-archetype-common-2_2_http_import",
-        ":org_apache_maven_archetype-archetype-catalog-2_2_http_import",
-        ":org_apache_maven_archetype-archetype-descriptor-2_2_http_import",
-        ":org_apache_maven_archetype-archetype-registry-2_2_http_import",
-    ],
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2"],
-)
-
 copy_file(
     name = "org.apache.maven/maven-compat-3.3.9.jar_copy",
     src = "@org_apache_maven-maven-compat-3_3_9_http//file",
@@ -17337,20 +17318,6 @@ java_library(
     exports = [":maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9"],
 )
 
-jvm_import(
-    name = "maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2",
-    jar = "@org_apache_maven_shared-maven-dependency-tree-1_2_http//file",
-    source_jar = "@org_apache_maven_shared-maven-dependency-tree-1_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
-)
-
 java_library(
     name = "maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1",
     visibility = ["//visibility:public"],
@@ -17566,20 +17533,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0"],
-)
-
-jvm_import(
-    name = "maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2",
-    jar = "@org_apache_maven_shared-maven-dependency-tree-1_2_http//file",
-    source_jar = "@org_apache_maven_shared-maven-dependency-tree-1_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2"],
 )
 
 copy_file(
@@ -18555,20 +18508,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-7"],
-)
-
-jvm_import(
-    name = "maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3",
-    jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http//file",
-    source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3"],
 )
 
 copy_file(

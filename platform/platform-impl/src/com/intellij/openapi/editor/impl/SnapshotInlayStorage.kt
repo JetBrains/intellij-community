@@ -229,12 +229,19 @@ internal class SnapshotInlayStorage(
     flavor: Int,
     convert: (SnapshotInlayMarker<*>) -> T?,
   ): List<T> {
-    val root = rootStore.root(snapshotForQueries()) ?: return emptyList()
+    val snapshot = snapshotForQueries()
+    val root = rootStore.root(snapshot) ?: return emptyList()
     val markers = ArrayList<SnapshotInlayMarker<*>>()
-    root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor) { entry ->
+    val processor = Processor<PMarkerRoot.MarkerEntry> { entry ->
       val marker = entry.markerReference?.get() as? SnapshotInlayMarker<*>
       if (marker != null) markers.add(marker)
       true
+    }
+    if (flavor == 0 && startOffset == 0 && endOffset >= snapshot.text().length()) {
+      root.processAllRangeMarkers { entry, _ -> processor.process(entry) }
+    }
+    else {
+      root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor, processor)
     }
     markers.sortWith(compareBy({ it.startOffset }, { it.iterationOrder }))
     return markers.mapNotNull(convert)

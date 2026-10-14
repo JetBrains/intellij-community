@@ -4,16 +4,23 @@ package com.intellij.application.options.codeStyle.arrangement.action.tokens;
 import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.tokens.ArrangementRuleAliasControl;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Svetlana.Zemlyanskaya
- */
-public final class RemoveArrangementAliasRuleAction extends RemoveArrangementRuleAction {
+final class RemoveArrangementAliasRuleAction extends RemoveArrangementRuleAction {
   @Override
   protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return e.getData(ArrangementRuleAliasControl.KEY);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

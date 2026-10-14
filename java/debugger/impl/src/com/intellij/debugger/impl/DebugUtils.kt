@@ -95,6 +95,11 @@ inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (
     }
   }
 
+fun emulateMethodBreakpointsOnVM(vm: VirtualMachine): Boolean {
+  // Disabled for Android: b/403624089, b/416446692, https://youtrack.jetbrains.com/issue/IDEA-367120.
+  return !DebuggerUtils.isAndroidVM(vm)
+}
+
 // TODO: move into VirtualMachineProxyImpl when converted to kotlin
 fun preloadAllClasses(vm: VirtualMachine) {
   DebuggerManagerThreadImpl.assertIsManagerThread()
@@ -105,7 +110,7 @@ fun preloadAllClasses(vm: VirtualMachine) {
   else {
     CompletableFuture.completedFuture(vm.allClasses())
   }
-  if (!Registry.`is`("debugger.preload.types.hierarchy", true) || DebuggerUtils.isAndroidVM(vm)) return
+  if (!Registry.`is`("debugger.preload.types.hierarchy", true) || !emulateMethodBreakpointsOnVM(vm)) return
 
   val channel = Channel<ReferenceType>(capacity = Channel.UNLIMITED)
   try {

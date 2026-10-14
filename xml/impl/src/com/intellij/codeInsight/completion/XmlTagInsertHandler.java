@@ -388,23 +388,32 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = (!firstLevel || !canHaveAttributes(descriptor, context))
+    boolean canHaveMoreAttributes = firstLevel && canHaveAttributes(descriptor, context);
+    // With required attributes inserted, close the tag, but stop the caret before the tag end to allow more attributes
+    boolean endBeforeTagEnd = canHaveMoreAttributes && !template.getVariables().isEmpty();
+    boolean completeIt = (!canHaveMoreAttributes || endBeforeTagEnd)
                          && (file == null || XmlExtension.getExtension(file).shouldCompleteTag(context));
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN -> {}
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY -> {
         if (completeIt) {
+          if (endBeforeTagEnd) {
+            template.addEndVariable();
+          }
           template.addTextSegment(closeTag(context));
         }
       }
       case XmlElementDescriptor.CONTENT_TYPE_MIXED -> {
         if (completeIt) {
-          template.addTextSegment(">");
-          if (firstLevel) {
+          if (endBeforeTagEnd) {
             template.addEndVariable();
           }
-          else {
+          template.addTextSegment(">");
+          if (!firstLevel) {
             template.addVariable(new MacroCallNode(new CompleteMacro()), true);
+          }
+          else if (!endBeforeTagEnd) {
+            template.addEndVariable();
           }
           addTagEnd(template, descriptor, context);
         }
@@ -412,8 +421,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       default -> {
         if (!addRequiredSubTags(template, descriptor, file, context)) {
           if (completeIt) {
+            if (endBeforeTagEnd) {
+              template.addEndVariable();
+            }
             template.addTextSegment(">");
-            template.addEndVariable();
+            if (!endBeforeTagEnd) {
+              template.addEndVariable();
+            }
             addTagEnd(template, descriptor, context);
           }
         }

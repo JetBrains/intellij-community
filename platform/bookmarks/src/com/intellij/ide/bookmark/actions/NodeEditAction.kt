@@ -2,6 +2,7 @@
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarksListProviderService
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -11,7 +12,13 @@ internal class NodeEditAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
+    if (event.place == ActionPlaces.ACTION_SEARCH) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabled = false
+
     val project = event.project ?: return
     val node = event.bookmarkNodes?.singleOrNull() ?: return
     val provider = BookmarksListProviderService.findProvider(project) { it.canEdit(node) } ?: return

@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
   </component>
 </module>

@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.compiler.server.BuildManager
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
@@ -32,6 +33,8 @@ import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
@@ -43,6 +46,7 @@ import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -60,10 +64,20 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
 
   private val resolvingContext = DefaultPackagingElementResolvingContext(project)
 
-  internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
+  // Weak keys: an artifact bridge stays here only while other code references it
+  private val bridges = ConcurrentCollectionFactory.createConcurrentWeakIdentityMap<ArtifactBridge, Boolean>()
 
   init {
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(coroutineScope)
+    project.messageBus.connect(coroutineScope).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        ArtifactBridge.beforeChanged(event, bridges.keys)
+      }
+    })
+  }
+
+  internal fun registerBridge(bridge: ArtifactBridge) {
+    bridges[bridge] = true
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -243,8 +257,8 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
     }
 
     // Set actual storages
-    artifactWithDiffs.forEach { it.setActualStorage() }
-    artifactWithDiffs.clear()
+    artifactModel.bridgesWithDiff.forEach { it.setActualStorage() }
+    artifactModel.bridgesWithDiff.clear()
 
     val entityStorage = (project.workspaceModel as WorkspaceModelInternal).entityStorage
     added.forEach { bridge ->

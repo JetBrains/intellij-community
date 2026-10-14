@@ -1,0 +1,5 @@
+object Singleton {
+    fun answer() = 42
+}
+
+fun use() = Singleton.answer()

@@ -29,6 +29,7 @@ import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonBinaryPath
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject

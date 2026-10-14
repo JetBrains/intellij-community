@@ -129,6 +129,7 @@
     <module name="intellij.toml.core"/>
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.yaml"/>
+    <module name="intellij.libraries.commons.compress"/>
   </dependencies>
   <!-- endregion -->
 
@@ -1157,7 +1158,8 @@
 
     <!-- PyDocstring -->
     <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDoctestVisitorFilter"/>
-    <visitorFilter language="PythonDocstringCodeBlock" implementationClass="com.jetbrains.python.documentation.PyDocstringCodeBlockVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.documentation.PyDocstringCodeBlockVisitorFilter"/>
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
@@ -1302,6 +1304,7 @@
     </action>
 
     <action id="ReloadPyPiCacheAction" class="com.jetbrains.python.packaging.pip.actions.ReloadPyPiCacheAction"/>
+    <action id="ReloadCondaPackageCacheAction" class="com.jetbrains.python.packaging.conda.actions.ReloadCondaCacheAction"/>
 
     <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
@@ -1350,7 +1353,7 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
     </action>
 
-    <group id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
+    <group id="PyDebugger.ViewAsGroup" searchable="false" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </group>
 

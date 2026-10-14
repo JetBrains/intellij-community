@@ -82,29 +82,25 @@ windows_clippy_tests(
     ],
 )
 
-# The Tart, Docker CLI, Lima and Apple container pins, and the guest image versions, for the tests that keep each at
-# or above the controller's floor. See `tart.MODULE.bazel`, `docker.MODULE.bazel`, `lima.MODULE.bazel`,
-# `container.MODULE.bazel` and `provision/versions.env`. `avl-base` also embeds `provision/versions.env`
-# (`include_str!`).
+# The Tart, Docker CLI and Apple container pins, and the guest image versions, for the tests that keep each at or
+# above the controller's floor. See `tart.MODULE.bazel`, `docker.MODULE.bazel`, `container.MODULE.bazel` and
+# `provision/versions.env`. `avl-base` also embeds `provision/versions.env` (`include_str!`).
 exports_files(
     [
         "container.MODULE.bazel",
         "docker.MODULE.bazel",
-        "lima.MODULE.bazel",
         "provision/versions.env",
         "tart.MODULE.bazel",
     ],
     visibility = ["//tools/vm:__subpackages__"],
 )
 
-# The Docker worker's image definition and the Lima template of its engine on a macOS host, which `avl-vm`
-# embeds (`include_str!`). The image files go into the build context of `docker build`. The template goes to
-# `limactl start`.
+# The Docker worker's image definition, which `avl-vm` embeds (`include_str!`). The files go into the build context
+# of `docker build`.
 exports_files(
     [
         "docker/Dockerfile",
         "docker/air-display",
-        "docker/engine.lima.yaml",
     ],
     visibility = ["//tools/vm:__subpackages__"],
 )
@@ -199,10 +195,10 @@ avl_binary(
     visibility = ["//visibility:public"],
 )
 
-# The pinned Tart, Docker CLI, `docker-buildx`, Lima and Apple container of a macOS host, one alias per repository of
-# `tart.MODULE.bazel`, `docker.MODULE.bazel`, `lima.MODULE.bazel` and `container.MODULE.bazel`. A repository of this
-# module has no name that the ultimate root can see, so the controller asks Bazel for these labels. Its `cquery` is the
-# only reader. Each alias is `manual`, so `//...` does not download the archive.
+# The pinned Tart, Docker CLI, `docker-buildx` and Apple container of a macOS host, one alias per repository of
+# `tart.MODULE.bazel`, `docker.MODULE.bazel` and `container.MODULE.bazel`. A repository of this module has no name that
+# the ultimate root can see, so the controller asks Bazel for these labels. Its `cquery` is the only reader. Each alias
+# is `manual`, so `//...` does not download the archive.
 alias(
     name = "air_tart",
     actual = "@air_tart//:tart",
@@ -234,20 +230,6 @@ alias(
 alias(
     name = "air_docker_buildx_darwin_x86_64",
     actual = "@air_docker_buildx_darwin_x86_64//file",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "air_lima_darwin_arm64",
-    actual = "@air_lima_darwin_arm64//:limactl",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "air_lima_darwin_x86_64",
-    actual = "@air_lima_darwin_x86_64//:limactl",
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )

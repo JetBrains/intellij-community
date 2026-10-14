@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.launch
 
 internal class ProjectRunConfigurationInitializer : InitProjectActivity {
@@ -39,5 +40,16 @@ internal class ProjectRunConfigurationInitializer : InitProjectActivity {
         IS_RUN_MANAGER_INITIALIZED.set(project, true)
       }
     }
+  }
+}
+
+/**
+ * Sets [IS_RUN_MANAGER_INITIALIZED] when this module loads dynamically into an open project.
+ * [ProjectRunConfigurationInitializer] does not run in this case.
+ * It would be better not to register [ProjectRunConfigurationInitializer] as non-dynamic extension instead, see IJPL-258584.
+ */
+internal class RunManagerInitializedFlagSetter : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    IS_RUN_MANAGER_INITIALIZED.set(project, true)
   }
 }

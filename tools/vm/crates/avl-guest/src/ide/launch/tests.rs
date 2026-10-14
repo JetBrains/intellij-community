@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::cli::CancelArgs;
-use crate::ide::fixture::{FakeIde, Fixture, NO_DISPLAY_CHECK, PORT_PROPERTY, mode, prepared, wait_for_file};
+use crate::ide::fixture::{FakeIde, Fixture, NO_DISPLAY_CHECK, PORT_PROPERTY, VM_OPTIONS_FILE_PATH, mode, prepared, wait_for_file};
 use crate::ide::{CODE_IDE_RUNNING, live_run, prepare};
 use crate::supervisor::{CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, LaunchHost, LiveSystem, child_path, has_utf8_locale};
 use crate::testing::run_agent;
@@ -83,10 +83,27 @@ fn the_argument_file_puts_the_data_paths_of_the_context_last() {
         "-Dfrom.vmoptions=1",
         "-Dfrom.product.info=1",
         "-Dfrom.idea.properties=1",
+        &format!("-Djb.vmOptionsFile={dist}/bin/idea64.vmoptions"),
         &format!("-Duser.home={}", context.home_dir),
     ] {
         position(&arguments, property);
     }
+}
+
+// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
+#[test]
+fn the_product_info_is_at_the_production_place_or_in_bin() {
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path();
+    let production = home.join(PRODUCT_INFO_FILE);
+    let dev_build = home.join("bin/product-info.json");
+    assert_eq!(product_info_file(home), production, "no file names the production place");
+    fs::create_dir_all(home.join("bin")).unwrap();
+    fs::write(&dev_build, "{}").unwrap();
+    assert_eq!(product_info_file(home), dev_build);
+    fs::create_dir_all(production.parent().unwrap()).unwrap();
+    fs::write(&production, "{}").unwrap();
+    assert_eq!(product_info_file(home), production);
 }
 
 // The flags file cannot move a data path.
@@ -109,13 +126,54 @@ fn a_flag_that_states_a_data_path_is_refused() {
     }
 }
 
+// `product-info.json` names the main vmoptions file, so a second file in `bin` does not count.
 #[test]
-fn a_distribution_needs_one_vm_options_file() {
+fn the_product_info_names_the_vm_options_file() {
     let fixture = Fixture::new();
     let context = prepared(&fixture.context_document(true));
-    fs::write(fixture.path("dist/bin/jetbrains_client64.vmoptions"), "").unwrap();
+    fs::write(fixture.path("dist/bin/jetbrains_client64.vmoptions"), "-Dfrom.frontend=1\n").unwrap();
+    let document = fixture.launch_document("launch-1", &context);
+    let arguments = compose_arguments(&document, &LaunchPaths::new(&document)).unwrap_or_else(|refusal| panic!("{refusal}"));
+    position(&arguments, "-Dfrom.vmoptions=1");
+    assert!(!arguments.iter().any(|argument| argument == "-Dfrom.frontend=1"), "{arguments:#?}");
+
+    let product_info = fixture.path("dist").join(PRODUCT_INFO_FILE);
+    fs::write(&product_info, r#"{"launch":[]}"#).unwrap();
     let refusal = refused_launch(&fixture.launch_document("launch-1", &context));
-    assert!(refusal.message.contains("exactly one *.vmoptions"), "{}", refusal.message);
+    assert!(refusal.message.contains("states no launch"), "{}", refusal.message);
+    fs::write(&product_info, r#"{"launch":[{"vmOptionsFilePath":"../../idea.vmoptions"}]}"#).unwrap();
+    let refusal = refused_launch(&fixture.launch_document("launch-1", &context));
+    assert!(refusal.message.contains("is not a file of the home"), "{}", refusal.message);
+}
+
+// The path resolves by its text against the directory of the production place, as the launcher resolves it.
+#[test]
+fn the_vm_options_path_resolves_in_the_home() {
+    assert_eq!(
+        resolve_in_home("Resources", "../bin/idea.vmoptions").as_deref(),
+        Some("bin/idea.vmoptions")
+    );
+    assert_eq!(resolve_in_home("", "bin/idea64.vmoptions").as_deref(), Some("bin/idea64.vmoptions"));
+    assert_eq!(
+        resolve_in_home("", "./bin//idea64.vmoptions").as_deref(),
+        Some("bin/idea64.vmoptions")
+    );
+    assert_eq!(
+        resolve_in_home(
+            PRODUCT_INFO_FILE.rsplit_once('/').map_or("", |(directory, _)| directory),
+            VM_OPTIONS_FILE_PATH
+        )
+        .as_deref(),
+        Some("bin/idea64.vmoptions")
+    );
+    for refused in [
+        "../bin/idea64.vmoptions",
+        "/bin/idea64.vmoptions",
+        "bin\\idea64.vmoptions",
+        "bin/..",
+    ] {
+        assert_eq!(resolve_in_home("", refused), None, "{refused}");
+    }
 }
 
 // A launch needs the layout of `ide-prepare`: the context and the project.

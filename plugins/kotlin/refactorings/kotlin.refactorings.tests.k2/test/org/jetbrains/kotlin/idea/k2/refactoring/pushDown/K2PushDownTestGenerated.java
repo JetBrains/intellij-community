@@ -30,6 +30,11 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
             runTest("testData/pushDown/k2k/accidentalOverrides.kt");
         }
 
+        @TestMetadata("anonymousInheritorNestedClass.kt")
+        public void testAnonymousInheritorNestedClass() throws Exception {
+            runTest("testData/pushDown/k2k/anonymousInheritorNestedClass.kt");
+        }
+
         @TestMetadata("caretOnDeepestFinalClassInInterface.kt")
         public void testCaretOnDeepestFinalClassInInterface() throws Exception {
             runTest("testData/pushDown/k2k/caretOnDeepestFinalClassInInterface.kt");
@@ -55,6 +60,61 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
             runTest("testData/pushDown/k2k/classToInterface.kt");
         }
 
+        @TestMetadata("companionBeforeMemberUsage.kt")
+        public void testCompanionBeforeMemberUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionBeforeMemberUsage.kt");
+        }
+
+        @TestMetadata("companionObjectClashingMembers.kt")
+        public void testCompanionObjectClashingMembers() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectClashingMembers.kt");
+        }
+
+        @TestMetadata("companionObjectExternalUsage.kt")
+        public void testCompanionObjectExternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectExternalUsage.kt");
+        }
+
+        @TestMetadata("companionObjectExternalUsageExisting.kt")
+        public void testCompanionObjectExternalUsageExisting() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectExternalUsageExisting.kt");
+        }
+
+        @TestMetadata("companionObjectImplicitUsage.kt")
+        public void testCompanionObjectImplicitUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectImplicitUsage.kt");
+        }
+
+        @TestMetadata("companionObjectImportedMemberUsage.kt")
+        public void testCompanionObjectImportedMemberUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectImportedMemberUsage.kt");
+        }
+
+        @TestMetadata("companionObjectImports.kt")
+        public void testCompanionObjectImports() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectImports.kt");
+        }
+
+        @TestMetadata("companionObjectJavaMemberUsage.kt")
+        public void testCompanionObjectJavaMemberUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectJavaMemberUsage.kt");
+        }
+
+        @TestMetadata("companionObjectJavaUsage.kt")
+        public void testCompanionObjectJavaUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectJavaUsage.kt");
+        }
+
+        @TestMetadata("companionObjectMultipleInheritors.kt")
+        public void testCompanionObjectMultipleInheritors() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectMultipleInheritors.kt");
+        }
+
+        @TestMetadata("companionObjectMultipleInheritorsNoUsage.kt")
+        public void testCompanionObjectMultipleInheritorsNoUsage() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectMultipleInheritorsNoUsage.kt");
+        }
+
         @TestMetadata("conflictingSuperCall.kt")
         public void testConflictingSuperCall() throws Exception {
             runTest("testData/pushDown/k2k/conflictingSuperCall.kt");
@@ -75,9 +135,119 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
             runTest("testData/pushDown/k2k/implicitCompanionUsages.kt");
         }
 
+        @TestMetadata("innerClassExternalUsage.kt")
+        public void testInnerClassExternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/innerClassExternalUsage.kt");
+        }
+
+        @TestMetadata("innerClassJavaUsage.kt")
+        public void testInnerClassJavaUsage() throws Exception {
+            runTest("testData/pushDown/k2k/innerClassJavaUsage.kt");
+        }
+
+        @TestMetadata("innerClassMultipleInheritors.kt")
+        public void testInnerClassMultipleInheritors() throws Exception {
+            runTest("testData/pushDown/k2k/innerClassMultipleInheritors.kt");
+        }
+
         @TestMetadata("liftPrivate.kt")
         public void testLiftPrivate() throws Exception {
             runTest("testData/pushDown/k2k/liftPrivate.kt");
+        }
+
+        @TestMetadata("namedCompanionObjectExternalUsage.kt")
+        public void testNamedCompanionObjectExternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/namedCompanionObjectExternalUsage.kt");
+        }
+
+        @TestMetadata("namedCompanionObjectExternalUsageExisting.kt")
+        public void testNamedCompanionObjectExternalUsageExisting() throws Exception {
+            runTest("testData/pushDown/k2k/namedCompanionObjectExternalUsageExisting.kt");
+        }
+
+        @TestMetadata("nestedAnnotationUsage.kt")
+        public void testNestedAnnotationUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedAnnotationUsage.kt");
+        }
+
+        @TestMetadata("nestedClassAcrossFiles.kt")
+        public void testNestedClassAcrossFiles() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassAcrossFiles.kt");
+        }
+
+        @TestMetadata("nestedClassExternalUsage.kt")
+        public void testNestedClassExternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassExternalUsage.kt");
+        }
+
+        @TestMetadata("nestedClassImportedUsage.kt")
+        public void testNestedClassImportedUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassImportedUsage.kt");
+        }
+
+        @TestMetadata("nestedClassInheritedMemberUsage.kt")
+        public void testNestedClassInheritedMemberUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassInheritedMemberUsage.kt");
+        }
+
+        @TestMetadata("nestedClassInstanceMemberUsage.kt")
+        public void testNestedClassInstanceMemberUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassInstanceMemberUsage.kt");
+        }
+
+        @TestMetadata("nestedClassJavaImportedUsage.kt")
+        public void testNestedClassJavaImportedUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassJavaImportedUsage.kt");
+        }
+
+        @TestMetadata("nestedClassJavaUsage.kt")
+        public void testNestedClassJavaUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassJavaUsage.kt");
+        }
+
+        @TestMetadata("nestedClassKDocUsage.kt")
+        public void testNestedClassKDocUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassKDocUsage.kt");
+        }
+
+        @TestMetadata("nestedClassMultipleInheritorsInternalUsage.kt")
+        public void testNestedClassMultipleInheritorsInternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassMultipleInheritorsInternalUsage.kt");
+        }
+
+        @TestMetadata("nestedClassNestedTypeUsage.kt")
+        public void testNestedClassNestedTypeUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassNestedTypeUsage.kt");
+        }
+
+        @TestMetadata("nestedClassSameFilePackage.kt")
+        public void testNestedClassSameFilePackage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassSameFilePackage.kt");
+        }
+
+        @TestMetadata("nestedClassSamePackageAcrossFiles.kt")
+        public void testNestedClassSamePackageAcrossFiles() throws Exception {
+            runTest("testData/pushDown/k2k/nestedClassSamePackageAcrossFiles.kt");
+        }
+
+        @TestMetadata("nestedCompanionObjectExternalUsage.kt")
+        public void testNestedCompanionObjectExternalUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedCompanionObjectExternalUsage.kt");
+        }
+
+        @TestMetadata("nestedEnumUsage.kt")
+        public void testNestedEnumUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedEnumUsage.kt");
+        }
+
+        @TestMetadata("nestedInterfaceUsage.kt")
+        public void testNestedInterfaceUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedInterfaceUsage.kt");
+        }
+
+        @TestMetadata("nestedTypeAliasUsage.kt")
+        public void testNestedTypeAliasUsage() throws Exception {
+            runTest("testData/pushDown/k2k/nestedTypeAliasUsage.kt");
         }
 
         @TestMetadata("noCaret.kt")
@@ -103,6 +273,16 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
         @TestMetadata("objectDeclaration.kt")
         public void testObjectDeclaration() throws Exception {
             runTest("testData/pushDown/k2k/objectDeclaration.kt");
+        }
+
+        @TestMetadata("objectInheritorCompanion.kt")
+        public void testObjectInheritorCompanion() throws Exception {
+            runTest("testData/pushDown/k2k/objectInheritorCompanion.kt");
+        }
+
+        @TestMetadata("objectInheritorInnerClass.kt")
+        public void testObjectInheritorInnerClass() throws Exception {
+            runTest("testData/pushDown/k2k/objectInheritorInnerClass.kt");
         }
 
         @TestMetadata("outsideOfClass.kt")

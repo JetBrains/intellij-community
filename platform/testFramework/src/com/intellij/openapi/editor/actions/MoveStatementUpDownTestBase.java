@@ -12,6 +12,10 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.io.File;
 
+/**
+ * @deprecated Use {@link MoveStatementUpDownTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class MoveStatementUpDownTestBase extends LightPlatformCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/moveStatementAction/";
 

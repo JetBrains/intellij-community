@@ -1,18 +1,33 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.editor
 
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 
-@RunWith(JUnit38ClassRunner::class)
-abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
+abstract class KotlinAutoPopupTest {
+    companion object {
+        private val projectFixture = projectFixture(openAfterCreation = true)
+    }
+
+    protected val myFixture: CodeInsightTestFixture by codeInsightModuleFixture(projectFixture)
+
+    private val lookup: LookupImpl? get() = CompletionAutoPopupTestUtil.getLookup(myFixture)
+
+    private fun type(s: String) = CompletionAutoPopupTestUtil.type(myFixture, s)
+
+    private fun runTest(block: () -> Unit) = CompletionAutoPopupTestUtil.runWithAutoPopupEnabled<Throwable>(myFixture, block)
 
     
 
-    fun testAfterLT() {
+    @Test
+    fun testAfterLT(): Unit = runTest {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             fun test(x:Int) {
                 if (x <caret>)
@@ -23,7 +38,8 @@ abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         assertNull(lookup)
     }
 
-    fun testAfterAtInModifierList() {
+    @Test
+    fun testAfterAtInModifierList(): Unit = runTest {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             <caret>
             fun test() {}
@@ -37,7 +53,8 @@ abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "OptIn")
     }
 
-    fun testAfterAtInFileAnnotationList() {
+    @Test
+    fun testAfterAtInFileAnnotationList(): Unit = runTest {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             <caret>
         """.trimIndent())
@@ -51,7 +68,8 @@ abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "OptIn")
     }
 
-    fun testPropertyKey() {
+    @Test
+    fun testPropertyKey(): Unit = runTest {
         myFixture.createFile("PropertyKey.properties", "foo.bar = 1")
         myFixture.createFile("PropertyKey.kt", """
             package org.jetbrains.annotations
@@ -76,7 +94,8 @@ abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "foo.bar")
     }
 
-    fun testNotPropertyKey() {
+    @Test
+    fun testNotPropertyKey(): Unit = runTest {
         myFixture.createFile("PropertyKey.properties", "foo.bar = 1")
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             fun test() {
@@ -88,7 +107,8 @@ abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
         assertNull(lookup)
     }
 
-    fun testStringTemplateEntry() {
+    @Test
+    fun testStringTemplateEntry(): Unit = runTest {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             class A {
                 val foo = 1

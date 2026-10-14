@@ -7,7 +7,6 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -117,7 +116,7 @@ object AddQualifiersUtil {
         val fqName = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(referenceExpression) {
-                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KaNamedSymbol ?: return null
+                    val symbol = referenceExpression.tryResolveSymbolsCallFirst().singleOrNull() as? KaNamedSymbol ?: return null
                     val fqName = getFqName(symbol) ?: return null
                     if (!isApplicableTo(referenceExpression, symbol)) return null
                     fqName

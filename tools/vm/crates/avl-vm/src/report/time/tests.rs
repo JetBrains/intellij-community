@@ -188,6 +188,7 @@ fn report(
         traces_error: None,
         tree: None,
         tree_error: None,
+        notes: Vec::new(),
         protocol_diagnostic: None,
         verdict_diagnostic: None,
     }

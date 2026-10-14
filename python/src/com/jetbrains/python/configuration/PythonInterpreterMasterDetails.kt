@@ -182,12 +182,15 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     }
     else {
       // it would be nicer to insert the sdk at the proper place instead of adding it to the bottom
-      val addInterpreterActionGroup = PopupActionGroup(collectAddInterpreterActions(moduleOrProject, ::addSdkNodeAndSelect))
-      addInterpreterActionGroup.templatePresentation.icon = AllIcons.General.Add
-      addInterpreterActionGroup.templatePresentation.text = PyBundle.message("python.interpreters.add.interpreter.action.text")
-      addInterpreterActionGroup.isPopup = true
-      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
-      listOf(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
+      val addActions = collectAddInterpreterActions(moduleOrProject, ::addSdkNodeAndSelect)
+      // Without a module there is nothing to add an interpreter to, so there is no Add button.
+      val addInterpreterActionGroup = addActions.takeIf { it.isNotEmpty() }?.let { PopupActionGroup(it) }?.apply {
+        templatePresentation.icon = AllIcons.General.Add
+        templatePresentation.text = PyBundle.message("python.interpreters.add.interpreter.action.text")
+        isPopup = true
+        registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
+      }
+      listOfNotNull(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
     }
 
   private fun getSelectedSdk(): Sdk? = selectedObject as? Sdk

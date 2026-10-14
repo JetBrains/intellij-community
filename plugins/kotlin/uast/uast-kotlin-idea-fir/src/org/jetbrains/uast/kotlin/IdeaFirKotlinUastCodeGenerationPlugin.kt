@@ -6,9 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
@@ -17,11 +18,11 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UQualifiedReferenceExpression
@@ -41,7 +42,8 @@ class IdeaFirKotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin
 
 
     private fun KtDotQualifiedExpression.getTargetClassId(): ClassId?= allowAnalysisFromWriteActionInEdt(this) {
-        val symbol = receiverExpression.mainReference?.resolveToSymbol() ?: return@allowAnalysisFromWriteActionInEdt null
+        val symbol = (receiverExpression as? KtNameReferenceExpression)?.tryResolveSymbols()?.symbols?.singleOrNull()
+            ?: return@allowAnalysisFromWriteActionInEdt null
         return@allowAnalysisFromWriteActionInEdt (symbol as? KaClassSymbol)?.classId
     }
 

@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CONSTRUCTOR;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.ENUM;
@@ -12,7 +15,9 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 
+@TestApplication
 public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
+  @Test
   public void testDoNotBreakAnonymousClassAlignment() {
     @Language("JAVA") String text = """
       public final class Test {
@@ -33,6 +38,7 @@ public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTe
     doTest(text, text, classic);
   }
 
+  @Test
   public void testAnonymousAndLocalClasses() {
     String text = """
       class Main {
@@ -49,6 +55,7 @@ public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTe
     doTest(text, text, classic);
   }
 
+  @Test
   public void testAnonymousClassesInsideMethod() {
     doTest("""
              public class Rearranging {

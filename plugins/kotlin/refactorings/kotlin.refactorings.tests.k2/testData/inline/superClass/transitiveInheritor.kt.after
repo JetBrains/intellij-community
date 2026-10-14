@@ -1,0 +1,7 @@
+open class Middle {
+    open fun answer() = 42
+}
+
+class Leaf : Middle() {
+    override fun answer() = 0
+}

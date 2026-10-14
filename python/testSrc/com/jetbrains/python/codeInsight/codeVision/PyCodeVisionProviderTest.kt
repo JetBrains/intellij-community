@@ -6,25 +6,39 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.idea.TestFor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 
+@TestApplication
 @Subsystems.CodeInsight
 @Layers.Functional
-class PyCodeVisionProviderTest : CodeVisionTestCase() {
-  override fun setUp() {
-    super.setUp()
+class PyCodeVisionProviderTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    CodeVisionTestUtil.setUp(myFixture)
     val settings = CodeVisionSettings.getInstance()
     val prevPosition = settings.defaultPosition
     settings.defaultPosition = CodeVisionAnchorKind.Top
-    Disposer.register(testRootDisposable) {
+    Disposer.register(myFixture.testRootDisposable) {
       settings.defaultPosition = prevPosition
     }
   }
 
-  fun testDynamicUsages() = doTest("""
+  @Test
+  fun testDynamicUsages(): Unit = doTest("""
     /*<# block [1 usage] #>*/
     class MyClass:
     /*<# block [2 usages (1 dynamic)] #>*/
@@ -46,7 +60,8 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     cc.method()
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
-  fun testTwoDynamicUsages() = doTest("""
+  @Test
+  fun testTwoDynamicUsages(): Unit = doTest("""
     /*<# block [1 usage] #>*/
     class MyClass:
     /*<# block [3 usages (2 dynamic)] #>*/
@@ -63,7 +78,8 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     cc.method()
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
-  fun testLocalDefinitionsNotAnalysed() = doTest("""
+  @Test
+  fun testLocalDefinitionsNotAnalysed(): Unit = doTest("""
     /*<# block [1 usage] #>*/
     def foo():
         class MyClass:
@@ -79,7 +95,8 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     foo()
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
-  fun testMagicMethodUsagesNotAnalysed() = doTest("""
+  @Test
+  fun testMagicMethodUsagesNotAnalysed(): Unit = doTest("""
     /*<# block [2 usages] #>*/
     class MyClass:
         def __add__(self, other):
@@ -92,7 +109,8 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     d = a.__add__(b)
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
-  fun testInnerClassNotAnalysed() = doTest("""
+  @Test
+  fun testInnerClassNotAnalysed(): Unit = doTest("""
     /*<# block [2 usages] #>*/
     class MyClass:
         class MyInnerClass:
@@ -110,6 +128,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
     mic.inner_foo()
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
+  @Test
   @TestFor(issues=["PY-82336"])
   fun testUsagesInManyFiles() {
     // The symbol is "widespread", so the search is time-bounded; pin a generous budget so a cold/slow
@@ -131,6 +150,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
 
   // When the number of usages exceeds the `python.code.vision.usages.limit` cap, the count is
   // truncated and rendered with a trailing "+".
+  @Test
   fun testUsagesCountIsCappedWithPlus() {
     val limitId = "python.code.vision.usages.limit"
     val previousLimit = AdvancedSettings.getInt(limitId)
@@ -165,6 +185,9 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
   }
 
   private fun doTest(text: String, vararg enabledProviderGroupIds: String, fileName: String = "test.py") {
-    testProviders(text, fileName, *enabledProviderGroupIds)
+    CodeVisionTestUtil.testProviders(myFixture, text, { sourceText ->
+      val file = myFixture.addFileToProject(fileName, sourceText)
+      myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    }, false, *enabledProviderGroupIds)
   }
 }

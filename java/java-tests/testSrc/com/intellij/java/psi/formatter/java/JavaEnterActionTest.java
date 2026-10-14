@@ -4,16 +4,21 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AbstractBasicJavaEnterActionTest;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.EnterActionTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.LocalTimeCounter;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
 
   //almost all because of formatting
@@ -21,6 +26,11 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
+  private void doGetIndentTest(PsiFile file, int lineNum, String expected) {
+    EnterActionTestUtil.doGetIndentTest(getProject(), file, lineNum, expected);
+  }
+
+  @Test
   public void testIndentInArgList1() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -30,6 +40,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile("/codeInsight/enterAction/indent/InArgList1_after.java");
   }
 
+  @Test
   public void testIndentInArgList2() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -39,6 +50,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile("/codeInsight/enterAction/indent/InArgList2_after.java");
   }
 
+  @Test
   public void testIndentInArgList3() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -48,6 +60,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile("/codeInsight/enterAction/indent/InArgList3_after.java");
   }
 
+  @Test
   public void testIndentInArgList4() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -58,6 +71,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testBinaryExpressionAsParameter() throws Exception {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
@@ -65,6 +79,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testBlaBla() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -85,6 +100,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testEnterBlaBla() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_EXTENDS_LIST = true;
@@ -100,6 +116,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testEnterInConditionOperation() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
@@ -118,6 +135,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testInsideIfCondition() throws Exception {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
@@ -141,6 +159,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testInsideIfCondition_2() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
@@ -164,6 +183,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testIDEADEV_14102() {
     CommonCodeStyleSettings settings = getJavaCommonSettings();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
@@ -186,6 +206,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testAlignmentIndentAfterIncompleteImplementsBlock() {
     // Inspired by IDEA-65777
     CommonCodeStyleSettings settings = getJavaCommonSettings();
@@ -208,6 +229,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testEnterInsideTryWithResources() {
     doTextTest("java",
                """
@@ -227,12 +249,14 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  """);
   }
 
+  @Test
   public void testSplitLiteralInEscape() {
     configureByFile("/codeInsight/enterAction/splitLiteral/Escape.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/splitLiteral/Escape_after.java");
   }
 
+  @Test
   public void testJavaDocInlineTag() {
     configureByFile("/codeInsight/enterAction/javaDoc/beforeInlineTag.java");
     performAction();
@@ -240,6 +264,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testBreakingElseIfWithoutBraces() {
     // Inspired by IDEA-60304.
     doTextTest(
@@ -265,6 +290,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testFirstLineOfJavadocParameter() {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
@@ -289,6 +315,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
   
+  @Test
   public void testFirstLineOfJavaDocParameterMarkdown() {
     doTextTest(
       "java",
@@ -307,6 +334,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testBetweenComments() {
     doTextTest("java",
                """
@@ -323,6 +351,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testDoNotGrabUnnecessaryEndDocCommentSymbols() {
     // Inspired by IDEA-64896
     doTextTest(
@@ -348,6 +377,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testInsideCodeBlock() {
     doTextTest("java", """
       class Foo{
@@ -365,6 +395,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testNoCloseJavaDocComment() {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.CLOSE_COMMENT_ON_ENTER = false;
@@ -375,17 +406,19 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     });
   }
 
+  @Test
   public void testNoSmartIndentInJavadoc() {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.SMART_INDENT_ON_ENTER = false;
       settings.JAVADOC_STUB_ON_ENTER = false;
       configureByFile("/codeInsight/enterAction/settings/NoJavadocStub.java");
       performAction();
-      checkResultByFile(null, "/codeInsight/enterAction/settings/NoJavadocStub_after.java", true); // side effect...
+      checkResultByFile("/codeInsight/enterAction/settings/NoJavadocStub_after.java", true); // side effect...
       return null;
     });
   }
 
+  @Test
   public void testLineCommentAtTrailingSpaces() {
     String path = "/codeInsight/enterAction/lineComment/";
 
@@ -394,6 +427,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile(path + "AtTrailingSpaces_after.java");
   }
 
+  @Test
   public void testNoJavadocStub() {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.JAVADOC_STUB_ON_ENTER = false;
@@ -405,6 +439,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testEnter_inlineComment() {
     doTextTest("java",
                """
@@ -470,6 +505,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testJavaDoc1() {
     String path = "/codeInsight/enterAction/javaDoc/";
 
@@ -480,42 +516,49 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile(path + "state2.java");
   }
 
+  @Test
   public void testJavaDoc3() {
     configureByFile("/codeInsight/enterAction/javaDoc/before1.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after1.java");
   }
 
+  @Test
   public void testJavaDoc4() {
     configureByFile("/codeInsight/enterAction/javaDoc/before2.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after2.java");
   }
 
+  @Test
   public void testJavaDoc5() {
     configureByFile("/codeInsight/enterAction/javaDoc/before3.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after3.java");
   }
 
+  @Test
   public void testJavaDoc6() {
     configureByFile("/codeInsight/enterAction/javaDoc/before4.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after4.java");
   }
 
+  @Test
   public void testJavaDoc7() {
     configureByFile("/codeInsight/enterAction/javaDoc/before5.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after5.java");
   }
 
+  @Test
   public void testJavaDoc8() {
     configureByFile("/codeInsight/enterAction/javaDoc/before6.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/javaDoc/after6.java");
   }
 
+  @Test
   public void testJavaDoc9() {
     // IDEA-64896
     configureByFile("/codeInsight/enterAction/javaDoc/beforeCommentEndLike.java");
@@ -523,6 +566,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile("/codeInsight/enterAction/javaDoc/afterCommentEndLike.java");
   }
 
+  @Test
   public void testIdea115696_Aligned() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -550,6 +594,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testBreakingElseIfWithBraces() {
     // Inspired by IDEA-60304.
     doTextTest(
@@ -577,6 +622,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testStringLiteralAsReferenceExpression() {
     doTextTest("java",
                """
@@ -596,6 +642,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testInsideFor() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_FOR = true;
@@ -632,6 +679,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testSCR1696() {
     doTextTest("java", """
                  class Foo {
@@ -704,12 +752,14 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testSplitLiteral() {
     configureByFile("/codeInsight/enterAction/splitLiteral/Before.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/splitLiteral/After.java");
   }
 
+  @Test
   public void testWithinBracesWithSpaceAfterCaret() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -718,12 +768,14 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     checkResultByFile(path + "WithinBracesWithSpaceAfterCaret_after.java");
   }
 
+  @Test
   public void testSCR26493() {
     configureByFile("/codeInsight/enterAction/SCR26493/before1.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/SCR26493/after1.java");
   }
 
+  @Test
   public void testGetLineIndent() {
     CodeStyleSettings settings = getCodeStyleSettings();
     final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
@@ -747,12 +799,14 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
       ) {
       \t}}""";
     PsiFileFactory factory = PsiFileFactory.getInstance(PsiManager.getInstance(getProject()).getProject());
-    final PsiFile file = factory.createFileFromText("a.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), true);
+    final PsiFile file = ReadAction.computeBlocking(
+      () -> factory.createFileFromText("a.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), true));
     doGetIndentTest(file, 2, "\t\t\t\t\t");
     doGetIndentTest(file, 4, "\t");
     doGetIndentTest(file, 6, "\t          ");
   }
 
+  @Test
   public void testEnterInImplementsList() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_EXTENDS_LIST = false;
@@ -767,6 +821,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testInsideJavadocParameter() {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
@@ -791,6 +846,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testAfterLbrace3() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -800,6 +856,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testIdea108112() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -829,6 +886,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testIdea115696() {
     doTextTest(
       "java",
@@ -852,6 +910,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testIdea153628() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -878,6 +937,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testIdea188397() {
     doTextTest(
       "java",
@@ -897,6 +957,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testLineCommentInJavadoc() {
     doTextTest("java",
                """
@@ -916,6 +977,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testIdea235221() {
     doTextTest(
       "java",
@@ -945,6 +1007,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testAfterDocComment() {
     doTextTest("java",
                """
@@ -961,6 +1024,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
 
+  @Test
   public void testInsideParameterList() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
@@ -1016,11 +1080,13 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                      }}""");
   }
 
+  @Test
   public void testJavaDocSplitWhenLeadingAsterisksAreDisabled() throws Exception {
     JavaCodeStyleSettings.getInstance(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED = false;
     doTest();
   }
 
+  @Test
   public void testInsideJavadocParameterWithCodeStyleToAvoidAlignment() {
     // Inspired by IDEA-75802
     JavaCodeStyleSettings.getInstance(getProject()).JD_ALIGN_PARAM_COMMENTS = false;
@@ -1046,6 +1112,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterInsideAnnotationParameters() {
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
@@ -1099,6 +1166,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testEnterInsideAnnotationParameters_AfterNameValuePairBeforeLparenth() {
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
@@ -1127,6 +1195,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  @Test
   public void testEnterAfterFirstAnnotationOfRecordComponent() {
     doTextTest("java",
       """
@@ -1145,6 +1214,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterAfterLastAnnotationOfRecordComponent() {
     doTextTest("java",
                """
@@ -1163,6 +1233,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterBeforeAnnotationOfRecordComponent() {
     doTextTest("java",
                """
@@ -1181,6 +1252,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterAfterIdentifierOfRecordComponent() {
     doTextTest("java",
                """
@@ -1199,6 +1271,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterAfterTheFirstAnnotationBeforePackage() {
     doTextTest("java",
                """
@@ -1213,6 +1286,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterBetweenAnnotationBeforePackage() {
     doTextTest("java",
                """
@@ -1229,6 +1303,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
     );
   }
 
+  @Test
   public void testEnterAfterTheLastAnnotationBeforePackage() {
     doTextTest("java",
                """

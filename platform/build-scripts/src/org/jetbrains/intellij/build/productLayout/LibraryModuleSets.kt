@@ -22,7 +22,7 @@ package org.jetbrains.intellij.build.productLayout
  * A library that one plugin uses belongs to that plugin, as private content. A library whose types cross
  * a plugin boundary belongs to the plugin that owns the API, and every dependent plugin reuses that copy.
  * Only when neither route works does the module join a set here, because a set ships it to every product.
- * Read `build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md`.
+ * Read `build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md`.
  *
  * **How to regenerate XML files:**
  * - IDE: Run configuration "Generate Product Layouts"

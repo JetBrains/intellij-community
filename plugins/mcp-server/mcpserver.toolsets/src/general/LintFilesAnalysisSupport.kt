@@ -11,6 +11,8 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.mcpserver.McpLintFilesPreparation
+import com.intellij.mcpserver.McpLintFilesPreparer
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.mcpToolCallIdOrNull
 import com.intellij.mcpserver.statistics.logLintFilesFinished
@@ -21,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
@@ -42,13 +45,17 @@ import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -90,14 +97,18 @@ data class LintFilesTelemetry(
   @JvmField val more: Boolean,
 )
 
+/**
+ * At the request deadline lint stops and reports the unfinished files as timed out.
+ * The analysis timeout cancels the run half a headroom later, so these reports are in; the other half is for the response.
+ */
 @Internal
 fun createLintFilesBatchTimeouts(timeoutMs: Int, currentTimeMs: Long = System.currentTimeMillis()): LintFilesBatchTimeouts {
   val headroomMs = (timeoutMs / LINT_FILES_TIMEOUT_HEADROOM_DIVISOR)
     .coerceIn(LINT_FILES_MIN_TIMEOUT_HEADROOM_MILLISECONDS, LINT_FILES_MAX_TIMEOUT_HEADROOM_MILLISECONDS)
-  val analysisTimeoutMs = (timeoutMs - headroomMs).coerceAtLeast(0)
+  val deadlineMs = (timeoutMs - headroomMs).coerceAtLeast(0)
   return LintFilesBatchTimeouts(
-    analysisTimeoutMs = analysisTimeoutMs,
-    timeoutContext = LintFilesTimeoutContext(requestDeadlineMs = currentTimeMs + analysisTimeoutMs),
+    analysisTimeoutMs = (timeoutMs - headroomMs / 2).coerceAtLeast(0),
+    timeoutContext = LintFilesTimeoutContext(requestDeadlineMs = currentTimeMs + deadlineMs),
   )
 }
 
@@ -165,14 +176,36 @@ internal suspend fun collectLintFiles(
     return
   }
 
-  collectLintFileResults(
-    project = project,
-    resolvedFiles = resolvedFiles,
-    minSeverity = request.minSeverity,
-    inspectionProfile = project.serviceAsync<InspectionProjectProfileManager>().currentProfile,
-    onFileResult = onFileResult,
-    timeoutContext = timeoutContext,
-  )
+  // Preparers, such as a language-server client, get the files ready while lint runs.
+  // A file is analyzed once every preparer has it ready; a file not ready by the request deadline is reported as timed out.
+  val preparations = ArrayList<McpLintFilesPreparation>()
+  try {
+    val virtualFiles = resolvedFiles.map { it.virtualFile }
+    for (preparer in McpLintFilesPreparer.EP.extensionList) {
+      preparations.add(preparer.prepare(project, virtualFiles))
+    }
+
+    collectLintFileResults(
+      project = project,
+      resolvedFiles = resolvedFiles,
+      minSeverity = request.minSeverity,
+      inspectionProfile = project.serviceAsync<InspectionProjectProfileManager>().currentProfile,
+      onFileResult = onFileResult,
+      timeoutContext = timeoutContext,
+      awaitReady = if (preparations.isEmpty()) null else { file -> for (preparation in preparations) preparation.awaitReady(file) },
+    )
+  }
+  finally {
+    for (preparation in preparations) {
+      try {
+        preparation.close()
+      }
+      catch (e: Exception) {
+        if (e is ControlFlowException) throw e
+        LOG.warn("lint_files preparer failed to release files", e)
+      }
+    }
+  }
 }
 
 @TestOnly
@@ -280,6 +313,7 @@ suspend fun collectLintFileResults(
   inspectionProfile: InspectionProfile,
   onFileResult: (AnalysisToolset.LintFileResult) -> Unit,
   timeoutContext: LintFilesTimeoutContext? = null,
+  awaitReady: (suspend (VirtualFile) -> Unit)? = null,
 ) {
   if (resolvedFiles.isEmpty()) {
     return
@@ -291,7 +325,7 @@ suspend fun collectLintFileResults(
   val codeAnalyzerSettings = serviceAsync<DaemonCodeAnalyzerSettings>()
   // `runMainPasses()` is serialized separately; file preparation and result delivery can proceed concurrently.
   // Callers must treat `onFileResult` as a concurrent callback and restore request ordering themselves when needed.
-  resolvedFiles.forEachConcurrent { resolvedFile ->
+  val analyze: suspend (ResolvedLintFile) -> Unit = { resolvedFile ->
     val result = collectLintFileResult(
       project = project,
       resolvedFile = resolvedFile,
@@ -305,6 +339,38 @@ suspend fun collectLintFileResults(
     )
     onFileResult(result)
   }
+  if (awaitReady == null) {
+    resolvedFiles.forEachConcurrent(action = analyze)
+    return
+  }
+
+  // Each file waits to be ready outside the analysis slots: a file that never gets ready holds no slot.
+  val analysisSlots = Semaphore(Runtime.getRuntime().availableProcessors())
+  coroutineScope {
+    for (resolvedFile in resolvedFiles) {
+      launch {
+        if (awaitLintFileReady(resolvedFile.virtualFile, awaitReady, timeoutContext)) {
+          analysisSlots.withPermit { analyze(resolvedFile) }
+        }
+        else {
+          onFileResult(createTimedOutLintFileResult(resolvedFile.relativePath))
+        }
+      }
+    }
+  }
+}
+
+private suspend fun awaitLintFileReady(
+  file: VirtualFile,
+  awaitReady: suspend (VirtualFile) -> Unit,
+  timeoutContext: LintFilesTimeoutContext?,
+): Boolean {
+  if (timeoutContext == null) {
+    awaitReady(file)
+    return true
+  }
+  val remainingMs = (timeoutContext.requestDeadlineMs - System.currentTimeMillis()).coerceAtLeast(0)
+  return withTimeoutOrNull(remainingMs.milliseconds) { awaitReady(file) } != null
 }
 
 private suspend fun collectLintFileResult(

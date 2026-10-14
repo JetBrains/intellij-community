@@ -13,11 +13,11 @@
     <!-- endregion -->
   </content>
   <!-- region additional -->
-  <content>
-    <module name="intellij.embedded.notSeparate" loading="on-demand"/>
-  </content>
   <content namespace="jetbrains">
     <module name="intellij.embedded.existing" required-if-available="intellij.embedded.noPackage"/>
+  </content>
+  <content>
+    <module name="intellij.embedded.notSeparate" loading="on-demand"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

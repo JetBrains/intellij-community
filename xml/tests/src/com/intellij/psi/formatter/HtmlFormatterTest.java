@@ -17,6 +17,7 @@ package com.intellij.psi.formatter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,9 +25,12 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class HtmlFormatterTest extends XmlFormatterTestBase {
   @Override
   protected String getBasePath() {
@@ -38,6 +42,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     return "html";
   }
 
+  @Test
   public void test1() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_BLANK_LINES = 0;
@@ -52,24 +57,29 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test2() throws Exception {
     doTest();
   }
 
+  @Test
   public void test3() throws Exception {
     doTest();
   }
 
+  @Test
   public void test4() throws Exception {
     doTest();
   }
 
+  @Test
   public void test5() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTest();
   }
 
+  @Test
   public void test6() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     getSettings().setDefaultRightMargin(140);
@@ -80,6 +90,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test7() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     getSettings().setDefaultRightMargin(140);
@@ -90,6 +101,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test8() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     getSettings().setDefaultRightMargin(140);
@@ -101,6 +113,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test9() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     getSettings().setDefaultRightMargin(140);
@@ -113,6 +126,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test10() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
@@ -125,6 +139,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test11() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
@@ -135,6 +150,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test12() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
@@ -145,6 +161,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test13() {
     getHtmlSettings().HTML_KEEP_LINE_BREAKS = false;
     doTextTest("""
@@ -161,6 +178,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  </root>""");
   }
 
+  @Test
   public void testSpaces() {
     doTextTest("<div> text <div/> text <div> text </div> </div>",
                """
@@ -171,6 +189,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  </div>""");
   }
 
+  @Test
   public void testClosingDivOnNextLine() {
     //getSettings().HTML_PLACE_ON_NEW_LINE += ",div";
     doTextTest("<div>ReSharper</div>", "<div>ReSharper</div>");
@@ -178,6 +197,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTextTest("<div>Re\nSharper </div>", "<div>Re\n    Sharper\n</div>");
   }
 
+  @Test
   public void testLineFeedAfterWrappedTag() {
     doTextTest("<html><body><table></table></body></html>", """
       <html>
@@ -216,6 +236,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   }
 
+  @Test
   public void testSCR3654() {
     getSettings().setDefaultRightMargin(5);
     getHtmlSettings().HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -238,34 +259,42 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       </html>""");
   }
 
+  @Test
   public void testBody() throws Exception {
     doTest();
   }
 
+  @Test
   public void testDontAddBreaksInside() throws Exception {
     doTest();
   }
 
+  @Test
   public void testRemoveSpacesBeforeSpanInBody() throws Exception {
     doTest();
   }
 
+  @Test
   public void testH1() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSmall() throws Exception {
     doTest();
   }
 
+  @Test
   public void testTableformatting() throws Exception {
     doTest();
   }
 
+  @Test
   public void testUnknownScriptFormatting() throws Exception  {
     doTest();
   }
 
+  @Test
   public void testHtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
       """
@@ -276,14 +305,17 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
         <p>ntent here</p>
         </body>
         </html>""";
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.html", fileText);
-    final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
-    CodeStyleManager.getInstance(getProject()).reformatRange(
-      bodyTag,
-      bodyTag.getTextRange().getStartOffset(),
-      bodyTag.getTextRange().getEndOffset());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.html", fileText);
+      final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
+      CodeStyleManager.getInstance(getProject()).reformatRange(
+        bodyTag,
+        bodyTag.getTextRange().getStartOffset(),
+        bodyTag.getTextRange().getEndOffset());
+    });
   }
 
+  @Test
   public void testXhtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
       """
@@ -294,19 +326,23 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
         <p>ntent here</p>
         </body>
         </html>""";
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xhtml", fileText);
-    final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
-    CodeStyleManager.getInstance(getProject()).reformatRange(
-      bodyTag,
-      bodyTag.getTextRange().getStartOffset(),
-      bodyTag.getTextRange().getEndOffset());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xhtml", fileText);
+      final XmlTag bodyTag = file.getDocument().getRootTag().getSubTags()[1];
+      CodeStyleManager.getInstance(getProject()).reformatRange(
+        bodyTag,
+        bodyTag.getTextRange().getStartOffset(),
+        bodyTag.getTextRange().getEndOffset());
+    });
 
   }
 
+  @Test
   public void testInvalidChar() throws Exception {
     doTest();
   }
 
+  @Test
   public void testIndent() throws Exception {
     CommonCodeStyleSettings.IndentOptions htmlIndentOptions = getSettings().getCommonSettings(HTMLLanguage.INSTANCE).getIndentOptions();
     assert  htmlIndentOptions != null : "HTML Indent options not found!";
@@ -323,6 +359,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  @Test
   public void testWeb456() {
     doTextTest(
       """
@@ -349,6 +386,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testWeb2405() {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     int noIndentMinLines = settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
@@ -383,6 +421,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  @Test
   public void testWeb12840() {
     doTextTest(
       """
@@ -399,6 +438,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testWeb16223() {
     doTextTest(
       """
@@ -419,6 +459,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testWeb12937() {
     doTextTest(
       """
@@ -435,11 +476,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  @Override
-  protected boolean doCheckDocumentUpdate() {
-    return "Performance".equals(getTestName(false));
-  }
-
+  @Test
   public void test10809() {
     doTextTest(
       """
@@ -480,6 +517,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testWeb18909() {
     doTextTest("""
                  <!doctype html>
@@ -509,6 +547,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  </html>""");
   }
 
+  @Test
   public void testSingleQuotes() throws Exception {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     CodeStyleSettings.QuoteStyle quoteStyle = settings.HTML_QUOTE_STYLE;
@@ -524,6 +563,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  @Test
   public void testWeb18213() {
     doTextTest(
       """
@@ -544,6 +584,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testSpaceInEmptyTag() {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
@@ -557,6 +598,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  <div class="notEmpty"></div>""");
   }
 
+  @Test
   public void testMultilineTags_NewlinesBeforeAndAfterAttributes() {
     final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;

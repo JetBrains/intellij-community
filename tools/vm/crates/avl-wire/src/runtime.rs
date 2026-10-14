@@ -26,7 +26,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 7;
+pub const SCHEMA_VERSION: u32 = 8;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -72,6 +72,9 @@ pub mod code {
     /// too. The daemon joins the destination onto the plugin directory of the IDE context, so one that escapes is a
     /// write outside that directory.
     pub const PLUGIN_DESTINATION_INVALID: &str = "daemon_runtime_plugin_destination_invalid";
+    /// A JBR directory that is absolute or contains `..`. The controller joins it onto the distribution home, so a
+    /// directory that escapes stages a JVM from outside the distribution.
+    pub const JBR_DIRECTORY_INVALID: &str = "daemon_runtime_jbr_directory_invalid";
 }
 
 /// The token the descriptor's flags carry where the host runfiles root belongs.
@@ -141,21 +144,23 @@ pub struct DevDist {
     pub home: RuntimeFile,
 }
 
-/// The runtime the guest unpacks, and the policy that says how.
+/// The JBR of the distribution, which the daemon JVM runs on. The guest copies it into the generation of the daemon.
 ///
-/// `preloaded_only` says the guest may use only a JBR its image already holds. It is required rather than
-/// defaulted: on this field the difference between "false" and "not stated" is a guest that downloads a runtime
-/// on a worker that has no network.
+/// `directory` is the slash path of the JBR below [`DevDist::home`]: `jbr` on Linux, and `Contents/jbr` for a macOS
+/// distribution, whose IDE home is `Contents`. It is the production place of the JBR.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Jbr {
-    pub archive: RuntimeFile,
-    /// Empty is legal: a Linux JBR's java is directly under the unpacked root.
+    #[serde(deserialize_with = "non_empty")]
+    pub directory: String,
+    /// Empty is legal: the `bin/java` of a Linux JBR is directly below `directory`.
     pub java_home_suffix: String,
-    pub manifest: RuntimeFile,
     pub platform: String,
-    pub preloaded_only: bool,
 }
+
+/// The keys of the `jbr` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
+/// Starlark rule to them.
+pub const JBR_SECTION_FIELDS: [&str; 3] = ["directory", "javaHomeSuffix", "platform"];
 
 /// The keys of the `ide` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
@@ -323,9 +328,9 @@ fn descriptor_error(code: &'static str, descriptor_path: &str, detail: &str) -> 
 /// Reads and fail-closed validates the Bazel-owned daemon launch contract.
 ///
 /// `expected_jbr_platform` is the *guest's*, and checking it here is what keeps the wrong configuration from being
-/// staged silently. A darwin descriptor handed to a Linux worker declares `Contents/Home` as its Java-home suffix,
-/// and that path does exist inside the macOS tarball, so staging succeeds and the first complaint is an
-/// exec-format error from a daemon that has already been told it started.
+/// staged silently. A darwin descriptor handed to a Linux worker names a macOS distribution, whose JBR does hold
+/// `Contents/Home/bin/java`, so staging succeeds and the first complaint is an exec-format error from a daemon that
+/// has already been told it started.
 ///
 /// The version and the kind are read before the typed decode, so a document of another vintage is named as such
 /// rather than as a list of fields it lacks.
@@ -405,6 +410,12 @@ pub fn parse_runtime_descriptor(
             &format!("ide.projectRoot {} escapes the project archive", descriptor.ide.project_root),
         ));
     }
+    if escapes(&descriptor.jbr.directory) {
+        return Err(fail(
+            code::JBR_DIRECTORY_INVALID,
+            &format!("jbr.directory {} escapes the distribution home", descriptor.jbr.directory),
+        ));
+    }
     let mut destinations = HashSet::new();
     for (index, plugin) in descriptor.ide.plugins.iter().enumerate() {
         if !is_plugin_destination(&plugin.destination) {
@@ -435,8 +446,6 @@ pub fn parse_runtime_descriptor(
             &descriptor.dev_dist.config,
             &descriptor.dev_dist.fingerprint,
             &descriptor.dev_dist.home,
-            &descriptor.jbr.archive,
-            &descriptor.jbr.manifest,
             &descriptor.ide.flags_file,
             &descriptor.ide.project_archive,
         ])
@@ -463,8 +472,6 @@ fn labelled_files(descriptor: &RuntimeDescriptor) -> Vec<(String, &RuntimeFile)>
         ("devDist.config".to_owned(), &descriptor.dev_dist.config),
         ("devDist.fingerprint".to_owned(), &descriptor.dev_dist.fingerprint),
         ("devDist.home".to_owned(), &descriptor.dev_dist.home),
-        ("jbr.archive".to_owned(), &descriptor.jbr.archive),
-        ("jbr.manifest".to_owned(), &descriptor.jbr.manifest),
         ("ide.flagsFile".to_owned(), &descriptor.ide.flags_file),
         ("ide.projectArchive".to_owned(), &descriptor.ide.project_archive),
     ]);

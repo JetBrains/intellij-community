@@ -72,10 +72,10 @@ Three mechanisms:
   `contrib/Angular/.../web-types/angular-base@0.0.0.web-types.json`.
 
 Loading pipeline: `WebTypesDefinitionsEP`
-(`community/platform/polySymbols/src-web/com/intellij/polySymbols/webTypes/impl/WebTypesDefinitionsEP.kt`)
+(`community/platform/polySymbols/web/src/com/intellij/polySymbols/webTypes/impl/WebTypesDefinitionsEP.kt`)
 deserializes the JSON (validating `name` + a parseable `SemVer` version) into a `WebTypes`/
 `Contributions` model. `WebTypesScopeBase`
-(`community/platform/polySymbols/src-web/.../webTypes/WebTypesScopeBase.kt`, extending
+(`community/platform/polySymbols/web/src/.../webTypes/WebTypesScopeBase.kt`, extending
 `StaticPolySymbolScopeBase`) builds an in-memory contribution index and exposes it through the
 normal `getMatchingSymbols`/`getSymbols`/`getCodeCompletions` `PolySymbolScope` contract.
 

@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -21,27 +23,34 @@ class CriDiagnosticAction : AnAction(), DumbAware {
         val project = e.project ?: return
 
         val diagnosticInfo = buildString {
-            appendLine("=== Kotlin CRI Diagnostics ===")
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.header"))
             appendLine()
+            val moduleCount = ModuleManager.getInstance(project).modules.size
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.modules.total", moduleCount))
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.indexing", DumbService.isDumb(project)))
 
             val kotlinCompilerReferenceIndexService = KotlinCompilerReferenceIndexService.getInstanceIfEnabled(project) ?: run {
-                appendLine("Kotlin Compiler Reference Index is disabled")
+                appendLine(KotlinReferenceIndexBundle.message("diagnostics.disabled"))
                 return@buildString
             }
 
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.build.active", kotlinCompilerReferenceIndexService.isBuildActive()))
             val dirtyModules = kotlinCompilerReferenceIndexService.dirtyModules() ?: run {
-                appendLine("Kotlin CRI storage is not yet initialized")
+                appendLine(KotlinReferenceIndexBundle.message("diagnostics.uninitialized"))
                 return@buildString
             }
 
-            if (kotlinCompilerReferenceIndexService.isBuildActive()) {
-                appendLine("Build is in progress, CRI is not available")
-                return@buildString
-            }
+            val dirtyModuleCount = dirtyModules.size
+            val cleanModuleCount = moduleCount - dirtyModuleCount
+            val dirtyPercentage = if (moduleCount == 0) 0.0 else dirtyModuleCount * 100.0 / moduleCount
+            val cleanPercentage = if (moduleCount == 0) 0.0 else cleanModuleCount * 100.0 / moduleCount
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.modules.dirty", dirtyModuleCount, dirtyPercentage))
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.modules.clean", cleanModuleCount, cleanPercentage))
+            appendLine()
 
-            appendLine("Dirty Modules (${dirtyModules.size}):")
+            appendLine(KotlinReferenceIndexBundle.message("diagnostics.modules.dirty.list"))
             if (dirtyModules.isEmpty()) {
-                appendLine("  (none - all modules are up-to-date)")
+                appendLine(KotlinReferenceIndexBundle.message("diagnostics.modules.dirty.none"))
             } else {
                 dirtyModules.sortedBy { it.name }.forEach { moduleName ->
                     appendLine("  - $moduleName")

@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -106,18 +107,25 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       }
       else if (selectedValue == IGNORE_FILE) {
         markIgnored(myVirtualFile, myProject);
-        return doFinalStep(() -> myService.reset());
+        return doFinalStep(() -> updateFile());
       }
       else if (selectedValue == STOP_IGNORE_FILE) {
         unmarkIgnored(myVirtualFile, myProject);
-        return doFinalStep(() -> myService.reset());
+        return doFinalStep(() -> updateFile());
       }
       else {
         setMapping(selectedValue, myVirtualFile, myProject);
-        return doFinalStep(() -> myService.reset());
+        return doFinalStep(() -> updateFile());
       }
     }
     return PopupStep.FINAL_CHOICE;
+  }
+
+  private void updateFile() {
+    myService.reset();
+    if (myVirtualFile != null) {
+      VirtualFileAppearanceListener.fireVirtualFileAppearanceChanged(myVirtualFile);
+    }
   }
 
   protected void runSchemaEditorForCurrentFile() {

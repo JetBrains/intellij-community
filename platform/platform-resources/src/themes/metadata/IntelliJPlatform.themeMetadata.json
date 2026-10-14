@@ -2702,6 +2702,16 @@
       "since": "2019.2"
     },
     {
+      "key": "ToolTip.borderCornerRadius",
+      "description": "The corner radius of a one-line tooltip",
+      "since": "2022.3"
+    },
+    {
+      "key": "ToolTip.multilineBorderCornerRadius",
+      "description": "The corner radius of a tooltip with a header, a description, or a link. The default is ToolTip.borderCornerRadius",
+      "since": "2026.3"
+    },
+    {
       "key": "ToolTip.Actions.background",
       "description": "Actions in editor tooltips for inspection errors."
     },

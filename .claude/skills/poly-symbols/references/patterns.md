@@ -31,7 +31,7 @@ almost 1:1 (`template`/`items`/`delegate`/`repeat`/`required`).
 
 ## The pattern DSL
 
-`community/platform/polySymbols/src/com/intellij/polySymbols/patterns/PolySymbolPatternDsl.kt`:
+`community/platform/polySymbols/shared/src/com/intellij/polySymbols/patterns/PolySymbolPatternDsl.kt`:
 
 ```kotlin
 val pattern = polySymbolPattern {
@@ -146,7 +146,7 @@ without duplicating data. Example from the docs: message-bundle property keys re
 string literals — a scope contributor supplies both the real symbols *and* a reference symbol that
 maps one qualified kind onto another.
 
-`community/platform/polySymbols/src/com/intellij/polySymbols/utils/ReferencingPolySymbol.kt`
+`community/platform/polySymbols/shared/src/com/intellij/polySymbols/utils/ReferencingPolySymbol.kt`
 builds exactly this: a `PolySymbolWithPattern` whose pattern is, conceptually,
 `group { symbols { kinds.forEach { from(it) } }; symbolReference(name) }` — any symbol of the listed
 other kinds matches, and a reference/usage gets registered under the given name.

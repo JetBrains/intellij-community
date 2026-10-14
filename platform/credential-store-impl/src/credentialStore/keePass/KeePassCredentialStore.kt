@@ -17,7 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -73,7 +73,7 @@ internal class KeePassCredentialStore(
   }
 
   init {
-    messageBusConnection?.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    messageBusConnection?.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         if (events.any { (it is VFileContentChangeEvent || it is VFileCreateEvent) && it.path.toNioPathOrNull() == dbFile }) {
           val currentTimestamp = Files.getLastModifiedTime(dbFile).toMillis()

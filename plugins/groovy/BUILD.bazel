@@ -451,6 +451,8 @@ jvm_library(
         "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//platform/bazel-runfiles",
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/workspace/jps",

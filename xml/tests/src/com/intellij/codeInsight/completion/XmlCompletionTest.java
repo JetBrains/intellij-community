@@ -181,6 +181,32 @@ public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     checkResultByFile(getTestName(false) + "_after.xml");
   }
 
+  public void testCloseTagWithRequiredAndOptionalAttributes() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+    String dtd = """
+      <!DOCTYPE methods [
+        <!ELEMENT methods (include|exclude|single)*>
+        <!ELEMENT include ANY>
+        <!ATTLIST include name CDATA #REQUIRED description CDATA #IMPLIED>
+        <!ELEMENT exclude ANY>
+        <!ATTLIST exclude name CDATA #REQUIRED>
+        <!ELEMENT single EMPTY>
+        <!ATTLIST single name CDATA #REQUIRED description CDATA #IMPLIED>
+      ]>
+      """;
+    doTestTagWithRequiredAttribute(dtd, "inc", "<include name=\"foo\"<caret>></include>");
+    doTestTagWithRequiredAttribute(dtd, "exc", "<exclude name=\"foo\"><caret></exclude>");
+    doTestTagWithRequiredAttribute(dtd, "sin", "<single name=\"foo\"<caret>/>");
+  }
+
+  private void doTestTagWithRequiredAttribute(String dtd, String prefix, String expectedTag) {
+    myFixture.configureByText("foo.xml", dtd + "<methods><" + prefix + "<caret></methods>");
+    myFixture.completeBasic();
+    myFixture.type("foo");
+    TemplateManagerImpl.getTemplateState(myFixture.getEditor()).nextTab();
+    myFixture.checkResult(dtd + "<methods>" + expectedTag + "</methods>");
+  }
+
   private void configureByFile(String s) {
     myFixture.configureByFile(s);
     myFixture.completeBasic();

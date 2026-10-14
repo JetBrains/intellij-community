@@ -105,19 +105,29 @@ def maven_coordinates_urls(repository, coordinates):
         urls.append(maven_url(repository, parts[0], parts[1], parts[2], "jar"))
     return urls
 
-# JBRResolver.jbrArchiveFileName
-def jbr_url(platform, runtime_build):
-    parts = platform_parts(platform)
+def _runtime_build_parts(runtime_build):
     major_version, separator, build_number = runtime_build.partition("b")
     if not separator or not major_version or not build_number:
         fail("'runtimeBuild' does not match '<update>b<build_number>': '%s'" % runtime_build)
-    return "%s/jbrsdk_jcef-%s-%s-%s-b%s.tar.gz" % (
-        INTELLIJ_JBR_URL,
-        major_version,
-        JBR_OS_SUFFIX[parts.os],
-        parts.arch,
-        build_number,
-    )
+    return struct(version = major_version, build_number = build_number)
+
+def _jbr_archive_root(prefix, platform, runtime_build):
+    parts = platform_parts(platform)
+    build = _runtime_build_parts(runtime_build)
+    return "%s%s-%s-%s-b%s" % (prefix, build.version, JBR_OS_SUFFIX[parts.os], parts.arch, build.build_number)
+
+# JBRResolver.jbrArchiveFileName
+def jbr_url(platform, runtime_build):
+    return "%s/%s.tar.gz" % (INTELLIJ_JBR_URL, _jbr_archive_root("jbrsdk_jcef-", platform, runtime_build))
+
+def jbr_runtime_archive_root(platform, runtime_build):
+    """The one root directory of the [jbr_runtime_url] archive, such as `jbr-25.0.4.1-osx-aarch64-b635.70`."""
+    return _jbr_archive_root("jbr-", platform, runtime_build)
+
+# BundledRuntimeImpl.archiveName
+def jbr_runtime_url(platform, runtime_build):
+    """The vanilla runtime that a production distribution bundles as `jbr`, for one [HOST_PLATFORMS] entry."""
+    return "%s/%s.tar.gz" % (INTELLIJ_JBR_URL, jbr_runtime_archive_root(platform, runtime_build))
 
 # CommunityRepositoryModules.jcefDownloadUrl
 def jcef_url(platform, jcef_build):
@@ -209,7 +219,7 @@ filegroup(
     name = "files",
     srcs = files,
 )
-""" % repr(["BUILD", "BUILD.bazel"] + repository_ctx.attr.excludes),
+""" % repr(["BUILD", "BUILD.bazel", "REPO.bazel"] + repository_ctx.attr.excludes),
     )
     return repository_ctx.repo_metadata(reproducible = bool(repository_ctx.attr.sha256) or bool(result.sha256))
 
@@ -226,7 +236,8 @@ dev_launch_extracted_repo = repository_rule(
     implementation = _extracted_repo_impl,
     environ = [DEFAULT_CANONICAL_ID_ENV],
     attrs = {
-        # globs of the extracted files that the `files` filegroup leaves out, beside the BUILD files
+        # globs of the extracted files that the `files` filegroup leaves out, beside the BUILD files and the `REPO.bazel`
+        # boundary file that Bazel writes into the repository
         "excludes": attr.string_list(),
         # optional, exactly as in dev_launch_deps_repo: these URLs carry their version, so the same URL is the same
         # artifact and an unpinned fetch costs a re-download only when the version moves
@@ -383,6 +394,11 @@ MAVEN_DEV_LAUNCH_REPOS = _shared_repos(["maven", "maven3_libraries", "maven_tele
 # `bazel run` dev launch runs on the JVM Bazel gave it and never touches these 400 MB.
 COMMUNITY_IDE_STARTER_REPOS = _per_platform_repos("jbr")
 
+def jbr_runtime_repository_label(platform):
+    """The `files` filegroup of the unpacked production runtime of one [HOST_PLATFORMS] entry."""
+    platform_parts(platform)
+    return Label("@dev_launch_%s_jbr_runtime_extracted//:files" % platform)
+
 def _dev_launch_deps_community_impl(module_ctx):
     community = read_properties(module_ctx, _COMMUNITY_DEPENDENCIES)
 
@@ -426,6 +442,20 @@ def _dev_launch_deps_community_impl(module_ctx):
     dev_launch_extracted_repo(
         name = "dev_launch_restarter_extracted",
         url = restarter_url,
+    )
+
+    # NativeBinaryDownloader.getLauncher - one archive with the native launcher of every platform, unpacked.
+    # The plan states the launcher facts of each product. The `platform_assets` component of a split distribution
+    # derives the files from them (`_launcher_files`) and places each one from this repository.
+    dev_launch_extracted_repo(
+        name = "dev_launch_launcher_extracted",
+        url = maven_url(
+            INTELLIJ_DEPENDENCIES_URL,
+            "org.jetbrains.intellij.deps",
+            "launcher",
+            pinned(community, _COMMUNITY_DEPENDENCIES, "launcherBuild"),
+            "tar.gz",
+        ),
     )
 
     # BundledMavenDownloader.downloadMavenDistribution - the one archive of `:files`, so a plugin layout names it
@@ -484,6 +514,14 @@ def _dev_launch_deps_community_impl(module_ctx):
         dev_launch_deps_repo(
             name = "dev_launch_%s_jbr" % platform,
             urls = [jbr_url(platform, runtime_build)],
+        )
+
+        # BundledRuntimeImpl.archiveName. The runtime that a production distribution bundles as `jbr`, unpacked.
+        dev_launch_extracted_repo(
+            name = "dev_launch_%s_jbr_runtime_extracted" % platform,
+            url = jbr_runtime_url(platform, runtime_build),
+            strip_prefix = jbr_runtime_archive_root(platform, runtime_build),
+            excludes = ["**/.DS_Store"],
         )
 
     # the same watched inputs always produce the same repositories, so this stays out of MODULE.bazel.lock

@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.universal.NioPathCompletion.Trigger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.DebouncedUpdates
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   Lets a caller open a remote connection off the EDT.
  * @param homeDirectory returns the absolute home directory text for the `~` expansion, or null when the home is unknown.
  *   Runs in a background coroutine after [prepareCompletion]. The completion calls it once and keeps the result.
- * @param onPreparationFailed gets the failure of [prepareCompletion], and null when a new preparation starts. Runs on the EDT.
+ *   A failure of [prepareCompletion] or [homeDirectory] shows in the completion popup.
  */
 @ApiStatus.Internal
 class NioPathTextField(
@@ -50,7 +49,6 @@ class NioPathTextField(
   pathParser: (String) -> Path? = { text -> runCatching { Path.of(text) }.getOrNull()?.takeIf { it.isAbsolute } },
   prepareCompletion: suspend () -> Unit = {},
   homeDirectory: suspend () -> String? = { null },
-  onPreparationFailed: (Throwable?) -> Unit = {},
 ) : JBTextField() {
 
   private val popup = NioPathCompletionPopup(owner = this, location = ::popupLocation, onChoose = ::chooseSelected)
@@ -64,7 +62,6 @@ class NioPathTextField(
     prepareCompletion = prepareCompletion,
     homeDirectory = homeDirectory,
     onStateChanged = ::showState,
-    onPreparationFailed = onPreparationFailed,
   )
 
   // Set while the completion edits the document itself, so the edit does not re-trigger the completion.
@@ -116,6 +113,8 @@ class NioPathTextField(
     updateDocument { super.setText(text) }
   }
 
+  suspend fun expandHome(text: String): String = completion.expandHome(text)
+
   override fun removeNotify() {
     cancelCompletion()
     super.removeNotify()
@@ -155,6 +154,7 @@ class NioPathTextField(
       is State.Loading -> popup.showLoading(state.progressText)
       State.NoResults -> popup.showNoResults()
       is State.Suggestions -> popup.showSuggestions(state.matching)
+      is State.Failed -> popup.showFailed()
     }
   }
 

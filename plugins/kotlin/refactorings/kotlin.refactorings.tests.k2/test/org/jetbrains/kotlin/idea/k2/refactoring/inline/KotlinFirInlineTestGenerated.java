@@ -2780,4 +2780,352 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inline/superClass")
+    public static class SuperClass extends AbstractKotlinFirInlineTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractOverride.kt")
+        public void testAbstractOverride() throws Exception {
+            runTest("testData/inline/superClass/abstractOverride.kt");
+        }
+
+        @TestMetadata("ambiguousUsage.kt")
+        public void testAmbiguousUsage() throws Exception {
+            runTest("testData/inline/superClass/ambiguousUsage.kt");
+        }
+
+        @TestMetadata("anonymousInheritor.kt")
+        public void testAnonymousInheritor() throws Exception {
+            runTest("testData/inline/superClass/anonymousInheritor.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/inline/superClass/companionObject.kt");
+        }
+
+        @TestMetadata("companionObjectImports.kt")
+        public void testCompanionObjectImports() throws Exception {
+            runTest("testData/inline/superClass/companionObjectImports.kt");
+        }
+
+        @TestMetadata("companionObjectInnerClass.kt")
+        public void testCompanionObjectInnerClass() throws Exception {
+            runTest("testData/inline/superClass/companionObjectInnerClass.kt");
+        }
+
+        @TestMetadata("companionObjectMemberClash.kt")
+        public void testCompanionObjectMemberClash() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMemberClash.kt");
+        }
+
+        @TestMetadata("companionObjectMerge.kt")
+        public void testCompanionObjectMerge() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMerge.kt");
+        }
+
+        @TestMetadata("companionObjectMergeIdentity.kt")
+        public void testCompanionObjectMergeIdentity() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeIdentity.kt");
+        }
+
+        @TestMetadata("companionObjectMergeInitialization.kt")
+        public void testCompanionObjectMergeInitialization() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeInitialization.kt");
+        }
+
+        @TestMetadata("companionObjectMergeSupertype.kt")
+        public void testCompanionObjectMergeSupertype() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeSupertype.kt");
+        }
+
+        @TestMetadata("companionObjectMultipleInheritors.kt")
+        public void testCompanionObjectMultipleInheritors() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMultipleInheritors.kt");
+        }
+
+        @TestMetadata("companionObjectSupertype.kt")
+        public void testCompanionObjectSupertype() throws Exception {
+            runTest("testData/inline/superClass/companionObjectSupertype.kt");
+        }
+
+        @TestMetadata("companionObjectTargetObject.kt")
+        public void testCompanionObjectTargetObject() throws Exception {
+            runTest("testData/inline/superClass/companionObjectTargetObject.kt");
+        }
+
+        @TestMetadata("constructorArgumentEvaluation.kt")
+        public void testConstructorArgumentEvaluation() throws Exception {
+            runTest("testData/inline/superClass/constructorArgumentEvaluation.kt");
+        }
+
+        @TestMetadata("constructorArgumentOrder.kt")
+        public void testConstructorArgumentOrder() throws Exception {
+            runTest("testData/inline/superClass/constructorArgumentOrder.kt");
+        }
+
+        @TestMetadata("constructorDefaultArguments.kt")
+        public void testConstructorDefaultArguments() throws Exception {
+            runTest("testData/inline/superClass/constructorDefaultArguments.kt");
+        }
+
+        @TestMetadata("constructorDependentDefault.kt")
+        public void testConstructorDependentDefault() throws Exception {
+            runTest("testData/inline/superClass/constructorDependentDefault.kt");
+        }
+
+        @TestMetadata("constructorExternalProperty.kt")
+        public void testConstructorExternalProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorExternalProperty.kt");
+        }
+
+        @TestMetadata("constructorGenericProperty.kt")
+        public void testConstructorGenericProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorGenericProperty.kt");
+        }
+
+        @TestMetadata("constructorMultipleSubclasses.kt")
+        public void testConstructorMultipleSubclasses() throws Exception {
+            runTest("testData/inline/superClass/constructorMultipleSubclasses.kt");
+        }
+
+        @TestMetadata("constructorMutableProperty.kt")
+        public void testConstructorMutableProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorMutableProperty.kt");
+        }
+
+        @TestMetadata("constructorNameAmbiguity.kt")
+        public void testConstructorNameAmbiguity() throws Exception {
+            runTest("testData/inline/superClass/constructorNameAmbiguity.kt");
+        }
+
+        @TestMetadata("constructorNamedArguments.kt")
+        public void testConstructorNamedArguments() throws Exception {
+            runTest("testData/inline/superClass/constructorNamedArguments.kt");
+        }
+
+        @TestMetadata("constructorParameterShadowing.kt")
+        public void testConstructorParameterShadowing() throws Exception {
+            runTest("testData/inline/superClass/constructorParameterShadowing.kt");
+        }
+
+        @TestMetadata("constructorParameters.kt")
+        public void testConstructorParameters() throws Exception {
+            runTest("testData/inline/superClass/constructorParameters.kt");
+        }
+
+        @TestMetadata("constructorPlainParameters.kt")
+        public void testConstructorPlainParameters() throws Exception {
+            runTest("testData/inline/superClass/constructorPlainParameters.kt");
+        }
+
+        @TestMetadata("constructorPrivateProperty.kt")
+        public void testConstructorPrivateProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorPrivateProperty.kt");
+        }
+
+        @TestMetadata("constructorPropertyArgument.kt")
+        public void testConstructorPropertyArgument() throws Exception {
+            runTest("testData/inline/superClass/constructorPropertyArgument.kt");
+        }
+
+        @TestMetadata("constructorPropertyType.kt")
+        public void testConstructorPropertyType() throws Exception {
+            runTest("testData/inline/superClass/constructorPropertyType.kt");
+        }
+
+        @TestMetadata("constructorSuperProperty.kt")
+        public void testConstructorSuperProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperProperty.kt");
+        }
+
+        @TestMetadata("constructorSuperclassArgument.kt")
+        public void testConstructorSuperclassArgument() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperclassArgument.kt");
+        }
+
+        @TestMetadata("constructorSuperclassEvaluation.kt")
+        public void testConstructorSuperclassEvaluation() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperclassEvaluation.kt");
+        }
+
+        @TestMetadata("constructorUsage.kt")
+        public void testConstructorUsage() throws Exception {
+            runTest("testData/inline/superClass/constructorUsage.kt");
+        }
+
+        @TestMetadata("constructorVararg.kt")
+        public void testConstructorVararg() throws Exception {
+            runTest("testData/inline/superClass/constructorVararg.kt");
+        }
+
+        @TestMetadata("differentSubstitutions.kt")
+        public void testDifferentSubstitutions() throws Exception {
+            runTest("testData/inline/superClass/differentSubstitutions.kt");
+        }
+
+        @TestMetadata("duplicateSupertype.kt")
+        public void testDuplicateSupertype() throws Exception {
+            runTest("testData/inline/superClass/duplicateSupertype.kt");
+        }
+
+        @TestMetadata("emptySuperclass.kt")
+        public void testEmptySuperclass() throws Exception {
+            runTest("testData/inline/superClass/emptySuperclass.kt");
+        }
+
+        @TestMetadata("genericInheritor.kt")
+        public void testGenericInheritor() throws Exception {
+            runTest("testData/inline/superClass/genericInheritor.kt");
+        }
+
+        @TestMetadata("imports.kt")
+        public void testImports() throws Exception {
+            runTest("testData/inline/superClass/imports.kt");
+        }
+
+        @TestMetadata("inaccessibleInitializer.kt")
+        public void testInaccessibleInitializer() throws Exception {
+            runTest("testData/inline/superClass/inaccessibleInitializer.kt");
+        }
+
+        @TestMetadata("incompatibleConstructor.kt")
+        public void testIncompatibleConstructor() throws Exception {
+            runTest("testData/inline/superClass/incompatibleConstructor.kt");
+        }
+
+        @TestMetadata("initializationOrder.kt")
+        public void testInitializationOrder() throws Exception {
+            runTest("testData/inline/superClass/initializationOrder.kt");
+        }
+
+        @TestMetadata("innerClassAmbiguousUsage.kt")
+        public void testInnerClassAmbiguousUsage() throws Exception {
+            runTest("testData/inline/superClass/innerClassAmbiguousUsage.kt");
+        }
+
+        @TestMetadata("innerClassClash.kt")
+        public void testInnerClassClash() throws Exception {
+            runTest("testData/inline/superClass/innerClassClash.kt");
+        }
+
+        @TestMetadata("innerClassConstructorReference.kt")
+        public void testInnerClassConstructorReference() throws Exception {
+            runTest("testData/inline/superClass/innerClassConstructorReference.kt");
+        }
+
+        @TestMetadata("innerClassGeneric.kt")
+        public void testInnerClassGeneric() throws Exception {
+            runTest("testData/inline/superClass/innerClassGeneric.kt");
+        }
+
+        @TestMetadata("innerClassMultipleInheritors.kt")
+        public void testInnerClassMultipleInheritors() throws Exception {
+            runTest("testData/inline/superClass/innerClassMultipleInheritors.kt");
+        }
+
+        @TestMetadata("innerClassOuterThis.kt")
+        public void testInnerClassOuterThis() throws Exception {
+            runTest("testData/inline/superClass/innerClassOuterThis.kt");
+        }
+
+        @TestMetadata("interfaceSupertype.kt")
+        public void testInterfaceSupertype() throws Exception {
+            runTest("testData/inline/superClass/interfaceSupertype.kt");
+        }
+
+        @TestMetadata("labeledThis.kt")
+        public void testLabeledThis() throws Exception {
+            runTest("testData/inline/superClass/labeledThis.kt");
+        }
+
+        @TestMetadata("membersAndTypeReferences.kt")
+        public void testMembersAndTypeReferences() throws Exception {
+            runTest("testData/inline/superClass/membersAndTypeReferences.kt");
+        }
+
+        @TestMetadata("multipleSubclasses.kt")
+        public void testMultipleSubclasses() throws Exception {
+            runTest("testData/inline/superClass/multipleSubclasses.kt");
+        }
+
+        @TestMetadata("namedCompanionObject.kt")
+        public void testNamedCompanionObject() throws Exception {
+            runTest("testData/inline/superClass/namedCompanionObject.kt");
+        }
+
+        @TestMetadata("namedCompanionObjectMerge.kt")
+        public void testNamedCompanionObjectMerge() throws Exception {
+            runTest("testData/inline/superClass/namedCompanionObjectMerge.kt");
+        }
+
+        @TestMetadata("nestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("testData/inline/superClass/nestedClass.kt");
+        }
+
+        @TestMetadata("nestedClassClash.kt")
+        public void testNestedClassClash() throws Exception {
+            runTest("testData/inline/superClass/nestedClassClash.kt");
+        }
+
+        @TestMetadata("nestedClassDeepImports.kt")
+        public void testNestedClassDeepImports() throws Exception {
+            runTest("testData/inline/superClass/nestedClassDeepImports.kt");
+        }
+
+        @TestMetadata("noInheritors.kt")
+        public void testNoInheritors() throws Exception {
+            runTest("testData/inline/superClass/noInheritors.kt");
+        }
+
+        @TestMetadata("objectInheritor.kt")
+        public void testObjectInheritor() throws Exception {
+            runTest("testData/inline/superClass/objectInheritor.kt");
+        }
+
+        @TestMetadata("privateMember.kt")
+        public void testPrivateMember() throws Exception {
+            runTest("testData/inline/superClass/privateMember.kt");
+        }
+
+        @TestMetadata("propertyAccessors.kt")
+        public void testPropertyAccessors() throws Exception {
+            runTest("testData/inline/superClass/propertyAccessors.kt");
+        }
+
+        @TestMetadata("propertyOverride.kt")
+        public void testPropertyOverride() throws Exception {
+            runTest("testData/inline/superClass/propertyOverride.kt");
+        }
+
+        @TestMetadata("superAccessWithoutOverride.kt")
+        public void testSuperAccessWithoutOverride() throws Exception {
+            runTest("testData/inline/superClass/superAccessWithoutOverride.kt");
+        }
+
+        @TestMetadata("superCall.kt")
+        public void testSuperCall() throws Exception {
+            runTest("testData/inline/superClass/superCall.kt");
+        }
+
+        @TestMetadata("superclassAndInterface.kt")
+        public void testSuperclassAndInterface() throws Exception {
+            runTest("testData/inline/superClass/superclassAndInterface.kt");
+        }
+
+        @TestMetadata("transitiveInheritor.kt")
+        public void testTransitiveInheritor() throws Exception {
+            runTest("testData/inline/superClass/transitiveInheritor.kt");
+        }
+
+        @TestMetadata("typeChecksAndClassLiteral.kt")
+        public void testTypeChecksAndClassLiteral() throws Exception {
+            runTest("testData/inline/superClass/typeChecksAndClassLiteral.kt");
+        }
+    }
 }

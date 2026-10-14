@@ -28,9 +28,12 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -127,6 +130,15 @@ public final class VcsImplUtil {
       return !changeListManager.isInUpdate()
              && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
     });
+  }
+
+  /**
+   * Tells if the frame of {@code project} suppresses VCS UI, see {@link ProjectFrameCapability#SUPPRESS_VCS_UI}.
+   */
+  @ApiStatus.Internal
+  public static boolean isVcsUiSuppressed(@NotNull Project project) {
+    return ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class)
+      .has(project, ProjectFrameCapability.SUPPRESS_VCS_UI);
   }
 
   public static @NotNull String loadTextFromBytes(@Nullable Project project, byte @NotNull [] bytes, @NotNull FilePath filePath) {

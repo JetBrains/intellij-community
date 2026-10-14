@@ -1,0 +1,8 @@
+class Child {
+    inner class Reader(val answer: Int)
+}
+
+fun reader(child: Child): Child.Reader {
+    val create = child::Reader
+    return create(42)
+}

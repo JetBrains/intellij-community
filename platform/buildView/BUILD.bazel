@@ -156,6 +156,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/testFramework/buildView",
+        "//platform/testFramework/buildView:buildView_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/core-ui",

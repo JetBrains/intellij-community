@@ -77,9 +77,9 @@ def avl_crate(
     community module (`_CROSS_MODULE_CRATES`).
 
     The test runs through `rust_test_junit`: libtest writes no report, Bazel's own report holds one case for the whole
-    target, and BT counts cases. `AirTestTargetSandboxTest` does not see this test, because it scans `BUILD.bazel`
-    files for rule calls named `*_test`. So nothing gates `test_tags`, and an `external` or `no-sandbox` tag there makes
-    the test uncached.
+    target, and BT counts cases. `AirTestTargetDeclarationTest` does not see this test, because it scans `BUILD.bazel`
+    files for rule calls named `*_test` or `*_test_*`, and this one is `avl_crate`. So nothing gates `test_tags`, and an
+    `external` or `no-sandbox` tag there makes the test uncached.
 
     The library of a crate that is not portable is `manual` and has no `NOT_ON_WINDOWS`, so `//...` does not build it
     for Windows and a guest binary cross-built on a Windows host does not refuse its own library. Its test, its clippy
@@ -130,7 +130,7 @@ def avl_crate(
         test_tags = test_tags,
     )
 
-def avl_crate_test(name, package, data = [], env = {}, size = "small"):
+def avl_crate_test(name, package, data = [], env = {}, size = "small", tags = []):
     """Declares the unit test of the crate in `package` of this workspace again, for a package of the ultimate root.
 
     The test of `avl_crate` cannot have a target of the ultimate root as data, because the community module does not
@@ -143,6 +143,7 @@ def avl_crate_test(name, package, data = [], env = {}, size = "small"):
       data: the files that the test reads at run time.
       env: the environment of the test, such as an `$(rlocationpath ...)` of the caller's data.
       size: the Bazel size of the test.
+      tags: the tags of the test, such as the category tag of the Air area.
     """
     crate = Label("//{}:{}".format(package, package.split("/")[-1]))
     rust_test_junit(
@@ -154,6 +155,7 @@ def avl_crate_test(name, package, data = [], env = {}, size = "small"):
         lint_config = _LINTS,
         rustc_env = {"AVL_PACKAGE": package, "AVL_REPO": crate.repo_name or "_main"},
         size = size,
+        tags = tags,
         target_compatible_with = NOT_ON_WINDOWS,
     )
 

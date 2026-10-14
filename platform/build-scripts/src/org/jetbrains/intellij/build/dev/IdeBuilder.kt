@@ -559,11 +559,7 @@ private fun prepareDevRunDir(request: BuildRequest): Path {
     "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
     else -> request.platformPrefix
   }
-  val productDirSuffix = when {
-    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
-    request.scrambleTool != null -> "-scrambled"
-    else -> ""
-  }
+  val productDirSuffix = if (request.scrambleTool != null) "-scrambled" else ""
   // Keep the product-identifying head (dev-run prefix + product name + suffix) intact, and spend the remaining
   // path-length budget on the classifier, truncating it from the front so its discriminative xxh3 hash tail survives.
   // Truncating the whole string with `takeLast` used to drop the product prefix from the front whenever
@@ -595,8 +591,9 @@ private fun prepareDevRunDir(request: BuildRequest): Path {
 
 /**
  * Writes `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json` of [context] for [os] and
- * [arch] into [runDir], and returns the files it wrote. A complete assembly writes these files, and
- * [renderSplitPlatformResources] writes them for the launch model test.
+ * [arch] into [runDir], and returns the files it wrote. A product with an embedded frontend also gets the vmoptions
+ * file of the frontend in `bin`. A complete assembly writes these files, and [renderSplitPlatformResources] writes them
+ * for the launch model test.
  */
 internal fun writePlatformResourceFiles(context: BuildContext, os: OsFamily, arch: JvmArchitecture, runDir: Path): List<Path> {
   val result = ArrayList<Path>()
@@ -611,6 +608,7 @@ internal fun writePlatformResourceFiles(context: BuildContext, os: OsFamily, arc
   val osDistributionBuilder = getOsDistributionBuilder(os = os, libcImpl = LibcImpl.current(os), context = context)
   if (osDistributionBuilder != null) {
     result.add(osDistributionBuilder.writeVmOptions(binDir))
+    osDistributionBuilder.writeEmbeddedFrontendVmOptions(binDir)?.let(result::add)
     // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
     val productInfoDir = context.paths.tempDir.resolve("product-info").createDirectories()
     val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, arch)
@@ -871,12 +869,7 @@ internal fun createDevBuildContext(
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-    "org.jetbrains.intellij.build.IjLightProperties"
-  }
-  else {
-    productConfiguration.className
-  }
+  val className = productConfiguration.className
   val properties = spanBuilder("create product properties").setAttribute("className", className).use {
     doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
   }

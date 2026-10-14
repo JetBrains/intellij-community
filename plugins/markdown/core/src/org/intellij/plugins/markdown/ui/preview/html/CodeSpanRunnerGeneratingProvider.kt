@@ -6,14 +6,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.gfm.TableAwareCodeSpanGeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandRunnerPreviewExtension
 
 internal class CodeSpanRunnerGeneratingProvider(
   val project: Project,
   val file: VirtualFile
 ): TableAwareCodeSpanGeneratingProvider() {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
-    val codeViewExtension = CommandRunnerExtension.getRunnerByFile(file)
+    val codeViewExtension = MarkdownCommandRunnerPreviewExtension.getByFile(file)
     if (codeViewExtension == null ) {
       super.processNode(visitor, text, node)
       return

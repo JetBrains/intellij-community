@@ -248,6 +248,8 @@ jvm_library(
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//libraries/junit4",

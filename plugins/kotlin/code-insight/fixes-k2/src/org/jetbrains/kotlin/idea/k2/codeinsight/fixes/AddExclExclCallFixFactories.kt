@@ -4,15 +4,18 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNull
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
 import org.jetbrains.kotlin.analysis.api.scopes.scope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -54,8 +57,7 @@ object AddExclExclCallFixFactories {
             is KtArrayAccessExpression -> unwrapped.arrayExpression to false
 
             is KtCallableReferenceExpression -> unwrapped.lhs.let { lhs ->
-                // `String?::length` should not be fixed as `String!!?::length`
-                if (lhs is LeafPsiElement) return emptyList()
+                if (lhs is LeafPsiElement || lhs?.isTypeAliasReference() == true) return emptyList()
 
                 if (lhs != null) {
                     // `foo::bar` -> `foo!!::bar`
@@ -129,6 +131,16 @@ object AddExclExclCallFixFactories {
             emptyList()
         }
     }
+}
+
+context(_: KaSession)
+private fun PsiElement.isTypeAliasReference(): Boolean {
+    val reference = when (this) {
+        is KtNameReferenceExpression -> this
+        is KtDotQualifiedExpression -> selectorExpression as? KtNameReferenceExpression ?: return false
+        else -> return false
+    }
+    return reference.mainReference.resolveToSymbol() is KaTypeAliasSymbol
 }
 
 internal fun PsiElement?.asAddExclExclCallFix(hasImplicitReceiver: Boolean = false) =

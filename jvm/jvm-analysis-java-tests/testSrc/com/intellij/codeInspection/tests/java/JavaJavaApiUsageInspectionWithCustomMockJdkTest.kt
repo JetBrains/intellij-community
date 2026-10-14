@@ -24,7 +24,7 @@ import org.junit.runners.BlockJUnit4ClassRunner
 @Ignore
 @RunWith(BlockJUnit4ClassRunner::class) // disabled because there are currently no tests for a JDK higher than the highest mock JDK
 class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTestBase() {
-  override fun getBasePath(): String = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH
+  override fun getTestDataPath(): String = JavaJvmAnalysisTestUtil.testDataPath
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

@@ -1,0 +1,6 @@
+package base
+
+open class Base {
+}
+
+class Keep

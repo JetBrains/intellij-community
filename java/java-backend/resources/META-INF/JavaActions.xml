@@ -59,6 +59,7 @@
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="InspectCodeActionInPopupMenus"/>
 
     <group id="AnalyzeMenu" popup="true">
+      <override-text place="GoToAction"/>
       <reference ref="InspectCodeGroup"/>
       <separator/>
       <reference ref="AnalyzeActions"/>
@@ -155,7 +156,7 @@
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
-    <group id="AnalyzeJavaMenu">
+    <group id="AnalyzeJavaMenu" searchable="false">
       <separator/>
       <group id="ShowPackageDepsGroup">
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">

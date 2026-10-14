@@ -14,7 +14,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JCheckBox
 
-@Deprecated("Use identical {@link BeanConfigurable} for replacement")
+@Deprecated("Use identical {@link BeanConfigurable} for replacement", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 abstract class ConfigurableBuilder
 @Deprecated("Use BeanConfigurable", level = DeprecationLevel.HIDDEN)

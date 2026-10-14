@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestUtil
 import java.io.File
 
 abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
@@ -48,7 +48,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     testMode: ProviderTestMode = ProviderTestMode.DETAILED
   ) {
     if (verifyHintsPresence) {
-      InlayHintsProviderTestCase.verifyHintsPresence(expectedText)
+      InlayHintsProviderTestUtil.verifyHintsPresence(expectedText)
     }
     val file = myFixture.file!!
     val editor = myFixture.editor

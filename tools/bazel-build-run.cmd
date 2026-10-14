@@ -64,23 +64,17 @@ case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-# The parent of this file's directory is the community root in both layouts: `<ultimate>/community/tools/..` and
-# `<community>/tools/..`.
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
+# The shared steps of the polyglot wrappers: the Git Bash hand-off and the roots. A caller exports the variables
+# above, so the CMD half reads the same contract after the hand-off.
+. "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
+polyglot_find_roots "$self_dir"
 
-root="$community_root"
 label="$BAZEL_RUN_TARGET"
 binary="$BAZEL_RUN_BINARY"
-
-# The last test rules out a parent that holds an unrelated directory named `community`.
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  if [ "${BAZEL_RUN_IN_COMMUNITY:-}" = "1" ]; then
-    label="@community$BAZEL_RUN_TARGET"
-    binary="external/community+/$BAZEL_RUN_BINARY"
-  fi
+if [ "$label_prefix" = "@community//" ] && [ "${BAZEL_RUN_IN_COMMUNITY:-}" = "1" ]; then
+  label="@community$BAZEL_RUN_TARGET"
+  binary="external/community+/$BAZEL_RUN_BINARY"
 fi
 
 cd -- "$root"
@@ -123,22 +117,10 @@ if "%BAZEL_RUN_BINARY%"=="" (
   exit /B 1
 )
 
-REM `%~dp0` ends with a backslash, so `%~dp0..` is the parent of this file's directory. `%%~fd` resolves the `..`,
-REM which is what makes the identity test below comparable.
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-
-set "ROOT=%COMMUNITY_ROOT%"
+call "%~dp0polyglot-wrapper.cmd"
 set "BIN_PREFIX="
 set "LABEL=%BAZEL_RUN_TARGET%"
-
-REM A `goto` chain rather than a nested `if (...)` block: plain expansion reads a stale value inside a block.
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
+if "%LABEL_PREFIX%"=="//" goto :ROOTREADY
 if not "%BAZEL_RUN_IN_COMMUNITY%"=="1" goto :ROOTREADY
 set "LABEL=@community%BAZEL_RUN_TARGET%"
 set "BIN_PREFIX=external\community+\"

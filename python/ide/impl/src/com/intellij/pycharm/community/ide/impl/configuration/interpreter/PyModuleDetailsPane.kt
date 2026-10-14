@@ -32,7 +32,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.jetbrains.python.PyBundle
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -288,7 +288,8 @@ internal class PyModuleDetailsPane(
     else {
       // Settings applies on the EDT and does not read the snapshot back.
       runWithSdkConfigurationLock(project) {
-        module.asPyProject()?.setPythonInterpreter(chosen?.pythonInterpreterAsync(), waitForSnapshot = false)
+        // A broken SDK names no interpreter, so the module gets none, as for no SDK.
+        module.asPyProject()?.setPythonInterpreter(chosen?.pythonInterpreterResultAsync()?.successOrNull, waitForSnapshot = false)
       }
     }
   }

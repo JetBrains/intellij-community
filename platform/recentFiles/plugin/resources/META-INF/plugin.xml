@@ -16,5 +16,6 @@
     <module name="intellij.platform.recentFiles"/>
     <module name="intellij.platform.recentFiles.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.ide.tabInEditor.recentFiles"/>
   </content>
 </idea-plugin>

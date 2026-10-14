@@ -20,7 +20,6 @@ windows_clippy_tests(
         "//build/dev-dist-tools/bins/content-module-packer",
         "//build/dev-dist-tools/bins/dev-dist-collector",
         "//build/dev-dist-tools/bins/dev-dist-composer",
-        "//build/dev-dist-tools/bins/dev-launch-args",
         "//build/dev-dist-tools/bins/plugin-descriptor-writer",
         "//build/dev-dist-tools/bins/plugin-remainder-packer",
         "//build/dev-dist-tools/bins/product-files",

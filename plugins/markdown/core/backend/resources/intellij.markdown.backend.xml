@@ -5,6 +5,7 @@
       <module name="fleet.rhizomedb"/>
       <module name="intellij.libraries.kotlinx.coroutines.core"/>
       <module name="intellij.libraries.markdown"/>
+      <module name="intellij.markdown.execution"/>
       <module name="intellij.platform.analysis"/>
       <module name="intellij.platform.backend"/>
       <module name="intellij.platform.builtInServer.impl"/>
@@ -40,6 +41,8 @@
     <extensions defaultExtensionNs="com.intellij">
       <postStartupActivity implementation="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
+      <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
+                          serviceImplementation="com.intellij.markdown.backend.commandRunner.LocalPreviewCommandRunnability"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.fence.CodeFenceBackgroundHighlightingPassFactory"/>
       <externalAnnotator language="Markdown"

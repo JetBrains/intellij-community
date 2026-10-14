@@ -17,10 +17,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -67,6 +69,7 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private Dimension myPointerSize;
   private boolean myPointerShiftedToStart;
+  private @Nullable PopupCornerType myPopupCornerType;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -200,6 +203,21 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public IdeTooltip setPointerShiftedToStart(boolean pointerShiftedToStart) {
     myPointerShiftedToStart = pointerShiftedToStart;
+    return this;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable PopupCornerType getPopupCornerType() {
+    return myPopupCornerType;
+  }
+
+  /**
+   * Sets the corner type of the tooltip balloon. The theme gives the corner radius for each type.
+   * Without it, the tooltip uses {@link PopupCornerType#RoundedTooltip}.
+   */
+  @ApiStatus.Internal
+  public IdeTooltip setPopupCornerType(@Nullable PopupCornerType cornerType) {
+    myPopupCornerType = cornerType;
     return this;
   }
 

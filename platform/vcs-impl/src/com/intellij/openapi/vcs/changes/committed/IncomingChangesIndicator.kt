@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.Consumer
+import com.intellij.vcsUtil.VcsImplUtil
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 import kotlin.properties.Delegates.observable
@@ -37,7 +38,7 @@ internal class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   override fun getDisplayName(): String = message("incoming.changes.indicator.name")
 
   override fun isAvailable(project: Project): Boolean {
-    return IncomingChangesViewProvider.VisibilityPredicate().test(project)
+    return !VcsImplUtil.isVcsUiSuppressed(project) && IncomingChangesViewProvider.VisibilityPredicate().test(project)
   }
 
   override fun createWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)

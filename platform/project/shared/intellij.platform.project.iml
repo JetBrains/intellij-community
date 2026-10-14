@@ -39,9 +39,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
-    <orderEntry type="module" module-name="fleet.rhizomedb.transactor" />
-    <orderEntry type="module" module-name="fleet.rhizomedb.transactor.rebase" />
-    <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="module" module-name="intellij.platform.productMode" />
   </component>
 </module>

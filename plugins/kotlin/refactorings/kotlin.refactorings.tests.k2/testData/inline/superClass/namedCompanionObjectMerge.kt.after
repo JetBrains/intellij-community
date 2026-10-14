@@ -1,0 +1,8 @@
+class Child {
+    companion object Existing {
+        const val ANSWER = 42
+        fun answer() = ANSWER
+    }
+}
+
+fun answer() = Child.ANSWER

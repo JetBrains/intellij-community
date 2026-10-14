@@ -12,6 +12,8 @@ load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load(
     ":dev_launch_dependencies.bzl",
     "HOST_PLATFORMS",
+    "jbr_runtime_archive_root",
+    "jbr_runtime_url",
     "jbr_url",
     "jcef_url",
     "lib_ghostty_vt_url",
@@ -36,6 +38,16 @@ _JBR_URLS = {
     "linux_x64": _JBR + "/jbrsdk_jcef-25.0.4-linux-x64-b557.28.tar.gz",
     "windows_aarch64": _JBR + "/jbrsdk_jcef-25.0.4-windows-aarch64-b557.28.tar.gz",
     "windows_x64": _JBR + "/jbrsdk_jcef-25.0.4-windows-x64-b557.28.tar.gz",
+}
+
+# BundledRuntimeImpl.archiveName, for `runtimeBuild=25.0.4.1b635.70`
+_JBR_RUNTIME_URLS = {
+    "darwin_aarch64": _JBR + "/jbr-25.0.4.1-osx-aarch64-b635.70.tar.gz",
+    "darwin_x64": _JBR + "/jbr-25.0.4.1-osx-x64-b635.70.tar.gz",
+    "linux_aarch64": _JBR + "/jbr-25.0.4.1-linux-aarch64-b635.70.tar.gz",
+    "linux_x64": _JBR + "/jbr-25.0.4.1-linux-x64-b635.70.tar.gz",
+    "windows_aarch64": _JBR + "/jbr-25.0.4.1-windows-aarch64-b635.70.tar.gz",
+    "windows_x64": _JBR + "/jbr-25.0.4.1-windows-x64-b635.70.tar.gz",
 }
 
 # CommunityRepositoryModules.jcefDownloadUrl, for `jcefBuild=263-b10`
@@ -71,6 +83,7 @@ _PYREFLY_DIRECTORIES = {
 def _every_platform_is_covered_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JBR_URLS))
+    asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JBR_RUNTIME_URLS))
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JCEF_URLS))
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_PYREFLY_URLS))
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_PYREFLY_DIRECTORIES))
@@ -88,6 +101,21 @@ def _jbr_url_test_impl(ctx):
     return unittest.end(env)
 
 jbr_url_test = unittest.make(_jbr_url_test_impl)
+
+# The archive has one root, the file name without `.tar.gz`, and the extracted repository strips it.
+def _jbr_runtime_url_test_impl(ctx):
+    env = unittest.begin(ctx)
+    for platform, expected in _JBR_RUNTIME_URLS.items():
+        asserts.equals(env, expected, jbr_runtime_url(platform, "25.0.4.1b635.70"), platform)
+        asserts.equals(
+            env,
+            expected.rpartition("/")[2].removesuffix(".tar.gz"),
+            jbr_runtime_archive_root(platform, "25.0.4.1b635.70"),
+            platform,
+        )
+    return unittest.end(env)
+
+jbr_runtime_url_test = unittest.make(_jbr_runtime_url_test_impl)
 
 def _jcef_url_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -143,6 +171,13 @@ def _maven_url_test_impl(ctx):
         env,
         _DEPS + "/org/jetbrains/intellij/deps/restarter/243.6005/restarter-243.6005.tar.gz",
         maven_url(_DEPS, "org.jetbrains.intellij.deps", "restarter", "243.6005", "tar.gz"),
+    )
+
+    # NativeBinaryDownloader.getLauncher, for `launcherBuild=263.6784`. The same Maven shape as the restarter.
+    asserts.equals(
+        env,
+        _DEPS + "/org/jetbrains/intellij/deps/launcher/263.6784/launcher-263.6784.tar.gz",
+        maven_url(_DEPS, "org.jetbrains.intellij.deps", "launcher", "263.6784", "tar.gz"),
     )
     return unittest.end(env)
 
@@ -228,6 +263,7 @@ def dev_launch_dependencies_test_suite(name):
         name,
         every_platform_is_covered_test,
         jbr_url_test,
+        jbr_runtime_url_test,
         jcef_url_test,
         lib_ghostty_vt_url_test,
         pyrefly_url_test,

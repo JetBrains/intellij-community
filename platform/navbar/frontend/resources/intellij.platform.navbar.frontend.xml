@@ -31,7 +31,7 @@
     <group id="NavbarPopupMenuSearchable" searchable="true">
       <reference ref="NavbarPopupMenu"/>
     </group>
-    <group id="NavBarActions">
+    <group id="NavBarActions" searchable="false">
       <action id="NavBar-selectHome" class="com.intellij.platform.navbar.frontend.actions.NavBarActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="NavBar-selectEnd" class="com.intellij.platform.navbar.frontend.actions.NavBarActions$End" use-shortcut-of="EditorLineEnd"/>
       <action id="NavBar-selectUp" class="com.intellij.platform.navbar.frontend.actions.NavBarActions$Up" use-shortcut-of="EditorUp"/>
@@ -51,11 +51,14 @@
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
     </action>
     <group id="NavbarLocationGroup" popup="true" class="com.intellij.platform.navbar.frontend.actions.NavBarLocationGroup">
+      <override-text place="GoToAction"/>
       <action id="NavBarLocationTop" class="com.intellij.platform.navbar.frontend.actions.NavBarTopLocationAction"/>
       <action id="NavBarLocationBottom" class="com.intellij.platform.navbar.frontend.actions.NavBarBottomLocationAction"/>
       <action id="NavBarLocationHide" class="com.intellij.platform.navbar.frontend.actions.HideNavBarAction"/>
       <separator/>
-      <action id="ShowMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ShowNavigationBarMembersAction"/>
+      <action id="ShowMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ShowNavigationBarMembersAction">
+        <override-text place="GoToAction"/>
+      </action>
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
     </group>
     <action id="ViewMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ViewNavigationBarMembersAction">

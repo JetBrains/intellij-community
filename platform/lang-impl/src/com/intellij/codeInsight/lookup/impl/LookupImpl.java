@@ -772,6 +772,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     Project project = actionContext.project();
     ModCommand command = wrapper.getCachedCommand(finalActionContext, insertionContext);
     if (command == null) {
+      // the text typed into the open lookup may be uncommitted yet
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
       command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> ReadAction.nonBlocking(
           () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(

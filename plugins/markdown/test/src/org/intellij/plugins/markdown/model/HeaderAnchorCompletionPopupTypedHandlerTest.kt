@@ -1,25 +1,46 @@
 package org.intellij.plugins.markdown.model
 
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
-import junit.framework.TestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
-class HeaderAnchorCompletionPopupTypedHandlerTest: CompletionAutoPopupTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/model/headers/completion")
+class HeaderAnchorCompletionPopupTypedHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private val lookup: LookupImpl? get() = CompletionAutoPopupTestUtil.getLookup(myFixture)
+
+  private fun type(s: String) = CompletionAutoPopupTestUtil.type(myFixture, s)
+
+  private fun runTest(block: () -> Unit) = CompletionAutoPopupTestUtil.runWithAutoPopupEnabled<Throwable>(myFixture, block)
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
     application.invokeAndWait {
       myFixture.copyDirectoryToProject("", "")
     }
   }
 
   @Test
-  fun `test reference to own header`() {
+  fun `test reference to own header`(): Unit = runTest {
     doTest(
       "header-in-main",
       "other-header-in-main"
@@ -27,7 +48,7 @@ class HeaderAnchorCompletionPopupTypedHandlerTest: CompletionAutoPopupTestCase()
   }
 
   @Test
-  fun `test reference to header in other file`() {
+  fun `test reference to header in other file`(): Unit = runTest {
     doTest(
       "header-near-main",
       "other-header-near-main"
@@ -35,7 +56,7 @@ class HeaderAnchorCompletionPopupTypedHandlerTest: CompletionAutoPopupTestCase()
   }
 
   @Test
-  fun `test reference to header in subdirectory`() {
+  fun `test reference to header in subdirectory`(): Unit = runTest {
     doTest(
       "header-in-subdirectory",
       "other-header-in-subdirectory"
@@ -43,20 +64,10 @@ class HeaderAnchorCompletionPopupTypedHandlerTest: CompletionAutoPopupTestCase()
   }
 
   private fun doTest(vararg expectedLookupString: String) {
-    val testName = getTestName(true)
     myFixture.configureByFile("$testName.md")
     type("#")
-    TestCase.assertNotNull(lookup)
+    assertNotNull(lookup)
     val elements = myFixture.lookupElementStrings ?: emptyList()
-    UsefulTestCase.assertSameElements(elements, *expectedLookupString)
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/model/headers/completion"
+    assertThat(elements).containsExactlyInAnyOrder(*expectedLookupString)
   }
 }

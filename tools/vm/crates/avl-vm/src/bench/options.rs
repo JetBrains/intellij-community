@@ -17,9 +17,9 @@ pub(crate) const DEFAULT_TARGET: &str = "//build:idea_dist";
 pub(crate) const LONG_ABOUT: &str = "Measures the start-up of the IDE on this macOS host, from a staged copy of its dev \
 distribution, and takes no worker and no lease.
 
-welcome, open-project and project build the self-contained distribution --target and its row launcher with the host Bazel build. \
-They stage both as an immutable generation under the runtime root, keyed by their digest. Every IDE run starts from \
-that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
+welcome, open-project and project build the self-contained distribution --target with the host Bazel build. They \
+stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
+from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
 
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
@@ -227,7 +227,7 @@ pub(crate) const DEFAULT_OPEN_PROJECT_RUNS: u32 = 3;
 /// The options of a verb that starts the IDE.
 #[derive(Clone, Debug, PartialEq, clap::Args)]
 pub(crate) struct LaunchArgs {
-    /// The Bazel label of the self-contained distribution. Its row launcher, the label without `_dist`, gives the JBR.
+    /// The Bazel label of the self-contained distribution. The IDE starts with the JBR inside the distribution.
     #[arg(long, value_name = "LABEL", default_value = DEFAULT_TARGET, value_parser = flag_value)]
     pub(crate) target: String,
     /// The time to wait after the event of the gate, before the quit: `3s`, `500ms`, `1m` or `0`.
@@ -240,6 +240,11 @@ pub(crate) struct LaunchArgs {
     /// The default is the CPU count. A host without a load average passes.
     #[arg(long, value_name = "LOAD", value_parser = parse_load)]
     pub(crate) max_load: Option<f64>,
+    /// Runs the session over the staged generation whose digest starts with DIGEST, under
+    /// `<runtime root>/bench/generations`, and skips the build and the stage. The session names the commit that built
+    /// the generation, so an A/B/A run measures the base again from its own bytes.
+    #[arg(long, value_name = "DIGEST", value_parser = parse_digest_prefix, conflicts_with = "target")]
+    pub(crate) generation: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -378,6 +383,17 @@ pub(crate) fn parse_ms(value: &str) -> Result<f64, String> {
     match value.parse::<f64>() {
         Ok(ms) if ms.is_finite() && ms >= 0.0 => Ok(ms),
         _ => Err(format!("must be a number of milliseconds, 0 or more, got: {value}")),
+    }
+}
+
+/// Parses `--generation`: the start of a generation digest, one or more lowercase hex digits.
+pub(crate) fn parse_digest_prefix(value: &str) -> Result<String, String> {
+    if !value.is_empty() && value.chars().all(|character| matches!(character, '0'..='9' | 'a'..='f')) {
+        Ok(value.to_owned())
+    } else {
+        Err(format!(
+            "must be the start of a generation digest, lowercase hex digits, got: {value}"
+        ))
     }
 }
 

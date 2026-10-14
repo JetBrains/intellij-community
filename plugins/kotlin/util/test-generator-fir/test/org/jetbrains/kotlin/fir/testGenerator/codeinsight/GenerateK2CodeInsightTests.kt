@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationTest
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
+import org.jetbrains.kotlin.testGenerator.model.Junit5Suite
 import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
@@ -212,12 +213,12 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("hints/compilerPlugins/modality", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtBundledCompilerDeclarationsHintProviderTest> {
-            model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
+        testClass<AbstractKtBundledCompilerDeclarationsHintProviderTest>(junit5 = Junit5Suite()) {
+            model("hints/compilerPlugins/declarations/serialization", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtThirdPartyCompilerDeclarationsHintProviderTest> {
-            model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
+        testClass<AbstractKtThirdPartyCompilerDeclarationsHintProviderTest>(junit5 = Junit5Suite()) {
+            model("hints/compilerPlugins/declarations/serialization", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractCompilerPluginDeclarationHighlighterTest> {
@@ -232,7 +233,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("hints/compilerPlugins/supertypes", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated") {
+        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated", junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/codeVision")
         }
 

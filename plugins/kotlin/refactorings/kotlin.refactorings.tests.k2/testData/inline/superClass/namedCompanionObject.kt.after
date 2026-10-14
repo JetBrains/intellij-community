@@ -1,0 +1,10 @@
+class Child {
+    companion object Factory {
+        fun self(): Factory = this@Factory
+    }
+}
+
+fun implicit() = Child
+fun explicit(): Child.Factory = Child.Factory
+fun same() = Child === Child.Factory
+fun type() = Child.Factory::class

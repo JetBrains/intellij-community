@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
@@ -22,6 +22,9 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    if (getTestName(false).endsWith("ValueClass.java")) {
+      return LightJavaCodeInsightFixtureTestCase.JAVA_X;
+    }
     if (getTestName(false).endsWith("Markdown.java")) {
        return LightJavaCodeInsightFixtureTestCase.JAVA_23;
     }

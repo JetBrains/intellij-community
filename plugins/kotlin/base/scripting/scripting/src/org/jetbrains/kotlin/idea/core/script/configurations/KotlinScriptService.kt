@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.core.script.configurations
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.ide.TrustedFiles
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -161,6 +162,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         get() = NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup")
 
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
+        if (!TrustedFiles.isTrusted(virtualFile, project)) return
         if (KotlinScriptEntityProvider.provide(project, virtualFile) != null) return
 
         val urlManager = project.workspaceModel.getVirtualFileUrlManager()

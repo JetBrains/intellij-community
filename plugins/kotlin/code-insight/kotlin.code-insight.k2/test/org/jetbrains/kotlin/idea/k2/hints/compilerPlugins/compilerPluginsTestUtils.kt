@@ -25,6 +25,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.jar.Manifest
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.copyTo
 import kotlin.io.path.div
 import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
@@ -59,9 +60,17 @@ fun <T> OpenapiModule.withCompilerPlugin(
 fun createThirdPartyCompilerPluginJar(
     plugin: KotlinK2BundledCompilerPlugins,
     tempDir: TempDirectory,
+): Path = createThirdPartyCompilerPluginJar(plugin, tempDir.rootPath)
+
+/** Creates a "compatible" third-party compiler plugin jar in [targetDir], as defined in [CompilerPluginManifestAttributes] */
+@ApiStatus.Internal
+@TestOnly
+fun createThirdPartyCompilerPluginJar(
+    plugin: KotlinK2BundledCompilerPlugins,
+    targetDir: Path,
 ): Path {
     val pluginJar = plugin.bundledJarLocation
-    val newPluginJar = tempDir.newFileNio(pluginJar.fileName.pathString, pluginJar.readBytes())
+    val newPluginJar = pluginJar.copyTo(targetDir / pluginJar.fileName.pathString)
 
     FileSystems.newFileSystem(newPluginJar).use {
         val root = it.rootDirectories.single()
@@ -105,8 +114,9 @@ fun createThirdPartyCompilerPluginJar(
 internal fun OpenapiModule.addPluginLibraryToClassPath(plugin: KotlinK2BundledCompilerPlugins) {
     when (plugin) {
         KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN -> {
+            val serializationCoreJar = project.serializationCoreJar
             ConfigLibraryUtil.addLibrary(this, "serialization-core") {
-                addRoot(project.serializationCoreJar, OrderRootType.CLASSES)
+                addRoot(serializationCoreJar, OrderRootType.CLASSES)
             }
         }
 

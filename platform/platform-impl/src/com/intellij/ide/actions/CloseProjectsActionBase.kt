@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.closeAndDisposeProject
+import com.intellij.openapi.wm.impl.opensWelcomeScreenProjectAfterClose
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
 import org.jetbrains.annotations.ApiStatus
@@ -29,24 +31,44 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
     // ProjectFrameCapability
     val shouldReopenWelcomeFrameAfterClose = shouldReopenWelcomeFrameAfterClose(currentProject)
 
-    ProjectManager.getInstance().openProjects
-      .filter { canClose(it, currentProject) }
-      .forEach {
-        // ensure that last closed project frame bounds will be used as newly created project frame bounds
-        // (if will be no another focused opened project)
-        WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(it)
-        WriteIntentReadAction.run {
-          ProjectManager.getInstance().closeAndDispose(it)
-        }
+    val openProjects = ProjectManager.getInstance().openProjects
+    val projectsToClose = openProjects.filter { canClose(it, currentProject) }
 
-        // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
-        // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.
-        RecentProjectsManager.getInstance().updateLastProjectPath()
+    // the welcome screen project opens in the frame of the current project when no project stays open
+    val keepCurrentProjectFrame = shouldReopenWelcomeFrameAfterClose
+                                  && projectsToClose.size == openProjects.size
+                                  && opensWelcomeScreenProjectAfterClose(currentProject)
+
+    var allOtherProjectsClosed = true
+    for (project in projectsToClose) {
+      if (project !== currentProject && !closeProject(project, keepFrame = false)) {
+        allOtherProjectsClosed = false
       }
+    }
+    if (currentProject in projectsToClose) {
+      closeProject(currentProject, keepFrame = keepCurrentProjectFrame && allOtherProjectsClosed)
+    }
 
     if (shouldReopenWelcomeFrameAfterClose) {
       showWelcomeFrameIfNeeded()
     }
+  }
+
+  /**
+   * @return `true` when [project] has closed, or `false` when a listener vetoed the close.
+   */
+  private fun closeProject(project: Project, keepFrame: Boolean): Boolean {
+    // ensure that last closed project frame bounds will be used as newly created project frame bounds
+    // (if will be no another focused opened project)
+    WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
+    val closed = WriteIntentReadAction.compute<Boolean> {
+      closeAndDisposeProject(project, keepFrame)
+    }
+
+    // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
+    // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.
+    RecentProjectsManager.getInstance().updateLastProjectPath()
+    return closed
   }
 
   @ApiStatus.Internal

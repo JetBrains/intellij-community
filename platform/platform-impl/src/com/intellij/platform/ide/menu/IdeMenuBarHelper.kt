@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -44,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -193,7 +196,14 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
   val dataManager = serviceAsync<DataManager>()
   return withContext(CoroutineName("expandMainActionGroup")) {
     val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
-    val dataContext =  withContext(Dispatchers.EDT) { dataManager.getDataContext(targetComponent) }
+    // the data snapshot runs providers that rely on the read access of the write-intent lock,
+    // so the first fill waits here while a background write action runs
+    val dataContext = if (isFirstUpdate) {
+      span("ide menu bar actions init: EDT hop") { getDataContextOnEdt(dataManager, targetComponent) }
+    }
+    else {
+      getDataContextOnEdt(dataManager, targetComponent)
+    }
     Utils.expandActionGroupSuspend(
       group = mainActionGroup,
       presentationFactory = presentationFactory,
@@ -203,6 +213,10 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
       fastTrack = isFirstUpdate,
     )
   }.filterIsInstance<ActionGroup>()
+}
+
+private suspend fun getDataContextOnEdt(dataManager: DataManager, component: Component): DataContext {
+  return withContext(Dispatchers.EDT) { dataManager.getDataContext(component) }
 }
 
 @ApiStatus.Internal

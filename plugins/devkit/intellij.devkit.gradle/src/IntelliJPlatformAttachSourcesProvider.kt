@@ -7,8 +7,9 @@ import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -26,20 +27,31 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformSourceCoordinates
 import org.jetbrains.idea.devkit.run.loadProductInfo
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import java.io.IOException
 import java.nio.file.Path
+import java.util.Properties
+import java.util.zip.ZipFile
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+
+private val LOG = logger<IntelliJPlatformAttachSourcesProvider>()
 
 internal enum class ApiSourceArchive(
   val id: String,
@@ -83,7 +95,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
                   ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
 
-    return when {
+    val platformAction = when {
       // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`, `idea:ideaIC:aarch64:2024.3`, or `idea:ideaIC:2023.2.7`
       product != null -> resolveIntelliJPlatformAction(psiFile, coordinates.version)
 
@@ -100,7 +112,10 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       coordinates.groupId == IntelliJPlatformSourceCoordinates.JETBRAINS_PLUGIN_GROUP -> createAttachJetBrainsPluginSourcesAction(psiFile, coordinates)
 
       else -> null
-    }
+    } ?: return null
+
+    // A third-party library bundled with the IntelliJ Platform, such as `commons-cli:commons-cli:1.11.0` in `lib/intellij.libraries.commons.cli.jar`
+    return createAttachLibrarySourcesAction(psiFile, platformAction) ?: platformAction
   }
 
 
@@ -219,14 +234,54 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         private fun performInternal(libraries: Collection<Library>): ActionCallback {
           val executionResult = ActionCallback()
 
-          attachSources(it, libraries) {
-            executionResult.setDone()
+          psiFile.project.gradleCoroutineScope.launch {
+            try {
+              attachSources(it, libraries)
+              executionResult.setDone()
+            }
+            catch (e: Throwable) {
+              executionResult.setRejected()
+              throw e
+            }
           }
 
           return executionResult
         }
       }
     }
+  }
+
+  /**
+   * Creates an action to attach sources of a third-party library bundled with the IntelliJ Platform.
+   *
+   * The IntelliJ Platform build keeps the `META-INF/maven/<groupId>/<artifactId>/pom.properties` file of the original library in the jar.
+   * The action downloads the `sources` artifact for these coordinates instead of the IntelliJ Platform sources.
+   * The action attaches the first archive that contains the package of the handled class.
+   * A jar can merge IntelliJ Platform classes with a third-party library, such as `lib/intellij.platform.ide.impl.jar`.
+   * When no archive contains the package, the action runs [platformAction] instead.
+   * When no archive downloads at all, the action reports it first, because the library repository is missing in the project.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param platformAction The action that attaches the IntelliJ Platform sources of the same library.
+   * @return The action, or `null` when the jar of [psiFile] carries no Maven metadata.
+   */
+  private fun createAttachLibrarySourcesAction(psiFile: PsiFile, platformAction: AttachSourcesAction): AttachSourcesAction? {
+    val jarRoot = VfsUtilCore.getRootFile(psiFile.virtualFile)
+    val coordinates = readLibraryCoordinates(jarRoot)
+    if (coordinates.isEmpty()) {
+      return null
+    }
+
+    val classPath = psiFile.virtualFile.path.substringAfter("!/")
+    return createDownloadSourcesAction(
+      psiFile,
+      name = DevKitGradleBundle.message("attachSources.library.action.name"),
+      busyText = DevKitGradleBundle.message("attachSources.library.action.busyText"),
+      notations = coordinates.map { "$it:sources" },
+      failure = DownloadFailure("attachSources.library.failed.title", "attachSources.library.failed.content"),
+      accept = { path -> containsPackageSources(path, classPath) },
+      fallback = platformAction,
+    )
   }
 
   /**
@@ -237,14 +292,63 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param version The version of the product.
    * @param closeVersion The alternative version of the product used for resolving sources of a close version.
    */
-  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String, closeVersion: String) =
+  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String, closeVersion: String): AttachSourcesAction {
+    val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
+    return createDownloadSourcesAction(
+      psiFile,
+      name = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name"),
+      busyText = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText"),
+      notations = listOf(
+        "$productCoordinates:$version:sources",
+        "$productCoordinates:$closeVersion:sources",
+        "$productCoordinates:$snapshotVersion:sources", // last chance, nightly snapshot
+      ),
+      failure = DownloadFailure("attachSources.intellijPlatform.failed.title", "attachSources.intellijPlatform.failed.content"),
+    )
+  }
+
+  /**
+   * The notification shown when a download action downloads no archive.
+   *
+   * @param titleKey The bundle key of the notification title.
+   * @param contentKey The bundle key of the notification content. It takes the notation, the Gradle project, and the documentation URL.
+   */
+  private class DownloadFailure(
+    @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val titleKey: String,
+    @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val contentKey: String,
+  )
+
+  /**
+   * Creates an action that downloads the first available sources archive from [notations] and attaches it to the library.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param name The name of the action.
+   * @param busyText The text shown while the action runs.
+   * @param notations The Gradle artifact notations to try in order.
+   * @param failure The notification shown when no archive from [notations] downloads.
+   * @param accept Checks a downloaded archive. The action skips the archive and tries the next notation when it returns `false`.
+   * @param fallback The action to run when no archive from [notations] is attached.
+   */
+  private fun createDownloadSourcesAction(
+    psiFile: PsiFile,
+    name: @Nls String,
+    busyText: @Nls String,
+    notations: List<String>,
+    failure: DownloadFailure,
+    accept: (Path) -> Boolean = { true },
+    fallback: AttachSourcesAction? = null,
+  ) =
     object : AttachSourcesAction {
-      override fun getName() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name")
+      override fun getName() = name
 
-      override fun getBusyText() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText")
+      override fun getBusyText() = busyText
 
+      @Deprecated("Deprecated in Java")
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library })
+        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library }) {
+          @Suppress("DEPRECATION")
+          fallback?.perform(orderEntries)
+        }
       }
 
       override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
@@ -253,65 +357,72 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
           .firstOrNull()
           ?.findModule(snapshot)
         if (module != null) {
-          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) })
+          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) }) {
+            fallback?.perform(libraryEntities, project)
+          }
         }
         return ActionCallback.REJECTED
       }
 
-
-      private fun performInternal(module: Module, libraries: Collection<Library>): ActionCallback {
+      /**
+       * Downloads and attaches the first accepted archive.
+       * When no archive downloads, reports [failure]. A downloaded archive that [accept] rejects is not a failure.
+       * When no archive is attached, runs [performFallback] on the EDT and joins its result,
+       * or rejects the result when it returns `null`.
+       *
+       * The work runs in a coroutine of the project, and not in a continuation of the download future.
+       * The continuation runs in the context of the completed download job, which cancels an IDE service initialization.
+       */
+      private fun performInternal(module: Module, libraries: Collection<Library>, performFallback: () -> ActionCallback?): ActionCallback {
         val moduleData = CachedModuleDataFinder.getGradleModuleData(module)
                          ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
         val project = psiFile.project
 
-        val primaryNotation = "$productCoordinates:$version:sources"
-        val fallbackNotation = "$productCoordinates:$closeVersion:sources"
-
-        val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
-        val nightlySnapshotNotation = "$productCoordinates:$snapshotVersion:sources" // last chance, nightly snapshot
-
-        fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
-          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
-                                                    GradleDependencySourceDownloaderErrorHandler.Noop)
-            .whenComplete { path, error ->
-              when {
-                error == null && path != null -> attachSources(path, libraries) { executionResult.setDone() }
-                else -> onFailure()
+        project.gradleCoroutineScope.launch {
+          try {
+            var downloaded = false
+            for (artifactNotation in notations) {
+              val path = GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
+                                                                   GradleDependencySourceDownloaderErrorHandler.Noop).await()
+                         ?: continue
+              downloaded = true
+              if (accept(path)) {
+                attachSources(path, libraries)
+                executionResult.setDone()
+                return@launch
               }
             }
+            withContext(Dispatchers.EDT) {
+              if (!downloaded) {
+                notifyDownloadFailed(project, moduleData, notations.first(), failure)
+              }
+              performFallback()?.notify(executionResult) ?: executionResult.setRejected()
+            }
+          }
+          catch (e: Throwable) {
+            executionResult.setRejected()
+            throw e
+          }
         }
-
-        downloadAndAttach(primaryNotation, onFailure = {
-          downloadAndAttach(fallbackNotation, onFailure = {
-            downloadAndAttach(nightlySnapshotNotation, onFailure = {
-              notifyDownloadFailed(project, moduleData, primaryNotation)
-              executionResult.setRejected()
-            })
-          })
-        })
 
         return executionResult
       }
     }
 
   /**
-   * Attaches the sources archive in [path] to [libraries] and then runs [block].
+   * Attaches the sources archive in [path] to [libraries].
    * Refreshes the VFS for [path] on a background thread.
    * Then adds the archive root as a sources root of [libraries] on the EDT.
    */
-  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
-    val application = ApplicationManager.getApplication()
-    application.executeOnPooledThread {
-      val archiveRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
+  private suspend fun attachSources(path: Path, libraries: Collection<Library>) {
+    val archiveRoot = withContext(Dispatchers.IO) {
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
         ?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) }
-      application.invokeLater {
-        if (archiveRoot != null) {
-          addSourcesRoot(archiveRoot, libraries)
-        }
-        block()
-      }
+    } ?: return
+    withContext(Dispatchers.EDT) {
+      addSourcesRoot(archiveRoot, libraries)
     }
   }
 
@@ -327,12 +438,12 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     }
   }
 
-  private fun notifyDownloadFailed(project: Project, moduleData: GradleModuleData, notation: String) {
+  private fun notifyDownloadFailed(project: Project, moduleData: GradleModuleData, notation: String, failure: DownloadFailure) {
     val gradleProject = moduleData.gradlePathOrNull ?: moduleData.gradleProjectDir
     GradleNotification.gradleNotificationGroup
       .createNotification(
-        title = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.title"),
-        content = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.content", notation, gradleProject, REPOSITORIES_DOCUMENTATION_URL),
+        title = DevKitGradleBundle.message(failure.titleKey),
+        content = DevKitGradleBundle.message(failure.contentKey, notation, gradleProject, REPOSITORIES_DOCUMENTATION_URL),
         type = NotificationType.WARNING
       )
       .setDisplayId("devkit.gradle.attachSources.intellijPlatform.failed")
@@ -404,4 +515,46 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       else ->
         IntelliJPlatformSourceCoordinates.defaultPlatformSources(majorVersion)
     }
+}
+
+/**
+ * Reads the Maven coordinates of the libraries packed into the jar with the given [jarRoot].
+ * The coordinates come from every `META-INF/maven/<groupId>/<artifactId>/pom.properties` entry.
+ *
+ * @return The coordinates in the `groupId:artifactId:version` form, or an empty list when the jar has no Maven metadata.
+ */
+internal fun readLibraryCoordinates(jarRoot: VirtualFile?): List<String> {
+  val mavenRoot = jarRoot?.findFileByRelativePath("META-INF/maven") ?: return emptyList()
+  return mavenRoot.children
+    .flatMap { group -> group.children.asList() }
+    .mapNotNull { artifact -> artifact.findChild("pom.properties") }
+    .mapNotNull { file ->
+      val properties = Properties().apply { file.inputStream.use { load(it) } }
+      val groupId = properties.getProperty("groupId") ?: return@mapNotNull null
+      val artifactId = properties.getProperty("artifactId") ?: return@mapNotNull null
+      val version = properties.getProperty("version") ?: return@mapNotNull null
+      "$groupId:$artifactId:$version"
+    }
+}
+
+/**
+ * Checks if the sources archive in [path] contains a source file in the package of the class in [classPath].
+ * The [classPath] is relative to the jar root, such as `org/apache/commons/cli/Option$Builder.class`.
+ *
+ * The check uses the package directory and not the class name,
+ * because a Kotlin or Groovy source file can declare classes with other names, such as `FlowKt` in `Flow.kt`.
+ */
+internal fun containsPackageSources(path: Path, classPath: String): Boolean {
+  val packagePrefix = classPath.substringBeforeLast('/', "").let { if (it.isEmpty()) "" else "$it/" }
+  return try {
+    ZipFile(path.pathString).use { zip ->
+      zip.entries().asSequence().any { entry ->
+        !entry.isDirectory && entry.name.startsWith(packagePrefix) && '/' !in entry.name.substring(packagePrefix.length)
+      }
+    }
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot read the sources archive $path", e)
+    false
+  }
 }

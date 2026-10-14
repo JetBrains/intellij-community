@@ -86,6 +86,10 @@ class SystemPythonServiceImpl internal constructor(
   /**
    * What each python binary reported about itself, by the path of the binary.
    * It keeps a repeated search from starting an interpreter that did not change.
+   *
+   * An ephemeral environment gets no record here.
+   * The service cannot see the end of such an environment, so a record would outlive it.
+   * See [com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter].
    */
   private val pythonInfoCache = ConcurrentHashMap<PythonBinary, ReadPythonInfo>()
 
@@ -227,7 +231,7 @@ class SystemPythonServiceImpl internal constructor(
     val stamp = python.binaryStamp()
     val readEarlier = pythonInfoCache[python]?.takeIf { it.stamp == stamp }
     val pythonInfo = readEarlier?.pythonInfo ?: environment.getPythonInfo().getOr { return it }
-    if (readEarlier == null && stamp != null) {
+    if (readEarlier == null && stamp != null && !python.getEelDescriptor().isEphemeral) {
       pythonInfoCache[python] = ReadPythonInfo(stamp, pythonInfo)
     }
     return Result.success(SystemPython.create(VanillaPythonWithPythonInfoImpl.create(python, pythonInfo), ui))

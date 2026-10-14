@@ -6,11 +6,13 @@
 //! The rule `intellij_dev_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
 //! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. Launch metadata can also name
 //! `--core-classpath-file` and `--plugin-classpath-file`, which get a copy of the two metadata files of the output.
-//! Every failure exits with 1.
+//! An optional `--home-prefix` names one directory below the output, such as `Contents` for a macOS app. Then the
+//! composer writes every file below that directory, and `DevIdeConfig` names it as the home. Every failure exits with 1.
 //!
 //! The composer owns the composition of the component contract. [`spec`] reads the composition spec and the source
 //! bindings. [`compose`] checks the components and their destinations, then [`merge`] copies the files of a full
-//! distribution, and [`local_layout`] writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
+//! distribution. [`compose`] then checks the launch class path of the copied `product-info.json`. [`local_layout`]
+//! writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
 //! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 //! [`placement`] checks the home placement of the spec against the manifests.
 
@@ -100,6 +102,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
     let fingerprint_file = required_path(&mut options, "--fingerprint")?;
     let core_classpath_file = optional_path(&mut options, "--core-classpath-file")?;
     let plugin_classpath_file = optional_path(&mut options, "--plugin-classpath-file")?;
+    let home = home_directory(&output_dir, options.take("--home-prefix")?.as_deref())?;
     options.finish()?;
     root.tag("componentCount", spec.components.len());
 
@@ -151,7 +154,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
         },
         source_directory_runfiles: Some(compose::absolute_keys(&spec.source_directory_runfiles)?),
     };
-    let home = output_dir.as_path();
+    let home = home.as_path();
     let result = compose::compose_components(&components, home, &compose_options, root)?;
     for (file, content) in [
         (
@@ -174,11 +177,24 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
     }
     ide_config::write_dev_ide_config(
         &ide_config,
-        &output_dir,
+        home,
         &result.main_class,
         &result.platform_prefix,
         &result.additional_modules,
     )
+}
+
+/// The home of the IDE: `output_dir`, or its child `prefix` when the option names one.
+///
+/// The prefix is one directory name, such as `Contents` for a macOS app. An empty value is an absent option.
+fn home_directory(output_dir: &Path, prefix: Option<&str>) -> Result<PathBuf> {
+    let Some(prefix) = prefix.filter(|prefix| !prefix.is_empty()) else {
+        return Ok(output_dir.to_path_buf());
+    };
+    if prefix.contains('/') || distpath::validate_relative_path(prefix).is_err() {
+        bail!("--home-prefix must be one directory name, not {prefix:?}");
+    }
+    Ok(output_dir.join(prefix))
 }
 
 /// Removes the output of an earlier run. Bazel creates the declared output directory before the action runs.

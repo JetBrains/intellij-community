@@ -449,36 +449,44 @@ class AutoImportProjectTracker(
   init {
     LOG.debug("Project tracker initialization")
 
-    projectChangeOperation.whenOperationStarted(serviceDisposable) {
-      LOG.debug("Detected project change start event")
-      scheduleChangeProcessing()
-    }
-    projectChangeOperation.whenOperationFinished(serviceDisposable) {
-      LOG.debug("Detected project change finish event")
-      scheduleChangeProcessing()
-    }
-    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
-      LOG.debug("Detected project lookup start event")
-      scheduleChangeProcessing()
-    }
-    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
-      LOG.debug("Detected project lookup finish event")
-      scheduleChangeProcessing()
-    }
-    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) {
-      LOG.debug("Detected project reload type change event")
-      scheduleChangeProcessing()
-    }
+    try {
+      projectChangeOperation.whenOperationStarted(serviceDisposable) {
+        LOG.debug("Detected project change start event")
+        scheduleChangeProcessing()
+      }
+      projectChangeOperation.whenOperationFinished(serviceDisposable) {
+        LOG.debug("Detected project change finish event")
+        scheduleChangeProcessing()
+      }
+      isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
+        LOG.debug("Detected project lookup start event")
+        scheduleChangeProcessing()
+      }
+      isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
+        LOG.debug("Detected project lookup finish event")
+        scheduleChangeProcessing()
+      }
+      settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) {
+        LOG.debug("Detected project reload type change event")
+        scheduleChangeProcessing()
+      }
 
-    dispatcher.bindIsPassThrough(asyncChangesProcessingProperty.not(), serviceDisposable)
-    dispatcher.bindMergingTimeSpan(mergingTimeSpanProperty, serviceDisposable)
+      dispatcher.bindIsPassThrough(asyncChangesProcessingProperty.not(), serviceDisposable)
+      dispatcher.bindMergingTimeSpan(mergingTimeSpanProperty, serviceDisposable)
 
-    dispatcher.setRestartTimerOnAdd(true)
+      dispatcher.setRestartTimerOnAdd(true)
 
-    application.messageBus.connect(serviceDisposable)
-      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
-    project.messageBus.connect(serviceDisposable)
-      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
+      application.messageBus.connect(serviceDisposable)
+        .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+      project.messageBus.connect(serviceDisposable)
+        .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
+    }
+    catch (e: Throwable) {
+      // The dispatcher and the subscriptions make this tracker a Disposer root before the service container adopts it.
+      // The container does not get the instance when the constructor fails, so dispose it here.
+      Disposer.dispose(serviceDisposable)
+      throw e
+    }
   }
 
   private data class ProjectData(

@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The reader of the application-info facts that `bin/product-info.json` states.
+//! The reader of the application-info facts that `product-info.json` states.
 //!
 //! It ports the constructor of `ApplicationInfoPropertiesImpl` (`ApplicationInfoPropertiesImpl.kt:63-138`) for a dev
 //! distribution. A line reference below names a line of that file. The port supports no system-property override,

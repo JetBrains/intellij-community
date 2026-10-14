@@ -224,7 +224,8 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
-      for (int inputId : set.toIntArray()) {
+      for (it.unimi.dsi.fastutil.ints.IntIterator it = set.intIterator(); it.hasNext(); ) {
+        int inputId = it.nextInt();
         DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
     }

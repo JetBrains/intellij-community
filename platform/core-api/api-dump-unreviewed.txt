@@ -1982,9 +1982,7 @@ a:com.intellij.psi.search.SearchScope
 c:com.intellij.psi.search.searches.ExtensibleQueryFactory
 - p:<init>():V
 - p:getExecutors():java.util.List
-- registerExecutor(com.intellij.util.QueryExecutor):V
 - registerExecutor(com.intellij.util.QueryExecutor,com.intellij.openapi.Disposable):V
-- unregisterExecutor(com.intellij.util.QueryExecutor):V
 c:com.intellij.psi.stubs.BinaryFileStubBuilders
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.psi.stubs.BinaryFileStubBuilders

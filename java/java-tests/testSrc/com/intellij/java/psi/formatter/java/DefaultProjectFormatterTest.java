@@ -15,41 +15,39 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.formatter.FormatterTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
 public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
   @Override
   protected String getBasePath() {
     return "/psi/formatter/wrapping";
   }
 
+  @Test
   public void testFormatting() {
-    Project currProject = getProject();
-    setProject(ProjectManager.getInstance().getDefaultProject());
-    try {
-      doFileTest(
-        "class Foo{}",
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    doFileTest(
+      defaultProject,
+      "class Foo{}",
 
-        "class Foo {\n" +
-        "}");
-    }
-    finally {
-      setProject(currProject);
-    }
+      "class Foo {\n" +
+      "}");
   }
 
-  protected void doFileTest(final String text, final String textAfter)
-    throws IncorrectOperationException {
+  private void doFileTest(Project project, final String text, final String textAfter) {
     final String fileName = "before." + getFileExtension();
-    final PsiFile file = createFileFromText(text, fileName, PsiFileFactory.getInstance(getProject()));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
-    String fileText = file.getText();
+    final PsiFile file = FormatterTestUtil.createFile(project, fileName, text);
+    FormatterTestUtil.reformat(project, file, null);
+    String fileText = ReadAction.computeBlocking(() -> file.getText());
     assertEquals(textAfter, fileText);
   }
 }

@@ -1,0 +1,5 @@
+class Child {
+    val value = 40
+    fun helper() = 2
+    fun use() = this.value + this.helper()
+}

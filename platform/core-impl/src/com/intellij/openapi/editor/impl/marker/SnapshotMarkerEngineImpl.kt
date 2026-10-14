@@ -170,6 +170,16 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     return storedMarker.updateCurrentRoot { it.remove(markerId) }
   }
 
+  override fun processAllRangeMarkers(
+    rootStore: SnapshotMarkerRootStore,
+    snapshot: DocumentSnapshot,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean {
+    processQueue()
+    val root = rootStore.root(snapshot) ?: return true
+    return root.processAllRangeMarkers { entry, _ -> processMarker(rootStore, snapshot, entry, processor) }
+  }
+
   override fun processRangeMarkersOverlappingWith(
     rootStore: SnapshotMarkerRootStore,
     snapshot: DocumentSnapshot,
@@ -181,15 +191,22 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     processQueue()
     val root = rootStore.root(snapshot) ?: return true
     return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference) { entry ->
-      val marker = entry.markerReference?.get()
-      if (marker == null) {
-        rootStore.purge(snapshot, entry.markerId)
-        true
-      }
-      else {
-        marker.disposed || processor.process(marker)
-      }
+      processMarker(rootStore, snapshot, entry, processor)
     }
+  }
+
+  private fun processMarker(
+    rootStore: SnapshotMarkerRootStore,
+    snapshot: DocumentSnapshot,
+    entry: PMarkerRoot.MarkerEntry,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean {
+    val marker = entry.markerReference?.get()
+    if (marker == null) {
+      rootStore.purge(snapshot, entry.markerId)
+      return true
+    }
+    return marker.disposed || processor.process(marker)
   }
 
   @ApiStatus.Internal

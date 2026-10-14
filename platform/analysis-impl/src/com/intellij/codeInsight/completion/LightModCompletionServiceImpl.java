@@ -6,6 +6,8 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
@@ -15,8 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -71,14 +73,20 @@ public final class LightModCompletionServiceImpl {
     if (startOffset == caretOffset) {
       PsiFile copy = (PsiFile)file.copy();
       Document document = copy.getFileDocument();
-      document.insertString(caretOffset, CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
-      PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-      manager.commitDocument(document);
-      element = Objects.requireNonNull(copy.findElementAt(caretOffset));
+      if (document instanceof DocumentWindow window) {
+        element = insertDummyIntoInjection(file, copy, window, caretOffset);
+        if (element == null) return;
+      }
+      else {
+        document.insertString(caretOffset, CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+        manager.commitDocument(document);
+        element = Objects.requireNonNull(copy.findElementAt(caretOffset));
+      }
     } else {
       element = Objects.requireNonNullElse(original, file);
     }
-    List<ModCompletionItemProvider> providers = ModCompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
+    List<ModCompletionItemProvider> providers = ModCompletionItemProvider.forLanguage(file.getLanguage());
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
     var matcher = new CamelHumpMatcher(prefix);
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
@@ -93,9 +101,9 @@ public final class LightModCompletionServiceImpl {
 
         @Override
         public void accept(ModCompletionItem item) {
-          if (matcher.prefixMatches(item.mainLookupString()) ||
-              ContainerUtil.exists(item.additionalLookupStrings(), matcher::prefixMatches)) {
-            CompletionItemLookupElement le = new CompletionItemLookupElement(item);
+          CompletionItemLookupElement le = new CompletionItemLookupElement(item);
+          // matches every lookup string, as CompletionResult.wrap does in the IDE
+          if (matcher.prefixMatches(le)) {
             if (classifier == null) {
               classifier = sortMap.computeIfAbsent(sorter, s -> s.buildClassifier(Classifier.empty()));
             }
@@ -111,6 +119,26 @@ public final class LightModCompletionServiceImpl {
         sink.accept(((CompletionItemLookupElement)item).item());
       }
     }
+  }
+
+  /**
+   * Inserts the dummy identifier into the host copy that holds {@code copy} and returns the element at the caret in the injection
+   * that the commit yields: the commit may re-inject instead of reparsing {@code copy} in place, leaving it stale.
+   * Null when the host text with the dummy identifier has no injection there, like an injection whose value pattern does not match it.
+   */
+  private static @Nullable PsiElement insertDummyIntoInjection(PsiFile file, PsiFile copy, DocumentWindow window, int caretOffset) {
+    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(file.getProject());
+    PsiFile hostCopy = injectedManager.getTopLevelFile(copy);
+    int hostOffset = window.injectedToHost(caretOffset);
+    Document hostDocument = window.getDelegate();
+    hostDocument.insertString(hostOffset, CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(hostDocument);
+    PsiElement element = injectedManager.findInjectedElementAt(hostCopy, hostOffset);
+    if (element == null) return null;
+    if (element.getContainingFile() instanceof PsiFileImpl injected && injected.getOriginalFile() == injected) {
+      injected.setOriginalFile(file);
+    }
+    return element;
   }
 
   private static ProcessingContext createContext(CamelHumpMatcher matcher) {

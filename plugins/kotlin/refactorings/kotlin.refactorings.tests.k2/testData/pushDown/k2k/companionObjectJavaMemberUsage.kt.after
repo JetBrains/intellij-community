@@ -1,0 +1,12 @@
+package sample
+
+open class Base {
+}
+
+class Child : Base() {
+    // INFO: {"checked": "true"}
+    companion object {
+        @JvmStatic
+        fun obj() {}
+    }
+}

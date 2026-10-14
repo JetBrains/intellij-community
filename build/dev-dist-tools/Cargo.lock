@@ -221,17 +221,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dev-launch-args"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cli",
- "dev-launch",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "digest"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

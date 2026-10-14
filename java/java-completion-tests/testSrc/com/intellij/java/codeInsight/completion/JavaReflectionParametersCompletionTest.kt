@@ -17,7 +17,7 @@ import kotlin.math.min
 
 @NeedsIndex.Full
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
-  override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
+  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
 

@@ -49,6 +49,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @ApiStatus.Internal
 interface GHPRConnectedProjectViewModel {
+  val connectionId: String
   val repository: GHRepositoryCoordinates
   val dataContext: GHPRDataContext
   val listVm: GHPRListViewModel
@@ -105,6 +106,7 @@ abstract class GHPRConnectedProjectViewModelBase(
 ) : GHPRConnectedProjectViewModel {
   protected val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
+  override val connectionId: String = connection.id
   override val dataContext: GHPRDataContext = connection.dataContext
   override val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)

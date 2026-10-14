@@ -185,6 +185,7 @@ dev_launch_deps_community = use_extension("@community//build:dev_launch_dependen
 use_repo(
     dev_launch_deps_community,
     "dev_launch_jserialcomm",
+    "dev_launch_launcher_extracted",
     "dev_launch_libghostty",
     "dev_launch_libwebp",
     "dev_launch_maven",
@@ -203,6 +204,7 @@ use_repo(dev_launch_paths, "dev_launch_paths")
     "dev_launch_%s_%s" % (platform, group),
 ) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
     "jbr",
+    "jbr_runtime_extracted",
     "jcef",
     "pyrefly_extracted",
 ]]
@@ -363,10 +365,12 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
-# The Air UI-lane controller, `tools/vm`: the pinned Docker CLI, Lima and Tart, and the crate hub `@avl`.
+# The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
 include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")
-include("//tools/vm:lima.MODULE.bazel")
 include("//tools/vm:tart.MODULE.bazel")
 include("//tools/vm:avl.MODULE.bazel")
 include("//:fleet/kmp.MODULE.bazel")
+
+# jscpd, the copy-paste detector of `tools/jscpd.cmd`.
+include("//tools:jscpd.MODULE.bazel")

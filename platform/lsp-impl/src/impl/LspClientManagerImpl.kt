@@ -454,12 +454,16 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   companion object {
     fun getInstanceImpl(project: Project): LspClientManagerImpl = LspClientManager.getInstance(project) as LspClientManagerImpl
 
-    internal inline fun forEachRunningClientInEachProject(action: (LspClientImpl) -> Unit) =
+    internal inline fun forEachRunningClientInEachProject(file:VirtualFile?=null, action: (LspClientImpl) -> Unit) {
       ProjectManager.getInstance().openProjects.forEach { project ->
         getInstanceImpl(project).lspClients.forEach { client ->
-          if (client.state == LspServerState.Running) action(client)
+          if (client.state == LspServerState.Running &&
+              (file == null || client.isFileOpened(file) && client.isSupportedFile(file))) {
+            action(client)
+          }
         }
       }
+    }
 
     internal fun isAnyServerRunning(): Boolean =
       ProjectManager.getInstance().openProjects.any { project ->

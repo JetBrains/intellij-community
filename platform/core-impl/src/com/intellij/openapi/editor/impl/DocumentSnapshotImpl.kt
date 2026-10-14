@@ -23,13 +23,6 @@ internal class DocumentSnapshotImpl private constructor(
     return modState
   }
 
-  override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
-    if (this === metadata || text === metadata.text()) {
-      return metadata
-    }
-    return this
-  }
-
   override fun copyWithNewIdentity(): DocumentSnapshotImpl {
     return DocumentSnapshotImpl(text, modState)
   }

@@ -24,6 +24,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,13 +64,12 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
     val workingDirectory = tempDirFixture.get()
     val venvDir = workingDirectory.resolve(".venv")
     val venvPython = createVenv(python, venvDir).getOrThrow()
-    val sdk = createSdk(
-      pyProjectFixture.get().residesOnModule.project,
-      PathHolder.Eel(venvPython),
-      createVenvAdditionalData(workingDirectory),
-    ).orThrow().getSdkAPI()
+    val pyProject = pyProjectFixture.get()
+    val sdk = createSdk(pyProject, PathHolder.Eel(venvPython), createVenvAdditionalData(workingDirectory)).orThrow().getSdkAPI()
+    // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
+    edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
     try {
-      pyProjectFixture.get().residesOnModule.pythonSdk = sdk
+      pyProject.residesOnModule.pythonSdk = sdk
 
       val (shell, _) = eel.exec.getShell()
       val execOptions = MutableShellExecOptionsImpl(

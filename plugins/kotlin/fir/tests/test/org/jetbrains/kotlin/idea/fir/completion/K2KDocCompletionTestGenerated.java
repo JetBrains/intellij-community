@@ -48,6 +48,11 @@ public class K2KDocCompletionTestGenerated extends AbstractK2JvmBasicCompletionT
         runTest("../../completion/testData/kdoc/CompanionObject.kt");
     }
 
+    @TestMetadata("ContextArguments.kt")
+    public void testContextArguments() throws Exception {
+        runTest("../../completion/testData/kdoc/ContextArguments.kt");
+    }
+
     @TestMetadata("Extension.kt")
     public void testExtension() throws Exception {
         runTest("../../completion/testData/kdoc/Extension.kt");

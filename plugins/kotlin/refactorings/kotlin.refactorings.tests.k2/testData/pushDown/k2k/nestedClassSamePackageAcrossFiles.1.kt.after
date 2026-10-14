@@ -1,0 +1,3 @@
+package sample
+
+fun use(): sample.Bar.Nested = sample.Bar.Nested()

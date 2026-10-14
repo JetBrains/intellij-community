@@ -123,6 +123,7 @@ git4idea.commands.Git
 - a:runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 - a:unlockWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 f:git4idea.commands.GitCommand
+- sf:FSMONITOR_DAEMON:git4idea.commands.GitCommand
 - sf:HOOK:git4idea.commands.GitCommand
 - sf:NOTES:git4idea.commands.GitCommand
 f:git4idea.commands.GitCommandNotTrustedException

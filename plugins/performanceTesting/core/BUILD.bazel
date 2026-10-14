@@ -32,6 +32,7 @@ dev_dist_plugin(
         "intellij.driver.impl",
         "intellij.driver.client",
         "intellij.performanceTesting.freezes",
+        "intellij.dev.leakDetection",
         "intellij.libraries.oshi.core",
         "intellij.libraries.assertj.core",
         "intellij.libraries.assertj.swing",

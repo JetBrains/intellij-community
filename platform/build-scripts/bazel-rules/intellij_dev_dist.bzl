@@ -152,9 +152,9 @@ IntellijDevFragmentInfo = provider(
 DevDistPlacementInfo = provider(
     doc = """Where a component places its files in a home, known at analysis.
 
-    A launcher that starts `java` directly links its home from these paths in its runfiles tree, because Bazel writes a
-    runfiles tree only from paths that analysis knows. Every destination is in slash form, relative to the home. The
-    composer checks the placement against the component manifest, see `placement.rs` of the composer.""",
+    A launch target links its home from these paths in its runfiles tree, because Bazel writes a runfiles tree only
+    from paths that analysis knows. Every destination is in slash form, relative to the home. The composer checks the
+    placement against the component manifest, see `placement.rs` of the composer.""",
     fields = {
         "files": "Dictionary from a file destination to its `File`.",
         "trees": "Dictionary from a directory destination to a directory `File` that holds every entry below it at the same relative path.",
@@ -174,14 +174,22 @@ IntellijDevReferenceInfo = provider(
 IntellijDevDistInfo = provider(
     fields = {
         "fingerprint": "The content fingerprint of the composed IDE distribution.",
-        "home": "The self-contained home or the local launch metadata directory.",
+        "home": "The output directory: the export `<name>.dist` or the local launch metadata `<name>.metadata`. The home of the IDE is this directory or its `home_prefix` child, see `dist_home_path`.",
+        "home_prefix": "The directory below `home` that holds the home of the IDE: `Contents` for a macOS app, or `\"\"` for `home` itself. `home_prefix` of `dev_dist_product_files.bzl` states the rule.",
         "ide_config": "The config file used by PreBuiltDevMain.",
         "runtime_files": "Component artifacts used directly by a local launch.",
         "placement": "The merged `DevDistPlacementInfo` of a local launch as `struct(files, trees, executables)`. None for a full distribution or a component without a placement.",
         "core_classpath": "The `core-classpath.txt` of a local launch as a file of its own, or None.",
         "plugin_classpath": "The `plugins/plugin-classpath.txt` of a local launch as a file of its own, or None.",
+        "sibling_vm_options": "The sibling vmoptions file `<name>.dist.vmoptions` of an export, or None.",
     },
 )
+
+def dist_home_path(info):
+    """The exec path of the home of the IDE in the `IntellijDevDistInfo` `info`: `home`, or its `home_prefix` child."""
+    if info.home_prefix:
+        return info.home.path + "/" + info.home_prefix
+    return info.home.path
 
 IntellijProjectModelTreeInfo = provider(
     fields = {
@@ -631,12 +639,56 @@ def _jar_destinations(ctx, records):
             by_source[source.file.path] = entry
     return [by_source[source] for source in sorted(by_source.keys())]
 
+def _names_destination(pattern, destination):
+    """Whether `pattern` names `destination`: the same path, or with a final `/` the directory that holds it directly."""
+    if pattern.endswith("/"):
+        return destination.startswith(pattern) and "/" not in destination[len(pattern):]
+    return pattern == destination
+
+def _place_unpacked_archives(ctx, files, records, destinations, executables):
+    """Places every file of each `unpacked_archives` target at `<directory>/<path in the archive>`.
+
+    The path in the archive is the label name of the file. The BUILD file of a `dev_launch_extracted_repo` exports each
+    file by its path in the root package, so the name is the path below the archive root. A record also states
+    `checkSourceMode`: the collector then refuses a source with an executable bit that the record does not state.
+    """
+    patterns = ctx.attr.unpacked_archive_executables
+    used_patterns = {}
+    for target, directory in ctx.attr.unpacked_archives.items():
+        if not directory or directory.startswith("/") or directory.endswith("/"):
+            fail("%s: %s needs a relative directory without a final '/', not '%s'" % (ctx.label, target.label, directory))
+        for file in target[DefaultInfo].files.to_list():
+            if file.is_directory:
+                fail("%s: %s provides the directory %s; an unpacked archive provides ordinary files" % (ctx.label, target.label, file.path))
+            if not file.is_source:
+                fail("%s: %s provides the generated file %s; an unpacked archive provides source files" % (ctx.label, target.label, file.path))
+            relative_path = directory + "/" + file.owner.name
+            if relative_path in destinations:
+                fail("%s: duplicate destination: %s" % (ctx.label, relative_path))
+            destinations[relative_path] = file
+            matched = [pattern for pattern in patterns if _names_destination(pattern, relative_path)]
+            for pattern in matched:
+                used_patterns[pattern] = True
+            executable = bool(matched)
+            if executable:
+                executables.append(relative_path)
+            files.append(file)
+            records.append({
+                "source": file.path,
+                "relativePath": relative_path,
+                "executable": executable,
+                "checkSourceMode": True,
+            })
+    for pattern in patterns:
+        if pattern not in used_patterns:
+            fail("%s: unpacked_archive_executables names '%s', which matches no file of unpacked_archives" % (ctx.label, pattern))
+
 def _packed_jars_component_impl(ctx):
     if ctx.attr.plugin_classpath_prefix and not ctx.attr.platform_payload:
         fail("%s: plugin_classpath_prefix needs platform_payload" % ctx.label)
     if ctx.attr.platform_payload:
-        if ctx.attr.files or ctx.attr.executable_files:
-            fail("%s: files and executable_files cannot be combined with platform_payload" % ctx.label)
+        if ctx.attr.files or ctx.attr.executable_files or ctx.attr.unpacked_archives:
+            fail("%s: files, executable_files and unpacked_archives cannot be combined with platform_payload" % ctx.label)
         jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
         records = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_metadata.to_list()
         trees = [record.native_tree for record in records if record.native_tree]
@@ -667,14 +719,16 @@ def _packed_jars_component_impl(ctx):
             main_class = ctx.attr.main_class,
         )
 
-    if not ctx.attr.files and not ctx.attr.executable_files:
-        fail("%s: either platform_payload or nonempty files or executable_files is required" % ctx.label)
+    if not ctx.attr.files and not ctx.attr.executable_files and not ctx.attr.unpacked_archives:
+        fail("%s: either platform_payload or nonempty files, executable_files or unpacked_archives is required" % ctx.label)
+    if ctx.attr.unpacked_archive_executables and not ctx.attr.unpacked_archives:
+        fail("%s: unpacked_archive_executables needs unpacked_archives" % ctx.label)
     files = []
     records = []
     destinations = {}
     executables = []
     for placed, executable in [(ctx.attr.files, False), (ctx.attr.executable_files, True)]:
-        for target, relative_path in placed.items():
+        for relative_path, target in placed.items():
             outputs = target[DefaultInfo].files.to_list()
             if len(outputs) != 1 or outputs[0].is_directory:
                 fail("%s: %s must provide exactly one ordinary file" % (ctx.label, target.label))
@@ -689,6 +743,7 @@ def _packed_jars_component_impl(ctx):
                 "relativePath": relative_path,
                 "executable": executable,
             })
+    _place_unpacked_archives(ctx, files, records, destinations, executables)
     metadata = ctx.actions.declare_file(ctx.label.name + ".files.json")
     ctx.actions.write(metadata, json.encode(records))
     args = ctx.actions.args()
@@ -708,9 +763,13 @@ intellij_dev_packed_jars_component = rule(
     doc = """Collect packed platform jars or explicitly placed files into a distribution component.
 
     Set platform_payload to collect its packed jars at lib/<filename>, and the native tree of a content module jar at
-    lib/<native_lib_dir>/. The manifest marks the jars that the payload puts on the core classpath. Alternatively, set files and executable_files to map source labels to distribution paths;
-    the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
+    lib/<native_lib_dir>/. The manifest marks the jars that the payload puts on the core classpath. Alternatively, set files and executable_files to map distribution paths to source labels,
+    so one source can go to several paths; the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
     only these sources and writes one manifest. The composer copies the files directly from their sources.
+
+    The file mode also takes unpacked_archives: each file of an extracted repository goes below one directory, at its
+    path in the archive. unpacked_archive_executables names the destinations that get the executable bit. The collector
+    refuses an archive file with an executable bit that this list does not name, on macOS and Linux.
     """,
     implementation = _packed_jars_component_impl,
     attrs = _COLLECTOR_ATTRS | {
@@ -718,8 +777,17 @@ intellij_dev_packed_jars_component = rule(
             providers = [DevDistPlatformPayloadInfo],
             doc = "The payload's packed `lib/` jars, derived from the graph - see `dev_dist_platform_payload`.",
         ),
-        "files": attr.label_keyed_string_dict(allow_files = True, doc = "Maps each source label to its distribution path. The composer copies the file as is."),
-        "executable_files": attr.label_keyed_string_dict(allow_files = True, doc = "Maps each source label to its distribution path. The composer copies the file with the executable bit."),
+        "files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file as is."),
+        "executable_files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file with the executable bit."),
+        "unpacked_archives": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = "Maps the `:files` filegroup of a `dev_launch_extracted_repo` to a distribution directory. " +
+                  "Each file goes to `<directory>/<path in the archive>`.",
+        ),
+        "unpacked_archive_executables": attr.string_list(
+            doc = "The destinations of `unpacked_archives` that get the executable bit. A value with a final `/` names " +
+                  "a directory, and the files directly in it are executable. Each value must name a file.",
+        ),
         "plugin_classpath_prefix": attr.label(
             allow_single_file = True,
             doc = "The `plugin-classpath.txt` prefix that `dev_dist_product_descriptor` writes. Only with `platform_payload`.",
@@ -794,9 +862,43 @@ def _merge_placements(ctx, fragment_targets):
                 fail("%s: '%s' of %s is below '%s', which %s links as a whole" % (ctx.label, destination, owners[destination], parent, owners[parent]))
     return struct(files = files, trees = trees, executables = executables)
 
+# The token of a sibling vmoptions line that stands for the absolute path of the home of the export.
+_EXPORT_TOKEN = "${EXPORT}"
+
+def _sibling_vm_options(ctx, home):
+    """Writes the sibling vmoptions file of the export `home`, or returns None when the rule states no line.
+
+    The file is `<name>.dist.vmoptions`, the Toolbox-style name next to the export. The native launcher finds it on
+    every OS. On macOS the home is `Contents`, and the launcher strips that level first. A file write runs on the local
+    host, so no shared cache holds its absolute paths. No action reads the file.
+    """
+    lines = ctx.attr.sibling_vm_options
+    if not lines:
+        return None
+    if ctx.attr.local_launch:
+        fail("%s: a local launch has no export, so it takes no sibling_vm_options" % ctx.label, attr = "sibling_vm_options")
+    export = None
+    if ctx.attr.output_base:
+        export = "%s/execroot/%s/%s" % (ctx.attr.output_base, ctx.workspace_name, home.path)
+        if ctx.attr.home_prefix:
+            export += "/" + ctx.attr.home_prefix
+    resolved = []
+    for line in lines:
+        if not line or "\n" in line or "\r" in line:
+            fail("%s: a sibling vmoptions line must be one JVM option, got %s" % (ctx.label, repr(line)), attr = "sibling_vm_options")
+        if _EXPORT_TOKEN in line:
+            if export == None:
+                fail("%s: '%s' names %s, so output_base is required" % (ctx.label, line, _EXPORT_TOKEN), attr = "output_base")
+            line = line.replace(_EXPORT_TOKEN, export)
+        resolved.append(line)
+    file = ctx.actions.declare_file(ctx.label.name + ".dist.vmoptions")
+    ctx.actions.write(file, "".join([line + "\n" for line in resolved]))
+    return file
+
 def _compose(ctx, fragment_targets):
     local_launch = ctx.attr.local_launch
     home = ctx.actions.declare_directory(ctx.label.name + (".metadata" if local_launch else ".dist"))
+    sibling_vm_options = _sibling_vm_options(ctx, home)
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
@@ -855,6 +957,8 @@ def _compose(ctx, fragment_targets):
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
+    if ctx.attr.home_prefix:
+        args.add("--home-prefix=" + ctx.attr.home_prefix)
     metadata_files = [file for file in [core_classpath, plugin_classpath] if file]
     if core_classpath:
         args.add("--core-classpath-file=" + core_classpath.path)
@@ -879,17 +983,20 @@ def _compose(ctx, fragment_targets):
     )
     return [
         DefaultInfo(
-            files = depset([home, ide_config, fingerprint]),
+            # The sibling vmoptions file is no runfile: a consumer of the export reads the export, not the local file.
+            files = depset([home, ide_config, fingerprint] + ([sibling_vm_options] if sibling_vm_options else [])),
             runfiles = ctx.runfiles(files = [home, ide_config, fingerprint], transitive_files = runtime_files),
         ),
         IntellijDevDistInfo(
             home = home,
+            home_prefix = ctx.attr.home_prefix,
             ide_config = ide_config,
             fingerprint = fingerprint,
             runtime_files = runtime_files,
             placement = placement,
             core_classpath = core_classpath,
             plugin_classpath = plugin_classpath,
+            sibling_vm_options = sibling_vm_options,
         ),
         # Read by `intellij_dev_dist_config`, which needs the single-file label `$(rlocationpath ...)` takes - which a
         # dist target, with three outputs, is not. Not reachable through `IntellijDevDistInfo`: the consumers are
@@ -941,6 +1048,19 @@ per plugin serves every product that bundles the plugin.""",
                   "distribution was configured with, not what any one component assembled. A shared plugin component " +
                   "packs a module that the product bundles, so only this attribute tells a consumer that the " +
                   "distribution contains it.",
+        ),
+        "home_prefix": attr.string(
+            doc = "The directory below the output that holds the home of the IDE: `Contents` for a macOS app, or empty " +
+                  "for the output itself. `home_prefix` of `dev_dist_product_files.bzl` states the value. The composer " +
+                  "writes every file below it, and `DevIdeConfig` names it as the home. A local launch takes it too.",
+        ),
+        "sibling_vm_options": attr.string_list(
+            doc = "The lines of `<name>.dist.vmoptions`, the sibling vmoptions file next to the export. Each line is one " +
+                  "JVM option. `${EXPORT}` in a line stands for the absolute path of the home of the export. The native " +
+                  "launcher reads the file as the user vmoptions file of a bare start. A local launch refuses the attribute.",
+        ),
+        "output_base": attr.string(
+            doc = "The absolute output base of the workspace. The rule needs it when a line of `sibling_vm_options` names `${EXPORT}`.",
         ),
     } | _TRACE_SPANS_ATTR,
 )

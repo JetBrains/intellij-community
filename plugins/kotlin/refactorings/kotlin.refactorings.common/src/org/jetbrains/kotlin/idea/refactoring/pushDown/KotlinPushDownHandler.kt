@@ -77,7 +77,11 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
             return
         }
 
-        val members = allowAnalysisOnEdt { KotlinMemberInfoStorage(classOrObject).getClassMemberInfos(classOrObject).filter { it.member !is KtParameter } }
+        val members = allowAnalysisOnEdt {
+            KotlinMemberInfoStorage(classOrObject)
+                .getClassMemberInfos(classOrObject)
+                .filter { it.member !is KtParameter } + classOrObject.companionObjects.map { KotlinMemberInfo.Declaration(it) }
+        }
         if (isUnitTestMode()) {
             val helper = dataContext?.getData(PUSH_DOWN_TEST_HELPER_KEY) as TestHelper
             val selectedMembers = helper.adjustMembers(members)

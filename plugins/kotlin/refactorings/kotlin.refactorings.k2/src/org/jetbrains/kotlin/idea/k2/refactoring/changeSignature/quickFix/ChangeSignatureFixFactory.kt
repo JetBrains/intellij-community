@@ -423,6 +423,9 @@ object ChangeSignatureFixFactory {
         val functionType = this as KaFunctionType
         return typeCreator.functionType {
             isSuspend = typeFamily.isSuspend
+            functionType.receiverType?.let { receiverType ->
+                valueParameter(null, receiverType)
+            }
             for (originalParameter in functionType.parameters) {
                 valueParameter(originalParameter.name, originalParameter.type)
             }

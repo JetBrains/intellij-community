@@ -1,5 +1,5 @@
 # Apple `container`, the engine of the UI-lane controller's Docker backend on a macOS host of macOS 26 or newer
-# (ADR 0222, ADR 0224). The pin removes the manual install.
+# (the decision `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`, and ADR 0224). The pin removes the manual install.
 #
 # No `BUILD` file may name `@air_container_darwin_arm64` in `data` or `deps`. The controller asks for the alias with
 # `bazel cquery` at its first command on this engine (`resolve_apple_executable` in

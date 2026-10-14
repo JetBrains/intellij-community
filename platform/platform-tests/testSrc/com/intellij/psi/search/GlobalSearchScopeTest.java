@@ -3,15 +3,18 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.ResolveScopeEnlarger;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -178,6 +181,35 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
 
     assertOrderedEquals(checkContains.fun(copyPsi.getResolveScope()), true, false, true);
     assertOrderedEquals(checkContains.fun(ResolveScopeManager.getInstance(myProject).getDefaultResolveScope(copyFile)), true, false, true);
+  }
+
+  public void testDefaultResolveScopeIsCachedWhileVirtualFileIsAlive() throws IOException {
+    VirtualFile file = getTempDir().createVirtualFile("cached.txt");
+    PsiTestUtil.addSourceContentToRoots(getModule(), file.getParent());
+
+    AtomicInteger computations = new AtomicInteger();
+    ResolveScopeEnlarger.EP_NAME.getPoint().registerExtension(new ResolveScopeEnlarger() {
+      @Override
+      public @Nullable SearchScope getAdditionalResolveScope(@NotNull VirtualFile f, @NotNull Project project) {
+        if (f.equals(file)) {
+          computations.incrementAndGet();
+        }
+        return null;
+      }
+    }, getTestRootDisposable());
+
+    ResolveScopeManager manager = ResolveScopeManager.getInstance(myProject);
+    GlobalSearchScope first = manager.getDefaultResolveScope(file);
+    assertEquals(1, computations.get());
+
+    for (int i = 0; i < 3; i++) {
+      //noinspection CallToSystemGC
+      System.gc();
+    }
+
+    GlobalSearchScope second = manager.getDefaultResolveScope(file);
+    assertSame(first, second);
+    assertEquals(1, computations.get());
   }
 
   public void testUnionWithEmptyAndUnion() {

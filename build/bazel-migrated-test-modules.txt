@@ -42,12 +42,15 @@ intellij.idea.community.build.tasks.tests
 intellij.idea.community.main.tests
 intellij.java.compiler.heavy.tests
 intellij.java.compiler.tests
+intellij.java.completion.tests
 intellij.idea.tools.launch.tests
 intellij.java.byteCodeViewer.tests
 intellij.java.coverage.tests
 intellij.java.debugger.impl.tests
 intellij.java.debugger.streams.tests
 intellij.java.decompiler.engine.tests
+intellij.java.decompiler.tests
+intellij.java.featuresTrainer.tests
 intellij.java.frontback.tests
 intellij.java.guiForms.compiler.tests
 intellij.java.guiForms.designer.tests
@@ -58,6 +61,9 @@ intellij.java.ide.customization.tests
 intellij.java.jshell.console.tests
 intellij.java.jshell.protocol.tests
 intellij.java.manifest.tests
+intellij.java.mcp.tests
+intellij.java.rareRefactorings.tests
+intellij.java.structuralSearch.tests
 intellij.java.terminal.tests
 intellij.java.testFramework.tests
 intellij.java.typeMigration.tests
@@ -123,6 +129,7 @@ intellij.platform.ide.concurrency.tests
 intellij.platform.ide.fileChooser.universal.tests
 intellij.platform.ide.hprof.tests
 intellij.platform.ide.impl.tests
+intellij.platform.ide.initialConfigImport.tests
 intellij.platform.ide.nonModalWelcomeScreen.tests
 intellij.platform.ide.tabInEditor.tests
 intellij.platform.ide.util.io.native.tests

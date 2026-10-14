@@ -26,8 +26,8 @@ private val mySyncTagEditing                                get() = CheckboxDesc
 private val mySelectWholeCssIdentifierOnDoubleClick         get() = CheckboxDescriptor(XmlBundle.message("smart.keys.select.whole.css.identifiers.on.double.click"), model::isSelectWholeCssIdentifierOnDoubleClick, model::setSelectWholeCssIdentifierOnDoubleClick)
 // @formatter:on
 
-private val webEditorOptionDescriptors
-  get() = listOf(
+private fun webEditorOptionDescriptors(configurableId: String) =
+  listOf(
     myAutomaticallyInsertClosingTagCheckBox,
     myAutomaticallyInsertRequiredAttributesCheckBox,
     myAutomaticallyInsertRequiredSubTagsCheckBox,
@@ -36,7 +36,7 @@ private val webEditorOptionDescriptors
     myAutoCloseTagCheckBox,
     mySyncTagEditing,
     mySelectWholeCssIdentifierOnDoubleClick
-  ).map(CheckboxDescriptor::asOptionDescriptor)
+  ).map { it.asOptionDescriptor(configurableId) }
 
 internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   XmlBundle.message("configurable.name.html.css")), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
@@ -76,7 +76,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
     }
   }
 
-  override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String, String>) = webEditorOptionDescriptors
+  override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String, String>) = webEditorOptionDescriptors(configurableId)
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
     return ConfigurableWrapper.createConfigurables(EP_NAME)

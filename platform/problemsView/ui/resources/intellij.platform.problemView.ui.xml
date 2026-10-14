@@ -77,7 +77,7 @@
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
-      <group id="ProblemsView.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+      <group id="ProblemsView.Options" searchable="false" icon="AllIcons.Actions.GroupBy" popup="true">
         <separator key="group.ProblemsView.Show.text"/>
         <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
         <separator key="group.ProblemsView.SortBy.text"/>

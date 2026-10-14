@@ -58,6 +58,10 @@ c:com.intellij.execution.filters.Filter$ResultItem
 - getHyperlinkInfo():com.intellij.execution.filters.HyperlinkInfo
 c:com.intellij.execution.filters.FilterMixin$AdditionalHighlight
 - com.intellij.execution.filters.Filter$Result
+com.intellij.execution.filters.HyperlinkWithHoverInfo
+- com.intellij.execution.filters.HyperlinkInfo
+- a:onMouseEntered(javax.swing.JComponent,java.awt.Rectangle):V
+- a:onMouseExited():V
 com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 - com.intellij.execution.filters.HyperlinkInfo
 - a:getPopupMenuGroup(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.ActionGroup

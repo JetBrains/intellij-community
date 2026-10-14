@@ -196,7 +196,9 @@ class K2IDEProjectStructureProviderCache : Disposable {
         moduleCacheForKind(module.kind)[moduleId] = module
     }
 
-    override fun dispose() {}
+    override fun dispose() {
+        invalidateAllModuleCaches()
+    }
 
     companion object {
         fun getInstance(project: Project): K2IDEProjectStructureProviderCache =

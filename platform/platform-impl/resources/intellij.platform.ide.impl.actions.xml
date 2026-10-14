@@ -15,74 +15,142 @@
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate"/>
     <action id="DumpPluginDescriptorsAction" class="com.intellij.internal.DumpPluginDescriptorsAction" internal="true"/>
-    <action id="List-selectFirstRow" class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
+    <action id="List-selectFirstRow" class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectFirstRowExtendSelection" class="com.intellij.ui.ListActions$ShiftHome"
-            use-shortcut-of="EditorTextStartWithSelection"/>
-    <action id="List-selectLastRow" class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd"/>
+            use-shortcut-of="EditorTextStartWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="List-selectLastRow" class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectLastRowExtendSelection" class="com.intellij.ui.ListActions$ShiftEnd"
-            use-shortcut-of="EditorTextEndWithSelection"/>
-    <action id="List-selectPreviousRow" class="com.intellij.ui.ListActions$Up" use-shortcut-of="EditorUp"/>
+            use-shortcut-of="EditorTextEndWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="List-selectPreviousRow" class="com.intellij.ui.ListActions$Up" use-shortcut-of="EditorUp">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectPreviousRowExtendSelection" class="com.intellij.ui.ListActions$ShiftUp"
-            use-shortcut-of="EditorUpWithSelection"/>
-    <action id="List-selectNextRow" class="com.intellij.ui.ListActions$Down" use-shortcut-of="EditorDown"/>
+            use-shortcut-of="EditorUpWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="List-selectNextRow" class="com.intellij.ui.ListActions$Down" use-shortcut-of="EditorDown">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectNextRowExtendSelection" class="com.intellij.ui.ListActions$ShiftDown"
-            use-shortcut-of="EditorDownWithSelection"/>
-    <action id="List-selectPreviousColumn" class="com.intellij.ui.ListActions$Left" use-shortcut-of="EditorLeft"/>
+            use-shortcut-of="EditorDownWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="List-selectPreviousColumn" class="com.intellij.ui.ListActions$Left" use-shortcut-of="EditorLeft">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectPreviousColumnExtendSelection" class="com.intellij.ui.ListActions$ShiftLeft"
-            use-shortcut-of="EditorLeftWithSelection"/>
-    <action id="List-selectNextColumn" class="com.intellij.ui.ListActions$Right" use-shortcut-of="EditorRight"/>
+            use-shortcut-of="EditorLeftWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="List-selectNextColumn" class="com.intellij.ui.ListActions$Right" use-shortcut-of="EditorRight">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="List-selectNextColumnExtendSelection" class="com.intellij.ui.ListActions$ShiftRight"
-            use-shortcut-of="EditorRightWithSelection"/>
+            use-shortcut-of="EditorRightWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
-    <action id="List-scrollUp" class="com.intellij.ui.ListActions$PageUp" use-shortcut-of="EditorPageUp"/>
+    <action id="List-scrollUp" class="com.intellij.ui.ListActions$PageUp" use-shortcut-of="EditorPageUp">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
     <action id="List-scrollUpExtendSelection" class="com.intellij.ui.ListActions$ShiftPageUp"
-            use-shortcut-of="EditorPageUpWithSelection"/>
+            use-shortcut-of="EditorPageUpWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
-    <action id="List-scrollDown" class="com.intellij.ui.ListActions$PageDown" use-shortcut-of="EditorPageDown"/>
+    <action id="List-scrollDown" class="com.intellij.ui.ListActions$PageDown" use-shortcut-of="EditorPageDown">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
     <action id="List-scrollDownExtendSelection" class="com.intellij.ui.ListActions$ShiftPageDown"
-            use-shortcut-of="EditorPageDownWithSelection"/>
+            use-shortcut-of="EditorPageDownWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectFirstRow" class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
     </action>
     <action id="Table-selectFirstRowExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftHome"
             use-shortcut-of="EditorTextStartWithSelection">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control shift UP" keymap="$default"/>
     </action>
     <action id="Table-selectLastRow" class="com.intellij.ui.TableActions$CtrlEnd" use-shortcut-of="EditorTextEnd">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
     </action>
     <action id="Table-selectLastRowExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftEnd"
             use-shortcut-of="EditorTextEndWithSelection">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control shift DOWN" keymap="$default"/>
     </action>
-    <action id="Table-selectPreviousRow" class="com.intellij.ui.TableActions$Up" use-shortcut-of="EditorUp"/>
+    <action id="Table-selectPreviousRow" class="com.intellij.ui.TableActions$Up" use-shortcut-of="EditorUp">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectPreviousRowExtendSelection" class="com.intellij.ui.TableActions$ShiftUp"
-            use-shortcut-of="EditorUpWithSelection"/>
-    <action id="Table-selectNextRow" class="com.intellij.ui.TableActions$Down" use-shortcut-of="EditorDown"/>
+            use-shortcut-of="EditorUpWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="Table-selectNextRow" class="com.intellij.ui.TableActions$Down" use-shortcut-of="EditorDown">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectNextRowExtendSelection" class="com.intellij.ui.TableActions$ShiftDown"
-            use-shortcut-of="EditorDownWithSelection"/>
+            use-shortcut-of="EditorDownWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectFirstColumn" class="com.intellij.ui.TableActions$CtrlLeft" use-shortcut-of="EditorPreviousWord"/>
     <action id="Table-selectLastColumn" class="com.intellij.ui.TableActions$CtrlRight" use-shortcut-of="EditorNextWord"/>
     <action id="Table-selectFirstColumnExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftLeft" use-shortcut-of="EditorPreviousWordWithSelection"/>
     <action id="Table-selectLastColumnExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftRight" use-shortcut-of="EditorNextWordWithSelection"/>
-    <action id="Table-selectPreviousColumn" class="com.intellij.ui.TableActions$Left" use-shortcut-of="EditorLeft"/>
+    <action id="Table-selectPreviousColumn" class="com.intellij.ui.TableActions$Left" use-shortcut-of="EditorLeft">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectPreviousColumnExtendSelection" class="com.intellij.ui.TableActions$ShiftLeft"
-            use-shortcut-of="EditorLeftWithSelection"/>
-    <action id="Table-selectNextColumn" class="com.intellij.ui.TableActions$Right" use-shortcut-of="EditorRight"/>
+            use-shortcut-of="EditorLeftWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="Table-selectNextColumn" class="com.intellij.ui.TableActions$Right" use-shortcut-of="EditorRight">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-selectNextColumnExtendSelection" class="com.intellij.ui.TableActions$ShiftRight"
-            use-shortcut-of="EditorRightWithSelection"/>
+            use-shortcut-of="EditorRightWithSelection">
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
-    <action id="Table-scrollUpChangeSelection" class="com.intellij.ui.TableActions$PageUp" use-shortcut-of="EditorPageUp"/>
+    <action id="Table-scrollUpChangeSelection" class="com.intellij.ui.TableActions$PageUp" use-shortcut-of="EditorPageUp">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
     <action id="Table-scrollUpExtendSelection" class="com.intellij.ui.TableActions$ShiftPageUp"
-            use-shortcut-of="EditorPageUpWithSelection"/>
+            use-shortcut-of="EditorPageUpWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
-    <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
+    <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
     <action id="Table-scrollDownExtendSelection" class="com.intellij.ui.TableActions$ShiftPageDown"
-            use-shortcut-of="EditorPageDownWithSelection"/>
+            use-shortcut-of="EditorPageDownWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Table-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.table.StartEditingAction">
       <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
     </action>
@@ -96,8 +164,12 @@
     <action id="Tree-selectPreviousExtendSelection" class="com.intellij.ui.TreeActions$ShiftUp" use-shortcut-of="EditorUpWithSelection"/>
     <action id="Tree-selectNext" class="com.intellij.ui.TreeActions$Down" use-shortcut-of="EditorDown"/>
     <action id="Tree-selectNextExtendSelection" class="com.intellij.ui.TreeActions$ShiftDown" use-shortcut-of="EditorDownWithSelection"/>
-    <action id="Tree-selectParentNoCollapse" class="com.intellij.ui.TreeActions$SelectParent"/>
-    <action id="Tree-selectParent" class="com.intellij.ui.TreeActions$Left" use-shortcut-of="EditorLeft"/>
+    <action id="Tree-selectParentNoCollapse" class="com.intellij.ui.TreeActions$SelectParent">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="Tree-selectParent" class="com.intellij.ui.TreeActions$Left" use-shortcut-of="EditorLeft">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Tree-selectParentExtendSelection" class="com.intellij.ui.TreeActions$ShiftLeft"
             use-shortcut-of="EditorLeftWithSelection"/>
     <action id="Tree-selectChild" class="com.intellij.ui.TreeActions$Right" use-shortcut-of="EditorRight"/>
@@ -107,12 +179,18 @@
     <action id="Tree-scrollUpChangeSelection" class="com.intellij.ui.TreeActions$PageUp" use-shortcut-of="EditorPageUp"/>
     <!--suppress PluginXmlCapitalization -->
     <action id="Tree-scrollUpExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageUp"
-            use-shortcut-of="EditorPageUpWithSelection"/>
+            use-shortcut-of="EditorPageUpWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <!--suppress PluginXmlCapitalization -->
     <action id="Tree-scrollDownChangeSelection" class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
     <!--suppress PluginXmlCapitalization -->
     <action id="Tree-scrollDownExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageDown"
-            use-shortcut-of="EditorPageDownWithSelection"/>
+            use-shortcut-of="EditorPageDownWithSelection">
+      <!--suppress PluginXmlCapitalization -->
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
     <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
     <action id="Tree-selectAll" class="com.intellij.ui.TreeActions$SelectAll" use-shortcut-of="$SelectAll"/>
@@ -152,7 +230,8 @@
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction"/>
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction"/>
-    <group id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
+    <group id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction"
+           icon="AllIcons.General.GearPlain" searchable="false"/>
     <action id="SpeedSearch"
             class="com.intellij.ide.actions.speedSearch.SpeedSearchAction"
             icon="AllIcons.Actions.Find"
@@ -213,7 +292,9 @@
     <action id="EditorAddRectangularSelectionOnMouseDrag"
             class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>
     <action id="EditorCreateRectangularSelectionOnMouseDrag"
-            class="com.intellij.openapi.editor.actions.CreateRectangularSelectionOnMouseDragAction"/>
+            class="com.intellij.openapi.editor.actions.CreateRectangularSelectionOnMouseDragAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="EditorCloneCaretBelow" class="com.intellij.openapi.editor.actions.CloneCaretBelow"/>
     <action id="EditorCloneCaretAbove" class="com.intellij.openapi.editor.actions.CloneCaretAbove"/>
     <action id="EditorToggleStickySelection" class="com.intellij.openapi.editor.actions.ToggleStickySelectionModeAction"/>
@@ -293,15 +374,23 @@
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="TextEditorWithPreview.Layout.EditorOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorOnly"/>
+    <action id="TextEditorWithPreview.Layout.EditorOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorOnly">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="TextEditorWithPreview.Layout.EditorAndPreview"
-            class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorAndPreview"/>
-    <action id="TextEditorWithPreview.Layout.PreviewOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$PreviewOnly"/>
+            class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorAndPreview">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TextEditorWithPreview.Layout.PreviewOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$PreviewOnly">
+      <override-text place="GoToAction"/>
+    </action>
     <group id="TextEditorWithPreview.SplitGroup" popup="true" class="com.intellij.openapi.fileEditor.EditorSplitGroup">
       <action id="TextEditorWithPreview.SplitVertically" class="com.intellij.openapi.fileEditor.SplitVerticallyAction"/>
       <action id="TextEditorWithPreview.SplitHorizontally" class="com.intellij.openapi.fileEditor.SplitHorizontallyAction"/>
     </group>
-    <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
+    <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction">
       <override-text place="EditorPopup"/>
       <override-text place="EditorTabPopup"/>
@@ -421,7 +510,8 @@
       <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
       <separator/>
       <group id="OtherMenu"/>
-      <group id="ToolsMenu.Services" popup="true"/>
+      <group id="ToolsMenu.Services" popup="true" searchable="false"/>
+      <reference id="ExternalToolsGroupPlaceholder"/>
     </group>
     <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
     <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
@@ -455,7 +545,7 @@
             use-shortcut-of="NextSplitter"/>
     <action id="TW.MoveToPreviousSplitter" class="com.intellij.ide.actions.ToolWindowMoveToPreviousSplitterAction"
             use-shortcut-of="PrevSplitter"/>
-    <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
+    <group id="TW.ViewModeGroup" searchable="false" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
     <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
     <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
     <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
@@ -656,7 +746,9 @@
     <action id="EditorStickyConfigure" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesConfigureAction"/>
     <action id="EditorStickyLinesDisableForLang"
             class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableForLangAction"/>
-    <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableAction"/>
+    <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>

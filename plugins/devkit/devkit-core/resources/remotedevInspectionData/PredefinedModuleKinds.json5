@@ -17,7 +17,7 @@
 [
   {kind: "moduleId", id: "intellij.platform.monolith", moduleKind: "monolith"},
   // A customization for monolith IntelliJ Light IDE. In-between frontend and monolith
-  {kind: "moduleId", id: "intellij.idea.ultimate.light.customization", moduleKind: "monolith"},
+  {kind: "moduleId", id: "intellij.platform.unified.customization", moduleKind: "monolith"},
 
   {kind: "moduleId", id: "intellij.frontend.split.customization", moduleKind: "frontend"},
   {kind: "moduleId", id: "intellij.platform.frontend", moduleKind: "frontend"},

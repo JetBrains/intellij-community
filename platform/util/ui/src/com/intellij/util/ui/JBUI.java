@@ -2011,6 +2011,13 @@ public final class JBUI {
     public static final class Tooltip {
       public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("ToolTip.borderCornerRadius", 4);
 
+      /**
+       * The corner radius of a tooltip with a header, a description, or a link.
+       * A theme that does not set it gets {@link #CORNER_RADIUS}.
+       */
+      public static final JBValue MULTILINE_CORNER_RADIUS =
+        new JBValue.UIInteger("ToolTip.multilineBorderCornerRadius", CORNER_RADIUS);
+
       private static final @NotNull Color SEPARATOR_COLOR = JBColor.namedColor("ToolTip.separatorColor", 0xd1d1d1, 0x545658);
       private static final @NotNull Color FOREGROUND = JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
       private static final @NotNull Color BACKGROUND = JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));

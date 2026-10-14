@@ -258,11 +258,11 @@ open class SelfElementInfo internal constructor(
       val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
       val events = documentManager.getEventsSinceCommit(document).ifEmpty { return null }
 
+      // the contract: a range is inferred only for a file that holds tracked pointers
       val pointerManager = SmartPointerManagerEx.getInstanceEx(project)
-      val tracker = pointerManager.getTracker(containingFile.viewProvider.virtualFile) ?: return null
+      if (pointerManager.getTracker(containingFile.viewProvider.virtualFile) == null) return null
 
-      return tracker.getUpdatedRange(
-        containingFile = containingFile,
+      return MarkerCache.getUpdatedRange(
         segment = segment,
         isSegmentGreedy = isSegmentGreedy,
         frozen = documentManager.getLastCommittedDocument(document) as FrozenDocument,

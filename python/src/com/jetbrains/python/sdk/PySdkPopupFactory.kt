@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.popup.ActionPopupOptions
@@ -214,7 +214,8 @@ class PySdkPopupFactory(val module: Module) {
     override fun actionPerformed(e: AnActionEvent) {
       runWithSdkConfigurationLock(module.project) {
         // The popup does not read the snapshot back.
-        module.asPyProject()?.setPythonInterpreter(sdk.pythonInterpreterAsync(), waitForSnapshot = false)
+        // A broken SDK names no interpreter, so the module gets none, as for no SDK.
+        module.asPyProject()?.setPythonInterpreter(sdk.pythonInterpreterResultAsync().successOrNull, waitForSnapshot = false)
       }
     }
   }

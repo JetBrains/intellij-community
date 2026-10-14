@@ -31,7 +31,7 @@ private val iconsByExtension: Map<String, Icon> = mapOf(
   "dockerfile" to AllIcons.FileTypes.Docker,
   "editorconfig" to AllIcons.Nodes.Editorconfig,
   "fish" to AllIcons.Nodes.Console,
-  "gitignore" to AllIcons.FileTypes.Gitignore,
+  "gitignore" to AllIcons.Vcs.Ignore_file,
   "go" to AllIcons.Language.GO,
   "gradle" to AllIcons.FileTypes.Gradle,
   "graphql" to AllIcons.FileTypes.Graphql,

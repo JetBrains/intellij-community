@@ -1,0 +1,14 @@
+open class Base {
+}
+
+class Child : Base() {
+    // INFO: {"checked": "true"}
+    companion object Factory {
+        fun obj() {}
+    }
+}
+
+fun usage() {
+    Child.obj()
+    Child.obj()
+}

@@ -81,7 +81,7 @@ fn input(source: RetrievedXml, summary: Option<Summary>, events: Vec<RunEvent>) 
         source,
         evidence: Vec::new(),
         protocol_diagnostic: None,
-        hot_jar_drift: None,
+        notes: Vec::new(),
         traces: Vec::new(),
         traces_error: None,
         tree: None,
@@ -198,27 +198,35 @@ fn a_healthy_run_is_passed_and_explains_nothing() {
     assert_eq!(document.suites[0].duration_ms, 12_500.0);
 }
 
-/// A jar rebuilt on the host under a running iteration takes the verdict away, even from a document that is
-/// complete and agrees with the summary: the execution was clean, and only its subject moved.
+/// The note that a test jar moved on the host while the iteration ran.
+const DRIFT: &str = "1 test jar(s) were rebuilt on the host while this iteration ran: ui_test_lib.jar";
+
+/// A test jar that the host rebuilt while the iteration ran is a note. The guest ran the pushed jars, so the
+/// status follows the counts, and the note reaches the document and survives the wire.
 #[test]
-fn a_host_rebuilt_jar_is_an_infrastructure_error_and_is_explained_first() {
-    let mut from = input(available(PASSING_XML), Some(summary(1, 0, 0, 0, 0)), vec![]);
-    from.hot_jar_drift = Some("1 test jar(s) were rebuilt on the host while this iteration ran: ui_test_lib.jar".to_owned());
-    let document = built(from);
-    assert_eq!(document.status, Status::InfrastructureError);
-    assert!(
-        diagnostic(&document).starts_with("1 test jar(s) were rebuilt"),
-        "the drift is not the first thing a reader sees: {}",
-        diagnostic(&document)
-    );
+fn a_host_rebuilt_jar_is_a_note_and_the_status_follows_the_counts() {
+    for (xml, failed, status) in [(PASSING_XML, 0, Status::Passed), (FAILING_XML, 1, Status::Failed)] {
+        let mut from = input(available(xml), Some(summary(1, failed, 0, 0, 0)), vec![]);
+        from.notes = vec![DRIFT.to_owned()];
+        let document = built(from);
+        assert_eq!(document.status, status, "{}", diagnostic(&document));
+        assert_eq!(document.verdict_diagnostic, None);
+        assert_eq!(document.notes, vec![DRIFT.to_owned()]);
+        let decoded = decode_run_report(&serde_json::to_vec(&document).unwrap()).unwrap();
+        assert_eq!(decoded.notes, document.notes);
+    }
 }
 
 #[test]
-fn an_absent_or_empty_drift_leaves_a_healthy_run_passing() {
-    for drift in [None, Some(String::new())] {
+fn an_absent_or_empty_note_leaves_a_healthy_run_passing_with_no_notes() {
+    for notes in [Vec::new(), vec![String::new()]] {
         let mut from = input(available(PASSING_XML), Some(summary(1, 0, 0, 0, 0)), vec![]);
-        from.hot_jar_drift = drift.clone();
-        assert_eq!(built(from).status, Status::Passed, "drift {drift:?}");
+        from.notes = notes.clone();
+        let document = built(from);
+        assert_eq!(document.status, Status::Passed, "notes {notes:?}");
+        assert!(document.notes.is_empty(), "notes {notes:?}");
+        let encoded = serde_json::to_string(&document).unwrap();
+        assert!(!encoded.contains("\"notes\""), "an empty list is absent on the wire: {encoded}");
     }
 }
 

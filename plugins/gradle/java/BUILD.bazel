@@ -255,6 +255,8 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/buildView",
         "//platform/buildView:buildView_test_lib",
+        "//platform/testFramework/buildView",
+        "//platform/testFramework/buildView:buildView_test_lib",
         "//platform/indexing-api:indexing",
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model",

@@ -1,0 +1,4 @@
+class Child {
+    val value = 42
+}
+// IGNORE_K2

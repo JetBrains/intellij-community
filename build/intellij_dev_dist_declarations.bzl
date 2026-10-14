@@ -12,11 +12,11 @@ tables name the community products and the community tables in `community`, see 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_platform_payload")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
-load(":intellij_dev.bzl", "intellij_dev_java_launcher_binary")
+load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_repository_label", "platform_parts")
+load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
     """Reads one tier of the generated component map as `struct(main_module, label, labels)` entries.
@@ -221,11 +221,119 @@ PACKED_JARS_COMPONENT = "platform_packed_content_modules"
 
 # The component that places the platform's declared dist files: the files of the unpacked dev-launch archives that
 # `PlatformLayout.withDistFiles` names, at their distribution paths. The generated plan states them per host platform.
+# The component also places the native launcher files, which `_launcher_files` derives from the launch facts of the plan,
+# and the files of the bundled runtime below `jbr/`.
 PLATFORM_ASSETS_COMPONENT = "platform_assets"
 
-# The component of `bin/idea.properties`, the vmoptions file, `bin/product-info.json` and `build.txt`, which the product
+# The unpacked launcher archive, and its spelling of the `platform_parts` tokens in `<OS>-<Arch>/`.
+_LAUNCHER_REPOSITORY = "@dev_launch_launcher_extracted//:"
+_LAUNCHER_ARCHIVE_OS = {"darwin": "macOS", "linux": "Linux", "windows": "Windows"}
+_LAUNCHER_ARCHIVE_ARCH = {"aarch64": "AArch64", "x64": "X86_64"}
+
+def _launcher_files(launcher, platform):
+    """The native launcher files of one host platform, as `struct(source, path, executable)` entries.
+
+    `launcher` is the `launch.launcher` struct of a plan. It states the base file name, the language server flag and the
+    two Windows launcher flags of the product. The rule mirrors the OS builders of production packaging:
+
+    - `LinuxDistributionBuilder.addNativeLauncher` places `bin/<base>`.
+    - `MacDistributionBuilder.layoutMacApp` places `MacOS/<base>`, and `layoutMacCli` places `bin/<base>` for a language
+      server. A dev home starts through `bin`, so macOS always gets `bin/<base>`. An app also gets `MacOS/<base>`,
+      which the restarter starts.
+    - `WindowsDistributionBuilder.patchLauncher` writes the GUI launcher `bin/<base>64.exe` and the console launcher
+      `bin/<base>.exe`, each one when its flag is set. A language server adds no `64`.
+
+    Every platform also gets the launcher license at `license/launcher-third-party-libraries.html`. The OS builders patch
+    the launcher, and this component places the archive bytes as they are.
+    """
+    parts = platform_parts(platform)
+    directory = _LAUNCHER_REPOSITORY + _LAUNCHER_ARCHIVE_OS[parts.os] + "-" + _LAUNCHER_ARCHIVE_ARCH[parts.arch] + "/"
+    base = launcher.base_file_name
+    launchers = []
+    if parts.os == "windows":
+        if launcher.windows_gui:
+            launchers.append((directory + "xplat-launcher.exe", "bin/%s.exe" % (base if launcher.language_server else base + "64")))
+        if launcher.windows_console:
+            launchers.append((directory + "xplat-launcher-win-con.exe", "bin/%s.exe" % base))
+    else:
+        launchers.append((directory + "xplat-launcher", "bin/" + base))
+        if parts.os == "darwin" and not launcher.language_server:
+            launchers.append((directory + "xplat-launcher", "MacOS/" + base))
+    files = [struct(source = source, path = path, executable = True) for source, path in launchers]
+    files.append(struct(
+        source = _LAUNCHER_REPOSITORY + "license/xplat-launcher-third-party-licenses.html",
+        path = "license/launcher-third-party-libraries.html",
+        executable = False,
+    ))
+    return files
+
+# The directory of the bundled runtime in a distribution home. On macOS the runtime is a bundle with `Contents/Home`.
+_RUNTIME_DIRECTORY = "jbr"
+
+def _runtime_executables(platform):
+    """The `unpacked_archive_executables` values of the bundled runtime of one host platform.
+
+    The composer gives the executable bit only to a destination that this list names.
+    """
+    os = platform_parts(platform).os
+    if os == "windows":
+        return []
+
+    # BundledRuntimeImpl.executableFilesPatterns
+    if os == "darwin":
+        # Production omits `jspawnhelper` on macOS. The archive gives it the executable bit, and `posix_spawn` needs it.
+        return [_RUNTIME_DIRECTORY + "/Contents/Home/bin/", _RUNTIME_DIRECTORY + "/Contents/Home/lib/jspawnhelper"]
+    return [_RUNTIME_DIRECTORY + "/bin/", _RUNTIME_DIRECTORY + "/lib/jexec", _RUNTIME_DIRECTORY + "/lib/jspawnhelper"]
+
+# The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
+
+# The dev marker of a dev distribution. The product files action appends it to `additionalJvmArguments`, so a bare
+# start of the export through the native launcher is a dev-mode IDE. Production states none.
+_DEV_JVM_ARGUMENTS = ["-Didea.use.dev.build.server=true"]
+
+def _launch_destinations(plan, os):
+    """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
+
+    `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The native
+    launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
+    with the name of the plan. `product_info_destination` states the path of `product-info.json`.
+    `frontend_vm_options` is `None` for a product without an embedded frontend.
+    """
+    frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
+    return struct(
+        vm_options = "bin/" + plan.launch.vmoptions[os],
+        product_info = product_info_destination(os, plan.launch.launcher.language_server),
+        frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
+    )
+
+def _launcher_destinations(launcher):
+    """The destination of the native launcher that a launch target starts, for each OS token.
+
+    `launcher` is the `launch.launcher` struct of a plan. macOS and Linux start `bin/<base>`, which every home of these
+    OSes has. Windows starts the console launcher, so `bazel run` keeps a console. A product without one starts its GUI
+    launcher.
+    """
+    base = launcher.base_file_name
+    if launcher.windows_console:
+        windows = "bin/%s.exe" % base
+    elif launcher.windows_gui:
+        windows = "bin/%s.exe" % (base if launcher.language_server else base + "64")
+    else:
+        fail("The launcher '%s' has no Windows launcher" % base)
+    return {"darwin": "bin/" + base, "linux": "bin/" + base, "windows": windows}
+
+def _env_var_base_name(launch, program_args):
+    """The base of the variables that the native launcher reads for a row with `program_args`.
+
+    The launcher selects a custom command from the first program argument. A command can state a base of its own, such
+    as `JETBRAINS_CLIENT` for `ijLight`. Any other row gets the base of the product.
+    """
+    commands = getattr(launch, "command_env_var_base_names", {})
+    if program_args and program_args[0] in commands:
+        return commands[program_args[0]]
+    return launch.env_var_base_name
 
 def _fragment_suffix(fragment_name):
     """The target suffix of a platform component, `<platform set>_<suffix>`."""
@@ -251,16 +359,17 @@ def _platform_fragment_layout(tables, product):
 
     `suffix` names the target, `<platform set>_<suffix>`. `fragment_name` is the composer's name for it. The order is
     the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
-    the one owner of that list; the declaring macro and the label lookup both read it.
+    the one owner of that list; the declaring macro and the label lookup both read it. Every product has the platform
+    assets, because every product places the native launcher.
     """
-    plan = _plan(tables, product)
-    layout = [
+
+    # A product without a plan fails here, with its name.
+    _plan(tables, product)
+    return [
         struct(suffix = _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT), fragment_name = _PLATFORM_RESOURCES_FRAGMENT),
         struct(suffix = PACKED_JARS_COMPONENT, fragment_name = PACKED_JARS_COMPONENT),
+        struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT),
     ]
-    if plan.platform_assets:
-        layout.append(struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT))
-    return layout
 
 def _has_runtime_module_repository(tables, product):
     """Whether the plan of `product` has the runtime module repository component.
@@ -388,8 +497,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
             platform_prefix = product,
             target_platform = target_platform,
             files = {
-                ":%s.home/modules/module-descriptors.dat" % repository: "modules/module-descriptors.dat",
-                ":%s.home/modules/module-descriptors.jar" % repository: "modules/module-descriptors.jar",
+                "modules/module-descriptors.dat": ":%s.home/modules/module-descriptors.dat" % repository,
+                "modules/module-descriptors.jar": ":%s.home/modules/module-descriptors.jar" % repository,
             },
         )
         return ":" + component
@@ -441,12 +550,17 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     def product_files_component():
-        # `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json`. The product files action
-        # renders them from the launch model the plan generator writes for the product, so the component reads no project
-        # model and starts no JVM. The action reads the application info sources and `build.txt` for the version, the
-        # names and the build number. The rendered files have fixed names, and the component maps each one to its path in
-        # the distribution. The component also declares the main class of the launch model.
+        # `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json`. A product with an embedded
+        # frontend also gets the vmoptions file of the frontend. The product files action renders them from the launch
+        # model the plan generator writes for the product, so the component reads no project model and starts no JVM.
+        # The action reads the application info sources and `build.txt` for the version, the names and the build number.
+        # The rendered files have fixed names, and the component maps each one to its path in the distribution.
+        # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
+        # declares the main class of the launch model. A classic-loader launch takes its boot class path from the core
+        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model. The
+        # launch and each custom command with JVM arguments of its own get the dev marker `_DEV_JVM_ARGUMENTS`.
         files = name + "_product_files"
+        frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
         application_info = tables.application_infos[product]
         dev_dist_product_files(
             name = files,
@@ -461,15 +575,22 @@ def _platform_set(tables, product, name, target_platform, visibility):
             idea_properties_out = files + "/idea.properties",
             vmoptions = files + "/vmoptions",
             product_info = files + "/product-info.json",
+            frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
+            platform_payload = None if _modular_loader(tables, product) else ":" + name + "_platform_payload",
+            dev_jvm_arguments = _DEV_JVM_ARGUMENTS,
         )
 
         def placed(platform):
-            return {
-                ":%s/build.txt" % files: "build.txt",
-                ":%s/idea.properties" % files: "bin/idea.properties",
-                ":%s/vmoptions" % files: "bin/" + plan.launch.vmoptions[platform_parts(platform).os],
-                ":%s/product-info.json" % files: "bin/product-info.json",
+            destinations = _launch_destinations(plan, platform_parts(platform).os)
+            result = {
+                "build.txt": ":%s/build.txt" % files,
+                "bin/idea.properties": ":%s/idea.properties" % files,
+                destinations.vm_options: ":%s/vmoptions" % files,
+                destinations.product_info: ":%s/product-info.json" % files,
             }
+            if destinations.frontend_vm_options:
+                result[destinations.frontend_vm_options] = ":%s/frontend.vmoptions" % files
+            return result
 
         intellij_dev_packed_jars_component(
             name = name + "_" + _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT),
@@ -484,13 +605,24 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     def assets_component():
-        # The generated plan states each file as `struct(source, path, executable)` per host platform. The rule takes
-        # the files as two label-to-path dicts, one per executable bit.
+        # The generated plan states each file as `struct(source, path, executable)` per host platform, and
+        # `_launcher_files` adds the launcher files in the same shape. The rule takes the files as two path-to-label
+        # dicts, one per executable bit. The path is the key, so one source can go to two paths. The bundled runtime goes
+        # in as an unpacked archive, and the rule refuses a runtime file at the path of an explicit asset.
+        def platform_files(platform):
+            entries = getattr(plan, "platform_assets", {}).get(platform, []) + _launcher_files(plan.launch.launcher, platform)
+            paths = {}
+            for entry in entries:
+                if entry.path in paths:
+                    fail("%s: two platform assets of %s go to '%s'" % (product, platform, entry.path))
+                paths[entry.path] = True
+            return entries
+
         def asset_files(entries, executable):
-            return {entry.source: entry.path for entry in entries if entry.executable == executable}
+            return {entry.path: entry.source for entry in entries if entry.executable == executable}
 
         def selected(executable):
-            return per_platform(lambda platform: asset_files(plan.platform_assets.get(platform, []), executable))
+            return per_platform(lambda platform: asset_files(platform_files(platform), executable))
 
         intellij_dev_packed_jars_component(
             name = name + "_assets",
@@ -502,6 +634,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
             target_platform = target_platform,
             files = selected(False),
             executable_files = selected(True),
+            unpacked_archives = per_platform(lambda platform: {jbr_runtime_repository_label(platform): _RUNTIME_DIRECTORY}),
+            unpacked_archive_executables = per_platform(_runtime_executables),
         )
 
     # Declared in the layout's order, which is the composition order the returned lists state.
@@ -539,11 +673,13 @@ def _declare_fragments_dist(
         additional_modules,
         target_platform,
         create_local_launch,
-        catalogue):
+        catalogue,
+        export_attrs = {}):
     """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`.
 
     `catalogue` is `_plugin_component_catalogue(tables, product)`. A caller that declares several distributions of one
-    product reads it once and passes it to each.
+    product reads it once and passes it to each. `export_attrs` holds the attributes that only the export takes: the
+    sibling vmoptions attributes of `export_vm_options` in `intellij_dev.bzl`.
     """
     bundled_components = _plugin_components(target_platform, catalogue.bundled)
 
@@ -580,6 +716,9 @@ def _declare_fragments_dist(
         additional_components.modules
     )
 
+    # The export and the local launch share the home prefix, so the runfiles home of a row has the layout of the
+    # export.
+    prefix = _home_prefix(_plan(tables, product), target_platform)
     for local_launch in [False, True] if create_local_launch else [False]:
         intellij_dev_fragments_dist(
             name = name + ("_launch" if local_launch else ""),
@@ -592,7 +731,22 @@ def _declare_fragments_dist(
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
             local_launch = local_launch,
+            home_prefix = prefix,
+            **({} if local_launch else export_attrs)
         )
+
+def _home_prefix(plan, target_platform):
+    """The `home_prefix` of a distribution of `plan`: for `target_platform`, or a `select` over the host platforms.
+
+    `home_prefix` of `dev_dist_product_files.bzl` states the rule. It is `Contents` for a macOS app.
+    """
+    language_server = plan.launch.launcher.language_server
+    if target_platform:
+        return home_prefix(platform_parts(target_platform).os, language_server)
+    return select({
+        "@community//build:host_" + platform: home_prefix(platform_parts(platform).os, language_server)
+        for platform in HOST_PLATFORMS
+    })
 
 def _check_plan(tables, name, product):
     """Fails when the generated plan cannot serve the launcher `name` of `product`.
@@ -627,6 +781,12 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
     A row starts over the placement of `_dist_launch`, and on Windows over the home of `_dist`. A distribution with
     `runtime_module_repository` composes the `platform_runtime_module_repository` component of its product, which
     places the `modules/` files of `dev_dist_runtime_module_repository`.
+
+    The export `<name>_dist.dist` gets the sibling vmoptions file `<name>_dist.dist.vmoptions`. A bare start of the
+    export through the native launcher keeps its data in `out/dev-data/<name>_dist`. On macOS the home of the export is
+    `<name>_dist.dist/Contents`. The launcher strips that level, so it finds the file on macOS too. The file names the
+    runtime module repository of a classic-loader export that has one. A modular-loader launch states it in
+    `product-info.json`.
     """
     _check_plan(tables, name, product)
     platform = _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
@@ -641,6 +801,10 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
         target_platform = "",
         create_local_launch = True,
         catalogue = catalogue,
+        export_attrs = export_vm_options(
+            name + "_dist",
+            runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
+        ),
     )
 
 def _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run):
@@ -660,6 +824,7 @@ def _declare_run_launcher(
         distribution,
         product,
         additional_modules,
+        runtime_module_repository,
         jvm_flags,
         env,
         data,
@@ -669,7 +834,8 @@ def _declare_run_launcher(
     """The launcher `name`, the launcher over the distribution `_declare_run_distribution` declared as `distribution`.
 
     The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, with the home `<distribution>_dist` on
-    Windows.
+    Windows. It starts the native launcher with the variables of `_env_var_base_name`. Its vmoptions file names the
+    runtime module repository under the rule of `export_vm_options`.
     """
     for flag in jvm_flags:
         if flag.startswith("-Dadditional.modules="):
@@ -687,11 +853,18 @@ def _declare_run_launcher(
     if tables.launcher_jvm_flags != None:
         jvm_flags = tables.launcher_jvm_flags(product, additional_modules, jvm_flags)
 
+    plan = _plan(tables, product)
+    destinations = {os: _launch_destinations(plan, os) for os in plan.launch.vmoptions}
     intellij_dev_java_launcher_binary(
         name = name,
         visibility = visibility,
         dist = "//%s:%s_dist_launch" % (native.package_name(), distribution),
         export = "//%s:%s_dist" % (native.package_name(), distribution),
+        vm_options = {os: destination.vm_options for os, destination in destinations.items()},
+        product_info = {os: destination.product_info for os, destination in destinations.items()},
+        launcher = _launcher_destinations(plan.launch.launcher),
+        env_var_base_name = _env_var_base_name(plan.launch, program_args),
+        runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
         jvm_flags = jvm_flags,
         env = env,
         data = data,
@@ -731,6 +904,7 @@ def _run_configurations(tables, rows):
                 distribution = distribution,
                 product = product,
                 additional_modules = additional_modules,
+                runtime_module_repository = runtime_module_repository,
                 jvm_flags = getattr(row, "jvm_flags", []),
                 env = getattr(row, "env", {}),
                 data = [],
@@ -767,6 +941,7 @@ def _run_configuration(
         distribution = name,
         product = product,
         additional_modules = additional_modules,
+        runtime_module_repository = generate_runtime_module_repository,
         jvm_flags = jvm_flags,
         env = env,
         data = data,

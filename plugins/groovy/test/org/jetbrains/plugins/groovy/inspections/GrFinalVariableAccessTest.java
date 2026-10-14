@@ -29,6 +29,19 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          print foo""");
   }
 
+  public void testWriteFromDifferentClassOrClosure() {
+    doTestHighlighting("""
+                         final var c = 1
+                         new Object() {
+                             void f00() {
+                                 <error descr="Cannot assign a value to final variable 'c'">c</error> = 10\s
+                             }
+                         }
+                         [1, 2].each { <error descr="Cannot assign a value to final variable 'c'">c</error> = it }
+                         Runnable r = () -> <error descr="Cannot assign a value to final variable 'c'">c</error> = 10
+                         """);
+  }
+
   public void testSimpleVal() {
     doTestHighlighting("""
                          val foo = 5

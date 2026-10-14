@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -38,7 +37,6 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBund
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenPaintTracker
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
@@ -53,7 +51,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
@@ -318,11 +315,7 @@ internal class WelcomeScreenRightTabImpl(
 
     val buttonHeight = JBUI.scale(if (extraContent) 36 else 48)
 
-    val twoRows = featureModels.size == 4
-    val rows = if (twoRows) 2 else contentProvider.buttonsPerRow
-    var commonWidth = 0
-
-    for (row in featureModels.chunked(rows)) {
+    for (row in featureModels.chunked(contentProvider.buttonsPerRow)) {
       for (model in row) {
         val button = DisclosureButton()
         button.arrowIcon = null
@@ -331,25 +324,11 @@ internal class WelcomeScreenRightTabImpl(
         button.text = model.text
         button.icon = model.icon
 
-        if (twoRows) {
-          commonWidth = max(commonWidth, button.preferredSize.width)
-        }
-
         button.addActionListener { model.onClick(project, contentProvider.coroutineScope) }
 
-        gridBuilder.cell(button, gaps = UnscaledGaps(right = 10, bottom = 10))
+        gridBuilder.cell(button, gaps = UnscaledGaps(right = 10))
       }
       gridBuilder.row()
-    }
-
-    if (twoRows) {
-      val count = buttonPanel.componentCount
-      for (i in 0..<count) {
-        val component = buttonPanel.getComponent(i)
-        if (component is DisclosureButton) {
-          component.preferredSize = Dimension(commonWidth, -1)
-        }
-      }
     }
 
     return wrapper
@@ -381,7 +360,7 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
-    val singleBanner = WelcomeScreenRightTabBannerProvider.createSurveyBanner(project)
+    val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner is Disposable) {
       Disposer.register(this, singleBanner)
     }
@@ -490,6 +469,7 @@ internal class WelcomeScreenRightTabImpl(
     return buildList {
       add(ButtonInfoPanelModel(WelcomeRightTabContentProvider.InfoButtonModel(IdeBundle.message("welcome.screen.plugins.title"),
                                                                               AllIcons.Nodes.Plugin) { project, _ ->
+        WelcomeScreenTabUsageCollector.logPluginsClicked()
         PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(project)
       }))
       add(ComboBoxInfoPanelModel(ThemeModel.getIcon(), "welcome.screen.right.tab.theme.switch.prefix", ThemeModel()))
@@ -539,7 +519,7 @@ internal suspend fun prepareDefaultBody(
         sectionFeatureKeys = sections.mapTo(HashSet()) { it.featureKey },
         featureKeysReplacingFeatureGrid = contentProvider.featureKeysReplacingFeatureGrid,
       )
-      PreparedBody(sections, addModels(featureModels))
+      PreparedBody(sections, featureModels)
     }
   }
   catch (e: CancellationException) {
@@ -549,32 +529,6 @@ internal suspend fun prepareDefaultBody(
     LOG.error("Cannot prepare the default content of the welcome right tab", e)
     return null
   }
-}
-
-private fun addModels(models: List<WelcomeRightTabContentProvider.FeatureButtonModel>): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
-  if (!Registry.`is`("air.welcome.screen.inline.prompt", true) &&
-      !Registry.`is`("air.welcome.screen.hide.agent.sessions", true) &&
-      !PlatformUtils.isDataGrip()) {
-
-      val button = agentSessionsFeatureButtonModel()
-      if (button != null && models.find { it.text == button.text } == null) {
-        return buildList {
-          add(button)
-          addAll(models)
-        }
-      }
-  }
-  return models
-}
-
-private fun agentSessionsFeatureButtonModel(): WelcomeRightTabContentProvider.FeatureButtonModel? {
-  val feature = WelcomeScreenFeatureUI.getForFeatureKey("air.sessions") ?: return null
-  val text = feature.text ?: return null
-  return FeatureButtonModelWithBackend(
-    featureKey = feature.featureKey,
-    text = text,
-    icon = feature.icon,
-  )
 }
 
 /** What one feature answered: whether it is available, and the section it stated when the tab offered it. */

@@ -50,6 +50,12 @@ class ArtifactModifiableModelBridge(
 
   internal val elementsWithDiff = mutableSetOf<PackagingElement<*>>()
 
+  /**
+   * Bridges that this model creates on [diff] for artifacts without a bridge.
+   * [ArtifactManagerBridge.commit] moves them to the project storage.
+   */
+  internal val bridgesWithDiff: MutableList<ArtifactBridge> = mutableListOf()
+
   private val versionedOnBuilder = VersionedEntityStorageOnBuilder(diff)
 
   override fun getArtifacts(): Array<ArtifactBridge> = getArtifactsMs.addMeasuredTime {
@@ -59,7 +65,7 @@ class ArtifactModifiableModelBridge(
       .map { artifactEntity ->
         diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
-          manager.artifactWithDiffs.add(it)
+          bridgesWithDiff.add(it)
         }
       }
       .filter { VALID_ARTIFACT_CONDITION.value(it) }
@@ -75,7 +81,7 @@ class ArtifactModifiableModelBridge(
     val bridge = diff.artifactsMap.getDataByEntity(artifactEntity)
                  ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
                    newBridges.add(it)
-                   manager.artifactWithDiffs.add(it)
+                   bridgesWithDiff.add(it)
                  }
     addBridgesToDiff(newBridges, diff)
 
@@ -100,7 +106,7 @@ class ArtifactModifiableModelBridge(
       .map { artifactEntity ->
         diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
-          manager.artifactWithDiffs.add(it)
+          bridgesWithDiff.add(it)
         }
       }
       .toList()
@@ -116,7 +122,7 @@ class ArtifactModifiableModelBridge(
       .map { artifactEntity ->
         diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
-          manager.artifactWithDiffs.add(it)
+          bridgesWithDiff.add(it)
         }
       }
       .toMutableList()
@@ -233,6 +239,7 @@ class ArtifactModifiableModelBridge(
       }
     }
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
+    bridgesWithDiff.clear()
 
     val current = WorkspaceModel.getInstance(project).currentSnapshot
     val changes = (diff as MutableEntityStorageInstrumentation).collectChanges()[ArtifactEntity::class.java] ?: emptyList()

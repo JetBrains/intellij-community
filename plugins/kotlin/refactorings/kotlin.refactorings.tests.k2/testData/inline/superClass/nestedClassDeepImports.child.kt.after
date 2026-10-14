@@ -1,0 +1,9 @@
+package child
+
+class Child {
+    class Nested {
+        class Deep {
+            fun answer() = 42
+        }
+    }
+}

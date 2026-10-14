@@ -195,7 +195,6 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   val pythonInterpreter = setupExistingEnvAndSdk(
     moduleOrProject = moduleOrProject,
     pythonBinary = pythonBinary,
-    uvPath = normalizedUvExecutablePath,
     workingDir = workingDir,
     fileSystem = fileSystem,
     mode = mode,
@@ -227,14 +226,12 @@ internal suspend fun <P : PathHolder> initUvProjectIfNeeded(uvExecutable: P, wor
 internal suspend fun setupExistingEnvAndSdk(
   moduleOrProject: ModuleOrProject,
   pythonBinary: PythonBinary,
-  uvPath: Path,
   envWorkingDir: Path,
   mode: UvMode,
 ): PyResult<PythonInterpreter> =
   setupExistingEnvAndSdk(
     moduleOrProject = moduleOrProject,
     pythonBinary = PathHolder.Eel(pythonBinary),
-    uvPath = PathHolder.Eel(uvPath),
     workingDir = envWorkingDir,
     fileSystem = EelFileSystem(pythonBinary.getEelDescriptor().toEelApi()),
     mode = mode,
@@ -249,17 +246,16 @@ internal suspend fun setupExistingEnvAndSdk(
 internal suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   moduleOrProject: ModuleOrProject,
   pythonBinary: P,
-  uvPath: P,
   workingDir: Path,
   fileSystem: FileSystem<P>,
   mode: UvMode,
 ): PyResult<PythonInterpreter> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
-  fileSystem.setupSdk(moduleOrProject, pythonBinary, uvSdkDataOf(pythonBinary, workingDir, mode, uvPath), null, null)
+  val data = uvSdkDataOf(pythonBinary, workingDir).also { it.requirementsPath = mode.requirementsFile }
+  fileSystem.setupSdk(moduleOrProject, pythonBinary, data, null, null)
 }
 
-/** The SDK data of the existing uv environment of [pythonBinary], with the dependency file of [mode]. */
-internal fun uvSdkDataOf(pythonBinary: PathHolder, workingDir: Path, mode: UvMode, uvPath: PathHolder? = null): UvSdkAdditionalData {
+/** The SDK data of the existing uv environment of [pythonBinary]. The caller stores its dependency file. */
+internal fun uvSdkDataOf(pythonBinary: PathHolder, workingDir: Path): UvSdkAdditionalData {
   val venvPath = pythonBinary.resolvePythonHome().toStringForExecution()
-  return UvSdkAdditionalData(uvWorkingDirectory = workingDir, usePip = null, venvPath = venvPath, uvPath = uvPath?.toStringForExecution())
-    .also { it.requirementsPath = mode.requirementsFile }
+  return UvSdkAdditionalData(uvWorkingDirectory = workingDir, usePip = null, venvPath = venvPath, uvPath = null)
 }

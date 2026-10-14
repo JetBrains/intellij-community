@@ -11,8 +11,8 @@
 //! past the end of the file, `WINDOWS_LOCK_OFFSET`, and not the owner record. Any process can then read the
 //! record while the lock is held, as on Unix.
 //!
-//! The file carries an owner record naming the holder's pid and the pid's start time, and it is *diagnostics* that
-//! decides nothing. It answers "who holds this, and since when" for an operator, and after a crash it answers "who
+//! The file carries an owner record naming the identity of the holder's process ([`ProcessIdentity`]), and it is
+//! *diagnostics* that decides nothing. It answers "who holds this, and since when" for an operator, and after a crash it answers "who
 //! died holding it". Reclaiming a lock because that record says its owner is gone cannot be made correct: judging
 //! the record and evicting the holder are two syscalls, and in between the lock can be released and taken again by
 //! somebody live, so the eviction would remove a holder nobody ever examined.
@@ -32,7 +32,7 @@ use tokio::sync::OnceCell;
 use crate::ctx::Ctx;
 use crate::poll::{Backoff, Poll};
 use crate::private::{PrivateOpen, open_private_file};
-use crate::proc::{PsField, Runner};
+use crate::proc::{ProcessIdentity, Runner};
 
 #[cfg(test)]
 mod tests;
@@ -41,14 +41,15 @@ mod tests;
 /// and costs no process, and a waiter should take a released lock at once.
 const QUEUE_POLL: Duration = Duration::from_millis(100);
 
-/// Acquires locks for this process.
+/// Acquires locks for this process, and knows the identity of this process.
 ///
-/// The `ps` probe of its own start time goes through a [`Runner`], because it is a host subprocess and the phase
-/// table should see it; it is resolved once, since a lock is taken inside a contention poll loop.
+/// The probes of the identity go through a [`Runner`], because they are host subprocesses and the phase table should
+/// see them. The identity is found once, since a lock is taken inside a contention poll loop. A run marker names the
+/// same identity, so one invocation has one identity.
 pub struct LockManager {
     runner: Runner,
-    pid: u32,
-    process_start: OnceCell<String>,
+    pid: i32,
+    identity: OnceCell<Option<ProcessIdentity>>,
 }
 
 /// What a held lock records about the invocation holding it. Diagnostics: nothing reads it back to decide
@@ -58,19 +59,43 @@ pub struct LockManager {
 #[serde(rename_all = "camelCase", default)]
 pub struct OwnerRecord {
     pub schema_version: u32,
-    pub pid: u32,
-    pub process_start: String,
+    /// The holder's process. The start time and the command are empty when the process table gave no answer.
+    #[serde(flatten)]
+    pub process: ProcessIdentity,
     pub operation: String,
     pub acquired_at: String,
 }
 
 impl LockManager {
+    /// The lock manager of this process.
     pub fn new(runner: Runner) -> Self {
+        Self::for_process(runner, i32::try_from(std::process::id()).unwrap_or(0))
+    }
+
+    /// A lock manager that speaks for the process `pid` in place of this one. A suite uses it to play a second
+    /// controller inside one test process, with a `pid` that the process table of `runner` declares.
+    pub fn for_process(runner: Runner, pid: i32) -> Self {
         Self {
             runner,
-            pid: std::process::id(),
-            process_start: OnceCell::new(),
+            pid,
+            identity: OnceCell::new(),
         }
+    }
+
+    /// The pid of the process this manager speaks for.
+    pub const fn pid(&self) -> i32 {
+        self.pid
+    }
+
+    /// The identity of the process this manager speaks for, or `None` when the process table holds no such process.
+    ///
+    /// The probes run once ([`Runner::identify`]). A probe without an answer is the refusal, and the next call asks
+    /// again.
+    pub async fn identity(&self, ctx: &Ctx) -> Result<Option<&ProcessIdentity>, Refusal> {
+        self.identity
+            .get_or_try_init(|| async { self.runner.identify(ctx, self.pid).await })
+            .await
+            .map(Option::as_ref)
     }
 
     /// Takes a lock, or answers `None` because somebody else holds it.
@@ -148,25 +173,18 @@ impl LockManager {
     ///
     /// Best effort, and that is safe precisely because the record decides nothing: the exclusion is already held,
     /// and giving up a lock because a diagnostic could not be written would refuse work for a reason the caller
-    /// cannot act on. The start time is left empty when `ps` did not answer.
+    /// cannot act on. The start time and the command are left empty when the process table did not answer.
     async fn describe(&self, ctx: &Ctx, file: &File, operation: &str) {
-        let process_start = self
-            .process_start
-            .get_or_init(|| async {
-                let pid = i32::try_from(self.pid).unwrap_or(0);
-                // Best effort, as the record is: a `ps` without an answer leaves the field empty.
-                self.runner
-                    .probe_process(ctx, pid, PsField::StartTime)
-                    .await
-                    .ok()
-                    .flatten()
-                    .unwrap_or_default()
-            })
-            .await;
+        let process = match self.identity(ctx).await {
+            Ok(Some(identity)) => identity.clone(),
+            Ok(None) | Err(_) => ProcessIdentity {
+                pid: self.pid,
+                ..ProcessIdentity::default()
+            },
+        };
         let record = OwnerRecord {
             schema_version: SCHEMA_VERSION,
-            pid: self.pid,
-            process_start: process_start.clone(),
+            process,
             operation: operation.to_owned(),
             acquired_at: Timestamp::now().to_string(),
         };

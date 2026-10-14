@@ -13,7 +13,7 @@
 use std::ffi::OsString;
 use std::fs;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use avl_wire::ide::{
     self, ARG_FILE, CONFIG_DIR, IdeLaunch, IdeLaunched, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord, OWNED_JVM_OPTIONS, OWNED_PROPERTIES,
@@ -22,6 +22,7 @@ use avl_wire::ide::{
 use avl_wire::supervisor::EnvironmentPolicy;
 use avl_wire::verb::AgentVerb;
 use dev_launch::{Distribution, DistributionFiles};
+use serde::Deserialize;
 
 use super::{create_private_dirs, reap, require_free_slot};
 use crate::clock::stamp;
@@ -171,7 +172,8 @@ fn require_display(guest: &Guest) -> Result<(), AgentRefusal> {
 fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<String>, AgentRefusal> {
     let home = document.dist_home.as_str();
     let bin = Path::new(home).join("bin");
-    let vm_options = single_vm_options(&bin)?;
+    let product_info = product_info_file(Path::new(home));
+    let vm_options = vm_options_destination(&product_info)?;
 
     let flags_file = Path::new(&document.flags_file);
     let flags = dev_launch::read_lines(flags_file).map_err(|error| AgentRefusal::for_verb(VERB, format!("{error:#}")))?;
@@ -189,8 +191,7 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
     command_line.extend(document.properties.iter().map(|(key, value)| format!("-D{key}={value}")));
 
     let idea_properties = bin.join("idea.properties");
-    let vm_options_file = bin.join(&vm_options);
-    let product_info = bin.join("product-info.json");
+    let vm_options_file = vm_options.split('/').fold(PathBuf::from(home), |path, part| path.join(part));
     let core_classpath = Path::new(home).join("core-classpath.txt");
     let files = DistributionFiles {
         ide_config: Path::new(&document.ide_config),
@@ -200,7 +201,7 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
         core_classpath: &core_classpath,
     };
     let runtime_module_repository = is_file(&Path::new(home).join("modules").join("module-descriptors.dat"));
-    let distribution = Distribution::read(home, &files, &format!("bin/{vm_options}"), runtime_module_repository)
+    let distribution = Distribution::read(home, &files, &vm_options, runtime_module_repository)
         .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read the distribution {home}: {error:#}")))?;
     let mut arguments = dev_launch::java_arguments(command_line, distribution, None)
         .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot compose the IDE launch: {error:#}")))?;
@@ -218,23 +219,83 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
     Ok(arguments)
 }
 
-/// The one `*.vmoptions` file of the `bin` directory of the distribution, by its name.
-fn single_vm_options(bin: &Path) -> Result<String, AgentRefusal> {
-    let entries = fs::read_dir(bin).map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read {}: {error}", bin.display())))?;
-    let mut names: Vec<String> = entries
-        .filter_map(Result::ok)
-        .filter_map(|entry| entry.file_name().into_string().ok())
-        .filter(|name| name.ends_with(".vmoptions"))
-        .collect();
-    if names.len() != 1 {
-        names.sort();
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+pub(crate) const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `home`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(home: &Path) -> PathBuf {
+    let production = home.join(PRODUCT_INFO_FILE);
+    if is_file(&production) {
+        return production;
+    }
+    let dev_build = home.join("bin").join("product-info.json");
+    if is_file(&dev_build) { dev_build } else { production }
+}
+
+/// The slash path of the main vmoptions file relative to the home, as the launcher finds it.
+///
+/// It is `vmOptionsFilePath` of the first launch of `product_info`, relative to the directory of [`PRODUCT_INFO_FILE`].
+/// The `bin/product-info.json` of an older dev distribution holds the text of the production place, so the same base
+/// applies to it.
+fn vm_options_destination(product_info: &Path) -> Result<String, AgentRefusal> {
+    #[derive(Deserialize)]
+    struct ProductInfo {
+        launch: Vec<Launch>,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Launch {
+        vm_options_file_path: String,
+    }
+
+    let data =
+        fs::read(product_info).map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read {}: {error}", product_info.display())))?;
+    let info: ProductInfo = serde_json::from_slice(&data).map_err(|error| {
+        AgentRefusal::for_verb(
+            VERB,
+            format!("{} states no launch with a vmOptionsFilePath: {error}", product_info.display()),
+        )
+    })?;
+    let Some(launch) = info.launch.first() else {
+        refuse!(VERB, "{} states no launch", product_info.display());
+    };
+    let base = PRODUCT_INFO_FILE.rsplit_once('/').map_or("", |(directory, _)| directory);
+    let Some(destination) = resolve_in_home(base, &launch.vm_options_file_path) else {
         refuse!(
             VERB,
-            "{} must hold exactly one *.vmoptions file, and holds {names:?}",
-            bin.display()
+            "the vmOptionsFilePath '{}' of {} is not a file of the home",
+            launch.vm_options_file_path,
+            product_info.display()
         );
+    };
+    Ok(destination)
+}
+
+/// The slash path `relative`, resolved against the slash directory `base` by its text. Both are relative to the home.
+///
+/// The answer is `None` for an absolute path, a backslash, a path that leaves the home and the home itself.
+fn resolve_in_home(base: &str, relative: &str) -> Option<String> {
+    if relative.starts_with('/') || relative.contains('\\') {
+        return None;
     }
-    Ok(names.remove(0))
+    let mut parts: Vec<&str> = base.split('/').filter(|part| !part.is_empty()).collect();
+    for part in relative.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            _ => parts.push(part),
+        }
+    }
+    if parts.is_empty() { None } else { Some(parts.join("/")) }
 }
 
 /// The data path that a flag states, or `None`.

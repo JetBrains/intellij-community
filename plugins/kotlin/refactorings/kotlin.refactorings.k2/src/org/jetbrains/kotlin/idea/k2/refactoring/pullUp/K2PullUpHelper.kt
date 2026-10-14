@@ -563,7 +563,7 @@ internal class K2PullUpHelper(
                 data.sourceClass,
                 targetClass,
                 data.getSourceToTargetClassSubstitutor(),
-            )
+            ) + markTypeReferences(member)
         }
         val memberCopy = member.copy() as KtNamedDeclaration
 
@@ -677,6 +677,7 @@ internal class K2PullUpHelper(
             movedMember.modifierList?.reformatted()
 
             applyMarking(movedMember, targetClass)
+            rebindTypeReferences(movedMember, listOf(member))
             addMovedMember(movedMember)
         } finally {
             clearMarking(markedElements)

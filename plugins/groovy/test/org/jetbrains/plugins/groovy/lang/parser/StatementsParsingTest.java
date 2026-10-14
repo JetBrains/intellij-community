@@ -246,6 +246,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTry_catch$tryResourcesSeparators() { doTest(); }
   public void testTry_catch$tryResourcesTyped() { doTest(); }
   public void testTry_catch$tryResourcesMultiline() { doTest(); }
+  public void testTry_catch$multicatchMultiline() { doTest(); }
 
   public void testTuples$doubleParens() { doTest(); }
   public void testTuples$methCallNotTuple() { doTest(); }

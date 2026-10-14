@@ -16,6 +16,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
@@ -28,6 +29,7 @@ import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PairProcessor;
@@ -162,6 +164,10 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//platform/structuralsearch:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/ssBased";
+    }
     return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/ssBased";
   }
 

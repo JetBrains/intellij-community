@@ -1,0 +1,11 @@
+interface Factory {
+    fun answer(): Int
+}
+
+class Child {
+    companion object : Factory {
+        override fun answer() = 42
+    }
+}
+
+fun factory(): Factory = Child

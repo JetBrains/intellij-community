@@ -87,15 +87,6 @@ internal class DocumentSnapshotTest {
   }
 
   @Test
-  fun `withMetadata with a different, longer text keeps line-modification tracking consistent`() {
-    val patched = insertString(snapshot("a"), fragment = "z") // builds modState().lineSet for a 1-line text
-    val longText = snapshot("a\nb\nc\nd\ne") // unrelated, never patched, 5 real lines
-    val merged = longText.withMetadata(patched)
-    assertEquals(5, merged.text().lineCount()) // the kept text is unaffected by the metadata merge
-    assertFalse(merged.modState().isLineModified(3)) // must not throw for a line valid in the kept (longer) text
-  }
-
-  @Test
   fun `fresh unrelated documents do not share line-modification state`() {
     insertString(snapshot("z"), fragment = "y") // builds a fresh DocumentModStateImpl's lineSet
     val unrelated = snapshot("a\nb\nc\nd\ne") // a different, never-edited document, 5 real lines

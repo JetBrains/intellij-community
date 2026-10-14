@@ -1,0 +1,8 @@
+package usage
+
+import child.Child.Companion.ANSWER
+import child.Child.Companion.Token as ImportedToken
+import child.Child.Companion.answer as importedAnswer
+
+fun answer() = ANSWER + importedAnswer()
+fun token(): ImportedToken = ImportedToken()

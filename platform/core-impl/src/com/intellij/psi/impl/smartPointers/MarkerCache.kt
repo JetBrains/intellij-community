@@ -112,7 +112,7 @@ internal class MarkerCache(
       val resultMarkers = myMarkers.clone()
       for (event in events) {
         val before = frozen
-        frozen = frozen.applyEvent(event, 0)
+        frozen = frozen.applyEvent(event)
         val correctedEvent = withFrozenDocument(event, frozen)
 
         var i = 0
@@ -228,7 +228,7 @@ internal class MarkerCache(
       var document = frozen
       for (event in newEvents) {
         val before = document
-        document = document.applyEvent(event, 0)
+        document = document.applyEvent(event)
         marker = marker?.getUpdatedRange(withFrozenDocument(event, document), before)
       }
       return marker

@@ -230,7 +230,7 @@ fn populate(staging: &Path, manifest: &RunfilesManifest, request: &RunfilesTreeR
                 ));
             };
             if request.copy_package_stores && is_package_store_directory(&entry.path, Path::new(&guest)) {
-                copy_tree(Path::new(&guest), &entry_path)
+                crate::stage::copy_tree(Path::new(&guest), &entry_path)
             } else {
                 std::os::unix::fs::symlink(guest, &entry_path)
             }
@@ -305,26 +305,6 @@ fn write_staged(staging: &Path, request: &RunfilesTreeRequest, bytes: &[u8]) -> 
 /// read. A copy puts the real path inside the tree, where those links are the tree's own.
 fn is_package_store_directory(logical: &str, guest: &Path) -> bool {
     logical.split('/').any(|component| component == "node_modules") && guest.is_dir()
-}
-
-/// Copies the directory `source` to `destination`: a file by its content, a directory by recursion, and a symbolic
-/// link as the link it is.
-fn copy_tree(source: &Path, destination: &Path) -> std::io::Result<()> {
-    fs::create_dir(destination)?;
-    for entry in fs::read_dir(source)? {
-        let entry = entry?;
-        let from = entry.path();
-        let to = destination.join(entry.file_name());
-        let metadata = fs::symlink_metadata(&from)?;
-        if metadata.is_dir() {
-            copy_tree(&from, &to)?;
-        } else if metadata.is_symlink() {
-            std::os::unix::fs::symlink(fs::read_link(&from)?, &to)?;
-        } else {
-            fs::copy(&from, &to)?;
-        }
-    }
-    Ok(())
 }
 
 /// Where the runfile at `logical` goes under `root`. A path that is absolute, or that holds an empty, `.` or `..`

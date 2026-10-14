@@ -10,6 +10,7 @@ import com.intellij.openapi.util.WinBuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.StartupUiUtil;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
@@ -73,8 +74,7 @@ public final class WindowRoundedCornersManager {
         if (cornerType == PopupCornerType.None) {
           return;
         }
-        var radius = cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
-        params = Float.valueOf(radius.getFloat());
+        params = Float.valueOf(cornerRadius(cornerType).getFloat());
       }
       else if (params instanceof Color) {
         params = new Object[]{Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()), Integer.valueOf(1), params};
@@ -83,8 +83,7 @@ public final class WindowRoundedCornersManager {
         if (values.length != 2 || !(values[0] instanceof PopupCornerType cornerType) || !(values[1] instanceof Color)) {
           return;
         }
-        var radius = cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
-        params = new Object[]{Float.valueOf(radius.getFloat()), Integer.valueOf(1), values[1]};
+        params = new Object[]{Float.valueOf(cornerRadius(cornerType).getFloat()), Integer.valueOf(1), values[1]};
       }
       else if (!(params instanceof Float)) {
         return;
@@ -98,7 +97,7 @@ public final class WindowRoundedCornersManager {
         if (cornerType == PopupCornerType.None) {
           return;
         }
-        params = cornerType == PopupCornerType.RoundedTooltip ? "small" : "full";
+        params = windowsCornerPreset(cornerType);
       }
       else if (params instanceof Color) {
         params = new Object[]{"full", params};
@@ -107,7 +106,7 @@ public final class WindowRoundedCornersManager {
         if (values.length != 2 || !(values[0] instanceof PopupCornerType cornerType) || !(values[1] instanceof Color)) {
           return;
         }
-        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : "full", values[1]};
+        params = new Object[]{windowsCornerPreset(cornerType), values[1]};
       }
       else if (!(params instanceof String)) {
         return;
@@ -118,6 +117,29 @@ public final class WindowRoundedCornersManager {
     if (!AppMode.isRemoteDevHost()) {
       JBR.getRoundedCornersManager().setRoundedCorners(window, params);
     }
+  }
+
+  /**
+   * The theme corner radius for the given corner type.
+   */
+  @ApiStatus.Internal
+  public static @NotNull JBValue cornerRadius(@NotNull PopupCornerType cornerType) {
+    return switch (cornerType) {
+      case RoundedWindow -> IdeaPopupMenuUI.CORNER_RADIUS;
+      case None -> JBValue.Float.EMPTY;
+      case RoundedTooltip -> JBUI.CurrentTheme.Tooltip.CORNER_RADIUS;
+      case RoundedMultilineTooltip -> JBUI.CurrentTheme.Tooltip.MULTILINE_CORNER_RADIUS;
+    };
+  }
+
+  /**
+   * Windows 11 has only two presets: "small" is 4px and "full" is 8px.
+   */
+  private static @NotNull String windowsCornerPreset(@NotNull PopupCornerType cornerType) {
+    return switch (cornerType) {
+      case RoundedWindow, None -> "full";
+      case RoundedTooltip, RoundedMultilineTooltip -> cornerRadius(cornerType).getUnscaled() >= 8 ? "full" : "small";
+    };
   }
 
   @ApiStatus.Internal

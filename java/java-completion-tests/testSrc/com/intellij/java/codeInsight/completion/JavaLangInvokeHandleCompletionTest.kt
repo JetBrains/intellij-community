@@ -13,7 +13,7 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_9
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
 
 
   fun testVirtual() = doTestFirst(1, "m1(int)", "pm1(int)", "m2(float, double)")

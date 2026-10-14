@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization.r.inlays.components
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -19,7 +20,12 @@ internal class NotebookOutputSelectAllAction : DumbAwareAction() {
     // for some reason, EDITOR and HOST_EDITOR are always null for console output components. this is a workaround.
     val editor = e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE)
 
-    e.presentation.isEnabled = editor?.contentComponent?.hasFocus() == true && editor.getUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY) == true
+    e.presentation.isEnabled = editor?.contentComponent?.hasFocus() == true
+                               && editor.getUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY) == true
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

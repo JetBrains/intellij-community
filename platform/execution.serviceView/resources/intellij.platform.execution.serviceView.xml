@@ -63,16 +63,16 @@
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">
-      <!-- Suppres unresolved reference to NewElement -->
+      <!-- Suppress unresolved reference to NewElement -->
       <!--suppress PluginXmlValidity -->
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.platform.execution.serviceView.AddServiceActionGroup"/>
-      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
+      <group id="ServiceView.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
         <action id="ServiceView.GroupByContributor" class="com.intellij.platform.execution.serviceView.GroupByContributorAction"/>
         <separator/>
       </group>
-      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
+      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab" searchable="false"
              class="com.intellij.platform.execution.serviceView.OpenInNewTabActionGroup">
         <action id="ServiceView.OpenInNewTab" class="com.intellij.platform.execution.serviceView.OpenInNewTabAction"/>
         <action id="ServiceView.OpenEachInNewTab" class="com.intellij.platform.execution.serviceView.OpenEachInNewTabAction"/>

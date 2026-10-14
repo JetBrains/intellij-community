@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
-import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import org.jetbrains.annotations.ApiStatus
@@ -89,7 +89,7 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
 
     override fun isApplicable(context: ExecutionContext, info: ClassLoadingAdapter.Companion.ClassInfoForEvaluator): Boolean {
         return info.isCompilingEvaluatorPreferred && context.classLoader != null
-                && !DexDebugFacility.isDex(context.evaluationContext.virtualMachineProxy.virtualMachine)
+                && !isAndroidVM(context.evaluationContext.virtualMachineProxy.virtualMachine)
     }
 
     override fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference {

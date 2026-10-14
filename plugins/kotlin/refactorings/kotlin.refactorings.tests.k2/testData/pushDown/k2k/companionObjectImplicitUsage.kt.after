@@ -1,0 +1,13 @@
+open class Base {
+}
+
+class Child : Base() {
+    // INFO: {"checked": "true"}
+    companion object {
+        fun obj() = value()
+
+        private fun value() = 1
+    }
+}
+
+fun usage() = Child.obj()

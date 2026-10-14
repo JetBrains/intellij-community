@@ -16,7 +16,7 @@ interface EelArchiveApi {
    * Anything else throws [IOException] (`Unsupported archive`).
    *
    * [target] is created if missing. Existing entries are overwritten.
-   * Symbolic links are extracted as-is from archive metadata - not safe for untrusted archives.
+   * Entry paths that escape [target] are rejected. Symbolic-link support depends on the archive format and environment.
    */
   @Throws(IOException::class)
   suspend fun extract(archive: EelPath, target: EelPath)

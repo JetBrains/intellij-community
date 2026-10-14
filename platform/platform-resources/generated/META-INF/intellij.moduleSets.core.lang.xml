@@ -278,6 +278,7 @@
     <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
     <module name="intellij.platform.consoleView" loading="embedded"/>
     <module name="intellij.platform.consoleView.impl" loading="embedded"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>
@@ -321,6 +322,7 @@
     <module name="intellij.platform.ide.playback"/>
     <module name="intellij.platform.ide.fileChooser.universal"/>
     <module name="intellij.platform.ide.tabInEditor"/>
+    <module name="intellij.platform.ide.tabInEditor.frontend"/>
     <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.ide.favoritesTreeView"/>
     <module name="intellij.platform.ide.designer"/>

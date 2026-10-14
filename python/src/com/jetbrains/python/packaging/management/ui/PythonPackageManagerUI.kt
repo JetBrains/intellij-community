@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
@@ -212,8 +212,10 @@ class PythonPackageManagerUI private constructor(
     @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun installPackagesWithModalProgressBlocking(project: Project, sdk: Sdk, vararg packages: String): List<PythonPackage>? {
       val interpreter = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
-        sdk.pythonInterpreterAsync()
-      }
+        val result = sdk.pythonInterpreterResultAsync()
+        result.errorOrNull?.let { ErrorSink().emit(it, project) }
+        result.successOrNull
+      } ?: return null
       return forPythonInterpreter(project, interpreter).installPackagesWithModalProgressBlocking(*packages)
     }
   }

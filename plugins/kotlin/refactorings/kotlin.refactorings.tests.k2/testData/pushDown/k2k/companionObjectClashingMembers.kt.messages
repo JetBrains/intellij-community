@@ -1,0 +1,3 @@
+Companion object Child.Companion already contains function 'fun clash()'
+Companion object Child.Companion already contains nested class named Nested
+Companion object Child.Companion already contains property 'val number: Int'

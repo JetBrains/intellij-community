@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KMutableProperty0
 
 class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
@@ -42,22 +43,37 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
     groupName: @Nls String? = null
   ) : this(name, mutableProperty, comment, /*commentAction = */null, groupName)
 
-  fun asUiOptionDescriptor(): BooleanOptionDescription {
-    return asOptionDescriptor {
+  /**
+   * Uses the Editor Tabs configurable ID. Use the overload with `configurableId` for a checkbox on another settings page.
+   */
+  fun asUiOptionDescriptor(): BooleanOptionDescription = asUiOptionDescriptor(EDITOR_TABS_OPTIONS_ID)
+
+  fun asUiOptionDescriptor(configurableId: @NonNls String): BooleanOptionDescription {
+    return asOptionDescriptor(configurableId) {
       UISettings.getInstance().fireUISettingsChanged()
     }
   }
 
+  /**
+   * Uses the Editor Tabs configurable ID. Use the overload with `configurableId` for a checkbox on another settings page.
+   */
   fun asOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor(null)
 
-  fun asOptionDescriptor(fireUpdated: (() -> Unit)?): BooleanOptionDescription {
+  fun asOptionDescriptor(configurableId: @NonNls String): BooleanOptionDescription = asOptionDescriptor(configurableId, null)
+
+  /**
+   * Uses the Editor Tabs configurable ID. Use the overload with `configurableId` for a checkbox on another settings page.
+   */
+  fun asOptionDescriptor(fireUpdated: (() -> Unit)?): BooleanOptionDescription = asOptionDescriptor(EDITOR_TABS_OPTIONS_ID, fireUpdated)
+
+  fun asOptionDescriptor(configurableId: @NonNls String, fireUpdated: (() -> Unit)?): BooleanOptionDescription {
     val optionName = if (groupName == null) {
       name
     }
     else {
       "${groupName.trim().removeSuffix(":")}: $name"
     }
-    return object : BooleanOptionDescription(optionName, EDITOR_TABS_OPTIONS_ID) {
+    return object : BooleanOptionDescription(optionName, configurableId) {
       override fun setOptionState(enabled: Boolean) {
         setter(enabled)
         fireUpdated?.invoke()

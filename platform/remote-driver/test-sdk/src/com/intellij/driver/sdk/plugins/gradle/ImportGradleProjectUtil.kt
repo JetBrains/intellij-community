@@ -8,7 +8,7 @@ import com.intellij.driver.sdk.waitForIndicators
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-@Remote("org.jetbrains.plugins.gradle.performanceTesting.ImportGradleProjectUtil", plugin = "org.jetbrains.plugins.gradle")
+@Remote("com.intellij.gradle.java.performance.ImportGradleProjectUtil", plugin = "org.jetbrains.plugins.gradle/intellij.gradle.java.performance")
 interface ImportGradleProjectUtil {
   fun importProject(project: Project)
 }

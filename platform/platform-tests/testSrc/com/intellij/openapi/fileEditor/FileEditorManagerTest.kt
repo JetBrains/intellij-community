@@ -676,6 +676,39 @@ class FileEditorManagerTest {
     assertOpenedFileEditorsNames(file, "hide_others_1", "hide_others_2", "hide_others_3")
   }
 
+  @Test
+  fun testHideOtherEditorsAfterDumbMode(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    registerProvider(MockFileEditorProvider("t_passive", "passive", FileEditorPolicy.NONE))
+    registerProvider(MyDumbAwareProvider("t_hide_others", "hide_others", FileEditorPolicy.HIDE_OTHER_EDITORS))
+    val file = DumbModeTestUtils.computeInDumbModeSynchronously(project) {
+      val file = createTempFooBar()
+      manager.openFile(file, false)
+      file
+    }
+
+    manager.waitForAsyncUpdateOnDumbModeFinished()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertOpenedFileEditorsNames(file, "hide_others")
+  }
+
+  @Test
+  fun testDumbUnawareHideOtherEditorsAfterDumbMode(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    registerProvider(MyDefaultEditorProvider("t_default", "default"))
+    registerProvider(MyDumbAwareProvider("t_passive", "passive", FileEditorPolicy.NONE))
+    registerProvider(MockFileEditorProvider("t_hide_others", "hide_others", FileEditorPolicy.HIDE_OTHER_EDITORS))
+    val file = DumbModeTestUtils.computeInDumbModeSynchronously(project) {
+      val file = createTempFooBar()
+      manager.openFile(file, false)
+      assertOpenedFileEditorsNames(file, "default", "passive")
+      file
+    }
+
+    manager.waitForAsyncUpdateOnDumbModeFinished()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertOpenedFileEditorsNames(file, "hide_others")
+    assertThat(manager.getSelectedEditor(file)?.name).isEqualTo("hide_others")
+  }
+
   @ParameterizedTest(name = "{0}")
   @MethodSource("activeSplitterNavigationCases")
   fun testOpenInActiveSplitter(

@@ -496,8 +496,8 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
             }
           }
           launch(CoroutineName("Flush updates for the PV pane $id")) {
-            runSafelyCancellable(LOG, taskDescription = { "processing pending updates for the pane $id" }) {
-              pendingUpdatesSignal.throttle(timeMs = 50).collect {
+            pendingUpdatesSignal.throttle(timeMs = 50).collect {
+              runSafelyCancellable(LOG, taskDescription = { "processing pending updates for the pane $id" }) {
                 scheduleProcessPendingUpdates()
               }
             }
@@ -506,31 +506,33 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
             runSafelyCancellable(LOG, taskDescription = { "processing update requests for the PV pane $id" }) {
               for (request in stateUpdateRequests) {
                 LOG.trace { "Processing update request $request" }
-                when (request) {
-                  is LoadChildrenRequest -> {
-                    updateChildren(request.parentId, allowLoading = true, deep = false)
-                  }
-                  is ProcessPendingUpdatesRequest -> {
-                    processPendingUpdates()
-                  }
-                  is UpdateNodeModelRequest<*> -> {
-                    builder.updateNode(request.model)
-                  }
-                  is UpdateSettingsRequest -> {
-                    applySettings()
-                  }
-                  is SetOptionRequest -> {
-                    applyOptionChange(request.option, request.newValue)
-                  }
-                  is SetSortKeyRequest -> {
-                    applySortKeyChange(request.sortKey)
-                  }
-                  is SetFileNestingRequest -> {
-                    applyFileNestingChange(request.fileNesting)
-                  }
-                  is SelectNodeRequest -> {
-                    builder.selectNode(request.nodePath) { options -> 
-                      options.requestFocus = request.requestFocus
+                runSafelyCancellable(LOG, taskDescription = { "Updating pane $id state, request = $request" }) {
+                  when (request) {
+                    is LoadChildrenRequest -> {
+                      updateChildren(request.parentId, allowLoading = true, deep = false)
+                    }
+                    is ProcessPendingUpdatesRequest -> {
+                      processPendingUpdates()
+                    }
+                    is UpdateNodeModelRequest<*> -> {
+                      builder.updateNode(request.model)
+                    }
+                    is UpdateSettingsRequest -> {
+                      applySettings()
+                    }
+                    is SetOptionRequest -> {
+                      applyOptionChange(request.option, request.newValue)
+                    }
+                    is SetSortKeyRequest -> {
+                      applySortKeyChange(request.sortKey)
+                    }
+                    is SetFileNestingRequest -> {
+                      applyFileNestingChange(request.fileNesting)
+                    }
+                    is SelectNodeRequest -> {
+                      builder.selectNode(request.nodePath) { options -> 
+                        options.requestFocus = request.requestFocus
+                      }
                     }
                   }
                 }
@@ -540,8 +542,8 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
             }
           }
           launch(CoroutineName("Select requests for the PV pane $id")) {
-            runSafelyCancellable(LOG, taskDescription = { "executing select requests for the pane $id" }) {
-              selectRequests.consumeAsFlow().collectLatest { element ->
+            selectRequests.consumeAsFlow().collectLatest { element ->
+              runSafelyCancellable(LOG, taskDescription = { "executing select request for the pane $id: $element" }) {
                 selectElementImpl(element)
               }
             }

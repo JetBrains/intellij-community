@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl
 
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.openapi.util.Key
@@ -25,6 +26,6 @@ internal class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
   }
 
   override fun isApplicable(evaluationContext: EvaluationContextImpl): Boolean {
-    return !DexDebugFacility.isDex(evaluationContext.virtualMachineProxy.virtualMachine)
+    return !isAndroidVM(evaluationContext.virtualMachineProxy.virtualMachine)
   }
 }

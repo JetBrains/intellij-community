@@ -282,6 +282,10 @@ class MacDistributionBuilder(
 
   override fun writeVmOptions(distBinDir: Path): Path = writeMacOsVmOptions(distBinDir, context)
 
+  override fun writeEmbeddedFrontendVmOptions(distBinDir: Path): Path? {
+    return context.getEmbeddedFrontendProductContext()?.let { writeMacOsVmOptions(distBinDir, it) }
+  }
+
   private fun layoutMacCli(macDistDir: Path, arch: JvmArchitecture) {
     val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)

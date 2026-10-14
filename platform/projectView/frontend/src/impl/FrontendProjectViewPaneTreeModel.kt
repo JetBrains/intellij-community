@@ -106,6 +106,12 @@ internal class FrontendProjectViewPaneTreeModel(
   internal val selectionRequests: ReceiveChannel<ProjectViewSelectNodeEvent>
     field = Channel<ProjectViewSelectNodeEvent>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  internal val isEffectivelyEmpty: Boolean
+    get() {
+      val root = treeModel.root ?: return true
+      return root.children().asSequence().none { (it as? Node)?.projectViewNode?.isSynthetic() == false }
+    }
+
   private val loadRequests = Channel<Long>(capacity = Channel.UNLIMITED)
 
   suspend fun manage() {

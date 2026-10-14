@@ -72,6 +72,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -175,6 +176,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       try {
         try {
           popupSemaphore.withPermit {
+            popupScope.ensureActive()
             val mlService = SeMlService.getInstanceIfEnabled()
             mlService?.onSessionStarted(project, tabId)
 
@@ -190,6 +192,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
               sessionProvidersHolder = providersHolder
               localProvidersHolder = providersHolder
               project?.let { Disposer.tryRegister(it, providersHolder) }
+              popupScope.ensureActive()
               initializeVmAndSetToPopup(popupFuture,
                                         popup,
                                         popupContentPane,
@@ -232,6 +235,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           if (!popupFuture.isDone) {
             // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
             withContext(Dispatchers.EDT) {
+              if (popup.isDisposed) return@withContext
               popup.cancel()
 
               if (isRetry) {
@@ -310,7 +314,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           tabLoadingProperty.getValue()
         } ?: run {
           if (loadingTabId == tabId || loadingTabId in MAIN_TABS) {
-            SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
+            SeLog.log(LIFE_CYCLE) { "Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway" }
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
           }
@@ -335,6 +339,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
+    popupScope.ensureActive()
     val popupVm = SePopupVm(
       popupScope,
       session,
@@ -436,6 +441,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       onCancel(contentPane)
       selectionState = contentPane.getSelectionState()
     }
+    contentPane.closePopupHandler = popup::cancel
 
     // The content pane is disposed together with the popup. Stop its UI coroutines at the same time.
     Disposer.register(popup) { popupScope.cancel() }

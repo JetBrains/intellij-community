@@ -11,15 +11,21 @@ load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name"
 load(":dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_module_repository")
 load(
     ":intellij_dev_dist.bzl",
+    "DevDistPlacementInfo",
     "IntellijDevBuildInputsInfo",
+    "IntellijDevDistInfo",
     "IntellijDevFragmentInfo",
     "IntellijDevReferenceInfo",
     "IntellijProjectModelTreeInfo",
+    "dist_home_path",
     "intellij_dev_build_inputs",
     "intellij_dev_fragment",
     "intellij_dev_fragments_dist",
     "intellij_dev_packed_jars_component",
 )
+
+# The fixture of an unpacked archive, with the files `bin/tool`, `lib/helper` and `lib/sub/data.txt`.
+_UNPACKED_ARCHIVE = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:files")
 
 # The application info of the fixture product, an EAP product without a release date.
 _FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
@@ -435,6 +441,42 @@ _distribution_groups_test = analysistest.make(
     config_settings = {_TRACE_SPANS: False},
 )
 
+def _sibling_vm_options_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDevDistInfo]
+    file = info.sibling_vm_options
+    asserts.true(env, file != None, "the export has a sibling vmoptions file")
+    if file == None:
+        return analysistest.end(env)
+    asserts.equals(env, target.label.name + ".dist.vmoptions", file.basename)
+    asserts.true(env, file in target[DefaultInfo].files.to_list(), "the target builds the file")
+    asserts.false(env, file in target[DefaultInfo].default_runfiles.files.to_list(), "the file is no runfile")
+    writes = [action for action in analysistest.target_actions(env) if file in action.outputs.to_list()]
+    asserts.equals(env, 1, len(writes), "one action writes the file")
+    if writes:
+        # `${EXPORT}` resolves to the absolute path of the home of the export below the execution root.
+        export = "/output-base/execroot/%s/%s" % (ctx.workspace_name, info.home.path)
+        if ctx.attr.home_prefix:
+            export += "/" + ctx.attr.home_prefix
+        asserts.equals(env, "/output-base/execroot/%s/%s" % (ctx.workspace_name, dist_home_path(info)), export)
+        asserts.equals(env, "-Da=1\n-Dexport=%s/x\n" % export, writes[0].content)
+
+    # The provider and the composer get the home prefix. The composer gets no option for the output itself.
+    asserts.equals(env, ctx.attr.home_prefix, info.home_prefix)
+    composes = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    asserts.equals(env, 1, len(composes), "one action composes the export")
+    if composes:
+        prefixes = [argument for argument in composes[0].argv if argument.startswith("--home-prefix")]
+        asserts.equals(env, ["--home-prefix=" + ctx.attr.home_prefix] if ctx.attr.home_prefix else [], prefixes)
+    return analysistest.end(env)
+
+_sibling_vm_options_test = analysistest.make(
+    _sibling_vm_options_test_impl,
+    attrs = {"home_prefix": attr.string(doc = "The home prefix of the export under test.")},
+    config_settings = {_TRACE_SPANS: False},
+)
+
 def _packed_component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
@@ -501,6 +543,46 @@ def _files_component_test_impl(ctx):
 _files_component_test = analysistest.make(
     _files_component_test_impl,
     attrs = {"main_class": attr.string()},
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _unpacked_archive_component_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+
+    # Each file of the archive goes below its directory at its path in the archive, beside an explicit file. A directory
+    # value names only the files directly in it, so `lib/sub/data.txt` keeps no executable bit.
+    placement = target[DevDistPlacementInfo]
+    asserts.equals(env, ["build.txt", "runtime/bin/tool", "runtime/lib/helper", "runtime/lib/sub/data.txt"], sorted(placement.files.keys()))
+
+    # The source is the archive file of the fixture package. Its short path starts with `../community+/` when the test
+    # runs from the ultimate workspace, so the test compares the owner package and the archive-relative tail only.
+    for path in ["bin/tool", "lib/helper", "lib/sub/data.txt"]:
+        source = placement.files.get("runtime/" + path)
+        asserts.equals(env, _UNPACKED_ARCHIVE.package, source.owner.package if source else None)
+        asserts.true(env, source != None and source.short_path.endswith("/" + path), "runtime/%s comes from %s" % (path, source.short_path if source else None))
+    asserts.equals(env, {}, placement.trees)
+    asserts.equals(env, ["runtime/bin/tool", "runtime/lib/helper"], sorted(placement.executables))
+
+    # The collector reads the same destinations, and checks the source mode of an archive file only.
+    written = [
+        json.decode(action.content)
+        for action in analysistest.target_actions(env)
+        if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename == target.label.name + ".files.json"
+    ]
+    asserts.equals(env, 1, len(written))
+    records = {record["relativePath"]: record for record in written[0]} if written else {}
+    asserts.equals(env, sorted(placement.files.keys()), sorted(records.keys()))
+    asserts.equals(env, ["executable", "relativePath", "source"], sorted(records["build.txt"].keys()) if records else None)
+    for destination in ["runtime/bin/tool", "runtime/lib/helper", "runtime/lib/sub/data.txt"]:
+        record = records.get(destination, {})
+        asserts.equals(env, placement.files[destination].path, record.get("source"))
+        asserts.equals(env, destination in placement.executables, record.get("executable"))
+        asserts.equals(env, True, record.get("checkSourceMode"))
+    return analysistest.end(env)
+
+_unpacked_archive_component_test = analysistest.make(
+    _unpacked_archive_component_test_impl,
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -907,6 +989,42 @@ def dev_dist_content_test_suite(name):
         production = [":" + component for component in production],
     )
 
+    # The sibling vmoptions file of an export, flat and with the home in `Contents`, and the lines and the distributions
+    # that the rule refuses.
+    for suffix, prefix in [("", ""), ("_contents", "Contents")]:
+        sibling = name + "_sibling_distribution" + suffix
+        intellij_dev_fragments_dist(
+            name = sibling,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            expect_fragments = production,
+            sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
+            output_base = "/output-base",
+            home_prefix = prefix,
+            tags = ["manual"],
+        )
+        tests.append(sibling + "_test")
+        _sibling_vm_options_test(name = tests[-1], target_under_test = ":" + sibling, home_prefix = prefix)
+    for suffix, local_launch, lines, output_base, expected_message in [
+        ("local_launch", True, ["-Da=1"], "", "a local launch has no export, so it takes no sibling_vm_options"),
+        ("line_break", False, ["-Da=1\n-Db=2"], "", "a sibling vmoptions line must be one JVM option"),
+        ("empty_line", False, [""], "", "a sibling vmoptions line must be one JVM option"),
+        ("no_output_base", False, ["-Dexport=${EXPORT}"], "", "names ${EXPORT}, so output_base is required"),
+    ]:
+        refused = "%s_sibling_%s" % (name, suffix)
+        intellij_dev_fragments_dist(
+            name = refused,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            expect_fragments = production,
+            local_launch = local_launch,
+            sibling_vm_options = lines,
+            output_base = output_base,
+            tags = ["manual"],
+        )
+        tests.append(refused + "_test")
+        _expected_failure_test(name = tests[-1], target_under_test = ":" + refused, expected_message = expected_message)
+
     packed_component = name + "_packed_component"
     intellij_dev_packed_jars_component(
         name = packed_component,
@@ -936,12 +1054,48 @@ def dev_dist_content_test_suite(name):
             component_name = "platform_" + case,
             platform_prefix = "idea",
             target_platform = "linux_x64",
-            files = {":" + build_txt: "build.txt"},
+            files = {"build.txt": ":" + build_txt},
             main_class = main_class,
             tags = ["manual"],
         )
         tests.append(files_component + "_test")
         _files_component_test(name = tests[-1], target_under_test = ":" + files_component, main_class = main_class)
+
+    # An unpacked archive below one directory, beside an explicit file. Then the inputs that the rule refuses: a
+    # destination that both an explicit file and the archive place, and an executable value that names no archive file.
+    archive_component = name + "_unpacked_archive_component"
+    intellij_dev_packed_jars_component(
+        name = archive_component,
+        collector = ":" + fixture,
+        component_name = "platform_assets",
+        platform_prefix = "idea",
+        target_platform = "linux_x64",
+        files = {"build.txt": ":" + build_txt},
+        unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
+        unpacked_archive_executables = ["runtime/bin/tool", "runtime/lib/"],
+        tags = ["manual"],
+    )
+    tests.append(archive_component + "_test")
+    _unpacked_archive_component_test(name = tests[-1], target_under_test = ":" + archive_component)
+    for case, files, executables, message in [
+        ("duplicate", {"runtime/bin/tool": ":" + build_txt}, [], "duplicate destination: runtime/bin/tool"),
+        ("unknown_executable", {}, ["runtime/lib/sub"], "unpacked_archive_executables names 'runtime/lib/sub', which matches no file of unpacked_archives"),
+        ("unknown_executable_directory", {}, ["runtime/bin/sub/"], "unpacked_archive_executables names 'runtime/bin/sub/', which matches no file of unpacked_archives"),
+    ]:
+        refused = "%s_unpacked_archive_%s" % (name, case)
+        intellij_dev_packed_jars_component(
+            name = refused,
+            collector = ":" + fixture,
+            component_name = "platform_assets",
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = files,
+            unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
+            unpacked_archive_executables = executables,
+            tags = ["manual"],
+        )
+        tests.append(refused + "_test")
+        _expected_failure_test(name = tests[-1], target_under_test = ":" + refused, expected_message = message)
 
     empty_inputs = name + "_empty_inputs"
     intellij_dev_build_inputs(name = empty_inputs)

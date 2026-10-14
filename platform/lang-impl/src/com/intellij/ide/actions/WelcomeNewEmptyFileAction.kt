@@ -13,9 +13,11 @@ import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.UndoUtil
@@ -48,7 +50,7 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
+internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -68,8 +70,12 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
     else {
       context.prepareText = false
     }
-    ScratchFileActions.doCreateNewScratch(project, context, e.dataContext)
+    if (ScratchFileActions.doCreateNewScratch(project, context, e.dataContext) != null) {
+      rememberWelcomeNewFile(e, context.language)
+    }
   }
+
+  override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> = welcomeNewFileUsageData(event)
 }
 
 internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
@@ -181,9 +187,11 @@ private fun closeWelcomeFilesWithProject(project: Project, files: List<VirtualFi
 @ApiStatus.Internal
 @YesNoCancelResult
 fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
-  return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.file.dialog.title", file.name),
-                                          IdeBundle.message("welcome.file.dialog.messages"))
+  val result = MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.file.dialog.title", file.name),
+                                                IdeBundle.message("welcome.file.dialog.messages"))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
+  WelcomeFilesUsageCollector.logCloseDialogClosed(project, result, 1)
+  return result
 }
 
 /**
@@ -194,11 +202,13 @@ fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
 @YesNoCancelResult
 fun askSaveWelcomeFiles(files: List<VirtualFile>, project: Project): Int {
   files.singleOrNull()?.let { return askSaveWelcomeFile(it, project) }
-  return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
-                                          IdeBundle.message("welcome.files.dialog.messages",
-                                                            files.size.toString(),
-                                                            files.joinToString("<br>") { it.name }))
+  val result = MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
+                                                IdeBundle.message("welcome.files.dialog.messages",
+                                                                  files.size.toString(),
+                                                                  files.joinToString("<br>") { it.name }))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
+  WelcomeFilesUsageCollector.logCloseDialogClosed(project, result, files.size)
+  return result
 }
 
 /**

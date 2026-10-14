@@ -12,7 +12,6 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstBinaryExpression
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
@@ -50,7 +49,6 @@ import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference.OperatorSide
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableArgument
@@ -65,7 +63,6 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCompositeType
 import com.jetbrains.python.psi.types.PyConcatenateType
-import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNeverType
@@ -81,7 +78,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
@@ -160,7 +156,6 @@ object PyCallExpressionHelper {
         buildList {
           add(getExplicitCalleeType(callee, it))
           addIfNotNull(getImplicitCalleeType(callee, it))
-          addIfNotNull(getRemoteCalleeType(callee, it))
         }
       )
     }
@@ -265,118 +260,6 @@ object PyCallExpressionHelper {
     }
 
     return null
-  }
-
-  private fun getRemoteCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
-    if (!resolveContext.allowRemote()) return null
-    val file = callee.containingFile
-    if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return null
-
-    val context = resolveContext.typeEvalContext
-    if (callee !is PyReferenceExpression) {
-      val callables = context.getType(callee).compositeComponents.filterIsInstance<PyCallableType>()
-      return if (callables.isEmpty()) null else PyUnionType.unionOrUnknown(callables)
-    }
-
-    val expression = PyCallExpressionNavigator.getPyCallExpressionByCallee(callee) ?: return null
-
-    val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
-    val results = PyUtil.filterTopPriorityResults(
-      forEveryScopeTakeOverloadsOtherwiseImplementations(resolvedCallee, context) { it.element }
-    )
-
-    val callableTypes = mutableListOf<PyType?>()
-    for (result in results) {
-      val clarified = clarifyResolveResult(result, context) ?: continue
-      val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
-
-      result.element
-        ?.let { PyReferenceExpressionImpl.getReferenceTypeFromProviders(it, context, expression) }
-        ?.get()
-        .toStream().filterIsInstance<PyCallableType>()
-        .ifEmpty {
-          context.getType(clarifiedResolved).toStream().filterIsInstance<PyCallableType>()
-        }
-        .forEach {
-          callableTypes.add(adjustCallableType(it, expression, clarified, context))
-        }
-    }
-    val callables = PyUnionType.unionOrUnknown(callableTypes).compositeComponents.filterIsInstance<PyCallableType>()
-    return if (callables.isEmpty()) null else PyUnionType.unionOrUnknown(callables)
-  }
-
-  private fun clarifyResolveResult(result: QualifiedRatedResolveResult, context: TypeEvalContext): ClarifiedResolveResult? {
-    val resolved = result.element
-
-    if (resolved is PyCallExpression) { // foo = classmethod(foo)
-
-      val wrapperInfo = interpretAsModifierWrappingCall(resolved)
-      if (wrapperInfo != null) {
-        val wrapperName = wrapperInfo.first
-        val wrappedModifier = if (PyNames.CLASSMETHOD == wrapperName)
-          PyAstFunction.Modifier.CLASSMETHOD
-        else
-          if (PyNames.STATICMETHOD == wrapperName)
-            PyAstFunction.Modifier.STATICMETHOD
-          else
-            null
-
-        return ClarifiedResolveResult(result, wrapperInfo.second, wrappedModifier)
-      }
-    }
-    else if (resolved is PyFunction) {
-      val property = resolved.property
-      if (property != null && property.getter.valueOrNull() == resolved && isQualifiedByInstance(resolved, result.qualifiers, context)) {
-        val type = context.getReturnType(resolved)
-
-        return if (type is PyFunctionType) ClarifiedResolveResult(result, type.callable, null) else null
-      }
-    }
-
-    return if (resolved != null) ClarifiedResolveResult(result, resolved, null) else null
-  }
-
-  private fun adjustCallableType(
-    callableType: PyCallableType,
-    callExpression: PyCallExpression,
-    resolveResult: ClarifiedResolveResult,
-    context: TypeEvalContext,
-  ): PyCallableType {
-    val clarifiedResolved = resolveResult.clarifiedResolved
-    if (clarifiedResolved is PyCallable) {
-      val originalModifier = if (clarifiedResolved is PyFunction) clarifiedResolved.modifier else null
-      val resolvedModifier = originalModifier ?: resolveResult.wrappedModifier
-
-      val qualifiers = resolveResult.originalResolveResult.qualifiers
-
-      val isByInstance = isQualifiedByInstance(clarifiedResolved, qualifiers, context)
-
-      val lastQualifier = qualifiers.lastOrNull()
-      val isByClass = lastQualifier != null && isQualifiedByClass(clarifiedResolved, lastQualifier, context)
-
-      val resolvedImplicitOffset =
-        getImplicitArgumentCount(clarifiedResolved, resolvedModifier, false, isByInstance, isByClass)
-
-      if (callableType.modifier == resolvedModifier && resolvedImplicitOffset == 0) {
-        return callableType
-      }
-
-      val parametersType = callableType.getParametersType(context)
-      val newParametersType = if (resolvedImplicitOffset > 0 && parametersType is PyCallableParameterListType)
-        PyCallableParameterListTypeImpl(parametersType.parameters.drop(resolvedImplicitOffset))
-      else
-        parametersType
-
-      return PyCallableTypeImpl(
-        callableType.getTypeParameters(context),
-        newParametersType,
-        callableType.getCallType(context, callExpression, callExpression.arguments.map { PyCallableArgument(it) }),
-        clarifiedResolved,
-        resolvedModifier
-      )
-    }
-
-    return callableType
   }
 
   /**
@@ -1675,12 +1558,6 @@ private class PositionalArgumentsAnalysisResults(
   val allPositionalArguments: MutableList<PyCallableArgument?>,
   val componentsOfVariadicPositionalArguments: List<PyCallableArgument>,
   val variadicPositionalArguments: MutableList<PyCallableArgument>,
-)
-
-private class ClarifiedResolveResult(
-  val originalResolveResult: QualifiedRatedResolveResult,
-  val clarifiedResolved: PsiElement,
-  val wrappedModifier: PyAstFunction.Modifier?,
 )
 
 @ApiStatus.Internal

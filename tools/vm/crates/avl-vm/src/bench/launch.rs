@@ -1,8 +1,8 @@
 //! The IDE processes of a session: the Starter-shaped command line over a generation, and the supervision of one run.
 //!
 //! The command line is the one the IDE Starter gives a locally built distribution (`IdeFromCodeInstaller`):
-//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (`bin/*.vmoptions`,
-//! `-Djb.vmOptionsFile` and the `additionalJvmArguments` of `product-info.json`), the test options of the Starter, the
+//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (the vmoptions file that
+//! `product-info.json` names, `-Djb.vmOptionsFile` and the `additionalJvmArguments`), the test options of the Starter, the
 //! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{Context, bail};
+use anyhow::{Context, anyhow, bail};
 use avl_base::{Exit, Refusal};
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
@@ -110,6 +110,13 @@ pub(crate) fn sandbox_options(sandbox: &Sandbox) -> Vec<String> {
     ]
 }
 
+/// The options that make the JVM write its log, the class-load log among it, from a thread of its own. A flush of each
+/// class line under the global log lock costs a start about half a second of CPU over all its threads, the EDT too. The
+/// default mode, `drop`, loses a line when the buffer is full. In the `stall` mode a full buffer makes the logging
+/// thread wait instead, so the class count stays exact. The buffer holds the class log of a whole start, so the wait
+/// stays rare.
+pub(crate) const ASYNC_LOG_OPTIONS: [&str; 2] = ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"];
+
 /// The option that makes the JVM write [`CLASS_LOAD_LOG`] with the uptime of each class. The `-Xlog` grammar ends the
 /// file name at a `:`, so a run directory with a `:` in its path is an error that names it. A space is no problem,
 /// because the argfile quotes it.
@@ -125,10 +132,10 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
     Ok(format!("-Xlog:class+load:file={path}:uptime,tags"))
 }
 
-/// The options of a measured start, in order: the sandbox, the files of the run, the class-load log, the properties,
-/// the arm and the profiler. A run directory that the class-load log cannot name is an error, see
-/// [`class_load_option`]. The profiler starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run
-/// stops it at the gate.
+/// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm and the profiler. A run directory that the
+/// class-load log cannot name is an error, see [`class_load_option`]. The profiler starts with the JVM and writes
+/// [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
 pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
     options.extend([
@@ -137,8 +144,9 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
         property("idea.diagnostic.opentelemetry.file", &run_dir.join(TRACE_FILE)),
         property("idea.log.class.list.file", &run_dir.join("class-report.txt")),
         property("plugin.classloader.debug", &run_dir.join("plugin-classes.txt")),
-        class_load_option(run_dir)?,
     ]);
+    options.extend(ASYNC_LOG_OPTIONS.map(str::to_owned));
+    options.push(class_load_option(run_dir)?);
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm {
         Arm::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
@@ -223,6 +231,53 @@ const fn home_macro() -> &'static str {
     }
 }
 
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `dist`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(dist: &Path) -> PathBuf {
+    let production = dist.join(PRODUCT_INFO_FILE);
+    if production.is_file() {
+        return production;
+    }
+    let dev_build = dist.join("bin").join("product-info.json");
+    if dev_build.is_file() { dev_build } else { production }
+}
+
+/// The main vmoptions file of the distribution at `dist`, as the launcher finds it.
+///
+/// It is `vm_options_file_path`, the `vmOptionsFilePath` of the first launch, relative to the directory of
+/// [`PRODUCT_INFO_FILE`]. The `bin/product-info.json` of an older dev distribution holds the text of the production place,
+/// so the same base applies to it. The path resolves by its text, and a path that leaves `dist` fails.
+fn vm_options_file(dist: &Path, vm_options_file_path: &str) -> anyhow::Result<PathBuf> {
+    let leaves = || anyhow!("the vmOptionsFilePath '{vm_options_file_path}' is not a file of {}", dist.display());
+    if vm_options_file_path.starts_with('/') || vm_options_file_path.contains('\\') {
+        return Err(leaves());
+    }
+    let mut parts: Vec<&str> = PRODUCT_INFO_FILE.split('/').collect();
+    parts.pop();
+    for part in vm_options_file_path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop().ok_or_else(leaves)?;
+            }
+            _ => parts.push(part),
+        }
+    }
+    if parts.is_empty() {
+        return Err(leaves());
+    }
+    Ok(parts.iter().fold(dist.to_path_buf(), |path, part| path.join(part)))
+}
+
 /// The JVM options of a distribution, as `readVmOptions` of the dev launch reads them, then the test options of the
 /// Starter and the platform prefix of the config.
 ///
@@ -231,24 +286,6 @@ const fn home_macro() -> &'static str {
 /// welcome events of the gate arrive as `validation.unmatched_rule`. The dev launcher of the BT version passed `true`
 /// too.
 pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -> anyhow::Result<Vec<String>> {
-    let bin = dist.join("bin");
-    let mut vm_options: Vec<PathBuf> = std::fs::read_dir(&bin)
-        .with_context(|| format!("cannot list {}", bin.display()))?
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().is_some_and(|extension| extension == "vmoptions"))
-        .collect();
-    let Some(vm_options_file) = vm_options.pop().filter(|_| vm_options.is_empty()) else {
-        bail!("{} has no single *.vmoptions file", bin.display());
-    };
-    let mut options: Vec<String> = files::read_text(&vm_options_file)?
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(str::to_owned)
-        .collect();
-    options.push(property("jb.vmOptionsFile", &vm_options_file));
-
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct ProductInfo {
@@ -257,21 +294,32 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct LaunchData {
+        vm_options_file_path: String,
         #[serde(default)]
         additional_jvm_arguments: Vec<String>,
     }
-    let product_info_path = bin.join("product-info.json");
+    let product_info_path = product_info_file(dist);
     let product_info: ProductInfo = serde_json::from_str(&files::read_text(&product_info_path)?)
-        .with_context(|| format!("{} has no `launch` list", product_info_path.display()))?;
+        .with_context(|| format!("{} has no `launch` list with a vmOptionsFilePath", product_info_path.display()))?;
+    let Some(launch) = product_info.launch.first() else {
+        bail!("{} states no launch", product_info_path.display());
+    };
+
+    let vm_options_file = vm_options_file(dist, &launch.vm_options_file_path)?;
+    let mut options: Vec<String> = files::read_text(&vm_options_file)?
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(str::to_owned)
+        .collect();
+    options.push(property("jb.vmOptionsFile", &vm_options_file));
     let home = dist.display().to_string();
-    if let Some(launch) = product_info.launch.first() {
-        options.extend(
-            launch
-                .additional_jvm_arguments
-                .iter()
-                .map(|argument| argument.replace(home_macro(), &home)),
-        );
-    }
+    options.extend(
+        launch
+            .additional_jvm_arguments
+            .iter()
+            .map(|argument| argument.replace(home_macro(), &home)),
+    );
 
     let dist_name = dist.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
     options.extend([
@@ -281,7 +329,7 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
         format!("-Ddev.build.dir={dist_name}"),
         property("idea.dev.project.root", repo_root),
         property("idea.home.path", dist),
-        property("idea.properties.file", &bin.join("idea.properties")),
+        property("idea.properties.file", &dist.join("bin").join("idea.properties")),
     ]);
     if let Some(prefix) = &config.platform_prefix {
         options.push(format!("-Didea.platform.prefix={prefix}"));
@@ -411,10 +459,10 @@ impl Launcher {
                 format!("the generation {} cannot start: {error:#}", generation.root.display()),
             )
         };
-        let dist_options = dist_options(&generation.dist, &generation.config, repo_root).map_err(refuse)?;
+        let dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
-        let classpath = files::read_text(&generation.dist.join("core-classpath.txt")).map_err(refuse)?;
-        let entry_options = entry_options(&generation.dist, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
+        let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
+        let entry_options = entry_options(&generation.home, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
         Ok(Self {
             runner,
             java: generation.java.clone(),

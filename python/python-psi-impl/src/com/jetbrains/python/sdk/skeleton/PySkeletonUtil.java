@@ -60,7 +60,8 @@ public final class PySkeletonUtil {
    */
   @RequiresBackgroundThread
   public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    return PythonInterpreterExtKt.sitePackagesDirectory(PythonInterpreterKt.pythonInterpreter(pythonSdk, false));
+    PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterResult(pythonSdk, false).getSuccessOrNull();
+    return interpreter == null ? null : PythonInterpreterExtKt.sitePackagesDirectory(interpreter);
   }
 
   /**
@@ -112,11 +113,12 @@ public final class PySkeletonUtil {
       originPath = originFile.getPath();
     }
 
-    final PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(pythonSdk, false);
-    final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(pythonInterpreter);
+    final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(pythonSdk);
     if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
       return true;
     }
+    final PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreterResult(pythonSdk, false).getSuccessOrNull();
+    if (pythonInterpreter == null) return PyTypeShed.INSTANCE.isInStandardLibrary(vFile);
     final VirtualFile venvLibDir = PythonInterpreterExtKt.venvLibDirectory(pythonInterpreter);
     if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
       return true;

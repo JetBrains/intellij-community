@@ -1,0 +1,511 @@
+/* Canvas styling for what utilities can't own: React Flow internals (edges, minimap, controls,
+   node wrappers), walkthrough/selection STATE rules (classes React Flow applies to its wrapper
+   DOM — these deliberately override the node components' utility classes: unlayered CSS beats
+   the utilities layer), SVG presentation (var() doesn't resolve in SVG attributes), and the
+   layer and tag class→variable color maps (--layer-color, --tag-color; the chip chrome itself is
+   TagBadge and LayerBadge in src/chips.tsx). Node/panel base chrome lives as utilities in
+   src/graph/nodes.tsx, MapCanvas.tsx, FlowDiagram.tsx, and panels/DetailPanel.tsx. */
+
+.react-flow {
+  background: var(--background);
+}
+
+.react-flow__attribution {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.arch-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* selection state — React Flow toggles `selected`; overrides the nodes' utility borders */
+.arch-node.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* dynamic layer accent consumed by node skins, minimap fills, and layer chips */
+.layer-indigo { --layer-color: var(--layer-indigo); }
+.layer-sky { --layer-color: var(--layer-sky); }
+.layer-blue { --layer-color: var(--layer-blue); }
+.layer-green { --layer-color: var(--layer-green); }
+.layer-amber { --layer-color: var(--layer-amber); }
+.layer-red { --layer-color: var(--layer-red); }
+.layer-neutral { --layer-color: var(--layer-neutral); }
+
+/* concept tag pills (TagBadge in chips.tsx): the class→variable map only; a pill without a tag reads muted */
+.tag { --tag-color: var(--muted-foreground); }
+.tag-target { --tag-color: var(--tag-target); }
+.tag-durable { --tag-color: var(--tag-durable); }
+.tag-live { --tag-color: var(--tag-live); }
+.tag-ui { --tag-color: var(--tag-ui); }
+.tag-terminalBacked { --tag-color: var(--tag-terminalBacked); }
+.tag-structured { --tag-color: var(--tag-structured); }
+
+/* the detail panel embeds markdown at node size (must beat .markdown-body's font-size: inherit) */
+.detail-panel .markdown-body {
+  font-size: var(--text-node);
+}
+
+/* ---- edges ---------------------------------------------------------------------------------- */
+
+.react-flow__edge-path {
+  stroke: var(--edge-stroke);
+}
+
+/* map/mini/embedded arrowhead (src/graph/edges.tsx) — drawn inside the edge element so it
+   follows the edge's color state, unlike React Flow's shared marker defs */
+.arch-edge-arrow {
+  fill: var(--edge-stroke);
+}
+
+.react-flow__edge.sel-active .arch-edge-arrow {
+  fill: var(--primary);
+}
+
+.react-flow__edge.edge-realizes .react-flow__edge-path {
+  stroke-dasharray: 6 4;
+  stroke-opacity: 0.6;
+}
+
+.react-flow__edge.edge-dep .react-flow__edge-path {
+  stroke-opacity: 0.75;
+}
+
+.react-flow__edge.edge-dep .arch-edge-arrow {
+  opacity: 0.75;
+}
+
+.react-flow__edge.edge-ep .react-flow__edge-path {
+  stroke: color-mix(in srgb, var(--primary) 60%, transparent);
+  stroke-dasharray: 2 4;
+}
+
+/* a planned part of a hand-laid diagram (src/graph/HandLaidDiagram.tsx, ADR 0204) */
+.react-flow__edge.edge-target .react-flow__edge-path {
+  stroke-dasharray: 6 4;
+}
+
+/* a receded part of a hand-laid diagram stays readable as context (the map dims to 0.18) */
+.hand-laid-canvas .react-flow__node.sel-dimmed,
+.hand-laid-canvas .react-flow__edge.sel-dimmed,
+.hand-laid-canvas .arch-edge-label.sel-dimmed {
+  opacity: 0.3;
+}
+
+/* the HTML label of a hand-laid edge (src/graph/edges.tsx) follows the step state of its edge */
+.arch-edge-label {
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.arch-edge-label.step-trail {
+  opacity: 0.7;
+}
+
+.arch-edge-label.sel-active {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* --- map selection highlight ---------------------------------------------------------------- */
+
+.react-flow__node,
+.react-flow__edge {
+  transition: opacity 0.25s ease;
+}
+
+.react-flow__node.sel-dimmed,
+.react-flow__edge.sel-dimmed {
+  opacity: 0.18;
+}
+
+.react-flow__edge.sel-active .react-flow__edge-path {
+  stroke: var(--primary);
+  stroke-width: 2.5;
+}
+
+.react-flow__edge.sel-active .react-flow__edge-text {
+  font-weight: 700;
+}
+
+/* --- flow diagram (C4-dynamic canvas on React Flow, src/graph/FlowDiagram.tsx) ---------------- */
+
+.flow-diagram .react-flow__node {
+  cursor: default;
+}
+
+.flow-diagram .react-flow__node.flow-node-actionable {
+  cursor: pointer;
+}
+
+/* clickable-canvas affordance; the active glow and selection ring stay stronger */
+.flow-diagram .arch-node {
+  box-shadow: var(--shadow-1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-diagram .react-flow__node.flow-node-actionable:not(.step-active):hover .arch-node:not(.selected) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--input));
+  box-shadow: 0 2px 8px var(--shadow-tint);
+}
+
+.flow-diagram .decision-shape polygon {
+  transition: stroke 0.2s ease;
+}
+
+.flow-diagram .react-flow__node.flow-node-actionable:not(.step-active):hover .decision-shape polygon {
+  stroke: var(--primary);
+}
+
+.flow-edge .flow-edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+}
+
+.flow-edge .flow-edge-path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.flow-edge .flow-edge-arrow {
+  fill: var(--primary);
+}
+
+/* walkthrough phases: past steps stay lit; future steps stay readable; excluded branches are dashed */
+.react-flow__node.step-dimmed .arch-node {
+  border-color: color-mix(in srgb, var(--input) 72%, var(--primary));
+  background: color-mix(in srgb, var(--primary) 4%, var(--muted));
+}
+
+.flow-edge.step-dimmed,
+.step-edge-chip.step-dimmed {
+  opacity: 0.62;
+}
+
+.react-flow__node.step-trail,
+.flow-edge.step-trail,
+.step-edge-chip.step-trail {
+  opacity: 0.7;
+}
+
+.flow-edge.step-active .flow-edge-path {
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  animation: flow-edge-march 0.6s linear infinite;
+}
+
+@keyframes flow-edge-march {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+.react-flow__node.step-active .arch-node {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+/* the hop to/from an off-page connector crosses a flow boundary — dashed */
+.flow-edge.edge-continues .flow-edge-path {
+  stroke-dasharray: 6 4;
+}
+
+/* alternate branches are peer paths (different entry points): full contrast, neutral color */
+.flow-edge.step-alt .flow-edge-path {
+  stroke: var(--edge-stroke);
+}
+
+.flow-edge.step-alt .flow-edge-arrow {
+  fill: var(--edge-stroke);
+}
+
+/* A branch the scenario excludes still has to be there — the bird's-eye view is the point — but it
+   must stop competing with the path in play. Node boxes are baked into the build-time layout and
+   applicability is a runtime answer, so a ghost card cannot shrink; it gives up its ink instead:
+   flat, unaccented, and down to its title. */
+.react-flow__node.step-unavailable .arch-node {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--edge-stroke) 78%, var(--muted));
+  background: color-mix(in srgb, var(--edge-stroke) 5%, var(--muted));
+  box-shadow: none;
+  opacity: 0.72;
+}
+
+.react-flow__node.step-unavailable .flow-step-node {
+  border-left-color: var(--edge-stroke);
+  border-left-width: 1px;
+}
+
+.react-flow__node.step-unavailable .flow-step-node em {
+  color: var(--muted-foreground);
+}
+
+.react-flow__node.step-unavailable .flow-step-owner {
+  display: none;
+}
+
+/* peer branches keep full contrast but no accent — they are alternatives, not the current path */
+.react-flow__node.step-alt .flow-step-node {
+  border-left-color: color-mix(in srgb, var(--primary) 35%, var(--input));
+}
+
+.flow-edge.step-unavailable .flow-edge-path {
+  stroke: var(--edge-stroke);
+  stroke-dasharray: 6 5;
+  stroke-opacity: 0.58;
+}
+
+.flow-edge.step-unavailable .flow-edge-arrow {
+  fill: var(--edge-stroke);
+  opacity: 0.58;
+}
+
+/* C4-dynamic interaction chip states (base chrome is utilities in FlowDiagram.tsx) */
+.step-edge-chip.step-alt {
+  padding-left: 9px;
+  border-color: var(--input);
+}
+
+.step-edge-chip.step-unavailable {
+  padding-left: 9px;
+  border-style: dashed;
+  border-color: var(--input);
+  background: color-mix(in srgb, var(--edge-stroke) 8%, var(--muted));
+}
+
+.step-edge-chip.step-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
+  font-weight: 600;
+}
+
+/* compact yes/no chips on guard edges; polarity scans at a glance — yes tinted, no neutral */
+.step-edge-chip.chip-small {
+  padding: 1px 8px;
+  font-size: var(--text-3xs);
+}
+
+.step-edge-chip.chip-yes {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--input));
+  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+}
+
+.step-edge-chip.chip-no {
+  border-color: var(--input);
+}
+
+/* diamond walkthrough phases (box-shadow cannot follow a diamond, so strokes carry them);
+   var() does not resolve in SVG presentation attributes, so the polygon is styled here */
+.decision-shape polygon {
+  fill: color-mix(in srgb, var(--primary) 7%, var(--muted));
+  stroke: color-mix(in srgb, var(--primary) 55%, var(--input));
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.react-flow__node.step-dimmed .decision-shape polygon {
+  fill: color-mix(in srgb, var(--primary) 4%, var(--muted));
+  stroke: color-mix(in srgb, var(--input) 72%, var(--primary));
+}
+
+.react-flow__node.step-active .decision-shape polygon {
+  stroke: var(--primary);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 45%, transparent));
+}
+
+.react-flow__node.step-unavailable .decision-shape polygon {
+  fill: color-mix(in srgb, var(--edge-stroke) 7%, var(--muted));
+  stroke: color-mix(in srgb, var(--edge-stroke) 78%, var(--muted));
+  stroke-dasharray: 6 5;
+}
+
+/* the `no` path around an optional step: ghosted while the guard holds */
+.flow-edge.step-bypass .flow-edge-path {
+  stroke: var(--edge-stroke);
+  stroke-dasharray: 4 5;
+  stroke-opacity: 0.5;
+}
+
+.flow-edge.step-bypass .flow-edge-arrow {
+  fill: var(--edge-stroke);
+  opacity: 0.5;
+}
+
+/* the developer's own moves carry a warm accent; everything else is the product responding */
+.flow-step-node.actor-user {
+  border-left-color: var(--layer-amber);
+}
+
+.flow-step-node .actor-glyph {
+  color: var(--layer-amber);
+}
+
+.react-flow__node.step-unavailable .flow-step-node.actor-user {
+  border-left-color: var(--edge-stroke);
+}
+
+/* --- the marks of a recorded run (FlowDiagram.tsx `runMarkOf`) -------------------------------- */
+
+/* A failed step carries a destructive ring. The ring stays inside the active glow, so a failed active card shows both. */
+.react-flow__node.run-failed .flow-step-node {
+  box-shadow: 0 0 0 2px var(--destructive), var(--shadow-1);
+}
+
+.react-flow__node.step-active.run-failed .flow-step-node {
+  box-shadow: 0 0 0 2px var(--destructive), 0 0 0 5px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+/* the run stopped inside this step */
+.react-flow__node.run-cut-off .flow-step-node {
+  outline: 2px dashed var(--warning);
+  outline-offset: 2px;
+}
+
+/* the run never reached this step: the look of a future step */
+.react-flow__node.run-pending .flow-step-node {
+  border-color: color-mix(in srgb, var(--input) 72%, var(--primary));
+  background: color-mix(in srgb, var(--primary) 4%, var(--muted));
+}
+
+.react-flow__node.run-pending .flow-step-still {
+  opacity: 0.72;
+}
+
+/* --- phase markers (canvas gutter) ------------------------------------------------------------ */
+
+.phase-mark {
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.phase-mark .phase-index {
+  border-color: var(--input);
+}
+
+.react-flow__node.phase-active .phase-mark {
+  color: var(--primary);
+}
+
+.react-flow__node.phase-active .phase-index {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--background);
+}
+
+/* --- legend ----------------------------------------------------------------------------------- */
+
+.flow-legend {
+  margin-bottom: 46px; /* clears the zoom controls in the same corner */
+}
+
+.flow-legend summary::marker,
+.flow-legend summary::-webkit-details-marker {
+  content: '';
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 0;
+  flex: none;
+  border-top: 2px solid var(--edge-stroke);
+}
+
+.legend-swatch.legend-spine {
+  border-top-color: var(--primary);
+}
+
+.legend-swatch.legend-unavailable {
+  border-top-style: dashed;
+  opacity: 0.58;
+}
+
+.legend-swatch.legend-continues {
+  border-top-style: dashed;
+}
+
+.legend-diamond {
+  width: 18px;
+  flex: none;
+  text-align: center;
+  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+
+.legend-actor {
+  width: 18px;
+  flex: none;
+  text-align: center;
+  color: var(--layer-amber);
+}
+
+/* var() does not resolve in SVG fill attributes, so minimap colors go through classes */
+.react-flow__minimap-node.mini-layer {
+  fill: color-mix(in srgb, var(--layer-color, var(--layer-neutral)) 70%, var(--muted));
+}
+
+.react-flow__minimap-node.mini-ext {
+  fill: var(--muted-foreground);
+}
+
+.react-flow__minimap-node.mini-decision {
+  fill: color-mix(in srgb, var(--primary) 35%, var(--muted));
+}
+
+.react-flow__minimap-node.mini-flow-step {
+  fill: color-mix(in srgb, var(--primary) 55%, var(--muted));
+}
+
+.react-flow__minimap-node.mini-run-failed {
+  fill: color-mix(in srgb, var(--destructive) 70%, var(--muted));
+}
+
+.react-flow__minimap-node.mini-group {
+  fill: var(--accent);
+}
+
+/* gutter markers are canvas chrome, not story nodes */
+.react-flow__minimap-node.mini-hidden {
+  fill: transparent;
+  stroke: none;
+}
+
+/* the minimap floats over the story's bottom-right corner: keep it small and see-through */
+.flow-diagram .flow-minimap {
+  width: 128px;
+  height: 96px;
+  opacity: 0.85;
+}
+
+.react-flow__edge-textbg {
+  fill: var(--background);
+}
+
+.react-flow__edge-text {
+  fill: var(--muted-foreground);
+  font-size: var(--text-2xs);
+}
+
+/* the minimap eats too much of a phone canvas (below Tailwind's md) */
+@media (width < 48rem) {
+  .react-flow__minimap {
+    display: none;
+  }
+}
+
+/* touch ergonomics: larger canvas controls and interaction chips */
+@media (pointer: coarse) {
+  .react-flow__controls button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .step-edge-chip {
+    padding-block: 4px;
+  }
+}

@@ -191,3 +191,44 @@ fn a_modal_session_shows_the_modal_spans_and_their_ends() {
     );
     assert!(!text.contains("welcome spans:"), "{text}");
 }
+
+/// A profile with stacks of the profiler's own symbol parsing names them in a note of its arm, and neither block of
+/// the profile holds them.
+#[test]
+fn the_digest_notes_the_samples_of_the_symbol_parsing_of_the_profiler() {
+    use crate::bench::arm::Arm;
+    use crate::bench::profile::ExcludedSamples;
+    use crate::bench::record::{self, LaunchFacts, RunId};
+    use crate::bench::session;
+    use crate::bench::summary::Summary;
+    let (_dir, session_dir) = fixture_session();
+    let mut info = session::read_info(&session_dir).expect("the session");
+    info.arms = vec![Arm::NonModal];
+    let run_dir = session_dir.join("non-modal-run-01");
+    std::fs::write(
+        run_dir.join("cpu-gate.collapsed"),
+        "[AWT-EventQueue-0 tid=1];a/A.run;Profiler::dlopen_hook(char const*, int);Symbols::parseLibraries 480\n\
+         [DefaultDispatcher-worker-1 tid=7];c/C.run;Profiler::dlopen_hook(char const*, int);CodeCache::sort 30\n\
+         [AWT-EventQueue-0 tid=1];a/A.run;b/B.paint 20\n",
+    )
+    .expect("a profile to the gate");
+    let id = RunId::parse("non-modal-run-01").expect("a run");
+    let run = record::collect(&run_dir, &id, LaunchFacts::default());
+    assert_eq!(
+        run.excluded_samples,
+        Some(ExcludedSamples {
+            samples: 510,
+            edt_samples: 480
+        })
+    );
+    let summary = Summary::build(&info, "<session>", &[run]);
+    let text = super::render(&summary);
+    assert!(
+        text.contains("\nnon-modal EDT, top Java frames by samples (20 EDT cpu samples, to the gate):\n  100.0%     20  b/B.paint\n"),
+        "{text}"
+    );
+    assert!(
+        text.contains("\nnon-modal note: profiler symbol parsing: 510 samples excluded, 480 of them on the EDT\n"),
+        "{text}"
+    );
+}

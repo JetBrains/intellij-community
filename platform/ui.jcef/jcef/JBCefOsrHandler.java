@@ -107,6 +107,10 @@ class JBCefOsrHandler implements CefRenderHandler {
       stopResizePusher();
     }
 
+    if (!isDirtyRectsEnabled()) {
+      dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
+    }
+
     myFpsMeter.onPaintStarted();
     JBHiDPIScaledImage image = popup ? myPopupImage : myImage;
 
@@ -201,6 +205,9 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   protected double getPixelDensity() { return myPixelDensity; }
+
+  // IJPL-258523 JCEF browser animations glitch until a repaint is triggered
+  protected static boolean isDirtyRectsEnabled() { return !OS.isLinux(); }
 
   protected double getScaleFactor() { return myScaleFactor; }
 

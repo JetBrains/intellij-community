@@ -35,6 +35,7 @@
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -820,10 +821,12 @@
 
     <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
             icon="AllIcons.Actions.Download">
+      <override-text place="GoToAction"/>
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
             icon="AllIcons.Actions.Download">
+      <override-text place="GoToAction"/>
     </action>
 
     <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
@@ -933,7 +936,7 @@
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>
 
-    <group id="Maven.Internal" internal="true" popup="true">
+    <group id="Maven.Internal" internal="true" popup="true" searchable="false">
       <action id="Maven.PrintStatistics" class="org.jetbrains.idea.maven.internal.MavenShowReadStatisticsAction"/>
       <action id="Maven.ResetReadStatistic" class="org.jetbrains.idea.maven.internal.MavenResetStatisticsAction"/>
       <action id="Maven.Killall" class="org.jetbrains.idea.maven.internal.MavenKillallConnectors"/>

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -24,7 +25,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 
 internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
@@ -40,8 +41,8 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
       else -> if (context.type != ExecutableType.LOCAL) return
     }
 
-    val pyRichSdk = sdk.pythonInterpreter()
-    if (pyRichSdk.isActivatable) {
+    val interpreter = sdk.pythonInterpreterResult().successOrNull
+    if (interpreter is NativePythonInterpreter && interpreter.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
       envs.putAll(runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap())
     }

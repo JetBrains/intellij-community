@@ -247,6 +247,7 @@
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
     <group id="GitHub.MainMenu" popup="true" icon="AllIcons.Vcs.Vendors.Github">
+      <override-text place="GoToAction"/>
       <reference ref="Github.Create.Pull.Request"/>
       <reference ref="Github.View.Pull.Request"/>
       <reference ref="Github.Sync.Fork"/>
@@ -279,8 +280,10 @@
       <reference ref="Github.PullRequest.Open.Link"/>
       <reference ref="Github.PullRequest.Copy.Link"/>
       <separator/>
-      <action id="Github.PullRequest.List.Reload"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
+      <action id="Github.PullRequest.List.Reload" icon="AllIcons.Actions.Refresh"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh">
+        <override-text place="GoToAction"/>
+      </action>
     </group>
     <group id="Github.PullRequest.Details.Popup">
       <reference ref="Github.PullRequest.Details.Reload"/>
@@ -317,7 +320,7 @@
         <override-text place="Diff.EditorPopupMenu" use-text-of-place="EditorPopupMenu"/>
       </action>
       <separator/>
-      <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" searchable="false" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>
       </group>
       <reference ref="ExpandAll"/>

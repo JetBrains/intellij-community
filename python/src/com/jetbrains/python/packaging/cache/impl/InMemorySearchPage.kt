@@ -19,7 +19,7 @@ class InMemorySearchPage(
   companion object {
     /**
      * Constructs a [PythonPackageSearchResult] with [InMemorySearchPage] pages.
-     * 
+     *
      * @param matches A list of items to paginate.
      * @param pageSize Maximum page size.
      * @return a constructed result, where each page is represented by a chunk of [matches] of size [pageSize].

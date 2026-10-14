@@ -200,8 +200,14 @@ private interface PatchedImageDataLoader : ImageDataLoader {
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
 }
 
-internal object EmptyImageDataLoader : ImageDataLoader {
-  override val path: String? get() = null
+/**
+ * A loader without image data. A detached icon uses it in place of the loader of its class loader.
+ * It keeps [path] and [expUIPath] of the former loader for diagnostics and holds no class loader.
+ */
+internal class EmptyImageDataLoader(
+  override val path: String? = null,
+  override val expUIPath: String? = null,
+) : ImageDataLoader {
   override val url: URL? get() = null
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): ImageWithShape<Image>? = null

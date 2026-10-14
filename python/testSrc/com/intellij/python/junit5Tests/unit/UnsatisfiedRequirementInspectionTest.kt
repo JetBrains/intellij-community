@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.test.env.junit5.pyUvVenvFixture
 import com.intellij.testFramework.ExtensionTestUtil
@@ -45,7 +45,7 @@ class UnsatisfiedRequirementInspectionTest {
   private val pyProject = project.pyProjectFixture(tempDir)
 
   @Suppress("unused")
-  private val venvFixture = project.pyInterpreterFixture().pyUvVenvFixture(
+  private val venvFixture = pyEnvironmentFixture().pyUvVenvFixture(
     pyProjectFixture = pyProject,
   )
 

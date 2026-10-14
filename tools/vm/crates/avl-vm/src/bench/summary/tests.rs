@@ -43,6 +43,7 @@ fn run(arm: Arm, kind: RunKind, index: u32, value: Option<f64>) -> RunRecord {
         classes_by_module: BTreeMap::new(),
         classes_by_plugin_at: BTreeMap::new(),
         profile_scope: None,
+        excluded_samples: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),

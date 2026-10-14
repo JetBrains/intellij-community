@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -11,6 +10,10 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.PythonSdkType
 import org.junit.jupiter.api.Test
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
 /**
  * A manager must not put itself into the Disposer tree.
@@ -29,10 +32,14 @@ import org.junit.jupiter.api.Test
 class PythonPackageManagerDisposerTest {
   private val projectFixture = projectFixture()
 
+  @TempDir
+  lateinit var tempDir: Path
+
   @Test
   fun `a fresh manager is absent from the Disposer tree`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
-    val interpreter = ProjectJdkImpl("PY-90829 test SDK", PythonSdkType.getInstance()).pythonInterpreterAsync()
+    val sdk = PythonMockSdk.create("PY-90829 test SDK", tempDir.toString(), PythonSdkType.getInstance(), LanguageLevel.getLatest())
+    val interpreter = sdk.pythonInterpreterResultAsync().orThrow()
 
     val manager = TestPythonPackageManager(project, interpreter)
 

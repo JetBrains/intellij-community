@@ -28,7 +28,7 @@ import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
@@ -210,7 +210,8 @@ internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotli
       .getNotificationsManager()
       .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
   }
-  return installed.map { it.pythonInterpreterAsync() }
+  // A Python just installed always names an interpreter, so a failure here is a bug.
+  return installed.mapCatching { it.pythonInterpreterResultAsync().orThrow() }
 }
 
 

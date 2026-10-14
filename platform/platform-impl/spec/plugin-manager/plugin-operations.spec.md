@@ -6,10 +6,13 @@ targets:
   - ../../src/com/intellij/ide/plugins/UnifiedPluginsPageSession.kt
   - ../../src/com/intellij/ide/plugins/newui/DefaultUiPluginManagerController.kt
   - ../../src/com/intellij/ide/plugins/newui/LegacyPluginUiHost.kt
+  - ../../src/com/intellij/ide/plugins/newui/ListPluginComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginDetailsPageComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginManagerCustomizer.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelEvents.kt
+  - ../../src/com/intellij/ide/plugins/newui/SelectionBasedPluginModelAction.java
+  - ../../src/com/intellij/ide/plugins/newui/UninstallAction.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginRowFactory.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedger.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginLocalSourceCoordinator.kt
@@ -22,6 +25,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/InstallPluginTerminalStateTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/LegacyPluginUiHostTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginManagerButtonUsageTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginModelEventPublisherTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt
@@ -257,6 +261,24 @@ Untested: No focused test covers every management edit and refresh path.
   )
 
 ## Operation Integration
+
+- The local page must report install and uninstall clicks to FUS and MP before the operation starts.
+- Each selected plugin must produce one click event, including when the operation is cancelled.
+- The event must identify a default button, dropdown item, or context menu item and use the frontend side.
+- A context install action must preserve the button listeners.
+- The local page must leave click reporting to the active product customizer when one exists.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginManagerButtonUsageTest.kt (
+    `row install button reports a click before a cancelled operation`;
+    `context install reports each selected plugin and preserves button listeners`;
+    `details install button reports a click before a cancelled operation`;
+    `uninstall dropdown reports a click before a cancelled operation`;
+    `standalone uninstall button reports a default click`;
+    `context uninstall reports each selected plugin`;
+    `keyboard install and uninstall report default clicks`;
+    `active customizer suppresses local button reporting`
+  )
+
+Untested: No focused test verifies clicks through the complete split frontend implementation.
 
 - Plugin identity must join operation events with all matching page occurrences.
 - Inventory refreshes must remain authoritative for the final installed state.

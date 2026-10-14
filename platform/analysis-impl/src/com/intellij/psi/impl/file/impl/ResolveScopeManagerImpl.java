@@ -35,7 +35,7 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.ApiStatus;
@@ -54,7 +54,12 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<FileWithContext, GlobalSearchScope> myDefaultResolveScopesCache;
+  /**
+   * Weak VirtualFile -> Strong CodeInsightContext -> Soft GlobalSearchScope
+   */
+  private final Map<VirtualFile, Map<CodeInsightContext, GlobalSearchScope>> myDefaultResolveScopesCache =
+    ConcurrentCollectionFactory.createConcurrentWeakMap();
+
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project) {
@@ -62,11 +67,6 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myProjectRootManager = ProjectRootManager.getInstance(project);
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
-
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
-      fileWithContext -> ReadAction.computeBlocking(() -> createScopeByFile(fileWithContext)),
-      () -> ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap()
-    );
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -150,7 +150,15 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    return myDefaultResolveScopesCache.get(new FileWithContext(vFile, context));
+    Map<CodeInsightContext, GlobalSearchScope> scopesByContext =
+      myDefaultResolveScopesCache.computeIfAbsent(vFile, __ -> CollectionFactory.createConcurrentSoftValueMap());
+    GlobalSearchScope cached = scopesByContext.get(context);
+    if (cached != null) {
+      return cached;
+    }
+    GlobalSearchScope scope = ReadAction.computeBlocking(() -> createScopeByFile(new FileWithContext(vFile, context)));
+    GlobalSearchScope previous = scopesByContext.putIfAbsent(context, scope);
+    return previous != null ? previous : scope;
   }
 
   private @NotNull GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {

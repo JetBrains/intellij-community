@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,14 +67,6 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   // This counter can go negative value if the engine stops the whole JVM, but resumed this particular thread
   private boolean myIsIgnoreModelSuspendCount = false;
-
-  public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
-    int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
-    if (res == 0) {
-      return th1.name().compareToIgnoreCase(th2.name());
-    }
-    return res;
-  };
 
   public ThreadReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ThreadReference threadReference) {
     super(virtualMachineProxy, threadReference);

@@ -4,11 +4,11 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.openapi.wm.WelcomeScreenLeftPanel;
@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     leftSidebarHolder.add(myLeftSidebar.getComponent(), BorderLayout.CENTER);
 
+    // the tabs come first: the EDT builds them while ActionManager may still be loading, and the quick access panel needs it
+    Activity tabsActivity = StartUpMeasurer.startActivity("welcome tabs creating");
+    loadTabs(welcomeTabFactories);
+    tabsActivity.end();
+
     if (addQuickAccessPanel) {
       Activity quickAccessPanelActivity = StartUpMeasurer.startActivity("welcome quick access panel creating");
       JComponent quickAccessPanel = createQuickAccessPanel(this);
@@ -105,10 +111,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       setBorder(JBUI.Borders.customLineTop(JBColor.border()));
       centralPanel.setBorder(JBUI.Borders.customLineLeft(JBColor.border()));
     }
-
-    Activity tabsActivity = StartUpMeasurer.startActivity("welcome tabs creating");
-    loadTabs(welcomeTabFactories);
-    tabsActivity.end();
   }
 
   @ApiStatus.Internal
@@ -214,15 +216,20 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       .toList();
 
     if (!actions.isEmpty()) {
-      DefaultActionGroup group = new DefaultActionGroup(actions);
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.WELCOME_SCREEN_QUICK_PANEL, group, true);
+      ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN_QUICK_PANEL, new DefaultActionGroup(actions), true);
       toolbar.setTargetComponent(result);
       toolbar.setMinimumButtonSize(new JBDimension(26, 26));
       JComponent toolbarComponent = toolbar.getComponent();
 
       toolbarComponent.setOpaque(false);
       toolbarComponent.setBorder(null);
-      result.add(toolbarComponent);
+      // a toolbar that is shown before ActionManager exists blocks the EDT until it is loaded, so it is added once ActionManager is ready
+      ActionManagerEx.withLazyActionManager(null, _ -> {
+        result.add(toolbarComponent, 0);
+        result.revalidate();
+        result.repaint();
+        return Unit.INSTANCE;
+      });
     }
 
     // Remove this together with createQuickAccessComponent method

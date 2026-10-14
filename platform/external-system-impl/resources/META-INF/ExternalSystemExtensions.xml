@@ -164,7 +164,7 @@
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImplBulkFileListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable"
               activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$ModuleListenerImpl"
               topic="com.intellij.openapi.project.ModuleListener"

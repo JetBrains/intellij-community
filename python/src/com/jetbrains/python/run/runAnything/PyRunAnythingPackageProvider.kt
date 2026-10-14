@@ -46,7 +46,10 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       initCaches(packageManager)
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
-        val searchResult = packageRepository.search(commandLine.toComplete)
+        val searchResult =
+          runBlockingCancellable {
+            packageRepository.search(commandLine.toComplete)
+          }
         return searchResult.firstPageOrEmpty().getOr { return emptySequence() }.asSequence()
       }
       return packageManager.listInstalledPackagesSnapshot().map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
@@ -58,9 +61,9 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       val packageName = last.substring(0, ind)
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
       initCaches(packageManager)
-      val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(pyRequirement(packageName)) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
+          val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(pyRequirement(packageName)) ?: return@withContext emptySequence()
           val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec.name, packageSpec.repository).getOrThrow()
           val versionPrefix = last.substring(ind + operator.length)
           packageInfo.availableVersions.distinct().asSequence().filter { it.startsWith(versionPrefix) }.map { packageName + operator + it }

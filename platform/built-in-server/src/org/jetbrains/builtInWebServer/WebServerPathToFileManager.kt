@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.SmartList
@@ -67,7 +67,7 @@ class WebServerPathToFileManager(private val project: Project) {
     })
 
   init {
-    ApplicationManager.getApplication().messageBus.connect (project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    ApplicationManager.getApplication().messageBus.connect (project).subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFileContentChangeEvent) {

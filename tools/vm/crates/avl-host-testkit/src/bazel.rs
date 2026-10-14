@@ -1,11 +1,11 @@
-//! The host Bazel a backend resolves its pinned tools through, without Bazel: the Tart of `tart.MODULE.bazel`, the
-//! Docker CLI and its `docker-buildx` plugin of `docker.MODULE.bazel`, and the `limactl` of `lima.MODULE.bazel`.
+//! The host Bazel a backend resolves its pinned tools through, without Bazel: the Tart of `tart.MODULE.bazel`, and the
+//! Docker CLI and its `docker-buildx` plugin of `docker.MODULE.bazel`.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use avl_base::config::{TART_LABEL, docker_buildx_label, docker_cli_label, label_target, limactl_label};
+use avl_base::config::{TART_LABEL, docker_buildx_label, docker_cli_label, label_target};
 use avl_base::sync::lock;
 use avl_base::{GuestArch, Refusal};
 use avl_host_sys::Ctx;
@@ -60,14 +60,6 @@ impl PinnedBazel {
         let label = docker_buildx_label(arch);
         let relative = format!("external/community++http_file+{}/file/docker-buildx", label_target(&label));
         self.pin(&label, &relative, plugin)
-    }
-
-    /// Resolves the pinned `limactl` of a host of `arch` to the executable at `limactl`.
-    #[must_use]
-    pub fn with_limactl(self, arch: GuestArch, limactl: &Path) -> Self {
-        let label = limactl_label(arch);
-        let relative = format!("external/community++http_archive+{}/bin/limactl", label_target(&label));
-        self.pin(&label, &relative, limactl)
     }
 
     fn pin(mut self, label: &str, relative: &str, executable: &Path) -> Self {

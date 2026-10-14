@@ -53,7 +53,39 @@ internal class TrustedProjectStartupDialogTest {
     }
   }
 
-  private fun createStartupDialog(): TrustedProjectStartupDialog {
+  @Test
+  @SystemProperty(TrustedProjectStartupDialog.TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY, "true")
+  fun `trust project startup dialog hides safe mode when it is not offered`() = runBlocking(Dispatchers.EDT) {
+    val dialog = createStartupDialog(isSafeModeOffered = false)
+    try {
+      val buttonTexts = getButtonTexts(dialog)
+
+      Assertions.assertTrue(buttonTexts.contains(TRUST_BUTTON_TEXT))
+      Assertions.assertFalse(buttonTexts.contains(DISTRUST_BUTTON_TEXT))
+      Assertions.assertTrue(buttonTexts.contains(CANCEL_BUTTON_TEXT))
+    }
+    finally {
+      dialog.disposeIfNeeded()
+    }
+  }
+
+  @Test
+  @SystemProperty(TrustedProjectStartupDialog.TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY, "false")
+  fun `trust project startup dialog keeps safe mode when it is the only way to decline`() = runBlocking(Dispatchers.EDT) {
+    val dialog = createStartupDialog(isSafeModeOffered = false)
+    try {
+      val buttonTexts = getButtonTexts(dialog)
+
+      Assertions.assertTrue(buttonTexts.contains(TRUST_BUTTON_TEXT))
+      Assertions.assertTrue(buttonTexts.contains(DISTRUST_BUTTON_TEXT))
+      Assertions.assertFalse(buttonTexts.contains(CANCEL_BUTTON_TEXT))
+    }
+    finally {
+      dialog.disposeIfNeeded()
+    }
+  }
+
+  private fun createStartupDialog(isSafeModeOffered: Boolean = true): TrustedProjectStartupDialog {
     return TrustedProjectStartupDialog.createDialogInTests(
       project = null,
       projectPath = testRoot.resolve("project"),
@@ -62,6 +94,7 @@ internal class TrustedProjectStartupDialogTest {
       trustButtonText = TRUST_BUTTON_TEXT,
       distrustButtonText = DISTRUST_BUTTON_TEXT,
       cancelButtonText = CANCEL_BUTTON_TEXT,
+      isSafeModeOffered = isSafeModeOffered,
     )
   }
 

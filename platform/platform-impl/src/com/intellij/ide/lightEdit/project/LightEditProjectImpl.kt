@@ -7,7 +7,6 @@ import com.intellij.ide.lightEdit.LightEditUtil.PROJECT_NAME
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
@@ -17,7 +16,6 @@ import com.intellij.openapi.project.impl.schedulePreloadServices
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.serviceContainer.getComponentManagerImpl
 import kotlinx.coroutines.launch
 import java.nio.file.Path
@@ -37,7 +35,6 @@ internal class LightEditProjectImpl private constructor(identityFle: Path) :
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
       ProjectManagerImpl.initEssentialProjectPreInit(project)
-      ApplicationManager.getApplication().serviceAsync<ProjectEntitiesStorage>().createEntity(project)
       schedulePreloadServices(project)
       launch {
         project.createComponentsNonBlocking()

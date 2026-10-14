@@ -19,6 +19,17 @@
 //! caller cannot learn a token's length by timing a refusal. Every command that acts on a leased worker takes
 //! `--lease-file` and goes through [`receipt_for_path`], which is why losing the receipt is not "the lease is
 //! unrecoverable" but "recovery needs the holder to say who it was".
+//!
+//! # Three shapes of a command on a leased worker
+//!
+//! Each shape re-reads the lease under the lifecycle lock of the worker. They differ in how long the lock is held:
+//!
+//! - [`with_lease_operation`] holds the lock for the whole action, and refuses while a run of another live process
+//!   is in flight. `lease release`, `exec`, `peekaboo` and the `daemon` verbs that change the daemon take it.
+//! - [`with_lease_read`] drops the lock before the action, so the action answers during a run. `lease show`,
+//!   `daemon status`, `daemon log`, `ls`, `pull` and `vnc` take it.
+//! - [`with_run_marker`] holds the lock only at the two ends of a run. The run marker on the worker names the run
+//!   for the length of the action.
 
 use std::io::Write;
 use std::path::Path;
@@ -28,11 +39,12 @@ use std::time::Duration;
 use avl_base::fs::{PublishError, private_temporary, publish};
 use avl_base::{Backend, Config, Exit, GuestOs, OrRefuse, Outcome, Refusal, Scope};
 use avl_host_sys::Ctx;
-use avl_host_sys::guest::{Guest, ParkedDaemonProbe};
+use avl_host_sys::guest::{Guest, ParkedDaemonProbe, ensure_host_paths};
 use regex::Regex;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::worker::run_marker::{RunMarker, RunMarkerState, read_run_marker, remove_run_marker};
 use crate::worker::worker::{Lease, Manager, read_lease};
 use avl_base::RefusalExt;
 
@@ -204,12 +216,29 @@ pub(crate) fn try_atomic_lease(settings: &Config, worker: &str, lease: &Lease) -
     }
 }
 
-/// Runs `action` holding the worker's lifecycle lock, having re-read the lease under it.
+/// The lease of `expected.worker` when it is still `expected`, or the refusal `lease_changed`. The caller holds the
+/// lifecycle lock of the worker.
 ///
 /// The re-read is the point, not the lock. A receipt was validated against the live lease *before* the lock was
 /// taken, so between those two moments the lease could have been released and the worker handed to somebody else -
 /// and the operation would then run against another holder's worker with a receipt that looked valid when it was
 /// checked. `lease_changed` is that window closing.
+fn reread_lease(settings: &Config, expected: &Lease) -> Result<Lease, Refusal> {
+    read_lease(&settings.lease_path(&expected.worker))?
+        .filter(|current| current.same_lease(expected))
+        .ok_or_else(|| {
+            Refusal::new(
+                "lease_changed",
+                Exit::NO_PERM,
+                format!("lease for {} changed during the operation", expected.worker),
+            )
+        })
+}
+
+/// Runs `action` holding the worker's lifecycle lock, having re-read the lease under it ([`reread_lease`]).
+///
+/// A run of another live process refuses the operation as `lease_busy` ([`Manager::require_no_run`]). That run does
+/// not hold the lock, and its run marker is what keeps an operation from changing the worker under it.
 pub(crate) async fn with_lease_operation<T>(
     ctx: &Ctx,
     manager: &Manager,
@@ -220,18 +249,133 @@ pub(crate) async fn with_lease_operation<T>(
     let settings = manager.settings();
     manager
         .with_lifecycle_lock(ctx, &expected.worker, operation, async {
-            let current = read_lease(&settings.lease_path(&expected.worker))?
-                .filter(|current| current.same_lease(expected))
-                .ok_or_else(|| {
-                    Refusal::new(
-                        "lease_changed",
-                        Exit::NO_PERM,
-                        format!("lease for {} changed during the operation", expected.worker),
-                    )
-                })?;
+            let current = reread_lease(settings, expected)?;
+            manager.require_no_run(ctx, &expected.worker, operation).await?;
             action(current).await
         })
         .await
+}
+
+/// Runs `action` without the worker's lifecycle lock, once the lease was re-read under it ([`reread_lease`]).
+///
+/// For a command that reads the worker, so it answers while a run is in flight. Such an action ignores the run marker,
+/// and it changes nothing of the worker's lifecycle. A read that may start the worker first passes
+/// [`require_ready_for_read`].
+pub(crate) async fn with_lease_read<T>(
+    ctx: &Ctx,
+    manager: &Manager,
+    expected: &Lease,
+    operation: &str,
+    action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
+) -> Result<T, Refusal> {
+    let settings = manager.settings();
+    let current = manager
+        .with_lifecycle_lock(ctx, &expected.worker, operation, async { reread_lease(settings, expected) })
+        .await?;
+    action(current).await
+}
+
+/// Brings the worker of `lease` into the state a read needs, as [`Manager::require_ready`] does, for an action of
+/// [`with_lease_read`].
+///
+/// The gate can start or restart the worker, so it runs under the lifecycle lock with the lease re-read. A run of
+/// another live process keeps its worker ready, so the gate only resolves the host paths while that run is in flight.
+/// Then the read changes nothing under the run.
+pub(crate) async fn require_ready_for_read(ctx: &Ctx, manager: &Manager, lease: &Lease, operation: &str) -> Result<(), Refusal> {
+    let settings = manager.settings();
+    manager
+        .with_lifecycle_lock(ctx, &lease.worker, operation, async {
+            let current = reread_lease(settings, lease)?;
+            if let RunMarkerState::Live(_) = manager.judge_run_marker(ctx, &current.worker).await? {
+                return ensure_host_paths(ctx, manager.runner(), settings).await;
+            }
+            manager.require_ready(ctx, &current).await
+        })
+        .await
+}
+
+/// Runs `action` as the run `run_id` under its run marker, with the lease re-read ([`reread_lease`]). The marker
+/// names the run on the worker for the length of the action, and the lifecycle lock is held only at the two ends.
+///
+/// The start takes the lock, refuses a run of another live process ([`Manager::require_no_run`]) and writes the
+/// marker. A second marker of this process on the worker is an internal error. A nested run would remove the marker
+/// of the outer run at its end. The end takes the lock queued for [`ACQUIRE_LOCK_TIMEOUT`], because only short
+/// holders can be in the way ([`Manager::run_marker_lock_wait`]). It removes the marker when the marker is still this
+/// run's.
+///
+/// The end never changes the answer of the action. A marker that the end cannot remove goes stale with this process,
+/// and a note says so. An interrupt keeps the marker, as it keeps the lease.
+pub(crate) async fn with_run_marker<T>(
+    ctx: &Ctx,
+    manager: &Manager,
+    expected: &Lease,
+    run_id: &str,
+    operation: &str,
+    action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
+) -> Result<T, Refusal> {
+    let settings = manager.settings();
+    let worker = expected.worker.as_str();
+    let (current, marker) = manager
+        .with_lifecycle_lock(ctx, worker, operation, async {
+            let current = reread_lease(settings, expected)?;
+            manager.require_no_run(ctx, worker, operation).await?;
+            // The check leaves no marker, or a marker of this process.
+            if read_run_marker(settings, worker)?.is_some() {
+                return Err(Refusal::internal(format!("a run of this process is already in flight on {worker}")));
+            }
+            let marker = manager.write_run_marker(ctx, &current, run_id, operation).await?;
+            Ok((current, marker))
+        })
+        .await?;
+    let answer = action(current).await;
+    end_run_marker(ctx, manager, &marker).await;
+    answer
+}
+
+/// The end of the run of `marker`: removes the marker under the lifecycle lock, or notes why it stays.
+async fn end_run_marker(ctx: &Ctx, manager: &Manager, marker: &RunMarker) {
+    let worker = marker.worker.as_str();
+    let stays = |why: &str| {
+        manager.reporter().note(
+            format!(
+                "the run marker of {} stays on {worker}: {why}; it goes stale with this process",
+                marker.run_id
+            ),
+            Some(&Scope::worker(worker)),
+        );
+    };
+    // The iteration of an interrupted run can still be in flight in the guest.
+    if ctx.is_cancelled() {
+        stays("the run was interrupted");
+        return;
+    }
+    let held = manager
+        .locks()
+        .acquire_queued(
+            ctx,
+            &manager.lifecycle_lock_path(worker),
+            &marker.operation,
+            manager.run_marker_lock_wait(),
+            "lease_busy",
+            "another lifecycle operation held the lock for the whole wait",
+        )
+        .await;
+    let _held = match held {
+        Ok(held) => held,
+        Err(refusal) => return stays(&refusal.message),
+    };
+    let removed = match read_run_marker(manager.settings(), worker) {
+        Ok(Some(found)) if found.run_id == marker.run_id && found.process == marker.process => {
+            remove_run_marker(manager.settings(), worker)
+        }
+        // A release of this run's lease removed the marker already.
+        Ok(None) => Ok(()),
+        Ok(Some(found)) => return stays(&format!("the marker names the run {} now", found.run_id)),
+        Err(refusal) => Err(refusal),
+    };
+    if let Err(refusal) = removed {
+        stays(&refusal.message);
+    }
 }
 
 // --- the commands --------------------------------------------------------------------------------------------
@@ -380,10 +524,14 @@ struct LeaseShowWorker {
     holder: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     acquired_at: Option<String>,
+    /// The id of the run in flight on the worker of the caller's own lease.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    run: Option<String>,
 }
 
-/// Renders the pool, naming the holder only of the lease the caller proved it owns.
-pub(crate) fn lease_show_outcome(settings: &Config, authorized: Option<&Lease>) -> Result<Outcome, Refusal> {
+/// Renders the pool, naming the holder only of the lease the caller proved it owns. `run` is the id of the run in
+/// flight on the worker of that lease.
+pub(crate) fn lease_show_outcome(settings: &Config, authorized: Option<&Lease>, run: Option<&str>) -> Result<Outcome, Refusal> {
     let mut workers = Vec::with_capacity(settings.workers.len());
     let mut rendered = Vec::with_capacity(settings.workers.len());
     for worker in &settings.workers {
@@ -394,17 +542,23 @@ pub(crate) fn lease_show_outcome(settings: &Config, authorized: Option<&Lease>) 
                 state: "free",
                 holder: None,
                 acquired_at: None,
+                run: None,
             });
             continue;
         };
         let ours = authorized.is_some_and(|authorized| authorized.same_lease(&lease));
         if ours {
-            rendered.push(format!("{worker}: leased holder={} acquired={}", lease.holder, lease.acquired_at));
+            let mut line = format!("{worker}: leased holder={} acquired={}", lease.holder, lease.acquired_at);
+            if let Some(run) = run {
+                line.push_str(&format!(" run={run}"));
+            }
+            rendered.push(line);
             workers.push(LeaseShowWorker {
                 worker: worker.clone(),
                 state: "leased",
                 holder: Some(lease.holder),
                 acquired_at: Some(lease.acquired_at),
+                run: run.map(str::to_owned),
             });
         } else {
             rendered.push(format!("{worker}: leased"));
@@ -413,6 +567,7 @@ pub(crate) fn lease_show_outcome(settings: &Config, authorized: Option<&Lease>) 
                 state: "leased",
                 holder: None,
                 acquired_at: None,
+                run: None,
             });
         }
     }
@@ -425,19 +580,29 @@ pub(crate) fn lease_show_outcome(settings: &Config, authorized: Option<&Lease>) 
 /// `lease show`: the pool's occupancy, with the holder of the caller's own lease.
 ///
 /// A receipt is optional here and only here, because the free/leased shape is not private - what it buys is the
-/// holder and the acquisition time of the one lease the caller can prove is its own.
+/// holder and the acquisition time of the one lease the caller can prove is its own, and the run in flight on it.
 pub(crate) async fn command_lease_show(ctx: &Ctx, manager: &Manager, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
     manager.prepare_runtime_dirs()?;
     let settings = manager.settings();
     // No `--lease-file` is no receipt: the pool is shown without holders.
     let Some(lease_file) = lease_file else {
-        return lease_show_outcome(settings, None);
+        return lease_show_outcome(settings, None, None);
     };
     let (_, receipt) = receipt_for_path(settings, lease_file)?;
-    with_lease_operation(ctx, manager, &receipt, "lease-show", async |current| {
-        lease_show_outcome(settings, Some(&current))
+    with_lease_read(ctx, manager, &receipt, "lease-show", async |current| {
+        let run = run_of_lease(ctx, manager, &current).await?;
+        lease_show_outcome(settings, Some(&current), run.as_deref())
     })
     .await
+}
+
+/// The id of the run in flight on the worker of `lease`: the run of a live marker written for that lease. A stale
+/// marker names no run.
+async fn run_of_lease(ctx: &Ctx, manager: &Manager, lease: &Lease) -> Result<Option<String>, Refusal> {
+    Ok(match manager.judge_run_marker(ctx, &lease.worker).await? {
+        RunMarkerState::Live(marker) | RunMarkerState::Ours(marker) if marker.names_lease(lease) => Some(marker.run_id),
+        RunMarkerState::None | RunMarkerState::Live(_) | RunMarkerState::Ours(_) | RunMarkerState::Stale(_) => None,
+    })
 }
 
 /// One release, from the handle that authorizes it: the gate every caller goes through, whether it arrived as
@@ -509,9 +674,9 @@ async fn release_one_lease(ctx: &Ctx, manager: &Manager, lease: &Lease, probe: &
     // The contract: a release is refused by an *executing* run, and a warm daemon of this controller's own is not
     // one. The daemon takes the supervisor's run slot with `supervisor start` and keeps it for its whole life, so a
     // check on the slot alone could never free a worker with a warm daemon on it - the opposite of the documented
-    // design, where a warm daemon survives a release. The lifecycle lock already excludes every iteration this host
-    // can start; the slot's remaining job is a controller that crashed and left a run behind, so the probe answers
-    // "executing" for everything it cannot prove idle.
+    // design, where a warm daemon survives a release. The run marker excludes every run of a live process. The
+    // slot's remaining job is a controller that crashed and left a run behind. So the probe answers "executing" for
+    // everything it cannot prove idle.
     guest.reject_executing_run(probe, "release the lease").await?;
     // The warm daemon survives the release, and its lane IDEs do not: the next holder gets no IDE of this one's runs.
     // The daemon launches a new IDE on its next run.
@@ -536,8 +701,10 @@ async fn release_one_lease(ctx: &Ctx, manager: &Manager, lease: &Lease, probe: &
     })
 }
 
-/// Unlinks the lease and every receipt for it, so a released worker leaves no usable handle.
+/// Unlinks the run marker, the lease and every receipt for it, so a released worker leaves no usable handle. The
+/// release passed [`Manager::require_no_run`], so a marker that is left is one of this process.
 fn remove_lease(settings: &Config, lease: &Lease) -> Result<(), Refusal> {
+    remove_run_marker(settings, &lease.worker)?;
     std::fs::remove_file(settings.lease_path(&lease.worker)).or_refuse("state_write_failed", Exit::FAILURE, || {
         format!("cannot release the lease on {}", lease.worker)
     })?;

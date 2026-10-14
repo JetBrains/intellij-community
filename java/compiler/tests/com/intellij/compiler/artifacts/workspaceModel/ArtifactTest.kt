@@ -42,6 +42,7 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
+import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactsTestingState
 import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
@@ -58,13 +59,19 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import junit.framework.TestCase
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(JUnit38AssumeSupportRunner::class)
 class ArtifactTest : ArtifactsTestCase() {
@@ -326,6 +333,55 @@ class ArtifactTest : ArtifactsTestCase() {
     modifiableArtifact.rootElement
 
     modifiableModel.dispose()
+  }
+
+  fun `test project does not keep bridges of disposed modifiable model`() {
+    val artifact = addArtifact("MyName")
+    val bridges = runWriteAction {
+      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(artifact)
+      val addedArtifact = modifiableModel.addArtifact("Added", PlainArtifactType.getInstance())
+      modifiableModel.dispose()
+      listOf(modifiableArtifact, addedArtifact)
+    }
+    LeakHunter.checkLeak(project, ArtifactBridge::class.java) { bridge -> bridges.any { it === bridge } }
+  }
+
+  fun `test commit of one model keeps bridges of another model`() = runWriteAction {
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    // Add via model, so the artifact has no bridge yet
+    workspaceModel.updateProjectModel {
+      it addEntity ArtifactEntity("X", PlainArtifactType.ID, true, MySource) {
+        rootElement = ArtifactRootElementEntity(MySource)
+      }
+    }
+
+    val manager = ArtifactManager.getInstance(project)
+    val modelB = manager.createModifiableModel()
+    val bridgeB = modelB.findArtifact("X") as ArtifactBridge
+
+    val modelA = manager.createModifiableModel()
+    modelA.addArtifact("Y", PlainArtifactType.getInstance())
+    modelA.commit()
+    assertTrue(bridgeB.entityStorage is VersionedEntityStorageOnBuilder)
+
+    modelB.commit()
+    assertSame((workspaceModel as WorkspaceModelInternal).entityStorage, bridgeB.entityStorage)
+    assertSame(bridgeB, manager.findArtifact("X"))
+  }
+
+  fun `test project does not keep bridge of removed artifact`() {
+    val artifact = addArtifact("MyName")
+    deleteArtifact(artifact)
+    // The workspace model replays its last event, and the storage before the removal maps the bridge
+    addArtifact("Other")
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    runBlocking {
+      withTimeout(10.seconds) {
+        workspaceModel.eventLog.first { it.storageAfter === workspaceModel.currentSnapshot }
+      }
+    }
+    LeakHunter.checkLeak(project, ArtifactBridge::class.java) { it === artifact }
   }
 
   fun `test dir with same name`() = runWriteAction {

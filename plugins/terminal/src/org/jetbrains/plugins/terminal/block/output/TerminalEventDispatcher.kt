@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
 import com.intellij.ide.IdeEventQueue
@@ -50,7 +50,7 @@ import javax.swing.KeyStroke
 internal abstract class TerminalEventDispatcher(
   private val editor: EditorEx,
   private val parentDisposable: Disposable
-) : IdeEventQueue.EventDispatcher {
+) : IdeEventQueue.NonLockedEventDispatcher {
   private val keyListener: KeyListener = MyKeyEventsListener()
   private var myRegistered = false
   private var actionsToSkip: List<AnAction> = emptyList()

@@ -316,7 +316,7 @@ const SOURCE_COMPOSITION: [&str; 8] = [
 ];
 
 /// The composition of `composed.xml`: a set alias, an optional include, a `required-if-available` row, and a private
-/// additional module before a `jetbrains` one.
+/// additional module before a `jetbrains` one in the flags.
 const FULL_COMPOSITION: [&str; 10] = [
     "--alias=com.intellij.modules.set.alias",
     "--alias=com.intellij.modules.pycharm",
@@ -395,14 +395,14 @@ fn a_full_composition_reaches_every_rule() {
     assert_eq!(run_request(dir, &request), 0);
     let [descriptor, prefix, classpath] = output_bytes(dir);
     assert_eq!(classpath, prefix[5..]);
-    // The optional include stays, and the private block comes before the `jetbrains` one.
+    // The optional include stays, and the private block comes after the `jetbrains` one.
     let descriptor = String::from_utf8(descriptor).unwrap();
     for want in [
         "<module value=\"com.intellij.modules.set.alias\" />",
         "<xi:include href=\"/META-INF/pycharm-optional.xml\">\n    <xi:fallback />\n  </xi:include>",
         "<module name=\"intellij.platform.ide.osCertificates\" loading=\"required\" required-if-available=\"intellij.platform.debugger\">",
-        "<content>\n    <module name=\"intellij.libraries.sqlite\">",
-        "</content>\n  <content namespace=\"jetbrains\">\n    <module name=\"intellij.libraries.blockmap\" loading=\"embedded\">",
+        "<content namespace=\"jetbrains\">\n    <module name=\"intellij.libraries.blockmap\" loading=\"embedded\">",
+        "</content>\n  <content>\n    <module name=\"intellij.libraries.sqlite\">",
     ] {
         assert!(descriptor.contains(want), "{want:?} is not in\n{descriptor}");
     }

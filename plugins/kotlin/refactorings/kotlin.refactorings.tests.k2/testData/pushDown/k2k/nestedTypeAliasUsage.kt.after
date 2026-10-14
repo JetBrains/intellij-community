@@ -1,0 +1,13 @@
+// LANGUAGE: +NestedTypeAliases
+package sample
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    typealias Nested = String
+
+}
+
+fun use(value: Foo.Nested): Foo.Nested = value

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
@@ -418,13 +419,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       systemProperties.put("test.group.roots", testGroupRoots.joinToString(File.pathSeparator, transform = Path::absolutePathString))
     }
 
+    //filter out only for community (ALL_EXCLUDE_DEFINED)
+    val isBazelMigratedGroup =
+      options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true && mainModule.name == "intellij.idea.community.main.tests"
+
     val searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
     val testModules = let {
       if (searchForTestsAcrossModuleDependencies && System.getProperty("pass.jar.dependencies.to.tests") == null && options.testSimplePatterns == null) guessTestModulesForGroupsAndPatterns(mainModule, rootExcludeCondition, systemProperties)
       else listOf(mainModule)
     }.let { modules ->
-      //filter out only for community (ALL_EXCLUDE_DEFINED)
-      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true && mainModule.name == "intellij.idea.community.main.tests") {
+      if (isBazelMigratedGroup) {
         val bazelMigratedTestModules = BazelMigratedTestModules.load(context.paths.communityHomeDir)
         val (bazelMigratedModules, jpsModules) = modules.partition { it.name in bazelMigratedTestModules }
         val jpsModulesNotInAllowlist = jpsModules.filter { !COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST.contains(it.name) }
@@ -477,7 +481,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     if (suppressedExceptions.size == testModules.size &&
         // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
-        options.bucketsCount < 2) {
+        options.bucketsCount < 2 &&
+        // we keep running tests in bazel migrated modules even if there are no tests found to protect from adding new tests to the test group
+        !isBazelMigratedGroup) {
       throw RuntimeException("No tests were found in '${mainModule.name}' module classpath w/ simple patterns '${options.testSimplePatterns}', patterns '${options.testPatterns}', or groups '${options.testGroups}'").apply {
         suppressedExceptions.forEach(::addSuppressed)
       }
@@ -1088,7 +1094,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
           old.createDirectories()
           val testProcessName = systemProperties["intellij.build.test.process.name"] ?: error("'intellij.build.test.process.name' is not set")
-          Files.createTempDirectory(old, "junit-$testProcessName-")
+          FileUtil.createTempDirectory(old.toFile(), "junit-$testProcessName-", null, false).toPath()
         }
         val ideaConfigPath = Path.of(systemProperties[PathManager.PROPERTY_CONFIG_PATH] ?: error("'${PathManager.PROPERTY_CONFIG_PATH}' is not set")).resolve(ideaLogPath.fileName)  // reuse the same junit-* name
         ideaConfigPath.deleteRecursively()
@@ -1487,7 +1493,6 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
 }
 
 private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
-  "intellij.java.tests",
   // no tests
   "kotlin.jvm-debugger.testFramework",
 )

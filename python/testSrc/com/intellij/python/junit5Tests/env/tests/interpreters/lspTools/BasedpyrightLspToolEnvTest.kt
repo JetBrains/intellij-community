@@ -12,7 +12,7 @@ import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.getClients
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyright.BasedpyrightConfiguration
 import com.intellij.python.pyright.BasedpyrightPyTool
@@ -146,7 +146,7 @@ class BasedpyrightLspToolEnvTest {
     private val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
     internal val pyProject by pyProjectFixture
     internal val module: Module get() = pyProject.residesOnModule
-    internal val venv by projectFixture.pyInterpreterFixture().pyVenvFixture(
+    internal val venv by pyEnvironmentFixture().pyVenvFixture(
       where = tempPathFixture,
       pyProjectFixture = pyProjectFixture,
     )

@@ -21,7 +21,7 @@ import com.intellij.platform.lsp.api.getClients
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.LeakedProcessReporterExtension
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
 import com.intellij.python.lsp.core.pyServedModules
@@ -92,13 +92,13 @@ class RuffMultiModuleLspToolEnvTest {
   private val projectFixture = projectFixture(projectPath, openAfterCreation = true)
   private val rootPyProjectFixture = projectFixture.pyProjectFixture(projectPath)
   private val servicePyProjectFixture = projectFixture.pyProjectFixture(servicePath)
-  private val projectSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = projectPath)
-  private val serviceSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = servicePath, servicePyProjectFixture)
+  private val projectSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = projectPath, rootPyProjectFixture)
+  private val serviceSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = servicePath, servicePyProjectFixture)
 
   /** A module outside the project directory. It is a workspace of its own, so it never joins the group of a module above. */
   private val sparePath = tempPathFixture(prefix = "ruff_spare")
   private val sparePyProjectFixture = projectFixture.pyProjectFixture(sparePath)
-  private val spareSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = sparePath, sparePyProjectFixture)
+  private val spareSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = sparePath, sparePyProjectFixture)
 
   private val project: Project by projectFixture
   private val rootPyProject: PyProject by rootPyProjectFixture

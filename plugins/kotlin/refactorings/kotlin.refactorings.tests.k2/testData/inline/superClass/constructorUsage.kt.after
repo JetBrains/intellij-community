@@ -1,0 +1,5 @@
+class Child(val value: Int = 0) {
+    fun answer() = 42
+}
+
+fun create() = Child()

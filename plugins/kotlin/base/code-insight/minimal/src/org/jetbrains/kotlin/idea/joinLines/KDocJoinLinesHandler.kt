@@ -13,15 +13,28 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 
 class KDocJoinLinesHandler : JoinRawLinesHandlerDelegate {
-    override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
-        if (file.fileType !is KotlinFileType) return CANNOT_JOIN
-        if (start <= 0 || end >= document.textLength) return CANNOT_JOIN
+    private fun couldBeJoined(
+        file: PsiFile,
+        start: Int,
+        end: Int,
+        document: Document
+    ): Boolean {
+        if (file.fileType !is KotlinFileType) return false
+        if (start <= 0 || end >= document.textLength) return false
 
-        val elementBefore = file.findElementAt(start - 1) ?: return CANNOT_JOIN
-        val elementAfter = file.findElementAt(end) ?: return CANNOT_JOIN
+        val elementBefore = file.findElementAt(start - 1) ?: return false
+        val elementAfter = file.findElementAt(end) ?: return false
         val kDocElementBefore = elementBefore.parentOfType<KDoc>(true)
         val kDocElementAfter = elementAfter.parentOfType<KDoc>(true)
-        if (kDocElementBefore != kDocElementAfter) return CANNOT_JOIN
+        if (kDocElementBefore != kDocElementAfter) return false
+
+        return true
+    }
+
+    override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
+        if (!couldBeJoined(file, start, end, document)) return CANNOT_JOIN
+
+        val elementBefore = file.findElementAt(start - 1) ?: return CANNOT_JOIN
         if (elementBefore.node?.elementType != KDocTokens.START) return CANNOT_JOIN
         if (document.charsSequence[end] != '*') return CANNOT_JOIN
         if (end + 1 < document.textLength && document.charsSequence[end + 1] == '/') return CANNOT_JOIN
@@ -30,14 +43,10 @@ class KDocJoinLinesHandler : JoinRawLinesHandlerDelegate {
     }
 
     override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
-        if (file.fileType !is KotlinFileType) return CANNOT_JOIN
-        if (start < 0 || end >= document.textLength) return CANNOT_JOIN
+        if (!couldBeJoined(file, start, end, document)) return CANNOT_JOIN
 
         val elementBefore = file.findElementAt(start) ?: return CANNOT_JOIN
         val elementAfter = file.findElementAt(end) ?: return CANNOT_JOIN
-        val kDocElementBefore = elementBefore.parentOfType<KDoc>(true)
-        val kDocElementAfter = elementAfter.parentOfType<KDoc>(true)
-        if (kDocElementBefore != kDocElementAfter) return CANNOT_JOIN
 
         val contentAsteriskOffset = joinedContentAsteriskOffset(document, elementBefore, start)
         if (contentAsteriskOffset != null) {

@@ -38,7 +38,7 @@
             class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
     <action id="GotoPrevElementUnderCaretUsage"
             class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
-    <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
+    <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true" searchable="false"/>
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
     <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
     <action id="QuickTypeDefinition" class="com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction"/>
@@ -263,15 +263,20 @@
     <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.Settings"/>
     <action id="Arrangement.Rule.Add"
             use-shortcut-of="NewElement"
-            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Arrangement.Rule.Section.Add"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
     <action id="Arrangement.Rule.Remove"
             use-shortcut-of="$Delete"
-            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
+            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Arrangement.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
       <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      <override-text place="GoToAction"/>
     </action>
     <action id="Arrangement.Rule.Match.Condition.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
@@ -308,7 +313,7 @@
     <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
     <group id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
     <group id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
-    <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
+    <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction" icon="AllIcons.General.Settings"/>
     <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
     <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction"/>
@@ -344,7 +349,9 @@
     <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.General.Print"/>
     <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
     <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction"/>
-    <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find"/>
+    <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="AllIcons.Actions.Replace"/>
     <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction">
       <override-text place="MainMenu"/>

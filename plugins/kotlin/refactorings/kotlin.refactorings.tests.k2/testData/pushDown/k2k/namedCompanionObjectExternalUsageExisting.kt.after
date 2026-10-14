@@ -1,0 +1,11 @@
+open class Base {
+}
+
+class Child : Base() {
+    companion object {
+        fun existing() {}
+        fun create() = Base()
+    }
+}
+
+fun usage() = Child.create()

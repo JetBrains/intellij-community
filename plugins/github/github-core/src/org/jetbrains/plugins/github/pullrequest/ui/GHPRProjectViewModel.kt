@@ -9,20 +9,27 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -31,6 +38,8 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -40,6 +49,7 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
   private val connectionManager: GHRepositoryConnectionManager get() = project.service()
   private val settings: GithubPullRequestsProjectUISettings
     get() = GithubPullRequestsProjectUISettings.getInstance(project)
+  private val PREFERRED_REPOSITORY_MAPPING_TIMEOUT: Duration = 1.minutes
 
   private val cs = parentCs.childScope(this::class)
 
@@ -95,19 +105,19 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
     vm
   }
 
-  private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount) {
+  private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount): GHRepositoryConnection? =
     withContext(cs.coroutineContext) {
       // Compare by repository coordinates, not mapping equality: the same repo can re-resolve to a
       // structurally different mapping (e.g. after git sync), which would otherwise trigger a needless
       // reconnect that cancels in-flight work (e.g. a diff load).
       val current = connectionManager.connectionState.value
       if (current != null && current.repo.repository == repo.repository && current.account == account) {
-        return@withContext
+        return@withContext current
       }
-      connectionManager.openConnection(repo, account)
+      val connection = connectionManager.openConnection(repo, account)
       settings.selectedUrlAndAccount = repo.remote.url to account
+      connection
     }
-  }
 
   private val vmFactory = project.service<GHPRConnectedProjectViewModelFactory>()
 
@@ -131,33 +141,61 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
   }
 
   /**
-   * @param preferredRepoAndAccount connects directly to this repository/account instead of relying on
-   * [selectorVm]'s auto-connect heuristics, which need exactly one known repo/account - not true for a
-   * freshly opened PR worktree. [action] always runs against the vm for [preferredRepoAndAccount], never
-   * a stale one left by a racing heuristic connection.
+   * @param preferredRepoAndAccount connects directly to this repository and account.
+   * The [selectorVm] heuristics need exactly one known repository and account, and a new pull request worktree can have more.
+   * [action] always runs against the view model for [preferredRepoAndAccount].
+   * When no mapping for the repository appears within [mappingTimeout], [action] does not run.
+   * When the connection closes or changes before its view model appears, [action] does not run.
    */
   fun activateAndAwaitProject(
     preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>? = null,
+    mappingTimeout: Duration = PREFERRED_REPOSITORY_MAPPING_TIMEOUT,
     action: GHPRConnectedProjectViewModel.() -> Unit,
   ) {
-    cs.launch {
+    doActivateAndAwaitProject(preferredRepoAndAccount, mappingTimeout, action)
+  }
+
+  /**
+   * Does the same as [activateAndAwaitProject] and returns the job of the activation.
+   */
+  @VisibleForTesting
+  internal fun doActivateAndAwaitProject(
+    preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>? = null,
+    mappingTimeout: Duration = PREFERRED_REPOSITORY_MAPPING_TIMEOUT,
+    action: GHPRConnectedProjectViewModel.() -> Unit,
+  ): Job {
+    return cs.launch {
       _activationRequests.emit(Unit)
-      val connectedRepository = preferredRepoAndAccount?.let { (repositoryCoordinates, account) ->
-        val mapping = repositoriesManager.knownRepositoriesState
-          .first { repos -> repos.any { it.repository == repositoryCoordinates } }
-          .find { it.repository == repositoryCoordinates }
-        if (mapping != null) {
-          connect(mapping, account)
-          repositoryCoordinates
-        }
-        else null
+      if (preferredRepoAndAccount == null) {
+        connectedProjectVm.filterNotNull().first().action()
+        return@launch
       }
-      connectedProjectVm.filterNotNull().first { connectedRepository == null || it.repository == connectedRepository }.action()
+
+      val (expectedRepository, account) = preferredRepoAndAccount
+      val mapping = withTimeoutOrNull(mappingTimeout) {
+        repositoriesManager.knownRepositoriesState
+          .mapNotNull { repos -> repos.find { it.repository == expectedRepository } }
+          .first()
+      }
+      if (mapping == null) {
+        LOG.warn("No Git remote for GitHub repository $expectedRepository appeared in $mappingTimeout, skipping the requested action")
+        return@launch
+      }
+      val connection = connect(mapping, account) ?: return@launch
+      val (currentConnection, vm) = combine(connectionManager.connectionState, connectedProjectVm, ::Pair)
+        .first { (currentConnection, vm) -> currentConnection !== connection || vm?.connectionId == connection.id }
+      if (currentConnection === connection) {
+        vm?.action()
+      }
     }
   }
 
   fun loginIfPossible() {
     // init selector, so that auto-login is done automatically
     selectorVm
+  }
+
+  companion object {
+    private val LOG = logger<GHPRProjectViewModel>()
   }
 }

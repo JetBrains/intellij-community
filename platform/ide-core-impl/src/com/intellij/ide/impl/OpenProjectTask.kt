@@ -78,20 +78,26 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
 
   @get:ApiStatus.Internal
   val beforeInit: ((Project) -> Unit)?
-    get() = beforeInitTasks.takeIf { it.isNotEmpty() }?.let {
-      { project -> it.forEach { task -> task(project) } }
+    get() {
+      return beforeInitTasks.takeIf { it.isNotEmpty() }?.let {
+        { project -> it.forEach { task -> task(project) } }
+      }
     }
 
   @get:ApiStatus.Internal
   val beforeOpen: (suspend (Project) -> Boolean)?
-    get() = beforeOpenTasks.takeIf { it.isNotEmpty() }?.let {
-      { project -> it.all { task -> task(project) } }
+    get() {
+      return beforeOpenTasks.takeIf { it.isNotEmpty() }?.let {
+        { project -> it.all { task -> task(project) } }
+      }
     }
 
   @get:ApiStatus.Internal
   val preparedToOpen: (suspend (Module) -> Unit)?
-    get() = preparedToOpenTasks.firstOrNull()?.let {
-      task -> { module -> task(module) }
+    get() {
+      return preparedToOpenTasks.firstOrNull()?.let { task ->
+        { module -> task(module) }
+      }
     }
 
   @Deprecated("Use `OpenProjectTask { ... }`")
@@ -104,16 +110,35 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
     /** Ignored if [isNewProject] is set to false. */
     useDefaultProjectAsTemplate: Boolean = isNewProject,
   ) : this(
-    forceOpenInNewFrame, forceReuseFrame = false, projectToClose, isNewProject, useDefaultProjectAsTemplate,
-    project = null, projectName = null, showWelcomeScreen = true, callback = null, line = -1, column = -1, isRefreshVfsNeeded = false,
-    runConfigurators = null, runConversionBeforeOpen = true, projectWorkspaceId = null, projectFrameTypeId = null,
-    isProjectCreatedWithWizard = false, preloadServices = true, beforeInitTasks = emptyList(), beforeOpenTasks = emptyList(),
-    preventIprLookup = false, preparedToOpenTasks = emptyList(), processorChooser = null,
+    forceOpenInNewFrame = forceOpenInNewFrame,
+    forceReuseFrame = false,
+    projectToClose = projectToClose,
+    isNewProject = isNewProject,
+    useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
+    project = null,
+    projectName = null,
+    showWelcomeScreen = true,
+    callback = null,
+    line = -1,
+    column = -1,
+    isRefreshVfsNeeded = false,
+    runConfigurators = null,
+    runConversionBeforeOpen = true,
+    projectWorkspaceId = null,
+    projectFrameTypeId = null,
+    isProjectCreatedWithWizard = false,
+    preloadServices = true,
+    beforeInitTasks = emptyList(),
+    beforeOpenTasks = emptyList(),
+    preventIprLookup = false,
+    preparedToOpenTasks = emptyList(),
+    processorChooser = null,
     implOptions = OpenProjectTaskImplOptions(delegate = null, opensFileAfterProjectOpen = false),
-    createModule = true, projectRootDir = null
+    createModule = true,
+    projectRootDir = null
   )
 
-  @Deprecated("Use `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask(base) { ... }`")
   @Suppress("DEPRECATION")
   fun copy(
     forceOpenInNewFrame: Boolean = this.forceOpenInNewFrame,
@@ -143,10 +168,32 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
     projectRootDir: Path? = this.projectRootDir,
     createModule: Boolean = this.createModule,
   ): OpenProjectTask = OpenProjectTask(
-    forceOpenInNewFrame, forceReuseFrame, projectToClose, isNewProject, useDefaultProjectAsTemplate, project, projectName,
-    showWelcomeScreen, callback, line, column, isRefreshVfsNeeded, runConfigurators, runConversionBeforeOpen, projectWorkspaceId,
-    projectFrameTypeId, isProjectCreatedWithWizard, preloadServices, beforeInitTasks, beforeOpenTasks, preparedToOpenTasks,
-    preventIprLookup, processorChooser, implOptions, projectRootDir, createModule
+    forceOpenInNewFrame = forceOpenInNewFrame,
+    forceReuseFrame = forceReuseFrame,
+    projectToClose = projectToClose,
+    isNewProject = isNewProject,
+    useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
+    project = project,
+    projectName = projectName,
+    showWelcomeScreen = showWelcomeScreen,
+    callback = callback,
+    line = line,
+    column = column,
+    isRefreshVfsNeeded = isRefreshVfsNeeded,
+    runConfigurators = runConfigurators,
+    runConversionBeforeOpen = runConversionBeforeOpen,
+    projectWorkspaceId = projectWorkspaceId,
+    projectFrameTypeId = projectFrameTypeId,
+    isProjectCreatedWithWizard = isProjectCreatedWithWizard,
+    preloadServices = preloadServices,
+    beforeInitTasks = beforeInitTasks,
+    beforeOpenTasks = beforeOpenTasks,
+    preparedToOpenTasks = preparedToOpenTasks,
+    preventIprLookup = preventIprLookup,
+    processorChooser = processorChooser,
+    implOptions = implOptions,
+    projectRootDir = projectRootDir,
+    createModule = createModule
   )
 
   companion object {
@@ -179,10 +226,6 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
   fun withProjectRootDir(projectRootDir: Path?): OpenProjectTask = copy(projectRootDir = projectRootDir)
 
   @ApiStatus.Internal
-  @Suppress("DEPRECATION")
-  fun markAsOpeningFileAfterProjectOpen(): OpenProjectTask = copy(implOptions = implOptions.withOpensFileAfterProjectOpen(value = true))
-
-  @ApiStatus.Internal
   @TestOnly
   @Suppress("DEPRECATION")
   fun prepareForTests(asNewProject: Boolean): OpenProjectTask = copy(preloadServices = false, isNewProject = asNewProject)
@@ -190,9 +233,11 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
 
 @get:ApiStatus.Internal
 val OpenProjectTask.effectiveImplOptions: Any?
-  get() = when (val options = implOptions) {
-    is OpenProjectTaskImplOptions -> options.delegate
-    else -> options
+  get() {
+    return when (val options = implOptions) {
+      is OpenProjectTaskImplOptions -> options.delegate
+      else -> options
+    }
   }
 
 @ApiStatus.Internal
@@ -282,6 +327,39 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       createModule = false
     }
 
+  /** Starts from every option of [base]; see `OpenProjectTask(base) { ... }`. */
+  @PublishedApi
+  @ApiStatus.Internal
+  internal constructor(base: OpenProjectTask) : this() {
+    projectName = base.projectName
+    forceOpenInNewFrame = base.forceOpenInNewFrame
+    forceReuseFrame = base.forceReuseFrame
+    isNewProject = base.isNewProject
+    useDefaultProjectAsTemplate = base.useDefaultProjectAsTemplate
+    runConfigurators = base.runConfigurators
+    preloadServices = base.preloadServices
+    isProjectCreatedWithWizard = base.isProjectCreatedWithWizard
+    runConversionBeforeOpen = base.runConversionBeforeOpen
+    preventIprLookup = base.preventIprLookup
+    projectToClose = base.projectToClose
+    beforeInitTasks = base.beforeInitTasks
+    beforeOpenTasks = base.beforeOpenTasks
+    preparedToOpen = base.preparedToOpen
+    callback = base.callback
+    showWelcomeScreen = base.showWelcomeScreen
+    projectWorkspaceId = base.projectWorkspaceId
+    projectFrameTypeId = base.projectFrameTypeId
+    implOptions = base.effectiveImplOptions
+    opensFileAfterProjectOpen = base.opensFileAfterProjectOpen
+    line = base.line
+    column = base.column
+    projectRootDir = base.projectRootDir
+    processorChooser = base.processorChooser
+    // the `project` setter resets `createModule`, so `createModule` must come after it
+    project = base.project
+    createModule = base.createModule
+  }
+
   @Deprecated("Pass the builder to `OpenProjectTask` or use `apply { ... }`", level = DeprecationLevel.ERROR)
   @PublishedApi
   internal fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask = apply { builder() }.build()
@@ -309,5 +387,12 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   }
 }
 
-inline fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask =
-  OpenProjectTaskBuilder().apply { buildAction() }.build()
+inline fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  return OpenProjectTaskBuilder().apply { buildAction() }.build()
+}
+
+/** Returns a copy of [base] with the changes of [buildAction] applied. */
+@ApiStatus.Internal
+inline fun OpenProjectTask(base: OpenProjectTask, buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  return OpenProjectTaskBuilder(base).apply { buildAction() }.build()
+}

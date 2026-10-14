@@ -22,6 +22,12 @@ interface PMarkerRoot {
   fun emptyRoot(): PMarkerRoot
 
   /**
+   * Returns `true` when this root contains no valid markers.
+   * Removed and invalid markers do not affect the result.
+   */
+  fun isEmpty(): Boolean
+
+  /**
    * Resolves [markerId] in this root.
    *
    * @return [PMarkerResolution.Valid], [PMarkerResolution.Invalid], or
@@ -183,6 +189,22 @@ interface PMarkerRoot {
    * The iterator orders entries by start offset and marker ID.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
+
+  /**
+   * Processes all valid markers by increasing actual start offset, then increasing marker ID.
+   * The start offset includes pending shifts in this root.
+   * The end offset, flavor flags, and tree shape do not affect the order.
+   *
+   * Supplies each entry and an offset delta. Add the delta to the node range to get the actual range.
+   * Stops and returns `false` when [processor] returns `false`.
+   */
+  fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean
+
+  /** Processes one marker entry with an offset delta. */
+  fun interface MarkerDeltaProcessor {
+    /** Processes an entry whose actual range is its node range plus [ancestorDelta]. */
+    fun process(entry: MarkerEntry, ancestorDelta: Int): Boolean
+  }
 
   companion object {
     /** Ignores invalidated marker IDs. */

@@ -1,0 +1,129 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.polySymbols.tests`
+
+### auto-generated section `build intellij.platform.polySymbols.tests` start
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.polySymbols.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/lang-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/core-api:core",
+        "//platform/usageView",
+        "//platform/refactoring",
+        "//platform/analysis-impl",
+        "//libraries/fastutil",
+        "//libraries/commons/compress",
+        "//libraries/markdown",
+        "//libraries/gson",
+        "//platform/markdown-utils",
+        "//platform/testFramework",
+        "//platform/polySymbols/shared:polySymbols",
+        "//platform/polySymbols/backend",
+        "//platform/polySymbols/web",
+        "//platform/polySymbols/testFramework",
+        "//java/java-runtime:rt",
+    ],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.polySymbols.tests",
+    resource_strip_prefix = "testData",
+    resources = glob(
+        ["testData/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/usageView",
+        "//platform/usageView:usageView_test_lib",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//libraries/fastutil",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/commons/compress",
+        "//libraries/commons/compress:compress_test_lib",
+        "//libraries/markdown",
+        "//libraries/markdown:markdown_test_lib",
+        "//libraries/gson",
+        "//libraries/gson:gson_test_lib",
+        "//platform/markdown-utils",
+        "//platform/markdown-utils:markdown-utils_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/polySymbols/shared:polySymbols",
+        "//platform/polySymbols/shared:polySymbols_test_lib",
+        "//platform/polySymbols/backend",
+        "//platform/polySymbols/backend:backend_test_lib",
+        "//platform/polySymbols/web",
+        "//platform/polySymbols/web:web_test_lib",
+        "//platform/polySymbols/testFramework",
+        "//platform/polySymbols/testFramework:testFramework_test_lib",
+        "//java/java-runtime:rt",
+        "//java/java-runtime:rt_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.polySymbols.tests` end
+
+### auto-generated section `iml intellij.platform.polySymbols.tests` start
+exports_files(
+    [
+        "intellij.platform.polySymbols.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.polySymbols.tests` end

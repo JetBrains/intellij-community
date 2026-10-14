@@ -33,8 +33,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -77,6 +75,8 @@
     <module name="intellij.markdown.spellchecker"/>
     <module name="intellij.markdown.compose.preview"/>
     <module name="intellij.markdown.frontend"/>
+    <module name="intellij.markdown.frontend.execution"/>
+    <module name="intellij.markdown.execution"/>
     <module name="intellij.markdown.frontend.split"/>
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
@@ -118,9 +118,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.markdown.codeSpanRunnableSearcher"
-                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
                     interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
@@ -400,8 +397,6 @@
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.MarkdownAlertIconsExtension$Provider"/>
 
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
-
     <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
                            implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
 
@@ -600,7 +595,7 @@
     </group>
 
     <group id="Markdown.Tools" popup="true">
-      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroupPlaceholder"/>
       <action id="Markdown.ImportFromDocx"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
       <action id="Markdown.Export"

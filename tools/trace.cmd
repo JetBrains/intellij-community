@@ -10,7 +10,7 @@ GOTO :CMDSCRIPT
 # The same dual sh/CMD shape as vm.cmd, for vm.cmd's reasons:
 #
 # 1. **No cache.** The binary is built from working-copy sources, so every invocation runs
-#    `bazel run --script_path` and the build is the freshness guarantee. A stale planner would print commands
+#    `bazel build` and the build is the freshness guarantee. A stale planner would print commands
 #    for a lane layout that no longer exists.
 # 2. **`AIR_TRACE_BIN` overrides everything on the sh half, checked first.** It names an explicit binary and
 #    skips Bazel, for a debugger attached to a hand-built binary. The CMD half reads it the same way (note 5).
@@ -36,67 +36,25 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-# Resolve the Community root in either layout, then use its parent only for an Ultimate checkout, as bt.cmd does. In a
-# Community checkout `plan` refuses with `air_area_missing`, because no `bt.json` there names the Air area.
 case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
-root="$community_root"
-target="//tools/vm:air-trace"
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  target="@community//tools/vm:air-trace"
-fi
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
+. "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
+
+# In a Community checkout `plan` refuses with `air_area_missing`, because no `bt.json` there names the Air area.
+polyglot_find_roots "$self_dir"
+target="${label_prefix}tools/vm:air-trace"
 
 export BUILD_WORKSPACE_DIRECTORY="$root"
 unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY TEST_SRCDIR
 
-if [ -n "${AIR_TRACE_BIN:-}" ]; then
-  if [ ! -x "$AIR_TRACE_BIN" ]; then
-    echo "trace: AIR_TRACE_BIN is not an executable file: $AIR_TRACE_BIN" >&2
-    exit 78
-  fi
-  exec "$AIR_TRACE_BIN" "$@"
-fi
+polyglot_exec_override trace AIR_TRACE_BIN 78 "$@"
 
-# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
-# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
-# `file://<path>`. An event file that names no such file answers the empty string.
-built_file() {
-  awk -v name="$2" '{
-    line = $0
-    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
-      uri = substr(line, RSTART + 14, RLENGTH - 15)
-      line = substr(line, RSTART + RLENGTH)
-      count = split(uri, parts, "/")
-      if (parts[count] == name) found = uri
-    }
-  } END { print found }' "$1"
-}
-
-mkdir -p "$root/out/air"
-events="$root/out/air/trace.events.$$.json"
-# `--config=bt` keeps Bazel's progress lines quiet and `>&2` keeps the rest off stdout, which `plan` answers on.
-# A `bazel build` and not a `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis of the
-# last lane build.
-if ! (cd "$root" && ./bazel.cmd build --config=bt "--build_event_json_file=$events" \
-  --nobuild_event_json_file_path_conversion "$target" >&2); then
-  rm -f "$events"
-  echo "trace: could not build $target; see the bazel output above" >&2
-  exit 78
-fi
-
-resolved="$(built_file "$events" air-trace)"
-rm -f "$events"
-resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
-if [ ! -x "$resolved" ]; then
-  echo "trace: could not resolve air-trace from $target (got '$resolved')" >&2
-  exit 78
-fi
+# The build output goes to stderr as it comes, which keeps stdout for the answer of `plan`.
+polyglot_build_binary trace "$target" 78 air-trace
 
 exec "$resolved" "$@"
 
@@ -107,18 +65,8 @@ setlocal
 REM The same steps as the sh half, see note 5. The launcher is only read for its last line and never run.
 REM This half still runs `bazel run --script_path`, for the reason that the CMD half of vm.cmd states.
 
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-set "ROOT=%COMMUNITY_ROOT%"
-set "TARGET=//tools/vm:air-trace"
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
-set "TARGET=@community//tools/vm:air-trace"
-:ROOTREADY
+call "%~dp0polyglot-wrapper.cmd"
+set "TARGET=%LABEL_PREFIX%tools/vm:air-trace"
 
 set "BUILD_WORKSPACE_DIRECTORY=%ROOT%"
 set "JAVA_RUNFILES="

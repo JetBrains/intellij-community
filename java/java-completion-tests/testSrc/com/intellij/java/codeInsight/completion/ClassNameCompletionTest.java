@@ -32,8 +32,8 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/className/";
   }
 
   @NeedsIndex.Full

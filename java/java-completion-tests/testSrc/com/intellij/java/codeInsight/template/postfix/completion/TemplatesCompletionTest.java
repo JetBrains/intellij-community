@@ -216,8 +216,8 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/postfix/completion";
   }
 
   private void doCompleteTest(String textToType, char c) {

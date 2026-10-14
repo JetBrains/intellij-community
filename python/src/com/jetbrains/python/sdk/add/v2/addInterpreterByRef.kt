@@ -13,7 +13,8 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.findPyProject
 
 /**
- * Adds the environment of [manager] at [envRef] to the `PyProject` of [moduleOrProject]. The provider of
+ * The interpreter of the environment of [manager] at [envRef], for the `PyProject` of [moduleOrProject]. It is not
+ * registered yet: the caller sets it on the project. The provider of
  * [manager] builds the interpreter, as it does for the widget, so both surfaces create the same SDK.
  *
  * `null` when this path does not apply: a target file system, or no `PyProject` yet. The caller then builds the SDK
@@ -27,7 +28,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.addInterpreterByEnvRef(
   if (this !is FileSystemWithEel) return null
   val pyProject = moduleOrProject.findPyProject() ?: return null
   val provider = PyEvoEnvironmentProvider.EP_NAME.findFirstSafe { it.tool.fusId == manager.fusId } ?: return null
-  return PythonInterpreterRegistry.getInstance(pyProject.project).addPythonInterpreter(pyProject, provider.interpreterRefOf(envRef))
+  return PythonInterpreterRegistry.getInstance(pyProject.project).newPythonInterpreter(pyProject, provider.interpreterRefOf(envRef))
 }
 
 /**
@@ -43,5 +44,5 @@ internal suspend fun <P : PathHolder> FileSystem<P>.addInterpreterByBinary(
   val pyProject = moduleOrProject.findPyProject() ?: return null
   val provider = PyEvoEnvironmentProvider.EP_NAME.findFirstSafe { it.tool.fusId == manager.fusId } ?: return null
   val ref = provider.interpreterRefOf(provider.envRefOf(pyProject, pythonBinary))
-  return PythonInterpreterRegistry.getInstance(pyProject.project).addPythonInterpreter(pyProject, ref)
+  return PythonInterpreterRegistry.getInstance(pyProject.project).newPythonInterpreter(pyProject, ref)
 }

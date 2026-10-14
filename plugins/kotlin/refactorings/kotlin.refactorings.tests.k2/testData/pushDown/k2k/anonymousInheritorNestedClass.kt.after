@@ -1,0 +1,6 @@
+open class Base {
+    // INFO: {"checked": "true"}
+    class Nested
+}
+
+val x = object : Base() {}

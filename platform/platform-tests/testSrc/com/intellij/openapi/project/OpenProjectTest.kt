@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.CommandLineProcessor
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.TestProjectSource.SourceCLI
 import com.intellij.openapi.project.TestProjectSource.SourceOpenFileAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -337,7 +338,12 @@ internal class OpenProjectTest {
     attachProcessors.configureAttachProcessors(disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    openWithOpenerAndAssertProjectState(opener, projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: true)
+    openWithOpenerAndAssertProjectState(opener, projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: true) { project ->
+      if (opener.mode == ModeFolderAsProject) {
+        // a clean directory opened as a project goes through the directory branch of the platform processor
+        assertThat(PlatformProjectOpenProcessor.isOpenedByPlatformProcessor(project)).isTrue()
+      }
+    }
   }
 
   @Test

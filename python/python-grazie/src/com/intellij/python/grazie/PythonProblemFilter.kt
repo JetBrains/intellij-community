@@ -20,6 +20,8 @@ internal class PythonProblemFilter : ProblemFilter() {
             fitsPyDocParam(problem))
   }
 
+  override fun shouldIgnoreTypo(problem: TextProblem): Boolean = fitsPyDocParam(problem)
+
   private fun fitsPyDocParam(problem: TextProblem): Boolean {
     val text = problem.text
     //todo remove after https://youtrack.jetbrains.com/issue/PY-59061 is fixed

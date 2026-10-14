@@ -11,6 +11,7 @@ import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   public void testPropertyElement() {
     init();
 
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(PropertiesGrouper.ID, true);
       component.setActionActive(Sorter.getAlphaSorterId(), true);
 
@@ -133,7 +134,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   public void testStaticProperties() {
     init();
 
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(KindSorter.ID, true);
       component.setActionActive(PropertiesGrouper.ID, true);
       component.setActionActive(Sorter.getAlphaSorterId(), true);
@@ -171,7 +172,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   public void test14827() {
     myFixture.configureByText("Derived.java", "class Base {int x;}\n" +
                                               "class Derived extends Base {int getX() {return 0;}}");
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(FieldsFilter.ID, false);
       component.setActionActive(PropertiesGrouper.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(),
@@ -187,7 +188,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   public void testNotStaticAccessors() {
     myFixture.configureByText("A.java", NOT_STATIC_GETTERS);
 
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(KindSorter.ID, true);
       component.setActionActive(PropertiesGrouper.ID, true);
       component.setActionActive(Sorter.getAlphaSorterId(), true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
@@ -61,7 +61,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -143,33 +142,32 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void fileSystem_behavesAsIfUpdatesAppliedSynchronously_regardlessOfSynchronousOrAsynchronousImplementationUnderneath() throws IOException {
-    VirtualFile file = tempDir.newVirtualFile("testFile.tst", "initial content".getBytes(US_ASCII));
+    var file = tempDir.newVirtualFile("testFile.tst", "initial content".getBytes(US_ASCII));
     var asyncAllowingRequestor = new AsyncFileContentWriteRequestor() {};
-    int enoughAttempts = 100_000;
+    var enoughAttempts = 100_000;
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, IOException>)() -> {
-      for (int i = 0; i < enoughAttempts; i++) {
-        byte[] newContent = ("new content: " + "a".repeat(i)).getBytes(US_ASCII);
-        try (OutputStream stream = file.getOutputStream(asyncAllowingRequestor)) {
+      for (var i = 0; i < enoughAttempts; i++) {
+        var newContent = ("new content: " + "a".repeat(i)).getBytes(US_ASCII);
+        try (var stream = file.getOutputStream(asyncAllowingRequestor)) {
           stream.write(newContent);
         }
 
         //Regardless of LocalFileSystem implementation being synchronous or asynchronous, for outside observer
-        // they both must look as-if content is actually changed right after new content is written (outputStream
-        // is closed):
+        // they both must look as-if content is actually changed right after new content is written (outputStream is closed):
 
-        long lengthViaFs = myFS.getLength(file);
-        assertEquals("FS.getLength(file) must return content.length immediately after content update is finished",
-                     newContent.length,
-                     lengthViaFs
+        var lengthViaFs = myFS.getLength(file);
+        assertEquals(
+          "FS.getLength(file) must return content.length immediately after content update is finished",
+          newContent.length, lengthViaFs
         );
 
-        assertEquals("VirtualFile.timestamp must be == underlying FS.timestamp after file content update is finished",
-                     file.getTimeStamp(),
-                     myFS.getTimeStamp(file)
+        assertEquals(
+          "VirtualFile.timestamp must be == underlying FS.timestamp after file content update is finished",
+          file.getTimeStamp(), myFS.getTimeStamp(file)
         );
-        assertEquals("VirtualFile.length must be == underlying FS.length after file content update is finished",
-                     file.getLength(),
-                     lengthViaFs
+        assertEquals(
+          "VirtualFile.length must be == underlying FS.length after file content update is finished",
+          file.getLength(), lengthViaFs
         );
       }
       return null;
@@ -560,7 +558,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   public void testFindRootWithDeepNestedFileMustThrow() {
     try {
       var d = tempDir.newDirectoryPath();
-      var vDir = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(d));
+      var vDir = requireNonNull(myFS.refreshAndFindFileByNioFile(d));
       ManagingFS.getInstance().findRoot(vDir.getPath(), myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
     }
@@ -834,7 +832,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   public void testFindNioPathConsistency() {
     var file = tempDir.newFileNio("some-new-file");
 
-    var ioFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    var ioFile = myFS.refreshAndFindFileByNioFile(file);
     var nioFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
 
     assertNotNull(ioFile);
@@ -850,7 +848,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     var file = tempDir.newFileNio("dir/0");
     assertFalse(FileSystemUtil.isCaseToggleable(file.getFileName().toString()));
 
-    var dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.getParent());
+    var dir = (VirtualDirectoryImpl)myFS.refreshAndFindFileByNioFile(file.getParent());
     assertNotNull(dir);
     assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
 
@@ -981,25 +979,23 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   @SuppressWarnings("IO_FILE_USAGE")
   public void testRefreshIoFiles() {
-    var fs = LocalFileSystem.getInstance();
     testRefreshFiles(
       relativePath -> tempDir.newDirectoryPath(relativePath).toFile(),
       relativePath -> tempDir.newFileNio(relativePath).toFile(),
       (file, child) -> file.toPath().resolve(child).toFile(),
-      path -> fs.findFileByIoFile(path),
-      files -> fs.refreshIoFiles(files)
+      path -> myFS.findFileByIoFile(path),
+      files -> myFS.refreshIoFiles(files)
     );
   }
 
   @Test
   public void testRefreshNioFiles() {
-    var fs = LocalFileSystem.getInstance();
     testRefreshFiles(
       relativePath -> tempDir.newDirectoryPath(relativePath),
       relativePath -> tempDir.newFileNio(relativePath),
       (path, child) -> path.resolve(child),
-      path -> fs.findFileByNioFile(path),
-      files -> fs.refreshNioFiles(files)
+      path -> myFS.findFileByNioFile(path),
+      files -> myFS.refreshNioFiles(files)
     );
   }
 

@@ -35,7 +35,6 @@ jvm_library(
         "//libraries/guava",
         "//python/python-sdk/backend",
         "@lib//:kotlin-script-runtime",
-        "@lib//ant/lib:ant-provided",
         "//python/testFramework",
     ],
 )
@@ -61,7 +60,6 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//python:pycharm-community_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
-        "@lib//ant/lib:ant-provided",
         "//python/pluginCore:community-plugin_test_lib",
         "//python/testFramework:testFramework_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",

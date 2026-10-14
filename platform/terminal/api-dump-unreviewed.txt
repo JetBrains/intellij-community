@@ -1,0 +1,177 @@
+f:com.intellij.terminal.AppendableTerminalDataStream
+- append(C):java.lang.Appendable
+- append(java.lang.CharSequence,I,I):java.lang.Appendable
+- getChar():C
+- isEmpty():Z
+- pushBackBuffer(C[],I):V
+- pushChar(C):V
+- readNonControlCharacters(I):java.lang.String
+c:com.intellij.terminal.JBTerminalPanel
+- <init>(com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.jediterm.terminal.model.TerminalTextBuffer,com.jediterm.terminal.model.StyleState):V
+- p:createBufferedImage(I,I):java.awt.image.BufferedImage
+- p:createCopyPasteHandler():com.jediterm.terminal.TerminalCopyPasteHandler
+- p:createPopupMenu(com.jediterm.terminal.ui.TerminalActionProvider):javax.swing.JPopupMenu
+- p:drawImage(java.awt.Graphics2D,java.awt.image.BufferedImage,I,I,I,I,I,I,I,I):V
+- p:drawImage(java.awt.Graphics2D,java.awt.image.BufferedImage,I,I,java.awt.image.ImageObserver):V
+- s:drawImage(java.awt.Graphics,java.awt.Image,I,I,I,I,I,I,I,I,java.awt.image.ImageObserver):V
+- focusGained(java.awt.event.FocusEvent):V
+- focusLost(java.awt.event.FocusEvent):V
+- fontChanged():V
+- getActions():java.util.List
+- p:getFontToDisplay(C[],I,I,com.jediterm.terminal.TextStyle):java.awt.Font
+- getMinimumSize():java.awt.Dimension
+- p:processMouseWheelEvent(java.awt.event.MouseWheelEvent):V
+- p:setupAntialiasing(java.awt.Graphics):V
+c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+- sf:COMMAND_TO_RUN_USING_IDE_KEY:com.intellij.openapi.editor.colors.TextAttributesKey
+- caretBlinkingMs():I
+- copyOnSelect():Z
+- getBufferMaxLinesCount():I
+- getClearBufferActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getColumnSpacing():F
+- getCopyActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getDefaultBackground():com.jediterm.terminal.TerminalColor
+- getDefaultForeground():com.jediterm.terminal.TerminalColor
+- getDefaultStyle():com.jediterm.terminal.TextStyle
+- getFindActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getFoundPatternColor():com.jediterm.terminal.TextStyle
+- getGotoNextSplitTerminalAction(com.intellij.terminal.JBTerminalWidgetListener,Z):com.jediterm.terminal.ui.TerminalAction
+- s:getGotoNextSplitTerminalActionText(Z):java.lang.String
+- getHyperlinkColor():com.jediterm.terminal.TextStyle
+- s:getKeyStrokesByActionId(java.lang.String):java.util.List
+- s:getKeyStrokesByActionId(java.lang.String,java.lang.String):java.util.List
+- getLineDownActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getLineSpacing():F
+- getLineUpActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getMoveTabLeftActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getMoveTabRightActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getNewSessionActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getNextTabActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getOpenUrlActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getPageDownActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getPageUpActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getPasteActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getPreviousTabActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getSelectAllActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- p:getSelectAllActionPresentation(Z):com.jediterm.terminal.ui.TerminalActionPresentation
+- getSelectionColor():com.jediterm.terminal.TextStyle
+- getShowTabsActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getTerminalColorPalette():com.intellij.terminal.TerminalColorPalette
+- getTerminalFontSize():F
+- overrideIdeShortcuts():Z
+- pasteOnMiddleMouseClick():Z
+- shouldDisableLineSpacingForAlternateScreenBuffer():Z
+- shouldFillCharacterBackgroundIncludingLineSpacing():Z
+- useAntialiasing():Z
+- useInverseSelectionColor():Z
+c:com.intellij.terminal.JBTerminalWidget
+- sf:SELECTED_TEXT_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:TERMINAL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.openapi.project.Project,com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.intellij.openapi.Disposable):V
+- asNewWidget():com.intellij.terminal.ui.TerminalWidget
+- p:createExecutorServiceManager():com.jediterm.terminal.TerminalExecutorServiceManager
+- p:createScrollBar():javax.swing.JScrollBar
+- p:createSearchComponent():com.jediterm.terminal.ui.JediTermSearchComponent
+- p:createTerminalPanel(com.jediterm.terminal.ui.settings.SettingsProvider,com.jediterm.terminal.model.StyleState,com.jediterm.terminal.model.TerminalTextBuffer):com.intellij.terminal.JBTerminalPanel
+- p:executeCommand(java.lang.String):V
+- p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
+- getListener():com.intellij.terminal.JBTerminalWidgetListener
+- getProject():com.intellij.openapi.project.Project
+- getSettingsProvider():com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+- p:getShellCommand():java.util.List
+- p:hasRunningCommands():Z
+- notifyStarted():V
+- setListener(com.intellij.terminal.JBTerminalWidgetListener):V
+- p:setShellCommand(java.util.List):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+c:com.intellij.terminal.ProcessHandlerTtyConnector
+- <init>(com.intellij.execution.process.ProcessHandler,java.nio.charset.Charset):V
+- close():V
+- getName():java.lang.String
+- getProcessHandler():com.intellij.execution.process.ProcessHandler
+- isConnected():Z
+- read(C[],I,I):I
+- ready():Z
+- waitFor():I
+- write(java.lang.String):V
+- write(B[]):V
+a:com.intellij.terminal.TerminalColorPalette
+- sf:Companion:com.intellij.terminal.TerminalColorPalette$Companion
+- pa:getAttributesByColorIndex(I):com.intellij.openapi.editor.markup.TextAttributes
+- p:getBackgroundByColorIndex(I):com.jediterm.core.Color
+- p:getForegroundByColorIndex(I):com.jediterm.core.Color
+f:com.intellij.terminal.TerminalColorPalette$Companion
+f:com.intellij.terminal.TerminalExecutorServiceManagerImpl
+- getSingleThreadScheduledExecutor():java.util.concurrent.ScheduledExecutorService
+- getUnboundedExecutorService():java.util.concurrent.ExecutorService
+- shutdownWhenAllExecuted():V
+f:com.intellij.terminal.TerminalTitle
+- f:addTitleListener(com.intellij.terminal.TerminalTitleListener,com.intellij.openapi.Disposable):V
+- f:buildFullTitle():java.lang.String
+- f:getApplicationTitle():java.lang.String
+- f:getTag():java.lang.String
+- f:getUserDefinedTitle():java.lang.String
+f:com.intellij.terminal.TerminalTitle$State
+- <init>():V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- equals(java.lang.Object):Z
+- f:getApplicationTitle():java.lang.String
+- f:getDefaultTitle():java.lang.String
+- f:getTag():java.lang.String
+- f:getUserDefinedTitle():java.lang.String
+- hashCode():I
+- f:setDefaultTitle(java.lang.String):V
+f:com.intellij.terminal.TerminalTitleKt
+- sf:bindApplicationTitle(com.intellij.terminal.TerminalTitle,com.jediterm.terminal.Terminal,com.intellij.openapi.Disposable):V
+com.intellij.terminal.TerminalTitleListener
+- a:onTitleChanged(com.intellij.terminal.TerminalTitle):V
+f:com.intellij.terminal.TerminalUiSettingsManager
+- sf:Companion:com.intellij.terminal.TerminalUiSettingsManager$Companion
+- dispose():V
+- f:getAutoShowDocumentationPopup():Z
+- f:getCursorShape():com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- f:getFontSize():F
+- sf:getInstance():com.intellij.terminal.TerminalUiSettingsManager
+- f:getMaxVisibleCompletionItemsCount():I
+- getState():com.intellij.terminal.TerminalUiSettingsManager$State
+- loadState(com.intellij.terminal.TerminalUiSettingsManager$State):V
+- f:resetFontSize():V
+- f:setAutoShowDocumentationPopup(Z):V
+- f:setCursorShape(com.intellij.terminal.TerminalUiSettingsManager$CursorShape):V
+- f:setFontSize(F):V
+- f:setFontSize(I):V
+- f:setMaxVisibleCompletionItemsCount(I):V
+e:com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- java.lang.Enum
+- sf:BLOCK:com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- sf:UNDERLINE:com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- sf:VERTICAL:com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- s:values():com.intellij.terminal.TerminalUiSettingsManager$CursorShape[]
+f:com.intellij.terminal.TerminalUiSettingsManager$State
+- <init>():V
+- f:getAutoShowDocumentationPopup():Z
+- f:getCursorShape():com.intellij.terminal.TerminalUiSettingsManager$CursorShape
+- f:getMaxVisibleCompletionItemsCount():I
+- f:setAutoShowDocumentationPopup(Z):V
+- f:setCursorShape(com.intellij.terminal.TerminalUiSettingsManager$CursorShape):V
+- f:setMaxVisibleCompletionItemsCount(I):V
+f:com.intellij.terminal.actions.TerminalActionUtil
+- s:createTerminalAction(com.intellij.terminal.JBTerminalWidget,com.intellij.openapi.actionSystem.AnAction):com.jediterm.terminal.ui.TerminalAction
+- s:createTerminalAction(com.intellij.terminal.JBTerminalWidget,com.jediterm.terminal.ui.TerminalActionPresentation,java.util.function.Predicate):com.jediterm.terminal.ui.TerminalAction
+- s:createTerminalAction(com.intellij.terminal.JBTerminalWidget,java.lang.String,Z):com.jediterm.terminal.ui.TerminalAction
+c:com.intellij.terminal.pty.PtyProcessTtyConnector
+- <init>(java.lang.Process,java.nio.charset.Charset):V
+- <init>(java.lang.Process,java.nio.charset.Charset,java.util.List):V
+- b:<init>(java.lang.Process,java.nio.charset.Charset,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getName():java.lang.String
+- resize(com.jediterm.core.util.TermSize):V
+com.intellij.terminal.search.JediTermSearchComponentProvider
+- a:createSearchComponent(com.intellij.terminal.JBTerminalWidget):com.jediterm.terminal.ui.JediTermSearchComponent
+f:com.intellij.terminal.ui.TerminalWidgetKt
+- sf:setNewParentDisposable(com.intellij.terminal.ui.TerminalWidget,com.intellij.openapi.Disposable):V

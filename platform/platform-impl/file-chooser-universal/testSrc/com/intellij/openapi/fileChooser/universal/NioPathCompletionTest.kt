@@ -261,6 +261,48 @@ class NioPathCompletionTest {
   }
 
   @Test
+  fun `expanded text has the home directory in place of the tilde`() = runCompletionTest(home = { root.toString() }) {
+    val separator = root.fileSystem.separator
+    assertThat(completion.expandHome("~")).isEqualTo(root.toString())
+    assertThat(completion.expandHome("~${separator}alpha")).isEqualTo(root.resolve("alpha").toString())
+    assertThat(completion.expandHome(rootText)).isEqualTo(rootText)
+    assertThat(completion.expandHome("~bob")).describedAs("the home of another user").isEqualTo("~bob")
+  }
+
+  @Test
+  fun `posix backslash after the tilde does not expand`() {
+    Jimfs.newFileSystem(Configuration.unix()).use { fileSystem ->
+      runCompletionTest(pathParser = absoluteParser(fileSystem), home = { "/home/me" }) {
+        assertThat(completion.expandHome("~/projects/~/project")).isEqualTo("/home/me/projects/~/project")
+        assertThat(completion.expandHome("~\\project")).describedAs("a file name with a backslash").isEqualTo("~\\project")
+      }
+    }
+  }
+
+  @Test
+  fun `windows home expands with both separators`() {
+    Jimfs.newFileSystem(Configuration.windows()).use { fileSystem ->
+      runCompletionTest(pathParser = absoluteParser(fileSystem), home = { "C:\\Users\\me" }) {
+        assertThat(completion.expandHome("~\\projects")).isEqualTo("C:\\Users\\me\\projects")
+        assertThat(completion.expandHome("~/projects")).isEqualTo("C:\\Users\\me/projects")
+        assertThat(completion.expandHome("~me\\projects")).describedAs("the home of another user").isEqualTo("~me\\projects")
+      }
+    }
+  }
+
+  @Test
+  fun `expansion keeps the tilde when the home directory is unknown`() = runCompletionTest(home = { null }) {
+    assertThat(completion.expandHome("~/alpha")).isEqualTo("~/alpha")
+  }
+
+  @Test
+  fun `failed home directory lookup reports the error`() = runCompletionTest(home = { throw IllegalStateException("No home") }) {
+    completion.update("~/", Trigger.SHORTCUT)
+    val failed = awaitState { it !is State.Loading } as State.Failed
+    assertThat(failed.error).hasMessage("No home")
+  }
+
+  @Test
   fun `slow listing shows the loading state`() {
     val release = CompletableDeferred<Unit>()
     runCompletionTest(prepare = { release.await() }) {
@@ -291,22 +333,20 @@ class NioPathCompletionTest {
 
   @Test
   fun `failed preparation reports the error and waits for the shortcut`() {
-    val failure = IllegalStateException("No connection")
     val prepareCalls = AtomicInteger()
     val prepare: suspend () -> Unit = {
-      if (prepareCalls.incrementAndGet() == 1) throw failure
+      if (prepareCalls.incrementAndGet() == 1) throw IllegalStateException("No connection")
     }
     runCompletionTest(prepare = prepare) {
       completion.update(rootText, Trigger.SHORTCUT)
-      assertThat(awaitState { it !is State.Loading }).isEqualTo(State.Hidden)
-      assertThat(preparationError).isSameAs(failure)
+      val failed = awaitState { it !is State.Loading } as State.Failed
+      assertThat(failed.error).hasMessage("No connection")
 
       completion.update(rootText + "a", Trigger.TYPING)
-      assertThat(state).isEqualTo(State.Hidden)
+      assertThat(state).describedAs("an edit hides the failure").isEqualTo(State.Hidden)
       assertThat(prepareCalls.get()).isEqualTo(1)
 
       completion.update(rootText, Trigger.SHORTCUT)
-      assertThat(preparationError).isNull()
       assertThat(suggestionNames(awaitSuggestions())).containsExactly("alpha", "beta", "bravo.txt")
     }
   }
@@ -413,10 +453,6 @@ class NioPathCompletionTest {
   ) {
     private val states = Channel<State>(Channel.UNLIMITED)
 
-    /** The last preparation failure that the completion reported. */
-    var preparationError: Throwable? = null
-      private set
-
     /** The last state that the completion reported. */
     var state: State = State.Hidden
       private set
@@ -433,7 +469,6 @@ class NioPathCompletionTest {
         state = it
         states.trySend(it)
       },
-      onPreparationFailed = { preparationError = it },
     )
 
     suspend fun awaitState(predicate: (State) -> Boolean): State =

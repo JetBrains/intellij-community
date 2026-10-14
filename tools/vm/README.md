@@ -57,12 +57,11 @@ and `:air-trace` natively.
 
 `docker/` holds the image of the Linux worker (`--backend docker`, ADR 0183): the `Dockerfile` and its
 entrypoint `air-display`. The entrypoint starts the X display and the window manager. The image carries the guest
-Node (ADR 0210). `avl-vm` embeds both files and
+Node ([the Docker image carries Node, and the Tart Linux worker is retired](docs/decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). `avl-vm` embeds both files and
 builds the image; nobody builds it by hand. The base is `DOCKER_BASE_IMAGE` in `community/tools/vm/provision/versions.env`.
-`container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer (ADR 0222, ADR 0224).
-`docker/engine.lima.yaml` is the template of the Lima VM that runs the engine on an older macOS, or with
-`AIR_VM_DOCKER_ENGINE=lima` (ADR 0189). `avl-vm` embeds it too. `docker.MODULE.bazel` pins the Docker CLI and its
-`docker-buildx` plugin, and `lima.MODULE.bazel` pins Lima.
+`container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer ([Apple container is a second engine of the Docker backend](docs/decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), ADR 0224).
+`docker.MODULE.bazel` pins the Docker CLI and its `docker-buildx` plugin, which a Mac runs against the engine of its
+host environment.
 
 ## Crates
 
@@ -79,7 +78,7 @@ A crate exists when two binaries share it, or when it is the frozen-bytes engine
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
 controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`
 and `plan`.
-`build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
+`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` stands on `avl-trace` alone. `avl-record`
 links `avl-trace` and no other sibling, so the recorder links no packer, no discovery and no URL code. `avl-base`
@@ -138,19 +137,19 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 | | `avl-trace-tools` | the tools over the traces, which the recorder does not run: the deterministic zips with the media stored (`air-trace pack` and the guest's `trace-pack-ready`), the discovery of bundles in directories and zips, and the viewer URLs with the default port of `air-trace serve` |
 | base | `avl-base` | the exit vocabulary `Exit` and the controller's refusal, `refusal::Refusal<Exit>` with the constructors of `RefusalExt`, the `{ok,…}` envelope, the `AIR_VM_*` settings and their per-guest defaults (`src/config.rs`), phase timing, ids, the journal and history, atomic file publication. The image pins are read from `community/tools/vm/provision/versions.env` at compile time |
 | guest | `avl-guest` | the guest half and the agent binary: the run supervisor, the runtime stager, the Linux boot and macOS image verbs, the lane IDE contexts (`ide-prepare` lays out the directories of one context, `ide-launch` writes the argument file and the launch record and starts the IDE run in the closed environment of its context, `ide-gc` stops IDE runs and removes old logs, and `cancel --thread-dump` writes a thread dump before the kill), `trace-pack-ready`, the `relay` verb that bridges its stdin and stdout to a loopback port inside the guest, the `runfiles-tree` verb that builds the runfiles tree of the host's MANIFEST with the copies of the staged runfiles, and the `read-file` verb that writes one file on stdout unchanged for a pull |
-| host system | `avl-host-sys` | subprocesses, each with its timeout, and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and host-process identity, private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
-| workers | `avl-vm` (`worker`) | the four backends, Tart, Parallels, Docker and `container-linux`, of which a Windows host has Docker and `container-linux` (the binaries, the share grammars, the sealed golden, worker provenance, the Docker image and its containers), the Lima engine VM of a Docker pool on a macOS host, the Apple `container` engine and its CLI dialect, one dispatch for each lifecycle operation, the one resolver of the pinned tools (`PinnedTools`), readiness gates and the `pool` commands, lease ownership, receipts and the `lease` commands |
+| host system | `avl-host-sys` | subprocesses, each with its timeout, and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and the one host-process identity that the Tart pid receipt, the lock record and the run marker share (`ProcessIdentity`), private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
+| workers | `avl-vm` (`worker`) | the four backends, Tart, Parallels, Docker and `container-linux`, of which a Windows host has Docker and `container-linux` (the binaries, the share grammars, the sealed golden, worker provenance, the Docker image and its containers), the Apple `container` engine and its CLI dialect, one dispatch for each lifecycle operation, the one resolver of the pinned tools (`PinnedTools`), readiness gates and the `pool` commands, lease ownership, receipts, the run marker that names the run in flight on each worker (`run.json`) and the `lease` commands |
 | reports | `avl-report` | the content digests that decide whether a staged generation is reused, report assembly, the shard merge ladder and the flake arithmetic |
 | lanes | `avl-vm` (`lane`) | lane and selector resolution for the controller, the `suites` command, the host Bazel build, the guest launch environment, the lane IDEs that the controller stops or keeps and the check that no IDE runs from the shares (`ide`), and `exec`, `peekaboo`, `pull`, `ls`, `vnc`, `status` |
 | runs | `avl-vm` (`daemon`) | `run`, `shard`, `flake` and `daemon`: the HTTP client that reaches the guest daemon through the relay, staging, the hot-jar push, iterations, the verdict, the pull of each iteration's traces beside its report, the shard split and the flake trial chains, and the leased-run driver the three share: build first, lease, one body per worker, release, and the interrupt policy |
 | run time | `avl-vm` (`report`) | `report time`: where the time of a run went, from its journal, its iteration reports and the spans of its trace bundles, with no worker; `--baseline` adds the ratio of each test class |
 | bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the gate, the summary and the digest |
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
-| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels and JUnit tags (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label and JUnit tag, which `AirIntegrationTagTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
+| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels and JUnit tags (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label and JUnit tag, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
 | traces | `avl-record` | the recorder a lane JVM starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle, the snapshots, the `idea.log` slice, retention of the IDE root; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the lossless WebP stills, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen; the client of the IDE's trace routes |
 | | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, and the docs site; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
-| tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker`, fake `limactl` and fake Apple `container`. On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
-| | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI, `docker-buildx` and `limactl` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |
+| tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`. On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
+| | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI and `docker-buildx` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |
 
 ## The bench
 
@@ -159,7 +158,7 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 and the defaults of the verb.
 
 Every run is an integration test, as every run of the IDE Starter is, so a welcome run measures what the perf test of
-the welcome screen measures. `session.json` names this measurement model, and ADR 0230 records it. A metric of a
+the welcome screen measures. `session.json` names this measurement model, and ADR 0234 records it. A metric of a
 welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
@@ -172,6 +171,12 @@ metric.
 run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
 `cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
 profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why. The digest says which profile it read.
+
+Two costs of the instruments stay out of the numbers. The JVM writes `class-load.log` asynchronously, with
+`-Xlog:async:stall` and a buffer of 32 MB, because a flush of each class line under the global log lock costs a start
+about half a second of CPU. A full buffer stalls the logging thread and drops no line, so the class count stays exact.
+The profile leaves out the stacks under `Profiler::dlopen_hook`, where async-profiler parses the symbols of each library
+that the JVM loads, and the digest notes how many samples it left out.
 
 | verb | the question it answers | its output |
 | --- | --- | --- |
@@ -186,9 +191,26 @@ profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
 | `gc` | Which generations can go? | One line per removed generation, with its size. |
 
-A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clones of
-the `.dist` directory and of the JBR home of the row launcher, the dist config and `OpenedPackages.txt`. The digest of
-these four inputs is the key, so a generation that exists is reused. Its files are read-only.
+A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clone of
+the `.dist` directory, the dist config and `OpenedPackages.txt`. The home in the `.dist` directory holds the JBR at
+`jbr/Contents/Home`, as a macOS production distribution does, and every run starts with that JBR. The digest of these
+three inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
+names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
+directory, or its `Contents` for a macOS app.
+
+`--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
+session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An
+A/B/A run sets a change against the noise of this host: A1 measures the base, B the change, and A2 the bytes of A1
+again. The second line of the digest of A1 names its digest, and `bench ls` names each session:
+
+```bash
+./community/tools/vm.cmd bench welcome                             # A1, on the base commit
+./community/tools/vm.cmd bench welcome                             # B, after the change
+./community/tools/vm.cmd bench welcome --generation 5f1c0d9e2b7a   # A2, over the generation of A1
+./community/tools/vm.cmd bench compare aaaa1111 bbbb2222 cccc3333  # A1, B and A2 by a part of their names
+```
+
+`compare` sets B against A1, and A2 against A1 is the A/A run that tells the noise.
 
 A session directory holds:
 

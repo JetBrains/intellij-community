@@ -95,6 +95,7 @@
     <module name="intellij.driver.backend.split"/>
     <module name="intellij.performanceTesting.async.core"/>
     <module name="intellij.performanceTesting.freezes"/>
+    <module name="intellij.dev.leakDetection"/>
     <!-- oshi backs HardwareCollector. The platform no longer ships it, so this plugin owns it in a product.
          It stays in the 'jetbrains' namespace because the test tooling content modules of other plugins depend on it -->
     <module name="intellij.libraries.oshi.core" loading="embedded"/>

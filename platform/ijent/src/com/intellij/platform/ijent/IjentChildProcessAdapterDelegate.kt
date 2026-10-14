@@ -3,6 +3,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.provider.utils.asOutputStream
@@ -14,7 +15,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
@@ -31,13 +31,26 @@ internal class IjentChildProcessAdapterDelegate(
 
   val errorStream: InputStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
 
+  /**
+   * Previously, this code used to throw `IOException`. That was a bad idea:
+   * the documentation of `java.lang.Process.waitFor` explicitly says, the method may throw only `InterruptedException`.
+   * Users of this process adapter have never expected to catch anything from this method, so it led to errors.
+   *
+   * We could throw a RuntimeException. It would resolve the contract violation on paper, but the users still would not expect it.
+   *
+   * The only thing we can afford is to return some bogus error code.
+   */
   @Throws(InterruptedException::class)
   fun waitFor(): Int = runBlockingInContext {
     try {
       ijentChildProcess.exitCode.await()
     }
     catch (err: SafeDeferred.DeferredException) {
-      throw IOException("Can't wait for the process", err)
+      IjentLogger.EXEC_LOG.debug(err) {
+        "Can't wait for the process $ijentChildProcess"
+      }
+
+      EXIT_CODE_WHEN_SCOPE_CANCELED
     }
   }
 
@@ -48,7 +61,9 @@ internal class IjentChildProcessAdapterDelegate(
         ijentChildProcess.exitCode.await()
       }
       catch (err: SafeDeferred.DeferredException) {
-        throw IOException("Can't wait for the process", err)
+        if (err.cause !is EelUnavailableException) {
+          throw RuntimeException("Can't wait for the process", err)
+        }
       }
       true
     } == true
@@ -71,7 +86,9 @@ internal class IjentChildProcessAdapterDelegate(
   fun exitValue(): Int = when (val s = ijentChildProcess.exitCode.state) {
     is SafeDeferred.State.Completed -> s.value
 
-    SafeDeferred.State.Active, is SafeDeferred.State.Finished -> throw IllegalThreadStateException()
+    SafeDeferred.State.Active -> throw IllegalThreadStateException()
+
+    is SafeDeferred.State.Unsuccessful -> EXIT_CODE_WHEN_SCOPE_CANCELED
   }
 
   fun destroy() {
@@ -102,3 +119,34 @@ internal class IjentChildProcessAdapterDelegate(
     is EelWindowsProcess -> false
   }
 }
+
+/**
+ * Possible options:
+ *
+ * * Return -1
+ *     - Pros: Even though it is not documented, OpenJDK does that in rare cases itself.
+ *       See https://github.com/JetBrains/JetBrainsRuntime/blob/1f7925ceb4460b1052c93969749a52487bf133fc/src/java.base/unix/native/libjava/ProcessHandleImpl_unix.c#L194
+ *     - Pros: None of operating systems returns a negative error code.
+ *       Therefore, it's clear from the first glance that something different happened.
+ *     - Cons: Difficult to grep in case of problems.
+ * * Return 137 (128 + SIGKILL)
+ *     - Pros: Looks trustworthy.
+ *     - Cons: it's much worse lie than everything else, because it gives false impressions about what actually happened.
+ * * Return [Int.MIN_VALUE]
+ *     - Pros: Undoubtedly clear that something went wrong.
+ *     - Cons: `MIN_VALUE & 0xFF == 0`
+ *       In case of conversion of int to byte, it can give a false positive result.
+ *     - Cons: Difficult to grep
+ * * Return [Int.MAX_VALUE]
+ *     - Pros: Same as for [Int.MIN_VALUE]
+ *     - Pros: Unlike [Int.MIN_VALUE], `MAX_VALUE & 0xFF == 0xFF`. It's not zero.
+ *     - Cons: Difficult to grep
+ * * Return a recognizable magic number. For example, 331, 0x331 (Eel in 1337sp34k), 0x331ed, 0x331f411, etc.
+ *     - Pros: memorable, distinguishable, greppable.
+ *     - Cons: Unconventional.
+ *
+ * Only -1 and magic constant numbers are good options.
+ * Finally, -1 is chosen because there are already some comparisons to -1 in our code that uses the legacy SSH backend,
+ * even though these usages are from another API.
+ */
+private const val EXIT_CODE_WHEN_SCOPE_CANCELED = -1

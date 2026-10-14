@@ -101,6 +101,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests" scope="TEST" />

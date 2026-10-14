@@ -11,6 +11,7 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.uv.getOrDownloadUvExecutable
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.baseDir
@@ -26,6 +27,7 @@ import kotlinx.coroutines.withContext
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.junit5Tests.framework.env.PyInterpreterFixture
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -69,7 +71,7 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
   } ?: error("Python executable not found in UV venv: $venvDir")
 
   val interpreter =
-    setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(module), pythonBinary = venvPython, uvPath = uvExecutable, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
+    setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(module), pythonBinary = venvPython, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
   val sdk = interpreter.getSdkAPI()
   if (addToSdkTable) {
     module.pythonSdk = sdk
@@ -100,8 +102,23 @@ fun TestFixture<PyInterpreterFixture<PyEnvironment>>.pyUvVenvFixture(
   mode: UvMode = UvMode.Pip(),
 ): TestFixture<PythonInterpreter> = testFixture {
   val interpreterFixture = this@pyUvVenvFixture.init()
-  val env = interpreterFixture.env
-  val project = interpreterFixture.project
+  initUvVenvInterpreter(interpreterFixture.env, pyProjectFixture, mode)
+}
+
+/** [pyUvVenvFixture] on the test Python alone, which adds no interpreter of its own to the project. */
+@JvmName("pyEnvironmentUvVenvFixture")
+fun TestFixture<PyEnvironment>.pyUvVenvFixture(
+  pyProjectFixture: TestFixture<PyProject>,
+  mode: UvMode = UvMode.Pip(),
+): TestFixture<PythonInterpreter> = testFixture {
+  initUvVenvInterpreter(this@pyUvVenvFixture.init(), pyProjectFixture, mode)
+}
+
+private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initUvVenvInterpreter(
+  env: PyEnvironment,
+  pyProjectFixture: TestFixture<PyProject>,
+  mode: UvMode,
+): TestFixtureInitializer.InitializedTestFixture<PythonInterpreter> {
   val pyProject = pyProjectFixture.init()
   val baseDirPath = pyProject.baseDir
   val venvDir = baseDirPath.resolve(".venv")
@@ -123,13 +140,15 @@ fun TestFixture<PyInterpreterFixture<PyEnvironment>>.pyUvVenvFixture(
   } ?: error("Python executable not found in UV venv: $venvDir")
 
   val interpreter =
-    setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject), pythonBinary = venvPython, uvPath = uvExecutable, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
+    setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject), pythonBinary = venvPython, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
   pyProject.setPythonInterpreter(interpreter)
   // workaround interesting behavior of VFS_STRUCTURAL_MODIFICATIONS
   interpreter.sitePackagesDirectory()?.getChildren()
+  awaitPythonInterpreterReady(interpreter, pyProject.project)
 
-  initialized(interpreter) {
+  return initialized(interpreter) {
+    awaitPythonInterpreterUpdateBeforeRemoval(interpreter)
     pyProject.setPythonInterpreter(null)
-    PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProject, interpreter)
+    PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
   }
 }

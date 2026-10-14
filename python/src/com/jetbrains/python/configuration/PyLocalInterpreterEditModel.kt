@@ -3,6 +3,7 @@
 
 package com.jetbrains.python.configuration
 
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
@@ -36,7 +37,7 @@ data class PyLocalInterpreterHandle private constructor(
 ) {
   companion object {
     fun createOrNull(interpreter: PythonInterpreter): PyLocalInterpreterHandle? {
-      val env = interpreter.pythonEnvironment ?: return null
+      val env = interpreter.detectedEnvironment ?: return null
       return PyLocalInterpreterHandle(interpreter.getSdkAPI(), env.pythonBinaryPath)
     }
 

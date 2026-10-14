@@ -288,8 +288,7 @@ internal class IdeProjectFrameAllocator(
           (project as ComponentManagerEx).getCoroutineScope().launch(startUpContextElementToPass + rootTask()) {
             val frameHelper = deferredProjectFrameHelper.await()
             launch {
-              frameHelper.installDefaultProjectStatusBarWidgets(project)
-              frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+              installStatusBarWidgetsAndUpdateTitle(frameHelper = frameHelper, project = project, frameLoadingJob = job)
             }
 
             frameHelperInitJob.join() // initDockableContentFactory depends on it
@@ -1118,6 +1117,27 @@ internal suspend fun isReadmeLookupOnStartupEnabled(project: Project): Boolean {
   return AdvancedSettings.getBoolean("ide.open.readme.md.on.startup") &&
          !FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project) &&
          !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)
+}
+
+/**
+ * Installs the default status bar widgets of [project] and updates the frame title.
+ * A [ProjectFrameCapability.WELCOME_EXPERIENCE] project installs its widgets after [frameLoadingJob] completes,
+ * because the creation and the `install` of each widget is an EDT event that delays the frame becoming interactive.
+ */
+private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjectFrameHelper, project: Project, frameLoadingJob: Job) {
+  if (!serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+    frameHelper.installDefaultProjectStatusBarWidgets(project)
+    frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+    return
+  }
+
+  frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+  // the caller runs in the project scope, not as a child of the frame loading job, so the wait cannot deadlock
+  frameLoadingJob.join()
+  if (frameLoadingJob.isCancelled && !project.isOpen) {
+    return
+  }
+  frameHelper.installDefaultProjectStatusBarWidgets(project)
 }
 
 private class MutableLoadingState(override val done: Job) : FrameLoadingState

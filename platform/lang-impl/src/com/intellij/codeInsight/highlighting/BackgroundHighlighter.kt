@@ -146,7 +146,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
 
         val oldRange = e.oldRange
         val newRange = e.newRange
-        if (oldRange != null && newRange != null && oldRange.isEmpty == newRange.isEmpty) {
+        if (oldRange.isEmpty == newRange.isEmpty) {
           // don't update braces in case of active/absent selection.
           return
         }
@@ -263,7 +263,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       else {
         null
       }
-      // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
+      /** launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see [waitForIdentifierHighlighting] */
       launch(Dispatchers.EDT + modalityState) {
         if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
           applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
@@ -476,7 +476,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   val threshold = intValue("editor.highlight.selected.text.max.occurrences.threshold", 50)
   ReadAction.nonBlocking<List<FindResult>> {
     if (!BackgroundHighlightingUtil.isValidEditor(editor)) return@nonBlocking emptyList()
-    val sequence = document.charsSequence
+    val sequence = document.immutableCharSequence
     var result = findManager.findString(sequence, 0, findModel, null)
     val results = ArrayList<FindResult>()
     var count = 0
@@ -503,15 +503,13 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
       val highlighters = ArrayList<RangeHighlighter>()
       val markupModel = editor.markupModel
       for (result in results) {
-        val startOffset = result.startOffset
-        val endOffset = result.endOffset
-        if (TextRange.areSegmentsEqual(selectionRange, result)) {
-          continue
+        val coerced = BraceHighlightingHandler.coerceToDocumentRange(result, document)
+        if (!TextRange.areSegmentsEqual(selectionRange, coerced)) {
+          highlighters.add(markupModel.addRangeHighlighter(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, coerced.startOffset,
+                                                           coerced.endOffset,
+                                                           HighlighterLayer.ELEMENT_UNDER_CARET,
+                                                           HighlighterTargetArea.EXACT_RANGE))
         }
-
-        highlighters.add(markupModel.addRangeHighlighter(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, startOffset, endOffset,
-                                                         HighlighterLayer.ELEMENT_UNDER_CARET,
-                                                         HighlighterTargetArea.EXACT_RANGE))
       }
       editor.putUserData(SELECTION_HIGHLIGHTS, SelectionHighlights(toFind, highlighters))
     }
@@ -531,6 +529,6 @@ private fun removeSelectionHighlights(editor: Editor) {
 
 private class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
 
-private val SELECTION_HIGHLIGHTS = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
+private val SELECTION_HIGHLIGHTS: Key<SelectionHighlights> = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
 
 private class HighlightSelectionKey

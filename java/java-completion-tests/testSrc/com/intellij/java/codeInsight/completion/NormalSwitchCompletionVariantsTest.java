@@ -18,8 +18,8 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   private static final String[] COMMON_OBJECT_VARIANTS = ArrayUtil.mergeArrays(COMMON_VARIANTS, "case null", "case null, default");
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/variants/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/variants/";
   }
 
   @NotNull

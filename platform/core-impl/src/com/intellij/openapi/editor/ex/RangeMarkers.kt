@@ -33,6 +33,9 @@ interface RangeMarkers {
     layer: Int,
   )
 
+  /** Processes all valid markers by increasing start offset. Stops when [processor] returns `false`. */
+  fun processRangeMarkers(processor: Processor<in RangeMarker>): Boolean
+
   fun processRangeMarkersOverlappingWith(
     startOffset: Int,
     endOffset: Int,

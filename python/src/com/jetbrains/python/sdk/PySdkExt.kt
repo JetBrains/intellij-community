@@ -25,7 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.div
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
+import com.intellij.python.sdk.backend.detectedEnvironment
 
 internal fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
@@ -70,7 +71,7 @@ var Project.pythonSdk: Sdk?
 
 @Internal
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = sdk.pythonInterpreter().pythonHomePath?.let {
+  val root = sdk.pythonInterpreterResult().successOrNull?.detectedEnvironment?.pythonHomePath?.let {
     VirtualFileManager.getInstance().findFileByNioPath(it)
   } ?: return
 

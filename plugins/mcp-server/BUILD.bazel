@@ -76,7 +76,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/eel-provider",
         "//platform/built-in-server-api:builtInServer",
-        "//platform/execution",
         "//platform/backend/observation",
     ],
 )
@@ -144,7 +143,6 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/built-in-server-api:builtInServer_test_lib",
-        "//platform/execution:execution_test_lib",
         "//platform/backend/observation:observation_test_lib",
     ],
 )

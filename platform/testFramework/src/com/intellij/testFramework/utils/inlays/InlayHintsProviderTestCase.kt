@@ -10,6 +10,10 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.containers.isEmpty
 
+/**
+ * @deprecated Use [InlayHintsProviderTestUtil] in a JUnit 5 test.
+ */
+@Deprecated("Use InlayHintsProviderTestUtil in a JUnit 5 test.")
 abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
 
   companion object {

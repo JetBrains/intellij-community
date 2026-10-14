@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.UUID
@@ -309,6 +311,22 @@ class ToolWindowEditorTabManager(
     // more after the required state is available.
     project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       .fileClosed(FileEditorManager.getInstance(project), file)
+  }
+
+  /**
+   * Starts the synchronization of [file] with its backend mirror on the scope of this service.
+   *
+   * The synchronization sends an RPC request, so it must not run on the caller thread. The caller is
+   * the frontend file-open listener, which runs on the EDT inside the file-open event.
+   *
+   * @param editorsWithProviders the editors of [file] and the providers that created them
+   */
+  @ApiStatus.Internal
+  fun scheduleBackendMirrorSync(file: ToolWindowEditorTabFile, editorsWithProviders: List<FileEditorWithProvider>) {
+    val editorWithProvider = editorsWithProviders.firstOrNull { it.fileEditor is ToolWindowEditorTabFileEditor } ?: return
+    coroutineScope.launch {
+      syncToolWindowEditorTabWithBackendMirror(project, file, editorWithProvider)
+    }
   }
 
   companion object {

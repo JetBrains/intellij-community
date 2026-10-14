@@ -12,7 +12,8 @@
 //!   tag from `AIR_VM_DOCKER_REGISTRY` (ADR 0184): the tag names the same bytes wherever the image was built, and the
 //!   image's `org.opencontainers.image.revision` label carries the tag digest, so a pulled image that does not say
 //!   the digest is dropped and built instead. The Apple `container` engine pulls the tag from the file mirror
-//!   `AIR_VM_IMAGE_MIRROR` instead, as an OCI archive (ADR 0222), and checks the same label.
+//!   `AIR_VM_IMAGE_MIRROR` instead, as an OCI archive (the decision
+//!   `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`), and checks the same label.
 //! - **the container** is made by `docker create` with the shares as read-only bind mounts and `WorkerData` in a
 //!   named volume. The shares are arguments of the create, as they are arguments of `tart run` on Tart, so a
 //!   share-set change makes the container again. The create arguments are recorded ([`CreateRecord`]), and a record
@@ -31,12 +32,9 @@
 //! `cat` in the container returns the new bytes at once, `stat` answers the old size for about a second, and `open`
 //! never fails with ENOENT.
 //!
-//! Measured on 2026-09-30 on the Lima engine (Lima 2.2.0, vz, virtiofs, kernel 6.8, `docker.io` 29.1.3): a path the
-//! guest looked up in the second before the rename keeps a dead node, so `open` fails with ENOENT and `stat` answers
-//! the old size. The dead node clears by itself in under a second, in the VM and in the container.
-//!
-//! Measured on 2026-10-09 on Apple `container` 1.5.0 (one VM per container, virtiofs, kernel 6.18): the same dead
-//! node, which expired in under 60 ms.
+//! Measured on 2026-10-09 on Apple `container` 1.5.0 (one VM per container, virtiofs, kernel 6.18): a path the guest
+//! looked up in the second before the rename keeps a dead node, so `open` fails with ENOENT and `stat` answers the old
+//! size. The dead node expired in under 60 ms.
 //!
 //! So on every engine the share refresh is a short settle, not a remount (see `Manager::refresh_shares`).
 //!
@@ -52,7 +50,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use avl_base::config::{CONTAINER_LABEL, Secret, docker_buildx_label, docker_cli_label};
+use avl_base::config::{CONTAINER_LABEL, CONTAINER_MACOS_MAJOR, Secret, docker_buildx_label, docker_cli_label};
 use avl_base::fs::private_temporary;
 use avl_base::{Config, Exit, GuestArch, OrRefuse, Refusal, Reporter, SCHEMA_VERSION, Scope};
 use avl_host_sys::fs::real_path;
@@ -66,10 +64,8 @@ use tokio::sync::OnceCell;
 
 use crate::worker::container::{AppleContainer, BUILDER_MEMORY, container_missing, is_not_found};
 use crate::worker::hypervisor::unsupported;
-use crate::worker::lima::Lima;
 use crate::worker::pin::{PinnedTool, PinnedTools};
-use crate::worker::secure::write_json_line;
-use crate::worker::worker::{HeldLeases, Lease};
+use crate::worker::secure::{read_json_record, write_json_line};
 
 /// The timeout of `docker version`, the gate that asks the engine. An engine that answers does so at once, and one
 /// that does not answer within it is `docker_missing`, which a caller retries against.
@@ -311,7 +307,7 @@ pub(crate) fn apple_image_revision(answer: &str) -> String {
 /// The CLI dialect of the engine of a Docker pool.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Dialect {
-    /// The Docker CLI, on the Lima engine and on an external engine.
+    /// The Docker CLI, on the host engine.
     Docker,
     /// The Apple `container` CLI.
     AppleContainer,
@@ -360,11 +356,10 @@ pub(crate) struct ImageRecord {
 
 /// The Docker backend, one of the three a [`Machine`](crate::worker::hypervisor::Machine) is.
 ///
-/// The runner the manager hands over already carries `DOCKER_HOST` when the engine is the controller's Lima VM, and
-/// `DOCKER_CONFIG` with the pinned CLI, on every engine. So every `docker` command of the backend and of the guest
-/// channel reaches that engine, and the pinned CLI has the pinned `docker-buildx` plugin
-/// ([`Docker::install_cli_plugins`]). On the Apple `container` engine the executable is the Apple CLI, and neither
-/// variable applies.
+/// The runner the manager hands over carries `DOCKER_CONFIG` when the backend runs the pinned CLI. So every `docker`
+/// command of the backend and of the guest channel finds the pinned `docker-buildx` plugin
+/// ([`Docker::install_cli_plugins`]). On the Apple `container` engine the executable is the Apple CLI, and the
+/// variable does not apply.
 pub(crate) struct Docker {
     settings: Arc<Config>,
     runner: Runner,
@@ -375,10 +370,8 @@ pub(crate) struct Docker {
     /// The executable every Docker command runs: [`Config::docker`], or the pinned CLI once the gate resolved it. On
     /// the Apple `container` engine it is the real path of [`Config::container`] or of the pinned Apple CLI.
     executable: OnceCell<PathBuf>,
-    /// The Lima VM that is the engine, when [`Config::runs_lima_engine`]. `None` for the engine of the host
+    /// The Apple `container` engine, when [`Config::runs_container_engine`]. `None` for the engine of the host
     /// environment.
-    engine: Option<Lima>,
-    /// The Apple `container` engine, when [`Config::runs_container_engine`].
     apple: Option<AppleContainer>,
     /// Set once the pinned `docker-buildx` plugin is named in [`Config::docker_config_dir`].
     cli_plugins: OnceCell<()>,
@@ -391,33 +384,23 @@ impl Docker {
         reporter: Reporter,
         locks: Arc<LockManager>,
         pinned: Arc<PinnedTools>,
-        held: Arc<HeldLeases>,
     ) -> Self {
         let executable = OnceCell::new_with(settings.docker.clone());
         let apple = settings
             .runs_container_engine()
-            .then(|| AppleContainer::new(Arc::clone(&settings), runner.clone(), reporter.clone(), Arc::clone(&locks)));
-        let engine = settings
-            .runs_lima_engine()
-            .then(|| Lima::new(Arc::clone(&settings), &runner, reporter.clone(), locks, Arc::clone(&pinned), held));
+            .then(|| AppleContainer::new(Arc::clone(&settings), runner.clone(), reporter.clone(), locks));
         Self {
             settings,
             runner,
             reporter,
             pinned,
             executable,
-            engine,
             apple,
             cli_plugins: OnceCell::new(),
         }
     }
 
-    /// The controller's Lima engine, or `None` for the engine of the host environment and for Apple `container`.
-    pub(crate) const fn engine(&self) -> Option<&Lima> {
-        self.engine.as_ref()
-    }
-
-    /// The Apple `container` engine, or `None` on the other engines.
+    /// The Apple `container` engine, or `None` on the host engine.
     pub(crate) const fn apple(&self) -> Option<&AppleContainer> {
         self.apple.as_ref()
     }
@@ -517,27 +500,19 @@ impl Docker {
 
     // --- what the machine asks of the backend ------------------------------------------------------------
 
-    /// Refuses unless an engine answers and runs containers of the guest's architecture natively. The caller holds no
-    /// lease: [`Docker::require_available_for`] with none.
+    /// Refuses unless an engine answers and runs containers of the guest's architecture natively.
     ///
     /// The worker name is ignored, as on Tart: a slot is a name the controller may use, and the first operation on a
     /// free slot creates its container.
-    pub(crate) async fn require_available(&self, ctx: &Ctx, _worker: &str) -> Result<(), Refusal> {
-        self.require_available_for(ctx, None).await
-    }
-
-    /// The gate for a caller that holds `authorized`, a lease of this pool.
     ///
-    /// The CLI is resolved first, then the Lima engine is started when it is the engine, and only then does `docker
-    /// version` ask it. The lease is the caller's own, so its worker does not stop the Lima engine from being made
-    /// again after a template change ([`Lima::ensure_running`]). A missing binary and an engine that does not answer are
-    /// both `docker_missing` at [`Exit::UNAVAILABLE`], which is what a caller retries against: OrbStack that is not
-    /// started yet is the common case.
+    /// The CLI is resolved first, and only then does `docker version` ask the engine. A missing binary and an engine
+    /// that does not answer are both `docker_missing` at [`Exit::UNAVAILABLE`], which is what a caller retries against:
+    /// OrbStack that is not started yet is the common case.
     ///
     /// On the Apple `container` engine the gate is [`AppleContainer::ensure_running`]: the server of the login session,
     /// started when it is down, and refused when it belongs to another install of another major version. A host that
     /// cannot run the engine is refused before the CLI is resolved ([`AppleContainer::require_supported_host`]).
-    pub(crate) async fn require_available_for(&self, ctx: &Ctx, authorized: Option<&Lease>) -> Result<(), Refusal> {
+    pub(crate) async fn require_available(&self, ctx: &Ctx, _worker: &str) -> Result<(), Refusal> {
         if let Some(apple) = &self.apple {
             apple.require_supported_host()?;
         }
@@ -546,9 +521,6 @@ impl Docker {
             return apple.ensure_running(ctx, program).await;
         }
         self.install_cli_plugins(ctx).await?;
-        if let Some(engine) = &self.engine {
-            engine.ensure_running(ctx, authorized).await?;
-        }
         let argv = self.command(&["version", "--format", "{{.Server.Os}}/{{.Server.Arch}}"]);
         let captured = match self.runner.capture(ctx, &argv, &SpawnOptions::within(DOCKER_VERSION_TIMEOUT)).await {
             Ok(captured) => captured,
@@ -623,32 +595,22 @@ impl Docker {
         Ok(line)
     }
 
-    /// Whether the engine runs and answers, asked without a change to the engine: the question of `pool stop`, `pool
-    /// gc` and the engine stop, which must never start the Lima engine or make it again.
+    /// Whether the engine runs and answers, asked without a start of the engine: the question of a command that must
+    /// not start one, such as `pool stop`, `pool gc` or a lease release.
     ///
-    /// The Lima engine answers from `limactl list`, and when it runs the CLI is resolved, so the host commands that
-    /// follow have their head. The engine of the host environment passes the whole gate.
-    ///
-    /// The Apple `container` engine answers from `system status`, and a server that is down is not started.
+    /// The engine of the host environment passes the whole gate, so the host commands that follow have their head. The
+    /// Apple `container` engine answers from `system status`, and a server that is down is not started.
     pub(crate) async fn reach_engine(&self, ctx: &Ctx) -> Result<bool, Refusal> {
         if let Some(apple) = &self.apple {
             let program = self.resolve_executable(ctx).await?;
             return apple.is_running(ctx, program).await;
         }
-        let Some(engine) = &self.engine else {
-            self.require_available(ctx, "").await?;
-            return Ok(true);
-        };
-        if !engine.is_running(ctx).await? {
-            return Ok(false);
-        }
-        self.resolve_executable(ctx).await?;
-        self.install_cli_plugins(ctx).await?;
+        self.require_available(ctx, "").await?;
         Ok(true)
     }
 
     /// Stops and deletes the builder VM of the Apple `container` engine, when its server runs: the part of `pool
-    /// recycle all` that this engine has. A server that is down is not started, and the other engines do nothing.
+    /// recycle all` that this engine has. A server that is down is not started, and the host engine does nothing.
     pub(crate) async fn delete_builder(&self, ctx: &Ctx) -> Result<(), Refusal> {
         let Some(apple) = &self.apple else {
             return Ok(());
@@ -664,8 +626,9 @@ impl Docker {
     /// engine: the question of a lease release.
     ///
     /// The engine is reached first because a standalone `lease release` is the first command of its process, so no
-    /// gate has resolved the CLI that `docker inspect` needs. A Lima engine that does not run holds no running
-    /// container, so its worker is down without a `docker` command. A CLI that cannot be resolved is `docker_missing`.
+    /// gate has resolved the CLI that `docker inspect` needs. An Apple `container` server that does not run holds no
+    /// running container, so its worker is down without an `inspect`. A CLI that cannot be resolved is
+    /// `docker_missing`.
     pub(crate) async fn stopped(&self, ctx: &Ctx, worker: &str) -> Result<bool, Refusal> {
         Ok(!self.reach_engine(ctx).await? || !self.running(ctx, worker).await?)
     }
@@ -728,8 +691,7 @@ impl Docker {
     }
 
     /// What `docker_missing` tells the operator to do when the CLI does not run. The pinned CLI names its label, as
-    /// `tart_missing` does. A Linux or a Windows host has no pinned CLI and no Lima engine, so there the remedy is an
-    /// installation.
+    /// `tart_missing` does. A Linux or a Windows host has no pinned CLI, so there the remedy is an installation.
     fn install_remedy(&self) -> String {
         if self.apple.is_some() {
             return crate::worker::container::install_remedy(&self.settings);
@@ -1029,8 +991,7 @@ impl Docker {
     /// The record of where the pool's image came from, or `None` for every kind of wrong: absent, unparseable,
     /// another schema.
     pub(crate) fn read_image_record(&self) -> Option<ImageRecord> {
-        let content = std::fs::read(self.settings.docker_image_record_path()).ok()?;
-        let record: ImageRecord = serde_json::from_slice(&content).ok()?;
+        let record: ImageRecord = read_json_record(&self.settings.docker_image_record_path()).ok().flatten()?;
         (record.schema_version == SCHEMA_VERSION).then_some(record)
     }
 
@@ -1457,8 +1418,7 @@ impl Docker {
     /// worker's, another schema. The caller's question is "may I keep this container", and no damaged record may
     /// answer yes.
     pub(crate) fn read_create_record(&self, worker: &str) -> Option<CreateRecord> {
-        let content = std::fs::read(self.settings.docker_create_record_path(worker)).ok()?;
-        let record: CreateRecord = serde_json::from_slice(&content).ok()?;
+        let record: CreateRecord = read_json_record(&self.settings.docker_create_record_path(worker)).ok().flatten()?;
         (record.schema_version == SCHEMA_VERSION && record.worker == worker && !record.argv.is_empty()).then_some(record)
     }
 
@@ -1637,7 +1597,12 @@ impl Docker {
         Ok(())
     }
 
-    /// What a refusal of `docker version` tells the operator to do: look at the Lima engine, or start the engine.
+    /// What a refusal of `docker version` tells the operator to do: look at the Apple `container` server, start the
+    /// engine that the environment names, or name one.
+    ///
+    /// A Mac that names no engine in `DOCKER_BIN` or `DOCKER_HOST` and runs no Apple `container` has no engine that
+    /// this controller starts. Its remedy is [`named_engine_remedy`]. Only a macOS host leaves [`Config::docker`]
+    /// empty.
     fn engine_remedy(&self) -> String {
         if self.apple.is_some() {
             return format!(
@@ -1645,14 +1610,10 @@ impl Docker {
                 self.settings.container_system_log_path().display()
             );
         }
-        match &self.engine {
-            Some(engine) => format!(
-                "the Lima engine does not answer at {}; its log is {}",
-                engine.docker_host(),
-                self.settings.lima_engine_log_path().display()
-            ),
-            None => "start the Docker engine".to_owned(),
+        if self.settings.docker.is_none() && self.settings.docker_host.is_none() {
+            return format!("this Mac runs no Apple container; {}", named_engine_remedy());
         }
+        "start the Docker engine".to_owned()
     }
 }
 
@@ -1724,6 +1685,15 @@ fn push_failed(error: ProcError, log: &Path) -> Refusal {
         ),
         other => other.into(),
     }
+}
+
+/// What a Mac without the Apple `container` engine does instead: it names a Docker engine, or the lane runs on a Mac
+/// that runs Apple `container`.
+pub(crate) fn named_engine_remedy() -> String {
+    format!(
+        "name a Docker engine with DOCKER_BIN or DOCKER_HOST, or run the lane on a Mac with macOS {CONTAINER_MACOS_MAJOR} \
+         or newer on Apple silicon"
+    )
 }
 
 fn docker_missing(message: String) -> Refusal {

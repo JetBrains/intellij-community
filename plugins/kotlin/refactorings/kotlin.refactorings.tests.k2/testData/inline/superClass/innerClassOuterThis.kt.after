@@ -1,0 +1,12 @@
+class Child {
+    private val answer = 42
+
+    inner class Reader {
+        private val answer = -1
+
+        fun outerAnswer() = this@Child.answer
+        fun innerAnswer() = this@Reader.answer
+    }
+}
+
+fun reader(child: Child): Child.Reader = child.Reader()

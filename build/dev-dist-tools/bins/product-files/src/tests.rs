@@ -1,15 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+use std::collections::HashMap;
 use std::ffi::OsString;
 
 use appinfo::{ApplicationInfo, Replacement};
 use serde_json::Value;
 use testkit::{read_text, testdata};
 
-use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, parse_launch_model};
+use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, VmOptions, parse_launch_model};
 use crate::render::{
     LaunchFiles, LaunchNames, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, common_vm_options,
-    insert_eap_vm_options, opened_packages, parse_platform, render_launch_files,
+    insert_eap_vm_options, launch_boot_class_path, opened_packages, parse_platform, render_launch_files,
 };
 use crate::run;
 
@@ -27,6 +28,13 @@ const HOST_PLATFORMS: [&str; 6] = [
 
 fn test_model(name: &str) -> LaunchModel {
     parse_launch_model(read_text(testdata(name)).as_bytes()).unwrap()
+}
+
+/// The core classpath of the test distribution, in the sorted order of the payload. It holds `nio-fs.jar`.
+const CORE_CLASS_PATH_FILE: &str = "core-classpath.txt";
+
+fn test_core_class_path() -> Vec<String> {
+    read_text(testdata(CORE_CLASS_PATH_FILE)).lines().map(str::to_owned).collect()
 }
 
 /// One test product: a launch model, its application info, the markers of that application info and its build number.
@@ -110,10 +118,18 @@ impl Fixture {
     ) -> anyhow::Result<LaunchFiles> {
         let application_info = self.read_application_info();
         let build_number = self.build_number();
+        // A classic-loader launch reads the core classpath, as the action passes it for such a model only.
+        let core_class_path = test_core_class_path();
         let product = Product {
             model,
             application_info: &application_info,
             build_number: &build_number,
+            core_class_path: model
+                .launch
+                .boot_class_path_jar_names
+                .is_none()
+                .then_some(core_class_path.as_slice()),
+            dev_jvm_arguments: &[],
         };
         render_launch_files(&product, parse_platform(platform)?, opened, idea_properties, common)
     }
@@ -292,8 +308,8 @@ fn rendered_files_of_one_model() {
     );
 }
 
-/// The goldens are the bytes that the Go tool wrote for each test model on each host platform.
-/// `DevDistProductLaunchModelTest` checked the Go tool against the production writers.
+/// The goldens hold the bytes of each test model on each host platform. `DevDistProductLaunchModelTest` checks the tool
+/// against the production writers.
 #[test]
 fn product_info_matches_the_recorded_bytes_on_every_platform() {
     let opened = read_text(testdata("opened-packages.txt"));
@@ -358,6 +374,209 @@ fn language_server_vm_options_are_headless() {
     assert_eq!(
         files.vm_options,
         format!("-Xmx2048m\n{EAP_LINE}\n-ea\n-Dkept=1\n-Dx=linux\n-Djava.awt.headless=true\n")
+    );
+}
+
+/// The vmoptions file of the embedded frontend has its own parts, the common lines and the EAP flag of the product.
+/// The headless rule of a language server applies to the file of the product only.
+#[test]
+fn frontend_vm_options_follow_the_pipeline_of_the_product() {
+    let mut model = test_model(IDEA.model);
+    let common = "-XX:+Common\n";
+    let plain = IDEA.render_with_common(&model, "linux_x64", "", "", common).unwrap();
+    assert_eq!(
+        plain.frontend_vm_options, None,
+        "a model without frontendVmOptions renders no frontend file"
+    );
+    model.frontend_vm_options = Some(VmOptions {
+        memory: strings(&["-Xms256m", "-Xmx1024m"]),
+        product: strings(&["-Dfrontend=1", "-Dawt.x=1"]),
+        os: HashMap::from([(OS_MAC.to_owned(), strings(&["-Dmac=frontend"]))]),
+    });
+    let mac = IDEA.render_with_common(&model, "darwin_aarch64", "", "", common).unwrap();
+    assert_eq!(mac.vm_options, format!("-Xmx2048m\n-XX:+Common\n{EAP_LINE}\n-Dx=mac\n"));
+    assert_eq!(
+        mac.frontend_vm_options,
+        Some(format!(
+            "-Xms256m\n-Xmx1024m\n-XX:+Common\n{EAP_LINE}\n-Dfrontend=1\n-Dawt.x=1\n-Dmac=frontend\n"
+        ))
+    );
+    // A release product gets no EAP line, and the model states no Windows lines of the frontend.
+    let windows = RELEASE.render_with_common(&model, "windows_x64", "", "", common).unwrap();
+    assert_eq!(
+        windows.frontend_vm_options.as_deref(),
+        Some("-Xms256m\r\n-Xmx1024m\r\n-XX:+Common\r\n-Dfrontend=1\r\n-Dawt.x=1\r\n")
+    );
+    model.language_server = true;
+    let server = RELEASE.render_with_common(&model, "linux_x64", "", "", common).unwrap();
+    assert_eq!(server.vm_options, "-Xmx2048m\n-XX:+Common\n-Dx=linux\n-Djava.awt.headless=true\n");
+    assert_eq!(
+        server.frontend_vm_options.as_deref(),
+        Some("-Xms256m\n-Xmx1024m\n-XX:+Common\n-Dfrontend=1\n-Dawt.x=1\n")
+    );
+}
+
+/// A classic-loader launch takes the core classpath in the production order. The multi-routing file system puts
+/// `nio-fs.jar` on `-Xbootclasspath/a:`, so the list drops it then.
+#[test]
+fn launch_boot_class_path_follows_the_production_order() {
+    fn product<'a>(model: &'a LaunchModel, application_info: &'a ApplicationInfo, core: Option<&'a [String]>) -> Product<'a> {
+        Product {
+            model,
+            application_info,
+            build_number: "263.SNAPSHOT",
+            core_class_path: core,
+            dev_jvm_arguments: &[],
+        }
+    }
+    let mut model = test_model(IDEA.model);
+    let application_info = IDEA.read_application_info();
+    let core = strings(&[
+        "b.jar",
+        "util.jar",
+        "nio-fs.jar",
+        "a.jar",
+        "platform-loader.jar",
+        "a.jar",
+        "util-8.jar",
+    ]);
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap(),
+        strings(&["platform-loader.jar", "util-8.jar", "util.jar", "a.jar", "b.jar"])
+    );
+
+    model.launch.jvm_arguments.multi_routing_file_system = false;
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap(),
+        strings(&["platform-loader.jar", "util-8.jar", "util.jar", "a.jar", "b.jar", "nio-fs.jar"])
+    );
+
+    // A modular-loader launch states its list and reads no core classpath.
+    model.launch.boot_class_path_jar_names = Some(strings(&["platform-loader.jar"]));
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, None)).unwrap(),
+        strings(&["platform-loader.jar"])
+    );
+    let error = launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "the launch states bootClassPathJarNames, so it reads no core classpath"
+    );
+    model.launch.boot_class_path_jar_names = None;
+    let error = launch_boot_class_path(&product(&model, &application_info, None)).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "the launch states no bootClassPathJarNames, so it needs the core classpath"
+    );
+}
+
+/// A command with additional jars takes the boot class path of the launch first. A frontend command keeps its own list.
+#[test]
+fn custom_commands_extend_the_boot_class_path_of_the_launch() {
+    let mut model = test_model(IDEA.model);
+    let files = IDEA.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    let launch = strings(&["platform-loader.jar", "util-8.jar", "util.jar", "product-backend.jar", "app.jar"]);
+    assert_eq!(info["launch"][0]["bootClassPathJarNames"], serde_json::json!(launch));
+    let mut stdio = launch;
+    stdio.push("../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar".to_owned());
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(stdio)
+    );
+
+    // A Qodana launch adds `nio-fs.jar` after the list, which has no `nio-fs.jar` with the multi-routing file system.
+    let server = test_model(SERVER.model);
+    let files = SERVER.render(&server, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(["platform-loader.jar", "nio-fs.jar"])
+    );
+
+    model.custom_commands[0].boot_class_path_jar_names = strings(&["own.jar"]);
+    let error = IDEA.render(&model, "linux_x64", "", "").unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        r#"the custom command ["stdioMcpServer"] states both bootClassPathJarNames and additionalBootClassPathJarNames"#
+    );
+    model.custom_commands[0].additional_boot_class_path_jar_names.clear();
+    let files = IDEA.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(["own.jar"])
+    );
+}
+
+/// The JVM arguments of a JSON array at `pointer`, or none when the field is absent.
+fn json_strings(info: &Value, pointer: &str) -> Vec<String> {
+    info.pointer(pointer)
+        .and_then(Value::as_array)
+        .map(|values| values.iter().map(|value| value.as_str().unwrap().to_owned()).collect())
+        .unwrap_or_default()
+}
+
+/// The dev JVM arguments go after the list of the launch and of each custom command with a list of its own. The
+/// launcher gives a command with an empty list the list of the launch, so that list stays empty.
+#[test]
+fn dev_jvm_arguments_follow_each_list_of_its_own() {
+    let model = test_model(SERVER.model);
+    let application_info = SERVER.read_application_info();
+    let build_number = SERVER.build_number();
+    let dev = strings(&["-Didea.use.dev.build.server=true", "-Dsecond=1"]);
+    let render = |dev_jvm_arguments: &[String]| -> Value {
+        let product = Product {
+            model: &model,
+            application_info: &application_info,
+            build_number: &build_number,
+            core_class_path: None,
+            dev_jvm_arguments,
+        };
+        let files = render_launch_files(&product, parse_platform("linux_x64").unwrap(), "", "", "").unwrap();
+        serde_json::from_str(&files.product_info).unwrap()
+    };
+    let plain = render(&[]);
+    let marked = render(&dev);
+    for pointer in [
+        "/launch/0/additionalJvmArguments",
+        "/launch/0/customCommands/0/additionalJvmArguments",
+    ] {
+        let mut expected = json_strings(&plain, pointer);
+        assert!(!expected.is_empty(), "the fixture states a list at {pointer}");
+        expected.extend(dev.iter().cloned());
+        assert_eq!(json_strings(&marked, pointer), expected, "{pointer}");
+    }
+    assert_eq!(
+        marked["launch"][0]["customCommands"][1]["additionalJvmArguments"],
+        Value::Null,
+        "a command with an empty list takes the list of the launch in the launcher"
+    );
+}
+
+/// The tool appends each `--dev-jvm-argument` in its order, and refuses an empty one.
+#[test]
+fn the_tool_appends_the_dev_jvm_arguments() {
+    let tool = ToolRun::new();
+    let mut args = tool.base_args();
+    args.extend(IDEA.inputs());
+    args.extend(strings(&[
+        "--dev-jvm-argument=-Didea.use.dev.build.server=true",
+        "--dev-jvm-argument=-Dx=1",
+    ]));
+    let result = run_tool(&args);
+    assert_eq!(result.code, 0, "{}", result.errors);
+    let info = tool.product_info();
+    let launch = json_strings(&info, "/launch/0/additionalJvmArguments");
+    assert_eq!(launch[launch.len() - 2..], strings(&["-Didea.use.dev.build.server=true", "-Dx=1"]));
+    // `stdioMcpServer` states no JVM arguments, so it takes the list of the launch in the launcher.
+    assert_eq!(info["launch"][0]["customCommands"][0]["additionalJvmArguments"], Value::Null);
+
+    args.push("--dev-jvm-argument=".to_owned());
+    let result = run_tool(&args);
+    assert_eq!(
+        (result.code, result.errors.as_str()),
+        (2, "ERROR: --dev-jvm-argument must not be empty\n")
     );
 }
 
@@ -525,6 +744,7 @@ fn the_tool_writes_the_four_files() {
         format!("--idea-properties-out={}", out("out.properties")),
         format!("--vmoptions-out={}", out("out.vmoptions")),
         format!("--product-info-out={}", out("product-info.json")),
+        format!("--core-classpath-jar-names={}", testdata(CORE_CLASS_PATH_FILE).display()),
     ];
     args.extend(IDEA.inputs());
     let result = run_tool(&args);
@@ -552,6 +772,128 @@ fn the_tool_writes_the_four_files() {
         result.errors,
         "ERROR: \"solaris_x64\" is not a host platform such as darwin_aarch64\n"
     );
+}
+
+/// A model with `frontendVmOptions` needs `--frontend-vmoptions-out`, and a model without it refuses the option.
+#[test]
+fn the_tool_writes_the_frontend_vmoptions_file_when_the_model_states_it() {
+    let tool = ToolRun::new();
+    let mut model: Value = serde_json::from_str(&read_text(testdata("model.json"))).unwrap();
+    model["frontendVmOptions"] = serde_json::json!({"memory": ["-Xmx1024m"], "os": {"Linux": ["-Dx=frontend"]}});
+    let frontend_model = tool.write("frontend-model.json", &model.to_string());
+    let plain_model = testdata("model.json").display().to_string();
+    let args_of = |model: &str, extra: &[String]| -> Vec<String> {
+        let mut args = tool.base_args();
+        args[0] = format!("--model={model}");
+        args.extend(IDEA.inputs());
+        args.extend(extra.iter().cloned());
+        args
+    };
+    let frontend_out = format!("--frontend-vmoptions-out={}", tool.out("frontend.vmoptions"));
+
+    let result = run_tool(&args_of(&frontend_model, std::slice::from_ref(&frontend_out)));
+    assert_eq!(result.code, 0, "{}", result.errors);
+    assert_eq!(
+        std::fs::read_to_string(tool.out("frontend.vmoptions")).unwrap(),
+        format!("-Xmx1024m\n{EAP_LINE}\n-Dx=frontend\n")
+    );
+
+    for (model, extra, want) in [
+        (
+            &frontend_model,
+            Vec::new(),
+            (
+                1,
+                format!("ERROR: {frontend_model} states frontendVmOptions, so --frontend-vmoptions-out is required\n"),
+            ),
+        ),
+        (
+            &plain_model,
+            vec![frontend_out],
+            (
+                1,
+                format!("ERROR: --frontend-vmoptions-out is set, but {plain_model} states no frontendVmOptions\n"),
+            ),
+        ),
+        (
+            &frontend_model,
+            strings(&["--frontend-vmoptions-out="]),
+            (2, "ERROR: --frontend-vmoptions-out must not be empty\n".to_owned()),
+        ),
+    ] {
+        let result = run_tool(&args_of(model, &extra));
+        assert_eq!((result.code, result.errors), want, "{extra:?}");
+    }
+}
+
+/// A classic-loader launch needs `--core-classpath-jar-names`, and a modular-loader launch refuses it.
+#[test]
+fn the_tool_reads_the_core_classpath_for_a_classic_launch() {
+    let tool = ToolRun::new();
+    let mut model: Value = serde_json::from_str(&read_text(testdata("model.json"))).unwrap();
+    model["launch"]["bootClassPathJarNames"] = serde_json::json!(["platform-loader.jar"]);
+    let modular_model = tool.write("modular-model.json", &model.to_string());
+    let classic_model = testdata("model.json").display().to_string();
+    let args_of = |model: &str, core_class_path: Option<String>| -> Vec<String> {
+        let mut args: Vec<String> = tool
+            .base_args()
+            .into_iter()
+            .filter(|arg| !arg.starts_with("--core-classpath-jar-names="))
+            .collect();
+        args[0] = format!("--model={model}");
+        args.extend(IDEA.inputs());
+        args.extend(core_class_path.map(|file| format!("--core-classpath-jar-names={file}")));
+        args
+    };
+    let core_file = testdata(CORE_CLASS_PATH_FILE).display().to_string();
+
+    let result = run_tool(&args_of(&modular_model, None));
+    assert_eq!(result.code, 0, "{}", result.errors);
+    assert_eq!(
+        tool.product_info()["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!([
+            "platform-loader.jar",
+            "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar"
+        ])
+    );
+
+    for (model, core_class_path, want) in [
+        (
+            classic_model.as_str(),
+            None,
+            (
+                1,
+                format!(
+                    "ERROR: {classic_model} states no bootClassPathJarNames of the launch, so --core-classpath-jar-names is required\n"
+                ),
+            ),
+        ),
+        (
+            modular_model.as_str(),
+            Some(core_file),
+            (
+                1,
+                format!("ERROR: --core-classpath-jar-names is set, but {modular_model} states the bootClassPathJarNames of the launch\n"),
+            ),
+        ),
+        (
+            classic_model.as_str(),
+            Some(String::new()),
+            (2, "ERROR: --core-classpath-jar-names must not be empty\n".to_owned()),
+        ),
+    ] {
+        let result = run_tool(&args_of(model, core_class_path.clone()));
+        assert_eq!((result.code, result.errors), want, "{model} {core_class_path:?}");
+    }
+
+    for (name, content, want) in [
+        ("empty.txt", "", "the core classpath names no jar"),
+        ("gap.txt", "a.jar\n\nb.jar\n", "the core classpath has an empty line"),
+    ] {
+        let file = tool.write(name, content);
+        let result = run_tool(&args_of(&classic_model, Some(file.clone())));
+        assert_eq!((result.code, result.errors), (1, format!("ERROR: {want}: {file}\n")), "{name}");
+    }
 }
 
 #[test]
@@ -682,6 +1024,7 @@ impl ToolRun {
             format!("--idea-properties-out={}", self.out("out.properties")),
             format!("--vmoptions-out={}", self.out("out.vmoptions")),
             format!("--product-info-out={}", self.out("product-info.json")),
+            format!("--core-classpath-jar-names={}", testdata(CORE_CLASS_PATH_FILE).display()),
         ]
     }
 

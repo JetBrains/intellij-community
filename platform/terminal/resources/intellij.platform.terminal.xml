@@ -1,0 +1,50 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal" visible="false"/>
+    <applicationService serviceInterface="com.intellij.terminal.TerminalUtilsBridge"
+                        serviceImplementation="com.intellij.terminal.TerminalUtilsBridgeImpl"/>
+    <applicationSettings service="com.intellij.terminal.TerminalUiSettingsManager"/>
+    <colorSettings implementation="com.intellij.terminal.ANSIColoredConsoleColorsPage"
+                   bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
+  </extensions>
+  <actions>
+    <action id="TerminalIncreaseFontSize" class="com.intellij.terminal.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
+            use-shortcut-of="EditorIncreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TerminalDecreaseFontSize" class="com.intellij.terminal.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"
+            use-shortcut-of="EditorDecreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TerminalResetFontSize" class="com.intellij.terminal.actions.TerminalResetFontSizeAction"
+            use-shortcut-of="EditorResetFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+  </actions>
+</idea-plugin>

@@ -7,10 +7,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.text.CharArrayUtil;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -19,10 +22,12 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyTupleParameter;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -95,16 +100,32 @@ public final class PyParameterInfoUtils {
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext).withRemote();
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
 
-        return call.multiResolveCallee(resolveContext)
-          .stream()
+        return StreamEx.of(call.multiResolveCallee(resolveContext))
+          .append(getConsoleCallableTypes(call, resolveContext))
           .filter(callableType -> callableType.getParameters(typeEvalContext) != null)
           .map(callableType -> Pair.createNonNull(call, callableType))
           .collect(Collectors.toList());
       }
     }
     return null;
+  }
+
+  private static @NotNull List<PyCallableType> getConsoleCallableTypes(@NotNull PyCallExpression call,
+                                                                       @NotNull PyResolveContext resolveContext) {
+    if (!(call.getCallee() instanceof PyReferenceExpression callee)) return List.of();
+    final PsiPolyVariantReference consoleReference =
+      PythonRuntimeService.getInstance().getPydevConsoleReference(callee, resolveContext.withRemote());
+    if (consoleReference == null) return List.of();
+
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    return StreamEx.of(consoleReference.multiResolve(false))
+      .map(ResolveResult::getElement)
+      .select(PyTypedElement.class)
+      .map(context::getType)
+      .select(PyCallableType.class)
+      .toList();
   }
 
   /**

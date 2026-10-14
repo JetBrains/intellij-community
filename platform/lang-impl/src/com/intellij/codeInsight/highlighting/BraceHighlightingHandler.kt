@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainTextFile
@@ -179,6 +180,12 @@ class BraceHighlightingHandler internal constructor(
       if (editor is EditorEx) {
         removeLineMarkers(editor)
       }
+    }
+
+    fun coerceToDocumentRange(r:TextRange, document:Document):TextRange {
+      val coercedStart = TextRangeScalarUtil.coerce(r.startOffset, 0, document.textLength)
+      val coercedEnd = TextRangeScalarUtil.coerce(r.endOffset, 0, document.textLength)
+      return TextRange(coercedStart, max(coercedStart, coercedEnd))
     }
   }
 
@@ -359,10 +366,11 @@ class BraceHighlightingHandler internal constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
+    val coerced = coerceToDocumentRange(braceRange, document)
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
-    removeExistingBraceHighlightsAround(braceRange)
+    removeExistingBraceHighlightsAround(coerced)
     val braceHighlighter = editor.markupModel
-      .addRangeHighlighter(attributesKey, braceRange.startOffset, braceRange.endOffset, LAYER, HighlighterTargetArea.EXACT_RANGE)
+      .addRangeHighlighter(attributesKey, coerced.startOffset, coerced.endOffset, LAYER, HighlighterTargetArea.EXACT_RANGE)
     braceHighlighter.isGreedyToLeft = false
     braceHighlighter.isGreedyToRight = false
     getHighlightersList(editor).add(braceHighlighter)

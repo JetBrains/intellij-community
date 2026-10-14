@@ -16,6 +16,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
@@ -100,7 +101,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   private Object[] getElements(boolean showAnonymous, boolean showFields) {
     myFixture.configureByText("Foo.java", CLASS_WITH_ANONYMOUS);
     Ref<Object[]> ref = Ref.create();
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, showAnonymous);
       svc.setActionActive(FieldsFilter.ID, !showFields);
       ref.set(getElements(svc));
@@ -150,7 +151,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                   this.fullName = fullName;
                 }
              }""");
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, false);
       svc.setActionActive(PropertiesGrouper.ID, false);
@@ -505,7 +506,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
         class Impl implements I {
         }
       }""");
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(),
                                        """
@@ -517,7 +518,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
 
   public void testVisibilitySorterComparingEqualKnown() {
     init();
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
@@ -582,7 +583,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
 
   public void testVisibilitySorterCompareInheritanceGroups() {
     init();
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, true);
@@ -621,7 +622,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testHidingFieldsAndMethods() {
     myFixture.configureByText("Derived.java", DERIVED);
 
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(FieldsFilter.ID, true);
       svc.setActionActive(Sorter.getAlphaSorterId(), true);
@@ -649,7 +650,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testGrouping() {
     init();
 
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, true);
@@ -676,7 +677,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testInheritedMembers() {
     init();
 
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
@@ -735,7 +736,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testHideNotPublic() {
     init();
 
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
@@ -787,7 +788,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testInheritedEnumMembers() {
     myFixture.configureByText("a.java", "enum F { A,B,C}");
 
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
@@ -843,7 +844,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                       boolean showProperties,
                       boolean showInherited) {
     myFixture.configureByText("Test.java", classText);
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
       svc.setActionActive(PropertiesGrouper.ID, showProperties);

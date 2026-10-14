@@ -36,8 +36,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   public void testDontPreferRecursiveMethod() {

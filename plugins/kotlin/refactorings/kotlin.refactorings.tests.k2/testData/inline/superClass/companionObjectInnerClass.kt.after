@@ -1,0 +1,16 @@
+class Child {
+    companion object {
+        const val ANSWER = 42
+
+        fun answer() = ANSWER
+    }
+
+    inner class Reader {
+        fun read() = answer()
+        fun owner() = this@Child
+    }
+
+    fun reader() = Reader()
+}
+
+fun read(child: Child) = child.reader().read() + Child.answer()

@@ -289,7 +289,7 @@ object PluginManagerCore {
   }
 
   @JvmStatic
-  fun isVendorJetBrains(vendorItem: String): Boolean = VENDOR_JETBRAINS == vendorItem || VENDOR_JETBRAINS_SRO == vendorItem
+  fun isVendorJetBrains(vendorItem: String?): Boolean = VENDOR_JETBRAINS == vendorItem || VENDOR_JETBRAINS_SRO == vendorItem
 
   @ApiStatus.Internal
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {

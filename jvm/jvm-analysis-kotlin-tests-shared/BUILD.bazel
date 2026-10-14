@@ -1,6 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` start
 jvm_library(
     name = "analysis-kotlin-tests-shared",

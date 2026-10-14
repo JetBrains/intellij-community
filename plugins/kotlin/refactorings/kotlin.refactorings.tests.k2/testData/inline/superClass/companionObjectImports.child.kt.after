@@ -1,0 +1,11 @@
+package child
+
+class Child {
+    companion object {
+        const val ANSWER = 42
+
+        fun answer() = ANSWER
+
+        class Token
+    }
+}

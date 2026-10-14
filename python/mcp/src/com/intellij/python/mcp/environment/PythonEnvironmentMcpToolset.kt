@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.mcp.environment
 
+import com.intellij.python.sdk.backend.detectedEnvironment
+import com.intellij.python.sdk.backend.detectedHomePath
 import com.intellij.python.pyproject.model.evolution.findEvoPyProject
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpToolset
@@ -153,12 +155,12 @@ class PythonEnvironmentMcpToolset : McpToolset {
   }
 
   private fun buildResult(interpreter: PythonInterpreter, filePath: String): GetPythonEnvironmentResult {
-    val env = interpreter.pythonEnvironment
+    val env = interpreter.detectedEnvironment
               ?: throw McpExpectedError("$filePath is broken")
 
     // The kind is named once, by the `id` of the provider that detected it. See `PythonEnvironmentProvider`.
     val environmentType = env.kindId ?: "unknown"
-    val environmentPath = interpreter.pythonHomePath
+    val environmentPath = interpreter.detectedHomePath
 
 
     val packageManager = interpreter.getPyProjectManager().id.id

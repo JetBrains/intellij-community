@@ -1,0 +1,11 @@
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    class Nested {
+        fun m() {}
+    }
+}
+
+fun use(n: Bar.Nested) = n.m()

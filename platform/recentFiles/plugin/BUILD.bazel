@@ -9,6 +9,7 @@ dev_dist_plugin(
         "intellij.platform.recentFiles",
         "intellij.platform.recentFiles.backend",
         "intellij.platform.recentFiles.frontend",
+        "intellij.platform.ide.tabInEditor.recentFiles",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
@@ -56,6 +57,7 @@ ij_plugin(
         "//platform/recentFiles/shared:recentFiles",
         "//platform/recentFiles/backend",
         "//platform/recentFiles/frontend",
+        "//platform/platform-impl/tab-in-editor/recentFiles",
     ],
     visibility = ["//visibility:public"],
 )

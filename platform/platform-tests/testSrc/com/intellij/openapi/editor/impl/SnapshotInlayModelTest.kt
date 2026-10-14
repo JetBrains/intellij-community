@@ -27,6 +27,36 @@ import java.lang.ref.WeakReference
 @UsePMarkerImplementation
 class SnapshotInlayModelTest {
   @Test
+  fun `full traversal preserves inlay order after edits`(): Unit = timeoutRunBlocking {
+    val state = withEditor("abcdef") { editor ->
+      val updatedInlays = ArrayList<Inlay<*>>()
+      val trackingRenderer = object : EditorCustomElementRenderer {
+        override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+          updatedInlays.add(inlay)
+          return 1
+        }
+
+        override fun calcHeightInPixels(inlay: Inlay<*>): Int = 1
+      }
+      val model = editor.inlayModel
+      val shifted = model.addInlineElement(4, false, trackingRenderer)!!
+      val stationary = model.addInlineElement(2, false, trackingRenderer)!!
+      val afterLineEnd = model.addAfterLineEndElement(6, false, trackingRenderer)
+      val block = model.addBlockElement(0, false, false, 0, trackingRenderer)
+
+      editor.document.deleteString(2, 4)
+      editor.document.insertString(0, "x")
+      updatedInlays.clear()
+
+      model.reinitSettings()
+
+      updatedInlays.toList() to listOf(block, stationary, shifted, afterLineEnd)
+    }
+
+    assertThat(state.first).containsExactlyElementsOf(state.second)
+  }
+
+  @Test
   fun `inline inlay resolves in snapshot branches`(): Unit = timeoutRunBlocking {
     val state = withEditor("abcdef") { editor ->
       val document = editor.elfDocument as DocumentImpl

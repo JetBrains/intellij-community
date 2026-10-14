@@ -19,7 +19,6 @@ import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.SystemProperties.getLongProperty
-import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
@@ -460,7 +459,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
   }
 
   private fun createExecutorForIndexWriting(name: String): ExecutorService =
-    SequentialTaskExecutor.createSequentialApplicationPoolExecutor(name)
+    newSingleThreadExecutor(newNamedThreadFactory(name))
 
   private fun scheduleIndexWriting(writerIndex: Int, runnable: Runnable) {
     indexWritesQueued.incrementAndGet()

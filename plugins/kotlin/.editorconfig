@@ -1,5 +1,3 @@
-root = true
-
 [*]
 indent_size = 4
 tab_width = 4
@@ -27,3 +25,14 @@ ij_java_finally_on_new_line = false
 [{*.kt,*.kts}]
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 ij_kotlin_line_break_after_multiline_when_entry = true
+ij_kotlin_else_on_new_line = false
+ij_kotlin_while_on_new_line = false
+ij_kotlin_catch_on_new_line = false
+ij_kotlin_finally_on_new_line = false
+ij_kotlin_align_multiline_binary_operation = false
+ij_kotlin_align_multiline_parameters_in_calls = false
+ij_kotlin_align_multiline_extends_list = false
+ij_kotlin_allow_trailing_comma = false
+ij_kotlin_call_parameters_right_paren_on_new_line = true
+ij_kotlin_call_parameters_new_line_after_left_paren = true
+ij_kotlin_if_rparen_on_new_line = true

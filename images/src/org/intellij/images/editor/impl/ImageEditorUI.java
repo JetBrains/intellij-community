@@ -68,7 +68,6 @@ import org.intellij.images.options.OptionsManager;
 import org.intellij.images.options.TransparencyChessboardOptions;
 import org.intellij.images.options.ZoomOptions;
 import org.intellij.images.scientific.utils.ScientificUtils;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
@@ -299,8 +298,7 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
 
   @Override
   public boolean isEnabledForActionPlace(String place) {
-    // Disable for thumbnails action
-    return !ThumbnailViewActions.ACTION_PLACE.equals(place);
+    return true;
   }
 
 

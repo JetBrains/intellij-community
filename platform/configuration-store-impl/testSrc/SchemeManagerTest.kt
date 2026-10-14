@@ -582,7 +582,7 @@ class SchemeManagerTest {
         val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir, fileChangeSubscriber = { schemeManager ->
           @Suppress("UNCHECKED_CAST")
           val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
-          ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
+          ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, schemeFileTracker)
         }, coroutineScope = this)
 
         val a = TestScheme("a", "a")

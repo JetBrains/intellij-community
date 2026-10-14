@@ -17,7 +17,7 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.RuffConfiguration
 import com.intellij.python.ruff.RuffPyTool
@@ -181,7 +181,7 @@ class RuffProjectConfigEnvTest {
     private val outsideRootFixture = tempPathFixture()
     private val projectFixture = projectFixture(projectDirFixture, openAfterCreation = true)
     private val pyProjectFixture = projectFixture.pyProjectFixture(projectDirFixture)
-    private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = projectDirFixture, pyProjectFixture = pyProjectFixture)
+    private val venvFixture = pyEnvironmentFixture().pyVenvFixture(where = projectDirFixture, pyProjectFixture = pyProjectFixture)
     private val outsidePyProjectFixture = projectFixture.pyProjectFixture(outsideRootFixture)
     private val codeInsightFixtureFixture = codeInsightFixture(projectFixture, projectDirFixture)
 

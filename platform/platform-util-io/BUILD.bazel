@@ -30,6 +30,7 @@ jvm_library(
         "//platform/diagnostic",
         "//platform/eel-nioFs",
         "//platform/util/coroutines",
+        "//libraries/kotlinx/coroutines/core",
         "//platform/util/annotations",
     ],
 )
@@ -56,6 +57,7 @@ jvm_library(
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/annotations:annotations_test_lib",
     ],
 )

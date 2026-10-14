@@ -11,7 +11,7 @@ use avl_base::fs::create_private_dir;
 use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
-use avl_report::digest::{self, FileDigestCache, JbrPolicy, PathDigest, ProductIdentityInput};
+use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
 use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL};
 use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
@@ -239,6 +239,42 @@ pub(crate) fn declared_input(
     })
 }
 
+/// The JBR of the distribution, which the daemon JVM runs on a copy of: its host directory, digested as a tree.
+///
+/// The identity is named by the logical path of the directory, so the runtime digest moves when the JBR bytes
+/// or modes move, and not when another file of the distribution does. A distribution without the directory is a
+/// refusal that names the path.
+pub(crate) fn jbr_input(
+    cache: &mut FileDigestCache,
+    runfiles: &HostRunfiles,
+    descriptor: &RuntimeDescriptor,
+) -> Result<PathDigest, Refusal> {
+    let home = &descriptor.dev_dist.home;
+    let logical_path = format!("{}/{}", home.logical_path, descriptor.jbr.directory);
+    let missing = |path: &Path, cause: String| {
+        Refusal::new(
+            "daemon_runtime_input_missing",
+            Exit::SOFTWARE,
+            format!(
+                "the distribution {} ({}) has no JBR: {} is not a directory{cause}; the dev distribution places the \
+                 production JBR there",
+                home.logical_path,
+                home.owner,
+                path.display()
+            ),
+        )
+    };
+    let Some(home_path) = runfiles.host_path(&home.logical_path) else {
+        return Err(missing(&runfiles.location().join(&logical_path), String::new()));
+    };
+    let path = home_path.join(&descriptor.jbr.directory);
+    if !fs::metadata(&path).is_ok_and(|metadata| metadata.is_dir()) {
+        return Err(missing(&path, String::new()));
+    }
+    let sha256 = cache.digest(&path).map_err(|error| missing(&path, format!(": {error}")))?;
+    Ok(PathDigest::new(logical_path, sha256))
+}
+
 /// The digests of one descriptor's inputs, which is all the stamp reads from disk.
 struct Stamped {
     guest_tree: GuestRunfilesTree,
@@ -272,6 +308,7 @@ fn stamp(
     let started = Instant::now();
     let mut cache = FileDigestCache::open(cache_path);
     let opened = Instant::now();
+    let jbr = jbr_input(&mut cache, runfiles, descriptor)?;
     let mut file = |file: &RuntimeFile| declared_input(&mut cache, runfiles, file, false);
 
     let mut hot_jars = Vec::with_capacity(descriptor.classpath.hot.len());
@@ -291,7 +328,6 @@ fn stamp(
     for jar in &descriptor.classpath.stable {
         runtime_entries.push(file(jar)?.identity);
     }
-    let jbr_archive = file(&descriptor.jbr.archive)?;
     runtime_entries.push(PathDigest::new(
         "@static-launch",
         literal_digest(&StaticLaunch {
@@ -302,18 +338,12 @@ fn stamp(
             java_home_suffix: &descriptor.jbr.java_home_suffix,
         }),
     ));
-    runtime_entries.push(jbr_archive.identity);
+    runtime_entries.push(jbr);
     let runtime_digest = digest::path_sensitive_digest(&runtime_entries);
 
     let distribution = digest::product_identity(&ProductIdentityInput {
         fingerprint: file(&descriptor.dev_dist.fingerprint)?.identity,
         config: file(&descriptor.dev_dist.config)?.identity,
-        jbr_manifest: file(&descriptor.jbr.manifest)?.identity,
-        jbr_policy: JbrPolicy {
-            platform: descriptor.jbr.platform.clone(),
-            java_home_suffix: descriptor.jbr.java_home_suffix.clone(),
-            preloaded_only: descriptor.jbr.preloaded_only,
-        },
     });
     let product_digest = digest::path_sensitive_digest(&[
         PathDigest::new("@distribution", &distribution),

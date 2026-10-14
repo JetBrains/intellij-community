@@ -30,6 +30,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import javax.swing.JComponent;
 import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
@@ -133,6 +134,10 @@ final class PainterHelper implements Painter.Listener {
       g.setTransform(offsets.transform);
       g.translate(offsets.offsets[i++], offsets.offsets[i++]);
       painter.paint(cur, offsets.source, g);
+      // the next painters draw over this painter's output, not over the plain base color
+      if (g.getRenderingHint(IdeBackgroundUtil.BASE_COLOR_HINT) != null) {
+        g.setRenderingHint(IdeBackgroundUtil.BASE_COLOR_HINT, null);
+      }
     }
     g.setTransform(orig);
   }
@@ -223,15 +228,106 @@ final class PainterHelper implements Painter.Listener {
   }
 
   private static final class Cached {
+    private static final int MAX_PRECOMPOSED = 4;
+    // a recently drawn image is never evicted, so the cache cannot thrash
+    private static final long STALE_MS = 2000;
+
     final VolatileImage image;
     final Rectangle src;
     final Rectangle dst;
     long touched;
+    private final Map<PrecomposedKey, Precomposed> precomposed = new HashMap<>();
+    private final Map<PrecomposedKey, Long> pendingArea = new HashMap<>();
 
     Cached(VolatileImage image, Rectangle src, Rectangle dst) {
       this.image = image;
       this.src = src;
       this.dst = dst;
+    }
+
+    /**
+     * Returns an opaque copy of {@link #image} drawn with the given alpha over the given base color, or {@code null} if the caller must
+     * draw the translucent image.
+     * An opaque copy is much cheaper to draw than a translucent image with an extra alpha, in particular in a software pipeline.
+     * A base color gets a copy only after its fills covered the area of the image, so the copy never costs more than the drawing it saves.
+     */
+    @Nullable VolatileImage getPrecomposed(
+      @NotNull GraphicsConfiguration cfg,
+      @NotNull Color baseColor,
+      float alpha,
+      long fillArea,
+      long currentTime
+    ) {
+      var key = new PrecomposedKey(baseColor.getRGB(), alpha);
+      Precomposed entry = precomposed.get(key);
+      if (entry != null) {
+        VolatileImage result = ImagePainter.validateImage(cfg, entry.image);
+        if (result != null) {
+          entry.touched = currentTime;
+          return result;
+        }
+        precomposed.remove(key);
+      }
+
+      int w = image.getWidth();
+      int h = image.getHeight();
+      long area = pendingArea.merge(key, fillArea, Long::sum);
+      if (area < (long)w * h || !makeRoom(currentTime)) {
+        if (pendingArea.size() > 64) {
+          pendingArea.clear();
+        }
+        return null;
+      }
+      pendingArea.remove(key);
+
+      VolatileImage result = ImagePainter.createImage(cfg, w, h, Transparency.OPAQUE);
+      PaintUtil.use(result.createGraphics(), g -> {
+        g.setColor(baseColor);
+        g.fillRect(0, 0, w, h);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.drawImage(image, 0, 0, null);
+      });
+      precomposed.put(key, new Precomposed(result, currentTime));
+      return result;
+    }
+
+    private boolean makeRoom(long currentTime) {
+      if (precomposed.size() < MAX_PRECOMPOSED) {
+        return true;
+      }
+      for (Iterator<Precomposed> it = precomposed.values().iterator(); it.hasNext(); ) {
+        Precomposed entry = it.next();
+        if (currentTime - entry.touched > STALE_MS) {
+          entry.image.flush();
+          it.remove();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    void clearPrecomposed() {
+      if (precomposed.isEmpty() && pendingArea.isEmpty()) {
+        return;
+      }
+      for (Precomposed entry : precomposed.values()) {
+        entry.image.flush();
+      }
+      precomposed.clear();
+      pendingArea.clear();
+    }
+
+    private record PrecomposedKey(int rgb, float alpha) {
+    }
+
+    private static final class Precomposed {
+      final VolatileImage image;
+      long touched;
+
+      Precomposed(VolatileImage image, long touched) {
+        this.image = image;
+        this.touched = touched;
+      }
     }
   }
 
@@ -299,8 +395,11 @@ final class PainterHelper implements Painter.Listener {
         int sw = Math.min(cw, dst0.width);
         int sh = Math.min(ch, dst0.height);
         if (scaled == null || sw0 < sw || sh0 < sh) {
-          scaled = createImage(cfg, sw, sh);
-          cachedMap.put(cfg, cached = new Cached(scaled, src0, dst0));
+          scaled = createImage(cfg, sw, sh, Transparency.TRANSLUCENT);
+          Cached old = cachedMap.put(cfg, cached = new Cached(scaled, src0, dst0));
+          if (old != null) {
+            old.clearPrecomposed();
+          }
         }
         else {
           cached.src.setBounds(src0);
@@ -326,12 +425,19 @@ final class PainterHelper implements Painter.Listener {
             StartupUiUtil.drawImage(gg, image, dst0, src0, null);
           }
         });
+        cached.clearPrecomposed();
         repaint = false;
       }
       long currentTime = System.currentTimeMillis();
       cached.touched = currentTime;
       if (cachedMap.size() > 2) {
         clearImages(currentTime);
+      }
+      // another configuration, for example an offscreen snapshot, is rarely painted again, so do not keep its precomposed images
+      for (Cached other : cachedMap.values()) {
+        if (other != cached && currentTime - other.touched > Cached.STALE_MS) {
+          other.clearPrecomposed();
+        }
       }
       Rectangle src = new Rectangle(0, 0, cw, ch);
       Rectangle dst = new Rectangle(i.left, i.top, cw, ch);
@@ -343,6 +449,17 @@ final class PainterHelper implements Painter.Listener {
       Object hintedAdjustedAlphaObject = g.getRenderingHint(JBSwingUtilities.ADJUSTED_BACKGROUND_ALPHA);
       if (hintedAdjustedAlphaObject instanceof Float hintedAdjustedAlpha) {
         adjustedAlpha = hintedAdjustedAlpha;
+      }
+
+      // an accelerated pipeline blends on the GPU, so a precomposed copy only costs memory there
+      if (g.getRenderingHint(IdeBackgroundUtil.BASE_COLOR_HINT) instanceof Color baseColor && !scaled.getCapabilities().isAccelerated()) {
+        Rectangle clip = g.getClipBounds();
+        long fillArea = clip == null ? (long)cw * ch : (long)clip.width * clip.height;
+        VolatileImage precomposed = cached.getPrecomposed(cfg, baseColor, adjustedAlpha, fillArea, currentTime);
+        if (precomposed != null) {
+          StartupUiUtil.drawImage(g, precomposed, dst, src, null, null);
+          return;
+        }
       }
 
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
@@ -407,6 +524,7 @@ final class PainterHelper implements Painter.Listener {
           LOG.info(logPrefix(cfg, c.image) + "image flushed" +
                    (all ? "" : "; untouched for " + StringUtil.formatDuration(currentTime - c.touched)));
           c.image.flush();
+          c.clearPrecomposed();
         }
       }
     }
@@ -424,13 +542,13 @@ final class PainterHelper implements Painter.Listener {
       return image;
     }
 
-    private static @NotNull VolatileImage createImage(@NotNull GraphicsConfiguration cfg, int w, int h) {
+    private static @NotNull VolatileImage createImage(@NotNull GraphicsConfiguration cfg, int w, int h, int transparency) {
       VolatileImage image;
       try {
-        image = cfg.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), transparency);
       }
       catch (Exception e) {
-        image = cfg.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, transparency);
       }
       // validate first time (it's always RESTORED & cleared)
       image.validate(cfg);

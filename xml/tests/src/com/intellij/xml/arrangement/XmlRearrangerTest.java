@@ -1,30 +1,45 @@
 package com.intellij.xml.arrangement;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.nameRule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.ruleWithOrder;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
-public class XmlRearrangerTest extends AbstractRearrangerTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class XmlRearrangerTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-    fileType = XmlFileType.INSTANCE;
-    language = XMLLanguage.INSTANCE;
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private void doTest(@NotNull Map<String, ?> args) {
+    RearrangerTestUtil.doTest(codeInsightFixture.get(), XmlFileType.INSTANCE, XMLLanguage.INSTANCE, args);
   }
 
+  @Test
   public void testAttributeSorting1() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -36,6 +51,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSorting2() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -47,6 +63,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSorting3() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -70,6 +87,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSorting4() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -81,6 +99,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace1() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -100,6 +119,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace2() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -119,6 +139,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace3() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -139,6 +160,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace4() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -159,6 +181,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace5() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -180,6 +203,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testAttributeSortingByNamespace6() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -200,6 +224,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testTagSorting() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -219,6 +244,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(map);
   }
 
+  @Test
   public void testTagAndAttrSorting() {
     LinkedHashMap<String, Serializable> map = new LinkedHashMap<>(3);
     map.put("initial", """
@@ -246,7 +272,7 @@ public class XmlRearrangerTest extends AbstractRearrangerTest {
 
   @NotNull
   protected static StdArrangementMatchRule compositeRule(@NotNull String nameFilter, @NotNull String namespaceFilter) {
-    return AbstractRearrangerTest.rule(new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
-                                       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter));
+    return RearrangerTestUtil.rule(new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
+                                   new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter));
   }
 }

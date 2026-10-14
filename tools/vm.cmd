@@ -69,21 +69,17 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-# Resolve the Community root in either layout, then use its parent only for an Ultimate checkout, as bt.cmd does. In a
-# Community checkout the controller refuses with `air_area_missing`, because no `bt.json` there names the Air area.
 case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
-root="$community_root"
-target="//tools/vm:vm"
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  target="@community//tools/vm:vm"
-fi
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
+. "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
+
+# In a Community checkout the controller refuses with `air_area_missing`, because no `bt.json` there names the Air area.
+polyglot_find_roots "$self_dir"
+target="${label_prefix}tools/vm:vm"
 
 # BUILD_WORKSPACE_DIRECTORY is how the controller finds `bt.json` and `community/tools/vm/provision` - a Bazel-built
 # binary's own path is inside a Bazel output tree and says nothing about the checkout. Any RUNFILES_* in
@@ -93,62 +89,13 @@ unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY T
 
 # The override is checked before Bazel is consulted at all: naming a binary that is not there is a
 # mistake worth reporting, not a reason to quietly build a different one.
-if [ -n "${AIR_VM_BIN:-}" ]; then
-  if [ ! -x "$AIR_VM_BIN" ]; then
-    echo "vm: AIR_VM_BIN is not an executable file: $AIR_VM_BIN" >&2
-    exit 78
-  fi
-  exec "$AIR_VM_BIN" "$@"
-fi
+polyglot_exec_override vm AIR_VM_BIN 78 "$@"
 
-# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
-# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
-# `file://<path>`. An event file that names no such file answers the empty string.
-built_file() {
-  awk -v name="$2" '{
-    line = $0
-    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
-      uri = substr(line, RSTART + 14, RLENGTH - 15)
-      line = substr(line, RSTART + RLENGTH)
-      count = split(uri, parts, "/")
-      if (parts[count] == name) found = uri
-    }
-  } END { print found }' "$1"
-}
-
-mkdir -p "$root/out/air"
-events="$root/out/air/vm.events.$$.json"
-build_log="$root/out/air/vm.build.$$.log"
-build=(./bazel.cmd build --config=bt "--build_event_json_file=$events"
-  --nobuild_event_json_file_path_conversion "$target")
-# `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines short. For a pipe, the log file keeps
-# the rest out of both envelope streams; a terminal sees it (note 6 above). A failure here is infrastructure,
-# which this wrapper reports as 78 - the one code no controller command uses (note 4 above).
-if [ -t 2 ]; then
-  if ! (cd "$root" && "${build[@]}" >&2); then
-    rm -f "$events"
-    echo "vm: could not build $target; see the bazel output above" >&2
-    exit 78
-  fi
-elif ! (cd "$root" && "${build[@]}" >"$build_log" 2>&1); then
-  cat "$build_log" >&2
-  rm -f "$events" "$build_log"
-  echo "vm: could not build $target; see the bazel output above" >&2
-  exit 78
-fi
-rm -f "$build_log"
-
-# The controller reads the same event file of its own lane build, so this is the one way to ask Bazel where its
-# output went.
-resolved="$(built_file "$events" vm)"
-rm -f "$events"
-# The build names a symlink under the output base; resolving through it reaches the real file.
-# Where readlink -f is unavailable the unresolved path still works.
-resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
-if [ ! -x "$resolved" ]; then
-  echo "vm: could not resolve the controller from $target (got '$resolved')" >&2
-  exit 78
-fi
+# `log`: for a pipe, the build output goes to a log file and reaches stderr only when the build fails; a terminal
+# sees it (note 6 above). A failure here is infrastructure, which this wrapper reports as 78 - the one code no
+# controller command uses (note 4 above). The controller reads the same kind of event file for its own lane build,
+# so this is the one way to ask Bazel where its output went.
+polyglot_build_binary vm "$target" 78 vm log
 
 exec "$resolved" "$@"
 
@@ -160,18 +107,8 @@ REM The same steps as the sh half, see note 7. The launcher is only read for its
 REM This half still runs `bazel run --script_path`: CMD has no JSON reader for the build event file without
 REM PowerShell, and no Windows host has measured the `bazel build` of the sh half.
 
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-set "ROOT=%COMMUNITY_ROOT%"
-set "TARGET=//tools/vm:vm"
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
-set "TARGET=@community//tools/vm:vm"
-:ROOTREADY
+call "%~dp0polyglot-wrapper.cmd"
+set "TARGET=%LABEL_PREFIX%tools/vm:vm"
 
 set "BUILD_WORKSPACE_DIRECTORY=%ROOT%"
 set "JAVA_RUNFILES="

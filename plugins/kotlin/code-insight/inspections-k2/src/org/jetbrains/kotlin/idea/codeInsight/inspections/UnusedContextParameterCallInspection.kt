@@ -10,16 +10,22 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.ContextParameterUsages
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.consumedContextParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.contextCallableId
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -34,6 +40,8 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtReturnExpression
@@ -104,7 +112,9 @@ internal class UnusedContextParameterCallInspection :
         val unusedArguments = contextParameters.indices
             .filter { contextParameters[it] !in consumed }
             .map { nonLambdaArguments[it] }
-        if (unusedArguments.isEmpty()) return null
+        if (unusedArguments.isEmpty()) {
+            return checkRedundantGivenContext(element, body, lambda, consumed)
+        }
 
         val jumpsTargetingLambda = body.collectJumpsTargetingLambda(lambda)
 
@@ -127,7 +137,7 @@ internal class UnusedContextParameterCallInspection :
 
             is KtSimpleNameExpression -> {
                 val symbol = unwrapped.resolveSuccessfulSymbol()
-                symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol
+                symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol
             }
 
             else -> false
@@ -149,6 +159,58 @@ internal class UnusedContextParameterCallInspection :
         }
         return result
     }
+
+    context(_: KaSession)
+    private fun checkRedundantGivenContext(
+        contextCall: KtCallExpression,
+        body: KtBlockExpression,
+        lambda: KtLambdaExpression,
+        consumed: Map<KaContextParameterSymbol, ContextParameterUsages>,
+    ): BodyContext? {
+        if (consumed.isEmpty()) return null
+
+        val scopeContext = contextCall.containingKtFile.scopeContext(contextCall)
+        val contextParameters = scopeContext.implicitValues.filterIsInstance<KaScopeImplicitArgumentValue>()
+        val unusedArguments = mutableSetOf<KtValueArgument>()
+
+        for (c in consumed) {
+            val argument = contextCall.valueArguments.firstNotNullOfOrNull { argument ->
+                val exprType = argument.getArgumentExpression()?.expressionType ?: return@firstNotNullOfOrNull null
+                if (!c.value.signatureParameterTypes.any { exprType.isSubtypeOf(it) }) return@firstNotNullOfOrNull null
+
+                val nameReference = argument.getArgumentExpression() as? KtNameReferenceExpression ?: return@firstNotNullOfOrNull null
+                val parameter = nameReference.reference?.resolve() as? KtParameter ?: return@firstNotNullOfOrNull null
+
+                var found: KtValueArgument? = null
+
+                for (contextParameter in contextParameters) {
+                    if (c.value.signatureParameterTypes.any { contextParameter.type.isSubtypeOf(it) }) {
+                        found = argument.takeIf { contextParameter.symbol == parameter.symbol }
+                        break
+                    }
+                }
+
+                found
+            } ?: continue
+
+            unusedArguments.add(argument)
+        }
+
+        if (unusedArguments.isEmpty()) {
+            return null
+        }
+
+        val jumpsTargetingLambda = body.collectJumpsTargetingLambda(lambda)
+
+        val pointerManager = SmartPointerManager.getInstance(contextCall.project)
+
+        return BodyContext(
+            unusedArguments = unusedArguments.map { pointerManager.createSmartPsiElementPointer(it) },
+            allArgumentsUnused = unusedArguments.size == consumed.size,
+            jumpsTargetingLambda = jumpsTargetingLambda.map { pointerManager.createSmartPsiElementPointer(it) },
+        )
+    }
+
 
     override fun createQuickFix(
         element: KtCallExpression,

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -206,9 +206,9 @@ object KotlinReferenceRestoringHelper {
             KtPsiFactory.contextual(targetReference.element.containingFile, markGenerated = false)
                 .createImportDirective(ImportPath(sourceFqName, false))
                 .importedReference
-        val reference = importedReference?.getQualifiedElementSelector()?.mainReference ?: return false
-        analyze(reference.element) {
-            val symbols = reference.resolveToSymbols()
+        val selector = importedReference?.getQualifiedElementSelector() as? KtSimpleNameExpression ?: return false
+        analyze(selector) {
+            val symbols = selector.resolveSuccessfulSymbols()
             return symbols.isNotEmpty()
         }
     }

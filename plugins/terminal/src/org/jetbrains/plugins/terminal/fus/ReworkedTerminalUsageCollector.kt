@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -28,7 +29,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 24)
+  private val GROUP = EventLogGroup(GROUP_ID, 25)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -103,6 +104,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     BACKSPACES_RATIO_FIELD,
     ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD,
     ROUNDED_TYPING_TIME_FIELD,
+    EventFields.Projectless,
   )
 
   private val commandFinishedEvent = GROUP.registerVarargEvent(
@@ -215,8 +217,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     commandTypingTimeMillis: Long,
   ) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandStartedEvent.log(
-      project,
+    commandStartedEvent.log(project, listOfNotNull(
       TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
       TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
       RATIO_OF_POPUP_COMPLETION_FIELD with popupCompletionLength.ratioOf(totalCommandInsertedLength),
@@ -225,7 +226,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
       BACKSPACES_RATIO_FIELD with backspacesCount.ratioOf(totalCommandInsertedLength),
       ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD with totalCommandInsertedLength,
       ROUNDED_TYPING_TIME_FIELD with commandTypingTimeMillis,
-    )
+      ProjectlessData.forProject(project),
+    ))
   }
 
   private fun Int.ratioOf(total: Int): Double = if (total == 0) 0.0 else toDouble() / total

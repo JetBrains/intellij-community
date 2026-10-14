@@ -236,7 +236,7 @@ class PluginDependenciesValidator private constructor(
       errors.add(PluginModuleConfigurationError(
         pluginModelModuleName = moduleName,
         errorMessage = "'$moduleName' of plugin '${descriptor.parent.pluginId}' reaches a module the '${productMode.id}' mode refuses, " +
-                       "yet the run time enables it. A distribution of that mode places no jar of it (ADR 0021 in build/decisions). " +
+                       "yet the run time enables it. A distribution of that mode places no jar of it (ADR 0021 in build/docs/decisions). " +
                        "Its descriptor must state the dependency that reaches the refused module.",
       ))
     }

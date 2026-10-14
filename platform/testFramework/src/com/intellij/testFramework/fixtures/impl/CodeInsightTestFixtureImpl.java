@@ -52,13 +52,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockProgressIndicator;
@@ -99,7 +96,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -208,7 +204,6 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -2350,27 +2345,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void assertPreferredCompletionItems(int selected, String @NotNull ... expected) {
     getEditorTestFixture().assertPreferredCompletionItems(selected, expected);
-  }
-
-  @Override
-  public void testStructureView(@NotNull Consumer<? super StructureViewComponent> consumer) {
-    assertNotNull("configure first", myVirtualFile);
-
-    FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myVirtualFile);
-    assertNotNull("editor not opened for " + myVirtualFile, myVirtualFile);
-
-    StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(getFile());
-    assertNotNull("no builder for " + myVirtualFile, builder);
-
-    StructureViewComponent component = null;
-    try {
-      component = (StructureViewComponent)builder.createStructureView(fileEditor, getProject());
-      PlatformTestUtil.waitForPromise(component.rebuildAndUpdate());
-      consumer.consume(component);
-    }
-    finally {
-      if (component != null) Disposer.dispose(component);
-    }
   }
 
   @Override

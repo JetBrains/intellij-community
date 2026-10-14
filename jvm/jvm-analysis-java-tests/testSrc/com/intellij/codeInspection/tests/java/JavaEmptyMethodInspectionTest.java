@@ -3,21 +3,13 @@ package com.intellij.codeInspection.tests.java;
 
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.JavaInspectionTestCase;
-
-import java.io.File;
 
 public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/emptyMethod/";
-  }
-
-  @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + getBasePath();
+    return JavaJvmAnalysisTestUtil.getTestDataPath() + "/codeInspection/emptyMethod/";
   }
 
   private void doTest() {

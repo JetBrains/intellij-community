@@ -8,15 +8,13 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.OptionPaneRenderer;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ExperimentalUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.AbstractAction;
@@ -25,17 +23,17 @@ import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-/**
- * @author Dmitry Batkovich
- */
-@ApiStatus.Internal
-public final class EditSettingsAction extends InspectionViewActionBase implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
+final class EditSettingsAction extends InspectionViewActionBase implements DumbAware {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
 
-  public EditSettingsAction() {
-    super(InspectionsBundle.messagePointer(
-            ExperimentalUI.isNewUI() ? "inspection.action.edit.settings.new" : "inspection.action.edit.settings"),
-          Presentation.NULL_STRING, AllIcons.General.Settings);
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else if (!ExperimentalUI.isNewUI()) {
+      e.getPresentation().setText(InspectionsBundle.message("inspection.action.edit.settings"));
+    }
   }
 
   @Override
@@ -50,14 +48,16 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InspectionResultsView view = getView(e);
+    if (view == null) return;
+
     InspectionProfileImpl inspectionProfile = view.getCurrentProfile();
 
     if (view.isSingleInspectionRun()) {
-      InspectionToolWrapper tool = getSingleTool(view);
+      InspectionToolWrapper<?, ?> tool = getSingleTool(view);
       DialogBuilder builder = new DialogBuilder()
         .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()));
       JComponent panel = OptionPaneRenderer.createOptionsPanel(tool.getTool(), builder, e.getProject());
-      LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
+      Logger.getInstance(EditSettingsAction.class).assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
       builder.centerPanel(panel);
       builder.removeAllActions();
       builder.addOkAction();
@@ -76,8 +76,9 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
         });
       }
       builder.show();
-    } else {
-      InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
+    }
+    else {
+      InspectionToolWrapper<?, ?> toolWrapper = view.getTree().getSelectedToolWrapper(false);
       if (toolWrapper != null) {
         HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null) {
@@ -95,7 +96,7 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
     }
   }
 
-  private static @NotNull InspectionToolWrapper getSingleTool(InspectionResultsView view) {
+  private static @NotNull InspectionToolWrapper<?, ?> getSingleTool(InspectionResultsView view) {
     InspectionProfileImpl profile = view.getCurrentProfile();
     return Objects.requireNonNull(profile.getInspectionTool(Objects.requireNonNull(profile.getSingleTool()), view.getProject()));
   }

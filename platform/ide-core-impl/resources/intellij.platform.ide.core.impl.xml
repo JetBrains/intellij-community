@@ -98,12 +98,17 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"
                  description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
+    <registryKey key="ide.plugins.warmup.classloaders.on.load"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Warms up the plugin class loaders before the extension registration on a dynamic plugin load IJPL-257845"/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="false" key="vfs.windows.use.buffered.directory.stream"
-                 description="Use the native buffered WindowsBufferedDirectoryStream for directory enumeration on Windows. When disabled, falls back to the standard java.nio directory stream."/>
+                 description="Use faster native Windows calls for directory enumeration. When disabled, falls back to NIO directory streams."
+                 restartRequired="true"/>
     <registryKey defaultValue="true" key="scanning.waits.for.non.dumb.mode" restartRequired="false"
                  description="Scanning will wait until the end of current dumb mode (if any)"/>
     <registryKey defaultValue="true" key="scanning.hide.progress.in.smart.mode" restartRequired="false"

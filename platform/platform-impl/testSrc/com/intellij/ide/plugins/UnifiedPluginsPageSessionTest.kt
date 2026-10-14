@@ -35,6 +35,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
@@ -340,6 +341,123 @@ internal class UnifiedPluginsPageSessionTest {
         assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.TAG)
       }
       finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `session reports filter selection removal and sort changes`(): Unit =
+    uiTest {
+      val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+      val session = createSession(
+        searchQuery = "Plugin",
+        unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+      )
+      try {
+        waitForSearchCount(searches, 1)
+        val disabled = filterActions(session).takeLast(5)[2]
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        waitForSearchCount(searches, 2)
+
+        assertThat(searches.last().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS)
+        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.DISABLED)
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        waitForSearchCount(searches, 3)
+
+        assertThat(searches.last().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_ONLY)
+        assertThat(searches.last().first.filterKinds).isEmpty()
+
+        val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+        val searchComponent = componentsOfType(header, SearchFieldWithExtension::class.java).single()
+        val sortGroup = componentsOfType(searchComponent, ActionButton::class.java).first().action as ActionGroup
+        val name = sortGroup.getChildren(TestActionEvent.createTestEvent())[3]
+
+        name.actionPerformed(TestActionEvent.createTestEvent(name))
+        waitForSearchCount(searches, 4)
+
+        assertThat(searches.last().first.sort).isEqualTo(MarketplaceTabSearchSortByOptions.NAME)
+
+        name.actionPerformed(TestActionEvent.createTestEvent(name))
+        session.enableSearch("Plugin /tag:Private")!!.run()
+        waitForSearchCount(searches, 5)
+
+        assertThat(searches.map { it.second }).containsExactly(0, 1, 2, 3, 4)
+        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.TAG)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `session reports each installed menu filter with and without text`(): Unit =
+    uiTest {
+      val kinds = listOf(
+        UnifiedPluginSearchFilterKind.OUTDATED,
+        UnifiedPluginSearchFilterKind.ENABLED,
+        UnifiedPluginSearchFilterKind.DISABLED,
+        UnifiedPluginSearchFilterKind.INVALID,
+        UnifiedPluginSearchFilterKind.UPDATED_BUNDLED,
+      )
+      for (text in listOf("", "Plugin")) {
+        val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+        val session = createSession(
+          searchQuery = text,
+          unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+        )
+        try {
+          var searchCount = if (text.isEmpty()) 0 else 1
+          if (searchCount != 0) waitForSearchCount(searches, searchCount)
+          for ((index, kind) in kinds.withIndex()) {
+            val action = filterActions(session).takeLast(kinds.size)[index]
+            action.actionPerformed(TestActionEvent.createTestEvent(action))
+            waitForSearchCount(searches, ++searchCount)
+
+            val statistics = searches.last().first
+            assertThat(statistics.filterKinds).containsExactly(kind)
+            val shape = if (text.isEmpty()) UnifiedPluginSearchQueryShape.CONTROLS_ONLY else UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS
+            assertThat(statistics.queryShape).isEqualTo(shape)
+          }
+          assertThat(searches.map { it.second }).containsExactlyElementsOf(0 until searchCount)
+        }
+        finally {
+          Disposer.dispose(session)
+        }
+      }
+    }
+
+  @Test
+  fun `session reports only the latest menu query after pending sources settle`(): Unit =
+    uiTest {
+      val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+      val repositoryResult = CompletableDeferred<List<PluginUiModel>>()
+      val repository = CustomPluginRepository("private.repository", PluginSource.LOCAL)
+      val session = createSession(
+        searchQuery = "Plugin",
+        repositoryProvider = DeferredRepositoryDataProvider(listOf(repository), mapOf(repository.id to repositoryResult)),
+        unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+      )
+      try {
+        val installedActions = filterActions(session).takeLast(5)
+        val disabled = installedActions[2]
+        val enabled = installedActions[1]
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        enabled.actionPerformed(TestActionEvent.createTestEvent(enabled))
+
+        assertThat(searches).isEmpty()
+        repositoryResult.complete(emptyList())
+        waitForSearchCount(searches, 1)
+
+        assertThat(searches.single().second).isEqualTo(2)
+        assertThat(searches.single().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS)
+        assertThat(searches.single().first.sourceKinds).containsExactly(UnifiedPluginSearchSourceKind.LOCAL)
+        waitForSearchQuery(searchField(session), "Plugin /enabled")
+      }
+      finally {
+        repositoryResult.complete(emptyList())
         Disposer.dispose(session)
       }
     }
@@ -1030,6 +1148,13 @@ internal class UnifiedPluginsPageSessionTest {
       session.getCenterComponent(Configurable.TopComponentController.EMPTY),
       SearchTextField::class.java,
     ).single()
+  }
+
+  private fun filterActions(session: UnifiedPluginsPageSession): Array<AnAction> {
+    val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+    val searchComponent = componentsOfType(header, SearchFieldWithExtension::class.java).single()
+    val filterGroup = componentsOfType(searchComponent, ActionButton::class.java).last().action as ActionGroup
+    return filterGroup.getChildren(TestActionEvent.createTestEvent())
   }
 
   private fun visibleSearchControlCount(searchComponent: JComponent): Int {

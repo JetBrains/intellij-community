@@ -100,6 +100,18 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
   }
 }
 
+/**
+ * The copy of [NewProjectAction] for the welcome screen. Search Everywhere shows only the main `NewProject` action.
+ */
+internal class WelcomeScreenNewProjectAction : NewProjectAction() {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
+}
+
 private fun updateActionIcon(e: AnActionEvent) {
   if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
     NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e)

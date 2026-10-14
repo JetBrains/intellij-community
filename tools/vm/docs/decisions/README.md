@@ -4,7 +4,9 @@ These records decide the UI-lane controller in `community/tools/vm`. They moved 
 `plugins/air/docs/decisions`.
 
 A moved record keeps the number that it had in `plugins/air/docs/decisions`. Thus the sequence in this directory has
-gaps. A new record takes the next number after the highest number in this directory.
+gaps. A new record is `YYYY-MM-DD-<slug>.md` and takes no number. The
+[site maintenance guide](../../../../plugins/air/docs/guides/site-maintenance-guide.md#keeping-it-up-to-date) has the
+rule, and the Air architecture gate checks both folders.
 
 Each moved record has a `topic:` frontmatter. The Air docs site used it. Here it has no function.
 

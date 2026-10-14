@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
+import icons.DvcsImplIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
@@ -220,3 +221,8 @@ private object ScalingImageExtension : ExtendableHTMLViewFactory.Extension {
     return view
   }
 }
+
+// this is a trip-wire to ensure these icons are available to the clients of the panel
+// TODO: a better way to ensure icons are accessible (platform extension mb?)
+@Suppress("unused")
+private val IMPORT_STUB = DvcsImplIcons.BranchLabel

@@ -7,7 +7,7 @@ import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.FileBookmarksListener
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
-import com.intellij.ide.scratch.RootType
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ApplicationManager
@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -87,7 +87,7 @@ private class UpdateSession(
         emitFromRoot()
       })
 
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
         override fun after(vfsEvents: List<VFileEvent>) {
           for (event in vfsEvents) {
             when (event) {
@@ -118,7 +118,7 @@ private class UpdateSession(
         emitStructural(virtualFile)
       })
 
-      RootType.ROOT_EP.addChangeListener(scope) {
+      ScratchTreeStructureProvider.registerUpdaters(project, disposable) {
         emitFromRoot()
       }
 
@@ -252,7 +252,9 @@ private class UpdateSession(
         val next = events.tryReceive().getOrNull() ?: break
         batch.add(next)
       }
-      process(batch)
+      runSafelyCancellable(LOG, taskDescription = { "Processing a batch of ${batch.size} updates for the pane $id" }) {
+        process(batch)
+      }
       // Report after processing, so the resulting updateNode calls have already bumped the node epoch.
       progressReporter.eventsProcessed(batch.size)
     }

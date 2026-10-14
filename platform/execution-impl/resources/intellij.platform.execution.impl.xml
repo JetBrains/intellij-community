@@ -7,8 +7,6 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.hash4j"/>
-    <module name="intellij.libraries.jediterm.core"/>
-    <module name="intellij.libraries.jediterm.ui"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -53,6 +51,7 @@
     <module name="intellij.platform.remote.core"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.text.matching"/>
@@ -64,11 +63,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
                         serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
-    <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
     <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
     <projectService serviceInterface="com.intellij.execution.RunManager" open="true"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectPreInit implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="after initialProjectSynchronizer"/>
+    <postStartupActivity implementation="com.intellij.execution.impl.RunManagerInitializedFlagSetter"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
     <registryKey defaultValue="true"
                  description="Load run configurations from *.run.xml files in the project content."
@@ -98,7 +97,7 @@
     <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
-    <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
     <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory" open="true"
                         serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
@@ -144,18 +143,13 @@
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor$Factory"/>
 
     <templateModuleBuilderPostprocessing implementation="com.intellij.execution.impl.RunConfigurationTemplateModuleBuilderPostprocessing"/>
     <applicationService serviceInterface="com.intellij.testIntegration.RunSelectedTestAdvertisement"
                         serviceImplementation="com.intellij.execution.impl.RunSelectedTestAdvertisementImpl"/>
-
-    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal" visible="false"/>
-
-    <colorSettings implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage"
-                   bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
 
     <registryKey defaultValue="false"
                  description="Run implementation for split mode."
@@ -172,9 +166,6 @@
     <projectSettings service="com.intellij.execution.impl.IprRunManagerImpl"/>
     <projectSettings service="com.intellij.execution.ui.RunConfigurationStartHistory"/>
     <projectSettings service="com.intellij.execution.runToolbar.RunToolbarSettings"/>
-    <applicationService serviceInterface="com.intellij.terminal.TerminalUtilsBridge"
-                        serviceImplementation="com.intellij.terminal.TerminalUtilsBridgeImpl"/>
-    <applicationSettings service="com.intellij.terminal.TerminalUiSettingsManager"/>
     <projectSettings service="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectSettings service="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.runAnything.RunAnythingUsageCollector"/>
@@ -188,7 +179,7 @@
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
     <!-- External Tools -->
     <projectSettings service="com.intellij.tools.ToolsProjectConfig"/>
-    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
     <applicationConfigurable groupId="tools" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools"
                              key="tools.settings.title"
                              bundle="messages.ToolsBundle"/>

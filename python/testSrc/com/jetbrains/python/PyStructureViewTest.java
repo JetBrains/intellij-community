@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
@@ -248,7 +249,7 @@ public class PyStructureViewTest extends PyTestCase {
   }
 
   private void doTest(final String expected, final boolean inherited) {
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive("SHOW_INHERITED", !inherited);
       final JTree tree = component.getTree();
       PlatformTestUtil.waitWhileBusy(tree);

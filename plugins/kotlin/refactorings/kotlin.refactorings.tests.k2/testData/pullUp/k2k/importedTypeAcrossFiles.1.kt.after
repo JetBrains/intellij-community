@@ -1,0 +1,8 @@
+package base
+
+import helper.Helper
+
+open class Base {
+    // INFO: {"checked": "true"}
+    fun use(value: Helper): Helper = value
+}

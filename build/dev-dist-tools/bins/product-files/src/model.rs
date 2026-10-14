@@ -39,6 +39,8 @@ pub(crate) struct LaunchModel {
     #[serde(default)]
     pub custom_commands: Vec<CustomCommand>,
     pub vm_options: VmOptions,
+    /// The vmoptions file of the embedded frontend, with the parts of `vm_options`. The `thinClient` command names it.
+    pub frontend_vm_options: Option<VmOptions>,
     pub idea_properties: IdeaProperties,
 }
 
@@ -67,8 +69,9 @@ pub(crate) struct VmOptions {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LaunchCommand {
     pub main_class: String,
-    #[serde(default = "default_boot_class_path_jar_names")]
-    pub boot_class_path_jar_names: Vec<String>,
+    /// The boot class path of a modular-loader launch. `None` is a classic-loader launch. The tool derives its list from
+    /// the core classpath of the distribution.
+    pub boot_class_path_jar_names: Option<Vec<String>>,
     pub jvm_arguments: JvmArguments,
     pub stdio_redirect_arg: Option<String>,
 }
@@ -80,8 +83,12 @@ pub(crate) struct CustomCommand {
     /// The vmoptions file of the command, keyed by `OsFamily.osName`. A command with no entry names none.
     #[serde(default)]
     pub vm_options_file_path: HashMap<String, String>,
+    /// The own boot class path of the command, such as the one of a frontend command.
     #[serde(default)]
     pub boot_class_path_jar_names: Vec<String>,
+    /// The jars after the boot class path of the launch. A command states this list or `boot_class_path_jar_names`.
+    #[serde(default)]
+    pub additional_boot_class_path_jar_names: Vec<String>,
     /// The block of JVM arguments that the command renders.
     pub jvm_arguments: Option<JvmArgumentsRef>,
     /// Renders `jvm_arguments` the way Qodana starts: without the multi-routing file system.
@@ -150,11 +157,6 @@ impl Default for JvmArguments {
             native_access: true,
         }
     }
-}
-
-/// The default of `ProductLaunchCommand.bootClassPathJarNames`: `PLATFORM_LOADER_JAR`.
-fn default_boot_class_path_jar_names() -> Vec<String> {
-    vec!["platform-loader.jar".to_owned()]
 }
 
 /// The parts of `bin/idea.properties`: the base file, then each addition after a newline, with `@@settings_dir@@`

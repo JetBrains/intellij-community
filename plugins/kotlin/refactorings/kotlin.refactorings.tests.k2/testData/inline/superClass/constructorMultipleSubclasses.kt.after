@@ -1,0 +1,7 @@
+class First {
+    fun result() = 1
+}
+
+class Second {
+    fun result() = 2
+}

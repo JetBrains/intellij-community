@@ -220,7 +220,6 @@ class DevDistRunConfigurationModulesTest {
     assertThat(row.additionalModules).containsExactly("intellij.air.plugin", "intellij.devkit")
     assertThat(row.jvmFlags).containsExactly(
       "-Da=1",
-      "-Didea.dev.mode.custom.command=true",
       "-Dtool.home=\$\${BUILD_WORKSPACE_DIRECTORY}/tools/bin",
       "-Xmx8000m",
     )

@@ -40,7 +40,6 @@ import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
 import org.intellij.images.options.OptionsManager
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions
 import org.intellij.images.thumbnail.actions.ShowBorderAction.isBorderVisible
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
@@ -169,7 +168,7 @@ class JCefImageViewer(
   }
 
   override fun isTransparencyChessboardVisible(): Boolean = myState.chessboardEnabled
-  override fun isEnabledForActionPlace(place: String): Boolean = ThumbnailViewActions.ACTION_PLACE != place
+  override fun isEnabledForActionPlace(place: String): Boolean = true
   override fun getZoomModel(): ImageZoomModel = ZOOM_MODEL
   override fun isGridVisible(): Boolean = myState.status == ViewerState.Status.OK && myState.gridEnabled
   fun getZoom() = myState.zoom

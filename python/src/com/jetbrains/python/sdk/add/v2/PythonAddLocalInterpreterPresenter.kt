@@ -48,10 +48,14 @@ class PythonAddLocalInterpreterPresenter(
         return@withSdkConfigurationLock
       }
       is Result.Success -> {
-        moduleOrProject.moduleIfExists?.asPyProjectAddingFacet()?.setPythonInterpreter(r.result)
+        // The interpreter the module then has: the registry can adopt an existing SDK for it.
+        val set = moduleOrProject.moduleIfExists?.asPyProjectAddingFacet()?.setPythonInterpreter(r.result)?.getOr {
+          errorSink.emit(it.error, moduleOrProject.project)
+          return@withSdkConfigurationLock
+        } ?: r.result
         val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
-        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
-        _sdkShared.emit(r.result.getSdkAPI())
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(set, isPreviouslyConfigured)
+        _sdkShared.emit(set.getSdkAPI())
       }
     }
   }

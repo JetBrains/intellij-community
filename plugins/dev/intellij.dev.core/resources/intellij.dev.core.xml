@@ -231,9 +231,6 @@
     <action id="VirtualFileInfo" internal="true" class="com.intellij.dev.core.VirtualFileInfoAction">
       <add-to-group group-id="Internal.VFS" anchor="first"/>
     </action>
-    <action id="CheckVfsSanityInMenu" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction">
-      <add-to-group group-id="Internal.VFS"/>
-    </action>
     <action id="MarkVfsCorrupted" internal="true" class="com.intellij.dev.core.MarkVfsCorruptedAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>

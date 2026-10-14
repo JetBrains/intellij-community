@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -20,10 +21,12 @@ internal class ReloadPyPiCacheAction : DumbAwareAction() {
 
     ApplicationManager.getApplication().service<MyService>().coroutineScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, PyBundle.message("action.ReloadPyPiCacheAction.action.description")) {
-        ApplicationManager.getApplication().service<PyPiPackageCache>().reloadCache(true).getOrThrow()
+        ApplicationManager.getApplication().service<PyPiPackageCache>().fullRefetchAndReload().getOrThrow()
       }
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 @Service

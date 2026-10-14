@@ -2,11 +2,14 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -14,9 +17,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ThreeState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
@@ -188,20 +194,56 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   }
 
   /**
-   * Confirms trust before the project is loaded. An already-answered project shows no dialog.
+   * Confirms trust before the project is loaded, and tells whether the welcome screen may go on with it.
    *
-   * The dialog's own result only says the user did not cancel: "Preview in Safe Mode" also returns true, and it records the project as
-   * distrusted. A safe mode project refuses every Git command, so the trust state, not the dialog's result, decides whether to go on.
+   * @see `com.intellij.air.shared.session.requestAgentWorkspaceTrust`
    */
-  private suspend fun confirmTrust(projectPath: Path): Boolean {
-    val projectName = projectPath.fileName?.toString() ?: projectPath.toString()
+  private suspend fun confirmTrust(projectPath: Path): Boolean =
+    when (TrustedProjects.getProjectTrustedState(projectPath)) {
+      ThreeState.YES -> true
+      ThreeState.UNSURE -> confirmUnansweredProject(projectPath)
+      ThreeState.NO -> confirmSafeModeProject(projectPath)
+    }
+
+  /**
+   * Shows the platform's trust dialog for a project nobody has answered yet.
+   *
+   * The dialog does not offer "Preview in Safe Mode", because a safe mode project activates no VCS at all
+   */
+  private suspend fun confirmUnansweredProject(projectPath: Path): Boolean {
     TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
       projectRoot = projectPath,
       project = null,
-      title = IdeBundle.message("untrusted.project.open.dialog.title", projectName),
+      title = IdeBundle.message("untrusted.project.open.dialog.title", projectName(projectPath)),
+      message = IdeBundle.message("untrusted.project.vcs.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
+      isSafeModeOffered = false,
     )
     return TrustedProjects.isProjectTrusted(projectPath)
   }
+
+  /**
+   * Asks again for a project the user has already put in safe mode, and records the answer when it changes.
+   *
+   * Safe mode is the state the action cannot work in, so the question is the plain one the platform trust dialog cannot ask a second time:
+   * trust the project, or leave it as it is.
+   */
+  private suspend fun confirmSafeModeProject(projectPath: Path): Boolean = withContext(Dispatchers.EDT) {
+    MessageDialogBuilder
+      .yesNo(title = IdeBundle.message("untrusted.project.open.dialog.title", projectName(projectPath)),
+             message = IdeBundle.message("untrusted.project.vcs.safe.mode.dialog.text",
+                                         ApplicationInfo.getInstance().fullApplicationName))
+      .yesText(IdeBundle.message("untrusted.project.dialog.trust.button"))
+      .noText(IdeBundle.message("untrusted.project.dialog.distrust.button"))
+      .asWarning()
+      .help(TRUSTED_PROJECTS_HELP_TOPIC)
+      .guessWindowAndAsk()
+  }.also { isTrusted ->
+    if (isTrusted) {
+      TrustedProjects.setProjectTrusted(projectPath, isTrusted = true)
+    }
+  }
+
+  private fun projectName(projectPath: Path): String = projectPath.fileName?.toString() ?: projectPath.toString()
 
   // The loaded project has no frame, so its notifications show nowhere. Re-post each one at the application level, where the welcome frame
   // shows it. The subscription ends with the project.

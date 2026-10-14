@@ -459,6 +459,14 @@ internal class MoreRunToolbarActions : TogglePopupAction(
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 internal fun filterOutRunIfDebugResumeIsPresent(e: AnActionEvent, actions: List<AnAction>): List<AnAction> {
@@ -528,6 +536,10 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
     if (configurationName != null) {
       // Replace the maybe-cut-off name (set by delegate.update) with the full one, the UI will then cut it as needed.
       e.presentation.setText(configurationName, false)
+    }
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
     }
   }
 

@@ -29,8 +29,8 @@ import com.intellij.util.ArrayUtil;
 public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflection/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflection/";
   }
 
   public void testField() {

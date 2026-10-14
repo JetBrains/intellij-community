@@ -89,7 +89,6 @@
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
-    <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" />
@@ -216,5 +215,6 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
     <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
   </component>
 </module>

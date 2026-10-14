@@ -226,7 +226,7 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
                  "wait")
   }
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/logger"
 
 
   override fun doAntiTest() {

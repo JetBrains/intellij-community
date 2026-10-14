@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.hotswap
 
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findDocument
-import com.intellij.platform.debugger.impl.shared.awaitCommited
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
@@ -34,9 +33,9 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
 
   final override suspend fun getCompatibility(change: SourceFileChange): HotSwapChangesCompatibility {
     if (change.file.fileType != fileType) return HotSwapChangesCompatibility.Irrelevant
-    val document = readAction { change.file.findDocument() }
-    document?.awaitCommited(project)
-    return readAction { classify(project, change.file, change.oldContent) }
+    return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+      classify(project, change.file, change.oldContent)
+    }
   }
 
   private fun classify(project: Project, file: VirtualFile, oldContent: CharSequence): HotSwapChangesCompatibility {

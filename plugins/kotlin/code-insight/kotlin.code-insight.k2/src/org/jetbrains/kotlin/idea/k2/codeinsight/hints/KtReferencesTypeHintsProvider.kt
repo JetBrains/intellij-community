@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -16,7 +15,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.calculateAllTypes
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
@@ -68,6 +68,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.types.Variance
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -348,7 +349,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
         val selectorExpression = initializer.selectorExpression
         if (type.isEnum()) {
             // Do not show type for enums if initializer has enum entry with explicit enum name: val p = Enum.ENTRY
-            val symbol: KaSymbol? = selectorExpression?.mainReference?.resolveToSymbol()
+            val symbol: KaSymbol? = (selectorExpression as? KtResolvable)?.tryResolveSymbols()?.symbols?.singleOrNull()
             if (symbol is KaEnumEntrySymbol) {
                 return false
             }
@@ -400,7 +401,7 @@ context(_: KaSession)
 private fun KtExpression.isClassOrPackageReference(): Boolean =
     when (this) {
         is KtNameReferenceExpression ->
-            this.mainReference.resolveToSymbol()
+            this.tryResolveSymbols()?.symbols?.singleOrNull()
                 .let { it is KaClassLikeSymbol || it is KaPackageSymbol }
         is KtDotQualifiedExpression -> this.selectorExpression?.isClassOrPackageReference() ?: false
         else -> false

@@ -5,10 +5,12 @@ import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 
+@ApiStatus.Obsolete
 class SimpleGHGQLPagesLoader<T>(executor: GithubApiRequestExecutor,
                                 requestProducer: (GraphQLRequestPagination) -> GithubApiRequest.Post<GraphQLPagedResponseDataDTO<T>?>,
                                 supportsTimestampUpdates: Boolean = false,

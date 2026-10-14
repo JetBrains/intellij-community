@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -343,7 +345,14 @@ public class LocalFileSystemImpl
     // simulate logic in VirtualDirectoryImpl.findChild but for all files at once
     Map<VirtualFile, List<String>> newFilesToLoad = new LinkedHashMap<>();
     for (var file : files) {
-      var result = FileNavigator.navigate(this, file.toAbsolutePath().toString(), NON_REFRESHING_NAVIGATOR);
+      String absolutePathStr;
+      try {
+        absolutePathStr = file.toAbsolutePath().toString();
+      }
+      catch (InvalidPathException _) {
+        continue;
+      }
+      var result = FileNavigator.navigate(this, absolutePathStr, NON_REFRESHING_NAVIGATOR);
       if (result.isResolved()) {
         continue;
       }
@@ -464,7 +473,9 @@ public class LocalFileSystemImpl
     if (PlatformNioHelper.useWindowsBufferedDirectoryStream(nioPath)) {
       try (var dirStream = new WindowsBufferedDirectoryStream(nioPath)) {
         return StreamSupport.stream(dirStream.spliterator(), false)
-          .map(it -> it.getFirst().getFileName().toString())
+          .map(it -> it.getFirst())
+          .map(LocalFileSystemImpl::getFileNameOrNull)
+          .filter(Objects::nonNull)
           .toArray(String[]::new);
       }
       catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
@@ -473,12 +484,22 @@ public class LocalFileSystemImpl
     }
     try (var dirStream = Files.newDirectoryStream(nioPath)) {
       return StreamSupport.stream(dirStream.spliterator(), false)
-        .map(it -> it.getFileName().toString())
+        .map(LocalFileSystemImpl::getFileNameOrNull)
+        .filter(Objects::nonNull)
         .toArray(String[]::new);
     }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  private static @Nullable String getFileNameOrNull(@NotNull Path path) {
+    try {
+      return path.getFileName().toString();
+    }
+    catch (InvalidPathException _) {
+      return null;
+    }
   }
 
   @Override

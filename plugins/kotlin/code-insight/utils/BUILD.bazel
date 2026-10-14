@@ -63,6 +63,7 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//platform/core-ui",
+        "//plugins/kotlin/base/analysis",
     ],
 )
 
@@ -98,6 +99,7 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//platform/core-ui:core-ui_test_lib",
+        "//plugins/kotlin/base/analysis:analysis_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.utils` end

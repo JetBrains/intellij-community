@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.isImplicitReferenceToCompanion
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
@@ -12,7 +11,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -57,7 +59,7 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     val referenceExpression = callExpression.calleeExpression as? KtNameReferenceExpression ?: return false
     if (referenceExpression.getReferencedName() != OperatorNameConventions.TO_STRING.asString()) return false
     return analyze(callExpression) {
-        referenceExpression.mainReference.resolveToSymbols().any { symbol ->
+        referenceExpression.tryResolveSymbolsCallFirst().any { symbol ->
             val functionSymbol = symbol as? KaNamedFunctionSymbol ?: return@any false
             functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.classId == KaStandardTypeClassIds.STRING
         }
@@ -197,9 +199,9 @@ private val KtTypeReference.isSafeToResolve: Boolean
             is KtUserType -> {
                 val typeNameExpression = typeElement.referenceExpression
 
-                // N.B. Currently, the `resolveToSymbols` function is less fragile 
+                // N.B. Currently, the `tryResolveSymbols` function is less fragile 
                 // with incomplete types, that's why we rely on it here
-                typeNameExpression?.mainReference?.resolveToSymbols()?.isNotEmpty() == true
+                typeNameExpression?.tryResolveSymbols()?.symbols?.isNotEmpty() == true
             }
             
             // We currently assume that other `KtTypeElement`s are safe to resolve.

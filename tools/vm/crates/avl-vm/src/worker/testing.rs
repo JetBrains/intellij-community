@@ -18,7 +18,11 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 
 #[cfg(unix)]
+use avl_base::Reporter;
+#[cfg(unix)]
 use avl_base::config::MacosHost;
+#[cfg(unix)]
+use avl_base::report::SinkGuard;
 use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
@@ -26,19 +30,23 @@ use avl_host_sys::guest::BazelHost;
 use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
 #[cfg(unix)]
-use avl_host_sys::{Ctx, ProcessTable};
+use avl_host_sys::{Ctx, ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
 #[cfg(unix)]
 use avl_host_testkit::{FakeProcesses, PinnedBazel};
 #[cfg(unix)]
 use avl_testkit::tartfake::Answer;
 #[cfg(unix)]
+use avl_wire::progress::{Kind, Record};
+#[cfg(unix)]
 use nix::sys::signal::{Signal, killpg};
 #[cfg(unix)]
 use nix::unistd::Pid;
 
 #[cfg(unix)]
-use crate::worker::tart::{MINIMUM_VERSION, ProcessIdentity};
+use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
+#[cfg(unix)]
+use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
 use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
 
 /// The version the fake `tart` answers. A Windows host has no fake `tart`, and its fake `docker` reads no version.
@@ -103,16 +111,8 @@ impl Fixture {
         }
     }
 
-    /// A Docker pool of one slot on the Lima engine: the fake `limactl`, resolved as the pinned one, starts the
-    /// engine, and the fake `docker` of `DOCKER_BIN` answers the backend. The engine is pinned in the settings, so the
-    /// fixture runs on every Unix host.
-    #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::docker_builder().lima_engine().build()
-    }
-
-    /// A Docker pool of one slot on the Apple `container` engine, over the fake `container`. The engine is pinned in
-    /// the settings, so the fixture runs on every Unix host.
+    /// A Docker pool of one slot on the Apple `container` engine, over the fake `container`. The settings load as a
+    /// Mac of macOS 26 loads them, so the fixture runs on every Unix host.
     #[cfg(unix)]
     pub(crate) fn docker_container() -> Self {
         Self::docker_builder().container_engine().build()
@@ -189,12 +189,65 @@ impl Fixture {
     /// Makes a worker read as running: a live process of the fake table stands in for its `tart run` process. Nothing
     /// ends that process, and a `tart stop` does not end it either. Its command is no `tart run`, so no path takes it
     /// for an orphaned run process.
-    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> ProcessIdentity {
+    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> PidReceipt {
         let pid = self.processes.start(&format!("stand-in for the run process of {worker}"));
         self.manager
             .write_process_identity(&Ctx::background(), worker, pid)
             .await
             .expect("the fake process can be identified")
+    }
+
+    /// Declares a process of the fixture's process table whose every probe gives no answer, and answers its pid.
+    pub(crate) fn start_unanswered_process(&self) -> i32 {
+        self.processes.start_unanswered()
+    }
+
+    /// The identity of a live process of another controller: a new process of the fixture's process table.
+    pub(crate) async fn another_process(&self) -> ProcessIdentity {
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        self.manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity")
+    }
+
+    /// The identity of a process that is gone: the fixture's process table holds the pid, and declares no process
+    /// for it.
+    pub(crate) fn gone_process() -> ProcessIdentity {
+        ProcessIdentity {
+            pid: 0x7FFF_FFF0,
+            process_start: "Sun Aug 23 00:00:00 2026".to_owned(),
+            process_command: "vm run, a controller that died".to_owned(),
+        }
+    }
+
+    /// Writes a run marker of `process` for `lease` by hand, as another controller writes one, and answers it.
+    pub(crate) fn write_run_marker(&self, lease: &Lease, run_id: &str, process: ProcessIdentity) -> RunMarker {
+        write_marker_by_hand(&self.settings, lease, run_id, process)
+    }
+
+    /// A second controller over the same pool and the same guests, as another process sees the pool. Its lock manager
+    /// speaks for a live process of the fixture's process table. So a run marker of either manager is a live run of
+    /// another process to the other one. It starts no idle stop process.
+    pub(crate) fn another_controller(&self) -> Manager {
+        let runner = self.runner_with(&Interrupts::detached());
+        let pid = self.processes.start("vm, another controller of the suite");
+        let channel = (self.settings.backend != Backend::ContainerLinux).then(|| self.guest.factory());
+        Manager::with_timings(
+            Dependencies {
+                settings: Arc::clone(&self.settings),
+                locks: Arc::new(LockManager::for_process(runner.clone(), pid)),
+                runner,
+                reporter: quiet(),
+                channel,
+                bazel: self.bazel.clone().map(|bazel| bazel as Arc<dyn BazelHost>),
+                build_guest_boot: builds_nothing(),
+            },
+            Timings::fast(),
+        )
+        .with_idle_stop_spawner(Arc::new(|_: &Manager, _: &IdleStopRequest| Ok(())))
     }
 
     /// Makes a worker read as running on a `tart run` of its own whose VM Tart does not list: the fake's `run`,
@@ -323,10 +376,12 @@ impl FixtureBuilder {
         self
     }
 
-    /// Runs the Docker pool on the Lima engine, with a Bazel that resolves the pinned `limactl`.
+    /// Leaves `DOCKER_BIN` and `DOCKER_HOST` unset, with a Bazel that resolves the pinned Docker CLI to the fake. On a
+    /// release of [`FixtureBuilder::on_macos`] that runs no Apple `container`, the pool keeps the host engine and names
+    /// none.
     #[cfg(unix)]
-    pub(crate) fn lima_engine(mut self) -> Self {
-        self.pool = self.pool.with_lima_engine();
+    pub(crate) fn unnamed_engine(mut self) -> Self {
+        self.pool = self.pool.without_named_engine();
         self.pinned_bazel = true;
         self
     }
@@ -447,13 +502,13 @@ fn manager_with_bazel(
 #[cfg(unix)]
 pub(crate) struct StaleRun {
     child: std::process::Child,
-    pub(crate) identity: ProcessIdentity,
+    pub(crate) identity: PidReceipt,
 }
 
 #[cfg(unix)]
 impl Drop for StaleRun {
     fn drop(&mut self) {
-        let _ = killpg(Pid::from_raw(self.identity.pid), Signal::SIGKILL);
+        let _ = killpg(Pid::from_raw(self.identity.process.pid), Signal::SIGKILL);
         let _ = self.child.wait();
     }
 }
@@ -472,16 +527,44 @@ impl Drop for RunProcessReaper {
                 continue;
             };
             // Never this test process, which a suite of the real `ps` probe can record.
-            if u32::try_from(identity.pid).ok() != Some(std::process::id()) {
-                let _ = killpg(Pid::from_raw(identity.pid), Signal::SIGKILL);
+            if u32::try_from(identity.process.pid).ok() != Some(std::process::id()) {
+                let _ = killpg(Pid::from_raw(identity.process.pid), Signal::SIGKILL);
             }
         }
     }
 }
 
 #[cfg(unix)]
-fn read_identity(path: &std::path::Path) -> Option<ProcessIdentity> {
+fn read_identity(path: &std::path::Path) -> Option<PidReceipt> {
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
+}
+
+/// Every note that a reporter publishes while this lives.
+#[cfg(unix)]
+pub(crate) struct Notes {
+    notes: Arc<Mutex<Vec<String>>>,
+    _sink: SinkGuard,
+}
+
+#[cfg(unix)]
+impl Notes {
+    pub(crate) fn start(reporter: &Reporter) -> Self {
+        let notes: Arc<Mutex<Vec<String>>> = Arc::default();
+        let sink = {
+            let notes = Arc::clone(&notes);
+            reporter.add_sink(move |record: &Record| {
+                if record.event == Kind::Note {
+                    avl_base::sync::lock(&notes).push(record.message.clone());
+                }
+            })
+        };
+        Self { notes, _sink: sink }
+    }
+
+    /// The notes so far, in order.
+    pub(crate) fn all(&self) -> Vec<String> {
+        avl_base::sync::lock(&self.notes).clone()
+    }
 }
 
 /// What `/usr/bin/who` answers in a macOS guest whose console is logged in.

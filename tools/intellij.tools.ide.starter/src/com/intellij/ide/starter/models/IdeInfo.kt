@@ -87,7 +87,7 @@ data class IdeInfo(
         "RD" -> "JetBrains.Rider"
         "WRS" -> "writerside"
         "GW" -> "gateway"
-        "JB" -> "ij-void"
+        "JB" -> "unified-ide"
         else -> error("Unknown product code: $productCode")
       }
 

@@ -4289,6 +4289,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/lombok/allArgsConstructor.java");
         }
 
+        @TestMetadata("constructorAccess.java")
+        public void testConstructorAccess() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/lombok/constructorAccess.java");
+        }
+
         @TestMetadata("dataAccessLevel.java")
         public void testDataAccessLevel() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/lombok/dataAccessLevel.java");

@@ -1004,6 +1004,59 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/common/contextArguments")
+        public static class ContextArguments extends AbstractK2JsBasicCompletionLegacyStdlibTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("EnclosingContextParameter.kt")
+            public void testEnclosingContextParameter() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/EnclosingContextParameter.kt");
+            }
+
+            @TestMetadata("GenericContextParameter.kt")
+            public void testGenericContextParameter() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/GenericContextParameter.kt");
+            }
+
+            @TestMetadata("MultipleContextArguments.kt")
+            public void testMultipleContextArguments() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/MultipleContextArguments.kt");
+            }
+
+            @TestMetadata("NoContextArguments.kt")
+            public void testNoContextArguments() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/NoContextArguments.kt");
+            }
+
+            @TestMetadata("NullableContextArgument.kt")
+            public void testNullableContextArgument() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/NullableContextArgument.kt");
+            }
+
+            @TestMetadata("ShadowedByMissingContext.kt")
+            public void testShadowedByMissingContext() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/ShadowedByMissingContext.kt");
+            }
+
+            @TestMetadata("SubstitutedContextParameter.kt")
+            public void testSubstitutedContextParameter() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/SubstitutedContextParameter.kt");
+            }
+
+            @TestMetadata("SubtypeContextArgument.kt")
+            public void testSubtypeContextArgument() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/SubtypeContextArgument.kt");
+            }
+
+            @TestMetadata("WithReceiver.kt")
+            public void testWithReceiver() throws Exception {
+                runTest("../../completion/testData/basic/common/contextArguments/WithReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/contextSensitiveResolution")
         public static class ContextSensitiveResolution extends AbstractK2JsBasicCompletionLegacyStdlibTest {
             private void runTest(String testDataFilePath) throws Exception {

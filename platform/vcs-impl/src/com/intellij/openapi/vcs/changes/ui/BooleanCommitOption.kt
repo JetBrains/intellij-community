@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -186,6 +187,7 @@ private class BooleanCommitOptionWithLink(project: Project,
 
   override fun Panel.createOptionContent() {
     val configureFilterLink = LinkLabel(linkText, null, linkCallback, this@BooleanCommitOptionWithLink)
+    configureFilterLink.putClientProperty(SearchUtil.SEARCH_SKIP_COMPONENT_KEY, true) // do not put [Configure] to search index
     row {
       cell(checkBox).also {
         if (isInSettings) it.bindSelected(getter, setter::accept)

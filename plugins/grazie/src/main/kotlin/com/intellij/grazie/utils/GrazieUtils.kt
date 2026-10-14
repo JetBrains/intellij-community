@@ -9,7 +9,6 @@ import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.LangDetector
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.MAX_TEXT_LENGTH_IN_FILE
 import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.CheckerRunner
@@ -22,6 +21,7 @@ import com.intellij.grazie.text.TextContentImpl
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.text.TextProblemAggregator
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
+import com.intellij.grazie.utils.HighlightingUtil.isTooLargeFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.runWithCheckCanceled
@@ -44,7 +44,7 @@ internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allC
   val texts = HighlightingUtil.getAllFileTexts(file.viewProvider)
     .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
   texts.forEach { text -> require(text.getUserData(EXTRACTOR_SOURCE) != null) { "Text should contain source element" } }
-  if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE) return emptyList()
+  if (isTooLargeFile(texts)) return emptyList()
 
   return getAllProblems(texts, checkedDomains, allCheckers)
 }

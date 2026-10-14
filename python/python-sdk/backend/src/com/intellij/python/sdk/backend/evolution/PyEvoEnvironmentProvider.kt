@@ -3,7 +3,6 @@
 package com.intellij.python.sdk.backend.evolution
 
 import com.jetbrains.python.getOrNull
-import com.intellij.python.sdk.backend.ref
 import com.intellij.python.sdk.backend.resolveHomeEnvRef
 import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.backend.resolvePythonHome
@@ -339,12 +338,12 @@ interface PyEvoEnvironmentProvider {
   ): EvoLoadResultDto
 
   /**
-   * The interpreter of the *existing* environment that [ref] names. The default adds it to the project of
-   * [context], see [PythonInterpreterRegistry.addPythonInterpreter]. A tool that also creates a missing
-   * environment, such as hatch, overrides it.
+   * The interpreter of the *existing* environment that [ref] names, for the project of [context]. It is not
+   * registered yet: the caller sets it on the project, see [PythonInterpreterRegistry.newPythonInterpreter]. A tool
+   * that also creates a missing environment, such as hatch, overrides it.
    */
   suspend fun createInterpreter(context: EvoToolContext, ref: PyInterpreterRef): PyResult<PythonInterpreter> =
-    PythonInterpreterRegistry.getInstance(context.workspace.project).addPythonInterpreter(context.workspace.pyProject, ref)
+    PythonInterpreterRegistry.getInstance(context.workspace.project).newPythonInterpreter(context.workspace.pyProject, ref)
 
   /**
    * Builds the SDK for an environment that does not exist yet, creating it first via the tool's own "create" logic —

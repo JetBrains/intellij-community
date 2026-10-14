@@ -2,6 +2,7 @@
 package git4idea
 
 import com.google.common.collect.HashMultiset
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -17,7 +18,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
@@ -42,9 +42,9 @@ import git4idea.config.GitVersion
 import git4idea.config.UpdateMethod
 import git4idea.index.getStatus
 import git4idea.repo.GitCommitTemplateTracker
+import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.repo.GitObjectFormat
 import git4idea.statistics.GitAvailabilityChecker
 import git4idea.statistics.GitCommitterCounter
 import git4idea.statistics.RepositoryAvailability
@@ -107,7 +107,6 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         REPO_ID with project.getProjectCacheFileName() + repository.root.name,
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
-        TAGS with getTagsSize(repository),
         RECENT_CHECKOUT_BRANCHES with branches.recentCheckoutBranches.size,
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
@@ -120,6 +119,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
         REMOTES_AVAILABILITY with repoStatus,
       )
+      getTagsSize(repository)?.let { TAGS.addData(repositoryMetric.data, it) }
 
       try {
         val commitersCount = counter.calculateWithGit(project, repository)
@@ -130,7 +130,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         }
       }
       catch (e: Exception) {
-        if (e is ControlFlowException) throw e
+        rethrowControlFlowException(e)
         Logger.getInstance(GitStatisticsCollector::class.java).warn(e)
       }
       val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
@@ -160,7 +160,15 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private fun getTagsSize(repository: GitRepository): Int = GitBranchUtil.getAllTags(repository.project, repository.root).size
+  private fun getTagsSize(repository: GitRepository): Int? {
+    return try {
+      GitBranchUtil.getAllTags(repository.project, repository.root).size
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      null
+    }
+  }
 
   private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
     val executableManager = GitExecutableManager.getInstance()
@@ -402,7 +410,7 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
     Files.list(worktreesPath).count() > 0
   }
   catch (e: Exception) {
-    if (e is ControlFlowException) throw e
+    rethrowControlFlowException(e)
     false
   }
 }
@@ -425,7 +433,7 @@ private fun getConfigFileStatus(repository: GitRepository, configDirName: String
     return ConfigStatus.SHARED
   }
   catch (e: Exception) {
-    if (e is ControlFlowException) throw e
+    rethrowControlFlowException(e)
     null
   }
 }

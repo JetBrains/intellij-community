@@ -1,12 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 
+@TestApplication
 public class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
+  @Test
   public void test_that_doc_comment_folding_is_preserved() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
     doTest("""
@@ -48,6 +54,7 @@ public class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(PUBLIC), rule(PRIVATE)));
   }
 
+  @Test
   public void test_that_doc_comment_and_method_folding_is_preserved() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
     doTest("""
@@ -93,6 +100,7 @@ public class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(PUBLIC), rule(PRIVATE)));
   }
 
+  @Test
   public void test_that_single_doc_comment_folding_is_preserved() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
     doTest("""

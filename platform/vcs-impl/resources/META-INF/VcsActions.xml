@@ -146,6 +146,8 @@
              id="ChangesView.Changelists"
              class="com.intellij.openapi.vcs.changes.actions.ChangeListActionGroup"
              popup="true">
+        <override-text place="GoToAction"/>
+
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
         <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
@@ -253,7 +255,7 @@
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
       <reference ref="Diff.ShowDiff"/>
-      <group id="ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy">
+      <group id="ShelvedChangesToolbar.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy">
         <reference ref="ChangesView.GroupBy"/>
         <separator key="separator.show"/>
         <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
@@ -323,7 +325,9 @@
 
     <group id="CommittedChangesToolbar">
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
-              icon="AllIcons.Actions.Refresh"/>
+              icon="AllIcons.Actions.Refresh">
+        <override-text place="GoToAction"/>
+      </action>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
               icon="AllIcons.General.Filter"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
@@ -362,7 +366,9 @@
 
     <group id="IncomingChangesToolbar">
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
-              icon="AllIcons.Actions.Refresh"/>
+              icon="AllIcons.Actions.Refresh">
+        <override-text place="GoToAction"/>
+      </action>
       <reference ref="CommittedChanges.Details"/>
       <reference ref="Vcs.UpdateProject"/>
     </group>

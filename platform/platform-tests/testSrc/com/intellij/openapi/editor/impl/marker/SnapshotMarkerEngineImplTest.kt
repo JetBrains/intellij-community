@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
@@ -512,6 +513,79 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  @UsePMarkerImplementation(false)
+  fun `legacy document full traversal preserves order and stops early`() {
+    val document = DocumentImpl("abcdef", true)
+    val last = document.createRangeMarker(5, 6)
+    val persistent = document.createRangeMarker(2, 3, true)
+    val first = document.createRangeMarker(0, 1)
+    val visited = ArrayList<RangeMarker>()
+    assertFalse(first is SnapshotMarker)
+
+    assertTrue(document.processRangeMarkers {
+      visited.add(it)
+      true
+    })
+    assertEquals(listOf(first, persistent, last), visited)
+
+    visited.clear()
+    assertFalse(document.processRangeMarkers {
+      visited.add(it)
+      false
+    })
+    assertEquals(listOf(first), visited)
+  }
+
+  @Test
+  fun `document full traversal preserves order after an edit and stops early`() {
+    val document = DocumentImpl("abcdef", true)
+    assertTrue(document.processRangeMarkers { error("An empty document root must not visit a marker") })
+    val last = document.createRangeMarker(6, 6)
+    val firstEqual = document.createRangeMarker(2, 4)
+    val first = document.createRangeMarker(0, 0)
+    val secondEqual = document.createRangeMarker(2, 3)
+    document.insertString(0, "x")
+    val visited = ArrayList<RangeMarker>()
+
+    assertTrue(document.processRangeMarkers {
+      visited.add(it)
+      true
+    })
+    assertEquals(listOf(first, firstEqual, secondEqual, last), visited)
+
+    visited.clear()
+    assertFalse(document.processRangeMarkers {
+      visited.add(it)
+      false
+    })
+    assertEquals(listOf(first), visited)
+  }
+
+  @Test
+  fun `document full traversal purges cleared references and skips disposed markers`() {
+    val document = DocumentImpl("abcdef", true)
+    val snapshot = document.core.snapshot()
+    val first = document.createRangeMarker(0, 0)
+    val disposed = document.createRangeMarker(2, 3)
+    val cleared = document.createRangeMarker(4, 5) as SnapshotMarker
+    val last = document.createRangeMarker(6, 6)
+    val rootStore = document.rangeMarkers.rootStore()
+    val reference = rootStore.root(snapshot)!!.overlappingIterator(4, 5, 0).next().markerReference as Reference<*>
+    reference.clear()
+    val visited = ArrayList<RangeMarker>()
+
+    assertTrue(document.processRangeMarkers {
+      visited.add(it)
+      if (it === first) disposed.dispose()
+      true
+    })
+
+    assertEquals(listOf(first, last), visited)
+    assertFalse(rootStore.containsMarkerId(snapshot, cleared.id))
+    assertFalse(disposed.isValid)
+  }
+
+  @Test
   fun `enumeration returns the original marker with its user data`() {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
@@ -581,6 +655,86 @@ class SnapshotMarkerEngineImplTest {
       }
     )
     assertSame(marker, processedMarker)
+  }
+
+  @Test
+  fun `root emptiness ignores removed markers`() {
+    val empty = PMarkerRootImpl.empty()
+    assertTrue(empty.isEmpty())
+
+    val populated = empty
+      .insert(1, 2, 4, nonGreedySpec(), 0)
+      .insert(2, 5, 6, nonGreedySpec(), 0)
+    assertFalse(populated.isEmpty())
+
+    val oneRemoved = populated.remove(1)
+    assertFalse(oneRemoved.isEmpty())
+
+    val allRemoved = oneRemoved.remove(2)
+    assertTrue(allRemoved.isEmpty())
+    assertTrue(allRemoved.resolve(1, TextRange.EMPTY_RANGE) is PMarkerResolution.Absent)
+    assertTrue(allRemoved.purge(1).purge(2).isEmpty())
+    assertFalse(populated.isEmpty())
+  }
+
+  @Test
+  fun `root emptiness ignores invalid markers`() {
+    val populated = PMarkerRootImpl.empty()
+      .insert(1, 2, 4, nonGreedySpec(), 0)
+      .insert(2, 5, 6, nonGreedySpec(), 0)
+    val invalidated = applyPatch(populated, "abcdef", textPatch(1, 5, ""))
+    assertTrue(invalidated.resolve(1, TextRange.EMPTY_RANGE) is PMarkerResolution.Invalid)
+    assertFalse(invalidated.isEmpty())
+
+    val noValidMarkers = invalidated.remove(2)
+    assertTrue(noValidMarkers.isEmpty())
+    assertTrue(noValidMarkers.purge(1).purge(2).isEmpty())
+    assertFalse(populated.isEmpty())
+  }
+
+  @Test
+  fun `full traversal preserves marker order and lazy shifts`() {
+    var root: PMarkerRoot = PMarkerRootImpl.empty()
+      .insert(30, 8, 10, nonGreedySpec(), 0)
+      .insert(20, 2, 7, nonGreedySpec(), 0)
+      .insert(10, 2, 4, nonGreedySpec(), 0)
+      .insert(40, 14, 16, nonGreedySpec(), 0)
+      .insert(50, 20, 22, nonGreedySpec(), 0)
+      .insert(60, 25, 25, nonGreedySpec(), 0)
+      .remove(40)
+    root = applyPatch(root, "012345678901234567890123456789", textPatch(0, 0, "ab"))
+    val entries = ArrayList<Pair<Long, TextRange>>()
+    var hasLazyShift = false
+
+    assertTrue(root.processAllRangeMarkers { entry, ancestorDelta ->
+      entries.add(entry.markerId to TextRange(entry.nodeStart + ancestorDelta, entry.nodeEnd + ancestorDelta))
+      if (ancestorDelta != 0) hasLazyShift = true
+      true
+    })
+
+    assertEquals(
+      listOf(10L to TextRange(4, 6), 20L to TextRange(4, 9), 30L to TextRange(10, 12),
+             50L to TextRange(22, 24), 60L to TextRange(27, 27)),
+      entries,
+    )
+    assertTrue(hasLazyShift)
+  }
+
+  @Test
+  fun `full traversal stops when the processor returns false`() {
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 2, 4, nonGreedySpec(), 0)
+      .insert(2, 6, 8, nonGreedySpec(), 0)
+      .insert(3, 10, 12, nonGreedySpec(), 0)
+    val visited = ArrayList<Long>()
+
+    assertFalse(root.processAllRangeMarkers { entry, _ ->
+      visited.add(entry.markerId)
+      false
+    })
+
+    assertEquals(listOf(1L), visited)
+    assertTrue(PMarkerRootImpl.empty().processAllRangeMarkers { _, _ -> error("An empty root must not visit a marker") })
   }
 
   @Test
@@ -1303,7 +1457,7 @@ class SnapshotMarkerEngineImplTest {
     private var nextModSequence = initialSnapshot.modState().sequence() + 1
     private var nextModStamp = initialSnapshot.modState().stamp() + 1
 
-    fun applyOp(parent: DocumentSnapshot, op: DocumentOp): DocumentSnapshot = markerStores.applyOp(parent, op)
+    fun applyOp(parent: DocumentSnapshot, op: DocumentOp): DocumentSnapshot = markerStores.applyPatch(parent, parent.applyOp(op), null)
 
     fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot =
       markerStores.mergeMarkerRoots(markerSnapshot, metadataSnapshot)
@@ -1331,7 +1485,8 @@ class SnapshotMarkerEngineImplTest {
 
       while (child.modState().sequence() < targetModSequence) {
         newModStamp = nextModStamp++
-        child = markerStores.applyOp(child, DocumentOp.modStampOp(newModStamp, true))
+        val op = DocumentOp.modStampOp(newModStamp, true)
+        child = markerStores.applyPatch(child, child.applyOp(op), null)
       }
 
       check(child.modState().sequence() == targetModSequence) {

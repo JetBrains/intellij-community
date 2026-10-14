@@ -16,6 +16,8 @@ Accepted. Describes `lease release` in `//plugins/air/tests/integration/vm-lane`
 [ADR 0059](0059-the-ui-lane-tooling-is-rust.md); how the lane is driven is
 [the VM guide](../vm-ui-tests.md). This ADR records why a release stopped asking the run slot alone.
 
+Superseded in part on 2026-10-13: [a run marks its worker and holds the lock at its ends](2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends.md) replaces [the section on the lifecycle lock](#the-lifecycle-lock-already-excludes-a-live-iteration).
+
 ## Context
 
 A worker lease is the mutual exclusion between agents sharing one worker pool, and `lease release` is a gate

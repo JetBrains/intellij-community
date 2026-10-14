@@ -43,7 +43,8 @@
       <reference ref="EditorPaste"/>
     </group>
 
-    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings"
+           searchable="false" icon="AllIcons.Actions.More">
       <group id="git.branches.popup.filter.by.separator" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
       <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByAction"/>
       <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByRepository"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -11,11 +11,14 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class EditorActionManagerImpl extends EditorActionManager {
+  private static final Key<ReadonlyFragmentModificationHandler> HANDLER_KEY = Key.create("READONLY_FRAGMENT_MODIFICATION_HANDLER");
+
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
 
   @Override
@@ -40,18 +43,17 @@ final class EditorActionManagerImpl extends EditorActionManager {
   }
 
   @Override
-  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(final @NotNull Document document) {
-    final Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
-    final ReadonlyFragmentModificationHandler docHandler =
-      doc instanceof DocumentImpl ? ((DocumentImpl)doc).getReadonlyFragmentModificationHandler() : null;
+  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(@NotNull Document document) {
+    Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
+    ReadonlyFragmentModificationHandler docHandler = doc instanceof DocumentImpl ? doc.getUserData(HANDLER_KEY) : null;
     return docHandler == null ? myReadonlyFragmentsHandler : docHandler;
   }
 
   @Override
-  public void setReadonlyFragmentModificationHandler(final @NotNull Document document, @Nullable ReadonlyFragmentModificationHandler handler) {
-    final Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
+  public void setReadonlyFragmentModificationHandler(@NotNull Document document, @Nullable ReadonlyFragmentModificationHandler handler) {
+    Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (doc instanceof DocumentImpl) {
-      ((DocumentImpl)document).setReadonlyFragmentModificationHandler(handler);
+      doc.putUserData(HANDLER_KEY, handler);
     }
   }
 

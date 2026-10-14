@@ -779,6 +779,52 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
   }
 
   /**
+   * A plain usage of a type variable keeps a not-null usage of the same variable from making
+   * the type argument of the enclosing call not-null.
+   */
+  public void testNotNullAndPlainUsageOfSameVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NotNull;
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class Sample {
+        interface Box<T extends @Nullable Object> {}
+
+        interface Box2<L extends @Nullable Object, R extends @Nullable Object> {}
+
+        static <A extends @Nullable Object> Box2<@NotNull A, A> notNullFirst(A a) { return null; }
+
+        static <A extends @Nullable Object> Box2<A, @NotNull A> notNullSecond(A a) { return null; }
+
+        static <A extends @Nullable Object> Box2<@NotNull A, @NotNull A> notNullBoth(A a) { return null; }
+
+        static <B extends @Nullable Object> Box<B> merge(Box2<? extends B, ? extends B> p) { return null; }
+
+        static void test(Integer x, @Nullable Integer y) {
+          merge(notNullFirst(y));
+          merge(notNullSecond(y));
+          merge(notNullBoth(y));
+          merge(notNullFirst(x));
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>();
+    PsiTreeUtil.processElements(file, PsiMethodCallExpression.class, call -> {
+      if ("merge".equals(call.getMethodExpression().getReferenceName())) calls.add(call);
+      return true;
+    });
+    assertEquals(4, calls.size());
+    assertEquals(Nullability.NULLABLE, typeArgumentNullabilityOf(calls.get(0)));
+    assertEquals(Nullability.NULLABLE, typeArgumentNullabilityOf(calls.get(1)));
+    assertEquals(Nullability.NOT_NULL, typeArgumentNullabilityOf(calls.get(2)));
+    assertEquals(Nullability.NOT_NULL, typeArgumentNullabilityOf(calls.get(3)));
+  }
+
+  /**
    * The least upper bound of two equal intersection types joins the nullability of the arguments,
    * so the order of the conditional branches does not change the result.
    */

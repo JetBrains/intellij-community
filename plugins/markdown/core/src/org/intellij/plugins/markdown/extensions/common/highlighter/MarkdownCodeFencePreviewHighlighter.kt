@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.extensions.common.highlighter
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandRunnerPreviewExtension
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +51,7 @@ class MarkdownCodeFencePreviewHighlighter: CodeFenceGeneratingProvider {
 
   private fun processCodeLine(line: String): String {
     val file = currentFile.get() ?: return ""
-    val runner = CommandRunnerExtension.getRunnerByFile(file)
+    val runner = MarkdownCommandRunnerPreviewExtension.getByFile(file)
     return runner?.processCodeLine(line, true).orEmpty()
   }
 }

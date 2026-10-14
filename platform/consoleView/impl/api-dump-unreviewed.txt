@@ -6,6 +6,14 @@ c:com.intellij.execution.filters.TextConsoleBuilderImpl
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):V
 - addFilter(com.intellij.execution.filters.Filter):V
 - p:getFilters():java.util.List
+c:com.intellij.execution.filters.UrlFilter
+- applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
+f:com.intellij.execution.filters.UrlFilter$FileUrlHyperlinkInfo
+- <init>(com.intellij.openapi.project.Project,java.lang.String,I,I,java.lang.String,Z):V
+- getPopupMenuGroup(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.ActionGroup
+- navigate(com.intellij.openapi.project.Project):V
+c:com.intellij.execution.filters.UrlFilter$UrlFilterProvider
+- getDefaultFilters(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.Filter[]
 f:com.intellij.execution.impl.ConsoleBuffer
 - <init>():V
 - s:getLegacyCycleBufferSize():I
@@ -92,3 +100,6 @@ f:com.intellij.execution.impl.EditorHyperlinkSupport
 - getLinkNavigationRunnable(com.intellij.openapi.editor.LogicalPosition):java.lang.Runnable
 - highlightHyperlinks(com.intellij.execution.filters.Filter,I,I):V
 - highlightHyperlinksLater(com.intellij.execution.filters.Filter,I,I,com.intellij.openapi.util.Expirable):V
+f:com.intellij.ide.browsers.OpenUrlHyperlinkInfo
+- <init>(java.lang.String,com.intellij.ide.browsers.WebBrowser):V
+- <init>(java.lang.String,com.intellij.openapi.util.Condition):V

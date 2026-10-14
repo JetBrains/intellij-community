@@ -18,6 +18,9 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -119,7 +122,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.isProjectOpenWithoutModule
-import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -520,6 +522,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     projectSaveSettingsDurationMs: Long,
   ) {
     val app = ApplicationManager.getApplication()
+    val projectless = ProjectlessData.forProject(project)
     // the caller's thread context can carry a job of this project's scope; the scope cancellation below must not cancel the close
     Cancellation.withNonCancelableSection().use {
       val projectClosingDurationMs = measureTimeMillis {
@@ -546,7 +549,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             project.startDispose()
           }
         }
-        fireProjectClosed(project)
+        fireProjectClosed(project, projectless)
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           runSuppressing(
             { TimedZipHandler.closeOpenZipReferences() },
@@ -563,7 +566,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
         LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
-          project, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
+          project, projectless, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
         )
       }
     }
@@ -1270,9 +1273,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
     return withContext(Dispatchers.EDT) {
+      // The usage statistics read the mark while the project closes. A cancelled close removes it.
+      project.putUserData(ProjectlessLifecycleCollector.CLOSED_BY_ANOTHER_PROJECT, true)
+      var closed = false
       try {
         val windowManager = serviceAsync<WindowManager>() as WindowManagerEx
-        writeIntentReadAction {
+        closed = writeIntentReadAction {
           if (enableReuse) {
             windowManager.withFrameReuseEnabled().use {
               closeProject(project, checkCanClose = true)
@@ -1282,6 +1288,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             closeProject(project, checkCanClose = true)
           }
         }
+        closed
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") ce: CancellationException) {
         ensureActive()
@@ -1293,6 +1300,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       catch (e: Throwable) {
         LOG.error(e)
         true
+      }
+      finally {
+        if (!closed && !project.isDisposed) {
+          project.putUserData(ProjectlessLifecycleCollector.CLOSED_BY_ANOTHER_PROJECT, null)
+        }
       }
     }
   }
@@ -1343,12 +1355,12 @@ private fun fireProjectClosing(project: Project) {
   }
 }
 
-private fun fireProjectClosed(project: Project) {
+private fun fireProjectClosed(project: Project, projectless: EventPair<*>?) {
   if (LOG.isDebugEnabled) {
     LOG.debug("projectClosed $project", Throwable())
   }
 
-  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
+  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project, projectless)
   closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
@@ -1487,8 +1499,6 @@ private suspend fun initProject(
   }
 
   project.putUserDataIfAbsent(PROJECT_PATH, file)
-
-  serviceAsync<ProjectEntitiesStorage>().createEntity(project)
 
   project.registerComponents()
   registerComponentActivity?.end()

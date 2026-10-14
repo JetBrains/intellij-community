@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,10 +33,10 @@ import java.util.Arrays;
  * @author Manuel Stadelmann
  */
 @ApiStatus.Internal
-public class RemoveUsageAction extends AnAction {
+public final class RemoveUsageAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getUsages(e).length > 0);
+    e.getPresentation().setEnabled(getUsages(e).length > 0 && !ActionPlaces.ACTION_SEARCH.equals(e.getPlace()));
   }
 
   @Override

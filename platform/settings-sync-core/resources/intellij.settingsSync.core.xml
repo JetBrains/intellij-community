@@ -99,6 +99,7 @@
       <action class="com.intellij.settingsSync.core.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
     </group>
 
+    <!--suppress PluginXmlRegistrationCheck -->
     <action id="SettingsSyncSeparator" class="com.intellij.openapi.actionSystem.Separator">
       <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="ShowPlugins"/>
     </action>

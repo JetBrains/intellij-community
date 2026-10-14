@@ -3,11 +3,13 @@
 
 package com.intellij.ide.util.gotoByName
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
@@ -18,7 +20,9 @@ import com.intellij.util.text.Matcher
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import javax.swing.Icon
 import kotlin.math.max
 
 private const val BONUS_FOR_SPACE_IN_PATTERN = 100
@@ -32,6 +36,19 @@ fun getGroupName(@NotNull description: OptionDescription): @Nls @NotNull String 
   val settings: String = LangBundle.message("group.settings")
   return if (groupName == null || groupName == description.hit) settings else "$settings > $groupName"
 }
+
+/**
+ * Returns the icon for a [SettingsPageOptionDescription], and `null` for all other options.
+ */
+@ApiStatus.Internal
+fun getOptionDescriptionIcon(description: OptionDescription): Icon? =
+  if (description is SettingsPageOptionDescription) AllIcons.Actions.Properties else null
+
+/**
+ * An option that opens a settings page or a settings group by its display name.
+ */
+internal class SettingsPageOptionDescription(configurableId: @NonNls String, displayName: @NlsContexts.ConfigurableName String)
+  : OptionDescription(_option = null, configurableId = configurableId, hit = displayName, path = null, groupName = displayName)
 
 fun getActionText(value: Any?): @Nls String? {
   if (value is OptionDescription) return value.hit

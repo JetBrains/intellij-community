@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.HelpTooltip
@@ -502,7 +502,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
       }
     })
 
-    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
+    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher { e ->
       if (e is KeyEvent && KeymapUtil.isEventForAction(e, GotItComponentBuilder.CLOSE_ACTION_NAME)) {
         balloon.hide(true)
         GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)

@@ -19,7 +19,6 @@
     <module name="intellij.platform.ide.ui.inspector"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
-    <module name="intellij.dev.leakDetection"/>
     <module name="intellij.dev.pluginLoading"/>
     <module name="intellij.java.dev"/>
     <module name="intellij.groovy.dev"/>

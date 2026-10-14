@@ -283,7 +283,7 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
   extraRoot = true
 }
-private annotation_key ::= weak_keyword | IDENTIFIER | 'as' | 'def' | 'in'
+private annotation_key ::= weak_keyword | IDENTIFIER | 'def' | 'in'
 private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
@@ -775,11 +775,10 @@ try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
 private try_resource_list_item ::= mb_nl local_variable_declaration try_resource_list_separator { pin = 2 }
 private try_resource_list_separator ::= &')' | separators
 
-catch_clause ::= 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block) { pin = 1 }
+catch_clause ::= 'catch' '(' mb_nl parse_catch_parameter mb_nl ')' (mb_nl lazy_block) { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
-private catch_parameter_type_element ::= type_element_followed_by_identifier
-                                       | type_element disjunction_type_element
+private catch_parameter_type_element ::= type_element_followed_by_identifier | type_element disjunction_type_element
 catch_parameter ::= weak_keyword | IDENTIFIER { elementType = parameter }
 finally_clause ::= 'finally' (mb_nl lazy_block) { pin = 1 }
 
@@ -790,7 +789,7 @@ private control_statement_body ::= ';' | branch
 
 do_while_statement ::= [non_empty_annotation_list mb_nl] 'do' mb_nl control_statement_body mb_nl 'while' '(' <<insideParentheses expression>> (mb_nl ')') { pin = 2 }
 
-private type_element_followed_by_identifier ::= type_element variable_lookahead
+private type_element_followed_by_identifier ::= type_element mb_nl variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
 for_statement ::= [non_empty_annotation_list mb_nl] 'for' after_for { pin = 2 }
@@ -1328,8 +1327,8 @@ left array_type_element ::= non_empty_annotation_list? '[' mb_nl ']' { consumeTo
 
 wildcard_type_element ::= '?' wildcard_bound?
 private wildcard_bound ::= ('extends' | 'super') <<annotated any_type_element>> { pin = 1 }
-left disjunction_type_element ::= disjunction_type_element_part+
-private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+left disjunction_type_element ::= disjunction_type_element_part+ mb_nl
+private disjunction_type_element_part ::= mb_nl '|' mb_nl (type_element | expect_type) { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
 
 private expect_type ::= <<replaceVariants "type">> fail
 private any_type_element ::= <<anyTypeElement type_element>>

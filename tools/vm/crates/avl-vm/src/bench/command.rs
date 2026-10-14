@@ -184,7 +184,7 @@ impl Bench<'_> {
                 ),
             ));
         }
-        let launcher_label = resolve::launcher_label(&args.target)?;
+        resolve::check_dist_label(&args.target)?;
         ensure_host_paths(ctx, self.runner, self.settings).await?;
         let repo = self.settings.host_repo()?.to_path_buf();
         let binary_age = binary::age(self.environment, &repo);
@@ -232,9 +232,7 @@ impl Bench<'_> {
         let _journal = journal::attach(&bench_root, self.reporter, &actor);
         std::fs::create_dir_all(&session).map_err(|error| session_failed(format!("cannot create {}: {error}", session.display())))?;
         self.reporter.note(format!("session {}", session.display()), None);
-        let result = self
-            .measure(ctx, plan, args, max_load, &repo, &license, &session, &launcher_label, warnings)
-            .await;
+        let result = self.measure(ctx, plan, args, max_load, &repo, &license, &session, warnings).await;
         self.reporter
             .publish(Event::RunFinished(journal::run_finished(result.as_ref().err())), None);
         result
@@ -249,19 +247,30 @@ impl Bench<'_> {
         repo: &Path,
         license: &Path,
         session: &Path,
-        launcher_label: &str,
         mut warnings: Vec<String>,
     ) -> Result<Outcome, Refusal> {
-        let build_log = session.join("build.log");
-        let labels = [args.target.clone(), launcher_label.to_owned()];
-        self.bazel.build_labels(ctx, &build_log, &labels).await?;
-        let sources = resolve::sources(ctx, self.bazel, repo, &args.target, launcher_label).await?;
-        let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, self.reporter).await?;
+        let (generation, git, target) = if let Some(prefix) = &args.generation {
+            let staged = stage::open(&self.settings.runtime_root, prefix)?;
+            let (git, warning) = session::staged_commit(&staged.generation.digest, staged.git);
+            warnings.extend(warning);
+            (staged.generation, git, staged.target)
+        } else {
+            let build_log = session.join("build.log");
+            self.bazel.build_labels(ctx, &build_log, std::slice::from_ref(&args.target)).await?;
+            let sources = resolve::sources(ctx, self.bazel, repo, &args.target).await?;
+            let git = self.git_info(ctx, repo).await;
+            let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, &git, self.reporter).await?;
+            (generation, git, args.target.clone())
+        };
+        let how = match (&args.generation, generation.reused) {
+            (Some(_), _) => "opened by --generation, without a build",
+            (None, true) => "reused",
+            (None, false) => "staged",
+        };
         self.reporter.note(
             format!(
-                "generation {} ({}): {}",
+                "generation {} ({how}): {}",
                 &generation.digest[..12.min(generation.digest.len())],
-                if generation.reused { "reused" } else { "staged" },
                 generation.root.display()
             ),
             None,
@@ -277,7 +286,6 @@ impl Bench<'_> {
         } else {
             None
         };
-        let git = self.git_info(ctx, repo).await;
         let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
@@ -296,7 +304,7 @@ impl Bench<'_> {
 
         let info = SessionInfo {
             command: plan.command.to_owned(),
-            target: args.target.clone(),
+            target,
             git,
             generation: GenerationRef {
                 path: generation.root.display().to_string(),

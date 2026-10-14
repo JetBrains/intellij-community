@@ -193,8 +193,84 @@ public final class ApplicationNamesInfo {
    * <strong>Kept for compatibility; use {@link #getFullProductName()} instead.</strong>
    */
   public String getLowercaseProductName() {
-    String s = myProductName.toLowerCase(Locale.ENGLISH);
-    return Character.isUpperCase(s.charAt(0)) ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    return sentenceCase(myProductName);
+  }
+
+  /**
+   * Returns the conventional directory name used for projects created by the current product.
+   */
+  @ApiStatus.Internal
+  public @NlsSafe String getDefaultProjectDirectoryName() {
+    return getDefaultProjectDirectoryName(PlatformUtils.getPlatformPrefix(), myProductName);
+  }
+
+  /**
+   * Returns the conventional project directory name for a product identified by its platform prefix.
+   * {@code fallbackProductName} is used for products whose prefix isn't known to the platform.
+   */
+  @ApiStatus.Internal
+  public static @NlsSafe String getDefaultProjectDirectoryName(@NotNull String platformPrefix,
+                                                                @NotNull String fallbackProductName) {
+    String baseName;
+    switch (platformPrefix) {
+      case PlatformUtils.IDEA_PREFIX:
+      case PlatformUtils.IDEA_CE_PREFIX:
+      case PlatformUtils.IDEA_EDU_PREFIX:
+        baseName = "Idea";
+        break;
+      case PlatformUtils.APPCODE_PREFIX:
+        baseName = "AppCode";
+        break;
+      case PlatformUtils.AQUA_PREFIX:
+        baseName = "Aqua";
+        break;
+      case PlatformUtils.CLION_PREFIX:
+        baseName = "CLion";
+        break;
+      case PlatformUtils.PYCHARM_PREFIX:
+      case PlatformUtils.PYCHARM_CE_PREFIX:
+      case PlatformUtils.PYCHARM_EDU_PREFIX:
+        baseName = "Pycharm";
+        break;
+      case PlatformUtils.RUBY_PREFIX:
+        baseName = "Rubymine";
+        break;
+      case PlatformUtils.PHP_PREFIX:
+        baseName = "Phpstorm";
+        break;
+      case PlatformUtils.WEB_PREFIX:
+        baseName = "Webstorm";
+        break;
+      case PlatformUtils.DBE_PREFIX:
+        baseName = "DataGrip";
+        break;
+      case PlatformUtils.RIDER_PREFIX:
+        baseName = "Rider";
+        break;
+      case PlatformUtils.GOIDE_PREFIX:
+        baseName = "Goland";
+        break;
+      case PlatformUtils.FLEET_PREFIX:
+        baseName = "Fleet";
+        break;
+      case PlatformUtils.RUSTROVER_PREFIX:
+        baseName = "Rust";
+        break;
+      case PlatformUtils.MPS_PREFIX:
+        baseName = "MPS";
+        break;
+      case PlatformUtils.ANDROID_STUDIO_PREFIX:
+        baseName = "AndroidStudio";
+        break;
+      default:
+        baseName = sentenceCase(fallbackProductName);
+    }
+    return baseName + "Projects";
+  }
+
+  private static @NotNull String sentenceCase(@NotNull String value) {
+    String result = value.toLowerCase(Locale.ENGLISH);
+    return Character.isUpperCase(result.charAt(0)) ? result : Character.toUpperCase(result.charAt(0)) + result.substring(1);
   }
 
   /**

@@ -385,6 +385,12 @@ pub struct RunReport {
     pub tree: Option<Tree>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub tree_error: Option<String>,
+    /// The facts about the run that a reader must see and that do not change the verdict. An example is a test jar
+    /// that the host rebuilt while the iteration ran. Carried verbatim, and never read by anything that decides
+    /// `status` or `verdict_diagnostic`, as `traces_error` is. An optional field of v2, so an older report decodes
+    /// with no note.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub protocol_diagnostic: Option<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]

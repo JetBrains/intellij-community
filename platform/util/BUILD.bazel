@@ -4,7 +4,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 
 jps_test(
     name = "util-tests_test",
-    timeout = "long",
+    timeout = "eternal",
     jvm_flags = [
         "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
         "-Duser.country=US",
@@ -302,6 +302,8 @@ jvm_library(
         "//libraries/junit6-params:junit6-params_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.tests` end

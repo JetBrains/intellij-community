@@ -1,0 +1,103 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.terminal` start
+content_module_jar(module = ":terminal")
+### auto-generated section `dev intellij.platform.terminal` end
+
+### auto-generated section `build intellij.platform.terminal` start
+jvm_library(
+    name = "terminal",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.terminal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/consoleView",
+        "//platform/consoleView/impl",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util/concurrency",
+        "//platform/util/coroutines",
+        "//platform/util:util-ui",
+        "//libraries/guava",
+        "//libraries/jediterm-core",
+        "//libraries/jediterm-ui",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "terminal_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.terminal",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":terminal",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//libraries/jediterm-ui:jediterm-ui_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.terminal` end
+
+### auto-generated section `iml intellij.platform.terminal` start
+exports_files(
+    [
+        "intellij.platform.terminal.iml",
+        "resources/intellij.platform.terminal.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.terminal` end

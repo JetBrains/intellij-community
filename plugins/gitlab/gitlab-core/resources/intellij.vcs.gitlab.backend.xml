@@ -173,7 +173,9 @@
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
             use-shortcut-of="Refresh"
-            icon="AllIcons.Actions.Refresh"/>
+            icon="AllIcons.Actions.Refresh">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="GitLab.Merge.Request.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
             use-shortcut-of="Refresh"
@@ -224,6 +226,7 @@
     <group id="GitLab.Main.Group" popup="true"
            class="com.intellij.ide.actions.NonTrivialActionGroup"
            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <override-text place="GoToAction"/>
       <reference ref="GitLab.Merge.Request.Create"/>
       <reference ref="GitLab.Merge.Request.Show.List"/>
       <reference ref="GitLab.Create.Snippet"/>
@@ -272,7 +275,7 @@
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
       <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
-      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" searchable="false" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>
       </group>
       <separator/>

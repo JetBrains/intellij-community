@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.pipenv
 
+import java.nio.file.Path
 import com.jetbrains.python.sdk.PySdkDataProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.intellij.python.sdk.common.PyEnvRef
@@ -28,5 +29,7 @@ internal class PyPipEnvSdkDataProvider : PySdkDataProvider {
     envRef: PyEnvRef,
     pythonBinary: P,
     fileSystem: FileSystem<P>,
-  ): PythonSdkAdditionalData = PyPipEnvSdkAdditionalData(pyProject.baseDir)
+    requirementsFile: Path?,
+  ): PythonSdkAdditionalData =
+    PyPipEnvSdkAdditionalData(pyProject.baseDir).also { it.requirementsPath = requirementsFile }
 }

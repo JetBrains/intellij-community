@@ -197,8 +197,9 @@ fn a_private_additional_module_after_jetbrains_ones_gives_two_blocks_in_that_ord
     );
 }
 
+/// The block without a namespace comes last, whatever the order of the flags.
 #[test]
-fn a_private_additional_module_first_gives_the_reverse_order() {
+fn a_private_additional_module_first_still_gives_the_private_block_last() {
     assert_composes(
         &[
             "--additional-module=a.private;private",
@@ -207,12 +208,12 @@ fn a_private_additional_module_first_gives_the_reverse_order() {
         ],
         "<idea-plugin>
   <id>com.intellij</id>
+  <content namespace=\"jetbrains\">
+    <module name=\"a.one\" />
+  </content>
   <content>
     <module name=\"a.private\" />
     <module name=\"a.second.private\" loading=\"required\" />
-  </content>
-  <content namespace=\"jetbrains\">
-    <module name=\"a.one\" />
   </content>
 </idea-plugin>",
     );

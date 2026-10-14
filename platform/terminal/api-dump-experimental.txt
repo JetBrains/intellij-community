@@ -1,0 +1,9 @@
+f:com.intellij.terminal.TerminalTitle
+- *f:buildFullTitle(Z):java.lang.String
+- *f:buildTitle(Z):java.lang.String
+com.intellij.terminal.ui.TerminalWidget
+- com.intellij.openapi.ui.ComponentContainer
+- *:getCurrentDirectory():java.lang.String
+- *a:getTerminalSizeInitializedFuture():java.util.concurrent.CompletableFuture
+- *:getText():java.lang.CharSequence
+- *:isCommandRunning():Z

@@ -5,27 +5,34 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.refactoring.InplaceIntroduceTestUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
 public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTest {
-  @Override
-  protected boolean isRunInCommand() {
-    return false;
-  }
-
+  @Test
   public void testReassignSimple() {
     doTest();
   }
 
+  @Test
   public void testReassignWhenVariableWasPutInLoopBody() {
     doTest();
   }
 
+  @Test
   public void testFilterVariablesWhichMustBeEffectivelyFinal() {
     doTest();
   }
 
+  @Test
   public void testUndoPositionAfterSpace() {
     doUndoTest();
   }
@@ -33,45 +40,35 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
   private void doTest() {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
-
-      invokeRefactoring();
-      ReassignVariableUtil.reassign(getEditor());
-      assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
-      assertNull(AbstractInplaceIntroducer.getActiveIntroducer(getEditor()));
+    InplaceIntroduceTestUtil.withInplaceRename(getFixture(), () -> {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        invokeRefactoring();
+        ReassignVariableUtil.reassign(getEditor());
+        assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
+        assertNull(AbstractInplaceIntroducer.getActiveIntroducer(getEditor()));
+      });
 
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
-    }
-    finally {
-      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-    }
+    });
   }
 
   private void doUndoTest() {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+    InplaceIntroduceTestUtil.withInplaceRename(getFixture(), () -> {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        invokeRefactoring();
+        ReassignVariableUtil.reassign(getEditor());
 
-      invokeRefactoring();
-      ReassignVariableUtil.reassign(getEditor());
+        assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
 
-      assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
-
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-      assertNotNull(textEditor);
-      UndoManager.getInstance(getProject()).undo(textEditor);
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+        assertNotNull(textEditor);
+        UndoManager.getInstance(getProject()).undo(textEditor);
+      });
 
       checkResultByFile(getBasePath() + name + getExtension());
-    }
-    finally {
-      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-    }
+    });
   }
 
   @Override

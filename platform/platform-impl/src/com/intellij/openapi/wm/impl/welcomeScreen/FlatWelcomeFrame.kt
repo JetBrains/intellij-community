@@ -173,6 +173,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       layeredPane.putClientProperty(CUSTOM_HEADER, header)
     }
     else {
+      // created once: a menu bar and the helper that updates its actions live until the frame closes, and a LaF change updates it
       createWelcomeMenuBar(this, coroutineScope)
       content.setContent(screen.welcomePanel)
     }
@@ -270,7 +271,6 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       }
     }
     else {
-      createWelcomeMenuBar(this, coroutineScope)
       content.setContent(screen.welcomePanel)
     }
     if (USE_TABBED_WELCOME_SCREEN) {

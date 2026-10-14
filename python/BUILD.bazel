@@ -482,7 +482,6 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/jsoup",
         "//libraries/javax/annotation",
-        "@lib//ant/lib:ant-provided",
         "//python/python-psi-impl:psi-impl",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
@@ -569,6 +568,7 @@ jvm_library(
         "//python/python-poetry/backend",
         "//platform/eel-nioFs",
         "//platform/wsl-impl",
+        "//libraries/commons/compress",
     ],
 )
 
@@ -654,7 +654,6 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
         "//libraries/javax/annotation:annotation_test_lib",
-        "@lib//ant/lib:ant-provided",
         "//python/python-psi-impl:psi-impl_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//python/python-sdk/common:common_test_lib",
@@ -739,6 +738,7 @@ jvm_library(
         "//python/python-poetry/backend:backend_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/wsl-impl:wsl-impl_test_lib",
+        "//libraries/commons/compress:compress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1190,6 +1190,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/testFramework",
+        "//platform/testFramework/structureView",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
@@ -1291,6 +1292,8 @@ jvm_library(
         "//platform/remote-core:remote-core_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
         "//python/python-psi-api:psi",

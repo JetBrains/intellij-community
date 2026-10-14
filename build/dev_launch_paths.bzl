@@ -5,9 +5,9 @@ from the environment at launch are constants at analysis: the workspace root, th
 the user. The repository reads no workspace file. `getenv` tracks `HOME`, and a moved checkout has another output base,
 which fetches the repository again.
 
-Only the argument file action, `RunEnvironmentInfo` and the `args` of a launcher read the constants. Each of these is
-local, so no remotely cached action key holds a local path. The extension is reproducible, so the lockfile holds no
-local path either.
+Only the argument file action, `RunEnvironmentInfo`, the `args` of a launcher and the sibling vmoptions file of an
+export read the constants. Each of these is local, so no remotely cached action key holds a local path. The extension
+is reproducible, so the lockfile holds no local path either.
 """
 
 def _dev_launch_paths_impl(repository_ctx):

@@ -29,12 +29,28 @@ public class AuxiliaryConfigurationArtifacts {
 
   private final @NotNull Map<ComponentIdentifier, Set<File>> sources;
   private final @NotNull Map<ComponentIdentifier, Set<File>> javadocs;
+  private final @NotNull Map<File, File> artifactSources;
 
   public AuxiliaryConfigurationArtifacts(@NotNull Map<ComponentIdentifier, Set<File>> sources,
                                          @NotNull Map<ComponentIdentifier, Set<File>> javadocs
   ) {
+    this(sources, javadocs, Collections.emptyMap());
+  }
+
+  /**
+   * @param sources         the sources files of a component. {@link #getSources} chooses one of them by the file name.
+   * @param javadocs        the Javadoc files of a component. {@link #getJavadoc} chooses one of them by the file name.
+   * @param artifactSources the sources file of a specific artifact file. It takes precedence over {@code sources}.
+   *                        Use it when a component packs several libraries into separate artifacts,
+   *                        and the file names do not relate the artifact to its sources.
+   */
+  public AuxiliaryConfigurationArtifacts(@NotNull Map<ComponentIdentifier, Set<File>> sources,
+                                         @NotNull Map<ComponentIdentifier, Set<File>> javadocs,
+                                         @NotNull Map<File, File> artifactSources
+  ) {
     this.sources = sources;
     this.javadocs = javadocs;
+    this.artifactSources = artifactSources;
   }
 
   public @Nullable File getJavadoc(@NotNull ComponentIdentifier identifier,
@@ -50,6 +66,10 @@ public class AuxiliaryConfigurationArtifacts {
   public @Nullable File getSources(@NotNull ComponentIdentifier identifier,
                                    @NotNull File artifactFile
   ) {
+    File artifactSourcesFile = artifactSources.get(artifactFile);
+    if (artifactSourcesFile != null) {
+      return artifactSourcesFile;
+    }
     Set<File> files = sources.get(identifier);
     if (files == null) {
       return null;
@@ -143,6 +163,8 @@ public class AuxiliaryConfigurationArtifacts {
         mergedJavadocs.put(entry.getKey(), entry.getValue());
       }
     }
-    return new AuxiliaryConfigurationArtifacts(mergedSources, mergedJavadocs);
+    Map<File, File> mergedArtifactSources = new HashMap<>(other.artifactSources);
+    mergedArtifactSources.putAll(this.artifactSources);
+    return new AuxiliaryConfigurationArtifacts(mergedSources, mergedJavadocs, mergedArtifactSources);
   }
 }

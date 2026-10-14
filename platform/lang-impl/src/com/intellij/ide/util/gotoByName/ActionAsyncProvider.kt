@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.forEachConcurrent
-import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import com.intellij.platform.util.coroutines.transformConcurrent
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -168,11 +167,18 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   ) = coroutineScope {
     val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
 
-    val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
-    val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
-    val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
+    // a top hit provider can return a registered action that the action search already found
+    val foundActions = ConcurrentHashMap.newKeySet<AnAction>()
+    val actionConsumer: suspend (MatchedValue) -> Boolean = { matchedValue ->
+      (matchedValue.value as? ActionWrapper)?.let { foundActions.add(it.action) }
+      consumer(matchedValue)
+    }
 
-    val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
+    val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
+    val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, actionConsumer, nonMatchedIdsChannel, abbreviationsJob)
+    val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, actionConsumer, matchedStubsJob)
+
+    val topHitsJob = processTopHits(pattern, presentationProvider, consumer, foundActions, unmatchedStubsJob)
     val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
     processOptions(pattern, presentationProvider, consumer, intentionsJob)
   }
@@ -411,6 +417,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   private  fun CoroutineScope.processTopHits(pattern: String,
                                              presentationProvider: suspend (AnAction) -> Presentation,
                                              consumer: suspend (MatchedValue) -> Boolean,
+                                             foundActions: Set<AnAction>,
                                              awaitJob: Job
   ): Job = launch {
     val project = model.project
@@ -445,14 +452,18 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       }.getOrLogException(LOG)
     }
 
-    val matchedValues = collector.result.mapConcurrent { item ->
-      val obj = (item as? AnAction)?.let { wrapActionOrNull(action = it, presentationProvider = presentationProvider) } ?: item
+    val matchedValues = collector.result.mapNotNullConcurrent { item ->
+      val obj = if (item is AnAction) wrapActionOrNull(action = item, presentationProvider = presentationProvider) ?: return@mapNotNullConcurrent null else item
       matchItem(item = obj, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
     }.sortedWith(MATCHED_VALUE_COMPARATOR)
 
     awaitJob.join() //wait until all items from previous step are processed
     LOG.debug { "Process top hits for \"$pattern\"" }
-    matchedValues.forEach { if (!consumer(it)) cancel() }
+    for (matchedValue in matchedValues) {
+      val action = (matchedValue.value as? ActionWrapper)?.action
+      if (action != null && action in foundActions) continue
+      if (!consumer(matchedValue)) cancel()
+    }
   }
 
   private fun CoroutineScope.processIntentions(pattern: String,
@@ -507,7 +518,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         val matcher = buildMatcher(pattern)
         for ((key, value) in map) {
           if (matcher.matches(value)) {
-            res.add(OptionDescription(_option = null, configurableId = key, hit = value, path = null, groupName = value))
+            res.add(SettingsPageOptionDescription(configurableId = key, displayName = value))
           }
         }
       }

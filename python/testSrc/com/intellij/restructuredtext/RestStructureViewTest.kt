@@ -3,6 +3,7 @@ package com.intellij.restructuredtext
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
+import com.intellij.testFramework.StructureViewComponentTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class RestStructureViewTest : BasePlatformTestCase() {
@@ -43,7 +44,7 @@ class RestStructureViewTest : BasePlatformTestCase() {
 
   private fun doTest(expected: String) {
     myFixture.configureByFile("/structureView/" + getTestName(true).trim() + ".rst")
-    myFixture.testStructureView { svc ->
+    StructureViewComponentTestUtil.testStructureView(myFixture) { svc ->
       PlatformTestUtil.expandAll(svc.tree)
       assertTreeEqual(svc.tree, expected)
     }

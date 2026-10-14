@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xpathView
 
+import com.intellij.ide.ui.search.nonSearchableGroupTitle
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ColorPanel
@@ -22,7 +23,7 @@ internal class XPathConfigurable : BoundSearchableConfigurable(
       val config = XPathAppComponent.getInstance().getConfig()
       lateinit var useContextAtCursor: JBCheckBox
 
-      group(XPathBundle.message("settings.settings")) {
+      group(nonSearchableGroupTitle(XPathBundle.message("settings.settings"))) {
         row {
           checkBox(XPathBundle.message("settings.scroll.first.hit.into.visible.area"))
             .bindSelected(config::scrollToFirst)

@@ -18,11 +18,11 @@
     <!-- endregion -->
   </content>
   <!-- region additional -->
-  <content>
-    <module name="intellij.libraries.sqlite"/>
-  </content>
   <content namespace="jetbrains">
     <module name="intellij.libraries.blockmap" loading="embedded"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.sqlite"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

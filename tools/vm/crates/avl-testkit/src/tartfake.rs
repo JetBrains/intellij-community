@@ -86,16 +86,6 @@
 //!   `tart` ones too.
 //! - `volume`, `logs` and anything else exit from [`Answer::Exit`].
 //!
-//! The `limactl` verbs, which only the fake `limactl` answers. One fake holds one instance, the Docker engine, under
-//! the `LIMA_HOME` its caller sets; without one it exits 2:
-//!
-//! - `list --format {{.Status}} <name>` prints [`Answer::LimaState`]. No such file is no instance: exit 1 with the
-//!   "No instance matching" warning, as `limactl` answers.
-//! - `start` copies a template argument (`*.yaml`) to [`LIMA_TEMPLATE_COPY`], then exits from
-//!   [`Answer::LimaStartExit`]. A start that succeeds writes `Running` over [`Answer::LimaState`] and creates the
-//!   forwarded socket `$LIMA_HOME/<name>/sock/docker.sock` as a plain file.
-//! - `stop` writes `Stopped` and removes the socket. `delete` removes the state and `$LIMA_HOME/<name>`.
-//!
 //! The `container` verbs, which only the fake Apple `container` answers. It holds one container in the state file of
 //! the fake `docker`, [`Answer::ContainerState`], and prints it as the Apple CLI does:
 //!
@@ -187,8 +177,6 @@ pub enum Binary {
     Parallels,
     /// The fake `docker`, which `DOCKER_BIN` points at.
     Docker,
-    /// The fake `limactl`, which a suite's Bazel resolves as the pinned one.
-    Limactl,
     /// The fake Apple `container`, which `CONTAINER_BIN` points at.
     Container,
     /// The fake host `curl`, which `AIR_VM_HOST_CURL` points at.
@@ -206,7 +194,6 @@ impl Binary {
             Self::Tart => "tart",
             Self::Parallels => "prlctl",
             Self::Docker => "docker",
-            Self::Limactl => "limactl",
             Self::Container => "container",
             Self::Curl => "curl",
             Self::ContainerLinux => "container.cmd",
@@ -303,10 +290,6 @@ pub enum Answer {
     /// What `docker image inspect --format {{index .Config.Labels …}}` prints: the revision label of the image.
     /// Unseeded, it prints nothing, as an image without the label does.
     ImageRevision,
-    /// The instance of the fake `limactl`, as `limactl list --format {{.Status}}` prints it. Absent is no instance.
-    LimaState,
-    /// Exit code of `limactl start`, default 0. A nonzero exit starts nothing.
-    LimaStartExit,
     /// What `container system status --format json` prints. Absent is a server that is down.
     ContainerSystem,
     /// What `container system start` copies over [`Answer::ContainerSystem`] when seeded.
@@ -374,8 +357,6 @@ impl Answer {
             Self::PullExit => "pull-exit.txt",
             Self::PushExit => "push-exit.txt",
             Self::ImageRevision => "image-revision.txt",
-            Self::LimaState => "lima-state.txt",
-            Self::LimaStartExit => "lima-start-exit.txt",
             Self::ContainerSystem => "container-system.json",
             Self::ContainerSystemStarted => "container-system-started.json",
             Self::ContainerStartExit => "container-start-exit.txt",
@@ -394,9 +375,6 @@ impl Answer {
 
 /// The call log beside the executable.
 pub(crate) const CALLS: &str = "calls.txt";
-
-/// The copy of the template the last `limactl start` of a template was given, beside the executable.
-pub const LIMA_TEMPLATE_COPY: &str = "lima-template.yaml";
 
 /// The copy of the file the last upload of the fake `curl` sent, beside the executable.
 pub const MIRROR_UPLOAD: &str = "mirror-upload.txt";
@@ -462,33 +440,6 @@ if [ "$self" = curl ]; then
   if [ -f "$dir/mirror-archive.txt" ]; then cp "$dir/mirror-archive.txt" "$out"; exit 0; fi
   echo "curl: (22) The requested URL returned error: 404" >&2
   exit 22
-fi
-if [ "$self" = limactl ]; then
-  [ -n "$LIMA_HOME" ] || { echo "fake limactl: LIMA_HOME is not set" >&2; exit 2; }
-  lstate="$dir/lima-state.txt"
-  name=; prev=
-  for word in "$@"; do
-    [ "$prev" = --name ] && name=$word
-    prev=$word
-  done
-  [ -n "$name" ] || name=$prev
-  case "$1" in
-    list)
-      if [ -f "$lstate" ]; then cat "$lstate"; exit 0; fi
-      echo "level=warning msg=\"No instance matching $name found.\"" >&2
-      exit 1 ;;
-    start)
-      case "$prev" in *.yaml) cp "$prev" "$dir/lima-template.yaml" ;; esac
-      echo "fake limactl: starting $name"
-      lcode=$(cat "$dir/lima-start-exit.txt" 2>/dev/null || echo 0)
-      [ "$lcode" = 0 ] || { echo "fake limactl: the start failed" >&2; exit "$lcode"; }
-      mkdir -p "$LIMA_HOME/$name/sock" && : > "$LIMA_HOME/$name/sock/docker.sock"
-      echo Running > "$lstate"
-      exit 0 ;;
-    stop) rm -f "$LIMA_HOME/$name/sock/docker.sock"; echo Stopped > "$lstate"; exit 0 ;;
-    delete) rm -rf "${LIMA_HOME:?}/$name"; rm -f "$lstate"; exit 0 ;;
-  esac
-  exit 0
 fi
 if [ "$self" = container.cmd ] || [ "$self" = container.sh ]; then
   [ -f "$dir/container-linux-failed-verb.txt" ] && [ "$1" = "$(cat "$dir/container-linux-failed-verb.txt")" ] && {

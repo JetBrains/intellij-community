@@ -57,6 +57,7 @@ import git4idea.validators.checkRefName
 import git4idea.repo.tags
 import git4idea.validators.GitRefNameValidator
 import git4idea.workingTrees.GitWorkingTreesService
+import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -126,6 +127,8 @@ internal class GitWorkingTreeDialog(
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
   }
+
+  override fun getHelpId() = TOOLWINDOW_CONTENT_HELP_ID
 
   private fun getCurrentRepository(): GitRepository = selectedRepository.get()
 
@@ -265,6 +268,12 @@ internal class GitWorkingTreeDialog(
     refCellRenderer = RefWithTreeCellRenderer(data.project, getCurrentRepository())
     component.renderer = refCellRenderer
     refComboBox = component
+
+    // Preselect the current branch if no explicit ref was provided.
+    if (existingRefWithWorkingTree.get() == null) {
+      val currentBranch = getCurrentRepository().currentBranch
+      existingRefWithWorkingTree.set(localRefsWithTrees.firstOrNull { it?.ref == currentBranch } ?: localRefsWithTrees.firstOrNull())
+    }
 
     // Set prototype to calculate proper size upfront and prevent resizing on first selection
     val longestRef = localRefsWithTrees.maxByOrNull { it?.ref?.name?.length ?: 0 }

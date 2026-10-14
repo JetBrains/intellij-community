@@ -491,7 +491,7 @@ object ProjectUtil {
         ProjectNewWindowDoNotAskOption())
       mode = if (exitCode == 0) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == 1) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else if (exitCode == 2 && processor != null) GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH else -1
       if (mode != -1) {
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(project, mode)
       }
     }
     return mode
@@ -590,13 +590,8 @@ object ProjectUtil {
   @JvmStatic
   @Suppress("IO_FILE_USAGE")
   fun getUserHomeProjectDir(): String {
-    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
-      ApplicationNamesInfo.getInstance().productName
-    }
-    else {
-      ApplicationNamesInfo.getInstance().lowercaseProductName
-    }
-    return SystemProperties.getUserHome().replace('/', java.io.File.separatorChar) + java.io.File.separator + productName + "Projects"
+    val directoryName = ApplicationNamesInfo.getInstance().defaultProjectDirectoryName
+    return SystemProperties.getUserHome().replace('/', java.io.File.separatorChar) + java.io.File.separator + directoryName
   }
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {

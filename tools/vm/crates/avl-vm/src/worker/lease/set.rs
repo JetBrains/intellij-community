@@ -19,6 +19,7 @@ use super::receipt::{remove_lease_receipts, reusable_lease_receipt, write_lease_
 use super::{ACQUIRE_LOCK_TIMEOUT, AcquireRequest, release_by_receipt, try_atomic_lease};
 use crate::daemon::state::HostState;
 use crate::worker::hypervisor::SlotState;
+use crate::worker::run_marker::RunMarkerState;
 use crate::worker::worker::{Lease, Manager, read_lease, remove_idle_stop_record};
 
 #[cfg(test)]
@@ -159,15 +160,36 @@ pub(crate) async fn acquire_workers(ctx: &Ctx, manager: &Manager, request: &Acqu
 /// afterwards - `exact` short of the pool, a guest-OS disagreement - unwinds what this call placed rather than
 /// leaving a partly-owned set behind. N sequential single-lease calls cannot do this: the holder-recovery path
 /// answers the second call with the first call's worker.
+///
+/// A busy worker is not available, and the survey goes on with the next one. A busy worker that may hold a lease of
+/// the request refuses the acquisition as [`worker_busy`]: the recovery cannot read that lease under the lock, and a
+/// new lease would give the holder a second worker. A worker whose lease the request recovers refuses as
+/// [`worker_busy`] too, while a run of a live process is in flight on it ([`require_no_run_of_holder`]).
 async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest) -> Result<Vec<HeldWorker>, Refusal> {
     let settings = manager.settings();
     let shards = shard_holders(request);
     let mut wanted: HashSet<&str> = shards.iter().map(String::as_str).collect();
     let mut held = Vec::new();
     let mut taken = HashSet::new();
+    let mut busy = Vec::new();
     for worker in &settings.workers {
-        let Some(existing) = lease_for_acquire(ctx, manager, worker).await? else {
-            continue;
+        let existing = match lease_for_acquire(ctx, manager, worker).await? {
+            Surveyed::Read(None) => continue,
+            Surveyed::Read(Some(existing)) => existing,
+            Surveyed::Busy(lease) => {
+                let may_be_wanted = match &lease {
+                    Ok(None) => false,
+                    Ok(Some(lease)) => wanted.contains(lease.holder.as_str()),
+                    // A lease that cannot be read may be one of the request.
+                    Err(_) => true,
+                };
+                if may_be_wanted {
+                    return Err(holder_worker_busy(worker));
+                }
+                taken.insert(worker.as_str());
+                busy.push(worker.clone());
+                continue;
+            }
         };
         taken.insert(worker.as_str());
         // Struck off, so a stray second lease under the same shard name is left where it is rather than acquired
@@ -175,6 +197,7 @@ async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest
         if !wanted.remove(existing.holder.as_str()) {
             continue;
         }
+        require_no_run_of_holder(ctx, manager, worker).await?;
         let receipt = reusable_lease_receipt(settings, &existing).ok_or_else(|| {
             Refusal::new(
                 "lease_recovery_receipt_missing",
@@ -199,8 +222,19 @@ async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest
         .iter()
         .filter(|shard| !held.iter().any(|item| item.lease.holder == **shard))
         .collect();
+    let free: Vec<&str> = settings
+        .workers
+        .iter()
+        .map(String::as_str)
+        .filter(|worker| !taken.contains(worker))
+        .collect();
     let mut placed: Vec<Lease> = Vec::new();
-    let outcome = place_pending(ctx, manager, request, &pending, &taken, &mut held, &mut placed).await;
+    let outcome = async {
+        busy.extend(place_pending(ctx, manager, request, &pending, &free, &mut held, &mut placed).await?);
+        require_enough(settings, request, &held, &busy)?;
+        require_one_guest_os(settings, &held)
+    }
+    .await;
     if let Err(refusal) = outcome {
         rollback_placed_leases(manager, &placed);
         return Err(refusal);
@@ -208,25 +242,22 @@ async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest
     Ok(held)
 }
 
+/// Places a lease for each pending holder on the free slots, in the ranked order, and answers the slots that turned
+/// out to be busy. A busy slot is skipped as a taken one is.
 async fn place_pending(
     ctx: &Ctx,
     manager: &Manager,
     request: &AcquireRequest,
     pending: &[&String],
-    taken: &HashSet<&str>,
+    free: &[&str],
     held: &mut Vec<HeldWorker>,
     placed: &mut Vec<Lease>,
-) -> Result<(), Refusal> {
+) -> Result<Vec<String>, Refusal> {
     let settings = manager.settings();
-    let free: Vec<&str> = settings
-        .workers
-        .iter()
-        .map(String::as_str)
-        .filter(|worker| !taken.contains(worker))
-        .collect();
+    let mut busy = Vec::new();
     // One free slot has no order to choose, so a one-slot pool asks the backend nothing.
     let facts = if free.len() > 1 && !pending.is_empty() {
-        manager.slot_preference(ctx, &free, request.launch_digest()).await
+        manager.slot_preference(ctx, free, request.launch_digest()).await
     } else {
         free.iter()
             .map(|worker| SlotFacts {
@@ -251,8 +282,13 @@ async fn place_pending(
             holder: (*holder).clone(),
             acquired_at: stamp(jiff::Timestamp::now()),
         };
-        let Some(receipt) = place_lease(ctx, manager, worker, &lease).await? else {
-            continue;
+        let receipt = match place_lease(ctx, manager, worker, &lease).await? {
+            Placement::Placed(receipt) => receipt,
+            Placement::Taken => continue,
+            Placement::Busy => {
+                busy.push(worker.clone());
+                continue;
+            }
         };
         placed.push(lease.clone());
         held.push(HeldWorker {
@@ -262,6 +298,29 @@ async fn place_pending(
             slot_reason: slot.reason,
         });
     }
+    Ok(busy)
+}
+
+/// Refuses a held set that is empty, or short under `exact`. The refusal is [`worker_busy`] when a busy worker was in
+/// the way, because that worker becomes available when its operation ends. It is `pool_exhausted` otherwise.
+fn require_enough(settings: &Config, request: &AcquireRequest, held: &[HeldWorker], busy: &[String]) -> Result<(), Refusal> {
+    let short = if held.is_empty() {
+        format!("no {} worker of this pool could be leased", settings.guest_os)
+    } else if request.exact() && held.len() < usize::from(request.count()) {
+        format!(
+            "--exact asked for {} workers and only {} could be leased",
+            request.count(),
+            held.len()
+        )
+    } else {
+        return Ok(());
+    };
+    if !busy.is_empty() {
+        return Err(worker_busy(format!(
+            "{short}; another lifecycle operation holds {}",
+            busy.join(", ")
+        )));
+    }
     if held.is_empty() {
         return Err(Refusal::new(
             "pool_exhausted",
@@ -269,18 +328,7 @@ async fn place_pending(
             format!("every {} worker of this pool is leased", settings.guest_os),
         ));
     }
-    if request.exact() && held.len() < usize::from(request.count()) {
-        return Err(Refusal::new(
-            "pool_exhausted",
-            Exit::TEMP_FAIL,
-            format!(
-                "--exact asked for {} workers and only {} could be leased",
-                request.count(),
-                held.len()
-            ),
-        ));
-    }
-    require_one_guest_os(settings, held)
+    Err(Refusal::new("pool_exhausted", Exit::TEMP_FAIL, short))
 }
 
 /// The per-worker holder names one request stands for.
@@ -295,41 +343,96 @@ fn shard_holders(request: &AcquireRequest) -> Vec<String> {
     (1..=request.count()).map(|index| format!("{}#{index}", request.holder())).collect()
 }
 
-/// One worker's lease read under its lifecycle lock, or [`worker_busy`] when another operation holds the lock.
-async fn lease_for_acquire(ctx: &Ctx, manager: &Manager, worker: &str) -> Result<Option<Lease>, Refusal> {
-    manager
+/// What the survey of one worker found.
+enum Surveyed {
+    /// The lease read under the lifecycle lock of the worker, or `None` for a free worker.
+    Read(Option<Lease>),
+    /// Another operation holds the lifecycle lock, and the lease is read without it. A placement needs the pool lock
+    /// that the survey holds, so no lease appears on the worker during the survey. A release can remove one.
+    Busy(Result<Option<Lease>, Refusal>),
+}
+
+/// One worker's lease read under its lifecycle lock, or [`Surveyed::Busy`] when another operation holds the lock.
+async fn lease_for_acquire(ctx: &Ctx, manager: &Manager, worker: &str) -> Result<Surveyed, Refusal> {
+    let path = manager.settings().lease_path(worker);
+    let read = manager
+        .try_with_lifecycle_lock(ctx, worker, "lease-acquire-check", async { read_lease(&path) })
+        .await?;
+    Ok(read.map_or_else(|| Surveyed::Busy(read_lease(&path)), Surveyed::Read))
+}
+
+/// The refusal of an acquisition that a worker's lifecycle lock stopped: somebody is doing something to this worker,
+/// and `worker_busy` is the code a caller retries against.
+fn worker_busy(message: String) -> Refusal {
+    Refusal::new("worker_busy", Exit::TEMP_FAIL, message)
+}
+
+/// The refusal of an acquisition that finds a busy worker which may hold a lease of the request.
+fn holder_worker_busy(worker: &str) -> Refusal {
+    worker_busy(format!(
+        "{worker} is handling another lifecycle operation, and it may hold a lease of this holder; retry when the \
+         operation ends"
+    ))
+}
+
+/// Refuses the recovery of the lease on `worker` as [`worker_busy`] while a run of another live process is in flight
+/// on the worker. A recovered receipt would give a second run of the holder the worker of the first one. A stale
+/// marker is removed with a note, and the recovery goes on.
+///
+/// The check runs under the lifecycle lock of the worker. A busy lock refuses as [`holder_worker_busy`].
+async fn require_no_run_of_holder(ctx: &Ctx, manager: &Manager, worker: &str) -> Result<(), Refusal> {
+    let checked = manager
         .try_with_lifecycle_lock(ctx, worker, "lease-acquire-check", async {
-            read_lease(&manager.settings().lease_path(worker))
+            Ok(match manager.judge_run_marker(ctx, worker).await? {
+                RunMarkerState::Live(marker) => Some(marker),
+                RunMarkerState::Stale(marker) => {
+                    manager.remove_stale_run_marker(worker, &marker)?;
+                    None
+                }
+                RunMarkerState::None | RunMarkerState::Ours(_) => None,
+            })
         })
-        .await?
-        .ok_or_else(worker_busy)
+        .await?;
+    match checked {
+        None => Err(holder_worker_busy(worker)),
+        Some(None) => Ok(()),
+        Some(Some(marker)) => Err(worker_busy(format!(
+            "{worker} holds a lease of this holder, and its run {} is in flight (pid {} since {}); retry when the run \
+             ends",
+            marker.run_id, marker.process.pid, marker.started_at
+        ))),
+    }
 }
 
-/// The refusal of an acquisition that finds a worker's lifecycle lock held: somebody is doing something to this
-/// worker, and `worker_busy` is the code a caller retries against.
-fn worker_busy() -> Refusal {
-    Refusal::new("worker_busy", Exit::TEMP_FAIL, "a worker is handling another lifecycle operation")
+/// What one placement did.
+enum Placement {
+    /// The lease is on the worker, and this is its receipt.
+    Placed(PathBuf),
+    /// A lease of another caller is on the worker.
+    Taken,
+    /// Another operation holds the lifecycle lock of the worker.
+    Busy,
 }
 
-/// Places one lease and writes its receipt, or answers `None` when the worker turned out to be taken.
+/// Places one lease and writes its receipt.
 ///
 /// The receipt write is inside the lock and the lease is unlinked if it fails, because a lease with no receipt is a
 /// worker nobody can use and nobody can free: a release needs the handle this would not have written.
-async fn place_lease(ctx: &Ctx, manager: &Manager, worker: &str, lease: &Lease) -> Result<Option<PathBuf>, Refusal> {
+async fn place_lease(ctx: &Ctx, manager: &Manager, worker: &str, lease: &Lease) -> Result<Placement, Refusal> {
     let settings = manager.settings();
-    manager
+    let placed = manager
         .try_with_lifecycle_lock(ctx, worker, "lease-acquire", async {
             if !try_atomic_lease(settings, worker, lease)? {
-                return Ok(None);
+                return Ok(Placement::Taken);
             }
             // The new holder keeps the worker running: the idle stop of the last release finds no record.
             remove_idle_stop_record(settings, worker)?;
-            write_lease_receipt(settings, lease).map(Some).inspect_err(|_| {
+            write_lease_receipt(settings, lease).map(Placement::Placed).inspect_err(|_| {
                 let _ = std::fs::remove_file(settings.lease_path(worker));
             })
         })
-        .await?
-        .ok_or_else(worker_busy)
+        .await?;
+    Ok(placed.unwrap_or(Placement::Busy))
 }
 
 /// Undoes the leases this call placed, so an acquisition that cannot be completed leaves no worker owned by nobody.

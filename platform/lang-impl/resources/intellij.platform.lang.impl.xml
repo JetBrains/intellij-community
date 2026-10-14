@@ -766,7 +766,7 @@
       implementation="com.intellij.codeInsight.intention.impl.config.IntentionSearchableOptionContributor"/>
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
-    <applicationInitializedListener implementation="com.intellij.find.impl.FindSettingsInitializer"/>
+    <applicationActivity implementation="com.intellij.find.impl.FindSettingsInitializer"/>
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings"
                     serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
     <projectService serviceInterface="com.intellij.ide.util.FileStructurePopupLoadingStateUpdater" open="true"
@@ -1162,7 +1162,7 @@
                            dynamic="true"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance" bundle="messages.ApplicationBundle"
-                           key="tab.editor.settings.appearance" newOptions="true"/>
+                           key="tab.editor.settings.appearance"/>
     <editorAppearanceInlineDocHandler instance="com.intellij.application.options.editor.EditorAppearanceConfigurable$DefaultInlineDocAdditionalConfigurable"
                                       id="default"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"
@@ -1420,6 +1420,8 @@
       implementationClass="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationFeatureUsagesUtil"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.hints.declarative.impl.InlayActionHandlerUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.AttachDirectoryUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.WelcomeFilesUsageCollector"/>
+    <statistics.collectorExtension implementation="com.intellij.ide.actions.WelcomeNewFileFusEventFields"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor$HeadlessRenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileDumbProcessor"/>

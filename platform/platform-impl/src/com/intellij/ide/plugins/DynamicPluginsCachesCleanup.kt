@@ -37,6 +37,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.application
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.xmlb.clearKotlinxSerializationCache
 import com.intellij.util.xmlb.clearPropertyCollectorCache
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -56,6 +57,7 @@ internal object DynamicPluginsCachesCleanup {
     clearCachedValues()
 
     jdomSerializer.clearSerializationCaches()
+    clearKotlinxSerializationCache()
     clearPropertyCollectorCache()
     InspectionVisitorOptimizer.clearCache()
     TopHitCache.getInstance().clear()

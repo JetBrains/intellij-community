@@ -68,6 +68,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.EditorOpenFuture
 import com.intellij.openapi.fileEditor.FileEditorNavigatable
+import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.NavigatableFileEditor
@@ -560,17 +561,33 @@ open class FileEditorManagerImpl(
     refreshIcons()
 
     val fileToNewProviders = openedComposites.toList().mapNotNull { composite ->
-      if (composite.providerSequence.none()) {
+      val oldProviders = composite.providerSequence.toList()
+      if (oldProviders.isEmpty()) {
         // not initialized or invalid
         return@mapNotNull null
       }
 
-      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, composite.file, excludeIds = getEditorTypeIds(composite))
+      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(
+        project = project,
+        file = composite.file,
+        excludeIds = oldProviders.mapTo(HashSet()) { it.editorTypeId },
+      )
       if (newProviders.isEmpty()) {
+        return@mapNotNull null
+      }
+
+      // HIDE_OTHER_EDITORS applies to the editors opened in dumb mode and to the ones added after it, as if the file was opened in smart mode
+      if ((oldProviders.asSequence() + newProviders).none { it.policy == FileEditorPolicy.HIDE_OTHER_EDITORS }) {
+        return@mapNotNull ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = emptyList())
+      }
+
+      val providersToAdd = newProviders.filter { it.policy == FileEditorPolicy.HIDE_OTHER_EDITORS }
+      val editorTypeIdsToRemove = oldProviders.filter { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }.map { it.editorTypeId }
+      if (providersToAdd.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
         null
       }
       else {
-        ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = emptyList())
+        ProviderChange(composite = composite, newProviders = providersToAdd, editorTypeIdsToRemove = editorTypeIdsToRemove)
       }
     }
 
@@ -2577,7 +2594,7 @@ open class FileEditorManagerImpl(
 
     for (tab in tabs) {
       val composite = tab.composite
-      splitters.afterFileOpen(file = composite.file)
+      window.owner.afterFileOpen(file = composite.file)
       selectionHistory.addRecord(composite.file to window)
 
       composite.coroutineScope.launch {

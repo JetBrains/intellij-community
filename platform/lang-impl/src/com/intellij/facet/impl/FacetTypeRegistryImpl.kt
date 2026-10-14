@@ -16,12 +16,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.Arrays
 
@@ -51,8 +56,10 @@ internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
     val modulesWithFacets = InvalidFacetManager.getInstance(project).invalidFacets
       .filter { it.configuration.facetState.facetType == facetType.stringId }
       .mapTo(HashSet()) { it.module }
-    for (module in modulesWithFacets) {
-      val model = FacetManager.getInstance(module).createModifiableModel()
+    if (modulesWithFacets.isEmpty()) return
+    val builder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+    val models = modulesWithFacets.map { module ->
+      val model = createModifiableModel(module, builder)
       val invalidFacets = model.getFacetsByType(InvalidFacetType.TYPE_ID).filter { it.configuration.facetState.facetType == facetType.stringId }
       for (invalidFacet in invalidFacets) {
         val newFacet = FacetUtil.createFacetFromStateRawJ(module, facetType, invalidFacet)
@@ -61,8 +68,13 @@ internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
           model.addFacet(FacetManagerBase.createInvalidFacet(module, subFacet, newFacet, invalidFacet.configuration.errorMessage, false, false))
         }
       }
-      model.commit()
+      model
     }
+    ModifiableFacetModelBridgeImpl.commitAll(project, builder, models)
+  }
+
+  private fun createModifiableModel(module: Module, builder: MutableEntityStorage): ModifiableFacetModelBridgeImpl {
+    return (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(builder) as ModifiableFacetModelBridgeImpl
   }
 
   @Synchronized
@@ -79,8 +91,10 @@ internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
 
   private fun convertFacetsToInvalid(project: Project, facetType: FacetType<*, *>) {
     val modulesWithFacets = ProjectFacetManager.getInstance(project).getFacets(facetType.id).mapTo(HashSet()) { it.module }
-    for (module in modulesWithFacets) {
-      val model = FacetManager.getInstance(module).createModifiableModel()
+    if (modulesWithFacets.isEmpty()) return
+    val builder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+    val models = modulesWithFacets.map { module ->
+      val model = createModifiableModel(module, builder)
       val subFacets = model.allFacets.groupBy { it.underlyingFacet }
       val facets = model.getFacetsByType(facetType.id)
       for (facet in facets) {
@@ -92,13 +106,12 @@ internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
         removeAllSubFacets(model, facet, subFacets)
         model.replaceFacet(facet, invalidFacet)
       }
-      model.commit()
+      model
     }
-    if (modulesWithFacets.isNotEmpty()) {
-      /* this is needed to recompute RootIndex; otherwise its DirectoryInfoImpl instances will keep references to SourceFolderBridges,
-         which will keep references to Facet instances from unloaded plugin via WorkspaceEntityStorage making it impossible to unload plugins without a restart */
-      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
-    }
+    ModifiableFacetModelBridgeImpl.commitAll(project, builder, models)
+    /* this is needed to recompute RootIndex; otherwise its DirectoryInfoImpl instances will keep references to SourceFolderBridges,
+       which will keep references to Facet instances from unloaded plugin via WorkspaceEntityStorage making it impossible to unload plugins without a restart */
+    ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
   }
 
   private fun removeAllSubFacets(model: ModifiableFacetModel, facet: Facet<*>, subFacets: Map<Facet<*>, List<Facet<*>>>) {

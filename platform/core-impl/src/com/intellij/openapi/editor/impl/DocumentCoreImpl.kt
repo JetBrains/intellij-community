@@ -16,12 +16,12 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  /** mutable via [SNAPSHOT_UPDATER] */
-  @Volatile private var snapshot: DocumentSnapshot,
+  @Volatile private var snapshot: DocumentSnapshot, //  mutable via [SNAPSHOT_UPDATER]
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
 ) : DocumentCore {
   private val live: CharSequence = LiveCharSequence()
+  private val snapshotMarkerStores: SnapshotMarkerStores = SnapshotMarkerStores()
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
 
@@ -80,8 +80,7 @@ internal class DocumentCoreImpl private constructor(
     }
   }
 
-  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher) {
-    override val snapshotMarkerStores: SnapshotMarkerStores = SnapshotMarkerStores()
+  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, snapshotMarkerStores) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentCoreImpl.snapshot
     }

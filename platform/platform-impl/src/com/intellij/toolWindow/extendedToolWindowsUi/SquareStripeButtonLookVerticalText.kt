@@ -28,7 +28,7 @@ import javax.swing.UIManager
 internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : SquareStripeButtonLookExtension(button) {
 
   private fun getForegroundColor(): Color {
-    return if (toolWindow.isActive) StripeButtonUi.SELECTED_FOREGROUND_COLOR else StripeButtonUi.FOREGROUND_COLOR
+    return if (toolWindow.isActive) StripeButtonUi.SELECTED_FOREGROUND_COLOR else UIUtil.getLabelForeground()
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {

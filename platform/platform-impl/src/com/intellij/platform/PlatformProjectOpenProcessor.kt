@@ -48,6 +48,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -121,13 +122,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       dummyProjectName: String,
       file: Path,
     ): OpenProjectTask {
-      return options.copy(
-        isNewProject = true,
-        projectRootDir = file,
-        createModule = false,
-        projectName = dummyProjectName,
-        runConfigurators = false,
-        runConversionBeforeOpen = false,
+      return OpenProjectTask(options) {
+        isNewProject = true
+        projectRootDir = file
+        createModule = false
+        projectName = dummyProjectName
+        runConfigurators = false
+        runConversionBeforeOpen = false
         beforeOpenTasks = buildList {
           add { project ->
             project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
@@ -135,9 +136,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           addAll(options.beforeOpenTasks)
         }
-      ).let {
         // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
-        it.markAsOpeningFileAfterProjectOpen()
+        opensFileAfterProjectOpen = true
       }
     }
 
@@ -162,6 +162,24 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     /**
+     * Returns the options that the directory branch of [openProjectAsync] and [doOpenProject] opens the directory [file] with.
+     * Unless [originalOptions] say otherwise, the configurators run and [file] is the project root directory.
+     *
+     * A `beforeInit` task marks the project as opened by this processor, see [isOpenedByPlatformProcessor].
+     * A `beforeOpen` task must not set the mark: any `beforeOpen` task makes the project manager initialize the frame
+     * only after the whole project preparation.
+     * The `beforeOpen` tasks of [originalOptions] run after the mark, so they can still reset it.
+     */
+    @VisibleForTesting
+    internal fun directoryOpenOptions(originalOptions: OpenProjectTask, file: Path): OpenProjectTask {
+      return OpenProjectTask(originalOptions) {
+        runConfigurators = runConfigurators ?: true
+        projectRootDir = projectRootDir ?: file
+        beforeInitTasks += { project -> project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true) }
+      }
+    }
+
+    /**
      * Do not use this method. It should be private. Use [ProjectUtil.openOrImport] or [ProjectUtil.openOrImportAsync]
      */
     @Internal
@@ -169,15 +187,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       LOG.info("Opening (sync) $file")
 
       if (originalOptions.createModule && Files.isDirectory(file)) {
-        val options = originalOptions.copy(
-          runConfigurators = originalOptions.runConfigurators ?: true,
-          projectRootDir = originalOptions.projectRootDir ?: file,
-          beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
-            project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            true
-          }
-        )
-        return ProjectManagerEx.getInstanceEx().openProject(file, options)
+        return ProjectManagerEx.getInstanceEx().openProject(file, directoryOpenOptions(originalOptions, file))
       }
 
       var options = originalOptions
@@ -214,7 +224,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
+        options = OpenProjectTask(options) { isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir) }
       }
       else {
         baseDir = baseDirCandidate
@@ -229,7 +239,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+          OpenProjectTask(options) {
+            projectName = file.fileName.toString()
+            opensFileAfterProjectOpen = true
+          }
         }
       )
       if (project != null && file != baseDir) {
@@ -258,14 +271,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         //  Now we try to not reject existing originalOptions and capture the intent (most notably - runConfigurators flag) on the callers side.
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
-          options = originalOptions.copy(
-            runConfigurators = originalOptions.runConfigurators ?: true,
-            projectRootDir = originalOptions.projectRootDir ?: file,
-            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
-              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-              true
-            }
-          ),
+          options = directoryOpenOptions(originalOptions, file),
         )
       }
 
@@ -303,7 +309,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
+        options = OpenProjectTask(options) { isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir) }
       }
       else {
         baseDir = baseDirCandidate
@@ -317,7 +323,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+          OpenProjectTask(options) {
+            projectName = file.fileName.toString()
+            opensFileAfterProjectOpen = true
+          }
         }
       )
       if (project != null && file != baseDir) {
@@ -428,14 +437,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
               replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    val options = OpenProjectTask(createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)) {
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+    }
     return doOpenProject(baseDir, options)
   }
 
   // force open in a new frame if temp project
   override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
     if (tempProject) {
-      return createTempProjectAndOpenFile(file = file, options = options.copy(forceOpenInNewFrame = true))
+      return createTempProjectAndOpenFile(file = file, options = OpenProjectTask(options) { forceOpenInNewFrame = true })
     }
     else {
       return openProjectAsync(file = file, originalOptions = options)

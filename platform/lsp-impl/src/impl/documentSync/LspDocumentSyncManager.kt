@@ -27,7 +27,6 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentSyncKind
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
-  private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
+  private val openedFiles: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
   private val shutdown = AtomicBoolean(false)
 
   /**

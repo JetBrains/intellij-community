@@ -38,8 +38,8 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private JavaCodeStyleSettings javaSettings;
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/javadoc/";
   }
 
   @NotNull

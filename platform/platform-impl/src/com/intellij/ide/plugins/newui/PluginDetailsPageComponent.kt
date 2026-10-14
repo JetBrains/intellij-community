@@ -22,6 +22,9 @@ import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginInstallButtonClicked
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewNoteUrl
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWriteReviewUrl
@@ -2046,6 +2049,9 @@ class PluginDetailsPageComponent private constructor(
   private fun installOrUpdatePlugin() {
     val descriptor = plugin ?: return
     val operationUi = operationUi.captureContext(installButton?.getComponent() ?: return)
+    if (pluginManagerCustomizer == null) {
+      pluginInstallButtonClicked(descriptor.pluginId, PluginManagerSide.FRONTEND, PluginManagerButtonType.DEFAULT)
+    }
     PluginModelAsyncOperationsExecutor.performAutoInstall(
       operationLauncher,
       pluginModel,

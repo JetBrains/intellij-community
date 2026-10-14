@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Unusual but valid XML string content:
+  - U+FEFF byte order marks at the start of failure message
+  - XML unicode entities
+  - Raw unicode supplementary symbol in a test name
+  - Trailing spaces in a test name and a whitespace-only failure message
+  - Terminal-style markers such as [31m as literal text, without an ESC character
+  - Raw Unicode U+FFFD replacement character in a test name
+  - An ordinary test after the unusual names, proving that parsing continues
+-->
+<testsuites>
+  <testsuite name="dev.acme.ReportTextChecks" tests="5" failures="1" errors="1" skipped="1" time="0.480">
+    <testcase name="keepsPlainText" classname="dev.acme.ReportTextChecks" time="0.010"/>
+    <testcase name="temporarilyDisabled" classname="dev.acme.ReportTextChecks" time="0.000">
+      <skipped message="Waiting for the replacement decoder"/>
+    </testcase>
+    <testcase name="rendersCafeComparison" classname="dev.acme.ReportTextChecks" time="0.030">
+      <failure message="﻿Expected &#8216;caf&#233;&#8217; but was &#8216;cafe&#8217;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: accents differ
+    at dev.acme.ReportTextChecks.rendersCafeComparison(ReportTextChecks.java:37)
+Terminal-style markers: [31mDIFFERENT[0m
+]]></failure>
+      <system-out><![CDATA[[32mencoded stdout[0m]]></system-out>
+      <system-err><![CDATA[decoder warning [33mCHECK INPUT[0m]]></system-err>
+    </testcase>
+    <testcase name="readsSymbol𝄞WithoutLoss" classname="dev.acme.ReportTextChecks" time="0.140">
+      <error message="java.nio.charset.MalformedInputException: Input length = 1" type="java.nio.charset.MalformedInputException"><![CDATA[java.nio.charset.MalformedInputException: Input length = 1
+    at dev.acme.ReportTextChecks.readsSymbolWithoutLoss(ReportTextChecks.java:52)
+]]></error>
+    </testcase>
+    <testcase name="recoversAfterRetry   " classname="dev.acme.ReportTextChecks" time="0.300">
+      <flakyFailure message="   " type="org.opentest4j.AssertionFailedError"><![CDATA[first attempt compared decomposed text]]></flakyFailure>
+      <flakyError message="﻿transient decoder failure" type="java.lang.IllegalArgumentException"><![CDATA[second attempt rejected the byte sequence]]></flakyError>
+      <system-out><![CDATA[retry output [32mRECOVERED[0m]]></system-out>
+    </testcase>
+  </testsuite>
+  <testsuite name="dev.acme.RetryTextChecks" tests="2" failures="0" errors="0" skipped="0" time="0.070">
+    <testcase name="continuesAfterReplacement�" classname="dev.acme.RetryTextChecks" time="0.050">
+      <rerunFailure message="﻿replacement mismatch" type="org.opentest4j.AssertionFailedError"><![CDATA[first run saw a replacement character]]></rerunFailure>
+      <rerunError message="﻿decoder state was stale" type="java.lang.IllegalStateException"><![CDATA[second run reset the decoder]]></rerunError>
+    </testcase>
+    <testcase name="stillRunsAfterOddName" classname="dev.acme.RetryTextChecks" time="0.020"/>
+  </testsuite>
+</testsuites>

@@ -294,8 +294,15 @@ private suspend fun setSdkUsingCreateSdkInfo(module: Module, createSdkInfoWithTo
     }
 
     // Before the waiter releases its callers, so they read the new interpreter from the snapshot.
-    module.getRootModuleOrNull(createSdkInfoWithTool.toolId)?.asPyProject()?.setPythonInterpreter(sdk)
-    module.asPyProject()?.setPythonInterpreter(sdk)
+    // The tool root sets it first, so it registers the interpreter it owns, and the module then uses that one.
+    val set = module.getRootModuleOrNull(createSdkInfoWithTool.toolId)?.asPyProject()?.setPythonInterpreter(sdk)?.getOr {
+      ErrorSink().emit(it.error, module.project)
+      return@withContext
+    } ?: sdk
+    module.asPyProject()?.setPythonInterpreter(set)?.getOr {
+      ErrorSink().emit(it.error, module.project)
+      return@withContext
+    }
     logger.debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
   }
 }

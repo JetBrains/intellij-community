@@ -9,8 +9,8 @@ private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
 class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() {
-  override fun getBasePath(): String {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
+  override fun getTestDataPath(): String {
+    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
   }
 
   fun testSimple() {

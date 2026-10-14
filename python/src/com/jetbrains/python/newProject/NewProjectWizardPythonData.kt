@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject
 
+import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
@@ -12,7 +13,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
@@ -125,27 +125,29 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
       else -> ModuleOrProject.ModuleAndProject(module)
     }
 
-    moduleOrProject.moduleIfExists?.takeIf { createPythonModuleStructure }?.let { module ->
-      // What the shared Git step of this wizard was left at, so that a tool scaffolding the project does not create a
-      // repository against it (PY-92436). Absent step — no git4idea, or an added module rather than a new project —
-      // reads as unchecked, which is what the wizard itself would then do.
-      val createGitRepository = gitData?.git == true
-      runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
-        pySdkCreator.createPythonModuleStructure(module, createGitRepository).onFailure {
-          errorSink.emit(it, project)
+    // The tool creates its project files and the environment, and the interpreter is set on the module, under one lock.
+    runWithSdkConfigurationLock(project) {
+      moduleOrProject.moduleIfExists?.takeIf { createPythonModuleStructure }?.let { module ->
+        // What the shared Git step of this wizard was left at, so that a tool scaffolding the project does not create a
+        // repository against it (PY-92436). Absent step — no git4idea, or an added module rather than a new project —
+        // reads as unchecked, which is what the wizard itself would then do.
+        val createGitRepository = gitData?.git == true
+        withProgressText(PyBundle.message("python.sdk.creating.python.module.structure")) {
+          pySdkCreator.createPythonModuleStructure(module, createGitRepository).onFailure {
+            errorSink.emit(it, project)
+          }
         }
       }
-    }
-
-    runWithSdkConfigurationLock(project) {
       val (pythonInterpreter, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
         errorSink.emit(it.error, project)
         return@runWithSdkConfigurationLock
       }
-      pythonSdk = pythonInterpreter.getSdkAPI()
-      moduleOrProject.moduleIfExists?.let { module ->
-        module.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)
+      // The interpreter the project then has: the registry can adopt an existing SDK for it.
+      val set = moduleOrProject.moduleIfExists?.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)?.getOr {
+        errorSink.emit(it.error, project)
+        return@runWithSdkConfigurationLock
       }
+      pythonSdk = (set ?: pythonInterpreter).getSdkAPI()
     }
   }
 

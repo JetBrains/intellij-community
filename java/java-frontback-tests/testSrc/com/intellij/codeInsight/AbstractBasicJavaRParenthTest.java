@@ -2,30 +2,66 @@
 package com.intellij.codeInsight;
 
 import com.intellij.PathJavaTestUtil;
-import com.intellij.codeInsight.defaultAction.DefaultActionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.defaultAction.DefaultActionTestUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public abstract class AbstractBasicJavaRParenthTest extends DefaultActionTestCase {
-  private static final String BASE_PATH = "/codeInsight/defaultAction/rparenth/";
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return PathJavaTestUtil.getCommunityJavaTestDataPath();
+public abstract class AbstractBasicJavaRParenthTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private String testName;
+  private static final String BASE_PATH = "codeInsight/defaultAction/rparenth/";
+
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    codeInsightFixture.get().setTestDataPath(PathJavaTestUtil.getCommunityJavaTestDataPath());
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), false);
   }
 
+  @Test
   public void test1() { doTest(); }
 
+  @Test
   public void test2() { doTest(); }
 
+  @Test
   public void test3() { doTest(); }
 
+  @Test
   public void test4() { doTest(); }
 
+  @Test
   public void test5() { doTest(); }
 
   private void doTest() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    configureByFile(BASE_PATH + testName + ".java");
     performAction(')');
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    checkResultByFile(BASE_PATH + testName + "_after.java");
+  }
+
+  private void configureByFile(String filePath) {
+    codeInsightFixture.get().configureByFile(filePath);
+  }
+
+  private void performAction(char c) {
+    DefaultActionTestUtil.performAction(codeInsightFixture.get(), c);
+  }
+
+  private void checkResultByFile(String filePath) {
+    codeInsightFixture.get().checkResultByFile(filePath);
   }
 }

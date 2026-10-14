@@ -135,6 +135,49 @@ async fn a_pool_start_refuses_to_recreate_a_leased_running_container() {
     assert_eq!(docker(&fixture).state(&ctx(), worker).await.unwrap(), ContainerState::Running);
 }
 
+/// `pool start all` starts the slots which it can and names the slot that it refused. The first slot runs a stale
+/// container under the lease of another holder, so it is refused `worker_leased`. The start goes on with the next
+/// slot.
+///
+/// The fake holds one container for every name, so the second slot finds the container of the first slot running.
+/// The second slot has no create record, so its start makes the container again under its own name.
+#[tokio::test]
+async fn a_pool_start_of_all_starts_the_other_slots_and_names_the_refused_one() {
+    let fixture = Fixture::docker_builder().env("AIR_VM_WORKERS", "air-docker-1,air-docker-2").build();
+    let [leased, free] = [0, 1].map(|index| fixture.worker(index).to_owned());
+    fixture.manager.start(&ctx(), &leased).await.unwrap();
+    fixture.write_lease(&leased, "another-session");
+    declare_stale_container(&fixture, &leased);
+    let before = fixture.fake.calls().len();
+
+    let refusal = fixture.manager.pool(&ctx(), PoolCommand::Start(PoolTarget::All)).await.unwrap_err();
+    assert_eq!(
+        (refusal.code.as_ref(), refusal.exit),
+        ("start_incomplete", Exit::TEMP_FAIL),
+        "{refusal:?}"
+    );
+    assert_eq!(refusal.message, format!("started {free}; not started: {leased} (worker_leased)"));
+    let details = refusal.details().expect("the per-worker outcome");
+    assert_eq!(
+        (&details["backend"], &details["action"], &details["target"]),
+        (&serde_json::json!("docker"), &serde_json::json!("start"), &serde_json::json!("all"))
+    );
+    assert_eq!(details["workers"], serde_json::json!({ free.as_str(): "started" }));
+    let refused = details["refused"].as_object().unwrap();
+    assert_eq!(refused.len(), 1, "{details}");
+    assert_eq!(refused[&leased]["code"], "worker_leased");
+    let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
+    assert!(after.contains(&format!("start {free}")), "{after:#?}");
+    assert!(
+        !after
+            .iter()
+            .any(|call| call.ends_with(leased.as_str())
+                && (call.starts_with("stop ") || call.starts_with("rm ") || call.starts_with("start "))),
+        "{after:#?}"
+    );
+    assert!(fixture.settings.lease_path(&leased).exists());
+}
+
 /// A container that does not run is made again for any caller, leased or not: nothing runs in it, and its volume
 /// stays.
 #[tokio::test]
@@ -266,6 +309,19 @@ async fn a_docker_stop_stops_a_running_container_once() {
     assert_eq!(fixture.manager.stop(&ctx(), worker).await.unwrap(), StopState::AlreadyStopped);
 }
 
+/// `pool stop` answers the state of each worker that it stopped, and nothing about the engine: the engine of the host
+/// environment is the operator's, and no command of this controller stops it.
+#[tokio::test]
+async fn a_pool_stop_names_its_workers_and_no_engine() {
+    let fixture = Fixture::docker();
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Stop(PoolTarget::All)).await.unwrap();
+    assert_eq!(outcome.data["workers"][&worker], "stopped");
+    assert!(outcome.data.get("engine").is_none(), "{}", outcome.data);
+    assert_eq!(outcome.text, format!("{worker}=stopped"));
+}
+
 /// A lease release of a stopped container is refused the start a release gate would need, as on Tart.
 #[tokio::test]
 async fn a_stopped_docker_worker_is_not_release_ready() {
@@ -353,8 +409,8 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     assert!(!fixture.fake.saw_call_containing("rm "));
 }
 
-/// gc reads the state under the slot's lifecycle lock. A `pool start` that holds the lock makes gc refuse
-/// `lease_busy` for that slot, and a container that runs once gc has the lock is kept. It is never killed.
+/// gc reads the state under the slot's lifecycle lock. A `pool start` that holds the lock makes gc keep that slot as
+/// `busy`, and a container that runs once gc has the lock is kept. It is never killed.
 #[tokio::test]
 async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
     let fixture = Fixture::docker();
@@ -382,8 +438,27 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
         .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(&worker), "pool-start", "busy")
         .await
         .unwrap();
-    let refusal = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap_err();
-    assert_eq!(refusal.code, "lease_busy", "{refusal:?}");
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "busy" }));
+}
+
+/// One busy slot does not stop the gc of the pool. A lane run holds the lifecycle lock of its worker for the whole
+/// run, so the gc keeps that slot as `busy` and removes the stopped container of the other slot.
+#[tokio::test]
+async fn pool_gc_on_docker_keeps_a_busy_slot_and_goes_on() {
+    let fixture = Fixture::docker_builder().env("AIR_VM_WORKERS", "air-docker-1,air-docker-2").build();
+    fixture.manager.prepare_runtime_dirs().unwrap();
+    let _run = fixture
+        .manager
+        .locks()
+        .acquire(&ctx(), &fixture.manager.lifecycle_lock_path("air-docker-1"), "run", "busy")
+        .await
+        .unwrap();
+    fixture.fake.answer(Answer::ContainerState, "exited/0\n");
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-2"]));
+    assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "busy" }));
+    assert!(!fixture.fake.saw_call_containing("rm air-docker-1"));
 }
 
 /// `pool recycle` is the one command that drops a Docker worker's volume, and it starts the worker again.

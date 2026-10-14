@@ -1,10 +1,10 @@
 //! The `flake` command: one trial chain per worker, under the leased-run driver, and the reply.
 //!
-//! The driver holds each worker's lifecycle lock for the whole length of that worker's chain, so nothing can take the
-//! worker mid-experiment - which is exactly why the chain calls the lock-free iteration and never a command wrapper.
-//! A second acquisition of the same lock by the same live process is *refused, not reclaimed*, so a wrapper called
-//! from inside a chain would fail `lease_busy` on the second trial. The suite pins that on this file's own text and
-//! on the driver's.
+//! The driver puts each worker's run marker on the worker for the whole length of that worker's chain. So no other
+//! process can take the worker mid-experiment, and the chain calls the lock-free iteration and never a command
+//! wrapper. `command_run` writes a run marker of its own. A second marker of the same process on one worker is
+//! *refused as an internal error*. The nested run would remove the marker of the chain at its end. `command_daemon`
+//! would change the daemon that the chain measures. The suite pins that on this file's own text and on the driver's.
 
 use std::path::Path;
 use std::sync::Arc;

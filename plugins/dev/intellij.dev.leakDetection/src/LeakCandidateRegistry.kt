@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dev.leakDetection
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -41,14 +40,12 @@ class LeakCandidateRegistry {
 
 internal class LeakCandidateEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
-    if (!ApplicationManager.getApplication().isInternal) return
     LeakCandidateRegistry.getInstance().register(event.editor)
   }
 }
 
 internal class LeakCandidateProjectListener : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (!ApplicationManager.getApplication().isInternal) return
     LeakCandidateRegistry.getInstance().register(project)
   }
 }

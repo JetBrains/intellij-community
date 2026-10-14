@@ -1,0 +1,11 @@
+package sample
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    interface Nested
+}
+
+fun use(value: Bar.Nested): Bar.Nested = value

@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.getSectionRules
+import com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
@@ -12,9 +14,13 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SETTER
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.Collections
 
-class ArrangementSettingsRulesPriorityTest : AbstractRearrangerTest() {
+@TestApplication
+class ArrangementSettingsRulesPriorityTest {
 
   private fun getRulesSortedByPriority(rules: List<StdArrangementMatchRule>): List<StdArrangementMatchRule> {
     val sectionRules = getSectionRules(rules)
@@ -23,6 +29,7 @@ class ArrangementSettingsRulesPriorityTest : AbstractRearrangerTest() {
     return settings.getRulesSortedByPriority() as List<StdArrangementMatchRule>
   }
 
+  @Test
   fun testGetterAndSetterRulesComesFirst() {
     val getter = rule(GETTER)
     val setter = rule(SETTER)
@@ -35,6 +42,7 @@ class ArrangementSettingsRulesPriorityTest : AbstractRearrangerTest() {
     assertTrue(rules.indexOf(setter) < rules.indexOf(publicMethod) && rules.indexOf(setter) < rules.indexOf(method))
   }
 
+  @Test
   fun testOverridenRuleComesBefore() {
     val publicMethod = rule(PUBLIC, METHOD)
     val protectedMethod = rule(PROTECTED, METHOD)

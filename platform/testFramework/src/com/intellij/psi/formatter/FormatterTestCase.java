@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/** @deprecated Use {@link FormatterTestUtil} in a JUnit 5 test. */
+@Deprecated
 public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected boolean doReformatRangeTest;
   protected TextRange myTextRange;

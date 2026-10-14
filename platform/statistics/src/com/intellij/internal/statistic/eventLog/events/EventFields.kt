@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog.events
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.agents.AgentTelemetryFusValues
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -49,6 +50,41 @@ object EventFields {
   fun StringValidatedByRegexpReference(@NonNls name: String, @NonNls regexpRef: String, @NonNls description: String? = null): StringEventField {
     return StringEventField.ValidatedByRegexp(name, regexpRef, description)
   }
+
+  /**
+   * Creates a field validated by a global regexp rule, with an optional default value rule.
+   * You can find existing regexp rules in the "APM/metadata" repository /global/rules.json.
+   *
+   * @param name name of the field
+   * @param regexpRef reference to global regexp rule, e.g. "integer" for "{regexp#integer}"
+   * @param description optional description of the field
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  @JvmStatic
+  fun StringValidatedByRegexpReferenceWithDefault(
+    @NonNls name: String,
+    @NonNls regexpRef: String,
+    @NonNls description: String? = null,
+    @NonNls defaultValue: String? = null,
+  ): StringEventField =
+    StringEventField.ValidatedByRegexpRefWithDefault(name, regexpRef, description, defaultValue)
+
+  /**
+   * Creates a field for an LLM model name, validated by the global "llm_model" regexp rule.
+   * A value that fails the rule is reported as [defaultValue].
+   *
+   * @param name name of the field
+   * @param description optional description of the field
+   * @param defaultValue value reported when the field is missing or invalid, "unknown" by default; `null` disables the default value rule
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun LLMModelField(
+    @NonNls @EventFieldName name: String,
+    @NonNls description: String? = null,
+    @NonNls defaultValue: String? = AgentTelemetryFusValues.UNKNOWN,
+  ): StringEventField =
+    StringValidatedByRegexpReferenceWithDefault(name, AgentTelemetryFusValues.MODEL_REGEXP_REF, description, defaultValue)
 
   /**
    * Creates a field that will be validated by global enum rule.

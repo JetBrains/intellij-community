@@ -35,7 +35,7 @@ public class ListTemplatesActionTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/listTemplates";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/postfix/listTemplates";
   }
 }

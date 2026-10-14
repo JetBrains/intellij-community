@@ -99,13 +99,17 @@ internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, o
     )
   }
 
+/**
+ * The actions that add an interpreter to the module of [moduleOrProject]. None for [ProjectOnly]: every interpreter
+ * belongs to a `PyProject`, so a place without a module offers no Add.
+ */
 @ApiStatus.Internal
 fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
   val targetModuleSitsOn = when (moduleOrProject) {
     is ModuleAndProject -> PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(moduleOrProject.module)
-    is ProjectOnly -> null
+    is ProjectOnly -> return emptyList()
   }
   return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null || eelNativeMode) {

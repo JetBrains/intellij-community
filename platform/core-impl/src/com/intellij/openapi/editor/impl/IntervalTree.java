@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface IntervalTree<T> {
+  /**
+   * Processes all intervals in an implementation-specific order.
+   * Stops and returns {@code false} when {@code processor} returns {@code false}.
+   */
   boolean processAll(@NotNull Processor<? super T> processor);
 
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);

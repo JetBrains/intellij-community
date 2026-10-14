@@ -209,16 +209,16 @@ internal class EelDirectorySearchEngineTest {
     val directoryInfo = fileInfo.copy(type = EelPosixFileInfoImpl.Directory(EelFileInfo.CaseSensitivity.SENSITIVE))
     val directories = mapOf(eelPath("root/dir") to directoryInfo, eelPath("root/dir/sub") to directoryInfo)
 
-    val attributes = hitAttributes(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, directories)
+    val stats = hitStats(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, directories)
 
-    assertThat(attributes).isEqualTo(mapOf(
-      eelPath("root/dir/sub") to mapOf("file.txt" to fileInfo),
-      eelPath("root/dir") to mapOf("sub" to directoryInfo),
-      eelPath("root") to mapOf("dir" to directoryInfo),
+    assertThat(stats).isEqualTo(mapOf(
+      eelPath("root/dir/sub/file.txt") to fileInfo,
+      eelPath("root/dir/sub") to directoryInfo,
+      eelPath("root/dir") to directoryInfo,
     ))
     // a directory the search did not report ends the chain; its stat falls through to the file system
-    val partial = hitAttributes(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, mapOf(eelPath("root/dir/sub") to directoryInfo))
-    assertThat(partial.keys).containsExactlyInAnyOrder(eelPath("root/dir/sub"), eelPath("root/dir"))
+    val partial = hitStats(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, mapOf(eelPath("root/dir/sub") to directoryInfo))
+    assertThat(partial.keys).containsExactlyInAnyOrder(eelPath("root/dir/sub/file.txt"), eelPath("root/dir/sub"))
   }
 
   @Test

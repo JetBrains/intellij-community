@@ -9,7 +9,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.markdown.execution" />
     <orderEntry type="module" module-name="intellij.markdown.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.frontend.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.jcef" />
     <orderEntry type="module" module-name="intellij.markdown.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.projectView" />
@@ -49,6 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
@@ -68,6 +71,7 @@
     <orderEntry type="module" module-name="intellij.toml.json" scope="TEST" />
     <orderEntry type="module" module-name="intellij.yaml.backend" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />

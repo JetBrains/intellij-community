@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.env.packaging
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.test.env.junit5.pyUvVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
@@ -25,7 +25,7 @@ class UvPackageManagerTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
   private val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
-  private val sdkFixture = projectFixture.pyInterpreterFixture().pyUvVenvFixture(pyProjectFixture = pyProjectFixture, mode = UvMode.Project)
+  private val sdkFixture = pyEnvironmentFixture().pyUvVenvFixture(pyProjectFixture = pyProjectFixture, mode = UvMode.Project)
 
   @Test
   fun outdatedPackageWithExtrasTest(): Unit = timeoutRunBlocking(1.minutes) {

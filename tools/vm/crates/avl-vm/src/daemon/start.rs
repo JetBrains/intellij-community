@@ -89,15 +89,6 @@ fn shares_current(previous: Option<&HostState>, prep: &PreparedBuild) -> bool {
     previous.is_some_and(|state| state.launch_digest == prep.launch_digest && state.last_mount_digest == prep.mount_digest)
 }
 
-/// The JVM home of a staged `java` binary: the directory above its `bin`. The IDE runs on the JVM of the daemon that
-/// prepares it, so the daemon gets this directory, and the stager's answer is the only place that names it.
-fn java_home_of(java_binary: &str) -> Result<&str, Refusal> {
-    java_binary
-        .strip_suffix("/bin/java")
-        .filter(|home| !home.is_empty())
-        .ok_or_else(|| Refusal::internal(format!("the staged java binary {java_binary} is not <home>/bin/java")))
-}
-
 impl Host {
     /// Refreshes the shares ([`Manager::refresh_shares`]) unless the last daemon on this worker was already mounted
     /// for exactly this build.
@@ -572,9 +563,9 @@ impl Host {
     ///
     /// The home of the daemon JVM is an empty directory of the generation, and its config, system, log and IDE
     /// Starter output directories are on the guest disk, each named by its own flag. So no path of the JVM derives from
-    /// a home that holds the checkout. Three flags tell the daemon how to launch the lane IDE: the installed guest
-    /// agent, the directory of the IDE contexts, and the home of the staged JVM, which the IDE runs on too. They come
-    /// after the static flags of the descriptor, so they win over a runfiles agent that a lane flag names.
+    /// a home that holds the checkout. Two flags tell the daemon how to launch the lane IDE: the installed guest agent
+    /// and the directory of the IDE contexts. The IDE runs on the JBR of its distribution. The flags come after the
+    /// static flags of the descriptor, so they win over a runfiles agent that a lane flag names.
     fn launch_request(&self, prep: &PreparedBuild, staged: &GuestRuntime, state_dir: &str, run_tmp: &str) -> Result<LaunchPrep, Refusal> {
         let settings = &self.settings;
         let home = guest_home(settings, &prep.runtime_digest);
@@ -594,7 +585,6 @@ impl Host {
             format!("-Dair.ui.daemon.runtime.root={}", staged.root),
             format!("-Dair.lane.agent={}", settings.vm_agent),
             format!("-Dair.lane.ide.root={}", guest_ide_root(settings)),
-            format!("-Dair.lane.java.home={}", java_home_of(&staged.java_binary)?),
         ]);
         if settings.backend == Backend::ContainerLinux {
             // A published port forwards to the container's address, not to its loopback, so the daemon binds every

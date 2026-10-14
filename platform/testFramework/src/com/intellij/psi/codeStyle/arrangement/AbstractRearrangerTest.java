@@ -38,6 +38,10 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
+/**
+ * @deprecated Use {@link RearrangerTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   private static final RichTextHandler[] RICH_TEXT_HANDLERS = {new RangeHandler(), new FoldingHandler()};
   private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile("([^\\s]+)=([^\\s]+)");

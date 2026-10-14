@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogPanel;
@@ -29,6 +30,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectGeneratorPeer;
@@ -403,9 +406,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       textField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
     }
 
-    myLocationField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(IdeBundle.message("directory.project.location.title"))
-      .withDescription(IdeBundle.message("directory.project.location.description")));
+    myLocationField.addBrowseFolderListener(null, createLocationDescriptor());
     checkValid();
     return LabeledComponent.create(myLocationField,
                                    BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),
@@ -413,10 +414,45 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   /**
+   * Creates the descriptor of the chooser of the <em>Location</em> field.
+   * <p/>
+   * With a base directory, the chooser shows only the root of that directory.
+   * The descriptor also asks for the IDE chooser, because the native chooser cannot show a root of another environment.
+   */
+  private @NotNull FileChooserDescriptor createLocationDescriptor() {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(IdeBundle.message("directory.project.location.title"))
+      .withDescription(IdeBundle.message("directory.project.location.description"));
+
+    Path baseDirectory = getBaseDirectory();
+    Path rootDirectory = baseDirectory != null ? baseDirectory.getRoot() : null;
+    if (rootDirectory == null) {
+      return descriptor;
+    }
+
+    descriptor.setForcedToUseIdeaFileChooser(true);
+    VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(rootDirectory);
+    if (root != null) {
+      descriptor.withRoots(root);
+    }
+    return descriptor;
+  }
+
+  /**
    * Looks for the place for a new project
    */
   protected @NotNull Path findSequentNonExistingUntitled() {
-    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), myNewProjectName, "").toPath();
+    Path baseDirectory = getBaseDirectory();
+    File parent = baseDirectory != null ? baseDirectory.toFile() : new File(ProjectUtil.getBaseDir());
+    return FileUtil.findSequentNonexistentFile(parent, myNewProjectName, "").toPath();
+  }
+
+  /**
+   * The directory that holds the directory of the new project.
+   * A {@code null} value means the default location of the IDE.
+   */
+  protected final @Nullable Path getBaseDirectory() {
+    return myProjectStep != null ? myProjectStep.getBaseDirectory() : null;
   }
 
   @Override

@@ -33,8 +33,8 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/second";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/second";
   }
 
   public void testMethodAsQualifier() throws Throwable { doTest(); }

@@ -1,0 +1,5 @@
+class Child {
+    val value: Int = 1
+
+    fun result() = this.value
+}

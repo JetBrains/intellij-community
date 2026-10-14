@@ -60,6 +60,11 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     if (typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYREFLY)
       return
 
+    // The bundled binary is a file in the plugin, not a package of the interpreter, so it is never
+    // "removed" from an environment. Otherwise the package reload after an IDE restart resets the engine.
+    if (PyreflyPyTool.isBundledPyreflyEnabled())
+      return
+
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
       // Ask every served interpreter, not only the one that changed. One module of a multi-module
       // project that loses pyrefly must not turn the engine off for the modules that still hold it.

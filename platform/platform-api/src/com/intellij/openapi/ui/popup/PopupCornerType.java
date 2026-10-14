@@ -5,5 +5,8 @@ package com.intellij.openapi.ui.popup;
  * @author Alexander Lobas
  */
 public enum PopupCornerType {
-  RoundedWindow, RoundedTooltip, None
+  RoundedWindow,
+  RoundedTooltip,
+  RoundedMultilineTooltip,
+  None
 }

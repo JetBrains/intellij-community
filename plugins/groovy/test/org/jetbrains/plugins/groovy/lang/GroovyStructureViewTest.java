@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase {
@@ -17,7 +18,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
         def foo(int a, int b = 2) {}
       }
       """);
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
@@ -41,7 +42,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
         def bar(int x = 239) {}
       }
       """);
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
@@ -89,7 +90,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
         void foo() {}
       }
       """);
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
@@ -113,7 +114,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
         void ownMethod() {}
       }
       """);
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
           -_.groovy

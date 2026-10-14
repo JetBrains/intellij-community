@@ -1,0 +1,81 @@
+try (FileInputStream input
+     ;
+     FileOutputStream output) {
+    println "kzzzzzzz"
+} catch (
+        NullPointerException
+        |
+        IllegalArgumentException
+                e
+        ) {
+}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Try resource list
+      PsiElement(()('(')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('FileInputStream')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('input')
+      PsiElement(new line)('\n     ')
+      PsiElement(;)(';')
+      PsiElement(new line)('\n     ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('FileOutputStream')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('output')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Literal
+            PsiElement(double quoted string)('"kzzzzzzz"')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    Catch clause
+      PsiElement(catch)('catch')
+      PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      PsiElement(new line)('\n        ')
+      Parameter
+        Modifiers
+          <empty list>
+        disjunction type element
+          Type element
+            Reference element
+              PsiElement(identifier)('NullPointerException')
+          PsiElement(new line)('\n        ')
+          PsiElement(|)('|')
+          PsiElement(new line)('\n        ')
+          Type element
+            Reference element
+              PsiElement(identifier)('IllegalArgumentException')
+          PsiElement(new line)('\n                ')
+        PsiElement(identifier)('e')
+      PsiElement(new line)('\n        ')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n')
+        PsiElement(})('}')

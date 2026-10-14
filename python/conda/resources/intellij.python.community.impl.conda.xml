@@ -27,8 +27,6 @@
     <!-- Claim environment.yml/environment.yaml as YAML files belonging to the Python plugin so that the
          plugin advertiser doesn't promote unrelated third-party plugins for these conda env files (PY-89976). -->
     <fileType name="YAML" fileNames="environment.yml;environment.yaml"/>
-    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
-    <applicationSettings service="com.jetbrains.python.packaging.PyCondaPackageService"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

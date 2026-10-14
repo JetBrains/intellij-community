@@ -13,7 +13,7 @@ import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
-import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
+import com.intellij.ide.structureView.StructureViewFactoryEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
@@ -149,7 +149,7 @@ class TestApplicationManager private constructor() {
           { app.runWriteIntentReadAction<Unit, Nothing?> { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() } },
           { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
           { (project.serviceIfCreated<PsiManager>() as PsiManagerEx?)?.cleanupForNextTest() },
-          { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
+          { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryEx?)?.cleanupForNextTest() },
           { waitForProjectLeakingThreads(project) },
           { dropModuleRootCaches(project) },
           {

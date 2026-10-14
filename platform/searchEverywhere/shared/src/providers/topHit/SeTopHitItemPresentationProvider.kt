@@ -5,6 +5,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.ide.util.gotoByName.getOptionDescriptionIcon
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.AnAction
@@ -70,7 +71,7 @@ object SeTopHitItemPresentationProvider {
               )
           }
           else SeBasicItemPresentationBuilder()
-            .withIcon(EmptyIcon.ICON_16)
+            .withIcon(getOptionDescriptionIcon(item) ?: EmptyIcon.ICON_16)
             .withText(text)
             .withTextAttributes(attributes)
             .withSelectedTextAttributes(selectedAttributes)

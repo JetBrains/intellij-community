@@ -534,13 +534,17 @@ async fn a_full_start_boots_polls_and_records_its_state() {
         format!("-Didea.system.path={}/daemon/system", fixture.settings.vm_out),
         format!("-Didea.log.path={}/daemon/log", fixture.settings.vm_out),
         format!("-Dide.starter.out.dir={}", fixture.settings.vm_out),
-        // How the daemon launches the lane IDE: the installed agent, the context root, and the staged JVM home.
+        // How the daemon launches the lane IDE: the installed agent and the context root.
         format!("-Dair.lane.agent={}", fixture.settings.vm_agent),
         "-Dair.lane.ide.root=/vm/data/ide".to_owned(),
-        format!("-Dair.lane.java.home={generation}/jbr"),
     ] {
         assert!(prefix.contains(&fragment), "{fragment} missing from\n{prefix}");
     }
+    // The lane IDE runs on the JBR of its distribution, so no flag names a JVM for it.
+    assert!(
+        !prefix.contains("-Dair.lane.java.home"),
+        "the launch names a JVM for the IDE:\n{prefix}"
+    );
     assert_eq!(request.arg_file.main_class, "com.example.Main");
     assert_eq!(request.arg_file.destination, "/vm/data/daemon/daemon-jvm.args");
     assert_eq!(request.remove_files, ["/vm/data/daemon/daemon.json"]);

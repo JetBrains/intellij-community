@@ -35,9 +35,11 @@ import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBValue.UIInteger
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -568,6 +570,13 @@ open class HelpTooltip {
     return tipPanel
   }
 
+  /**
+   * Returns `true` when the last [createTipPanel] call built a multiline layout.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  fun isMultilineForTests(): Boolean = isMultiline
+
   private fun createTitleComponent(hasDescription: Boolean): JComponent {
     val popupOwner = if (this.popupOwner == null) null else this.popupOwner!!.get()
     val singleLineTitle = Header(hasDescription)
@@ -636,7 +645,11 @@ open class HelpTooltip {
       myToolTipText = text
       val tipPanel: JComponent = createTipPanel()
       tipPanel.addMouseListener(createIsOverTipMouseListener())
-      val popupBuilder: ComponentPopupBuilder = initPopupBuilder(tipPanel)
+      val popupCornerType = if (isMultiline)
+                              PopupCornerType.RoundedMultilineTooltip
+                            else
+                              PopupCornerType.RoundedTooltip
+      val popupBuilder: ComponentPopupBuilder = initPopupBuilder(tipPanel, popupCornerType)
       myPopup = popupBuilder.createPopup()
       myPopup!!.show(
         RelativePoint(
@@ -690,6 +703,16 @@ open class HelpTooltip {
       }
     }
 
+    /**
+     * Returns `true` when the HTML text takes more than one row at its preferred width.
+     * The text can wrap without [MAX_WIDTH], for example, when it has its own `<div width=...>` or a `<br>`.
+     */
+    fun hasSeveralRows(): Boolean {
+      val v = getClientProperty(BasicHTML.propertyKey) as? View
+              ?: return false
+      return getRows(v).size > 1
+    }
+
     companion object {
       private fun getRows(root: View): MutableCollection<View> {
         val rows: MutableCollection<View> = ArrayList()
@@ -724,17 +747,16 @@ open class HelpTooltip {
       setFont(deriveHeaderFont(getFont()))
       setForeground(UIUtil.getToolTipForeground())
 
-      val currentTitle: String = nonNullTitle
-      if (obeyWidth || currentTitle.length > MAX_WIDTH.get()) {
-        val v = BasicHTML.createHTMLView(
-          this,
-          String.format(
-            "<html>%s%s</html>",
-            currentTitle,
-            shortcutAsHTML
-          )
+      val currentTitle: String = XmlStringUtil.stripHtml(nonNullTitle)
+      val width = BasicHTML.createHTMLView(
+        this,
+        String.format(
+          "<html>%s%s</html>",
+          currentTitle,
+          shortcutAsHTML,
         )
-        val width = v.getPreferredSpan(View.X_AXIS)
+      ).getPreferredSpan(View.X_AXIS)
+      if (obeyWidth || width > MAX_WIDTH.get()) {
         isMultiline = isMultiline || width > MAX_WIDTH.get()
         val div = if (width > MAX_WIDTH.get()) HtmlChunk.div().attr("width", MAX_WIDTH.get()) else HtmlChunk.div()
         setText(
@@ -749,6 +771,7 @@ open class HelpTooltip {
       else {
         setText(htmlTitle)
       }
+      isMultiline = isMultiline || hasSeveralRows()
     }
   }
 
@@ -785,6 +808,7 @@ open class HelpTooltip {
       setText(div.addRaw(text).wrapWith(HtmlChunk.html()).toString())
 
       setSizeForWidth(width)
+      isMultiline = isMultiline || hasSeveralRows()
     }
   }
 
@@ -824,13 +848,16 @@ open class HelpTooltip {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun initPopupBuilder(tipPanel: JComponent): ComponentPopupBuilder {
+    fun initPopupBuilder(
+      tipPanel: JComponent,
+      cornerType: PopupCornerType = PopupCornerType.RoundedTooltip,
+    ): ComponentPopupBuilder {
       return JBPopupFactory.getInstance()
         .createComponentPopupBuilder(tipPanel, null)
         .setShowBorder(UIManager.getBoolean("ToolTip.paintBorder"))
         .setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor())
         .setShowShadow(true)
-        .addUserData(PopupCornerType.RoundedTooltip)
+        .addUserData(cornerType)
     }
 
     private fun createLongHtmlTextTitle(

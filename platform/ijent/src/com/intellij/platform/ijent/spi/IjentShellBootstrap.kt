@@ -1,38 +1,45 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 internal data class ShellBootstrap(val marker: String, val command: String)
 
+/** Returns the shell command used for deployment and Windows recovery. */
+fun getIjentShellBootstrapCommand(): String = createShellBootstrap().command
+
 internal fun createShellBootstrap(): ShellBootstrap {
   val marker = "IJENT_SHELL_PROBE_${UUID.randomUUID().toString().replace("-", "")}"
+  val cmdBootstrap = "ECHO $marker OS=%OS% ARCH=%PROCESSOR_ARCHITECTURE% SHELL=cmd.exe & " +
+                     "\"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" " +
+                     "-NoLogo -NoProfile -NonInteractive -Command -"
   val command = $$"""
-    echo \" <<'REM' >/dev/null ">NUL "\" \`" <#"
-    @ECHO OFF
-    ECHO $$marker OS=%OS% ARCH=%PROCESSOR_ARCHITECTURE% SHELL=cmd.exe
-    "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command -
-    EXIT /B %ERRORLEVEL%
-    REM
+    echo \" '">NUL "\" \`" <#" # & $$cmdBootstrap
     #> | Out-Null
-    echo \" <<'POWERSHELL_SCRIPT' >/dev/null # " | Out-Null
-    function global:prompt { ' ' }
+    echo \" # " | Out-Null
+    function global:prompt { " " }
     [Console]::Out.WriteLine("$$marker OS=$($env:OS) ARCH=$($env:PROCESSOR_ARCHITECTURE) SHELL=powershell.exe")
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command -
     exit $LASTEXITCODE
     <#
-    POWERSHELL_SCRIPT
-    ijent_os=$(uname -s)
-    echo "$$marker OS=$ijent_os ARCH=$(uname -m) SHELL=$0"
+    ' >/dev/null
+    exec /bin/sh -c '
+    ijent_uname() { uname "$@" 2>/dev/null || busybox uname "$@"; }
+    ijent_os=$(ijent_uname -s)
+    echo "$$marker OS=$ijent_os ARCH=$(ijent_uname -m) SHELL=$0"
     case "$ijent_os" in
       CYGWIN*|MINGW*|MSYS*) exec powershell.exe -NoLogo -NoProfile -NonInteractive -Command - ;;
       *) exec /bin/sh ;;
     esac
+    '
     #>
   """.trimIndent()
   return ShellBootstrap(marker, command)

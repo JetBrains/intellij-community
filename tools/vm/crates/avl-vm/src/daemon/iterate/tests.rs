@@ -950,6 +950,40 @@ async fn a_tree_failure_is_recorded_and_never_the_verdict() {
     assert_eq!(report.verdict_diagnostic, None);
 }
 
+// A test jar that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
+// and the status still follows the counts.
+#[tokio::test]
+async fn a_rebuilt_hot_jar_is_a_note_and_never_the_verdict() {
+    let (fixture, _, _) = iteration_fixture("it-52").await;
+    let built = fixture.prepared().await;
+    let jar = Path::new(&built.hot_jars[0].path);
+    let name = jar.file_name().unwrap().to_string_lossy().into_owned();
+    std::fs::write(jar, b"rebuilt on the host").unwrap();
+    let attempt = fixture
+        .host
+        .run_one_iteration(
+            &Ctx::background().with_run_id("suite-run-1"),
+            &fixture.lease(),
+            &built,
+            &lane_ui(),
+            POLICY,
+            false,
+            &RunSecrets::default(),
+        )
+        .await;
+    let report = report_of(&attempt);
+    assert_eq!(report.status, Status::Passed, "{:?}", report.verdict_diagnostic);
+    assert_eq!(report.verdict_diagnostic, None);
+    assert_eq!(report.notes.len(), 1, "{:?}", report.notes);
+    assert!(
+        report.notes[0].contains("were rebuilt on the host") && report.notes[0].contains(&name),
+        "{:?}",
+        report.notes
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    assert!(said.contains(&report.notes[0]), "{said}");
+}
+
 // --- the run secrets ---------------------------------------------------------------------------------------------
 
 const SECRET: &str = "central-login-export-0123456789abcdef";

@@ -1,0 +1,6 @@
+package sub
+
+import base.Base
+
+class Child : Base() {
+}

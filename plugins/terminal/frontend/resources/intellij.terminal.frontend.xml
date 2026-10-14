@@ -16,6 +16,7 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -161,6 +162,7 @@
     <action id="Terminal.CreateRectangularSelectionOnMouseDrag"
             class="com.intellij.terminal.frontend.action.TerminalCreateRectangularSelectionOnMouseDragAction"
             use-shortcut-of="EditorCreateRectangularSelectionOnMouseDrag">
+      <override-text place="GoToAction"/>
       <mouse-shortcut keystroke="shift alt button1" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">

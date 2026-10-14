@@ -58,6 +58,18 @@ interface SnapshotMarkerEngine {
   fun removeRangeMarker(marker: SnapshotMarker): Boolean
 
   /**
+   * Processes all valid markers from one captured root by increasing start offset, then marker ID.
+   * Includes markers beyond the snapshot text length.
+   * Collected weak marker references are purged. Disposed markers are skipped.
+   * Returns `false` when [processor] stops processing.
+   */
+  fun processAllRangeMarkers(
+    rootStore: SnapshotMarkerRootStore,
+    snapshot: DocumentSnapshot,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean
+
+  /**
    * Processes valid markers that non-strictly intersect the requested range.
    *
    * Each marker must contain every flavor bit in [tastePreference]. A zero value matches every marker.

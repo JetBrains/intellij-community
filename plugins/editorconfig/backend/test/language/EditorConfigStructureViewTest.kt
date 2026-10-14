@@ -3,6 +3,7 @@ package org.editorconfig.language
 
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 import com.intellij.testFramework.PlatformTestUtil.expandAll
+import com.intellij.testFramework.StructureViewComponentTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class EditorConfigStructureViewTest : BasePlatformTestCase() {
@@ -13,7 +14,7 @@ class EditorConfigStructureViewTest : BasePlatformTestCase() {
 
   fun doTest(expected: String) {
     myFixture.configureByFile(getTestName(true) + "/.editorconfig")
-    myFixture.testStructureView { svc ->
+    StructureViewComponentTestUtil.testStructureView(myFixture) { svc ->
       expandAll(svc.tree)
       assertTreeEqual(svc.tree, expected)
     }

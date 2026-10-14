@@ -21,6 +21,10 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link FoldingPolicyTestUtil#doTest} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractFoldingPolicyTest extends BasePlatformTestCase {
   protected void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);

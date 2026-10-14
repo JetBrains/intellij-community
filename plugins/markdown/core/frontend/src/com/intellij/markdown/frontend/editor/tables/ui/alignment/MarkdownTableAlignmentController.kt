@@ -35,7 +35,6 @@ import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentModel
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentSettingsListener
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.TablePadRenderer
-import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import org.jetbrains.annotations.ApiStatus
@@ -116,9 +115,6 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
       override fun onAdded(inlay: Inlay<*>) = onForeignInlayChanged(inlay)
       override fun onRemoved(inlay: Inlay<*>) = onForeignInlayChanged(inlay)
       override fun onUpdated(inlay: Inlay<*>) = onForeignInlayChanged(inlay)
-      override fun onBatchModeFinish(editor: Editor) {
-        HorizontalBarPresentation.refresh(editor)
-      }
     }, this)
 
     editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { event ->

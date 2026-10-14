@@ -2,18 +2,29 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.FileEditorManagerTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -21,9 +32,28 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EditorLoadTest extends FileEditorManagerTestCase {
-  public void testEditorLoadedStateMustTransitionInOneDirection_Stress() throws Exception {
-    VirtualFile virtualFile = createTempFile(getTestName(false) + ".txt", "text".getBytes(StandardCharsets.UTF_8));
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.fileEditorManagerFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class EditorLoadTest {
+  private static final Logger LOG = Logger.getInstance(EditorLoadTest.class);
+
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<FileEditorManagerImpl> managerFixture = fileEditorManagerFixture(projectFixture, false);
+
+  @TestDisposable
+  private Disposable testRootDisposable;
+
+  @Test
+  public void testEditorLoadedStateMustTransitionInOneDirection_Stress(TestInfo testInfo) throws Exception {
+    Project project = projectFixture.get();
+    FileEditorManagerImpl manager = managerFixture.get();
+    String testName = testInfo.getTestMethod().orElseThrow().getName().substring("test".length());
+    VirtualFile virtualFile = FileEditorManagerTestUtil.createTempFile(testName + ".txt", "text".getBytes(StandardCharsets.UTF_8));
     AtomicReference<Future<?>> testStateInvariant = new AtomicReference<>();
     AtomicBoolean run = new AtomicBoolean();
     AtomicBoolean loaded = new AtomicBoolean();
@@ -41,23 +71,26 @@ public class EditorLoadTest extends FileEditorManagerTestCase {
           }
         }));
       }
-    }, getTestRootDisposable());
+    }, testRootDisposable);
     for (int i=0; i<100; i++) {
       testStateInvariant.set(null);
       run.set(true);
       loaded.set(false);
-      List<FileEditor> editors = manager.openEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), false);
-      LOG.debug(i+": "+editors);
-      try {
-        while (!loaded.get()) {
-          UIUtil.dispatchAllInvocationEvents();
+      int iteration = i;
+      EdtTestUtil.runInEdtAndWait(() -> {
+        List<FileEditor> editors = manager.openEditor(new OpenFileDescriptor(project, virtualFile, 0), false);
+        LOG.debug(iteration+": "+editors);
+        try {
+          while (!loaded.get()) {
+            UIUtil.dispatchAllInvocationEvents();
+          }
+          run.set(false);
+          testStateInvariant.get().get();
         }
-        run.set(false);
-        testStateInvariant.get().get();
-      }
-      finally {
-        manager.closeFile(virtualFile);
-      }
+        finally {
+          manager.closeFile(virtualFile);
+        }
+      });
     }
   }
 }

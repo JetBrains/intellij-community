@@ -16,11 +16,13 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.IncludeAllContentModuleFilter
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
@@ -29,8 +31,11 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.filterAndProcessContentModules
+import org.jetbrains.intellij.build.impl.getBundledPluginModules
+import org.jetbrains.intellij.build.impl.nameToJarFileName
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -40,6 +45,8 @@ import org.jetbrains.intellij.build.isWindows
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
+import java.util.TreeSet
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * [includeProductModules] keeps the jars that hold a product content module. The module system loads them, so a
@@ -151,6 +158,86 @@ fun contentModuleJarCoreClasspathEntries(
     result.add(libDir.resolve(jarName))
   }
   return result
+}
+
+/**
+ * The core classpath of a split dev distribution of the platform [layout], as `lib/`-relative names in bytewise order.
+ *
+ * `dev_dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
+ * does not load. Here the module jars come from [contentModuleJarCoreClasspathEntries] over every module jar of
+ * [layout]. A jar with project libraries and no module is on the list when it is a direct child of `lib/`, as in
+ * [generateClassPathByLayoutReport]. The plan generator checks the Bazel derivation against this function, see ADR 0037.
+ *
+ * The list keeps `nio-fs.jar`. [launchBootClassPathJarNames] removes it for a launch with the multi-routing file system.
+ */
+@ApiStatus.Internal
+fun splitDistributionCoreClassPathJarNames(layout: PlatformLayout): List<String> {
+  val moduleDestinations = layout.includedModules.mapTo(HashSet()) { it.relativeOutputFile }
+  val libDir = Path.of("lib")
+  val result = TreeSet<String>()
+  contentModuleJarCoreClasspathEntries(
+    libDir = libDir,
+    includedModules = layout.includedModules,
+    externallyPackedJars = moduleDestinations,
+    skipNioFs = false,
+  ).mapTo(result) { libDir.relativize(it).invariantSeparatorsPathString }
+  for (library in layout.getIncludedProjectLibraries()) {
+    val destination = platformLibraryJarDestination(library)
+    if ('/' !in destination && destination !in moduleDestinations) {
+      result.add(destination)
+    }
+  }
+  return result.toList()
+}
+
+/**
+ * The destination within `lib/` where `JarPackager` writes the project library [library] of a platform layout. It is the
+ * stated jar, or the library name as [nameToJarFileName] spells it, in the stated directory. See
+ * `computeProjectLibrariesSources`.
+ */
+@ApiStatus.Internal
+fun platformLibraryJarDestination(library: ProjectLibraryData): String {
+  val outPath = library.outPath
+  val jarName = nameToJarFileName(library.libraryName)
+  return when {
+    outPath == null -> jarName
+    outPath.endsWith(".jar") -> outPath
+    else -> "$outPath/$jarName"
+  }
+}
+
+/**
+ * The `bootClassPathJarNames` of a classic-loader launch whose core classpath holds the `lib/` jars
+ * [coreClassPathJarNames].
+ *
+ * The result is what [generateClassPathByLayoutReport] gives for these jars. It has no `nio-fs.jar` when [skipNioFs] is
+ * set. The leading jars come first, then the other names in sorted order. The tool `product-files` applies the same rule
+ * to the core classpath of a dev distribution, and `DevDistProductLaunchModelTest` compares the two.
+ */
+@ApiStatus.Internal
+fun launchBootClassPathJarNames(coreClassPathJarNames: Collection<String>, skipNioFs: Boolean): List<String> {
+  val libDir = Path.of("lib")
+  val entries = coreClassPathJarNames.map { CustomAssetEntry(path = libDir.resolve(it), hash = 0, relativeOutputFile = it) }
+  return generateClassPathByLayoutReport(libDir = libDir, entries = entries, skipNioFs = skipNioFs).map {
+    libDir.relativize(it).invariantSeparatorsPathString
+  }
+}
+
+/**
+ * The bundled plugins of [productProperties] that set `use-idea-classloader`, sorted. [generateCoreClasspathFromPlugins]
+ * puts the jars of such a plugin on the boot class path of a classic-loader launch. The source descriptors decide.
+ */
+@ApiStatus.Internal
+fun bundledPluginsWithIdeaClassloader(productProperties: ProductProperties, outputProvider: ModuleOutputProvider): List<String> {
+  return getBundledPluginModules(productProperties, outputProvider).filter { mainModule ->
+    getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
+      pluginMainModule = mainModule,
+      cacheContainer = null,
+      outputProvider = outputProvider,
+      contentModuleFilter = IncludeAllContentModuleFilter,
+      sourceOnly = true,
+    ).isNotEmpty()
+  }.sorted()
 }
 
 /** The `lib/` jars the core classpath lists before everything else, in this order. */

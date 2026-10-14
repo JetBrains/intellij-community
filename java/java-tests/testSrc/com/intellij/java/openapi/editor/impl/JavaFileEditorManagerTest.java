@@ -2,27 +2,53 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.FileEditorManagerTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.tabs.TabInfo;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.fileEditorManagerFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
+@TestApplication
+public class JavaFileEditorManagerTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<FileEditorManagerImpl> managerFixture = fileEditorManagerFixture(projectFixture, false);
+
+  @Test
   public void testAsyncOpening() {
     @Language("XML")
     String FEM_XML = """
@@ -42,55 +68,69 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
             </file>
           </leaf>
         </component>""";
-    openFiles(FEM_XML);
+    FileEditorManagerImpl manager = managerFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> FileEditorManagerTestUtil.openFiles(manager, getTestDataPath(), FEM_XML));
   }
 
+  @Test
   public void testFoldingIsNotBlinkingOnNavigationToSingleLineMethod() {
-    VirtualFile dir = getFile("/src");
-    PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+    Project project = projectFixture.get();
+    Module module = codeInsightFixture.get().getModule();
+    FileEditorManagerImpl manager = managerFixture.get();
+    VirtualFile dir = FileEditorManagerTestUtil.getFile(getTestDataPath(), "/src");
+    PsiTestUtil.addSourceContentToRoots(module, dir);
     try {
-      VirtualFile file = getFile("/src/Bar.java");
-      PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
+      VirtualFile file = FileEditorManagerTestUtil.getFile(getTestDataPath(), "/src/Bar.java");
+      PsiJavaFile psiFile = ReadAction.computeBlocking(() -> (PsiJavaFile)PsiManager.getInstance(project).findFile(file));
       assertNotNull(psiFile);
-      PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
-      method.navigate(true);
+      PsiMethod method = ReadAction.computeBlocking(() -> psiFile.getClasses()[0].getMethods()[0]);
+      FileEditor[] editors = EdtTestUtil.runInEdtAndGet(() -> {
+        method.navigate(true);
+        return manager.getEditors(file);
+      });
 
-      FileEditor[] editors = manager.getEditors(file);
       assertEquals(1, editors.length);
       Editor editor = ((TextEditor)editors[0]).getEditor();
-      EditorTestUtil.waitForLoading(editor);
-      FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+      FoldRegion[] regions = EdtTestUtil.runInEdtAndGet(() -> {
+        EditorTestUtil.waitForLoading(editor);
+        return editor.getFoldingModel().getAllFoldRegions();
+      });
       assertEquals(2, regions.length);
       assertTrue(regions[0].isExpanded());
       assertTrue(regions[1].isExpanded());
 
-      CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
-
-      regions = editor.getFoldingModel().getAllFoldRegions();
+      regions = EdtTestUtil.runInEdtAndGet(() -> {
+        CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+        return editor.getFoldingModel().getAllFoldRegions();
+      });
       assertEquals(2, regions.length);
       assertTrue(regions[0].isExpanded());
       assertTrue(regions[1].isExpanded());
     }
     finally {
-      PsiTestUtil.removeSourceRoot(getModule(), dir);
+      PsiTestUtil.removeSourceRoot(module, dir);
     }
   }
 
+  @Test
   public void testOpenModuleDescriptorFile() {
-    VirtualFile moduleInfoFile = getFile("/src/module-info.java");
+    Project project = projectFixture.get();
+    FileEditorManagerImpl manager = managerFixture.get();
+    VirtualFile moduleInfoFile = FileEditorManagerTestUtil.getFile(getTestDataPath(), "/src/module-info.java");
     assertNotNull(moduleInfoFile);
 
-    manager.openFile(moduleInfoFile);
-    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
+    EditorTabbedContainer openedTabPane = EdtTestUtil.runInEdtAndGet(() -> {
+      manager.openFile(moduleInfoFile);
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project);
+      return manager.getCurrentWindow().getTabbedPane();
+    });
 
-    EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());
     TabInfo firstTab = openedTabPane.getTabs().getTabAt(0);
     assertEquals("module-info.java (test.module)", firstTab.getText());
   }
 
-  @Override
-  protected String getTestDataPath() {
+  private static String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/java/java-tests/testData/fileEditorManager";
   }
 }

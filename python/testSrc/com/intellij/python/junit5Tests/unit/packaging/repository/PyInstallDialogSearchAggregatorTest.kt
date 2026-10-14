@@ -31,7 +31,7 @@ private class FakeRepository(
     this.enabled = enabled
   }
 
-  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
+  override suspend fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
     val normalized = PyPackageName.normalizePackageName(needle)
     val matches = packages.filter { it.contains(normalized, ignoreCase = true) }
     return PythonPackageSearchResult(
@@ -57,13 +57,19 @@ private class FakeRepositoryManager(
 
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> =
     error("not used in this test")
+
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? =
     error("not used in this test")
+
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>? =
     error("not used in this test")
+
   override suspend fun refreshCaches() = error("not used in this test")
   override suspend fun initCaches() = error("not used in this test")
-  override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification? =
+  override suspend fun findPackageSpecification(
+    requirement: PyRequirement,
+    repository: PyPackageRepository?,
+  ): PythonRepositoryPackageSpecification? =
     error("not used in this test")
 }
 
@@ -79,7 +85,7 @@ internal class PyInstallDialogSearchAggregatorTest {
 
   @Test
   fun `awaitReady is called before searching`() = runTest {
-    val manager = FakeRepositoryManager(allRepositories =emptyList())
+    val manager = FakeRepositoryManager(allRepositories = emptyList())
 
     aggregateInstallDialogSearch(manager, extraRepositories = emptyList(), query = "anything")
 
@@ -89,7 +95,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   @Test
   fun `built-in repositories are searched through the manager`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("requests", "requests-mock", "flask"))
-    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories = listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = emptyList(), query = "request")
 
@@ -101,7 +107,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   fun `enabled extra repository not already covered is searched directly`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("flask"))
     val internalRepo = FakeRepository("Internal", "https://repo.internal/simple", packages = listOf("internal-tool", "unrelated"))
-    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories = listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(internalRepo), query = "internal")
 
@@ -113,7 +119,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   fun `extra repository with same url as a built-in is not searched twice`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("requests"))
     val duplicate = FakeRepository("PyPI mirror", "https://pypi.org/simple", packages = listOf("requests"))
-    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories = listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(duplicate), query = "requests")
 
@@ -124,7 +130,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   @Test
   fun `disabled extra repository is skipped`() = runTest {
     val internalRepo = FakeRepository("Internal", "https://repo.internal/simple", enabled = false, packages = listOf("internal-tool"))
-    val manager = FakeRepositoryManager(allRepositories =emptyList())
+    val manager = FakeRepositoryManager(allRepositories = emptyList())
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(internalRepo), query = "internal")
 

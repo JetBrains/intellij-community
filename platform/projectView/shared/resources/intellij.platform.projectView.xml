@@ -64,6 +64,7 @@
         <action id="ProjectView.ShowMembers"
                 class="com.intellij.platform.projectView.actions.ShowMembers"
                 icon="AllIcons.ObjectBrowser.ShowMembers">
+          <override-text place="GoToAction"/>
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.ShowExcludedFiles"
@@ -87,7 +88,9 @@
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.platform.projectView.actions.FlattenModules"
-                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+                icon="AllIcons.ObjectBrowser.FlattenModules">
+          <override-text place="GoToAction"/>
+        </action>
         <action id="ProjectView.FlattenPackages"
                 class="com.intellij.platform.projectView.actions.FlattenPackages"
                 icon="AllIcons.ObjectBrowser.FlattenPackages"/>

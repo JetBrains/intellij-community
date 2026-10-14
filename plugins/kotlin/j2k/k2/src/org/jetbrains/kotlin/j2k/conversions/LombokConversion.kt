@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.j2k.annotationByFqName
 import org.jetbrains.kotlin.j2k.psi
 import org.jetbrains.kotlin.j2k.tree.JKAnnotation
 import org.jetbrains.kotlin.j2k.tree.JKAnnotationList
+import org.jetbrains.kotlin.j2k.tree.JKAnnotationNameParameter
 import org.jetbrains.kotlin.j2k.tree.JKBlockImpl
 import org.jetbrains.kotlin.j2k.tree.JKClass
 import org.jetbrains.kotlin.j2k.tree.JKClass.ClassKind.CLASS
@@ -59,6 +60,7 @@ private const val LOMBOK_TO_STRING: String = "lombok.ToString"
 private const val LOMBOK_SETTER: String = "lombok.Setter"
 private const val PUBLIC_LEVEL: String = "PUBLIC"
 private const val NONE_LEVEL: String = "NONE"
+private const val ACCESS: String = "access"
 
 class LombokConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -75,15 +77,21 @@ class LombokConversion(context: ConverterContext) : RecursiveConversion(context)
 
         val presented = listOfNotNull(value, data, allArgs, requiredArgs)
         if (presented.isEmpty()) return
-        if (presented.any { it.arguments.isNotEmpty() }) return
+        if (presented.any { it.hasArgumentOtherThan(ACCESS) }) return
         // `@Data` and `@Value` add their constructor only when the class declares none
         if ((value != null || data != null) && classBody.declarations.any { it is JKConstructor }) return
 
         val allFieldsToConstructor = value != null || allArgs != null
         val generateAccessors = value != null || data != null
+        val constructorAnnotation = if (allArgs != null) LOMBOK_ALL_ARGS_CONSTRUCTOR else LOMBOK_REQUIRED_ARGS_CONSTRUCTOR
+        val constructorAccess = psi<PsiClass>()?.accessLevel(constructorAnnotation, ACCESS) ?: PUBLIC_LEVEL
 
         val fields = classBody.declarations.filterIsInstance<JKField>()
-        val constructorFields = fields.filter { if (allFieldsToConstructor) it.isAllArgument() else it.isRequiredArgument() }
+        val constructorFields = if (constructorAccess == NONE_LEVEL) {
+            emptyList()
+        } else {
+            fields.filter { if (allFieldsToConstructor) it.isAllArgument() else it.isRequiredArgument() }
+        }
         val shouldBeDataClass = generateAccessors && constructorFields.isNotEmpty() && canBeDataClass()
 
         for (annotation in presented) annotationList.annotations -= annotation
@@ -95,7 +103,7 @@ class LombokConversion(context: ConverterContext) : RecursiveConversion(context)
         }
         if (constructorFields.isEmpty()) return
 
-        classBody.declarations += generateConstructor(constructorFields)
+        classBody.declarations += generateConstructor(constructorFields, constructorAccess.toVisibility() ?: PUBLIC)
         if (shouldBeDataClass) otherModifierElements += JKOtherModifierElement(OtherModifier.DATA)
     }
 
@@ -129,9 +137,12 @@ class LombokConversion(context: ConverterContext) : RecursiveConversion(context)
         }
     }
 
-    private fun PsiModifierListOwner.accessLevel(annotationFqName: String): String? {
+    private fun JKAnnotation.hasArgumentOtherThan(name: String): Boolean =
+        arguments.any { it !is JKAnnotationNameParameter || it.name.value != name }
+
+    private fun PsiModifierListOwner.accessLevel(annotationFqName: String, attribute: String = "value"): String? {
         val annotation = modifierList?.findAnnotation(annotationFqName) ?: return null
-        val value = annotation.findDeclaredAttributeValue("value") ?: return PUBLIC_LEVEL
+        val value = annotation.findDeclaredAttributeValue(attribute) ?: return PUBLIC_LEVEL
         return value.text.substringAfterLast('.')
     }
 
@@ -162,7 +173,7 @@ class LombokConversion(context: ConverterContext) : RecursiveConversion(context)
         return psiField.hasModifierProperty(PsiModifier.FINAL) || psiField.hasAnnotation(LOMBOK_NON_NULL)
     }
 
-    private fun JKClass.generateConstructor(fields: List<JKField>): JKConstructorImpl {
+    private fun JKClass.generateConstructor(fields: List<JKField>, visibility: Visibility): JKConstructorImpl {
         val parameters = fields.map { field ->
             JKParameter(
                 JKTypeElement(field.type.type, field.type.annotationList.copyTreeAndDetach()),
@@ -177,7 +188,7 @@ class LombokConversion(context: ConverterContext) : RecursiveConversion(context)
             delegationCall = JKStubExpression(),
             JKAnnotationList(),
             otherModifierElements = emptyList(),
-            JKVisibilityModifierElement(PUBLIC),
+            JKVisibilityModifierElement(visibility),
             JKModalityModifierElement(FINAL)
         ).also { it.lineBreaksAfter = 1 }
     }

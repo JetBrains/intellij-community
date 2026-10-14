@@ -48,5 +48,6 @@ object UnsupportedFeatureFixFactory {
             put(LanguageFeature.CompanionExtensions, LanguageVersion.KOTLIN_2_4)
             put(LanguageFeature.NameBasedDestructuring, LanguageVersion.KOTLIN_2_4)
             put(LanguageFeature.UnnamedLocalVariables, LanguageVersion.KOTLIN_2_4)
+            put(LanguageFeature.IntrinsicConstEvaluation, LanguageVersion.KOTLIN_2_4)
         }
 }

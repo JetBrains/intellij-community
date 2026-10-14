@@ -16,37 +16,69 @@
 package com.intellij.java.ide.fileStructure;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
-import com.intellij.testFramework.FileStructureTestBase;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.FileStructureTestFixture;
+import com.intellij.testFramework.FileStructureTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
+public abstract class JavaFileStructureTestCase {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  protected CodeInsightTestFixture myFixture;
+  protected FileStructureTestFixture myPopupFixture;
+  protected String myTestMethodName;
   private boolean myShowAnonymousByDefault;
-  
+
   protected abstract String getTestDataFolderName();
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUpFileStructure(TestInfo testInfo) {
+    myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(IdeaTestExecutionPolicy.getHomePathWithPolicy() + getBasePath());
+    myPopupFixture = new FileStructureTestFixture(myFixture);
+    myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
     myShowAnonymousByDefault = PropertiesComponent.getInstance().getBoolean(getAnonymousPropertyName());
   }
 
-  @Override
-  protected void configureDefault() {
-    super.configureDefault();
-    if (getTestName(false).contains("Anonymous")) {
-      setShowAnonymous(true);
-    }
+  protected void checkTree() {
+    checkTree(null);
   }
 
-  @Override
-  protected String getFileExtension() {
-    return "java";
+  protected void checkTree(@Nullable String filter) {
+    FileStructureTestUtil.configureDefault(myFixture, myTestMethodName, "java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configurePopup();
+      FileStructureTestUtil.checkConfiguredTree(myFixture, myPopupFixture, myTestMethodName, filter, true);
+    });
+  }
+
+  protected void configurePopup() {
+    if (FileStructureTestUtil.getTestName(myTestMethodName).contains("Anonymous")) {
+      setShowAnonymous(true);
+    }
   }
 
   public void setShowAnonymous(boolean show) {
@@ -59,16 +91,13 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
     myPopupFixture.updateAndSelectCurrent();
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDownFileStructure() {
     try {
       PropertiesComponent.getInstance().setValue(getAnonymousPropertyName(), myShowAnonymousByDefault);
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
     finally {
-      super.tearDown();
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myPopupFixture));
     }
   }
 
@@ -76,7 +105,6 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
     return TreeStructureUtil.getPropertyName(JavaAnonymousClassesNodeProvider.JAVA_ANONYMOUS_PROPERTY_NAME);
   }
 
-  @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/fileStructure/" + getTestDataFolderName();
   }

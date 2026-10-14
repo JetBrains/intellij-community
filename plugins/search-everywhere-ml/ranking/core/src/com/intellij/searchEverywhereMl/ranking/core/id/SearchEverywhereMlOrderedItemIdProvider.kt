@@ -18,14 +18,18 @@ internal class SearchEverywhereMlOrderedItemIdProvider(private val onNullKey: (e
   private var idCounter = AtomicInteger(1)
   private val itemToId = hashMapOf<Any, Int>()
 
-  @Synchronized
+  /**
+   * Takes the read lock before the monitor and never the other way around.
+   */
   override fun getId(element: Any): Int? {
     val key = SearchEverywhereElementKeyProvider.getKeyOrNull(element)
     if (key == null) {
-      onNullKey.invoke(element)
+      synchronized(itemToId) { onNullKey.invoke(element) }
       return null
     }
 
-    return runReadActionBlocking { itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() } }
+    return runReadActionBlocking {
+      synchronized(itemToId) { itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() } }
+    }
   }
 }

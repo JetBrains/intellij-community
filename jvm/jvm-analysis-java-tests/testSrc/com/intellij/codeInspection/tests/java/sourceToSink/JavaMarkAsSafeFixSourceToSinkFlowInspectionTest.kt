@@ -15,8 +15,8 @@ class JavaMarkAsSafeFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspecti
     return JAVA_17
   }
 
-  override fun getBasePath(): String {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
+  override fun getTestDataPath(): String {
+    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
   }
 
   private fun getMessage() = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.mark.as.safe.text")

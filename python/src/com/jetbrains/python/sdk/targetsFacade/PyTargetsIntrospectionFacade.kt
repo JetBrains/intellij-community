@@ -10,7 +10,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PyBundle
@@ -56,7 +56,8 @@ sealed class PyTargetsIntrospectionFacade(
     protected fun <T> PyResult<T>.orThrowExecException(): T = getOr { throw ExecutionException(it.error.message) }
   }
 
-  protected suspend fun interpreter(): PythonInterpreter = sdk.pythonInterpreterAsync()
+  @Throws(ExecutionException::class)
+  protected suspend fun interpreter(): PythonInterpreter = sdk.pythonInterpreterResultAsync().orThrowExecException()
 
 
   abstract val isLocalTarget: Boolean

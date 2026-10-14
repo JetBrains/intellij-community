@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.base.util
 
-import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.sun.jdi.Method
 import org.jetbrains.org.objectweb.asm.Label
@@ -9,7 +9,7 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 
 fun Method.isSimpleGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
+    if (isAndroidVM(virtualMachine())) {
         // TODO(KTIJ-23684): Add support for DEX
         return false
     }
@@ -20,7 +20,7 @@ fun Method.isSimpleGetter(): Boolean {
 }
 
 fun Method.isLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
+    if (isAndroidVM(virtualMachine())) {
         // TODO(KTIJ-23684): Add support for DEX
         return false
     }
@@ -31,7 +31,7 @@ fun Method.isLateinitVariableGetter(): Boolean {
 }
 
 fun Method.isOldBackendLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
+    if (isAndroidVM(virtualMachine())) {
         // TODO(KTIJ-23684): Add support for DEX
         return false
     }
@@ -50,7 +50,7 @@ fun Method.isOldBackendLateinitVariableGetter(): Boolean {
 }
 
 fun Method.isIRBackendLateinitVariableGetterReturningAny(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
+    if (isAndroidVM(virtualMachine())) {
         // TODO(KTIJ-23684): Add support for DEX
         return false
     }
@@ -62,7 +62,7 @@ fun Method.isIRBackendLateinitVariableGetterReturningAny(): Boolean {
 }
 
 fun Method.isIRBackendLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
+    if (isAndroidVM(virtualMachine())) {
         // TODO(KTIJ-23684): Add support for DEX
         return false
     }

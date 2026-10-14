@@ -71,7 +71,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.util.SlowOperations
@@ -229,7 +229,8 @@ data class EelFileSystem(
           false
         }
       }.mapNotNull { sdk ->
-        val pythonInterpreter = sdk.pythonInterpreterAsync()
+        // A broken SDK names no interpreter, so it is not offered.
+        val pythonInterpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return@mapNotNull null
         val pythonInfo = pythonInterpreter.getPythonInfo()
         val languageLevel = pythonInfo.successOrNull?.languageLevel
 

@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -53,6 +54,10 @@ public class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
     Project project = e.getProject();
     if (project == null || !project.isInitialized() || project.isDisposed()) {
       e.getPresentation().setEnabled(false);

@@ -20,6 +20,9 @@ use crate::daemon::testing::{
     summary_record,
 };
 use crate::daemon::verdict::{checkout_of, failures_of, reproduce_commands, traces_of};
+use crate::worker::lease::{LeaseCommand, command_lease};
+use crate::worker::run_marker::read_run_marker;
+use avl_host_testkit::FakeProbe;
 
 /// `vm daemon`, as far as its own grammar goes.
 #[derive(Parser, Debug)]
@@ -661,6 +664,72 @@ async fn command_run_refuses_stdin_misuse_before_any_work() {
     assert!(!fixture.daemon.saw_request("POST /run"));
 }
 
+// A run of another process holds the lifecycle lock only at its two ends. While its iteration is in flight, `daemon
+// status` and `daemon log` answer. `daemon restart` and a lease release refuse `lease_busy`, and they name the run.
+#[tokio::test]
+async fn a_run_in_flight_lets_the_reads_answer_and_refuses_the_operations() {
+    let (fixture, receipt) = run_outcome_fixture(passing_run_lines("it-30"), PASSING_XML).await;
+    fixture.on(
+        "log",
+        handler(|argv, _| {
+            Ok(agent_reply(
+                "log",
+                &json!({"runId": argv_value(argv, "--run"), "logPath": "/vm/log", "content": "line1\n", "truncated": false}),
+            ))
+        }),
+    );
+    let parked = tokio_util::sync::CancellationToken::new();
+    fixture.daemon.script().block = Some(parked.clone());
+    let another = fixture.another_controller();
+    let args = run_command_args(&["--lane", "ui"]);
+    let ctx = Ctx::background();
+    let run = another.command_run(&ctx, &args, Some(&receipt));
+    let observe = async {
+        // The iteration is in flight once the daemon double holds its `/run`.
+        while !fixture.daemon.saw_request("POST /run") {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        let marker = read_run_marker(&fixture.settings, &fixture.worker)
+            .unwrap()
+            .expect("the run marks its worker");
+        let status = fixture.host.command_daemon(&ctx, DaemonVerb::Status, Some(&receipt)).await;
+        let log = fixture.host.command_daemon(&ctx, DaemonVerb::Log, Some(&receipt)).await;
+        let restart = fixture.host.command_daemon(&ctx, DaemonVerb::Restart, Some(&receipt)).await;
+        let release = command_lease(
+            &ctx,
+            &fixture.manager,
+            &LeaseCommand::Release,
+            Some(&receipt),
+            &FakeProbe::default(),
+        )
+        .await;
+        parked.cancel();
+        (marker, status, log, restart, release)
+    };
+    let (ran, (marker, status, log, restart, release)) =
+        tokio::time::timeout(Duration::from_secs(120), async { tokio::join!(run, observe) })
+            .await
+            .expect("the run settles");
+    assert!(marker.run_id.starts_with("suite-user-run-"), "{marker:?}");
+    assert_eq!(status.unwrap().data["reachable"], json!(true));
+    assert_eq!(log.unwrap().text, "line1");
+    for refused in [restart, release] {
+        let refusal = refusal(refused);
+        assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
+        assert!(
+            refusal.message.contains(&format!("has run {} in flight", marker.run_id)),
+            "{refusal}"
+        );
+    }
+    ran.unwrap();
+    assert_eq!(
+        read_run_marker(&fixture.settings, &fixture.worker).unwrap(),
+        None,
+        "the end of the run removes its marker"
+    );
+    assert!(fixture.settings.lease_path(&fixture.worker).exists(), "the caller's lease stays");
+}
+
 #[tokio::test]
 async fn command_run_reports_a_passed_iteration() {
     let (fixture, receipt) = run_outcome_fixture(passing_run_lines("it-20"), PASSING_XML).await;
@@ -706,7 +775,7 @@ fn blank_report() -> RunReport {
         },
         evidence: Vec::new(),
         protocol_diagnostic: None,
-        hot_jar_drift: None,
+        notes: Vec::new(),
         traces: Vec::new(),
         traces_error: None,
         tree: None,

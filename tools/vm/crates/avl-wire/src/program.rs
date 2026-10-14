@@ -31,17 +31,32 @@ vocabulary! {
     pub enum HostAction {
         /// Approves the JetBrains Account login of the value `signInUrl` in the JetBrains Cloud emulator.
         AccountApproveSignIn = "account-approve-sign-in",
-        /// Waits until the controlled agent receives the prompt that `agentTurn` claimed, and answers it as `agentPrompt`.
+        /// Waits until the IDE sends the held load `agentLoad` for `agentSession`, and neither binds nor answers it.
+        AgentAwaitHeldLoad = "agent-await-held-load",
+        /// Waits until the controlled agent receives a claimed prompt, the claim of the stated text in `agentSession` or
+        /// else the latest claim `agentTurn`, and answers the prompt as `agentPrompt`.
         AgentAwaitPrompt = "agent-await-prompt",
+        /// Waits until the IDE sends the held load `agentLoad` for `agentSession`, and binds the session without an answer.
+        AgentBindHeldLoad = "agent-bind-held-load",
         /// Makes the controlled agent end the turn of `agentPrompt`.
         AgentCompletePrompt = "agent-complete-prompt",
+        /// Makes the controlled agent answer the cancel of `agentSession` and end the turn of `agentPrompt` as cancelled.
+        AgentConfirmCancel = "agent-confirm-cancel",
         /// Claims the next prompt of the session `agentSession` before the chat sends it, and answers the claim as `agentTurn`.
         AgentExpectPrompt = "agent-expect-prompt",
+        /// Makes the controlled agent hold the next load of `agentSession` across a restart, and answers the hold as `agentLoad`.
+        AgentHoldNextSessionLoad = "agent-hold-next-session-load",
         /// Starts a session of the controlled agent of the fixture, gives the launch answers of the fixture, and answers
         /// the session as `agentSession` and its thread as `agentThreadId`.
         AgentLaunch = "agent-launch",
+        /// Makes the agent of `agentSession` fail every session load and new session with the stated message until the reset.
+        AgentRefuseConnects = "agent-refuse-connects",
+        /// Makes the controlled agent answer the held load `agentLoad`, so the restore of the session ends.
+        AgentReleaseHeldLoad = "agent-release-held-load",
         /// Makes the controlled agent ask for a form in the turn of `agentPrompt`, under the stated key and schema.
         AgentRequestElicitation = "agent-request-elicitation",
+        /// Makes the controlled agent send the stated text as a message in the turn of `agentPrompt`.
+        AgentSay = "agent-say",
         /// Pauses the next package download of the fake registry.
         ConsentHoldDownload = "consent-hold-download",
         /// Makes the fake registry fail the next package download.
@@ -62,6 +77,8 @@ vocabulary! {
     pub enum HostAssertion {
         /// The controlled agent of `agentSession` receives the stated action as the answer to the form of the stated key.
         AgentAwaitElicitationResponse = "agent-await-elicitation-response",
+        /// The IDE has not sent the held load `agentLoad` yet.
+        AgentLoadNotRequested = "agent-load-not-requested",
         /// The prompt `agentPrompt` holds exactly the stated text.
         AgentPromptContent = "agent-prompt-content",
         /// The fake registry fails the next package download.

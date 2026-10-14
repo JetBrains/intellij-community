@@ -3,6 +3,20 @@ load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin"
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+jps_test(
+    name = "java-rareRefactorings-tests_test",
+    timeout = "moderate",
+    data = [":testData"],
+    tags = ["community-java-tests"],
+    runtime_deps = [":java-rareRefactorings-tests_test_lib"],
+)
+### skip generation section `test intellij.java.rareRefactorings.tests`
+
 ### auto-generated section `dev intellij.java.rareRefactorings` start
 dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
@@ -217,6 +231,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.rareRefactorings.tests` end
@@ -229,10 +245,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.rareRefactorings.tests` end
-
-### auto-generated section `test intellij.java.rareRefactorings.tests` start
-jps_test(
-    name = "java-rareRefactorings-tests_test",
-    runtime_deps = [":java-rareRefactorings-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.rareRefactorings.tests` end

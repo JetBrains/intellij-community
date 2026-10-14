@@ -62,7 +62,7 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
   val eelApi = eelDescriptor.toEelApi()
   val customPath = tool.getCustomExecutablePath(eelDescriptor)
 
-  val interpreter = moduleIfExists?.pythonSdk?.pythonInterpreter()
+  val interpreter = moduleIfExists?.pythonSdk?.pythonInterpreterResult()?.successOrNull
   val toolBinaryPath = interpreter?.findToolExecutable(tool, executableName)
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)

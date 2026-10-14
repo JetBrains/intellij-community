@@ -22,7 +22,11 @@ use super::receipt::receipt_files;
 use super::*;
 use crate::worker::testing::Fixture;
 #[cfg(unix)]
-use crate::worker::worker::{IdleStopRequest, read_idle_stop_record};
+use crate::worker::testing::Notes;
+#[cfg(unix)]
+use crate::worker::worker::{IdleStopRequest, StopState, read_idle_stop_record};
+#[cfg(unix)]
+use avl_host_sys::interrupt::{Interrupts, Signal};
 
 pub(super) fn ctx() -> Ctx {
     Ctx::background()
@@ -564,7 +568,7 @@ async fn a_release_of_a_worker_whose_vm_is_missing_skips_the_guest() {
     let outcome = release(&fixture, &lease_file(&held), &FakeProbe::default()).await.unwrap();
     assert_eq!(outcome.text, "released=air-macos-1");
     assert_eq!(outcome.data["workerVmMissing"], Value::Bool(true));
-    assert_eq!(outcome.data["staleRunProcess"], Value::from(stale.identity.pid));
+    assert_eq!(outcome.data["staleRunProcess"], Value::from(stale.identity.process.pid));
     assert!(read_lease(&fixture.settings.lease_path("air-macos-1")).unwrap().is_none());
     assert!(!lease_file(&held).exists());
     assert!(fixture.guest.lines().is_empty(), "{:?}", fixture.guest.lines());
@@ -645,8 +649,8 @@ async fn a_release_succeeds_while_a_warm_daemon_holds_the_slot() {
     );
 }
 
-/// What the slot still exists to catch. The lifecycle lock excludes every iteration this host can start, so the residue
-/// is a run no lock covers - a controller that crashed and left one behind - and the probe answers nothing for it.
+/// What the slot still exists to catch. The run marker excludes every run of a live process. The residue is a run of
+/// a controller that crashed and left it behind, and the probe answers nothing for it.
 #[cfg(unix)]
 #[tokio::test]
 async fn a_release_is_refused_while_an_iteration_is_in_flight() {
@@ -784,4 +788,209 @@ async fn a_lease_that_changed_under_the_operation_refuses() {
         .await
         .unwrap();
     assert_eq!(ran, successor);
+}
+
+// --- the run marker ----------------------------------------------------------------------------------------------
+
+/// A Tart pool of one worker, the lease of an acquisition and its receipt.
+#[cfg(unix)]
+async fn leased_pool() -> (Fixture, Lease, PathBuf) {
+    let fixture = pool("air-macos-1");
+    let held = acquire(&fixture, "agent").await.unwrap();
+    let receipt = lease_file(&held);
+    let (_, lease) = receipt_for_path(&fixture.settings, &receipt).unwrap();
+    (fixture, lease, receipt)
+}
+
+/// A run holds the lifecycle lock only at its two ends. In its body the lock is free and the marker names the run, and
+/// the end removes the marker.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_run_holds_the_lock_only_at_its_ends() {
+    let (fixture, lease, _) = leased_pool().await;
+    let worker = lease.worker.clone();
+    let lock = fixture.manager.lifecycle_lock_path(&worker);
+    let answer = with_run_marker(&ctx(), &fixture.manager, &lease, "suite-user-run-1", "run", async |current| {
+        let taken = fixture.manager.locks().try_acquire(&ctx(), &lock, "suite").await?;
+        assert!(taken.is_some(), "the run holds the lifecycle lock in its body");
+        drop(taken);
+        let marker = read_run_marker(&fixture.settings, &current.worker)?.expect("the run marks its worker");
+        assert_eq!((marker.run_id.as_str(), marker.operation.as_str()), ("suite-user-run-1", "run"));
+        assert!(marker.names_lease(&current));
+        Ok(current.worker)
+    })
+    .await
+    .unwrap();
+    assert_eq!(answer, worker);
+    assert_eq!(
+        read_run_marker(&fixture.settings, &worker).unwrap(),
+        None,
+        "the end of the run removes its marker"
+    );
+}
+
+/// A release while a run of another live process is in flight refuses `lease_busy` and names the run. The lease and the
+/// receipt stay, and the release passes once the run ended.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_release_during_a_run_of_another_process_refuses() {
+    let (fixture, lease, receipt) = leased_pool().await;
+    let another = fixture.another_controller();
+    let refusal = with_run_marker(&ctx(), &another, &lease, "suite-user-run-1", "run", async |_| {
+        Ok(release(&fixture, &receipt, &FakeProbe::default()).await.unwrap_err())
+    })
+    .await
+    .unwrap();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
+    assert!(refusal.message.contains("has run suite-user-run-1 in flight"), "{refusal}");
+    assert!(read_lease(&fixture.settings.lease_path(&lease.worker)).unwrap().is_some());
+    assert!(receipt.exists());
+    release(&fixture, &receipt, &FakeProbe::default()).await.unwrap();
+}
+
+/// `lease show` with the receipt answers during a run and names the run. Without the receipt, and after the run, it
+/// names no run.
+#[cfg(unix)]
+#[tokio::test]
+async fn lease_show_names_the_run_in_flight_on_the_callers_lease() {
+    let (fixture, lease, receipt) = leased_pool().await;
+    let show = async |lease_file: Option<&Path>| {
+        command_lease(&ctx(), &fixture.manager, &LeaseCommand::Show, lease_file, &FakeProbe::default())
+            .await
+            .unwrap()
+    };
+    let another = fixture.another_controller();
+    let (authorized, anonymous) = with_run_marker(&ctx(), &another, &lease, "suite-user-run-1", "run", async |_| {
+        Ok((show(Some(&receipt)).await, show(None).await))
+    })
+    .await
+    .unwrap();
+    assert!(authorized.text.ends_with(" run=suite-user-run-1"), "{}", authorized.text);
+    assert_eq!(authorized.data["workers"][0]["run"], "suite-user-run-1");
+    assert!(!anonymous.text.contains("run="), "{}", anonymous.text);
+    assert!(anonymous.data["workers"][0].get("run").is_none(), "{}", anonymous.data);
+    let after = show(Some(&receipt)).await;
+    assert!(!after.text.contains("run="), "{}", after.text);
+    assert!(after.data["workers"][0].get("run").is_none(), "{}", after.data);
+}
+
+/// A release removes the marker of a controller that died, with a note. The guest check of the release still decides
+/// about an iteration that the dead controller left: it refuses while the iteration is in flight.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_release_removes_the_marker_of_a_dead_run_and_still_asks_the_guest() {
+    let (fixture, lease, receipt) = leased_pool().await;
+    fixture.run_as_fake_process(&lease.worker).await;
+    live_guest(&fixture, "run-ui-daemon-1");
+    let notes = Notes::start(fixture.manager.reporter());
+    fixture.write_run_marker(&lease, "suite-user-run-1", Fixture::gone_process());
+
+    let refusal = release(&fixture, &receipt, &FakeProbe::new(None, Some("run-ui-daemon-1")))
+        .await
+        .unwrap_err();
+    assert_eq!(refusal.code, "run_active", "{refusal:?}");
+    assert!(!fixture.settings.run_marker_path(&lease.worker).exists(), "the stale marker stayed");
+    assert!(
+        notes
+            .all()
+            .contains(&"removed the run marker of suite-user-run-1 on air-macos-1: its process 2147483632 is gone".to_owned()),
+        "{:?}",
+        notes.all()
+    );
+    // Once the daemon's iteration ends, the release passes.
+    let probe = FakeProbe::new(Some("run-ui-daemon-1"), Some("run-ui-daemon-1"));
+    release(&fixture, &receipt, &probe).await.unwrap();
+}
+
+/// The end of a run never changes its answer. A peer that holds the lock for the whole wait leaves the marker on the
+/// worker, and a note says that the marker stays.
+#[cfg(unix)]
+#[tokio::test]
+async fn the_end_of_a_run_keeps_its_answer_when_a_peer_holds_the_lock() {
+    let (fixture, lease, _) = leased_pool().await;
+    let notes = Notes::start(fixture.manager.reporter());
+    let lock = fixture.manager.lifecycle_lock_path(&lease.worker);
+    let peer = std::sync::Mutex::new(None);
+    let answer = with_run_marker(&ctx(), &fixture.manager, &lease, "suite-user-run-1", "run", async |_| {
+        let held = fixture.manager.locks().acquire(&ctx(), &lock, "pool-start", "busy").await?;
+        *peer.lock().unwrap() = Some(held);
+        Ok("the answer")
+    })
+    .await;
+    assert_eq!(answer.unwrap(), "the answer");
+    assert!(
+        read_run_marker(&fixture.settings, &lease.worker).unwrap().is_some(),
+        "the marker was removed under a lock that a peer held"
+    );
+    assert_eq!(
+        notes.all(),
+        [
+            "the run marker of suite-user-run-1 stays on air-macos-1: another lifecycle operation held the lock for the \
+          whole wait; it goes stale with this process"
+        ]
+    );
+    drop(peer);
+}
+
+/// A run of this process inside a run of this process is an internal error. The nested run would remove the marker of
+/// the outer run at its end. The outer run keeps its marker until its own end.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_nested_run_marker_is_an_internal_error() {
+    let (fixture, lease, _) = leased_pool().await;
+    let (nested, outer) = with_run_marker(&ctx(), &fixture.manager, &lease, "suite-user-run-1", "flake", async |current| {
+        let nested = with_run_marker(&ctx(), &fixture.manager, &current, "suite-user-run-2", "run", async |_| Ok(())).await;
+        let outer = read_run_marker(&fixture.settings, &current.worker)?.map(|marker| marker.run_id);
+        Ok((nested, outer))
+    })
+    .await
+    .unwrap();
+    let refusal = nested.unwrap_err();
+    assert_eq!(refusal.code, "internal_error");
+    assert_eq!(refusal.message, "a run of this process is already in flight on air-macos-1");
+    assert_eq!(outer.as_deref(), Some("suite-user-run-1"));
+    assert_eq!(read_run_marker(&fixture.settings, &lease.worker).unwrap(), None);
+}
+
+/// An interrupt keeps the marker, as it keeps the lease: the iteration of the run can still be in flight. A note says
+/// that the marker stays.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_interrupted_run_keeps_its_marker() {
+    let (fixture, lease, _) = leased_pool().await;
+    let notes = Notes::start(fixture.manager.reporter());
+    let interrupts = Interrupts::detached();
+    let ctx = interrupts.context();
+    with_run_marker(&ctx, &fixture.manager, &lease, "suite-user-run-1", "run", async |_| {
+        assert!(interrupts.deliver(Signal::Interrupt));
+        Ok(())
+    })
+    .await
+    .unwrap();
+    assert!(read_run_marker(&fixture.settings, &lease.worker).unwrap().is_some());
+    assert_eq!(
+        notes.all(),
+        ["the run marker of suite-user-run-1 stays on air-macos-1: the run was interrupted; it goes stale with this process"]
+    );
+}
+
+/// A run restarts its own worker under its own marker, so an authorized stop from inside the run passes the run guard.
+/// The same stop from another controller refuses `lease_busy`.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_authorized_stop_inside_a_run_passes_the_run_guard() {
+    let (fixture, lease, _) = leased_pool().await;
+    let another = fixture.another_controller();
+    let (inside, outside) = with_run_marker(&ctx(), &fixture.manager, &lease, "suite-user-run-1", "run", async |current| {
+        let inside = fixture
+            .manager
+            .stop_without_lifecycle_lock(&ctx(), &current.worker, Some(&current))
+            .await;
+        let outside = another.stop_without_lifecycle_lock(&ctx(), &current.worker, Some(&current)).await;
+        Ok((inside, outside))
+    })
+    .await
+    .unwrap();
+    assert_eq!(inside.unwrap(), StopState::AlreadyStopped);
+    assert_eq!(outside.unwrap_err().code, "lease_busy");
 }

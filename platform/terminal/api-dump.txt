@@ -1,0 +1,148 @@
+f:com.intellij.terminal.AppendableTerminalDataStream
+- com.jediterm.terminal.TerminalDataStream
+- java.lang.Appendable
+- <init>():V
+- append(java.lang.CharSequence):java.lang.Appendable
+c:com.intellij.terminal.JBTerminalPanel
+- com.intellij.openapi.Disposable
+- com.jediterm.terminal.ui.TerminalPanel
+- java.awt.event.FocusListener
+- addPreKeyEventHandler(java.util.function.Consumer):V
+- handleKeyEvent(java.awt.event.KeyEvent):V
+c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+- com.jediterm.terminal.ui.settings.DefaultSettingsProvider
+- <init>():V
+- getCursorShape():com.jediterm.terminal.CursorShape
+- getMoveToolWindowTabToEditorActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
+- getTerminalFont():java.awt.Font
+c:com.intellij.terminal.JBTerminalWidget
+- com.jediterm.terminal.ui.JediTermWidget
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.intellij.terminal.TerminalExecutionConsole,com.intellij.openapi.Disposable):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- s:asJediTermWidget(com.intellij.terminal.ui.TerminalWidget):com.intellij.terminal.JBTerminalWidget
+- dispose():V
+- p:getCurrentDirectory():java.lang.String
+- getProcessTtyConnector():com.jediterm.terminal.ProcessTtyConnector
+- getSelectedText():java.lang.String
+- getTerminalPanel():com.intellij.terminal.JBTerminalPanel
+- getTerminalTitle():com.intellij.terminal.TerminalTitle
+- getText():java.lang.String
+- start(com.jediterm.terminal.TtyConnector):V
+- writePlainMessage(java.lang.String):V
+com.intellij.terminal.JBTerminalWidgetListener
+- canMoveTabLeft():Z
+- canMoveTabRight():Z
+- canSplit(Z):Z
+- gotoNextSplitTerminal(Z):V
+- isGotoNextSplitTerminalAvailable():Z
+- moveTabLeft():V
+- moveTabRight():V
+- moveToolWindowTabToEditor():V
+- a:onNewSession():V
+- a:onNextTabSelected():V
+- a:onPreviousTabSelected():V
+- a:onSessionClosed():V
+- a:onTerminalStarted():V
+- a:showTabs():V
+- split(Z):V
+c:com.intellij.terminal.ProcessHandlerTtyConnector
+- com.jediterm.terminal.TtyConnector
+- com.jediterm.terminal.TtyConnectorResizeStrategyProvider
+- f:getProcess():java.lang.Process
+- getResizeStrategy():com.jediterm.terminal.TtyConnectorResizeStrategy
+- resize(com.jediterm.core.util.TermSize):V
+a:com.intellij.terminal.TerminalColorPalette
+- com.jediterm.terminal.emulator.ColorPalette
+- <init>():V
+- a:getDefaultBackground():com.jediterm.core.Color
+- a:getDefaultForeground():com.jediterm.core.Color
+c:com.intellij.terminal.TerminalExecutionConsole
+- com.intellij.execution.ui.ConsoleView
+- com.intellij.execution.ui.ObservableConsoleView
+- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler):V
+- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
+- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- attachToProcess(com.intellij.execution.process.ProcessHandler):V
+- f:attachToProcess(com.intellij.execution.process.ProcessHandler,com.jediterm.terminal.TtyConnector,Z):V
+- pf:attachToProcess(com.intellij.execution.process.ProcessHandler,Z):V
+- canPause():Z
+- clear():V
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getContentSize():I
+- getPreferredFocusableComponent():javax.swing.JComponent
+- getTerminalWidget():com.intellij.terminal.JBTerminalWidget
+- hasDeferredOutput():Z
+- s:isAcceptable(com.intellij.execution.process.ProcessHandler):Z
+- isOutputPaused():Z
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- scrollTo(I):V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+- withConvertLfToCrlfForNonPtyProcess(Z):com.intellij.terminal.TerminalExecutionConsole
+- withEnterKeyDefaultCodeEnabled(Z):com.intellij.terminal.TerminalExecutionConsole
+f:com.intellij.terminal.TerminalExecutionConsoleBuilder
+- <init>(com.intellij.openapi.project.Project):V
+- f:build():com.intellij.terminal.TerminalExecutionConsole
+- f:convertLfToCrlfForProcessWithoutPty(Z):com.intellij.terminal.TerminalExecutionConsoleBuilder
+- f:initialTermSize(com.jediterm.core.util.TermSize):com.intellij.terminal.TerminalExecutionConsoleBuilder
+- f:keepLastLineOnClear(Z):com.intellij.terminal.TerminalExecutionConsoleBuilder
+- f:settingsProvider(com.intellij.terminal.JBTerminalSystemSettingsProviderBase):com.intellij.terminal.TerminalExecutionConsoleBuilder
+f:com.intellij.terminal.TerminalExecutorServiceManagerImpl
+- com.jediterm.terminal.TerminalExecutorServiceManager
+- <init>():V
+f:com.intellij.terminal.TerminalTitle
+- <init>():V
+- f:buildTitle():java.lang.String
+- f:change(kotlin.jvm.functions.Function1):V
+- f:getDefaultTitle():java.lang.String
+f:com.intellij.terminal.TerminalTitle$State
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component5():Z
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.terminal.TerminalTitle$State
+- bs:copy$default(com.intellij.terminal.TerminalTitle$State,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.terminal.TerminalTitle$State
+- f:setApplicationTitle(java.lang.String):V
+- f:setTag(java.lang.String):V
+- f:setUserDefinedTitle(java.lang.String):V
+f:com.intellij.terminal.TerminalUiSettingsManager
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.PersistentStateComponent
+- f:getEditorColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+- f:getTerminalColorPalette():com.intellij.terminal.TerminalColorPalette
+f:com.intellij.terminal.TerminalUiSettingsManager$Companion
+- f:getInstance():com.intellij.terminal.TerminalUiSettingsManager
+c:com.intellij.terminal.pty.PtyProcessTtyConnector
+- com.jediterm.terminal.ProcessTtyConnector
+- com.jediterm.terminal.TtyConnectorResizeStrategyProvider
+- getResizeStrategy():com.jediterm.terminal.TtyConnectorResizeStrategy
+com.intellij.terminal.ui.TerminalWidget
+- com.intellij.openapi.ui.ComponentContainer
+- a:addNotification(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- a:addTerminationCallback(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- a:connectToTty(com.jediterm.terminal.TtyConnector,com.jediterm.core.util.TermSize):V
+- a:getShellCommand():java.util.List
+- a:getTermSize():com.jediterm.core.util.TermSize
+- a:getTerminalTitle():com.intellij.terminal.TerminalTitle
+- getTtyConnector():com.jediterm.terminal.TtyConnector
+- a:getTtyConnectorAccessor():com.intellij.terminal.ui.TtyConnectorAccessor
+- a:hasFocus():Z
+- a:requestFocus():V
+- a:sendCommandToExecute(java.lang.String):V
+- a:setCursorVisible(Z):V
+- a:setShellCommand(java.util.List):V
+- a:writePlainMessage(java.lang.String):V
+f:com.intellij.terminal.ui.TtyConnectorAccessor
+- <init>():V
+- f:executeWithTtyConnector(java.util.function.Consumer):V
+- f:getTtyConnector():com.jediterm.terminal.TtyConnector
+- f:setTtyConnector(com.jediterm.terminal.TtyConnector):V

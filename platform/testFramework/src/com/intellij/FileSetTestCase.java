@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/** @deprecated Use {@link FileSetTestUtil} in a JUnit 5 test. */
+@Deprecated
 public abstract class FileSetTestCase extends TestSuite {
   private final File[] myFiles;
   protected Project myProject;

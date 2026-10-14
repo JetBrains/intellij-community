@@ -1,0 +1,6 @@
+package other
+
+class Bar
+class Nested
+
+fun use(value: sample.Bar.Nested): sample.Bar.Nested = sample.Bar.Nested()

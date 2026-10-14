@@ -1,5 +1,23 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "completion-tests_test",
+    timeout = "long",
+    data = [
+        BAZEL_TARGETS_JSON,
+        "@community//java/java-tests:testData",
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["community-java-tests"],
+    runtime_deps = [":completion-tests_test_lib"],
+)
+### skip generation section `test intellij.java.completion.tests`
 
 ### auto-generated section `build intellij.java.completion.tests` start
 jvm_library(
@@ -156,10 +174,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.completion.tests` end
-
-### auto-generated section `test intellij.java.completion.tests` start
-jps_test(
-    name = "completion-tests_test",
-    runtime_deps = [":completion-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.completion.tests` end

@@ -34,7 +34,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   }
 
   @Override
-  protected abstract String getBasePath();
+  protected abstract String getTestDataPath();
 
   protected void checkPreferredItems(final int selected, @NonNls final String... expected) {
     invokeCompletion(getTestName(false) + ".java");

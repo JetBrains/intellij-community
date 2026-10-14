@@ -126,6 +126,26 @@ class SePopupHeaderPane(
         updateTabs(old ?: initialConfiguration, new)
       }
     }
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      disposeToolbarListenerOnCancellation(coroutineScope)
+    }
+  }
+
+  /**
+   * Disposes the toolbar listener together with [coroutineScope].
+   * [removeNotify] does not run for a popup that was never shown, and a popup without a project has no other parent.
+   */
+  @OptIn(AwaitCancellationAndInvoke::class)
+  private fun disposeToolbarListenerOnCancellation(coroutineScope: CoroutineScope) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UI) {
+      disposeToolbarListener()
+    }
+  }
+
+  private fun disposeToolbarListener() {
+    toolbarListenerDisposable?.let { Disposer.dispose(it) }
+    toolbarListenerDisposable = null
   }
 
   private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
@@ -205,8 +225,7 @@ class SePopupHeaderPane(
   }
 
   override fun removeNotify() {
-    toolbarListenerDisposable?.let { Disposer.dispose(it) }
-    toolbarListenerDisposable = null
+    disposeToolbarListener()
     super.removeNotify()
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 
@@ -17,7 +18,8 @@ public final class ForcefulReparseModificationTracker extends SimpleModification
     return ApplicationManager.getApplication().getService(ForcefulReparseModificationTracker.class);
   }
 
-  static void increment() {
+  @ApiStatus.Internal
+  public static void increment() {
     ((SimpleModificationTracker)getInstance()).incModificationCount();
   }
 }

@@ -2,10 +2,7 @@
 package com.intellij.python.junit5Tests.env.terminal
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
@@ -20,9 +17,12 @@ import com.intellij.platform.eel.where
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.test.env.junit5.pyVenvFixture
@@ -33,7 +33,7 @@ import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -75,21 +75,21 @@ internal class PyVirtualEnvTerminalCustomizerTest {
   private val pyProjectFixture = projectFixture.pyProjectFixture(tempDirFixture)
 
   @Suppress("unused") // we need venv
-  private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(
+  private val venvFixture = pyEnvironmentFixture().pyVenvFixture(
     where = tempDirFixture,
     pyProjectFixture = pyProjectFixture
   )
 
-  private var sdkToDelete: Sdk? = null
+  private var condaInterpreter: PythonInterpreter? = null
 
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
-    sdkToDelete?.let { sdk ->
+    condaInterpreter?.let { interpreter ->
+      val pyProject = pyProjectFixture.get()
+      pyProject.setPythonInterpreter(null).getOrThrow()
+      PythonInterpreterRegistry.getInstance(projectFixture.get()).removePythonInterpreter(pyProject, interpreter)
       if (OS.CURRENT == OS.Windows) {
-        deleteCheckLocking(Path.of(sdk.homePath!!))
-      }
-      edtWriteAction {
-        ProjectJdkTable.getInstance().removeJdk(sdk)
+        deleteCheckLocking(Path.of(interpreter.getSdkAPI().homePath!!))
       }
     }
   }
@@ -134,11 +134,12 @@ internal class PyVirtualEnvTerminalCustomizerTest {
     val (pythonBinary, venvDirName) =
       if (useConda) {
         val envDir = venvPath.resolve("some_path_with_underscores")
-        val interpreter = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(projectFixture.get(), null, envDir).getOrThrow()
-        val sdk = interpreter.getSdkAPI()
-        sdkToDelete = sdk
-        pyProjectFixture.get().residesOnModule.pythonSdk = sdk
-        Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
+        val pyProject = pyProjectFixture.get()
+        val built = createCondaEnv(condaEnv, envDir)
+          .createSdkFromThisEnv(ModuleOrProject.ModuleAndProject(pyProject.residesOnModule), null, envDir).getOrThrow()
+        val interpreter = pyProject.setPythonInterpreter(built).getOrThrow()!!
+        condaInterpreter = interpreter
+        Pair(Path(interpreter.getSdkAPI().homePath!!), envDir.toRealPath().pathString)
       }
       else {
         val venvDir = tempDirFixture.get().resolve(".venv")

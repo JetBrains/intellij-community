@@ -64,6 +64,7 @@ jvm_library(
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+        "//plugins/kotlin/base/analysis",
     ],
 )
 
@@ -99,6 +100,7 @@ jvm_library(
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+        "//plugins/kotlin/base/analysis:analysis_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` end

@@ -223,6 +223,9 @@ const SITE_BUILD_OUTPUT_LINES: usize = 30;
 
 /// The directory of the site's sources, under its project directory.
 pub(crate) const SITE_SOURCES_DIR: &str = "src";
+/// The directories of the kernel's sources, under the kernel directory: the shell, the scripts the build runs, and
+/// the styles.
+pub(crate) const KERNEL_SOURCES_DIRS: [&str; 3] = ["src", "scripts", "styles"];
 
 impl SiteBuild {
     fn keep(&mut self, chunk: &str) {
@@ -237,9 +240,17 @@ impl SiteBuild {
     }
 }
 
+/// The directories whose files the site is built from: the project's sources, then the kernel's.
+pub(crate) fn site_source_dirs(project: &Path, kernel: Option<&Path>) -> Vec<PathBuf> {
+    let kernel_dirs = kernel
+        .into_iter()
+        .flat_map(|kernel| KERNEL_SOURCES_DIRS.map(|dir| kernel.join(dir)));
+    std::iter::once(project.join(SITE_SOURCES_DIR)).chain(kernel_dirs).collect()
+}
+
 /// Why the site needs a build: its `index.html` is missing, or older than the newest file under the project's
-/// sources. `None` when the site is current, or when there is no project to build it from.
-pub(crate) fn site_needs_build(project: Option<&Path>, site: Option<&Path>) -> Option<&'static str> {
+/// sources or the kernel's. `None` when the site is current, or when there is no project to build it from.
+pub(crate) fn site_needs_build(project: Option<&Path>, kernel: Option<&Path>, site: Option<&Path>) -> Option<&'static str> {
     let (project, site) = (project?, site?);
     if !project.join("package.json").exists() {
         return None;
@@ -247,8 +258,9 @@ pub(crate) fn site_needs_build(project: Option<&Path>, site: Option<&Path>) -> O
     let Ok(index) = fs::metadata(site.join("index.html")).and_then(|info| info.modified()) else {
         return Some("the site is not built");
     };
-    let newest = walkdir::WalkDir::new(project.join(SITE_SOURCES_DIR))
+    let newest = site_source_dirs(project, kernel)
         .into_iter()
+        .flat_map(walkdir::WalkDir::new)
         .filter_map(Result::ok)
         .filter(|entry| !entry.file_type().is_dir())
         .filter_map(|entry| entry.metadata().ok()?.modified().ok())
@@ -262,7 +274,13 @@ impl Server {
     /// build stays failed until the server starts again, and the placeholder page says why.
     pub(crate) async fn build_site_once(self: Arc<Self>, cancel: CancellationToken) {
         let reason = self
-            .blocking(|server| site_needs_build(server.settings.site_project.as_deref(), server.settings.site_dir.as_deref()))
+            .blocking(|server| {
+                site_needs_build(
+                    server.settings.site_project.as_deref(),
+                    server.settings.site_kernel.as_deref(),
+                    server.settings.site_dir.as_deref(),
+                )
+            })
             .await;
         let (Some(reason), Some(project)) = (reason, self.settings.site_project.clone()) else {
             return;
@@ -274,7 +292,7 @@ impl Server {
             (server.settings.log)(chunk.trim_end_matches('\n'));
             lock(&server.site_build).keep(chunk);
         });
-        let built = (self.settings.build_site)(project, output, cancel).await;
+        let built = (self.settings.build_site)(project, self.settings.site_kernel.clone(), output, cancel).await;
         {
             let mut state = lock(&self.site_build);
             state.running = false;
@@ -291,9 +309,9 @@ impl Server {
 
 // --- the site build ------------------------------------------------------------------------------------------
 
-/// The Bazel labels of the node and the pnpm the site is built with; `//:MODULE.bazel` pins their versions.
-pub(crate) const SITE_NODE_LABEL: &str = "//plugins/air/docs/toolchain:air_docs_node";
-pub(crate) const SITE_PNPM_LABEL: &str = "//plugins/air/docs/toolchain:air_docs_pnpm";
+/// The Bazel labels of the node and the pnpm that every docs site is built with; `//:MODULE.bazel` pins their versions.
+pub(crate) const SITE_NODE_LABEL: &str = "//build:docs_site_node";
+pub(crate) const SITE_PNPM_LABEL: &str = "//build:docs_site_pnpm";
 /// Name the site's node and pnpm directly, together. For a server started outside a checkout, and for a test.
 pub(crate) const SITE_NODE_VARIABLE: &str = "AIR_TRACE_NODE";
 pub(crate) const SITE_PNPM_VARIABLE: &str = "AIR_TRACE_PNPM";
@@ -337,43 +355,58 @@ pub(crate) struct SiteStep {
 /// spawn finds a `.cmd` on the PATH only by its full name.
 pub(crate) const PATH_PNPM: &str = if cfg!(windows) { "pnpm.cmd" } else { "pnpm" };
 
-/// The steps that build the site: `pnpm install --frozen-lockfile` when `install` says the dependencies are
-/// missing, then `pnpm build`, which harvests the model and runs Vite.
-pub(crate) fn site_steps(tools: &SiteTools, project: &Path, install: bool) -> Vec<SiteStep> {
+/// The steps that build the site: `pnpm install --frozen-lockfile` in each directory of `installs`, in order, then
+/// `pnpm build` in the project, which harvests the model and runs Vite.
+pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path) -> Vec<SiteStep> {
     let (program, path_prefix) = match tools {
         SiteTools::Pinned { node, pnpm } => (pnpm.clone(), node.parent().map(Path::to_path_buf)),
         SiteTools::Path => (PathBuf::from(PATH_PNPM), None),
     };
-    let step = |verb: &[&str]| SiteStep {
-        label: format!("pnpm --dir {} {}", project.display(), verb.join(" ")),
+    let step = |dir: &Path, verb: &[&str]| SiteStep {
+        label: format!("pnpm --dir {} {}", dir.display(), verb.join(" ")),
         program: program.clone(),
-        args: [OsString::from("--dir"), project.as_os_str().to_owned()]
+        args: [OsString::from("--dir"), dir.as_os_str().to_owned()]
             .into_iter()
             .chain(verb.iter().map(OsString::from))
             .collect(),
         path_prefix: path_prefix.clone(),
     };
-    let mut steps = Vec::new();
-    if install {
-        steps.push(step(&["install", "--frozen-lockfile"]));
-    }
-    steps.push(step(&["build"]));
-    steps
+    installs
+        .iter()
+        .map(|dir| step(dir, &["install", "--frozen-lockfile"]))
+        .chain([step(project, &["build"])])
+        .collect()
 }
 
-/// The site build with the tools the environment provides. The dependencies are installed first when the
-/// project has no `node_modules`.
-pub(crate) async fn build_site(project: PathBuf, output: BuildOutput, cancel: CancellationToken) -> Result<(), Refusal> {
+/// The directories that need `pnpm install` before the build, because they have no `node_modules`: the kernel
+/// first, since the project links it, then the project. A kernel without `package.json` is not one.
+pub(crate) fn site_installs<'a>(project: &'a Path, kernel: Option<&'a Path>) -> Vec<&'a Path> {
+    let kernel = kernel.filter(|kernel| kernel.join("package.json").is_file());
+    kernel
+        .into_iter()
+        .chain([project])
+        .filter(|dir| !dir.join("node_modules").exists())
+        .collect()
+}
+
+/// The site build with the tools the environment provides. The dependencies of the kernel and of the project are
+/// installed first where they are missing, per [`site_installs`].
+pub(crate) async fn build_site(
+    project: PathBuf,
+    kernel: Option<PathBuf>,
+    output: BuildOutput,
+    cancel: CancellationToken,
+) -> Result<(), Refusal> {
     let tools = site_tools(&output, &cancel).await?;
-    let install = !project.join("node_modules").exists();
-    build_site_with(&tools, &project, install, &output, &cancel).await
+    let installs = site_installs(&project, kernel.as_deref());
+    build_site_with(&tools, &installs, &project, &output, &cancel).await
 }
 
 /// Runs [`site_steps`] in order, and stops at the first that fails.
 pub(crate) async fn build_site_with(
     tools: &SiteTools,
+    installs: &[&Path],
     project: &Path,
-    install: bool,
     output: &BuildOutput,
     cancel: &CancellationToken,
 ) -> Result<(), Refusal> {
@@ -385,7 +418,7 @@ pub(crate) async fn build_site_with(
         )),
         SiteTools::Path => output("air-trace serve: building the site with the pnpm on the PATH\n"),
     }
-    for step in site_steps(tools, project, install) {
+    for step in site_steps(tools, installs, project) {
         output(&format!("$ {}\n", step.label));
         run_step(&step, output, cancel).await?;
     }

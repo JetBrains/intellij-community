@@ -5,11 +5,13 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -62,9 +64,13 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
+
+    if (e.place == ActionPlaces.WELCOME_SCREEN) {
+      e.presentation.icon = AllIcons.ToolbarDecorator.Export
+    }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().saveSettings()

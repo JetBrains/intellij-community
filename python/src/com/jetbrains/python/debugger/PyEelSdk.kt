@@ -7,7 +7,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.asBinToExecute
@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.asBinToExecute
 internal fun Sdk.remoteEelOrNull(): EelDescriptor? {
   // An SDK without Python data cannot run, so it has no eel to tunnel to
   if (sdkAdditionalData !is PythonSdkAdditionalData) return null
-  return when (val binary = pythonInterpreter().asBinToExecute().successOrNull) {
+  return when (val binary = pythonInterpreterResult().successOrNull?.asBinToExecute()?.successOrNull) {
     is BinOnEel -> binary.path.getEelDescriptor().takeIf { it != LocalEelDescriptor }
     is BinOnTarget, null -> null
   }

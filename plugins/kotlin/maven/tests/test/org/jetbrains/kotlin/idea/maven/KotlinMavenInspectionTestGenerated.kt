@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
 @TestRoot("maven/tests")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/maven/tests")
 @TestMetadata("testData/maven-inspections")
 class KotlinMavenInspectionTestGenerated(mavenVersion: String, modelVersion: String) : AbstractKotlinMavenInspectionTest(mavenVersion, modelVersion) {
     @Test

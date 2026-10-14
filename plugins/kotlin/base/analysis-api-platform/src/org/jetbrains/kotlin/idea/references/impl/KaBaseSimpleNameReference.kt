@@ -9,12 +9,10 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
 import org.jetbrains.kotlin.psi.KtContinueExpression
@@ -26,11 +24,9 @@ import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
-import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
 
@@ -43,19 +39,7 @@ internal class KaBaseSimpleNameReference(
         return super<KaBaseReference>.isReferenceToImportAlias(alias)
     }
 
-    override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
-        // Resolved calls are preferable for navigation since they provide a more precise location.
-        // For instance, it is the case for constructor calls
-        // A special handling for `KtOperationReferenceExpression` is required to preserve the legacy behavior.
-        // It could be adjusted in the future.
-        val symbolsFromCall = (element as? KtResolvableCall)?.takeUnless { it is KtOperationReferenceExpression }
-            ?.tryResolveCall()
-            ?.calls
-            ?.flatMap(KaSimpleOrMultiCall::symbols)
-            ?.takeUnless(List<KaSymbol>::isEmpty)
-
-        return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()
-    }
+    override fun KaSession.resolveToSymbols(): Collection<KaSymbol> = element.tryResolveSymbolsCallFirst()
 
     context(session: KaSession)
     override fun getResolvedToPsi(): Collection<PsiElement> {

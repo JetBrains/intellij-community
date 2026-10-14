@@ -25,7 +25,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
-        "//platform/execution-impl",
+        "//platform/terminal",
         "//platform/util",
         "//platform/core-api:core",
         "//plugins/terminal",
@@ -48,7 +48,7 @@ jvm_library(
         # do not sort,
         ":cloud",
         "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/terminal:terminal_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/terminal:terminal_test_lib",

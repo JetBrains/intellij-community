@@ -2,10 +2,11 @@
 package com.intellij.find.impl
 
 import com.intellij.find.FindSettings
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.ArrayUtil
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
@@ -60,8 +61,13 @@ private class FindSettingsCoroutineScopeProvider(val coroutineScope: CoroutineSc
   }
 }
 
-internal class FindSettingsInitializer : ApplicationInitializedListener {
+/**
+ * Creates [FindSettings] early, so the file masks that [LangFindSettingsImpl.noStateLoaded] loads asynchronously
+ * are ready when Find in Files opens.
+ * The application start does not wait for it, because nothing in the start needs the settings.
+ */
+internal class FindSettingsInitializer : ApplicationActivity {
   override suspend fun execute() {
-    FindSettings.getInstance()
+    serviceAsync<FindSettings>()
   }
 }

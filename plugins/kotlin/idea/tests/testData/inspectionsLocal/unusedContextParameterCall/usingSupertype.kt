@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+open class A
+
+class B : A()
+
+context(p: A) fun f() {}
+
+context(p: B)
+fun g() {
+    <caret>context(p) {
+        f()
+    }
+}

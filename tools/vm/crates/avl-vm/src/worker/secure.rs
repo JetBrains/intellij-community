@@ -1,5 +1,5 @@
 //! Reading a private receipt without following a symlink, the one read the golden seal, a worker's provenance and a
-//! lease receipt share, and the one write of a private host record.
+//! lease receipt share, the one write of a private host record, and the one plain read of a JSON record.
 //!
 //! Three defences, and each one closes a different substitution. What each one is on a platform is
 //! [`avl_host_sys::private`]'s:
@@ -81,4 +81,14 @@ pub(crate) fn write_json_line(path: &Path, value: &impl serde::Serialize, what: 
     let mut encoded = serde_json::to_vec(value).or_refuse("state_write_failed", Exit::FAILURE, || format!("cannot encode {what}"))?;
     encoded.push(b'\n');
     avl_base::fs::write_atomically(path, &encoded, 0o600)
+}
+
+/// Reads the JSON record at `path`. A missing file is `None` and no error. The error is the read or the parse error
+/// alone. It names no path, because each caller words its own policy around it.
+pub(crate) fn read_json_record<T: serde::de::DeserializeOwned>(path: &Path) -> anyhow::Result<Option<T>> {
+    match std::fs::read(path) {
+        Ok(content) => Ok(Some(serde_json::from_slice(&content)?)),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error.into()),
+    }
 }

@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.filter
 
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
-import com.intellij.debugger.impl.DexDebugFacility
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassType
 import com.sun.jdi.Method
@@ -101,7 +101,7 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     }
 
     private fun hasOnlyInvokeStatic(m: Method): Boolean {
-        if (DexDebugFacility.isDex(m.virtualMachine())) {
+        if (isAndroidVM(m.virtualMachine())) {
             return DexBytecodeInspector.EP.extensionList.firstOrNull()?.hasOnlyInvokeStatic(m) == true
         }
         return hasOnlyInvokeStaticJVM(m)

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Migrates user-customized Classic Terminal ANSI colors to their Reworked Terminal counterparts.
- * See [com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage] for how the two 16-color
+ * See [com.intellij.terminal.ANSIColoredConsoleColorsPage] for how the two 16-color
  * palettes ([ConsoleHighlighter] for Classic, [BlockTerminalColors] for Reworked) are shown side by side.
  */
 @ApiStatus.Internal

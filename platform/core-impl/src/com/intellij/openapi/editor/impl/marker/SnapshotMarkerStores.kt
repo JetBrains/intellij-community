@@ -2,10 +2,11 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentOp
-import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Applies each [DocumentOp] to all marker roots for one document.
@@ -25,62 +26,28 @@ class SnapshotMarkerStores {
     stores.remove(store)
   }
 
-  fun applyOp(beforeSnapshot: DocumentSnapshot, op: DocumentOp): DocumentSnapshot {
-    val capturedRoots = captureRoots(beforeSnapshot)
-    val afterSnapshot = beforeSnapshot.applyOp(op)
+  fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch?): DocumentSnapshot {
     if (afterSnapshot === beforeSnapshot) return afterSnapshot
-
-    return additionalApply(op, beforeSnapshot, afterSnapshot, capturedRoots)
-  }
-
-  fun applyPatch(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
     val capturedRoots = captureRoots(beforeSnapshot)
-    val afterSnapshot = applyPatch0(beforeSnapshot, patch)
-    if (afterSnapshot === beforeSnapshot) return afterSnapshot
-
     return additionalApply(patch, beforeSnapshot, afterSnapshot, capturedRoots)
   }
 
-  fun applyPatch0(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
-    var snapshot = beforeSnapshot
+  @TestOnly
+  fun applyPatch(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
+    var afterSnapshot = beforeSnapshot
     for (op in patch.ops()) {
-      snapshot = snapshot.applyOp(op)
+      afterSnapshot = afterSnapshot.applyOp(op)
     }
-    return snapshot
+    return applyPatch(beforeSnapshot, afterSnapshot, patch)
   }
 
   private fun additionalApply(
-    op: DocumentOp,
+    patch: DocumentPatch?,
     beforeSnapshot: DocumentSnapshot,
     afterSnapshot: DocumentSnapshot,
     capturedRoots: List<CapturedRoot>,
   ): DocumentSnapshot {
-    if (op is DocumentPatch) {
-      validatePatch(beforeSnapshot, afterSnapshot, op)
-      for (i in capturedRoots.indices) {
-        val it = capturedRoots[i]
-        it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, op)
-      }
-    }
-    else {
-      require(beforeSnapshot.text() === afterSnapshot.text()) {
-        "Snapshots must share the same text instance, but op: $op corrupted the text"
-      }
-      for (i in capturedRoots.indices) {
-        val it = capturedRoots[i]
-        it.store.inherit(it.root, afterSnapshot)
-      }
-    }
-    return afterSnapshot
-  }
-
-  private fun additionalApply(
-    patch: DocumentPatch,
-    beforeSnapshot: DocumentSnapshot,
-    afterSnapshot: DocumentSnapshot,
-    capturedRoots: List<CapturedRoot>,
-  ): DocumentSnapshot {
-    if (patch is DocumentPatch) {
+    if (patch != null) {
       validatePatch(beforeSnapshot, afterSnapshot, patch)
       for (i in capturedRoots.indices) {
         val it = capturedRoots[i]
@@ -89,7 +56,7 @@ class SnapshotMarkerStores {
     }
     else {
       require(beforeSnapshot.text() === afterSnapshot.text()) {
-        "Snapshots must share the same text instance, but op: $patch corrupted the text"
+        "Snapshots must share the same text instance, but op corrupted the text"
       }
       for (i in capturedRoots.indices) {
         val it = capturedRoots[i]
@@ -114,8 +81,8 @@ class SnapshotMarkerStores {
   }
 
   /**
-   * Captures immutable roots before [applyOp] creates the next snapshot.
-   * This boundary prevents a marker created during the operation from entering the new snapshot.
+   * Captures the current marker root of each store for [snapshot].
+   * If a caller adds a marker to [snapshot] after this call, the next snapshot does not get that marker.
    */
   private fun captureRoots(snapshot: DocumentSnapshot): List<CapturedRoot> {
     SnapshotMarkerEngineImpl.processQueue()

@@ -35,8 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class WordCompletionTest extends NormalCompletionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/word/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/word/";
   }
 
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")

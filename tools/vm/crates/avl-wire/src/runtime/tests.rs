@@ -35,7 +35,7 @@ fn plugin(destination: &str) -> Value {
 /// Bazel rule actually emits.
 fn valid_descriptor() -> Value {
     json!({
-        "schemaVersion": 7,
+        "schemaVersion": 8,
         "kind": "air-ui-daemon-runtime",
         "mainClass": "com.intellij.air.uiDaemon.AirUiDaemonMain",
         "staticJvmFlags": ["-Xmx4g", "-Dsun.io.useCanonCaches=false", "-Dair.ui.runfiles=${RUNFILES_ROOT}/_main"],
@@ -49,11 +49,9 @@ fn valid_descriptor() -> Value {
             "home": file("_main/dist/home", "//build:dev_home"),
         },
         "jbr": {
-            "archive": file("_main/jbr/jbr-linux-x64.tar.gz", "//jbr:linux_x64"),
+            "directory": "jbr",
             "javaHomeSuffix": "",
-            "manifest": file("_main/jbr/manifest.json", "//jbr:manifest"),
             "platform": "linux-x64",
-            "preloadedOnly": false,
         },
         "ide": {
             "flagsFile": file("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt", "//plugins/air/tests/integration/ui:ide_flags"),
@@ -96,7 +94,7 @@ fn parse(descriptor: &Value) -> RuntimeDescriptor {
 #[test]
 fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     let parsed = parse(&valid_descriptor());
-    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (7, DESCRIPTOR_KIND));
+    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (8, DESCRIPTOR_KIND));
     assert_eq!(parsed.main_class, "com.intellij.air.uiDaemon.AirUiDaemonMain");
     assert_eq!((parsed.classpath.hot.len(), parsed.classpath.stable.len()), (1, 2));
     // The stable tier keeps its order: a classpath is ordered.
@@ -109,13 +107,12 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
         }
     );
     assert_eq!(parsed.jbr.platform, GUEST_JBR_PLATFORM);
-    assert!(!parsed.jbr.preloaded_only);
+    assert_eq!(parsed.jbr.directory, "jbr");
     // An empty Java-home suffix is legal - it is what a Linux JBR declares - so the check on it is a type check
     // and not an emptiness one.
     assert_eq!(parsed.jbr.java_home_suffix, "");
     assert_eq!(parsed.data.len(), 1);
     assert_eq!(parsed.dev_dist.home.logical_path, "_main/dist/home");
-    assert_eq!(parsed.jbr.manifest.logical_path, "_main/jbr/manifest.json");
     assert_eq!(parsed.ide.project_root, "BookmarksTestProject");
     assert_eq!(
         parsed.ide.flags_file.logical_path,
@@ -153,14 +150,14 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             "a JSON array has no schema version",
             b"[]".to_vec(),
             code::SCHEMA_VERSION,
-            &["schemaVersion is absent, expected 7"],
+            &["schemaVersion is absent, expected 8"],
         ),
-        // The version before the context plugins: a controller of this version cannot install them from it.
+        // The version before the JBR of the distribution: it names a JBR archive, which this controller stages no more.
         (
-            "a descriptor of the version before the context plugins",
-            bytes(set(valid(), "/schemaVersion", json!(6))),
+            "a descriptor of the version that names a JBR archive",
+            bytes(set(valid(), "/schemaVersion", json!(7))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 6, expected 7"],
+            &["schemaVersion is 7, expected 8"],
         ),
         (
             "an older rule emits no schema version",
@@ -170,9 +167,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "a schema version this controller predates",
-            bytes(set(valid(), "/schemaVersion", json!(8))),
+            bytes(set(valid(), "/schemaVersion", json!(9))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 8, expected 7"],
+            &["schemaVersion is 9, expected 8"],
         ),
         (
             "the schema version arrives as text",
@@ -326,21 +323,33 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             code::FIELD_INVALID,
             &["jbr", "platform"],
         ),
-        // The field whose absence would let a guest with no network try to download a runtime.
         (
-            "no preload policy",
-            bytes(drop_field(valid(), "/jbr/preloadedOnly")),
+            "no JBR directory",
+            bytes(drop_field(valid(), "/jbr/directory")),
             code::FIELD_INVALID,
-            &["jbr", "preloadedOnly"],
+            &["jbr", "directory"],
         ),
         (
-            "a preload policy spelled as text",
-            bytes(set(valid(), "/jbr/preloadedOnly", json!("false"))),
+            "an empty JBR directory",
+            bytes(set(valid(), "/jbr/directory", json!(""))),
             code::FIELD_INVALID,
-            &["jbr.preloadedOnly"],
+            &["jbr.directory", "is an empty string"],
         ),
-        // Keeps a darwin distribution off a Linux worker, where its `Contents/Home` suffix exists inside the
-        // tarball and staging therefore succeeds.
+        // The controller joins the directory onto the distribution home, so one that escapes names another JVM.
+        (
+            "a JBR directory that climbs out of the distribution",
+            bytes(set(valid(), "/jbr/directory", json!("../jbr"))),
+            code::JBR_DIRECTORY_INVALID,
+            &["jbr.directory ../jbr escapes the distribution home"],
+        ),
+        (
+            "an absolute JBR directory",
+            bytes(set(valid(), "/jbr/directory", json!("/usr/lib/jvm"))),
+            code::JBR_DIRECTORY_INVALID,
+            &["jbr.directory /usr/lib/jvm escapes the distribution home"],
+        ),
+        // Keeps a darwin distribution off a Linux worker, where its `Contents/Home` suffix exists inside the macOS
+        // JBR and staging therefore succeeds.
         (
             "a descriptor built for another guest",
             bytes(set(valid(), "/jbr/platform", json!("osx-aarch64"))),
@@ -358,18 +367,6 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             bytes(drop_field(valid(), "/devDist/config")),
             code::FIELD_INVALID,
             &["devDist", "config"],
-        ),
-        (
-            "no JBR archive",
-            bytes(drop_field(valid(), "/jbr/archive")),
-            code::FIELD_INVALID,
-            &["jbr", "archive"],
-        ),
-        (
-            "a JBR manifest with an empty logical path",
-            bytes(set(valid(), "/jbr/manifest/logicalPath", json!(""))),
-            code::FIELD_INVALID,
-            &["jbr.manifest.logicalPath"],
         ),
         ("no IDE section", bytes(drop_field(valid(), "/ide")), code::FIELD_INVALID, &["ide"]),
         (
@@ -527,7 +524,9 @@ fn every_way_the_descriptor_can_be_wrong_is_its_own_refusal() {
 #[test]
 fn the_validator_refuses_nothing_it_should_accept() {
     // A float that is the same number in JSON.
-    parse(&set(valid_descriptor(), "/schemaVersion", json!(7.0)));
+    parse(&set(valid_descriptor(), "/schemaVersion", json!(8.0)));
+    // The JBR of a macOS distribution, whose IDE home is `Contents`.
+    parse(&set(valid_descriptor(), "/jbr/directory", json!("Contents/jbr")));
     // A build with no context plugin installs nothing.
     assert!(parse(&set(valid_descriptor(), "/ide/plugins", json!([]))).ide.plugins.is_empty());
     // An empty data list is a build that mounts nothing.
@@ -552,6 +551,14 @@ fn the_ide_section_keys_are_the_ones_the_reader_reads() {
     let mut keys: Vec<&str> = section.as_object().unwrap().keys().map(String::as_str).collect();
     keys.sort_unstable();
     assert_eq!(keys, IDE_SECTION_FIELDS);
+}
+
+#[test]
+fn the_jbr_section_keys_are_the_ones_the_reader_reads() {
+    let section = serde_json::to_value(&parse(&valid_descriptor()).jbr).unwrap();
+    let mut keys: Vec<&str> = section.as_object().unwrap().keys().map(String::as_str).collect();
+    keys.sort_unstable();
+    assert_eq!(keys, JBR_SECTION_FIELDS);
 }
 
 #[test]

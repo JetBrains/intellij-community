@@ -130,6 +130,26 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{regexp#$regexpRef}")
   }
 
+  /**
+   * String event field validated by a global regexp rule,
+   * with optional support for the default value validation rule.
+   *
+   * @param name name of the field
+   * @param regexpRef reference to global regexp rule, e.g. "integer" for "{regexp#integer}"
+   * @param description optional description of the field
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByRegexpRefWithDefault @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                             @NonNls val regexpRef: String,
+                                             @NonNls override val description: String? = null,
+                                             @NonNls override val defaultValue: String? = null) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = buildList {
+        add("{regexp#$regexpRef}")
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
+  }
+
   data class ValidatedByInlineRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
                                      @NonNls val regexp: String,
                                      @NonNls override val description: String? = null) : StringEventField(name) {

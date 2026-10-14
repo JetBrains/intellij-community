@@ -3,8 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -14,7 +16,10 @@ import org.jetbrains.annotations.NonNls
 interface DynamicPluginsSupport {
   suspend fun validateDynamicReconfigurationPossible(targetState: PluginSet): DynamicPluginsReconfigurationResult.Invalid?
 
-  suspend fun performDynamicReconfiguration(targetState: PluginSet): DynamicPluginsReconfigurationResult
+  suspend fun performDynamicReconfiguration(
+    targetState: PluginSet,
+    criticalSectionModalProgressConfig: ModalProgressConfig?,
+  ): DynamicPluginsReconfigurationResult
 
   // TODO consider adding suspend fun runPreventingDynamicReconfiguration(body: suspend? () -> Unit)
 
@@ -66,3 +71,6 @@ private class DynamicReconfigurationIsNotPossibleReasonImpl(
 
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)
+
+@ApiStatus.Internal
+class ModalProgressConfig(val owner: ModalTaskOwner, val title: @Nls String)

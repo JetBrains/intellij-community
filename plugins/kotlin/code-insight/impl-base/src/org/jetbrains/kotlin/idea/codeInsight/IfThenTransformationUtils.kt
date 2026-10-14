@@ -14,7 +14,6 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -394,7 +394,7 @@ sealed class IfThenTransformationStrategy {
 
         context(_: KaSession)
         private fun KtExpression.hasImplicitReceiverMatchingThisExpression(thisExpression: KtThisExpression): Boolean {
-            val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return false
+            val thisExpressionSymbol = thisExpression.resolveSuccessfulSymbol() ?: return false
             // we need to resolve callee instead of call, because in case of variable call, call is resolved to `invoke`
             val singleCall = getCalleeExpressionIfAny()?.resolveSuccessfulExpressionCall()?.simple ?: return false
 

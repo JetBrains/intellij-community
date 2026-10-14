@@ -10,14 +10,18 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.TaskHandle
 import com.intellij.platform.ide.progress.TaskStorage
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.project.projectIdOrNull
+import com.intellij.platform.project.registerProjectIdAlias
+import com.intellij.platform.project.setNewProjectId
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.withProjectAsync
+import fleet.util.UID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -114,6 +118,29 @@ internal class TaskInfoEntityCollectorTest {
   private suspend fun loadProject(dir: Path): Project {
     Files.createDirectories(dir.resolve(Project.DIRECTORY_STORE_FOLDER))
     return withContext(Dispatchers.IO) { ProjectManagerEx.getInstanceEx().loadProject(dir) }
+  }
+
+  @Test
+  fun `closing a project removes a task that keeps an alias id of the project`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    val storage = TaskStorage.getInstance()
+
+    lateinit var aliasTask: TaskHandle
+    val project = openProject(tempDir.resolve("rebound")).withProjectAsync { aliasTask = addTask(storage, it) }
+    try {
+      project.useProjectAsync {
+        val aliasId = checkNotNull(aliasTask.info.projectId)
+        setNewProjectId(it, ProjectId.deserializeFromString(UID.random().toString()))
+        registerProjectIdAlias(it, aliasId)
+
+        assertTrue(aliasId.findProjectOrNull() === it, "The alias id must resolve to the project")
+        assertFalse(aliasTask.removed.isCompleted, "The task must stay while the project is open")
+      }
+
+      assertTrue(aliasTask.removed.isCompleted, "The task with the alias id must be removed when the project closes")
+    }
+    finally {
+      storage.removeTask(aliasTask)
+    }
   }
 
   private suspend fun openProject(dir: Path): Project {

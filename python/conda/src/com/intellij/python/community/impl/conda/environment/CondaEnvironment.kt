@@ -2,19 +2,21 @@
 package com.intellij.python.community.impl.conda.environment
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle.message
+import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonEnvironmentProvider
 import com.intellij.python.sdk.backend.ShellActivation
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.ShellType
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -137,9 +139,11 @@ internal class CondaEnvironmentProvider : PythonEnvironmentProvider {
       condaMetaPath = condaMeta,
       isBase = pythonHome.resolve("condabin").isDirectory() || pythonHome.resolve("envs").isDirectory(),
       // Prefer the per-env conda executable when the layout exposes one (base conda or
-      // <root>/envs/<name> envs); fall back to the user-configured / system-wide conda so that
-      // venv-style conda envs still get a usable handle for activation pipelines.
-      condaExecutable = findCondaExecutableRelativeToEnv(pythonBinary) ?: PyCondaPackageService.getCondaExecutable(),
+      // <root>/envs/<name> envs); fall back to the conda of the env's machine, the configured one or else the detected one,
+      // so that venv-style conda envs still get a usable handle for activation pipelines.
+      condaExecutable = findCondaExecutableRelativeToEnv(pythonBinary) ?: runBlockingMaybeCancellable {
+        PyExecutableCache.getInstance().get(pythonBinary.getEelDescriptor(), CondaPyTool.getInstance())
+      },
     ).let { PyResult.success(it) }
   }
 }

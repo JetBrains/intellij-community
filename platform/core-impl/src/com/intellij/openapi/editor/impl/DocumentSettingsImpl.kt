@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ReadOnlyModificationException
-import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.text.StringUtil
@@ -46,7 +45,6 @@ internal class DocumentSettingsImpl private constructor(
     val isGuardCheckSuppressed              : Boolean = false,
     val isGuardCheckSuppressedWholeTextOnly : Boolean = false,
     val isReadOnly                          : Boolean = false,
-    val readonlyHandler                     : ReadonlyFragmentModificationHandler? = null,
   )
   // @formatter:on
 
@@ -133,14 +131,6 @@ internal class DocumentSettingsImpl private constructor(
       }
     }
     return oldValue
-  }
-
-  override fun readOnlyHandler(): ReadonlyFragmentModificationHandler? {
-    return mutableSettings.get().readonlyHandler
-  }
-
-  override fun setReadOnlyHandler(readonlyHandler: ReadonlyFragmentModificationHandler?) {
-    mutableSettings.getAndUpdate { it.copy(readonlyHandler=readonlyHandler) }
   }
 
   override fun isWritable(hostDocument: Document): Boolean {

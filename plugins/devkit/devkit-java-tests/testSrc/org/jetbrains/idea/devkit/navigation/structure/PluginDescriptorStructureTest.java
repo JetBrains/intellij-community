@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -48,7 +49,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
     VirtualFile file = myFixture.copyFileToProject("plugin.xml");
     myFixture.openFileInEditor(file);
 
-    myFixture.testStructureView(component -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, component -> {
       TreeElementWrapper root = (TreeElementWrapper)TreeUtil.getUserObject(component.getTree().getModel().getRoot());
       TreeElement[] topLevelNodes = root.getValue().getChildren();
       assertSize(14, topLevelNodes);

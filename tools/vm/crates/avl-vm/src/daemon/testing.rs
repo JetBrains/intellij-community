@@ -8,7 +8,7 @@
 //! the fake `tart` relays with `nc` to the server's loopback listener.
 //!
 //! The runner probes [`FakeProcesses`] and not the host. So a worker that reads as running does so on a loaded host
-//! too.
+//! too. The table declares the process that the controller of the suite speaks for, so a run marker names it.
 
 use std::collections::{BTreeMap, VecDeque};
 use std::io;
@@ -475,15 +475,13 @@ pub(crate) fn failing_run(iteration_id: &str) -> (Vec<String>, String) {
 // --- the runtime-descriptor fixture ------------------------------------------------------------------------------
 
 /// The runfiles every fixture descriptor declares, with their contents.
-pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 11] = [
+pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 9] = [
     ("_main/hot/a.jar", "hot-a"),
     ("_main/stable/one.jar", "stable-one"),
     ("_main/stable/two.jar", "stable-two"),
     ("_main/data/project.zip", "data-a"),
     ("_main/dist/x.ide.config", "config"),
     ("_main/dist/fingerprint.txt", "fingerprint"),
-    ("_main/jbr/jbr.tar.gz", "jbr-archive"),
-    ("_main/jbr/manifest.json", "jbr-manifest"),
     ("_main/ide/ide.jvm-flags.txt", "-ea\n"),
     ("_main/ide/project.zip", "ide-project"),
     ("_main/plugins/bridge/lib/bridge.jar", "bridge-plugin"),
@@ -518,11 +516,9 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
             "home": file("_main/dist/home"),
         },
         "jbr": {
-            "archive": file("_main/jbr/jbr.tar.gz"),
+            "directory": FIXTURE_JBR_DIRECTORY,
             "javaHomeSuffix": "a&b",
-            "manifest": file("_main/jbr/manifest.json"),
             "platform": jbr_platform,
-            "preloadedOnly": false,
         },
         "ide": {
             "flagsFile": file("_main/ide/ide.jvm-flags.txt"),
@@ -536,6 +532,23 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
 
 /// The fixture runfile that is a source file of the checkout, as a lock file of the descriptor `data` is.
 pub(crate) const FIXTURE_SOURCE_RUNFILE: &str = "_main/data/project.zip";
+
+/// The distribution home of the fixture: a directory runfile, as the `.dist` tree artifact is. One MANIFEST line names
+/// the directory.
+pub(crate) const FIXTURE_DIST_HOME: &str = "_main/dist/home";
+
+/// The JBR directory of the fixture, below [`FIXTURE_DIST_HOME`].
+pub(crate) const FIXTURE_JBR_DIRECTORY: &str = "jbr";
+
+/// Writes the distribution home of the fixture below `root`: a JBR whose `java` is below the Java-home suffix of the
+/// fixture descriptor. Answers the home.
+fn write_fixture_dist_home(root: &Path) -> PathBuf {
+    let home = root.join(FIXTURE_DIST_HOME);
+    let bin = home.join(FIXTURE_JBR_DIRECTORY).join("a&b").join("bin");
+    std::fs::create_dir_all(&bin).expect("the JBR of the fixture is created");
+    std::fs::write(bin.join("java"), "java").expect("the java of the fixture is written");
+    home
+}
 
 /// Materializes the descriptor for `jbr_platform` and its runfiles tree in `directory`, answering the descriptor path.
 /// [`FIXTURE_SOURCE_RUNFILE`] is a file of `checkout`, and the tree links to it, as Bazel links a source runfile.
@@ -558,6 +571,8 @@ pub(crate) fn write_runtime_fixture(directory: &Path, checkout: &Path, jbr_platf
         }
         manifest.push_str(&format!("{logical_path} {}\n", target.display()));
     }
+    let home = write_fixture_dist_home(&root);
+    manifest.push_str(&format!("{FIXTURE_DIST_HOME} {}\n", home.display()));
     // Bazel writes the MANIFEST into the tree too, and the guest builds its own tree from it.
     std::fs::write(root.join("MANIFEST"), manifest).expect("the MANIFEST is written");
     std::fs::write(&descriptor_path, fixture_descriptor_for(jbr_platform).to_string()).expect("the descriptor is written");
@@ -572,7 +587,9 @@ pub(crate) fn replace_tree_with_manifest(descriptor_path: &Path) -> PathBuf {
     std::fs::rename(&root, &store).expect("the tree moves to the store");
     let manifest: String = FIXTURE_RUNFILES
         .iter()
-        .map(|(logical_path, _)| format!("{logical_path} {}\n", store.join(logical_path).display()))
+        .map(|(logical_path, _)| *logical_path)
+        .chain([FIXTURE_DIST_HOME])
+        .map(|logical_path| format!("{logical_path} {}\n", store.join(logical_path).display()))
         .collect();
     std::fs::write(&avl_host_sys::runfiles::manifest_paths(descriptor_path)[0], manifest).expect("the MANIFEST is written");
     store
@@ -816,10 +833,12 @@ impl DaemonFixture {
             .with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
         let (reporter, stdout, stderr) = Reporter::in_memory("vm-test");
         reporter.set_mode(Mode::Stream);
+        // The hermetic table holds no process of the suite itself, so the controller speaks for a declared one.
+        let controller = processes.start("vm, the controller of the suite");
         let manager = Arc::new(Manager::with_timings(
             Dependencies {
                 settings: Arc::clone(&settings),
-                locks: Arc::new(LockManager::new(runner.clone())),
+                locks: Arc::new(LockManager::for_process(runner.clone(), controller)),
                 runner: runner.clone(),
                 reporter,
                 // A container-linux pool is reached through the production channel, which the manager builds itself.
@@ -1125,6 +1144,43 @@ impl DaemonFixture {
     /// The first worker's lease and its receipt.
     pub(crate) fn lease_receipt(&self) -> PathBuf {
         self.leased_by(&self.worker, "suite", self.settings.guest_os)
+    }
+
+    /// A second controller over the same pool, guests, Bazel and daemon double, as another process sees the pool. Its
+    /// lock manager speaks for another process of the fake table. So a run marker of either controller is a live run
+    /// of another process to the other one.
+    pub(crate) fn another_controller(&self) -> Arc<Host> {
+        let pid = self.processes.start("vm, another controller of the suite");
+        let (reporter, _, _) = Reporter::in_memory("vm-test");
+        reporter.set_mode(Mode::Stream);
+        let over_hypervisor = self.guests.is_none();
+        let manager = Arc::new(Manager::with_timings(
+            Dependencies {
+                settings: Arc::clone(&self.settings),
+                locks: Arc::new(LockManager::for_process(self.runner.clone(), pid)),
+                runner: self.runner.clone(),
+                reporter,
+                channel: if self.settings.backend == Backend::ContainerLinux {
+                    None
+                } else {
+                    self.guests.as_ref().map(FakeGuests::factory)
+                },
+                bazel: over_hypervisor
+                    .then(|| Arc::new(PinnedBazel::tart(self.pool.fake.executable())) as Arc<dyn avl_host_sys::guest::BazelHost>),
+                build_guest_boot: builds_nothing(),
+            },
+            Timings::fast(),
+        ));
+        Arc::new(
+            Host::new(
+                manager,
+                self.runner.clone(),
+                self.bazel.clone(),
+                avl_base::Environment::from_pairs(self.pool.environment.iter().cloned()),
+            )
+            .with_poll_clock(Arc::clone(&self.host.clock))
+            .with_stdin(Arc::clone(&self.stdin) as Arc<dyn crate::lane::secrets::SecretStdin>),
+        )
     }
 }
 

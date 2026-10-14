@@ -1,0 +1,5 @@
+class Child(input: String) {
+    val value: String = input
+
+    fun result(): String = value
+}

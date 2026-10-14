@@ -15,8 +15,8 @@ class JavaSourceToSinkFlowInspectionUnknownTest : SourceToSinkFlowInspectionTest
       it.showUnknownObject = false
     }
 
-  override fun getBasePath(): String {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
+  override fun getTestDataPath(): String {
+    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
   }
 
   fun testSimple() {

@@ -40,6 +40,6 @@ class PythonFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFold
   }
 
   override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String?, String?>): List<OptionDescription> {
-    return listOf(longStringLiterals, longCollectionLiterals, sequentialComments, typeAnnotations).map { it.asOptionDescriptor() }
+    return listOf(longStringLiterals, longCollectionLiterals, sequentialComments, typeAnnotations).map { it.asOptionDescriptor(configurableId) }
   }
 }

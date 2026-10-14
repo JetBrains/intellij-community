@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -21,7 +21,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -104,8 +103,8 @@ public final class ConflictingFileTypeMappingTracker {
     
     // if both bundled, should win the bundle from other vendor as more specific
     // see the case "Image" plugin vs "Adobe Photoshop" from Android
-    boolean isOldJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(oldPlugin.getVendor()));
-    boolean isNewJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(newPlugin.getVendor()));
+    var isOldJetBrains = PluginManagerCore.isVendorJetBrains(oldPlugin.getVendor());
+    var isNewJetBrains = PluginManagerCore.isVendorJetBrains(newPlugin.getVendor());
     if (isOldJetBrains != isNewJetBrains) {
       FileTypeManagerImpl.FileTypeWithDescriptor result = isOldJetBrains ? newFtd : oldFtd;
       String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), result.fileType()

@@ -54,7 +54,7 @@ interface LocalEelFileSystemApi : EelFileSystemApi
  * It provides low-level I/O — open, read, write, stat — as well as batched operations. A batched operation lets the implementation
  * make many system calls on its side and stream the results back as a flow. That avoids one request per file, saving round-trips to
  * the environment. For example, [listDirectoryWithAttrs] streams a directory's entries with their attributes, [readFile] reads a whole
- * file's content, and [DirectoryPrefetcher] streams entire directory trees — each in a single call. Against a remote IJent this can
+ * file's content, and [EelPrefetchApi] streams entire directory trees — each in a single call. Against a remote IJent this can
  * turn O(N) round-trips into one RPC, crucial for bulk traversals such as scanning and indexing projects and libraries.
  *
  * It is also the engine behind routed NIO `Path`s: for a non-local environment the platform's routing `FileSystemProvider` implements

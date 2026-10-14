@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use super::{Manager, StopState, read_lease};
+use crate::worker::secure::read_json_record;
 
 /// How often a waiting `pool idle-stop` process reads the record again. A record that a later operation removed or
 /// replaced ends the process at the next read, so a busy pool keeps few waiting processes.
@@ -52,8 +53,7 @@ pub(crate) type IdleStopSpawner = Arc<dyn Fn(&Manager, &IdleStopRequest) -> Resu
 
 /// The record of the worker, or `None` when there is none or it cannot be read as a record of this worker.
 pub(crate) fn read_idle_stop_record(settings: &Config, worker: &str) -> Option<IdleStopRecord> {
-    let content = std::fs::read(settings.idle_stop_record_path(worker)).ok()?;
-    let record: IdleStopRecord = serde_json::from_slice(&content).ok()?;
+    let record: IdleStopRecord = read_json_record(&settings.idle_stop_record_path(worker)).ok().flatten()?;
     (record.schema_version == SCHEMA_VERSION && record.worker == worker).then_some(record)
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.DialogWrapper
@@ -16,6 +17,15 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class XJumpToSourceActionBase : XDebuggerTreeSplitActionBase() {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
+
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val value = node.valueContainer
     val dialog = e.getData(XDebuggerEvaluationDialog.KEY)

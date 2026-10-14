@@ -14,11 +14,13 @@ import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
-import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito
 
 @TestOnly
-internal class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
+internal class TestPythonPackageManagerService(
+  val installedPackages: List<PythonPackage> = emptyList(),
+  val availablePackageNames: List<String> = emptyList(),
+) : PythonPackageManagerService {
   private val cache: MutableMap<PythonInterpreter, PythonPackageManager> = ConcurrentHashMap()
 
   override fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
@@ -41,15 +43,19 @@ internal class TestPythonPackageManagerService(val installedPackages: List<Pytho
   }
 
   private fun createManager(project: Project, interpreter: PythonInterpreter): TestPythonPackageManager {
+    val repoPackageNames = (installedPackages.map { it.name } + availablePackageNames).distinct()
+
     if (installedPackages.isEmpty()) {
-      return TestPythonPackageManager(project, interpreter).also { Disposer.register(project, it) }
+      return TestPythonPackageManager(project, interpreter)
+        .withPackageNames(repoPackageNames)
+        .also { Disposer.register(project, it) }
     }
 
     return TestPythonPackageManager(project, interpreter)
       .withPackageInstalled(installedPackages)
-      .withPackageNames(installedPackages.map { it.name })
+      .withPackageNames(repoPackageNames)
       .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),
-                                                     TestPackageRepository(installedPackages.map { it.name }.toSet()))).also {
+                                                     TestPackageRepository(repoPackageNames.toSet()))).also {
         Disposer.register(project, it)
       }
   }
@@ -62,21 +68,35 @@ internal class TestPythonPackageManagerService(val installedPackages: List<Pytho
 
 
     @JvmStatic
-    fun replacePythonPackageManagerServiceWithTestInstance(project: Project, installedPackages: List<PythonPackage> = emptyList()) {
-      project.replaceService(PythonPackageManagerService::class.java, TestPythonPackageManagerService(installedPackages), project)
+    @JvmOverloads
+    fun replacePythonPackageManagerServiceWithTestInstance(
+      project: Project,
+      installedPackages: List<PythonPackage> = emptyList(),
+      availablePackageNames: List<String> = emptyList(),
+    ) {
+      project.replaceService(
+        PythonPackageManagerService::class.java,
+        TestPythonPackageManagerService(installedPackages, availablePackageNames),
+        project,
+      )
     }
 
     @JvmStatic
     fun replacePyPiPackageCacheService(project: Project, cache: List<String>) {
-      val mock = Mockito.mock(PyPiPackageCache::class.java)
-      Mockito.`when`(mock.contains(argThat { o -> cache.contains(o) } ?: "")).thenReturn(true)
-
+      val knownPackages = cache.toSet()
+      val mock = Mockito.mock(PyPiPackageCache::class.java) { invocation ->
+        when (invocation.method.name) {
+          "contains",
+          "containsBlocking" -> knownPackages.contains(invocation.arguments[0] as? String)
+          else -> Mockito.RETURNS_DEFAULTS.answer(invocation)
+        }
+      }
       ApplicationManager
         .getApplication()
         .replaceService(
           PyPiPackageCache::class.java,
           mock,
-          project
+          project,
         )
     }
   }

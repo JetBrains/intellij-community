@@ -5,6 +5,7 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configuration.EnvironmentVariablesConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -177,14 +178,14 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     SettingsEditorFragment<S, JComponent> fragment =
       new SettingsEditorFragment<>("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"),
                                    ExecutionBundle.message("group.operating.system"), env,
-                                   (settings, c) -> env.reset(settings),
+                                   (settings, c) -> EnvironmentVariablesConfiguration.resetFromConfiguration(env, settings),
                                    (settings, c) -> {
                                      if (!env.isVisible()) {
                                        settings.setEnvs(Collections.emptyMap());
                                        settings.setPassParentEnvs(true);
                                      }
                                      else
-                                       env.apply(settings);
+                                       EnvironmentVariablesConfiguration.applyToConfiguration(env, settings);
                                    },
                                    Predicates.alwaysTrue());
     fragment.setCanBeHidden(true);

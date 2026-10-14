@@ -118,8 +118,6 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       pluginId == "com.jetbrains.remoteDevelopment" ||
       // FIXME IJPL-159498
       pluginId == "org.jetbrains.plugins.docker.gateway" ||
-      // for intellij.build.minimal
-      pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
       // it's an internal plugin that should be compatible with older IDEA versions as well,
       // so it's ok to have preloading there
       pluginId == "com.intellij.monorepo.devkit"

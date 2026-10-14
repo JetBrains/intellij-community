@@ -3,6 +3,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -18,6 +20,15 @@ public class NewElementSamePlaceAction extends NewElementAction {
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setText(ActionsBundle.message("action.NewElementSamePlace.text"));
+    }
   }
 
   @ApiStatus.Internal

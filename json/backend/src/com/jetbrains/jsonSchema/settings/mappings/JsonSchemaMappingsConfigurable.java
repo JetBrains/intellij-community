@@ -2,11 +2,13 @@
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -191,6 +193,10 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
     }
     DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     EditorNotifications.getInstance(myProject).updateAllNotifications();
+    var fileEditorManager = FileEditorManager.getInstance(myProject);
+    for (var file : fileEditorManager.getOpenFiles()) {
+      VirtualFileAppearanceListener.fireVirtualFileAppearanceChanged(file);
+    }
   }
 
   private static void validate(@NotNull List<UserDefinedJsonSchemaConfiguration> list) throws ConfigurationException {

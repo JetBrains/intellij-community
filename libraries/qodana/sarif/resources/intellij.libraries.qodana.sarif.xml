@@ -13,7 +13,7 @@
 
   Register no third copy. Two copies that one module can reach put the same class in two classloaders
   and raise a LinkageError.
-  See QD-15883 and build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.
+  See QD-15883 and build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.
 -->
 <idea-plugin visibility="private">
 </idea-plugin>

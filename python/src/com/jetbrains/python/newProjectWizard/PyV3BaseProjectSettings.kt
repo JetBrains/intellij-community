@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard
 
+import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.module.Module
@@ -38,23 +39,24 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       }
     }
 
-    if (supportsNotEmptyModuleStructure) {
-      withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
-        withContext(Dispatchers.IO) {
-          // The tool is told what the checkbox said so that it can leave the repository alone; the initializer above
-          // still runs for a ticked box, over whatever the tool created. See PySdkCreator.createPythonModuleStructure.
-          sdkCreator.createPythonModuleStructure(module, createGitRepository).also {
-            VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
-          }
-        }
-      }.getOr { return@coroutineScope it }
-    }
-
+    // The tool creates its project files and the environment, and the interpreter is set on the module, under one lock.
     val sdkResult = withSdkConfigurationLock(module.project) {
+      if (supportsNotEmptyModuleStructure) {
+        withProgressText(PyBundle.message("python.sdk.creating.python.module.structure")) {
+          withContext(Dispatchers.IO) {
+            // The tool is told what the checkbox said so that it can leave the repository alone; the initializer above
+            // still runs for a ticked box, over whatever the tool created. See PySdkCreator.createPythonModuleStructure.
+            sdkCreator.createPythonModuleStructure(module, createGitRepository).also {
+              VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
+            }
+          }
+        }.getOr { return@withSdkConfigurationLock it }
+      }
       val (pythonInterpreter: PythonInterpreter, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@withSdkConfigurationLock it }
 
-      module.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)
-      Result.success(Pair(pythonInterpreter, interpreterStatistics))
+      // The interpreter the project then has: the registry can adopt an existing SDK for it.
+      val set = module.asPyProjectAddingFacet()?.setPythonInterpreter(pythonInterpreter)?.getOr { return@withSdkConfigurationLock it } ?: pythonInterpreter
+      Result.success(Pair(set, interpreterStatistics))
     }
     return@coroutineScope sdkResult
   }

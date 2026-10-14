@@ -33,6 +33,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.ListModel;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -43,10 +44,20 @@ import static com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.NP
  * @author Dennis.Ushakov
  */
 public abstract class AbstractNewProjectDialog extends DialogWrapper {
+  private final @Nullable Path myBaseDirectory;
   private Pair<JPanel, JBList<AnAction>> myPair;
 
   public AbstractNewProjectDialog() {
+    this(null);
+  }
+
+  /**
+   * @param baseDirectory the directory that holds the directory of the new project.
+   *                      A {@code null} value means the default location of the IDE.
+   */
+  public AbstractNewProjectDialog(@Nullable Path baseDirectory) {
     super(ProjectManager.getInstance().getDefaultProject());
+    myBaseDirectory = baseDirectory;
     init();
   }
 
@@ -67,6 +78,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     setTitle(AbstractNewProjectStep.EP_NAME.hasAnyExtensions() ? ProjectBundle.message("dialog.title.new.project")
                                                                : ProjectBundle.message("dialog.title.create.project"));
     var root = createNewProjectStep();
+    root.setBaseDirectory(myBaseDirectory);
     Disposer.register(getDisposable(), () -> root.removeAll());
 
     Pair<JPanel, JBList<AnAction>> pair = ActionGroupPanelWrapper.createActionGroupPanel(root, null, getDisposable());

@@ -1,0 +1,9 @@
+fun id(v: Int) = v
+
+class Child {
+    private val value1: Int = id(1)
+    val age = value1
+    val value = 1
+}
+
+fun result(child: Child) = child.value

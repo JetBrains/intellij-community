@@ -6,7 +6,8 @@
 //! a `/` and no space, such as `java/lang/ClassLoader.defineClass1`. A native leaf such as `__psynch_mutexwait` names no EDT work. A
 //! stack without a Java frame keeps its leaf.
 //!
-//! The reader also reads the class-loading triggers of every thread, see [`Triggers`].
+//! The reader also reads the class-loading triggers of every thread, see [`Triggers`]. It leaves out every stack of
+//! the profiler's own symbol parsing, see [`is_profiler_hook`], and counts it apart in [`ExcludedSamples`].
 
 use std::collections::BTreeMap;
 
@@ -21,6 +22,28 @@ pub(crate) const GATE_PROFILE: &str = "cpu-gate.collapsed";
 /// The profile of the whole run, with the hold and the quit, which async-profiler writes at the exit of the JVM when
 /// it still runs.
 pub(crate) const WHOLE_PROFILE: &str = "cpu.collapsed";
+
+/// The name of the frame of async-profiler that runs on each `dlopen` of the JVM, before the parameters of a C++
+/// frame. It parses the symbols of the new library, about half a second on the EDT of a profiled start, which no run
+/// without the profiler spends. Real profiles name it `Profiler::dlopen_hook`.
+const PROFILER_HOOK_FRAME: &str = "dlopen_hook";
+
+/// The samples of the stacks of the profiler's own symbol parsing, which a profile leaves out.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ExcludedSamples {
+    /// The samples of every thread.
+    pub(crate) samples: u64,
+    /// The samples of the EDT among them.
+    pub(crate) edt_samples: u64,
+}
+
+impl ExcludedSamples {
+    const fn merge(&mut self, other: Self) {
+        self.samples += other.samples;
+        self.edt_samples += other.edt_samples;
+    }
+}
 
 /// The event that async-profiler samples.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, clap::ValueEnum)]
@@ -93,6 +116,8 @@ pub(crate) struct EdtProfile {
     pub(crate) all_samples: u64,
     /// The class-loading triggers of every thread.
     pub(crate) triggers: Triggers,
+    /// The samples of the profiler's own symbol parsing, which no other count holds.
+    pub(crate) excluded: ExcludedSamples,
 }
 
 /// The class-loading triggers of one profile, over all threads.
@@ -117,6 +142,7 @@ impl EdtProfile {
         self.all_samples += other.all_samples;
         merge_samples(&mut self.self_samples, &other.self_samples);
         self.triggers.merge(&other.triggers);
+        self.excluded.merge(other.excluded);
     }
 
     /// The `limit` frames with the most samples, the most first, then by name.
@@ -164,10 +190,17 @@ pub(crate) fn parse(text: &str) -> anyhow::Result<EdtProfile> {
     let mut profile = EdtProfile::default();
     for (index, line) in text.lines().enumerate().filter(|(_, line)| !line.trim().is_empty()) {
         let (stack, samples) = parse_line(line).with_context(|| format!("line {}", index + 1))?;
-        profile.all_samples += samples;
         let mut frames = stack.split(';');
         let is_edt = frames.next().is_some_and(|thread| thread.starts_with(EDT_THREAD_PREFIX));
         let frames: Vec<&str> = frames.collect();
+        if frames.iter().any(|frame| is_profiler_hook(frame)) {
+            profile.excluded.samples += samples;
+            if is_edt {
+                profile.excluded.edt_samples += samples;
+            }
+            continue;
+        }
+        profile.all_samples += samples;
         profile.triggers.add(&frames, samples);
         if !is_edt {
             continue;
@@ -199,6 +232,16 @@ fn top_frames(samples: &BTreeMap<String, u64>, limit: usize) -> Vec<FrameSamples
     frames.sort_by(|left, right| right.samples.cmp(&left.samples).then_with(|| left.frame.cmp(&right.frame)));
     frames.truncate(limit);
     frames
+}
+
+/// Tells whether a frame is the dlopen hook of the profiler, see [`PROFILER_HOOK_FRAME`], with or without a class and
+/// the parameters: `Profiler::dlopen_hook` or `Profiler::dlopen_hook(char const*, int)`.
+fn is_profiler_hook(frame: &str) -> bool {
+    frame
+        .split('(')
+        .next()
+        .and_then(|name| name.rsplit("::").next())
+        .is_some_and(|name| name == PROFILER_HOOK_FRAME)
 }
 
 /// A Java frame has a `/` and no space. A stub such as `I2C/C2I adapters(0xbb)` has a space.

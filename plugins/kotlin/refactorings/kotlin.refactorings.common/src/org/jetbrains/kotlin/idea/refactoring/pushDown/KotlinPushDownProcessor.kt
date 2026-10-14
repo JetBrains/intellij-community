@@ -63,7 +63,7 @@ abstract class KotlinPushDownProcessor(
 
     protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get() ?: UsageInfo.EMPTY_ARRAY
-        if (usages.isEmpty()) {
+        if (usages.none { it is SubclassUsage }) {
             val className = context.sourceClass.qualifiedClassNameForRendering()
             val classPresentableName = context.sourceClass.getClassOrInterfaceKeyword()
                 ?.let { "${it.text} $className" }

@@ -4,7 +4,9 @@ package com.intellij.python.sdk.backend.impl
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -40,10 +42,13 @@ internal fun recordedPythonInfo(version: @NlsSafe String?): PythonInfo? =
  * Why this interpreter's configuration is broken whatever the interpreter itself would say: it is an environment a
  * project owns, and its SDK records no project. `null` when there is nothing wrong with it.
  *
- * A remote or non-Python SDK has no detected environment and is left alone.
+ * A target interpreter has no detected environment and is left alone.
  */
 internal fun PythonInterpreter.associationProblem(): Result.Failure<PyError>? {
-  val environment = pythonEnvironment ?: return null
+  val environment = when (this) {
+    is NativePythonInterpreter -> pythonEnvironment
+    is TargetPythonInterpreter -> null
+  } ?: return null
   if (!environment.requiresAssociation || sdk.recordsProject) return null
   val where = environment.pythonHomePath?.toString() ?: sdk.name
   return Result.Failure(MessageError(PySdkBundle.message("python.sdk.validation.environment.without.project", where)))

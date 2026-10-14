@@ -96,6 +96,11 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     Presentation presentation = e.getPresentation();
     presentation.putClientProperty(ExecutorActionStatus.KEY, null); // by default
     Project project = e.getProject();
@@ -298,6 +303,9 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
 
   @ApiStatus.Internal
   public static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+    if (!psiFile.isValid()) {
+      return List.of();
+    }
     if (resetCache) {
       psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
     }

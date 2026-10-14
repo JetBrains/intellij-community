@@ -7,6 +7,7 @@ import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
@@ -265,5 +266,23 @@ class ModifiableFacetModelBridgeImpl(
   override fun facetsChanged() {
     super.facetsChanged()
     listeners.forEach { it.onChanged() }
+  }
+
+  internal companion object {
+    /**
+     * Commits [models] in one workspace model update.
+     * Each model must use [builder] as its storage.
+     */
+    fun commitAll(project: Project, builder: MutableEntityStorage, models: List<ModifiableFacetModelBridgeImpl>) {
+      if (models.isEmpty()) return
+      for (model in models) {
+        require(model.diff === builder) { "The facet model of ${model.moduleBridge.name} uses another storage" }
+        model.prepareForCommit()
+        model.facetManager.model.facetsChanged()
+      }
+      WorkspaceModel.getInstance(project).updateProjectModel("Facet models commit") {
+        it.applyChangesFrom(builder)
+      }
+    }
   }
 }

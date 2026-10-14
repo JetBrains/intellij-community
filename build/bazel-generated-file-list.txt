@@ -964,6 +964,8 @@ platform/platform-impl/rpc
 platform/platform-impl/scripting
 platform/platform-impl/socket-connection
 platform/platform-impl/tab-in-editor
+platform/platform-impl/tab-in-editor/frontend
+platform/platform-impl/tab-in-editor/recentFiles
 platform/platform-impl/ui
 platform/platform-impl/ui-inspector
 platform/platform-impl/update-checker
@@ -987,9 +989,11 @@ platform/pluginManager/shared.baseline
 platform/pluginManager/testFramework
 platform/pluginSystem/parser/impl
 platform/pluginSystem/testFramework
-platform/polySymbols
-platform/polySymbols-web
 platform/polySymbols/backend
+platform/polySymbols/shared
+platform/polySymbols/testFramework
+platform/polySymbols/tests
+platform/polySymbols/web
 platform/pratt
 platform/problemsView/backend
 platform/problemsView/collector
@@ -1087,8 +1091,10 @@ platform/tasks-platform-impl
 platform/tasks-platform-impl/plugin
 platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
+platform/terminal
 platform/testFramework
 platform/testFramework/bootstrap
+platform/testFramework/buildView
 platform/testFramework/common
 platform/testFramework/core
 platform/testFramework/eelJava
@@ -1102,6 +1108,7 @@ platform/testFramework/junit5/highlighting
 platform/testFramework/junit5/projectStructure
 platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
+platform/testFramework/structureView
 platform/testFramework/teamCity
 platform/testIntegration
 platform/testIntegration-ui
@@ -1346,6 +1353,7 @@ plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
 plugins/gradle/java/coverage
+plugins/gradle/java/coverage/tests
 plugins/gradle/java/groovy
 plugins/gradle/java/groovy/ml
 plugins/gradle/java/groovy/toml
@@ -1669,6 +1677,8 @@ plugins/markdown/compose
 plugins/markdown/core
 plugins/markdown/core/backend
 plugins/markdown/core/frontend
+plugins/markdown/core/frontend/execution
+plugins/markdown/execution
 plugins/markdown/fenceInjection
 plugins/markdown/figmaAdvertiser
 plugins/markdown/frontmatter

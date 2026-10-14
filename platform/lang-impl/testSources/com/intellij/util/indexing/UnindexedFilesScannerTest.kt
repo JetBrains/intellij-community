@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
@@ -24,6 +25,12 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
@@ -35,10 +42,10 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
-import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
 import com.intellij.util.indexing.mocks.ConfigurableFiletypeSpecificFileIndexer
@@ -413,6 +420,72 @@ class UnindexedFilesScannerTest {
     val results = captureIndexingResults(brokenIndexer, healthyIndexer)
     results.assertIndexerIndexedFiles("A broken index must not prevent the other indexes from indexing the files", healthyIndexer)
     results.assertIndexerIndexedNoFiles("An index whose input filter fails must not index anything", brokenIndexer)
+  }
+
+  @Test
+  fun `test rebuild request resets index status when indexing activities are suppressed`() {
+    // IJPL-257943: the welcome screen project suppresses scanning and stays in smart mode.
+    // A rebuild request is application-wide, so the suppressed scan must still reset the index status.
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = true)
+    registerIndexers(indexer)
+    suppressIndexingActivities()
+
+    FileBasedIndex.getInstance().requestRebuild(indexer.name)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30))
+
+    assertEquals(RebuildStatus.OK, RebuildStatus.getStatus(indexer.name))
+  }
+
+  @Test
+  fun `test index is readable after rebuild request when indexing activities are suppressed`() {
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = true)
+    registerIndexers(indexer)
+    suppressIndexingActivities()
+
+    FileBasedIndex.getInstance().requestRebuild(indexer.name)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30))
+
+    assertThat(DumbService.isDumb(project)).isFalse
+    val keys = runReadActionBlocking { FileBasedIndex.getInstance().getAllKeys(indexer.name, project) }
+    assertThat(keys)
+      .withFailMessage("A suppressed project opens with empty indexes, so an index read must return an empty result")
+      .isEmpty()
+  }
+
+  @Test
+  fun `test partial scan does not reset index status when indexing activities are suppressed`() {
+    // only a full scan may reset the status, because a cleared index must be filled by a full scan
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = true)
+    registerIndexers(indexer)
+    suppressIndexingActivities()
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+    val rejectFullScans = Disposer.newDisposable(testRootDisposable, "reject full scans")
+    UnindexedFilesScannerExecutorImpl.getInstance(project).setTaskFilterInTest(rejectFullScans) { it.isFullIndexUpdate() != true }
+    try {
+      FileBasedIndex.getInstance().requestRebuild(indexer.name)
+      assertEquals(RebuildStatus.REQUIRES_REBUILD, RebuildStatus.getStatus(indexer.name))
+
+      scanFiles(filesAndDirs as IndexableFilesIterator)
+      assertEquals(RebuildStatus.REQUIRES_REBUILD, RebuildStatus.getStatus(indexer.name))
+    }
+    finally {
+      Disposer.dispose(rejectFullScans)
+    }
+
+    UnindexedFilesScanner(project, "full scan after the partial one").queue().get()
+    assertEquals(RebuildStatus.OK, RebuildStatus.getStatus(indexer.name))
+  }
+
+  private fun suppressIndexingActivities() {
+    val provider = object : ProjectFrameCapabilitiesProvider {
+      override fun getCapabilities(project: Project): Set<ProjectFrameCapability> =
+        setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
+
+      override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
+    }
+    ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(provider), testRootDisposable)
+    assertThat(isIndexingActivitiesSuppressedSync(project)).isTrue
   }
 
   /**

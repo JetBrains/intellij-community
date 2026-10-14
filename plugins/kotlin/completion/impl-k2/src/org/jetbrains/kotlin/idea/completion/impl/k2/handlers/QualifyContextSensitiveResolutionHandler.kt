@@ -13,9 +13,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameter
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.CorrectionType
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.copyContainingFile
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -117,10 +117,9 @@ private fun addQualifierIfNeeded(position: PsiElement): PsiElement? {
     if (replaced !is KtSimpleNameExpression) return null
 
     analyze(fileCopy) {
-        val reference = replaced.mainReference
         if (replaced.contextSensitiveResolutionStatus !is KaContextSensitiveResolutionStatus.Used) return null
 
-        val fqName = reference.resolveToSymbol()?.importableFqName?.parent() ?: return null
+        val fqName = replaced.tryResolveSymbols()?.symbols?.singleOrNull()?.importableFqName?.parent() ?: return null
 
         val factory = KtPsiFactory(position.project)
 

@@ -9,6 +9,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.MouseDragHelper
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MouseEventAdapter
 import java.awt.Cursor
 import java.awt.Point
@@ -22,6 +24,14 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 
+/**
+ * Routes mouse input on a [MinimapPanel] to a click, a thumb drag, an independent viewport drag, or a wheel scroll.
+ *
+ * A click is detected on [mouseReleased], not on [mouseClicked]. AWT drops `MOUSE_CLICKED` when the pointer moves
+ * between the press and the release, and the Wayland toolkit does this unreliably (JBR-9803, JBR-10255).
+ * A press and a release that stay inside a dead zone form a click. A move past the dead zone starts a drag.
+ * This follows the same rule as [com.intellij.ui.ClickListener] and [MouseDragHelper].
+ */
 class MinimapMouseInteractionController(
   private val panel: MinimapPanel,
   private val hoverController: MinimapHoverController
@@ -34,6 +44,7 @@ class MinimapMouseInteractionController(
   private var dragOffset = 0
   private var dragStartY = 0
   private var dragDistancePx = 0
+  private var pressPoint: Point? = null
   private var independentDragLastY = 0
   private var independentWheelRemainderPx = 0.0
   private var lastScrollLogTimeMs: Long = 0
@@ -50,12 +61,7 @@ class MinimapMouseInteractionController(
       dragAnimationDisabled = false
     }
 
-    interactionState = MinimapMouseInteractionState.IDLE
-    dragOffset = 0
-    dragStartY = 0
-    dragDistancePx = 0
-    independentDragLastY = 0
-    independentWheelRemainderPx = 0.0
+    resetGestureState()
     lastScrollLogTimeMs = 0
 
     panel.removeMouseListener(this)
@@ -65,6 +71,8 @@ class MinimapMouseInteractionController(
 
   override fun mousePressed(e: MouseEvent) {
     if (e.button != MouseEvent.BUTTON1) return
+
+    pressPoint = if (e.isPopupTrigger) null else e.point
 
     if (panel.isIndependentScrollEnabled()) {
       interactionState = MinimapMouseInteractionState.DRAGGING
@@ -112,9 +120,8 @@ class MinimapMouseInteractionController(
     if (e.button != MouseEvent.BUTTON1) return
 
     val wasDragging = interactionState == MinimapMouseInteractionState.DRAGGING
-    if (interactionState == MinimapMouseInteractionState.DRAGGING &&
-        dragDistancePx > 0 &&
-        MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
+    val isClick = isClickGesture(e)
+    if (wasDragging && !isClick && MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
       logDragged()
     }
 
@@ -123,14 +130,16 @@ class MinimapMouseInteractionController(
       dragAnimationDisabled = false
     }
 
-    interactionState = MinimapMouseInteractionState.IDLE
-    dragOffset = 0
-    dragStartY = 0
-    dragDistancePx = 0
-    independentDragLastY = 0
-    independentWheelRemainderPx = 0.0
+    resetGestureState()
     if (wasDragging) {
       hoverController.stopDragging(e.point)
+    }
+
+    if (isClick) {
+      if (MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
+        logClicked()
+      }
+      handleClick(e)
     }
   }
 
@@ -166,8 +175,11 @@ class MinimapMouseInteractionController(
   override fun mouseDragged(e: MouseEvent) {
     if (interactionState != MinimapMouseInteractionState.DRAGGING) return
 
+    dragDistancePx = max(dragDistancePx, abs(e.y - dragStartY))
+    // The pointer is still inside the dead zone. Treat the gesture as a click in progress and do not scroll yet.
+    if (dragDistancePx < clickTolerancePx()) return
+
     if (panel.isIndependentScrollEnabled()) {
-      dragDistancePx = max(dragDistancePx, abs(e.y - dragStartY))
       val deltaPx = e.y - independentDragLastY
       independentDragLastY = e.y
       panel.scrollIndependentViewportBy(deltaPx)
@@ -178,17 +190,8 @@ class MinimapMouseInteractionController(
       editor.scrollingModel.disableAnimation()
       dragAnimationDisabled = true
     }
-    dragDistancePx = max(dragDistancePx, abs(e.y - dragStartY))
 
     panel.scrollThumbTo(e.y, dragOffset)
-  }
-
-  override fun mouseClicked(e: MouseEvent) {
-    if (e.button != MouseEvent.BUTTON1) return
-    if (MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
-      logClicked()
-    }
-    handleClick(e)
   }
 
   override fun mouseEntered(e: MouseEvent) {
@@ -212,6 +215,29 @@ class MinimapMouseInteractionController(
 
   private fun updateHover(point: Point?) {
     hoverController.updateHover(point)
+  }
+
+  /**
+   * Returns `true` when the release at [e] completes a click: the press was recorded, both points are inside
+   * the panel, and the pointer stayed inside the dead zone.
+   */
+  private fun isClickGesture(e: MouseEvent): Boolean {
+    val pressed = pressPoint ?: return false
+    if (e.isPopupTrigger || !panel.contains(e.point)) return false
+    val tolerance = clickTolerancePx()
+    return abs(e.x - pressed.x) < tolerance && abs(e.y - pressed.y) < tolerance
+  }
+
+  private fun clickTolerancePx(): Int = JBUI.scale(MouseDragHelper.DRAG_START_DEADZONE)
+
+  private fun resetGestureState() {
+    interactionState = MinimapMouseInteractionState.IDLE
+    dragOffset = 0
+    dragStartY = 0
+    dragDistancePx = 0
+    pressPoint = null
+    independentDragLastY = 0
+    independentWheelRemainderPx = 0.0
   }
 
   private fun handleClick(e: MouseEvent) {

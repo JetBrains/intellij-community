@@ -6,6 +6,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
+/**
+ * @deprecated Use {@link CommentByLineTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class CommentByLineTestBase extends LightPlatformCodeInsightTestCase {
   protected void doTest() {
     doTest(1, false);

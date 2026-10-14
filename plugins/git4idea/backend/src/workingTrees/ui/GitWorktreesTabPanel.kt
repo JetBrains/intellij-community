@@ -173,8 +173,9 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
         .appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
           val repository = GitWorktreesUiUtil.findBackendRepository(project, singleRepository) ?: return@appendLine
+          val currentBranch = repository.currentBranch
           GitCreateWorkingTreeService.getInstance()
-            .collectDataAndCreateWorkingTree(repository, null, GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
+            .collectDataAndCreateWorkingTree(repository, currentBranch, GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }
     }
     else {

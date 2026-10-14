@@ -12,6 +12,7 @@ import com.intellij.ide.util.importProject.LibrariesDetectionStep
 import com.intellij.ide.util.importProject.RootDetectionProcessor
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.java.JavaPluginDisposable
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -77,6 +78,11 @@ internal class SetupJavaProjectFromSourcesActivity : ProjectActivity {
     }
 
     if (!isOpenedByPlatformProcessor(project)) {
+      return
+    }
+
+    // the welcome project is opened by the platform processor too, but it has no sources to set up
+    if (WelcomeUtils.isWelcomeProject(project)) {
       return
     }
 

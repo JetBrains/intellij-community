@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.DebouncedUpdates
@@ -39,7 +39,7 @@ class GitStashTracker internal constructor(private val project: Project, cs: Cor
 
   init {
     val connection = project.messageBus.connect(this)
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         if (GitRepositoryManager.getInstance(project).repositories.any { repo ->
             events.any { e -> repo.repositoryFiles.isStashReflogFile(e.path) }

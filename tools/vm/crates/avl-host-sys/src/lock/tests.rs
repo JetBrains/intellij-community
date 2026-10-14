@@ -21,8 +21,8 @@ fn record(path: &Path) -> OwnerRecord {
     serde_json::from_slice(&content).expect("the owner record is JSON")
 }
 
-fn own_pid() -> u32 {
-    std::process::id()
+fn own_pid() -> i32 {
+    i32::try_from(std::process::id()).unwrap()
 }
 
 #[tokio::test]
@@ -32,13 +32,29 @@ async fn a_lock_is_taken_once_and_released() {
     let path = directory.path().join("lease-operation.lock");
     let locks = manager();
     let held = locks.acquire(&ctx, &path, "pool start", "busy").await.unwrap();
-    // The lock names its owner, which is what lets an operator see which operation is in the way.
+    // The lock names its owner, which is what lets an operator see which operation is in the way. The owner is the
+    // identity of this process, the one that a run marker names too.
     let owned = record(&path);
-    assert_eq!(owned.pid, own_pid());
+    let identity = runner()
+        .identify(&ctx, own_pid())
+        .await
+        .unwrap()
+        .expect("this process has an identity");
+    assert_eq!(owned.process, identity);
+    assert_eq!(locks.identity(&ctx).await.unwrap(), Some(&identity));
+    assert_eq!(locks.pid(), own_pid());
     assert_eq!(owned.operation, "pool start");
     assert_eq!(owned.schema_version, SCHEMA_VERSION);
-    assert!(!owned.process_start.is_empty(), "{owned:?}");
+    assert!(
+        !owned.process.process_start.is_empty() && !owned.process.process_command.is_empty(),
+        "{owned:?}"
+    );
     assert!(owned.acquired_at.parse::<Timestamp>().is_ok(), "{owned:?}");
+    // The record keeps the keys of the identity at its top level.
+    let written: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    assert_eq!(written["pid"], own_pid());
+    assert_eq!(written["processStart"], identity.process_start.as_str());
+    assert_eq!(written["processCommand"], identity.process_command.as_str());
 
     drop(held);
     // The lock file **survives** its release, and that is the rule: a `flock` binds to the inode, so unlinking the
@@ -67,7 +83,7 @@ async fn a_live_holder_is_refused() {
     // The refused acquisition left the holder's record alone. It is the same process refusing itself - the closest
     // a test gets to a peer - so this also pins that a second descriptor on one file excludes inside one process.
     let owned = record(&path);
-    assert_eq!((owned.operation.as_str(), owned.pid), ("run", own_pid()));
+    assert_eq!((owned.operation.as_str(), owned.process.pid), ("run", own_pid()));
 }
 
 // The owner record is diagnostics and decides nothing, so no content in a lock file can keep the lock from being
@@ -76,15 +92,10 @@ async fn a_live_holder_is_refused() {
 #[tokio::test]
 async fn the_owner_record_decides_nothing() {
     let ctx = Ctx::background();
-    let own_start = runner()
-        .probe_process(&ctx, i32::try_from(own_pid()).unwrap(), PsField::StartTime)
-        .await
-        .unwrap()
-        .unwrap_or_default();
+    let own = runner().identify(&ctx, own_pid()).await.unwrap().unwrap_or_default();
     let live = serde_json::to_vec(&OwnerRecord {
         schema_version: SCHEMA_VERSION,
-        pid: own_pid(),
-        process_start: own_start,
+        process: own,
         operation: "run".to_owned(),
         acquired_at: String::new(),
     })
@@ -113,8 +124,11 @@ async fn residue_from_a_crashed_holder_never_strands_a_lock() {
     let path = directory.path().join("op.lock");
     let crashed = OwnerRecord {
         schema_version: SCHEMA_VERSION,
-        pid: 0x7FFF_FFF0,
-        process_start: "Thu Jan  1 00:00:00 1970".to_owned(),
+        process: ProcessIdentity {
+            pid: 0x7FFF_FFF0,
+            process_start: "Thu Jan  1 00:00:00 1970".to_owned(),
+            process_command: "vm run".to_owned(),
+        },
         operation: "run".to_owned(),
         acquired_at: "1970-01-01T00:00:00Z".to_owned(),
     };
@@ -135,7 +149,7 @@ async fn residue_from_a_crashed_holder_never_strands_a_lock() {
         .expect("residue stranded the lock");
     // And taking it overwrites the dead invocation's account with this one's.
     let owned = record(&path);
-    assert_eq!((owned.pid, owned.operation.as_str()), (own_pid(), "pool start"));
+    assert_eq!((owned.process.pid, owned.operation.as_str()), (own_pid(), "pool start"));
 }
 
 // The whole point of the lock: many contenders, and exactly one inside at a time.
@@ -243,7 +257,7 @@ async fn acquire_all_releases_the_partial_set_on_failure() {
     // than absence, because a lock file is never unlinked.
     assert_eq!(record(&first), OwnerRecord::default());
     let owned = record(&second);
-    assert_eq!((owned.pid, owned.operation.as_str()), (own_pid(), "run"));
+    assert_eq!((owned.process.pid, owned.operation.as_str()), (own_pid(), "run"));
     // The one past the failure was never reached, so it was never even created.
     assert!(!third.exists(), "a lock past the failure was taken");
     drop(blocked);

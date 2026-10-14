@@ -97,7 +97,7 @@ internal val editorSmartKeysOptionDescriptors: List<BooleanOptionDescription>
     cbCloseBlockCommentOnEnter,
     cbInsertJavadocStubOnEnter,
     cbHonorCamelHumpsWhenSelectingByClicking
-  ).map(CheckboxDescriptor::asUiOptionDescriptor)
+  ).map { it.asUiOptionDescriptor(ID) }
 
 @NonNls
 internal const val ID: String = "editor.preferences.smartKeys"

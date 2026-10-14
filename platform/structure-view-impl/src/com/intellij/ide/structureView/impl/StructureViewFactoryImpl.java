@@ -178,6 +178,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
   }
 
+  @Override
   @TestOnly
   public void cleanupForNextTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();

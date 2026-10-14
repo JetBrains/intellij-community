@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 
@@ -27,4 +28,9 @@ public abstract class StructureViewFactoryEx extends StructureViewFactory {
   }
 
   public abstract void runWhenInitialized(@NotNull Runnable runnable);
+
+  /** Resets the state that one test can leave for the next test. */
+  @TestOnly
+  public void cleanupForNextTest() {
+  }
 }

@@ -169,6 +169,12 @@ async fn a_guest_that_cannot_answer_stage_check_falls_through_to_a_full_stage() 
         manifest.stable_sources[0].ends_with("_main/stable/one.jar") && manifest.stable_sources[1].ends_with("_main/stable/two.jar"),
         "{manifest:?}"
     );
+    // The JBR is the one of the distribution, through the guest runfiles tree: no archive crosses.
+    assert_eq!(
+        manifest.jbr_source,
+        format!("{}/_main/dist/home/jbr", prep.guest_runfiles_root.trim_end_matches('/'))
+    );
+    assert_eq!(manifest.java_home_suffix, "a&b");
 }
 
 // What a failed agent verb reports, from the caller's side: the agent and its own exit, never the sudo in front of

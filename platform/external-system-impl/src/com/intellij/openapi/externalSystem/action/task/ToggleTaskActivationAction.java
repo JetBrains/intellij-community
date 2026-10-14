@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemToggleAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -33,6 +34,15 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
 
   protected ToggleTaskActivationAction(@NotNull ExternalSystemTaskActivator.Phase phase) {
     myPhase = phase;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override

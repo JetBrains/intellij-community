@@ -30,23 +30,32 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.io.URLUtil
 import org.jetbrains.java.decompiler.DecompilerPreset
 import org.jetbrains.java.decompiler.IDEA_DECOMPILER_BANNER
 import org.jetbrains.java.decompiler.IdeaDecompiler
 import org.jetbrains.java.decompiler.IdeaDecompilerSettings
+import kotlin.io.path.absolutePathString
 
 class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
+    myFixture.testDataPath = if (BazelTestUtil.isUnderBazelTest) {
+      val label = BazelLabel.fromString("@community//plugins/java-decompiler/plugin:testData")
+      BazelTestUtil.getFileFromBazelRuntime(label).absolutePathString()
+    }
+    else {
+      "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
+    }
   }
 
   override fun tearDown() {
@@ -120,11 +129,17 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testStubCompatibility() {
+    val classesPath = if (BazelTestUtil.isUnderBazelTest) {
+      val label = BazelLabel.fromString("@community//plugins/java-decompiler/engine:testData")
+      BazelTestUtil.getFileFromBazelRuntime(label).resolve("manual/classes").absolutePathString()
+    }
+    else {
+      "${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/manual/classes"
+    }
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/manual/classes"),
-                                           visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile(classesPath), visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
   }

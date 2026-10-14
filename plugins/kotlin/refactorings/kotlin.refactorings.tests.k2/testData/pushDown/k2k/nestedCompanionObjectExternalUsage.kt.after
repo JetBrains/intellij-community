@@ -1,0 +1,17 @@
+open class A {
+}
+
+class D: A() {
+    // INFO: {"checked": "true"}
+    class B {
+        class C {
+            companion object {
+                fun m() {}
+            }
+        }
+    }
+}
+
+fun n() {
+    D.B.C.m()
+}

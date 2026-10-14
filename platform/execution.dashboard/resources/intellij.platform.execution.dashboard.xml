@@ -122,7 +122,7 @@
               class="com.intellij.platform.execution.dashboard.actions.UngroupConfigurationsActions"/>
       <separator/>
     </group>
-    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup" searchable="false">
       <separator key="separator.RunDashboard.GroupBy"/>
       <action id="RunDashboard.GroupByType"
               class="com.intellij.platform.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
@@ -135,6 +135,7 @@
     </group>
     <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
       <add-to-group group-id="ServiceView.AddService" anchor="first"/>
+      <override-text place="GoToAction"/>
     </action>
     <reference ref="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>

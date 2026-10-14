@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.markdown.execution"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService$StartupActivity"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,10 @@
+class Child {
+    class Nested {
+        fun answer() = 42
+    }
+
+    object Shared
+}
+
+fun use() = Child.Nested().answer()
+fun shared() = Child.Shared

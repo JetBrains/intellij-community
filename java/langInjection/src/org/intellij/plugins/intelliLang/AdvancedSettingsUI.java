@@ -21,15 +21,17 @@ import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Gregory.Shrago
- */
-public class AdvancedSettingsUI implements SearchableConfigurable {
+final class AdvancedSettingsUI implements SearchableConfigurable {
   private final Configuration.AdvancedConfiguration myConfiguration;
   private AdvancedSettingsPanel myPanel;
   private final Project myProject;
 
-  public AdvancedSettingsUI(final @NotNull Project project) {
+  @Override
+  public boolean isSearchableInActions() {
+    return false;
+  }
+
+  AdvancedSettingsUI(@NotNull Project project) {
     myProject = project;
     myConfiguration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
   }

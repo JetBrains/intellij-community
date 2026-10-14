@@ -273,11 +273,11 @@ impl Host {
     /// One iteration on one worker, as a value.
     ///
     /// Lock-free and non-throwing, deliberately, because both callers that need several of these need it that way.
-    /// The worker's lifecycle lock is the caller's: `lease` is the one [`crate::worker::lease::with_lease_operation`]
-    /// handed it, and a second acquisition of the same lock by the same live process is refused rather than
-    /// reclaimed, so an iteration that took its own lock could only ever run one deep. And an attempt that failed is
-    /// an answer: N attempts across N workers cannot be reported at all if the first failure unwinds the caller.
-    /// `run` is the degenerate case - one attempt, whose error it answers.
+    /// The worker's run marker is the caller's: `lease` is the one [`crate::worker::lease::with_run_marker`] handed
+    /// it. A second run marker of one process on one worker is refused. So an iteration that wrote its own marker
+    /// could only ever run one deep. And an attempt that failed is an answer: N attempts across N workers cannot be
+    /// reported at all if the first failure unwinds the caller. `run` is the degenerate case - one attempt, whose
+    /// error it answers.
     ///
     /// `secrets` are `run`'s `--test-env` files, and empty for `shard` and `flake`.
     #[expect(clippy::too_many_arguments, reason = "one iteration's inputs, each from a different owner")]
@@ -486,6 +486,10 @@ impl Host {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
         let (archives, traces_error) = traces.finish(self, ctx, pulls).await;
+        let drift = prep.hot_jar_drift();
+        if let Some(drift) = &drift {
+            self.reporter.note(drift.clone(), Some(&scope));
+        }
         let document = run_report::build(Input {
             iteration_id,
             daemon_run_id: state.run_id.clone(),
@@ -502,7 +506,7 @@ impl Host {
             source,
             evidence,
             protocol_diagnostic: protocol_diagnostic(execution),
-            hot_jar_drift: prep.hot_jar_drift(),
+            notes: drift.into_iter().collect(),
             traces: archives,
             traces_error,
             tree: prep.tree.clone().ok(),
@@ -521,7 +525,7 @@ impl Host {
     /// record is forgotten: the start neither probes nor retires it, and the daemon starts as on a worker with no
     /// healthy daemon.
     async fn gate_iteration(&self, ctx: &Ctx, lease: &Lease, scope: &Scope) -> Result<bool, Refusal> {
-        self.manager.machine().require_available_for_lease(ctx, lease).await?;
+        self.manager.machine().require_available(ctx, &lease.worker).await?;
         if self.manager.guest_declaration_current(ctx, lease).await? {
             return Ok(false);
         }

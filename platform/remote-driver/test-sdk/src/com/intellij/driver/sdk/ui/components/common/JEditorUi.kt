@@ -239,7 +239,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  private fun calculatePositionPoint(line: Int, column: Int): Point {
+  fun calculatePositionPoint(line: Int, column: Int): Point {
     return interact {
       val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
       Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt() + editor.getLineHeight() / 2)

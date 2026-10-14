@@ -21,8 +21,8 @@ import com.intellij.testFramework.NeedsIndex;
 
 public class TabCompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal";
   }
 
   public void testMethodCallCompletionWithTab() {

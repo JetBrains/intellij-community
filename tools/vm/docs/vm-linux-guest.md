@@ -1,7 +1,7 @@
 # A Linux guest for the Air UI lanes
 
 **Status.** The Tart Linux worker was retired on 2026-10-08
-([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
+([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
 guest keeps the Linux guest model of this note, and its image carries Node. The rest of this note is history. The
 current model is in the [VM guide](vm-ui-tests.md).
 
@@ -15,7 +15,7 @@ lives: that backend's separate open list was retired on 2026-08-23 once its gold
 lane was finally measured on it.
 
 For the host-side Bazel assembly and launch boundary, see
-[Dev-build architecture](../../../../build/dev-build-architecture.md).
+[Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md).
 
 ## Why ask
 
@@ -54,7 +54,7 @@ needs a real X server. Xvfb satisfies both.
 
 **A Linux distribution cross-builds here, and does so today.**
 `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
-assembles on this macOS arm64 host and is a genuine Linux build: `bin/product-info.json` reports
+assembles on this macOS arm64 host and is a genuine Linux build: its `product-info.json` reports
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
 has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
 `--define=air_lane_guest_os=linux` with its stub naming `idea_air_lane_dist_linux` and

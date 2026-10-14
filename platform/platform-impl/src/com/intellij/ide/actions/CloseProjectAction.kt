@@ -2,10 +2,12 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.ui.IdeUICustomization
 
@@ -18,7 +20,10 @@ open class CloseProjectAction : CloseProjectsActionBase() {
 
   override fun canClose(project: Project, currentProject: Project): Boolean = project === currentProject
 
-  override fun shouldShow(e: AnActionEvent): Boolean = true
+  override fun shouldShow(e: AnActionEvent): Boolean {
+    val project = getProjectEvenIfNotInitialized(e) ?: return false
+    return !WelcomeUtils.isWelcomeProject(project) || ProjectManager.getInstance().openProjects.size > 1
+  }
 
   override fun update(e: AnActionEvent) {
     super.update(e)

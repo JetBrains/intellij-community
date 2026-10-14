@@ -240,7 +240,9 @@ vocabulary! {
         WatchdogExpired = "watchdogExpired",
         RunFailed = "runFailed",
         Summary = "summary",
-        /// A line of the daemon's stdout that is not JSON, kept so nothing is dropped.
+        /// A line of text from the daemon. The daemon sends each line that it writes to its error stream during a run
+        /// as this record. The decoder also keeps a line of the stream that is not JSON as this record, so nothing is
+        /// dropped. It is not progress, so it re-arms no deadline.
         Output = "output",
         /// The guest agent started the lane IDE for the daemon. The run journal keeps the life of the IDE with it.
         IdeLaunched = "ideLaunched",
@@ -699,9 +701,10 @@ pub fn decode_state_file(raw: &[u8]) -> Result<StateFile, ProtocolError> {
 
 /// The incremental decoder for the daemon's chunked `/run` response.
 ///
-/// A line that is not JSON becomes an `output` record rather than an error: the daemon's own stdout shares this
-/// stream, and dropping it would lose the only account of a JVM that died before it could say so. Chunks are
-/// bytes, and a chunk may end inside a line or inside a UTF-8 sequence; the partial line is carried.
+/// A line that is not JSON becomes an `output` record rather than an error, so the decoder drops no line. The
+/// daemon's own stdout and stderr do not share this stream: the supervisor sends both to the guest `run.log`. The
+/// daemon sends its error lines as explicit `output` records instead. Chunks are bytes, and a chunk may end inside
+/// a line or inside a UTF-8 sequence; the partial line is carried.
 #[derive(Debug, Default)]
 pub struct NdjsonDecoder {
     pending: Vec<u8>,
@@ -728,7 +731,7 @@ impl NdjsonDecoder {
                 continue;
             }
             // Whether a line is even a candidate record keeps a non-JSON line and a malformed *record* apart:
-            // the first is the daemon's stdout, the second a protocol break that must be reported.
+            // the first is kept as text, the second a protocol break that must be reported.
             if !line.starts_with(b"{") {
                 decoded.events.push(RunEvent::output(String::from_utf8_lossy(line)));
                 continue;

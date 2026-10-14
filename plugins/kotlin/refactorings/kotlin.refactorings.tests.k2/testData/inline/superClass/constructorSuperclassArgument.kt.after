@@ -1,0 +1,5 @@
+open class Parent(val value: Int)
+
+class Child : Parent(4) {
+    val result = 4 + 1
+}

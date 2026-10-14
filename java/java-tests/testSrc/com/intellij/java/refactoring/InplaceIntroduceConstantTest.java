@@ -10,28 +10,25 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author anna
  */
+@TestApplication
 public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = false;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = false;
   }
 
+  @Test
   public void testReplaceAll() {
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
@@ -46,10 +43,12 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     return expr instanceof PsiLiteralExpression ? expr : null;
   }
 
+  @Test
   public void testReplaceAllInsideParenthesized() {
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
+  @Test
   public void testReplaceAllWithClassRefType() {
     doTest(introducer -> {
      introducer.setReplaceAllOccurrences(true);
@@ -57,6 +56,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testReplaceAllWithBrokenIdentifier() {
     doTest(introducer -> {
      type("A B");
@@ -64,6 +64,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testImplicitClass() {
     doTest(introducer -> {
      type("B");
@@ -71,6 +72,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testImplicitClassWithConflict() {
     doTest(introducer -> {
      type("a");
@@ -78,6 +80,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testReplaceAllFromSecondOccurrence() {
     doTest(introducer -> {
      type("O");
@@ -85,6 +88,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testReplaceAllFromLiteral() {
     doTest(introducer -> {
      type("NINE");
@@ -92,18 +96,22 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testConflictingConstantName() {
     doTest(null);
   }
 
+  @Test
   public void testConflictingConstantNameStaticallyImported() {
     doTest(null);
   }
 
+  @Test
   public void testNoConflictingConstantName() {
     doTest(null);
   }
 
+  @Test
   public void testEnsureVisibilityForAnno() {
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = PsiModifier.PRIVATE;
     try {
@@ -114,26 +122,32 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
+  @Test
   public void testCorrectFinalPosition() {
     doTest(_ -> type("SEC"));
   }
 
+  @Test
   public void testCorrectConstantPosition() {
     doTest(_ -> type("R"));
   }
 
+  @Test
   public void testConstantBeforeUsage() {
     doTest(_ -> type("R"));
   }
 
+  @Test
   public void testEscapePosition() {
     doTestEscape();
   }
 
+  @Test
   public void testEscapePositionOnLocal() {
     doTestEscape();
   }
 
+  @Test
   public void testCleanUpImport() {
     doTestEscape();
   }

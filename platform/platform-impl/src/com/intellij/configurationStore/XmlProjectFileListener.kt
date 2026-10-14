@@ -70,13 +70,13 @@ abstract class XmlProjectFileListener(
           deletedFilePaths.remove(event.newPath)
         }
       }
+    }
 
-      if (updatedFilePaths.isNotEmpty() || deletedFilePaths.isNotEmpty()) {
-        return object : AsyncFileListener.ChangeApplier {
-          override fun afterVfsChange() {
-            for (project in getOpenedProjects()) {
-              updateFiles(project, deletedFilePaths, updatedFilePaths)
-            }
+    if (updatedFilePaths.isNotEmpty() || deletedFilePaths.isNotEmpty()) {
+      return object : AsyncFileListener.ChangeApplier {
+        override fun afterVfsChange() {
+          for (project in getOpenedProjects()) {
+            updateFiles(project, deletedFilePaths, updatedFilePaths)
           }
         }
       }

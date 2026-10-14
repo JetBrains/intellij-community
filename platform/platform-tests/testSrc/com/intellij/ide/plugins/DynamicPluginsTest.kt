@@ -55,6 +55,8 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
@@ -1305,6 +1307,53 @@ class DynamicPluginsTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `IJPL-257812 max loadable subset leaves out a plugin that requires restart and its dependents`() {
+    val gate = loadDescriptorInTest(plugin("gate") {}, pluginsDir)
+    val paidA = loadDescriptorInTest(plugin("paid.a") { dependencies { plugin("gate") } }, pluginsDir)
+    val paidB = loadDescriptorInTest(plugin("paid.b") {
+      rootTagAttributes = """require-restart="true""""
+      dependencies { plugin("gate") }
+    }, pluginsDir)
+    val paidC = loadDescriptorInTest(plugin("paid.c") { dependencies { plugin("paid.b") } }, pluginsDir)
+    val allPlugins = listOf(gate, paidA, paidB, paidC)
+    try {
+      // The gate plugin plays the Ultimate plugin in the free mode. It is disabled, so the paid plugins do not resolve.
+      PluginEnabler.HEADLESS.disable(listOf(gate))
+      assertThat(reconfigureInTest(addNewCustomPlugins = allPlugins, forceRemovePlugins = emptyList())).isTrue()
+      // The license activation marks the gate plugin enabled, but it does not load it.
+      PluginEnabler.HEADLESS.enable(listOf(gate))
+      assertThat(allPlugins.map { PluginManagerCore.isLoaded(it.pluginId) }).containsOnly(false)
+
+      val loadable = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+        DynamicPlugins.findMaxLoadableSubsetApproximation(listOf(paidA, paidB, paidC).map { it.pluginId })
+      }
+      assertThat(loadable).containsExactly(paidA.pluginId)
+
+      // The real load also resolves paid.b and paid.c, unless they are disabled.
+      assertThat(DynamicPlugins.loadPlugins(listOf(paidA), project = null)).isFalse()
+      PluginEnabler.HEADLESS.disable(listOf(paidB, paidC))
+      assertThat(DynamicPlugins.loadPlugins(listOf(paidA), project = null)).isTrue()
+      PluginEnabler.HEADLESS.enable(listOf(paidB, paidC))
+      assertThat(allPlugins.map { PluginManagerCore.isLoaded(it.pluginId) }).containsExactly(true, true, false, false)
+    }
+    finally {
+      PluginEnabler.HEADLESS.enable(allPlugins)
+      assertThat(reconfigureInTest(addNewCustomPlugins = emptyList(), forceRemovePlugins = allPlugins)).isTrue()
+    }
+  }
+}
+
+private fun reconfigureInTest(addNewCustomPlugins: List<PluginMainDescriptor>, forceRemovePlugins: List<PluginMainDescriptor>): Boolean {
+  return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+    DynamicPlugins.reconfigure(
+      project = null,
+      addNewCustomPlugins = addNewCustomPlugins,
+      forceRemovePlugins = forceRemovePlugins,
+      extraStateValidator = DynamicPlugins.expectPluginsState(),
+    )
   }
 }
 

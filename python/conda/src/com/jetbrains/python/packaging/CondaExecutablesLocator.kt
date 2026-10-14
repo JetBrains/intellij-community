@@ -2,22 +2,14 @@
 
 package com.jetbrains.python.packaging
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.util.SystemProperties
-import com.intellij.util.system.LowLevelLocalMachineAccess
-import com.intellij.util.system.OS
-import com.intellij.util.system.OS.CURRENT
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.div
 
-private val CONDA_DEFAULT_ROOTS = listOf("anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda",
-                                         "Miniconda3")
 private const val CONDA_ENVS_DIR = "envs"
 private const val CONDA_BAT_NAME = "conda.bat"
 private const val CONDA_BINARY_NAME = "conda"
@@ -25,12 +17,6 @@ private const val WIN_CONDA_BIN_DIR_NAME = "condabin"
 private const val UNIX_CONDA_BIN_DIR_NAME = "bin"
 private const val PYTHON_EXE_NAME = "python.exe"
 private const val PYTHON_UNIX_BINARY_NAME = "python"
-private const val WIN_CONTINUUM_DIR_PATH = "AppData\\Local\\Continuum\\"
-private const val WIN_PROGRAM_DATA_PATH = "C:\\ProgramData\\"
-private const val WIN_C_ROOT_PATH = "C:\\"
-private const val UNIX_OPT_PATH = "/opt/"
-
-private val LOG = Logger.getInstance("#com.jetbrains.python.packaging")
 
 @ApiStatus.Internal
 
@@ -83,60 +69,9 @@ fun findCondaExecutableRelativeToEnv(pyExecutable: Path): Path? {
   return null
 }
 
-private fun getCondaExecutableByName(condaName: String): Path? {
-  val userHome = Path.of(SystemProperties.getUserHome())
-
-  for (root in CONDA_DEFAULT_ROOTS) {
-    var condaFolder = userHome / root
-    var executableFile = findExecutable(condaName, condaFolder)
-    if (executableFile != null) return executableFile
-
-    if (SystemInfo.isWindows) {
-      condaFolder = userHome / WIN_CONTINUUM_DIR_PATH / root
-      executableFile = findExecutable(condaName, condaFolder)
-      if (executableFile != null) return executableFile
-
-      condaFolder = Path.of(WIN_PROGRAM_DATA_PATH, root)
-      executableFile = findExecutable(condaName, condaFolder)
-      if (executableFile != null) return executableFile
-
-      condaFolder = Path.of(WIN_C_ROOT_PATH, root)
-      executableFile = findExecutable(condaName, condaFolder)
-      if (executableFile != null) return executableFile
-    }
-    else {
-      condaFolder = Path.of(UNIX_OPT_PATH, root)
-      executableFile = findExecutable(condaName, condaFolder)
-      if (executableFile != null) return executableFile
-    }
-  }
-
-  return null
-}
-
 private fun findExecutable(condaName: String, condaFolder: Path): Path? {
   val binFolderName = if (SystemInfo.isWindows) WIN_CONDA_BIN_DIR_NAME else UNIX_CONDA_BIN_DIR_NAME
   val bin = condaFolder / binFolderName / condaName
   if (!Files.exists(bin)) return null
   return PythonSdkUtil.getExecutablePath(bin, condaName)
-}
-
-@OptIn(LowLevelLocalMachineAccess::class)
-internal fun getSystemCondaExecutable(): Path? {
-  val condaName = if (OS.CURRENT == OS.Windows) CONDA_BAT_NAME else CONDA_BINARY_NAME
-
-  val condaInPath = PathEnvironmentVariableUtil.findFirst(condaName)
-  if (condaInPath != null) {
-    LOG.info("Using $condaInPath as a conda executable (found in PATH)")
-    return condaInPath
-  }
-
-  val condaInRoots = getCondaExecutableByName(condaName)
-  if (condaInRoots != null) {
-    LOG.info("Using $condaInRoots as a conda executable (found by visiting possible conda roots)")
-    return condaInRoots
-  }
-
-  LOG.info("System conda executable is not found")
-  return null
 }

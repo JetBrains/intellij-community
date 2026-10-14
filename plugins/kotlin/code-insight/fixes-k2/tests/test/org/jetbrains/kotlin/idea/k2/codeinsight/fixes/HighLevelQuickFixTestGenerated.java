@@ -493,6 +493,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testOperationUnary() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/operationUnary.kt");
             }
+
+            @TestMetadata("typealiasCallableReference.kt")
+            public void testTypealiasCallableReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addExclExclCall/typealiasCallableReference.kt");
+            }
         }
     }
 
@@ -11863,6 +11868,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeCallableReferenceStaticLhsNullableTypeArgument.kt");
             }
 
+            @TestMetadata("removeCallableReferenceStaticLhsNullableTypeArguments.kt")
+            public void testRemoveCallableReferenceStaticLhsNullableTypeArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/nullables/removeCallableReferenceStaticLhsNullableTypeArguments.kt");
+            }
+
             @TestMetadata("removeCallableReferenceStaticLhsNullableWithComment.kt")
             public void testRemoveCallableReferenceStaticLhsNullableWithComment() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeCallableReferenceStaticLhsNullableWithComment.kt");
@@ -17889,6 +17899,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("functionNestedType2.kt")
             public void testFunctionNestedType2() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionNestedType2.kt");
+            }
+
+            @TestMetadata("functionReferenceExtensionReceiver.kt")
+            public void testFunctionReferenceExtensionReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReferenceExtensionReceiver.kt");
             }
 
             @TestMetadata("functionReflectType.kt")

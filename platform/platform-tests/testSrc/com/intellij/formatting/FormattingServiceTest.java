@@ -5,43 +5,84 @@ import com.intellij.formatting.service.AbstractDocumentFormattingService;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.formatting.service.FormattingService;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.formatter.FormatterTestCase;
+import com.intellij.psi.formatter.FormatterTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class FormattingServiceTest extends FormatterTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
+@TestApplication
+public class FormattingServiceTest {
+  private static final String EXTENSION = "txt";
+
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private Project project;
+  private String testName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    project = codeInsightFixture.get().getProject();
+    FormatterTestUtil.assertNoProjectCodeStyle(project);
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().get().getName(), true);
+  }
+
+  @Test
   public void testCustomFormatting() throws Exception {
-    FormattingService.EP_NAME.getPoint().registerExtension(new CustomFormattingService(), getTestRootDisposable());
-    doTest();
+    registerFormattingService(new CustomFormattingService());
+    doTest(null);
   }
 
+  @Test
   public void testCustomRangeFormatting() throws Exception {
-    FormattingService.EP_NAME.getPoint().registerExtension(new CustomFormattingService(), getTestRootDisposable());
-    myTextRange = TextRange.create(6,11);
-    doTest();
+    registerFormattingService(new CustomFormattingService());
+    doTest(TextRange.create(6, 11));
   }
 
+  @Test
   public void testAsyncFormatting() throws Exception {
-    FormattingService.EP_NAME.getPoint().registerExtension(new CustomAsyncFormattingService(), getTestRootDisposable());
-    doTest();
+    registerFormattingService(new CustomAsyncFormattingService());
+    doTest(null);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "../../../platform/platform-tests/testData/codeStyle/formatter/service";
+  private void registerFormattingService(@NotNull FormattingService service) {
+    FormattingService.EP_NAME.getPoint().registerExtension(service, codeInsightFixture.get().getTestRootDisposable());
   }
 
-  @Override
-  protected String getFileExtension() {
-    return "txt";
+  private static String getTestDataDir() {
+    return PathManagerEx.getTestDataPath() + File.separatorChar + "../../../platform/platform-tests/testData/codeStyle/formatter/service";
+  }
+
+  private void doTest(@Nullable TextRange textRange) throws IOException {
+    String testDataDir = getTestDataDir();
+    String text = FormatterTestUtil.loadFile(testDataDir, testName + "." + EXTENSION, null);
+    String textAfter = FormatterTestUtil.loadFile(testDataDir, testName + "_after." + EXTENSION, null);
+    PsiFile file = FormatterTestUtil.createFile(project, "before." + EXTENSION, text);
+    FormatterTestUtil.checkDocument(project, file, text, textAfter, textRange);
   }
 
   private static class CustomFormattingService extends AbstractDocumentFormattingService {

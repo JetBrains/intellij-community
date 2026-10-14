@@ -5,6 +5,7 @@ import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
 import com.intellij.ide.structureView.impl.java.SuperTypesGrouper;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
@@ -65,7 +66,7 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
                       boolean showInterfaces,
                       boolean showProperties) {
     myFixture.configureByText("Test.java", classText);
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
       svc.setActionActive(PropertiesGrouper.ID, showProperties);
       svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);

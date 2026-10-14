@@ -1,0 +1,83 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.markdown.frontend.execution` start
+content_module_jar(module = ":execution")
+### auto-generated section `dev intellij.markdown.frontend.execution` end
+
+### auto-generated section `build intellij.markdown.frontend.execution` start
+jvm_library(
+    name = "execution",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.frontend.execution",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
+    deps = [
+        # do not sort,
+        "//plugins/markdown/core:markdown",
+        "//plugins/markdown/execution",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/project/shared:project",
+        "//platform/platform-impl/rpc",
+        "//fleet/rpc",
+        "//platform/execution",
+        "//platform/statistics",
+    ],
+)
+
+jvm_library(
+    name = "execution_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.frontend.execution",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":execution",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/execution:execution_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/statistics:statistics_test_lib",
+    ],
+)
+### auto-generated section `build intellij.markdown.frontend.execution` end
+
+### auto-generated section `iml intellij.markdown.frontend.execution` start
+exports_files(
+    [
+        "intellij.markdown.frontend.execution.iml",
+        "resources/intellij.markdown.frontend.execution.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.markdown.frontend.execution` end

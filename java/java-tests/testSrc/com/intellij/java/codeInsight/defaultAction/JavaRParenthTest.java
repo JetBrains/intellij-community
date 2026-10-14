@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.defaultAction;
 
 import com.intellij.codeInsight.AbstractBasicJavaRParenthTest;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class JavaRParenthTest extends AbstractBasicJavaRParenthTest {
 }

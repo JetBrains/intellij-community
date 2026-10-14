@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -32,6 +33,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WelcomeScreenCustomization
@@ -50,16 +52,19 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.initOnShow
+import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -108,32 +113,37 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
         checkState()
       }
     })
-    checkState()
+    // the providers of recent projects, for example Toolbox, are queried once the tab is shown: a provider may start its service
+    isPanelEmptyPredicate.set(getCurrentState(includesProviders = false) == PanelState.EMPTY)
   }
 
   override fun buildComponent(): JComponent {
     val recentProjectsCount = RecentProjectListActionProvider.getInstance().countLocalProjects()
-    val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
-    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
 
-    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentProjectsCount == 0)
+    // the promotion is built after the tab is first shown: its promoters initialize their plugins, and the banner renders HTML
+    val isPromoForEmptyState = recentProjectsCount == 0
+    val isPromoVisible = AtomicBooleanProperty(false)
+    lateinit var promoPlaceholder: Placeholder
 
-    return panel {
+    val result = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
           val placeholder = placeholder()
             .align(Align.FILL)
 
-          val recentProjectsPanel = when {
-            isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
-            Registry.`is`("jetbrainsd.new.connection.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
-            else -> createRecentProjectsPanel()
+          // only the panel that is shown is built, the other one is built on the first switch to it
+          val recentProjectsPanel = lazy(LazyThreadSafetyMode.NONE) {
+            when {
+              isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
+              Registry.`is`("jetbrainsd.new.connection.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
+              else -> createRecentProjectsPanel()
+            }
           }
-          val emptyStatePanel = createEmptyStatePanel()
+          val emptyStatePanel = lazy(LazyThreadSafetyMode.NONE) { createEmptyStatePanel() }
           isPanelEmptyPredicate.addListener { isEmpty ->
-            placeholder.component = if (isEmpty) emptyStatePanel else recentProjectsPanel
+            placeholder.component = if (isEmpty) emptyStatePanel.value else recentProjectsPanel.value
           }
-          placeholder.component = if (isPanelEmptyPredicate.invoke()) emptyStatePanel else recentProjectsPanel
+          placeholder.component = if (isPanelEmptyPredicate.invoke()) emptyStatePanel.value else recentProjectsPanel.value
         }.resizableRow()
         row {
           notificationPanel = cell(WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable))
@@ -142,16 +152,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
               putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
             }.component
         }
-        if (promo != null) {
-          row {
-            cell(promo)
-              .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
-              .align(AlignX.FILL)
-              .applyToComponent {
-                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-              }
-          }
-        }
+        // hidden without a promotion, so the other rows keep their layout until it comes
+        row {
+          promoPlaceholder = placeholder()
+            .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+            .align(AlignX.FILL)
+        }.visibleIf(isPromoVisible)
 
         val errorReportAlert = createErrorReportAlert()
         if (errorReportAlert != null) {
@@ -167,6 +173,17 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     }.apply {
       background = WelcomeScreenUIManager.getProjectsBackground()
     }
+    UiNotifyConnector.doWhenFirstShown(result) {
+      checkState()
+      val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
+      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
+
+      val promo = WelcomeScreenComponentFactory.getSinglePromotion(isPromoForEmptyState) ?: return@doWhenFirstShown
+      promo.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+      promoPlaceholder.component = promo
+      isPromoVisible.set(true)
+    }
+    return result
   }
 
   private fun checkState() {
@@ -268,11 +285,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
           return JBUI.insetsBottom(12)
         }
       })
-    val actionsToolbar = createActionsToolbar()
-    actionsToolbar.targetComponent = scrollPane
-    val projectActionsPanel = actionsToolbar.component
     northPanel.add(projectSearch, BorderLayout.CENTER)
-    northPanel.add(projectActionsPanel, BorderLayout.EAST)
+    northPanel.add(createActionsToolbarHolder(scrollPane), BorderLayout.EAST)
     recentProjectsPanel.add(northPanel, BorderLayout.NORTH)
     recentProjectsPanel.add(projectsPanel, BorderLayout.CENTER)
 
@@ -295,12 +309,11 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
       projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", AllIcons.Actions.Search)
     }
 
-    val actionsToolbar = createActionsToolbar()
-    actionsToolbar.targetComponent = treeComponent
+    val actionsToolbarHolder = createActionsToolbarHolder(treeComponent)
 
     return panel {
       row {
-        cell(actionsToolbar.component)
+        cell(actionsToolbarHolder)
       }
       row {
         cell(projectSearch)
@@ -346,8 +359,21 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
       .install()
   }
 
-  private fun createActionsToolbar(): ActionToolbar {
-    val actionManager = ActionManager.getInstance()
+  /**
+   * Returns a panel that gets the toolbar of the project state actions once [ActionManager] is ready.
+   * The welcome frame is built while [ActionManager] may still be loading, and the toolbar needs its action group.
+   */
+  private fun createActionsToolbarHolder(targetComponent: JComponent): JComponent {
+    val holder = Wrapper()
+    ActionManagerEx.withLazyActionManager(scope = null) { actionManager ->
+      val toolbar = createActionsToolbar(actionManager)
+      toolbar.targetComponent = targetComponent
+      holder.setContent(toolbar.component)
+    }
+    return holder
+  }
+
+  private fun createActionsToolbar(actionManager: ActionManager): ActionToolbar {
     val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup
     val toolbarGroup = object : ActionGroupWrapper(baseGroup) {
       val wrappers = ConcurrentHashMap<AnAction, AnAction>()
@@ -424,8 +450,14 @@ private enum class PanelState {
   EMPTY, NOT_EMPTY
 }
 
-private fun getCurrentState(): PanelState {
-  val recentProjects = RecentProjectListActionProvider.getInstance().collectProjects()
+private fun getCurrentState(includesProviders: Boolean = true): PanelState {
+  val recentProjectListActionProvider = RecentProjectListActionProvider.getInstance()
+  val recentProjects = if (includesProviders) {
+    recentProjectListActionProvider.collectProjects()
+  }
+  else {
+    recentProjectListActionProvider.collectLocalProjects()
+  }
   val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   return if (recentProjects.isEmpty() && collectCloneableProjects.isEmpty()) {
     PanelState.EMPTY

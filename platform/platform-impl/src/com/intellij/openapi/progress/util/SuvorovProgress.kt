@@ -193,6 +193,9 @@ object SuvorovProgress {
         else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
       }
     } finally {
+      // paranoia: let's dispatch all accumulated events right here
+      processAllExistingEventsInEternalStealer()
+
       nestingDepth.decrementAndGet()
       enableSuspendedWriteActionsBack()
       counter.incrementAndGet()

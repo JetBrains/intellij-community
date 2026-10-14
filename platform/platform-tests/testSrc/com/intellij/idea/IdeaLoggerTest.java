@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.AsyncLogKt;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -27,6 +28,7 @@ import java.util.logging.LogRecord;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -124,6 +126,24 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
     logger.error(null, new UnhandledException(cause, true));
 
     assertSame("`ourErrorsOccurred` must name the real cause", cause, IdeaLogger.ourErrorsOccurred.getCause());
+  }
+
+  /// IJPL-238686 In production, nothing reads `ourErrorsOccurred`, so the logger must not keep the error there.
+  /// A kept error holds the classes of its stack, for example the classes of an unloaded plugin.
+  @Test
+  public void testErrorsOccurredStaysEmptyInProduction() {
+    Logger logger = getDelegate(new ConcurrentHashMap<>());
+
+    PluginManagerCore.isUnitTestMode = false;
+    try {
+      logger.error("boom", new IllegalStateException("boom"));
+    }
+    finally {
+      PluginManagerCore.isUnitTestMode = true;
+    }
+    AsyncLogKt.awaitLogQueueProcessed();
+
+    assertNull("The logger must keep no error in production", IdeaLogger.ourErrorsOccurred);
   }
 
   /// A wrapper can hold a control-flow exception, and the caller must get that exception back.

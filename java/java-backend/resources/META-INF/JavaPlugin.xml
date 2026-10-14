@@ -1232,7 +1232,7 @@
   </extensions>
 
   <actions>
-    <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+    <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.WelcomeScreenNewProjectAction"/>
 
     <group id="Java.ProjectTemplate.Group" searchable="false">
       <separator/>

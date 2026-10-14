@@ -1,0 +1,9 @@
+open class Base {
+    // INFO: {"checked": "true"}
+    fun use(value: Child.Nested): Child.Nested = value
+}
+
+class Child : Base() {
+    class Nested
+
+}

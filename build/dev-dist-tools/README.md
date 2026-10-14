@@ -8,12 +8,12 @@ serves the edit-test loop and rust-analyzer.
 The ultimate tools `dev-dist` and `content-report` are a second workspace, `build/dev-dist-tools` in the ultimate root.
 They use the crates of this workspace through path dependencies.
 
-The contracts are in the specs under `build/spec/` of the ultimate root. The guide
-[`dev-build-architecture.md`](../../../build/dev-build-architecture.md) names each tool by its Bazel label.
-[ADR 0020](../../../build/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
-[ADR 0043](../../../build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) records the crate rule
+The contracts are in the specs under `build/spec/` of the ultimate root. The explainer
+[`from-an-iml-to-a-dist.md`](../../../build/docs/explainers/from-an-iml-to-a-dist.md#where-the-code-goes) names each tool by its Bazel label.
+[ADR 0020](../../../build/docs/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
+[ADR 0043](../../../build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) records the crate rule
 and the closure test.
-[ADR 0027](../../../build/decisions/0027-four-jvm-tools-stay-on-the-distribution-path.md) lists the JVM tools that a
+[ADR 0027](../../../build/docs/decisions/0027-four-jvm-tools-stay-on-the-distribution-path.md) lists the JVM tools that a
 distribution still runs. They are not in this workspace.
 
 ## The crate map
@@ -26,7 +26,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dev-dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector and the composer: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
-| `crates/dev-launch` | The `java` command line of a dev distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The argument file writer and the guest agent of `community/tools/vm` link it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dev-dist-tools/crates/dev-launch:dev-launch_test` |
+| `crates/dev-launch` | The `java` command line of a dev distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The guest agent of `community/tools/vm` links it, and no Bazel action runs it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dev-dist-tools/crates/dev-launch:dev-launch_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
@@ -40,7 +40,6 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/content-module-packer` | The packer and the inventory of each packed jar. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
 | `bins/dev-dist-collector` | The collector: the inventory of a component and the plugin classpath record. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
 | `bins/dev-dist-composer` | The composer: the composition spec, the composition and its copy step, and the local layout writer. It also writes the plugin classpath file and the fingerprint. It checks the home placement. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
-| `bins/dev-launch-args` | The `jvm-args` command, which writes the argument file of an `intellij_dev_java_launcher` target through `crates/dev-launch`. | `@community//build/dev-dist-tools/bins/dev-launch-args:dev-launch-args_test` |
 | `bins/plugin-descriptor-writer` | The descriptor writer. | `@community//build/dev-dist-tools/bins/plugin-descriptor-writer:plugin-descriptor-writer_test` and `:descriptor_rule_tests` |
 | `bins/plugin-remainder-packer` | The remainder packer. | `@community//build/dev-dist-tools/bins/plugin-remainder-packer:plugin-remainder-packer_test` and `:plugin-remainder-packer_cli_test` |
 | `bins/product-files` | The tool of `dev_dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |
@@ -85,8 +84,8 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
 - `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`, and
   `replay` runs `bins/content-module-packer:content-module-packer_opt`. The unit test of each binary stays on the
   `rust_binary`.
-- A target runs no tool at start. Its argument file action runs `bins/dev-launch-args jvm-args` at build time, and on
-  macOS and Linux the target executable is a link to `java`. On Windows the executable is a `.cmd` stub that starts `java.exe`.
+- A launch target runs no tool of this workspace at start. Its executable is a stub that starts the native launcher of
+  the distribution.
 
 ### The Windows gate
 

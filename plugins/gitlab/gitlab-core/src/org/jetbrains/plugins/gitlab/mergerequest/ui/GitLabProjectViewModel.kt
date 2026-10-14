@@ -12,11 +12,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -130,13 +133,26 @@ class GitLabProjectViewModel(
    * The [selectorVm] heuristics need exactly one known project and account, and a new merge request worktree can have more.
    * [action] always runs against the view model for [preferredProjectAndAccount].
    * When no mapping for the project appears within [mappingTimeout], [action] does not run.
+   * When the connection closes or changes before its view model appears, [action] does not run.
    */
   internal fun activateAndAwaitProject(
     preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>? = null,
     mappingTimeout: Duration = PREFERRED_PROJECT_MAPPING_TIMEOUT,
     action: GitLabConnectedProjectViewModel.() -> Unit,
   ) {
-    cs.launch {
+    doActivateAndAwaitProject(preferredProjectAndAccount, mappingTimeout, action)
+  }
+
+  /**
+   * Does the same as [activateAndAwaitProject] and returns the job of the activation.
+   */
+  @VisibleForTesting
+  internal fun doActivateAndAwaitProject(
+    preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>? = null,
+    mappingTimeout: Duration = PREFERRED_PROJECT_MAPPING_TIMEOUT,
+    action: GitLabConnectedProjectViewModel.() -> Unit,
+  ): Job {
+    return cs.launch {
       _activationRequests.emit(Unit)
       if (preferredProjectAndAccount == null) {
         connectedProjectVm.filterNotNull().first().action()
@@ -154,7 +170,11 @@ class GitLabProjectViewModel(
         return@launch
       }
       val connection = connect(mapping, account) ?: return@launch
-      connectedProjectVm.filterNotNull().first { it.connectionId == connection.id }.action()
+      val (currentConnection, vm) = combine(connectionManager.connectionState, connectedProjectVm, ::Pair)
+        .first { (currentConnection, vm) -> currentConnection !== connection || vm?.connectionId == connection.id }
+      if (currentConnection === connection) {
+        vm?.action()
+      }
     }
   }
 

@@ -186,6 +186,22 @@ impl fmt::Display for MeasureModel {
     }
 }
 
+/// The commit of the bytes that a session over the staged generation `digest` measures: the commit that its stage
+/// recorded, not the commit of the checkout of the controller. A generation from before that record names none, so the
+/// session names no commit, and the second half of the answer is the warning that says so.
+pub(crate) fn staged_commit(digest: &str, recorded: Option<GitInfo>) -> (GitInfo, Option<String>) {
+    match recorded {
+        Some(git) => (git, None),
+        None => (
+            GitInfo::default(),
+            Some(format!(
+                "the generation {} was staged before its record named a commit, so the session names none",
+                digest.chars().take(12).collect::<String>()
+            )),
+        ),
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct GitInfo {
     pub(crate) commit: String,

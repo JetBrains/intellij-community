@@ -2,23 +2,16 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
-    <module name="fleet.rhizomedb.transactor"/>
-    <module name="fleet.rhizomedb.transactor.rebase"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.kernel"/>
-    <module name="intellij.platform.productMode"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
-                        serviceImplementation="com.intellij.platform.project.ProjectEntitiesStorageImpl"/>
-    <platform.entityTypes implementation="com.intellij.platform.project.ProjectEntitiesProvider"/>
     <postStartupActivity implementation="com.intellij.platform.project.module.ModuleStateInitializer"/>
   </extensions>
 </idea-plugin>

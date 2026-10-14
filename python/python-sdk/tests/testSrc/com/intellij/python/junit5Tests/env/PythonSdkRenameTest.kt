@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -35,10 +35,10 @@ class PythonSdkRenameTest {
   private val pyProjectBFixture = projectFixture.pyProjectFixture(tempPathFixture())
 
   // A venv registered in the project JDK table but not associated with any module; each test wires up the references it needs.
-  private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = tempPathFixture())
+  private val venvFixture = pyEnvironmentFixture().pyVenvFixture(where = tempPathFixture(), pyProjectAFixture)
 
   // A second, independent venv used to check renaming onto an already used name.
-  private val secondVenvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = tempPathFixture())
+  private val secondVenvFixture = pyEnvironmentFixture().pyVenvFixture(where = tempPathFixture(), pyProjectAFixture)
 
   @Test
   fun renameUpdatesProjectSdkReference(): Unit = runBlocking {

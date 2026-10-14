@@ -16,10 +16,10 @@ use crate::properties::{
 
 /// The class path separator of the JVM on the host.
 #[cfg(windows)]
-pub const PATH_LIST_SEPARATOR: &str = ";";
+const PATH_LIST_SEPARATOR: &str = ";";
 /// The class path separator of the JVM on the host.
 #[cfg(not(windows))]
-pub const PATH_LIST_SEPARATOR: &str = ":";
+const PATH_LIST_SEPARATOR: &str = ":";
 
 /// What a distribution adds to the command line of `java`.
 pub struct Distribution {
@@ -44,7 +44,7 @@ pub struct DistributionFiles<'a> {
     pub idea_properties: &'a Path,
     /// The vmoptions file of the OS.
     pub vm_options: &'a Path,
-    /// `bin/product-info.json`.
+    /// `product-info.json`.
     pub product_info: &'a Path,
     /// `core-classpath.txt`. A relative line is relative to the home.
     pub core_classpath: &'a Path,

@@ -39,11 +39,17 @@ private val ROW_FIELD_PROPERTIES = setOf(
 )
 
 /**
- * The data directories of the IDE, which the launcher owns: `_runtime_jvm_flags` in `community/build/intellij_dev.bzl`
+ * The data directories of the IDE, which the launcher owns: `dev_launch_jvm_flags` in `community/build/intellij_dev.bzl`
  * gives every row its own directories under `out/dev-data/<row>` and refuses a row that states one. `idea.plugins.path`
  * stays in the flags, because a row may load its plugins from a directory of its own.
  */
 private val LAUNCHER_DATA_PROPERTIES = setOf("idea.config.path", "idea.system.path", "idea.log.path")
+
+/**
+ * The property that makes `DevMainImpl` select the custom command of the first program argument. A launch target starts
+ * the native launcher, which selects the command from that argument itself. So the property leaves the flags of a row.
+ */
+private const val CUSTOM_COMMAND_PROPERTY = "idea.dev.mode.custom.command"
 
 private const val PROJECT_DIR_MACRO = "\$PROJECT_DIR\$"
 
@@ -83,8 +89,8 @@ internal const val UNPLANNABLE_NO_PLUGIN_DESCRIPTOR = "no plugin descriptor"
  * [name] is the sanitized configuration name and the launcher `//build:<name>`. [product] is the `build/dev-build.json`
  * key: the base prefix plus the platform prefix when `dev.build.base.ide.platform.prefix.for.frontend` is set, else the
  * platform prefix. [additionalModules] is sorted and distinct. [jvmFlags] is sorted and holds every flag except the
- * properties the row states as fields, the two product selectors, which [product] replaces, and the data directories
- * the launcher owns ([LAUNCHER_DATA_PROPERTIES]). An
+ * properties the row states as fields, the two product selectors, which [product] replaces, the data directories
+ * the launcher owns ([LAUNCHER_DATA_PROPERTIES]) and the custom command property ([CUSTOM_COMMAND_PROPERTY]). An
  * environment variable that names `$PROJECT_DIR$` becomes a `-D` property there, because the Bazel `env` of a launcher
  * cannot name the workspace. `$PROJECT_DIR$` is the workspace root, as it is for the IDE. A workspace-relative path
  * value of a property becomes an absolute path, see [workspacePathValue]. [env] holds every other
@@ -180,7 +186,7 @@ private fun devRunConfigurationRow(
     ?.takeIf { it.startsWith("$PROJECT_DIR_MACRO/out/") }
   val flagProperties = properties
     .filterKeys { key ->
-      key !in ROW_FIELD_PROPERTIES && key !in fieldProperties && key !in LAUNCHER_DATA_PROPERTIES &&
+      key !in ROW_FIELD_PROPERTIES && key !in fieldProperties && key !in LAUNCHER_DATA_PROPERTIES && key != CUSTOM_COMMAND_PROPERTY &&
       (repositoryPath == null || key != RUNTIME_MODULE_REPOSITORY_PATH_PROPERTY)
     }
     .mapValues { workspacePathValue(it.value, projectDir) }

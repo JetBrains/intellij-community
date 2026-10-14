@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -47,6 +47,7 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -83,11 +84,14 @@ final class ToolWindowsWidget implements CustomStatusBarWidget, Disposable, UISe
     return result;
   });
 
-    IdeEventQueue.getInstance().addDispatcher(e -> {
-      if (e instanceof MouseEvent) {
-        dispatchMouseEvent((MouseEvent)e);
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.NonLockedEventDispatcher() {
+      @Override
+      public boolean dispatch(@NotNull AWTEvent e) {
+        if (e instanceof MouseEvent) {
+          dispatchMouseEvent((MouseEvent)e);
+        }
+        return false;
       }
-      return false;
     }, parent);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);

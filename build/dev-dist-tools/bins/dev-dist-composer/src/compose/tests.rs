@@ -420,3 +420,128 @@ fn absolute_keys_join_the_working_directory_and_refuse_a_collision() {
 fn distinct_keeps_the_first_occurrence() {
     assert_eq!(distinct(["b", "a", "b"]), ["b", "a"]);
 }
+
+/// A full distribution with a packed `lib/` component and a component that places `product-info.json` at `place`. The
+/// copy step writes `product_info` there, as the real copy writes the rendered file.
+fn compose_with_product_info(place: &str, product_info: &serde_json::Value, options: &ComposeOptions) -> Result<ComposedBuild> {
+    let directory = TempDir::new();
+    let mut jars = test_manifest("platform_jars");
+    jars.main_class = None;
+    jars.core_class_path = ["lib/app.jar", "lib/nio-fs.jar", "lib/platform-loader.jar"]
+        .map(String::from)
+        .to_vec();
+    jars.entries = ["lib/app.jar", "lib/nio-fs.jar", "lib/platform-loader.jar"]
+        .map(file_entry)
+        .to_vec();
+    let resources = with_entries(test_manifest("platform_resources"), vec![file_entry(place)]);
+    let components = [DevBuildComponent::new(jars), DevBuildComponent::new(resources)];
+    let text = product_info.to_string();
+    let target = directory.path().join("target");
+    let place = place.to_owned();
+    compose_with_merge(&components, &target, options, move |_, target| {
+        write_file(target.join(&place), &text);
+        Ok(())
+    })
+}
+
+fn product_info(main_class: &str, boot_class_path: &[&str], arguments: &[&str]) -> serde_json::Value {
+    serde_json::json!({
+        "name": "IntelliJ IDEA",
+        "launch": [{
+            "os": "macOS",
+            "mainClass": main_class,
+            "bootClassPathJarNames": boot_class_path,
+            "additionalJvmArguments": arguments,
+        }],
+    })
+}
+
+const NIO_FS_BOOT: &str = "-Xbootclasspath/a:$APP_PACKAGE/Contents/lib/nio-fs.jar";
+
+#[test]
+fn the_launch_names_the_core_classpath_without_the_boot_jar() {
+    let options = ComposeOptions::default();
+    // The order does not matter, and `nio-fs.jar` is on `-Xbootclasspath/a:`.
+    let info = product_info("com.intellij.idea.Main", &["platform-loader.jar", "app.jar"], &[NIO_FS_BOOT]);
+    compose_with_product_info("Resources/product-info.json", &info, &options).unwrap();
+    let info = product_info("com.intellij.idea.Main", &["app.jar", "platform-loader.jar"], &[NIO_FS_BOOT]);
+    compose_with_product_info("product-info.json", &info, &options).unwrap();
+    // Without the multi-routing file system the launch names `nio-fs.jar` too. A Windows path names the jar as well.
+    let info = product_info("com.intellij.idea.Main", &["platform-loader.jar", "app.jar", "nio-fs.jar"], &[]);
+    compose_with_product_info("product-info.json", &info, &options).unwrap();
+    let windows = r"-Xbootclasspath/a:%IDE_HOME%\lib\x.jar;%IDE_HOME%\lib\nio-fs.jar";
+    let info = product_info("com.intellij.idea.Main", &["platform-loader.jar", "app.jar"], &[windows]);
+    compose_with_product_info("product-info.json", &info, &options).unwrap();
+}
+
+#[test]
+fn the_launch_of_a_full_distribution_must_name_the_core_classpath() {
+    let options = ComposeOptions::default();
+    for (boot_class_path, arguments, message) in [
+        (
+            &["platform-loader.jar"][..],
+            &[NIO_FS_BOOT][..],
+            r#"missing: ["app.jar"]; not on the core classpath: []"#,
+        ),
+        (
+            &["platform-loader.jar", "app.jar"][..],
+            &[][..],
+            r#"missing: ["nio-fs.jar"]; not on the core classpath: []"#,
+        ),
+        (
+            &["platform-loader.jar", "app.jar", "nio-fs.jar", "../plugins/x/lib/x.jar"][..],
+            &[NIO_FS_BOOT][..],
+            r#"missing: []; not on the core classpath: ["../plugins/x/lib/x.jar", "nio-fs.jar"]"#,
+        ),
+    ] {
+        let info = product_info("com.intellij.idea.Main", boot_class_path, arguments);
+        require_error(
+            compose_with_product_info("Resources/product-info.json", &info, &options),
+            &format!("Resources/product-info.json: the bootClassPathJarNames of the main launch differ from the core classpath; {message}"),
+        );
+    }
+}
+
+#[test]
+fn a_modular_loader_launch_names_the_platform_loader_alone() {
+    let options = ComposeOptions::default();
+    let loader = "com.intellij.platform.runtime.loader.IntellijLoader";
+    compose_with_product_info("product-info.json", &product_info(loader, &["platform-loader.jar"], &[]), &options).unwrap();
+    require_error(
+        compose_with_product_info(
+            "product-info.json",
+            &product_info(loader, &["platform-loader.jar", "app.jar"], &[]),
+            &options,
+        ),
+        r#"product-info.json: the main launch starts the modular loader, so its bootClassPathJarNames must be [platform-loader.jar], not ["platform-loader.jar", "app.jar"]"#,
+    );
+}
+
+#[test]
+fn only_the_production_places_of_product_info_are_checked() {
+    // A legacy `bin/product-info.json` is not a production place, and launch metadata copies no file.
+    let info = product_info("com.intellij.idea.Main", &["platform-loader.jar"], &[]);
+    compose_with_product_info("bin/product-info.json", &info, &ComposeOptions::default()).unwrap();
+    // The rendered file is absent, so a read would fail.
+    let directory = TempDir::new();
+    let source = directory.join("absent-product-info.json");
+    let resources = with_entries(
+        test_manifest("platform_resources"),
+        vec![sourced_entry("product-info.json", &source)],
+    );
+    let local = ComposeOptions {
+        source_runfiles: Some(runfiles(&[(&source, "_main/product-info.json")])),
+        ..ComposeOptions::default()
+    };
+    compose_with_merge(
+        &[DevBuildComponent::new(resources)],
+        &directory.path().join("metadata"),
+        &local,
+        no_merge,
+    )
+    .unwrap();
+    require_error(
+        compose_with_product_info("product-info.json", &serde_json::json!({"launch": []}), &ComposeOptions::default()),
+        "product-info.json states no launch",
+    );
+}

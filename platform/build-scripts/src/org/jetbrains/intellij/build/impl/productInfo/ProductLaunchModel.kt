@@ -37,17 +37,20 @@ import java.nio.file.Files
 
 /**
  * The launch facts of one product: what `build.txt`, `bin/idea.properties`, the vmoptions file and
- * `bin/product-info.json` of a distribution state, for every OS and architecture.
+ * `product-info.json` of a distribution state, for every OS and architecture.
  *
  * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
- * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and
- * architecture from it. They must be the files that the production writers write, byte for byte.
+ * model of each split product as JSON, and the tool `product-files` renders the files of one OS and architecture from
+ * it. A product with an embedded frontend has a fifth file, the vmoptions file of the frontend. The files must be the
+ * files that the production writers write, byte for byte.
  *
  * The model states each product fact once. It states no value that the version, the suffix, the release date, the EAP flag
  * or the build number decide. It keeps the product code, the environment variable name and the data directory base name.
  * The tool appends the version to the base name, and it reads the vendor from the application info. The tool reads the
  * application info sources and `build.txt` for the names, the version, the suffix, the icon, the release date, the EAP
  * flag, the build number and the Linux window class. It reads the common vmoptions lines from `bin/common.vmoptions`.
+ * It reads the core classpath of the distribution for the boot class path of a classic-loader launch, see
+ * [ProductLaunchCommand.bootClassPathJarNames].
  */
 @ApiStatus.Internal
 @Serializable
@@ -72,6 +75,15 @@ data class ProductLaunchModel(
   @JvmField val frontendJvmArguments: ProductJvmArguments? = null,
   @JvmField val customCommands: List<ProductLaunchCustomCommand> = emptyList(),
   @JvmField val vmOptions: ProductVmOptions,
+  /**
+   * The vmoptions file of the embedded frontend, or `null` without one. The `thinClient` command names the file, see
+   * [frontendVmOptionsFileName].
+   *
+   * It mirrors [org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.writeEmbeddedFrontendVmOptions]. That
+   * writer calls `generateVmOptions` over the context of the embedded frontend. The tool inserts the EAP line by the EAP
+   * flag of the product. [computeProductLaunchModel] checks that the frontend has the same flag.
+   */
+  @JvmField val frontendVmOptions: ProductVmOptions? = null,
   @JvmField val ideaProperties: ProductLaunchIdeaProperties,
 )
 
@@ -102,7 +114,15 @@ data class ProductLaunchProperty(@JvmField val key: String, @JvmField val value:
 @Serializable
 data class ProductLaunchCommand(
   @JvmField val mainClass: String,
-  @JvmField val bootClassPathJarNames: List<String> = listOf(PLATFORM_LOADER_JAR),
+  /**
+   * The boot class path of a modular-loader launch, which is [PLATFORM_LOADER_JAR] alone. `null` states a classic-loader
+   * launch.
+   *
+   * The boot class path of a classic-loader launch is the core classpath of the distribution, as `generateCoreClassPath`
+   * of `DistributionJARsBuilder.kt` derives it. The model does not copy that list. The tool reads the core classpath
+   * of the distribution and applies [org.jetbrains.intellij.build.classPath.launchBootClassPathJarNames].
+   */
+  @JvmField val bootClassPathJarNames: List<String>? = null,
   @JvmField val jvmArguments: ProductJvmArguments,
   @JvmField val stdioRedirectArg: String? = null,
 )
@@ -120,7 +140,13 @@ data class ProductLaunchCustomCommand(
   @JvmField val commands: List<String>,
   /** The vmoptions file of the command, keyed by [OsFamily.osName]. A command with no entry names none. */
   @JvmField val vmOptionsFilePath: Map<String, String> = emptyMap(),
+  /** The own boot class path of the command, such as the one of a frontend command. */
   @JvmField val bootClassPathJarNames: List<String> = emptyList(),
+  /**
+   * The jars that the command adds after the boot class path of [ProductLaunchModel.launch]. A command states this list
+   * or [bootClassPathJarNames], not both.
+   */
+  @JvmField val additionalBootClassPathJarNames: List<String> = emptyList(),
   @JvmField val jvmArguments: JvmArgumentsRef? = null,
   /** Renders [jvmArguments] the way Qodana starts: without the multi-routing file system. */
   @JvmField val qodana: Boolean = false,
@@ -200,7 +226,6 @@ class ProductLaunchInputs(
   @JvmField val useModularLoader: Boolean,
   /** `BuildContext.generateRuntimeModuleRepository`. */
   @JvmField val generateRuntimeModuleRepository: Boolean,
-  @JvmField val bootClassPathJarNames: List<String>,
   /** Loads the application info of another product, for [ProductProperties.getAdditionalContextDependentIdeJvmArguments]. */
   @JvmField val applicationInfoOf: (ProductProperties) -> ApplicationInfoProperties,
 ) {
@@ -211,6 +236,13 @@ class ProductLaunchInputs(
 
   val mainClass: String
     get() = if (useModularLoader) MODULAR_LOADER_MAIN_CLASS else properties.mainClassName
+
+  /**
+   * The boot class path of a modular-loader launch, or `null` for a classic-loader launch. `generateCoreClassPath` of
+   * `DistributionJARsBuilder.kt` has the same rule.
+   */
+  val modularLoaderBootClassPathJarNames: List<String>?
+    get() = if (useModularLoader) listOf(PLATFORM_LOADER_JAR) else null
 }
 
 /** `BuildContext.isLanguageServer`. */
@@ -232,7 +264,8 @@ private const val FRONTEND_MAC_ICON_JVM_ARGUMENT = $$"-Dapple.awt.application.ic
  * Derives the launch model of [product] from what a build context of it would read.
  *
  * [embeddedFrontend] is the frontend the product embeds, or `null`. [minRequiredJavaVersion] is the language level of
- * the project, and [bundledRuntimeBuild] the `runtimeBuild` of the dependencies.
+ * the project, and [bundledRuntimeBuild] the `runtimeBuild` of the dependencies. [pluginRepositoryVmOptions] and
+ * [frontendPluginRepositoryVmOptions] are the custom plugin repository lines of the product and of the frontend.
  */
 @ApiStatus.Internal
 fun computeProductLaunchModel(
@@ -241,6 +274,7 @@ fun computeProductLaunchModel(
   minRequiredJavaVersion: Int,
   bundledRuntimeBuild: String,
   pluginRepositoryVmOptions: List<String> = emptyList(),
+  frontendPluginRepositoryVmOptions: List<String> = emptyList(),
 ): ProductLaunchModel {
   val properties = product.properties
   val applicationInfo = product.applicationInfo
@@ -258,6 +292,10 @@ fun computeProductLaunchModel(
   }
 
   fun frontendCommand(commands: List<String>, frontend: ProductLaunchInputs, extraJvmArguments: List<String>): ProductLaunchCustomCommand {
+    val frontendBootClassPathJarNames = checkNotNull(frontend.modularLoaderBootClassPathJarNames) {
+      "The frontend ${frontend.properties.platformPrefix} does not start through the modular loader. The model states the boot " +
+      "class path of a frontend command, and only a modular-loader launch has a fixed one."
+    }
     check(frontend.systemSelector == product.systemSelector) {
       "The frontend ${frontend.properties.platformPrefix} has the system selector ${frontend.systemSelector}, but the product " +
       "has ${product.systemSelector}. The tool renders the data directory name of the product for a frontend command."
@@ -271,7 +309,7 @@ fun computeProductLaunchModel(
       vmOptionsFilePath = OsFamily.ALL.associate { os ->
         os.osName to vmOptionsFilePath(os, frontend.properties.baseFileName, frontend.isLanguageServer, hostLanguageServer = product.isLanguageServer)
       },
-      bootClassPathJarNames = frontend.bootClassPathJarNames,
+      bootClassPathJarNames = frontendBootClassPathJarNames,
       jvmArguments = JvmArgumentsRef.FRONTEND,
       macJvmArguments = if (frontendMacIcon) listOf(FRONTEND_MAC_ICON_JVM_ARGUMENT) else emptyList(),
       extraJvmArguments = extraJvmArguments,
@@ -297,7 +335,7 @@ fun computeProductLaunchModel(
     properties.qodanaProductProperties?.let { qodana ->
       add(ProductLaunchCustomCommand(
         commands = listOf("qodana"),
-        bootClassPathJarNames = product.bootClassPathJarNames + PLATFORM_CORE_NIO_FS,
+        additionalBootClassPathJarNames = listOf(PLATFORM_CORE_NIO_FS),
         jvmArguments = JvmArgumentsRef.LAUNCH,
         qodana = true,
         extraJvmArguments = qodana.getAdditionalVmOptions(BUILD_NUMBER_TOKEN),
@@ -306,7 +344,7 @@ fun computeProductLaunchModel(
     add(ProductLaunchCustomCommand(
       commands = listOf(STDIO_MCP_RUNNER_COMMAND),
       vmOptionsFilePath = OsFamily.ALL.associate { it.osName to stdioMcpRunnerVmOptionsFilePath(it) },
-      bootClassPathJarNames = product.bootClassPathJarNames + STDIO_MCP_RUNNER_BOOT_CLASS_PATH_JAR_NAMES,
+      additionalBootClassPathJarNames = STDIO_MCP_RUNNER_BOOT_CLASS_PATH_JAR_NAMES,
       mainClass = STDIO_MCP_RUNNER_MAIN_CLASS,
     ))
   }
@@ -323,26 +361,45 @@ fun computeProductLaunchModel(
     languageServer = product.isLanguageServer,
     launch = ProductLaunchCommand(
       mainClass = product.mainClass,
-      bootClassPathJarNames = product.bootClassPathJarNames,
+      bootClassPathJarNames = product.modularLoaderBootClassPathJarNames,
       jvmArguments = jvmArguments,
       stdioRedirectArg = properties.stdioRedirectArg,
     ),
     frontendJvmArguments = ijLightFrontend?.let { productJvmArguments(it, bundledRuntimeVersion) },
     customCommands = customCommands,
-    vmOptions = ProductVmOptions(
-      memory = memoryVmOptions(properties.customJvmMemoryOptions),
-      product = buildList {
-        addAll(multiRoutingFileSystemVmOptions(properties.platformPrefix))
-        addAll(properties.additionalVmOptions)
-        addAll(pluginRepositoryVmOptions)
-      },
-      os = OsFamily.ALL.associate { it.osName to osVmOptions(it, properties.platformPrefix) }.filterValues { it.isNotEmpty() },
-    ),
+    vmOptions = productVmOptions(properties, pluginRepositoryVmOptions),
+    frontendVmOptions = embeddedFrontend?.let { frontend ->
+      check(!frontend.isLanguageServer) {
+        "The embedded frontend ${frontend.properties.platformPrefix} is a language server. The tool applies the headless rule to " +
+        "the vmoptions file of the product only."
+      }
+      check(frontend.applicationInfo.isEAP == applicationInfo.isEAP) {
+        "The embedded frontend ${frontend.properties.platformPrefix} has the EAP flag ${frontend.applicationInfo.isEAP}, but the " +
+        "product has ${applicationInfo.isEAP}. The tool inserts the EAP line of the frontend vmoptions file by the flag of the product."
+      }
+      productVmOptions(frontend.properties, frontendPluginRepositoryVmOptions)
+    },
     ideaProperties = ProductLaunchIdeaProperties(
       languageServerBase = product.isLanguageServer,
       additions = properties.additionalIDEPropertiesFilePaths.map { Files.readString(it) },
       fatalErrorNotification = !product.isLanguageServer,
     ),
+  )
+}
+
+/**
+ * The parts of the vmoptions file that `generateVmOptions` writes for [properties] on each OS, with
+ * [pluginRepositoryVmOptions] after the additional lines of the product.
+ */
+private fun productVmOptions(properties: ProductProperties, pluginRepositoryVmOptions: List<String>): ProductVmOptions {
+  return ProductVmOptions(
+    memory = memoryVmOptions(properties.customJvmMemoryOptions),
+    product = buildList {
+      addAll(multiRoutingFileSystemVmOptions(properties.platformPrefix))
+      addAll(properties.additionalVmOptions)
+      addAll(pluginRepositoryVmOptions)
+    },
+    os = OsFamily.ALL.associate { it.osName to osVmOptions(it, properties.platformPrefix) }.filterValues { it.isNotEmpty() },
   )
 }
 
@@ -388,7 +445,6 @@ fun computeDevProductLaunchModel(properties: ProductProperties, outputProvider: 
       bundledPluginModules = getBundledPluginModules(productProperties, outputProvider),
       useModularLoader = productProperties.rootModuleForModularLoader != null,
       generateRuntimeModuleRepository = generateRuntimeModuleRepository,
-      bootClassPathJarNames = listOf(PLATFORM_LOADER_JAR),
       applicationInfoOf = applicationInfoOf,
     )
   }
@@ -428,6 +484,29 @@ internal fun vmOptionsFilePath(os: OsFamily, baseFileName: String, languageServe
 /** The name of the vmoptions file in `bin` of the distribution of [os]. */
 @ApiStatus.Internal
 fun ProductLaunchModel.vmOptionsFileName(os: OsFamily): String = vmOptionsFileName(os, baseFileName, languageServer)
+
+/**
+ * The name of the vmoptions file of the embedded frontend in `bin` of the distribution of [os], or `null` when the
+ * model states no [ProductLaunchModel.frontendVmOptions].
+ *
+ * The `thinClient` command states the path of the file relative to `product-info.json`. The name is the last part of
+ * that path. The function fails when the path does not lead to `bin`.
+ */
+@ApiStatus.Internal
+fun ProductLaunchModel.frontendVmOptionsFileName(os: OsFamily): String? {
+  if (frontendVmOptions == null) {
+    return null
+  }
+  val command = EMBEDDED_FRONTEND_COMMANDS.first()
+  val path = checkNotNull(customCommands.singleOrNull { command in it.commands }?.vmOptionsFilePath?.get(os.osName)) {
+    "The model states frontendVmOptions, but no $command command names a vmoptions file for ${os.osName}"
+  }
+  val name = path.substringAfterLast('/')
+  check(path == "bin/$name" || path == "../bin/$name") {
+    "The $command command names the vmoptions file $path for ${os.osName}, which is not a file of bin"
+  }
+  return name
+}
 
 /** The vmoptions file of a launch, as the distribution holds it. */
 internal fun vmOptionsFileName(os: OsFamily, baseFileName: String, languageServer: Boolean): String {
