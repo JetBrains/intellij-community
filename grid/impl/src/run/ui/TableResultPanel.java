@@ -24,6 +24,7 @@ import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSortingModel;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.GridUtilCore;
+import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
@@ -251,6 +252,8 @@ public class TableResultPanel extends UserDataHolderBase
   private final GridColumnDisplayOrder myColumnsDisplayOrder = new GridColumnDisplayOrder();
   private boolean mySavedColumnsOrderPendingRestore;
   private boolean myApplyingColumnsDisplayOrder;
+  /** Set during {@link #resetFiltersAndLoad}, so that a column replacement resets visibility. */
+  private boolean myVisibilityResetPending;
   private final CachedValue<Map<ModelIndex<GridColumn>, DatabaseDisplayObjectFormatterConfig>> myFormatterConfigCached;
 
   public TableResultPanel(@NotNull Project project,
@@ -579,6 +582,10 @@ public class TableResultPanel extends UserDataHolderBase
   public void columnsAdded(ModelIndexSet<GridColumn> columnIndices) {
     List<GridColumn> columns = getDataModel(DATA_WITH_MUTATIONS).getColumns();
     myColumnAttributes.newColumns(this, columns);
+    if (myVisibilityResetPending) {
+      myVisibilityResetPending = false;
+      myColumnAttributes.resetVisibility();
+    }
     myColumnWidthState.retain(columns);
     setOrderingFromModel();
     myResultView.columnsAdded(columnIndices);
@@ -2337,6 +2344,29 @@ public class TableResultPanel extends UserDataHolderBase
     resetOrderingAndVisibility();
   }
 
+  /**
+   * A flat table keeps hidden columns out of its layout,
+   * so visibility is reset only when the load replaces the columns.
+   */
+  @Override
+  public void resetFiltersAndLoad(@NotNull Runnable load) {
+    if (!(myResultView instanceof TableResultView view) || view.isTransposed() ||
+        getDataModel(DataAccessType.DATABASE_DATA) instanceof HierarchicalColumnsDataGridModel) {
+      resetFilters();
+      load.run();
+      return;
+    }
+    setFilterText("", -1);
+    resetOrdering();
+    myVisibilityResetPending = true;
+    try {
+      load.run();
+    }
+    finally {
+      myVisibilityResetPending = false;
+    }
+  }
+
   @Override
   public void resetView() {
     boolean shouldClearPendingChanges = hasPendingMutations();
@@ -2413,8 +2443,12 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   private void resetOrderingAndVisibility() {
-    myColumnAttributes.resetOrdering();
     myColumnAttributes.resetVisibility();
+    resetOrdering();
+  }
+
+  private void resetOrdering() {
+    myColumnAttributes.resetOrdering();
     cancelPendingColumnsOrderRestore();
     myColumnsDisplayOrder.reset();
     updateSortKeysFromColumnAttributes();
