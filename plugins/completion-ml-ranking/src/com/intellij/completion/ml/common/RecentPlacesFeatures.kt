@@ -12,7 +12,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
+import com.intellij.openapi.fileEditor.ex.PlaceInfo
+import com.intellij.openapi.fileEditor.ex.RecentPlacesListener
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -47,20 +48,20 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     }
   }
 
-  internal class StoreRecentPlacesListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
+  internal class StoreRecentPlacesListener(private val project: Project) : RecentPlacesListener {
     private val recentPlacesStorage = project.service<RecentPlacesStorage>()
 
-    override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
-      if (ApplicationManager.getApplication().isUnitTestMode || !changePlace.file.isValid || changePlace.file.isDirectory) {
+    override fun recentPlaceAdded(place: PlaceInfo, isChanged: Boolean, groupId: Any?) {
+      if (ApplicationManager.getApplication().isUnitTestMode || !place.file.isValid || place.file.isDirectory) {
         return
       }
 
-      val offset = changePlace.caretPosition?.startOffset ?: return
+      val offset = place.caretPosition?.startOffset ?: return
 
       @Suppress("IncorrectParentDisposable")
       ReadAction
         .nonBlocking<Pair<String, List<String>>?> {
-          val provider = PsiManager.getInstance(project).findViewProvider(changePlace.file) ?: return@nonBlocking null
+          val provider = PsiManager.getInstance(project).findViewProvider(place.file) ?: return@nonBlocking null
           val namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(provider.baseLanguage)
 
           val recentPlace = provider.tryFindElementAt(offset)
@@ -77,16 +78,14 @@ class RecentPlacesFeatures : ElementFeatureProvider {
             recentPlacesStorage.putChildren(place2children.second)
           }
         }
-        .coalesceBy(this, changePlace.file)
+        .coalesceBy(this, place.file)
         .expireWith(project)
         .expireWhen(BooleanSupplier {
-          val window = changePlace.getWindow()
+          val window = place.window
           window == null || window.isDisposed
         })
         .submit(AppExecutorUtil.getAppExecutorService())
     }
-
-    override fun recentPlaceRemoved(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) = Unit
 
     private fun PsiElement.getChildrenNames(): List<String> {
       return this.children.filterIsInstance<PsiNamedElement>().mapNotNull { it.name }
