@@ -195,13 +195,11 @@ public abstract class AppIcon {
       myAppListener = new ApplicationActivationListener() {
         @Override
         public void applicationActivated(@NotNull IdeFrame ideFrame) {
-          JFrame frame;
-          if (ideFrame instanceof JFrame) {
-            frame = (JFrame)ideFrame;
-          }
-          else {
-            frame = ((ProjectFrameHelper)ideFrame).getFrame();
-          }
+          var frame = switch (ideFrame) {
+            case JFrame jFrame -> jFrame;
+            case ProjectFrameHelper helper -> helper.getFrame();
+            default -> null;
+          };
 
           if (isProgressAppIconEnabled()) {
             _hideProgress(frame, myCurrentProcessId);
