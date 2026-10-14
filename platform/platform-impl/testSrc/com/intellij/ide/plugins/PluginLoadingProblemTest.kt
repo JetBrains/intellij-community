@@ -118,6 +118,21 @@ internal class PluginLoadingProblemTest {
   }
 
   @Test
+  fun `disabled Ultimate has an expected non-notifying problem`() {
+    val descriptor = PluginNode(PluginId.getId("affected")).apply { name = "Affected" }
+    val problem = pluginRequiresDisabledUltimate(descriptor)
+
+    assertThat(problem.plugin).isSameAs(descriptor)
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+    assertThat(problem.shouldNotifyUser).isFalse()
+    assertThat(problem.disabledDependencyId).isEqualTo(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+    descriptor.name = "After"
+    assertThat(problem.detailedMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "After", PluginManagerCore.ULTIMATE_PLUGIN_ID))
+  }
+
+  @Test
   fun `problem kind does not infer notification eligibility`() {
     val problem = PluginLoadingProblem(
       plugin = PluginNode(PluginId.getId("affected")),

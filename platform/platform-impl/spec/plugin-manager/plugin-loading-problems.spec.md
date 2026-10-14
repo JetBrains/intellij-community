@@ -171,12 +171,25 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `loading problem factories preserve their presentation`
   )
 
-- Dependency problems suppress notification text when the affected plugin requires the disabled Ultimate plugin.
+- An exclusion rooted in disabled Ultimate has kind `ULTIMATE_DISABLED`, severity `EXPECTED`, and notification eligibility false.
+- This classification must survive intermediate plugins and required content modules.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `disabled Ultimate keeps the dependency problem but suppresses notification text`;
     `a transitive disabled Ultimate dependency suppresses notification text`;
-    `a required content module preserves the disabled Ultimate root`;
-    `disabled Ultimate also suppresses an unrelated missing dependency`
+    `a required content module preserves the disabled Ultimate root`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
+    `disabled Ultimate has an expected non-notifying problem`
+  )
+
+- Other factories retain `OTHER` kind and `UNEXPECTED` severity independently of their notification eligibility.
+- Requiring disabled Ultimate must not suppress an unrelated recorded failure.
+- Absent or failed Ultimate must not receive disabled Ultimate classification.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `disabled Ultimate does not suppress an unrelated missing dependency`;
+    `an ordinary disabled root stays unexpected when Ultimate is also disabled`;
+    `absent Ultimate is reported as a missing dependency`;
+    `failed Ultimate is not a disabled Ultimate problem`
   )
 
 - Hidden Ultimate dependency problems still contribute notification recovery targets.
@@ -205,6 +218,11 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `loading error is cleared when disabled dependency and dependent are loaded`;
     `transitive disabled dependency reports the disabled root`
+  )
+
+- When Ultimate and its affected plugins load, their obsolete problems and recovery targets must disappear from the new state.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `an Ultimate problem disappears when its dependency becomes available`
   )
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.

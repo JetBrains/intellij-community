@@ -66,7 +66,6 @@ internal object PluginLoadingProblemAnalyzer {
           plugin,
           resolvedPluginSet = resolvedPluginSet,
           registerLoadingError = ::registerLoadingError,
-          candidateSet = resolvedPluginSet.candidateSet,
         )
       }
       else {
@@ -169,13 +168,8 @@ internal object PluginLoadingProblemAnalyzer {
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
     registerLoadingError: (PluginLoadingProblem) -> Unit,
-    candidateSet: UnambiguousPluginSet,
   ) {
-    val shouldNotifyUser = !plugin.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(
-      initContext = resolvedPluginSet.initContext,
-      ambiguousPluginSet = candidateSet.asAmbiguousPluginSet(),
-      plugin
-    )
+    val shouldNotifyUser = !plugin.isImplementationDetail
 
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
@@ -226,7 +220,11 @@ internal object PluginLoadingProblemAnalyzer {
         val rootCauseDescriptor = exclusionChain.last()
         val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
         if (rootCause is PluginIsMarkedDisabled) {
-          registerLoadingError(pluginDependencyIsDisabled(plugin, rootCause.descriptor.pluginId, shouldNotifyUser))
+          val disabledDependencyId = rootCause.descriptor.pluginId
+          registerLoadingError(
+            if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
+            else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser)
+          )
         }
         else {
           registerLoadingError(pluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
@@ -241,25 +239,6 @@ internal object PluginLoadingProblemAnalyzer {
     else {
       processRootCause(exclusionReason)
     }
-  }
-
-  private fun pluginRequiresUltimatePluginButItsDisabled(
-    initContext: PluginInitializationContext,
-    ambiguousPluginSet: AmbiguousPluginSet,
-    plugin: PluginMainDescriptor,
-  ): Boolean {
-    if (!initContext.isPluginDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) {
-      return false
-    }
-    val ultimate = ambiguousPluginSet.resolvePluginId(PluginManagerCore.ULTIMATE_PLUGIN_ID).firstOrNull()
-                   ?: return false
-    val requiredModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
-      initContext = initContext,
-      plugins = listOf(plugin),
-      ambiguousPluginSet = ambiguousPluginSet,
-      unresolvedStrictDependenciesCollector = null,
-    )
-    return ultimate in requiredModules
   }
 
   private fun DependencyRef.getIdString(): String = when (this) {

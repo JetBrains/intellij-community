@@ -330,6 +330,8 @@ internal class PluginManagerStateServiceTest {
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
 
     assertThat(problem.disabledDependencyId).isEqualTo(ULTIMATE_ID)
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
     assertThat(problem.shouldNotifyUser).isFalse()
     assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", ULTIMATE_ID))
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
@@ -346,6 +348,8 @@ internal class PluginManagerStateServiceTest {
     assertThat(state.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("affected"), PluginId.getId("intermediate"))
     for (problem in state.pluginNonLoadReasons.values) {
       assertThat(problem.disabledDependencyId).isEqualTo(ULTIMATE_ID)
+      assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
       assertThat(problem.shouldNotifyUser).isFalse()
     }
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
@@ -360,6 +364,8 @@ internal class PluginManagerStateServiceTest {
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
 
     assertThat(problem.disabledDependencyId).isEqualTo(ULTIMATE_ID)
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
     assertThat(problem.shouldNotifyUser).isFalse()
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
   }
@@ -383,7 +389,7 @@ internal class PluginManagerStateServiceTest {
   }
 
   @Test
-  fun `disabled Ultimate also suppresses an unrelated missing dependency`() {
+  fun `disabled Ultimate does not suppress an unrelated missing dependency`() {
     install(
       plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
       plugin("affected") {
@@ -397,9 +403,11 @@ internal class PluginManagerStateServiceTest {
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
 
     assertThat(problem.disabledDependencyId).isNull()
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
-    assertThat(problem.shouldNotifyUser).isFalse()
-    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
   }
 
   @Test
@@ -427,6 +435,8 @@ internal class PluginManagerStateServiceTest {
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
 
     assertThat(problem.disabledDependencyId).isNull()
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shouldNotifyUser).isTrue()
     assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
     assertThat(state.pluginsToEnable).isEmpty()
@@ -444,6 +454,68 @@ internal class PluginManagerStateServiceTest {
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(state.pluginsToEnable).isEmpty()
     assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `failed Ultimate is not a disabled Ultimate problem`() {
+    install(
+      plugin(ULTIMATE_ID.idString) {
+        name = "Ultimate"
+        depends("missing")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends(ULTIMATE_ID.idString)
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet())
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+    assertThat(problem.disabledDependencyId).isNull()
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "Ultimate"))
+    assertThat(state.pluginLoadingProblemsForNotification).contains(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).isEmpty()
+  }
+
+  @Test
+  fun `an ordinary disabled root stays unexpected when Ultimate is also disabled`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("affected") {
+        name = "Affected"
+        depends("root")
+        depends(ULTIMATE_ID.idString)
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root", ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.disabledDependencyId).isEqualTo(PluginId.getId("root"))
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("root") to "Root"))
+  }
+
+  @Test
+  fun `an Ultimate problem disappears when its dependency becomes available`() {
+    installUltimateDependency(transitive = true)
+    val initialState = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    assertThat(initialState.pluginNonLoadReasons.values.map { it.kind }).containsOnly(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+
+    val loadedState = publishAndGetState(buildPluginSet())
+
+    assertThat(loadedState.pluginNonLoadReasons).isEmpty()
+    assertThat(loadedState.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(loadedState.pluginsToEnable).isEmpty()
+    assertThat(loadedState.pluginsToDisable).isEmpty()
   }
 
   private fun installUltimateDependency(transitive: Boolean = false, loadingRule: ModuleLoadingRuleValue? = null) {

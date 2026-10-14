@@ -94,6 +94,18 @@ internal fun pluginDependencyIsDisabled(
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId) },
 )
 
+internal fun pluginRequiresDisabledUltimate(plugin: IdeaPluginDescriptor): PluginLoadingProblem = PluginLoadingProblem(
+  plugin = plugin,
+  kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
+  severity = PluginLoadingProblem.Severity.EXPECTED,
+  shouldNotifyUser = false,
+  disabledDependencyId = PluginManagerCore.ULTIMATE_PLUGIN_ID,
+  detailedMessageSupplier = {
+    CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, PluginManagerCore.ULTIMATE_PLUGIN_ID)
+  },
+  shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", PluginManagerCore.ULTIMATE_PLUGIN_ID) },
+)
+
 internal fun nonBundledPluginsAreExplicitlyDisabled(plugin: IdeaPluginDescriptor): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,
   shouldNotifyUser = false,
