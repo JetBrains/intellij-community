@@ -93,6 +93,7 @@ private fun Panel.signalCheckBox(
       .actionListener { _, component -> pending.choose(mapOf(signal.id to component.isSelected)) }
       .component
     soundPreviewButton { SoundSignalPlayer.getInstance().preview(signal) }
+      .accessibleName(IdeBundle.message("sound.preview.button.accessible.name", signal.title))
     if (addTopGap) {
       topGap(TopGap.SMALL)
     }
