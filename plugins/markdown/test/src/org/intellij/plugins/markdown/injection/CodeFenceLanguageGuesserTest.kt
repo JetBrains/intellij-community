@@ -73,6 +73,19 @@ internal class CodeFenceLanguageGuesserTest {
   }
 
   @Test
+  fun `C++ aliases resolve to the installed language`(@TestDisposable disposable: Disposable) {
+    val expected = object : Language("C++"), InjectableLanguage {}
+    Disposer.register(disposable) {
+      expected.unregisterLanguage(DefaultPluginDescriptor("org.intellij.plugins.markdown"))
+    }
+
+    for (infoString in listOf("c++", "cpp")) {
+      assertSame(expected, CodeFenceLanguageGuesser.findLanguage(infoString), infoString)
+      assertSame(expected, CodeFenceLanguageGuesser.guessLanguageForInjection(infoString), infoString)
+    }
+  }
+
+  @Test
   fun `PowerShell aliases do not match other fence names`() {
     for (infoString in listOf("power", "powershell-script", "posh1", "pwshx", "shell", "")) {
       assertNotEquals("PowerShell", CodeFenceLanguageGuesser.guessLanguageForExecution(infoString)?.id, infoString)
