@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -31,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 public abstract class SourcePosition implements Navigatable {
   private static final Logger LOG = Logger.getInstance(SourcePosition.class);
@@ -176,9 +177,8 @@ public abstract class SourcePosition implements Navigatable {
           document = getDocument(file.getOriginalFile());
         }
       }
-      catch (ProcessCanceledException ignored) {
-      }
       catch (Throwable e) {
+        rethrowControlFlowException(e);
         LOG.error(e);
       }
       if (document != null) {
