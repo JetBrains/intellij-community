@@ -248,7 +248,7 @@ class FileEditorManagerTest {
         val composite = assertThatNotNull(manager.getComposite(file))
         assertThat(composite.isAvailable()).isFalse()
       }
-      assertThat(progress.updates).contains("Reading the document")
+      waitUntil { progress.updates.contains("Reading the document") }
       release.countDown()
       opening.await()
       withContext(Dispatchers.EDT) {
@@ -290,8 +290,8 @@ class FileEditorManagerTest {
         assertThat(assertThatNotNull(manager.getComposite(file)).isAvailable()).isFalse()
       }
       progress.started.await().cancel()
-      release.countDown()
       opening.join()
+      release.countDown()
       if (navigate) {
         assertThat(opening.await()).isEqualTo(false)
       }
@@ -378,6 +378,47 @@ class FileEditorManagerTest {
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun testCancellationAfterPublicationKeepsOpening(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("published.txt", PlainTextFileType.INSTANCE, "text")
+    val progress = captureFilePreparation(file)
+    val targetFile = file
+    project.messageBus.connect(disposable).subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+      override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+        // The editors are published here, and the opening is not finished yet
+        if (file == targetFile) progress.started.getCompleted().cancel()
+      }
+    })
+    val scope = childScope("Published model flow")
+    val collectionFinished = CompletableDeferred<Unit>()
+    val composite = withContext(Dispatchers.EDT) {
+      val provider = MockFileEditorProvider()
+      val editor = provider.createEditor(project, file)
+      EditorWithProviderComposite(file, flow {
+        try {
+          progress.started.await()
+          emit(EditorCompositeModel(listOf(FileEditorWithProvider(editor, provider))))
+          awaitCancellation()
+        }
+        finally {
+          collectionFinished.complete(Unit)
+        }
+      }, project, scope)
+    }
+    try {
+      composite.shownDeferred.await()
+      progress.started.await().join()
+      // A cancellation of the preparation would also stop the model collection
+      assertThat(collectionFinished.isCompleted).isFalse()
+      assertThat(composite.isAvailable()).isTrue()
+      assertThat(composite.isDisposed()).isFalse()
+    }
+    finally {
+      withContext(Dispatchers.EDT) { Disposer.dispose(composite) }
+    }
+  }
+
   @Test
   fun testRemoteModelFlowStopsWhenCompositeDisposed(): Unit = timeoutRunBlocking {
     val file = LightVirtualFile("remote.txt", PlainTextFileType.INSTANCE, "text")
@@ -389,6 +430,7 @@ class FileEditorManagerTest {
       val editor = provider.createEditor(project, file)
       EditorWithProviderComposite(file, flow {
         try {
+          progress.started.await()
           emit(EditorCompositeModel(listOf(FileEditorWithProvider(editor, provider))))
           awaitCancellation()
         }
@@ -399,7 +441,7 @@ class FileEditorManagerTest {
     }
     try {
       composite.shownDeferred.await()
-      assertThat(progress.started.await().isActive).isTrue()
+      progress.started.await().join()
       assertThat(collectionFinished.isCompleted).isFalse()
     }
     finally {
@@ -435,7 +477,7 @@ class FileEditorManagerTest {
         assertThat(manager.windows).hasSize(2)
         assertThat(assertThatNotNull(manager.getComposite(file)).isAvailable()).isFalse()
       }
-      assertThat(progress.started.isCompleted).isTrue()
+      assertThat(progress.started.await().isActive).isTrue()
       release.countDown()
       assertThat(opening.await().allEditors.isNotEmpty()).isEqualTo(accepted)
       withContext(Dispatchers.EDT) {
@@ -488,9 +530,10 @@ class FileEditorManagerTest {
       val composite = withContext(Dispatchers.EDT) {
         assertThatNotNull(manager.getComposite(file)).also { assertThat(it.isAvailable()).isFalse() }
       }
-      assertThat(progress.started.isCompleted).isTrue()
+      assertThat(progress.started.await().isActive).isTrue()
       if (cancel) {
         progress.started.await().cancel()
+        composite.availableJob.join()
       }
       release.countDown()
       composite.availableJob.join()
@@ -644,6 +687,17 @@ class FileEditorManagerTest {
     val created = CompletableDeferred<FileEditor>()
     val progress = captureFilePreparation(file)
     registerProvider(object : MockFileEditorProvider(policy = FileEditorPolicy.HIDE_DEFAULT_EDITOR), AsyncFileEditorProvider {
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        progress.started.await()
+        super.createFileEditor(project, file, document, editorCoroutineScope)
+        awaitCancellation()
+      }
+
       override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
         return object : AsyncFileEditorProvider.Builder() {
           override fun build(): FileEditor {
@@ -657,7 +711,8 @@ class FileEditorManagerTest {
     })
     try {
       assertFailsWith<CancellationException> { manager.openFile(file, FileEditorOpenOptions()) }
-      assertThat(Disposer.isDisposed(created.await())).isTrue()
+      val editor = created.await()
+      waitUntil { withContext(Dispatchers.EDT) { Disposer.isDisposed(editor) } }
       withContext(Dispatchers.EDT) { assertThat(manager.isFileOpen(file)).isFalse() }
     }
     finally {
