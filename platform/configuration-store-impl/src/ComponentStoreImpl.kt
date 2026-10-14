@@ -205,9 +205,23 @@ abstract class ComponentStoreImpl : IComponentStore {
           // still must be added to a component list to support explicit save later
           if (stateSpec.allowLoadInTests || loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource)) {
             @Suppress("UNCHECKED_CAST")
-            doInitComponent(componentInfo, component as PersistentStateComponent<Any>, changedStorages = null, reloadData = ThreeState.NO) {
-              nonCancelableInvocator(it)
-              initializeComponent(component, stateSpec)
+            val requiresControllerReload = doInitComponent(
+              info = componentInfo,
+              component = component as PersistentStateComponent<Any>,
+              changedStorages = null,
+              reloadData = ThreeState.NO,
+            ) { action, controllerReload ->
+              nonCancelableInvocator(action)
+              if (controllerReload) {
+                component.initializeComponent()
+              }
+              else {
+                initializeComponent(component, stateSpec)
+              }
+            }
+            if (requiresControllerReload) {
+              initComponentImpl(componentInfo, changedStorages = emptySet(), reloadData = ThreeState.NO)
+              notifyComponentInitialized(stateSpec)
             }
 
             // if not service, so, component manager will check it later for all components
@@ -270,7 +284,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun initializeComponent(component: PersistentStateComponent<*>, stateSpec: State?) {
     component.initializeComponent()
+    notifyComponentInitialized(stateSpec)
+  }
 
+  private fun notifyComponentInitialized(stateSpec: State?) {
     componentInitializationListeners.forEach {
       runCatching {
         it.onComponentInitialized(stateSpec)
@@ -382,11 +399,14 @@ abstract class ComponentStoreImpl : IComponentStore {
       val start = System.currentTimeMillis()
       try {
         val info = getClientAwareComponentInfo(name) ?: continue
+        val updateLocalSaveBaseline = ClientId.isCurrentlyUnderLocalId || info.stateSpec?.perClient == true
         var currentModificationCount = -1L
 
         if (info.lastSaved != -1) {
           if (isForce || (nowInSeconds - info.lastSaved) > NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD) {
-            info.lastSaved = nowInSeconds
+            if (updateLocalSaveBaseline) {
+              info.lastSaved = nowInSeconds
+            }
           }
           else {
             if (isSaveModLogEnabled) {
@@ -416,7 +436,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
         commitComponent(sessionManager, info, name, modificationCountChanged, isExternalSystemStorageEnabled)
-        if (ClientId.isCurrentlyUnderLocalId || info.stateSpec?.perClient == true) {
+        if (updateLocalSaveBaseline) {
           info.updateModificationCount(currentModificationCount)
         }
       }
@@ -570,9 +590,15 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
     else {
-      doInitComponent(info, component, changedStorages, reloadData) {
-        it()
+      var requiresControllerReload: Boolean
+      var currentReloadData = reloadData
+      do {
+        requiresControllerReload = doInitComponent(info, component, changedStorages, currentReloadData) { action, _ ->
+          action()
+        }
+        currentReloadData = ThreeState.NO
       }
+      while (requiresControllerReload)
     }
   }
 
@@ -602,8 +628,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     component: PersistentStateComponent<Any>,
     changedStorages: Set<StateStorage>?,
     reloadData: ThreeState,
-    stateConsumer: (action: () -> Unit) -> Unit,
-  ) {
+    stateConsumer: (action: () -> Unit, requiresControllerReload: Boolean) -> Unit,
+  ): Boolean {
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
       is PersistenceStateAdapter -> component.component::class.java as Class<Any>
@@ -618,6 +644,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val postLoadStateUpdateModificationCount = name != "PathMacrosImpl"
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
+    var isStateChangedByController = false
     if (loadPolicy == StateLoadPolicy.LOAD || info.stateSpec?.allowLoadInTests == true) {
       val storageChooser = component as? StateStorageChooserEx
       for (storageSpec in getStorageSpecs(component.javaClass, component, stateSpec, StateStorageOperation.READ)) {
@@ -637,6 +664,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass, stateSpec.useLoadedStateAsExisting)
         var state = stateGetter.getState(defaultState)
+        isStateChangedByController = isStateChangedByController || stateGetter.isStateChangedByController
         if (state == null) {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {
             // the state will be `null` if a file is deleted;
@@ -655,9 +683,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           info.updateModificationCount(info.currentModificationCount)
         }
 
-        stateConsumer {
+        stateConsumer({
           component.loadState(state)
-        }
+        }, stateGetter.requiresControllerReload)
 
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec, storageSpec)) {
@@ -667,29 +695,43 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (postLoadStateUpdateModificationCount) {
           info.updateModificationCount(info.currentModificationCount)
         }
-        return
+        if (isStateChangedByController) {
+          markComponentForSave(info)
+        }
+        return stateGetter.requiresControllerReload
       }
     }
 
     // we load the default state even if isLoadComponentState false - required for app components
     // (for example, at least one color scheme must exist)
     if (defaultState == null) {
-      stateConsumer {
+      stateConsumer({
         component.noStateLoaded()
-      }
+      }, false)
     }
     else {
       if (!postLoadStateUpdateModificationCount) {
         info.updateModificationCount(info.currentModificationCount)
       }
 
-      stateConsumer {
+      stateConsumer({
         component.loadState(defaultState)
-      }
+      }, false)
 
       if (postLoadStateUpdateModificationCount) {
         info.updateModificationCount(info.currentModificationCount)
       }
+    }
+    if (isStateChangedByController) {
+      markComponentForSave(info)
+    }
+    return false
+  }
+
+  private fun markComponentForSave(info: ComponentInfo) {
+    info.updateModificationCount(-1)
+    if (info.lastSaved != -1) {
+      info.lastSaved = 0
     }
   }
 
@@ -708,9 +750,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
 
-    // getting state after loading with an active controller can lead to unusual issues - disable write protection
-    if (useLoadedStateAsExisting && storage is XmlElementStorage && (storage.controller == null || project != null) && isUseLoadedStateAsExisting(storage)) {
-      return storage.createGetSession(component, componentName, info.pluginId, stateClass, reloadData)
+    if (storage is XmlElementStorage) {
+      val archiveLoadedState = useLoadedStateAsExisting &&
+                               (storage.controller == null || project != null) &&
+                               isUseLoadedStateAsExisting(storage)
+      if (archiveLoadedState || storage.controller != null) {
+        return storage.createGetSession(component, componentName, info.pluginId, stateClass, reloadData, archiveLoadedState)
+      }
     }
 
     return object : StateGetter<Any> {

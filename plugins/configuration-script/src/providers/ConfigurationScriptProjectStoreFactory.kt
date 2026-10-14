@@ -71,7 +71,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     val configurationSchemaKey = info.configurationSchemaKey ?: return stateGetter
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
     val node = configurationFileManager.findValueNode(configurationSchemaKey) ?: return stateGetter
-    return object : StateGetter<Any> {
+    return object : StateGetter<Any> by stateGetter {
       override suspend fun getState(mergeInto: Any?): Any {
         val state = stateGetter.getState(mergeInto) ?: ReflectionUtil.newInstance(stateClass, false)
         val affectedProperties = mutableListOf<String>()

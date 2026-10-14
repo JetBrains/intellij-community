@@ -28,7 +28,7 @@ internal class DoNotAskAppManagerImpl(private val cs: CoroutineScope) :
 
 }
 
-@State(name = "DoNotAskProjectManager", storages = [Storage(value = "doNotAskNotifications.xml")], useLoadedStateAsExisting = false)
+@State(name = "DoNotAskProjectManager", storages = [Storage(value = "doNotAskNotifications.xml")])
 internal class DoNotAskProjectManagerImpl(private val project: Project, private val cs: CoroutineScope) :
   DoNotAskSettings(), DoNotAskProjectManager {
 
