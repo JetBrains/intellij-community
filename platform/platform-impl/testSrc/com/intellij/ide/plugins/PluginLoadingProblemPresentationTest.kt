@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
@@ -63,6 +64,22 @@ internal class PluginLoadingProblemPresentationTest {
       disabledDependencyId = PluginId.getId("com.intellij.ultimate"),
     )
 
+    assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+  }
+
+  @Test
+  fun `an expected product mode problem stays outside the generic error area`() {
+    val result = CheckErrorsResult(
+      loadingError = "This plugin does not support Light mode.",
+      isDisabledDependencyError = true,
+      kind = PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH,
+      severity = PluginLoadingProblem.Severity.EXPECTED,
+      productMode = ProductMode.LIGHT_REMOTE,
+      unavailableModuleName = "mode.module",
+      unavailableModuleNamespace = "jetbrains",
+    )
+
+    assertThat(MyPluginModel.getErrors(result)).isEmpty()
     assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.util.system.CpuArch
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +21,8 @@ class PluginLoadingProblem internal constructor(
   val disabledDependencyId: PluginId? = null,
   val kind: Kind = Kind.OTHER,
   val severity: Severity = Severity.UNEXPECTED,
+  val productMode: ProductMode? = null,
+  val unavailableModuleId: PluginModuleId? = null,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
   private val shortMessageSupplier: () -> @NlsContexts.Label String,
 ) {
@@ -30,6 +33,7 @@ class PluginLoadingProblem internal constructor(
   enum class Kind {
     OTHER,
     ULTIMATE_DISABLED,
+    PRODUCT_MODE_MISMATCH,
   }
 
   @ApiStatus.Internal
@@ -105,6 +109,29 @@ internal fun pluginRequiresDisabledUltimate(plugin: IdeaPluginDescriptor): Plugi
   },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", PluginManagerCore.ULTIMATE_PLUGIN_ID) },
 )
+
+internal fun pluginRequiresUnavailableProductModeModule(
+  plugin: IdeaPluginDescriptor,
+  moduleId: PluginModuleId,
+  productMode: ProductMode,
+): PluginLoadingProblem {
+  val messageKey = when (productMode) {
+    ProductMode.LIGHT_REMOTE, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LIGHT_MONOLITH -> "plugin.loading.problem.product.mode.light"
+    ProductMode.FRONTEND -> "plugin.loading.problem.product.mode.frontend"
+    ProductMode.BACKEND -> "plugin.loading.problem.product.mode.backend"
+    ProductMode.MONOLITH, ProductMode.LANGUAGE_SERVER -> "plugin.loading.problem.product.mode.unsupported"
+  }
+  return PluginLoadingProblem(
+    plugin = plugin,
+    kind = PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH,
+    severity = PluginLoadingProblem.Severity.EXPECTED,
+    shouldNotifyUser = false,
+    productMode = productMode,
+    unavailableModuleId = moduleId,
+    detailedMessageSupplier = { CoreBundle.message(messageKey) },
+    shortMessageSupplier = { CoreBundle.message(messageKey) },
+  )
+}
 
 internal fun nonBundledPluginsAreExplicitlyDisabled(plugin: IdeaPluginDescriptor): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,

@@ -1055,7 +1055,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> {
         return CheckErrorsResult(loadingError = loadingError.shortMessage, isUltimateDisabledProblem = true).withLoadingProblem(loadingError)
       }
-      PluginLoadingProblem.Kind.OTHER -> {}
+      PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
     }
 
     if (PluginManagerCore.ULTIMATE_PLUGIN_ID in requiredPlugins) {
@@ -1072,7 +1072,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun CheckErrorsResult.withLoadingProblem(problem: PluginLoadingProblem?): CheckErrorsResult {
     if (problem == null) return this
-    return copy(kind = problem.kind, severity = problem.severity, disabledDependencyId = problem.disabledDependencyId)
+    return copy(
+      kind = problem.kind,
+      severity = problem.severity,
+      disabledDependencyId = problem.disabledDependencyId,
+      productMode = problem.productMode,
+      unavailableModuleName = problem.unavailableModuleId?.name,
+      unavailableModuleNamespace = problem.unavailableModuleId?.namespace,
+    )
   }
 
   private fun findSession(sessionId: String): PluginManagerSession? {

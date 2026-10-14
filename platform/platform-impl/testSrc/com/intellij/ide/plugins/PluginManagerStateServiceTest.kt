@@ -327,7 +327,7 @@ internal class PluginManagerStateServiceTest {
   }
 
   @TestFactory
-  fun `a direct product mode exclusion has no loading explanation`() = ProductMode.entries.map { productMode ->
+  fun `a direct product mode exclusion has an expected explanation`() = ProductMode.entries.map { productMode ->
     dynamicTest(productMode.id) {
       install(modeDependentPlugin())
 
@@ -335,7 +335,8 @@ internal class PluginManagerStateServiceTest {
       val state = publishAndGetState(pluginSet)
 
       assertThat(pluginSet.enabledPlugins.map { it.pluginId }).doesNotContain(PluginId.getId("mode-dependent"))
-      assertThat(state.pluginNonLoadReasons).isEmpty()
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("mode-dependent"))
+      assertProductModeProblem(checkNotNull(state.pluginNonLoadReasons[PluginId.getId("mode-dependent")]), productMode)
       assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
       assertThat(state.pluginsToEnable).isEmpty()
       assertThat(state.pluginsToDisable).isEmpty()
@@ -344,7 +345,7 @@ internal class PluginManagerStateServiceTest {
 
   @TestFactory
   @TestFor(issues = ["IJPL-249174", "IJPL-258176"])
-  fun `a transitive product mode exclusion reports failed intermediate plugins`() = ProductMode.entries.map { productMode ->
+  fun `a transitive product mode exclusion retains the expected root`() = ProductMode.entries.map { productMode ->
     dynamicTest(productMode.id) {
       install(
         modeDependentPlugin(),
@@ -366,26 +367,18 @@ internal class PluginManagerStateServiceTest {
       val intermediateId = PluginId.getId("intermediate")
       val affectedId = PluginId.getId("affected")
 
-      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(intermediateId, affectedId)
-      for ((pluginId, dependencyName) in mapOf(intermediateId to "Mode dependent", affectedId to "Intermediate")) {
-        val problem = checkNotNull(state.pluginNonLoadReasons[pluginId])
-        assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
-        assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
-        assertThat(problem.shouldNotifyUser).isTrue()
-        assertThat(problem.disabledDependencyId).isNull()
-        assertThat(problem.shortMessage)
-          .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyName))
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("mode-dependent"), intermediateId, affectedId)
+      for (problem in state.pluginNonLoadReasons.values) {
+        assertProductModeProblem(problem, productMode)
       }
-      assertThat(state.pluginLoadingProblemsForNotification)
-        .containsExactlyInAnyOrderElementsOf(state.pluginNonLoadReasons.values.map { it.detailedMessage })
+      assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
       assertThat(state.pluginsToEnable).isEmpty()
-      assertThat(state.pluginsToDisable)
-        .containsExactlyInAnyOrderEntriesOf(mapOf(intermediateId to "Intermediate", affectedId to "Affected"))
+      assertThat(state.pluginsToDisable).isEmpty()
     }
   }
 
   @TestFactory
-  fun `a core product mode exclusion reports IDEA CORE`() = ProductMode.entries.map { productMode ->
+  fun `a core product mode exclusion retains the expected root`() = ProductMode.entries.map { productMode ->
     dynamicTest(productMode.id) {
       install(
         plugin(PluginManagerCore.CORE_PLUGIN_ID) {
@@ -407,11 +400,9 @@ internal class PluginManagerStateServiceTest {
 
       assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginManagerCore.CORE_ID).doesNotContain(affectedId)
       assertThat(state.pluginNonLoadReasons).containsOnlyKeys(affectedId)
-      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
-      assertThat(problem.shortMessage)
-        .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "IDEA CORE"))
-      assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
-      assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(affectedId to "Affected"))
+      assertProductModeProblem(problem, productMode)
+      assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+      assertThat(state.pluginsToDisable).isEmpty()
     }
   }
 
@@ -449,7 +440,8 @@ internal class PluginManagerStateServiceTest {
       val unrelatedId = PluginId.getId("unrelated")
       val problem = checkNotNull(state.pluginNonLoadReasons[unrelatedId])
 
-      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(unrelatedId)
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(unrelatedId, PluginId.getId("mode-dependent"))
+      assertProductModeProblem(checkNotNull(state.pluginNonLoadReasons[PluginId.getId("mode-dependent")]), productMode)
       assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
       assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
       assertThat(problem.shouldNotifyUser).isTrue()
@@ -465,7 +457,7 @@ internal class PluginManagerStateServiceTest {
     dynamicTest(productMode.id) {
       install(modeDependentPlugin(), plugin("affected") { depends("mode-dependent") })
       val initialState = publishAndGetState(buildProductModePluginSet(productMode))
-      assertThat(initialState.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("affected"))
+      assertThat(initialState.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("mode-dependent"), PluginId.getId("affected"))
 
       val loadedPluginSet = buildProductModePluginSet(ProductMode.MONOLITH, moduleAvailable = true)
       val loadedState = publishAndGetState(loadedPluginSet)
@@ -774,6 +766,23 @@ internal class PluginManagerStateServiceTest {
         module(MODE_MODULE_ID.name, loadingRule = loadingRule) {}
       }
     }
+
+  private fun assertProductModeProblem(problem: PluginLoadingProblem, productMode: ProductMode) {
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+    assertThat(problem.shouldNotifyUser).isFalse()
+    assertThat(problem.disabledDependencyId).isNull()
+    assertThat(problem.productMode).isEqualTo(productMode)
+    assertThat(problem.unavailableModuleId).isEqualTo(MODE_MODULE_ID)
+    val expectedText = when (productMode) {
+      ProductMode.LIGHT_REMOTE, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LIGHT_MONOLITH -> "This plugin does not support Light mode."
+      ProductMode.FRONTEND -> "This plugin does not support frontend mode."
+      ProductMode.BACKEND -> "This plugin does not support backend mode."
+      ProductMode.MONOLITH, ProductMode.LANGUAGE_SERVER -> "This plugin does not support the current product mode."
+    }
+    assertThat(problem.shortMessage).isEqualTo(expectedText)
+    assertThat(problem.detailedMessage).isEqualTo(expectedText)
+  }
 
   private fun buildProductModePluginSet(productMode: ProductMode, moduleAvailable: Boolean = false): PluginSet {
     val reason = if (moduleAvailable) null else UnsuitableProductModeModuleUnavailabilityReason(MODE_MODULE_ID, productMode.id)

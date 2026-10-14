@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.plugins.PluginLoadingProblem
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.productMode.ProductMode
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,4 +19,7 @@ data class CheckErrorsResult(
   val kind: PluginLoadingProblem.Kind = PluginLoadingProblem.Kind.OTHER,
   val severity: PluginLoadingProblem.Severity = PluginLoadingProblem.Severity.UNEXPECTED,
   val disabledDependencyId: PluginId? = null,
+  val productMode: ProductMode? = null,
+  val unavailableModuleName: String? = null,
+  val unavailableModuleNamespace: String? = null,
 )

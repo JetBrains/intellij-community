@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginInstallCallbackData
+import com.intellij.ide.plugins.PluginLoadingProblem
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
@@ -1366,6 +1367,10 @@ open class MyPluginModel @JvmOverloads constructor(
     }
 
     fun getErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
+      when (checkErrorsResult.severity) {
+        PluginLoadingProblem.Severity.EXPECTED -> return emptyList()
+        PluginLoadingProblem.Severity.UNEXPECTED -> {}
+      }
       if (checkErrorsResult.isUltimateDisabledProblem) {
         return emptyList()
       }

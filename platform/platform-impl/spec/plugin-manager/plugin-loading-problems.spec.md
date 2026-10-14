@@ -68,11 +68,7 @@ Remote development extends these rules with side aggregation and action routing.
     `a core content module reports the disabled root instead of IDEA CORE`
   )
 
-- For other chains that cross a plugin boundary, the explanation refers to the first required plugin outside the affected plugin.
-  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `a transitive product mode exclusion reports failed intermediate plugins`;
-    `a core product mode exclusion reports IDEA CORE`
-  )
+- For chains without disabled roots or product mode exclusions, the explanation refers to the first required plugin outside the affected plugin.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - For an unresolved dependency without a cross-plugin boundary, the installation requirement message uses the plugin ID or content module name.
@@ -101,12 +97,11 @@ Untested: Focused analysis tests do not cover all terminal mappings or optional 
     `explicitly disabled plugin has no loading error or suggested action`
   )
 
-- Direct environment exclusions and unused on-demand modules produce no loading explanation.
+- Unused on-demand modules produce no loading explanation.
 - Direct AI disablement, expired license, and unaccepted privacy exclusions produce no loading explanation from this analysis.
 - Direct superseded versions produce no loading explanation.
-- A chain across plugin boundaries follows the dependency selection rule even when its terminal exclusion has no direct explanation.
+- Other chains across plugin boundaries follow the dependency selection rule even when their terminal exclusion has no direct explanation.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `a direct product mode exclusion has no loading explanation`;
     `a product mode exclusion does not suppress an unrelated missing dependency`
   )
 
@@ -120,6 +115,10 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
 ## Plugins Page
 
 - An ordinary loading problem without a disabled dependency supplies its short explanation to the page.
+- Expected problems remain outside the generic red error area.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
+    `an expected product mode problem stays outside the generic error area`
+  )
 - Error text uses the theme's error foreground. Recovery links use the theme's link foreground.
 - Rows and details use the same error formatting and dependency suggestion data.
 
@@ -184,6 +183,21 @@ Untested: No focused test covers action labels, callback aggregation, or action 
 
 ## Product Restrictions
 
+- A plugin excluded through a required product mode module has kind `PRODUCT_MODE_MISMATCH`, severity `EXPECTED`, and notification eligibility false.
+- This classification retains the originating mode and terminal module through intermediate plugins and required content modules.
+- The explanation uses Light, frontend, or backend wording when applicable. Other modes use the generic product mode wording.
+- The Light wording takes priority for Light modes that also use the frontend.
+- These problems contribute no notification recovery targets and offer no generic dependency Enable suggestion.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `a direct product mode exclusion has an expected explanation`;
+    `a transitive product mode exclusion retains the expected root`;
+    `a core product mode exclusion retains the expected root`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `product mode exclusions retain their page classification`;
+    `disabling a product mode dependent suppresses its page problem`
+  )
+
 - Explicit restrictions on non-bundled plugins and the configured plugin subset produce explanations without notification eligibility.
 - Complete loading disablement produces an explanation with notification eligibility.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
@@ -201,7 +215,7 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `disabled Ultimate has an expected non-notifying problem`
   )
 
-- Other factories retain `OTHER` kind and `UNEXPECTED` severity independently of their notification eligibility.
+- Factories outside disabled Ultimate and product mode exclusions retain `OTHER` kind and `UNEXPECTED` severity.
 - Requiring disabled Ultimate must not suppress an unrelated recorded failure.
 - Absent or failed Ultimate must not receive disabled Ultimate classification.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (

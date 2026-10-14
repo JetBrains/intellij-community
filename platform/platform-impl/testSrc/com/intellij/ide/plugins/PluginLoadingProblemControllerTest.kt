@@ -5,16 +5,22 @@ import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSession
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.productMode.ProductMode
+import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
+import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.UUID
@@ -128,6 +134,65 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.isUltimateDisabledProblem).isFalse()
     assertThat(result.loadingError).isNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
+  }
+
+  @TestFactory
+  fun `product mode exclusions retain their page classification`() = ProductMode.entries.flatMap { productMode ->
+    listOf(false, true).map { transitive ->
+      dynamicTest("${productMode.id}, transitive=$transitive") {
+        timeoutRunBlocking {
+          installProductModeDependency(productMode, transitive)
+
+          val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+          assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH)
+          assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+          assertThat(result.productMode).isEqualTo(productMode)
+          assertThat(result.unavailableModuleName).isEqualTo("mode.module")
+          assertThat(result.unavailableModuleNamespace).isEqualTo("jetbrains")
+          assertThat(result.suggestToEnableRequiredPlugins).isFalse()
+          assertThat(result.requiredPluginNames).isEmpty()
+          assertThat(result.isUltimateDisabledProblem).isFalse()
+          assertThat(result.loadingError).isNotBlank()
+          assertThat(DefaultUiPluginManagerController.loadErrors(session.sessionId, listOf(PluginId.getId("affected"))))
+            .containsEntry(PluginId.getId("affected"), result)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `disabling a product mode dependent suppresses its page problem`(): Unit = timeoutRunBlocking {
+    installProductModeDependency(ProductMode.LIGHT_MONOLITH, transitive = false)
+    session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.DISABLED
+
+    val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+    assertThat(result.loadingError).isNull()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+  }
+
+  private fun installProductModeDependency(productMode: ProductMode, transitive: Boolean) {
+    val moduleId = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
+    val pluginsDir = tempDir.resolve("${productMode.id}-$transitive")
+    plugin("affected") {
+      if (transitive) depends("mode-dependent")
+      else content(namespace = "jetbrains") { module(moduleId.name, loadingRule = ModuleLoadingRuleValue.REQUIRED) {} }
+    }.installAt(pluginsDir)
+    if (transitive) {
+      plugin("mode-dependent") {
+        content(namespace = "jetbrains") { module(moduleId.name, loadingRule = ModuleLoadingRuleValue.REQUIRED) {} }
+      }.installAt(pluginsDir)
+      session.pluginStates[PluginId.getId("mode-dependent")] = PluginEnabledState.ENABLED
+    }
+    PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(pluginsDir)
+                                    .withProductMode(productMode)
+                                    .withEnvironmentConfiguredModules(mapOf(moduleId to PluginInitializationContext.EnvironmentConfiguredModuleData(
+                                      UnsuitableProductModeModuleUnavailabilityReason(moduleId, productMode.id),
+                                    )))
+                                    .build(configureClassLoaders = false))
+    session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.ENABLED
+    DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
   }
 
   @Test

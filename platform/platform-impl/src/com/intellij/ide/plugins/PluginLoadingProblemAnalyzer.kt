@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 
@@ -68,6 +69,7 @@ internal object PluginLoadingProblemAnalyzer {
           exclusionReason,
           plugin,
           resolvedPluginSet = resolvedPluginSet,
+          productMode = initContext.productMode,
           registerLoadingError = ::registerLoadingError,
         )
       }
@@ -170,6 +172,7 @@ internal object PluginLoadingProblemAnalyzer {
     exclusionReason: DescriptorExclusionReason,
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
+    productMode: ProductMode,
     registerLoadingError: (PluginLoadingProblem) -> Unit,
   ) {
     val shouldNotifyUser = !plugin.isImplementationDetail
@@ -183,7 +186,10 @@ internal object PluginLoadingProblemAnalyzer {
           // TODO bad mapping
           registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependencyModule.pluginId.idString, shouldNotifyUser))
         }
-        is ExcludedByEnvironmentConfiguration -> {} // logged during initialization
+        is ExcludedByEnvironmentConfiguration -> when (val reason = exclusionReason.reason) {
+          is UnsuitableProductModeModuleUnavailabilityReason ->
+            registerLoadingError(pluginRequiresUnavailableProductModeModule(plugin, reason.moduleId, productMode))
+        }
         is IncompatibleWithAnotherModule -> {
           registerLoadingError(pluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
         }
@@ -222,15 +228,28 @@ internal object PluginLoadingProblemAnalyzer {
       val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
       if (boundaryExclusion != null) {
         val excludedRequiredDescriptor = boundaryExclusion[1]
-        if (rootCause is PluginIsMarkedDisabled) {
-          val disabledDependencyId = rootCause.descriptor.pluginId
-          registerLoadingError(
-            if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
-            else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser)
-          )
-        }
-        else {
-          registerLoadingError(pluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+        when (rootCause) {
+          is PluginIsMarkedDisabled -> {
+            val disabledDependencyId = rootCause.descriptor.pluginId
+            registerLoadingError(
+              if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
+              else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser)
+            )
+          }
+          is ExcludedByEnvironmentConfiguration -> processRootCause(rootCause)
+          is DependencyIsNotResolved,
+          is DependencyIsNotVisible,
+          is IncompatibleWithAnotherModule,
+          is OnDemandContentModuleHasNoDependentsLeft,
+          is PackagePrefixConflictWithAnotherModule,
+          is ProductRulesImposedExclusion,
+          is PluginDeclaresConflictingId,
+          is PluginIsIncompatibleWithProduct,
+          is PluginVersionIsSuperseded,
+          is PartOfDependencyCycle,
+          is PartOfRuntimeModuleGroupDependencyCycle ->
+            registerLoadingError(pluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+          is ChainedExclusion -> error("expected a root cause: $rootCause")
         }
       }
       else {
