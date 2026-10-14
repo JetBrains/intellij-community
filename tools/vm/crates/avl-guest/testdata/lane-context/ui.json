@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lane": "UI",
-  "vocabularyDigest": "9878b753eb6695f0421605f7edf681ffe0d9ef0c3957cdcf6da86decd2797cc3",
+  "vocabularyDigest": "6968c4fc4487987467de333d3a697a6ea2713616312a18e453bc5e7d43d3fae5",
   "launchProperties": [
     {
       "key": "jb.consents.confirmation.enabled",
@@ -552,6 +552,7 @@
       "configName": "air-scenario-workflow-source",
       "displayName": "air-scenario-workflow-source",
       "controlled": true,
+      "controlOwner": "HOST",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -590,6 +591,7 @@
       "configName": "air-scenario-session-window-first",
       "displayName": "air-scenario-session-window-first",
       "controlled": true,
+      "controlOwner": "HOST",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -605,6 +607,7 @@
       "configName": "air-scenario-session-window-second",
       "displayName": "air-scenario-session-window-second",
       "controlled": true,
+      "controlOwner": "HOST",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -643,6 +646,7 @@
       "configName": "air-scenario-genui-agent",
       "displayName": "air-scenario-genui-agent",
       "controlled": true,
+      "controlOwner": "HOST",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -672,54 +676,6 @@
   },
   "journeySuites": [
     {
-      "suite": "workflow-completion",
-      "agents": [],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-execution",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-conditions",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-schedule",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-git",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
       "suite": "workflow-missed-runs",
       "agents": [
         "workflow-run"
@@ -733,27 +689,6 @@
       "suite": "workflow-references",
       "agents": [
         "workflow-source",
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "ACP_TRANSPORT_CAPTURE",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-editor",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-repair",
-      "agents": [
         "workflow-run"
       ],
       "requirements": [
@@ -780,13 +715,6 @@
         "session-window-first",
         "session-window-second"
       ],
-      "requirements": [
-        "ACP_DEBUG_SERVER"
-      ]
-    },
-    {
-      "suite": "welcome-screen-surfaces",
-      "agents": [],
       "requirements": [
         "ACP_DEBUG_SERVER"
       ]

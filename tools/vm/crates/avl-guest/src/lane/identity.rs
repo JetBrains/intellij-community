@@ -79,15 +79,10 @@ impl KeyInputs<'_> {
     }
 }
 
-/// Which process serves the control channel of a controlled agent.
-///
-/// The JVM host serves the agents of a journey that still runs there. The IDE serves the agents of a body in the IDE,
-/// on a port of its own, so the two servers of one lane never share a port.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ControlOwner {
-    Host,
-    Ide,
-}
+/// Which process serves the control channel of a controlled agent: the `controlOwner` of the agent in the lane
+/// document. The JVM host serves the agents of a journey that still runs there. The IDE serves the agents of a body in
+/// the IDE, on a port of its own, so the two servers of one lane never share a port.
+pub(crate) use avl_wire::program::lane::ControlOwner;
 
 /// The identity of one lane IDE: its config key and every value that derives from it.
 #[derive(Clone, Debug, PartialEq, Eq)]

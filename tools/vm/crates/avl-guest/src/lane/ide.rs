@@ -364,13 +364,6 @@ impl IdeOwner {
     pub(crate) fn ensure(&mut self, launch: &LaneLaunch<'_>, records: &mut Records<'_>) -> Result<IdeDecision, AgentRefusal> {
         let key = launch.identity.key().to_owned();
         let runtimes = self.inputs.runtimes_named(&launch.document.cli_runtimes)?;
-        let ide_owned = launch
-            .document
-            .agents
-            .iter()
-            .filter(|agent| agent.controlled)
-            .map(|agent| agent.key.clone())
-            .collect();
         let java = self.inputs.java();
         let context = LaneContext {
             document: launch.document,
@@ -378,7 +371,6 @@ impl IdeOwner {
             java: &java,
             fake_agent_jar: launch.fake_agent_jar,
             runtimes: &runtimes,
-            ide_owned: &ide_owned,
         };
         let ports = context.check()?;
         if let Some(other) = self.held.as_ref().map(|held| held.key.clone()).filter(|held| *held != key) {

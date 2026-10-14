@@ -13,7 +13,7 @@ const DIGEST: &str = "fac4a8f1fdc799f94ddda2f702923d6609be71e8ead7d3304828712fff
 
 /// One lifecycle answer of an IDE of [`LAUNCH`] in `phase`, which serves the vocabulary `vocabulary`.
 fn snapshot(phase: &str, vocabulary: Option<&str>) -> String {
-    json!({
+    let mut snapshot = json!({
         "seq": 1,
         "state": {
             "schemaVersion": 2,
@@ -26,9 +26,16 @@ fn snapshot(phase: &str, vocabulary: Option<&str>) -> String {
             "bridgePlugin": null,
             "vocabularyDigest": vocabulary,
         }
-    })
-    .to_string()
+    });
+    if phase == BIND_FAILED {
+        snapshot["state"]["phase"] = json!("BUSY");
+        snapshot["state"]["controlBindFailure"] = json!("Address already in use: 127.0.0.1:30309");
+    }
+    snapshot.to_string()
 }
+
+/// The phase of [`snapshot`] that stands for a busy IDE whose control server did not bind.
+const BIND_FAILED: &str = "BIND_FAILED";
 
 /// The answer `{value}` of the request endpoint.
 fn value(value: &Value) -> Response {
@@ -45,6 +52,16 @@ fn class(request: &Request) -> String {
 /// A fake IDE that is ready, serves `vocabulary`, drives gestures with `robot`, and shows the Junie offer when
 /// `offer_tooltip`. It answers each ping with its nonce and logs the class of each request.
 fn fake_ide(vocabulary: Option<&'static str>, robot: &'static str, offer_tooltip: bool) -> (FakeHttp, Arc<Mutex<Vec<String>>>) {
+    fake_ide_in("READY", vocabulary, robot, offer_tooltip)
+}
+
+/// [`fake_ide`] whose lifecycle answers `phase`.
+fn fake_ide_in(
+    phase: &'static str,
+    vocabulary: Option<&'static str>,
+    robot: &'static str,
+    offer_tooltip: bool,
+) -> (FakeHttp, Arc<Mutex<Vec<String>>>) {
     let log = Arc::new(Mutex::new(Vec::new()));
     let seen = Arc::clone(&log);
     let server = FakeHttp::start(move |request| {
@@ -52,7 +69,7 @@ fn fake_ide(vocabulary: Option<&'static str>, robot: &'static str, offer_tooltip
             return Response::json(401, r#"{"failure":{"type":"java.lang.SecurityException","message":"bad token"}}"#);
         }
         if request.path.starts_with("/api/air/ui-test-events") {
-            return Response::ok("application/json", snapshot("READY", vocabulary));
+            return Response::ok("application/json", snapshot(phase, vocabulary));
         }
         let name = class(request);
         seen.lock().unwrap().push(name.clone());
@@ -172,4 +189,25 @@ fn a_quit_is_one_request() {
     let (server, log) = fake_ide(Some(DIGEST), INPUT_EVENTS_ROBOT, false);
     quit(&Bridge::at(server.url(), TOKEN).unwrap()).unwrap();
     assert_eq!(*log.lock().unwrap(), ["Quit"]);
+}
+
+// An IDE whose control server did not bind never gets ready. The gate ends at the first state that names the failure,
+// with its text, and sends no bridge request.
+#[test]
+fn a_failed_control_bind_ends_the_gate_at_once_with_its_text() {
+    let (server, log) = fake_ide_in(BIND_FAILED, Some(DIGEST), INPUT_EVENTS_ROBOT, false);
+    let started = Instant::now();
+    let refusal = ready(&server, false).0.unwrap_err();
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "the gate waited {:?}",
+        started.elapsed()
+    );
+    assert_eq!(refusal.code, CONTROL_BIND_CODE);
+    assert!(
+        refusal.message.contains("did not bind: Address already in use: 127.0.0.1:30309"),
+        "{}",
+        refusal.message
+    );
+    assert!(log.lock().unwrap().is_empty());
 }

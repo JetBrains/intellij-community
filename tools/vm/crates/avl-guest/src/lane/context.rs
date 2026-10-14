@@ -187,8 +187,6 @@ pub(crate) struct LaneContext<'a> {
     pub fake_agent_jar: &'a Path,
     /// The declared CLI runtimes. Their names are the `cliRuntimes` of the document.
     pub runtimes: &'a [CliRuntime],
-    /// The controlled agents whose control channel the IDE serves. The JVM host serves every other controlled agent.
-    pub ide_owned: &'a BTreeSet<String>,
 }
 
 impl LaneContext<'_> {
@@ -223,14 +221,6 @@ impl LaneContext<'_> {
                 document.lane, document.services
             )));
         }
-        for key in self.ide_owned {
-            if !document.agents.iter().any(|agent| agent.key == *key && agent.controlled) {
-                return Err(refused(format!(
-                    "the IDE owns the control channel of '{key}', which is no controlled agent of the lane {}",
-                    document.lane
-                )));
-            }
-        }
         let mut names = BTreeSet::new();
         for name in document.agents.iter().filter_map(|agent| agent.config_name.as_deref()) {
             if !names.insert(name) {
@@ -255,13 +245,16 @@ impl LaneContext<'_> {
         })
     }
 
-    /// The process that serves the control channel of the controlled agent `agent_key`.
+    /// The process that serves the control channel of the controlled agent `agent_key`: the control owner that the lane
+    /// document states for it. The reader of the document refuses a controlled agent without one, so the host is only
+    /// the answer for a key that the document does not hold.
     pub(crate) fn owner(&self, agent_key: &str) -> ControlOwner {
-        if self.ide_owned.contains(agent_key) {
-            ControlOwner::Ide
-        } else {
-            ControlOwner::Host
-        }
+        self.document
+            .agents
+            .iter()
+            .find(|agent| agent.key == agent_key)
+            .and_then(|agent| agent.control_owner)
+            .unwrap_or(ControlOwner::Host)
     }
 
     /// Writes the context files into the prepared context `paths`, and answers the ports of the lane services.

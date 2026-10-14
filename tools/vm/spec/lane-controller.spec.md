@@ -523,7 +523,8 @@ Before a launch, the lane daemon writes these files into the context:
 - A controlled agent gets the URL and the credential of the control server that serves it.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_files_carry_the_values_of_the_identity`)
 
-- `control.json` lists each agent that the IDE serves, and the terminal sign-in of each one.
+- `control.json` lists each agent whose control owner in the lane document is the IDE, and the terminal sign-in of
+  each one.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_files_carry_the_values_of_the_identity`)
 
 - A lane whose IDE serves no agent has no `control.json`. The daemon deletes an earlier one.
@@ -532,8 +533,8 @@ Before a launch, the lane daemon writes these files into the context:
 - The daemon never writes or deletes `control-next-start.json`. An existing `ide.general.xml` stays.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file`)
 
-- The daemon refuses with `lane_context_input` a live lane, other CLI runtimes, other services, and an IDE owner of
-  an agent that is not controlled.
+- The daemon refuses with `lane_context_input` a live lane, other CLI runtimes and other services. The reader of the
+  lane document refuses a controlled agent without a control owner.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_document_that_the_daemon_cannot_launch_as_it_states_is_refused`)
 
 The lane daemon reads the other launch inputs from the runtime descriptor at its boot:
@@ -1305,6 +1306,10 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
 - A bridge that serves another flow vocabulary than the lane document is refused as `lane_vocabulary_skew`, which
   names both digests. A bridge that names no digest gets a note.
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_a_note`)
+
+- An IDE whose control server of the controlled agents did not bind never gets ready. Readiness ends at the first state
+  that names the failure, and it refuses as `lane_control_bind_failed` with the text of the failure.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_failed_control_bind_ends_the_gate_at_once_with_its_text`)
 
 - A quit asks the IDE through its bridge and waits one minute for the run to end. Then a kill with a thread dump
   follows. A process that survives both is a refusal, and no launch lands beside it.

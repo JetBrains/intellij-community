@@ -1,7 +1,8 @@
 //! The readiness of the lane IDE, and the requests of the bridge that the lane daemon sends for it.
 //!
 //! The gate, in order: the lifecycle long poll waits for `READY` with no quiet time, because the IDE decides readiness
-//! after the first scan of its project. The vocabulary digest of the bridge must be the digest of the lane document.
+//! after the first scan of its project. A state that names a failed bind of the control server ends the wait at once,
+//! because such an IDE never gets ready. The vocabulary digest of the bridge must be the digest of the lane document.
 //! The chain of `InputRobot` and `Ping` proves that gestures go through the input-events robot and that the typed bridge
 //! answers. The Junie offer of the IDE start gets `Skip`, unless the caller keeps it open.
 //!
@@ -10,7 +11,7 @@
 
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use avl_bridge::lifecycle::Reader;
+use avl_bridge::lifecycle::{Reader, WaitError};
 use avl_bridge::{Client, url};
 use serde_json::{Value, json};
 
@@ -21,6 +22,9 @@ mod tests;
 
 /// The refusal code of an IDE that did not get ready.
 pub(crate) const NOT_READY_CODE: &str = "lane_ide_not_ready";
+
+/// The refusal code of an IDE whose control server of the controlled agents did not bind.
+pub(crate) const CONTROL_BIND_CODE: &str = "lane_control_bind_failed";
 
 /// The refusal code of a bridge that serves another flow vocabulary than the documents of the run.
 pub(crate) const VOCABULARY_SKEW_CODE: &str = "lane_vocabulary_skew";
@@ -105,7 +109,7 @@ pub(crate) fn await_ready(
     let state = bridge
         .reader(launch)
         .await_ready(Duration::ZERO, READY_TIMEOUT)
-        .map_err(|error| AgentRefusal::refused(NOT_READY_CODE, format!("the IDE of '{launch}' did not get ready: {error}")))?;
+        .map_err(|error| not_ready(launch, &error))?;
     note(format!(
         "the IDE of '{launch}' is ready as pid {} after {} ms",
         state.pid,
@@ -121,6 +125,21 @@ pub(crate) fn await_ready(
         skip_junie_offer(bridge, note)?;
     }
     Ok(())
+}
+
+/// The refusal of a wait for readiness that `error` ended. A failed bind of the control server names its own text.
+fn not_ready(launch: &str, error: &WaitError) -> AgentRefusal {
+    if let WaitError::ControlBindFailed(state) = error {
+        let failure = state.control_bind_failure.as_deref().unwrap_or_default();
+        return AgentRefusal::refused(
+            CONTROL_BIND_CODE,
+            format!(
+                "the IDE of '{launch}' cannot get ready, because its control server of the controlled agents did not \
+                 bind: {failure}; idea.log of the IDE names the holder of the port"
+            ),
+        );
+    }
+    AgentRefusal::refused(NOT_READY_CODE, format!("the IDE of '{launch}' did not get ready: {error}"))
 }
 
 /// Refuses a bridge whose vocabulary is not the vocabulary of the lane document. A bridge that names none predates the

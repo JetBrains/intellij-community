@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
@@ -19,7 +19,8 @@ const DAEMON_PORT: u16 = 27_100;
 /// The digest of the option file templates that `AirLaneDigestTest` pins on the Kotlin side.
 const KOTLIN_OPTION_FILES_DIGEST: &str = "7960b0efbb3ac177ba7c285404e033ed2b7bdc8b59f9aef8dcd61826bd57773f";
 
-/// The controlled agent of the fixture whose control channel the IDE serves in these tests.
+/// The controlled agent of the fixture whose control channel the IDE serves in these tests. The committed document of
+/// the lane gives the host every controlled agent, so the tests move this one to the IDE.
 const IDE_OWNED_AGENT: &str = "genui-agent";
 
 fn testdata(name: &str) -> PathBuf {
@@ -34,6 +35,23 @@ fn document_bytes() -> Vec<u8> {
 
 fn document() -> LaneDocument {
     parse_lane_document(&document_bytes()).expect("the fixture lane document reads")
+}
+
+/// The fixture document with [`IDE_OWNED_AGENT`] served by the IDE.
+fn document_with_ide_agent() -> LaneDocument {
+    let mut document = document();
+    let agent = document
+        .agents
+        .iter_mut()
+        .find(|agent| agent.key == IDE_OWNED_AGENT)
+        .expect("the fixture has the agent");
+    assert_eq!(
+        agent.control_owner,
+        Some(ControlOwner::Host),
+        "the committed document gives the agent to the host"
+    );
+    agent.control_owner = Some(ControlOwner::Ide);
+    document
 }
 
 fn runtimes() -> Vec<CliRuntime> {
@@ -140,25 +158,20 @@ fn tree(context: &Path) -> String {
     rendered
 }
 
-fn written(ide_owned: &BTreeSet<String>) -> (Prepared, LaneIdentity, ServicePorts) {
-    let (document, runtimes) = (document(), runtimes());
-    let identity = identity(&document, &runtimes);
+fn written(document: &LaneDocument) -> (Prepared, LaneIdentity, ServicePorts) {
+    let runtimes = runtimes();
+    let identity = identity(document, &runtimes);
     let prepared = prepared();
     let ports = LaneContext {
-        document: &document,
+        document,
         identity: &identity,
         java: Path::new(FIXTURE_JAVA),
         fake_agent_jar: &fixture_jar(),
         runtimes: &runtimes,
-        ide_owned,
     }
     .write(&prepared.paths)
     .unwrap();
     (prepared, identity, ports)
-}
-
-fn ide_owned() -> BTreeSet<String> {
-    BTreeSet::from([IDE_OWNED_AGENT.to_owned()])
 }
 
 #[test]
@@ -168,7 +181,7 @@ fn the_option_templates_are_the_bytes_of_the_kotlin_templates() {
 
 #[test]
 fn the_context_of_the_ui_lane_is_the_golden() {
-    let (prepared, _, _) = written(&ide_owned());
+    let (prepared, _, _) = written(&document_with_ide_agent());
     expect_test::expect_file![testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
 }
 
@@ -176,7 +189,7 @@ fn the_context_of_the_ui_lane_is_the_golden() {
 /// `<ctx>` for the context, `<java>` for each command, `<key-derived>` for the control environment.
 #[test]
 fn acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values() {
-    let (prepared, _, _) = written(&BTreeSet::new());
+    let (prepared, _, _) = written(&document());
     let written = fs::read_to_string(Path::new(&prepared.paths.home_dir).join(ACP_JSON)).unwrap();
     let real = real_path(&prepared.context).unwrap().display().to_string();
     let masked = written
@@ -216,7 +229,7 @@ fn entry_names(text: &str) -> Vec<String> {
 
 #[test]
 fn the_private_files_and_the_launchers_get_their_modes() {
-    let (prepared, _, _) = written(&ide_owned());
+    let (prepared, _, _) = written(&document_with_ide_agent());
     let bridge = Path::new(&prepared.paths.config_dir).join(BRIDGE_DIR);
     let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
     assert_eq!(mode(&bridge), 0o700);
@@ -230,17 +243,16 @@ fn the_private_files_and_the_launchers_get_their_modes() {
 
 #[test]
 fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file() {
-    let (document, runtimes) = (document(), runtimes());
-    let identity = identity(&document, &runtimes);
+    let (owned, none, runtimes) = (document_with_ide_agent(), document(), runtimes());
+    let identity = identity(&none, &runtimes);
     let prepared = prepared();
-    let (jar, owned, none) = (fixture_jar(), ide_owned(), BTreeSet::new());
-    let context = |ide_owned| LaneContext {
-        document: &document,
+    let jar = fixture_jar();
+    let context = |document| LaneContext {
+        document,
         identity: &identity,
         java: Path::new(FIXTURE_JAVA),
         fake_agent_jar: &jar,
         runtimes: &runtimes,
-        ide_owned,
     };
     context(&owned).write(&prepared.paths).unwrap();
     let config = Path::new(&prepared.paths.config_dir);
@@ -261,7 +273,7 @@ fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a
 
 #[test]
 fn the_files_carry_the_values_of_the_identity() {
-    let (prepared, identity, ports) = written(&ide_owned());
+    let (prepared, identity, ports) = written(&document_with_ide_agent());
     let bridge = Path::new(&prepared.paths.config_dir).join(BRIDGE_DIR);
     let read = |name: &str| serde_json::from_str::<Value>(&fs::read_to_string(bridge.join(name)).unwrap()).unwrap();
     assert_eq!(
@@ -306,30 +318,25 @@ fn a_document_that_the_daemon_cannot_launch_as_it_states_is_refused() {
     let (document, runtimes) = (document(), runtimes());
     let identity = identity(&document, &runtimes);
     let jar = fixture_jar();
-    let refusal = |document: &LaneDocument, runtimes: &[CliRuntime], ide_owned: &BTreeSet<String>, java: &str| {
+    let refusal = |document: &LaneDocument, runtimes: &[CliRuntime], java: &str| {
         let refusal = LaneContext {
             document,
             identity: &identity,
             java: Path::new(java),
             fake_agent_jar: &jar,
             runtimes,
-            ide_owned,
         }
         .check()
         .unwrap_err();
         assert_eq!(refusal.code, INPUT_CODE);
         refusal.message
     };
-    let none = BTreeSet::new();
-
     let mut live = document.clone();
     live.lane = "UI_LIVE".to_owned();
-    assert!(refusal(&live, &runtimes, &none, FIXTURE_JAVA).contains("no live lane"));
-    assert!(refusal(&document, &runtimes[..1], &none, FIXTURE_JAVA).contains("CLI runtimes"));
+    assert!(refusal(&live, &runtimes, FIXTURE_JAVA).contains("no live lane"));
+    assert!(refusal(&document, &runtimes[..1], FIXTURE_JAVA).contains("CLI runtimes"));
     let mut services = document.clone();
     services.services.remove("codexModel");
-    assert!(refusal(&services, &runtimes, &none, FIXTURE_JAVA).contains("services"));
-    let deterministic = BTreeSet::from(["air-ui-flow-acp".to_owned()]);
-    assert!(refusal(&document, &runtimes, &deterministic, FIXTURE_JAVA).contains("no controlled agent"));
-    assert!(refusal(&document, &runtimes, &none, "jbr/bin/java").contains("not absolute"));
+    assert!(refusal(&services, &runtimes, FIXTURE_JAVA).contains("services"));
+    assert!(refusal(&document, &runtimes, "jbr/bin/java").contains("not absolute"));
 }
