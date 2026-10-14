@@ -23,7 +23,6 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang.impl"/>
-    <module name="intellij.platform.lang.impl.backend"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.serviceContainer"/>
