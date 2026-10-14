@@ -7,7 +7,6 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.ImageLoader
 import kotlinx.coroutines.CancellationException
@@ -58,9 +57,7 @@ class CachingGHUserAvatarLoader internal constructor(serviceCs: CoroutineScope) 
       // so we load only 2 in parallel and do this with retry
       val loadedImage = doWithBackoffRetry {
         withContext(limitedIODispatcher) {
-          coroutineToIndicator {
-            requestExecutor.execute(it, GithubApiRequests.CurrentUser.getAvatar(url))
-          }
+          requestExecutor.execute(GithubApiRequests.CurrentUser.getAvatar(url))
         }
       }
       return if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
