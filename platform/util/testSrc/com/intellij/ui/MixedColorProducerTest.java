@@ -2,22 +2,22 @@
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 
 public final class MixedColorProducerTest {
   @Test
   public void checkFirstColorInstance() {
-    Assert.assertSame(Color.BLACK, getBlackWhite(0));
-    Assert.assertSame(Color.WHITE, getWhiteBlack(0));
+    Assertions.assertSame(Color.BLACK, getBlackWhite(0));
+    Assertions.assertSame(Color.WHITE, getWhiteBlack(0));
   }
 
   @Test
   public void checkSecondColorInstance() {
-    Assert.assertSame(Color.WHITE, getBlackWhite(1));
-    Assert.assertSame(Color.BLACK, getWhiteBlack(1));
+    Assertions.assertSame(Color.WHITE, getBlackWhite(1));
+    Assertions.assertSame(Color.BLACK, getWhiteBlack(1));
   }
 
   @Test
@@ -25,18 +25,18 @@ public final class MixedColorProducerTest {
     MixedColorProducer producer = new MixedColorProducer(new Color(0xFF, 0, 0, 0), Color.RED);
     Color color1 = producer.produce(.999);
     Color color2 = producer.produce(.999);
-    Assert.assertEquals(color1, color2);
-    Assert.assertSame(color1, color2);
+    Assertions.assertEquals(color1, color2);
+    Assertions.assertSame(color1, color2);
     Color color3 = producer.produce(.9999);
-    Assert.assertEquals(color1, color3);
-    Assert.assertNotSame(color1, color3);
+    Assertions.assertEquals(color1, color3);
+    Assertions.assertNotSame(color1, color3);
   }
 
 
   private static void testInvalidValue(double mixer) {
     try {
       getTransparentRed(mixer);
-      Assert.fail("invalid value: " + mixer);
+      Assertions.fail("invalid value: " + mixer);
     }
     catch (IllegalArgumentException ignore) {
     }
@@ -166,6 +166,6 @@ public final class MixedColorProducerTest {
   }
 
   private static void assertColor(@NotNull Color actual, @NotNull Color expected) {
-    Assert.assertEquals(expected, actual);
+    Assertions.assertEquals(expected, actual);
   }
 }

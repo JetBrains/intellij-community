@@ -15,34 +15,40 @@
  */
 package com.intellij.util.diff;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-public class ReindexerNewTest extends TestCase {
+public class ReindexerNewTest {
+  @Test
   public void testAllUnique() {
     checkCase(new int[]{1, 2, 3}, new int[]{4, 5});
     checkCase(new int[]{}, new int[]{4, 5});
     checkCase(new int[]{1, 2, 3}, new int[]{});
   }
 
+  @Test
   public void testUniqueBeginning() {
     checkCase(new int[]{13, 15, 1, 2, 3}, new int[]{17, 1, 3});
   }
 
+  @Test
   public void testUniqueEnd() {
     checkCase(new int[]{1, 2, 3, 13, 15}, new int[]{1, 3, 17});
   }
 
+  @Test
   public void testSingleUniqueMoved() {
     checkCase(new int[]{1, 1, 2, 2, 10}, new int[]{10, 1, 1, 2, 2});
   }
 
+  @Test
   public void testSingleFunctionMoved() {
     checkCase(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 7, 9, 10, 2, 11, 12, 5, 13, 7, 8, 7},
               new int[]{10, 2, 11, 12, 5, 13, 7, 8, 7, 9, 1, 2, 3, 4, 5, 6, 7, 8, 7});
   }
 
+  @Test
   public void testInnerChunks() {
     checkCase(new int[]{0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0}, new int[]{1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1});
     checkCase(new int[]{0, 2, 3, 0, 4, 5, 0}, new int[]{1, 2, 1, 3, 4, 5, 1});
@@ -50,6 +56,7 @@ public class ReindexerNewTest extends TestCase {
     checkCase(new int[]{15, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 15}, new int[]{13, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 13});
   }
 
+  @Test
   public void testRandomExample() {
     int[] ints1 = new int[100];
     int[] ints2 = new int[100];

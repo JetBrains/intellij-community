@@ -3,27 +3,35 @@ package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-class RecursionManagerTest : TestCase() {
+class RecursionManagerTest {
   private val myGuard: RecursionGuard<Any> = RecursionManager.createGuard("RecursionManagerTest")
   private val myDisposable: Disposable = Disposer.newDisposable()
 
-  public override fun setUp() {
+  @BeforeEach
+  fun setUp() {
     RecursionManager.assertOnMissedCache(myDisposable)
-    super.setUp()
   }
 
-  public override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     Disposer.dispose(myDisposable)
-    super.tearDown()
   }
 
   fun prevent(key: Any, memoize: Boolean = true, c: Computable<Any>): Any? {
     return myGuard.doPreventingRecursion(key, memoize, c)
   }
 
+  @Test
   fun testPreventRecursion() {
     assertEquals("foo-return", prevent("foo") {
       assertEquals("bar-return", prevent("bar") {
@@ -34,11 +42,12 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun testAssertOnMissedCache() {
     assertEquals("foo-return", prevent("foo") {
       val stamp = RecursionManager.markStack()
       assertEquals(null, prevent("foo") { fail() })
-      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException::class.java) { stamp.mayCacheNow() }
+      assertThrows<RecursionManager.CachingPreventedException> { stamp.mayCacheNow() }
       "foo-return"
     })
   }
@@ -52,6 +61,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun testMemoizedValueAccessDoesntClearPreventionTrace() {
     assertEquals("outer-return", prevent("outer") {
       val stamp = RecursionManager.markStack()
@@ -64,7 +74,7 @@ class RecursionManagerTest : TestCase() {
         fail()
       }
       catch (e: RecursionManager.CachingPreventedException) {
-        val soe = UsefulTestCase.assertInstanceOf(e.cause, StackOverflowPreventedException::class.java)
+        val soe = assertInstanceOf(StackOverflowPreventedException::class.java, e.cause)
         assertTrue(soe.stackTrace.any { ste ->
           ste.methodName == "methodWhichShouldBePresentInPreventionTrace"
         })
@@ -73,6 +83,7 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun testMemoization() {
     assertEquals("foo-return", prevent("foo") {
       assertEquals("bar-return", prevent("bar") {
@@ -86,6 +97,7 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun testNoMemoizationAfterExit() {
     assertEquals("foo-return", prevent("foo") {
       assertEquals("bar-return", prevent("bar") {
@@ -99,12 +111,14 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun `test no memoization after exiting SOE loop inside another preventing call`() {
     prevent("unrelated") {
       testNoMemoizationAfterExit()
     }
   }
 
+  @Test
   fun `test memoize when the we run into the same prevention via different route`() {
     prevent("foo") {
       prevent("foo") { fail() }
@@ -116,6 +130,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun testMayCache() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
     val doo1 = RecursionManager.markStack()
@@ -146,6 +161,7 @@ class RecursionManagerTest : TestCase() {
     assertTrue(doo1.mayCacheNow())
   }
 
+  @Test
   fun testNoCachingForMemoizedValues() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
     assertEquals("foo-return", prevent("foo") {
@@ -162,6 +178,7 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun testNoCachingForMemoizedValues2() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
     assertEquals("1-return", prevent("1") {
@@ -185,6 +202,7 @@ class RecursionManagerTest : TestCase() {
     })
   }
 
+  @Test
   fun testNoMemoizationForNoReentrancy() {
     assertEquals("foo-return", prevent("foo") {
       assertEquals(null, prevent("foo") { "foo-return" })
@@ -197,6 +215,7 @@ class RecursionManagerTest : TestCase() {
   }
 
   @PerformanceUnitTest
+  @Test
   fun testFullGraphPerformance() {
     val start = System.currentTimeMillis()
     val count = 20
@@ -228,6 +247,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun `test full graph correctness`() {
     FullGraphCorrectness().ensureSymmetric()
     prevent("unrelated") {
@@ -235,6 +255,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun `test changing hash code doesn't crash RecursionManager`() {
     val key = mutableListOf("b")
     prevent(key) {
@@ -242,6 +263,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun `test key equals that invokes RecursionManager`() {
     prevent(RecursiveKey("a")) {
       prevent(RecursiveKey("b")) {
@@ -263,6 +285,7 @@ class RecursionManagerTest : TestCase() {
     }
   }
 
+  @Test
   fun `test exception from hashCode on exiting`() {
     val key1 = ThrowingKey()
     val key2 = ThrowingKey()

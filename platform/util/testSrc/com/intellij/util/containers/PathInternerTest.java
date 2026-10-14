@@ -1,19 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class PathInternerTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class PathInternerTest {
   private final PathInterner.PathEnumerator interner = new PathInterner.PathEnumerator();
 
+  @Test
   public void testAddTwice() {
     assertSame(interner.addPath("/foo/bar"), interner.addPath("/foo/bar"));
   }
 
+  @Test
   public void testAddDifferent() {
     assertNotSame(interner.addPath("/foo/bar"), interner.addPath("/foo/foo"));
   }
 
+  @Test
   public void testRetrieve() {
     int idx = interner.addPath("/foo/bar");
     int idx2 = interner.addPath("/foo/foo");
@@ -23,6 +33,7 @@ public class PathInternerTest extends TestCase {
     assertEquals("/foo", interner.retrievePath(idx3).toString());
   }
 
+  @Test
   public void testRetrieveNotExistingFails() {
     try {
       interner.retrievePath(239);
@@ -33,6 +44,7 @@ public class PathInternerTest extends TestCase {
     fail();
   }
 
+  @Test
   public void testContains() {
     String path = "/home/peter/work/idea/community/out/production/intellij.platform.vcs.impl/com/intellij/openapi/vcs/changes/committed/CommittedChangesViewManager$1.class";
     interner.addPath(path);

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,7 +15,7 @@ import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.CharBuffer;
 import java.text.DecimalFormat;
@@ -28,12 +27,13 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Eugene Zhuravlev
@@ -99,9 +99,9 @@ public class StringUtilTest {
     for (char ch = 0; ch < Character.MAX_VALUE; ch++) {
       char upperCaseCh = Character.toUpperCase(ch);
       assertEquals(
-        "Optimized StringUtil.toUpperCase(" + ch + ") must be == Character.toUpperCase(ch)[=" + upperCaseCh + "]",
         upperCaseCh,
-        StringUtil.toUpperCase(ch)
+        StringUtil.toUpperCase(ch),
+        "Optimized StringUtil.toUpperCase(" + ch + ") must be == Character.toUpperCase(ch)[=" + upperCaseCh + "]"
       );
     }
   }
@@ -123,9 +123,9 @@ public class StringUtilTest {
     for (char ch = 0; ch < Character.MAX_VALUE; ch++) {
       char lowerCaseCh = Character.toLowerCase(ch);
       assertEquals(
-        "Optimized StringUtil.toLowerCase(" + ch + ") must be == Character.toLowerCase(ch)[=" + lowerCaseCh + "]",
         lowerCaseCh,
-        StringUtil.toLowerCase(ch)
+        StringUtil.toLowerCase(ch),
+        "Optimized StringUtil.toLowerCase(" + ch + ") must be == Character.toLowerCase(ch)[=" + lowerCaseCh + "]"
       );
     }
   }
@@ -145,40 +145,26 @@ public class StringUtilTest {
   @Test
   public void testSplitWithQuotes() {
     // Merge separators
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("aaa bbb   ccc ", ' '),
-      "aaa", "bbb", "ccc"
-    );
+    assertThat(StringUtil.splitHonorQuotes("aaa bbb   ccc ", ' '))
+      .containsExactlyInAnyOrder("aaa", "bbb", "ccc");
     // Support different quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'aaa' \"bbb\"", ' '),
-      "'aaa'", "\"bbb\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'aaa' \"bbb\"", ' '))
+      .containsExactlyInAnyOrder("'aaa'", "\"bbb\"");
     // Ignore separators inside quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'a aa' \"bb b\"", ' '),
-      "'a aa'", "\"bb b\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'a aa' \"bb b\"", ' '))
+      .containsExactlyInAnyOrder("'a aa'", "\"bb b\"");
     // Ignore other quotes inside quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'a\" aa' \"bb 'b\"", ' '),
-      "'a\" aa'", "\"bb 'b\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'a\" aa' \"bb 'b\"", ' '))
+      .containsExactlyInAnyOrder("'a\" aa'", "\"bb 'b\"");
     // Escape quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'a \\'aa' \"bb\\\" b\"", ' '),
-      "'a \\'aa'", "\"bb\\\" b\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'a \\'aa' \"bb\\\" b\"", ' '))
+      .containsExactlyInAnyOrder("'a \\'aa'", "\"bb\\\" b\"");
     // Unescape escaped quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'a aa\\\\' \"bb b\\\\\"", ' '),
-      "'a aa\\\\'", "\"bb b\\\\\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'a aa\\\\' \"bb b\\\\\"", ' '))
+      .containsExactlyInAnyOrder("'a aa\\\\'", "\"bb b\\\\\"");
     // Escape unescaped quotes
-    UsefulTestCase.assertSameElements(
-      StringUtil.splitHonorQuotes("'a \\\\\\'aa' \"bb \\\\\\\"b\"", ' '),
-      "'a \\\\\\'aa'", "\"bb \\\\\\\"b\""
-    );
+    assertThat(StringUtil.splitHonorQuotes("'a \\\\\\'aa' \"bb \\\\\\\"b\"", ' '))
+      .containsExactlyInAnyOrder("'a \\\\\\'aa'", "\"bb \\\\\\\"b\"");
   }
 
   @Test
@@ -248,7 +234,7 @@ public class StringUtilTest {
     String s3 = " 0b";
     assertTrue(StringUtil.naturalCompare(s1, s2) < 0);
     assertTrue(StringUtil.naturalCompare(s2, s3) < 0);
-    assertTrue("non-transitive", StringUtil.naturalCompare(s1, s3) < 0);
+    assertTrue(StringUtil.naturalCompare(s1, s3) < 0, "non-transitive");
   }
 
   @Test
@@ -855,40 +841,40 @@ public class StringUtilTest {
     assertFalse(StringUtil.startsWith("ab", 2, "abcdefgh"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithNegativeIndex() {
-    StringUtil.startsWith("whatever", -1, "");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("whatever", -1, ""));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithIndexGreaterThanLength() {
-    StringUtil.startsWith("whatever", 9, "");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("whatever", 9, ""));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithEmptyStringNegativeIndex() {
-    StringUtil.startsWith("", -1, "");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("", -1, ""));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithEmptyStringIndexGreaterThanLength() {
-    StringUtil.startsWith("", 1, "");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("", 1, ""));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithLongerSuffixNegativeIndex() {
-    StringUtil.startsWith("wh", -1, "whatever");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("wh", -1, "whatever"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void startsWithLongerSuffixIndexGreaterThanLength() {
-    StringUtil.startsWith("wh", 3, "whatever");
+    assertThrows(IllegalArgumentException.class, () -> StringUtil.startsWith("wh", 3, "whatever"));
   }
 
   @Test
@@ -985,7 +971,7 @@ public class StringUtilTest {
   public void testEndsWith() {
     assertTrue(StringUtil.endsWith("text", 0, 4, "text"));
     assertFalse(StringUtil.endsWith("text", 4, 4, "-->"));
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
+    assertThrows(IllegalArgumentException.class, () -> assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
     assertFalse(StringUtil.endsWith("text", "-->"));
   }
 

@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
-import com.intellij.testFramework.UsefulTestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class GenerateRecursiveSequenceTest : UsefulTestCase() {
+class GenerateRecursiveSequenceTest {
+  @Test
   fun testEmpty() {
     assertTrue(generateRecursiveSequence<String>(emptySequence()) { s -> s.lineSequence() }.toList().isEmpty())
 
@@ -13,6 +17,7 @@ class GenerateRecursiveSequenceTest : UsefulTestCase() {
     }.firstOrNull()
   }
 
+  @Test
   fun testGraph() {
     class Node(val name: String) {
       val children = mutableListOf<Node>()
@@ -36,7 +41,7 @@ class GenerateRecursiveSequenceTest : UsefulTestCase() {
     n3.children += n5
 
     val names = generateRecursiveSequence(sequenceOf(n1)) { n -> n.children.asSequence() }.map { it.name }.toList()
-    assertOrderedEquals(names, "n1", "n2", "n3", "n4", "n5")
+    assertEquals(listOf("n1", "n2", "n3", "n4", "n5"), names)
 
     generateRecursiveSequence(sequenceOf(n1)) { n ->
       assertTrue(n != n3)

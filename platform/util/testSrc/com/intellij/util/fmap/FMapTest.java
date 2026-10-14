@@ -2,16 +2,17 @@
 package com.intellij.util.fmap;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static com.intellij.util.fmap.ArrayBackedFMap.ARRAY_THRESHOLD;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class FMapTest {
 
@@ -105,6 +106,10 @@ public class FMapTest {
 
   private static void assertKeys(@NotNull FMap<String, String> map) {
     assertSameElements(map.keys(), IntStream.range(0, map.size()).mapToObj(FMapTest::key).collect(Collectors.toList()));
+  }
+
+  private static void assertSameElements(@NotNull Iterable<String> actual, @NotNull Collection<String> expected) {
+    assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
   }
 
   private static void assertValues(@NotNull FMap<String, String> map) {

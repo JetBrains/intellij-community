@@ -3,7 +3,7 @@ package com.intellij.util.io.zip
 
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class UpdateZipFromFileTest {
   @Test fun `add entry`() {

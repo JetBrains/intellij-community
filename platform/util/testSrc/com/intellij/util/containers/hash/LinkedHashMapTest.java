@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class LinkedHashMapTest {
   @Test
@@ -95,7 +95,7 @@ public class LinkedHashMapTest {
     assertEquals(5000, tested.size());
     it = tested.keySet().iterator();
     for (int i = 1; i <= 9999; i += 2) {
-      Assert.assertTrue(it.hasNext());
+      Assertions.assertTrue(it.hasNext());
       assertEquals(i, it.next().intValue());
     }
   }

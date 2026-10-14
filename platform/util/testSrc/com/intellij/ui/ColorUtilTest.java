@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 
@@ -24,8 +24,11 @@ import static com.intellij.ui.ColorUtil.fromHex;
 import static com.intellij.ui.ColorUtil.mix;
 import static com.intellij.ui.ColorUtil.withAlpha;
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-public class ColorUtilTest extends TestCase {
+public class ColorUtilTest {
+  @Test
   public void testColorMix() {
     assertEquals(Color.GRAY, mix(Color.BLACK, Color.WHITE, .5));
     assertEquals(Color.LIGHT_GRAY, mix(Color.BLACK, Color.WHITE, .751));
@@ -36,6 +39,7 @@ public class ColorUtilTest extends TestCase {
     assertEquals(withAlpha(Color.GRAY, .17), mix(withAlpha(Color.WHITE, .17), withAlpha(Color.BLACK, .17), .5));
   }
 
+  @Test
   public void testColorMixWrapping() {
     assertEquals(Color.class, mix(Color.BLACK, Color.WHITE, .5).getClass());
     assertEquals(JBColor.class, mix(Color.BLACK, JBColor.WHITE, .5).getClass());
@@ -43,6 +47,7 @@ public class ColorUtilTest extends TestCase {
     assertEquals(JBColor.class, mix(JBColor.BLACK, Color.WHITE, .5).getClass());
   }
 
+  @Test
   public void testColorMixOutOfRange() {
     assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, Double.NEGATIVE_INFINITY));
     assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, -Double.MAX_VALUE));
@@ -53,6 +58,7 @@ public class ColorUtilTest extends TestCase {
     assertSame(Color.WHITE, mix(Color.BLACK, Color.WHITE, Double.POSITIVE_INFINITY));
   }
 
+  @Test
   public void testBlackFromHex() {
     for (String hex : asList("000", "#000", "0x000",
                              "000F", "#000F", "0x000F",
@@ -64,6 +70,7 @@ public class ColorUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testWhiteFromHex() {
     for (String hex : asList("FFF", "#FFF", "0xFFF",
                              "FFFF", "#FFFF", "0xFFFF",
@@ -75,6 +82,7 @@ public class ColorUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testRedFromHex() {
     for (String hex : asList("F00", "#F00", "0xF00",
                              "F00F", "#F00F", "0xF00F",
@@ -84,6 +92,7 @@ public class ColorUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testGreenFromHex() {
     for (String hex : asList("0F0", "#0F0", "0x0F0",
                              "0F0F", "#0F0F", "0x0F0F",
@@ -93,6 +102,7 @@ public class ColorUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testBlueFromHex() {
     for (String hex : asList("00F", "#00F", "0x00F",
                              "00FF", "#00FF", "0x00FF",
@@ -102,12 +112,14 @@ public class ColorUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testAlphaFromHex() {
     assertEquals(new Color(0x00000000, true), fromHex("0000"));
     assertEquals(new Color(0xAA123456, true), fromHex("123456AA"));
     assertEquals(new Color(0xAA2468AC, true), fromHex("#2468ACAA"));
   }
 
+  @Test
   public void testAlphaBlending() {
     assertEquals(new Color(48, 78, 241, 15), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 0)));
     assertEquals(new Color(0, 0, 0, 0), alphaBlending(new Color(48, 78, 241, 0), new Color(120, 46, 97, 0)));

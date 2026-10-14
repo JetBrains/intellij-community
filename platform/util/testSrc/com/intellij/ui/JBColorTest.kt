@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import junit.framework.TestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import javax.swing.UIManager
 
-class JBColorTest: TestCase() {
+class JBColorTest {
+  @Test
   fun testColorResolving() {
     UIManager.put("testColor", JBColor.BLUE)
 

@@ -16,17 +16,20 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.DelimitedListProcessor;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * @author Dmitry Avdeev
  */
-public class DelimitedListProcessorTest extends TestCase {
+public class DelimitedListProcessorTest {
 
+  @Test
   public void testProcessor() {
     doTest("a; ; ", Arrays.asList("a", " ", " "));
   }

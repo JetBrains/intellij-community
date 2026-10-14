@@ -15,39 +15,48 @@
  */
 package com.intellij.util.diff;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class IntLCSNewTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class IntLCSNewTest {
+  @Test
   public void testEqual() {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3});
     checkChange(change, new int[]{0, 0, 0}, new int[]{0, 0, 0});
   }
 
+  @Test
   public void testOneAtBegging() {
     BitSet[] change = buildChange(new int[]{1, 2}, new int[]{1, 3});
     checkChange(change, new int[]{0, 1}, new int[]{0, 1});
   }
 
+  @Test
   public void testOneAntEnd() {
     BitSet[] change = buildChange(new int[]{1, 3}, new int[]{2, 3});
     checkChange(change, new int[]{1, 0}, new int[]{1, 0});
   }
 
+  @Test
   public void testOneOverAtEnd() {
     BitSet[] change = buildChange(new int[]{1, 2}, new int[]{1, 2, 3});
     checkChange(change, new int[]{0, 0}, new int[]{0, 0, 1});
   }
 
+  @Test
   public void testOneOverAtBegging() {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{2, 3});
     checkChange(change, new int[]{1, 0, 0}, new int[]{0, 0});
   }
 
+  @Test
   public void testSingleMiddle() {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{4, 2, 5});
     checkChange(change, new int[]{1, 0, 1}, new int[]{1, 0, 1});
   }
 
+  @Test
   public void testAbsolutelyDifferent() {
     BitSet[] change1 = buildChange(new int[]{1, 2}, new int[]{3, 4});
     checkChange(change1, new int[]{1, 1}, new int[]{1, 1});
@@ -56,11 +65,13 @@ public class IntLCSNewTest extends TestCase {
     checkChange(change2, new int[]{1, 1, 1}, new int[]{1, 1, 1});
   }
 
+  @Test
   public void testSingleUniqueMoved() {
     BitSet[] change = buildChange(new int[]{1, 1, 2, 2, 10}, new int[]{10, 1, 1, 2, 2});
     checkChange(change, new int[]{0, 0, 0, 0, 1}, new int[]{1, 0, 0, 0, 0});
   }
 
+  @Test
   public void testSingleFunctionMoved() {
     BitSet[] change = buildChange(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 7, 9, 10, 2, 11, 12, 5, 13, 7, 8, 7},
                                   new int[]{10, 2, 11, 12, 5, 13, 7, 8, 7, 9, 1, 2, 3, 4, 5, 6, 7, 8, 7});

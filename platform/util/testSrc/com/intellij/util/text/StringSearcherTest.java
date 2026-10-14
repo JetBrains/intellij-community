@@ -19,9 +19,12 @@
  */
 package com.intellij.util.text;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class StringSearcherTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class StringSearcherTest {
+  @Test
   public void testSearchPatternAtTheEnd() {
     final String pattern = "bc";
     final String text = "aabc";
@@ -32,6 +35,7 @@ public class StringSearcherTest extends TestCase {
     assertEquals(text.indexOf("bc"), index);
   }
 
+  @Test
   public void testCaseInsensitiveWithUnicode() {
     String pattern = "SİL";
     final String text = "SİL SIL";
@@ -58,6 +62,7 @@ public class StringSearcherTest extends TestCase {
     assertEquals(firstPos, searcher.scan(text, 0, index - 1));
   }
 
+  @Test
   public void testSearchBackwardLastOne() {
     final String pattern = "c";
     final String text = "aabc";
@@ -68,6 +73,7 @@ public class StringSearcherTest extends TestCase {
     assertEquals(pos, index);
   }
 
+  @Test
   public void testOneElementPatternAndBackward() {
     assertEquals(-1, new StringSearcher("1", false, false).scan("SIL"));
     assertEquals(0, new StringSearcher("S", false, false).scan("SIL"));

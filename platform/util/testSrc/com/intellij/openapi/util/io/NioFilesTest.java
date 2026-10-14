@@ -4,12 +4,11 @@ package com.intellij.openapi.util.io;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.rules.InMemoryFsRule;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.rules.InMemoryFsExtension;
 import com.intellij.util.system.OS;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,14 +30,16 @@ import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWorkingWslDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NioFilesTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();  // for platform-specific tests
-  @Rule public InMemoryFsRule memoryFs = new InMemoryFsRule();
+  @TempDir
+  Path tempDir;  // for platform-specific tests
+  @RegisterExtension
+  InMemoryFsExtension memoryFs = new InMemoryFsExtension();
 
   @Test
   public void fileName() {
@@ -111,11 +112,11 @@ public class NioFilesTest {
 
   @Test
   public void deleteLinksRecursively() throws IOException {
-    var dir = Files.createDirectory(tempDir.getRootPath().resolve("dir"));
+    var dir = Files.createDirectory(tempDir.resolve("dir"));
     var file = Files.createFile(dir.resolve("file"));
     var subDir = Files.createDirectory(dir.resolve("subDir"));
     Files.createFile(subDir.resolve("subFile"));
-    var link = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), dir);
+    var link = Files.createSymbolicLink(tempDir.resolve("link"), dir);
     NioFiles.deleteRecursively(link.resolve(subDir.getFileName()));
     assertThat(subDir).doesNotExist();
     NioFiles.deleteRecursively(link.resolve(file.getFileName()));
@@ -124,14 +125,14 @@ public class NioFilesTest {
     assertThat(link).doesNotExist();
     assertThat(dir).isDirectory();
 
-    var anotherFile = Files.createFile(tempDir.getRootPath().resolve("file"));
-    var fileLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), anotherFile);
+    var anotherFile = Files.createFile(tempDir.resolve("file"));
+    var fileLink = Files.createSymbolicLink(tempDir.resolve("link"), anotherFile);
     NioFiles.deleteRecursively(fileLink.resolve("no_such_file"));
     assertThat(fileLink).isSymbolicLink();
     NioFiles.deleteRecursively(fileLink);
     assertThat(fileLink).doesNotExist();
 
-    var nonExistingLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), tempDir.getRootPath().resolve("no_such_file"));
+    var nonExistingLink = Files.createSymbolicLink(tempDir.resolve("link"), tempDir.resolve("no_such_file"));
     NioFiles.deleteRecursively(nonExistingLink.resolve("no_such_file"));
     assertThat(nonExistingLink).isSymbolicLink();
     NioFiles.deleteRecursively(nonExistingLink);
@@ -255,14 +256,14 @@ public class NioFilesTest {
 
   @Test
   public void caseOnlyRename() throws IOException {
-    var file = tempDir.newFileNio("dir/test.txt");
+    var file = Files.createFile(Files.createDirectories(tempDir.resolve("dir")).resolve("test.txt"));
     NioFiles.rename(file, "FILE.txt");
     assertThat(NioFiles.list(file.getParent()).stream().map(p -> p.getFileName().toString())).containsExactly("FILE.txt");
   }
 
   @Test
   public void setReadOnly() throws IOException {
-    var f = tempDir.newFileNio("f");
+    var f = Files.createFile(tempDir.resolve("f"));
 
     NioFiles.setReadOnly(f, true);
     assertThatThrownBy(() -> Files.writeString(f, "test"))
@@ -271,7 +272,7 @@ public class NioFilesTest {
     NioFiles.setReadOnly(f, false);
     Files.writeString(f, "test");
 
-    var d = tempDir.newDirectoryPath("d");
+    var d = Files.createDirectory(tempDir.resolve("d"));
     var child = d.resolve("f");
 
     NioFiles.setReadOnly(d, true);
@@ -288,7 +289,7 @@ public class NioFilesTest {
   public void setExecutable() throws IOException, InterruptedException {
     assumeUnix();
 
-    var script = Files.writeString(tempDir.newFileNio("test.sh"), "#!/bin/sh\nexit 42\n");
+    var script = Files.writeString(Files.createFile(tempDir.resolve("test.sh")), "#!/bin/sh\nexit 42\n");
     try { runAndGetExitValue(script.toString()); }
     catch (IOException ignored) { }
 
@@ -320,7 +321,7 @@ public class NioFilesTest {
   @Test
   public void circularSymlinkAttributesReading() throws IOException {
     assumeSymLinkCreationIsSupported();
-    var symlink = tempDir.getRootPath().resolve("symlink");
+    var symlink = tempDir.resolve("symlink");
     Files.createSymbolicLink(symlink, symlink);
     assertTrue(NioFiles.readAttributes(symlink).isSymbolicLink());
   }
@@ -328,7 +329,7 @@ public class NioFilesTest {
   @Test
   public void wslSymlinkAttributesReading() throws IOException {
     var distribution = assumeWorkingWslDistribution();
-    var tempDirPrefix = UsefulTestCase.TEMP_DIR_MARKER + "wslSymlinkAttributesReading" + "_";
+    var tempDirPrefix = "unitTest_" + "wslSymlinkAttributesReading" + "_";
     var tempDir = Files.createTempDirectory(Path.of("\\\\wsl$\\" + distribution + "\\tmp"), tempDirPrefix);
     var tmpPath = "/tmp/" + tempDir.getFileName() + '/';
     try {

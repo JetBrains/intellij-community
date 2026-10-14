@@ -12,8 +12,8 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
@@ -25,23 +25,33 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 
-public class ValueContainersTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ValueContainersTest {
+  @Test
   public void testNullValueSingleId() {
     runSimpleAddRemoveIteration(new Void[] {null}, new int[][]{{5}});
   }
 
+  @Test
   public void testNullValueSameIdTrice() {
     runSimpleAddRemoveIteration(new Void[] {null}, new int[][]{{5, 5, 5}});
   }
 
+  @Test
   public void testOneValueManyId() {
     runSimpleAddRemoveIteration(new String[] {"value"}, new int[][]{{2, 3, 4}});
   }
 
+  @Test
   public void testManyValuesManyId() {
     runSimpleAddRemoveIteration(new Integer[] { 25, 33, 77}, new int[][]{{ 10, 20, 30}, { 11, 22 }, {44}});
   }
 
+  @Test
   public void testMixedValueContainer() {
     ValueContainerImpl<String> container = ValueContainerImpl.createNewValueContainer();
 
@@ -53,9 +63,10 @@ public class ValueContainersTest extends TestCase {
     container.removeValue(294005, "com");
     container.removeValue(294001, "com");
 
-    assertEquals("Actual container: " + container, 0, container.size());
+    assertEquals(0, container.size(), "Actual container: " + container);
   }
 
+  @Test
   public void testValueContainerForTroveMap() throws IOException {
     class MyValueExternalizer implements DataExternalizer<Map<String, String>> {
       @Override

@@ -3,13 +3,20 @@ package com.intellij.util.io.storage;
 
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HeavyProcessLatchTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class HeavyProcessLatchTest {
+  @Test
   public void testQueryHeavyOpStatusWorks() throws Exception {
     AtomicBoolean started = new AtomicBoolean();
     AtomicBoolean finished = new AtomicBoolean();
@@ -48,6 +55,7 @@ public class HeavyProcessLatchTest extends TestCase {
     future.get();
   }
 
+  @Test
   public void testQueryHeavyStatusWorkForInterleavedOps() throws Exception {
     AtomicInteger started = new AtomicInteger();
     AtomicInteger finished = new AtomicInteger();

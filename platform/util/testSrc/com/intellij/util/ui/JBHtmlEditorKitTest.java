@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JEditorPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.StyledDocument;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class JBHtmlEditorKitTest {
   @Test

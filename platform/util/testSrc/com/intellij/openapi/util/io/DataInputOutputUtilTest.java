@@ -2,7 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.util.io.DataInputOutputUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,7 +11,7 @@ import java.io.DataOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DataInputOutputUtilTest {
 
@@ -31,9 +31,9 @@ public class DataInputOutputUtilTest {
       buffer.clear();
       int valueRead = DataInputOutputUtil.readINT(buffer);
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }
@@ -42,9 +42,9 @@ public class DataInputOutputUtilTest {
   public void sizeOfVarint_ReturnsExactSizeWrittenBy_writeINT() {
     for (int valueToCheck : SPECIAL_CASES_TO_CHECK) {
       assertEquals(
-        "sizeOfVarint must match actual writeINT byte count for special value " + valueToCheck,
         bytesWrittenByWriteINT(valueToCheck),
-        DataInputOutputUtil.sizeOfVarint(valueToCheck)
+        DataInputOutputUtil.sizeOfVarint(valueToCheck),
+        "sizeOfVarint must match actual writeINT byte count for special value " + valueToCheck
       );
     }
 
@@ -52,9 +52,9 @@ public class DataInputOutputUtilTest {
     for (int i = 0; i < 1_000_000; i++) {
       int valueToCheck = rnd.nextInt();
       assertEquals(
-        "sizeOfVarint must match actual writeINT byte count for random value " + valueToCheck,
         bytesWrittenByWriteINT(valueToCheck),
-        DataInputOutputUtil.sizeOfVarint(valueToCheck)
+        DataInputOutputUtil.sizeOfVarint(valueToCheck),
+        "sizeOfVarint must match actual writeINT byte count for random value " + valueToCheck
       );
     }
   }
@@ -74,9 +74,9 @@ public class DataInputOutputUtilTest {
       buffer.clear();
       int valueRead = DataInputOutputUtil.readINT(buffer);
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }
@@ -100,9 +100,9 @@ public class DataInputOutputUtilTest {
       buffer.clear();
       long valueRead = DataInputOutputUtil.readTIME(buffer);
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }
@@ -121,9 +121,9 @@ public class DataInputOutputUtilTest {
       long valueRead = DataInputOutputUtil.readTIME(buffer);
 
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }
@@ -150,9 +150,9 @@ public class DataInputOutputUtilTest {
       long valueRead = DataInputOutputUtil.readLONG(new DataInputStream(bis));
 
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }
@@ -171,9 +171,9 @@ public class DataInputOutputUtilTest {
       long valueRead = DataInputOutputUtil.readLONG(new DataInputStream(bis));
 
       assertEquals(
-        "Value read must be equal to value written",
         valueToCheck,
-        valueRead
+        valueRead,
+        "Value read must be equal to value written"
       );
     }
   }

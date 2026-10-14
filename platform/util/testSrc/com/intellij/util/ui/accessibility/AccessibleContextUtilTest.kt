@@ -18,8 +18,8 @@ package com.intellij.util.ui.accessibility
 import com.intellij.util.ui.accessibility.AccessibleContextUtil.combineAccessibleStrings
 import com.intellij.util.ui.accessibility.AccessibleContextUtil.joinAccessibleStrings
 import com.intellij.util.ui.accessibility.AccessibleContextUtil.replaceLineSeparatorsWithPunctuation
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
 class AccessibleContextUtilTest {
   @Test
@@ -27,47 +27,47 @@ class AccessibleContextUtilTest {
     val p = AccessibleContextUtil.PUNCTUATION_CHARACTER
     val s = AccessibleContextUtil.PUNCTUATION_SEPARATOR
 
-    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation(null))
-    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation(""))
-    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation("  "))
+    Assertions.assertEquals("", replaceLineSeparatorsWithPunctuation(null))
+    Assertions.assertEquals("", replaceLineSeparatorsWithPunctuation(""))
+    Assertions.assertEquals("", replaceLineSeparatorsWithPunctuation("  "))
 
-    Assert.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation(" a "))
-    Assert.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation("a"))
+    Assertions.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation(" a "))
+    Assertions.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation("a"))
 
-    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a\nb"))
-    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb"))
-    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb."))
+    Assertions.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a\nb"))
+    Assertions.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb"))
+    Assertions.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb."))
 
-    Assert.assertEquals("a" + p + s + "b" + p + s + "c" + p, replaceLineSeparatorsWithPunctuation("a\nb\n\nc"))
+    Assertions.assertEquals("a" + p + s + "b" + p + s + "c" + p, replaceLineSeparatorsWithPunctuation("a\nb\n\nc"))
   }
 
   @Test
   fun testCombineAccessibleStrings() {
-    Assert.assertNull(combineAccessibleStrings(null, null))
-    Assert.assertNull(combineAccessibleStrings("", ""))
-    Assert.assertNull(combineAccessibleStrings(null, ""))
-    Assert.assertNull(combineAccessibleStrings("", null))
+    Assertions.assertNull(combineAccessibleStrings(null, null))
+    Assertions.assertNull(combineAccessibleStrings("", ""))
+    Assertions.assertNull(combineAccessibleStrings(null, ""))
+    Assertions.assertNull(combineAccessibleStrings("", null))
 
-    Assert.assertEquals("first", combineAccessibleStrings("first", null))
-    Assert.assertEquals("first", combineAccessibleStrings("first", ""))
+    Assertions.assertEquals("first", combineAccessibleStrings("first", null))
+    Assertions.assertEquals("first", combineAccessibleStrings("first", ""))
 
-    Assert.assertEquals("second", combineAccessibleStrings(null, "second"))
-    Assert.assertEquals("second", combineAccessibleStrings("", "second"))
+    Assertions.assertEquals("second", combineAccessibleStrings(null, "second"))
+    Assertions.assertEquals("second", combineAccessibleStrings("", "second"))
 
-    Assert.assertEquals("first second", combineAccessibleStrings("first", "second"))
-    Assert.assertEquals("first, second", combineAccessibleStrings("first", ", ", "second"))
+    Assertions.assertEquals("first second", combineAccessibleStrings("first", "second"))
+    Assertions.assertEquals("first, second", combineAccessibleStrings("first", ", ", "second"))
   }
 
   @Test
   fun testJoinAccessibleStrings() {
-    Assert.assertEquals("first second third", joinAccessibleStrings(" ", "first", "second", "third"))
+    Assertions.assertEquals("first second third", joinAccessibleStrings(" ", "first", "second", "third"))
 
-    Assert.assertEquals("first second", joinAccessibleStrings(" ", "first", null, "second"))
-    Assert.assertEquals("first second", joinAccessibleStrings(" ", "first", "", "second"))
+    Assertions.assertEquals("first second", joinAccessibleStrings(" ", "first", null, "second"))
+    Assertions.assertEquals("first second", joinAccessibleStrings(" ", "first", "", "second"))
 
-    Assert.assertNull(joinAccessibleStrings(" "))
-    Assert.assertNull(joinAccessibleStrings(" ", null, null, null))
-    Assert.assertNull(joinAccessibleStrings(" ", "", "", ""))
-    Assert.assertNull(joinAccessibleStrings(" ", null, "", null))
+    Assertions.assertNull(joinAccessibleStrings(" "))
+    Assertions.assertNull(joinAccessibleStrings(" ", null, null, null))
+    Assertions.assertNull(joinAccessibleStrings(" ", "", "", ""))
+    Assertions.assertNull(joinAccessibleStrings(" ", null, "", null))
   }
 }

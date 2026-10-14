@@ -5,7 +5,7 @@ import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FileUtilLightTest {
   private static final char UNIX_SEPARATOR = '/';
@@ -111,12 +111,12 @@ public class FileUtilLightTest {
 
     for (int i = 0; i < data.length; i++) {
       ThreeState state = FileUtil.isAncestorThreeState(root, data[i], false);
-      assertEquals(String.valueOf(i), expected1[i], state);
+      assertEquals(expected1[i], state, String.valueOf(i));
     }
 
     for (int i = 0; i < data.length; i++) {
       ThreeState state = FileUtil.isAncestorThreeState(root, data[i], true);
-      assertEquals(String.valueOf(i), expected2[i], state);
+      assertEquals(expected2[i], state, String.valueOf(i));
     }
   }
 

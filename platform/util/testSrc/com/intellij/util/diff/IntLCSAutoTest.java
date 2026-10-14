@@ -15,12 +15,15 @@
  */
 package com.intellij.util.diff;
 
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-public class IntLCSAutoTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class IntLCSAutoTest {
   private final Random RNG = new Random();
 
   private static final int ITERATIONS = 1000;
@@ -29,12 +32,14 @@ public class IntLCSAutoTest extends TestCase {
 
   private enum Type {MyersLCS, PatienceLCS}
 
+  @Test
   public void testMyersLCS() throws Exception {
     for (int i = 0; i < ITERATIONS; i++) {
       doTestLCS(MAX_LENGTH, CHAR_COUNT, Type.MyersLCS);
     }
   }
 
+  @Test
   public void testPatienceLCS() throws Exception {
     for (int i = 0; i < ITERATIONS; i++) {
       doTestLCS(MAX_LENGTH, CHAR_COUNT, Type.PatienceLCS);

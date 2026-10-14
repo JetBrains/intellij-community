@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ScreenUtilTest {
   @Test

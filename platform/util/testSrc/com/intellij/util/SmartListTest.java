@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.AbstractList;
@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SmartListTest {
   @Test
@@ -66,7 +67,7 @@ public class SmartListTest {
     assertThat(l.get(2)).isEqualTo(3);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void testFourElement() throws Exception {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
@@ -101,7 +102,7 @@ public class SmartListTest {
     assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l.toString()).isEqualTo("[]");
 
-    l.set(1, 3);
+    assertThrows(IndexOutOfBoundsException.class, () -> l.set(1, 3));
   }
 
   private static int getModificationCount(SmartList<?> l) throws Exception {
@@ -110,7 +111,7 @@ public class SmartListTest {
     return (int)field.get(l);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void testFourElement2() throws Exception {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
@@ -131,34 +132,31 @@ public class SmartListTest {
     assertThat(iterator.next()).isEqualTo(-2);
     assertThat(iterator.hasNext()).isFalse();
 
-    assertThat(l.get(1)).isEqualTo(-2);
+    assertThrows(IndexOutOfBoundsException.class, () -> l.get(1));
   }
 
   @SuppressWarnings({"CollectionAddedToSelf", "RedundantOperationOnEmptyContainer"})
-  @Test(expected = ConcurrentModificationException.class)
+  @Test
   public void testFourElement3() {
     SmartList<Integer> l = new SmartList<>();
     l.clear();
     l.add(-2);
-    l.addAll(l);
-    assertThat(l).hasSize(2);
-    assertThat(l.toString()).isEqualTo("[-2, -2]");
-    l.addAll(l);
+    assertThrows(ConcurrentModificationException.class, () -> l.addAll(l));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void testAddIndexedNegativeIndex() {
-    new SmartList<Integer>().add(-1, 1);
+    assertThrows(IndexOutOfBoundsException.class, () -> new SmartList<Integer>().add(-1, 1));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void testAddIndexedWrongIndex() {
-    new SmartList<>(1).add(3, 1);
+    assertThrows(IndexOutOfBoundsException.class, () -> new SmartList<>(1).add(3, 1));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void testAddIndexedEmptyWrongIndex() {
-    new SmartList<Integer>().add(1, 1);
+    assertThrows(IndexOutOfBoundsException.class, () -> new SmartList<Integer>().add(1, 1));
   }
 
   @Test

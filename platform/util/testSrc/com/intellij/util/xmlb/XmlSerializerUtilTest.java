@@ -15,9 +15,15 @@
  */
 package com.intellij.util.xmlb;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class XmlSerializerUtilTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class XmlSerializerUtilTest {
+  @Test
   public void testCreateCopy() {
     BaseBean copy = XmlSerializerUtil.createCopy(new BaseBean("x", 1));
     assertNotNull(copy);
@@ -26,6 +32,7 @@ public class XmlSerializerUtilTest extends TestCase {
     assertEquals("x", copy.s);
   }
 
+  @Test
   public void testCopyBeanOfSameClass() {
     BaseBean to = new BaseBean();
     XmlSerializerUtil.copyBean(new BaseBean("a", 1), to);
@@ -33,6 +40,7 @@ public class XmlSerializerUtilTest extends TestCase {
     assertEquals("a", to.s);
   }
 
+  @Test
   public void testCopyBeanToInheritor() {
     InheritedBean to = new InheritedBean();
     to.b = true;

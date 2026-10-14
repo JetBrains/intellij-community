@@ -3,7 +3,7 @@ package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +14,12 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class KeyFMapTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class KeyFMapTest {
   private static final List<Key<Object>> KEYS =
     IntStream.range(0, 20).mapToObj(i -> Key.create("Key#"+i)).collect(Collectors.toList());
 
@@ -41,10 +46,11 @@ public class KeyFMapTest extends TestCase {
     assertEquals(size, actualKeys.length);
 
     for (Key key : KEYS.subList(0, size)) {
-      assertTrue("Key not found: " + key, ArrayUtil.contains(key, actualKeys));
+      assertTrue(ArrayUtil.contains(key, actualKeys), "Key not found: " + key);
     }
   }
 
+  @Test
   public void testHashCodeEquals() {
     Random r = new Random(1);
     for(int n=0; n<15; n++) {
@@ -62,7 +68,7 @@ public class KeyFMapTest extends TestCase {
         assertNotSame(fMap, newFMap); // new key is added: must be not same
         fMap = newFMap;
       }
-      assertEquals(hashMap + ":" + fMap, hashMap.hashCode(), fMap.hashCode());
+      assertEquals(hashMap.hashCode(), fMap.hashCode(), hashMap + ":" + fMap);
       KeyFMap fMap2 = KeyFMap.EMPTY_MAP;
       for (Map.Entry<Key<Object>, Object> entry : hashMap.entrySet()) {
         fMap2 = fMap2.plus(entry.getKey(), entry.getValue());
@@ -83,6 +89,7 @@ public class KeyFMapTest extends TestCase {
     }
   }
 
+  @Test
   public void testIdentityHashCode() {
     KeyFMap map = KeyFMap.EMPTY_MAP;
     for(int i=0; i<15; i++) {
@@ -101,22 +108,27 @@ public class KeyFMapTest extends TestCase {
     }
   }
 
+  @Test
   public void testGetKeysOnEmptyFMap() {
     doTestGetKeys(0);
   }
 
+  @Test
   public void testGetKeysOnOneElementFMap() {
     doTestGetKeys(1);
   }
 
+  @Test
   public void testGetKeysOnTwoElementFMap() {
     doTestGetKeys(2);
   }
 
+  @Test
   public void testGetKeysOnArrayBackedFMap() {
     doTestGetKeys(5);
   }
 
+  @Test
   public void testGetKeysOnMapBackedFMap() {
     doTestGetKeys(15);
   }

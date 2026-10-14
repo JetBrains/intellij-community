@@ -1,18 +1,22 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
-public class VersionComparatorTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class VersionComparatorTest {
+  @Test
   public void testNulls() {
     assertVerGreater("a", null);
     assertVerLess(null, "null");
     assertVerEquals(null, null);
   }
 
+  @Test
   public void testSplit() {
     assertStrsEquals(new String[]{"a", "b"}, VersionComparatorUtil.splitVersionString("a b"));
     assertStrsEquals(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "#ab"},
@@ -27,6 +31,7 @@ public class VersionComparatorTest extends TestCase {
     assertStrsEquals(new String[]{""}, VersionComparatorUtil.splitVersionString(""));
   }
 
+  @Test
   public void testExamples() {
     assertVerEquals("1", "1");
     assertVerLess("1", "2");
@@ -61,6 +66,7 @@ public class VersionComparatorTest extends TestCase {
         "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
   }
 
+  @Test
   public void testFormal() {
     assertVerEquals("7-snapshot", "7-sNaP");
     assertVerEquals("7-alpha", "7-a");
@@ -83,7 +89,7 @@ public class VersionComparatorTest extends TestCase {
   }
 
   private void assertStrsEquals(String[] expected, Collection<String> actual) {
-    Assert.assertEquals(StringUtil.join(expected, "^"), StringUtil.join(actual, "^"));
+    assertEquals(StringUtil.join(expected, "^"), StringUtil.join(actual, "^"));
   }
 
   private void assertVerEquals(final String v1, final String v2) {

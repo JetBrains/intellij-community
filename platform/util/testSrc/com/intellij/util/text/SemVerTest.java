@@ -17,8 +17,8 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,28 +90,28 @@ public class SemVerTest {
     assertPrecedence("1.0.0-beta.11", "1.0.0-rc.1");
     assertPrecedence("1.0.0-rc.1", "1.0.0");
 
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 5));
-    Assert.assertTrue(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 5));
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 4));
-    Assert.assertTrue(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 4));
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 0));
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 9));
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(3, 100, 100));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 5));
+    Assertions.assertTrue(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 5));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 4));
+    Assertions.assertTrue(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 4));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 0));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 9));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(3, 100, 100));
 
-    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 12, 6));
-    Assert.assertFalse(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 6));
-    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 13, 0));
-    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(5, 1, 0));
+    Assertions.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 12, 6));
+    Assertions.assertFalse(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 6));
+    Assertions.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 13, 0));
+    Assertions.assertFalse(parse("4.12.5").isGreaterOrEqualThan(5, 1, 0));
 
-    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(parse("4.12.4")));
-    Assert.assertTrue(parse("5.12.5").isGreaterOrEqualThan(parse("4.12.5")));
+    Assertions.assertTrue(parse("4.12.5").isGreaterOrEqualThan(parse("4.12.4")));
+    Assertions.assertTrue(parse("5.12.5").isGreaterOrEqualThan(parse("4.12.5")));
   }
 
   private static void assertEqual(@NotNull SemVer v1, @NotNull SemVer v2) {
     assertThat(v1).isEqualTo(v2);
     assertThat(v1).isEqualByComparingTo(v2);
-    Assert.assertTrue(v2.isGreaterOrEqualThan(v1));
-    Assert.assertTrue(v1.isGreaterOrEqualThan(v2));
+    Assertions.assertTrue(v2.isGreaterOrEqualThan(v1));
+    Assertions.assertTrue(v1.isGreaterOrEqualThan(v2));
   }
 
   private static void assertEqualPrecedence(String s1, String s2) {
@@ -128,7 +128,7 @@ public class SemVerTest {
     assertThat(v2).isGreaterThan(v1);
     assertThat(v1).isNotEqualByComparingTo(v2);
     assertThat(v1).isNotEqualTo(v2);
-    Assert.assertTrue(v2.isGreaterOrEqualThan(v1));
+    Assertions.assertTrue(v2.isGreaterOrEqualThan(v1));
   }
 
   private static void assertParsed(@NotNull String version,

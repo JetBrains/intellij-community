@@ -2,13 +2,13 @@
 package com.intellij.util.text;
 
 import com.intellij.BundleBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ListResourceBundle;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OrdinalFormatTest {
   @Test

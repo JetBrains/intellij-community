@@ -2,15 +2,18 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.JDOMUtil;
-import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.junit.jupiter.api.Test;
 
 import java.io.CharArrayWriter;
 import java.io.IOException;
 
-public class XMLOutputterTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class XMLOutputterTest {
+  @Test
   public void testEscapesInElementBody() throws Exception {
     Element root = new Element("root");
     root.setText("\"<>&");
@@ -18,6 +21,7 @@ public class XMLOutputterTest extends TestCase {
     assertEquals("<root>&quot;&lt;&gt;&amp;</root>", printElement(root));
   }
 
+  @Test
   public void testEscapesInAttributeValue() throws Exception {
     Element root = new Element("root");
     root.setAttribute("escapes", "\"<>&\n\r\t");

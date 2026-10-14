@@ -1,33 +1,39 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 
-public abstract class RandomAccessIntContainerGenericTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public abstract class RandomAccessIntContainerGenericTest {
   protected RandomAccessIntContainer myInstance;
 
   abstract RandomAccessIntContainer createInstance();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     myInstance = createInstance();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myInstance = null;
-    super.tearDown();
   }
 
+  @Test
   public void testContains() {
     myInstance.add(1);
     assertFalse(myInstance.contains(0));
     assertTrue(myInstance.contains(1));
   }
 
+  @Test
   public void testSize() {
     assertEquals(myInstance.size(), 0);
     for (int i = 0; i < 100; i++) {
@@ -39,11 +45,13 @@ public abstract class RandomAccessIntContainerGenericTest extends UsefulTestCase
     assertEquals(myInstance.size(), 99);
   }
 
+  @Test
   public void testAdd() {
     assertTrue(myInstance.add(1));
     assertFalse(myInstance.add(1));
   }
 
+  @Test
   public void testRemove() {
     assertFalse(myInstance.remove(1));
     assertTrue(myInstance.add(1));
@@ -51,6 +59,7 @@ public abstract class RandomAccessIntContainerGenericTest extends UsefulTestCase
     assertFalse(myInstance.remove(1));
   }
 
+  @Test
   public void testIterator() {
     final HashSet<Integer> data = new HashSet<>();
     for (int i = 0; i < 5000; i = (int)(i * 1.21 + 3)) {
@@ -60,12 +69,13 @@ public abstract class RandomAccessIntContainerGenericTest extends UsefulTestCase
     assertEquals(data.size(), myInstance.size());
     for (IntIdsIterator it = myInstance.intIterator(); it.hasNext(); ) {
       int value = it.next();
-      assertContainsElements(data, value);
+      assertTrue(data.contains(value));
       data.remove(value);
     }
-    assertEmpty(data);
+    assertTrue(data.isEmpty());
   }
 
+  @Test
   public void testBigValues() {
     final int MAX = 250000;
     for (int i = 0; i < MAX; i++) {

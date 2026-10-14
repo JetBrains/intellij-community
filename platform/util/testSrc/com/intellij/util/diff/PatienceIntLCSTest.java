@@ -15,39 +15,50 @@
  */
 package com.intellij.util.diff;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class PatienceIntLCSTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class PatienceIntLCSTest {
+  @Test
   public void testEqual() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3});
     checkChange(change, new int[]{0, 0, 0}, new int[]{0, 0, 0});
   }
 
+  @Test
   public void testOneAtBegging() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2}, new int[]{1, 3});
     checkChange(change, new int[]{0, 1}, new int[]{0, 1});
   }
 
+  @Test
   public void testOneAntEnd() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 3}, new int[]{2, 3});
     checkChange(change, new int[]{1, 0}, new int[]{1, 0});
   }
 
+  @Test
   public void testOneOverAtEnd() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2}, new int[]{1, 2, 3});
     checkChange(change, new int[]{0, 0}, new int[]{0, 0, 1});
   }
 
+  @Test
   public void testOneOverAtBegging() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{2, 3});
     checkChange(change, new int[]{1, 0, 0}, new int[]{0, 0});
   }
 
+  @Test
   public void testSingleMiddle() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{4, 2, 5});
     checkChange(change, new int[]{1, 0, 1}, new int[]{1, 0, 1});
   }
 
+  @Test
   public void testAbsolutelyDifferent() throws FilesTooBigForDiffException {
     BitSet[] change1 = buildChange(new int[]{1, 2}, new int[]{3, 4});
     checkChange(change1, new int[]{1, 1}, new int[]{1, 1});
@@ -56,11 +67,13 @@ public class PatienceIntLCSTest extends TestCase {
     checkChange(change2, new int[]{1, 1, 1}, new int[]{1, 1, 1});
   }
 
+  @Test
   public void testSingleUniqueMoved() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 1, 2, 2, 10}, new int[]{10, 1, 1, 2, 2});
     checkChange(change, new int[]{1, 1, 1, 1, 0}, new int[]{0, 1, 1, 1, 1});
   }
 
+  @Test
   public void testSingleFunctionMoved() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 7, 9, 10, 2, 11, 12, 5, 13, 7, 8, 7},
                                   new int[]{10, 2, 11, 12, 5, 13, 7, 8, 7, 9, 1, 2, 3, 4, 5, 6, 7, 8, 7});
@@ -68,6 +81,7 @@ public class PatienceIntLCSTest extends TestCase {
                 new int[]{0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
   }
 
+  @Test
   public void testBug1() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{2, 3, 4, 6, 7, 8, 9, 11, 12, 4, 6, 11, 15},
                                   new int[]{2, 3, 6, 7, 8, 9, 6, 11, 12, 4, 11, 15, 6});
@@ -75,55 +89,66 @@ public class PatienceIntLCSTest extends TestCase {
                 new int[]{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0});
   }
 
+  @Test
   public void testInnerChunks1() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0}, new int[]{1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1});
     checkChange(change, new int[]{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1}, new int[]{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1});
   }
 
+  @Test
   public void testInnerChunks2() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{0, 2, 3, 0, 4, 5, 0}, new int[]{1, 2, 1, 3, 4, 5, 1});
     checkChange(change, new int[]{1, 0, 0, 1, 0, 0, 1}, new int[]{1, 0, 1, 0, 0, 0, 1});
   }
 
+  @Test
   public void testInnerChunks3() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{15, 1, 2, 3, 1, 4, 5, 1, 15}, new int[]{13, 1, 2, 1, 3, 4, 5, 1, 13});
     checkChange(change, new int[]{1, 0, 0, 0, 1, 0, 0, 0, 1}, new int[]{1, 0, 0, 1, 0, 0, 0, 0, 1});
   }
 
+  @Test
   public void testInnerChunks4() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{15, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 15},
                                   new int[]{13, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 13});
     checkChange(change, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
   }
 
+  @Test
   public void testNotAbortedEqual() {
     checkAborted(false, new int[]{1, 2, 3}, new int[]{1, 2, 3});
   }
 
+  @Test
   public void testNotAbortedSimple() {
     checkAborted(false, new int[]{100, 1, 2, 3, 4, 5, 100}, new int[]{1, 2, 3, 4});
   }
 
+  @Test
   public void testAbortedNoMatches() {
     checkAborted(true, new int[]{4, 1, 2, 3}, new int[]{500, 100, 600,});
   }
 
+  @Test
   public void testAbortedSimple() {
     checkAborted(true, new int[]{4, 1, 2, 3, 100}, new int[]{5, 1, 6, 8, 9, 10});
   }
 
+  @Test
   public void testNotAbortedSecondStep() {
     checkAborted(false,
                  new int[]{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 100},
                  new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
   }
 
+  @Test
   public void testNotAbortedThirdStep() {
     checkAborted(false,
                  new int[]{100, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},
                  new int[]{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2});
   }
 
+  @Test
   public void testAbortedForthStep() {
     checkAborted(true,
                  new int[]{100, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},

@@ -16,7 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,8 +26,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CommandLineWrapperUtilTest {
   @Test
@@ -40,7 +40,7 @@ public class CommandLineWrapperUtilTest {
         Manifest manifest = inputStream.getManifest();
         String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
         String tempDirectoryUrl = tempDirectory.toURI().toURL().toString();
-        assertTrue(tempDirectoryUrl, tempDirectoryUrl.endsWith("/"));
+        assertTrue(tempDirectoryUrl.endsWith("/"), tempDirectoryUrl);
         assertEquals(tempDirectoryUrl + " " + tempDirectoryUrl +"directory%20with%20spaces/some.jar", classPath);
       }
       finally {

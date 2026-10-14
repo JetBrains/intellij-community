@@ -1,16 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.testFramework.rules.TempDirectory
-import org.junit.After
-import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.NonWritableChannelException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.WRITE
@@ -19,14 +20,13 @@ import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.TimeUnit.SECONDS
 
 class ResilientFileChannelTest {
-  @Rule
-  @JvmField
-  val tempDirectory: TempDirectory = TempDirectory()
+  @TempDir
+  lateinit var tempDirectory: Path
 
   private val byteBuf1 = ByteBuffer.wrap(byteArrayOf(1, 2, 3, 4))
   private val byteBuf2 = ByteBuffer.wrap(byteArrayOf(5, 6, 7, 8))
 
-  @After
+  @AfterEach
   fun clearInterruptedStatus() {
     Thread.interrupted()
   }
@@ -124,14 +124,14 @@ class ResilientFileChannelTest {
         secondOperationStarted = true
         it.write(byteBuf2)
       }
-      Assert.fail("Should not executed without exception")
+      Assertions.fail("Should not executed without exception")
     }
     catch (e: NonWritableChannelException) {
       exceptionHappened = true
     }
 
     assertTrue(exceptionHappened)
-    Assert.assertFalse(secondOperationStarted)
+    Assertions.assertFalse(secondOperationStarted)
   }
 
   @Test
@@ -171,15 +171,15 @@ class ResilientFileChannelTest {
             val actualData = ByteBuffer.allocate(expectedData.capacity())
 
             assertEquals(
-              "All expected bytes are read",
               actualData.capacity(),
-              fileHandle.read(actualData, threadId * actualData.capacity())
+              fileHandle.read(actualData, threadId * actualData.capacity()),
+              "All expected bytes are read"
             )
 
             assertEquals(
-              "Bytes read should be same as written before",
               IOUtil.toString(expectedData),
-              IOUtil.toString(actualData.rewind())
+              IOUtil.toString(actualData.rewind()),
+              "Bytes read should be same as written before"
             )
           }
         }.toList().forEach { it.get(1, MINUTES) }
@@ -204,8 +204,8 @@ class ResilientFileChannelTest {
       it.read(readBuffer1, 0)
     }
     assertTrue(
-      "Thread interrupted status is not cleared",
-      Thread.currentThread().isInterrupted
+      Thread.currentThread().isInterrupted,
+      "Thread interrupted status is not cleared"
     )
   }
 
@@ -224,5 +224,5 @@ class ResilientFileChannelTest {
     }
   }
 
-  private fun newTempFile() = tempDirectory.newFile("test.txt").toPath()
+  private fun newTempFile() = Files.createFile(tempDirectory.resolve("test.txt"))
 }

@@ -17,16 +17,24 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ReflectionUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
-public class ReflectionUtilTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class ReflectionUtilTest {
 
   @SuppressWarnings("unused")
+  @Test
   public void testFindField() throws Exception {
     class A {
       private String privateA;
@@ -53,6 +61,7 @@ public class ReflectionUtilTest extends TestCase {
   }
 
   @SuppressWarnings("FieldMayBeFinal")
+  @Test
   public void testResetField() throws NoSuchFieldException {
     class Reset {
       String STRING;
@@ -97,6 +106,7 @@ public class ReflectionUtilTest extends TestCase {
   }
 
   @SuppressWarnings({"RedundantMethodOverride", "override"})
+  @Test
   public void testHasOverridenMethod() {
     interface A {
       default void method() { }
@@ -117,28 +127,28 @@ public class ReflectionUtilTest extends TestCase {
       public void method() { }
     }
 
-    assertFalse("Method `A.method` isn't overridden in interface B",
-                ReflectionUtil.hasOverriddenMethod(B.class, A.class, "method"));
-    assertTrue("Method `A.method` is overridden in abstract class C",
-               ReflectionUtil.hasOverriddenMethod(C.class, A.class, "method"));
-    assertTrue("Method `A.method` is overridden in class D",
-               ReflectionUtil.hasOverriddenMethod(D.class, A.class, "method"));
-    assertTrue("Method `A.method` isn't directly overridden in class E. " +
-               "However, it is indirectly overridden in super class C",
-               ReflectionUtil.hasOverriddenMethod(E.class, A.class, "method"));
-    assertTrue("Method `A.method` is overridden in class F",
-               ReflectionUtil.hasOverriddenMethod(F.class, A.class, "method"));
-    assertFalse("Method `C.method` isn't overridden in class E",
-                ReflectionUtil.hasOverriddenMethod(E.class, C.class, "method"));
-    assertTrue("Method `C.method` is overridden in class F",
-               ReflectionUtil.hasOverriddenMethod(F.class, C.class, "method"));
+    assertFalse(ReflectionUtil.hasOverriddenMethod(B.class, A.class, "method"),
+                "Method `A.method` isn't overridden in interface B");
+    assertTrue(ReflectionUtil.hasOverriddenMethod(C.class, A.class, "method"),
+               "Method `A.method` is overridden in abstract class C");
+    assertTrue(ReflectionUtil.hasOverriddenMethod(D.class, A.class, "method"),
+               "Method `A.method` is overridden in class D");
+    assertTrue(ReflectionUtil.hasOverriddenMethod(E.class, A.class, "method"),
+               "Method `A.method` isn't directly overridden in class E. " +
+               "However, it is indirectly overridden in super class C");
+    assertTrue(ReflectionUtil.hasOverriddenMethod(F.class, A.class, "method"),
+               "Method `A.method` is overridden in class F");
+    assertFalse(ReflectionUtil.hasOverriddenMethod(E.class, C.class, "method"),
+                "Method `C.method` isn't overridden in class E");
+    assertTrue(ReflectionUtil.hasOverriddenMethod(F.class, C.class, "method"),
+               "Method `C.method` is overridden in class F");
 
     // Corner cases
-    assertFalse("Method `A.method` isn't overridden in interface A",
-                ReflectionUtil.hasOverriddenMethod(A.class, A.class, "method"));
-    assertFalse("Method `B.method` isn't overridden in interface B",
-                ReflectionUtil.hasOverriddenMethod(B.class, B.class, "method"));
-    assertFalse("Method `C.method` isn't overridden in interface C",
-                ReflectionUtil.hasOverriddenMethod(C.class, C.class, "method"));
+    assertFalse(ReflectionUtil.hasOverriddenMethod(A.class, A.class, "method"),
+                "Method `A.method` isn't overridden in interface A");
+    assertFalse(ReflectionUtil.hasOverriddenMethod(B.class, B.class, "method"),
+                "Method `B.method` isn't overridden in interface B");
+    assertFalse(ReflectionUtil.hasOverriddenMethod(C.class, C.class, "method"),
+                "Method `C.method` isn't overridden in interface C");
   }
 }

@@ -2,17 +2,17 @@
 package com.intellij.util
 
 import com.intellij.platform.util.ArgsParser
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.write
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
 class ArgsTest {
-  @JvmField
-  @Rule
-  val tempDir: TemporaryDirectory = TemporaryDirectory()
+  @TempDir
+  lateinit var tempDir: Path
 
   @Test
   fun testInt() {
@@ -56,23 +56,27 @@ class ArgsTest {
     assertEquals(0, all.size)
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun testNotEmptyFiles() {
     val parser = ArgsParser(listOf(""))
-    val notEmpty by parser.arg("test", "").notEmptyFiles()
-    println(notEmpty)
+    assertThrows<IllegalArgumentException> {
+      val notEmpty by parser.arg("test", "").notEmptyFiles()
+      println(notEmpty)
+    }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun testNotEmptyStrings() {
     val parser = ArgsParser(listOf(""))
-    val notEmpty by parser.arg("test", "").notEmptyStrings()
-    println(notEmpty)
+    assertThrows<IllegalArgumentException> {
+      val notEmpty by parser.arg("test", "").notEmptyStrings()
+      println(notEmpty)
+    }
   }
 
   @Test
   fun test_args_file() {
-    val argsFile = tempDir.newPath("args-file")
+    val argsFile = tempDir.resolve("args-file")
     argsFile.write("--test=123")
     val parser = ArgsParser(listOf("--@args-file=$argsFile", "--foo=bar"))
     val test by parser.arg("test", "").string()
@@ -84,9 +88,9 @@ class ArgsTest {
 
   @Test
   fun test_args_from_multiple_files() {
-    val oneFile = tempDir.newPath("args-file-one")
+    val oneFile = tempDir.resolve("args-file-one")
     oneFile.write("--foo=123")
-    val twoFile = tempDir.newPath("args-file-two")
+    val twoFile = tempDir.resolve("args-file-two")
     twoFile.write("--bar=true")
     val parser = ArgsParser(listOf("--@args-file=$oneFile", "--@args-file=$twoFile", "--baz=baz"))
 
@@ -123,7 +127,7 @@ class ArgsTest {
 
   @Test
   fun test_file() {
-    val someFile = tempDir.newPath("someFile")
+    val someFile = tempDir.resolve("someFile")
     val parser = ArgsParser(listOf("--file=$someFile"))
     val file by parser.arg("file", "").file()
     assertEquals(someFile, file)
@@ -136,25 +140,31 @@ class ArgsTest {
     assertEquals("default", value)
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun test_arg_not_specified() {
     val parser = ArgsParser(listOf("--test=123"))
-    val value by parser.arg("unspecified", "").string()
-    println(value)
+    assertThrows<IllegalArgumentException> {
+      val value by parser.arg("unspecified", "").string()
+      println(value)
+    }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun test_boolean_arg_wrong_value() {
     val parser = ArgsParser(listOf("--test=123"))
-    val value by parser.arg("test", "").boolean()
-    println(value)
+    assertThrows<IllegalArgumentException> {
+      val value by parser.arg("test", "").boolean()
+      println(value)
+    }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun test_arg_multiple_values() {
     val parser = ArgsParser(listOf("--test=123", "--test=456"))
-    val value by parser.arg("test", "").string()
-    println(value)
+    assertThrows<IllegalArgumentException> {
+      val value by parser.arg("test", "").string()
+      println(value)
+    }
   }
 
   @Test
@@ -178,18 +188,22 @@ class ArgsTest {
     assertEquals(42, value)
   }
 
-  @Test(expected = Throwable::class)
+  @Test
   fun test_transform_is_called() {
     val parser = ArgsParser(listOf())
-    parser.arg("test", "").booleanOrNull().andMap { error("123") }
-    parser.tryReadAll()
+    assertThrows<Throwable> {
+      parser.arg("test", "").booleanOrNull().andMap { error("123") }
+      parser.tryReadAll()
+    }
   }
 
-  @Test(expected = Throwable::class)
+  @Test
   fun test_apply_is_called() {
     val parser = ArgsParser(listOf())
-    parser.arg("test", "").booleanOrNull().andApply { error("123") }
-    parser.tryReadAll()
+    assertThrows<Throwable> {
+      parser.arg("test", "").booleanOrNull().andApply { error("123") }
+      parser.tryReadAll()
+    }
   }
 
   @Test

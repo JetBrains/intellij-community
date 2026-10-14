@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
-import junit.framework.TestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class GCWatcherTest {
 
@@ -32,8 +34,8 @@ public class GCWatcherTest {
     try {
       watcher.setGenerateHeapDump(false);
       watcher.ensureCollected();
-      TestCase.assertNotNull("Wrong test setup: ref should not be GC-ed yet", ref.get());
-      TestCase.fail("Should throw IllegalStateException");
+      assertNotNull(ref.get(), "Wrong test setup: ref should not be GC-ed yet");
+      fail("Should throw IllegalStateException");
     }
     catch (IllegalStateException ignored) {
       // expected
@@ -58,8 +60,8 @@ public class GCWatcherTest {
     try {
       watcher.setGenerateHeapDump(false);
       watcher.ensureCollected();
-      TestCase.assertNotNull("Wrong test setup: ref should not be GC-ed yet", ref.get());
-      TestCase.fail("Should throw IllegalStateException");
+      assertNotNull(ref.get(), "Wrong test setup: ref should not be GC-ed yet");
+      fail("Should throw IllegalStateException");
     }
     catch (IllegalStateException ignored) {
       // expected

@@ -15,12 +15,16 @@
  */
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.ListIterator;
 
-public class SortedListTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+public class SortedListTest {
+  @Test
   public void testAdd() {
     SortedList<String> list = createList();
     list.add("b");
@@ -32,6 +36,7 @@ public class SortedListTest extends TestCase {
     assertEquals("c", list.get(2));
   }
 
+  @Test
   public void testRemove() {
     final SortedList<String> list = createList();
     list.add("b");
@@ -41,6 +46,7 @@ public class SortedListTest extends TestCase {
     assertEquals("a", list.get(0));
   }
 
+  @Test
   public void testIterator() {
     final SortedList<String> list = createList();
     list.add("b");
@@ -60,6 +66,7 @@ public class SortedListTest extends TestCase {
     assertEquals("c", list.get(1));
   }
 
+  @Test
   public void testListIterator() {
     final SortedList<String> list = createList();
     list.add("b");

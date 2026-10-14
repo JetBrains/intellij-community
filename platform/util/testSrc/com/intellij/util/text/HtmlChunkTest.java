@@ -3,14 +3,14 @@ package com.intellij.util.text;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.HtmlChunk;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class HtmlChunkTest {
   @Test
