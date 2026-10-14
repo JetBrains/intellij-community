@@ -2070,6 +2070,8 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.openapi.fileEditor.impl.LegacyRecentPlacesListenerBridge"
+              topic="com.intellij.openapi.fileEditor.ex.RecentPlacesListener"/>
     <listener class="com.intellij.notification.impl.NotificationsListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"

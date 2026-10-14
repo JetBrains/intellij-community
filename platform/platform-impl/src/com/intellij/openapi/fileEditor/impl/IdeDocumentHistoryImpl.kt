@@ -34,6 +34,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceExIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.ex.PlaceInfo as HistoryPlaceInfo
+import com.intellij.openapi.fileEditor.ex.RecentPlacesListener as HistoryPlacesListener
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentlyChangedFilesState
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
@@ -84,8 +86,8 @@ open class IdeDocumentHistoryImpl(
 ) : IdeDocumentHistory(), Disposable, PersistentStateComponent<RecentlyChangedFilesState> {
   private var fileDocumentManager: FileDocumentManager? = null
 
-  private val backPlaces = ArrayDeque<PlaceInfo>()
-  private val forwardPlaces = ArrayDeque<PlaceInfo>()
+  private val backPlaces = ArrayDeque<HistoryPlaceInfo>()
+  private val forwardPlaces = ArrayDeque<HistoryPlaceInfo>()
   private var backInProgress = false
   private var forwardInProgress = false
   // weak reference here is to avoid leaking Document when it's used as a group id
@@ -95,10 +97,10 @@ open class IdeDocumentHistoryImpl(
   private var registeredBackPlaceInLastGroup = false
 
   // change's navigation
-  private val changePlaces = ArrayDeque<PlaceInfo>()
+  private val changePlaces = ArrayDeque<HistoryPlaceInfo>()
   private var currentIndex = 0
 
-  private var commandStartPlace: PlaceInfo? = null
+  private var commandStartPlace: HistoryPlaceInfo? = null
   private var currentCommandIsNavigation = false
   private var currentCommandHasChanges = false
   private val changedFilesInCurrentCommand = HashSet<VirtualFile>()
@@ -171,7 +173,7 @@ open class IdeDocumentHistoryImpl(
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<FileEditorProvider> {
       override fun extensionRemoved(provider: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
         val editorTypeId = provider.getEditorTypeId()
-        val clearStatePredicate = Predicate { e: PlaceInfo -> editorTypeId == e.editorTypeId }
+        val clearStatePredicate = Predicate { e: HistoryPlaceInfo -> editorTypeId == e.editorTypeId }
         if (changePlaces.removeIf(clearStatePredicate)) {
           currentIndex = changePlaces.size
         }
@@ -252,17 +254,17 @@ open class IdeDocumentHistoryImpl(
     changedFilesInCurrentCommand.clear()
   }
 
-  private fun getCurrentPlaceInfo(): PlaceInfo? {
+  private fun getCurrentPlaceInfo(): HistoryPlaceInfo? {
     val selectedEditorWithProvider = getSelectedEditor() ?: return null
     return createPlaceInfo(selectedEditorWithProvider.fileEditor, selectedEditorWithProvider.provider)
   }
 
-  private fun getPlaceInfoFromFocus(project: Project?): PlaceInfo? {
+  private fun getPlaceInfoFromFocus(project: Project?): HistoryPlaceInfo? {
     val fileEditor = FocusBasedCurrentEditorProvider().getCurrentEditor(project)
     if (fileEditor is TextEditor && fileEditor.isValid()) {
       val file = fileEditor.getFile()
       if (file != null) {
-        return PlaceInfo(file,
+        return HistoryPlaceInfo(file,
                          fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                          TextEditorProvider.getInstance().getEditorTypeId(),
                          null, false,
@@ -368,12 +370,12 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  private fun hasChangedSince(place: PlaceInfo): Boolean {
+  private fun hasChangedSince(place: HistoryPlaceInfo): Boolean {
     val currentPlace = getCurrentPlaceInfo() ?: return false
     return !isSameCaretPlace(currentPlace, place)
   }
 
-  private fun isSameCaretPlace(currentPlace: PlaceInfo, previousPlace: PlaceInfo): Boolean {
+  private fun isSameCaretPlace(currentPlace: HistoryPlaceInfo, previousPlace: HistoryPlaceInfo): Boolean {
     if (currentPlace.file != previousPlace.file || currentPlace.editorTypeId != previousPlace.editorTypeId) {
       return false
     }
@@ -385,7 +387,7 @@ open class IdeDocumentHistoryImpl(
     } else currentPlace.navigationState == previousPlace.navigationState
   }
 
-  private fun commitBackPlace(place: PlaceInfo, groupId: Any?, checkCommandGroup: Boolean) {
+  private fun commitBackPlace(place: HistoryPlaceInfo, groupId: Any?, checkCommandGroup: Boolean) {
     if (!backInProgress) {
       if (!checkCommandGroup || !registeredBackPlaceInLastGroup) {
         if (checkCommandGroup) {
@@ -422,7 +424,7 @@ open class IdeDocumentHistoryImpl(
     }
 
     val info = backPlaces.removeLast()
-    project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false)
+    project.getMessageBus().syncPublisher(HistoryPlacesListener.TOPIC).recentPlaceRemoved(info, false)
 
     val current = getCurrentPlaceInfo()
     if (current != null) {
@@ -451,7 +453,7 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  private fun getTargetForwardInfo(): PlaceInfo? {
+  private fun getTargetForwardInfo(): HistoryPlaceInfo? {
     @Suppress("UsePropertyAccessSyntax")
     if (forwardPlaces.isEmpty()) {
       return null
@@ -514,24 +516,24 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  final override fun getBackPlaces(): List<PlaceInfo> = java.util.List.copyOf(backPlaces)
+  final override fun getBackPlaces(): List<HistoryPlaceInfo> = java.util.List.copyOf(backPlaces)
 
-  final override fun getForwardPlaces(): List<PlaceInfo> = java.util.List.copyOf(forwardPlaces)
+  final override fun getForwardPlaces(): List<HistoryPlaceInfo> = java.util.List.copyOf(forwardPlaces)
 
-  final override fun getChangePlaces(): List<PlaceInfo> = java.util.List.copyOf(changePlaces)
+  final override fun getChangePlaces(): List<HistoryPlaceInfo> = java.util.List.copyOf(changePlaces)
 
-  final override fun removeBackPlace(placeInfo: PlaceInfo) {
+  final override fun removeBackPlace(placeInfo: HistoryPlaceInfo) {
     removePlaceInfo(placeInfo = placeInfo, places = backPlaces, changed = false)
   }
 
-  final override fun removeChangePlace(placeInfo: PlaceInfo) {
+  final override fun removeChangePlace(placeInfo: HistoryPlaceInfo) {
     removePlaceInfo(placeInfo = placeInfo, places = changePlaces, changed = true)
   }
 
-  private fun removePlaceInfo(placeInfo: PlaceInfo, places: MutableCollection<PlaceInfo>, changed: Boolean) {
+  private fun removePlaceInfo(placeInfo: HistoryPlaceInfo, places: MutableCollection<HistoryPlaceInfo>, changed: Boolean) {
     val removed = places.remove(placeInfo)
     if (removed) {
-      project.getMessageBus().syncPublisher(RecentPlacesListener.Companion.TOPIC).recentPlaceRemoved(placeInfo, changed)
+      project.getMessageBus().syncPublisher(HistoryPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, changed)
     }
   }
 
@@ -550,7 +552,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun isNavigateNextChangeAvailable(): Boolean = currentIndex < changePlaces.size
 
-  private fun removeInvalidFilesFrom(backPlaces: Deque<PlaceInfo>): Boolean {
+  private fun removeInvalidFilesFrom(backPlaces: Deque<HistoryPlaceInfo>): Boolean {
     return backPlaces.removeIf { info ->
       val file = info.file
       (file is OptionallyIncluded && !file.isIncludedInDocumentHistory(project)) || !file.isValid()
@@ -565,11 +567,11 @@ open class IdeDocumentHistoryImpl(
     override fun isIncludedInDocumentHistory(project: Project): Boolean = false
   }
 
-  override fun gotoPlaceInfo(info: PlaceInfo) {
+  override fun gotoPlaceInfo(info: HistoryPlaceInfo) {
     gotoPlaceInfo(info, ToolWindowManager.getInstance(project).isEditorComponentActive)
   }
 
-  override fun gotoPlaceInfo(info: PlaceInfo, requestFocus: Boolean) {
+  override fun gotoPlaceInfo(info: HistoryPlaceInfo, requestFocus: Boolean) {
     val editorManager = getFileEditorManager()!!
     val openMode = info.getOpenMode()
     val window = if (openMode != FileEditorManagerImpl.OpenMode.NEW_WINDOW) info.getWindow() else null
@@ -604,7 +606,7 @@ open class IdeDocumentHistoryImpl(
     return editorManager.getSelectedEditorWithProvider(file)
   }
 
-  protected open fun createPlaceInfo(fileEditor: FileEditor, fileProvider: FileEditorProvider): PlaceInfo? {
+  protected open fun createPlaceInfo(fileEditor: FileEditor, fileProvider: FileEditorProvider): HistoryPlaceInfo? {
     if (!fileEditor.isValid()) {
       return null
     }
@@ -621,7 +623,7 @@ open class IdeDocumentHistoryImpl(
     val state = fileEditor.getState(FileEditorStateLevel.NAVIGATION)
     val window = editorManager?.currentWindow
     val composite = window?.getComposite(file)
-    return PlaceInfo(
+    return HistoryPlaceInfo(
       file = file,
       navigationState = state,
       editorTypeId = fileProvider.getEditorTypeId(),
@@ -652,10 +654,10 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  private fun putLastOrMerge(next: PlaceInfo, limit: Int, isChanged: Boolean, groupId: Any?) {
+  private fun putLastOrMerge(next: HistoryPlaceInfo, limit: Int, isChanged: Boolean, groupId: Any?) {
     val list = if (isChanged) changePlaces else backPlaces
     val messageBus = project.getMessageBus()
-    val listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC)
+    val listener = messageBus.syncPublisher(HistoryPlacesListener.TOPIC)
     @Suppress("UsePropertyAccessSyntax")
     if (!list.isEmpty()) {
       val prev = list.getLast()
@@ -682,41 +684,27 @@ open class IdeDocumentHistoryImpl(
     return fileDocumentManager
   }
 
-  class PlaceInfo(
-    val file: VirtualFile,
-    val navigationState: FileEditorState,
-    val editorTypeId: String,
-    window: EditorWindow?,
-    val isPreviewTab: Boolean,
-    val caretPosition: RangeMarker?,
-    val timeStamp: Long
-  ) {
-    private val windowRef = WeakReference(window)
+  /**
+   * Keeps the old binary name of [com.intellij.openapi.fileEditor.ex.PlaceInfo] for compiled plugins. It wraps [place].
+   */
+  @Deprecated("Use com.intellij.openapi.fileEditor.ex.PlaceInfo")
+  class PlaceInfo(val place: HistoryPlaceInfo) {
+    val file: VirtualFile get() = place.file
+    val navigationState: FileEditorState get() = place.navigationState
+    val editorTypeId: String get() = place.editorTypeId
+    val isPreviewTab: Boolean get() = place.isPreviewTab
+    val caretPosition: RangeMarker? get() = place.caretPosition
+    val timeStamp: Long get() = place.timeStamp
 
-    constructor(
-      file: VirtualFile,
-      navigationState: FileEditorState,
-      editorTypeId: String,
-      window: EditorWindow?,
-      caretPosition: RangeMarker?
-    ) : this(
-      file = file,
-      navigationState = navigationState,
-      editorTypeId = editorTypeId,
-      window = window,
-      isPreviewTab = false,
-      caretPosition = caretPosition,
-      timeStamp = -1,
-    )
+    fun getWindow(): EditorWindow? = place.getWindow()
 
-    fun getWindow(): EditorWindow? = windowRef.get()
+    fun getOpenMode(): FileEditorManagerImpl.OpenMode? = place.getOpenMode()
 
-    override fun toString(): String = file.getName() + " " + navigationState
+    override fun equals(other: Any?): Boolean = other is PlaceInfo && place == other.place
 
-    @ApiStatus.Internal
-    fun getOpenMode(): FileEditorManagerImpl.OpenMode? {
-      return (navigationState as? FileEditorStateWithPreferredOpenMode)?.let { return it.openMode }
-    }
+    override fun hashCode(): Int = place.hashCode()
+
+    override fun toString(): String = place.toString()
   }
 
   override fun dispose() {
@@ -735,7 +723,7 @@ open class IdeDocumentHistoryImpl(
     CommandProcessor.getInstance().executeCommand(project, runnable, name, groupId)
   }
 
-  override fun isSame(first: PlaceInfo, second: PlaceInfo): Boolean {
+  override fun isSame(first: HistoryPlaceInfo, second: HistoryPlaceInfo): Boolean {
     if (first.file == second.file) {
       val firstState = first.navigationState
       val secondState = second.navigationState
@@ -745,8 +733,11 @@ open class IdeDocumentHistoryImpl(
   }
 
   /**
-   * [RecentPlacesListener] listens recently viewed or changed place adding and removing events.
+   * Keeps the old binary name of [com.intellij.openapi.fileEditor.ex.RecentPlacesListener] for compiled plugins.
+   * [LegacyRecentPlacesListenerBridge] sends the events of the new topic to [TOPIC].
    */
+  @Deprecated("Use com.intellij.openapi.fileEditor.ex.RecentPlacesListener")
+  @Suppress("DEPRECATION")
   interface RecentPlacesListener {
     companion object {
       @Topic.ProjectLevel
@@ -754,35 +745,12 @@ open class IdeDocumentHistoryImpl(
       val TOPIC: Topic<RecentPlacesListener> = Topic(RecentPlacesListener::class.java, Topic.BroadcastDirection.NONE)
     }
 
-    /**
-     * Fires on new place info adding into [.changePlaces] or [.backPlaces] infos a list
-     *
-     * @param changePlace new place info
-     * @param isChanged   true if place info was added into the changed infos list [.changePlaces];
-     * false if place info was added into the back infos list [.backPlaces]
-     */
-    @Deprecated("")
+    @Deprecated("Override recentPlaceAdded(PlaceInfo, Boolean, Any?)")
     fun recentPlaceAdded(changePlace: PlaceInfo, isChanged: Boolean)
 
-    /**
-     * Fires on a place info removing from the [.changePlaces] or the [.backPlaces] infos list
-     *
-     * @param changePlace place info that was removed
-     * @param isChanged   true if place info was removed from the changed infos list [.changePlaces];
-     * false if place info was removed from the back infos list [.backPlaces]
-     */
     fun recentPlaceRemoved(changePlace: PlaceInfo, isChanged: Boolean)
 
-    /**
-     * Fires on new place info adding into [.changePlaces] or [.backPlaces] infos a list
-     *
-     * @param changePlace new place info
-     * @param isChanged   true if place info was added into the changed infos list [.changePlaces];
-     * false if place info was added into the back infos list [.backPlaces]
-     * @param groupId     groupId of the command that caused the change place addition
-     */
     fun recentPlaceAdded(changePlace: PlaceInfo, isChanged: Boolean, groupId: Any?) {
-      @Suppress("DEPRECATION")
       recentPlaceAdded(changePlace, isChanged)
     }
   }
@@ -804,6 +772,22 @@ open class IdeDocumentHistoryImpl(
     }
 
     fun recentFileUpdated(file: VirtualFile)
+  }
+}
+
+/**
+ * Sends the events of [HistoryPlacesListener.TOPIC] to the deprecated [IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC].
+ */
+@Suppress("DEPRECATION")
+internal class LegacyRecentPlacesListenerBridge(private val project: Project) : HistoryPlacesListener {
+  override fun recentPlaceAdded(changePlace: HistoryPlaceInfo, isChanged: Boolean, groupId: Any?) {
+    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC)
+      .recentPlaceAdded(IdeDocumentHistoryImpl.PlaceInfo(changePlace), isChanged, groupId)
+  }
+
+  override fun recentPlaceRemoved(changePlace: HistoryPlaceInfo, isChanged: Boolean) {
+    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC)
+      .recentPlaceRemoved(IdeDocumentHistoryImpl.PlaceInfo(changePlace), isChanged)
   }
 }
 

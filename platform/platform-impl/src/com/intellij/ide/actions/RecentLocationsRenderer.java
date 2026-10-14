@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.fileEditor.ex.PlaceInfo;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -225,7 +225,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
     settings.setUseSoftWraps(false);
   }
 
-  private void customizeTitleComponentText(@NotNull IdeDocumentHistoryImpl.PlaceInfo place) {
+  private void customizeTitleComponentText(@NotNull PlaceInfo place) {
     String breadcrumbs = myModel.getBreadcrumbsMap(myCheckBox.isSelected()).get(place);
     String fileName = place.getFile().getName();
     myTitle.append(fileName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -314,7 +314,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
   private Highlight @NotNull [] calcItemHighlights(@NotNull RecentLocationItem item, boolean lexerHighlights) {
     TextRange[] ranges = item.ranges;
-    IdeDocumentHistoryImpl.PlaceInfo info = item.info;
+    PlaceInfo info = item.info;
     EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
 
     RangeMarker caretPosition = item.info.getCaretPosition();
