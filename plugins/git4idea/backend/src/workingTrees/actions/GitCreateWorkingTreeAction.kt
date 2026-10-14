@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.git.actions.GitSingleRefActions
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import com.intellij.vcs.git.icons.GitIcons
 import git4idea.GitBranch
 import git4idea.GitReference
@@ -84,8 +85,10 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
         else GitWorkingTreesService.findWorktreeCapableRepositories(project)
     val initialRepository = contextRepository ?: candidates.firstOrNull() ?: return
 
+    val openAfterCreation = e.getData(GitBranchesPopupKeys.OPEN_CREATED_WORKTREE) ?: true
+
     GitCreateWorkingTreeService.getInstance()
-      .collectDataAndCreateWorkingTree(initialRepository, refFromContext, e.place, candidates)
+      .collectDataAndCreateWorkingTree(initialRepository, refFromContext, e.place, candidates, openAfterCreation)
   }
 
   private fun resolveContextRepository(e: AnActionEvent, status: GitWorktreeSupportStatus): GitRepository? =

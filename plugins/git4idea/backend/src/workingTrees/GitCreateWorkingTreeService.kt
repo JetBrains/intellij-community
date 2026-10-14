@@ -3,15 +3,21 @@ package git4idea.workingTrees
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.ide.RecentProjectMetaInfo
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -36,9 +42,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.VisibleForTesting
 import git4idea.GitBranch
-import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
 import git4idea.GitReference
 import git4idea.GitWorkingTree
@@ -62,6 +66,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.resume
@@ -167,6 +172,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     refFromContext: GitReference?,
     place: String,
     candidateRepositories: List<GitRepository> = listOf(repository),
+    openAfterCreation: Boolean = true,
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
     val project = repository.project
@@ -184,7 +190,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
         val lastParentPath = loadLastParentPath(project)
         val initialParentPath = computeInitialParentPath(project, repository, systemTempDir) { getDefaultParentDir(eel) }
         GitWorktreeDialogContext(project, repository, ideActivity, refFromContext,
-                                 lastParentPath ?: initialParentPath, candidateRepositories)
+                                 lastParentPath ?: initialParentPath, candidateRepositories, openAfterCreation)
       }
 
       withContext(Dispatchers.UiWithModelAccess) {
@@ -197,7 +203,8 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
               val request = dialog.getWorkTreeData()
               request.workingTreePath.parentPath?.path?.let { saveLastParentPath(project, it) }
               withContext(Dispatchers.Default) {
-                doCreateWorkingTree(dialogContext.ideActivity, request, onProjectOpened)
+                doCreateWorkingTree(dialogContext.ideActivity, request, onProjectOpened,
+                                    openAfterCreation = dialogContext.openAfterCreation)
               }
               return@withContext
             }
@@ -271,6 +278,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     onProjectOpened: ((Project) -> Unit)? = null,
     force: Boolean = false,
     reportOwnProgress: Boolean = true,
+    openAfterCreation: Boolean = true,
   ) {
     GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
 
@@ -294,6 +302,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       createAndConfigureWorkingTree(project, request, gitWTService, targetWorktreeDir, force)
     }
     if (!workingTreeCreated) return
+
+    if (!openAfterCreation) {
+      registerAsRecentProject(project, targetWorktreeDir)
+      request.repository.workingTreeHolder.scheduleReload()
+      GitWorktreeNotifications.notifyWorktreeCreated(project, request.branch.presentableBranchName, targetWorktreeDir)
+      return
+    }
 
     openWorktreeProject(project, request, gitWTService, targetWorktreeDir, ideActivity, onProjectOpened)
   }
@@ -472,6 +487,15 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
           request.repository.workingTreeHolder.scheduleReload()
         }
       }
+    }
+  }
+
+  private suspend fun registerAsRecentProject(project: Project, worktreePath: Path) {
+    val pathToOpen = resolveWorktreeOpenPath(project, worktreePath)
+    val recentProjectsManager = serviceAsync<RecentProjectsManager>() as? RecentProjectsManagerBase ?: return
+    recentProjectsManager.addRecentPath(pathToOpen, RecentProjectMetaInfo())
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
     }
   }
 

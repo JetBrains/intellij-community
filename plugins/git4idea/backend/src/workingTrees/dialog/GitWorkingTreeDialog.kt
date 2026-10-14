@@ -55,9 +55,9 @@ import git4idea.branch.GitNewBranchDialog.Companion.cleanBranchNameAndAdjustCurs
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
-import git4idea.validators.checkRefName
 import git4idea.repo.tags
 import git4idea.validators.GitRefNameValidator
+import git4idea.validators.checkRefName
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
 import org.jetbrains.annotations.VisibleForTesting
@@ -127,7 +127,13 @@ internal class GitWorkingTreeDialog(
     selectedRepository.afterChange { onRepositoryChanged() }
     init()
     title = GitBundle.message("working.tree.dialog.title")
-    setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
+    val okButtonText = if (data.openAfterCreation) {
+      GitBundle.message("working.tree.dialog.button.ok")
+    }
+    else {
+      GitBundle.message("working.tree.dialog.button.ok.create.only")
+    }
+    setOKButtonText(okButtonText)
   }
 
   override fun getHelpId() = TOOLWINDOW_CONTENT_HELP_ID

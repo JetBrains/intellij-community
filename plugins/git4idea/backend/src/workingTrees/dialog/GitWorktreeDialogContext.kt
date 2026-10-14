@@ -15,6 +15,7 @@ internal data class GitWorktreeDialogContext(
   val initialExistingRef: GitReference?,
   val initialParentPath: String?,
   val candidateRepositories: List<GitRepository> = listOf(initialRepository),
+  val openAfterCreation: Boolean = true,
   val initialState: GitWorkingTreeDialogState? = null,
 )
 
