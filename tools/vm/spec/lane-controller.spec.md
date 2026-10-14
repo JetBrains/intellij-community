@@ -21,6 +21,9 @@ targets:
   - ../crates/avl-guest/src/ide/launch.rs
   - ../crates/avl-guest/src/ide/gc.rs
   - ../crates/avl-guest/src/ide/reap.rs
+  - ../crates/avl-guest/src/lane/identity.rs
+  - ../crates/avl-guest/src/lane/context.rs
+  - ../crates/avl-guest/src/lane/context/options/*.xml
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
   - ../crates/avl-bridge/src/lifecycle.rs
   - ../crates/avl-wire/src/ide.rs
@@ -430,6 +433,87 @@ The rest of the scenario matrix is in
 - A run that rules out each of its classes is not a run that matched no class. The controller gives the
   reason of each class, and does not tell the person to look at the selector.
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+
+#### The lane identity and the context files
+
+The lane daemon of the guest agent derives the identity of a lane IDE from the lane document. It hands the derived
+values to the IDE as files, so the IDE computes no secret.
+
+- The config key hashes one line for each input, in this order: the lane, the digest of the lane document, the
+  product stamp, each CLI runtime by its name, and the digest of the option file templates.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_identity_of_the_fixed_key_is_the_golden`)
+  [@test] ../../../../plugins/air/tests/integration/contract/test/flow/AirLaneDigestTest.kt
+
+- A blank product stamp is no stamp. The key is `air-`, the lowercase lane, a dash and 16 hex digits.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_lane_without_a_stamp_states_no_stamp_line_and_its_prefix_is_the_lowercase_lane`)
+
+- A change of any input of the key changes the key.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`every_input_changes_the_key`)
+
+The port of each lane service derives from the key, inside the window of the service:
+
+| service | window |
+| --- | --- |
+| the fake ACP registry | 26000 to 29999 |
+| the control server of the test process | 30000 to 30499 |
+| the control server in the IDE | 30000 to 30499 |
+| the feedback capture | 30500 to 30999 |
+| the JetBrains Cloud emulator | 32000 to 32499 |
+
+The UI-test bridge has the fixed port 31347, and the Codex mock model has the fixed port 31500.
+
+- A derived port that is the port of the lane daemon moves to the next port of its window.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_derived_port_steps_over_the_daemon_port_and_wraps_at_the_end_of_its_window`)
+
+- The control server in the IDE never takes the port of the control server of the test process.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_ide_control_port_steps_clear_of_the_host_control_port`)
+
+- The windows do not overlap, and they hold no fixed port.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`every_window_stays_clear_of_the_fixed_ports_and_of_the_ephemeral_floor`)
+
+- A lane secret derives from the key and a purpose. Two purposes give two secrets.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_secret_tells_two_purposes_apart`)
+
+Before a launch, the lane daemon writes these files into the context:
+
+| file | content |
+| --- | --- |
+| `config/options/*.xml` | the five option files |
+| `config/air-ui-test/token` | the token of the UI-test bridge |
+| `config/air-ui-test/lane-services.json` | the lane-service token and the URL of each lane service |
+| `config/air-ui-test/control.json` | the control server in the IDE and its credentials |
+| `home/.air-lane/acp-scenario-agent.jar` | the copy of the fake agent jar |
+| `home/.jetbrains/acp.json` | one entry for each local agent |
+| `bin/<runtime>` | one launcher for each CLI runtime |
+| `home/.codex/config.toml` | the Codex mock model and the trusted project |
+
+- The files of the context of the `UI` lane are the golden `testdata/lane-context/ui-context.txt`.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_context_of_the_ui_lane_is_the_golden`)
+
+- The option file templates have the digest that the test process pins.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_are_the_bytes_of_the_kotlin_templates`)
+
+- `acp.json` equals the file of the test process for the same lane, except the values that derive from the key.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values`)
+
+- Only the account can enter `config/air-ui-test` and read its files. Each launcher is executable.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_private_files_and_the_launchers_get_their_modes`)
+
+- A controlled agent gets the URL and the credential of the control server that serves it.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_files_carry_the_values_of_the_identity`)
+
+- `control.json` lists each agent that the IDE serves, and the terminal sign-in of each one.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_files_carry_the_values_of_the_identity`)
+
+- A lane whose IDE serves no agent has no `control.json`. The daemon deletes an earlier one.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file`)
+
+- The daemon never writes or deletes `control-next-start.json`. An existing `ide.general.xml` stays.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file`)
+
+- The daemon refuses with `lane_context_input` a live lane, other CLI runtimes, other services, and an IDE owner of
+  an agent that is not controlled.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_document_that_the_daemon_cannot_launch_as_it_states_is_refused`)
 
 ### Supervision and evidence
 

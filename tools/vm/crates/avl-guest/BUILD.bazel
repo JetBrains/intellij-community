@@ -2,6 +2,8 @@ load("//tools/vm:avl.bzl", "avl_crate")
 
 avl_crate(
     closure = True,
+    # The option file templates of the lane context, which `lane::context` embeds (`include_str!`).
+    compile_data = glob(["src/lane/context/options/*.xml"]),
     test_data = [":testdata"],
 )
 

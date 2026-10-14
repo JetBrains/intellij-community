@@ -1,0 +1,8 @@
+<application>
+  <component name="Trusted.Paths">
+    <option name="TRUSTED_PROJECT_PATHS">
+      <map>
+{{trustedPathEntries}}      </map>
+    </option>
+  </component>
+</application>
