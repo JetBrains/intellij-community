@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.elicitation
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.mcpserver.McpLaunchOrigin
+import com.intellij.mcpserver.launchOrigin
+import com.intellij.mcpserver.mcpCallInfoOrNull
 import com.intellij.mcpserver.settings.McpServerSettings
 
 /**
@@ -17,5 +21,6 @@ class McpElicitationCliProvider : McpTransportElicitationProvider() {
       TextElicitationFormRenderer
     }
 
-  override fun isApplicable(kind: McpElicitationKind): Boolean = kind == McpElicitationKind.CLI
+  override fun isApplicable(kind: McpElicitationKind): Boolean =
+    kind == McpElicitationKind.CLI && currentThreadContext().mcpCallInfoOrNull?.headers.launchOrigin != McpLaunchOrigin.AIR_CHAT
 }
