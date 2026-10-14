@@ -35,6 +35,9 @@ object PyTypeEngineUtils {
   fun isExternalTypeEngineSupported(project: Project): Boolean {
     if (!Registry.`is`("pycharm.type.engine", true))
       return false
+    if (Registry.`is`("use.bundled.pyrefly", false)) {
+      return true
+    }
 
     val modules = project.modules
     val multiModuleAllowed = modules.size <= 1 || isMultiModuleSupportEnabled
