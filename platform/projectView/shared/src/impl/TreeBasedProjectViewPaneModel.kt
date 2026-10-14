@@ -104,12 +104,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -125,6 +129,7 @@ import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Experimental
 interface ProjectViewTreeNodeProvider<T : ProjectViewNodeUserObject> {
@@ -466,6 +471,9 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     private lateinit var modelComputationScope: CoroutineScope
     private val modelComputations = ConcurrentHashMap<Long, NodeModelComputation>()
 
+    private lateinit var retryScope: CoroutineScope
+    private val retryActivities = ConcurrentHashMap<Long, RetryActivity>()
+
     private val sessionFinished = CompletableDeferred<Unit>()
 
     private var nextId = 1L
@@ -487,6 +495,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       try {
         coroutineScope {
           modelComputationScope = childScope("Async model computations for the PV pane $id")
+          retryScope = childScope("Retries of cancelled updates for the PV pane $id")
           applySettings()
           initialize()
           onStateChanged(suspendingState)
@@ -509,10 +518,13 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
                 runSafelyCancellable(LOG, taskDescription = { "Updating pane $id state, request = $request" }) {
                   when (request) {
                     is LoadChildrenRequest -> {
-                      updateChildren(request.parentId, allowLoading = true, deep = false)
+                      updateChildrenWithRetry(request.parentId, allowLoading = true, deep = false)
                     }
                     is ProcessPendingUpdatesRequest -> {
                       processPendingUpdates()
+                    }
+                    is RetryUpdateChildrenRequest -> {
+                      updateChildrenWithRetry(request.parentId, request.allowLoading, request.deep)
                     }
                     is UpdateNodeModelRequest<*> -> {
                       builder.updateNode(request.model)
@@ -612,6 +624,10 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       return schedule { ProcessPendingUpdatesRequest(it) }
     }
 
+    private fun scheduleRetryUpdateChildren(parentId: Long, allowLoading: Boolean, deep: Boolean): Long {
+      return schedule { epoch -> RetryUpdateChildrenRequest(epoch, parentId, allowLoading, deep) }
+    }
+
     private fun schedule(makeRequest: (epoch: Long) -> StateUpdateRequest): Long = synchronized(requestLock) {
       val epoch = ++submittedUpdateEpoch
       stateUpdateRequests.trySend(makeRequest(epoch))
@@ -656,16 +672,34 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
     private suspend fun getOrMaybeLoadChildren(parent: BackendProjectViewNodeModel<T>, allowLoading: Boolean): List<BackendProjectViewNodeModel<T>>? {
       var existingChildren = suspendingState.getChildren(parent)
+      val parentId = parent.id
       if (existingChildren == null && allowLoading) {
-        scheduleLoadChildren(parent.id)
+        scheduleLoadChildren(parentId)
         while (existingChildren == null) {
           val currentEpoch = appliedUpdateEpoch.value
           appliedUpdateEpoch.first { it > currentEpoch }
-          if (suspendingState.getNodeById(parent.id) == null) return null // the parent is gone
+          if (suspendingState.getNodeById(parentId) == null) return null // the parent is gone
           existingChildren = suspendingState.getChildren(parent)
         }
       }
+      if (allowLoading) { // if not, we just take the current state
+        // We have the children, but they still could be outdated.
+        // Even if the pending updates were applied, there's no guarantee that they were successful.
+        // So wait until the retries are done, if any.
+        awaitPendingRetries(parentId)
+        existingChildren = suspendingState.getChildren(parent)
+      }
       return existingChildren
+    }
+
+    private suspend fun awaitPendingRetries(parentId: Long) {
+      while (true) {
+        val activity = retryActivities[parentId] ?: return // no pending retries
+        activity.awaitDone()
+        val newActivity = retryActivities[parentId] ?: return // no more pending retries
+        if (newActivity === activity) return // done, but not gone => its scope is canceled => pointless to continue waiting
+        // otherwise, there's a new non-null activity, run another loop to wait for it to finish
+      }
     }
 
     private suspend fun selectElementImpl(request: SelectRequest) {
@@ -910,9 +944,28 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     }
 
     suspend fun initialize() {
-      val root = updateRoot()
+      LOG.debug { "Initializing the root of $id" }
+      val root = runInitLoop { updateRoot() }
       if (root != null) {
-        updateChildren(root, allowLoading = true, deep = false)
+        LOG.debug { "Initializing the top level nodes of $id" }
+        runInitLoop {
+          updateChildren(root, allowLoading = true, deep = false)
+        }
+      }
+    }
+    
+    @Suppress("IncorrectCancellationExceptionHandling") // it IS rethrown by ensureActive()!
+    private suspend inline fun <T> runInitLoop(loop: () -> T): T {
+      while (true) {
+        return try {
+          loop()
+        }
+        catch (e: CancellationException) {
+          currentCoroutineContext().ensureActive()
+          LOG.debug("Retrying because of a CE", e)
+          delay(10.milliseconds)
+          continue
+        }
       }
     }
 
@@ -981,14 +1034,47 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       LOG.trace { "The node ${n(node.id)} is updated, the new model is $newNodeModel" }
       builder.updateNode(newNodeModel)
       if (effectiveOptions.deep) { // update recursively, but only already loaded children
-        updateChildren(parentId = node.id, allowLoading = false, deep = true)
+        updateChildrenWithRetry(parentId = node.id, allowLoading = false, deep = true)
       }
       return effectiveOptions
     }
 
-    suspend fun updateChildren(parentId: Long, allowLoading: Boolean, deep: Boolean) {
-      val parentModel = suspendingState.getNodeById(parentId) ?: return
-      updateChildren(parentModel, allowLoading, deep)
+    @Suppress("IncorrectCancellationExceptionHandling") // (sigh) it IS rethrown, it CAN be logged as debug
+    suspend fun updateChildrenWithRetry(parentId: Long, allowLoading: Boolean, deep: Boolean) {
+      val parentModel = suspendingState.getNodeById(parentId)
+      if (parentModel == null) {
+        LOG.debug { "Not updating children of $parentId because it no longer exists" }
+        return
+      }
+      try {
+        updateChildren(parentModel, allowLoading, deep)
+      }
+      catch (e: CancellationException) {
+        currentCoroutineContext().ensureActive()
+        val retryRequest = RetryLoadChildrenRequest(allowLoading, deep)
+        LOG.debug(e) { "Re-scheduling the children update because of a CE: $parentId -> $retryRequest" }
+        retryUpdateChildren(parentId, retryRequest)
+      }
+    }
+
+    private fun retryUpdateChildren(
+      nodeId: Long,
+      retryLoadChildrenRequest: RetryLoadChildrenRequest,
+    ) {
+      // It has to be done atomically:
+      // 1. the existing activity can be reused if it exists and not closed yet;
+      // 2. otherwise, we need to start a new one (but only one!).
+      // compute() guarantees that the function will be invoked exactly once.
+      retryActivities.compute(nodeId) { _, oldActivity ->
+        if (oldActivity?.addRetryRequest(retryLoadChildrenRequest) == true) {
+          oldActivity
+        }
+        else {
+          RetryActivity(nodeId).also { newActivity ->
+            check(newActivity.addRetryRequest(retryLoadChildrenRequest))
+          }
+        }
+      }
     }
 
     private suspend fun updateChildren(parentModel: BackendProjectViewNodeModel<T>, allowLoading: Boolean, deep: Boolean) {
@@ -1087,7 +1173,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
       if (deep) {
         for (newChild in newModels) { // update recursively, but don't load unless already loaded
-          updateChildren(newChild, allowLoading = false, deep = true)
+          updateChildrenWithRetry(newChild.id, allowLoading = false, deep = true)
         }
       }
     }
@@ -1184,6 +1270,61 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         job.cancelAndJoin()
       }
     }
+    
+    private inner class RetryActivity(private val nodeId: Long) {
+      private val pendingRequests = Channel<RetryLoadChildrenRequest>(capacity = Channel.UNLIMITED)
+      
+      private val job = retryScope.launch(
+        context = CoroutineName("Update retries for the node $nodeId of the pane $id"),
+        start = CoroutineStart.LAZY, // processing stops after all requests are gone, so start only after adding the first request
+      ) {
+        try {
+          while (true) {
+            delay(10.milliseconds)
+            val nextRequest = mergeAllIncomingRequests() ?: break
+            val targetEpoch = scheduleRetryUpdateChildren(
+              parentId = nodeId,
+              allowLoading = nextRequest.allowLoading,
+              deep = nextRequest.deep,
+            )
+            appliedUpdateEpoch.first { it >= targetEpoch }
+          }
+        }
+        finally {
+          pendingRequests.close()
+          val leftovers = mergeAllIncomingRequests()
+          if (leftovers != null) {
+            // start a new activity (it'll try to send the request to this one first, but fail because the channel is closed)
+            retryUpdateChildren(nodeId, leftovers)
+          }
+          retryActivities.remove(nodeId, this@RetryActivity)
+        }
+      }
+
+      private fun mergeAllIncomingRequests(): RetryLoadChildrenRequest? {
+        var result: RetryLoadChildrenRequest? = null
+        while (true) {
+          val nextRequest = pendingRequests.tryReceive().getOrNull() ?: break
+          result = result?.merge(nextRequest) ?: nextRequest
+        }
+        return result
+      }
+
+      fun addRetryRequest(retryLoadChildrenRequest: RetryLoadChildrenRequest): Boolean {
+        val result = pendingRequests.trySend(retryLoadChildrenRequest)
+        if (result.isSuccess) {
+          job.start()
+          return true
+        }
+        else {
+          return false
+        }
+      }
+
+      suspend fun awaitDone() {
+        job.join()
+      }
+    }
   }
 }
 
@@ -1192,12 +1333,25 @@ private sealed class StateUpdateRequest {
 }
 private data class LoadChildrenRequest(override val epoch: Long, val parentId: Long) : StateUpdateRequest()
 private data class ProcessPendingUpdatesRequest(override val epoch: Long) : StateUpdateRequest()
+private data class RetryUpdateChildrenRequest(override val epoch: Long, val parentId: Long, val allowLoading: Boolean, val deep: Boolean) : StateUpdateRequest()
 private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdateRequest()
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
 private data class SetFileNestingRequest(override val epoch: Long, val fileNesting: ProjectViewPaneFileNestingValue) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath, val requestFocus: Boolean) : StateUpdateRequest()
 private data class UpdateNodeModelRequest<T : ProjectViewNodeUserObject>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
+
+private data class RetryLoadChildrenRequest(
+  val allowLoading: Boolean,
+  val deep: Boolean,
+) {
+  fun merge(anotherRequest: RetryLoadChildrenRequest): RetryLoadChildrenRequest {
+    return RetryLoadChildrenRequest(
+      allowLoading = allowLoading || anotherRequest.allowLoading,
+      deep = deep || anotherRequest.deep,
+    )
+  }
+}
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()
 
