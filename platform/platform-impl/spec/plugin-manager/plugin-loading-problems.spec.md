@@ -20,6 +20,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginDetailsPresenter.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
 ---
@@ -202,10 +203,23 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `mixed disabled roots offer only ordinary recovery targets`
   )
 
-- The controller can still supply a generic Enable suggestion for a disabled Ultimate dependency before page restrictions apply.
+- The controller must retain disabled Ultimate classification without a generic Enable suggestion.
+- The generic error area must exclude disabled Ultimate explanations and retain ordinary errors and Enable links.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
-    `disabled Ultimate still produces a generic controller Enable suggestion`;
-    `transitive disabled Ultimate still produces a generic controller Enable suggestion`
+    `disabled Ultimate supplies its classification without an Enable suggestion`;
+    `transitive disabled Ultimate supplies its classification without an Enable suggestion`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
+    `a disabled Ultimate problem stays outside the generic error area`;
+    `an ordinary loading problem retains its error text`;
+    `an ordinary disabled dependency retains its Enable link`;
+    `the page result retains Ultimate classification through serialization`;
+    `a page result without Ultimate classification keeps its default`
+  )
+
+- An ordinary disabled dependency explanation must not offer Enable when its unresolved targets include Ultimate.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `an ordinary disabled root beside Ultimate does not offer to enable Ultimate`
   )
 
 - The product availability check marks a plugin unavailable when it requires disabled Ultimate features.
@@ -228,6 +242,12 @@ Untested: No focused test covers the complete Ultimate restriction in details or
 - When Ultimate and its affected plugins load, their obsolete problems and recovery targets must disappear from the new state.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `an Ultimate problem disappears when its dependency becomes available`
+  )
+
+- The page must clear Ultimate classification when the session dependencies resolve or the user disables the affected plugin.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `disabling an Ultimate dependent suppresses its page problem`;
+    `resolved Ultimate dependencies suppress the page problem`
   )
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.

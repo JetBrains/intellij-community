@@ -18,6 +18,7 @@ import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginInstallOperation
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginLoadingProblem
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -1047,6 +1048,17 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }.forEach { requiredPlugins.put(it.getFirst(), it.getSecond()) }
     if (requiredPlugins.isEmpty()) {
       return CheckErrorsResult()
+    }
+
+    when (loadingError.kind) {
+      PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> {
+        return CheckErrorsResult(loadingError = loadingError.shortMessage, isUltimateDisabledProblem = true)
+      }
+      PluginLoadingProblem.Kind.OTHER -> {}
+    }
+
+    if (PluginManagerCore.ULTIMATE_PLUGIN_ID in requiredPlugins) {
+      return CheckErrorsResult(loadingError = loadingError.shortMessage, isDisabledDependencyError = true)
     }
 
     if (requiredPlugins.entries.none { it.value == null || PluginManagerCore.isIncompatible(it.value!!) }) {

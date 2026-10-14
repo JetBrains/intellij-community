@@ -12,4 +12,5 @@ data class CheckErrorsResult(
   @NlsSafe val loadingError: String? = null,
   val requiredPluginNames: Set<String> = emptySet(),
   val suggestToEnableRequiredPlugins: Boolean = false,
+  val isUltimateDisabledProblem: Boolean = false,
 )

@@ -1366,6 +1366,9 @@ open class MyPluginModel @JvmOverloads constructor(
     }
 
     fun getErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
+      if (checkErrorsResult.isUltimateDisabledProblem) {
+        return emptyList()
+      }
       if (checkErrorsResult.isDisabledDependencyError) {
         val loadingError = checkErrorsResult.loadingError
         return if (loadingError != null) listOf<HtmlChunk>(createTextChunk(loadingError)) else emptyList()
