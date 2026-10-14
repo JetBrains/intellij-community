@@ -19,7 +19,7 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,7 +66,7 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
       }
       edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
       if (module != null) {
-        module.pythonSdk = sdk
+        module.setPythonSdkForTests(sdk)
         sdk.setAssociationToModule(module)
       }
     }

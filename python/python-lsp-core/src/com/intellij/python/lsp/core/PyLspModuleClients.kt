@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.messages.Topic
@@ -310,6 +311,13 @@ data class PyLspServeKey(val workspaceRoot: String?, val toolVersion: String?, v
  */
 private fun pyLspServeInterpreterOf(interpreter: PythonInterpreter, pyTool: PyTool): String? =
   if ((pyTool as? PyLspTool<*>)?.serverNeedsOneInterpreter == true) interpreter.detectedEnvironment?.pythonBinaryPath?.toString() else null
+
+/**
+ * The interpreter of the Python project of [module], from the current snapshot. `null` when [module] is not a Python
+ * project or has no interpreter. For a tool module that does not depend on the Python project structure.
+ */
+@ApiStatus.Internal
+suspend fun pyLspInterpreterOf(module: Module): PythonInterpreter? = module.asPyProject()?.getInterpreter()
 
 /**
  * The [PyLspServeKey] of [pyProject] for [pyTool], with the interpreter from the current snapshot.

@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -32,7 +31,7 @@ import org.junit.Assert;
 import java.nio.file.Path;
 
 import static com.intellij.python.venv.VenvKt.createVenvAdditionalData;
-import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdkForTests;
 
 
 /**
@@ -111,8 +110,7 @@ public final class PySdkTools {
     if (module != null) {
       project = module.getProject();
 
-      PySdkExtKt.setPythonSdk(project, sdk);
-      setPythonSdk(module, sdk);
+      setPythonSdkForTests(module, sdk);
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

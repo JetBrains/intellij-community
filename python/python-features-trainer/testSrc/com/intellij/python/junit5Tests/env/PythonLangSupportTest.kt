@@ -10,6 +10,7 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithPyt
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
@@ -18,7 +19,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.mainPythonInterpreterIfReady
 import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +83,8 @@ class PythonLangSupportTest {
     withContext(Dispatchers.IO) {
       sut.cleanupBeforeLessons(project)
     }
-    val sdk = project.pythonSdk!!
+    @Suppress("DEPRECATION") // The test removes the SDK from the table.
+    val sdk = project.mainPythonInterpreterIfReady()!!.getSdkAPI()
     try {
       val pythonBinary = Path.of(sdk.homePath!!)
       Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")

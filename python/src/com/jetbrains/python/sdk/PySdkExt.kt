@@ -2,18 +2,19 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -21,12 +22,9 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.div
-import com.intellij.python.sdk.backend.pythonInterpreterResult
-import com.intellij.python.sdk.backend.detectedEnvironment
 
 internal fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
@@ -49,25 +47,25 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
 }
 
 /**
- * Please set sdk on module level: [Module.pythonSdk]
+ * The interpreter of the main Python project, for a caller that cannot suspend and runs after startup, such as a
+ * lesson or an action. `null` before the first snapshot, and when the project has no main Python project. A coroutine
+ * calls [com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter], which waits.
  */
-@set:ApiStatus.Obsolete
-var Project.pythonSdk: Sdk?
-  get() {
-    val sdk = ProjectRootManager.getInstance(this).projectSdk
-    return when (sdk?.sdkType) {
-      is PythonSdkType -> sdk
-      else -> null
-    }
-  }
-  set(value) {
-    val application = ApplicationManager.getApplication()
-    application.invokeAndWait {
-      application.runWriteAction {
-        ProjectRootManager.getInstance(this).projectSdk = value
-      }
-    }
-  }
+@Internal
+fun Project.mainPythonInterpreterIfReady(): PythonInterpreter? = findMainEvoPyProjectIfReady()?.interpreter
+
+/**
+ * The SDK of the interpreter of the main Python project, for external plugins. There is no project interpreter: an
+ * interpreter belongs to a Python project. `null` before the first snapshot, and when the project has no main Python
+ * project.
+ */
+@Deprecated(
+  "An interpreter belongs to a Python project. Use the interpreter of the PyProject, or findMainPythonInterpreter for the main one.",
+  ReplaceWith("mainPythonInterpreterIfReady()?.getSdkAPI()", "com.intellij.python.sdk.backend.getSdkAPI"),
+)
+@Suppress("DEPRECATION") // It still answers an SDK.
+val Project.pythonSdk: Sdk?
+  get() = mainPythonInterpreterIfReady()?.getSdkAPI()
 
 @Internal
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {

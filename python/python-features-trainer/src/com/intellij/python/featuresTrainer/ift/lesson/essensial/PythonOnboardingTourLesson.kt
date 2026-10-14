@@ -34,7 +34,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.sdk.pythonSdk
 import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.LessonSample
@@ -119,7 +118,7 @@ class PythonOnboardingTourLesson :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
-      usedInterpreterAtStart = project.pythonSdk?.versionString ?: "none"
+      usedInterpreterAtStart = PythonLessonsUtil.usedInterpreterVersion(project)
       useDelay = true
       invokeActionForFocusContext(getActionById("Stop"))
       val runManager = RunManager.getInstance(project)

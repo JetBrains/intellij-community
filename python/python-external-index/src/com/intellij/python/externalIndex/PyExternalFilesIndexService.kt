@@ -6,9 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
@@ -99,13 +97,6 @@ class PyExternalFilesIndexService(private val project: Project, private val coro
         }.forEach { storage.removeEntity(it) }
       }
     }
-  }
-
-  fun findSdkForExternallyIndexedFile(file: VirtualFile): Sdk? {
-    if (!isFileAddedToNonProjectIndex(file)) {
-      return null
-    }
-    return ProjectRootManager.getInstance(project).getProjectSdk()
   }
 
   fun isFileAddedToNonProjectIndex(file: VirtualFile): Boolean {

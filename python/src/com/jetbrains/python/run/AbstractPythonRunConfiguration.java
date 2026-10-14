@@ -20,7 +20,6 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -195,15 +194,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     else {
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-          if (projectSdk == null || !PythonSdkUtil.isPythonSdk(projectSdk)) {
-            throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
-          }
+          // No SDK home and no module SDK: an interpreter belongs to a Python project, so there is nothing to run.
+          throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
         }
-        // Only that the SDK is a Python one, which is what the project-SDK branch above checks too. Whether the
-        // interpreter actually runs is not asked here: this method runs on every validation pass of the run
-        // configuration editor, and answering it launches a process. A broken interpreter fails at launch instead,
-        // with the error the launch itself reports.
+        // Only that the SDK is a Python one. Whether the interpreter actually runs is not asked here: this method runs on
+        // every validation pass of the run configuration editor, and answering it launches a process. A broken
+        // interpreter fails at launch instead, with the error the launch itself reports.
         else if (mySdk == null || !PythonSdkUtil.isPythonSdk(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }

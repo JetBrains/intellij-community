@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.mainPythonInterpreterIfReady
 import com.jetbrains.python.statistics.modules
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
@@ -25,10 +25,14 @@ import training.util.OnboardingFeedbackData
 import java.util.concurrent.CompletableFuture
 
 object PythonLessonsUtil {
-  fun isPython3Installed(project: Project): Boolean {
-    val sdk = project.pythonSdk ?: return false
-    return PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)?.isPy3K == true
-  }
+  // A lesson polls this while it runs, after the project structure has loaded.
+  fun isPython3Installed(project: Project): Boolean =
+    project.mainPythonInterpreterIfReady()?.getPythonInfo()?.successOrNull?.languageLevel?.isPy3K == true
+
+  /** The version of the main interpreter for the feedback report, or `none`. */
+  internal fun usedInterpreterVersion(project: Project): @NlsSafe String =
+    project.mainPythonInterpreterIfReady()?.getPythonInfo()?.successOrNull?.let { it.version ?: it.languageLevel.toString() }
+    ?: "none"
 
   fun LessonContext.showWarningIfPython3NotFound() {
     task {
@@ -67,7 +71,7 @@ object PythonLessonsUtil {
       interpreterVersions.complete(versions)
     }
 
-    val usedInterpreter = project.pythonSdk?.versionString ?: "none"
+    val usedInterpreter = usedInterpreterVersion(project)
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization") // a very strange warning report here
     val startInterpreter = if (usedInterpreterAtStart == usedInterpreter) "same" else usedInterpreterAtStart

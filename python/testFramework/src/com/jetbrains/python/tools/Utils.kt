@@ -15,7 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -66,7 +66,7 @@ fun openProjectWithSdk(projectPath: String,
 
     val sdk = sdkProducer(project, module)
 
-    module.pythonSdk = sdk
+    module.setPythonSdkForTests(sdk)
 
     if (sdk != null) {
       assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.isNotEmpty())

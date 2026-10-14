@@ -12,7 +12,6 @@ import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
 import com.intellij.openapi.diagnostic.fileLogger
@@ -21,7 +20,7 @@ import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfoWithInterpreterCreator
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithToolBase
 import com.jetbrains.python.sdk.configuration.getInterpreterCreator
-import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.readPythonSdkForConfiguration
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 
 private val logger = fileLogger()
@@ -43,7 +42,7 @@ private val logger = fileLogger()
 internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(controller: AutoConfigurationController<T>): InterpreterConfigurationResult<T> {
   val outcome = withSdkConfigurationLock(module.project) {
     // We might have TOCTOU here (sdk might already be created), so we check SDK once again
-    if (module.findPythonSdk() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
+    if (module.readPythonSdkForConfiguration() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
   }
   return when (outcome) {
     is ConfigOutcome.Configured -> {
@@ -143,7 +142,7 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
       // Use the parent interpreter, but do not associate it with this module, as it belongs to the parent. The parent
       // registered it, so the call only points this module at it.
       suspend fun inheritFromParent(): ConfigOutcome.Configured<T> {
-        parent.residesOnModule.findPythonSdk()?.pythonInterpreterResultAsync()?.successOrNull?.let {
+        parent.getInterpreter()?.let {
           pyProject.setPythonInterpreter(it, waitForSnapshot = false).onFailure { error -> logger.warn("Cannot inherit the interpreter of ${parent.baseDir}: $error") }
         }
         return ConfigOutcome.Configured()

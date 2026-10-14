@@ -12,7 +12,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectConfigurators
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
-import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.readPythonSdkForConfiguration
 
 /**
  * See usage for an API doc
@@ -24,7 +24,7 @@ internal suspend fun PyProject.getModuleSdkStateImpl(
   // The live SDK decides, as the configuration lock needs a true answer at this instant. The interpreter itself comes
   // from the snapshot, which [autoConfigureSdk] keeps in step with every write.
   // A broken SDK, one that names no interpreter, counts as no SDK, so it can be configured again.
-  val currentSdk = residesOnModule.findPythonSdk()
+  val currentSdk = residesOnModule.readPythonSdkForConfiguration()
   val interpreter = currentSdk?.let { getInterpreter() ?: it.pythonInterpreterResultAsync().successOrNull }
   if (interpreter != null) return ModuleSdkState.HasSdk(interpreter)
   return ModuleSdkState.NoSdk(suggestConfigInstruction(configuratorsByTool, fresh))

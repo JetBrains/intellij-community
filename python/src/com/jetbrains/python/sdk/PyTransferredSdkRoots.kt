@@ -19,24 +19,6 @@ import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Applies [transferRoots] to all modules inheriting python sdk from the [project].
- */
-@ApiStatus.Internal
-
-fun transferRootsToModulesWithInheritedSdk(project: Project, sdk: Sdk?) {
-  updateRootsForModulesWithInheritedSdk(project, sdk, ::transferRoots)
-}
-
-/**
- * See [transferRootsToModulesWithInheritedSdk] and [removeTransferredRoots].
- */
-@ApiStatus.Internal
-
-fun removeTransferredRootsFromModulesWithInheritedSdk(project: Project, sdk: Sdk?) {
-  updateRootsForModulesWithInheritedSdk(project, sdk, ::removeTransferredRoots)
-}
-
-/**
  * Returns [sdk] paths that are located under project modules and hence should be turned into source roots,
  * at least to avoid enabling reader mode for them.
  */
@@ -127,20 +109,6 @@ fun updateTransferredRoots(project: Project, sdk: Sdk, newInProjectPaths: Set<Vi
       }
     }
     setPathsToTransfer(sdk, newTransferredRoots)
-  }
-}
-
-private fun updateRootsForModulesWithInheritedSdk(project: Project, sdk: Sdk?, action: (Module, Sdk) -> Unit) {
-  if (sdk == null) {
-    return
-  }
-
-  for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
-    if (!ModuleRootManager.getInstance(module).isSdkInherited) {
-      continue
-    }
-
-    action(module, sdk)
   }
 }
 

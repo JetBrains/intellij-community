@@ -27,12 +27,13 @@ import com.intellij.python.lsp.core.pyLspModulesToServeWith
 import com.intellij.python.lsp.core.pyServedModules
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.isFor
+import com.intellij.python.lsp.core.pyLspInterpreterOf
+import com.intellij.python.sdk.backend.detectedEnvironment
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.zuban.common.ZubanTypeCheckingMode
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.Diagnostic
@@ -114,7 +115,7 @@ private class ZubanPackageListener(private val project: Project) : PythonPackage
     if (clients.isEmpty()) return
     project.service<PyLspService>().cs.launch {
       for (client in clients) {
-        if (client.isUsable && client.pyServedModules.any { !it.isDisposed && it.findPythonSdk()?.let(interpreter::isFor) == true }) {
+        if (client.isUsable && client.pyServedModules.any { !it.isDisposed && pyLspInterpreterOf(it) == interpreter }) {
           client.invalidateServerResults()
         }
       }
@@ -149,8 +150,9 @@ class ZubanLspClientDescriptor(
 
   override suspend fun resolveCommandLine(): GeneralCommandLine {
     val commandLine = super.resolveCommandLine()
-    val sdk = module.findPythonSdk()?.takeIf { PyTypeEngineUtils.isLocalSdk(it) }
-    pythonExecutable = sdk?.homePath?.let { zubanPythonExecutable(Path.of(it)) }
+    @Suppress("DEPRECATION") // The local check still reads the SDK.
+    val interpreter = pyLspInterpreterOf(module)?.takeIf { PyTypeEngineUtils.isLocalSdk(it.getSdkAPI()) }
+    pythonExecutable = interpreter?.detectedEnvironment?.pythonBinaryPath?.let { zubanPythonExecutable(it) }
     val firstRoot = readAction {
       refreshModuleRoots()
       roots.firstOrNull()?.let { it.fileSystem.getNioPath(it) }

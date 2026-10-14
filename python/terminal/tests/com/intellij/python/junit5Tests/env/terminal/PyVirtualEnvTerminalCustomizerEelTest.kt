@@ -24,7 +24,7 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
@@ -68,7 +68,7 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
     // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
     edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
     try {
-      pyProject.residesOnModule.pythonSdk = sdk
+      pyProject.residesOnModule.setPythonSdkForTests(sdk)
 
       val (shell, _) = eel.exec.getShell()
       val execOptions = MutableShellExecOptionsImpl(

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.inspections
 
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.DataManager
@@ -10,12 +9,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -26,14 +23,16 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.model.api.CreateSdkNotFilesResult
-import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.InterpreterConfigurationError
 import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
+import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
 import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.PlatformUtils
@@ -43,14 +42,13 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.impl.getRootModuleOrNull
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.createAddInterpreterActionGroup
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.getInterpreterCreator
 import com.jetbrains.python.sdk.configuration.suppressors.suppressTipAndInspectionsFor
-import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.PySdkBundle
+import com.jetbrains.python.sdk.createAddInterpreterActionGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -128,19 +126,14 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
         return
       }
 
+      // An interpreter belongs to the module of a Python project, so a module opens its own settings.
       val settingsService = ProjectSettingsService.getInstance(project)
-      if (module == null || justOneModuleInheritingSdk(project, module)) {
+      if (module == null) {
         settingsService.openProjectSettings()
       }
       else {
         settingsService.openModuleSettings(module)
       }
-    }
-
-    private fun justOneModuleInheritingSdk(project: Project, module: Module): Boolean {
-      return ProjectRootManager.getInstance(project).projectSdk == null &&
-             ModuleRootManager.getInstance(module).isSdkInherited &&
-             ModuleManager.getInstance(project).modules.size < 2
     }
   }
 }

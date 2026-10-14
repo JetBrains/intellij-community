@@ -15,7 +15,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
@@ -74,7 +74,7 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
     setupExistingEnvAndSdk(moduleOrProject = ModuleOrProject.ModuleAndProject(module), pythonBinary = venvPython, envWorkingDir = baseDirPath, mode = mode).getOrThrow()
   val sdk = interpreter.getSdkAPI()
   if (addToSdkTable) {
-    module.pythonSdk = sdk
+    module.setPythonSdkForTests(sdk)
     sdk.setAssociationToModule(module)
   }
   // workaround interesting behavior of VFS_STRUCTURAL_MODIFICATIONS

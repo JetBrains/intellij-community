@@ -8,6 +8,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -43,14 +46,21 @@ import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcom
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.ScriptResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
 import com.intellij.python.community.common.welcomeScreen.PyWelcomeBundle
+import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
+import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.sdk.backend.detectedHomePath
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonRunConfigurationProducer
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Callable
 
 internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
@@ -62,10 +72,13 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
       return
     }
 
+    val module = moduleRef.get()
     StartupManager.getInstance(project).runAfterOpened(
       DumbAwareRunnable {
         PyWelcomeCollector.logWelcomeProject(project, ProjectType.OPENED)
-        PyWelcome.welcomeUser(project, baseDir, moduleRef.get())
+        project.service<PyWelcomeScope>().scope.launch {
+          PyWelcome.welcomeUser(project, baseDir, module, findInterpreterHome(project, module))
+        }
       }
     )
   }
@@ -79,44 +92,47 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
 internal object PyWelcome {
   private val LOG = Logger.getInstance(PyWelcome::class.java)
 
+  /**
+   * [interpreterHome] is the environment root of the interpreter of the project. The welcome script ignores it when it
+   * lies inside [baseDir], since a virtual environment there is not a user file.
+   */
   @CalledInAny
-  fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module?) {
+  fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module?, interpreterHome: VirtualFile?) {
     val enabled = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
 
-    if (isEmptyProject(project, baseDir, module)) {
+    if (isEmptyProject(project, baseDir, module, interpreterHome)) {
       if (enabled) {
         prepareFileAndOpen(project, baseDir).onSuccess {
           if (it != null) {
             // expand tree after the welcome script is created, otherwise expansion will have no effect on empty tree
-            expandProjectTree(project, baseDir, module, it.virtualFile)
+            expandProjectTree(project, baseDir, module, interpreterHome, it.virtualFile)
             createRunConfiguration(project, it)
           }
         }
       }
       else {
         PyWelcomeCollector.logWelcomeScript(project, ScriptResult.DISABLED_BUT_COULD)
-        expandProjectTree(project, baseDir, module, null)
+        expandProjectTree(project, baseDir, module, interpreterHome, null)
       }
     }
     else {
       PyWelcomeCollector.logWelcomeScript(project, if (enabled) ScriptResult.NOT_EMPTY else ScriptResult.DISABLED_AND_COULD_NOT)
-      expandProjectTree(project, baseDir, module, null)
+      expandProjectTree(project, baseDir, module, interpreterHome, null)
     }
   }
 
-  private fun isEmptyProject(project: Project, baseDir: VirtualFile, module: Module?): Boolean {
-    return firstUserFile(project, baseDir, module) == null
+  private fun isEmptyProject(project: Project, baseDir: VirtualFile, module: Module?, interpreterHome: VirtualFile?): Boolean {
+    return firstUserFile(project, baseDir, module, interpreterHome) == null
   }
 
-  private fun firstUserFile(project: Project, baseDir: VirtualFile, module: Module?): VirtualFile? {
+  private fun firstUserFile(project: Project, baseDir: VirtualFile, module: Module?, interpreterHome: VirtualFile?): VirtualFile? {
     if (module != null && module.isDisposed || module == null && project.isDisposed) return null
 
-    val sdkBinary = (module?.pythonSdk ?: project.pythonSdk)?.homeDirectory
-    val innerSdk = sdkBinary != null && VfsUtil.isAncestor(baseDir, sdkBinary, true)
+    val innerInterpreter = interpreterHome != null && VfsUtil.isAncestor(baseDir, interpreterHome, false)
 
     return baseDir.children.filterNot {
       ProjectCoreUtil.isProjectOrWorkspaceFile(it) ||
-      innerSdk && it.isDirectory && VfsUtil.isAncestor(it, sdkBinary, true) ||
+      innerInterpreter && it.isDirectory && VfsUtil.isAncestor(it, interpreterHome, false) ||
       FileElement.isFileHidden(it)
     }.firstOrNull()
   }
@@ -152,8 +168,8 @@ internal object PyWelcome {
   }
 
   @CalledInAny
-  private fun expandProjectTree(project: Project, baseDir: VirtualFile, module: Module?, file: VirtualFile?) {
-    expandProjectTree(project, ToolWindowManager.getInstance(project), baseDir, module, file, ProjectViewPoint.IMMEDIATELY)
+  private fun expandProjectTree(project: Project, baseDir: VirtualFile, module: Module?, interpreterHome: VirtualFile?, file: VirtualFile?) {
+    expandProjectTree(project, ToolWindowManager.getInstance(project), baseDir, module, interpreterHome, file, ProjectViewPoint.IMMEDIATELY)
   }
 
   @CalledInAny
@@ -162,6 +178,7 @@ internal object PyWelcome {
     toolWindowManager: ToolWindowManager,
     baseDir: VirtualFile,
     module: Module?,
+    interpreterHome: VirtualFile?,
     file: VirtualFile?,
     point: ProjectViewPoint,
   ) {
@@ -169,7 +186,7 @@ internal object PyWelcome {
 
     val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
     if (toolWindow == null) {
-      val listener = ProjectViewListener(project, baseDir, module, file)
+      val listener = ProjectViewListener(project, baseDir, module, interpreterHome, file)
       Disposer.register(PythonPluginDisposable.getInstance(project), listener)
       // collected listener will release the connection
       project.messageBus.connect(listener).subscribe(ToolWindowManagerListener.TOPIC, listener)
@@ -181,7 +198,7 @@ internal object PyWelcome {
             .onUiThread(ModalityState.nonModal())
             .expireWith(PythonPluginDisposable.getInstance(project))
             .submit {
-              val fileToChoose = (file ?: firstUserFile(project, baseDir, module)) ?: return@submit
+              val fileToChoose = (file ?: firstUserFile(project, baseDir, module, interpreterHome)) ?: return@submit
 
               ProjectViewSelectInTarget
                 .select(project, fileToChoose, ProjectViewPane.ID, null, fileToChoose, false)
@@ -265,6 +282,7 @@ internal object PyWelcome {
     private val project: Project,
     private val baseDir: VirtualFile,
     private val module: Module?,
+    private val interpreterHome: VirtualFile?,
     private val file: VirtualFile?,
   ) : ToolWindowManagerListener, Disposable {
 
@@ -274,7 +292,7 @@ internal object PyWelcome {
       if (ToolWindowId.PROJECT_VIEW in ids) {
         toolWindowRegistered = true
         Disposer.dispose(this) // to release message bus connection
-        expandProjectTree(project, toolWindowManager, baseDir, module, file, ProjectViewPoint.FROM_LISTENER)
+        expandProjectTree(project, toolWindowManager, baseDir, module, interpreterHome, file, ProjectViewPoint.FROM_LISTENER)
       }
     }
 
@@ -285,3 +303,16 @@ internal object PyWelcome {
     }
   }
 }
+
+/**
+ * The environment root of the interpreter of [module], or of the main Python project when there is no module. Waits for
+ * the project structure, since the welcome flow runs at startup.
+ */
+private suspend fun findInterpreterHome(project: Project, module: Module?): VirtualFile? {
+  val interpreter = module?.asPyProject()?.getInterpreter() ?: project.findMainPythonInterpreter() ?: return null
+  val home = interpreter.detectedHomePath ?: return null
+  return withContext(Dispatchers.IO) { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(home) }
+}
+
+@Service(Service.Level.PROJECT)
+private class PyWelcomeScope(val scope: CoroutineScope)

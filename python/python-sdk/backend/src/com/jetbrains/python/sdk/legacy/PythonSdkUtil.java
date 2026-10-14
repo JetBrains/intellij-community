@@ -123,7 +123,7 @@ public final class PythonSdkUtil {
   }
 
   /**
-   * Consider to use suspended {@link com.jetbrains.python.sdk.ModuleExKt#findPythonSdk} instead, it waits for project model to be ready
+   * Consider to use the interpreter of the Python project instead, {@code PyProject.getInterpreter}, it waits for the project structure
    */
   @ApiStatus.Obsolete
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {

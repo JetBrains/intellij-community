@@ -54,7 +54,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -253,7 +253,7 @@ internal class DependenciesPsiProviderTest {
           .also {
             // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
             edtWriteAction { ProjectJdkTable.getInstance().addJdk(it) }
-            module.pythonSdk = it
+            module.setPythonSdkForTests(it)
             it.setAssociationToModule(module)
             beforePackageManager()
           }

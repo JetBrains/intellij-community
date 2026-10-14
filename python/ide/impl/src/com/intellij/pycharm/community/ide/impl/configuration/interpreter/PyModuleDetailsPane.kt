@@ -18,6 +18,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -31,7 +32,9 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.jetbrains.python.PyBundle
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
@@ -39,7 +42,6 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
-import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.interpreterItemsUnderProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -192,7 +194,7 @@ internal class PyModuleDetailsPane(
 
   /**
    * Snapshot of the module's Python SDK, populated by the init coroutine through the suspending
-   * [Module.findPythonSdk]. `null` until the first `refreshModuleSdkSnapshot` completes; UI reads
+   * [findModuleSdk]. `null` until the first `refreshModuleSdkSnapshot` completes; UI reads
    * on the EDT, coroutine writes on the EDT after resolving.
    */
   private var moduleSdkSnapshot: Sdk? = null
@@ -207,7 +209,7 @@ internal class PyModuleDetailsPane(
     sdkCombo.addActionListener { refreshPackages() }
     component = buildLayout()
     PyPackageCoroutine.launch(project) {
-      val sdk = module.findPythonSdk()
+      val sdk = findModuleSdk(module)
       withContext(Dispatchers.EDT) {
         moduleSdkSnapshot = sdk
         model.markSdkApplied(sdk?.name)
@@ -225,7 +227,7 @@ internal class PyModuleDetailsPane(
 
   fun reset() {
     PyPackageCoroutine.launch(project) {
-      val sdk = module.findPythonSdk()
+      val sdk = findModuleSdk(module)
       withContext(Dispatchers.EDT) {
         moduleSdkSnapshot = sdk
         reloadSdkComboItems()
@@ -409,7 +411,7 @@ internal class PyModuleDetailsPane(
 
   /**
    * Latest module SDK snapshot resolved by the init / reset coroutine through
-   * [Module.findPythonSdk]. `null` before the first resolve completes and after the module loses
+   * [findModuleSdk]. `null` before the first resolve completes and after the module loses
    * its Python SDK — the pane treats both as "no interpreter".
    */
   private fun currentModuleSdk(): Sdk? = moduleSdkSnapshot
@@ -461,3 +463,8 @@ internal class PyModuleDetailsPane(
     settings.select(target)
   }
 }
+
+/** The SDK of the interpreter of the Python project of [module], for the combo that lists SDKs. */
+@Suppress("DEPRECATION") // The combo still lists SDKs.
+private suspend fun findModuleSdk(module: Module): Sdk? = module.asPyProject()?.getInterpreter()?.getSdkAPI()
+

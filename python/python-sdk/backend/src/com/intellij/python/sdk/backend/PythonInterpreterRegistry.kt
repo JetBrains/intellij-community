@@ -40,7 +40,7 @@ import com.jetbrains.python.sdk.pythonBinaryPath
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.readPythonSdkForConfiguration
 import com.jetbrains.python.project.project
 import kotlinx.coroutines.Dispatchers
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -306,7 +306,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   private suspend fun adoptOwnerlessModuleSdks() {
     val users = mutableMapOf<Sdk, MutableList<PyProject>>()
     for (pyProject in project.getPyProjects()) {
-      val sdk = pyProject.residesOnModule.findPythonSdk() ?: continue
+      val sdk = pyProject.residesOnModule.readPythonSdkForConfiguration() ?: continue
       if (sdk.sdkAdditionalData !is PythonSdkAdditionalData || sdk.ownerDirectory() != null) continue
       users.getOrPut(sdk) { mutableListOf() } += pyProject
     }

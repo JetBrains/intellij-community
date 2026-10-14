@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -261,7 +260,9 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
     Sdk sdk = getSdk();
     if (sdk == null) {
-      return ProjectRootManager.getInstance(myProject).getProjectSdk();
+      // A run configuration with no SDK runs with the SDK of its module, see AbstractPythonRunConfiguration.getSdkHome.
+      Module module = getModule();
+      return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     }
     return sdk;
   }

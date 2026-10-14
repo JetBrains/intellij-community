@@ -13,7 +13,7 @@ import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.collectPythonPath
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
@@ -26,7 +26,7 @@ internal class PyPathGeneratorTest : PyEnvTestCase() {
       override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
         val sdk = existingSdk ?: createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK)
         val module = myFixture.module
-        module.pythonSdk = sdk
+        module.setPythonSdkForTests(sdk)
 
         var myFile: VirtualFile? = null
         var myDir: VirtualFile? = null

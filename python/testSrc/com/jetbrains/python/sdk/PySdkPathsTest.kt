@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
@@ -92,7 +93,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create().also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
 
     // Associated like its sibling `sysPathEntryIsModuleRoot`, because `updateSdkPaths` classifies a path against the
@@ -119,7 +120,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create().also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, moduleRoot.path))
 
@@ -143,7 +144,7 @@ class PySdkPathsTest {
     val sdk = PythonMockSdk.create(sdkPath)
     registerSdk(sdk)
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    module.pythonSdk = sdk
+    module.setPythonSdkForTests(sdk)
 
     mockPythonPluginDisposable()
     runWriteActionAndWait {
@@ -164,7 +165,7 @@ class PySdkPathsTest {
 
     val simpleSdk = PythonMockSdk.create().also {
       removeTransferredRoots(module, sdk)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
 
     updateSdkPaths(simpleSdk)
@@ -182,7 +183,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create(sdkPath).also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
@@ -197,7 +198,7 @@ class PySdkPathsTest {
 
     val simpleSdk = PythonMockSdk.create().also {
       removeTransferredRoots(module, sdk)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
 
     updateSdkPaths(simpleSdk)
@@ -216,7 +217,7 @@ class PySdkPathsTest {
     val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
     val sdk = PythonMockSdk.create(sdkDir.path).also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
     mockPythonPluginDisposable()
@@ -245,7 +246,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create(sdkDir.path).also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
@@ -264,7 +265,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
       registerSdk(it)
-      module1.pythonSdk = it
+      module1.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
 
@@ -285,7 +286,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
       registerSdk(it)
-      module1.pythonSdk = it
+      module1.setPythonSdkForTests(it)
     }
     mockPythonPluginDisposable()
 
@@ -369,7 +370,7 @@ class PySdkPathsTest {
       runWriteActionAndWait { commit() }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
-    module.pythonSdk = sdk
+    module.setPythonSdkForTests(sdk)
 
     updateSdkPaths(sdk)
 
@@ -396,7 +397,7 @@ class PySdkPathsTest {
 
     val sdk = PythonMockSdk.create(sdkPath).also {
       registerSdk(it)
-      module.pythonSdk = it
+      module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 

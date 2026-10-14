@@ -15,7 +15,6 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
-import com.jetbrains.python.sdk.pythonSdk
 
 /**
  * Light counterpart of [com.intellij.python.junit5Tests.env.packaging.DependenciesPsiProviderTest], which needs a real
@@ -177,7 +176,6 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
   override fun setUp() {
     super.setUp()
     InspectionProfileImpl.INIT_INSPECTIONS = true
-    myFixture.project.pythonSdk = projectDescriptor.sdk
   }
 
   override fun tearDown() {
