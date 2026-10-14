@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class PluginLoadingProblem internal constructor(
   val plugin: IdeaPluginDescriptor,
   val shouldNotifyUser: Boolean,
