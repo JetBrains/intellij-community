@@ -4,12 +4,14 @@ package org.jetbrains.plugins.github.api.util
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Obsolete
 abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExecutor,
                                       private val requestProducer: (GraphQLRequestPagination) -> GithubApiRequest.Post<T>,
                                       private val supportsTimestampUpdates: Boolean = false,
