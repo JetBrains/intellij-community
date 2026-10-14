@@ -67,8 +67,14 @@ internal class GithubApiHelperRequestExecutor(
     Semaphore(Registry.intValue(MAX_CONCURRENT_REQUESTS_REGISTRY_KEY, DEFAULT_MAX_CONCURRENT_REQUESTS).coerceAtLeast(1))
 
   @Suppress("UsagesOfObsoleteApi")
-  override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T =
-    ProgressManager.getInstance().runProcess(Computable { runBlockingCancellable { execute(request) } }, indicator)
+  override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+    return if (ProgressManager.getInstance().progressIndicator === indicator) {
+      runBlockingCancellable { execute(request) }
+    }
+    else {
+      ProgressManager.getInstance().runProcess(Computable { runBlockingCancellable { execute(request) } }, indicator)
+    }
+  }
 
   override suspend fun <T> execute(request: GithubApiRequest<T>): T =
     requestsSemaphore.withPermit {
