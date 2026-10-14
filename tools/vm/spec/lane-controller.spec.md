@@ -455,8 +455,8 @@ The rest of the scenario matrix is in
 The lane daemon of the guest agent derives the identity of a lane IDE from the lane document. It hands the derived
 values to the IDE as files, so the IDE computes no secret.
 
-- The config key hashes one line for each input, in this order: the lane, the digest of the lane document, the
-  product stamp, each CLI runtime by its name, and the digest of the option file templates.
+- The config key hashes one line for each input. The first lines are the lane, the digest of the lane document and
+  the product stamp. Then come each CLI runtime by its name and the digest of the option file templates.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_identity_of_the_fixed_key_is_the_golden`)
   [@test] ../../../../plugins/air/tests/integration/contract/test/flow/AirLaneDigestTest.kt
 
