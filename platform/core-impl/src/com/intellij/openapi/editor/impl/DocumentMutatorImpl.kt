@@ -103,22 +103,19 @@ internal abstract class DocumentMutatorImpl(
 
   override fun setText(hostDocument: Document, newWholeText: CharSequence) {
     val snapshot = getSnapshot()
-    executeCommandIfNeeded(
-      hostDocument,
-      Runnable {
-        replaceString(
-          hostDocument,
-          snapshot,
-          0,
-          snapshot.text().length(),
-          0,
-          newWholeText,
-          DocumentModStamp.next(),
-          true,
-          true,
-        )
-      }
-    )
+    executeCommandIfNeeded(hostDocument) {
+      replaceString(
+        hostDocument,
+        snapshot,
+        0,
+        snapshot.text().length(),
+        0,
+        newWholeText,
+        DocumentModStamp.next(),
+        true,
+        true,
+      )
+    }
   }
 
   override fun moveText(
@@ -355,18 +352,18 @@ internal abstract class DocumentMutatorImpl(
     return snapshot
   }
 
-  private fun executeCommandIfNeeded(hostDocument: Document, runnable: Runnable) {
+  private inline fun executeCommandIfNeeded(hostDocument: Document, crossinline command: () -> Unit) {
     if (!settings.isCommandCheckEnabled()) {
-      runnable.run()
+      command.invoke()
       return
     }
     val commandProcessor = CommandProcessor.getInstance()
-    if (commandProcessor.isUndoTransparentActionInProgress) {
-      runnable.run()
+    if (commandProcessor.isUndoTransparentActionInProgress || commandProcessor.isCommandInProgress) {
+      command.invoke()
     } else {
       commandProcessor.executeCommand(
         null,
-        runnable,
+        Runnable { command.invoke() },
         "",
         DocCommandGroupId.noneGroupId(hostDocument),
       )
