@@ -180,6 +180,16 @@ internal object PluginLoadingProblemAnalyzer {
   ) {
     val shouldNotifyUser = !plugin.isImplementationDetail
 
+    fun registerFailedDependency(descriptor: IdeaPluginDescriptorImpl) {
+      val dependency = if (descriptor is ContentModuleDescriptor) {
+        DependencyRef.ContentModule(descriptor.moduleId)
+      }
+      else {
+        DependencyRef.Plugin(descriptor.pluginId)
+      }
+      registerLoadingError(pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptor))
+    }
+
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
         is DependencyIsNotResolved -> when (val dependency = exclusionReason.dependency) {
@@ -266,15 +276,7 @@ internal object PluginLoadingProblemAnalyzer {
           is PluginIsIncompatibleWithProduct,
           is PluginVersionIsSuperseded,
           is PartOfDependencyCycle,
-          is PartOfRuntimeModuleGroupDependencyCycle -> {
-            val dependency = if (excludedRequiredDescriptor is ContentModuleDescriptor) {
-              DependencyRef.ContentModule(excludedRequiredDescriptor.moduleId)
-            }
-            else {
-              DependencyRef.Plugin(excludedRequiredDescriptor.pluginId)
-            }
-            registerLoadingError(pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, excludedRequiredDescriptor))
-          }
+          is PartOfRuntimeModuleGroupDependencyCycle -> registerFailedDependency(excludedRequiredDescriptor)
           is ChainedExclusion -> error("expected a root cause: $rootCause")
         }
       }
