@@ -1,4 +1,5 @@
 value class One {
+  public static int i;
 
   <error descr="Field 'value' might not have been initialized">private int value</error>;
 
