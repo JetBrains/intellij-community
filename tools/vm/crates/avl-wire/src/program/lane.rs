@@ -46,6 +46,16 @@ vocabulary! {
 }
 
 vocabulary! {
+    /// Which process serves the control channel of a controlled agent, `AirAcpControlOwner` of the Kotlin fixture.
+    pub enum ControlOwner {
+        /// The control server of the JVM host.
+        Host = "HOST",
+        /// The control server in the lane IDE, which the launch file `control.json` binds.
+        Ide = "IDE",
+    }
+}
+
+vocabulary! {
     /// A lane fixture that no agent implies, as `AirLaneRequirement` names it.
     pub enum Requirement {
         AcpDebugServer = "ACP_DEBUG_SERVER",
@@ -116,6 +126,9 @@ pub struct LaneAgent {
     pub display_name: String,
     /// The agent proxies every frame to the control channel of the lane.
     pub controlled: bool,
+    /// The process that serves the control channel of a controlled agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub control_owner: Option<ControlOwner>,
     /// What a deterministic agent answers.
     #[serde(default, deserialize_with = "crate::json::non_null")]
     pub deterministic: Option<DeterministicAnswer>,
@@ -271,6 +284,11 @@ impl LaneAgent {
         let key = &self.key;
         if self.controlled == self.deterministic.is_some() {
             refusals.push(format!("the agent '{key}' must state an answer exactly when it is not controlled"));
+        }
+        if self.controlled != self.control_owner.is_some() {
+            refusals.push(format!(
+                "the agent '{key}' must state a control owner exactly when it is controlled"
+            ));
         }
         let local = self.delivery == Delivery::Local;
         let registry = self.delivery == Delivery::Registry;

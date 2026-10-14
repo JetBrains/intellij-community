@@ -88,6 +88,10 @@ pub struct State {
     pub bridge_plugin: Option<String>,
     /// The digest of the flow vocabulary that the bridge serves, or null.
     pub vocabulary_digest: Option<String>,
+    /// Why the control server of the controlled agents in the IDE did not bind. The IDE leaves the field out while it
+    /// is null, and it never reports [Phase::Ready] while the field is set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub control_bind_failure: Option<String>,
 }
 
 impl fmt::Display for State {
@@ -101,7 +105,11 @@ impl fmt::Display for State {
             self.projects,
             self.indexing,
             self.background_tasks
-        )
+        )?;
+        if let Some(failure) = &self.control_bind_failure {
+            write!(formatter, ", the control server did not bind: {failure}")?;
+        }
+        Ok(())
     }
 }
 
@@ -238,7 +246,7 @@ pub struct PhaseWait {
 pub enum Verdict<'a> {
     Waiting,
     Reached(&'a State),
-    /// The IDE cannot reach the phase: it quits, or it belongs to another launch.
+    /// The IDE cannot reach the phase: it quits, it belongs to another launch, or its control server did not bind.
     Refused(WaitError),
 }
 
@@ -311,6 +319,9 @@ impl PhaseWait {
                 state: Box::new(state.clone()),
             });
         }
+        if state.control_bind_failure.is_some() && self.phase == Phase::Ready {
+            return Verdict::Refused(WaitError::ControlBindFailed(Box::new(state.clone())));
+        }
         match self.in_phase_since {
             Some(since) if now.saturating_duration_since(since) >= self.quiet_for => Verdict::Reached(state),
             _ => Verdict::Waiting,
@@ -345,6 +356,8 @@ pub enum WaitError {
     Quitting { phase: Phase, state: Box<State> },
     /// The state names another launch. The IDE of another lane answers on the port.
     OtherLaunch { expected: String, state: Box<State> },
+    /// The control server of the controlled agents in the IDE did not bind, so the IDE never gets ready.
+    ControlBindFailed(Box<State>),
     /// The deadline passed first.
     TimedOut(Box<TimedOut>),
 }
@@ -373,6 +386,10 @@ impl fmt::Display for WaitError {
                 formatter,
                 "the lifecycle state names the launch {}, not {expected}, so the IDE of another lane answers on the port: {state}",
                 state.launch.as_deref().unwrap_or_default()
+            ),
+            Self::ControlBindFailed(state) => write!(
+                formatter,
+                "the IDE cannot reach READY, because its ACP control server did not bind; read idea.log of the IDE for the holder of the port: {state}"
             ),
             Self::TimedOut(seen) => {
                 write!(formatter, "the IDE did not reach {}", seen.phase)?;

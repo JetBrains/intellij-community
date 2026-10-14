@@ -27,6 +27,7 @@ fn state(phase: Phase) -> State {
         background_tasks: 0,
         bridge_plugin: None,
         vocabulary_digest: None,
+        control_bind_failure: None,
     }
 }
 
@@ -230,6 +231,29 @@ fn the_snapshot_of_the_ide_fixture_is_the_golden() {
     expect_test::expect_file![golden()].assert_eq(&format!("{text}\n"));
     let document = std::fs::read(golden()).unwrap();
     assert_eq!(decode_snapshot(document.trim_ascii_end()).unwrap(), expected);
+}
+
+/// The frame of the Kotlin side of a failed bind: the field is there only with its text, and the phase stays BUSY.
+#[test]
+fn a_failed_control_bind_is_read_and_refuses_the_ready_wait_at_once() {
+    let fixture = r#""phase":"BUSY","launch":"air-ui-lane","pid":4321,"projects":["plain-project"],"indexing":false,"backgroundTasks":0,"bridgePlugin":null,"vocabularyDigest":null"#;
+    let document = format!(r#"{{"seq":3,"state":{{"schemaVersion":2,{fixture},"controlBindFailure":"could not bind port 30425"}}}}"#);
+    let snapshot = decode_snapshot(document.as_bytes()).unwrap();
+    assert_eq!(snapshot.state.control_bind_failure.as_deref(), Some("could not bind port 30425"));
+    assert!(!serde_json::to_string(&state(Phase::Ready)).unwrap().contains("controlBindFailure"));
+
+    let now = Instant::now();
+    let mut wait = PhaseWait::new(Phase::Ready, Duration::ZERO, Some(LAUNCH));
+    wait.observe(snapshot, now);
+    let Verdict::Refused(refusal) = wait.verdict(now) else {
+        panic!("a failed bind must refuse the ready wait");
+    };
+    assert!(matches!(refusal, WaitError::ControlBindFailed(_)));
+    assert!(refusal.to_string().contains("did not bind: could not bind port 30425"), "{refusal}");
+
+    let mut quitting = PhaseWait::new(Phase::Quitting, Duration::ZERO, Some(LAUNCH));
+    quitting.observe(decode_snapshot(document.replace("BUSY", "QUITTING").as_bytes()).unwrap(), now);
+    assert!(matches!(quitting.verdict(now), Verdict::Reached(_)));
 }
 
 #[test]

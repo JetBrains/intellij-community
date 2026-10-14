@@ -18,7 +18,7 @@ fn document() -> Value {
              "deterministic": {"responsePrefix": "Done", "responseDelayMs": 0, "asksPermission": false, "loadsSessions": false},
              "acpJson": {"command": "${java}", "args": ["-jar", "${fakeAgentJar}"], "env": {"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Done"}}},
             {"key": "steer", "delivery": "registry", "registryId": "air-scenario-steer", "displayName": "Air Controlled steer",
-             "controlled": true, "env": {}},
+             "controlled": true, "controlOwner": "IDE", "env": {}},
         ],
         "registryAgents": ["steer"],
         "disabledPluginIds": ["com.intellij.ml.llm"],
@@ -41,6 +41,8 @@ fn a_document_that_fits_itself_is_read_with_every_field() {
         "Done"
     );
     assert_eq!(document.agents[1].delivery, Delivery::Registry);
+    assert_eq!(document.agents[1].control_owner, Some(ControlOwner::Ide));
+    assert_eq!(document.agents[0].control_owner, None);
     assert_eq!(document.journey_suites[0].requirements, vec![Requirement::Workflows]);
 }
 
@@ -79,6 +81,25 @@ fn an_unknown_field_and_another_schema_version_are_refused() {
     let mut newer = document();
     newer["schemaVersion"] = json!(2);
     assert_eq!(parse(&newer).unwrap_err(), "has the schema version 2, and this reader reads 1");
+}
+
+#[test]
+fn a_control_owner_is_stated_exactly_for_a_controlled_agent() {
+    let mut missing = document();
+    missing["agents"][1].as_object_mut().unwrap().remove("controlOwner");
+    assert_eq!(
+        parse(&missing).unwrap_err(),
+        "the agent 'steer' must state a control owner exactly when it is controlled"
+    );
+    let mut deterministic = document();
+    deterministic["agents"][0]["controlOwner"] = json!("HOST");
+    assert_eq!(
+        parse(&deterministic).unwrap_err(),
+        "the agent 'run' must state a control owner exactly when it is controlled"
+    );
+    let mut unknown = document();
+    unknown["agents"][1]["controlOwner"] = json!("GUEST");
+    assert!(parse(&unknown).unwrap_err().contains("GUEST"));
 }
 
 #[test]
