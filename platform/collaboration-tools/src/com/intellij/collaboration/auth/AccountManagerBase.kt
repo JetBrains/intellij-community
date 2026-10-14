@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,6 +133,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
       persistentCredentials.persistCredentials(account, credentials)
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       logger.warn("Could not save credentials for account $account", e)
     }
   }
