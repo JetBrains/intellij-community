@@ -51,7 +51,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.database.csv.CsvFileUsageCollector"/>
-    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" isDocumentRequired="true"/>
+    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" allowedInUntrustedFiles="true" isDocumentRequired="true"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
     <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
     <statusBarWidgetFactory id="GridPosition" implementation="com.intellij.database.datagrid.GridPositionWidget$Factory" order="before Position"/>
