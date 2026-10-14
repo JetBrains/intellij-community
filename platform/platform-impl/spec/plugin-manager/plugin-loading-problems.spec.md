@@ -27,6 +27,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt
@@ -81,6 +82,18 @@ Remote development extends these rules with side aggregation and action routing.
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - For an unresolved dependency without a cross-plugin boundary, the installation requirement message uses the plugin ID or content module name.
 - For an invisible dependency without a cross-plugin boundary, that message uses the dependency module's plugin ID.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
+    `an absent plugin uses the installation message`;
+    `an absent modern plugin dependency uses the installation message`;
+    `an incompatible installed dependency uses its name`;
+    `an installed dependency excluded by an ID conflict uses the installation message`;
+    `an incompatible installed alias uses the installation message`;
+    `a broken installed dependency uses its name`;
+    `a missing module uses the plugin installation message`;
+    `a required module keeps its missing dependency explanation`;
+    `an invisible module uses its owner in the installation message`;
+    `a failed core module uses IDEA CORE as a failed plugin`
+  )
 - Supported compatibility and selection exclusions can also produce plugin explanations.
 - A package-prefix conflict in an optional content module can produce an explanation while the main plugin remains loaded.
 
