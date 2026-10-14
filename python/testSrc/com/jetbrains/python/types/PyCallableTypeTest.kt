@@ -1339,6 +1339,53 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Self@C
           return a
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93142"])
+    fun `decorator declared in an enclosing function applies`() = test("""
+      from typing import Callable
+
+      def outer():
+          def dec(fun) -> Callable[[], int]: ...
+
+          @dec
+          def func() -> str: ...
+
+          expr = func
+      #     └ TYPE () -> str FIXME () -> int # PY-93142
+      """.trimIndent())
+
+    // The module-level namesake is applied in place of the local decorator, so the type is not merely
+    // unchanged but taken from the wrong declaration.
+    @Test
+    @TestFor(issues = ["PY-93142"])
+    fun `decorator declared in an enclosing function wins over a module-level namesake`() = test("""
+      from typing import Callable
+
+      def dec(fun) -> Callable[[], str]: ...
+
+      def outer():
+          def dec(fun) -> Callable[[], int]: ...
+
+          @dec
+          def func() -> float: ...
+
+          expr = func
+      #     └ TYPE () -> str FIXME () -> int # PY-93142
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93142"])
+    fun `untyped decorator declared in an enclosing function stays transparent`() = test("""
+      def outer():
+          def dec(fun): ...
+
+          @dec
+          def func() -> str: ...
+
+          expr = func
+      #     └ TYPE () -> str
+      """.trimIndent())
   }
 
   @Nested
