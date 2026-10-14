@@ -58,7 +58,6 @@ object CodeReviewDetailsBranchComponentFactory {
     }
 
     val panelWithIcon = HorizontalListPanel(BRANCH_ICON_LINK_GAP).apply {
-      border = JBUI.Borders.empty(CodeReviewDetailsCommitsComponentFactory.VERT_PADDING, 0, CodeReviewDetailsCommitsComponentFactory.VERT_PADDING - 1, 0)
       add(statusIcon)
       add(sourceBranch)
     }

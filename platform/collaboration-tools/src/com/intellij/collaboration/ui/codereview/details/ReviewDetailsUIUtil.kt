@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -19,9 +19,15 @@ import javax.swing.JComponent
 object ReviewDetailsUIUtil {
   private const val TITLE_PANEL_GAP: Int = 8
 
-  fun createTitlePanel(title: JComponent, timelineLink: JComponent): JComponent =
+  /**
+   * Puts [branches] in its own row between [title] and [timelineLink].
+   *
+   * @see CodeReviewDetailsBranchComponentFactory.create
+   */
+  fun createTitlePanel(title: JComponent, branches: JComponent, timelineLink: JComponent): JComponent =
     VerticalListPanel(TITLE_PANEL_GAP).apply {
       add(title)
+      add(branches)
       add(timelineLink)
     }
 

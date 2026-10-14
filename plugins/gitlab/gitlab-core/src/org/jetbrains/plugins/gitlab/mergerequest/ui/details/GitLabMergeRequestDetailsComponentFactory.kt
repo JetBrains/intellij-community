@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -11,7 +11,6 @@ import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommits
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CommitPresentation
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -32,7 +31,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -104,16 +102,19 @@ object GitLabMergeRequestDetailsComponentFactory {
                                                                     addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
                                                                   }
                                                                 })
+      val branches = CodeReviewDetailsBranchComponentFactory.create(cs, detailsVm.branchesVm)
       val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
         detailsVm.showTimeline()
       }
-      ReviewDetailsUIUtil.createTitlePanel(title, timelineLink)
+      ReviewDetailsUIUtil.createTitlePanel(title, branches, timelineLink)
     }
     else {
       null
     }
 
-    val commitsAndBranches = createCommitAndBranchesComponent(cs, changesVm, detailsVm.branchesVm)
+    val commits = CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit ->
+      createCommitInfoPresenter(commit)
+    }
 
     val layout = MigLayout(
       LC()
@@ -133,7 +134,7 @@ object GitLabMergeRequestDetailsComponentFactory {
         add(titlePanel,
             CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       }
-      add(commitsAndBranches,
+      add(commits,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(createChangesComponent(project, cs, changesVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(GitLabMergeRequestDetailsChangesComponentFactory.create(cs, changesVm),
@@ -177,20 +178,6 @@ object GitLabMergeRequestDetailsComponentFactory {
         CodeReviewChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
         else -> null
       }
-    }
-  }
-
-  private fun createCommitAndBranchesComponent(
-    cs: CoroutineScope,
-    changesVm: GitLabMergeRequestChangesViewModel,
-    branchesVm: CodeReviewBranchesViewModel,
-  ): JComponent {
-    return JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
-      isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit ->
-        createCommitInfoPresenter(commit)
-      })
-      add(CodeReviewDetailsBranchComponentFactory.create(cs, branchesVm))
     }
   }
 
