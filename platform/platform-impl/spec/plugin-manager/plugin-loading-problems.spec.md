@@ -69,6 +69,11 @@ Remote development extends these rules with side aggregation and action routing.
   )
 
 - For other chains that cross a plugin boundary, the explanation refers to the first required plugin outside the affected plugin.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `a transitive product mode exclusion reports failed intermediate plugins`;
+    `a core product mode exclusion reports IDEA CORE`
+  )
+
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - For an unresolved dependency without a cross-plugin boundary, the installation requirement message uses the plugin ID or content module name.
 - For an invisible dependency without a cross-plugin boundary, that message uses the dependency module's plugin ID.
@@ -100,6 +105,15 @@ Untested: Focused analysis tests do not cover all terminal mappings or optional 
 - Direct AI disablement, expired license, and unaccepted privacy exclusions produce no loading explanation from this analysis.
 - Direct superseded versions produce no loading explanation.
 - A chain across plugin boundaries follows the dependency selection rule even when its terminal exclusion has no direct explanation.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `a direct product mode exclusion has no loading explanation`;
+    `a product mode exclusion does not suppress an unrelated missing dependency`
+  )
+
+- An unavailable optional module alone must not produce a loading problem for its loaded plugin or dependents.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `an optional product mode module does not produce a loading problem`
+  )
 
 Untested: Focused tests do not cover every direct exclusion and its transitive dependents.
 
@@ -246,7 +260,8 @@ Untested: No focused test covers the complete Ultimate restriction in details or
 - When a dependency and its affected plugin load, the new state must contain neither their obsolete problems nor their recovery targets.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `loading error is cleared when disabled dependency and dependent are loaded`;
-    `transitive disabled dependency reports the disabled root`
+    `transitive disabled dependency reports the disabled root`;
+    `making a product mode module available removes its dependent loading problem`
   )
 
 - When Ultimate and its affected plugins load, their obsolete problems and recovery targets must disappear from the new state.

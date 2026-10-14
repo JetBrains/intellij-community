@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
@@ -18,7 +19,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
@@ -323,6 +326,159 @@ internal class PluginManagerStateServiceTest {
     assertThat(state.pluginsToDisable).isEmpty()
   }
 
+  @TestFactory
+  fun `a direct product mode exclusion has no loading explanation`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(modeDependentPlugin())
+
+      val pluginSet = buildProductModePluginSet(productMode)
+      val state = publishAndGetState(pluginSet)
+
+      assertThat(pluginSet.enabledPlugins.map { it.pluginId }).doesNotContain(PluginId.getId("mode-dependent"))
+      assertThat(state.pluginNonLoadReasons).isEmpty()
+      assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+      assertThat(state.pluginsToEnable).isEmpty()
+      assertThat(state.pluginsToDisable).isEmpty()
+    }
+  }
+
+  @TestFactory
+  @TestFor(issues = ["IJPL-249174", "IJPL-258176"])
+  fun `a transitive product mode exclusion reports failed intermediate plugins`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(
+        modeDependentPlugin(),
+        plugin("intermediate") {
+          name = "Intermediate"
+          depends("mode-dependent")
+        },
+        plugin("affected") {
+          name = "Affected"
+          content {
+            module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+              dependencies { plugin("intermediate") }
+            }
+          }
+        },
+      )
+
+      val state = publishAndGetState(buildProductModePluginSet(productMode))
+      val intermediateId = PluginId.getId("intermediate")
+      val affectedId = PluginId.getId("affected")
+
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(intermediateId, affectedId)
+      for ((pluginId, dependencyName) in mapOf(intermediateId to "Mode dependent", affectedId to "Intermediate")) {
+        val problem = checkNotNull(state.pluginNonLoadReasons[pluginId])
+        assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+        assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+        assertThat(problem.shouldNotifyUser).isTrue()
+        assertThat(problem.disabledDependencyId).isNull()
+        assertThat(problem.shortMessage)
+          .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyName))
+      }
+      assertThat(state.pluginLoadingProblemsForNotification)
+        .containsExactlyInAnyOrderElementsOf(state.pluginNonLoadReasons.values.map { it.detailedMessage })
+      assertThat(state.pluginsToEnable).isEmpty()
+      assertThat(state.pluginsToDisable)
+        .containsExactlyInAnyOrderEntriesOf(mapOf(intermediateId to "Intermediate", affectedId to "Affected"))
+    }
+  }
+
+  @TestFactory
+  fun `a core product mode exclusion reports IDEA CORE`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(
+        plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+          name = "IDEA CORE"
+          content(namespace = "jetbrains") {
+            module(MODE_MODULE_ID.name) { moduleVisibility = ModuleVisibilityValue.PUBLIC }
+          }
+        },
+        plugin("affected") {
+          name = "Affected"
+          dependencies { module(MODE_MODULE_ID.name) }
+        },
+      )
+
+      val pluginSet = buildProductModePluginSet(productMode)
+      val state = publishAndGetState(pluginSet)
+      val affectedId = PluginId.getId("affected")
+      val problem = checkNotNull(state.pluginNonLoadReasons[affectedId])
+
+      assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginManagerCore.CORE_ID).doesNotContain(affectedId)
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(affectedId)
+      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+      assertThat(problem.shortMessage)
+        .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "IDEA CORE"))
+      assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+      assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(affectedId to "Affected"))
+    }
+  }
+
+  @TestFactory
+  fun `an optional product mode module does not produce a loading problem`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(
+        modeDependentPlugin(ModuleLoadingRuleValue.OPTIONAL),
+        plugin("affected") { depends("mode-dependent") },
+      )
+
+      val pluginSet = buildProductModePluginSet(productMode)
+      val state = publishAndGetState(pluginSet)
+
+      assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("mode-dependent"), PluginId.getId("affected"))
+      assertThat(state.pluginNonLoadReasons).isEmpty()
+      assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+      assertThat(state.pluginsToEnable).isEmpty()
+      assertThat(state.pluginsToDisable).isEmpty()
+    }
+  }
+
+  @TestFactory
+  fun `a product mode exclusion does not suppress an unrelated missing dependency`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(
+        modeDependentPlugin(),
+        plugin("unrelated") {
+          name = "Unrelated"
+          depends("missing")
+        },
+      )
+
+      val state = publishAndGetState(buildProductModePluginSet(productMode))
+      val unrelatedId = PluginId.getId("unrelated")
+      val problem = checkNotNull(state.pluginNonLoadReasons[unrelatedId])
+
+      assertThat(state.pluginNonLoadReasons).containsOnlyKeys(unrelatedId)
+      assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+      assertThat(problem.shouldNotifyUser).isTrue()
+      assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin",
+                                                                    "missing"))
+      assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+      assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(unrelatedId to "Unrelated"))
+    }
+  }
+
+  @TestFactory
+  fun `making a product mode module available removes its dependent loading problem`() = ProductMode.entries.map { productMode ->
+    dynamicTest(productMode.id) {
+      install(modeDependentPlugin(), plugin("affected") { depends("mode-dependent") })
+      val initialState = publishAndGetState(buildProductModePluginSet(productMode))
+      assertThat(initialState.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("affected"))
+
+      val loadedPluginSet = buildProductModePluginSet(ProductMode.MONOLITH, moduleAvailable = true)
+      val loadedState = publishAndGetState(loadedPluginSet)
+
+      assertThat(loadedState).isNotSameAs(initialState)
+      assertThat(loadedPluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("mode-dependent"), PluginId.getId("affected"))
+      assertThat(loadedState.pluginNonLoadReasons).isEmpty()
+      assertThat(loadedState.pluginLoadingProblemsForNotification).isEmpty()
+      assertThat(loadedState.pluginsToEnable).isEmpty()
+      assertThat(loadedState.pluginsToDisable).isEmpty()
+    }
+  }
+
   @Test
   fun `disabled Ultimate keeps the dependency problem but suppresses notification text`() {
     installUltimateDependency()
@@ -611,6 +767,22 @@ internal class PluginManagerStateServiceTest {
     plugins.forEach { it.installAt(tempDir) }
   }
 
+  private fun modeDependentPlugin(loadingRule: ModuleLoadingRuleValue = ModuleLoadingRuleValue.REQUIRED): PluginSpec =
+    plugin("mode-dependent") {
+      name = "Mode dependent"
+      content(namespace = "jetbrains") {
+        module(MODE_MODULE_ID.name, loadingRule = loadingRule) {}
+      }
+    }
+
+  private fun buildProductModePluginSet(productMode: ProductMode, moduleAvailable: Boolean = false): PluginSet {
+    val reason = if (moduleAvailable) null else UnsuitableProductModeModuleUnavailabilityReason(MODE_MODULE_ID, productMode.id)
+    return PluginSetTestBuilder.fromPath(tempDir)
+      .withProductMode(productMode)
+      .withEnvironmentConfiguredModules(mapOf(MODE_MODULE_ID to PluginInitializationContext.EnvironmentConfiguredModuleData(reason)))
+      .build(configureClassLoaders = false)
+  }
+
   private fun buildPluginSet(disabledPluginIds: Array<String> = emptyArray()): PluginSet {
     return PluginSetTestBuilder.fromPath(tempDir)
       .withDisabledPlugins(*disabledPluginIds)
@@ -626,6 +798,7 @@ internal class PluginManagerStateServiceTest {
     state.pluginNonLoadReasons.mapValues { it.value.shortMessage to it.value.detailedMessage }
 
   private companion object {
+    val MODE_MODULE_ID = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
     val ULTIMATE_ID = PluginManagerCore.ULTIMATE_PLUGIN_ID
     val USER_REPORTING_POLICY = PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true)
     val SILENT_REPORTING_POLICY = USER_REPORTING_POLICY.copy(reportToUser = false)
