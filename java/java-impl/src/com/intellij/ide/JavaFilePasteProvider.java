@@ -53,7 +53,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
   }
 
   @Override
-  public void performPaste(final @NotNull DataContext dataContext) {
+  public void performPaste(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
@@ -66,9 +66,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
     if (targetDir == null) return;
     String fileName = className + ".java";
     PsiFile existingFile = targetDir.findFile(fileName);
-    if (existingFile != null && 
-        !MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
-                                    CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project)) {
+    if (existingFile != null && !shouldOverwrite(fileName, project)) {
       return;
     }
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -89,8 +87,8 @@ public final class JavaFilePasteProvider implements PasteProvider {
           document.setText(fileText);
           PsiDocumentManager.getInstance(project).commitDocument(document);
         }
-        if (file instanceof PsiJavaFile) {
-          updatePackageStatement((PsiJavaFile)file, targetDir);
+        if (file instanceof PsiJavaFile javaFile) {
+          updatePackageStatement(javaFile, targetDir);
         }
         return file.getVirtualFile();
       });
@@ -100,7 +98,12 @@ public final class JavaFilePasteProvider implements PasteProvider {
     }, JavaBundle.message("paste.class.command.name", className), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION, false);
   }
 
-  private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {
+  private static boolean shouldOverwrite(String fileName, Project project) {
+    return MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
+                                      CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project);
+  }
+
+  private static void updatePackageStatement(PsiJavaFile javaFile, PsiDirectory targetDir) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDir);
     if (aPackage == null) return;
     final PsiPackageStatement oldStatement = javaFile.getPackageStatement();
@@ -120,19 +123,19 @@ public final class JavaFilePasteProvider implements PasteProvider {
           CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
         }
       }
-      catch (IncorrectOperationException e) {
+      catch (IncorrectOperationException _) {
         // ignore
       }
     }
   }
 
   @Override
-  public boolean isPastePossible(final @NotNull DataContext dataContext) {
+  public boolean isPastePossible(@NotNull DataContext dataContext) {
     return true;
   }
 
   @Override
-  public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     if (FileCopyPasteUtil.isFileListFlavorAvailable()) return false;
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
