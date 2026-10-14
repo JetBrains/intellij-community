@@ -362,7 +362,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
     useAccessorsWhenNecessary(usages);
     CallMatcher redundantObjectMethods = findRedundantObjectMethods(myRecordCandidate);
-    PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
+    PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build(PsiUtil.getLanguageLevel(psiClass)));
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
     addImplicitSyntheticGetters(result, syntheticGetters.toArray(PsiMethod.EMPTY_ARRAY));
