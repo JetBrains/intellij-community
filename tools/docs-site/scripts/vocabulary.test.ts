@@ -100,7 +100,7 @@ describe('the vocabulary of a diagram', () => {
 })
 
 describe('the vocabulary check of a site', () => {
-  // the port of the synonym case of the field guide: a guide is a violation, a decision record is allowed
+  // a guide is a violation, a decision record is allowed
   it('reports a term outside its scope, and its scope allows it', () => {
     const root = temporaryTree('vocabulary-', {
       'docs/guides/g.md': '---\ngroup: docs\n---\n\n# G\n\nThe composer places files.\n',

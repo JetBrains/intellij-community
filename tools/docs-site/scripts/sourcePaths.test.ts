@@ -10,7 +10,7 @@ describe('SOURCE_PATH_PATTERN', () => {
       'MODULE.bazel',
       'community/build/dev-dist-tools/crates/fscopy/src/lib.rs',
       './build/jpsModelToBazel.cmd',
-      'build/dev-dist-site/site.mjs',
+      'build/docs/scripts/harvest.ts',
       'bin/idea.properties',
       'build/dev-build.json#L3',
     ]) {
