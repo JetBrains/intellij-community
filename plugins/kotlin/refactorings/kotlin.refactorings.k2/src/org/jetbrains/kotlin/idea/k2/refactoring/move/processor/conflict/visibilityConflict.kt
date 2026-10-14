@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -20,10 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -118,7 +115,7 @@ private fun KaModule.isFriendDependencyFor(other: KaModule): Boolean {
     }
 }
 
-private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTargetDescriptor.Declaration<*>): Boolean {
+private fun isPrivateVisibleAt(referencedElement: KtNamedDeclaration, referencingElement: PsiElement, target: K2MoveTargetDescriptor.Declaration<*>): Boolean {
     return when (target) {
         is K2MoveTargetDescriptor.File -> {
             // For top level declarations, private members will be visible within the entire file
@@ -126,7 +123,7 @@ private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTar
         }
 
         is K2MoveTargetDescriptor.CompanionExtension -> {
-            referencingElement.containingFile == target.getTarget()
+            referencedElement.parent is KtFile && referencingElement.containingFile == target.getTarget()
         }
 
         is K2MoveTargetDescriptor.ClassBody<*> -> {
@@ -167,7 +164,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
                     val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleContainingElement(targetDir)
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
                         KaSymbolVisibility.PRIVATE -> {
-                            target != null && isPrivateVisibleAt(referencedDeclaration, target)
+                            target != null && isPrivateVisibleAt(referencedDeclaration, usageElement, target)
                         }
 
                         KaSymbolVisibility.INTERNAL -> usageElement.module == targetDir.module ||
@@ -249,7 +246,7 @@ fun checkVisibilityConflictsForInternalUsages(
                             symbol.visibility
                         }
                         when (visibility) {
-                            KaSymbolVisibility.PRIVATE -> target != null && isPrivateVisibleAt(usageElement, target)
+                            KaSymbolVisibility.PRIVATE -> target != null && isPrivateVisibleAt(referencedDeclaration, usageElement, target)
                             KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module ||
                                     (referencedDeclarationKaModule != null && usageKaModule != null &&
                                             referencedDeclarationKaModule.isFriendDependencyFor(usageKaModule))

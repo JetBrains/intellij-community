@@ -14144,6 +14144,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testPlusOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/plusOperator.kt");
         }
+
+        @TestMetadata("privateCompanionBlockMember.kt")
+        public void testPrivateCompanionBlockMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateCompanionBlockMember.kt");
+        }
+
+        @TestMetadata("privateTopLevelHelper.kt")
+        public void testPrivateTopLevelHelper() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateTopLevelHelper.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
