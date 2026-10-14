@@ -67,6 +67,7 @@
     <projectService serviceInterface="com.intellij.execution.RunManager" open="true"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectPreInit implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="after initialProjectSynchronizer"/>
+    <postStartupActivity implementation="com.intellij.execution.impl.RunManagerInitializedFlagSetter"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
     <registryKey defaultValue="true"
                  description="Load run configurations from *.run.xml files in the project content."
@@ -96,7 +97,7 @@
     <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
-    <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
     <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory" open="true"
                         serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
@@ -142,7 +143,7 @@
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor$Factory"/>
 
@@ -178,7 +179,7 @@
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
     <!-- External Tools -->
     <projectSettings service="com.intellij.tools.ToolsProjectConfig"/>
-    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
+    <dynamicActionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
     <applicationConfigurable groupId="tools" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools"
                              key="tools.settings.title"
                              bundle="messages.ToolsBundle"/>

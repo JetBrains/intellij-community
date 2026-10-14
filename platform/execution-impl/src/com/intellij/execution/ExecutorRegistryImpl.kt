@@ -32,7 +32,6 @@ import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Anchor
-import com.intellij.openapi.actionSystem.CompositeShortcutSet
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataContext
@@ -40,8 +39,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
-import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
+import com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -123,7 +122,7 @@ class ExecutorRegistryImpl(private val coroutineScope: CoroutineScope) : Executo
     ))
   }
 
-  internal class ExecutorRegistryActionConfigurationTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
+  internal class ExecutorRegistryActionConfigurationTuner : DynamicActionConfigurationCustomizer, LightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       if (!Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
         (serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl).listenExtensionChanges()
@@ -158,6 +157,10 @@ class ExecutorRegistryImpl(private val coroutineScope: CoroutineScope) : Executo
 
       // listen only after first init
       executorRegistry.listenExtensionChanges()
+    }
+
+    override fun unregisterActions(actionManager: ActionManager) {
+      //actions registered for executors will be unregistered inside `listenExtensionChanges`
     }
   }
 
