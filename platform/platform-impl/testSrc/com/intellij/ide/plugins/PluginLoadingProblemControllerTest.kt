@@ -49,6 +49,9 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.requiredPluginNames).containsExactly("Root")
     assertThat(result.loadingError).isNull()
     assertThat(result.isUltimateDisabledProblem).isFalse()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+    assertThat(result.disabledDependencyId).isEqualTo(PluginId.getId("root"))
   }
 
   @Test
@@ -85,6 +88,9 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
     assertThat(result.requiredPluginNames).isEmpty()
     assertThat(result.loadingError).isNotNull()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
+    assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+    assertThat(result.disabledDependencyId).isEqualTo(PluginManagerCore.ULTIMATE_PLUGIN_ID)
   }
 
   @Test

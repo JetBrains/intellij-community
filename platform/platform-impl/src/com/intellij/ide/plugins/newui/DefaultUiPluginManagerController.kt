@@ -1039,7 +1039,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val loadingError = service<PluginManagerStateService>().getPluginNonLoadReason(pluginId)
     val disabledDependency = loadingError?.disabledDependencyId
     if (disabledDependency == null) {
-      return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)
+      return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true).withLoadingProblem(loadingError)
     }
 
     val requiredPlugins = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
@@ -1053,21 +1053,26 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
     when (loadingError.kind) {
       PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> {
-        return CheckErrorsResult(loadingError = loadingError.shortMessage, isUltimateDisabledProblem = true)
+        return CheckErrorsResult(loadingError = loadingError.shortMessage, isUltimateDisabledProblem = true).withLoadingProblem(loadingError)
       }
       PluginLoadingProblem.Kind.OTHER -> {}
     }
 
     if (PluginManagerCore.ULTIMATE_PLUGIN_ID in requiredPlugins) {
-      return CheckErrorsResult(loadingError = loadingError.shortMessage, isDisabledDependencyError = true)
+      return CheckErrorsResult(loadingError = loadingError.shortMessage, isDisabledDependencyError = true).withLoadingProblem(loadingError)
     }
 
     if (requiredPlugins.entries.none { it.value == null || PluginManagerCore.isIncompatible(it.value!!) }) {
       val pluginNames = requiredPlugins.map { InstalledPluginsTableModel.getPluginNameOrId(it.key, it.value) }
       return CheckErrorsResult(suggestToEnableRequiredPlugins = true,
-                               requiredPluginNames = pluginNames.toSet())
+                               requiredPluginNames = pluginNames.toSet()).withLoadingProblem(loadingError)
     }
     return CheckErrorsResult()
+  }
+
+  private fun CheckErrorsResult.withLoadingProblem(problem: PluginLoadingProblem?): CheckErrorsResult {
+    if (problem == null) return this
+    return copy(kind = problem.kind, severity = problem.severity, disabledDependencyId = problem.disabledDependencyId)
   }
 
   private fun findSession(sessionId: String): PluginManagerSession? {

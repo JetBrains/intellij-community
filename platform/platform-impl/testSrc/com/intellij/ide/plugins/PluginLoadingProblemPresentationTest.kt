@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
@@ -47,5 +48,21 @@ internal class PluginLoadingProblemPresentationTest {
 
     assertThat(result.isUltimateDisabledProblem).isFalse()
     assertThat(MyPluginModel.getErrors(result)).hasSize(1)
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+    assertThat(result.disabledDependencyId).isNull()
+  }
+
+  @Test
+  fun `the page result retains structured classification through serialization`() {
+    val result = CheckErrorsResult(
+      loadingError = "Ultimate is disabled",
+      isUltimateDisabledProblem = true,
+      kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
+      severity = PluginLoadingProblem.Severity.EXPECTED,
+      disabledDependencyId = PluginId.getId("com.intellij.ultimate"),
+    )
+
+    assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
   }
 }
