@@ -844,7 +844,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         requiredPlugins.add(result)
       }
     }
-    val result = enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY,
+    val pluginsToEnable = requiredPlugins.filter { it.pluginId != PluginManagerCore.ULTIMATE_PLUGIN_ID }
+    val result = enableDependencies(session, pluginsToEnable, PluginEnableDisableAction.ENABLE_GLOBALLY,
                                     buildPluginIdMap(), getPluginSet().buildContentModuleIdMap())
     return result.changedStates.filterValues { it }.keys
   }

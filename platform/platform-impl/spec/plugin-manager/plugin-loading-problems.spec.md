@@ -207,7 +207,7 @@ Untested: No focused test covers action labels, callback aggregation, or action 
 - The generic error area must exclude disabled Ultimate explanations and retain ordinary errors and Enable links.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
     `disabled Ultimate supplies its classification without an Enable suggestion`;
-    `transitive disabled Ultimate supplies its classification without an Enable suggestion`
+    `transitive disabled Ultimate supplies classification without an Enable suggestion`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
     `a disabled Ultimate problem stays outside the generic error area`;
@@ -220,6 +220,16 @@ Untested: No focused test covers action labels, callback aggregation, or action 
 - An ordinary disabled dependency explanation must not offer Enable when its unresolved targets include Ultimate.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
     `an ordinary disabled root beside Ultimate does not offer to enable Ultimate`
+  )
+
+- Generic dependency recovery must exclude Ultimate even when a caller invokes it without a page suggestion.
+- It must retain ordinary direct, transitive, and mixed recovery targets.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `generic recovery enables an ordinary direct dependency`;
+    `generic recovery enables an ordinary transitive dependency`;
+    `generic recovery does not enable direct Ultimate`;
+    `generic recovery does not enable transitive Ultimate`;
+    `generic recovery enables an ordinary root without enabling Ultimate`
   )
 
 - The product availability check marks a plugin unavailable when it requires disabled Ultimate features.

@@ -88,7 +88,7 @@ internal class PluginLoadingProblemControllerTest {
   }
 
   @Test
-  fun `transitive disabled Ultimate supplies its classification without an Enable suggestion`(): Unit = timeoutRunBlocking {
+  fun `transitive disabled Ultimate supplies classification without an Enable suggestion`(): Unit = timeoutRunBlocking {
     installDisabledDependency(transitive = true, rootId = PluginManagerCore.ULTIMATE_PLUGIN_ID.idString)
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
@@ -149,6 +149,63 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.loadingError).isNotNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
     assertThat(result.requiredPluginNames).isEmpty()
+  }
+
+  @Test
+  fun `generic recovery enables an ordinary direct dependency`(): Unit =
+    checkDependencyRecovery(transitive = false, requiresUltimate = false)
+
+  @Test
+  fun `generic recovery enables an ordinary transitive dependency`(): Unit =
+    checkDependencyRecovery(transitive = true, requiresUltimate = false)
+
+  @Test
+  fun `generic recovery does not enable direct Ultimate`(): Unit = checkDependencyRecovery(transitive = false, requiresUltimate = true)
+
+  @Test
+  fun `generic recovery does not enable transitive Ultimate`(): Unit = checkDependencyRecovery(transitive = true, requiresUltimate = true)
+
+  @Test
+  fun `generic recovery enables an ordinary root without enabling Ultimate`(): Unit = timeoutRunBlocking {
+    val ultimateId = PluginManagerCore.ULTIMATE_PLUGIN_ID
+    plugin("root") { name = "Root" }.installAt(tempDir)
+    plugin(ultimateId.idString) { name = "Ultimate" }.installAt(tempDir)
+    plugin("affected") {
+      name = "Affected"
+      depends("root")
+      depends(ultimateId.idString)
+    }.installAt(tempDir)
+    PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(tempDir)
+                                    .withDisabledPlugins("root", ultimateId.idString)
+                                    .build(configureClassLoaders = false))
+    session.pluginStates[PluginId.getId("root")] = PluginEnabledState.DISABLED
+    session.pluginStates[ultimateId] = PluginEnabledState.DISABLED
+    session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.ENABLED
+    DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
+
+    val enabledIds = DefaultUiPluginManagerController.enableRequiredPlugins(session.sessionId, PluginId.getId("affected"))
+
+    assertThat(enabledIds).containsExactly(PluginId.getId("root"))
+    assertThat(session.pluginStates[PluginId.getId("root")]).isEqualTo(PluginEnabledState.ENABLED)
+    assertThat(session.pluginStates[ultimateId]).isEqualTo(PluginEnabledState.DISABLED)
+    assertThat(session.statesDiff.keys.map { it.pluginId }).doesNotContain(ultimateId)
+  }
+
+  private fun checkDependencyRecovery(transitive: Boolean, requiresUltimate: Boolean): Unit = timeoutRunBlocking {
+    val rootId = if (requiresUltimate) PluginManagerCore.ULTIMATE_PLUGIN_ID else PluginId.getId("root")
+    installDisabledDependency(transitive, rootId.idString)
+
+    val enabledIds = DefaultUiPluginManagerController.enableRequiredPlugins(session.sessionId, PluginId.getId("affected"))
+
+    if (requiresUltimate) {
+      assertThat(enabledIds).isEmpty()
+      assertThat(session.pluginStates[rootId]).isEqualTo(PluginEnabledState.DISABLED)
+      assertThat(session.statesDiff.keys.map { it.pluginId }).doesNotContain(rootId)
+    }
+    else {
+      assertThat(enabledIds).containsExactly(rootId)
+      assertThat(session.pluginStates[rootId]).isEqualTo(PluginEnabledState.ENABLED)
+    }
   }
 
   private fun checkDisabledAffectedPlugin(transitive: Boolean): Unit = timeoutRunBlocking {
