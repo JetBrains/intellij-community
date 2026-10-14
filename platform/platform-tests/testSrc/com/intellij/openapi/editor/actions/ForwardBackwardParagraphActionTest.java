@@ -1,165 +1,226 @@
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class ForwardBackwardParagraphActionTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testForwardFromNonEmptyLine() {
-    doTestForward("""
-                    ab<caret>c
+    myFixture.runTest(() -> {
+      doTestForward("""
+                      ab<caret>c
 
-                    def
+                      def
 
-                    """,
+                      """,
 
-                  """
-                    abc
-                    <caret>
-                    def
+                    """
+                      abc
+                      <caret>
+                      def
 
-                    """);
+                      """);
+    });
   }
 
+  @Test
   public void testForwardFromEmptyLine() {
-    doTestForward("""
-                    <caret>
+    myFixture.runTest(() -> {
+      doTestForward("""
+                      <caret>
 
-                    def
+                      def
 
-                    """,
+                      """,
 
-                  """
+                    """
 
 
-                    def
-                    <caret>
-                    """);
+                      def
+                      <caret>
+                      """);
+    });
   }
 
+  @Test
   public void testForwardWhenNoMoreBlankLines() {
-    doTestForward("ab<caret>c\n" +
-                  "def",
+    myFixture.runTest(() -> {
+      doTestForward("ab<caret>c\n" +
+                    "def",
 
-                  "abc\n" +
-                  "def<caret>");
+                    "abc\n" +
+                    "def<caret>");
+    });
   }
 
+  @Test
   public void testForwardWhenTargetLineContainsSpaces() {
-    doTestForward("""
-                    <caret>abc
-                      \s
-                    """,
+    myFixture.runTest(() -> {
+      doTestForward("""
+                      <caret>abc
+                        \s
+                      """,
 
-                  """
-                    abc
-                    <caret>  \s
-                    """);
+                    """
+                      abc
+                      <caret>  \s
+                      """);
+    });
   }
 
+  @Test
   public void testBackwardFromNonEmptyLine() {
-    doTestBackward("""
+    myFixture.runTest(() -> {
+      doTestBackward("""
 
-                     abc
+                       abc
 
-                     de<caret>f""",
+                       de<caret>f""",
 
-                   """
+                     """
 
-                     abc
-                     <caret>
-                     def""");
+                       abc
+                       <caret>
+                       def""");
+    });
   }
 
+  @Test
   public void testBackwardFromEmptyLine() {
-    doTestBackward("""
+    myFixture.runTest(() -> {
+      doTestBackward("""
 
-                     abc
+                       abc
 
-                     <caret>
-                     """,
+                       <caret>
+                       """,
 
-                   """
-                     <caret>
-                     abc
+                     """
+                       <caret>
+                       abc
 
 
-                     """);
+                       """);
+    });
   }
 
+  @Test
   public void testBackwardWhenNoMoreBlankLines() {
-    doTestBackward("abc\n" +
-                   "de<caret>f",
+    myFixture.runTest(() -> {
+      doTestBackward("abc\n" +
+                     "de<caret>f",
 
-                   "<caret>abc\n" +
-                   "def");
+                     "<caret>abc\n" +
+                     "def");
+    });
   }
 
+  @Test
   public void testBackwardWhenTargetLineContainsSpaces() {
-    doTestBackward("""
-                      \s
-                     abc
+    myFixture.runTest(() -> {
+      doTestBackward("""
+                        \s
+                       abc
 
-                     <caret>
-                     """,
+                       <caret>
+                       """,
 
-                   """
-                      \s
-                     <caret>abc
+                     """
+                        \s
+                       <caret>abc
 
 
-                     """);
+                       """);
+    });
   }
 
+  @Test
   public void testBackwardWhenPreviousLineContainsSpaces() {
-    doTestBackward("  \n" +
-                   "ab<caret>c",
+    myFixture.runTest(() -> {
+      doTestBackward("  \n" +
+                     "ab<caret>c",
 
-                   "  \n" +
-                   "<caret>abc");
+                     "  \n" +
+                     "<caret>abc");
+    });
   }
 
+  @Test
   public void testBackwardAtLineStartWhenPreviousLineContainsSpaces() {
-    doTestBackward("""
+    myFixture.runTest(() -> {
+      doTestBackward("""
 
-                     ttt
-                      \s
-                     <caret>abc""",
+                       ttt
+                        \s
+                       <caret>abc""",
 
-                   """
-                     <caret>
-                     ttt
-                      \s
-                     abc""");
+                     """
+                       <caret>
+                       ttt
+                        \s
+                       abc""");
+    });
   }
 
+  @Test
   public void testForwardWithSelection() {
-    doTestForwardWithSelection("""
-                                 ab<caret>c
+    myFixture.runTest(() -> {
+      doTestForwardWithSelection("""
+                                   ab<caret>c
 
-                                 def
+                                   def
 
-                                 """,
+                                   """,
 
-                               """
-                                 ab<selection>c
-                                 <caret></selection>
-                                 def
+                                 """
+                                   ab<selection>c
+                                   <caret></selection>
+                                   def
 
-                                 """);
+                                   """);
+    });
   }
 
+  @Test
   public void testBackwardWithSelection() {
-    doTestBackwardWithSelection("""
+    myFixture.runTest(() -> {
+      doTestBackwardWithSelection("""
 
-                                  abc
+                                    abc
 
-                                  de<caret>f""",
+                                    de<caret>f""",
 
-                                """
+                                  """
 
-                                  abc
-                                  <selection><caret>
-                                  de</selection>f""");
+                                    abc
+                                    <selection><caret>
+                                    de</selection>f""");
+    });
   }
 
   private void doTestForward(String initialText, String resultText) {
@@ -179,8 +240,8 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
   }
 
   private void doTest(String initialText, String resultText, String action) {
-    initText(initialText);
-    executeAction(action);
-    checkResultByText(resultText);
+    myFixture.initText(initialText);
+    myFixture.executeAction(action);
+    myFixture.checkResultByText(resultText);
   }
 }

@@ -15,34 +15,69 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertArrayEquals;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-public class MoveLineTest extends AbstractEditorTest {
+@TestApplication
+public class MoveLineTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testInlaysAreMovedWithText() {
-    initText("<caret>ab\ncd\n");
-    addInlay(1);
-    executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
-    checkResultByText("cd\n<caret>ab\n");
-    assertInlayPositions(4);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>ab\ncd\n");
+      myFixture.addInlay(1);
+      myFixture.executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
+      myFixture.checkResultByText("cd\n<caret>ab\n");
+      assertInlayPositions(4);
+    });
   }
 
+  @Test
   public void testMoveWithMultipleCarets() {
-    initText("<caret>foo\nbar\nba<caret>z\nfuz\n");
-    executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
-    checkResultByText("bar\n<caret>foo\nfuz\nba<caret>z\n");
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>foo\nbar\nba<caret>z\nfuz\n");
+      myFixture.executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
+      myFixture.checkResultByText("bar\n<caret>foo\nfuz\nba<caret>z\n");
+    });
   }
 
+  @Test
   public void testMoveWithMultipleCaretsOnTheSameLine() {
-    initText("<caret>f<caret>o<caret>o\nbar\nbaz\nfuz\n");
-    executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
-    checkResultByText("bar\n<caret>f<caret>o<caret>o\nbaz\nfuz\n");
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>f<caret>o<caret>o\nbar\nbaz\nfuz\n");
+      myFixture.executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);
+      myFixture.checkResultByText("bar\n<caret>f<caret>o<caret>o\nbaz\nfuz\n");
+    });
   }
 
   private void assertInlayPositions(int... offsets) {
-    int[] actualPositions = getEditor().getInlayModel().getInlineElementsInRange(0, getEditor().getDocument().getTextLength())
+    Editor editor = myFixture.getEditor();
+    int[] actualPositions = editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength())
       .stream().mapToInt(i -> i.getOffset()).toArray();
     assertArrayEquals(offsets, actualPositions);
   }

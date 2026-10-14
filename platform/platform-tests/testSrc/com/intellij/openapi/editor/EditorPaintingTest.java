@@ -23,10 +23,12 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.awt.Color;
@@ -41,18 +43,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@TestDataPath("$CONTENT_ROOT/testData/editor/painting")
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestDataPath("$PROJECT_ROOT/community/platform/platform-tests/testData/editor/painting")
+@TestApplication
 public class EditorPaintingTest extends EditorPaintingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return !getName().endsWith("_Async");
-  }
-
-  @Override
-  protected boolean isRunInCommand() {
-    return super.isRunInCommand() && !getName().endsWith("_Async");
-  }
-
   private record SelectionState(boolean enabled, boolean islands) {}
 
   private static SelectionState setNewSelectionEnabled(boolean enabled) {
@@ -70,319 +69,399 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     IslandsState.Companion.setEnabled(state.islands(), false);
   }
 
-  public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
-    initText("foo");
-    addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
-    checkResult();
+  @Test
+  public void testWholeLineHighlighterAtDocumentEnd() {
+    myFixture.runTest(() -> {
+      myFixture.initText("foo");
+      addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
+      checkResult();
+    });
   }
 
-  public void testBoxedHighlightingLastLinePartially() throws Exception {
-    initText("foo\nbar bar");
-    addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
-    checkResult();
+  @Test
+  public void testBoxedHighlightingLastLinePartially() {
+    myFixture.runTest(() -> {
+      myFixture.initText("foo\nbar bar");
+      addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
+      checkResult();
+    });
   }
 
-  public void testUpperHighlighterCanSetDefaultForegroundColor() throws Exception {
-    initText("foo");
-    addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
-    addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
-    checkResult();
+  @Test
+  public void testUpperHighlighterCanSetDefaultForegroundColor() {
+    myFixture.runTest(() -> {
+      myFixture.initText("foo");
+      addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
+      addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
+      checkResult();
+    });
   }
 
-  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
-    initText("foo");
-    setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
-    addRangeHighlighter(0, 3, 0, null, Color.blue);
-    checkResult();
+  @Test
+  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() {
+    myFixture.runTest(() -> {
+      myFixture.initText("foo");
+      setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
+      addRangeHighlighter(0, 3, 0, null, Color.blue);
+      checkResult();
+    });
   }
 
-  public void testEmptyBorderInEmptyDocument() throws Exception {
-    initText("");
-    addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
-    checkResult();
+  @Test
+  public void testEmptyBorderInEmptyDocument() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
+      checkResult();
+    });
   }
 
-  public void testPrefixWithEmptyText() throws Exception {
-    initText("");
-    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
-    checkResult();
+  @Test
+  public void testPrefixWithEmptyText() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      ((EditorEx)myFixture.getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+      checkResult();
+    });
   }
 
-  public void testBorderAtLastLine() throws Exception {
-    initText("a\nbc");
-    addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
-    checkResult();
+  @Test
+  public void testBorderAtLastLine() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nbc");
+      addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
+      checkResult();
+    });
   }
 
-  public void testFoldedRegionShownOnlyWithBorder() throws Exception {
-    initText("abc");
-    addCollapsedFoldRegion(0, 3, "...");
-    getEditor().getColorsScheme().setAttributes(
-      EditorColors.FOLDED_TEXT_ATTRIBUTES,
-      new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
-    );
-    checkResult();
+  @Test
+  public void testFoldedRegionShownOnlyWithBorder() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addCollapsedFoldRegion(0, 3, "...");
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        EditorColors.FOLDED_TEXT_ATTRIBUTES,
+        new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
+      );
+      checkResult();
+    });
   }
 
-  public void testFoldedRegionCanHidePlaceholderBackground() throws Exception {
-    initText("abc\ndef\nghi");
-    getEditor().getColorsScheme().setAttributes(
-      HighlighterColors.TEXT,
-      new TextAttributes(Color.black, Color.white, null, null, Font.PLAIN)
-    );
-    getEditor().getColorsScheme().setAttributes(
-      EditorColors.FOLDED_TEXT_ATTRIBUTES,
-      new TextAttributes(null, Color.red, null, null, Font.PLAIN)
-    );
-    getEditor().getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, Color.green);
-    FoldRegion previousRegion = addCollapsedFoldRegion(0, 3, ".");
-    FoldRegion caretRegion = addCollapsedFoldRegion(4, 7, ".");
-    FoldRegion nextRegion = addCollapsedFoldRegion(8, 11, ".");
-    assertTrue(containsRed(paintEditor(false, null, null)));
+  @Test
+  public void testFoldedRegionCanHidePlaceholderBackground() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        HighlighterColors.TEXT,
+        new TextAttributes(Color.black, Color.white, null, null, Font.PLAIN)
+      );
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        EditorColors.FOLDED_TEXT_ATTRIBUTES,
+        new TextAttributes(null, Color.red, null, null, Font.PLAIN)
+      );
+      myFixture.getEditor().getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, Color.green);
+      FoldRegion previousRegion = myFixture.addCollapsedFoldRegion(0, 3, ".");
+      FoldRegion caretRegion = myFixture.addCollapsedFoldRegion(4, 7, ".");
+      FoldRegion nextRegion = myFixture.addCollapsedFoldRegion(8, 11, ".");
+      assertTrue(containsRed(paintEditor(false, null, null)));
 
-    previousRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
-    caretRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
-    nextRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
-    getEditor().getCaretModel().moveToOffset(7);
+      previousRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
+      caretRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
+      nextRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
+      myFixture.getEditor().getCaretModel().moveToOffset(7);
 
-    BufferedImage image = paintEditor(false, null, null);
-    assertFalse(containsRed(image));
-    assertFoldBackground(image, 0, Color.white);
-    assertFoldBackground(image, 4, Color.green);
-    assertFoldBackground(image, 8, Color.white);
+      BufferedImage image = paintEditor(false, null, null);
+      assertFalse(containsRed(image));
+      assertFoldBackground(image, 0, Color.white);
+      assertFoldBackground(image, 4, Color.green);
+      assertFoldBackground(image, 8, Color.white);
+    });
   }
 
-  public void testIndentGuideStartingAtInlineFold() throws Exception {
-    initText("  - parent\n    child\n    child\n  next");
-    getEditor().getColorsScheme().setColor(EditorColors.INDENT_GUIDE_COLOR, Color.red);
-    addCollapsedFoldRegion(2, 3, "•");
-    int guideEnd = getEditor().getDocument().getLineStartOffset(3);
-    RangeHighlighter guide = addRangeHighlighter(0, guideEnd, 0, null);
-    guide.setCustomRenderer(new IndentGuideRenderer());
+  @Test
+  public void testIndentGuideStartingAtInlineFold() {
+    myFixture.runTest(() -> {
+      myFixture.initText("  - parent\n    child\n    child\n  next");
+      myFixture.getEditor().getColorsScheme().setColor(EditorColors.INDENT_GUIDE_COLOR, Color.red);
+      myFixture.addCollapsedFoldRegion(2, 3, "•");
+      int guideEnd = myFixture.getEditor().getDocument().getLineStartOffset(3);
+      RangeHighlighter guide = addRangeHighlighter(0, guideEnd, 0, null);
+      guide.setCustomRenderer(new IndentGuideRenderer());
 
-    assertTrue(containsRed(paintEditor(false, null, null)));
+      assertTrue(containsRed(paintEditor(false, null, null)));
+    });
   }
 
-  public void testEraseMarker() throws Exception {
-    initText("abc");
-    setUniformEditorHighlighter(new TextAttributes(null, null, null, null, Font.BOLD));
-    addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
-    checkResult();
+  @Test
+  public void testEraseMarker() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      setUniformEditorHighlighter(new TextAttributes(null, null, null, null, Font.BOLD));
+      addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
+      checkResult();
+    });
   }
 
-  public void testInlayAtEmptyLine() throws Exception {
-    initText("\n");
-    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
-    checkResult();
+  @Test
+  public void testInlayAtEmptyLine() {
+    myFixture.runTest(() -> {
+      myFixture.initText("\n");
+      myFixture.getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
+      checkResult();
+    });
   }
 
   /** An inline inlay reads exactly where the hint does, so the line goes to the inlay and the hint is not painted at all. */
-  public void testInlineInlaySuppressesPlaceholder() throws Exception {
-    initText("");
-    EditorEx editor = (EditorEx)getEditor();
-    editor.setPlaceholder("placeholder");
-    editor.setShowPlaceholderWhenFocused(true);
-    editor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
-    checkResult();
-  }
-
-  public void testMultilineBorderWithInlays() throws Exception {
-    initText("abc\ndef");
-    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
-    addBorderHighlighter(0, 7, 0, Color.red);
-    checkResult();
-  }
-
-  public void testSoftWrapAtHighlighterBoundary() throws Exception {
-    initText("a bc");
-    configureSoftWraps(2);
-    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(2));
-    addRangeHighlighter(1, 3, HighlighterLayer.CARET_ROW + 1, null, Color.red);
-    addRangeHighlighter(1, 2, HighlighterLayer.CARET_ROW + 2, null, Color.blue);
-    checkResult();
-  }
-
-  public void testFontStyleAfterMove() throws Exception {
-    initText("text\ntext\n");
-    addRangeHighlighter(0, 4, 0, new TextAttributes(null, null, null, null, Font.BOLD));
-    addRangeHighlighter(5, 9, 0, new TextAttributes(null, null, null, null, Font.BOLD));
-    checkResult(); // initial text layout cache population
-
-    getEditor().getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        // force population of text layout cache on document update
-        // this can be done by editor implementation in real life,
-        // but we're doing it manually here to cover more potential cases
-        getEditor().visualPositionToXY(new VisualPosition(0, 10));
-      }
+  @Test
+  public void testInlineInlaySuppressesPlaceholder() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      EditorEx editor = (EditorEx)myFixture.getEditor();
+      editor.setPlaceholder("placeholder");
+      editor.setShowPlaceholderWhenFocused(true);
+      editor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+      checkResult();
     });
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((DocumentEx)getEditor().getDocument()).moveText(5, 10, 0));
-    checkResult();
   }
 
-  public void testSoftWrapWithWithLineSeparator() throws Exception {
-    initText("x\nabcef\ny");
-    configureSoftWraps(2);
-    verifySoftWrapPositions(4, 5);
-
-    addLineSeparator(4, SeparatorPlacement.TOP, Color.red);
-    addLineSeparator(4, SeparatorPlacement.BOTTOM, Color.blue);
-
-    checkResult();
-  }
-
-  public void testSoftWrappedLineHighlighterWithBlockInlay() throws Exception {
-    initText("some text");
-    configureSoftWraps(5);
-    addBlockInlay(0);
-    addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
-    checkResultWithGutterForNewUI();
-  }
-
-  public void testBlockInlayBelowCustomFoldRegionIsPaintedAtItsBounds() throws Exception {
-    initText("line1\nline2");
-    CustomFoldRegion region = addCustomFoldRegion(0, 0, 50);
-    assertNotNull(region);
-    List<Double> paintedY = new ArrayList<>();
-    Inlay<?> inlay = getEditor().getInlayModel().addBlockElement(5, new InlayProperties().relatesToPrecedingText(true), new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) {
-        return 10;
-      }
-
-      @Override
-      public int calcHeightInPixels(@NotNull Inlay inlay) {
-        return 20;
-      }
-
-      @Override
-      public void paint(@NotNull Inlay inlay, @NotNull Graphics2D g, @NotNull Rectangle2D targetRegion, @NotNull TextAttributes textAttributes) {
-        paintedY.add(targetRegion.getY());
-      }
+  @Test
+  public void testMultilineBorderWithInlays() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      myFixture.getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+      myFixture.getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
+      addBorderHighlighter(0, 7, 0, Color.red);
+      checkResult();
     });
-    assertNotNull(inlay);
+  }
 
-    paintEditor(false, null, null);
+  @Test
+  public void testSoftWrapAtHighlighterBoundary() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a bc");
+      configureSoftWraps(2);
+      assertNotNull(myFixture.getEditor().getSoftWrapModel().getSoftWrap(2));
+      addRangeHighlighter(1, 3, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+      addRangeHighlighter(1, 2, HighlighterLayer.CARET_ROW + 2, null, Color.blue);
+      checkResult();
+    });
+  }
 
-    Rectangle bounds = inlay.getBounds();
-    assertNotNull(bounds);
-    assertEquals(region.getLocation().y + region.getHeightInPixels(), bounds.y);
-    assertEquals(Collections.singletonList((double)bounds.y), paintedY);
+  @Test
+  public void testFontStyleAfterMove() {
+    myFixture.runTest(() -> {
+      myFixture.initText("text\ntext\n");
+      addRangeHighlighter(0, 4, 0, new TextAttributes(null, null, null, null, Font.BOLD));
+      addRangeHighlighter(5, 9, 0, new TextAttributes(null, null, null, null, Font.BOLD));
+      checkResult(); // initial text layout cache population
+
+      myFixture.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          // force population of text layout cache on document update
+          // this can be done by editor implementation in real life,
+          // but we're doing it manually here to cover more potential cases
+          myFixture.getEditor().visualPositionToXY(new VisualPosition(0, 10));
+        }
+      }, myFixture.getTestRootDisposable());
+
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
+                                               () -> ((DocumentEx)myFixture.getEditor().getDocument()).moveText(5, 10, 0));
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testSoftWrapWithWithLineSeparator() {
+    myFixture.runTest(() -> {
+      myFixture.initText("x\nabcef\ny");
+      configureSoftWraps(2);
+      myFixture.verifySoftWrapPositions(4, 5);
+
+      addLineSeparator(4, SeparatorPlacement.TOP, Color.red);
+      addLineSeparator(4, SeparatorPlacement.BOTTOM, Color.blue);
+
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testSoftWrappedLineHighlighterWithBlockInlay() {
+    myFixture.runTest(() -> {
+      myFixture.initText("some text");
+      configureSoftWraps(5);
+      myFixture.addBlockInlay(0);
+      addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testBlockInlayBelowCustomFoldRegionIsPaintedAtItsBounds() {
+    myFixture.runTest(() -> {
+      myFixture.initText("line1\nline2");
+      CustomFoldRegion region = myFixture.addCustomFoldRegion(0, 0, 50);
+      assertNotNull(region);
+      List<Double> paintedY = new ArrayList<>();
+      Inlay<?> inlay = myFixture.getEditor().getInlayModel().addBlockElement(5, new InlayProperties().relatesToPrecedingText(true), new EditorCustomElementRenderer() {
+        @Override
+        public int calcWidthInPixels(@NotNull Inlay inlay) {
+          return 10;
+        }
+
+        @Override
+        public int calcHeightInPixels(@NotNull Inlay inlay) {
+          return 20;
+        }
+
+        @Override
+        public void paint(@NotNull Inlay inlay, @NotNull Graphics2D g, @NotNull Rectangle2D targetRegion, @NotNull TextAttributes textAttributes) {
+          paintedY.add(targetRegion.getY());
+        }
+      });
+      assertNotNull(inlay);
+
+      paintEditor(false, null, null);
+
+      Rectangle bounds = inlay.getBounds();
+      assertNotNull(bounds);
+      assertEquals(region.getLocation().y + region.getHeightInPixels(), bounds.y);
+      assertEquals(Collections.singletonList((double)bounds.y), paintedY);
+    });
   }
 
   private void runTestBlockInlaysWithSelection() throws Exception {
-    initText("line 1\nline 2\na");
-    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
-    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
-    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
+    myFixture.initText("line 1\nline 2\na");
+    myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(0));
+    myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(1));
+    myFixture.executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResult();
   }
 
-  public void testBlockInlaysWithSelection() throws Exception {
-    var state = setNewSelectionEnabled(false);
-    try {
-      runTestBlockInlaysWithSelection();
-    } finally {
-      restoreSelectionState(state);
-    }
-  }
-
-  public void testBlockInlaysWithNewSelection() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      runTestBlockInlaysWithSelection();
-    } finally {
-      restoreSelectionState(state);
-    }
-  }
-
-  public void testBlockInlaysWithNewSelection2() throws Exception {
-    var state = setNewSelectionEnabled(true);
-
-    try {
-      initText("line 1\nline 2\n");
-      addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
-      addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
-      executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
-      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
-      checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
-  }
-
-  public void testBlockInlaysAboveWithNewSelection() throws Exception {
-    var state = setNewSelectionEnabled(true);
-
-    try {
-      initText("\n\nline 1\nline 2\n");
-      addBlockInlay(getEditor().getDocument().getLineStartOffset(2), true);
-      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-      for (int i = 0; i < 2; i++) {
-        executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+  @Test
+  public void testBlockInlaysWithSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(false);
+      try {
+        runTestBlockInlaysWithSelection();
+      } finally {
+        restoreSelectionState(state);
       }
-      checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
+    });
   }
 
-  public void testNewSelectionStaysMergedAfterInlayShift() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      initText("aaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa");
-      setNewSelectionEnabled(true);
+  @Test
+  public void testBlockInlaysWithNewSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        runTestBlockInlaysWithSelection();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
 
-      executeAction(IdeActions.ACTION_SELECT_ALL);
-      paintEditor(false, null, null);
+  @Test
+  public void testBlockInlaysWithNewSelection2() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
 
-      addBlockInlay(getEditor().getDocument().getLineStartOffset(4), true, 0, 5);
-      checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
+      try {
+        myFixture.initText("line 1\nline 2\n");
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(0));
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(1));
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testBlockInlaysAboveWithNewSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+
+      try {
+        myFixture.initText("\n\nline 1\nline 2\n");
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(2), true);
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+        for (int i = 0; i < 2; i++) {
+          myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+        }
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testNewSelectionStaysMergedAfterInlayShift() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        myFixture.initText("aaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa");
+        setNewSelectionEnabled(true);
+
+        myFixture.executeAction(IdeActions.ACTION_SELECT_ALL);
+        paintEditor(false, null, null);
+
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(4), true, 0, 5);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
   }
 
   private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    initText("  \n ");
-    addBlockInlay(0);
-    executeAction(IdeActions.ACTION_SELECT_ALL);
-    getEditor().getSettings().setRightMargin(1);
+    myFixture.initText("  \n ");
+    myFixture.addBlockInlay(0);
+    myFixture.executeAction(IdeActions.ACTION_SELECT_ALL);
+    myFixture.getEditor().getSettings().setRightMargin(1);
     checkResult();
   }
 
-  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    var state = setNewSelectionEnabled(false);
-    try {
-      runTestMarginIsShownOverSelectionInBlockInlayRange();
-    } finally {
-      restoreSelectionState(state);
-    }
+  @Test
+  public void testMarginIsShownOverSelectionInBlockInlayRange() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(false);
+      try {
+        runTestMarginIsShownOverSelectionInBlockInlayRange();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
   }
 
-  public void testMarginIsShownOverSelectionInBlockInlayRangeWithNewSelection() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      runTestMarginIsShownOverSelectionInBlockInlayRange();
-    } finally {
-      restoreSelectionState(state);
-    }
+  @Test
+  public void testMarginIsShownOverSelectionInBlockInlayRangeWithNewSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        runTestMarginIsShownOverSelectionInBlockInlayRange();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
   }
 
-  public void testIndentGuideOverBlockInlayWithSoftWraps_Async() throws Exception {
+  @Test
+  public void testIndentGuideOverBlockInlayWithSoftWraps_Async() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      initText("  a\n    b c");
+      myFixture.initText("  a\n    b c");
       configureSoftWraps(5, false);
     });
     runIndentsPass();
     EdtTestUtil.runInEdtAndWait(() -> {
-      addBlockInlay(0);
+      myFixture.addBlockInlay(0);
       try {
         checkResult();
       }
@@ -392,158 +471,212 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     });
   }
 
-  public void testLineSeparatorRepaint() throws Exception {
-    initText("a\nb");
-    addLineSeparator(3, SeparatorPlacement.TOP, Color.red);
-    checkPartialRepaint(0);
-  }
-
-  public void testLineSeparatorNearBlockInlay() throws Exception {
-    initText("a\nb");
-    addBlockInlay(2, true);
-    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
-    checkResult();
-  }
-
-  public void testLineSeparatorNearBlockInlay2() throws Exception {
-    initText("a\nb");
-    addBlockInlay(2, true);
-    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
-    checkResult();
-  }
-
-  public void testLineSeparatorNearBlockInlay3() throws Exception {
-    initText("a\nb");
-    addBlockInlay(1, false);
-    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
-    checkResult();
-  }
-
-  public void testLineSeparatorNearBlockInlay4() throws Exception {
-    initText("a\nb");
-    addBlockInlay(1, false);
-    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
-    checkResult();
-  }
-
-  public void testBlockInlayWithLineHighlighterEndingAtEmptyLine() throws Exception {
-    initText("\n");
-    addBlockInlay(0);
-    addLineHighlighter(0, 1, HighlighterLayer.SELECTION + 1, null, Color.green);
-    checkResult();
-  }
-
-  public void testEmptyEditorWithGutterIcon() throws Exception {
-    initText("");
-    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
-    checkResultWithGutterForNewUI();
-  }
-
-  public void testBlockInlaysInAnEmptyEditor() throws Exception {
-    initText("");
-    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
-    getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
-    getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
-    checkResultWithGutterForNewUI();
-  }
-
-  public void testAfterLineEndInlayWithLineExtension() throws Exception {
-    initText("");
-    getEditor().getInlayModel().addAfterLineEndElement(0, false, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) {
-        return 10;
-      }
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {
-        g.setColor(Color.red);
-        g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
-      }
+  @Test
+  public void testLineSeparatorRepaint() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      addLineSeparator(3, SeparatorPlacement.TOP, Color.red);
+      checkPartialRepaint(0);
     });
-    ((EditorEx)getEditor()).registerLineExtensionPainter(
-      line -> Collections.singleton(new LineExtensionInfo("ABC", new TextAttributes(Color.black, null, null, null, Font.PLAIN)))
-    );
-    paintEditor(false, null, null); // first paint triggers size update due to line extensions
-    checkResult();
   }
 
-  public void testEmptyBorderAtInlay1() throws Exception {
-    initText("ab");
-    getEditor().getInlayModel().addInlineElement(1, false, new MyInlayRenderer());
-    addBorderHighlighter(1, 1, 0, Color.red);
-    checkResult();
+  @Test
+  public void testLineSeparatorNearBlockInlay() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      myFixture.addBlockInlay(2, true);
+      addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+      checkResult();
+    });
   }
 
-  public void testEmptyBorderAtInlay2() throws Exception {
-    initText("ab");
-    getEditor().getInlayModel().addInlineElement(1, true, new MyInlayRenderer());
-    addBorderHighlighter(1, 1, 0, Color.red);
-    checkResult();
+  @Test
+  public void testLineSeparatorNearBlockInlay2() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      myFixture.addBlockInlay(2, true);
+      addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+      checkResult();
+    });
   }
 
-  public void testCaretAtFoldRegion() throws Exception {
-    initText("test");
-    addCollapsedFoldRegion(0, 4, ".");
-    checkResultWithGutterForNewUI();
+  @Test
+  public void testLineSeparatorNearBlockInlay3() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      myFixture.addBlockInlay(1, false);
+      addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+      checkResult();
+    });
   }
 
-  public void testCustomFoldRegion() throws Exception {
-    initText("a\nb\nc");
-    addCustomLinesFolding(1, 1);
-    checkResultWithGutterForNewUI();
+  @Test
+  public void testLineSeparatorNearBlockInlay4() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      myFixture.addBlockInlay(1, false);
+      addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+      checkResult();
+    });
   }
 
-  public void testCustomFoldRegionWithCaret() throws Exception {
-    initText("a\n<caret>b\nc");
-    addCustomLinesFolding(1, 1);
-    checkResultWithGutterForNewUI();
+  @Test
+  public void testBlockInlayWithLineHighlighterEndingAtEmptyLine() {
+    myFixture.runTest(() -> {
+      myFixture.initText("\n");
+      myFixture.addBlockInlay(0);
+      addLineHighlighter(0, 1, HighlighterLayer.SELECTION + 1, null, Color.green);
+      checkResult();
+    });
   }
 
-  public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
-    initText("a\nb<caret>\nc");
-    addCustomLinesFolding(1, 1);
-    checkResultWithGutterForNewUI();
+  @Test
+  public void testEmptyEditorWithGutterIcon() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testBlockInlaysInAnEmptyEditor() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+      myFixture.getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
+      myFixture.getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testAfterLineEndInlayWithLineExtension() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      myFixture.getEditor().getInlayModel().addAfterLineEndElement(0, false, new EditorCustomElementRenderer() {
+        @Override
+        public int calcWidthInPixels(@NotNull Inlay inlay) {
+          return 10;
+        }
+
+        @Override
+        public void paint(@NotNull Inlay inlay,
+                          @NotNull Graphics g,
+                          @NotNull Rectangle targetRegion,
+                          @NotNull TextAttributes textAttributes) {
+          g.setColor(Color.red);
+          g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
+        }
+      });
+      ((EditorEx)myFixture.getEditor()).registerLineExtensionPainter(
+        line -> Collections.singleton(new LineExtensionInfo("ABC", new TextAttributes(Color.black, null, null, null, Font.PLAIN)))
+      );
+      paintEditor(false, null, null); // first paint triggers size update due to line extensions
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testEmptyBorderAtInlay1() {
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.getEditor().getInlayModel().addInlineElement(1, false, new MyInlayRenderer());
+      addBorderHighlighter(1, 1, 0, Color.red);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testEmptyBorderAtInlay2() {
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.getEditor().getInlayModel().addInlineElement(1, true, new MyInlayRenderer());
+      addBorderHighlighter(1, 1, 0, Color.red);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testCaretAtFoldRegion() {
+    myFixture.runTest(() -> {
+      myFixture.initText("test");
+      myFixture.addCollapsedFoldRegion(0, 4, ".");
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testCustomFoldRegion() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb\nc");
+      addCustomLinesFolding(1, 1);
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testCustomFoldRegionWithCaret() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\n<caret>b\nc");
+      addCustomLinesFolding(1, 1);
+      checkResultWithGutterForNewUI();
+    });
+  }
+
+  @Test
+  public void testCustomFoldRegionWithCaretAtEnd() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb<caret>\nc");
+      addCustomLinesFolding(1, 1);
+      checkResultWithGutterForNewUI();
+    });
   }
 
   private void runTestCustomFoldRegionInsideSelection() throws Exception {
-    initText("<selection>\ntext\n<caret></selection>");
+    myFixture.initText("<selection>\ntext\n<caret></selection>");
     addCustomLinesFolding(1, 1);
     checkResult();
   }
 
-  public void testCustomFoldRegionInsideSelection() throws Exception {
-    var state = setNewSelectionEnabled(false);
-    try {
-      runTestCustomFoldRegionInsideSelection();
-    } finally {
-      restoreSelectionState(state);
-    }
+  @Test
+  public void testCustomFoldRegionInsideSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(false);
+      try {
+        runTestCustomFoldRegionInsideSelection();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
   }
 
-  public void testCustomFoldRegionInsideSelectionWithNewSelection() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      runTestCustomFoldRegionInsideSelection();
-    } finally {
-      restoreSelectionState(state);
-    }
+  @Test
+  public void testCustomFoldRegionInsideSelectionWithNewSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        runTestCustomFoldRegionInsideSelection();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
   }
 
-  public void testInlineInlaysAroundCustomWrap() throws Exception {
-    setUpCustomWrapSupport();
-    initText("0123456789");
-    getEditor().getCustomWrapModel().runBatchMutation(mutator -> mutator.addWrap(4, 2, 0));
-    getEditor().getInlayModel().addInlineElement(4, true, new MyInlayRenderer(JBColor.CYAN));
-    getEditor().getInlayModel().addInlineElement(4, false, new MyInlayRenderer(JBColor.GREEN));
-    checkResult();
+  @Test
+  public void testInlineInlaysAroundCustomWrap() {
+    myFixture.runTest(() -> {
+      myFixture.setUpCustomWrapSupport();
+      myFixture.initText("0123456789");
+      myFixture.getEditor().getCustomWrapModel().runBatchMutation(mutator -> mutator.addWrap(4, 2, 0));
+      myFixture.getEditor().getInlayModel().addInlineElement(4, true, new MyInlayRenderer(JBColor.CYAN));
+      myFixture.getEditor().getInlayModel().addInlineElement(4, false, new MyInlayRenderer(JBColor.GREEN));
+      checkResult();
+    });
   }
 
   private void addCustomLinesFolding(int startLine, int endLine) {
-    FoldingModel foldingModel = getEditor().getFoldingModel();
+    FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
   }
 
@@ -558,14 +691,15 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void assertFoldBackground(BufferedImage image, int offset, Color color) {
-    var foldStart = getEditor().offsetToXY(offset);
+    var foldStart = myFixture.getEditor().offsetToXY(offset);
     assertEquals(color.getRGB(), image.getRGB(foldStart.x + 1, foldStart.y + 1));
   }
 
   private void runIndentsPass() {
     IndentGuidePass indentsPass = EdtTestUtil.runInEdtAndGet(
-      () -> ActionUtil.underModalProgress(getProject(), "", () -> new IndentGuidePass(getProject(), getEditor(), getFile())));
-    ReadAction.run(() -> indentsPass.doCollectInformation(new EmptyProgressIndicator()));
+      () -> ActionUtil.underModalProgress(myFixture.getProject(), "",
+                                          () -> new IndentGuidePass(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile())));
+    ReadAction.runBlocking(() -> indentsPass.doCollectInformation(new EmptyProgressIndicator()));
     EdtTestUtil.runInEdtAndWait(() -> indentsPass.doApplyInformationToEditor());
   }
 

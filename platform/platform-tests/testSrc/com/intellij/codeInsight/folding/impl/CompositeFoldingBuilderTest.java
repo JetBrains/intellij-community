@@ -15,69 +15,94 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-public class CompositeFoldingBuilderTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    init("Some plain text to fold", PlainTextFileType.INSTANCE);
+@TestApplication
+public class CompositeFoldingBuilderTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+    myFixture.init("Some plain text to fold", PlainTextFileType.INSTANCE);
   }
 
+  @Test
   public void testAllowOnlyOneDescriptorPerTextRange() {
-    final FoldingBuilder first = createDummyFoldingBuilder("plain", "mountain", false);
-    final FoldingBuilder second = createDummyFoldingBuilder("plain", "tree", false);
+    myFixture.runTest(() -> {
+      final FoldingBuilder first = createDummyFoldingBuilder("plain", "mountain", false);
+      final FoldingBuilder second = createDummyFoldingBuilder("plain", "tree", false);
 
-    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, first);
-    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, second);
+      LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, first);
+      LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, second);
 
-    try {
-      PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
-      int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.psiElement()));
+      try {
+        PsiFile file = myFixture.getFile();
+        List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
+        int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.psiElement()));
 
-      assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
-    }
-    finally {
-      LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, first);
-      LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, second);
-    }
+        assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
+      }
+      finally {
+        LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, first);
+        LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, second);
+      }
+    });
   }
 
+  @Test
   public void testOverrideGetText() {
-    final FoldingBuilder first = createDummyFoldingBuilder("plain", "mountain", true);
+    myFixture.runTest(() -> {
+      final FoldingBuilder first = createDummyFoldingBuilder("plain", "mountain", true);
 
-    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, first);
+      LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, first);
 
-    try {
-      PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
-      int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.psiElement()));
-      assertEquals("mountain", regionInfos.get(0).descriptor().getPlaceholderText());
+      try {
+        PsiFile file = myFixture.getFile();
+        List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
+        int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.psiElement()));
+        assertEquals("mountain", regionInfos.getFirst().descriptor().getPlaceholderText());
 
-      assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
-    }
-    finally {
-      LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, first);
-    }
+        assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
+      }
+      finally {
+        LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, first);
+      }
+    });
   }
 
   @NotNull

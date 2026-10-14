@@ -1,34 +1,56 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.awt.Point;
 import java.util.ArrayList;
 
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * To simplify the representation of input text, 'R' character in these tests represents an RTL character.
  */
-public abstract class AbstractRtlTest extends AbstractEditorTest {
+public abstract class AbstractRtlTest {
   private static final char RTL_CHAR_REPRESENTATION = 'R';
-  private static final char RTL_CHAR = '\u05d0'; // Hebrew 'aleph' letter
+  private static final char RTL_CHAR = 'א'; // Hebrew 'aleph' letter
   private static final char BIDI_BOUNDARY_MARKER = '|';
+
+  @SuppressWarnings("deprecation")
+  protected static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  protected EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUpAbstractRtlTest() {
+    myFixture = editorFixture.get();
+  }
 
   protected void prepareText(String text) {
     prepare(text, PlainTextFileType.INSTANCE);
   }
   
   protected void prepare(String text, FileType fileType) {
-    init(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR), fileType);
+    myFixture.init(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR), fileType);
   }
   
   protected void checkResult(String text) {
-    checkResultByText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
+    myFixture.checkResultByText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }
   
   protected void checkOffsetConversions(int offset,
@@ -45,15 +67,16 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
                                         VisualPosition visualPositionTowardsLargerOffsets,
                                         Point xyTowardsSmallerOffsets,
                                         Point xyTowardsLargerOffsets) {
-    assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation", logicalPosition, getEditor().offsetToLogicalPosition(offset));
+    assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation",
+                                logicalPosition, myFixture.getEditor().offsetToLogicalPosition(offset));
     assertVisualPositionsEqual("Wrong beforeOffset->visualPosition calculation",
-                               visualPositionTowardsSmallerOffsets, getEditor().offsetToVisualPosition(offset, false, false));
+                               visualPositionTowardsSmallerOffsets, myFixture.getEditor().offsetToVisualPosition(offset, false, false));
     assertVisualPositionsEqual("Wrong afterOffset->visualPosition calculation",
-                               visualPositionTowardsLargerOffsets, getEditor().offsetToVisualPosition(offset, true, false));
-    assertEquals("Wrong afterOffset->visualLine calculation", 
-                 visualPositionTowardsLargerOffsets.line, ((EditorImpl)getEditor()).offsetToVisualLine(offset));
-    assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, getEditor().offsetToXY(offset, false, false));
-    assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, getEditor().offsetToXY(offset, true, false));
+                               visualPositionTowardsLargerOffsets, myFixture.getEditor().offsetToVisualPosition(offset, true, false));
+    assertEquals(visualPositionTowardsLargerOffsets.line, 
+                 ((EditorImpl)myFixture.getEditor()).offsetToVisualLine(offset), "Wrong afterOffset->visualLine calculation");
+    assertEquals(xyTowardsSmallerOffsets, myFixture.getEditor().offsetToXY(offset, false, false), "Wrong beforeOffset->xy calculation");
+    assertEquals(xyTowardsLargerOffsets, myFixture.getEditor().offsetToXY(offset, true, false), "Wrong afterOffset->xy calculation");
   }
 
   protected void checkLPConversions(int logicalColumn, int offset,
@@ -64,9 +87,9 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
   }
   
   protected void checkLPConversions(LogicalPosition logicalPosition, int offset, VisualPosition visualPosition) {
-    assertEquals("Wrong logicalPosition->offset calculation", offset, getEditor().logicalPositionToOffset(logicalPosition));
+    assertEquals(offset, myFixture.getEditor().logicalPositionToOffset(logicalPosition), "Wrong logicalPosition->offset calculation");
     assertVisualPositionsEqual("Wrong logicalPosition->visualPosition calculation",
-                               visualPosition, getEditor().logicalToVisualPosition(logicalPosition));
+                               visualPosition, myFixture.getEditor().logicalToVisualPosition(logicalPosition));
   }
 
   protected void checkVPConversions(int visualColumn, LogicalPosition logicalPositionForLeftLeaningVp,
@@ -77,27 +100,27 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
 
   protected void checkVPConversions(VisualPosition visualPosition, LogicalPosition logicalPosition, Point xy) {
     assertLogicalPositionsEqual("Wrong visualPosition->logicalPosition calculation",
-                                logicalPosition, getEditor().visualToLogicalPosition(visualPosition));
-    assertEquals("Wrong visualPosition->xy calculation", xy, getEditor().visualPositionToXY(visualPosition));
+                                logicalPosition, myFixture.getEditor().visualToLogicalPosition(visualPosition));
+    assertEquals(xy, myFixture.getEditor().visualPositionToXY(visualPosition), "Wrong visualPosition->xy calculation");
   }
   
   protected void checkXYConversion(Point xy,
                                    VisualPosition visualPosition) {
-    assertVisualPositionsEqual("Wrong xy->visualPosition calculation", visualPosition, getEditor().xyToVisualPosition(xy));
+    assertVisualPositionsEqual("Wrong xy->visualPosition calculation", visualPosition, myFixture.getEditor().xyToVisualPosition(xy));
   }
 
   protected static void assertLogicalPositionsEqual(String message, LogicalPosition expectedPosition, LogicalPosition actualPosition) {
-    assertEquals(message, expectedPosition, actualPosition);
-    assertEquals(message + " (direction flag)", expectedPosition.leansForward, actualPosition.leansForward);
+    assertEquals(expectedPosition, actualPosition, message);
+    assertEquals(expectedPosition.leansForward, actualPosition.leansForward, message + " (direction flag)");
   }
 
   protected static void assertVisualPositionsEqual(String message, VisualPosition expectedPosition, VisualPosition actualPosition) {
-    assertEquals(message, expectedPosition, actualPosition);
-    assertEquals(message + " (direction flag)", expectedPosition.leansRight, actualPosition.leansRight);
+    assertEquals(expectedPosition, actualPosition, message);
+    assertEquals(expectedPosition.leansRight, actualPosition.leansRight, message + " (direction flag)");
   }
 
   protected void assertCaretPosition(VisualPosition visualPosition) {
-    assertVisualPositionsEqual("Wrong caret position", visualPosition, getEditor().getCaretModel().getVisualPosition());
+    assertVisualPositionsEqual("Wrong caret position", visualPosition, myFixture.getEditor().getCaretModel().getVisualPosition());
   }
 
   protected void assertVisualCaretLocation(int visualColumn, boolean reversedDirection) {
@@ -105,8 +128,8 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
   }
   
   protected void assertVisualCaretLocation(int visualLine, int visualColumn, boolean reversedDirection) {
-    assertEquals(1, getEditor().getCaretModel().getCaretCount());
-    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+    assertEquals(1, myFixture.getEditor().getCaretModel().getCaretCount());
+    Caret caret = myFixture.getEditor().getCaretModel().getPrimaryCaret();
     assertEquals(visualLine, caret.getVisualPosition().line);
     assertEquals(visualColumn, caret.getVisualPosition().column);
     assertEquals(reversedDirection, caret.isAtRtlLocation());
@@ -128,16 +151,16 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
       }
     }
     String rawText = rawTextBuilder.toString();
-    configureFromFileText(getTestName(false) + "." + fileExtension, rawText.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
+    myFixture.configureFromFileText(myFixture.getTestName() + "." + fileExtension, rawText.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
 
     java.util.List<Integer> actualBoundaryPositions = new ArrayList<>();
     for (int i = 1; i < rawText.length(); i++) {
-      if (!getEditor().offsetToVisualPosition(i, false, false).equals(
-        getEditor().offsetToVisualPosition(i, true, false))) {
+      if (!myFixture.getEditor().offsetToVisualPosition(i, false, false).equals(
+        myFixture.getEditor().offsetToVisualPosition(i, true, false))) {
         actualBoundaryPositions.add(i);
       }
     }
-    assertEquals("Unexpected bidi regions boundaries' positions", expectedBoundaryPositions, actualBoundaryPositions);
+    assertEquals(expectedBoundaryPositions, actualBoundaryPositions, "Unexpected bidi regions boundaries' positions");
   }
 
   // logical position leaning backward

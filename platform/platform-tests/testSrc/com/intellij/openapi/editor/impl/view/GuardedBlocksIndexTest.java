@@ -3,19 +3,26 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class GuardedBlocksIndexTest extends AbstractEditorTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class GuardedBlocksIndexTest {
+
+  @Test
   public void testCreateIndex() {
-    assertEquals(
+    assertAllEquals(
       index(0, 6, r(2, 4)),
       index(0, 3, r(2, 4)),
       index(3, 6, r(2, 4)),
@@ -23,8 +30,9 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     );
   }
 
+  @Test
   public void testCreateIndex1() {
-    assertEquals(
+    assertAllEquals(
       index(0, 10, r(2, 4), r(6, 8)),
       index(0, 6, r(2, 4), r(6, 8)),
       index(4, 10, r(2, 4), r(6, 8)),
@@ -33,6 +41,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     );
   }
 
+  @Test
   public void testOverlappingRanges() {
     var index = index(0, 10, r(3, 7), r(1, 5), r(2, 9), r(1, 5));
     assertEquals("[1+)[2+)[3+)[5+)[7+)[9-)", index.toString());
@@ -41,6 +50,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertFalse(index.isGuarded(9));
   }
 
+  @Test
   public void testSharedBoundaries() {
     var index = index(0, 10, r(4, 7), r(4, 4), r(1, 4), r(7, 7), r(7, 9));
     assertEquals("[1+)[4+)[7+)[9-)", index.toString());
@@ -49,6 +59,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertFalse(index.isGuarded(9));
   }
 
+  @Test
   public void testEmptyRanges() {
     var index = index(0, 6, r(4, 4), r(2, 2), r(2, 2));
     assertEquals("[2-)[4-)", index.toString());
@@ -58,23 +69,27 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertFalse(index.isGuarded(4));
   }
 
+  @Test
   public void testRangeFiltering() {
     assertEquals("[7+)[9-)[11+)[13-)[21+)[24-)",
                  index(10, 20, r(0, 8), r(22, 25), r(21, 24), r(11, 13), r(7, 9)).toString());
   }
 
+  @Test
   public void testSurrogatePairAlignment() {
     var document = new DocumentImpl("a\uD83D\uDE00b");
     var builder = new GuardedBlocksIndex.DocumentBuilder(document);
     assertEquals("[1+)[3-)", builder.build(0, 4, List.of(r(2, 2), r(1, 2), r(2, 3))).toString());
   }
 
+  @Test
   public void testSurrogatePairAlignmentAtDocumentEnd() {
     var document = new DocumentImpl("a\uD83D\uDE00");
     var builder = new GuardedBlocksIndex.DocumentBuilder(document);
     assertEquals("[1-)", builder.build(0, 3, List.of(r(2, 2))).toString());
   }
 
+  @Test
   public void testNearestRight1() {
     GuardedBlocksIndex index = index(0, 6, r(2, 4));
     assertEquals(2, index.nearestRight(0));
@@ -86,6 +101,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(-1, index.nearestRight(6));
   }
 
+  @Test
   public void testNearestRight2() {
     GuardedBlocksIndex index = index(0, 8, r(2, 4), r(6, 6));
     assertEquals(2, index.nearestRight(0));
@@ -99,6 +115,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(-1, index.nearestRight(8));
   }
 
+  @Test
   public void testNearestLeft1() {
     GuardedBlocksIndex index = index(0, 6, r(2, 4));
     assertEquals(-1, index.nearestLeft(0));
@@ -110,6 +127,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(4, index.nearestLeft(6));
   }
 
+  @Test
   public void testNearestLeft2() {
     GuardedBlocksIndex index = index(0, 8, r(2, 4), r(6, 6));
     assertEquals(-1, index.nearestLeft(0));
@@ -123,6 +141,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(6, index.nearestLeft(8));
   }
 
+  @Test
   public void testNearestRightEmpty() {
     GuardedBlocksIndex index = index(0, 3);
     assertEquals(-1, index.nearestRight(0));
@@ -131,6 +150,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(-1, index.nearestRight(3));
   }
 
+  @Test
   public void testNearestLeftEmpty() {
     GuardedBlocksIndex index = index(0, 3);
     assertEquals(-1, index.nearestLeft(0));
@@ -139,6 +159,7 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertEquals(-1, index.nearestLeft(3));
   }
 
+  @Test
   public void testIsGuarded() {
     GuardedBlocksIndex index = index(0, 8, r(2, 4), r(6, 6));
     assertFalse(index.isGuarded(-1));
@@ -154,13 +175,13 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
     assertFalse(index.isGuarded(9));
   }
 
-  private static void assertEquals(Object o1, Object o2, Object o3, Object o4) {
+  private static void assertAllEquals(Object o1, Object o2, Object o3, Object o4) {
     assertEquals(o1, o2);
     assertEquals(o2, o3);
     assertEquals(o3, o4);
   }
 
-  private static void assertEquals(Object o1, Object o2, Object o3, Object o4, Object o5) {
+  private static void assertAllEquals(Object o1, Object o2, Object o3, Object o4, Object o5) {
     assertEquals(o1, o2);
     assertEquals(o2, o3);
     assertEquals(o3, o4);

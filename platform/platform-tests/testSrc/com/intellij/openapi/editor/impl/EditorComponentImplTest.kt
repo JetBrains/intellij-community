@@ -8,12 +8,25 @@ import com.intellij.openapi.editor.NullGraphics2D
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicBoolean
 
-class EditorComponentImplTest : AbstractEditorTest() {
-  fun testPaintComponentSoftlyProhibitsLockAcquisitionByCustomRenderer() {
+@TestApplication
+class EditorComponentImplTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun testPaintComponentSoftlyProhibitsLockAcquisitionByCustomRenderer(): Unit = fixture.runTest {
     initText("abc")
     setEditorVisibleSize(20, 5)
 

@@ -1,13 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,10 +25,43 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.IntSupplier;
 
-import static org.junit.Assume.assumeFalse;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-@RunWith(JUnit38AssumeSupportRunner.class)
-public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
+@TestApplication
+public class MarkerTreeWithPartialSumsTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  private static final Logger LOG = Logger.getInstance(MarkerTreeWithPartialSumsTest.class);
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+    assumeFalse(RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION, "See SnapshotMarkerEngineImplTest instead. This test covers the legacy range markers but the snapshot marker engine is on. Turn off RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION temporarily if you really need to run this test");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myDocument = new DocumentImpl("abcdefghij");
+      myTree = new TestMarkerTreeWithPartialSums(myDocument);
+    });
+  }
+
+  @AfterEach
+  void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      if (myTree != null) myTree.disposeInTests(myDocument);
+    });
+  }
+
   private static final int RANDOM_ITERATIONS = 10_000;
   private static final int MAX_VALUE = 10;
   private static final int MAX_CHARS_PER_OPERATION = 10;
@@ -59,134 +99,141 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
       return super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
     }
   }
-  @Override
-  public void setUp() throws Exception {
-    assumeFalse("See SnapshotMarkerEngineImplTest instead. This test covers the legacy range markers but the snapshot marker engine is on. Turn off RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION temporarily if you really need to run this test", RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION);
-    super.setUp();
-    myDocument = new DocumentImpl("abcdefghij");
-    myTree = new TestMarkerTreeWithPartialSums(myDocument);
-  }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myTree != null) myTree.disposeInTests(myDocument);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
+  @Test
   public void testOneMarker() {
-    MyRange marker = new MyRange(2, 1);
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 0);
-    checkSumForOffset(2, 1);
-    checkSumForOffset(3, 1);
-    checkSumForOffset(10, 1);
-    marker.dispose();
-    checkSumForOffset(2, 0);
-    checkSumForOffset(3, 0);
+    myFixture.runTest(() -> {
+      MyRange marker = new MyRange(2, 1);
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 0);
+      checkSumForOffset(2, 1);
+      checkSumForOffset(3, 1);
+      checkSumForOffset(10, 1);
+      marker.dispose();
+      checkSumForOffset(2, 0);
+      checkSumForOffset(3, 0);
+    });
   }
 
+  @Test
   public void testTwoMarkers() {
-    new MyRange(2, 1);
-    new MyRange(5, 2);
-    checkSumForOffset(1, 0);
-    checkSumForOffset(2, 1);
-    checkSumForOffset(3, 1);
-    checkSumForOffset(5, 3);
-    checkSumForOffset(6, 3);
+    myFixture.runTest(() -> {
+      new MyRange(2, 1);
+      new MyRange(5, 2);
+      checkSumForOffset(1, 0);
+      checkSumForOffset(2, 1);
+      checkSumForOffset(3, 1);
+      checkSumForOffset(5, 3);
+      checkSumForOffset(6, 3);
+    });
   }
 
+  @Test
   public void testTreeRotation() {
-    new MyRange(1, 1);
-    new MyRange(3, 2);
-    new MyRange(5, 4);
-    checkSumForOffset(10, 7);
+    myFixture.runTest(() -> {
+      new MyRange(1, 1);
+      new MyRange(3, 2);
+      new MyRange(5, 4);
+      checkSumForOffset(10, 7);
+    });
   }
 
+  @Test
   public void testTwoMarkersAtSameOffset() {
-    MyRange r1 = new MyRange(1, 1);
-    MyRange r2 = new MyRange(1, 2);
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 3);
-    checkSumForOffset(2, 3);
-    r1.dispose();
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 2);
-    checkSumForOffset(2, 2);
-    r2.dispose();
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 0);
-    checkSumForOffset(2, 0);
+    myFixture.runTest(() -> {
+      MyRange r1 = new MyRange(1, 1);
+      MyRange r2 = new MyRange(1, 2);
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 3);
+      checkSumForOffset(2, 3);
+      r1.dispose();
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 2);
+      checkSumForOffset(2, 2);
+      r2.dispose();
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 0);
+      checkSumForOffset(2, 0);
+    });
   }
 
+  @Test
   public void testMarkerMergingOnEditing() {
-    MyRange r1 = new MyRange(1, 1);
-    MyRange r2 = new MyRange(2, 2);
-    runWriteCommand(() -> myDocument.deleteString(1, 2));
-    assertTrue(r1.isValid());
-    assertTrue(r2.isValid());
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 3);
-    checkSumForOffset(2, 3);
+    myFixture.runTest(() -> {
+      MyRange r1 = new MyRange(1, 1);
+      MyRange r2 = new MyRange(2, 2);
+      myFixture.runWriteCommand(() -> myDocument.deleteString(1, 2));
+      assertTrue(r1.isValid());
+      assertTrue(r2.isValid());
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 3);
+      checkSumForOffset(2, 3);
+    });
   }
 
+  @Test
   public void testMarkerSplitOnEditing() {
-    MyRange r1 = new MyRange(1, 1, false);
-    MyRange r2 = new MyRange(1, 2, true);
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 3);
-    checkSumForOffset(2, 3);
-    runWriteCommand(() -> myDocument.insertString(1, " "));
-    assertTrue(r1.isValid());
-    assertEquals(1, r1.getStartOffset());
-    assertTrue(r2.isValid());
-    assertEquals(2, r2.getStartOffset());
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 1);
-    checkSumForOffset(2, 3);
-    checkSumForOffset(3, 3);
+    myFixture.runTest(() -> {
+      MyRange r1 = new MyRange(1, 1, false);
+      MyRange r2 = new MyRange(1, 2, true);
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 3);
+      checkSumForOffset(2, 3);
+      myFixture.runWriteCommand(() -> myDocument.insertString(1, " "));
+      assertTrue(r1.isValid());
+      assertEquals(1, r1.getStartOffset());
+      assertTrue(r2.isValid());
+      assertEquals(2, r2.getStartOffset());
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 1);
+      checkSumForOffset(2, 3);
+      checkSumForOffset(3, 3);
+    });
   }
 
+  @Test
   public void testMarkerDisposalOnEditing() {
-    MyRange r1 = new MyRange(1, 1);
-    runWriteCommand(() -> myDocument.deleteString(0, 2));
-    assertFalse(r1.isValid());
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 0);
-    checkSumForOffset(2, 0);
+    myFixture.runTest(() -> {
+      MyRange r1 = new MyRange(1, 1);
+      myFixture.runWriteCommand(() -> myDocument.deleteString(0, 2));
+      assertFalse(r1.isValid());
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 0);
+      checkSumForOffset(2, 0);
+    });
   }
 
+  @Test
   public void testValueUpdate() {
-    MyRange r = new MyRange(1, 1);
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 1);
-    checkSumForOffset(2, 1);
-    r.setValue(2);
-    checkSumForOffset(0, 0);
-    checkSumForOffset(1, 2);
-    checkSumForOffset(2, 2);
+    myFixture.runTest(() -> {
+      MyRange r = new MyRange(1, 1);
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 1);
+      checkSumForOffset(2, 1);
+      r.setValue(2);
+      checkSumForOffset(0, 0);
+      checkSumForOffset(1, 2);
+      checkSumForOffset(2, 2);
+    });
   }
 
+  @Test
   public void testStressByRandomOperations() {
-    LOG.debug("Seed is " + mySeed);
-    int i = 0;
-    try {
-      for (i = 0; i < RANDOM_ITERATIONS; i++) {
-        ourActions.get(myRandom.nextInt(ourActions.size())).run();
-        validateSums();
+    myFixture.runTest(() -> {
+      LOG.debug("Seed is " + mySeed);
+      int i = 0;
+      try {
+        for (i = 0; i < RANDOM_ITERATIONS; i++) {
+          ourActions.get(myRandom.nextInt(ourActions.size())).run();
+          validateSums();
+        }
       }
-    }
-    catch (Throwable t) {
-      String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.err.println(message);
-      throw new RuntimeException(message, t);
-    }
+      catch (Throwable t) {
+        String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
+        System.err.println(message);
+        throw new RuntimeException(message, t);
+      }
+    });
   }
 
   private void validateSums() {
@@ -280,7 +327,8 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     @Override
     public void run() {
       int offset = myRandom.nextInt(myDocument.getTextLength() + 1);
-      runWriteCommand(() -> myDocument.insertString(offset, StringUtil.repeat(" ", myRandom.nextInt(MAX_CHARS_PER_OPERATION) + 1)));
+      myFixture.runWriteCommand(
+        () -> myDocument.insertString(offset, StringUtil.repeat(" ", myRandom.nextInt(MAX_CHARS_PER_OPERATION) + 1)));
     }
   }
 
@@ -290,7 +338,8 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
       int textLength = myDocument.getTextLength();
       if (textLength <= 0) return;
       int offset = myRandom.nextInt(textLength);
-      runWriteCommand(() -> myDocument.deleteString(offset, Math.min(textLength, offset + 1 + myRandom.nextInt(MAX_CHARS_PER_OPERATION))));
+      myFixture.runWriteCommand(
+        () -> myDocument.deleteString(offset, Math.min(textLength, offset + 1 + myRandom.nextInt(MAX_CHARS_PER_OPERATION))));
     }
   }
 
@@ -303,7 +352,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
       int endOffset = Math.min(textLength, startOffset + 1 + myRandom.nextInt(MAX_CHARS_PER_OPERATION));
       int targetOffset = myRandom.nextInt(textLength + 1);
       if (targetOffset < startOffset || targetOffset > endOffset) {
-        runWriteCommand(() -> myDocument.moveText(startOffset, endOffset, targetOffset));
+        myFixture.runWriteCommand(() -> myDocument.moveText(startOffset, endOffset, targetOffset));
       }
     }
   }

@@ -3,13 +3,27 @@ package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.EditorModelFixture.Companion.SURROGATE_PAIR
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 import com.intellij.openapi.editor.impl.EditorViewAccessor
+import com.intellij.openapi.editor.impl.editorModelFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class LogicalPositionCacheTest : AbstractEditorTest() {
-  fun `test empty document and out of range positions`() {
+@TestApplication
+class LogicalPositionCacheTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun `test empty document and out of range positions`(): Unit = fixture.runTest {
     initText("")
     assertOffset(line=0, column=10, expectedOffset=0)
     assertOffset(line=10, column=0, expectedOffset=0)
@@ -18,7 +32,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test simple multiline text conversions`() {
+  @Test
+  fun `test simple multiline text conversions`(): Unit = fixture.runTest {
     initText("ab\ncde\n")
 
     assertLogicalPosition(offset=0, expectedLine=0, expectedColumn=0)
@@ -35,7 +50,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test tabs and surrogate pairs`() {
+  @Test
+  fun `test tabs and surrogate pairs`(): Unit = fixture.runTest {
     initText("a\t${SURROGATE_PAIR}b")
 
     val tabSize = currentTabSize()
@@ -55,7 +71,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test tabs`() {
+  @Test
+  fun `test tabs`(): Unit = fixture.runTest {
     initText("a\tb")
 
     val tabSize = currentTabSize()
@@ -72,7 +89,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test surrogate pairs`() {
+  @Test
+  fun `test surrogate pairs`(): Unit = fixture.runTest {
     initText("a${SURROGATE_PAIR}b")
 
     assertLogicalPosition(offset=0, expectedLine=0, expectedColumn=0)
@@ -88,7 +106,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test long line uses cached anchors`() {
+  @Test
+  fun `test long line uses cached anchors`(): Unit = fixture.runTest {
     initText("x".repeat(1024) + "\t" + SURROGATE_PAIR + "z")
 
     val tabSize = currentTabSize()
@@ -106,7 +125,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated after replacing trivial line with tab`() {
+  @Test
+  fun `test cache is invalidated after replacing trivial line with tab`(): Unit = fixture.runTest {
     initText("abcdef")
     assertOffset(line=0, column=3, expectedOffset=3)
     runWriteCommand {
@@ -118,7 +138,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated when replacement contains tab in the middle`() {
+  @Test
+  fun `test cache is invalidated when replacement contains tab in the middle`(): Unit = fixture.runTest {
     initText("abcdef")
     editor.settings.setTabSize(4)
     assertOffset(line=0, column=3, expectedOffset=3)
@@ -130,7 +151,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache preserves trivial inserted lines`() {
+  @Test
+  fun `test cache preserves trivial inserted lines`(): Unit = fixture.runTest {
     val firstLine = "before\n"
     initText("${firstLine}after")
     assertOffset(line=0, column=3, expectedOffset=3)
@@ -146,7 +168,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache invalidates inserted line when simple newline exposes tab suffix`() {
+  @Test
+  fun `test cache invalidates inserted line when simple newline exposes tab suffix`(): Unit = fixture.runTest {
     initText("a\tb")
     editor.settings.setTabSize(4)
     assertOffset(line=0, column=4, expectedOffset=2)
@@ -158,7 +181,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache stays consistent when simple newline follows tab prefix`() {
+  @Test
+  fun `test cache stays consistent when simple newline follows tab prefix`(): Unit = fixture.runTest {
     initText("a\tb")
     editor.settings.setTabSize(4)
     assertOffset(line=0, column=4, expectedOffset=2)
@@ -170,7 +194,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache invalidates merged line when deleted separator exposes following tab line`() {
+  @Test
+  fun `test cache invalidates merged line when deleted separator exposes following tab line`(): Unit = fixture.runTest {
     initText("aa\n\tbb")
     editor.settings.setTabSize(4)
     assertOffset(line=1, column=4, expectedOffset=4)
@@ -182,7 +207,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache stays consistent when deleted separator follows tab line`() {
+  @Test
+  fun `test cache stays consistent when deleted separator follows tab line`(): Unit = fixture.runTest {
     initText("a\t\nbb")
     editor.settings.setTabSize(4)
     assertOffset(line=0, column=4, expectedOffset=2)
@@ -194,7 +220,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache invalidates inserted line when simple replacement exposes tab suffix on upper bound`() {
+  @Test
+  fun `test cache invalidates inserted line when simple replacement exposes tab suffix on upper bound`(): Unit = fixture.runTest {
     val replacement = "\nplain\n"
     initText("aa\nbb\tcc\nzz")
     editor.settings.setTabSize(4)
@@ -207,7 +234,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated after removing lines`() {
+  @Test
+  fun `test cache is invalidated after removing lines`(): Unit = fixture.runTest {
     val twoLines = "first\nsecond\n"
     initText(twoLines + "third")
     assertOffset(line=2, column=2, expectedOffset=twoLines.length+2)
@@ -219,7 +247,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated after replacing many lines with one line`() {
+  @Test
+  fun `test cache is invalidated after replacing many lines with one line`(): Unit = fixture.runTest {
     val text = buildString {
       repeat(6001) {
         if (it > 0) append('\n')
@@ -237,7 +266,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated after deleting many middle lines before cached tail`() {
+  @Test
+  fun `test cache is invalidated after deleting many middle lines before cached tail`(): Unit = fixture.runTest {
     val prefix = "prefix\n"
     val removed = buildString {
       repeat(6000) {
@@ -259,7 +289,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache preserves trivial line after deleting line separator`() {
+  @Test
+  fun `test cache preserves trivial line after deleting line separator`(): Unit = fixture.runTest {
     initText("ab\ncd")
     assertOffset(line=0, column=1, expectedOffset=1)
     assertOffset(line=1, column=1, expectedOffset=4)
@@ -271,7 +302,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test cache is invalidated after tab size change`() {
+  @Test
+  fun `test cache is invalidated after tab size change`(): Unit = fixture.runTest {
     initText("a\tb")
     editor.settings.setTabSize(4)
     assertLogicalPosition(offset=2, expectedLine=0, expectedColumn=4)
@@ -282,7 +314,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test whole text replacement restores caret using current document`() {
+  @Test
+  fun `test whole text replacement restores caret using current document`(): Unit = fixture.runTest {
     initText("a\tb\nsame")
     editor.settings.setTabSize(4)
     editor.caretModel.moveToLogicalPosition(LogicalPosition(0, 4))
@@ -294,7 +327,8 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
     checkConsistency()
   }
 
-  fun `test forced reset reads text changed without events`() {
+  @Test
+  fun `test forced reset reads text changed without events`(): Unit = fixture.runTest {
     val document = EditorTextFieldRendererDocument()
     val editorFactory = EditorFactory.getInstance()
     val rendererEditor = editorFactory.createViewer(document) as EditorImpl
@@ -317,21 +351,21 @@ class LogicalPositionCacheTest : AbstractEditorTest() {
   }
 
   private fun assertOffset(line: Int, column: Int, expectedOffset: Int) {
-    val actual = editor.logicalPositionToOffset(LogicalPosition(line, column))
+    val actual = fixture.editor.logicalPositionToOffset(LogicalPosition(line, column))
     assertEquals(expectedOffset, actual)
   }
 
   private fun assertLogicalPosition(offset: Int, expectedLine: Int, expectedColumn: Int) {
     val expected = LogicalPosition(expectedLine, expectedColumn)
-    val actual = editor.offsetToLogicalPosition(offset)
+    val actual = fixture.editor.offsetToLogicalPosition(offset)
     assertEquals(expected, actual)
   }
 
   private fun currentTabSize(): Int {
-    return EditorViewAccessor.getView(editor).tabSize
+    return EditorViewAccessor.getView(fixture.editor).tabSize
   }
 
   private fun checkConsistency() {
-    EditorViewAccessor.getView(editor).logicalPositionCache.validateState()
+    EditorViewAccessor.getView(fixture.editor).logicalPositionCache.validateState()
   }
 }

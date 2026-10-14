@@ -2,12 +2,19 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
-public class EditorTextFieldDocumentTest extends AbstractEditorTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class EditorTextFieldDocumentTest {
+  @Test
   public void testSelection() {
     EditorTextFieldRendererDocument document = new EditorTextFieldRendererDocument();
     document.setText("12345\n67890\n\r12345\r11111");
@@ -20,6 +27,7 @@ public class EditorTextFieldDocumentTest extends AbstractEditorTest {
     assertEquals(18, document.getLineEndOffset(3));
   }
 
+  @Test
   public void testEmptyText() {
     var document = new EditorTextFieldRendererDocument();
     document.setText("");
@@ -29,6 +37,7 @@ public class EditorTextFieldDocumentTest extends AbstractEditorTest {
     assertEquals(0, document.getLineEndOffset(0));
   }
 
+  @Test
   public void testLineMappingMatchesDocumentImpl() {
     for (var text : new String[]{"", "a", "a\n", "\n", "\n\n", "ab\ncd", "ab\ncd\n", "ab\r\ncd\ref\n"}) {
       var expected = new DocumentImpl(StringUtil.convertLineSeparators(text));
@@ -39,29 +48,29 @@ public class EditorTextFieldDocumentTest extends AbstractEditorTest {
   }
 
   private static void assertSameLineMapping(DocumentEx expected, DocumentEx actual, String label) {
-    assertEquals(label, expected.getText(), actual.getText());
-    assertEquals(label, expected.getLineCount(), actual.getLineCount());
+    assertEquals(expected.getText(), actual.getText(), label);
+    assertEquals(expected.getLineCount(), actual.getLineCount(), label);
     for (var line = 0; line < expected.getLineCount(); line++) {
       var context = label + ", line " + line;
-      assertEquals(context, expected.getLineStartOffset(line), actual.getLineStartOffset(line));
-      assertEquals(context, expected.getLineEndOffset(line), actual.getLineEndOffset(line));
-      assertEquals(context, expected.getLineSeparatorLength(line), actual.getLineSeparatorLength(line));
+      assertEquals(expected.getLineStartOffset(line), actual.getLineStartOffset(line), context);
+      assertEquals(expected.getLineEndOffset(line), actual.getLineEndOffset(line), context);
+      assertEquals(expected.getLineSeparatorLength(line), actual.getLineSeparatorLength(line), context);
     }
     for (var offset = 0; offset <= expected.getTextLength(); offset++) {
-      assertEquals(label + ", offset " + offset, expected.getLineNumber(offset), actual.getLineNumber(offset));
+      assertEquals(expected.getLineNumber(offset), actual.getLineNumber(offset), label + ", offset " + offset);
     }
     var expectedLines = expected.createLineIterator();
     var actualLines = actual.createLineIterator();
     while (!expectedLines.atEnd()) {
       var context = label + ", iterator line " + expectedLines.getLineNumber();
-      assertFalse(context, actualLines.atEnd());
-      assertEquals(context, expectedLines.getLineNumber(), actualLines.getLineNumber());
-      assertEquals(context, expectedLines.getStart(), actualLines.getStart());
-      assertEquals(context, expectedLines.getEnd(), actualLines.getEnd());
-      assertEquals(context, expectedLines.getSeparatorLength(), actualLines.getSeparatorLength());
+      assertFalse(actualLines.atEnd(), context);
+      assertEquals(expectedLines.getLineNumber(), actualLines.getLineNumber(), context);
+      assertEquals(expectedLines.getStart(), actualLines.getStart(), context);
+      assertEquals(expectedLines.getEnd(), actualLines.getEnd(), context);
+      assertEquals(expectedLines.getSeparatorLength(), actualLines.getSeparatorLength(), context);
       expectedLines.advance();
       actualLines.advance();
     }
-    assertTrue(label, actualLines.atEnd());
+    assertTrue(actualLines.atEnd(), label);
   }
 }

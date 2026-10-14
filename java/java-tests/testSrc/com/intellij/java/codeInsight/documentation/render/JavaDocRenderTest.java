@@ -6,295 +6,355 @@ import com.intellij.codeInsight.documentation.render.DocRenderItemManager;
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 
-public class JavaDocRenderTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaDocRenderTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
   private boolean myStoredSetting;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
     myStoredSetting = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(myStoredSetting);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(myStoredSetting));
   }
 
+  @Test
   public void testDeleteLine() {
-    configure("""
-                class C {
-                <caret>
-                  /** doc */
-                  int a;
-                }
-                """, true);
-    verifyFoldingState(11, 23);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    checkResultByText("""
-                        class C {
-                        <caret>  /** doc */
-                          int a;
-                        }
-                        """);
+    myFixture.runTest(() -> {
+      configure("""
+                  class C {
+                  <caret>
+                    /** doc */
+                    int a;
+                  }
+                  """, true);
+      verifyFoldingState(11, 23);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
+      myFixture.checkResultByText("""
+                          class C {
+                          <caret>  /** doc */
+                            int a;
+                          }
+                          """);
+    });
   }
 
+  @Test
   public void testTypingAtLineStart() {
-    configure("""
-                class C {
-                /** doc */
-                int a;<caret>
-                }
-                """, true);
-    verifyFoldingState(10, 20);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
-    type(' ');
-    checkResultByText("""
-                        class C {
-                        /** doc */
-                         <caret>int a;
-                        }
-                        """);
-  }
-
-  public void testCommentModification() {
-    configure("""
-                class C {
+    myFixture.runTest(() -> {
+      configure("""
+                  class C {
                   /** doc */
                   int a;<caret>
-                }
-                """, false);
-    verifyFoldingState();
-    verifyItem(12, 22, null);
-    toggleItem();
-    verifyFoldingState(10, 22);
-    verifyItem(12, 22, "doc");
-    toggleItem();
-    verifyFoldingState();
-    verifyItem(12, 22, null);
-    runWriteCommand(() -> getEditor().getDocument().setText(getEditor().getDocument().getText().replace("doc", "another")));
-    toggleItem();
-    verifyFoldingState(10, 26);
-    verifyItem(12, 26, "another");
-  }
-
-  public void testMultipleAuthors() {
-    configure("""
-                package some;
-
-                /**
-                 * @author foo
-                 * @author bar
-                 */
-                class C {}""", true);
-    verifyItem(15, 52,"<table class=\"sections\"><tbody><tr><td valign=\"top\" class=\"section\"><p>Author:</p></td>" +
-                      "<td valign=\"top\"><p>foo, bar</p></td></tr></tbody></table>");
-  }
-
-  public void testDocumentStart() {
-    configure("""
-                /**
-                 * comment
-                 */
-                class C {}""", true);
-    verifyFoldingState(0, 18);
-  }
-
-  public void testPackageInfo() {
-    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
-    configureFromFileText("package-info.java",
-                          """
-                            /**
-                             * whatever
-                             */
-                            package some;""");
-    updateRenderedItems(true);
-    verifyItem(0, 19, "whatever");
-  }
-
-  public void testModuleInfo() {
-    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
-    configureFromFileText("module-info.java",
-                          """
-                            /**
-                             * whatever
-                             */
-                            module some {}""");
-    updateRenderedItems(true);
-    verifyItem(0, 19, "whatever");
-  }
-
-  public void testToggleNestedMember() {
-    configure("""
-                /**
-                 * class
-                 */
-                class C {
-                  /**
-                   * method
-                   */
-                  void m() {
-                    <caret>
                   }
-                }""", false);
-    verifyFoldingState();
-    toggleItem();
-    verifyFoldingState(27, 50);
+                  """, true);
+      verifyFoldingState(10, 20);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+      myFixture.type(' ');
+      myFixture.checkResultByText("""
+                          class C {
+                          /** doc */
+                           <caret>int a;
+                          }
+                          """);
+    });
   }
 
-  public void testExpandAll() {
-    boolean savedValue = CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
-    try {
-      CodeFoldingSettings.getInstance().COLLAPSE_METHODS = true;
+  @Test
+  public void testCommentModification() {
+    myFixture.runTest(() -> {
       configure("""
-                  /** class */
                   class C {
-                    void m() {
-                    }
-                  }""", true);
-      int methodBodyPos = getEditor().getDocument().getText().indexOf("{\n  }");
-      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
-      executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
-      assertNotNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
-      executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
-      assertNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
-    }
-    finally {
-      CodeFoldingSettings.getInstance().COLLAPSE_METHODS = savedValue;
-    }
+                    /** doc */
+                    int a;<caret>
+                  }
+                  """, false);
+      verifyFoldingState();
+      verifyItem(12, 22, null);
+      toggleItem();
+      verifyFoldingState(10, 22);
+      verifyItem(12, 22, "doc");
+      toggleItem();
+      verifyFoldingState();
+      verifyItem(12, 22, null);
+      myFixture.runWriteCommand(
+        () -> myFixture.getEditor().getDocument().setText(myFixture.getEditor().getDocument().getText().replace("doc", "another")));
+      toggleItem();
+      verifyFoldingState(10, 26);
+      verifyItem(12, 26, "another");
+    });
   }
 
-  public void testTypingAfterCollapse() {
-    configure("""
-                /**
-                 * doc<caret>
-                 */
-                class C {}""", false);
-    toggleItem();
-    type("  ");
-    checkResultByText("""
-                          <caret>/**
-                         * doc
-                         */
-                        class C {}""");
+  @Test
+  public void testMultipleAuthors() {
+    myFixture.runTest(() -> {
+      configure("""
+                  package some;
+
+                  /**
+                   * @author foo
+                   * @author bar
+                   */
+                  class C {}""", true);
+      verifyItem(15, 52,"<table class=\"sections\"><tbody><tr><td valign=\"top\" class=\"section\"><p>Author:</p></td>" +
+                        "<td valign=\"top\"><p>foo, bar</p></td></tr></tbody></table>");
+    });
   }
 
-  public void testAddedCommentIsNotCollapsed() {
-    configure("class C {}", true);
-    runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
-    updateRenderedItems(false);
-    verifyFoldingState();
-  }
-
-  public void testLineToYAndBackConversions() {
-    configure("""
-                class C {
+  @Test
+  public void testDocumentStart() {
+    myFixture.runTest(() -> {
+      configure("""
                   /**
                    * comment
                    */
-                  void m() {}
-                }""", true);
-    FoldRegion foldRegion = getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
-    assertInstanceOf(foldRegion, CustomFoldRegion.class);
-    CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
-    Point location = cfr.getLocation();
-    assertNotNull(location);
-    Rectangle rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
-    assertFalse(rendererBounds.isEmpty());
-
-    @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 2);
-    assertEquals(rendererBounds.y, p.first.intervalStart());
-    assertEquals(rendererBounds.y + rendererBounds.height, p.first.intervalEnd());
-    assertNull(p.second);
-
-    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), rendererBounds.y + rendererBounds.height / 2);
-    assertEquals(1, lineRange.intervalStart());
-    assertEquals(3, lineRange.intervalEnd());
+                  class C {}""", true);
+      verifyFoldingState(0, 18);
+    });
   }
 
+  @Test
+  public void testPackageInfo() {
+    myFixture.runTest(() -> {
+      EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+      myFixture.configureFromFileText("package-info.java",
+                            """
+                              /**
+                               * whatever
+                               */
+                              package some;""");
+      updateRenderedItems(true);
+      verifyItem(0, 19, "whatever");
+    });
+  }
+
+  @Test
+  public void testModuleInfo() {
+    myFixture.runTest(() -> {
+      EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+      myFixture.configureFromFileText("module-info.java",
+                            """
+                              /**
+                               * whatever
+                               */
+                              module some {}""");
+      updateRenderedItems(true);
+      verifyItem(0, 19, "whatever");
+    });
+  }
+
+  @Test
+  public void testToggleNestedMember() {
+    myFixture.runTest(() -> {
+      configure("""
+                  /**
+                   * class
+                   */
+                  class C {
+                    /**
+                     * method
+                     */
+                    void m() {
+                      <caret>
+                    }
+                  }""", false);
+      verifyFoldingState();
+      toggleItem();
+      verifyFoldingState(27, 50);
+    });
+  }
+
+  @Test
+  public void testExpandAll() {
+    myFixture.runTest(() -> {
+      boolean savedValue = CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
+      try {
+        CodeFoldingSettings.getInstance().COLLAPSE_METHODS = true;
+        configure("""
+                    /** class */
+                    class C {
+                      void m() {
+                      }
+                    }""", true);
+        int methodBodyPos = myFixture.getEditor().getDocument().getText().indexOf("{\n  }");
+        EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
+        myFixture.executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
+        assertNotNull(myFixture.getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
+        myFixture.executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
+        assertNull(myFixture.getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
+      }
+      finally {
+        CodeFoldingSettings.getInstance().COLLAPSE_METHODS = savedValue;
+      }
+    });
+  }
+
+  @Test
+  public void testTypingAfterCollapse() {
+    myFixture.runTest(() -> {
+      configure("""
+                  /**
+                   * doc<caret>
+                   */
+                  class C {}""", false);
+      toggleItem();
+      myFixture.type("  ");
+      myFixture.checkResultByText("""
+                            <caret>/**
+                           * doc
+                           */
+                          class C {}""");
+    });
+  }
+
+  @Test
+  public void testAddedCommentIsNotCollapsed() {
+    myFixture.runTest(() -> {
+      configure("class C {}", true);
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
+      updateRenderedItems(false);
+      verifyFoldingState();
+    });
+  }
+
+  @Test
+  public void testLineToYAndBackConversions() {
+    myFixture.runTest(() -> {
+      configure("""
+                  class C {
+                    /**
+                     * comment
+                     */
+                    void m() {}
+                  }""", true);
+      FoldRegion foldRegion = myFixture.getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
+      assertInstanceOf(CustomFoldRegion.class, foldRegion);
+      CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+      Point location = cfr.getLocation();
+      assertNotNull(location);
+      Rectangle rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
+      assertFalse(rendererBounds.isEmpty());
+
+      @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(myFixture.getEditor(), 2);
+      assertEquals(rendererBounds.y, p.first.intervalStart());
+      assertEquals(rendererBounds.y + rendererBounds.height, p.first.intervalEnd());
+      assertNull(p.second);
+
+      Interval lineRange = EditorUtil.yToLogicalLineRange(myFixture.getEditor(), rendererBounds.y + rendererBounds.height / 2);
+      assertEquals(1, lineRange.intervalStart());
+      assertEquals(3, lineRange.intervalEnd());
+    });
+  }
+
+  @Test
   public void testCommentAnnotationAfterDoc() {
-    configure("""
-                /**
-                 * doc
-                 */
-                <caret>@Deprecated
-                class C {}""", true);
-    executeAction(IdeActions.ACTION_COMMENT_LINE);
-    checkResultByText("""
-                        /**
-                         * doc
-                         */
-                        //@Deprecated
-                        class C {}""");
+    myFixture.runTest(() -> {
+      configure("""
+                  /**
+                   * doc
+                   */
+                  <caret>@Deprecated
+                  class C {}""", true);
+      myFixture.executeAction(IdeActions.ACTION_COMMENT_LINE);
+      myFixture.checkResultByText("""
+                          /**
+                           * doc
+                           */
+                          //@Deprecated
+                          class C {}""");
+    });
   }
 
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
-    init(text, JavaFileType.INSTANCE);
+    myFixture.init(text, JavaFileType.INSTANCE);
     updateRenderedItems(enableRendering);
   }
 
   private void updateRenderedItems(boolean collapseNewRegions) {
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
-    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(myFixture.getEditor(), myFixture.getFile());
+    DocRenderPassFactory.applyItemsToRender(myFixture.getEditor(), myFixture.getProject(), items, collapseNewRegions);
   }
 
   private void toggleItem() {
-    executeAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC);
+    myFixture.executeAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private void verifyItem(int startOffset, int endOffset, @Nullable String textInContent) {
-    DocRenderItem item = DocRenderItemManager.getInstance().getItemAroundOffset(getEditor(), startOffset);
-    assertNotNull("Item is not found at offset " + startOffset, item);
-    assertEquals("Unexpected item start offset", startOffset, item.getHighlighter().getStartOffset());
-    assertEquals("Unexpected item end offset", endOffset, item.getHighlighter().getEndOffset());
+    DocRenderItem item = DocRenderItemManager.getInstance().getItemAroundOffset(myFixture.getEditor(), startOffset);
+    assertNotNull(item, "Item is not found at offset " + startOffset);
+    assertEquals(startOffset, item.getHighlighter().getStartOffset(), "Unexpected item start offset");
+    assertEquals(endOffset, item.getHighlighter().getEndOffset(), "Unexpected item end offset");
     Object toCheck = item.getFoldRegion();
     if (textInContent == null) {
-      assertNull("Item in rendered state", toCheck);
+      assertNull(toCheck, "Item in rendered state");
     }
     else {
-      assertNotNull("Item not in rendered state", toCheck);
-      assertTrue("Unexpected rendered text: " + item.getTextToRender(), item.getTextToRender() != null && item.getTextToRender().contains(textInContent));
+      assertNotNull(toCheck, "Item not in rendered state");
+      assertTrue(item.getTextToRender() != null && item.getTextToRender().contains(textInContent), "Unexpected rendered text: " + item.getTextToRender());
     }
   }
 
   private void verifyFoldingState(int... collapsedRegionOffsets) {
     int expectedNumberOfCollapsedRegions = collapsedRegionOffsets.length / 2;
-    List<FoldRegion> foldRegions = ContainerUtil.filter(getEditor().getFoldingModel().getAllFoldRegions(), region -> !region.isExpanded());
-    assertEquals("Unexpected number of collapsed fold regions", expectedNumberOfCollapsedRegions, foldRegions.size());
+    List<FoldRegion> foldRegions =
+      ContainerUtil.filter(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), region -> !region.isExpanded());
+    assertEquals(expectedNumberOfCollapsedRegions, foldRegions.size(), "Unexpected number of collapsed fold regions");
     for (int i = 0; i < expectedNumberOfCollapsedRegions; i++) {
       FoldRegion region = foldRegions.get(i);
-      assertEquals("Unexpected region " + i + " start offset", collapsedRegionOffsets[i * 2], region.getStartOffset());
-      assertEquals("Unexpected region " + i + " end offset", collapsedRegionOffsets[i * 2 + 1], region.getEndOffset());
+      assertEquals(collapsedRegionOffsets[i * 2], region.getStartOffset(), "Unexpected region " + i + " start offset");
+      assertEquals(collapsedRegionOffsets[i * 2 + 1], region.getEndOffset(), "Unexpected region " + i + " end offset");
     }
   }
 }

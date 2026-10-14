@@ -23,14 +23,17 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.IslandsState;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 import java.awt.Font;
 
 
-@TestDataPath("$CONTENT_ROOT/testData/editor/painting/right")
+@TestDataPath("$PROJECT_ROOT/community/platform/platform-tests/testData/editor/painting/right")
+@TestApplication
 public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   private record SelectionState(boolean enabled, boolean islands) {}
 
@@ -49,128 +52,175 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
     IslandsState.Companion.setEnabled(state.islands(), false);
   }
 
-  @Override
-  protected void initText(@NotNull String fileText) {
-    super.initText(fileText);
-    ((EditorImpl)getEditor()).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
+  private void initText(@NotNull String fileText) {
+    myFixture.initText(fileText);
+    ((EditorImpl)myFixture.getEditor()).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
   }
 
-  public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
-    initText("foo");
-    addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
-    checkResult();
-  }
-
-  public void testBoxedHighlightingLastLinePartially() throws Exception {
-    initText("foo\nbar bar");
-    addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
-    checkResult();
-  }
-
-  public void testUpperHighlighterCanSetDefaultForegroundColor() throws Exception {
-    initText("foo");
-    addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
-    addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
-    checkResult();
-  }
-
-  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
-    initText("foo");
-    setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
-    addRangeHighlighter(0, 3, 0, null, Color.blue);
-    checkResult();
-  }
-
-  public void testEmptyBorderInEmptyDocument() throws Exception {
-    initText("");
-    addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
-    checkResult();
-  }
-
-  public void testPrefixWithEmptyText() throws Exception {
-    initText("");
-    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
-    checkResult();
-  }
-
-  public void testBorderAtLastLine() throws Exception {
-    initText("a\nbc");
-    addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
-    checkResult();
-  }
-
-  public void testFoldedRegionShownOnlyWithBorder() throws Exception {
-    initText("abc");
-    addCollapsedFoldRegion(0, 3, "...");
-    getEditor().getColorsScheme().setAttributes(
-      EditorColors.FOLDED_TEXT_ATTRIBUTES,
-      new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
-    );
-    checkResult();
-  }
-
-  public void testEraseMarker() throws Exception {
-    initText("abc");
-    setUniformEditorHighlighter(new TextAttributes(null, null, null, null, Font.BOLD));
-    addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
-    checkResult();
-  }
-
-  public void testInlayAtEmptyLine() throws Exception {
-    initText("\n");
-    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
-    checkResult();
-  }
-
-  public void testMultilineBorderWithInlays() throws Exception {
-    initText("abc\ndef");
-    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
-    addBorderHighlighter(0, 7, 0, Color.red);
-    checkResult();
-  }
-
-  public void testSelectionInsideLine() throws Exception {
-    var state = setNewSelectionEnabled(false);
-    try {
-      initText("first line\nsecond line");
-      getEditor().getSelectionModel().setSelection(6, 12);
+  @Test
+  public void testWholeLineHighlighterAtDocumentEnd() {
+    myFixture.runTest(() -> {
+      initText("foo");
+      addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
       checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
+    });
   }
 
-  public void testSelectionInsideLineNewSelection() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      initText("first longer line\nsecond line");
-      getEditor().getSelectionModel().setSelection(13, 19);
+  @Test
+  public void testBoxedHighlightingLastLinePartially() {
+    myFixture.runTest(() -> {
+      initText("foo\nbar bar");
+      addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
       checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
+    });
   }
 
-  public void testSelectionInsideLineNewSelection2() throws Exception {
-    var state = setNewSelectionEnabled(true);
-    try {
-      initText("first longer line\nsecond line");
-      getEditor().getSelectionModel().setSelection(18, 21);
+  @Test
+  public void testUpperHighlighterCanSetDefaultForegroundColor() {
+    myFixture.runTest(() -> {
+      initText("foo");
+      addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
+      addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
       checkResult();
-    } finally {
-      restoreSelectionState(state);
-    }
+    });
   }
 
-  public void testCaretAfterEmptyLine() throws Exception {
-    initText("\nsecond line<caret>");
-    checkResult();
+  @Test
+  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() {
+    myFixture.runTest(() -> {
+      initText("foo");
+      setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
+      addRangeHighlighter(0, 3, 0, null, Color.blue);
+      checkResult();
+    });
   }
 
-  public void testCaretOnEmptyLine() throws Exception {
-    initText("<caret>\n    second line");
-    checkResult();
+  @Test
+  public void testEmptyBorderInEmptyDocument() {
+    myFixture.runTest(() -> {
+      initText("");
+      addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testPrefixWithEmptyText() {
+    myFixture.runTest(() -> {
+      initText("");
+      ((EditorEx)myFixture.getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testBorderAtLastLine() {
+    myFixture.runTest(() -> {
+      initText("a\nbc");
+      addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testFoldedRegionShownOnlyWithBorder() {
+    myFixture.runTest(() -> {
+      initText("abc");
+      myFixture.addCollapsedFoldRegion(0, 3, "...");
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        EditorColors.FOLDED_TEXT_ATTRIBUTES,
+        new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
+      );
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testEraseMarker() {
+    myFixture.runTest(() -> {
+      initText("abc");
+      setUniformEditorHighlighter(new TextAttributes(null, null, null, null, Font.BOLD));
+      addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testInlayAtEmptyLine() {
+    myFixture.runTest(() -> {
+      initText("\n");
+      myFixture.getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testMultilineBorderWithInlays() {
+    myFixture.runTest(() -> {
+      initText("abc\ndef");
+      myFixture.getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+      myFixture.getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
+      addBorderHighlighter(0, 7, 0, Color.red);
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testSelectionInsideLine() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(false);
+      try {
+        initText("first line\nsecond line");
+        myFixture.getEditor().getSelectionModel().setSelection(6, 12);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testSelectionInsideLineNewSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("first longer line\nsecond line");
+        myFixture.getEditor().getSelectionModel().setSelection(13, 19);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testSelectionInsideLineNewSelection2() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("first longer line\nsecond line");
+        myFixture.getEditor().getSelectionModel().setSelection(18, 21);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testCaretAfterEmptyLine() {
+    myFixture.runTest(() -> {
+      initText("\nsecond line<caret>");
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testCaretOnEmptyLine() {
+    myFixture.runTest(() -> {
+      initText("<caret>\n    second line");
+      checkResult();
+    });
   }
 
   @NotNull

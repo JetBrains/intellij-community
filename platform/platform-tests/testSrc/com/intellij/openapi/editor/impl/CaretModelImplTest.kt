@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CaretActionListener
 import com.intellij.openapi.editor.CaretModel
@@ -14,15 +13,34 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorModelFixture.Companion.SURROGATE_PAIR
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.callUnderOwnClassLoader
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Color
 import kotlin.test.assertFailsWith
 
-class CaretModelImplTest : AbstractEditorTest() {
-  fun `test a removed caret keeps no class loader of the code that removed it`() {
+@TestApplication
+class CaretModelImplTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun `test a removed caret keeps no class loader of the code that removed it`(): Unit = fixture.runTest {
     initText("ab\ncd")
     val caret = caretModel.addCaret(VisualPosition(1, 0))!!
 
@@ -40,7 +58,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertTrue(failure.cause!!.stackTrace.any { it.methodName == "removeCaret" })
   }
 
-  fun `test primary caret exposes editor model position and selection contracts`() {
+  @Test
+  fun `test primary caret exposes editor model position and selection contracts`(): Unit = fixture.runTest {
     initText("ab\ncd")
 
     val caret = primaryCaret
@@ -73,7 +92,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertFalse(caret.isAtBidiRunBoundary)
   }
 
-  fun `test caret row text attributes are cached and reinitialized`() {
+  @Test
+  fun `test caret row text attributes are cached and reinitialized`(): Unit = fixture.runTest {
     initText("abc")
 
     val attributes = caretModel.textAttributes
@@ -85,8 +105,9 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertTrue(attributes !== reinitializedAttributes)
   }
 
-  fun `test max caret count is lower bounded and prevents adding more carets`() {
-    Registry.get("editor.max.caret.count").setValue(0, rootDisposable)
+  @Test
+  fun `test max caret count is lower bounded and prevents adding more carets`(): Unit = fixture.runTest {
+    Registry.get("editor.max.caret.count").setValue(0, testRootDisposable)
     initText("abc")
 
     assertEquals(1, caretModel.maxCaretCount)
@@ -94,7 +115,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(1, caretModel.caretCount)
   }
 
-  fun `test add caret by visual and logical position respects primary duplicate selection and sorting contracts`() {
+  @Test
+  fun `test add caret by visual and logical position respects primary duplicate selection and sorting contracts`(): Unit = fixture.runTest {
     initText("abc\ndef\nghi")
 
     primaryCaret.setSelection(1, 3)
@@ -115,7 +137,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertNull(caretModel.addCaret(VisualPosition(1, 2), true))
   }
 
-  fun `test removing carets updates validity primary caret and listener registration`() {
+  @Test
+  fun `test removing carets updates validity primary caret and listener registration`(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     data class EventPosition(val line: Int, val column: Int)
@@ -162,7 +185,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     )
   }
 
-  fun `test removing foreign caret does not affect either caret model`() {
+  @Test
+  fun `test removing foreign caret does not affect either caret model`(): Unit = fixture.runTest {
     initText("abc")
 
     val editorFactory = EditorFactory.getInstance()
@@ -182,7 +206,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     }
   }
 
-  fun `test remove secondary carets leaves primary caret valid`() {
+  @Test
+  fun `test remove secondary carets leaves primary caret valid`(): Unit = fixture.runTest {
     initText("abc\ndef\nghi")
 
     val firstSecondaryCaret = caretModel.addCaret(VisualPosition(0, 2), false)!!
@@ -197,8 +222,9 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(listOf(VisualPosition(2, 1)), caretModel.allCarets.map { it.visualPosition })
   }
 
-  fun `test set carets and selections creates trims preserves and restores caret state`() {
-    Registry.get("editor.max.caret.count").setValue(2, rootDisposable)
+  @Test
+  fun `test set carets and selections creates trims preserves and restores caret state`(): Unit = fixture.runTest {
+    Registry.get("editor.max.caret.count").setValue(2, testRootDisposable)
     initText("abc\ndef\nghi")
 
     caretModel.setCaretsAndSelections(
@@ -236,7 +262,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     }
   }
 
-  fun `test carets and selections restore visual position around inline inlays`() {
+  @Test
+  fun `test carets and selections restore visual position around inline inlays`(): Unit = fixture.runTest {
     initText("ab")
 
     primaryCaret.moveToOffset(1)
@@ -259,7 +286,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     }
   }
 
-  fun `test run for each caret exposes current caret order listeners disposal and recursion guard`() {
+  @Test
+  fun `test run for each caret exposes current caret order listeners disposal and recursion guard`(): Unit = fixture.runTest {
     initText("abc\ndef\nghi")
     caretModel.setCaretsAndSelections(
       listOf(
@@ -272,7 +300,7 @@ class CaretModelImplTest : AbstractEditorTest() {
 
     val actionEvents = mutableListOf<String>()
     val disposable = Disposer.newDisposable()
-    Disposer.register(rootDisposable, disposable)
+    Disposer.register(testRootDisposable, disposable)
     caretModel.addCaretActionListener(object : CaretActionListener {
       override fun beforeAllCaretsAction() {
         actionEvents += "before"
@@ -313,7 +341,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(eventsBeforeDisposal, actionEvents)
   }
 
-  fun `test run for each caret iterates over initial snapshot when carets are added`() {
+  @Test
+  fun `test run for each caret iterates over initial snapshot when carets are added`(): Unit = fixture.runTest {
     initText("a\nb\nc")
 
     assertNotNull(caretModel.addCaret(VisualPosition(1, 0), false))
@@ -336,7 +365,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     )
   }
 
-  fun `test batch caret operation postpones merging until operation is complete`() {
+  @Test
+  fun `test batch caret operation postpones merging until operation is complete`(): Unit = fixture.runTest {
     initText("abc\ndef")
     val originalCaret = primaryCaret
     val secondaryCaret = caretModel.addCaret(VisualPosition(1, 1), true)!!
@@ -352,7 +382,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(0, caretModel.primaryCaret.offset)
   }
 
-  fun `test move to offset distinguishes soft wrap sides`() {
+  @Test
+  fun `test move to offset distinguishes soft wrap sides`(): Unit = fixture.runTest {
     initText("abcdefghi")
     configureSoftWraps(4, false)
 
@@ -365,7 +396,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(VisualPosition(0, 4), primaryCaret.visualPosition)
   }
 
-  fun `test move to logical and visual positions clamp and support virtual space`() {
+  @Test
+  fun `test move to logical and visual positions clamp and support virtual space`(): Unit = fixture.runTest {
     initText("abc\nx")
 
     primaryCaret.moveToVisualPosition(VisualPosition(10, 50))
@@ -388,7 +420,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertTrue(caretImpl.isInVirtualSpace)
   }
 
-  fun `test move caret relatively moves across lines extends selection and clears selection`() {
+  @Test
+  fun `test move caret relatively moves across lines extends selection and clears selection`(): Unit = fixture.runTest {
     initText("ab\ncdef")
 
     primaryCaret.moveToOffset(1)
@@ -408,7 +441,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(1, primaryCaret.offset)
   }
 
-  fun `test visual aware reversed selection keeps lead position when caret is not on selection boundary`() {
+  @Test
+  fun `test visual aware reversed selection keeps lead position when caret is not on selection boundary`(): Unit = fixture.runTest {
     initText("abcdef")
 
     primaryCaret.setSelection(VisualPosition(0, 5), 5, VisualPosition(0, 1), 1, false)
@@ -417,7 +451,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(VisualPosition(0, 5), primaryCaret.leadSelectionPosition)
   }
 
-  fun `test moving into collapsed fold expands it and positions caret inside`() {
+  @Test
+  fun `test moving into collapsed fold expands it and positions caret inside`(): Unit = fixture.runTest {
     initText("abcdef")
     val foldRegion = addCollapsedFoldRegion(1, 5, "...")
 
@@ -428,7 +463,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(LogicalPosition(0, 3), primaryCaret.logicalPosition)
   }
 
-  fun `test selection overloads expose offsets visual positions ranges lead and selected text`() {
+  @Test
+  fun `test selection overloads expose offsets visual positions ranges lead and selected text`(): Unit = fixture.runTest {
     initText("abcdef")
 
     primaryCaret.moveToOffset(4)
@@ -468,7 +504,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(TextRange.create(4, 4), primaryCaret.selectionRange)
   }
 
-  fun `test selection expands to collapsed fold boundaries`() {
+  @Test
+  fun `test selection expands to collapsed fold boundaries`(): Unit = fixture.runTest {
     initText("abcdef")
     val foldRegion = addCollapsedFoldRegion(1, 5, "...")
 
@@ -480,7 +517,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals("bcde", primaryCaret.selectedText)
   }
 
-  fun `test visual aware selection can represent virtual selection in column mode`() {
+  @Test
+  fun `test visual aware selection can represent virtual selection in column mode`(): Unit = fixture.runTest {
     initText("abc")
     (editor as EditorEx).setColumnMode(true)
 
@@ -496,7 +534,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals("   ", primaryCaret.selectedText)
   }
 
-  fun `test remove selection respects sticky selection mode`() {
+  @Test
+  fun `test remove selection respects sticky selection mode`(): Unit = fixture.runTest {
     initText("abcdef")
 
     primaryCaret.moveToOffset(4)
@@ -510,7 +549,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertTrue(primaryCaret.hasSelection())
   }
 
-  fun `test select line and word at caret update current selection`() {
+  @Test
+  fun `test select line and word at caret update current selection`(): Unit = fixture.runTest {
     initText("one two\nthree")
 
     primaryCaret.moveToOffset(5)
@@ -522,7 +562,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals("one two\n", primaryCaret.selectedText)
   }
 
-  fun `test select word at caret honors camel humps parameter`() {
+  @Test
+  fun `test select word at caret honors camel humps parameter`(): Unit = fixture.runTest {
     val editorSettings = EditorSettingsExternalizable.getInstance()
     val oldCamelWords = editorSettings.isCamelWords
     try {
@@ -542,7 +583,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     }
   }
 
-  fun `test clone copies caret column and selection and returns null outside document or at occupied target`() {
+  @Test
+  fun `test clone copies caret column and selection and returns null outside document or at occupied target`(): Unit = fixture.runTest {
     initText("abc\ndef\nghi")
 
     val original = primaryCaret
@@ -567,15 +609,17 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertNull(above.clone(false))
   }
 
-  fun `test clone returns null when maximum caret count is reached`() {
-    Registry.get("editor.max.caret.count").setValue(1, rootDisposable)
+  @Test
+  fun `test clone returns null when maximum caret count is reached`(): Unit = fixture.runTest {
+    Registry.get("editor.max.caret.count").setValue(1, testRootDisposable)
     initText("a\nb")
 
     assertNull(primaryCaret.clone(false))
     assertEquals(1, caretModel.caretCount)
   }
 
-  fun `test visual attributes can be overridden and reset to default`() {
+  @Test
+  fun `test visual attributes can be overridden and reset to default`(): Unit = fixture.runTest {
     initText("abc")
 
     assertSame(CaretVisualAttributes.getDefault(), primaryCaret.visualAttributes)
@@ -588,7 +632,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertSame(CaretVisualAttributes.getDefault(), primaryCaret.visualAttributes)
   }
 
-  fun `test document updates shift caret without explicit movement events`() {
+  @Test
+  fun `test document updates shift caret without explicit movement events`(): Unit = fixture.runTest {
     initText("ab<caret>cd")
 
     var movementEvents = 0
@@ -596,7 +641,7 @@ class CaretModelImplTest : AbstractEditorTest() {
       override fun caretPositionChanged(event: CaretEvent) {
         movementEvents++
       }
-    }, rootDisposable)
+    }, testRootDisposable)
 
     runWriteCommand {
       editor.document.insertString(0, "x")
@@ -608,7 +653,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertTrue(primaryCaret.isUpToDate)
   }
 
-  fun `test caret never stays inside surrogate pair`() {
+  @Test
+  fun `test caret never stays inside surrogate pair`(): Unit = fixture.runTest {
     initText("a${SURROGATE_PAIR}b")
 
     primaryCaret.moveToOffset(2)
@@ -618,7 +664,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertFalse(com.intellij.util.DocumentUtil.isInsideSurrogatePair(editor.document, primaryCaret.selectionEnd))
   }
 
-  fun `test inline inlay add and remove recalculates visual position at caret offset`() {
+  @Test
+  fun `test inline inlay add and remove recalculates visual position at caret offset`(): Unit = fixture.runTest {
     initText("ab")
 
     primaryCaret.moveToOffset(1)
@@ -633,7 +680,8 @@ class CaretModelImplTest : AbstractEditorTest() {
     assertEquals(VisualPosition(0, 1), primaryCaret.visualPosition)
   }
 
-  fun `test explicit visual position update keeps logical caret and refreshes soft wrap visual position`() {
+  @Test
+  fun `test explicit visual position update keeps logical caret and refreshes soft wrap visual position`(): Unit = fixture.runTest {
     initText("abcdefghi")
     primaryCaret.moveToOffset(editor.document.textLength)
 
@@ -646,7 +694,7 @@ class CaretModelImplTest : AbstractEditorTest() {
   }
 
   private val caretModel: CaretModel
-    get() = editor.caretModel
+    get() = fixture.editor.caretModel
 
   private val caretModelImpl: CaretModelImpl
     get() = caretModel as CaretModelImpl
@@ -656,7 +704,4 @@ class CaretModelImplTest : AbstractEditorTest() {
 
   private val caretImpl: CaretImpl
     get() = primaryCaret as CaretImpl
-
-  private val rootDisposable: Disposable
-    get() = getTestRootDisposable()
 }

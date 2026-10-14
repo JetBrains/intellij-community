@@ -1,52 +1,74 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-class RelativeLineHelperTests : AbstractEditorTest() {
-  fun `test relative line above caret`() {
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
+@TestApplication
+class RelativeLineHelperTests {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun `test relative line above caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     checkRelativeLine(-1, 2, 1)
   }
 
-  fun `test relative line below caret`() {
+  @Test
+  fun `test relative line below caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     checkRelativeLine(1, 2, 3)
   }
 
-  fun `test relative line at caret`() {
+  @Test
+  fun `test relative line at caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     checkRelativeLine(0, 2, 2)
   }
 
-  fun `test hybrid line at caret`() {
+  @Test
+  fun `test hybrid line at caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     assertEquals(3, RelativeLineHelper.getHybridLine(editor, 2, 2))
   }
 
-  fun `test relative line above caret in fold`() {
+  @Test
+  fun `test relative line above caret in fold`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     checkRelativeLine(-1, 2, 1)
   }
 
-  fun `test relative line below caret in fold`() {
+  @Test
+  fun `test relative line below caret in fold`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     checkRelativeLine(1, 2, 4)
   }
 
-  fun `test relative line at caret in fold`() {
+  @Test
+  fun `test relative line at caret in fold`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     checkRelativeLine(0, 2, 2)
   }
 
-  fun `test hybrid line at caret in fold`() {
+  @Test
+  fun `test hybrid line at caret in fold`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     assertEquals(3, RelativeLineHelper.getHybridLine(editor, 2, 2))
   }
 
-  fun `test line number for fold below caret`() {
+  @Test
+  fun `test line number for fold below caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     checkRelativeLine(1, 1, 2)
@@ -55,7 +77,8 @@ class RelativeLineHelperTests : AbstractEditorTest() {
     checkRelativeLine(0, 1, 1)
   }
 
-  fun `test line number for fold above caret`() {
+  @Test
+  fun `test line number for fold above caret`(): Unit = fixture.runTest {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
     checkRelativeLine(-2, 4, 1)
@@ -64,7 +87,8 @@ class RelativeLineHelperTests : AbstractEditorTest() {
     checkRelativeLine(0, 4, 4)
   }
 
-  fun `test fold inside line`() {
+  @Test
+  fun `test fold inside line`(): Unit = fixture.runTest {
     val text = """
       line 0
       line 1
@@ -104,21 +128,21 @@ class RelativeLineHelperTests : AbstractEditorTest() {
    * @param endLine is inclusive
    */
   private fun foldLines(startLine: Int, endLine: Int) {
-    val startOffset = editor.document.getLineStartOffset(startLine)
-    val endOffset = editor.document.getLineEndOffset(endLine)
+    val startOffset = fixture.editor.document.getLineStartOffset(startLine)
+    val endOffset = fixture.editor.document.getLineEndOffset(endLine)
     foldRegion(startOffset, endOffset)
   }
 
   private fun foldRegion(startOffset: Int, endOffset: Int) {
-    val foldingModel = editor.foldingModel
+    val foldingModel = fixture.editor.foldingModel
     foldingModel.runBatchFoldingOperation {
-      val foldRegion = editor.foldingModel.addFoldRegion(startOffset, endOffset, "...")
+      val foldRegion = fixture.editor.foldingModel.addFoldRegion(startOffset, endOffset, "...")
       foldRegion?.isExpanded = false
     }
   }
 
   private fun checkRelativeLine(expectedRelativeLine: Int, caretLine: Int, logicalLine: Int) {
-    assertEquals(expectedRelativeLine, RelativeLineHelper.getRelativeLine(editor, caretLine, logicalLine))
-    assertEquals(logicalLine, RelativeLineHelper.getLogicalLine(editor, caretLine, expectedRelativeLine))
+    assertEquals(expectedRelativeLine, RelativeLineHelper.getRelativeLine(fixture.editor, caretLine, logicalLine))
+    assertEquals(logicalLine, RelativeLineHelper.getLogicalLine(fixture.editor, caretLine, expectedRelativeLine))
   }
 }

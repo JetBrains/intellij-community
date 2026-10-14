@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -12,11 +13,15 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,254 +30,317 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.TestLoggerKt.assertErrorLogged;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class FoldingTest extends AbstractEditorTest {
+@TestApplication
+public class FoldingTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
   private FoldingModelEx myModel;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    init("I don't know what you mean by `glory,'\" Alice said. " +
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+    myFixture.init("I don't know what you mean by `glory,'\" Alice said. " +
       "Humpty Dumpty smiled contemptuously. \"Of course you don't -- till I tell you. I meant `there's a nice knock-down argument for you!'" +
       "But glory doesn't mean `a nice knock-down argument,'\" Alice objected." +
       "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
       "The question is,\" said Alice, \"whether you can make words mean so many different things." +
       "The question is,\" said Humpty Dumpty, \"which is to be master -- that's all.",
          PlainTextFileType.INSTANCE);
-    myModel = (FoldingModelEx)getEditor().getFoldingModel();
+    myModel = (FoldingModelEx)myFixture.getEditor().getFoldingModel();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myModel = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testCleanupInvalidRegions() {
-    myModel.runBatchFoldingOperation(() -> {
-      myModel.addFoldRegion(0, 4, "/*...*/");
-      myModel.addFoldRegion(5, 9, "/*...*/");
+    myFixture.runTest(() -> {
+      myModel.runBatchFoldingOperation(() -> {
+        myModel.addFoldRegion(0, 4, "/*...*/");
+        myModel.addFoldRegion(5, 9, "/*...*/");
+      });
+      assertThat(myModel.getAllFoldRegions()).hasSize(2);
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 5));
+      assertThat(myModel.getAllFoldRegions()).hasSize(1);
     });
-    assertSize(2, myModel.getAllFoldRegions());
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 5));
-    assertSize(1, myModel.getAllFoldRegions());
   }
 
+  @Test
   public void testIntersects () {
-    myModel.runBatchFoldingOperation(() -> {
-      FoldRegion region = myModel.addFoldRegion(5, 10, ".");
-      assertNotNull(region);
-      region = myModel.addFoldRegion(7, 11, ".");
-      assertNull(region);
-      region = myModel.addFoldRegion(20, 30, ".");
-      assertNotNull(region);
-      region = myModel.addFoldRegion(9, 12, ".");
-      assertNull(region);
-      region = myModel.addFoldRegion(7, 10, ".");
-      assertNotNull(region);
-      region = myModel.addFoldRegion(7, 10, ".");
-      assertNull(region);
-      region = myModel.addFoldRegion(5, 30, ".");
-      assertNotNull(region);
+    myFixture.runTest(() -> {
+      myModel.runBatchFoldingOperation(() -> {
+        FoldRegion region = myModel.addFoldRegion(5, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(7, 11, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(20, 30, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(9, 12, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(7, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(7, 10, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(5, 30, ".");
+        assertNotNull(region);
+      });
     });
   }
 
+  @Test
   public void testIntersectsWithRegionFarInStorageOrder() {
-    myModel.runBatchFoldingOperation(() -> {
-      FoldRegion region = myModel.addFoldRegion(0, 10, ".");
-      assertNotNull(region);
-      region = myModel.addFoldRegion(1, 5, ".");
-      assertNotNull(region);
-      region = myModel.addFoldRegion(6, 11, ".");
-      assertNull(region);
+    myFixture.runTest(() -> {
+      myModel.runBatchFoldingOperation(() -> {
+        FoldRegion region = myModel.addFoldRegion(0, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(1, 5, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(6, 11, ".");
+        assertNull(region);
+      });
     });
   }
 
+  @Test
   public void testAddEmptyRegion() {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    assertErrorLogged(Throwable.class, () -> {
-      FoldRegion region = null;
-      try {
-        region = myModel.addFoldRegion(5, 5, "...");
-      }
-      catch (AssertionError ignored) {
-      }
-      assertNull(region);
+    myFixture.runTest(() -> {
+      DefaultLogger.disableStderrDumping(myFixture.getTestRootDisposable());
+      assertErrorLogged(Throwable.class, () -> {
+        FoldRegion region = null;
+        try {
+          region = myModel.addFoldRegion(5, 5, "...");
+        }
+        catch (AssertionError ignored) {
+        }
+        assertNull(region);
+      });
     });
   }
 
+  @Test
   public void testCollapsedRegionQueries() {
-    addCollapsedFoldRegion(5, 7, "...");
-    FoldRegion[] regions = myModel.getAllFoldRegions();
-    assertEquals(1, regions.length);
-    FoldRegion region = regions[0];
-    assertNotNull(region);
+    myFixture.runTest(() -> {
+      myFixture.addCollapsedFoldRegion(5, 7, "...");
+      FoldRegion[] regions = myModel.getAllFoldRegions();
+      assertEquals(1, regions.length);
+      FoldRegion region = regions[0];
+      assertNotNull(region);
 
-    assertFalse(myModel.isOffsetCollapsed(4));
-    assertTrue(myModel.isOffsetCollapsed(5));
-    assertTrue(myModel.isOffsetCollapsed(6));
-    assertFalse(myModel.isOffsetCollapsed(7));
-    assertFalse(myModel.isOffsetCollapsed(8));
+      assertFalse(myModel.isOffsetCollapsed(4));
+      assertTrue(myModel.isOffsetCollapsed(5));
+      assertTrue(myModel.isOffsetCollapsed(6));
+      assertFalse(myModel.isOffsetCollapsed(7));
+      assertFalse(myModel.isOffsetCollapsed(8));
 
-    assertNull(myModel.getCollapsedRegionAtOffset(4));
-    assertSame(region, myModel.getCollapsedRegionAtOffset(5));
-    assertSame(region, myModel.getCollapsedRegionAtOffset(6));
-    assertNull(myModel.getCollapsedRegionAtOffset(7));
-    assertNull(myModel.getCollapsedRegionAtOffset(8));
+      assertNull(myModel.getCollapsedRegionAtOffset(4));
+      assertSame(region, myModel.getCollapsedRegionAtOffset(5));
+      assertSame(region, myModel.getCollapsedRegionAtOffset(6));
+      assertNull(myModel.getCollapsedRegionAtOffset(7));
+      assertNull(myModel.getCollapsedRegionAtOffset(8));
+    });
   }
 
+  @Test
   public void testAdjacentRegions() {
-    addCollapsedFoldRegion(5, 7, "AA");
-    assertFalse(myModel.isOffsetCollapsed(4));
-    assertTrue(myModel.isOffsetCollapsed(5));
-    assertTrue(myModel.isOffsetCollapsed(6));
-    assertFalse(myModel.isOffsetCollapsed(7));
-    assertFalse(myModel.isOffsetCollapsed(8));
-    assertFalse(myModel.isOffsetCollapsed(10));
-    assertFalse(myModel.isOffsetCollapsed(11));
+    myFixture.runTest(() -> {
+      myFixture.addCollapsedFoldRegion(5, 7, "AA");
+      assertFalse(myModel.isOffsetCollapsed(4));
+      assertTrue(myModel.isOffsetCollapsed(5));
+      assertTrue(myModel.isOffsetCollapsed(6));
+      assertFalse(myModel.isOffsetCollapsed(7));
+      assertFalse(myModel.isOffsetCollapsed(8));
+      assertFalse(myModel.isOffsetCollapsed(10));
+      assertFalse(myModel.isOffsetCollapsed(11));
 
-    addCollapsedFoldRegion(7, 10, "BB");
-    FoldRegion[] regions = myModel.getAllFoldRegions();
-    assertEquals(2, regions.length);
-    FoldRegion region1 = regions[0];
-    assertNotNull(region1);
-    FoldRegion region2 = regions[1];
-    assertNotNull(region2);
+      myFixture.addCollapsedFoldRegion(7, 10, "BB");
+      FoldRegion[] regions = myModel.getAllFoldRegions();
+      assertEquals(2, regions.length);
+      FoldRegion region1 = regions[0];
+      assertNotNull(region1);
+      FoldRegion region2 = regions[1];
+      assertNotNull(region2);
 
-    assertFalse(myModel.isOffsetCollapsed(4));
-    assertTrue(myModel.isOffsetCollapsed(5));
-    assertTrue(myModel.isOffsetCollapsed(6));
-    assertTrue(myModel.isOffsetCollapsed(7));
-    assertTrue(myModel.isOffsetCollapsed(8));
-    assertFalse(myModel.isOffsetCollapsed(10));
-    assertFalse(myModel.isOffsetCollapsed(11));
+      assertFalse(myModel.isOffsetCollapsed(4));
+      assertTrue(myModel.isOffsetCollapsed(5));
+      assertTrue(myModel.isOffsetCollapsed(6));
+      assertTrue(myModel.isOffsetCollapsed(7));
+      assertTrue(myModel.isOffsetCollapsed(8));
+      assertFalse(myModel.isOffsetCollapsed(10));
+      assertFalse(myModel.isOffsetCollapsed(11));
 
-    assertNull(myModel.getCollapsedRegionAtOffset(4));
-    assertSame(region1, myModel.getCollapsedRegionAtOffset(5));
-    assertSame(region1, myModel.getCollapsedRegionAtOffset(6));
-    assertSame(region2, myModel.getCollapsedRegionAtOffset(7));
-    assertSame(region2, myModel.getCollapsedRegionAtOffset(8));
-    assertNull(myModel.getCollapsedRegionAtOffset(10));
-    assertNull(myModel.getCollapsedRegionAtOffset(11));
+      assertNull(myModel.getCollapsedRegionAtOffset(4));
+      assertSame(region1, myModel.getCollapsedRegionAtOffset(5));
+      assertSame(region1, myModel.getCollapsedRegionAtOffset(6));
+      assertSame(region2, myModel.getCollapsedRegionAtOffset(7));
+      assertSame(region2, myModel.getCollapsedRegionAtOffset(8));
+      assertNull(myModel.getCollapsedRegionAtOffset(10));
+      assertNull(myModel.getCollapsedRegionAtOffset(11));
+    });
   }
 
+  @Test
   public void testTopLevel() {
-    FoldRegion region = addCollapsedFoldRegion(5, 15, "...");
-    addCollapsedFoldRegion(10, 12, "???");
+    myFixture.runTest(() -> {
+      FoldRegion region = myFixture.addCollapsedFoldRegion(5, 15, "...");
+      myFixture.addCollapsedFoldRegion(10, 12, "???");
 
-    FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
-    Assert.assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
+      FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
+      assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
+    });
   }
 
+  @Test
   public void testLastCollapsedRegionBefore() {
-    addCollapsedFoldRegion(1, 3, "...");
-    addCollapsedFoldRegion(5, 6, "...");
+    myFixture.runTest(() -> {
+      myFixture.addCollapsedFoldRegion(1, 3, "...");
+      myFixture.addCollapsedFoldRegion(5, 6, "...");
 
-    assertEquals(-1, myModel.getLastCollapsedRegionBefore(0));
-    assertEquals(-1, myModel.getLastCollapsedRegionBefore(1));
-    assertEquals(-1, myModel.getLastCollapsedRegionBefore(2));
-    assertEquals(0, myModel.getLastCollapsedRegionBefore(3));
-    assertEquals(0, myModel.getLastCollapsedRegionBefore(4));
-    assertEquals(0, myModel.getLastCollapsedRegionBefore(5));
-    assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
-    assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
+      assertEquals(-1, myModel.getLastCollapsedRegionBefore(0));
+      assertEquals(-1, myModel.getLastCollapsedRegionBefore(1));
+      assertEquals(-1, myModel.getLastCollapsedRegionBefore(2));
+      assertEquals(0, myModel.getLastCollapsedRegionBefore(3));
+      assertEquals(0, myModel.getLastCollapsedRegionBefore(4));
+      assertEquals(0, myModel.getLastCollapsedRegionBefore(5));
+      assertEquals(1, myModel.getLastCollapsedRegionBefore(6));
+      assertEquals(1, myModel.getLastCollapsedRegionBefore(7));
+    });
   }
 
+  @Test
   public void testSelectionIsRemovedWhenInterruptedByFolding() {
-    getEditor().getSelectionModel().setSelection(0, 5);
-    addCollapsedFoldRegion(3, 6, "...");
+    myFixture.runTest(() -> {
+      myFixture.getEditor().getSelectionModel().setSelection(0, 5);
+      myFixture.addCollapsedFoldRegion(3, 6, "...");
 
-    assertFalse(getEditor().getSelectionModel().hasSelection());
+      assertFalse(myFixture.getEditor().getSelectionModel().hasSelection());
+    });
   }
 
+  @Test
   public void testModelRemainsConsistentOnTextRemoval() {
-    addCollapsedFoldRegion(0, 10, "...");
-    addCollapsedFoldRegion(1, 9, "...");
+    myFixture.runTest(() -> {
+      myFixture.addCollapsedFoldRegion(0, 10, "...");
+      myFixture.addCollapsedFoldRegion(1, 9, "...");
 
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 1));
 
-    addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
+      myFixture.addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
 
-    assertTrue(myModel.isOffsetCollapsed(5));
+      assertTrue(myModel.isOffsetCollapsed(5));
+    });
   }
 
+  @Test
   public void testAmongIdenticalRegionsExpandedOnesShouldBeKilledFirst() {
-    FoldRegion c = addCollapsedFoldRegion(0, 10, "...");
-    FoldRegion e = addFoldRegion(1, 10, "...");
+    myFixture.runTest(() -> {
+      FoldRegion c = myFixture.addCollapsedFoldRegion(0, 10, "...");
+      FoldRegion e = myFixture.addFoldRegion(1, 10, "...");
 
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 1));
 
-    assertFalse(e.isValid());
-    assertTrue(c.isValid());
-    FoldRegion survivor = assertOneElement(myModel.getAllFoldRegions());
-    assertSame(c, survivor);
+      assertFalse(e.isValid());
+      assertTrue(c.isValid());
+      FoldRegion[] survivors = myModel.getAllFoldRegions();
+      assertThat(survivors).hasSize(1);
+      FoldRegion survivor = survivors[0];
+      assertSame(c, survivor);
+    });
   }
 
+  @Test
   public void testAmongIdenticalRegionsExpandedOnesShouldBeKilledFirst2() {
-    FoldRegion e = addFoldRegion(0, 10, "...");
-    FoldRegion c = addCollapsedFoldRegion(1, 10, "...");
+    myFixture.runTest(() -> {
+      FoldRegion e = myFixture.addFoldRegion(0, 10, "...");
+      FoldRegion c = myFixture.addCollapsedFoldRegion(1, 10, "...");
 
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 1));
 
-    assertFalse(e.isValid());
-    assertTrue(c.isValid());
-    FoldRegion survivor = assertOneElement(myModel.getAllFoldRegions());
-    assertSame(c, survivor);
+      assertFalse(e.isValid());
+      assertTrue(c.isValid());
+      FoldRegion[] survivors = myModel.getAllFoldRegions();
+      assertThat(survivors).hasSize(1);
+      FoldRegion survivor = survivors[0];
+      assertSame(c, survivor);
+    });
   }
 
+  @Test
   public void testIdenticalRegionsAreRemoved() {
-    addFoldRegion(0, 5, "...");
-    addFoldRegion(0, 4, "...");
-    assertNumberOfValidFoldRegions(2);
+    myFixture.runTest(() -> {
+      myFixture.addFoldRegion(0, 5, "...");
+      myFixture.addFoldRegion(0, 4, "...");
+      assertNumberOfValidFoldRegions(2);
 
-    runWriteCommand(() -> getEditor().getDocument().deleteString(4, 5));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(4, 5));
 
 
-    assertNumberOfValidFoldRegions(1);
+      assertNumberOfValidFoldRegions(1);
+    });
   }
 
+  @Test
   public void testNotificationIsSentOnRemovalOfNonExpandingRegion() {
-    Ref<FoldRegion> regionRef = new Ref<>();
-    runFoldingOperation(() -> {
-      FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
+    myFixture.runTest(() -> {
+      Ref<FoldRegion> regionRef = new Ref<>();
+      myFixture.runFoldingOperation(() -> {
+        FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
+        assertNotNull(region);
+        assertTrue(region.isValid());
+        assertFalse(region.isExpanded());
+        regionRef.set(region);
+      });
+      List<FoldRegion> notifications = new ArrayList<>();
+      myModel.addListener(new FoldingListener() {
+        @Override
+        public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+          notifications.add(region);
+        }
+      }, myFixture.getTestRootDisposable());
+      myFixture.runFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
+      assertThat(notifications).hasSize(1);
+      assertEquals(regionRef.get(), notifications.getFirst());
+    });
+  }
+
+  @Test
+  public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
+    myFixture.runTest(() -> {
+      myFixture.addCollapsedFoldRegion(10, 15, "...");
+      myFixture.addCollapsedFoldRegion(10, 14, "...");
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(14, 15));
+
+
+      FoldRegion region = myModel.getCollapsedRegionAtOffset(10);
       assertNotNull(region);
       assertTrue(region.isValid());
-      assertFalse(region.isExpanded());
-      regionRef.set(region);
+      assertEquals(10, region.getStartOffset());
+      assertEquals(14, region.getEndOffset());
+
+      myFixture.addFoldRegion(0, 1, "...");
+
+      FoldRegion region2 = myModel.getCollapsedRegionAtOffset(10);
+      assertNotNull(region2);
+      assertTrue(region2.isValid());
+      assertEquals(10, region2.getStartOffset());
+      assertEquals(14, region2.getEndOffset());
+      assertSame(region, region2);
     });
-    List<FoldRegion> notifications = new ArrayList<>();
-    myModel.addListener(new FoldingListener() {
-      @Override
-      public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-        notifications.add(region);
-      }
-    }, getTestRootDisposable());
-    runFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
-    assertSize(1, notifications);
-    assertEquals(regionRef.get(), notifications.get(0));
-  }
-
-  public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
-    addCollapsedFoldRegion(10, 15, "...");
-    addCollapsedFoldRegion(10, 14, "...");
-    runWriteCommand(() -> getEditor().getDocument().deleteString(14, 15));
-
-
-    FoldRegion region = myModel.getCollapsedRegionAtOffset(10);
-    assertNotNull(region);
-    assertTrue(region.isValid());
-    assertEquals(10, region.getStartOffset());
-    assertEquals(14, region.getEndOffset());
-
-    addFoldRegion(0, 1, "...");
-
-    FoldRegion region2 = myModel.getCollapsedRegionAtOffset(10);
-    assertNotNull(region2);
-    assertTrue(region2.isValid());
-    assertEquals(10, region2.getStartOffset());
-    assertEquals(14, region2.getEndOffset());
-    assertSame(region, region2);
   }
 
   private void assertNumberOfValidFoldRegions(int expectedValue) {
@@ -285,221 +353,272 @@ public class FoldingTest extends AbstractEditorTest {
     assertEquals(expectedValue, actualValue);
   }
 
+  @Test
   public void testCantCreateOverlappingRegions() {
-    FoldingModelImpl model = (FoldingModelImpl)getEditor().getFoldingModel();
-    model.runBatchFoldingOperation(
-      () -> {
-        FoldRegion f1 = model.addFoldRegion(1, 10, "...");
-        assertNotNull(f1);
-        FoldRegion f2 = model.addFoldRegion(5, 11, "...");
-        assertNull(f2);
+    myFixture.runTest(() -> {
+      FoldingModelImpl model = (FoldingModelImpl)myFixture.getEditor().getFoldingModel();
+      model.runBatchFoldingOperation(
+        () -> {
+          FoldRegion f1 = model.addFoldRegion(1, 10, "...");
+          assertNotNull(f1);
+          FoldRegion f2 = model.addFoldRegion(5, 11, "...");
+          assertNull(f2);
 
 
-        FoldRegion c1 = model.createFoldRegion(2, 9, "...", null, false);
-        assertNotNull(c1);
-        FoldRegion c2 = model.createFoldRegion(4, 12, "...", null, false);
-        assertNull(c2);
-      });
+          FoldRegion c1 = model.createFoldRegion(2, 9, "...", null, false);
+          assertNotNull(c1);
+          FoldRegion c2 = model.createFoldRegion(4, 12, "...", null, false);
+          assertNull(c2);
+        });
+    });
   }
 
+  @Test
   public void testCollapseInnerRegion() {
-    FoldRegion inner = addFoldRegion(10, 15, "inner");
-    FoldRegion outer = addCollapsedFoldRegion(10, 20, "outer");
-    myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
-    assertSame(outer, myModel.getCollapsedRegionAtOffset(10));
+    myFixture.runTest(() -> {
+      FoldRegion inner = myFixture.addFoldRegion(10, 15, "inner");
+      FoldRegion outer = myFixture.addCollapsedFoldRegion(10, 20, "outer");
+      myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
+      assertSame(outer, myModel.getCollapsedRegionAtOffset(10));
+    });
   }
 
+  @Test
   public void testNoIdenticalRegionsSpecialCase() {
-    addFoldRegion(10, 20, "1");
-    addFoldRegion(15, 20, "2");
-    addFoldRegion(16, 17, "3");
-    WriteAction.run(() -> getEditor().getDocument().deleteString(10, 15));
-    FoldRegion[] regions = getEditor().getFoldingModel().getAllFoldRegions();
-    assertSize(2, regions);
-    assertEquals(TextRange.create(10, 15), regions[0].getTextRange());
-    assertEquals(TextRange.create(11, 12), regions[1].getTextRange());
+    myFixture.runTest(() -> {
+      myFixture.addFoldRegion(10, 20, "1");
+      myFixture.addFoldRegion(15, 20, "2");
+      myFixture.addFoldRegion(16, 17, "3");
+      WriteAction.run(() -> myFixture.getEditor().getDocument().deleteString(10, 15));
+      FoldRegion[] regions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+      assertThat(regions).hasSize(2);
+      assertEquals(TextRange.create(10, 15), regions[0].getTextRange());
+      assertEquals(TextRange.create(11, 12), regions[1].getTextRange());
+    });
   }
 
+  @Test
   public void test1() {
-    String text = getEditor().getDocument().getText().codePoints().mapToObj(c -> c + "\n").collect(Collectors.joining());
-    runWriteCommand(()-> getEditor().getDocument().setText(text));
-    addFoldRegion(20, 151, "1");
-    addFoldRegion(289, 357, "2");
-    addCollapsedFoldRegion(282, 357, "3");
-    FoldRegion[] regions = getEditor().getFoldingModel().getAllFoldRegions();
-    assertSize(3, regions);
-    assertEquals(21, ((FoldingModelImpl)getEditor().getFoldingModel()).getTotalNumberOfFoldedLines());
+    myFixture.runTest(() -> {
+      String text = myFixture.getEditor().getDocument().getText().codePoints().mapToObj(c -> c + "\n").collect(Collectors.joining());
+      myFixture.runWriteCommand(()-> myFixture.getEditor().getDocument().setText(text));
+      myFixture.addFoldRegion(20, 151, "1");
+      myFixture.addFoldRegion(289, 357, "2");
+      myFixture.addCollapsedFoldRegion(282, 357, "3");
+      FoldRegion[] regions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+      assertThat(regions).hasSize(3);
+      assertEquals(21, ((FoldingModelImpl)myFixture.getEditor().getFoldingModel()).getTotalNumberOfFoldedLines());
+    });
   }
 
+  @Test
   public void testInnerRegionAtTheEndOfOuterRegion() {
-    addFoldRegion(10, 20, "outer");
-    FoldRegion inner = addFoldRegion(15, 20, "inner");
-    myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
-    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    myFixture.runTest(() -> {
+      myFixture.addFoldRegion(10, 20, "outer");
+      FoldRegion inner = myFixture.addFoldRegion(15, 20, "inner");
+      myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
+      assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    });
   }
 
+  @Test
   public void testNestedRegions() {
-    addFoldRegion(10, 20, "outer");
-    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
-    addCollapsedFoldRegion(11, 12, "innermost");
-    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    myFixture.runTest(() -> {
+      myFixture.addFoldRegion(10, 20, "outer");
+      FoldRegion inner = myFixture.addCollapsedFoldRegion(10, 15, "inner");
+      myFixture.addCollapsedFoldRegion(11, 12, "innermost");
+      assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    });
   }
 
+  @Test
   public void testIdenticalRegionsOtherCase() {
-    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
-    addFoldRegion(10, 20, "outer");
-    runWriteCommand(() -> getEditor().getDocument().deleteString(15, 20));
-    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    myFixture.runTest(() -> {
+      FoldRegion inner = myFixture.addCollapsedFoldRegion(10, 15, "inner");
+      myFixture.addFoldRegion(10, 20, "outer");
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(15, 20));
+      assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+    });
   }
 
+  @Test
   public void testClearingInvalidatesFoldRegions() {
-    FoldRegion region = addCollapsedFoldRegion(5, 10, "...");
-    myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
-    assertFalse(region.isValid());
+    myFixture.runTest(() -> {
+      FoldRegion region = myFixture.addCollapsedFoldRegion(5, 10, "...");
+      myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
+      assertFalse(region.isValid());
+    });
   }
 
+  @Test
   public void testGroupIsUpdatedOnRegionDisposal() {
-    FoldingGroup group = FoldingGroup.newGroup("test");
-    FoldRegion[] regions = new FoldRegion[2];
-    myModel.runBatchFoldingOperation(() -> {
-      regions[0] = myModel.createFoldRegion(1, 2, "a", group, false);
-      regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+    myFixture.runTest(() -> {
+      FoldingGroup group = FoldingGroup.newGroup("test");
+      FoldRegion[] regions = new FoldRegion[2];
+      myModel.runBatchFoldingOperation(() -> {
+        regions[0] = myModel.createFoldRegion(1, 2, "a", group, false);
+        regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+      });
+      assertNotNull(regions[0]);
+      assertNotNull(regions[1]);
+      List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
+      assertTrue(regionsInGroup.size() == 2 && regionsInGroup.containsAll(Arrays.asList(regions)));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 3));
+      assertFalse(regions[0].isValid());
+      assertTrue(regions[1].isValid());
+      List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
+      assertEquals(Collections.singletonList(regions[1]), newRegionsInGroup);
     });
-    assertNotNull(regions[0]);
-    assertNotNull(regions[1]);
-    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
-    assertTrue(regionsInGroup.size() == 2 && regionsInGroup.containsAll(Arrays.asList(regions)));
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 3));
-    assertFalse(regions[0].isValid());
-    assertTrue(regions[1].isValid());
-    List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
-    assertEquals(Collections.singletonList(regions[1]), newRegionsInGroup);
   }
 
+  @Test
   public void testAllRegionsFromInvalidNodeAreRemovedFromGroups() {
-    FoldingGroup group = FoldingGroup.newGroup("test");
-    FoldRegion[] regions = new FoldRegion[3];
-    myModel.runBatchFoldingOperation(() -> {
-      regions[0] = myModel.createFoldRegion(1, 4, "a", group, false);
-      regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
-      regions[2] = myModel.createFoldRegion(20, 30, "c", group, false);
+    myFixture.runTest(() -> {
+      FoldingGroup group = FoldingGroup.newGroup("test");
+      FoldRegion[] regions = new FoldRegion[3];
+      myModel.runBatchFoldingOperation(() -> {
+        regions[0] = myModel.createFoldRegion(1, 4, "a", group, false);
+        regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+        regions[2] = myModel.createFoldRegion(20, 30, "c", group, false);
+      });
+      assertNotNull(regions[0]);
+      assertNotNull(regions[1]);
+      assertNotNull(regions[2]);
+      myFixture.runWriteCommand(() -> DocumentUtil.executeInBulk(myFixture.getEditor().getDocument(), () -> {
+        myFixture.getEditor().getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
+        myFixture.getEditor().getDocument().deleteString(1, 2); // invalidate regions
+      }));
+      assertFalse(regions[0].isValid());
+      assertFalse(regions[1].isValid());
+      assertTrue(regions[2].isValid());
+      List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
+      assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
     });
-    assertNotNull(regions[0]);
-    assertNotNull(regions[1]);
-    assertNotNull(regions[2]);
-    runWriteCommand(() -> DocumentUtil.executeInBulk(getEditor().getDocument(), () -> {
-      getEditor().getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
-      getEditor().getDocument().deleteString(1, 2); // invalidate regions
-    }));
-    assertFalse(regions[0].isValid());
-    assertFalse(regions[1].isValid());
-    assertTrue(regions[2].isValid());
-    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
-    assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
   }
 
+  @Test
   public void testAddingEmptyRegion() {
-    FoldRegion region = addFoldRegion(0, 0, ".");
-    assertNull(region);
+    myFixture.runTest(() -> {
+      FoldRegion region = myFixture.addFoldRegion(0, 0, ".");
+      assertNull(region);
+    });
   }
 
+  @Test
   public void testRegionBecomingInvalidIsRemovedFromGroup() {
-    FoldingGroup group = FoldingGroup.newGroup("test");
+    myFixture.runTest(() -> {
+      FoldingGroup group = FoldingGroup.newGroup("test");
 
-    getEditor().getFoldingModel().runBatchFoldingOperation(
-      () -> myModel.createFoldRegion(0, 10, "...", group, false)
-    );
-    addCollapsedFoldRegion(1, 10, "...");
+      myFixture.getEditor().getFoldingModel().runBatchFoldingOperation(
+        () -> myModel.createFoldRegion(0, 10, "...", group, false)
+      );
+      myFixture.addCollapsedFoldRegion(1, 10, "...");
 
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 1));
 
-    List<FoldRegion> regions = myModel.getGroupedRegions(group);
-    assertEmpty(regions);
+      List<FoldRegion> regions = myModel.getGroupedRegions(group);
+      assertThat(regions).isEmpty();
+    });
   }
 
+  @Test
   public void testMultipleCaretsUpdateOnRegionCollapsing() {
-    CaretModel caretModel = getEditor().getCaretModel();
-    caretModel.moveToVisualPosition(new VisualPosition(0, 0));
-    caretModel.addCaret(new VisualPosition(0, 1));
-    caretModel.addCaret(new VisualPosition(0, 2));
-    caretModel.addCaret(new VisualPosition(0, 3));
+    myFixture.runTest(() -> {
+      CaretModel caretModel = myFixture.getEditor().getCaretModel();
+      caretModel.moveToVisualPosition(new VisualPosition(0, 0));
+      caretModel.addCaret(new VisualPosition(0, 1));
+      caretModel.addCaret(new VisualPosition(0, 2));
+      caretModel.addCaret(new VisualPosition(0, 3));
 
-    addCollapsedFoldRegion(0, 4, "...");
+      myFixture.addCollapsedFoldRegion(0, 4, "...");
 
-    List<Caret> carets = caretModel.getAllCarets();
-    assertSize(1, carets);
-    assertEquals(0, carets.get(0).getOffset());
+      List<Caret> carets = caretModel.getAllCarets();
+      assertThat(carets).hasSize(1);
+      assertEquals(0, carets.getFirst().getOffset());
+    });
   }
 
+  @Test
   public void testMousePositionAfterClickOnCollapsedFolding() {
-    initText("\ntext");
-    addCollapsedFoldRegion(0, getEditor().getDocument().getTextLength(), "...");
-    mouse().clickAt(0, 1);
-    assertEquals(new VisualPosition(0, 0), getEditor().getCaretModel().getVisualPosition());
+    myFixture.runTest(() -> {
+      myFixture.initText("\ntext");
+      myFixture.addCollapsedFoldRegion(0, myFixture.getEditor().getDocument().getTextLength(), "...");
+      myFixture.mouse().clickAt(0, 1);
+      assertEquals(new VisualPosition(0, 0), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
 
+  @Test
   public void testExpandRegionDoesNotImpactOutsideCaret() {
-    initText("""
-               (
-                 foo [
-                   bar<caret>
-                 ]
-               )""");
-    foldOccurrences("(?s)\\(.*\\)", "...");
-    foldOccurrences("(?s)\\[.*\\]", "...");
-    checkResultByText("""
-                        <caret>(
-                          foo [
-                            bar
-                          ]
-                        )""");
+    myFixture.runTest(() -> {
+      myFixture.initText("""
+                 (
+                   foo [
+                     bar<caret>
+                   ]
+                 )""");
+      myFixture.foldOccurrences("(?s)\\(.*\\)", "...");
+      myFixture.foldOccurrences("(?s)\\[.*\\]", "...");
+      myFixture.checkResultByText("""
+                          <caret>(
+                            foo [
+                              bar
+                            ]
+                          )""");
 
-    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("foo"));
-    verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
+      myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("foo"));
+      myFixture.verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
 
-    executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
+      myFixture.executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
 
-    checkResultByText("""
-                        (
-                          <caret>foo [
-                            bar
-                          ]
-                        )""");
+      myFixture.checkResultByText("""
+                          (
+                            <caret>foo [
+                              bar
+                            ]
+                          )""");
+    });
   }
 
+  @Test
   public void testDisposalListenerMethodCalledOnExplicitRemoval() {
-    AtomicInteger invocationCount = new AtomicInteger();
-    myModel.addListener(new FoldingListener() {
-      @Override
-      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
-        invocationCount.incrementAndGet();
-      }
-    }, getTestRootDisposable());
-    Ref<FoldRegion> regionRef = new Ref<>();
-    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
-    assertNotNull(regionRef.get());
-    assertTrue(regionRef.get().isValid());
-    assertEquals(0, invocationCount.get());
-    myModel.runBatchFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
-    assertFalse(regionRef.get().isValid());
-    assertEquals(1, invocationCount.get());
+    myFixture.runTest(() -> {
+      AtomicInteger invocationCount = new AtomicInteger();
+      myModel.addListener(new FoldingListener() {
+        @Override
+        public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+          invocationCount.incrementAndGet();
+        }
+      }, myFixture.getTestRootDisposable());
+      Ref<FoldRegion> regionRef = new Ref<>();
+      myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+      assertNotNull(regionRef.get());
+      assertTrue(regionRef.get().isValid());
+      assertEquals(0, invocationCount.get());
+      myModel.runBatchFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
+      assertFalse(regionRef.get().isValid());
+      assertEquals(1, invocationCount.get());
+    });
   }
 
+  @Test
   public void testDisposalListenerMethodCalledOnImplicitRemoval() {
-    AtomicInteger invocationCount = new AtomicInteger();
-    myModel.addListener(new FoldingListener() {
-      @Override
-      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
-        invocationCount.incrementAndGet();
-      }
-    }, getTestRootDisposable());
-    Ref<FoldRegion> regionRef = new Ref<>();
-    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
-    assertNotNull(regionRef.get());
-    assertTrue(regionRef.get().isValid());
-    assertEquals(0, invocationCount.get());
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 3));
-    assertFalse(regionRef.get().isValid());
-    assertEquals(1, invocationCount.get());
+    myFixture.runTest(() -> {
+      AtomicInteger invocationCount = new AtomicInteger();
+      myModel.addListener(new FoldingListener() {
+        @Override
+        public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+          invocationCount.incrementAndGet();
+        }
+      }, myFixture.getTestRootDisposable());
+      Ref<FoldRegion> regionRef = new Ref<>();
+      myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+      assertNotNull(regionRef.get());
+      assertTrue(regionRef.get().isValid());
+      assertEquals(0, invocationCount.get());
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(0, 3));
+      assertFalse(regionRef.get().isValid());
+      assertEquals(1, invocationCount.get());
+    });
   }
 }
