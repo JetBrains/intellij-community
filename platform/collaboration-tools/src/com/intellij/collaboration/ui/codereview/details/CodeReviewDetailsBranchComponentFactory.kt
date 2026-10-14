@@ -23,6 +23,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -51,6 +52,7 @@ object CodeReviewDetailsBranchComponentFactory {
       }
     }
     val sourceBranch = JBLabel().apply {
+      foreground = NamedColorUtil.getInactiveTextColor()
       bindTextIn(scope, branchesVm.sourceBranch)
       bindTooltipTextIn(scope, branchesVm.sourceBranch)
       minimumSize = Dimension(0, 0)
