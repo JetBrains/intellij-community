@@ -22,6 +22,7 @@ targets:
   - ../crates/avl-guest/src/ide/gc.rs
   - ../crates/avl-guest/src/ide/reap.rs
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
+  - ../crates/avl-bridge/src/lifecycle.rs
   - ../crates/avl-wire/src/ide.rs
   - ../crates/avl-wire/src/supervisor.rs
   - ../crates/avl-wire/src/verb.rs
@@ -813,6 +814,34 @@ The daemon's half and the IDE's half of supervision are in
 
 - A launch kills the JCEF helpers that name its context, and no other process.
   [@test] ../crates/avl-guest/src/ide/reap/tests.rs
+
+- The bridge client reads the lifecycle state of the lane IDE through the long poll of the bridge. Each poll
+  names the sequence number of the last state that it read. A poll without a number gets the current state at
+  once. The client asks for a wait of 30 s or less.
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_reader_without_the_current_seq_gets_the_current_snapshot_at_once`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_current_reader_waits_for_the_next_snapshot`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_wait_ends_with_the_current_snapshot_and_the_client_cuts_it_to_the_cap`)
+
+- The client reads a lifecycle state of schema 2 only, and it refuses an unknown field. The state names the
+  digest of the loaded bridge plugin and the digest of the vocabulary.
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`the_snapshot_of_the_ide_fixture_is_the_golden`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_snapshot_outside_the_contract_is_refused`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`the_bridge_plugin_and_the_vocabulary_digest_reach_the_reader`)
+
+- A wait for a phase ends when the IDE stays in that phase for the dwell. A gap of two or more in the
+  sequence number starts the dwell again. A new process id and a failed poll also start it again.
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`the_dwell_starts_again_after_each_sign_of_a_missed_state`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_wait_reaches_the_phase_after_the_dwell`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_gap_in_the_sequence_starts_the_dwell_again`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_restarted_ide_starts_the_dwell_again`)
+
+- A wait retries a refused connect, a passed poll deadline and a bridge that unloads until its own deadline.
+  A refused token ends the wait at once. An answer outside the contract, another launch and a quitting IDE
+  also end it.
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_transient_failure_is_retried_within_the_deadline`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_refused_token_ends_the_wait_at_once`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`an_answer_outside_the_contract_ends_a_wait`)
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_quitting_ide_and_another_launch_refuse_the_wait`)
 
 - When the child of a run exits, the supervisor kills the processes that stay in the process group of the child. The
   supervisor log of the run names each of them. The run then finishes with the exit of the child, and it is not

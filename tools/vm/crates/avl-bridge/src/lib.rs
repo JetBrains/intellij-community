@@ -1,7 +1,7 @@
 //! The client of the in-IDE bridge, which the recorder and the guest agent share.
 //!
 //! The bridge is the HTTP server of the IDE under test, on the port of its built-in server. It serves the request
-//! endpoint, the trace routes of [avl_trace::bridge] and the lifecycle routes. The far end is
+//! endpoint, the trace routes of [avl_trace::bridge] and the lifecycle long poll of [lifecycle]. The far end is
 //! `plugins/air/tests/integration/bridge/tests`.
 //!
 //! Every call goes to loopback, carries the token of the launch in [avl_trace::bridge::TOKEN_HEADER], and ends at
@@ -10,6 +10,7 @@
 
 mod client;
 mod failure;
+pub mod lifecycle;
 mod trace;
 
 pub use client::{Client, Error, ErrorKind, JSON, Rejection, url};
