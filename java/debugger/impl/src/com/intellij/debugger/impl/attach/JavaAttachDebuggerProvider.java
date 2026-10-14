@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SyntheticRunConfigurationBase;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.BaseProcessHandler;
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -56,8 +55,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -287,7 +287,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
 
       //do not allow further for idea process
       // read only attach is disabled on macos because of IDEA-252760
-      if (!pid.equals(String.valueOf(OSProcessUtil.getCurrentProcessId())) && !SystemInfo.isMac) {
+      if (!pid.equals(String.valueOf(ProcessHandle.current().pid())) && !SystemInfo.isMac) {
         Properties systemProperties = vm.getSystemProperties();
 
         // prefer sa-jdwp attach if available
@@ -396,9 +396,12 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
 
     static @Nullable SAPIDLocalAttachInfo create(Properties systemProperties, String aClass, String pid) throws IOException {
-      File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-      if (saJdiJar.exists()) {
-        return new SAPIDLocalAttachInfo(aClass, pid, saJdiJar.getCanonicalPath());
+      var javaHome = systemProperties.getProperty("java.home");
+      if (javaHome != null) {
+        var saJdiJar = Path.of(javaHome, "../lib/sa-jdi.jar"); // java 8 only for now
+        if (Files.exists(saJdiJar)) {
+          return new SAPIDLocalAttachInfo(aClass, pid, saJdiJar.toRealPath().toString());
+        }
       }
       return null;
     }
