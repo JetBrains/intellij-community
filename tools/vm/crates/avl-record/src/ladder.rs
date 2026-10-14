@@ -4,9 +4,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use avl_bridge::Client;
 use avl_trace::protocol::{CaptureSource, VideoCodec};
 
-use crate::bridge::Client;
 use crate::capture::ide::IdePaint;
 use crate::capture::{Frame, Source};
 use crate::video::{self, Recording};

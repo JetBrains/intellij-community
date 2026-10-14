@@ -8,6 +8,7 @@ members = [
     "crates/air-trace",
     "crates/avl-affected",
     "crates/avl-base",
+    "crates/avl-bridge",
     "crates/avl-guest",
     "crates/avl-host-sys",
     "crates/avl-host-testkit",
@@ -142,6 +143,7 @@ verbose_file_reads = "warn"
 air-trace = { path = "crates/air-trace" }
 avl-affected = { path = "crates/avl-affected" }
 avl-base = { path = "crates/avl-base" }
+avl-bridge = { path = "crates/avl-bridge" }
 avl-guest = { path = "crates/avl-guest" }
 avl-host-sys = { path = "crates/avl-host-sys" }
 avl-host-testkit = { path = "crates/avl-host-testkit" }

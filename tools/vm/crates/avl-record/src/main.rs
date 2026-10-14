@@ -35,7 +35,6 @@ macro_rules! say {
 
 mod allure;
 mod attach;
-mod bridge;
 mod bundle;
 mod capture;
 mod frames;
@@ -215,7 +214,7 @@ impl Options {
         let os_type = os_type().to_owned();
         Self {
             host_name: host_name(),
-            bridge_url: Box::new(bridge::url),
+            bridge_url: Box::new(avl_bridge::url),
             ladder: Box::new(SystemLadder::new(diagnostics.clone(), clock.clone(), os_type.clone())),
             video: Box::new(SystemVideographer::new(os_type.clone(), clock.clone())),
             frame_interval: video::FRAME_INTERVAL,

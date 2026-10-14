@@ -6,11 +6,11 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 
+use avl_bridge::Client;
 use avl_trace::bridge::Facts;
 use avl_trace::bundle::{AllureStatusDetails, BundleStatus, IDE_ROOT_RETAINED_RUNS, sanitize_name};
 use avl_trace::protocol::{Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, Launcher, VideoCodec, decode_command};
 
-use crate::bridge::Client;
 use crate::capture::Source;
 use crate::ladder::ScreenAccess;
 use crate::retention::prune_runs;
@@ -238,7 +238,7 @@ impl<W: Write> Session<W> {
     pub(crate) fn facts(&self) -> anyhow::Result<Facts> {
         match &self.client {
             None => anyhow::bail!("the lane named no bridge"),
-            Some(client) => client.facts(Instant::now() + FACTS_TIMEOUT),
+            Some(client) => Ok(client.facts(Instant::now() + FACTS_TIMEOUT)?),
         }
     }
 

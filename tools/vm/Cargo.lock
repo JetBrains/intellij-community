@@ -178,9 +178,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl-bridge"
+version = "0.1.0"
+dependencies = [
+ "avl-testkit",
+ "avl-trace",
+ "pretty_assertions",
+ "serde_json",
+]
+
+[[package]]
 name = "avl-guest"
 version = "0.1.0"
 dependencies = [
+ "avl-bridge",
  "avl-testkit",
  "avl-trace-tools",
  "avl-wire",
@@ -246,6 +257,7 @@ name = "avl-record"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "avl-bridge",
  "avl-testkit",
  "avl-trace",
  "crossbeam-channel",

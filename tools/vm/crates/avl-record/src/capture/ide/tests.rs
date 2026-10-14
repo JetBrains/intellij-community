@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
+use avl_testkit::http::{FakeHttp, Response};
 use avl_trace::bridge::{PAINT_CONTENT_TYPE, PAINT_ROUTE, TOKEN_HEADER};
 
 use super::*;
-use crate::testing::{FakeHttp, Response};
 
 #[test]
 fn a_paint_becomes_a_bgrx_frame_stamped_when_it_was_asked_for() {

@@ -8,6 +8,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use avl_bridge::Client;
+use avl_testkit::http::{FakeHttp, Response};
 use avl_trace::bridge::{
     FACTS_ROUTE, FLUSHED_SPANS_ROUTE, Facts, GESTURE_PRESS, IdeAttribute, IdeSpan, IdeSpans, Input, InputTarget, PAINT_CONTENT_TYPE,
     PAINT_ROUTE, Point, Rect, SPANS_ROUTE, TOKEN_HEADER, TREE_ROUTE, Tree, decode_tree,
@@ -16,11 +18,10 @@ use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, SPANS
 use avl_trace::otlp::{LogRecord, Span, decode_logs_line, decode_traces_line};
 use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, decode_command, encode_command};
 
-use crate::bridge::Client;
 use crate::capture::{Frame, Source};
 use crate::ladder::{CaptureLadder, ScreenAccess, VideoPlan, Videographer};
 use crate::session::Session;
-use crate::testing::{FakeHttp, Response, ScriptedClock, SharedBuffer};
+use crate::testing::{ScriptedClock, SharedBuffer};
 use crate::video::Recording;
 use crate::{Diagnostics, Options, lock};
 

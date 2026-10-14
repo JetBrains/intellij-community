@@ -12,6 +12,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub mod fakebin;
+pub mod http;
 mod shared;
 pub mod tartfake;
 

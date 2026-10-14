@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
+use avl_bridge::Client;
 use avl_trace::bridge::{Facts, IdeSpan};
 use avl_trace::bundle::{
     AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Video, allure_results_dir, format_manifest_time,
@@ -18,7 +19,6 @@ use avl_trace::otlp::{
 use avl_trace::protocol::{CallCommand, CaptureSource, EndCommand, Failure, Launcher, ScenarioCommand, SpanCommand, Status, VideoCodec};
 
 use crate::allure::{ResultInput, write_result};
-use crate::bridge::Client;
 use crate::bundle::{BundleWriter, nanos, unique_bundle_dir, write_manifest};
 use crate::capture::{Frame, Source};
 use crate::frames::FrameLoop;

@@ -19,8 +19,8 @@
 //! notice until a failure needed it. The decoders therefore refuse an unknown field just as they refuse an
 //! unknown op.
 //!
-//! The recorder links this crate alone. `avl-trace-tools` holds the tools over these documents, which the recorder
-//! does not run: the packer, the discovery of bundles and the viewer's URLs.
+//! The recorder links this crate and `avl-bridge`, the client of the bridge routes. `avl-trace-tools` holds the tools
+//! over these documents, which the recorder does not run: the packer, the discovery of bundles and the viewer's URLs.
 
 use std::fmt;
 
