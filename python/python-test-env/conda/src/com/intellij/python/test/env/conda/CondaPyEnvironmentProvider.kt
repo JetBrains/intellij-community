@@ -14,13 +14,16 @@ import com.intellij.python.test.env.core.CacheKey
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.PyEnvironmentSpec
+import com.intellij.python.test.env.core.cacheLockFile
 import com.intellij.python.test.env.core.defaultPyEnvDownloadCache
 import com.intellij.python.test.env.core.executeProcess
 import com.intellij.python.test.env.core.extractIfNecessary
 import com.intellij.python.test.env.core.markExecutable
+import com.intellij.python.test.env.core.withCacheLock
 import com.intellij.util.io.awaitExit
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
@@ -99,6 +102,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     const val ARCH_X86_64 = "x86_64"
   }
 
+  @OptIn(PyInternalExecApi::class)
   override suspend fun setupEnvironment(context: Context, spec: CondaPyEnvironmentSpec): PyEnvironment {
     val logger = thisLogger()
     val targetPath = nextEnvPath(context.workingDir)
@@ -107,38 +111,46 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     logger.info("Conda version: ${spec.condaVersion}")
     logger.info("Python version: ${spec.pythonVersion}")
 
-    val condaExecutable = downloadAndSetupConda(spec.condaVersion)
+    val condaDir = downloadAndSetupConda(spec.condaVersion)
+    val condaExecutable = getCondaExecutablePath(condaDir)
     logger.info("Conda executable: $condaExecutable")
 
-    // conda 25+ refuses to create envs from the default Anaconda channels until their ToS is
-    // accepted. The `conda tos` plugin doesn't exist on older conda releases, so we run the
-    // accept commands best-effort and ignore non-zero exit codes.
-    acceptAnacondaToSBestEffort(logger, condaExecutable)
+    // conda keeps one package cache in its installation directory, and that cache is not safe for
+    // a concurrent writer. Two `conda create` runs download the same package into the same
+    // `<package>.conda.partial` file and then rename it. The loser stops with
+    // "No such file or directory". The lock gives one process at a time the right to write to this
+    // conda installation. See PY-91298.
+    return withCacheLock(cacheLockFile(condaDir), logger) {
+      // conda 25+ refuses to create envs from the default Anaconda channels until their ToS is
+      // accepted. The `conda tos` plugin doesn't exist on older conda releases, so we run the
+      // accept commands best-effort and ignore non-zero exit codes.
+      acceptAnacondaToSBestEffort(logger, condaExecutable)
 
-    val fullPythonVersion = spec.pythonVersion.toString()
+      val fullPythonVersion = spec.pythonVersion.toString()
 
-    logger.info("Creating Conda environment")
-    val binaryToExec = BinOnEel(condaExecutable)
-    CondaExecutor.createUnnamedEnv(binaryToExec, targetPath.pathString, fullPythonVersion).getOrThrow()
-    logger.info("Conda environment created")
+      logger.info("Creating Conda environment")
+      val binaryToExec = BinOnEel(condaExecutable)
+      CondaExecutor.createUnnamedEnv(binaryToExec, targetPath.pathString, fullPythonVersion).getOrThrow()
+      logger.info("Conda environment created")
 
-    val pythonPath = findPythonInCondaEnv(targetPath)
-    logger.info("Conda Python path: $pythonPath")
+      val pythonPath = findPythonInCondaEnv(targetPath)
+      logger.info("Conda Python path: $pythonPath")
 
-    if (spec.libraries.isNotEmpty()) {
-      logger.info("Installing libraries: ${spec.libraries.joinToString(", ")}")
-      installLibraries(targetPath, condaExecutable, spec.libraries)
-      logger.info("Libraries installed successfully")
+      if (spec.libraries.isNotEmpty()) {
+        logger.info("Installing libraries: ${spec.libraries.joinToString(", ")}")
+        installLibraries(targetPath, condaExecutable, spec.libraries)
+        logger.info("Libraries installed successfully")
+      }
+
+      logger.info("Conda environment setup completed at: $targetPath")
+      CondaPyEnvironment(pythonPath, targetPath, condaExecutable)
     }
-    
-    logger.info("Conda environment setup completed at: $targetPath")
-    return CondaPyEnvironment(pythonPath, targetPath, condaExecutable)
   }
 
   /**
    * Downloads and sets up Miniconda in the cache directory.
    * Directory name includes installer name to handle different OS/architecture variants.
-   * @return Path to conda executable
+   * @return Path to the Miniconda installation directory
    */
   @OptIn(ExperimentalPathApi::class)
   private suspend fun downloadAndSetupConda(condaVersion: String): Path = withContext(Dispatchers.IO) {
@@ -164,7 +176,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
       logger.info("Conda setup completed")
     }
 
-    condaExecutable
+    condaDir
   }
 
   /**
