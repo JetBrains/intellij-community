@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected
@@ -53,6 +54,7 @@ object CodeReviewChangeListComponentFactory {
     }.also { tree ->
       ClientProperty.put(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
       SelectionSaver.installOn(tree)
+      tree.treeStateStrategy = ChangesTree.KEEP_NON_EMPTY
       tree.doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
         vm.updateSelectedChangesFromTree(tree)
