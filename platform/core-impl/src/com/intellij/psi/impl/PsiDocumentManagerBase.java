@@ -1188,7 +1188,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     if (viewProviders.isEmpty()) {
-      handleCommitWithoutPsi(document);
+      commitChangeWithoutPsi(document);
       return;
     }
 
@@ -1200,7 +1200,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     List<PsiFile> files = ContainerUtil.flatMap(viewProviders, p -> p.getAllFiles());
     if (files.isEmpty()) {
-      handleCommitWithoutPsi(document);
+      commitChangeWithoutPsi(document);
       return;
     }
 
@@ -1330,6 +1330,23 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       myUncommittedState.appendEvent(event);
+    }
+  }
+
+  private void commitChangeWithoutPsi(@NotNull Document document) {
+    if (document instanceof DocumentImpl && ((DocumentImpl)document).isWriteThreadOnly()) {
+      handleCommitWithoutPsi(document);
+      return;
+    }
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
+    if (publishCommit(document)) {
+      myUncommittedDocuments.remove(document);
+      myUncommittedDocumentTraces.remove(document);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("commitChangeWithoutPsi: " + document + " became committed");
+      }
     }
   }
 
