@@ -9,11 +9,13 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.playSound
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
@@ -52,6 +54,7 @@ abstract class SoundSignalPlayer {
 internal class SoundSignalPlayerImpl(private val scope: CoroutineScope) : SoundSignalPlayer() {
   // Keyed by the owner too, because two providers can use the same path for different sounds.
   private val audioBytesCache: ConcurrentMap<Pair<Class<*>, String>, ByteArray> = CollectionFactory.createConcurrentSoftValueMap()
+  private val previewJob = AtomicReference<Job?>()
 
   override fun playEnabled(sounds: Map<SoundSignal, String>) {
     for ((signal, sound) in sounds) {
@@ -61,13 +64,13 @@ internal class SoundSignalPlayerImpl(private val scope: CoroutineScope) : SoundS
 
   override fun playPreview(sounds: List<Pair<SoundSignal, String>>) {
     if (sounds.isEmpty()) return
-    scope.launch {
+    previewJob.getAndSet(scope.launch {
       for ((index, pair) in sounds.withIndex()) {
         if (index > 0) delay(PREVIEW_DELAY)
         val (signal, sound) = pair
         playLogged(signal, sound)
       }
-    }
+    })?.cancel()
   }
 
   private suspend fun playLogged(signal: SoundSignal, sound: String) {
