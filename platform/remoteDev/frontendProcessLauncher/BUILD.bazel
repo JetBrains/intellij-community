@@ -25,7 +25,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/execution",
         "//platform/remoteDev-util",
         "//platform/runtime/repository",
         "//platform/core-impl",
@@ -62,7 +61,6 @@ jvm_library(
         # do not sort,
         ":frontendProcessLauncher",
         "//platform/core-api:core_test_lib",
-        "//platform/execution:execution_test_lib",
         "//platform/remoteDev-util:remoteDev-util_test_lib",
         "//platform/runtime/repository:repository_test_lib",
         "//platform/core-impl:core-impl_test_lib",

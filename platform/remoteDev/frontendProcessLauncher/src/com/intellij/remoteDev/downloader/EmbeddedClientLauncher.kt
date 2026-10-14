@@ -1,8 +1,8 @@
 package com.intellij.remoteDev.downloader
 
-import com.intellij.execution.ShortenCommandLine
+import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -16,11 +16,11 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -123,8 +123,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val processLifetimeDef = lifetime.createNested()
 
     val arguments = listOf("thinClient", url) + extraArguments
-    val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, arguments)
-    val commandLine = javaParameters.toCommandLine()
+    val commandLine = createCommandLine(moduleRepository, moduleRepositoryPath, arguments)
     LOG.debug { "Starting embedded client: $commandLine" }
     val handler = OSProcessHandler.Silent(commandLine)
     val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
@@ -201,13 +200,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     }
   }
 
-  private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, arguments: List<String>): SimpleJavaParameters {
-    val javaParameters = SimpleJavaParameters()
-    javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
-    javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
+  private fun createCommandLine(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, arguments: List<String>): GeneralCommandLine {
+    val vmParametersList = ParametersList()
     val customIdeaPropertiesPath = EnvironmentUtil.getValue("JETBRAINS_CLIENT_PROPERTIES")
     if (customIdeaPropertiesPath != null) {
-      javaParameters.vmParametersList.addProperty(PathManager.PROPERTIES_FILE, customIdeaPropertiesPath)
+      vmParametersList.addProperty(PathManager.PROPERTIES_FILE, customIdeaPropertiesPath)
     }
     else if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
       val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
@@ -215,19 +212,24 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       if (!configDir.exists()) {
         CustomConfigMigrationOption.MigrateFromCustomPlace(PathManager.getConfigDir()).writeConfigMarkerFile(configDir)
       }
-      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
+      vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
       val systemDir = tempDir / "system"
-      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
+      vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
       val logDir = PathManager.getLogDir() / "embedded-client"
-      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
+      vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
     }
-    passProperties(javaParameters.vmParametersList)
-    javaParameters.mainClass = "com.intellij.platform.runtime.loader.IntellijLoader"
+    passProperties(vmParametersList)
+    addVmOptions(vmParametersList, moduleRepositoryPath)
     val runtimeLoaderModule = RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")
-    javaParameters.classPath.addAllPaths(moduleRepository.computeModuleClasspath(runtimeLoaderModule))
-    addVmOptions(javaParameters.vmParametersList, moduleRepositoryPath)
-    javaParameters.programParametersList.addAll(arguments)
-    return javaParameters
+    val classPath = moduleRepository.computeModuleClasspath(runtimeLoaderModule).joinToString(File.pathSeparator) { it.pathString }
+
+    //the argument file keeps the command line short because the classpath can be longer than the Windows limit
+    val argFileContent = vmParametersList.list + listOf("-classpath", classPath, "com.intellij.platform.runtime.loader.IntellijLoader")
+    val argFile = CommandLineWrapperUtil.createArgumentFile(argFileContent, CharsetToolkit.getPlatformCharset())
+    val commandLine = GeneralCommandLine(Path(SystemProperties.getJavaHome(), "bin", "java").pathString, "@${argFile.absolutePath}")
+      .withParameters(arguments)
+    OSProcessHandler.deleteFileOnTermination(commandLine, argFile)
+    return commandLine
   }
 
   private fun passProperties(vmParametersList: ParametersList) {
