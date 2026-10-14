@@ -57,7 +57,7 @@ internal class GithubApiHelperRequestExecutor(
   private val helper: HttpApiHelper,
 ) : GithubApiRequestExecutor() {
 
-  constructor(useProxy: Boolean, tokenSupplier: (URL) -> String?) : this(createHelper(useProxy, tokenSupplier))
+  constructor(useProxy: Boolean, tokenSupplier: suspend (URL) -> String?) : this(createHelper(useProxy, tokenSupplier))
 
   /**
    * Limits the number of concurrent requests of this executor.
