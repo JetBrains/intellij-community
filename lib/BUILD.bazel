@@ -12179,16 +12179,16 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.android.tools.layoutlib/layoutlib-17.0.1.jar_copy",
-    src = "@com_android_tools_layoutlib-layoutlib-17_0_1_http//file",
-    out = "com.android.tools.layoutlib/layoutlib-17.0.1.jar",
+    name = "com.android.tools.layoutlib/layoutlib-17.0.3.jar_copy",
+    src = "@com_android_tools_layoutlib-layoutlib-17_0_3_http//file",
+    out = "com.android.tools.layoutlib/layoutlib-17.0.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-layoutlib-layoutlib",
-    jar = "@com_android_tools_layoutlib-layoutlib-17_0_1_http//file",
+    jar = "@com_android_tools_layoutlib-layoutlib-17_0_3_http//file",
     visibility = ["//visibility:public"],
 )
 
