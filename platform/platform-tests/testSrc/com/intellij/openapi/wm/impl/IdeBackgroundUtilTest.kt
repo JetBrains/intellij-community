@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import org.assertj.core.api.Assertions.assertThat
@@ -31,15 +32,17 @@ class IdeBackgroundUtilTest {
       fillRect(0, 0, W, H)
       dispose()
     }
-    val root = JPanel(null).apply { setBounds(0, 0, W, H) }
-    JPanel(null).add(root)  // the painter skips a root without a parent
-    IdeBackgroundUtil.createTemporaryBackgroundTransform(root, image, IdeBackgroundUtil.Fill.SCALE, IdeBackgroundUtil.Anchor.CENTER,
-                                                         0.3f, JBInsets.emptyInsets(), disposable)
+    val (translucent, precomposed) = runInEdtAndGet {
+      val root = JPanel(null).apply { setBounds(0, 0, W, H) }
+      JPanel(null).add(root)  // the painter skips a root without a parent
+      IdeBackgroundUtil.createTemporaryBackgroundTransform(root, image, IdeBackgroundUtil.Fill.SCALE, IdeBackgroundUtil.Anchor.CENTER,
+                                                           0.3f, JBInsets.emptyInsets(), disposable)
 
-    // fill(Shape) always uses the translucent path; fillRect uses the precomposed opaque path when the fill qualifies.
-    // The rectangle starts at a fractional device coordinate for a fractional scale.
-    val translucent = render(root, scale, antialiasing) { fill(Rectangle(0, 3, W, 31)) }
-    val precomposed = render(root, scale, antialiasing) { fillRect(0, 3, W, 31) }
+      // fill(Shape) always uses the translucent path; fillRect uses the precomposed opaque path when the fill qualifies.
+      // The rectangle starts at a fractional device coordinate for a fractional scale.
+      render(root, scale, antialiasing) { fill(Rectangle(0, 3, W, 31)) } to
+        render(root, scale, antialiasing) { fillRect(0, 3, W, 31) }
+    }
 
     assertThat(translucent.any { it != BASE.rgb && it != UNDER.rgb }).describedAs("the background image is painted").isTrue()
     assertThat(precomposed).isEqualTo(translucent)
