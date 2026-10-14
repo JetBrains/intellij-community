@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
@@ -161,7 +161,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
   private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
       "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16); // to parse records
-    return psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_X); // to parse all possible things
+    return psiFile instanceof PsiJavaFile file ? file.getClasses() : PsiClass.EMPTY_ARRAY;
   }
 }

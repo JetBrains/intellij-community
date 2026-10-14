@@ -12,5 +12,6 @@ public class JavaFilePasteProviderTest extends LightPlatformTestCase {
     assertEquals("X", JavaFilePasteProvider.detectClassName(project, "class X {}"));
     assertEquals("Y", JavaFilePasteProvider.detectClassName(project, "class X {} public class Y{}"));
     assertEquals("R", JavaFilePasteProvider.detectClassName(project, "record R() {}"));
+    assertEquals("User", JavaFilePasteProvider.detectClassName(project, "value record User(String name) {}"));
   }
 }
