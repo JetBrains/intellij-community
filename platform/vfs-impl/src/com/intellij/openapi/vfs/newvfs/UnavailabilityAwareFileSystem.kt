@@ -9,10 +9,12 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Implement if your [NewVirtualFileSystem] can tell an unavailable environment from a missing file.
  *
- * The methods have the contracts of [NewVirtualFileSystem.getAttributes] and [BatchingFileSystem.listWithAttributes], with one difference.
- * When the environment behind the path is not connected, they throw [FileSystemUnavailableException].
- * They do not answer "absent" or "empty" in that case.
- * The VFS refresh uses them, so it does not delete the files of an unavailable environment.
+ * The methods have the contracts of [NewVirtualFileSystem.getAttributes] and [BatchingFileSystem.listWithAttributes], with two differences.
+ * When the environment behind the path is not connected, they throw [FileSystemUnavailableException]; they do not answer "absent" or "empty".
+ * And they are not cancellable: the I/O runs on the calling thread, so a cancelled progress waits for it.
+ * Call them from a non-cancellable section, see [com.intellij.openapi.progress.Cancellation.computeInNonCancelableSection].
+ *
+ * The VFS refresh uses them: it keeps a file it cannot read dirty, with no events, until the environment answers again.
  */
 @ApiStatus.Internal
 interface UnavailabilityAwareFileSystem {
