@@ -101,7 +101,10 @@ final class RefreshWorker {
 
   private volatile boolean cancelled;
 
-  /** The files whose scan the worker skipped because their file system is unavailable. */
+  /**
+   * The files whose file system could not answer in this scan. Their state is unknown, not absent: the worker generates
+   * no events for them and keeps them dirty, so a later refresh asks again once the file system can answer. See {@link #scan()}.
+   */
   private final Set<NewVirtualFile> skipped = ConcurrentHashMap.newKeySet();
 
   // =========================== monitoring =========================================================================== //
@@ -147,7 +150,8 @@ final class RefreshWorker {
       else {
         parallelScan(events);
       }
-      // a scanned parent is clean, and `markDirty` of a skipped file, which is still dirty, does not mark the parent
+      // the parents are already clean, and `markDirty` of a still-dirty file does not reach them:
+      // re-dirty the skipped files after the join, so the chain from the root to each of them is dirty again
       skipped.forEach(RefreshWorker::forceMarkDirty);
       return events;
     }

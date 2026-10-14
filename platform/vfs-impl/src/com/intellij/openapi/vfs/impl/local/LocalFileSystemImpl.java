@@ -467,6 +467,7 @@ public class LocalFileSystemImpl
     return attributes;
   }
 
+  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
   @Override
   public @Nullable FileAttributes getAttributesOrThrowIfUnavailable(@NotNull VirtualFile file) throws FileSystemUnavailableException {
     return isUncRoot(file) ? UNC_ROOT_ATTRIBUTES : readAttributesOrThrowIfUnavailable(file);
@@ -518,6 +519,7 @@ public class LocalFileSystemImpl
     return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
   }
 
+  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
   @Override
   public @NotNull Map<String, FileAttributes> listWithAttributesOrThrowIfUnavailable(
     @NotNull VirtualFile dir,
