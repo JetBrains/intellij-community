@@ -69,6 +69,8 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/vcs-api:vcs",
