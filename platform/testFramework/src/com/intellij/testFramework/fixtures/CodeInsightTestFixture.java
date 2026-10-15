@@ -48,6 +48,7 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
@@ -343,11 +344,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   long testHighlighting(@TestDataFile String @NotNull ... filePaths);
 
+  @RequiresEdt
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NotNull VirtualFile file);
 
   @NotNull
   HighlightTestInfo testFile(String @NotNull ... filePath);
 
+  @RequiresEdt
   void openFileInEditor(@NotNull VirtualFile file);
 
   void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper);
@@ -614,6 +617,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   RangeHighlighter @NotNull [] testHighlightUsages(@TestDataFile String @NotNull ... files);
 
+  @RequiresEdt
   void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @TestDataFile String @NotNull ... additionalFiles);
 
   /**
@@ -629,6 +633,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @see #findGutter(String)
    */
+  @RequiresEdt
   @NotNull
   @Unmodifiable
   List<GutterMark> findGuttersAtCaret();
@@ -720,6 +725,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Unmodifiable
   List<String> getLookupElementStrings();
 
+  @RequiresEdt
   void finishLookup(@MagicConstant(valuesFromClass = Lookup.class) char completionChar);
 
   LookupEx getLookup();
@@ -764,6 +770,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param element element to rename
    * @param newName new name for the element
    */
+  @RequiresEdt
   void renameElement(@NotNull PsiElement element, @NotNull String newName);
 
   @Experimental
@@ -774,6 +781,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void allowTreeAccessForAllFiles();
 
+  @RequiresEdt
   void renameElement(@NotNull PsiElement element,
                      @NotNull String newName,
                      boolean searchInComments,
