@@ -63,6 +63,7 @@ internal class MoveToolWindowTabFromEditorToToolWindowAction : DumbAwareAction()
   override fun actionPerformed(e: AnActionEvent) {
     val context = getContext(e) ?: return
     ToolWindowEditorTabTransferController.getInstance(context.project).moveContentToToolWindow(context.toolWindow, context.file)
+    context.toolWindow.activate(null)
   }
 
   private fun getContext(e: AnActionEvent): Context? {
