@@ -1,0 +1,7 @@
+fun varargFunction2(key: String, vararg params: Any) {
+}
+
+fun test() {
+    varargFunction2(key = "1")
+    varargFunction2(key = "2", params = arrayOf(2))
+}

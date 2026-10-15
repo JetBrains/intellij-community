@@ -94,11 +94,9 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val argumentsToExpand = ArrayList<Pair<KtValueArgument, KtCallExpression>>()
 
         result.forEachDescendantOfType<KtValueArgument>(canGoInside = { it.getCopyableUserData(USER_CODE_KEY) == null }) { argument ->
-            if (!argument.isNamed()) {
-                val callExpression = argument.arrayOfCallExpression() ?: return@forEachDescendantOfType
-                if (argument.getSpreadElement() != null || argument.isArtificialVarargArrayPassedToVararg()) {
-                    argumentsToExpand.add(argument to callExpression)
-                }
+            val callExpression = argument.arrayOfCallExpression() ?: return@forEachDescendantOfType
+            if (argument.getSpreadElement() != null || argument.canReplaceArtificialVarargArray(callExpression)) {
+                argumentsToExpand.add(argument to callExpression)
             }
         }
 
@@ -113,15 +111,23 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val callExpression =
           ((argumentExpression as? KtDotQualifiedExpression)?.selectorExpression ?: argumentExpression) as? KtCallExpression
                 ?: return null
+        if (argumentExpression.getCopyableUserData(ARTIFICIAL_VARARG_ARRAY_VALUE_KEY) != null) return callExpression
+
         val resolved = callExpression.referenceExpression()?.mainReference?.resolve() as? KtNamedDeclaration ?: return null
         return callExpression.takeIf { ARRAY_CALL_FQ_NAMES.contains(resolved.fqName) }
+    }
+
+    private fun KtValueArgument.canReplaceArtificialVarargArray(arrayOfCallExpression: KtCallExpression): Boolean {
+        if (!isArtificialVarargArrayPassedToVararg()) return false
+        return !isNamed() || arrayOfCallExpression.valueArgumentList?.arguments.orEmpty().isEmpty()
     }
 
     private fun KtValueArgument.isArtificialVarargArrayPassedToVararg(): Boolean {
         val argumentExpression = getArgumentExpression() ?: return false
         if (argumentExpression.getCopyableUserData(ARTIFICIAL_VARARG_ARRAY_VALUE_KEY) == null) return false
 
-        val callExpression = (parent as? KtValueArgumentList)?.parent as? KtCallExpression ?: return false
+        val argumentList = parent as? KtValueArgumentList ?: return false
+        val callExpression = argumentList.parent as? KtCallExpression ?: return false
         return analyze(callExpression) {
             callExpression.resolveSuccessfulCall()
                 ?.valueArgumentMapping

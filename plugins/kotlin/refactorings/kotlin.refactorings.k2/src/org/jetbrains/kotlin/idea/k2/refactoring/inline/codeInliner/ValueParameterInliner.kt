@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -73,6 +74,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolution.KtResolvableCall
+import org.jetbrains.kotlin.types.Variance
 
 internal class IntroduceValueForParameter(
     val parameterName: Name,
@@ -295,7 +297,13 @@ internal class ValueParameterInliner(
             val parameterType = parameter.returnType
             val elementType = parameterType.arrayElementType ?: return null
             psiFactory.buildExpression {
-                appendFixedText(arrayOfFunctionName(elementType))
+                val arrayOfFunctionName = arrayOfFunctionName(elementType)
+                appendFixedText(arrayOfFunctionName)
+                if (argumentExpressionsForParameter.isEmpty() && elementType !is KaErrorType && arrayOfFunctionName == "kotlin.arrayOf") {
+                    appendFixedText("<")
+                    appendFixedText(elementType.render(position = Variance.INVARIANT))
+                    appendFixedText(">")
+                }
                 appendFixedText("(")
                 for ((i, argument) in argumentExpressionsForParameter.withIndex()) {
                     if (i > 0) appendFixedText(",")
