@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems")
 
 package com.intellij.platform.testFramework.junit5.eel.impl
@@ -14,7 +14,6 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.util.annotations.paths.NioPath
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.impl.provider.EelMachineResolverEpBridge
@@ -25,6 +24,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
+import com.intellij.platform.util.annotations.paths.NioPath
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.util.io.Ksuid
@@ -103,6 +103,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val eelDescriptor = descriptor
   val machine: EelMachine = object : EelMachine {
+    override val isConnected: Boolean = true
     override val internalName: String = "mock-$id"
     override suspend fun toEelApi(descriptor: EelDescriptor): EelApi = apiRef.get()
     override fun ownsDescriptor(descriptor: EelDescriptor): Boolean {
