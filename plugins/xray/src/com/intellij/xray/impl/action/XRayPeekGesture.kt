@@ -65,7 +65,7 @@ internal class XRayPeekGesture private constructor(
 
   private fun start() {
     ThreadingAssertions.assertEventDispatchThread()
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
 
     Disposer.register(service, gestureDisposable)
     Disposer.register(gestureDisposable, Disposable { onTerminated() })
@@ -121,7 +121,7 @@ internal class XRayPeekGesture private constructor(
   }
 
   private fun onHoldThresholdReached() {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
 
     if (state !is State.Listening) return
     val original = service.getXRayModeState()
@@ -146,7 +146,7 @@ internal class XRayPeekGesture private constructor(
     val current = state
     Disposer.dispose(gestureDisposable)
 
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
     when (current) {
       is State.Peeking -> revert(current.originalMode)
       State.Listening -> {
@@ -171,21 +171,21 @@ internal class XRayPeekGesture private constructor(
   }
 
   private fun revert(original: XRayMode) {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
 
     service.endPeek()
     setMode(original)
   }
 
   private fun setMode(mode: XRayMode) {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
 
     service.setXRayMode(mode, editor)
     refreshToolbars()
   }
 
   private fun flipMode() {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
 
     when (service.getXRayModeState()) {
       XRayMode.BASIC -> setMode(XRayMode.EXTENDED)

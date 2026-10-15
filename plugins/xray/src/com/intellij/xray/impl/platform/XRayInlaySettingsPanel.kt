@@ -508,7 +508,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     DeclarativeInlayHintsPassFactory.resetModificationStamp()
     InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlaySettingsPanel.apply()")
 
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
     service.refreshAllHints()
   }
 

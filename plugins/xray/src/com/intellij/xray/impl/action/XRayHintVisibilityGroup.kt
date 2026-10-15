@@ -69,7 +69,7 @@ internal class XRayHintVisibilityGroup(
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val store = XRayStageStore.getInstanceOrNull() ?: return
-      val service = XRayModeService.getInstanceOrNull(project) ?: return
+      val service = XRayModeService.getInstance(project)
 
       val previousStage = store.getStage(key)
 

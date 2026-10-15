@@ -8,7 +8,7 @@ import com.intellij.xray.impl.service.XRayStageStore
 
 internal class XRayInlayVisibilityPolicy : InlayVisibilityPolicy {
   override fun accepts(request: InlayVisibilityRequest): Boolean? {
-    val service = XRayModeService.getInstanceOrNull(request.project) ?: return null
+    val service = XRayModeService.getInstance(request.project)
     val store = XRayStageStore.getInstanceOrNull() ?: return null
 
     val storedStage = store.findStage(request.visibilityKey)

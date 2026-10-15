@@ -50,7 +50,7 @@ internal fun applyStageChange(
 ): Boolean {
 
   val project = editor.project ?: return false
-  val service = XRayModeService.getInstanceOrNull(project) ?: return false
+  val service = XRayModeService.getInstance(project)
   val store = XRayStageStore.getInstanceOrNull() ?: return false
 
   if (IdeProductMode.isFrontend) return true

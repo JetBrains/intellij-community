@@ -42,7 +42,7 @@ internal class XRayModeTracker : EditorFactoryListener {
     // Caret listener for X-ray mode
     val caretRefreshTimer = Timer(XRayTimings.CARET_REFRESH_DELAY_MS) {
       val project = editor.project ?: return@Timer
-      val service = XRayModeService.getInstanceOrNull(project) ?: return@Timer
+      val service = XRayModeService.getInstance(project)
 
       if (service.isXRayModeEnabled() &&
           editor.getUserData(XRAY_EDITOR_USE_MODE) == XRayEditorUseMode.EDITING) {
@@ -55,7 +55,7 @@ internal class XRayModeTracker : EditorFactoryListener {
         editor.putUserData(XRAY_CURRENT_LINE, event.newPosition.line)
         editor.putUserData(XRAY_CURRENT_LINE_POSITION, event.newPosition.column)
         val project = editor.project ?: return
-        val service = XRayModeService.getInstanceOrNull(project) ?: return
+        val service = XRayModeService.getInstance(project)
         if (service.isXRayModeEnabled()) {
           caretRefreshTimer.restart()
         }
@@ -68,7 +68,7 @@ internal class XRayModeTracker : EditorFactoryListener {
       editor.putUserData(XRAY_EDITOR_USE_MODE, XRayEditorUseMode.READING)
       ActionToolbarImpl.updateAllToolbarsImmediately(false)
 
-      val service = XRayModeService.getInstanceOrNull(editor.project ?: return@Timer) ?: return@Timer
+      val service = XRayModeService.getInstance(editor.project ?: return@Timer)
       service.refreshActiveEditorHints(editor)
     }.also { it.isRepeats = false }
 
@@ -76,7 +76,7 @@ internal class XRayModeTracker : EditorFactoryListener {
     val keyListener = object : KeyAdapter() {
       override fun keyReleased(e: KeyEvent?) {
 
-        val service = editor.project?.let { XRayModeService.getInstanceOrNull(it) ?: return } ?: return
+        val service = editor.project?.let { XRayModeService.getInstance(it) } ?: return
 
         if (!service.isXRayModeEnabled()) return
 
@@ -113,7 +113,7 @@ internal class XRayModeTracker : EditorFactoryListener {
     // The implementation reflects the solution from JetBrains Scala plugin (ScalaEditorFactoryListener#editorMouseWheelListener)
     val editorMouseWheelListener = object : MouseWheelListener {
       override fun mouseWheelMoved(e: MouseWheelEvent) {
-        val service = editor.project?.let { XRayModeService.getInstanceOrNull(it) ?: return } ?: return
+        val service = editor.project?.let { XRayModeService.getInstance(it) } ?: return
 
         if (!service.isHoldActive()) return
 

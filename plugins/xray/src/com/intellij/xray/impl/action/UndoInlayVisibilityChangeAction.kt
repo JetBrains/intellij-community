@@ -17,7 +17,7 @@ internal class UndoInlayVisibilityChangeAction(
 ) :
   BasicUndoableAction(document) {
   override fun undo() {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
     val store = XRayStageStore.getInstanceOrNull() ?: return
 
     store.setStage(key, previousStage)
@@ -25,7 +25,7 @@ internal class UndoInlayVisibilityChangeAction(
   }
 
   override fun redo() {
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
     val store = XRayStageStore.getInstanceOrNull() ?: return
 
     store.setStage(key, stage)

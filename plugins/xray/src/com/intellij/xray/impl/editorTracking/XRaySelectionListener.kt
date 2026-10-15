@@ -10,7 +10,7 @@ import com.intellij.xray.impl.service.XRayModeService
 internal class XRaySelectionListener(private val project: Project) : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val editor = (event.newEditor as? TextEditor)?.editor ?: return
-    val service = XRayModeService.getInstanceOrNull(project) ?: return
+    val service = XRayModeService.getInstance(project)
     service.refreshEditorIfStale(editor)
   }
 }

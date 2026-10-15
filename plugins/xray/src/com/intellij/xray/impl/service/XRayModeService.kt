@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.InlayHintsRefresher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -26,9 +25,6 @@ internal class XRayModeService(private val project: Project) : Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): XRayModeService = project.service()
-
-    @JvmStatic
-    fun getInstanceOrNull(project: Project): XRayModeService? = project.serviceOrNull()
   }
 
   @Volatile
