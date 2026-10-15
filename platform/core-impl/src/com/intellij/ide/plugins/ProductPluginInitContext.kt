@@ -273,7 +273,6 @@ class ProductPluginInitContext(
                 yieldIfResolves(DependencyRef.of(moduleId))
               }
             }
-            yieldIfResolves(DependencyRef.of(COLLABORATION_TOOLS_MODULE_ID))
           }
 
           /* Compatibility Layer */
@@ -322,6 +321,7 @@ class ProductPluginInitContext(
           for (vcsModule in vcsApiContentModules) {
             yieldIfResolves(DependencyRef.of(vcsModule))
           }
+          yieldIfResolves(DependencyRef.of(COLLABORATION_TOOLS_MODULE_ID))
         }
         if (descriptor !is PluginMainDescriptor || descriptor.pluginId != CORE_ID) { // FIXME violator: DesignedCorePlugin.xml which is xi:included from IdeaPlugin.xml
           for (depends in descriptor.pluginDependencies) {
