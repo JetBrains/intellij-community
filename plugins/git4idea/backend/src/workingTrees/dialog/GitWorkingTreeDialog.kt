@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees.dialog
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -21,9 +20,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
@@ -89,7 +91,7 @@ internal class GitWorkingTreeDialog(
   private lateinit var projectNameCell: Cell<JBTextField>
   private lateinit var refComboBox: ComboBox<RefWithWorkingTree?>
   private lateinit var refCellRenderer: RefWithTreeCellRenderer
-  private lateinit var submoduleWarningRow: Row
+  private lateinit var submoduleInfoRow: Row
   private lateinit var existingRefCell: Cell<ComboBox<RefWithWorkingTree?>>
   private val additionalSettingsHandles = mutableListOf<GitWorktreeSettingsPanelHandle>()
   private val configCategoriesPanel: GitWorktreeConfigCategoriesPanel
@@ -170,13 +172,14 @@ internal class GitWorkingTreeDialog(
     }
 
     return panel {
-      // Warn that a worktree of a submodule is standalone and is not re-linked into the parent repository in
-      // place of the original submodule directory (the parent keeps pointing at the original checkout).
-      submoduleWarningRow = row {
-        icon(AllIcons.General.Warning).gap(RightGap.SMALL)
-        text(GitBundle.message("working.tree.dialog.submodule.warning"))
+      // Tell that a worktree of a submodule is standalone and does not replace the submodule in the parent repository
+      // (the parent keeps pointing at the original checkout).
+      submoduleInfoRow = row {
+        val banner = InlineBanner(GitBundle.message("working.tree.dialog.submodule.info"), EditorNotificationPanel.Status.Info)
+          .showCloseButton(false)
+        cell(banner).align(AlignX.FILL)
       }.bottomGap(BottomGap.SMALL)
-      submoduleWarningRow.visible(getCurrentRepository().isSubmodule())
+      submoduleInfoRow.visible(getCurrentRepository().isSubmodule())
 
       // Multi-root project: let the user pick which repository the worktree is created for.
       if (candidateRepositories.size > 1) {
@@ -298,7 +301,7 @@ internal class GitWorkingTreeDialog(
     refComboBox.model = DefaultComboBoxModel(Vector<RefWithWorkingTree?>(refs))
     val currentBranch = getCurrentRepository().currentBranch
     existingRefWithWorkingTree.set(refs.firstOrNull { it.ref == currentBranch } ?: refs.firstOrNull())
-    submoduleWarningRow.visible(getCurrentRepository().isSubmodule())
+    submoduleInfoRow.visible(getCurrentRepository().isSubmodule())
     refCellRenderer.updateRepository(getCurrentRepository())
     configCategoriesPanel.updateWorktreeIncludeButtons()
   }
