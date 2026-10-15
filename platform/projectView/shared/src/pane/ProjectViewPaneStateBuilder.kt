@@ -33,7 +33,6 @@ sealed interface BackendProjectViewPaneStateAccessor<T : ProjectViewNodeUserObje
 sealed interface SuspendingBackendProjectViewPaneStateAccessor<T : ProjectViewNodeUserObject> {
   suspend fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
   suspend fun getNodePathById(id: Long): ProjectViewNodePath?
-  suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>?
   suspend fun getParentByChildId(childId: Long): BackendProjectViewNodeModel<T>?
   suspend fun getChildren(parent: BackendProjectViewNodeModel<T>?): List<BackendProjectViewNodeModel<T>>?
 }
