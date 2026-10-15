@@ -45,6 +45,15 @@ internal class WslEelMachineResolver : EelMachineResolver {
 
 @ApiStatus.Internal
 class WslEelMachine internal constructor(val distribution: WSLDistribution) : EelMachine, IjentMachine {
+  override val isConnected: Boolean
+    get() = when (WslIjentManager.getInstance().getIjentSessionState(distribution, false).value) {
+      is IjentSessionState.Deployed -> true
+
+      IjentSessionState.Deploying,
+      is IjentSessionState.Failed,
+      IjentSessionState.NotDeployed -> false
+    }
+
   override val internalName: String = "WSL-" + distribution.id
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {

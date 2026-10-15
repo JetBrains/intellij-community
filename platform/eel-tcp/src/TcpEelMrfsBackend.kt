@@ -1,17 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptorWithInteractiveDeployment
-import com.intellij.platform.eel.EelMachineWithConnectionState
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.util.annotations.paths.NioPath
 import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
 import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
+import com.intellij.platform.util.annotations.paths.NioPath
 import kotlinx.coroutines.CoroutineScope
 import java.net.URI
 import java.nio.file.FileStore
@@ -63,7 +62,7 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
         scope,
         descriptor,
         checkIsIjentInitialized = if (descriptor is EelDescriptorWithInteractiveDeployment) {
-          { (descriptor.getResolvedEelMachine() as? EelMachineWithConnectionState)?.isConnected == true }
+          { descriptor.getResolvedEelMachine()?.isConnected == true }
         }
         else null,
       )

@@ -4,7 +4,7 @@ package com.intellij.platform.eel.tcp
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelMachineWithConnectionState
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import kotlinx.coroutines.CancellationException
@@ -30,7 +30,7 @@ import kotlinx.coroutines.sync.withLock
  * - NotStarted → Failed (on creation error, excluding cancellation)
  * - Failed → Started (after backoff period)
  */
-abstract class TcpEelMachine(override val internalName: String) : EelMachineWithConnectionState {
+abstract class TcpEelMachine(override val internalName: String) : EelMachine {
 
   private val sessionMutex = Mutex()
 
