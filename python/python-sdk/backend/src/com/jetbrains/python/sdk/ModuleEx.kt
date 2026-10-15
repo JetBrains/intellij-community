@@ -29,8 +29,9 @@ suspend fun Module.readPythonSdkForConfiguration(): Sdk? =
  * resolved yet (e.g., the SDK table is still loading from a stale workspace model cache).
  * Prefer the interpreter of the Python project, `PyProject.getInterpreter`, in coroutine contexts.
  */
-@get:ApiStatus.Obsolete
+@Deprecated("Use the interpreter of the Python project: `PyProject.getInterpreter`, or the snapshot of `EvoPyProjectModel` when the caller cannot wait")
 val Module.pythonSdk: Sdk?
+  @Suppress("DEPRECATION")
   get() = PythonSdkUtil.findPythonSdk(this)
 
 /**
@@ -54,6 +55,7 @@ fun Module.setPythonSdkForTests(sdk: Sdk?): Unit = writePythonSdk(sdk)
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 fun Module.writePythonSdk(newSdk: Sdk?) {
+  @Suppress("DEPRECATION")
   val prevSdk = pythonSdk
   thisLogger.info("Setting PythonSDK $newSdk to module $this")
   newSdk?.pythonInterpreter(forceRefresh = true)

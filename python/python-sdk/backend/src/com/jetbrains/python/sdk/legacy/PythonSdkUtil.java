@@ -123,9 +123,10 @@ public final class PythonSdkUtil {
   }
 
   /**
-   * Consider to use the interpreter of the Python project instead, {@code PyProject.getInterpreter}, it waits for the project structure
+   * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}. It waits for the project structure.
+   * A caller that cannot wait reads the snapshot of {@code EvoPyProjectModel}.
    */
-  @ApiStatus.Obsolete
+  @Deprecated
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     if (module == null || module.isDisposed()) {
       return null;
@@ -292,6 +293,11 @@ public final class PythonSdkUtil {
     return ProjectJdkTable.getInstance().findJdk(key);
   }
 
+  /**
+   * @deprecated Use the interpreter of the Python project of the file, {@code findPythonInterpreter(file)}.
+   * A caller that cannot wait reads {@code EvoPyProjectModel.snapshotOrNull()?.forFile(file)}.
+   */
+  @Deprecated
   public static @Nullable Sdk findPythonSdk(final @NotNull PsiElement element) {
     return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
