@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.LoadingOrder
@@ -24,7 +24,6 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.ThreadingAssertions.assertWriteAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -340,6 +339,6 @@ private fun ensureReadAccess(file: VirtualFile) {
   if (file !is LightVirtualFile) {
     // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
     // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment()
   }
 }
