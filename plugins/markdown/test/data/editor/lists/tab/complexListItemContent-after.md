@@ -1,5 +1,5 @@
 1. This item will become a parent soon
-   1. Some text<caret>
+   2. Some text<caret>
       Paragraph continuation
 
       1. Inner item's text
