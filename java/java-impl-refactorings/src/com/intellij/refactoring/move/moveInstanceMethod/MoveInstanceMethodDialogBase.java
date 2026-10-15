@@ -17,6 +17,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.ListSpeedSearch;
@@ -144,12 +145,13 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value instanceof PsiVariable psiVariable) {
-        WriteIntentReadAction.run(() -> {
+        PsiVersioningService.freezePsiVersion(() -> {
           final String text = PsiFormatUtil.formatVariable(psiVariable,
                                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE,
                                                            PsiSubstitutor.EMPTY);
           setIcon(psiVariable.getIcon(0));
           setText(text);
+          return null;
         });
       }
       else if (value instanceof @NlsSafe String s) {
