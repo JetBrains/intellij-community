@@ -34,6 +34,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
+import org.jetbrains.plugins.gitlab.api.getClient
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil

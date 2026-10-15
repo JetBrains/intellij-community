@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.getClient
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -42,7 +43,7 @@ class GitLabAccountsDetailsProvider private constructor(
     scope: CoroutineScope,
     apiManager: GitLabApiManager,
     accountManager: GitLabAccountManager,
-  ) : this(scope, apiManager::getClient) {
+  ) : this(scope, { apiManager.getClient(it) }) {
     cancelOnRemoval(scope, accountManager)
   }
 

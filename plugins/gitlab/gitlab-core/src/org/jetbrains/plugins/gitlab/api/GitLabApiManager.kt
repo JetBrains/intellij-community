@@ -39,17 +39,6 @@ abstract class GitLabApiManager {
   ): GitLabApi =
     GitLabApiImpl(serversManager, server, tokenSupplier)
 
-  /**
-   * Gets a client that acquires the account credentials before each API call.
-   *
-   * The requests performed by the client may throw additional exceptions if something goes wrong when acquiring the credentials:
-   * * [org.jetbrains.plugins.gitlab.authentication.accounts.GitLabMissingCredentialsException] - if the client could not acquire any credentials from the store
-   * * [org.jetbrains.plugins.gitlab.authentication.accounts.GitLabCredentialsRefreshException] - if the credentials are expired, and the client has failed to refresh them
-   */
-  fun getClient(account: GitLabAccount): GitLabApi =
-    getClient(account.server) {
-      service<GitLabAccountManager>().getAndRefreshCredentials(account).accessToken
-    }
 
   /**
    * Gets an unauthenticated API Client that can be used for requests that are sure
