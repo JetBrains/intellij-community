@@ -57,6 +57,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentWithMnemonics
@@ -180,13 +181,15 @@ class EditorTabbedContainer internal constructor(
       if (window.isDisposed) {
         return@setSelectionChangeHandler ActionCallback.DONE
       }
-      val result = ActionCallback()
-      val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-      CommandProcessor.getInstance().executeCommand(project, {
-        ideDocumentHistory.onSelectionChanged()
-        result.notify(doChangeSelection.run())
-      }, "EditorChange", null)
-      result
+      PsiVersioningService.freezePsiVersion {
+        val result = ActionCallback()
+        val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
+        CommandProcessor.getInstance().executeCommand(project, {
+          ideDocumentHistory.onSelectionChanged()
+          result.notify(doChangeSelection.run())
+        }, "EditorChange", null)
+        result
+      }
     }
     editorTabs.component.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
