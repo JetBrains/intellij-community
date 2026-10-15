@@ -34,7 +34,6 @@ internal class XRayModeService(private val project: Project) : Disposable {
   @Volatile
   private var xRayMode: XRayMode = XRayMode.DISABLED
 
-  @Volatile
   private var holdActive: Boolean = false
 
   fun isXRayModeEnabled(): Boolean = xRayMode != XRayMode.DISABLED
