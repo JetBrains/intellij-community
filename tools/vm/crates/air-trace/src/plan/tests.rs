@@ -831,22 +831,22 @@ fn a_path_that_reaches_an_authored_suite_plans_its_class() {
     let repo = fixture_repo(&documents);
     repo.write(
         air_area().catalog().expect("a catalog").authored_suites_file,
-        r#"{ "suites": [ { "suite": "plugin-reload", "lane": "GUI_CHAT", "testClassName": "AirPluginUnloadLeakTest" } ] }"#,
+        r#"{ "suites": [ { "suite": "real-session-memory", "lane": "GUI_CHAT", "testClassName": "AirRealSessionMemoryUiTest" } ] }"#,
     );
-    let path = "plugins/air/tests/integration/gui-chat/test/AirPluginUnloadLeakTest.kt";
-    repo.write(path, "package air\n\nclass AirPluginUnloadLeakTest\n");
+    let path = "plugins/air/tests/integration/gui-chat/test/AirRealSessionMemoryUiTest.kt";
+    repo.write(path, "package air\n\nclass AirRealSessionMemoryUiTest\n");
 
     let result = plan(&repo.root, vec![text(path)]);
     assert!(result.scenarios.is_empty(), "{:?}", scenario_keys(&result));
-    assert_eq!(result.classes, vec!["AirPluginUnloadLeakTest".to_owned()]);
+    assert_eq!(result.classes, vec!["AirRealSessionMemoryUiTest".to_owned()]);
     assert_eq!(result.lanes, vec!["gui-chat".to_owned()]);
     assert!(
-        notes_of(&result).contains("AirPluginUnloadLeakTest, which have no generated profile"),
+        notes_of(&result).contains("AirRealSessionMemoryUiTest, which have no generated profile"),
         "{:?}",
         result.notes
     );
     let vm = command_of(&result, CommandKind::Vm, "gui-chat");
-    assert_eq!(vm.lines, vec![vm_run("gui-chat", &["AirPluginUnloadLeakTest"])]);
+    assert_eq!(vm.lines, vec![vm_run("gui-chat", &["AirRealSessionMemoryUiTest"])]);
 }
 
 // --- the CLI -------------------------------------------------------------------------------------------------
