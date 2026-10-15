@@ -336,7 +336,12 @@ fn verdict_diagnostics(
     // The summary is compared with the records only when it exists: an absent one is already named above, and the
     // counts are then the records' own.
     if let Some(summary) = &input.summary {
-        diagnostics.extend(summary_mismatches(summary, execution, &stream_counts(&input.events)));
+        diagnostics.extend(summary_mismatches(
+            summary,
+            execution,
+            &stream_counts(&input.events),
+            failed_as_a_whole(&input.events),
+        ));
     }
     diagnostics.extend(recorder_mismatch(cases));
     diagnostics
@@ -345,14 +350,23 @@ fn verdict_diagnostics(
 /// The statuses a recorder closes a scenario with: its `done` command.
 const DONE_STATUSES: [&str; 3] = ["passed", "failed", "aborted"];
 
+/// Whether the stream names a failure of the run as a whole: a `runFailed` or a `watchdogExpired` record. Such a
+/// run has no failed case to count, and each record is a diagnostic of its own.
+fn failed_as_a_whole(events: &[RunEvent]) -> bool {
+    events
+        .iter()
+        .any(|event| matches!(event.kind, RunEventKind::RunFailed(_) | RunEventKind::WatchdogExpired(_)))
+}
+
 /// The daemon's summary against the records of its own stream.
 ///
 /// Each count is compared on its own, because each names a different defect: a record the decoder lost, a summary
-/// that counts another way, or a `hasFailures` that contradicts its own counts.
-fn summary_mismatches(summary: &Summary, execution: &ExecutionCounts, records: &ExecutionCounts) -> Vec<String> {
+/// that counts another way, or a `hasFailures` that contradicts its own counts. A run that failed as a whole has
+/// failures and no failed case, so it may say `hasFailures` with no failed count.
+fn summary_mismatches(summary: &Summary, execution: &ExecutionCounts, records: &ExecutionCounts, whole_run_failed: bool) -> Vec<String> {
     let mut mismatches = Vec::new();
     let expected_has_failures = execution.tests_failed > 0 || execution.container_failures > 0;
-    if summary.has_failures != expected_has_failures {
+    if summary.has_failures != expected_has_failures && !(summary.has_failures && whole_run_failed) {
         mismatches.push(format!(
             "summary hasFailures mismatch: reported={}, expected={expected_has_failures}",
             summary.has_failures

@@ -775,6 +775,10 @@ The daemon's half and the IDE's half of supervision are in
   the run is an `infrastructure_error`.
   [@test] ../crates/avl-report/src/report/tests.rs (`the_summary_and_the_stream_are_reconciled_field_by_field`)
 
+- A run that failed as a whole has a `runFailed` or a `watchdogExpired` record and no failed case. Its record is
+  its diagnostic, and its `hasFailures` contradicts nothing.
+  [@test] ../crates/avl-report/src/report/tests.rs (`a_run_that_failed_as_a_whole_explains_its_has_failures`)
+
 - The recorder is the second account of each case. The case names the status of its trace bundle as `recorded`. A
   status of the recorder's `done` that contradicts the stream is a diagnostic. A case with no bundle and a bundle the
   recorder never closed are not compared, and a traces error decides nothing.

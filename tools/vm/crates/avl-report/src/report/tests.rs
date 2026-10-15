@@ -322,6 +322,33 @@ fn the_summary_and_the_stream_are_reconciled_field_by_field() {
     );
 }
 
+/// A run that failed as a whole sends `hasFailures` with no failed case. Its own record is the diagnostic, and the
+/// summary check adds no second line about it.
+#[test]
+fn a_run_that_failed_as_a_whole_explains_its_has_failures() {
+    let mut whole = summary(0, 0, 0, 0, 0);
+    whole.has_failures = true;
+    for record in [
+        RunEventKind::RunFailed(avl_wire::daemon::RunFailed {
+            error: "readiness: the IDE never reached READY".to_owned(),
+        }),
+        RunEventKind::WatchdogExpired(expired("progress gap", None, &[])),
+    ] {
+        let mut from = input(Some(whole.clone()), vec![RunEvent::synthesized(record)]);
+        from.protocol_diagnostic = Some("readiness: the IDE never reached READY".to_owned());
+        let document = built(from);
+        assert_eq!(document.status, Status::InfrastructureError);
+        assert!(!diagnostic(&document).contains("hasFailures"), "{}", diagnostic(&document));
+    }
+    // Without such a record, the same summary contradicts its counts.
+    let document = built(input(Some(whole), Vec::new()));
+    assert!(
+        diagnostic(&document).contains("summary hasFailures mismatch: reported=true, expected=false"),
+        "{}",
+        diagnostic(&document)
+    );
+}
+
 /// Zero tests ran in all three, and the three answers are different instructions to the caller.
 #[test]
 fn nothing_running_is_three_different_verdicts() {
