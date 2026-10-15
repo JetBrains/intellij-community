@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.reworked.hyperlinks
+package com.intellij.terminal.osc8
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.execution.filters.HyperlinkInfo
@@ -9,10 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.osc8.CompositeOsc8UriResolver
-import com.intellij.terminal.osc8.CompositeOsc8UriResolverWrapper
-import com.intellij.terminal.osc8.Osc8UriResolver
-import com.intellij.terminal.osc8.Osc8UriResolverProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking

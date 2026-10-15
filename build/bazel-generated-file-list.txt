@@ -1092,6 +1092,7 @@ platform/tasks-platform-impl/plugin
 platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
 platform/terminal
+platform/terminal/tests
 platform/testFramework
 platform/testFramework/bootstrap
 platform/testFramework/buildView
