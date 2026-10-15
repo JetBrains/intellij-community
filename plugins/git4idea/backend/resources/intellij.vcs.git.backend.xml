@@ -1122,6 +1122,12 @@
                     qualifiedName="Git4Idea.worktreeSettingsPanelProvider" dynamic="true"/>
   </extensionPoints>
 
+  <applicationListeners>
+    <listener class="git4idea.repo.GitFsMonitorProjectCloseListener"
+              topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
+
   <projectListeners>
     <listener class="git4idea.repo.GitFsMonitorProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectCloseListener"
