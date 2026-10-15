@@ -176,9 +176,22 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+a:com.intellij.collaboration.auth.Account
+- sf:Companion:com.intellij.collaboration.auth.Account$Companion
+- <init>():V
+- f:equals(java.lang.Object):Z
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- f:hashCode():I
+f:com.intellij.collaboration.auth.Account$Companion
+- f:generateId():java.lang.String
 com.intellij.collaboration.auth.AccountDetails
 - a:getAvatarUrl():java.lang.String
 - a:getName():java.lang.String
+a:com.intellij.collaboration.auth.ServerAccount
+- com.intellij.collaboration.auth.Account
+- <init>():V
+- a:getServer():com.intellij.collaboration.api.ServerPath
 f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier

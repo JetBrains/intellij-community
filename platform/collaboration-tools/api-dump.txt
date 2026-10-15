@@ -1,12 +1,3 @@
-a:com.intellij.collaboration.auth.Account
-- sf:Companion:com.intellij.collaboration.auth.Account$Companion
-- <init>():V
-- f:equals(java.lang.Object):Z
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- f:hashCode():I
-f:com.intellij.collaboration.auth.Account$Companion
-- f:generateId():java.lang.String
 com.intellij.collaboration.auth.AccountManager
 - a:findCredentials(com.intellij.collaboration.auth.Account,kotlin.coroutines.Continuation):java.lang.Object
 - a:getAccountsState():kotlinx.coroutines.flow.StateFlow
@@ -89,10 +80,6 @@ f:com.intellij.collaboration.auth.PersistentDefaultAccountHolder$AccountState
 - <init>():V
 - f:getDefaultAccountId():java.lang.String
 - f:setDefaultAccountId(java.lang.String):V
-a:com.intellij.collaboration.auth.ServerAccount
-- com.intellij.collaboration.auth.Account
-- <init>():V
-- a:getServer():com.intellij.collaboration.api.ServerPath
 a:com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
 - com.intellij.testFramework.LightVirtualFileBase
 - com.intellij.openapi.vfs.VirtualFilePathWrapper
