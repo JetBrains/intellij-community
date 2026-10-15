@@ -4,6 +4,7 @@ package com.intellij.pycharm.community.ide.impl
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.awaitOccurred
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -21,9 +22,7 @@ import com.intellij.pycharm.community.ide.impl.settings.PythonMainConfigurable
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.console.PyConsoleOptions
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Initialize PyCharm.
@@ -56,9 +55,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration.V3")) {
       propertyManager.setValue("PyCharm.InitialConfiguration.V3", "true")
       (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
-        while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
-          delay(10.milliseconds)
-        }
+        LoadingState.COMPONENTS_LOADED.awaitOccurred()
 
         val fileTypeManager = FileTypeManager.getInstance()
         val ignoredFilesList = fileTypeManager.getIgnoredFilesList()
