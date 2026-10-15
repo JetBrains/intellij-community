@@ -9,6 +9,7 @@
 //! A request is the JSON of one `AirUiTestRequest`: `{"type": "<class name>", ...fields}`, posted to the request
 //! endpoint. Its transport deadline is its `timeoutMs` and a grace, as the Kotlin client derives it.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use avl_bridge::lifecycle::{Reader, WaitError};
@@ -120,7 +121,13 @@ pub(crate) fn await_ready(
         state.pid,
         started.elapsed().as_millis()
     ));
-    check_vocabulary(launch, state.vocabulary_digest.as_deref(), vocabulary_digest)?;
+    check_vocabulary(
+        launch,
+        state.vocabulary_digest.as_deref(),
+        vocabulary_digest,
+        &MISSING_DIGEST_NOTED,
+        note,
+    )?;
     let nonce = format!("air-ui-test-bridge-{}", nanos());
     check_robot_and_ping(
         &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
@@ -147,10 +154,18 @@ fn not_ready(launch: &str, error: &WaitError) -> AgentRefusal {
     AgentRefusal::refused(NOT_READY_CODE, format!("the IDE of '{launch}' did not get ready: {error}"))
 }
 
-/// Refuses a bridge whose vocabulary is not the vocabulary of the lane document, and a bridge that names no
-/// vocabulary. The resident plugin reads the digest of the loaded bridge plugin, so a bridge without one is a bridge
-/// plugin that the lane cannot hold to its documents.
-pub(crate) fn check_vocabulary(launch: &str, served: Option<&str>, expected: &str) -> Result<(), AgentRefusal> {
+/// Whether the daemon noted a bridge without a vocabulary digest already: it notes that once per daemon.
+static MISSING_DIGEST_NOTED: AtomicBool = AtomicBool::new(false);
+
+/// Refuses a bridge whose vocabulary is not the vocabulary of the lane document. A bridge that names no vocabulary
+/// passes, and `note` gets one line about it, the first time that `noted` sees one.
+pub(crate) fn check_vocabulary(
+    launch: &str,
+    served: Option<&str>,
+    expected: &str,
+    noted: &AtomicBool,
+    note: &mut dyn FnMut(String),
+) -> Result<(), AgentRefusal> {
     match served {
         Some(served) if served != expected => Err(AgentRefusal::refused(
             VOCABULARY_SKEW_CODE,
@@ -160,14 +175,15 @@ pub(crate) fn check_vocabulary(launch: &str, served: Option<&str>, expected: &st
             ),
         )),
         Some(_) => Ok(()),
-        None => Err(AgentRefusal::refused(
-            VOCABULARY_SKEW_CODE,
-            format!(
-                "the bridge of '{launch}' names no vocabulary digest, so readiness cannot hold it to {expected}; the \
-                 loaded bridge plugin has no AirFlowVocabularyDigest class, or the resident plugin cannot read it, and \
-                 idea.log of the IDE names which"
-            ),
-        )),
+        None => {
+            if !noted.swap(true, Ordering::SeqCst) {
+                note(format!(
+                    "the bridge of '{launch}' names no vocabulary digest, so readiness cannot hold it to {expected}; the \
+                     daemon says this once"
+                ));
+            }
+            Ok(())
+        }
     }
 }
 

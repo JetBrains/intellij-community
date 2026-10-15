@@ -134,9 +134,9 @@ fn a_kept_junie_offer_is_not_answered() {
 }
 
 // The bridge serves the vocabulary of one build and the documents name another: the gate names both digests. A
-// bridge that names no digest is refused too, because readiness cannot hold it to the documents.
+// bridge that names no digest passes, and the daemon notes that once.
 #[test]
-fn a_vocabulary_of_another_build_and_a_missing_one_are_refused() {
+fn a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_is_noted_once() {
     let (server, _) = fake_ide(Some("0000"), INPUT_EVENTS_ROBOT, false);
     let refusal = ready(&server, false).0.unwrap_err();
     assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
@@ -145,10 +145,15 @@ fn a_vocabulary_of_another_build_and_a_missing_one_are_refused() {
         "{}",
         refusal.message
     );
+    let noted = AtomicBool::new(false);
+    let mut notes = Vec::new();
+    for _ in 0..2 {
+        check_vocabulary("air-ui-1", None, DIGEST, &noted, &mut |text| notes.push(text)).unwrap();
+    }
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    assert!(notes[0].contains("names no vocabulary digest"), "{notes:?}");
     let (server, _) = fake_ide(None, INPUT_EVENTS_ROBOT, false);
-    let refusal = ready(&server, false).0.unwrap_err();
-    assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
-    assert!(refusal.message.contains("names no vocabulary digest"), "{}", refusal.message);
+    ready(&server, false).0.unwrap();
 }
 
 // An IDE that drives gestures with the real pointer is refused, because a lane gesture must not depend on the screen.

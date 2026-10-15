@@ -1507,8 +1507,8 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`another_robot_is_refused`)
 
 - A bridge that serves another flow vocabulary than the lane document is refused as `lane_vocabulary_skew`, which
-  names both digests. A bridge that names no digest is refused with the same code.
-  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_vocabulary_of_another_build_and_a_missing_one_are_refused`)
+  names both digests. A bridge that names no digest passes, and the daemon notes that once.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_is_noted_once`)
 
 - An IDE whose control server of the controlled agents did not bind never gets ready. Readiness ends at the first state
   that names the failure, and it refuses as `lane_control_bind_failed` with the text of the failure.
