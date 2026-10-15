@@ -358,10 +358,17 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         fake_agent_jar: &fake_agent_jar,
         plugins: &plugins,
     };
-    let decision = daemon
-        .with_ide(|owner| owner.ensure(&launch, &mut Records(&mut |record| stream.emit(&record))))
-        .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?;
-    stream.note(format!("lane {lane}: ide {}", decision.action.as_str()));
+    // Each suite of a bare IDE launches its own, so a run of such suites alone needs no IDE of the lane.
+    if selection.suites.iter().any(|suite| suite.program.launch.is_none()) {
+        let decision = daemon
+            .with_ide(|owner| owner.ensure(&launch, &mut Records(&mut |record| stream.emit(&record))))
+            .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?;
+        stream.note(format!("lane {lane}: ide {}", decision.action.as_str()));
+    } else {
+        stream.note(format!(
+            "lane {lane}: every selected suite launches a bare IDE, so the IDE of the lane does not start"
+        ));
+    }
 
     let discovered: usize = selection.suites.iter().map(|suite| suite.program.profiles.len()).sum();
     let discovered = u32::try_from(discovered).unwrap_or(u32::MAX);
@@ -498,6 +505,22 @@ impl Lane for DaemonLane<'_, '_> {
             launched: self.daemon.with_ide(|owner| owner.pid()),
             bridge: readiness::bridge_pid(&self.bridge, self.launch.identity.key())?,
         })
+    }
+
+    fn launch_bare(&self, key: &str) -> Result<(), String> {
+        let launched = self
+            .daemon
+            .with_ide(|owner| owner.launch_bare(self.launch, key, &mut Records(&mut |record| self.stream.emit(&record))));
+        self.refresh_held();
+        launched.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
+    }
+
+    fn end_bare(&self) -> Result<(), String> {
+        let ended = self
+            .daemon
+            .with_ide(|owner| owner.end_bare(&mut Records(&mut |record| self.stream.emit(&record))));
+        self.refresh_held();
+        ended.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
     }
 }
 

@@ -18,7 +18,7 @@ fn suite(name: &str, lane: &str, class: &str, scenarios: usize) -> String {
         })
         .collect();
     json!({
-        "suite": name, "lane": lane, "testClassName": class, "restartsIde": false,
+        "schemaVersion": 2, "suite": name, "lane": lane, "testClassName": class, "restartsIde": false,
         "labels": [{"name": "testClass", "value": format!("com.intellij.air.integration.flow.generated.ui.{class}")}],
         "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}},

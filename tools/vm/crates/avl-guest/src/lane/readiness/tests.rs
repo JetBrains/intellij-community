@@ -125,6 +125,22 @@ fn a_ready_ide_passes_the_gate_and_the_junie_offer_gets_skip() {
     assert!(notes.iter().any(|note| note.contains("got Skip")), "{notes:?}");
 }
 
+// A bare IDE is ready once its lifecycle says so and its vocabulary fits. The wait sends no request of the bridge, so
+// the first request that the IDE gets is the first instruction of its suite.
+#[test]
+fn the_readiness_of_a_bare_ide_sends_no_request_of_the_bridge() {
+    let (server, log) = fake_ide(Some(DIGEST), INPUT_EVENTS_ROBOT, true);
+    let bridge = Bridge::at(server.url(), TOKEN).unwrap();
+    let mut notes = Vec::new();
+    await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut |note| notes.push(note)).unwrap();
+    assert_eq!(*log.lock().unwrap(), Vec::<String>::new());
+    assert!(notes.iter().any(|note| note.contains("is ready as pid 4321")), "{notes:?}");
+    let (server, _) = fake_ide(Some("0000"), INPUT_EVENTS_ROBOT, false);
+    let bridge = Bridge::at(server.url(), TOKEN).unwrap();
+    let refusal = await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut |_| {}).unwrap_err();
+    assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
+}
+
 // A relaunch that keeps the Junie offer open asks nothing of the offer.
 #[test]
 fn a_kept_junie_offer_is_not_answered() {

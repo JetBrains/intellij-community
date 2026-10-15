@@ -14,6 +14,8 @@
 //! | `bin/<runtime>` | one launcher for each declared CLI runtime |
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
 //!
+//! A bare IDE gets the option files and the token of the bridge only, see [`write_bare`].
+//!
 //! The directory `config/air-ui-test` and its three files are private to the account. The runtime in the IDE owns
 //! [`NEXT_START_CONTROL_FILE`], so this writer never writes or deletes it.
 
@@ -260,19 +262,8 @@ impl LaneContext<'_> {
     /// Writes the context files into the prepared context `paths`, and answers the ports of the lane services.
     pub(crate) fn write(&self, paths: &IdePrepared) -> Result<ServicePorts, AgentRefusal> {
         let ports = self.check()?;
-        let (config, home, project) = (
-            Path::new(&paths.config_dir),
-            Path::new(&paths.home_dir),
-            Path::new(&paths.project_dir),
-        );
-        write_option_files(
-            &config.join(OPTIONS_DIR),
-            project,
-            &Path::new(&paths.context_dir).join(NEW_PROJECTS_DIR),
-        )?;
-        let bridge = config.join(BRIDGE_DIR);
-        create_private_dir(&bridge)?;
-        write_private(&bridge.join(TOKEN_FILE), self.identity.secret(BRIDGE_TOKEN_PURPOSE).as_bytes())?;
+        let (home, project) = (Path::new(&paths.home_dir), Path::new(&paths.project_dir));
+        let bridge = write_options_and_token(paths, &self.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         write_private(&bridge.join(LANE_SERVICES_FILE), &json_document(&self.lane_services(ports))?)?;
         let control = bridge.join(CONTROL_FILE);
         match self.control_file(home) {
@@ -384,6 +375,28 @@ impl LaneContext<'_> {
 
 /// Writes the option files into `options`, and creates `new_projects`, an absolute path. `ide.general.xml` is written only when it is
 /// missing. The trusted paths are the absolute project path and its real path.
+/// Writes the context files of a bare IDE into the prepared context `paths`: the option files and `bridge_token` as the
+/// token of the bridge. A bare IDE gets no file of the lane services, of the control server or of an agent, so its
+/// home holds nothing of the machine or of the lane.
+pub(crate) fn write_bare(paths: &IdePrepared, bridge_token: &str) -> Result<(), AgentRefusal> {
+    write_options_and_token(paths, bridge_token).map(|_| ())
+}
+
+/// Writes the option files and the token of the bridge, which every lane IDE gets, and answers the private directory
+/// of the bridge files.
+fn write_options_and_token(paths: &IdePrepared, bridge_token: &str) -> Result<PathBuf, AgentRefusal> {
+    let config = Path::new(&paths.config_dir);
+    write_option_files(
+        &config.join(OPTIONS_DIR),
+        Path::new(&paths.project_dir),
+        &Path::new(&paths.context_dir).join(NEW_PROJECTS_DIR),
+    )?;
+    let bridge = config.join(BRIDGE_DIR);
+    create_private_dir(&bridge)?;
+    write_private(&bridge.join(TOKEN_FILE), bridge_token.as_bytes())?;
+    Ok(bridge)
+}
+
 fn write_option_files(options: &Path, project: &Path, new_projects: &Path) -> Result<(), AgentRefusal> {
     create_dirs(options)?;
     create_dirs(new_projects)?;

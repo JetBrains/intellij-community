@@ -6,7 +6,7 @@ use super::*;
 /// A one-scenario suite whose instructions are `instructions`, stated by `vocabulary`.
 fn program(vocabulary: &Value, instructions: &Value) -> SuiteProgram {
     let document = json!({
-        "suite": "suite", "lane": "UI", "testClassName": "AirSuiteGeneratedFlowUiTest", "restartsIde": false,
+        "schemaVersion": 2, "suite": "suite", "lane": "UI", "testClassName": "AirSuiteGeneratedFlowUiTest", "restartsIde": false,
         "labels": [{"name": "testClass", "value": "com.example.AirSuiteGeneratedFlowUiTest"}, {"name": "Subsystem", "value": "AI"}],
         "modules": [], "implementationFlows": [],
         "vocabulary": vocabulary,
@@ -161,7 +161,8 @@ fn authored(instructions: &Value) -> SuiteProgram {
     let params = json!({"part": key(&["seed", "use"]), "scenario": key(&["scenario"]), "suite": key(&["authored"]),
         "timeoutMs": {"type": "int", "optional": false}});
     let document = json!({
-        "suite": "authored", "lane": "UI", "testClassName": "AgentAuthoredUiTest", "restartsIde": false, "authored": true,
+        "schemaVersion": 2, "suite": "authored", "lane": "UI", "testClassName": "AgentAuthoredUiTest", "restartsIde": false,
+        "authored": true,
         "labels": [{"name": "testClass", "value": "com.example.AgentAuthoredUiTest"}],
         "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": spec("ide", &params)}, "assertions": {}},
@@ -193,5 +194,103 @@ fn a_part_that_names_no_part_of_its_suite_is_refused() {
     assert_eq!(
         authored(&program).refusals(),
         vec!["scenario 'scenario' program: the action 'authored-step' parameter 'part' does not accept \"other\"".to_owned()]
+    );
+}
+
+/// The suite document `startup-class-loading` of a bare launch: one authored program of one IDE id, and `launch`. A
+/// `launch` of null leaves the field out.
+fn bare(authored: bool, launch: &Value, actions: &Value) -> Result<SuiteProgram, String> {
+    let mut document = json!({
+        "schemaVersion": 2, "suite": "startup-class-loading", "lane": "UI", "testClassName": "AirStartupClassLoadingBudgetUiTest",
+        "authored": authored, "restartsIde": false,
+        "labels": [{"name": "testClass", "value": "com.example.AirStartupClassLoadingBudgetUiTest"}],
+        "modules": [], "implementationFlows": [], "launch": launch,
+        "vocabulary": {"runnerAnswers": [], "actions": actions, "assertions": {}},
+        "profiles": [{"name": "Air loads no more classes than its budget while a project opens", "fixture": "bare",
+            "flags": {}, "followsLastUsedPreset": false, "requiresPromptProbe": false, "setups": [], "steps": [],
+            "program": [{"action": "startup-class-loading-within-budget"}]}],
+    });
+    if launch.is_null() {
+        document.as_object_mut().unwrap().remove("launch");
+    }
+    parse_suite_program(document.to_string().as_bytes())
+}
+
+// A suite of a bare IDE states its profile in `launch`. The profile is a word of the runner, and the section has no
+// other field, so a document of a later profile fails to parse. A document without `launch` runs on the shared IDE.
+#[test]
+fn a_bare_launch_is_a_profile_word_and_a_section_with_no_other_field() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let program = bare(true, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &actions).unwrap();
+    assert_eq!(
+        program.launch,
+        Some(SuiteLaunch {
+            profile: LaunchProfile::Bare,
+            key: "air-startup-class-loading".to_owned(),
+        })
+    );
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    let unknown = bare(true, &json!({"profile": "warm", "key": "air-startup-class-loading"}), &actions).unwrap_err();
+    assert!(unknown.contains("unknown variant `warm`, expected `bare`"), "{unknown}");
+    let extra = bare(
+        true,
+        &json!({"profile": "bare", "key": "air-startup-class-loading", "port": 1}),
+        &actions,
+    )
+    .unwrap_err();
+    assert!(extra.contains("unknown field `port`"), "{extra}");
+    assert_eq!(bare(true, &Value::Null, &actions).unwrap().launch, None);
+}
+
+// A bare IDE runs an authored program, and no host id: no restart, no recycle, no lane service.
+#[test]
+fn a_bare_launch_of_a_story_suite_or_of_a_host_id_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    assert_eq!(
+        bare(false, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &actions)
+            .unwrap()
+            .refusals(),
+        vec!["the suite launches a bare IDE, which runs an authored program and no story scenario".to_owned()]
+    );
+    let with_restart = json!({
+        "startup-class-loading-within-budget": spec("ide", &json!({})),
+        "restart-ide": {"side": "host", "timeoutMs": 840_000, "restarts": 1, "answers": [], "takes": [], "mayTake": [], "params": {}},
+    });
+    let refusals = bare(true, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &with_restart)
+        .unwrap()
+        .refusals();
+    assert!(
+        refusals.contains(&"the suite launches a bare IDE, which runs no host id, and the vocabulary states 'restart-ide'".to_owned()),
+        "{refusals:?}"
+    );
+}
+
+// A suite document states the schema version of this reader. A document of another version is refused, so a runner
+// never reads a field that it does not know as an absent one.
+#[test]
+fn a_document_of_another_schema_version_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let mut document: Value = serde_json::from_str(&format!(
+        r#"{{"schemaVersion": 1, "suite": "s", "lane": "UI", "testClassName": "AirSUiTest", "labels": [],
+            "vocabulary": {{"runnerAnswers": [], "actions": {actions}, "assertions": {{}}}}, "profiles": []}}"#
+    ))
+    .unwrap();
+    assert_eq!(
+        parse_suite_program(document.to_string().as_bytes()).unwrap_err(),
+        "has the schema version 1, and this reader reads 2"
+    );
+    document.as_object_mut().unwrap().remove("schemaVersion");
+    let missing = parse_suite_program(document.to_string().as_bytes()).unwrap_err();
+    assert!(missing.contains("missing field `schemaVersion`"), "{missing}");
+}
+
+// The launch key names the context of the bare IDE, a directory below the IDE root, so it is a plain name.
+#[test]
+fn a_launch_key_that_is_no_plain_name_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let program = bare(true, &json!({"profile": "bare", "key": "../lane"}), &actions).unwrap();
+    assert_eq!(
+        program.refusals(),
+        vec!["the launch key '../lane' is no name of lowercase letters, digits and dashes".to_owned()]
     );
 }

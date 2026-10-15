@@ -16,6 +16,10 @@
 //! A reload that fails is a `relaunch`, with the failure as its reason ([`super::reload`]). Each decision is a
 //! `decision` record of the run stream.
 //!
+//! A suite of the launch profile `bare` gets an IDE of its own: the owner quits the IDE of the lane and keeps its record,
+//! launches a bare IDE on a fresh context of the launch key of the suite, and holds the record of the lane IDE again
+//! when the suite ends. The next run then relaunches the lane IDE on its context.
+//!
 //! A relaunch keeps the config, system and project directories of the context, which a restart scenario asserts
 //! across. A quit asks the IDE through its bridge and waits for the run to end. It kills the process after a grace,
 //! with a thread dump first, and no launch lands beside a process that survives both.
@@ -67,6 +71,10 @@ pub(crate) const REQUIRED_CONTEXT_PLUGINS: [&str; 2] =
 /// file, in destination order. The resident plugin reads it for the digest of the loaded bridge. A leading dot, so the
 /// platform reads no plugin from it.
 pub(crate) const MANIFEST_FILE: &str = ".air-context-plugins";
+
+/// The platform property of the internal mode, which every lane IDE runs in, and which a bare IDE leaves out: it
+/// measures the start-up that a user pays.
+const INTERNAL_MODE_PROPERTY: &str = "idea.is.internal";
 
 /// The launch name of the first run of a context, and of a relaunch before its count.
 const FIRST_LAUNCH: &str = "start";
@@ -315,6 +323,8 @@ struct HeldIde {
     relaunches: u32,
     /// Whether the end of this run was reported, so each run reports its end once.
     exit_reported: bool,
+    /// Whether this is the IDE of a suite of the launch profile `bare`.
+    bare: bool,
 }
 
 impl HeldIde {
@@ -361,6 +371,8 @@ pub(crate) struct IdeOwner {
     inputs: LaunchInputs,
     services: Option<LaneServices>,
     held: Option<HeldIde>,
+    /// The record of the lane IDE that a bare launch quit, until the bare suite ends.
+    parked: Option<HeldIde>,
 }
 
 impl IdeOwner {
@@ -369,6 +381,7 @@ impl IdeOwner {
             inputs,
             services: None,
             held: None,
+            parked: None,
         }
     }
 
@@ -555,6 +568,7 @@ impl IdeOwner {
             pid: None,
             relaunches: 0,
             exit_reported: false,
+            bare: false,
         };
         let state = live_state(&held)?;
         Some(HeldIde { pid: state.pid, ..held })
@@ -586,30 +600,14 @@ impl IdeOwner {
         if self.held.is_some() {
             self.quit(records)?;
         }
-        let system = LiveSystem;
-        let stopped = crate::ide::gc::collect(
-            &system,
-            &IdeGcArgs {
-                root: self.inputs.ide_root.clone(),
-                stop_all: true,
-                keep_product: None,
-                keep_logs: 5,
-                grace_ms: 10_000,
-            },
-        )?;
-        for run in &stopped.stopped {
-            records.note(format!(
-                "cancelled the IDE run {} of '{}' before a new context",
-                run.run_id, run.launch_key
-            ));
-        }
+        self.stop_every_run(records)?;
         records.note(format!(
             "preparing a fresh context of '{}' under {}",
             launch.identity.key(),
             self.inputs.ide_root.display()
         ));
         let paths = crate::ide::prepare::prepare(
-            &system,
+            &LiveSystem,
             &IdeContext {
                 schema_version: wire_ide::SCHEMA_VERSION,
                 ide_root: self.inputs.ide_root.display().to_string(),
@@ -632,8 +630,31 @@ impl IdeOwner {
             pid: None,
             relaunches: 0,
             exit_reported: false,
+            bare: false,
         };
         self.start_run(held, launch, records)
+    }
+
+    /// Stops every IDE run under the IDE root before a launch on a fresh context, so no IDE of an earlier daemon holds
+    /// the bridge port. The contexts stay.
+    fn stop_every_run(&self, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        let stopped = crate::ide::gc::collect(
+            &LiveSystem,
+            &IdeGcArgs {
+                root: self.inputs.ide_root.clone(),
+                stop_all: true,
+                keep_product: None,
+                keep_logs: 5,
+                grace_ms: 10_000,
+            },
+        )?;
+        for run in &stopped.stopped {
+            records.note(format!(
+                "cancelled the IDE run {} of '{}' before a new context",
+                run.run_id, run.launch_key
+            ));
+        }
+        Ok(())
     }
 
     /// Quits the held IDE and launches it again on its context as `<base>-<n>-<millis>`. The count `n` counts every
@@ -658,7 +679,7 @@ impl IdeOwner {
     fn start_run(&mut self, mut held: HeldIde, launch: &LaneLaunch<'_>, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let distribution: Vec<String> = self.inputs.distribution_plugins.iter().cloned().collect();
         install_plugins(Path::new(&held.paths.plugins_dir), launch.plugins, &distribution)?;
-        let properties = self.launch_properties(launch, &held.paths)?;
+        let properties = self.launch_properties(launch, &held)?;
         let launched = crate::ide::launch::launch(
             &LiveSystem,
             &Launcher::current(),
@@ -688,12 +709,19 @@ impl IdeOwner {
         Ok(())
     }
 
-    /// The `-D` properties of a launch on the context `paths`, in the order of the JVM host. A later property wins.
-    fn launch_properties(&self, launch: &LaneLaunch<'_>, paths: &IdePrepared) -> Result<BTreeMap<String, String>, AgentRefusal> {
-        let services = self
-            .services
-            .as_ref()
-            .ok_or_else(|| AgentRefusal::internal("a launch without the lane services"))?;
+    /// The `-D` properties of the launch of `held`, in the order of the JVM host. A later property wins. A bare IDE gets
+    /// the launch properties of the lane document without the internal mode, and no property of a lane service.
+    fn launch_properties(&self, launch: &LaneLaunch<'_>, held: &HeldIde) -> Result<BTreeMap<String, String>, AgentRefusal> {
+        let services = if held.bare {
+            None
+        } else {
+            Some(
+                self.services
+                    .as_ref()
+                    .ok_or_else(|| AgentRefusal::internal("a launch without the lane services"))?,
+            )
+        };
+        let paths = &held.paths;
         let project = real_path(Path::new(&paths.project_dir))?;
         let host = LaunchHost {
             linux: cfg!(target_os = "linux"),
@@ -712,15 +740,98 @@ impl IdeOwner {
         put("user.home", paths.home_dir.clone());
         put("java.util.prefs.userRoot", paths.home_dir.clone());
         put(DRIVEN_PROJECT_PROPERTY, project.display().to_string());
-        for (key, value) in launch.document.launch_properties_on(host) {
+        for (key, value) in document_properties(launch.document, host, held.bare) {
             put(key, value.to_owned());
         }
-        for (key, value) in services.launch_properties() {
+        for (key, value) in services.into_iter().flat_map(LaneServices::launch_properties) {
             put(key, value);
         }
         put(BRIDGE_PORT_PROPERTY, BRIDGE_PORT.to_string());
-        put(BRIDGE_LAUNCH_PROPERTY, launch.identity.key().to_owned());
+        put(BRIDGE_LAUNCH_PROPERTY, held.key.clone());
         Ok(properties)
+    }
+
+    /// Launches a bare IDE for a suite of the launch profile `bare`, and waits until it is ready.
+    ///
+    /// The owner quits the IDE of the lane and keeps its record until [`IdeOwner::end_bare`]. It stops every other IDE
+    /// run under the IDE root, and prepares a fresh context of `key` with the option files and the token of the bridge
+    /// alone, installs the context
+    /// plugins of `launch`, and launches the IDE with the launch properties of the lane document without the internal
+    /// mode. The readiness is the lifecycle and the vocabulary only, so the IDE gets no request before the first
+    /// instruction of its suite.
+    pub(crate) fn launch_bare(&mut self, launch: &LaneLaunch<'_>, key: &str, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        if key == launch.identity.key() {
+            return Err(refused(format!(
+                "the bare launch key '{key}' is the key of the lane, and a bare launch makes its context again"
+            )));
+        }
+        if let Some(lane) = self.held.clone().filter(|held| !held.bare) {
+            records.note(format!(
+                "a suite of a bare IDE quits the IDE of '{}', and the next run launches it again on its context",
+                lane.key
+            ));
+            self.quit(records)?;
+            self.parked = Some(HeldIde {
+                exit_reported: true,
+                ..lane
+            });
+        } else {
+            self.quit(records)?;
+        }
+        self.stop_every_run(records)?;
+        records.note(format!(
+            "preparing a fresh context of '{key}' under {}",
+            self.inputs.ide_root.display()
+        ));
+        let paths = crate::ide::prepare::prepare(
+            &LiveSystem,
+            &IdeContext {
+                schema_version: wire_ide::SCHEMA_VERSION,
+                ide_root: self.inputs.ide_root.display().to_string(),
+                launch_key: key.to_owned(),
+                fresh: true,
+                project: ProjectSource {
+                    archive: self.inputs.project_archive.display().to_string(),
+                    archive_root: self.inputs.project_root.clone(),
+                    relocate_to: None,
+                },
+                disabled_plugin_ids: launch.document.disabled_plugin_ids.clone(),
+            },
+        )?;
+        // The bare IDE serves the token of the lane, so the bridge of the run reaches both IDEs.
+        let token = launch.identity.secret(BRIDGE_TOKEN_PURPOSE);
+        super::context::write_bare(&paths, &token)?;
+        let held = HeldIde {
+            key: key.to_owned(),
+            token: token.clone(),
+            paths,
+            launch_name: launch_name(FIRST_LAUNCH),
+            pid: None,
+            relaunches: 0,
+            exit_reported: false,
+            bare: true,
+        };
+        self.start_run(held, launch, records)?;
+        records.note(format!(
+            "waiting up to {} s for the bare IDE of '{key}' to get ready",
+            readiness::READY_TIMEOUT.as_secs()
+        ));
+        let bridge = Bridge::new(BRIDGE_PORT, &token)?;
+        readiness::await_lifecycle_ready(&bridge, key, &launch.document.vocabulary_digest, &mut |text| {
+            records.note(text);
+        })
+    }
+
+    /// Quits the bare IDE, and holds the record of the IDE of the lane again, so the next run relaunches it on its
+    /// context.
+    pub(crate) fn end_bare(&mut self, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        if self.held.as_ref().is_some_and(|held| held.bare) {
+            self.quit(records)?;
+        }
+        if self.held.is_none() {
+            self.held = self.parked.take();
+        }
+        Ok(())
     }
 
     /// Quits the held IDE and forgets it: the bridge asks the IDE to quit, and the owner waits for the run to end. A run
@@ -787,6 +898,19 @@ impl IdeOwner {
     pub(crate) fn close_services(&mut self) {
         self.services = None;
     }
+}
+
+/// The launch properties of `document` on `host`. The IDE of a lane gets the stated properties and those of the
+/// requirements. A bare IDE gets the stated properties without the internal mode, as the IDE of a user starts.
+pub(crate) fn document_properties(document: &LaneDocument, host: LaunchHost, bare: bool) -> Vec<(&str, &str)> {
+    if !bare {
+        return document.launch_properties_on(host);
+    }
+    document
+        .stated_launch_properties_on(host)
+        .into_iter()
+        .filter(|(key, _)| *key != INTERNAL_MODE_PROPERTY)
+        .collect()
 }
 
 /// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named.

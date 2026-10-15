@@ -1502,6 +1502,42 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_recycle_that_keeps_the_ide_process_fails_the_proof`)
 
+- A suite document may state `launch: {profile: "bare", key: <launch key>}`. Such a suite runs after the suites of
+  the shared IDE, on an IDE of its own. The verb quits the IDE of the lane and launches a bare IDE on a fresh context of
+  the launch key. The next run launches the IDE of the lane again on its context.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
+
+- The profile is a word of the verb, and `launch` has no third field, so a document of another profile does not parse.
+  The launch key is a name of lowercase letters, digits and dashes. A bare suite runs an authored program and no host
+  id.
+  [@test] ../crates/avl-wire/src/program/tests.rs (`a_bare_launch_is_a_profile_word_and_a_section_with_no_other_field`)
+  [@test] ../crates/avl-wire/src/program/tests.rs (`a_launch_key_that_is_no_plain_name_is_refused`)
+  [@test] ../crates/avl-wire/src/program/tests.rs (`a_bare_launch_of_a_story_suite_or_of_a_host_id_is_refused`)
+
+- A suite document states its schema version, and the verb reads version 2 only. A document of another version fails to
+  parse, so the verb never reads a field that it does not know as an absent field.
+  [@test] ../crates/avl-wire/src/program/tests.rs (`a_document_of_another_schema_version_is_refused`)
+
+- A bare IDE gets the option files and the token of the bridge, and no other context file. It gets the stated launch
+  properties of the lane document without the internal mode, and no property of a requirement or a lane service.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements`)
+
+- The readiness of a bare IDE is the lifecycle and the vocabulary digest only. Its scenarios run no reset, and the
+  watchdog sends it no probe and no dump. So the first request of the bridge that a bare IDE gets is the first
+  instruction of its suite. The trace of its scenario opens after the program, because the recorder asks the IDE for
+  its facts.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`the_readiness_of_a_bare_ide_sends_no_request_of_the_bridge`)
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`a_quiet_hold_sends_the_ide_no_probe_and_no_dump`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
+
+- A bare IDE that does not get ready fails its suite as one container failure `lane_launch`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_ide_that_does_not_get_ready_fails_its_suite_and_the_lane_takes_its_ide_back`)
+
+- An instruction that answers `attachments` gets each file attached to the trace of its scenario. The text of each file
+  goes into the run log.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
+
 - `restart-ide` performs the file operations of `whileDown` while the IDE is down, and it answers `whileDownReads`.
   It then states the fixture to the new IDE. A fixture can keep the Junie offer of the new start open.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_restart_performs_while_down_and_states_the_fixture_again`)

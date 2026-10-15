@@ -99,6 +99,10 @@ struct Fake {
     killed: Arc<AtomicBool>,
     /// A relaunch keeps the pid, as a launch that left the old IDE on the bridge port would.
     relaunch_keeps_pid: AtomicBool,
+    /// The launches and the ends of a bare IDE, in order.
+    bare: Mutex<Vec<&'static str>>,
+    /// A bare launch fails, as an IDE that never gets ready does.
+    bare_launch_fails: AtomicBool,
 }
 
 impl Fake {
@@ -137,6 +141,8 @@ impl Fake {
             services: FakeServices::default(),
             killed,
             relaunch_keeps_pid: AtomicBool::new(false),
+            bare: Mutex::new(Vec::new()),
+            bare_launch_fails: AtomicBool::new(false),
         }
     }
 
@@ -270,6 +276,21 @@ impl Lane for Fake {
             bridge: i64::from(pid),
         })
     }
+
+    fn launch_bare(&self, key: &str) -> Result<(), String> {
+        assert_eq!(key, "air-startup-class-loading");
+        self.bare.lock().unwrap().push("launch");
+        if self.bare_launch_fails.load(Ordering::SeqCst) {
+            return Err("lane_ide_not_ready: the IDE of 'air-startup-class-loading' did not get ready".to_owned());
+        }
+        self.pid.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn end_bare(&self) -> Result<(), String> {
+        self.bare.lock().unwrap().push("end");
+        Ok(())
+    }
 }
 
 /// The spec of an IDE id with these values.
@@ -281,7 +302,7 @@ fn ide(answers: &[&str], may_answer: &[&str], takes: &[&str]) -> Value {
 /// A story suite document of `profiles` over `vocabulary`, whose fixture `fixture` carries its bridge requests.
 fn story(vocabulary: &Value, profiles: &Value) -> Suite {
     let document = json!({
-        "schemaVersion": 1, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
+        "schemaVersion": 2, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
         "labels": [
             {"name": "testClass", "value": "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest"},
             {"name": "testMethod", "value": "generatedFlowScenarios"},
@@ -713,7 +734,7 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
             "uses": {"takes": takes, "answers": answers}})
     };
     let document = json!({
-        "suite": "workflow-git", "lane": "UI", "testClassName": "AgentWorkflowGitUiTest", "authored": true,
+        "schemaVersion": 2, "suite": "workflow-git", "lane": "UI", "testClassName": "AgentWorkflowGitUiTest", "authored": true,
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.workflows.AgentWorkflowGitUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
@@ -763,7 +784,7 @@ fn recycle_smoke() -> Suite {
             "suite": {"type": "enum", "values": ["lane-recycle-smoke"], "optional": false},
             "timeoutMs": {"type": "int", "optional": false}}});
     let document = json!({
-        "schemaVersion": 1, "suite": "lane-recycle-smoke", "lane": "UI", "testClassName": "AirFlowRecycleSmokeUiTest",
+        "schemaVersion": 2, "suite": "lane-recycle-smoke", "lane": "UI", "testClassName": "AirFlowRecycleSmokeUiTest",
         "authored": true,
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.AirFlowRecycleSmokeUiTest"}],
         "restartsIde": true, "modules": [], "implementationFlows": [],
@@ -844,6 +865,117 @@ fn a_recycle_that_keeps_the_ide_process_fails_the_proof() {
     assert_eq!(finished[0]["status"], "FAILED");
     assert_eq!(finished[0]["type"], "lane_host_id");
     assert_eq!(finished[0]["message"], "the recycle kept the IDE process 1");
+}
+
+/// The id of the start-up measurement of a bare IDE.
+const STARTUP: &str = "startup-class-loading-within-budget";
+
+/// The suite document `startup-class-loading`: one scenario of a bare IDE whose program is the start-up measurement.
+fn startup_class_loading() -> Suite {
+    let document = json!({
+        "schemaVersion": 2, "suite": "startup-class-loading", "lane": "UI", "testClassName": "AirStartupClassLoadingBudgetUiTest",
+        "authored": true, "launch": {"profile": "bare", "key": "air-startup-class-loading"},
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.startup.AirStartupClassLoadingBudgetUiTest"}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {STARTUP: {"side": "ide", "timeoutMs": 600_000, "restarts": 0,
+            "answers": [], "mayAnswer": [], "takes": [], "mayTake": [], "params": {}}}, "assertions": {}},
+        "fixtures": {"bare": {}},
+        "profiles": [{"name": "Air loads no more classes than its budget while a project opens", "fixture": "bare",
+            "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+            "program": [{"action": STARTUP}]}],
+    });
+    let bytes = document.to_string().into_bytes();
+    let program = parse_suite_program(&bytes).unwrap();
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+}
+
+// A suite of a bare IDE runs after the suites of the shared IDE, on an IDE of its own. The bare IDE gets no reset, no
+// baseline and no preparation: its one request is the measurement. The tables that the measurement answers go into the
+// run log and, once the scenario opened in the trace, to the recorder as an attachment.
+#[test]
+fn a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction() {
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(
+            format!("action/{STARTUP}"),
+            json!({"attachments": [{"title": "Air start-up class loading", "contentType": "text/plain",
+                "fileName": "air-startup-class-loading.txt", "text": "com.intellij.air: 3879 classes over 195 loaders"}]}),
+        )]),
+        ..Script::default()
+    });
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
+    let story = story(
+        &vocabulary,
+        &json!([scenario("renames", &json!([{"action": "rename-session-select"}]))]),
+    );
+    let ran = run(&fake, &[startup_class_loading(), story], None);
+    assert_eq!(*fake.bare.lock().unwrap(), ["launch", "end"]);
+    let on_bare: Vec<String> = fake
+        .requests()
+        .into_iter()
+        .filter(|(pid, _)| *pid == 2)
+        .map(|(_, kind)| kind)
+        .collect();
+    assert_eq!(on_bare, [format!("action/{STARTUP}")]);
+    let finished: Vec<(String, String)> = ran
+        .events("testFinished")
+        .iter()
+        .map(|record| {
+            (
+                record["displayName"].as_str().unwrap().to_owned(),
+                record["status"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        finished,
+        [
+            ("renames".to_owned(), "SUCCESSFUL".to_owned()),
+            (
+                "Air loads no more classes than its budget while a project opens".to_owned(),
+                "SUCCESSFUL".to_owned()
+            ),
+        ]
+    );
+    assert!(
+        ran.events("output").iter().any(|record| record["text"]
+            == format!("[attachment] {STARTUP}: Air start-up class loading\ncom.intellij.air: 3879 classes over 195 loaders")),
+        "{:?}",
+        ran.events("output")
+    );
+    let bare_trace: Vec<&String> = ran
+        .trace
+        .iter()
+        .skip_while(|line| !line.contains(r#""name":"Air loads no more classes than its budget while a project opens""#))
+        .collect();
+    assert!(bare_trace[0].starts_with(r#"{"op":"scenario""#), "{bare_trace:?}");
+    assert!(
+        bare_trace[1].starts_with(r#"{"op":"attach""#) && bare_trace[1].contains(r#""name":"Air start-up class loading""#),
+        "{bare_trace:?}"
+    );
+    assert!(
+        bare_trace.iter().all(|line| !line.starts_with(r#"{"op":"span""#)),
+        "the measurement ran before the scenario opened: {bare_trace:?}"
+    );
+}
+
+// A bare IDE that does not get ready fails its suite as one container failure, and the lane gets its IDE back.
+#[test]
+fn a_bare_ide_that_does_not_get_ready_fails_its_suite_and_the_lane_takes_its_ide_back() {
+    let fake = Fake::new(Script::default());
+    fake.bare_launch_fails.store(true, Ordering::SeqCst);
+    let ran = run(&fake, &[startup_class_loading()], None);
+    assert_eq!(*fake.bare.lock().unwrap(), ["launch", "end"]);
+    let failed = ran.events("containerFailed");
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failed[0]["type"], "lane_launch");
+    assert_eq!(
+        failed[0]["message"],
+        "the bare IDE of the suite 'startup-class-loading' did not get ready: lane_ide_not_ready: the IDE of \
+         'air-startup-class-loading' did not get ready"
+    );
+    assert!(ran.events("testStarted").is_empty());
+    assert!(fake.requests().is_empty(), "{:?}", fake.requests());
 }
 
 // The transport of an instruction waits its deadline and a margin. An IDE that does not answer by then fails the

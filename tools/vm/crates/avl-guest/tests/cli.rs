@@ -234,7 +234,7 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     .to_string()
     .into_bytes();
     let suite = serde_json::json!({
-        "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
+        "schemaVersion": 2, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
         "restartsIde": false, "labels": [], "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}}, "profiles": [],
     });

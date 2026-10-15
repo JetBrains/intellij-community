@@ -209,16 +209,23 @@ pub fn parse_lane_document(content: &[u8]) -> Result<LaneDocument, String> {
 impl LaneDocument {
     /// The launch properties that apply on `host`, in document order, then the properties of the requirements.
     pub fn launch_properties_on(&self, host: LaunchHost) -> Vec<(&str, &str)> {
-        let stated = self
-            .launch_properties
+        let mut properties = self.stated_launch_properties_on(host);
+        properties.extend(
+            self.requirements
+                .iter()
+                .flat_map(|requirement| requirement.properties.iter().map(|(key, value)| (key.as_str(), value.as_str()))),
+        );
+        properties
+    }
+
+    /// The launch properties that the document states and that apply on `host`, in document order, without the
+    /// properties of the requirements: the defaults of every IDE of the lane, which a bare IDE gets too.
+    pub fn stated_launch_properties_on(&self, host: LaunchHost) -> Vec<(&str, &str)> {
+        self.launch_properties
             .iter()
             .filter(|property| property.condition.is_none_or(|condition| condition.holds(host)))
-            .map(|property| (property.key.as_str(), property.value.as_str()));
-        let required = self
-            .requirements
-            .iter()
-            .flat_map(|requirement| requirement.properties.iter().map(|(key, value)| (key.as_str(), value.as_str())));
-        stated.chain(required).collect()
+            .map(|property| (property.key.as_str(), property.value.as_str()))
+            .collect()
     }
 
     /// Every way in which this document does not fit itself, one line each. Empty for a document a runner can launch.

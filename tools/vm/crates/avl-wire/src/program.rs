@@ -68,6 +68,16 @@ vocabulary! {
 }
 
 vocabulary! {
+    /// How a lane launches the IDE of a suite that does not run on the shared IDE of its lane.
+    pub enum LaunchProfile {
+        /// A fresh context for the suite alone, with nothing of the machine in its home. The IDE gets the launch
+        /// properties of the lane document without the internal mode, and no lane service, fixture or agent file. The
+        /// runner sends the IDE no request before the first instruction, so the IDE can measure its own start-up.
+        Bare = "bare",
+    }
+}
+
+vocabulary! {
     /// The type of one argument.
     pub enum ParamType {
         Int = "int",
@@ -77,10 +87,15 @@ vocabulary! {
     }
 }
 
+/// The schema version of the suite documents that this reader reads. Version 2 added `launch`.
+pub const SUITE_DOCUMENT_SCHEMA_VERSION: u32 = 2;
+
 /// One suite document, as a lane runner reads it.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SuiteProgram {
+    /// The schema version of the document, [`SUITE_DOCUMENT_SCHEMA_VERSION`].
+    pub schema_version: u32,
     pub suite: String,
     pub lane: String,
     pub test_class_name: String,
@@ -97,6 +112,18 @@ pub struct SuiteProgram {
     #[serde(default)]
     pub fixtures: BTreeMap<String, SuiteFixture>,
     pub profiles: Vec<ScenarioProgram>,
+    /// The launch of an IDE of the suite alone. Absent for a suite on the shared IDE of its lane.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub launch: Option<SuiteLaunch>,
+}
+
+/// The launch of an IDE of one suite alone, `launch` of the suite document.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SuiteLaunch {
+    pub profile: LaunchProfile,
+    /// The launch key of the IDE, which names its context: never the key of a lane.
+    pub key: String,
 }
 
 /// What a runner reads of one fixture. The generator owns the other fields.
@@ -280,9 +307,16 @@ impl IdKind {
     }
 }
 
-/// Reads one suite document from its bytes.
+/// Reads one suite document from its bytes. A document of another schema version is refused.
 pub fn parse_suite_program(content: &[u8]) -> Result<SuiteProgram, String> {
-    serde_json::from_slice(content).map_err(|error| format!("is not a suite program: {error}"))
+    let program: SuiteProgram = serde_json::from_slice(content).map_err(|error| format!("is not a suite program: {error}"))?;
+    if program.schema_version != SUITE_DOCUMENT_SCHEMA_VERSION {
+        return Err(format!(
+            "has the schema version {}, and this reader reads {SUITE_DOCUMENT_SCHEMA_VERSION}",
+            program.schema_version
+        ));
+    }
+    Ok(program)
 }
 
 /// The scenarios of one suite document, each verbatim as the document holds it: the `program` of the recorder's
@@ -364,6 +398,28 @@ impl SuiteProgram {
                     let answers = uses.into_iter().flat_map(|uses| &uses.answers);
                     answered.extend(spec.answers.iter().chain(&spec.may_answer).chain(answers).map(String::as_str));
                 }
+            }
+        }
+        if let Some(launch) = &self.launch {
+            let plain = |character: char| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '-';
+            if launch.key.is_empty() || !launch.key.chars().all(plain) {
+                refusals.push(format!(
+                    "the launch key '{}' is no name of lowercase letters, digits and dashes",
+                    launch.key
+                ));
+            }
+            if !self.authored {
+                refusals.push(format!(
+                    "the suite launches a {} IDE, which runs an authored program and no story scenario",
+                    launch.profile
+                ));
+            }
+            let host_ids = self.vocabulary.actions.iter().chain(&self.vocabulary.assertions);
+            for (id, _) in host_ids.filter(|(_, spec)| spec.side == Side::Host) {
+                refusals.push(format!(
+                    "the suite launches a {} IDE, which runs no host id, and the vocabulary states '{id}'",
+                    launch.profile
+                ));
             }
         }
         for (kind, entries) in [

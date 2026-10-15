@@ -12,6 +12,9 @@
 //!   [`SLOW_STEP_BUDGET`] gets the dumps of the IDE once: `DiagnosticDump` into
 //!   `<iterationDir>/slow-steps/NN-<slug>-ide-dump.txt`, at most [`MAX_DUMPS`] per run, and a `slowStep` record.
 //! - **Heartbeat.** A `watchdogState` record each [`HEARTBEAT`], so the controller sees a live run during a long scenario.
+//! - **Quiet.** A suite of a bare IDE measures the start-up of its IDE, and a request of the watchdog would load classes
+//!   into the count. While [`Watch::quiet`] runs, the watchdog sends the IDE no probe and no dump. The deadlines and the
+//!   heartbeat go on.
 //!
 //! Every deadline runs on the monotonic clock. Only the instants of the wire read the wall clock, anchored once.
 
@@ -233,6 +236,8 @@ struct State {
     deadlines: Deadlines,
     steps: Vec<OpenStep>,
     relaunching: u32,
+    /// How many callers hold the IDE free of every request of the watchdog, see [`Watch::quiet`].
+    quiet: u32,
     expired: Option<String>,
     /// The IDE dumps that the watchdog wrote and the run thread did not attach yet: the step and the file.
     dumps: Vec<(String, PathBuf)>,
@@ -255,6 +260,7 @@ impl Watch {
                 deadlines: Deadlines::new(policy, now),
                 steps: Vec::new(),
                 relaunching: 0,
+                quiet: 0,
                 expired: None,
                 dumps: Vec::new(),
             }),
@@ -333,6 +339,14 @@ impl Watch {
         result
     }
 
+    /// Runs `work` while the IDE must get no request of the watchdog: neither the probe nor the dump of a slow step.
+    pub(crate) fn quiet<T>(&self, work: impl FnOnce() -> T) -> T {
+        self.lock().quiet += 1;
+        let result = work();
+        self.lock().quiet -= 1;
+        result
+    }
+
     /// The `watchdogState` record of `deadlines`.
     fn record(&self, deadlines: &Deadlines) -> RunEventKind {
         let millis = |duration: Duration| i64::try_from(duration.as_millis()).unwrap_or(i64::MAX);
@@ -379,11 +393,12 @@ pub(crate) fn watch(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, ite
                 return;
             }
             let now = Instant::now();
+            let quiet = state.quiet > 0;
             let overdue = state
                 .steps
                 .iter()
-                .position(|step| !step.dumped && now.duration_since(step.started) >= watch.slow_step);
-            (state.deadlines.expiry(now), state.relaunching == 0, overdue)
+                .position(|step| !quiet && !step.dumped && now.duration_since(step.started) >= watch.slow_step);
+            (state.deadlines.expiry(now), state.relaunching == 0 && !quiet, overdue)
         };
         if let Some(expiry) = expiry {
             expire(watch, stream, probes, &expiry);

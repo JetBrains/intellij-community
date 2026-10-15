@@ -71,6 +71,15 @@ fn the_conditions_of_the_launch_properties_read_the_host() {
         on_team_city_linux,
         vec![("idea.is.internal", "true"), ("jdk.gtk.version", "2"), ("air.workflows", "true")]
     );
+    assert_eq!(
+        document.stated_launch_properties_on(LaunchHost {
+            linux: true,
+            windows: false,
+            team_city: true,
+        }),
+        vec![("idea.is.internal", "true"), ("jdk.gtk.version", "2")],
+        "the stated properties leave the properties of the requirements out"
+    );
 }
 
 #[test]

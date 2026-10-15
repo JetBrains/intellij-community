@@ -123,3 +123,33 @@ fn a_launch_name_is_the_base_and_the_time_in_base_36() {
     assert!(name.starts_with("recycle-2-"), "{name}");
     assert!(wire_ide::is_launch_name(&name), "{name}");
 }
+
+// A bare IDE starts as the IDE of a user: the stated defaults of the lane without the internal mode, and without the
+// properties of the requirements, such as the workflows and the debug server of the lane. The IDE of the lane gets
+// both.
+#[test]
+fn a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements() {
+    let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
+    let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
+    let host = LaunchHost {
+        linux: true,
+        windows: false,
+        team_city: false,
+    };
+    let lane = document_properties(&document, host, false);
+    let bare = document_properties(&document, host, true);
+    assert!(lane.contains(&("idea.is.internal", "true")), "{lane:?}");
+    assert!(lane.contains(&("air.workflows", "true")), "{lane:?}");
+    let expected: Vec<(&str, &str)> = document
+        .stated_launch_properties_on(host)
+        .into_iter()
+        .filter(|(key, _)| *key != "idea.is.internal")
+        .collect();
+    assert_eq!(bare, expected);
+    assert!(
+        bare.iter()
+            .all(|(key, _)| !matches!(*key, "idea.is.internal" | "air.workflows" | "air.acp.debug.server.enabled")),
+        "{bare:?}"
+    );
+    assert!(!bare.is_empty());
+}

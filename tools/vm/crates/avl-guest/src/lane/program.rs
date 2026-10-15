@@ -16,6 +16,13 @@
 //!    [`AUTHORED_HOST_IDS`].
 //! 4. A failure snapshot on failure, then `reset:after`, then `done`.
 //!
+//! A suite of the launch profile `bare` runs after the suites of the shared IDE, on an IDE of its own, see
+//! [`Runner::bare_suite`]. Its scenarios run their programs with no reset and no preparation, and the IDE gets no request
+//! before the first instruction.
+//!
+//! An instruction that answers `attachments`, each `{title, contentType, fileName, text}`, gets each file attached to
+//! its span in the trace, and its text written into the run log.
+//!
 //! The run thread owns every call of the loop. The watchdog thread of [`super::watchdog`] watches it.
 
 use std::cell::{Cell, RefCell, RefMut};
@@ -32,6 +39,7 @@ use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
 };
 use avl_wire::report::ScenarioReport;
+use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
 
@@ -65,6 +73,8 @@ pub(crate) mod kind {
     pub(crate) const UNSUPPORTED: &str = "lane_unsupported";
     /// The watchdog ended the run.
     pub(crate) const EXPIRED: &str = "lane_watchdog_expired";
+    /// The IDE of a suite of its own did not launch or did not get ready.
+    pub(crate) const LAUNCH: &str = "lane_launch";
 }
 
 /// What the transport of an instruction waits past its deadline, before the grace of the bridge client.
@@ -124,6 +134,23 @@ pub(crate) trait Lane: Probes {
 
     /// The process of the IDE now, as the run supervisor and the bridge know it.
     fn ide_process(&self) -> Result<IdeProcess, String>;
+
+    /// Quits the IDE of the lane, launches a bare IDE of the launch key `key` for a suite of the launch profile `bare`,
+    /// and waits until it is ready. It sends the bare IDE no request.
+    fn launch_bare(&self, key: &str) -> Result<(), String>;
+
+    /// Quits the bare IDE. The next run launches the IDE of the lane again.
+    fn end_bare(&self) -> Result<(), String>;
+}
+
+/// One file that an instruction answered for the evidence of its scenario, an element of `attachments` of its answer.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Attachment {
+    title: String,
+    content_type: String,
+    file_name: String,
+    text: String,
 }
 
 /// The process of the lane IDE as two readers know it: the pid of the run that the supervisor launched, and the pid
@@ -251,6 +278,10 @@ pub(crate) struct Runner<'r, 's> {
     isolation: RefCell<Isolation>,
     /// The notes and the metrics that the authored parts of the open scenario reported.
     report: RefCell<ScenarioReport>,
+    /// The files that the instructions answered, which the trace did not take yet.
+    attachments: RefCell<Vec<Attachment>>,
+    /// Whether a suite of a bare IDE runs: the trace of its scenario opens after its program.
+    bare: Cell<bool>,
     /// What the transport of an instruction waits past its deadline, [`INSTRUCTION_MARGIN`] outside a test.
     instruction_margin: Duration,
 }
@@ -273,6 +304,8 @@ impl<'r, 's> Runner<'r, 's> {
             trace: RefCell::new(trace),
             isolation: RefCell::new(Isolation::default()),
             report: RefCell::new(ScenarioReport::default()),
+            attachments: RefCell::new(Vec::new()),
+            bare: Cell::new(false),
             instruction_margin: INSTRUCTION_MARGIN,
         }
     }
@@ -289,13 +322,18 @@ impl<'r, 's> Runner<'r, 's> {
     }
 
     /// Runs every scenario of `suites`, in order, and closes the trace. A run that the watchdog ended starts no further
-    /// scenario.
+    /// scenario. The suites of a bare IDE run last, so the IDE of the lane quits once per run.
     pub(crate) fn run(self, suites: &[Suite]) {
-        for suite in suites {
+        let (bare, shared): (Vec<&Suite>, Vec<&Suite>) = suites.iter().partition(|suite| suite.program.launch.is_some());
+        for suite in shared.into_iter().chain(bare) {
             if self.watch.expired().is_some() {
                 break;
             }
-            self.suite(suite);
+            if suite.program.launch.is_some() {
+                self.bare_suite(suite);
+            } else {
+                self.suite(suite);
+            }
         }
         if let Some(report) = self.isolation.borrow().report() {
             self.stream.note(report);
@@ -324,17 +362,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// The prologue of a suite: the document, the declared CLIs, and the managed-agent baseline. It answers what the
     /// reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<&'p SuiteReset, Failure> {
-        let refusals = suite.refusals();
-        if !refusals.is_empty() {
-            return Err(Failure::runner(
-                kind::DOCUMENT,
-                format!(
-                    "the suite document '{}' does not fit its vocabulary: {}",
-                    suite.suite,
-                    refusals.join("; ")
-                ),
-            ));
-        }
+        document_fits(suite)?;
         let reset = suite.reset.as_ref().ok_or_else(|| {
             Failure::runner(
                 kind::DOCUMENT,
@@ -456,6 +484,11 @@ impl<'r, 's> Runner<'r, 's> {
                 (primary, Ok(())) => primary,
             };
         }
+        self.finish(&case, started, verdict);
+    }
+
+    /// Ends the case of a scenario that started: the end of its trace, its `testFinished` and its watchdog state.
+    fn finish(&self, case: &CaseIdentity, started: Instant, verdict: Result<(), Failure>) {
         // A watchdog that ended the run killed the IDE under this scenario, so its failure is no verdict about it.
         let expired = self.watch.expired().is_some();
         let failure = verdict.err().map(|failure| Failure {
@@ -470,8 +503,65 @@ impl<'r, 's> Runner<'r, 's> {
         };
         let report = self.report.take();
         self.stream
-            .finished(&case, status, started.elapsed(), failure.as_ref().map(Failure::typed), report);
+            .finished(case, status, started.elapsed(), failure.as_ref().map(Failure::typed), report);
         self.watch.execution_finished(self.stream);
+    }
+
+    /// A suite of the launch profile `bare`, on an IDE of its own. The lane quits its IDE and launches a bare one, each
+    /// scenario runs its program, and the bare IDE quits at the end. The watchdog sends the bare IDE no request while the
+    /// suite runs, so the IDE can measure its own start-up.
+    fn bare_suite(&self, suite: &Suite) {
+        let program = &suite.program;
+        let Some(launch) = &program.launch else { return };
+        if let Err(failure) = document_fits(program) {
+            self.stream
+                .container_failed(&program.suite, &program.test_class_name, &class_label(program), failure.typed());
+            return;
+        }
+        self.bare.set(true);
+        self.watch.quiet(|| {
+            let launched = self
+                .watch
+                .step(&format!("{} bare launch", program.suite), || self.lane.launch_bare(&launch.key));
+            if let Err(error) = launched {
+                let failure = Failure::runner(
+                    kind::LAUNCH,
+                    format!("the bare IDE of the suite '{}' did not get ready: {error}", program.suite),
+                );
+                self.stream
+                    .container_failed(&program.suite, &program.test_class_name, &class_label(program), failure.typed());
+                return;
+            }
+            for (profile, raw) in program.profiles.iter().zip(&suite.raw_profiles) {
+                if self.watch.expired().is_some() {
+                    break;
+                }
+                self.bare_scenario(program, profile, raw);
+            }
+        });
+        self.bare.set(false);
+        if let Err(error) = self.lane.end_bare() {
+            self.stream
+                .note(format!("the bare IDE of the suite '{}' did not quit: {error}", program.suite));
+        }
+    }
+
+    /// One scenario of a bare IDE: its program with no reset, because the IDE is fresh and serves this suite alone. The
+    /// trace of the scenario opens after the program, because the recorder asks the IDE for its facts as a scenario
+    /// opens. The files that the program answered then go to the scenario.
+    fn bare_scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue) {
+        let case = case_identity(suite, profile);
+        let started = Instant::now();
+        self.stream.started(&case);
+        self.watch.execution_started(self.stream, case.execution());
+        let verdict = self.body(suite, profile, &SuiteFixture::default());
+        self.trace()
+            .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
+        self.attach_answers();
+        if verdict.is_err() {
+            self.trace().snap_failure();
+        }
+        self.finish(&case, started, verdict);
     }
 
     /// One side's reset as a `reset` span, under the isolation that recycles the IDE when it does not hold.
@@ -671,6 +761,9 @@ impl<'r, 's> Runner<'r, 's> {
             self.trace().snap(SnapshotPhase::Check);
         }
         self.attach_dumps();
+        if !self.bare.get() {
+            self.attach_answers();
+        }
         self.trace().end_span(span, outcome.as_ref().err().map(Failure::trace).as_ref());
         outcome
     }
@@ -719,6 +812,7 @@ impl<'r, 's> Runner<'r, 's> {
             }
             failure
         })?;
+        self.keep_attachments(label, &answer);
         if authored {
             let declared = instruction.uses.as_ref().map(|uses| uses.answers.as_slice()).unwrap_or_default();
             let answered = answer.get("values").and_then(Value::as_object).cloned().unwrap_or_default();
@@ -804,6 +898,35 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.note(report);
         }
         Ok(())
+    }
+
+    /// Keeps each file of `attachments` in the answer of the instruction `label` for the trace, and writes its text into
+    /// the run log.
+    fn keep_attachments(&self, label: &str, answer: &Value) {
+        let Some(files) = answer.get("attachments") else { return };
+        match serde_json::from_value::<Vec<Attachment>>(files.clone()) {
+            Ok(files) => {
+                for file in files {
+                    self.stream.note(format!("[attachment] {label}: {}\n{}", file.title, file.text));
+                    self.attachments.borrow_mut().push(file);
+                }
+            }
+            Err(error) => self.stream.note(format!(
+                "[attachment] {label}: the answer holds attachments that are no files: {error}"
+            )),
+        }
+    }
+
+    /// Attaches each file that the instructions answered to the innermost open span of the trace.
+    fn attach_answers(&self) {
+        for file in self.attachments.take() {
+            let extension = Path::new(&file.file_name)
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .unwrap_or("txt");
+            self.trace()
+                .attach(&file.title, &file.content_type, file.text.as_bytes(), extension);
+        }
     }
 
     /// Attaches each IDE dump that the watchdog wrote for a slow step since the last call to the innermost open span.
@@ -1051,6 +1174,22 @@ impl HostSide for RunnerHost<'_, '_, '_> {
             .ok_or_else(|| "the suite document states no reset section, and the proof of the recycle runs that reset".to_owned())?;
         self.runner.recycle_through_failed_reset(self.scenario, reset)
     }
+}
+
+/// Refuses a suite document that does not fit its vocabulary.
+fn document_fits(suite: &SuiteProgram) -> Result<(), Failure> {
+    let refusals = suite.refusals();
+    if refusals.is_empty() {
+        return Ok(());
+    }
+    Err(Failure::runner(
+        kind::DOCUMENT,
+        format!(
+            "the suite document '{}' does not fit its vocabulary: {}",
+            suite.suite,
+            refusals.join("; ")
+        ),
+    ))
 }
 
 /// The `testClass` label of a suite, or its `testClassName` when it has none.

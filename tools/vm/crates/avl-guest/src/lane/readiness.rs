@@ -6,6 +6,9 @@
 //! The chain of `InputRobot` and `Ping` proves that gestures go through the input-events robot and that the typed bridge
 //! answers. The Junie offer of the IDE start gets `Skip`, unless the caller keeps it open.
 //!
+//! A bare IDE passes the first two steps only, see [`await_lifecycle_ready`]: it measures its own start-up, so it gets
+//! no request of the bridge before its first instruction.
+//!
 //! A request is the JSON of one `AirUiTestRequest`: `{"type": "<class name>", ...fields}`, posted to the request
 //! endpoint. Its transport deadline is its `timeoutMs` and a grace, as the Kotlin client derives it.
 
@@ -111,6 +114,27 @@ pub(crate) fn await_ready(
     keep_junie_offer: bool,
     note: &mut dyn FnMut(String),
 ) -> Result<(), AgentRefusal> {
+    await_lifecycle_ready(bridge, launch, vocabulary_digest, note)?;
+    let nonce = format!("air-ui-test-bridge-{}", nanos());
+    check_robot_and_ping(
+        &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
+        &nonce,
+    )?;
+    if !keep_junie_offer {
+        skip_junie_offer(bridge, note)?;
+    }
+    Ok(())
+}
+
+/// Waits until the lifecycle of the IDE of `launch` reports `READY`, and holds the bridge to `vocabulary_digest`, the
+/// digest of the lane document. It sends no request of the bridge, because the resident plugin serves the lifecycle
+/// route: the readiness of a bare IDE ends here.
+pub(crate) fn await_lifecycle_ready(
+    bridge: &Bridge,
+    launch: &str,
+    vocabulary_digest: &str,
+    note: &mut dyn FnMut(String),
+) -> Result<(), AgentRefusal> {
     let started = Instant::now();
     let state = bridge
         .reader(launch)
@@ -127,16 +151,7 @@ pub(crate) fn await_ready(
         vocabulary_digest,
         &MISSING_DIGEST_NOTED,
         note,
-    )?;
-    let nonce = format!("air-ui-test-bridge-{}", nanos());
-    check_robot_and_ping(
-        &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
-        &nonce,
-    )?;
-    if !keep_junie_offer {
-        skip_junie_offer(bridge, note)?;
-    }
-    Ok(())
+    )
 }
 
 /// The refusal of a wait for readiness that `error` ended. A failed bind of the control server names its own text.

@@ -104,6 +104,63 @@ fn an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide() {
     );
 }
 
+/// Probes that count what the watchdog asked: the intruder probes and the dumps. No intruder shows.
+#[derive(Default)]
+struct Counting {
+    probes: Mutex<u32>,
+    dumps: Mutex<u32>,
+}
+
+impl Probes for Counting {
+    fn intrusion(&self) -> Option<String> {
+        *self.probes.lock().unwrap() += 1;
+        None
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        *self.dumps.lock().unwrap() += 1;
+        Ok("\"main\" RUNNABLE".to_owned())
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+/// Runs one step of `step` past the slow-step budget under the watchdog thread, and answers what the IDE was asked.
+fn watched_step(quiet: bool) -> (u32, u32) {
+    let directory = TempDir::new().unwrap();
+    let probes = Counting::default();
+    let watch = Watch::new(POLICY).with_slow_step(Duration::from_millis(100));
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    std::thread::scope(|scope| {
+        scope.spawn(|| super::watch(&watch, &stream, &probes, directory.path()));
+        let measure = || watch.step("measure", || std::thread::sleep(TICK + Duration::from_millis(500)));
+        if quiet {
+            watch.quiet(measure);
+        } else {
+            measure();
+        }
+        watch.completed(&stream);
+    });
+    (*probes.probes.lock().unwrap(), *probes.dumps.lock().unwrap())
+}
+
+// While a quiet hold runs, the watchdog sends the IDE no probe and no dump, so a bare IDE measures a start-up that no
+// request of the watchdog changed. The same step without the hold gets both.
+#[test]
+fn a_quiet_hold_sends_the_ide_no_probe_and_no_dump() {
+    assert_eq!(watched_step(true), (0, 0));
+    let (probes, dumps) = watched_step(false);
+    assert!(probes > 0, "the watchdog probed no intruder");
+    assert_eq!(dumps, 1);
+}
+
 // A file name part keeps lowercase letters and digits, joins the rest with one `-`, and keeps 40 characters.
 #[test]
 fn a_slug_is_lowercase_words_joined_by_dashes() {
