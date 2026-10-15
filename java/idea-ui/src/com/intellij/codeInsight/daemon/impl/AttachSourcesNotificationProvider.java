@@ -410,6 +410,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(JavaUiBundle.message("library.attach.sources.action"));
       descriptor.setDescription(JavaUiBundle.message("library.attach.sources.description"));
+      descriptor.setEnvironmentRestricted(true);
 
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : VfsUtil.getLocalFile(roots[0]));
