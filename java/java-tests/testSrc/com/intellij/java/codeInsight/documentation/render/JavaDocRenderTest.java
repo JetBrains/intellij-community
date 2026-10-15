@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,8 +31,11 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.awt.Dimension;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
@@ -311,6 +317,29 @@ public class JavaDocRenderTest {
                            */
                           //@Deprecated
                           class C {}""");
+    });
+  }
+
+  @Test
+  public void testVisibleAreaChangeWhileScreenDevicesChange() {
+    myFixture.runTest(() -> {
+      configure("""
+                  class C {
+                    /**
+                     * doc
+                     */
+                    int a;
+                  }""", true);
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 1);
+      // a headless EditorImpl reports a hidden cursor until the first mouse event, and the icon update skips a hidden cursor
+      new EditorMouseFixture((EditorImpl)myFixture.getEditor()).moveToXY(0, 0);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      try (MockedStatic<MouseInfo> mouseInfo = Mockito.mockStatic(MouseInfo.class)) {
+        mouseInfo.when(MouseInfo::getPointerInfo).thenThrow(new ArrayIndexOutOfBoundsException("Index 1 out of bounds for length 1"));
+        EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 2);
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        mouseInfo.verify(MouseInfo::getPointerInfo, Mockito.atLeastOnce());
+      }
     });
   }
 
