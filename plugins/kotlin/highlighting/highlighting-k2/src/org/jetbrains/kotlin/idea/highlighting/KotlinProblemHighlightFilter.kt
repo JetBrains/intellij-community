@@ -7,9 +7,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinProblemHighlightFilter : ProblemHighlightFilter() {
-    override fun shouldHighlight(file: PsiFile): Boolean = when (file) {
-        is KtFile -> file.shouldHighlightFile()
-        else -> true
+    override fun shouldHighlight(file: PsiFile): Boolean {
+        return true
     }
 
     override fun shouldProcessInBatch(file: PsiFile): Boolean = when (file) {

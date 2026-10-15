@@ -167,6 +167,7 @@ f:com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil
 a:com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
+- s:getDeclaredDefaultSetting(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 e:com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 - java.lang.Enum
 - s:fromInspectionsLevel(com.intellij.openapi.editor.markup.InspectionsLevel):com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting

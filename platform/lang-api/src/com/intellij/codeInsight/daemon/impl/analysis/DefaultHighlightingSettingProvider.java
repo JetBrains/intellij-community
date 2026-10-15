@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,4 +20,14 @@ public abstract class DefaultHighlightingSettingProvider implements PossiblyDumb
     new ExtensionPointName<>("com.intellij.defaultHighlightingSettingProvider");
 
   public abstract @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file);
+
+  public static @Nullable FileHighlightingSetting getDeclaredDefaultSetting(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    for (DefaultHighlightingSettingProvider p : DumbService.getDumbAwareExtensions(project, EP_NAME)) {
+      FileHighlightingSetting setting = p.getDefaultSetting(project, virtualFile);
+      if (setting != null) {
+        return setting;
+      }
+    }
+    return null;
+  }
 }
