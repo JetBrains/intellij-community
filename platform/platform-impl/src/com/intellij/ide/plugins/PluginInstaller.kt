@@ -133,7 +133,11 @@ object PluginInstaller {
       throw IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId())
     }
 
-    var uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(pluginDescriptor)
+    // A disabled plugin is unloaded but stays in the plugin set. Skip unloading only when the plugin is
+    // also gone from the plugin set. Otherwise, `installFromDisk` finds the stale descriptor on the next
+    // install of the same plugin and schedules it after a restart. Scenario: install/uninstall/install.
+    val pluginRemoved = !pluginDescriptor.isLoaded && PluginManagerCore.getPlugin(pluginDescriptor.pluginId) == null
+    var uninstalledWithoutRestart = pluginRemoved || unloadDynamicPlugin(pluginDescriptor)
     if (uninstalledWithoutRestart) {
       try {
         LOG.debug("Deleting dynamic plugin from disk: " + pluginDescriptor.getPluginPath())
