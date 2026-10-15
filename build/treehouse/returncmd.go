@@ -69,6 +69,15 @@ func executeReturn(rt Runtime, workspaceOption string, confirmPreserved bool) (a
 			details:  map[string]any{"receipt": receipt, "live": live},
 		}
 	}
+	if live.Status() == statusUnverified {
+		details := receipt.fields()
+		details["live_status"] = live.Status()
+		return nil, &cliError{
+			message:  "Treehouse could not check the processes of the workspace; stop them, then retry the return.",
+			exitCode: 2,
+			details:  details,
+		}
+	}
 	if len(live.Processes()) > 0 {
 		details := receipt.fields()
 		details["processes"] = live.Processes()
@@ -101,6 +110,9 @@ func executeReturn(rt Runtime, workspaceOption string, confirmPreserved bool) (a
 		options.Stdin = returnPromptAnswer
 	}
 	result := rt.Spawn(returnCommand(receipt.LeaseIdentity), options)
+	if result.ExitCode == nativeExitNotReturned {
+		return nil, notReturnedFailure(receipt, result, dirty)
+	}
 	if result.ExitCode != 0 {
 		return nil, nativeFailure("return", result, receipt.fields())
 	}
@@ -118,6 +130,22 @@ func executeReturn(rt Runtime, workspaceOption string, confirmPreserved bool) (a
 		Dirty:          dirty,
 		ReceiptRemoved: receiptRemoved,
 	}, nil
+}
+
+// notReturnedFailure reports a CLI return that kept the lease because the dirty tree was not
+// confirmed. The message is the wrapper's own. The native stderr goes to the details only,
+// because it advises `--force`, which the wrapper never passes.
+// answered tells whether the wrapper sent returnPromptAnswer.
+func notReturnedFailure(receipt *LeaseReceipt, result SpawnResult, answered bool) error {
+	message := "Treehouse did not return the workspace, because it did not get the confirmation for its uncommitted changes. The lease is still held; retain this lease identity."
+	if !answered {
+		message = "The workspace became dirty during the return, so Treehouse did not return it. Preserve all intended work, then rerun with --confirm-preserved."
+	}
+	details := receipt.fields()
+	details["receipt_removed"] = false
+	details["native_exit_code"] = result.ExitCode
+	details["native_stderr"] = strings.TrimSpace(result.Stderr)
+	return &cliError{message: message, exitCode: 1, details: details}
 }
 
 // verifyReturned confirms against the live pool that the lease of the receipt is gone. A

@@ -104,6 +104,7 @@ type FakeRuntime struct {
 	removed    []string
 	writeError error
 	uuidValue  string
+	osName     string
 }
 
 func newFakeRuntime(t *testing.T) *FakeRuntime {
@@ -115,6 +116,7 @@ func newFakeRuntime(t *testing.T) *FakeRuntime {
 		files:     map[string]string{},
 		removed:   []string{},
 		uuidValue: "generated-uuid",
+		osName:    "linux",
 	}
 }
 
@@ -124,6 +126,8 @@ func (r *FakeRuntime) push(results ...SpawnResult) {
 }
 
 func (r *FakeRuntime) Cwd() string { return r.cwd }
+
+func (r *FakeRuntime) OS() string { return r.osName }
 
 func (r *FakeRuntime) Env(name string) (string, bool) {
 	value, ok := r.env[name]

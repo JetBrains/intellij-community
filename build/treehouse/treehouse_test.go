@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -130,6 +131,64 @@ func TestWriteAcquireForcesTheDetachButNeverForcesTheCLI(t *testing.T) {
 		t.Fatalf("the detach does not check out the source HEAD: %v", detach)
 	}
 	assertNoForce(t, rt)
+	assertQueueDrained(t, rt)
+}
+
+// The source checkout names its seed manifest, and macOS asks for APFS sharing, unless
+// TREEHOUSE_APFS_SHARING already decides it.
+func TestWriteAcquireAddsTheSeedManifestAndApfsSharing(t *testing.T) {
+	base := []string{"treehouse", "get", "--lease", "--json", "--no-fetch", "--lease-holder", "agent-session"}
+	manifest := []string{"--include-file", testRoot + "/.worktreeinclude"}
+	sharing := []string{"--apfs-sharing", "fresh"}
+	cases := []struct {
+		name     string
+		os       string
+		env      map[string]string
+		manifest bool
+		expected [][]string
+	}{
+		{"linux without a manifest", "linux", nil, false, nil},
+		{"linux with a manifest", "linux", nil, true, [][]string{manifest}},
+		{"macOS", "darwin", nil, false, [][]string{sharing}},
+		{"macOS with a manifest", "darwin", nil, true, [][]string{manifest, sharing}},
+		{"macOS with the variable", "darwin", map[string]string{"TREEHOUSE_APFS_SHARING": "off"}, false, nil},
+	}
+	for _, item := range cases {
+		t.Run(item.name, func(t *testing.T) {
+			rt := newFakeRuntime(t)
+			rt.osName = item.os
+			for name, value := range item.env {
+				rt.env[name] = value
+			}
+			if item.manifest {
+				rt.files[testRoot+"/.worktreeinclude"] = ".ai/local.md\n"
+			}
+			prepareAcquire(rt, leasedEntry, testSourceHead)
+
+			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
+			requireSuccess(t, data, err)
+
+			expected := append([]string(nil), base...)
+			for _, extra := range item.expected {
+				expected = append(expected, extra...)
+			}
+			assertCommand(t, rt, 4, expected...)
+			assertQueueDrained(t, rt)
+		})
+	}
+}
+
+// The diagnostics of `get`, for example the APFS sharing result, reach the caller.
+func TestWriteAcquireReportsTheDiagnosticsOfTheCLI(t *testing.T) {
+	rt := newFakeRuntime(t)
+	prepareAcquireStart(rt, leasedEntry)
+	rt.responses[len(rt.responses)-1].Stderr = "APFS sharing: 12 files\n"
+	prepareWorkspace(rt, leasedEntry, testSourceHead)
+
+	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
+	output := requireSuccess(t, data, err)
+
+	assertSubset(t, output, map[string]any{"native_stderr": "APFS sharing: 12 files"})
 	assertQueueDrained(t, rt)
 }
 
@@ -472,6 +531,66 @@ func TestWriteReturnRefusesAWorkspaceWithLiveProcesses(t *testing.T) {
 	assertSpawnCount(t, rt, 2)
 }
 
+func TestWriteReturnRefusesAWorkspaceWithUnverifiedProcesses(t *testing.T) {
+	rt := newFakeRuntime(t)
+	rt.files[testReceiptPath] = receipt(nil)
+	rt.push(
+		result(testWorkspace+"\n", 0, ""),
+		jsonResult([]any{withFields(leasedEntry, map[string]any{"status": "unverified"})}),
+	)
+
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
+	failure := requireFailure(t, data, err)
+
+	assertMessage(t, failure, "could not check the processes")
+	assertExitCode(t, failure, 2)
+	assertSubset(t, failure.details, map[string]any{"live_status": "unverified"})
+	assertSpawnCount(t, rt, 2)
+}
+
+// The CLI exits 3 when it keeps a dirty workspace. Its stderr advises `--force`, so the
+// wrapper gives its own message and keeps the stderr in the details.
+func TestWriteReturnReportsAReturnThatTheCLIDidNotDo(t *testing.T) {
+	stderr := "🌳 worktree not returned: it has uncommitted changes. Use treehouse return --force /treehouse/1/repo"
+	cases := []struct {
+		name      string
+		gitStatus string
+		argv      []string
+		fragment  string
+	}{
+		{"a clean tree that became dirty", "", nil, "rerun with --confirm-preserved"},
+		{"a confirmed dirty tree", " M changed.kt\n", []string{"--confirm-preserved"}, "retain this lease identity"},
+	}
+	for _, item := range cases {
+		t.Run(item.name, func(t *testing.T) {
+			rt := newFakeRuntime(t)
+			prepareReturn(rt, item.gitStatus)
+			rt.push(result("", nativeExitNotReturned, stderr))
+
+			argv := append([]string{"write", "return", "--workspace", testWorkspace}, item.argv...)
+			data, err := execute(argv, rt)
+			failure := requireFailure(t, data, err)
+
+			assertExitCode(t, failure, 1)
+			assertMessage(t, failure, item.fragment)
+			if strings.Contains(failure.message, "--force") {
+				t.Fatalf("the message advises --force: %q", failure.message)
+			}
+			assertSubset(t, failure.details, map[string]any{
+				"lease_id":         "lease-1",
+				"receipt_removed":  false,
+				"native_exit_code": nativeExitNotReturned,
+				"native_stderr":    stderr,
+			})
+			if _, present := rt.files[testReceiptPath]; !present {
+				t.Fatalf("the receipt was removed although the lease survived")
+			}
+			assertNoForce(t, rt)
+			assertQueueDrained(t, rt)
+		})
+	}
+}
+
 // --- the command surface ---
 
 func TestCommandSurfaceRejectsDestructiveOperationsAndForce(t *testing.T) {
@@ -498,7 +617,7 @@ func TestCommandSurfaceRejectsDestructiveOperationsAndForce(t *testing.T) {
 func TestWriteReturnFailsWhenTheLeaseSurvivesASuccessfulExit(t *testing.T) {
 	rt := newFakeRuntime(t)
 	prepareReturn(rt, "")
-	// The CLI aborts its own dirty-return prompt and still exits 0.
+	// A CLI before version 3 aborts its own dirty-return prompt and still exits 0.
 	rt.push(result("", 0, "Aborted."), jsonResult([]any{leasedEntry}))
 
 	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
@@ -645,7 +764,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(
 		t.Run(trigger.name, func(t *testing.T) {
 			rt := newFakeRuntime(t)
 			trigger.prepare(rt)
-			// The CLI aborts its own dirty-return prompt and still exits 0.
+			// A CLI before version 3 aborts its own dirty-return prompt and still exits 0.
 			rt.push(result("", 0, "Aborted."), jsonResult([]any{leasedEntry}))
 
 			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
@@ -668,6 +787,28 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(
 					t.Fatalf("the receipt was removed although the lease survived")
 				}
 			}
+			assertJSON(t, rt.removed, "[]")
+			assertQueueDrained(t, rt)
+		})
+	}
+}
+
+func TestWriteAcquireRollbackKeepsTheReceiptWhenTheCLIDoesNotReturn(t *testing.T) {
+	for _, trigger := range rollbackTriggers {
+		t.Run(trigger.name, func(t *testing.T) {
+			rt := newFakeRuntime(t)
+			trigger.prepare(rt)
+			rt.push(result("", nativeExitNotReturned, "worktree not returned"))
+
+			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
+			failure := requireFailure(t, data, err)
+
+			assertExitCode(t, failure, 1)
+			assertMessage(t, failure, "could not be returned; retain this lease identity")
+			assertSubset(t, failure.details, map[string]any{
+				"rollback_exit_code": nativeExitNotReturned,
+				"rollback_returned":  false,
+			})
 			assertJSON(t, rt.removed, "[]")
 			assertQueueDrained(t, rt)
 		})

@@ -42,8 +42,14 @@ result holds the workspace path, the lease ID, the holder, and the receipt path.
 
 The acquire takes a clean lease with `--no-fetch` and detaches it at the exact `HEAD` of the
 caller. It transfers no index, working-tree, or untracked change, and it performs no fetch,
-rebase, stash, cherry-pick, or file copy. It refuses only when the current checkout itself holds a
-lease, so one checkout can hold several leases.
+rebase, stash, or cherry-pick. It refuses only when the current checkout itself holds a lease, so
+one checkout can hold several leases.
+
+Treehouse copies the ignored files that `.worktreeinclude` in the root of the caller lists, for
+example `.claude/settings.local.json`. A return removes them. On macOS, a fresh workspace shares
+its large tracked files with the main checkout as APFS copy-on-write clones. Set
+`TREEHOUSE_APFS_SHARING=off` to stop that. The `native_stderr` field of the result holds the
+diagnostics of Treehouse.
 
 The receipt is `out/treehouse/lease.json` inside the acquired workspace. It has schema version 2
 and records the captured `source_head`. Both repository layouts ignore `out/`. Do not edit, move,
@@ -81,6 +87,10 @@ The CLI writes a JSON failure document to stderr with the message, the exit code
 Exit code 2 marks a usage or a precondition failure. Exit code 127 means that the pinned CLI
 binary did not resolve. That is a Bazel build failure or a runfiles failure. It is not a missing
 host install.
+
+When Treehouse keeps a dirty workspace, the wrapper reports that the lease is still held. The
+`native_stderr` detail can advise `treehouse return --force`. Never run the Treehouse CLI
+directly, and never pass `--force`.
 
 Never install Treehouse. Never fall back to a Git worktree, a clone, or another workspace manager
 on your own initiative. Continue in the current checkout when that is safe, or ask the user for an

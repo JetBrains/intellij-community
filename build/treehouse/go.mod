@@ -2,9 +2,7 @@ module jetbrains.com/treehouse
 
 go 1.27.0
 
-// The upstream module path has no /v2 suffix, so Go rejects the v2.3.0 tag.
-// This pseudo-version points to the exact v2.3.0 commit 35b8a41d8b0f.
-require github.com/kunchenguid/treehouse v0.0.0-20260822132253-35b8a41d8b0f
+require github.com/kunchenguid/treehouse/v3 v3.1.3
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect

@@ -17,6 +17,10 @@ func (w WorkspaceStatus) LeaseID() string     { return w["lease_id"].(string) }
 func (w WorkspaceStatus) LeaseHolder() string { return w["lease_holder"].(string) }
 func (w WorkspaceStatus) Processes() []any    { return w["processes"].([]any) }
 
+// statusUnverified marks an entry whose process scan failed. Its process list is then empty,
+// so the list does not show that the workspace is quiet.
+const statusUnverified = "unverified"
+
 // parseStatus validates the array of the CLI. It rejects a missing or a wrongly typed
 // key, because every later decision reads these values.
 func parseStatus(value any) ([]WorkspaceStatus, error) {
@@ -107,10 +111,10 @@ const (
 // is the authority on the outcome of a return, and the exit code is not.
 //
 // The CLI asks "Worktree has uncommitted changes. Clean and return?" when the tree is
-// dirty. A "no" answer prints "Aborted." and exits 0, and the workspace keeps its lease.
-// A non-interactive child reaches the end of its input at that prompt and aborts the same
-// way. Another holder may also hold the workspace by now, so only the same identity means
-// that the lease of this caller is still open.
+// dirty. A "no" answer, or the end of the input at that prompt, keeps the lease and exits
+// with nativeExitNotReturned. A CLI before version 3 exited 0 in that case, so the exit code
+// alone does not prove a return. Another holder may also hold the workspace by now, so only
+// the same identity means that the lease of this caller is still open.
 //
 // leaseHeld carries the live entry. leaseUnknown carries the read failure.
 func confirmLeaseGone(rt Runtime, identity LeaseIdentity) (leaseOutcome, WorkspaceStatus, error) {

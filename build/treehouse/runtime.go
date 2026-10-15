@@ -40,6 +40,8 @@ type SpawnOptions struct {
 // Runtime holds every effect of the wrapper. A test replaces it with a fake.
 type Runtime interface {
 	Cwd() string
+	// OS is the operating system in the GOOS spelling.
+	OS() string
 	Env(name string) (string, bool)
 	Now() time.Time
 	UUID() string
@@ -67,6 +69,8 @@ func newOSRuntime() *osRuntime {
 }
 
 func (r *osRuntime) Cwd() string { return r.cwd }
+
+func (r *osRuntime) OS() string { return goruntime.GOOS }
 
 func (r *osRuntime) Env(name string) (string, bool) { return os.LookupEnv(name) }
 

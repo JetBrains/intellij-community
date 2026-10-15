@@ -7,7 +7,7 @@ package main
 import (
 	"os"
 
-	treehousecmd "github.com/kunchenguid/treehouse/cmd"
+	treehousecmd "github.com/kunchenguid/treehouse/v3/cmd"
 )
 
 // main starts the upstream command tree and never calls treehousecmd.SetVersion.
@@ -23,10 +23,11 @@ import (
 // import from another module. It does not need it: nothing passes that flag once the
 // update check is off.
 //
-// os.Exit(1), never a panic. A panic would turn a guard failure from exit 1 into exit 2
+// treehousecmd.ExitCode gives the exit code, never a panic. The code is 1 for a failure and
+// 3 for a return that left a dirty worktree in place. A panic would turn either code into 2
 // and would corrupt the exit-code contract of the wrapper.
 func main() {
 	if err := treehousecmd.Execute(); err != nil {
-		os.Exit(1)
+		os.Exit(treehousecmd.ExitCode(err))
 	}
 }

@@ -263,7 +263,7 @@ go_sdk.download(version = "1.27.0")
 # Every version comes from the treehouse `go.mod`, which is also what the IDE and a plain `go build` read.
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//build/treehouse:go.mod")
-use_repo(go_deps, "com_github_kunchenguid_treehouse")
+use_repo(go_deps, "com_github_kunchenguid_treehouse_v3")
 
 # Rust, for the dev-distribution tools in //build/dev-dist-tools. rules_rs supplies the Rust toolchains and the
 # `@rules_rust` facade. The ultimate root declares the same `bazel_dep`, override and toolchain tag.

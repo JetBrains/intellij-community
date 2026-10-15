@@ -53,6 +53,9 @@ type AcquireResult struct {
 	LeaseReceipt
 	PreparedHead string `json:"prepared_head"`
 	ReceiptPath  string `json:"receipt_path"`
+	// NativeStderr holds the diagnostics of the `get` call, for example the APFS sharing
+	// result.
+	NativeStderr string `json:"native_stderr,omitempty"`
 }
 
 // ReturnResult is the `data` payload of `write return`.
@@ -128,6 +131,11 @@ func identityOf(rt Runtime, values map[string]string) LeaseIdentity {
 // The answer is not a `--force`. The CLI still detaches the workspace and still honors both
 // lease guards, and verifyReturned still reads the live pool for the outcome.
 const returnPromptAnswer = "y\n"
+
+// nativeExitNotReturned is the exit code of a CLI return that left a dirty workspace and its
+// lease as they were. The CLI exits with this code when the confirmation prompt gets no
+// answer or a "no" answer.
+const nativeExitNotReturned = 3
 
 // returnCommand always guards the return with both halves of the lease identity, so a
 // lease that another holder took in the meantime stays untouched. It never passes

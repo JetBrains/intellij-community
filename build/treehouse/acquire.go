@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 )
 
@@ -44,7 +45,7 @@ type rollbackMessages struct {
 
 // rollbackAcquire returns a lease the wrapper took but cannot use, then confirms the
 // outcome against the live pool. A non-zero exit code counts as leaseHeld, because
-// nothing returned the lease.
+// nothing returned the lease. That includes nativeExitNotReturned.
 func rollbackAcquire(rt Runtime, identity LeaseIdentity) rollbackOutcome {
 	// A half-prepared workspace can be dirty, so the return can meet the confirmation
 	// prompt. The rollback answers it. The caller never received this workspace, and a
@@ -211,11 +212,7 @@ func executeAcquire(rt Runtime, holderOption string, holderPresent bool) (any, e
 	if err != nil {
 		return nil, err
 	}
-	// `--no-fetch` skips the fetch of origin inside the CLI. prepareAcquiredWorkspace detaches
-	// the workspace at the HEAD of the caller, which the shared Git directory already holds.
-	result := rt.Spawn([]string{
-		treehouseCommandName, "get", "--lease", "--json", "--no-fetch", "--lease-holder", holder,
-	}, SpawnOptions{})
+	result := rt.Spawn(acquireCommand(rt, root, holder), SpawnOptions{})
 	if result.ExitCode != 0 {
 		return nil, nativeFailure("acquire", result, map[string]any{"lease_holder": holder})
 	}
@@ -296,7 +293,40 @@ func executeAcquire(rt Runtime, holderOption string, holderPresent bool) (any, e
 		}, details)
 	}
 
-	return AcquireResult{LeaseReceipt: *receipt, PreparedHead: sourceHead, ReceiptPath: receiptPath}, nil
+	return AcquireResult{
+		LeaseReceipt: *receipt,
+		PreparedHead: sourceHead,
+		ReceiptPath:  receiptPath,
+		NativeStderr: strings.TrimSpace(result.Stderr),
+	}, nil
+}
+
+// worktreeIncludeName is the seed manifest of a repository. It selects ignored files of the
+// source checkout, in `.gitignore` syntax, that Treehouse copies into the acquired workspace.
+const worktreeIncludeName = ".worktreeinclude"
+
+// acquireCommand builds the `get` call of the CLI.
+//
+// `--no-fetch` skips the fetch of origin inside the CLI. prepareAcquiredWorkspace detaches
+// the workspace at the HEAD of the caller, which the shared Git directory already holds.
+//
+// `--include-file` names the manifest of the source checkout. Without it, the CLI reads the
+// manifest at the HEAD of the slot before the detach, and that HEAD can be older than the
+// HEAD of the caller.
+//
+// `--apfs-sharing fresh` on macOS shares the large tracked files of a fresh slot with the
+// source checkout as copy-on-write clones. The flag overrides TREEHOUSE_APFS_SHARING, so the
+// wrapper leaves the flag out when the variable is set.
+func acquireCommand(rt Runtime, root string, holder string) []string {
+	command := []string{treehouseCommandName, "get", "--lease", "--json", "--no-fetch", "--lease-holder", holder}
+	manifest := filepath.Join(root, worktreeIncludeName)
+	if _, err := rt.ReadTextFile(manifest); err == nil {
+		command = append(command, "--include-file", manifest)
+	}
+	if _, set := rt.Env("TREEHOUSE_APFS_SHARING"); !set && rt.OS() == "darwin" {
+		command = append(command, "--apfs-sharing", "fresh")
+	}
+	return command
 }
 
 // parseAllocationOutput decodes and validates the acquire output of the CLI.
