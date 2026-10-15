@@ -257,6 +257,15 @@ fn skip_junie_offer(bridge: &Bridge, note: &mut dyn FnMut(String)) -> Result<(),
     Ok(())
 }
 
+/// The pid that the bridge of the IDE of `launch` answers with now: one lifecycle poll that does not wait.
+pub(crate) fn bridge_pid(bridge: &Bridge, launch: &str) -> Result<i64, String> {
+    bridge
+        .reader(launch)
+        .poll(None, Duration::ZERO)
+        .map(|snapshot| snapshot.state.pid)
+        .map_err(|error| format!("the bridge of '{launch}' did not answer a lifecycle poll: {error}"))
+}
+
 /// Asks the IDE to quit the way a user does, so the project workspace is flushed. The IDE answers when the exit is
 /// scheduled.
 pub(crate) fn quit(bridge: &Bridge) -> Result<(), AgentRefusal> {

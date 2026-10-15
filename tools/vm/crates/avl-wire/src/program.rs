@@ -44,6 +44,10 @@ vocabulary! {
         RegistryFailNextDownload = "registry-fail-next-download",
         /// Answers the count of package requests that the fake registry answered so far, as `consentRegistryBaseline`.
         RegistryMarkRequests = "registry-mark-requests",
+        /// Proves the recycle of the lane IDE. The next state reset fails on purpose, so the runner recycles the IDE as it
+        /// does after any reset that does not hold, and resets the replacement. The action fails unless that reset
+        /// passed on a new IDE process, and unless the bridge answers from that process.
+        RecycleThroughFailedReset = "recycle-through-failed-reset",
         /// Lets the paused package download of the fake registry finish.
         ReleaseDownload = "release-download",
         /// Quits the IDE the way a user does and starts it again on the same context. Between the quit and the launch it

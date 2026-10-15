@@ -12,12 +12,13 @@
 //!    are the runner value `terminalBaseline`.
 //! 3. The setups and the flow steps, or the authored program. Each IDE id is one bridge request `<kind>/<id>`: its
 //!    arguments in camel case, the values it takes, and `timeoutMs`. The transport waits `timeoutMs`, a margin and the
-//!    grace of the bridge. A host id runs here, see [`super::host_ids`].
+//!    grace of the bridge. A host id runs here, see [`super::host_ids`]. An authored program runs only the host ids of
+//!    [`AUTHORED_HOST_IDS`].
 //! 4. A failure snapshot on failure, then `reset:after`, then `done`.
 //!
 //! The run thread owns every call of the loop. The watchdog thread of [`super::watchdog`] watches it.
 
-use std::cell::{RefCell, RefMut};
+use std::cell::{Cell, RefCell, RefMut};
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -27,7 +28,9 @@ use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
 use avl_wire::program::lane::LaneDocument;
-use avl_wire::program::{IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset};
+use avl_wire::program::{
+    HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
+};
 use avl_wire::report::ScenarioReport;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
@@ -86,6 +89,8 @@ const TERMINAL_SURFACE: &str = "terminal";
 const REGISTRY_AGENT_PREFIX: &str = "acp.registry.";
 /// The id of the part of an authored program.
 const AUTHORED_STEP: &str = "authored-step";
+/// The host ids that an authored program may run between its parts: the restart, and the proof of the recycle.
+const AUTHORED_HOST_IDS: [HostAction; 2] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset];
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
 /// How many lines of a reset failure a skip reason and a failure carry.
@@ -116,6 +121,17 @@ pub(crate) trait Lane: Probes {
 
     /// The bridge endpoint that the recorder asks for its snapshots.
     fn recorder_bridge(&self) -> Option<protocol::Bridge>;
+
+    /// The process of the IDE now, as the run supervisor and the bridge know it.
+    fn ide_process(&self) -> Result<IdeProcess, String>;
+}
+
+/// The process of the lane IDE as two readers know it: the pid of the run that the supervisor launched, and the pid
+/// that the bridge answers with. The two differ where a launcher process starts the JVM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct IdeProcess {
+    pub launched: Option<i32>,
+    pub bridge: i64,
 }
 
 /// One selected suite document, and each of its scenarios verbatim.
@@ -649,7 +665,7 @@ impl<'r, 's> Runner<'r, 's> {
         self.trace().snap(SnapshotPhase::Boundary);
         let outcome = self.watch.step(&format!("{operation}/{label}"), || match spec.side {
             Side::Ide => self.ide_instruction(id_kind, id, &label, instruction, spec, values),
-            Side::Host => self.host_instruction(suite, id_kind, id, &label, instruction, values, fixture),
+            Side::Host => self.host_instruction(suite, operation, id_kind, id, &label, instruction, values, fixture),
         });
         if outcome.is_ok() && id_kind == IdKind::Assertion {
             self.trace().snap(SnapshotPhase::Check);
@@ -713,7 +729,7 @@ impl<'r, 's> Runner<'r, 's> {
         values.keep_answers(label, spec, &answer).map_err(missing)
     }
 
-    /// An id that runs on the host. An authored program may run `restart-ide` only.
+    /// An id that runs on the host. An authored program may run the ids of [`AUTHORED_HOST_IDS`] only.
     #[expect(
         clippy::too_many_arguments,
         reason = "the parts of one instruction, which the caller resolved once"
@@ -721,6 +737,7 @@ impl<'r, 's> Runner<'r, 's> {
     fn host_instruction(
         &self,
         suite: &SuiteProgram,
+        operation: &str,
         id_kind: IdKind,
         id: &str,
         label: &str,
@@ -730,7 +747,7 @@ impl<'r, 's> Runner<'r, 's> {
     ) -> Result<(), Failure> {
         let host = HostId::of(id_kind == IdKind::Assertion, id)
             .ok_or_else(|| Failure::runner(kind::DOCUMENT, format!("the host id '{label}' has no word of the host vocabulary")))?;
-        if suite.authored && host != HostId::Action(avl_wire::program::HostAction::RestartIde) {
+        if suite.authored && !matches!(host, HostId::Action(action) if AUTHORED_HOST_IDS.contains(&action)) {
             return Err(Failure::runner(
                 kind::DOCUMENT,
                 format!("the authored program runs '{label}', which no authored program may run"),
@@ -740,8 +757,53 @@ impl<'r, 's> Runner<'r, 's> {
             runner: self,
             fixture,
             authored: suite.authored,
+            scenario: operation,
+            reset: suite.reset.as_ref(),
         };
         host_ids::perform(host, label, &instruction.args, values, &mut side).map_err(|message| Failure::runner(kind::HOST, message))
+    }
+
+    /// Fails the next reset on purpose, so the isolation recycles the IDE and resets the replacement, as after any reset
+    /// that does not hold. The proof keeps an isolation of its own, so it spends none of the recycle budget of the run.
+    /// It fails unless the reset ran twice, and unless the IDE after it is a new process that answers the bridge.
+    fn recycle_through_failed_reset(&self, scenario: &str, reset: &SuiteReset) -> Result<(), String> {
+        let before = self.lane.ide_process()?;
+        let resets = Cell::new(0_u32);
+        let mut isolation = Isolation::default();
+        isolation
+            .ensure_clean(
+                ResetPhase::Before,
+                scenario,
+                &mut || {
+                    resets.set(resets.get() + 1);
+                    if resets.get() == 1 {
+                        return Err(format!(
+                            "the first reset of '{scenario}' fails on purpose, so the lane recycles the IDE"
+                        ));
+                    }
+                    self.reset(ResetPhase::Before, scenario, reset)
+                },
+                &mut || self.relaunch_span(Relaunch::Recycle, false, &mut |_| Ok(())),
+            )
+            .map_err(|failure| failure.to_string())?;
+        let after = self.lane.ide_process()?;
+        let launched = after.launched.ok_or_else(|| "the recycle left no IDE process".to_owned())?;
+        if before.launched == Some(launched) {
+            return Err(format!("the recycle kept the IDE process {launched}"));
+        }
+        if after.bridge == before.bridge {
+            return Err(format!("the recycle kept the IDE {} that answers the bridge", before.bridge));
+        }
+        if resets.get() != 2 {
+            return Err(format!(
+                "the reset ran {} time(s), and the recycle runs it once more on the replacement",
+                resets.get()
+            ));
+        }
+        if let Some(report) = isolation.report() {
+            self.stream.note(report);
+        }
+        Ok(())
     }
 
     /// Attaches each IDE dump that the watchdog wrote for a slow step since the last call to the innermost open span.
@@ -952,11 +1014,15 @@ impl<'r, 's> Runner<'r, 's> {
     }
 }
 
-/// The host side of an instruction: the services of the lane, and a restart that states the fixture again.
+/// The host side of an instruction: the services of the lane, a restart that states the fixture again, and the proof of
+/// the recycle over the reset of the suite.
 struct RunnerHost<'a, 'r, 's> {
     runner: &'a Runner<'r, 's>,
     fixture: &'a SuiteFixture,
     authored: bool,
+    /// The label of the scenario or operation of the instruction, which the reset names.
+    scenario: &'a str,
+    reset: Option<&'a SuiteReset>,
 }
 
 impl HostSide for RunnerHost<'_, '_, '_> {
@@ -977,6 +1043,13 @@ impl HostSide for RunnerHost<'_, '_, '_> {
                 .map_err(|failure| failure.message)?;
         }
         Ok(())
+    }
+
+    fn recycle_through_failed_reset(&mut self) -> Result<(), String> {
+        let reset = self
+            .reset
+            .ok_or_else(|| "the suite document states no reset section, and the proof of the recycle runs that reset".to_owned())?;
+        self.runner.recycle_through_failed_reset(self.scenario, reset)
     }
 }
 

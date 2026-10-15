@@ -27,8 +27,8 @@ use super::ide::{ContextPlugin, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::package::sha256_hex;
-use super::program::{Failure, Lane, Runner, Suite, class_label, kind};
-use super::readiness::{Bridge, READY_TIMEOUT, request};
+use super::program::{Failure, IdeProcess, Lane, Runner, Suite, class_label, kind};
+use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
 use super::watchdog::{self, DISMISS_TIMEOUT, DUMP_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
@@ -479,6 +479,13 @@ impl Lane for DaemonLane<'_, '_> {
         Some(protocol::Bridge {
             port: BRIDGE_PORT,
             token: self.token.clone(),
+        })
+    }
+
+    fn ide_process(&self) -> Result<IdeProcess, String> {
+        Ok(IdeProcess {
+            launched: self.daemon.with_ide(|owner| owner.pid()),
+            bridge: readiness::bridge_pid(&self.bridge, self.launch.identity.key())?,
         })
     }
 }

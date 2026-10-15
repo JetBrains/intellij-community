@@ -1407,7 +1407,7 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs (`a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one`)
 
 - `lane-run` runs one iteration of a lane from a runfiles tree, with no control channel. It stores the lane inputs and
-  the context plugins of the descriptor in the jar store by digest, and it runs the iteration that a `/run` runs. It
+  the context plugins of the descriptor in the jar store by digest. It then runs the iteration that a `/run` runs. It
   quits the IDE at the end, and it exits 0 only for a summary with no failure. A stream without a summary is not green.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_summary_without_failures_is_green`)
 
@@ -1485,6 +1485,13 @@ after that move.
   `scenario '<name>' never ran: <reason>`.
   [@test] ../crates/avl-guest/src/lane/recycle/tests.rs (`the_fourth_dirty_reset_exhausts_the_budget_of_three_recycles`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`resets_that_never_hold_spend_the_budget_and_skip_the_rest`)
+
+- The host action `recycle-through-failed-reset` proves the recycle. It fails the next reset on purpose, so the IDE
+  recycles and the reset runs again on the replacement. The action fails unless that reset passed on a new IDE
+  process that answers the bridge. The proof spends no recycle of the run. An authored program may run this action
+  and `restart-ide`, and no other host id.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_recycle_that_keeps_the_ide_process_fails_the_proof`)
 
 - `restart-ide` performs the file operations of `whileDown` while the IDE is down, and it answers `whileDownReads`.
   It then states the fixture to the new IDE. A fixture can keep the Junie offer of the new start open.

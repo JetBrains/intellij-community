@@ -25,6 +25,10 @@ impl HostSide for Side<'_> {
         *self.restarts.borrow_mut() += 1;
         while_down(self.context)
     }
+
+    fn recycle_through_failed_reset(&mut self) -> Result<(), String> {
+        Err("this host side holds no IDE to recycle".to_owned())
+    }
 }
 
 fn perform_id(id: HostId, args: Value, values: &mut Values, side: &mut Side<'_>) -> Result<(), String> {

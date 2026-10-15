@@ -97,6 +97,8 @@ struct Fake {
     services: FakeServices,
     /// Set by the kill of the watchdog. A request that answers after it fails, as a request to a dead IDE does.
     killed: Arc<AtomicBool>,
+    /// A relaunch keeps the pid, as a launch that left the old IDE on the bridge port would.
+    relaunch_keeps_pid: AtomicBool,
 }
 
 impl Fake {
@@ -134,6 +136,7 @@ impl Fake {
             context: TempDir::new().unwrap(),
             services: FakeServices::default(),
             killed,
+            relaunch_keeps_pid: AtomicBool::new(false),
         }
     }
 
@@ -235,7 +238,9 @@ impl Lane for Fake {
     ) -> Result<(), String> {
         self.relaunches.lock().unwrap().push((cause, keep_junie_offer));
         let down = while_down(self.context.path());
-        self.pid.fetch_add(1, Ordering::SeqCst);
+        if !self.relaunch_keeps_pid.load(Ordering::SeqCst) {
+            self.pid.fetch_add(1, Ordering::SeqCst);
+        }
         down
     }
 
@@ -255,6 +260,14 @@ impl Lane for Fake {
         Some(protocol::Bridge {
             port: 31_347,
             token: "golden-transcript-token".to_owned(),
+        })
+    }
+
+    fn ide_process(&self) -> Result<IdeProcess, String> {
+        let pid = self.pid.load(Ordering::SeqCst);
+        Ok(IdeProcess {
+            launched: Some(i32::try_from(pid).unwrap()),
+            bridge: i64::from(pid),
         })
     }
 }
@@ -735,6 +748,102 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
     );
     let scenario = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"scenario""#)).unwrap();
     assert!(scenario.contains(r#"{"name":"testMethod","value":"gitScenarios"}"#), "{scenario}");
+}
+
+/// The authored document `lane-recycle-smoke`: the proof of the recycle, a restart, and one part that reads the driven
+/// project on the restarted IDE.
+fn recycle_smoke() -> Suite {
+    let host = |restarts: u32| {
+        json!({"side": "host", "timeoutMs": 840_000, "restarts": restarts, "answers": [], "mayAnswer": [], "takes": [],
+            "mayTake": [], "params": {}})
+    };
+    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {"part": {"type": "enum", "values": ["driven-project-read"], "optional": false},
+            "scenario": {"type": "enum", "values": ["recycle"], "optional": false},
+            "suite": {"type": "enum", "values": ["lane-recycle-smoke"], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}});
+    let document = json!({
+        "schemaVersion": 1, "suite": "lane-recycle-smoke", "lane": "UI", "testClassName": "AirFlowRecycleSmokeUiTest",
+        "authored": true,
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.AirFlowRecycleSmokeUiTest"}],
+        "restartsIde": true, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
+            "recycle-through-failed-reset": host(1), "restart-ide": host(1)}, "assertions": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "fixtures": {"authored-lane-recycle-smoke": {}},
+        "profiles": [{"name": "failed reset recycles one warm IDE and retries on the replacement", "key": "recycle",
+            "method": "recycleSmokeScenarios", "fixture": "authored-lane-recycle-smoke", "flags": {}, "flagKeys": [],
+            "requiredExecutables": [], "setups": [], "steps": [],
+            "program": [
+                {"action": "recycle-through-failed-reset"},
+                {"action": "restart-ide"},
+                {"action": "authored-step", "args": {"part": "driven-project-read", "scenario": "recycle",
+                    "suite": "lane-recycle-smoke", "timeoutMs": 180_000}, "uses": {"answers": [], "takes": []}},
+            ]}],
+    });
+    let bytes = document.to_string().into_bytes();
+    let program = parse_suite_program(&bytes).unwrap();
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+}
+
+// The proof of the recycle fails its first reset on purpose. The runner recycles the IDE once and resets the
+// replacement, then the program restarts the IDE and reads the driven project on the third IDE. The proof spends no
+// recycle of the run, so a later reset that does not hold still finds the whole budget.
+#[test]
+fn the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid() {
+    let fake = Fake::new(Script::default());
+    let ran = run(&fake, &[recycle_smoke()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(finished[0]["status"], "SUCCESSFUL", "{finished:?}");
+    assert_eq!(
+        *fake.relaunches.lock().unwrap(),
+        [(Relaunch::Recycle, false), (Relaunch::Restart, false)]
+    );
+    let resets: Vec<u32> = fake
+        .requests()
+        .into_iter()
+        .filter(|(_, kind)| kind == "Reset")
+        .map(|(pid, _)| pid)
+        .collect();
+    assert_eq!(
+        resets,
+        [1, 2, 3],
+        "the reset before the scenario, the reset of the replacement, and the reset after the scenario"
+    );
+    let part = fake
+        .requests()
+        .into_iter()
+        .find(|(_, kind)| kind == "action/authored-step")
+        .unwrap();
+    assert_eq!(part.0, 3, "the part reads the IDE of the restart");
+    assert!(
+        ran.events("output")
+            .iter()
+            .any(|record| record["text"].as_str().unwrap().starts_with(
+                "The IDE was recycled 1 time(s): before 'lane-recycle-smoke/recycle': the first reset of \
+             'lane-recycle-smoke/recycle' fails on purpose"
+            )),
+        "{:?}",
+        ran.events("output")
+    );
+    assert!(
+        ran.trace.iter().any(|line| line.contains(r#""key":"restart:recycle""#)),
+        "{:?}",
+        ran.trace
+    );
+}
+
+// A recycle that leaves the same IDE process on the bridge proves nothing, so the proof fails and names the pid.
+#[test]
+fn a_recycle_that_keeps_the_ide_process_fails_the_proof() {
+    let fake = Fake::new(Script::default());
+    fake.relaunch_keeps_pid.store(true, Ordering::SeqCst);
+    let ran = run(&fake, &[recycle_smoke()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(finished[0]["status"], "FAILED");
+    assert_eq!(finished[0]["type"], "lane_host_id");
+    assert_eq!(finished[0]["message"], "the recycle kept the IDE process 1");
 }
 
 // The transport of an instruction waits its deadline and a margin. An IDE that does not answer by then fails the

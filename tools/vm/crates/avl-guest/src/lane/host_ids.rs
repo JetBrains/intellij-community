@@ -2,7 +2,8 @@
 //! process, instead of through the bridge.
 //!
 //! The words are [`HostAction`] and [`HostAssertion`] of the suite program. `restart-ide` quits the IDE and launches it
-//! again on the same context, and performs the file operations of the value `whileDown` in between. The registry ids
+//! again on the same context, and performs the file operations of the value `whileDown` in between.
+//! `recycle-through-failed-reset` proves the recycle of an IDE whose reset did not hold. The registry ids
 //! hold, fail, release and count the package downloads of the fake registry. `account-approve-sign-in` approves the
 //! JetBrains Account login that the IDE started, in the emulator, and follows its redirect to the callback of the IDE.
 
@@ -74,6 +75,10 @@ pub(crate) trait HostSide {
 
     /// Quits the IDE, performs `while_down` on its context directory, and launches it again on the same context.
     fn restart_ide(&mut self, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String>;
+
+    /// Fails the next state reset on purpose, recycles the IDE as a reset that does not hold does, and resets the
+    /// replacement. It fails unless that reset passed on a new IDE process that answers the bridge.
+    fn recycle_through_failed_reset(&mut self) -> Result<(), String>;
 }
 
 /// One host id of an instruction.
@@ -119,6 +124,7 @@ pub(crate) fn perform(
             values.set(REGISTRY_BASELINE, json!(mark));
             Ok(())
         }
+        HostId::Action(HostAction::RecycleThroughFailedReset) => side.recycle_through_failed_reset(),
         HostId::Action(HostAction::ReleaseDownload) => side.services().registry_clear(),
         HostId::Action(HostAction::RestartIde) => restart_ide(values, side),
         HostId::Assertion(HostAssertion::ConsentDownloadFaultArmed) => {

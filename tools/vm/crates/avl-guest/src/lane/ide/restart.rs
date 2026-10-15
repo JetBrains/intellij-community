@@ -84,6 +84,11 @@ impl IdeOwner {
             .map(|held| (held.context().to_path_buf(), held.run_id(), self.inputs.jcmd()))
     }
 
+    /// The pid of the held IDE run, as its launch named it.
+    pub(crate) fn pid(&self) -> Option<i32> {
+        self.held.as_ref().and_then(|held| held.pid)
+    }
+
     /// The recorder of the scenario traces, as the runtime descriptor names it.
     pub(crate) const fn trace_inputs(&self) -> &TraceInputs {
         &self.inputs.trace
