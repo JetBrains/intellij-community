@@ -711,8 +711,9 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_deadlines_follow_the_phase_and_the_emergency_caps_the_run`)
 
 - On expiry the watchdog of the lane daemon writes `watchdogExpired` and kills the IDE run with a thread dump. The
-  run then starts no further scenario.
+  scenario in flight ends as `ABORTED`, and the run starts no further scenario.
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_scenario_past_its_timeout_is_aborted_and_no_later_scenario_starts`)
 
 - The first modal intruder of a run gets one dismissal. An intruder that the next tick still sees expires the run as
   `ide_intrusion`, and the detail names the dismissal.

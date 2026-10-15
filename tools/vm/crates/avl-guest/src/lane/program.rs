@@ -434,7 +434,12 @@ impl<'r, 's> Runner<'r, 's> {
                 (primary, Ok(())) => primary,
             };
         }
-        let failure = verdict.err();
+        // A watchdog that ended the run killed the IDE under this scenario, so its failure is no verdict about it.
+        let expired = self.watch.expired().is_some();
+        let failure = verdict.err().map(|failure| Failure {
+            aborted: failure.aborted || expired,
+            ..failure
+        });
         self.trace().finish_scenario(failure.as_ref().map(Failure::trace).as_ref());
         let status = match &failure {
             None => CaseStatus::Successful,

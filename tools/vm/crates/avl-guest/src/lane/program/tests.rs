@@ -2,7 +2,7 @@
 //! request type from a script, and the lane IDE is a pid that each relaunch counts up.
 
 use std::collections::{BTreeMap, VecDeque};
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -89,14 +89,17 @@ struct Fake {
     relaunches: Mutex<Vec<bool>>,
     context: TempDir,
     services: FakeServices,
+    /// Set by the kill of the watchdog. A request that answers after it fails, as a request to a dead IDE does.
+    killed: Arc<AtomicBool>,
 }
 
 impl Fake {
     fn new(script: Script) -> Self {
         let script = Arc::new(Mutex::new(script));
         let pid = Arc::new(AtomicU32::new(1));
+        let killed = Arc::new(AtomicBool::new(false));
         let http = {
-            let (script, pid) = (Arc::clone(&script), Arc::clone(&pid));
+            let (script, pid, killed) = (Arc::clone(&script), Arc::clone(&pid), Arc::clone(&killed));
             FakeHttp::start(move |request| {
                 let body: Value = serde_json::from_slice(&request.body).unwrap();
                 let kind = body["type"].as_str().unwrap_or_default().to_owned();
@@ -107,6 +110,9 @@ impl Fake {
                 };
                 if let Some(delay) = delay {
                     std::thread::sleep(delay);
+                }
+                if killed.load(Ordering::SeqCst) {
+                    return Response::error(503, "the IDE was killed");
                 }
                 let answer = answer(&mut script.lock().unwrap(), &kind, &body);
                 Response::json(200, answer.to_string())
@@ -121,6 +127,7 @@ impl Fake {
             relaunches: Mutex::new(Vec::new()),
             context: TempDir::new().unwrap(),
             services: FakeServices::default(),
+            killed,
         }
     }
 
@@ -203,6 +210,7 @@ impl Probes for Fake {
     }
 
     fn kill(&self) -> Result<(), String> {
+        self.killed.store(true, Ordering::SeqCst);
         Ok(())
     }
 }
@@ -299,10 +307,11 @@ fn lane_document() -> LaneDocument {
 
 /// Runs `suites` against `fake`, with the watchdog thread when `watch` has a slow-step budget for the test.
 fn run(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>) -> Ran {
-    run_with_margin(fake, suites, slow_step, INSTRUCTION_MARGIN)
+    run_with(fake, suites, slow_step, INSTRUCTION_MARGIN, Duration::from_mins(30))
 }
 
-fn run_with_margin(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: Duration) -> Ran {
+/// [`run`] with the transport margin `margin` and the active execution timeout `active` of the watchdog.
+fn run_with(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: Duration, active: Duration) -> Ran {
     let iteration = TempDir::new().unwrap();
     let recording = Recording::default();
     let trace = Trace::open(
@@ -314,7 +323,7 @@ fn run_with_margin(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, m
     {
         let stream = Stream::new(&mut out);
         let policy = Policy {
-            active_execution: Duration::from_mins(30),
+            active_execution: active,
             progress_gap: Duration::from_mins(5),
         };
         let watch = match slow_step {
@@ -729,11 +738,12 @@ fn an_instruction_past_its_deadline_fails_and_is_named() {
     select["timeoutMs"] = json!(200);
     let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": select}, "assertions": {}});
     let instructions = json!([{"action": "rename-session-select"}]);
-    let ran = run_with_margin(
+    let ran = run_with(
         &fake,
         &[story(&vocabulary, &json!([scenario("hangs", &instructions)]))],
         None,
         Duration::from_millis(100),
+        Duration::from_mins(30),
     );
     let finished = ran.events("testFinished");
     assert_eq!(finished[0]["status"], "FAILED");
@@ -743,4 +753,33 @@ fn an_instruction_past_its_deadline_fails_and_is_named() {
         message.starts_with("the instruction 'rename-session-select' got no answer: POST /api/air/ui-test: the deadline passed"),
         "{message}"
     );
+}
+
+// A scenario past the active execution timeout expires the run: the watchdog writes `watchdogExpired` and kills the IDE.
+// The request in flight then fails, and the scenario ends as ABORTED, not FAILED, because its failure is no verdict about
+// it. No later scenario starts.
+#[test]
+fn a_scenario_past_its_timeout_is_aborted_and_no_later_scenario_starts() {
+    let fake = Fake::new(Script {
+        delays: BTreeMap::from([("action/rename-session-select".to_owned(), Duration::from_millis(2_500))]),
+        ..Script::default()
+    });
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
+    let instructions = json!([{"action": "rename-session-select"}]);
+    let profiles = json!([scenario("hangs", &instructions), scenario("never", &instructions)]);
+    let ran = run_with(
+        &fake,
+        &[story(&vocabulary, &profiles)],
+        Some(Duration::from_mins(1)),
+        INSTRUCTION_MARGIN,
+        Duration::from_millis(500),
+    );
+    assert_eq!(ran.events("watchdogExpired").len(), 1, "{:?}", ran.records);
+    assert_eq!(ran.events("watchdogExpired")[0]["reason"], "active_execution_timeout");
+    let finished = ran.events("testFinished");
+    assert_eq!(finished.len(), 1);
+    assert_eq!(finished[0]["status"], "ABORTED");
+    assert_eq!(ran.events("testStarted").len(), 1);
+    let done = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
+    assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
 }
