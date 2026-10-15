@@ -33,9 +33,10 @@ enum class GitRebaseOption(@NonNls private val option: String,
 /**
  * Set of options that are used without any additional params
  */
-val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
-                         GitRebaseOption.REBASE_MERGES,
-                         GitRebaseOption.KEEP_EMPTY,
-                         GitRebaseOption.ROOT,
-                         GitRebaseOption.UPDATE_REFS,
-                         GitRebaseOption.AUTOSQUASH)
+val REBASE_FLAGS: Set<GitRebaseOption> = setOf(GitRebaseOption.INTERACTIVE,
+                                               GitRebaseOption.REBASE_MERGES,
+                                               GitRebaseOption.KEEP_EMPTY,
+                                               GitRebaseOption.ROOT,
+                                               GitRebaseOption.UPDATE_REFS,
+                                               GitRebaseOption.AUTOSQUASH,
+                                               GitRebaseOption.NO_AUTOSQUASH)
