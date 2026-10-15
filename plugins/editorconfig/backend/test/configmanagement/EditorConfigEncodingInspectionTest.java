@@ -7,7 +7,6 @@ import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -65,7 +64,7 @@ public class EditorConfigEncodingInspectionTest {
     doWithEditorConfigDisabled(()->myFixture.configureByFile("test.txt"));
     myFixture.copyFileToProject(".editorconfig");
     myFixture.enableInspections(EditorConfigEncodingInspection.class);
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
+    myFixture.checkHighlighting();
   }
 
   @Test
@@ -73,7 +72,7 @@ public class EditorConfigEncodingInspectionTest {
     doWithEditorConfigDisabled(()->myFixture.configureByFile("test.xml"));
     myFixture.copyFileToProject(".editorconfig");
     myFixture.enableInspections(EditorConfigEncodingInspection.class);
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
+    myFixture.checkHighlighting();
   }
 
   @Test
@@ -81,12 +80,11 @@ public class EditorConfigEncodingInspectionTest {
     doWithEditorConfigDisabled(()->myFixture.configureByFile("test.txt"));
     myFixture.copyFileToProject(".editorconfig");
     myFixture.enableInspections(EditorConfigEncodingInspection.class);
-    IntentionAction quickFix = EdtTestUtil.runInEdtAndGet(
-      () -> myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.ignore")));
+    IntentionAction quickFix = myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.ignore"));
     assertNotNull(quickFix);
     myFixture.launchAction(quickFix);
     assertTrue(EditorConfigEncodingCache.Companion.getInstance().isIgnored(myFixture.getFile().getVirtualFile()));
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
+    myFixture.checkHighlighting();
   }
 
   @Test
@@ -96,12 +94,11 @@ public class EditorConfigEncodingInspectionTest {
     VirtualFile sourceFile = myFixture.getFile().getVirtualFile();
     assertEquals(StandardCharsets.UTF_8, sourceFile.getCharset());
     myFixture.enableInspections(EditorConfigEncodingInspection.class);
-    IntentionAction quickFix = EdtTestUtil.runInEdtAndGet(
-      () -> myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.apply")));
+    IntentionAction quickFix = myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.apply"));
     assertNotNull(quickFix);
     myFixture.launchAction(quickFix);
     assertEquals(StandardCharsets.ISO_8859_1, sourceFile.getCharset());
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
+    myFixture.checkHighlighting();
   }
 
   private void doWithEditorConfigDisabled(@NotNull Runnable runnable) {

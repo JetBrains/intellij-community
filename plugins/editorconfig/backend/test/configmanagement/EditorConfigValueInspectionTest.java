@@ -3,7 +3,6 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -48,6 +47,6 @@ public class EditorConfigValueInspectionTest {
   public void testValues() {
     myFixture.configureByFile(".editorconfig");
     myFixture.enableInspections(EditorConfigValueCorrectnessInspection.class);
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.testHighlighting(true, false, true));
+    myFixture.testHighlighting(true, false, true);
   }
 }
