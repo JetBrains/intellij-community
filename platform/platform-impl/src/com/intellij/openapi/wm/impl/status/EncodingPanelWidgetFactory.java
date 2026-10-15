@@ -2,17 +2,15 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.ui.UIBundle;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+final class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return StatusBar.StandardWidgets.ENCODING_PANEL;
@@ -26,5 +24,10 @@ public class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactor
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
     return new EncodingPanel(project, scope);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return !Registry.is("ide.status.bar.simplified");
   }
 }

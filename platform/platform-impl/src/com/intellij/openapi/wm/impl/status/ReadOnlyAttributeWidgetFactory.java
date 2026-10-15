@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WidgetPresentation;
 import com.intellij.openapi.wm.WidgetPresentationDataContext;
@@ -24,5 +25,10 @@ final class ReadOnlyAttributeWidgetFactory extends StatusBarEditorBasedWidgetFac
   @Override
   public @NotNull WidgetPresentation createPresentation(@NotNull WidgetPresentationDataContext context, @NotNull CoroutineScope scope) {
     return new ToggleReadOnlyAttributePanel(context, scope);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return !Registry.is("ide.status.bar.simplified");
   }
 }
