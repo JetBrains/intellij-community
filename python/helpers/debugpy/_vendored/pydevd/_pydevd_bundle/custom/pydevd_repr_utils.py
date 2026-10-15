@@ -98,16 +98,6 @@ if IS_PY3K:
     from itertools import islice
 
 
-    def _possibly_sorted(x):
-        # Since not all sequences of items can be sorted and comparison
-        # functions may raise arbitrary exceptions, return an unsorted
-        # sequence in that case.
-        try:
-            return sorted(x)
-        except Exception:
-            return list(x)
-
-
     class PydevdRepr(Repr):
         def __init__(self, do_trim):
             super(PydevdRepr, self).__init__()
@@ -169,7 +159,8 @@ if IS_PY3K:
             pieces = []
             curr_length = 0
             max_elements = self.maxdict if self.do_trim else n
-            for key in islice(_possibly_sorted(x), max_elements):
+            # keep the insertion order, as repr() does
+            for key in islice(x, max_elements):
                 keyrepr = repr1(key, newlevel)
                 valrepr = repr1(x[key], newlevel)
                 elem_repr = '%s: %s' % (keyrepr, valrepr)
