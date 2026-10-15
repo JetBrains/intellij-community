@@ -28,6 +28,13 @@ targets:
   - ../crates/avl-guest/src/lane/inputs.rs
   - ../crates/avl-guest/src/lane/iteration.rs
   - ../crates/avl-guest/src/lane/readiness.rs
+  - ../crates/avl-guest/src/lane/program.rs
+  - ../crates/avl-guest/src/lane/values.rs
+  - ../crates/avl-guest/src/lane/host_ids.rs
+  - ../crates/avl-guest/src/lane/recycle.rs
+  - ../crates/avl-guest/src/lane/watchdog.rs
+  - ../crates/avl-guest/src/lane/stream.rs
+  - ../crates/avl-guest/src/lane/ide/restart.rs
   - ../crates/avl-guest/src/lane/context/options/*.xml
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
   - ../crates/avl-bridge/src/lifecycle.rs
@@ -695,6 +702,26 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-wire/src/report/tests.rs
   [@test] ../crates/avl-wire/src/daemon/tests.rs
 
+- The lane daemon has a watchdog of its own. Between two scenarios the progress gap applies. During a scenario its
+  active execution timeout applies.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_deadlines_follow_the_phase_and_the_emergency_caps_the_run`)
+
+- An emergency deadline caps the run of the lane daemon. It holds a gap for each scenario and two more, the timeout
+  of each scenario, and one minute.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_deadlines_follow_the_phase_and_the_emergency_caps_the_run`)
+
+- On expiry the watchdog of the lane daemon writes `watchdogExpired` and kills the IDE run with a thread dump. The
+  run then starts no further scenario.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide`)
+
+- The first modal intruder of a run gets one dismissal. An intruder that the next tick still sees expires the run as
+  `ide_intrusion`, and the detail names the dismissal.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide`)
+
+- A step of the lane daemon that is open past 30 s gets the dump of the IDE once, at most four for each run. The dump
+  is a file under `slow-steps`, a `slowStep` record, and an attachment of the trace.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)
+
 - The controller writes the JUnit XML of a run from its run stream. The XML holds one `testsuite` for each test
   class. Each scenario is one `testcase`: its class is the `testClassName` of the document, and its name is the
   scenario. A failure holds its type, the first line of its message, and the message and the detail as CDATA. A skip
@@ -1347,12 +1374,63 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs (`a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one`)
 
 - An iteration runs the suite documents of its lane. A selector narrows them by the test class, with or without a
-  package and a scenario.
+  package. A `#<scenario>` part keeps that scenario only.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors`)
 
-- The program runner is a later slice. Until then, each selected document ends as a container failure of the type
-  `not_implemented`, which names the suite.
-  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selected_document_fails_as_not_implemented`)
+- The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- A suite whose document does not fit its vocabulary fails its prologue as one container failure. A document without
+  its reset, or without the bridge requests of a story fixture, fails it too.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_without_its_bridge_requests_fails_its_prologue`)
+
+- The prologue of a suite clears the registry fault and resets the managed agents of the lane, in sorted order.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- A story scenario prepares the IDE in one chain of the bridge requests of its document. The terminal tabs after the
+  chain are the value `terminalBaseline`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- An IDE id is one bridge request `<kind>/<id>`. It holds the arguments in camel case, the values it takes, and
+  `timeoutMs`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- The transport of an IDE id waits its deadline, 10 s and the grace of the bridge. A request without an answer
+  then fails its scenario, and the failure names the instruction.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_instruction_past_its_deadline_fails_and_is_named`)
+
+- An id that takes a value that no earlier instruction answered fails its scenario. The failure names the value and
+  the instruction.
+  [@test] ../crates/avl-guest/src/lane/values/tests.rs (`a_request_gets_the_values_it_takes_and_a_missing_one_is_named`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_missing_take_fails_the_scenario_with_the_sentence_of_the_host`)
+
+- An authored part gets the values it takes in one `values` object, and it answers exactly the values it declares.
+  Its notes and its metrics go into the `report` of the `testFinished` of its scenario.
+  [@test] ../crates/avl-guest/src/lane/values/tests.rs (`a_part_takes_and_answers_exactly_its_declared_values`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_passes_its_values_and_reports_its_notes`)
+
+- A failed scenario has a typed failure. The type is the class of the failure in the IDE, and the detail is its
+  stack and its causes.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)
+
+- A reset that does not hold recycles the IDE on its context, and the reset runs again. The scenario then runs on
+  the new IDE.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid`)
+  [@test] ../crates/avl-guest/src/lane/recycle/tests.rs (`a_dirty_reset_recycles_once_and_the_next_reset_holds`)
+
+- A run has a budget of three recycles. Each scenario after the budget is `testSkipped` with the reason
+  `scenario '<name>' never ran: <reason>`.
+  [@test] ../crates/avl-guest/src/lane/recycle/tests.rs (`the_fourth_dirty_reset_exhausts_the_budget_of_three_recycles`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`resets_that_never_hold_spend_the_budget_and_skip_the_rest`)
+
+- `restart-ide` performs the file operations of `whileDown` while the IDE is down, and it answers `whileDownReads`.
+  It then states the fixture to the new IDE. A fixture can keep the Junie offer of the new start open.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_restart_performs_while_down_and_states_the_fixture_again`)
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_restart_performs_while_down_and_answers_the_reads`)
+
+- The registry host ids hold, fail and release a package download, and they count the package requests after a mark.
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_registry_ids_arm_hold_release_and_check_the_package_fault`)
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_request_count_reads_the_package_requests_after_the_mark`)
 
 The verb owns the lane services of one config key. They bind once for the key and live until `/shutdown`. A run of
 another key stops them and binds the services of the new key. Each iteration then decides about the IDE of the key:

@@ -1,7 +1,6 @@
 use std::fs;
 use std::path::Path;
 
-use expect_test::expect;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -56,14 +55,17 @@ fn selected(root: &Path, lane: &str, selectors: &[&str]) -> Result<Selection, St
 }
 
 // The lane document names the lane, and the suite documents of that lane are selected in class order. A selector
-// narrows them by the test class, with or without a package and a scenario.
+// narrows them by the test class, with or without a package, and a `#<scenario>` part keeps that scenario only.
 #[test]
 fn a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors() {
     let root = documents();
     let all = selected(root.path(), "ui", &[]).unwrap();
     assert_eq!(all.lane.lane, "UI");
     assert_eq!(
-        all.suites.iter().map(|suite| suite.test_class_name.as_str()).collect::<Vec<_>>(),
+        all.suites
+            .iter()
+            .map(|suite| suite.program.test_class_name.as_str())
+            .collect::<Vec<_>>(),
         ["AirAddToAgentContextGeneratedFlowUiTest", "AirRenameSessionGeneratedFlowUiTest"]
     );
     let one = selected(
@@ -73,49 +75,32 @@ fn a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors() {
     )
     .unwrap();
     assert_eq!(
-        one.suites.iter().map(|suite| suite.suite.as_str()).collect::<Vec<_>>(),
+        one.suites.iter().map(|suite| suite.program.suite.as_str()).collect::<Vec<_>>(),
         ["rename-session"]
     );
+    assert_eq!(
+        one.suites[0]
+            .program
+            .profiles
+            .iter()
+            .map(|profile| profile.name.as_str())
+            .collect::<Vec<_>>(),
+        ["scenario 1"]
+    );
+    assert_eq!(one.suites[0].raw_profiles.len(), 1);
+    assert!(one.suites[0].raw_profiles[0].get().contains("\"scenario 1\""));
+    let whole = selected(
+        root.path(),
+        "ui",
+        &[
+            "AirRenameSessionGeneratedFlowUiTest#scenario 1",
+            "AirRenameSessionGeneratedFlowUiTest",
+        ],
+    )
+    .unwrap();
+    assert_eq!(whole.suites[0].program.profiles.len(), 2);
     let other_lane = selected(root.path(), "ui", &["AirChatReplyGeneratedFlowUiTest"]).unwrap_err();
     assert!(other_lane.contains("no suite document of the lane UI"), "{other_lane}");
     let unknown = selected(root.path(), "ui-perf", &[]).unwrap_err();
     assert!(unknown.contains("hold no ui-perf.json"), "{unknown}");
-}
-
-// Until the program runner lands, a selected document ends as one container failure of the type `not_implemented`,
-// which names the suite.
-#[test]
-fn a_selected_document_fails_as_not_implemented() {
-    let root = documents();
-    let selection = selected(root.path(), "ui", &["AirRenameSessionGeneratedFlowUiTest"]).unwrap();
-    let RunEventKind::ContainerFailed(failed) = not_implemented(&selection.suites[0]) else {
-        panic!("not a container failure");
-    };
-    let mut encoded = serde_json::to_value(RunEventKind::ContainerFailed(failed)).unwrap();
-    encoded["timestamp"] = json!("t");
-    expect![[r#"{"className":"AirRenameSessionGeneratedFlowUiTest","displayName":"AirRenameSessionGeneratedFlowUiTest","event":"containerFailed","id":"[engine:lane-daemon]/[suite:rename-session]","message":"the lane daemon runs no suite document yet, so the suite 'rename-session' did not run","timestamp":"t","type":"not_implemented"}"#]]
-        .assert_eq(&encoded.to_string());
-}
-
-// A stream that a client stopped reading takes no record more, and the iteration goes on.
-#[test]
-fn a_broken_stream_drops_the_later_records() {
-    struct Broken;
-    impl Write for Broken {
-        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
-            Err(std::io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut out = Broken;
-    let mut stream = Stream::new(&mut out);
-    stream.note("first");
-    assert!(stream.broken);
-    stream.note("second");
-    let mut kept = Vec::new();
-    let mut stream = Stream::new(&mut kept);
-    stream.note("line");
-    assert_eq!(String::from_utf8(kept).unwrap(), "{\"event\":\"output\",\"text\":\"line\"}\n");
 }

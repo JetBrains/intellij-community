@@ -87,6 +87,7 @@ fn a_runtime_flag_names_the_manifest_of_one_cli_runtime() {
         project_root: "plain-project".to_owned(),
         runtimes,
         distribution_plugins: BTreeSet::new(),
+        trace: TraceInputs::default(),
     };
     let named = inputs.runtimes_named(&["codex".to_owned()]).unwrap();
     assert_eq!(named.iter().map(|runtime| runtime.name.as_str()).collect::<Vec<_>>(), ["codex"]);

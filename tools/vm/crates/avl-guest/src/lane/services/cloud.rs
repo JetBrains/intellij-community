@@ -130,6 +130,16 @@ impl Cloud {
         self.record.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
+    /// The base URL of the emulator, the runner value `jetBrainsCloudUrl`.
+    pub(crate) fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
+    /// Empties the record, and answers what it held.
+    pub(crate) fn clear(&self) -> Record {
+        std::mem::take(&mut *self.lock())
+    }
+
     /// The properties that point the IDE at this emulator. The regional property wins over the plain one for the
     /// default region, so both name the configuration.
     pub(crate) fn launch_properties(&self) -> Vec<(&'static str, String)> {
@@ -228,7 +238,7 @@ impl Cloud {
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("record", "GET") => control::answer(&*self.lock()),
-            ("record", "DELETE") => control::answer(&std::mem::take(&mut *self.lock())),
+            ("record", "DELETE") => control::answer(&self.clear()),
             ("record", _) => control::method_not_allowed(request, "GET or DELETE"),
             _ => control::unknown_route(request),
         }

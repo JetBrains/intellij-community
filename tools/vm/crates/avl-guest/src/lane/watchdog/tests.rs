@@ -1,0 +1,116 @@
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+use avl_wire::daemon::ExecutionIdentity;
+use pretty_assertions::assert_eq;
+use tempfile::TempDir;
+
+use super::*;
+
+const POLICY: Policy = Policy {
+    active_execution: Duration::from_mins(30),
+    progress_gap: Duration::from_mins(5),
+};
+
+fn identity(name: &str) -> ExecutionIdentity {
+    ExecutionIdentity {
+        id: format!("[scenario:{name}]"),
+        display_name: name.to_owned(),
+        class_name: Some("com.example.AirSuiteGeneratedFlowUiTest".to_owned()),
+        method_name: Some("generatedFlowScenarios".to_owned()),
+    }
+}
+
+// Between scenarios the progress gap applies, and during one the active execution budget. The emergency deadline caps
+// the run at a gap before each scenario and after the last, the budget of each, and the kill.
+#[test]
+fn the_deadlines_follow_the_phase_and_the_emergency_caps_the_run() {
+    let start = Instant::now();
+    let mut deadlines = Deadlines::new(POLICY, start);
+    assert_eq!(deadlines.expiry(start + Duration::from_mins(4)), None);
+    assert_eq!(
+        deadlines.expiry(start + Duration::from_mins(5)).map(|expiry| expiry.reason),
+        Some(ExpiryReason::ProgressGap)
+    );
+    deadlines.plan_started(2, start);
+    deadlines.execution_started(identity("first"), start);
+    assert_eq!(deadlines.expiry(start + Duration::from_mins(29)), None);
+    let active = deadlines.expiry(start + Duration::from_mins(30)).unwrap();
+    assert_eq!(active.reason, ExpiryReason::ActiveExecution);
+    assert_eq!(active.active, Some(identity("first")));
+    deadlines.execution_finished(start + Duration::from_mins(20));
+    assert_eq!(deadlines.expiry(start + Duration::from_mins(24)), None);
+    // 4 gaps of 5 min, 2 executions of 30 min, and the kill grace of 1 min.
+    let emergency = start + Duration::from_mins(81);
+    deadlines.execution_started(identity("second"), start + Duration::from_mins(80));
+    assert_eq!(deadlines.expiry(start + Duration::from_secs(81 * 60 - 1)), None);
+    assert_eq!(
+        deadlines.expiry(emergency).map(|expiry| expiry.reason),
+        Some(ExpiryReason::Emergency)
+    );
+    deadlines.completed();
+    assert_eq!(deadlines.expiry(emergency + Duration::from_hours(1)), None);
+    assert_eq!(deadlines.intrusion("a dialog".to_owned(), emergency), None);
+}
+
+/// Probes that answer an intruder on every probe and count what the watchdog asked.
+#[derive(Default)]
+struct Intruded {
+    dismissals: Mutex<u32>,
+    kills: Mutex<u32>,
+}
+
+impl Probes for Intruded {
+    fn intrusion(&self) -> Option<String> {
+        Some("an unexpected modal dialog no scenario opened is showing: 'EAP expired'".to_owned())
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        *self.dismissals.lock().unwrap() += 1;
+        Some("cancelled 'EAP expired'".to_owned())
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        Ok("\"main\" RUNNABLE".to_owned())
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        *self.kills.lock().unwrap() += 1;
+        Ok(())
+    }
+}
+
+// The first intrusion of a run gets one dismissal. The next tick that still sees it expires the run as an intrusion,
+// names the dismissal, and kills the IDE, so the run thread unwinds.
+#[test]
+fn an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide() {
+    let directory = TempDir::new().unwrap();
+    let probes = Intruded::default();
+    let watch = Watch::new(POLICY);
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    watch.execution_started(&stream, identity("first"));
+    super::watch(&watch, &stream, &probes, directory.path());
+    assert_eq!(*probes.dismissals.lock().unwrap(), 1);
+    assert_eq!(*probes.kills.lock().unwrap(), 1);
+    let expired = watch.expired().unwrap();
+    assert!(expired.starts_with("the watchdog ended the run: ide_intrusion: "), "{expired}");
+    drop(stream);
+    let records = String::from_utf8(out).unwrap();
+    let expiry = records.lines().find(|line| line.contains("\"watchdogExpired\"")).unwrap();
+    assert!(
+        expiry.contains("The run tried to clear it first: cancelled 'EAP expired'"),
+        "{expiry}"
+    );
+}
+
+// A file name part keeps lowercase letters and digits, joins the rest with one `-`, and keeps 40 characters.
+#[test]
+fn a_slug_is_lowercase_words_joined_by_dashes() {
+    assert_eq!(
+        slug("before reset of Rename: closed project"),
+        "before-reset-of-rename-closed-project"
+    );
+    assert_eq!(slug("!!!"), "step");
+    assert_eq!(slug(&"a".repeat(60)).len(), 40);
+}

@@ -49,6 +49,7 @@ use crate::cli::{CancelArgs, IdeGcArgs, RootArgs, RunArgs};
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::supervisor::{self, Launcher, LiveSystem};
 
+mod restart;
 #[cfg(test)]
 mod tests;
 

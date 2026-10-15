@@ -265,7 +265,7 @@ fn read_chunked(reader: &mut impl BufRead, max_body: usize) -> Result<Vec<u8>, R
 }
 
 /// Writes `response` to `stream`. A `head_only` answer to a `HEAD` request sends no body, and its writer does not run.
-pub(crate) fn write_response(stream: &mut impl Write, response: Response, head_only: bool) -> io::Result<()> {
+pub(crate) fn write_response(stream: &mut (impl Write + Send), response: Response, head_only: bool) -> io::Result<()> {
     let mut head = format!("HTTP/1.1 {} {}\r\n", response.status, reason(response.status));
     if let Some(content_type) = &response.content_type {
         head.push_str(&format!("Content-Type: {content_type}\r\n"));
@@ -304,7 +304,7 @@ const LAST_CHUNK: &[u8] = b"0\r\n\r\n";
 /// Writes each buffer it gets as one chunk, and flushes it, so the client reads each record when it is written. An
 /// empty buffer writes nothing, because an empty chunk would end the body.
 pub(crate) struct ChunkedWriter<'a> {
-    stream: &'a mut dyn Write,
+    stream: &'a mut (dyn Write + Send),
 }
 
 impl Write for ChunkedWriter<'_> {

@@ -287,40 +287,95 @@ impl Registry {
         registry_json(&self.base_url, &self.packages, &self.agents, checksum_override)
     }
 
+    /// The count of the requests that the registry answered so far: the mark that a later count starts after.
+    pub(crate) fn mark(&self) -> usize {
+        self.lock().events.len()
+    }
+
+    /// The answered requests after `mark` whose path starts with `prefix`, in order.
+    pub(crate) fn events_since(&self, mark: usize, prefix: &str) -> Vec<Event> {
+        control::after(&self.lock().events, mark)
+            .iter()
+            .filter(|event| event.path.starts_with(prefix))
+            .cloned()
+            .collect()
+    }
+
+    /// Every answered request, one line each, for a failure message.
+    pub(crate) fn request_log(&self) -> String {
+        let state = self.lock();
+        if state.events.is_empty() {
+            return "the fake registry answered no request".to_owned();
+        }
+        state
+            .events
+            .iter()
+            .map(|event| {
+                format!(
+                    "#{} {} {} -> {} ({})",
+                    event.sequence,
+                    event.method,
+                    event.path,
+                    event.status,
+                    event.fault.id()
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    /// The id of the armed fault, `none` when no fault is armed.
+    pub(crate) fn armed_fault(&self) -> &'static str {
+        self.lock().armed.fault.id()
+    }
+
+    /// Arms the fault `fault` with its options. Arming the whole fault restores the default of each option, and a held
+    /// answer of an earlier fault is released.
+    pub(crate) fn arm(&self, fault: &str, status: Option<u16>, hold_ms: Option<u64>) -> Result<(), String> {
+        let request = ArmRequest {
+            fault: fault.to_owned(),
+            status,
+            hold_ms,
+        };
+        let armed = request.armed().map_err(|refusal| refusal.message)?;
+        self.set_armed(armed);
+        Ok(())
+    }
+
+    /// Clears the armed fault, and releases a held answer.
+    pub(crate) fn clear(&self) {
+        self.set_armed(Armed::CLEAR);
+    }
+
+    fn set_armed(&self, armed: Armed) -> Armed {
+        let mut state = self.lock();
+        state.armed = armed;
+        state.generation += 1;
+        state.hold = armed.fault.holds().then_some(state.generation);
+        self.released.notify_all();
+        state.armed
+    }
+
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
-            ("mark", "GET") => control::answer(&serde_json::json!({ "mark": self.lock().events.len() })),
+            ("mark", "GET") => control::answer(&serde_json::json!({ "mark": self.mark() })),
             ("events", "GET") => match control::since(request) {
                 Ok(since) => {
-                    let state = self.lock();
                     let prefix = request.query_param("prefix").unwrap_or_default();
-                    let events: Vec<&Event> = control::after(&state.events, since)
-                        .iter()
-                        .filter(|event| event.path.starts_with(&prefix))
-                        .collect();
-                    control::answer(&serde_json::json!({ "mark": state.events.len(), "events": events }))
+                    let events = self.events_since(since, &prefix);
+                    control::answer(&serde_json::json!({ "mark": self.mark(), "events": events }))
                 }
                 Err(refusal) => refusal,
             },
             ("fault", "GET") => control::answer(&self.lock().armed),
-            ("fault", "POST") => match control::body::<ArmRequest>(request).and_then(ArmRequest::armed) {
-                Ok(armed) => {
-                    let mut state = self.lock();
-                    state.armed = armed;
-                    state.generation += 1;
-                    state.hold = armed.fault.holds().then_some(state.generation);
-                    self.released.notify_all();
-                    control::answer(&state.armed)
-                }
+            ("fault", "POST") => match control::body::<ArmRequest>(request) {
+                Ok(arm) => match arm.armed() {
+                    Ok(armed) => control::answer(&self.set_armed(armed)),
+                    Err(refusal) => control::refuse(400, refusal.code, &refusal.message),
+                },
                 Err(refusal) => refusal,
             },
-            ("fault", "DELETE") => {
-                let mut state = self.lock();
-                state.armed = Armed::CLEAR;
-                state.hold = None;
-                self.released.notify_all();
-                control::answer(&state.armed)
-            }
+            ("fault", "DELETE") => control::answer(&self.set_armed(Armed::CLEAR)),
             ("mark" | "events", _) => control::method_not_allowed(request, "GET"),
             ("fault", _) => control::method_not_allowed(request, "GET, POST or DELETE"),
             _ => control::unknown_route(request),
@@ -337,22 +392,39 @@ struct ArmRequest {
     hold_ms: Option<u64>,
 }
 
+/// Why an arm request names no fault that the registry can arm, with the code of its refusal.
+struct ArmRefusal {
+    code: &'static str,
+    message: String,
+}
+
+impl ArmRefusal {
+    const fn bad(message: String) -> Self {
+        Self {
+            code: "bad_request",
+            message,
+        }
+    }
+}
+
 impl ArmRequest {
-    fn armed(self) -> Result<Armed, Response> {
+    fn armed(self) -> Result<Armed, ArmRefusal> {
         let ids = || Fault::ALL.map(Fault::id).join(", ");
-        let fault = Fault::of_id(&self.fault)
-            .ok_or_else(|| control::refuse(400, "unknown_fault", &format!("the fault {:?} is not one of {}", self.fault, ids())))?;
+        let fault = Fault::of_id(&self.fault).ok_or_else(|| ArmRefusal {
+            code: "unknown_fault",
+            message: format!("the fault {:?} is not one of {}", self.fault, ids()),
+        })?;
         if self.status.is_some() && !fault.takes_status() {
-            return Err(control::bad_request(&format!("the fault {} takes no status", fault.id())));
+            return Err(ArmRefusal::bad(format!("the fault {} takes no status", fault.id())));
         }
         if self.hold_ms.is_some() && !fault.holds() {
-            return Err(control::bad_request(&format!("the fault {} takes no holdMs", fault.id())));
+            return Err(ArmRefusal::bad(format!("the fault {} takes no holdMs", fault.id())));
         }
         if let Some(status) = self.status.filter(|status| !(100..=599).contains(status)) {
-            return Err(control::bad_request(&format!("the status {status} is no HTTP status")));
+            return Err(ArmRefusal::bad(format!("the status {status} is no HTTP status")));
         }
         if let Some(hold_ms) = self.hold_ms.filter(|hold_ms| !(1..=MAX_HOLD_MS).contains(hold_ms)) {
-            return Err(control::bad_request(&format!("the holdMs {hold_ms} is not in 1..={MAX_HOLD_MS}")));
+            return Err(ArmRefusal::bad(format!("the holdMs {hold_ms} is not in 1..={MAX_HOLD_MS}")));
         }
         let mut armed = Armed { fault, ..Armed::CLEAR };
         match fault {

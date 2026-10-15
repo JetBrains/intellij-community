@@ -7,6 +7,7 @@ targets:
   - ../crates/avl-record/**
   - ../crates/air-trace/**
   - ../crates/avl-guest/src/tracepack.rs
+  - ../crates/avl-guest/src/lane/trace.rs
   - ../crates/avl-guest/src/cli.rs
   - ../crates/avl-vm/src/daemon/iterate.rs
   - ../crates/avl-vm/src/daemon/traces.rs
@@ -308,6 +309,18 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The recorder ignores SIGPIPE, so a lane that died cannot stop it from finishing the bundle.
   [@test] ../crates/avl-record/src/tests.rs
+
+- The lane daemon is a lane of the protocol. Its `hello` names the launcher `daemon` and the root
+  `<iterationDir>/air-traces`. Its transcript of a green scenario is held to a golden.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- The lane daemon writes one `call` for each bridge request, and one for each step of a chain after it.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- The lane daemon photographs the first failure of a scenario once, in the span that failed. It attaches the IDE
+  dump of a slow step to the span of that step.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_failure_is_photographed_once_in_its_own_span_and_fails_the_spans_it_unwinds`)
 
 ### Capture and video
 

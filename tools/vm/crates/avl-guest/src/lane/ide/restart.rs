@@ -1,0 +1,77 @@
+//! The restart of the held IDE on its own context, which the program runner asks for: `restart-ide` of a scenario, and
+//! the recycle of an IDE whose reset did not hold. Also what the runner reads of the owner while a run goes on: the
+//! held run, which the watchdog kills, and the lane services, which a host id steers.
+
+use std::path::{Path, PathBuf};
+
+use super::{IdeOwner, LaneLaunch, LaneServices, Records, refused};
+use crate::lane::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE};
+use crate::lane::inputs::TraceInputs;
+use crate::lane::readiness::{self, Bridge};
+use crate::lane::services::Service;
+use crate::lane::services::cloud::Cloud;
+use crate::lane::services::feedback::Feedback;
+use crate::lane::services::registry::Registry;
+use crate::reply::AgentRefusal;
+
+impl IdeOwner {
+    /// Quits the held IDE, performs `while_down` on its context directory, launches it again on the same context, and
+    /// waits for readiness. With `keep_junie_offer`, the Junie offer of the new start stays open.
+    ///
+    /// The launch happens even when `while_down` fails, so the lane keeps an IDE. The failure of `while_down` is then the
+    /// failure of the restart.
+    pub(crate) fn restart(
+        &mut self,
+        launch: &LaneLaunch<'_>,
+        keep_junie_offer: bool,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+        records: &mut Records<'_>,
+    ) -> Result<(), AgentRefusal> {
+        let Some(mut previous) = self.held.clone() else {
+            return Err(refused("a restart was asked for, and the owner holds no IDE"));
+        };
+        self.quit(records)?;
+        let down = while_down(previous.context());
+        // The quit reported the end of this run already, so the relaunch below reports no second end.
+        previous.exit_reported = true;
+        self.held = Some(previous);
+        self.relaunch(launch, records)?;
+        let key = launch.identity.key();
+        let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
+        readiness::await_ready(&bridge, key, &launch.document.vocabulary_digest, keep_junie_offer, &mut |text| {
+            records.note(text);
+        })?;
+        down.map_err(|error| refused(format!("the file operations while the IDE of '{key}' was down failed: {error}")))
+    }
+
+    /// The context directory and the run id of the held IDE run, and the `jcmd` that dumps its threads before a kill.
+    pub(crate) fn kill_target(&self) -> Option<(PathBuf, String, Option<PathBuf>)> {
+        self.held
+            .as_ref()
+            .map(|held| (held.context().to_path_buf(), held.run_id(), self.inputs.jcmd()))
+    }
+
+    /// The recorder of the scenario traces, as the runtime descriptor names it.
+    pub(crate) const fn trace_inputs(&self) -> &TraceInputs {
+        &self.inputs.trace
+    }
+
+    /// The lane services of the current config key.
+    pub(crate) const fn services(&self) -> Option<&LaneServices> {
+        self.services.as_ref()
+    }
+}
+
+impl LaneServices {
+    pub(crate) fn registry(&self) -> Option<&Registry> {
+        self.registry.as_ref().map(Service::handler)
+    }
+
+    pub(crate) fn feedback(&self) -> Option<&Feedback> {
+        self.feedback.as_ref().map(Service::handler)
+    }
+
+    pub(crate) fn cloud(&self) -> &Cloud {
+        self.cloud.handler()
+    }
+}

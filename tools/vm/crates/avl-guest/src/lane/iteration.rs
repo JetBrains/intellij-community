@@ -1,89 +1,52 @@
 //! One iteration of the lane daemon: the run stream of `/run` from `runStarted` to `summary`.
 //!
 //! The iteration reads the lane document and the suite documents from the jars that the push stored, selects the
-//! documents of the lane, makes the IDE of the lane ready, and then names the plan. The program runner of the suite
-//! documents is the next slice, so each selected document ends as a container failure of the type `not_implemented`,
-//! which names the suite. The IDE part is whole, so a run proves the decision, the launch and the readiness of the IDE.
+//! documents of the lane, makes the IDE of the lane ready, and names the plan. The program runner of
+//! [`super::program`] then runs each scenario of each selected document, under the watchdog of [`super::watchdog`] and
+//! with the recorder of [`super::trace`]. The bundles of the recorder go to `<iterationDir>/air-traces`, which the
+//! trace pull of the controller packs.
 
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
-use avl_wire::daemon::{
-    ContainerFailed, ExecutionIdentity, Output, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, TypedFailure,
-    WatchdogState,
-};
+use avl_trace::protocol;
+use avl_wire::daemon::{PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
-use avl_wire::program::{SuiteProgram, parse_suite_program, read_lane_documents, read_suite_documents};
+use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents};
+use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
 use super::ide::{ContextPlugin, LaneLaunch, Records};
-use super::identity::{KeyInputs, LaneIdentity};
+use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
+use super::inputs::TraceInputs;
 use super::package::sha256_hex;
-use super::readiness::READY_TIMEOUT;
+use super::program::{Lane, Runner, Suite};
+use super::readiness::{Bridge, READY_TIMEOUT, request};
+use super::stream::Stream;
+use super::trace::{RecorderProcess, Trace};
+use super::watchdog::{self, DISMISS_TIMEOUT, DUMP_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
+use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
+use crate::supervisor::{self, LiveSystem};
 
 #[cfg(test)]
 mod tests;
 
-/// The type of the failure of a selected document until the program runner lands.
-pub(crate) const NOT_IMPLEMENTED: &str = "not_implemented";
-
 /// The budget that the watchdog record names for the IDE part: a fresh launch, then readiness.
 const IDE_BUDGET: Duration = Duration::from_mins(5);
-
-/// The writer of the run stream: one record per line, each line one chunk. A write that fails ends the stream, and the
-/// iteration goes on, so the state of the daemon stays whole.
-pub(crate) struct Stream<'a> {
-    out: &'a mut dyn Write,
-    broken: bool,
-}
-
-impl<'a> Stream<'a> {
-    pub(crate) fn new(out: &'a mut dyn Write) -> Self {
-        Self { out, broken: false }
-    }
-
-    /// Writes one record. The run log of the daemon gets each `output` record and each failure too.
-    pub(crate) fn emit(&mut self, record: &RunEventKind) {
-        match record {
-            RunEventKind::Output(output) => log(&output.text),
-            RunEventKind::RunFailed(failed) => log(&format!("the iteration failed: {}", failed.error)),
-            RunEventKind::IdeLaunched(launched) => log(&format!(
-                "the IDE of '{}' runs as pid {}, launch {}, log {}",
-                launched.launch_key, launched.pid, launched.launch_name, launched.log_dir
-            )),
-            RunEventKind::IdeExited(exited) => log(&format!("the IDE pid {} exited with {}", exited.pid, exited.exit_code)),
-            _ => {}
-        }
-        if self.broken {
-            return;
-        }
-        let Ok(mut line) = serde_json::to_vec(record) else {
-            return;
-        };
-        line.push(b'\n');
-        if self.out.write_all(&line).is_err() {
-            self.broken = true;
-        }
-    }
-
-    /// Writes one `output` record of `text`.
-    pub(crate) fn note(&mut self, text: impl Into<String>) {
-        self.emit(&RunEventKind::Output(Output { text: text.into() }));
-    }
-}
 
 /// The suite documents that an iteration runs, and the lane document of their lane.
 #[derive(Debug)]
 pub(crate) struct Selection {
     pub lane_bytes: Vec<u8>,
     pub lane: LaneDocument,
-    pub suites: Vec<SuiteProgram>,
+    pub suites: Vec<Suite>,
 }
 
 /// What a selection is read from: the lane, the jars of the documents, and the selectors.
@@ -95,9 +58,10 @@ pub(crate) struct SelectionInputs<'a> {
 }
 
 /// Reads the lane document `<lane>.json` and the suite documents of its lane. A selector names the `testClassName` of a
-/// document, with or without a package and a `#scenario` part. No selector selects every document of the lane.
+/// document, with or without a package. A `#<scenario>` part keeps only the scenario of that name or key. No selector
+/// selects every document of the lane.
 ///
-/// The JUnit5 filters of a request are not read here. The program runner applies them.
+/// The JUnit5 filters of a request are not read: no lane passes one to the lane daemon.
 pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> {
     let lanes = read_lane_documents(inputs.lane_documents)?;
     let name = format!("{}.json", inputs.lane);
@@ -108,41 +72,51 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
         )
     })?;
     let lane = parse_lane_document(&lane_bytes).map_err(|problem| format!("the lane document {name} {problem}"))?;
-    let mut suites = Vec::new();
+    let mut documents = Vec::new();
     for (file, content) in read_suite_documents(inputs.suite_documents)? {
         let suite = parse_suite_program(&content).map_err(|problem| format!("the suite document {file} {problem}"))?;
         if suite.lane == lane.lane {
-            suites.push(suite);
+            documents.push((suite, content));
         }
     }
-    let wanted: Vec<&str> = inputs
-        .selectors
-        .iter()
-        .map(|selector| {
-            let class = selector.split('#').next().unwrap_or_default();
-            class.rsplit('.').next().unwrap_or(class)
-        })
-        .collect();
+    let mut suites = super::program::suites_of(documents)?;
+    // The scenarios that the selectors name, by class: `None` keeps every scenario of the class.
+    let mut wanted: BTreeMap<&str, Option<Vec<&str>>> = BTreeMap::new();
+    for selector in inputs.selectors {
+        let (class, scenario) = selector
+            .split_once('#')
+            .map_or((selector.as_str(), None), |(class, scenario)| (class, Some(scenario)));
+        let class = class.rsplit('.').next().unwrap_or(class);
+        let entry = wanted.entry(class).or_insert_with(|| Some(Vec::new()));
+        match (entry.as_mut(), scenario) {
+            (Some(scenarios), Some(scenario)) => scenarios.push(scenario),
+            _ => *entry = None,
+        }
+    }
     if !wanted.is_empty() {
-        suites.retain(|suite| wanted.contains(&suite.test_class_name.as_str()));
+        suites.retain(|suite| wanted.contains_key(suite.program.test_class_name.as_str()));
         if suites.is_empty() {
-            return Err(format!("no suite document of the lane {} has the test class {wanted:?}", lane.lane));
+            return Err(format!(
+                "no suite document of the lane {} has the test class {:?}",
+                lane.lane,
+                wanted.keys().collect::<Vec<_>>()
+            ));
+        }
+        for suite in &mut suites {
+            if let Some(Some(scenarios)) = wanted.get(suite.program.test_class_name.as_str()) {
+                suite.retain_scenarios(|profile| {
+                    scenarios.contains(&profile.name.as_str()) || profile.key.as_deref().is_some_and(|key| scenarios.contains(&key))
+                });
+            }
         }
     }
-    suites.sort_by(|left, right| left.test_class_name.cmp(&right.test_class_name));
+    suites.sort_by(|left, right| left.program.test_class_name.cmp(&right.program.test_class_name));
     Ok(Selection { lane_bytes, lane, suites })
 }
 
-/// The counts that the summary reports.
-#[derive(Debug, Default)]
-struct Counts {
-    container_failures: u32,
-    failed: bool,
-}
-
 /// Runs one iteration of `request` and writes its records to `out`. A write that fails ends the stream, not the run.
-pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
-    let mut stream = Stream::new(out);
+pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) {
+    let stream = Stream::new(out);
     let iteration_id = daemon.next_iteration_id();
     let started_at = now_stamp();
     let iteration_dir = daemon.iteration_dir(&iteration_id);
@@ -159,7 +133,10 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
         request.lane.as_deref().unwrap_or("<none>")
     ));
     // A panic of the run is a failed iteration with a summary, so the stream never ends without one.
-    let executed = panic::catch_unwind(AssertUnwindSafe(|| execute(daemon, request, &mut stream))).unwrap_or_else(|panic| {
+    let executed = panic::catch_unwind(AssertUnwindSafe(|| {
+        execute(daemon, request, &stream, &iteration_dir, &iteration_id)
+    }))
+    .unwrap_or_else(|panic| {
         let message = panic
             .downcast_ref::<String>()
             .cloned()
@@ -167,38 +144,40 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
             .unwrap_or_default();
         Err(format!("the run thread panicked: {message}"))
     });
-    let counts = match executed {
-        Ok(counts) => counts,
+    let failed = match executed {
+        Ok(expired) => expired,
         Err(error) => {
             stream.emit(&RunEventKind::RunFailed(RunFailed { error }));
-            Counts {
-                container_failures: 0,
-                failed: true,
-            }
+            stream.emit(&watchdog_record("completed", request, None));
+            true
         }
     };
-    stream.emit(&watchdog("completed", request, None));
+    let counts = stream.counts();
     stream.emit(&RunEventKind::Summary(Summary {
         iteration_id: iteration_id.clone(),
         daemon_boot_stamp: daemon.boot_stamp().to_owned(),
         started_at,
-        tests_started: 0,
-        tests_failed: 0,
-        tests_skipped: 0,
+        tests_started: counts.started,
+        tests_failed: counts.failed,
+        tests_skipped: counts.skipped,
         containers_skipped: 0,
         container_failures: counts.container_failures,
-        has_failures: counts.failed || counts.container_failures > 0,
+        has_failures: failed || counts.failed > 0 || counts.container_failures > 0,
         ide_running: daemon.ide_running(),
     }));
     log(&format!(
-        "iteration {iteration_id} ended: {} container failure(s){}",
+        "iteration {iteration_id} ended: {} started, {} failed, {} skipped, {} container failure(s){}",
+        counts.started,
+        counts.failed,
+        counts.skipped,
         counts.container_failures,
-        if counts.failed { ", failed" } else { "" }
+        if failed { ", failed" } else { "" }
     ));
 }
 
-/// The part of an iteration that can fail as a whole: the documents, the IDE and the plan.
-fn execute(daemon: &Daemon, request: &RunRequest, stream: &mut Stream<'_>) -> Result<Counts, String> {
+/// The part of an iteration that can fail as a whole: the documents, the IDE, the plan and the scenarios. It answers
+/// whether the watchdog ended the run.
+fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration_dir: &Path, iteration_id: &str) -> Result<bool, String> {
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
     };
@@ -228,72 +207,279 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &mut Stream<'_>) -> Re
         selection.lane.lane,
         plugins.len()
     ));
-    stream.emit(&watchdog("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
-    let decision = daemon.with_ide(|owner| {
-        let runtimes: BTreeMap<String, String> = owner
-            .runtimes_named(&selection.lane.cli_runtimes)?
-            .into_iter()
-            .map(|runtime| (runtime.name, runtime.identity))
-            .collect();
-        let key = KeyInputs {
-            lane: &selection.lane.lane,
-            lane_document: &sha256_hex(&selection.lane_bytes),
-            product_stamp: Some(&request.product_stamp),
-            runtimes: &runtimes,
-            option_files: &option_files_digest(),
-        }
-        .config_key();
-        let identity = LaneIdentity::new(key, daemon.port());
-        let launch = LaneLaunch {
-            document: &selection.lane,
-            identity: &identity,
-            product_stamp: &request.product_stamp,
-            fake_agent_jar: &fake_agent_jar,
-            plugins: &plugins,
-        };
-        owner.ensure(&launch, &mut Records(&mut |record| stream.emit(&record)))
-    });
-    let decision = decision.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?;
+    stream.emit(&watchdog_record("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
+    let runtimes: BTreeMap<String, String> = daemon
+        .with_ide(|owner| owner.runtimes_named(&selection.lane.cli_runtimes))
+        .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?
+        .into_iter()
+        .map(|runtime| (runtime.name, runtime.identity))
+        .collect();
+    let key = KeyInputs {
+        lane: &selection.lane.lane,
+        lane_document: &sha256_hex(&selection.lane_bytes),
+        product_stamp: Some(&request.product_stamp),
+        runtimes: &runtimes,
+        option_files: &option_files_digest(),
+    }
+    .config_key();
+    let identity = LaneIdentity::new(key, daemon.port());
+    let launch = LaneLaunch {
+        document: &selection.lane,
+        identity: &identity,
+        product_stamp: &request.product_stamp,
+        fake_agent_jar: &fake_agent_jar,
+        plugins: &plugins,
+    };
+    let decision = daemon
+        .with_ide(|owner| owner.ensure(&launch, &mut Records(&mut |record| stream.emit(&record))))
+        .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?;
     stream.note(format!("lane {lane}: ide {}", decision.action.as_str()));
-    let discovered: usize = selection.suites.iter().map(|suite| suite.profiles.len()).sum();
+
+    let discovered: usize = selection.suites.iter().map(|suite| suite.program.profiles.len()).sum();
+    let discovered = u32::try_from(discovered).unwrap_or(u32::MAX);
     stream.emit(&RunEventKind::PlanStarted(PlanStarted {
         timestamp: now_stamp(),
-        discovered_executions: u32::try_from(discovered).unwrap_or(u32::MAX),
-        class_names: selection.suites.iter().map(|suite| suite.test_class_name.clone()).collect(),
+        discovered_executions: discovered,
+        class_names: selection.suites.iter().map(|suite| suite.program.test_class_name.clone()).collect(),
     }));
-    for suite in &selection.suites {
-        stream.emit(&not_implemented(suite));
+    let token = identity.secret(BRIDGE_TOKEN_PURPOSE);
+    let daemon_lane = DaemonLane {
+        daemon,
+        launch: &launch,
+        stream,
+        bridge: Bridge::new(BRIDGE_PORT, &token).map_err(|refusal| refusal.message)?,
+        token,
+        held: Mutex::new(None),
+    };
+    daemon_lane.refresh_held();
+    let trace_inputs = daemon.with_ide(|owner| owner.trace_inputs().clone());
+    let trace = start_trace(&trace_inputs, iteration_dir, iteration_id, daemon_lane.recorder_bridge());
+    let watch = Watch::new(Policy {
+        active_execution: Duration::from_secs(request.active_execution_timeout_sec),
+        progress_gap: Duration::from_secs(request.progress_gap_timeout_sec),
+    });
+    watch.plan_started(stream, discovered);
+    std::thread::scope(|scope| {
+        scope.spawn(|| watchdog::watch(&watch, stream, &daemon_lane, iteration_dir));
+        Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace).run(&selection.suites);
+        watch.completed(stream);
+    });
+    Ok(watch.expired().is_some())
+}
+
+/// The trace of the iteration: the recorder of `inputs`, or a quiet session when there is none or it does not start.
+fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, bridge: Option<protocol::Bridge>) -> Trace {
+    let Some(recorder) = &inputs.recorder else {
+        log("no recorder is named, so the iteration records no trace");
+        return Trace::off();
+    };
+    match RecorderProcess::start(recorder) {
+        Ok(process) => Trace::open(Box::new(process), Trace::hello(iteration_dir, iteration_id, inputs.screen, bridge)),
+        Err(error) => {
+            log(&format!("{error}; the iteration records no trace"));
+            Trace::off()
+        }
     }
-    Ok(Counts {
-        container_failures: u32::try_from(selection.suites.len()).unwrap_or(u32::MAX),
-        failed: false,
-    })
 }
 
-/// The container failure of a selected document until the program runner lands.
-pub(crate) fn not_implemented(suite: &SuiteProgram) -> RunEventKind {
-    RunEventKind::ContainerFailed(ContainerFailed {
-        timestamp: now_stamp(),
-        execution: ExecutionIdentity {
-            id: format!("[engine:lane-daemon]/[suite:{}]", suite.suite),
-            display_name: suite.test_class_name.clone(),
-            class_name: Some(suite.test_class_name.clone()),
-            method_name: None,
-        },
-        error: None,
-        failure: TypedFailure {
-            kind: Some(NOT_IMPLEMENTED.to_owned()),
-            message: Some(format!(
-                "the lane daemon runs no suite document yet, so the suite '{}' did not run",
-                suite.suite
-            )),
-            detail: None,
-        },
-    })
+/// The lane of the daemon: its IDE owner, its bridge and its lane services.
+struct DaemonLane<'a, 's> {
+    daemon: &'a Daemon,
+    launch: &'a LaneLaunch<'a>,
+    stream: &'a Stream<'s>,
+    bridge: Bridge,
+    token: String,
+    /// The context directory, the run id and the `jcmd` of the held IDE run, read after each launch, so the watchdog
+    /// kills the run without the lock of the owner.
+    held: Mutex<Option<(PathBuf, String, Option<PathBuf>)>>,
 }
 
-/// The watchdog record of the phase `phase`, which tells the controller how long the next step may take.
-fn watchdog(phase: &str, request: &RunRequest, next: Option<Duration>) -> RunEventKind {
+impl DaemonLane<'_, '_> {
+    fn refresh_held(&self) {
+        let held = self.daemon.with_ide(|owner| owner.kill_target());
+        *self.held.lock().unwrap_or_else(PoisonError::into_inner) = held;
+    }
+
+    fn with_services<T>(&self, work: impl FnOnce(&super::ide::LaneServices) -> Result<T, String>) -> Result<T, String> {
+        self.daemon.with_ide(|owner| {
+            owner
+                .services()
+                .ok_or_else(|| "the lane services do not run".to_owned())
+                .and_then(work)
+        })
+    }
+}
+
+impl Lane for DaemonLane<'_, '_> {
+    fn call(&self, request: &Value, within: Duration) -> Result<Value, avl_bridge::Error> {
+        self.bridge.post(request, within)
+    }
+
+    fn relaunch(&self, keep_junie_offer: bool, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
+        let restarted = self.daemon.with_ide(|owner| {
+            owner.restart(
+                self.launch,
+                keep_junie_offer,
+                while_down,
+                &mut Records(&mut |record| self.stream.emit(&record)),
+            )
+        });
+        self.refresh_held();
+        restarted.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
+    }
+
+    fn services(&self) -> &dyn super::host_ids::ServiceControl {
+        self
+    }
+
+    fn cloud_url(&self) -> Option<String> {
+        self.with_services(|services| Ok(services.cloud().base_url().to_owned())).ok()
+    }
+
+    fn context_dir(&self) -> Option<PathBuf> {
+        self.held
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+            .map(|(context, _, _)| context.clone())
+    }
+
+    fn recorder_bridge(&self) -> Option<protocol::Bridge> {
+        Some(protocol::Bridge {
+            port: BRIDGE_PORT,
+            token: self.token.clone(),
+        })
+    }
+}
+
+impl super::host_ids::ServiceControl for DaemonLane<'_, '_> {
+    fn registry_mark(&self) -> Result<usize, String> {
+        self.with_services(|services| Ok(registry(services)?.mark()))
+    }
+
+    fn registry_requests_since(&self, mark: usize, prefix: &str) -> Result<usize, String> {
+        self.with_services(|services| Ok(registry(services)?.events_since(mark, prefix).len()))
+    }
+
+    fn registry_log(&self) -> String {
+        self.with_services(|services| Ok(registry(services)?.request_log()))
+            .unwrap_or_else(|error| error)
+    }
+
+    fn registry_arm(&self, fault: &str, status: Option<u16>, hold_ms: Option<u64>) -> Result<(), String> {
+        self.with_services(|services| registry(services)?.arm(fault, status, hold_ms))
+    }
+
+    fn registry_clear(&self) -> Result<(), String> {
+        // A lane without registry agents runs no registry, and it has no fault to clear.
+        self.with_services(|services| {
+            if let Some(registry) = services.registry() {
+                registry.clear();
+            }
+            Ok(())
+        })
+    }
+
+    fn registry_fault(&self) -> Result<String, String> {
+        self.with_services(|services| Ok(registry(services)?.armed_fault().to_owned()))
+    }
+
+    fn feedback_clear(&self) -> Result<(), String> {
+        self.with_services(|services| {
+            if let Some(feedback) = services.feedback() {
+                feedback.clear();
+            }
+            Ok(())
+        })
+    }
+
+    fn cloud_clear(&self) -> Result<(), String> {
+        self.with_services(|services| {
+            services.cloud().clear();
+            Ok(())
+        })
+    }
+}
+
+fn registry(services: &super::ide::LaneServices) -> Result<&super::services::registry::Registry, String> {
+    services
+        .registry()
+        .ok_or_else(|| "the lane runs no fake ACP registry, because its lane document names no registry agent".to_owned())
+}
+
+impl Probes for DaemonLane<'_, '_> {
+    fn intrusion(&self) -> Option<String> {
+        let intruder = self
+            .bridge
+            .post(&request("ModalIntruder", json!({ "graceMs": INTRUDER_GRACE_MS })), PROBE_TIMEOUT)
+            .ok()?;
+        intruder_text(&intruder)
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        let dismissed = match self.bridge.post(
+            &request("DismissIntruder", json!({ "graceMs": INTRUDER_GRACE_MS })),
+            DISMISS_TIMEOUT,
+        ) {
+            Ok(Value::Null) => return None,
+            Ok(Value::String(text)) => text,
+            Ok(other) => other.to_string(),
+            Err(error) => format!("the dismissal request did not answer: {error}"),
+        };
+        log(&format!("the lane watchdog acted on a modal intruder: {dismissed}"));
+        Some(dismissed)
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        match self.bridge.post(&request("DiagnosticDump", json!({})), DUMP_TIMEOUT) {
+            Ok(Value::String(text)) => Ok(text),
+            Ok(other) => Err(format!("the IDE answered the dump {other}, which is no text")),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        let Some((context, run_id, jcmd)) = self.held.lock().unwrap_or_else(PoisonError::into_inner).clone() else {
+            return Err("no IDE run is held".to_owned());
+        };
+        supervisor::cancel(
+            &LiveSystem,
+            &CancelArgs {
+                run: RunArgs {
+                    root: RootArgs { root: context },
+                    run_id,
+                },
+                grace_ms: 0,
+                thread_dump: jcmd,
+            },
+        )
+        .map(|_| ())
+        .map_err(|refusal| refusal.message)
+    }
+}
+
+/// The verdict line of an intruder that `ModalIntruder` answered, or `None` for no intruder.
+fn intruder_text(intruder: &Value) -> Option<String> {
+    let fields = intruder.as_object()?;
+    let text = |name: &str| {
+        fields
+            .get(name)
+            .map_or_else(String::new, |value| value.as_str().map_or_else(|| value.to_string(), str::to_owned))
+    };
+    let title = text("title");
+    Some(format!(
+        "an unexpected modal dialog no scenario opened is showing: '{}' ({}), showing for {}ms, buttons {}, text: {}",
+        if title.trim().is_empty() { "<untitled>" } else { title.as_str() },
+        text("windowClass"),
+        text("showingForMs"),
+        text("buttons"),
+        text("visibleText")
+    ))
+}
+
+/// The watchdog record of the phase `phase` before the program runner owns the watchdog: the IDE part, or the end of a
+/// run that failed as a whole.
+fn watchdog_record(phase: &str, request: &RunRequest, next: Option<Duration>) -> RunEventKind {
     let millis = |seconds: u64| i64::try_from(seconds.saturating_mul(1000)).unwrap_or(i64::MAX);
     RunEventKind::WatchdogState(WatchdogState {
         timestamp: now_stamp(),

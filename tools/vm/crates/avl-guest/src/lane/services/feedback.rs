@@ -96,6 +96,11 @@ impl Feedback {
         ]
     }
 
+    /// Empties the queue, and answers the submissions that it held.
+    pub(crate) fn clear(&self) -> Vec<String> {
+        self.lock().submissions.drain(..).collect()
+    }
+
     /// Takes the oldest submission, and waits for one at most `wait`.
     fn next(&self, wait: Duration) -> Option<String> {
         let deadline = Instant::now() + wait;
@@ -119,10 +124,7 @@ impl Feedback {
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("submissions", "GET") => control::answer(&json!({ "submissions": &self.lock().submissions })),
-            ("submissions", "DELETE") => {
-                let removed: Vec<String> = self.lock().submissions.drain(..).collect();
-                control::answer(&json!({ "submissions": removed }))
-            }
+            ("submissions", "DELETE") => control::answer(&json!({ "submissions": self.clear() })),
             ("next", "POST") => match control::body::<NextRequest>(request) {
                 Ok(NextRequest { wait_ms }) if wait_ms <= MAX_WAIT_MS => {
                     control::answer(&json!({ "submission": self.next(Duration::from_millis(wait_ms)) }))

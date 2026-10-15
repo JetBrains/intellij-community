@@ -15,6 +15,7 @@ workspace = true
 
 [dependencies]
 avl-bridge.workspace = true
+avl-trace.workspace = true
 avl-trace-tools.workspace = true
 avl-wire.workspace = true
 clap.workspace = true

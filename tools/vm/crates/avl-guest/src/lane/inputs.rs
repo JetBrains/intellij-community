@@ -29,6 +29,12 @@ const RUNFILES_ROOT_TOKEN: &str = "${RUNFILES_ROOT}";
 const RUNTIME_FLAG_PREFIX: &str = "-Dair.test.";
 const RUNTIME_FLAG_SUFFIX: &str = ".runtime=";
 
+/// The flag that names the recorder binary, the flag that turns the trace off, and the flag that lets the recorder read
+/// the screen, as `ui_lane_ide.bzl` writes them.
+const RECORDER_FLAG: &str = "-Dair.trace.recorder=";
+const TRACE_OFF_FLAG: &str = "-Dair.flow.trace=off";
+const SCREEN_FLAG: &str = "-Dair.flow.trace.screen=on";
+
 /// The key of the `DevIdeConfig` file that names the home of the distribution, `DevIdeConfig.HOME_PATH_KEY`.
 const HOME_PATH_KEY: &str = "home.path";
 
@@ -54,6 +60,17 @@ pub(crate) struct LaunchInputs {
     pub runtimes: Vec<CliRuntime>,
     /// The names of the plugin directories of the distribution. A context plugin of one of them would load twice.
     pub distribution_plugins: BTreeSet<String>,
+    /// The recorder of the scenario traces.
+    pub trace: TraceInputs,
+}
+
+/// The recorder of the scenario traces, as the flags of the descriptor name it.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct TraceInputs {
+    /// The `air-trace-record` binary, or `None` when the descriptor names none or turns the trace off.
+    pub recorder: Option<PathBuf>,
+    /// The recorder may read the screen itself, because the display belongs to the lane.
+    pub screen: bool,
 }
 
 impl LaunchInputs {
@@ -134,7 +151,23 @@ pub(crate) fn from_descriptor(descriptor: &RuntimeDescriptor, args: &LaneDaemonA
         project_root: descriptor.ide.project_root.clone(),
         runtimes,
         distribution_plugins,
+        trace: trace_inputs(&descriptor.static_jvm_flags, root),
     })
+}
+
+/// The recorder that the flags name. `-Dair.flow.trace=off` turns the trace off whatever else they name.
+fn trace_inputs(flags: &[String], runfiles_root: &Path) -> TraceInputs {
+    let root = runfiles_root.display().to_string();
+    let off = flags.iter().any(|flag| flag == TRACE_OFF_FLAG);
+    let recorder = flags
+        .iter()
+        .find_map(|flag| flag.strip_prefix(RECORDER_FLAG))
+        .filter(|_| !off)
+        .map(|path| resolve(&path.replace(RUNFILES_ROOT_TOKEN, &root), runfiles_root));
+    TraceInputs {
+        recorder,
+        screen: flags.iter().any(|flag| flag == SCREEN_FLAG),
+    }
 }
 
 /// The home of the distribution: [`HOME_PATH_KEY`] of the `DevIdeConfig` file, relative to the directory of the file

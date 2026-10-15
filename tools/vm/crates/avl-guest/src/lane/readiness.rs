@@ -82,11 +82,16 @@ impl Bridge {
 
     /// Sends `request`, whose deadline in the IDE is `within`, and answers its value.
     pub(crate) fn call(&self, request: &Value, within: Duration) -> Result<Value, AgentRefusal> {
-        let deadline = Instant::now() + within + TRANSPORT_GRACE;
         let name = request.get("type").and_then(Value::as_str).unwrap_or_default().to_owned();
-        self.client
-            .post_json(REQUEST_ROUTE, &request.to_string(), deadline)
+        self.post(request, within)
             .map_err(|error| AgentRefusal::refused(NOT_READY_CODE, format!("the bridge request {name} failed: {error}")))
+    }
+
+    /// Sends `request`, whose deadline in the IDE is `within`, and answers its value or the error of the client. The
+    /// transport waits `within` and the grace of the bridge.
+    pub(crate) fn post(&self, request: &Value, within: Duration) -> Result<Value, avl_bridge::Error> {
+        self.client
+            .post_json(REQUEST_ROUTE, &request.to_string(), Instant::now() + within + TRANSPORT_GRACE)
     }
 
     /// The lifecycle reader of the IDE of `launch`.

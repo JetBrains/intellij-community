@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use serde_json::Value;
+use serde_json::value::RawValue;
 
 mod documents;
 pub mod lane;
@@ -79,10 +80,61 @@ pub struct SuiteProgram {
     pub suite: String,
     pub lane: String,
     pub test_class_name: String,
+    /// Whether the scenarios are authored programs of parts and host ids, not story scenarios of setups and steps.
+    #[serde(default)]
+    pub authored: bool,
     /// The Allure labels of the generated class, which a runner passes in the `scenario` command of the recorder.
     pub labels: Vec<SuiteLabel>,
     pub vocabulary: Vocabulary,
+    /// What the state reset of each scenario sends. Absent in a document that predates it.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub reset: Option<SuiteReset>,
+    /// The fixtures of the scenarios, by the fixture name that a scenario states.
+    #[serde(default)]
+    pub fixtures: BTreeMap<String, SuiteFixture>,
     pub profiles: Vec<ScenarioProgram>,
+}
+
+/// What a runner reads of one fixture. The generator owns the other fields.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SuiteFixture {
+    /// The registry agent of the fixture starts installed: the suite installs it before its first scenario.
+    #[serde(default)]
+    pub managed_agent_starts_installed: bool,
+    /// The keys of the agents that the suite installs before its first scenario.
+    #[serde(default)]
+    pub preinstalled: Vec<String>,
+    /// A restart of a scenario of this fixture keeps the Junie offer of the IDE start open.
+    #[serde(default)]
+    pub keeps_junie_startup_offer: bool,
+    /// The bridge requests of the scenario preparation, rendered by the generator. Absent in a document that predates
+    /// them.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub bridge: Option<FixtureBridge>,
+}
+
+/// The two bridge requests of the preparation of a scenario of one fixture, as the generator renders them: each one a
+/// whole request body, `type` first. A runner sends each one as it is.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FixtureBridge {
+    /// `SetScenarioFixture` with the facts of the fixture.
+    pub set_scenario_fixture: Box<RawValue>,
+    /// `SeedSessionPresets` with the preset of the fixture first, then its additional presets.
+    pub seed_session_presets: Box<RawValue>,
+}
+
+/// What the state reset of every scenario of a suite sends, as the generator renders it.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SuiteReset {
+    /// Every registry flag that a scenario of the suite sets, sorted.
+    pub flag_keys: Vec<String>,
+    /// The reset forgets the answer to the Junie promo, so the next IDE start offers it.
+    pub offer_junie_promo: bool,
+    /// The lane value of each registry flag that has one.
+    pub lane_flags: BTreeMap<String, String>,
 }
 
 /// One Allure label of the generated class of a suite.
@@ -137,8 +189,28 @@ pub struct ParamSpec {
 
 /// One scenario: its setups, then its flow steps, then its authored program.
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScenarioProgram {
     pub name: String,
+    /// The key of an authored scenario, unique in its suite. A story scenario has none.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub key: Option<String>,
+    /// The JUnit factory method of an authored scenario. A story scenario takes `testMethod` of the suite labels.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub method: Option<String>,
+    pub fixture: String,
+    /// The declaring flow of a story scenario.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub flow: Option<String>,
+    /// The registry flags that the preparation sets, by key.
+    #[serde(default)]
+    pub flags: BTreeMap<String, String>,
+    /// The registry flags that an authored scenario sets itself, so the reset puts them back.
+    #[serde(default)]
+    pub flag_keys: Vec<String>,
+    /// The declared CLI runtimes that an authored scenario drives.
+    #[serde(default)]
+    pub required_executables: Vec<String>,
     pub setups: Vec<OperationProgram>,
     pub steps: Vec<StepProgram>,
     /// The program of an authored scenario: one instruction for each part or host id. Empty for a story scenario, which
@@ -169,6 +241,9 @@ pub struct Instruction {
     pub action: Option<String>,
     #[serde(default)]
     pub assertion: Option<String>,
+    /// The sentence that an assertion proves.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub expectation: Option<String>,
     #[serde(default)]
     pub args: BTreeMap<String, Value>,
     /// The values that one use takes and answers, for an id whose values change per use, such as `authored-step`.
@@ -192,7 +267,8 @@ pub enum IdKind {
 }
 
 impl IdKind {
-    const fn as_str(self) -> &'static str {
+    /// The kind as a document and a bridge request spell it.
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Action => "action",
             Self::Assertion => "assertion",
@@ -203,6 +279,47 @@ impl IdKind {
 /// Reads one suite document from its bytes.
 pub fn parse_suite_program(content: &[u8]) -> Result<SuiteProgram, String> {
     serde_json::from_slice(content).map_err(|error| format!("is not a suite program: {error}"))
+}
+
+/// The scenarios of one suite document, each verbatim as the document holds it: the `program` of the recorder's
+/// `scenario` command.
+pub fn raw_profiles(content: &[u8]) -> Result<Vec<Box<RawValue>>, String> {
+    #[derive(Deserialize)]
+    struct Profiles {
+        profiles: Vec<Box<RawValue>>,
+    }
+    serde_json::from_slice::<Profiles>(content)
+        .map(|document| document.profiles)
+        .map_err(|error| format!("is not a suite program: {error}"))
+}
+
+impl Instruction {
+    /// The kind and the id of the instruction, or `None` when it is not exactly one action or one assertion.
+    pub fn id(&self) -> Option<(IdKind, &str)> {
+        match (&self.action, &self.assertion) {
+            (Some(id), None) => Some((IdKind::Action, id)),
+            (None, Some(id)) => Some((IdKind::Assertion, id)),
+            _ => None,
+        }
+    }
+
+    /// The label that names the instruction in a trace and in a failure: the id, and its arguments in key order, as
+    /// `instructionKey` of the generator spells it. A string argument is written without its quotes.
+    pub fn label(&self) -> String {
+        let id = self.id().map_or("", |(_, id)| id);
+        if self.args.is_empty() {
+            return id.to_owned();
+        }
+        let args: Vec<String> = self
+            .args
+            .iter()
+            .map(|(key, value)| match value {
+                Value::String(text) => format!("{key}={text}"),
+                other => format!("{key}={other}"),
+            })
+            .collect();
+        format!("{id}({})", args.join(","))
+    }
 }
 
 impl SuiteProgram {
@@ -272,7 +389,7 @@ impl SuiteProgram {
     }
 
     /// The vocabulary entry of one instruction, if it states one.
-    fn spec_of(&self, instruction: &Instruction) -> Option<&IdSpec> {
+    pub fn spec_of(&self, instruction: &Instruction) -> Option<&IdSpec> {
         match (&instruction.action, &instruction.assertion) {
             (Some(id), None) => self.vocabulary.actions.get(id),
             (None, Some(id)) => self.vocabulary.assertions.get(id),

@@ -195,6 +195,7 @@ version = "0.1.0"
 dependencies = [
  "avl-bridge",
  "avl-testkit",
+ "avl-trace",
  "avl-trace-tools",
  "avl-wire",
  "clap",

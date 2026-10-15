@@ -26,6 +26,7 @@ fn inputs(root: &Path) -> LaunchInputs {
         project_root: "plain-project".to_owned(),
         runtimes: Vec::new(),
         distribution_plugins: BTreeSet::new(),
+        trace: inputs::TraceInputs::default(),
     }
 }
 
