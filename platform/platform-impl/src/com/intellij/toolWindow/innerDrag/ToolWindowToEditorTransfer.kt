@@ -1,14 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.innerDrag
 
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -17,7 +9,6 @@ import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupportUtil
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabTransferController
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
-import java.awt.event.MouseEvent
 
 /**
  * Represents a strategy for moving tool window content to the editor.
@@ -116,26 +107,9 @@ private class EditorTabTransfer(
   private val toolWindow = sourceDecorator.toolWindow
 
   override fun move(editorWindow: EditorWindow): Boolean {
-    recordMoveToEditorByDrag()
+    recordActionByDrag(toolWindow, "MoveToolWindowTabToEditorAction", sourceDecorator)
     controller.moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
     return false
-  }
-
-  private fun recordMoveToEditorByDrag() {
-    val action = ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction") ?: return
-    val dataContext = SimpleDataContext.builder()
-      .setParent(DataContext.EMPTY_CONTEXT)
-      .add(PlatformDataKeys.TOOL_WINDOW, toolWindow)
-      .build()
-    val event = AnActionEvent.createEvent(
-      action,
-      dataContext,
-      null,
-      ActionPlaces.TOOLWINDOW_CONTENT,
-      ActionUiKind.NONE,
-      MouseEvent(sourceDecorator, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false, MouseEvent.BUTTON1),
-    )
-    recordActionInvoked(toolWindow.project, action, event) { }
   }
 }
 
