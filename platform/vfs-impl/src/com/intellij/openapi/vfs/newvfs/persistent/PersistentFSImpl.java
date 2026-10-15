@@ -1002,8 +1002,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (child == null) {
       throw new IOException("Cannot create child file '" + childName + "' at " + parent.getPath());
     }
+    var fileType = child.getFileType();
     if (child.getCharset().equals(StandardCharsets.UTF_8) &&
-        !(child.getFileType() instanceof InternalFileType) &&
+        !fileType.isBinary() &&
+        !(fileType instanceof InternalFileType) &&
         isUtf8BomRequired(child)) {
       child.setBOM(CharsetToolkit.UTF8_BOM);
     }

@@ -1126,6 +1126,9 @@ public class FileEncodingTest implements TestDialog {
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
       VirtualFile file2 = createFile("x2.txt", "xx");
       assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
+      VirtualFile binaryFile = createFile("x2.png", "xx");
+      assertTrue(binaryFile.getFileType().isBinary());
+      assertNull(binaryFile.getBOM());
       // internal files must never be BOMed
       imlFile = createFile("x2.iml", xxTag);
       assertNull(imlFile.getBOM());
