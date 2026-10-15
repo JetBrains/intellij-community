@@ -18,6 +18,7 @@ use avl_trace::protocol;
 use avl_wire::daemon::{PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
 use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents};
+use regex::Regex;
 use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
@@ -26,7 +27,7 @@ use super::ide::{ContextPlugin, LaneLaunch, Records};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::package::sha256_hex;
-use super::program::{Lane, Runner, Suite};
+use super::program::{Lane, Runner, Suite, class_label};
 use super::readiness::{Bridge, READY_TIMEOUT, request};
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
@@ -55,13 +56,13 @@ pub(crate) struct SelectionInputs<'a> {
     pub lane_documents: &'a Path,
     pub suite_documents: &'a Path,
     pub selectors: &'a [String],
+    /// The JUnit5 filters of the request, `<option>=<value>`.
+    pub junit5_filters: &'a [String],
 }
 
 /// Reads the lane document `<lane>.json` and the suite documents of its lane. A selector names the `testClassName` of a
 /// document, with or without a package. A `#<scenario>` part keeps only the scenario of that name or key. No selector
-/// selects every document of the lane.
-///
-/// The JUnit5 filters of a request are not read: no lane passes one to the lane daemon.
+/// selects every document of the lane. The JUnit5 filters then narrow the documents, see [`apply_filters`].
 pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> {
     let lanes = read_lane_documents(inputs.lane_documents)?;
     let name = format!("{}.json", inputs.lane);
@@ -110,8 +111,60 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
             }
         }
     }
+    apply_filters(&mut suites, inputs.junit5_filters, &lane.lane)?;
     suites.sort_by(|left, right| left.program.test_class_name.cmp(&right.program.test_class_name));
     Ok(Selection { lane_bytes, lane, suites })
+}
+
+/// Keeps the documents that the JUnit5 `filters` select, as JUnit applies them to the class of each document: the
+/// `testClass` label. An `include-classname` pattern must match the whole class name, and a document passes when one
+/// of them matches. An `exclude-classname` pattern that matches drops it. A package filter takes the package and its
+/// sub-packages. The lane of the request selects the lane, so a tag filter, which the documents do not carry, is a
+/// refusal, and so is a set of filters that keeps no document.
+pub(crate) fn apply_filters(suites: &mut Vec<Suite>, filters: &[String], lane: &str) -> Result<(), String> {
+    if filters.is_empty() {
+        return Ok(());
+    }
+    let pattern = |value: &str| {
+        Regex::new(&format!("^(?:{value})$")).map_err(|error| format!("the JUnit5 filter pattern {value:?} is not a pattern: {error}"))
+    };
+    let (mut include_classes, mut exclude_classes) = (Vec::new(), Vec::new());
+    let (mut include_packages, mut exclude_packages) = (Vec::new(), Vec::new());
+    for filter in filters {
+        let (option, value) = filter
+            .split_once('=')
+            .ok_or_else(|| format!("the JUnit5 filter {filter:?} is not <option>=<value>"))?;
+        match option {
+            "include-classname" => include_classes.push(pattern(value)?),
+            "exclude-classname" => exclude_classes.push(pattern(value)?),
+            "include-package" => include_packages.push(value.to_owned()),
+            "exclude-package" => exclude_packages.push(value.to_owned()),
+            "include-tag" | "exclude-tag" => {
+                return Err(format!(
+                    "the lane daemon selects the documents of its lane and reads no JUnit tag, so it refuses the filter {filter}"
+                ));
+            }
+            _ => {
+                return Err(format!(
+                    "the JUnit5 filter {filter:?} has an option that the lane daemon does not know"
+                ));
+            }
+        }
+    }
+    let in_package = |class: &str, package: &str| class.strip_prefix(package).is_some_and(|rest| rest.starts_with('.'));
+    suites.retain(|suite| {
+        let class = class_label(&suite.program);
+        (include_classes.is_empty() || include_classes.iter().any(|include| include.is_match(&class)))
+            && !exclude_classes.iter().any(|exclude| exclude.is_match(&class))
+            && (include_packages.is_empty() || include_packages.iter().any(|package| in_package(&class, package)))
+            && !exclude_packages.iter().any(|package| in_package(&class, package))
+    });
+    if suites.is_empty() {
+        return Err(format!(
+            "the JUnit5 filters {filters:?} select no suite document of the lane {lane}"
+        ));
+    }
+    Ok(())
 }
 
 /// Runs one iteration of `request` and writes its records to `out`. A write that fails ends the stream, not the run.
@@ -189,6 +242,7 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         lane_documents: &lane_documents,
         suite_documents: &suite_documents,
         selectors: &request.selectors,
+        junit5_filters: &request.junit5_filters,
     })?;
     let plugins: Vec<ContextPlugin> = request
         .ide_plugins

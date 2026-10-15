@@ -17,7 +17,8 @@ fn suite(name: &str, lane: &str, class: &str, scenarios: usize) -> String {
         .collect();
     json!({
         "suite": name, "lane": lane, "testClassName": class, "restartsIde": false,
-        "labels": [], "modules": [], "implementationFlows": [],
+        "labels": [{"name": "testClass", "value": format!("com.intellij.air.integration.flow.generated.ui.{class}")}],
+        "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}},
         "profiles": profiles,
     })
@@ -45,13 +46,53 @@ fn documents() -> TempDir {
 }
 
 fn selected(root: &Path, lane: &str, selectors: &[&str]) -> Result<Selection, String> {
-    let selectors: Vec<String> = selectors.iter().map(|selector| (*selector).to_owned()).collect();
+    filtered(root, lane, selectors, &[])
+}
+
+fn filtered(root: &Path, lane: &str, selectors: &[&str], filters: &[&str]) -> Result<Selection, String> {
+    let owned = |texts: &[&str]| texts.iter().map(|text| (*text).to_owned()).collect::<Vec<String>>();
     select(&SelectionInputs {
         lane,
         lane_documents: root,
         suite_documents: root,
-        selectors: &selectors,
+        selectors: &owned(selectors),
+        junit5_filters: &owned(filters),
     })
+}
+
+fn classes(selection: &Selection) -> Vec<&str> {
+    selection
+        .suites
+        .iter()
+        .map(|suite| suite.program.test_class_name.as_str())
+        .collect()
+}
+
+// The class filter of a suite keeps the document whose class it matches as a whole, in any package. An exclude
+// filter and a package filter narrow too. A tag filter and a filter that keeps nothing are refusals.
+#[test]
+fn the_junit5_filters_narrow_the_documents_by_their_class() {
+    let root = documents();
+    let suite = filtered(
+        root.path(),
+        "ui",
+        &[],
+        &[r"include-classname=(^|.*\.)AirRenameSessionGeneratedFlowUiTest$"],
+    )
+    .unwrap();
+    assert_eq!(classes(&suite), ["AirRenameSessionGeneratedFlowUiTest"]);
+    let shard = filtered(root.path(), "ui", &[], &["include-classname=.*(AirRename|AirAddToAgent).*"]).unwrap();
+    assert_eq!(classes(&shard).len(), 2);
+    let excluded = filtered(root.path(), "ui", &[], &["exclude-classname=.*AirRename.*"]).unwrap();
+    assert_eq!(classes(&excluded), ["AirAddToAgentContextGeneratedFlowUiTest"]);
+    let package = filtered(root.path(), "ui", &[], &["include-package=com.intellij.air.integration.flow"]).unwrap();
+    assert_eq!(classes(&package).len(), 2);
+    let other = filtered(root.path(), "ui", &[], &["include-package=com.intellij.air.integration.flo"]).unwrap_err();
+    assert!(other.contains("select no suite document of the lane UI"), "{other}");
+    let tag = filtered(root.path(), "ui", &[], &["include-tag=air-flow-ui"]).unwrap_err();
+    assert!(tag.contains("reads no JUnit tag"), "{tag}");
+    let simple = filtered(root.path(), "ui", &[], &["include-classname=AirRenameSessionGeneratedFlowUiTest"]).unwrap_err();
+    assert!(simple.contains("select no suite document"), "{simple}");
 }
 
 // The lane document names the lane, and the suite documents of that lane are selected in class order. A selector

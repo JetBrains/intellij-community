@@ -998,3 +998,21 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
     let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon).unwrap_err();
     assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
 }
+
+// The lane field selects the documents of the lane, so the lane daemon gets no filter of the lane's own tag. A suite
+// filter goes to it, and the JVM daemon gets every filter.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let class = r"include-classname=(^|.*\.)AirRenameSessionGeneratedFlowUiTest$".to_owned();
+    let selection = RunSelection {
+        lane: Some("ui".to_owned()),
+        junit5_filters: vec!["include-tag=air-flow-ui".to_owned(), class.clone()],
+        ..RunSelection::default()
+    };
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon).unwrap();
+    assert_eq!(verb.junit5_filters, std::slice::from_ref(&class));
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm).unwrap();
+    assert_eq!(jvm.junit5_filters, ["include-tag=air-flow-ui".to_owned(), class]);
+}

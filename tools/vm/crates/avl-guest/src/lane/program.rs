@@ -970,7 +970,7 @@ impl HostSide for RunnerHost<'_, '_, '_> {
 }
 
 /// The `testClass` label of a suite, or its `testClassName` when it has none.
-fn class_label(suite: &SuiteProgram) -> String {
+pub(crate) fn class_label(suite: &SuiteProgram) -> String {
     label_value(suite, "testClass").unwrap_or_else(|| suite.test_class_name.clone())
 }
 

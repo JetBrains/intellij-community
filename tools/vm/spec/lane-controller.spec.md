@@ -1386,6 +1386,15 @@ after that move.
   package. A `#<scenario>` part keeps that scenario only.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors`)
 
+- The JUnit5 filters of the run request narrow the documents by the `testClass` label of each one. A class pattern
+  must match the whole class name. A filter that keeps no document is a refusal.
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
+
+- The `lane` field selects the documents of the lane, so the controller sends no filter of the lane's own tag. The
+  verb refuses a tag filter, because the documents carry no JUnit tag.
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
+
 - The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
 

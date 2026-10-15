@@ -206,6 +206,7 @@ dependencies = [
  "nix",
  "pretty_assertions",
  "refusal",
+ "regex",
  "serde",
  "serde_json",
  "sha2",

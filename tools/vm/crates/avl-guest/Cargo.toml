@@ -22,6 +22,7 @@ clap.workspace = true
 dev-launch.workspace = true
 hex.workspace = true
 jiff.workspace = true
+regex.workspace = true
 refusal.workspace = true
 serde.workspace = true
 serde_json.workspace = true

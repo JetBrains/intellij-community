@@ -608,13 +608,15 @@ pub(crate) struct RunExecution {
 /// The `/run` request of `selection` for the build `prep` and the daemon of `runner`.
 ///
 /// The lane daemon also gets the lane and the digests of the lane inputs. It refuses a run of no lane here, before the
-/// request goes out, because it cannot choose a lane IDE for it.
+/// request goes out, because it cannot choose a lane IDE for it. The `lane` field selects the documents of the lane, so
+/// the JUnit5 filter of the lane's own tag does not go to the lane daemon; every other filter does.
 pub(crate) fn run_request(
     prep: &PreparedBuild,
     selection: &RunSelection,
     policy: WatchdogPolicy,
     runner: Runner,
 ) -> Result<RunRequest, Refusal> {
+    let mut junit5_filters = selection.junit5_filters.clone();
     let (lane, lane_inputs) = match runner {
         Runner::Jvm => (None, None),
         Runner::Daemon => {
@@ -640,12 +642,14 @@ pub(crate) fn run_request(
                 lane_documents: digest("laneDocuments")?,
                 suite_documents: digest("suiteDocuments")?,
             };
+            let own_tag = format!("include-tag={}", avl_affected::ui_lane(lane)?.junit_tag);
+            junit5_filters.retain(|filter| *filter != own_tag);
             (Some(lane.clone()), Some(inputs))
         }
     };
     Ok(RunRequest {
         selectors: selection.selectors.clone(),
-        junit5_filters: selection.junit5_filters.clone(),
+        junit5_filters,
         product_stamp: prep.product_digest.clone(),
         launch_digest: prep.launch_digest.clone(),
         hot_jars: prep.hot_jars.iter().map(|jar| jar.sha256.clone()).collect(),
