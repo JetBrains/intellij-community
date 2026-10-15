@@ -1,6 +1,6 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -29,14 +29,6 @@ content_module_jar(module = ":vcs-gitlab-backend")
 ### auto-generated section `dev intellij.vcs.gitlab.backend` end
 
 ### auto-generated section `build intellij.vcs.gitlab.backend` start
-resourcegroup(
-    name = "vcs-gitlab-backend_resources",
-    srcs = glob(
-        ["gen-resources/**/*"],
-    ),
-    strip_prefix = "gen-resources",
-)
-
 jvm_library(
     name = "vcs-gitlab-backend",
     srcs = glob(
@@ -48,7 +40,6 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.vcs.gitlab.backend",
-    resource_jars = [":vcs-gitlab-backend_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

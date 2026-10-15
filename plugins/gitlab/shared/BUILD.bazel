@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.vcs.gitlab.shared` start
@@ -6,6 +6,14 @@ content_module_jar(module = ":shared")
 ### auto-generated section `dev intellij.vcs.gitlab.shared` end
 
 ### auto-generated section `build intellij.vcs.gitlab.shared` start
+resourcegroup(
+    name = "shared_resources",
+    srcs = glob(
+        ["gen-resources/**/*"],
+    ),
+    strip_prefix = "gen-resources",
+)
+
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -19,6 +27,7 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.vcs.gitlab.shared",
+    resource_jars = [":shared_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
