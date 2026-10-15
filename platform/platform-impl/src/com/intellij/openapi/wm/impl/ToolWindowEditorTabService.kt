@@ -39,5 +39,10 @@ interface ToolWindowEditorTabService {
 
   fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean
 
-  fun moveContentToEditor(toolWindow: ToolWindow, content: Content, window: EditorWindow, sourceDecorator: InternalDecoratorImpl)
+  /**
+   * Moves [content] from [toolWindow] into [window] as an editor tab.
+   *
+   * @return `true` if the editor opened the content; `false` if the content stayed in the tool window.
+   */
+  fun moveContentToEditor(toolWindow: ToolWindow, content: Content, window: EditorWindow, sourceDecorator: InternalDecoratorImpl): Boolean
 }

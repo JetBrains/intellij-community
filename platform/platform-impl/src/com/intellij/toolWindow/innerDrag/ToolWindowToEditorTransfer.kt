@@ -106,8 +106,10 @@ private class EditorTabTransfer(
   private val toolWindow = sourceDecorator.toolWindow
 
   override fun move(editorWindow: EditorWindow): Boolean {
-    recordActionByDrag(toolWindow, "MoveToolWindowTabToEditorAction", sourceDecorator)
-    service.moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
+    val isMoved = service.moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
+    if (isMoved) {
+      recordActionByDrag(toolWindow, "MoveToolWindowTabToEditorAction", sourceDecorator)
+    }
     return false
   }
 }
