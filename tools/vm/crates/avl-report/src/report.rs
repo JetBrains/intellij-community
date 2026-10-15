@@ -34,6 +34,8 @@ use avl_wire::report::{
     XmlCounts, expiry_evidence_paths,
 };
 
+use crate::cases::{STATUS_ABORTED, STATUS_FAILED, unreported_classes};
+
 #[cfg(test)]
 mod tests;
 
@@ -179,11 +181,6 @@ fn read_source(source: &RetrievedXml) -> Result<(Option<bt_junit::Report>, Integ
 }
 
 // --- the two accounts of a run --------------------------------------------------------------------------------
-
-/// The two `testFinished` statuses this module branches on; a typo in either is a silent zero in a count a
-/// verdict is read off.
-const STATUS_FAILED: &str = "FAILED";
-const STATUS_ABORTED: &str = "ABORTED";
 
 /// The daemon's own count of what it ran, and the reconstruction used when it never said.
 ///
@@ -423,40 +420,6 @@ fn skipped_containers(events: &[RunEvent]) -> Vec<SkippedContainer> {
             }),
             _ => None,
         })
-        .collect()
-}
-
-/// Every class the plan discovered that the run then said nothing about at all.
-///
-/// The one account of a suite that never ran: `planStarted` names what JUnit selected, and every later record
-/// names a class it reached. A class in the first list and in none of the rest is a suite the run dropped, which
-/// is what a watchdog that kills the IDE leaves behind. Read from the stream and not from the suites, because the
-/// XML is written in one burst at the end of the plan, so the run this describes is exactly the run whose XML is
-/// incomplete or absent.
-///
-/// A class the run merely did not *finish* started, so it is among the active tests instead. The two lists are
-/// disjoint: what broke, and what never got a turn. The daemon's own order is kept.
-fn unreported_classes(events: &[RunEvent]) -> Vec<String> {
-    let Some(plan) = events.iter().rev().find_map(|event| match &event.kind {
-        RunEventKind::PlanStarted(plan) => Some(plan),
-        _ => None,
-    }) else {
-        return Vec::new();
-    };
-    let reached: HashSet<&str> = events
-        .iter()
-        .filter_map(|event| match &event.kind {
-            RunEventKind::TestStarted(started) => started.execution.class_name.as_deref(),
-            RunEventKind::TestFinished(finished) => finished.execution.class_name.as_deref(),
-            RunEventKind::TestSkipped(skipped) | RunEventKind::ContainerSkipped(skipped) => skipped.execution.class_name.as_deref(),
-            RunEventKind::ContainerFailed(failed) => failed.execution.class_name.as_deref(),
-            _ => None,
-        })
-        .collect();
-    plan.class_names
-        .iter()
-        .filter(|class_name| !reached.contains(class_name.as_str()))
-        .cloned()
         .collect()
 }
 

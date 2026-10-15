@@ -27,7 +27,8 @@
 //! - [`iterate`], [`traces`]: one iteration as a value, and the trace pull beside its stream;
 //! - [`verdict`], [`command`]: what a report concluded, and the `run` and `daemon` commands;
 //! - [`shard`], [`flake`]: the two commands that fan a lane out over several workers;
-//! - `leased`: the journaled run and the leased-run driver `run`, `shard` and `flake` share.
+//! - `leased`: the journaled run and the leased-run driver `run`, `shard` and `flake` share;
+//! - `results`: the JUnit XML and the TeamCity service messages, written from the run stream.
 
 pub(crate) mod build;
 pub(crate) mod command;
@@ -36,6 +37,7 @@ pub(crate) mod host;
 pub(crate) mod http;
 pub(crate) mod iterate;
 mod leased;
+mod results;
 pub(crate) mod run;
 pub(crate) mod shard;
 pub(crate) mod slot;

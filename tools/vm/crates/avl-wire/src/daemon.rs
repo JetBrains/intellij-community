@@ -453,6 +453,10 @@ pub struct TestFinished {
     pub error: Option<String>,
     #[serde(flatten)]
     pub failure: TypedFailure,
+    /// The notes and the metrics of the scenario, which the lane daemon reads from the answers of its authored parts.
+    /// Absent when the scenario reported none, and from the JVM daemon.
+    #[serde(default, skip_serializing_if = "crate::report::ScenarioReport::is_empty")]
+    pub report: crate::report::ScenarioReport,
 }
 
 /// A skipped test, or a skipped container: the same record under two names.

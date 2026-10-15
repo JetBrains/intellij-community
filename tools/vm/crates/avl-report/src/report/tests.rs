@@ -128,6 +128,7 @@ fn finished(id: &str, display_name: &str, status: &str, class_name: Option<&str>
         duration_ms: 1,
         error: error.map(str::to_owned),
         failure: TypedFailure::default(),
+        report: avl_wire::report::ScenarioReport::default(),
     }))
 }
 

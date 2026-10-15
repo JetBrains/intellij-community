@@ -59,6 +59,10 @@ targets:
   - ../crates/avl-report/src/report.rs
   - ../crates/avl-report/src/aggregate.rs
   - ../crates/avl-report/src/aggregate/persist.rs
+  - ../crates/avl-report/src/cases.rs
+  - ../crates/avl-report/src/junit.rs
+  - ../crates/avl-report/src/teamcity.rs
+  - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
   - ../crates/avl-vm/src/report/time.rs
   - ../crates/avl-vm/src/worker/hypervisor.rs
@@ -690,6 +694,40 @@ The daemon's half and the IDE's half of supervision are in
   after the files of the expiry, and at most eight. The journal keeps the record as a `runProgress` event.
   [@test] ../crates/avl-wire/src/report/tests.rs
   [@test] ../crates/avl-wire/src/daemon/tests.rs
+
+- The controller writes the JUnit XML of a run from its run stream. The XML holds one `testsuite` for each test
+  class. Each scenario is one `testcase`: its class is the `testClassName` of the document, and its name is the
+  scenario. A failure holds its type, the first line of its message, and the message and the detail as CDATA. A skip
+  holds its reason. A prologue failure is one case named after the suite.
+  [@test] ../crates/avl-report/src/junit/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-report/src/junit/tests.rs (`the_rendered_document_reads_back_with_the_counts_of_the_stream`)
+  [@test] ../crates/avl-report/src/cases/tests.rs (`a_typed_failure_keeps_its_type_message_and_detail`)
+
+- A run that the stream cuts off fails in the XML. A scenario that started and never finished fails as
+  `unfinished`. A class of the plan that no record reached fails as `unreported`, in one case named after the class.
+  [@test] ../crates/avl-report/src/junit/tests.rs (`a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached`)
+
+- The XML of each iteration is `<iterationId>.xml` beside the report of the iteration. The XML of the command goes
+  to the file that `JB_XML_OUTPUT_FILE` names, else to the file that `XML_OUTPUT_FILE` names. The controller writes
+  it again after each iteration and at the end of the run. A write that fails is a note, and the run goes on.
+  [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_bazel_test_gets_the_xml_of_the_command_and_each_report_gets_its_own`)
+  [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_write_that_fails_is_noted_when_the_readers_detach`)
+  [@test] ../crates/avl-report/src/junit/tests.rs (`the_named_file_wins_over_the_bazel_file_and_a_blank_name_is_none`)
+
+- The controller is the build step of a TeamCity build when `TEAMCITY_VERSION` is set and `XML_OUTPUT_FILE` is
+  not. Then it writes the TeamCity service messages on stdout as the records arrive. A test class is a suite, and a
+  case is `<testClassName>.<scenario>`. A failure is `testFailed` with the failure chain as its details. A skip is
+  `testIgnored`. `testFinished` holds the duration. The flow of each message is its worker.
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`each_worker_is_its_own_flow`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_build_step_is_a_teamcity_agent_outside_a_bazel_test`)
+  [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_gets_the_messages_of_the_stream_and_of_each_trace`)
+
+- A note of a scenario is a text `testMetadata`, and a metric of a scenario is a `number` one. A trace that
+  arrives publishes its zip once under `air-traces/<worker>/<iterationId>`. It names the bundle as an `artifact` and
+  its video as a `video`.
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_zip_is_published_once_for_its_bundles`)
 
 - `report time <run or iteration>` says where the time of a run went. It reads the journal of the run, the report of
   each iteration and the spans of the trace bundles, and needs no worker. The answer is the total, and the time

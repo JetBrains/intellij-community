@@ -30,6 +30,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::daemon::results;
 use crate::worker::lease::{
     AcquireRequest, HeldWorker, ReleaseResult, SlotReason, acquire_workers, disposition, receipt_for_path, release_workers,
     require_one_guest_os, with_run_marker,
@@ -141,6 +142,7 @@ impl Host {
         let run_id = avl_base::actor_id(&self.environment, command);
         let ctx = ctx.clone().with_run_id(run_id.as_str());
         let _journal = journal::attach(&self.settings.runtime_root, &self.reporter, &run_id);
+        let _results = results::attach(&self.reporter, &self.environment);
         let process_started_at = self.process_started_at(&ctx).await;
         self.reporter.publish(
             Event::RunStarted(RunStarted {

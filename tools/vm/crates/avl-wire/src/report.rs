@@ -23,6 +23,7 @@
 //! in the order that keeps each code honest: the JSON object, the version, the top-level shape, the vocabulary
 //! words, the typed decode, and the invariants a type cannot state.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
@@ -205,6 +206,27 @@ pub struct Suite {
     pub skipped: u32,
     #[serde(default)]
     pub cases: Vec<Case>,
+}
+
+/// What the authored parts of one scenario report beside their values: the notes and the measurements of the
+/// scenario, merged over its parts. The `testFinished` of the scenario carries it. A note and a metric explain a run and
+/// never decide its verdict. The TeamCity messages turn a note into a text `testMetadata` and a metric into a `number`
+/// one.
+///
+/// A metric is a JSON number rather than an `f64`, so the records of the run stream keep their equality.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScenarioReport {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metrics: BTreeMap<String, serde_json::Number>,
+}
+
+impl ScenarioReport {
+    /// Whether the scenario reported nothing, which is how the record leaves the field out.
+    pub fn is_empty(&self) -> bool {
+        self.notes.is_empty() && self.metrics.is_empty()
+    }
 }
 
 /// One thing that went wrong, from either account of the run.
