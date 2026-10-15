@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -28,7 +29,7 @@ import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GenerateTableOfContentsAction: AnAction() {
+class GenerateTableOfContentsAction: AnAction(), DumbAware {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.Markdown.GenerateTableOfContents.insert.popup.text")
