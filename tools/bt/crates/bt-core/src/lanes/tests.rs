@@ -345,24 +345,19 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
         assert_eq!(described.axis, TagAxis::Lane, "{tag} is a category, not a lane tag");
         // Every lane is an IDE-launching one, so its target carries the one category CI excludes for a display.
         assert_eq!(described.category.as_deref(), Some("air-integration-ui"), "lane tag {tag}");
-        // The controller and the trace planner read these two instead of a table of their own, and a lane without
-        // them is one a VM worker cannot run.
+        // The controller and the trace planner read the test label instead of a table of their own, and a lane
+        // without it is one a VM worker cannot run.
         let label = spec.test_label.as_deref().unwrap_or_default();
         assert!(
             label.starts_with("//plugins/air/tests/integration/") && label.ends_with("_test"),
             "the integration lane {} has no test label: {label:?}",
             spec.name
         );
-        assert!(
-            spec.junit_tag.as_deref().is_some_and(|tag| tag.starts_with("air-")),
-            "the integration lane {} has no JUnit tag",
-            spec.name
-        );
     }
     for spec in lanes().iter().filter(|spec| spec.integration_tag.is_none()) {
         assert!(
-            spec.test_label.is_none() && spec.junit_tag.is_none(),
-            "{} runs no IDE, so no VM worker selects it by label or JUnit tag",
+            spec.test_label.is_none(),
+            "{} runs no IDE, so no VM worker selects it by label",
             spec.name
         );
     }

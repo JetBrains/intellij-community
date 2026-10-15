@@ -25,10 +25,36 @@ pub(crate) struct Selection {
 /// The variable a JUnit filter travels in, for the daemon's runner and for `JUnit5BazelRunner` alike.
 pub(crate) const JUNIT5_FILTERS: &str = "JB_TEST_JUNIT5_FILTERS";
 
+/// The JUnit tag that the suites of each UI lane carry, by lane name. Only the JVM runner reads it: one warm JVM holds
+/// the classpath of every lane, so an iteration names its lane by a JUnit filter. The lane daemon selects the documents
+/// of its lane and reads no tag, so the lane table of `bt` carries none. The table goes with the JVM runner.
+const JVM_JUNIT_TAGS: [(&str, &str); 6] = [
+    ("ui", "air-flow-ui"),
+    ("ui-real", "air-flow-ui-real"),
+    ("ui-live", "air-flow-ui-live"),
+    ("ui-perf", "air-ui-perf"),
+    ("jcp", "air-jcp"),
+    ("gui-chat", "air-gui-chat"),
+];
+
+/// The JUnit tag of the UI lane `lane` for the JVM runner, or an internal refusal for a lane that the table misses.
+pub(crate) fn jvm_junit_tag(lane: &str) -> Result<&'static str, Refusal> {
+    JVM_JUNIT_TAGS
+        .iter()
+        .find(|(name, _)| *name == lane)
+        .map(|(_, tag)| *tag)
+        .ok_or_else(|| Refusal::internal(format!("the JVM runner knows no JUnit tag of the UI lane {lane}")))
+}
+
+/// The JUnit5 filter of the lane `lane` that the JVM runner selects it by, `include-tag=<tag>`.
+pub(crate) fn jvm_lane_filter(lane: &str) -> Result<String, Refusal> {
+    Ok(format!("include-tag={}", jvm_junit_tag(lane)?))
+}
+
 /// Answers what one UI lane runs, and refuses a lane a VM worker cannot.
 pub(crate) fn lane_selection(lane: &str) -> Result<Selection, Refusal> {
     let ui = ui_lane(lane)?;
-    let mut test_env = BTreeMap::from([(JUNIT5_FILTERS.to_owned(), format!("include-tag={}", ui.junit_tag))]);
+    let mut test_env = BTreeMap::from([(JUNIT5_FILTERS.to_owned(), jvm_lane_filter(ui.name)?)]);
     // Bazel's `--test_env=NAME=VALUE` form: a variable the lane sets *by value*. The valueless form forwards the
     // client's own variable, and a host value names a machine the guest is not.
     static ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {

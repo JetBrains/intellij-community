@@ -18,8 +18,8 @@ use crate::selector::Resolution;
 /// One lane table, a flat object. Only `lanes` is required:
 ///
 /// - `lanes`: every lane in declared order, which is the order a caller sees in the "Known lanes" refusal. Each
-///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name, its test label and its JUnit tag,
-///   which the Air UI-lane controller and its trace planner read instead of a table of their own.
+///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name and its test label, which the Air
+///   UI-lane controller and its trace planner read instead of a table of their own.
 /// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
 ///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
 ///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
@@ -102,10 +102,6 @@ pub struct LaneSpec {
     /// it is.
     #[serde(default)]
     pub test_label: Option<String>,
-    /// The JUnit tag an IDE-launching lane's suites carry, which is how a daemon that holds every lane's classpath
-    /// selects a lane. A Bazel run has no use for it, because the lane's Bazel tag already selects its one module.
-    #[serde(default)]
-    pub junit_tag: Option<String>,
     /// Whether the lane compiles `excludedTestLibs` in a second spawn; see [`LaneSpec::build_only`].
     #[serde(default)]
     builds_excluded_test_libs: bool,

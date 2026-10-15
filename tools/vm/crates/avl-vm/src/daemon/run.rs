@@ -645,7 +645,7 @@ pub(crate) fn run_request(
                 lane_documents: digest("laneDocuments")?,
                 suite_documents: digest("suiteDocuments")?,
             };
-            let own_tag = format!("include-tag={}", avl_affected::ui_lane(lane)?.junit_tag);
+            let own_tag = crate::lane::lanes::jvm_lane_filter(lane)?;
             junit5_filters.retain(|filter| *filter != own_tag);
             (Some(lane.clone()), Some(inputs), lane_classes)
         }

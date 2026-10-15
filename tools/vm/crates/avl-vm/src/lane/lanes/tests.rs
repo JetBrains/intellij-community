@@ -28,7 +28,12 @@ fn only_the_ide_lanes_are_runnable() {
             "{} is not a lane bt knows, so its --test_env values cannot be read",
             lane.name
         );
-        assert!(!lane.label.is_empty() && !lane.junit_tag.is_empty(), "{lane:?}");
+        assert!(!lane.label.is_empty(), "{lane:?}");
+        assert!(
+            jvm_junit_tag(lane.name).is_ok_and(|tag| tag.starts_with("air-")),
+            "the JVM runner has no JUnit tag of the UI lane {}",
+            lane.name
+        );
     }
     let refused = refusal(lane_selection("fast"));
     assert_eq!(refused.exit, Exit::USAGE);

@@ -136,8 +136,7 @@
       "shards": 1,
       "integrationTag": "air-integration-ui-flow",
       "catalogLane": "UI",
-      "testLabel": "//plugins/air/tests/integration/ui:ui_test",
-      "junitTag": "air-flow-ui"
+      "testLabel": "//plugins/air/tests/integration/ui:ui_test"
     },
     {
       "name": "ui-real",
@@ -147,8 +146,7 @@
       "shards": 1,
       "integrationTag": "air-integration-ui-real",
       "catalogLane": "UI_REAL",
-      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test",
-      "junitTag": "air-flow-ui-real"
+      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test"
     },
     {
       "name": "ui-live",
@@ -167,8 +165,7 @@
       ],
       "shards": 1,
       "integrationTag": "air-integration-ui-live",
-      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test",
-      "junitTag": "air-flow-ui-live"
+      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test"
     },
     {
       "name": "ui-perf",
@@ -177,8 +174,7 @@
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-perf",
-      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test",
-      "junitTag": "air-ui-perf"
+      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test"
     },
     {
       "name": "jcp",
@@ -190,8 +186,7 @@
       ],
       "shards": 1,
       "integrationTag": "air-integration-jcp",
-      "testLabel": "//plugins/air/tests/integration/jcp:jcp_test",
-      "junitTag": "air-jcp"
+      "testLabel": "//plugins/air/tests/integration/jcp:jcp_test"
     },
     {
       "name": "gui-chat",
@@ -204,8 +199,7 @@
       "shards": 1,
       "integrationTag": "air-integration-gui-chat",
       "catalogLane": "GUI_CHAT",
-      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_test",
-      "junitTag": "air-gui-chat"
+      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_test"
     },
     {
       "name": "headless",

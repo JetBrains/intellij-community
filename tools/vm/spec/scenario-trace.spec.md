@@ -586,10 +586,12 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   reached nothing, 2 for usage, and 1 for an unreadable checkout.
   [@test] ../crates/air-trace/src/plan/tests.rs
 
-- The planner and the controller read the UI lanes, their test labels and their JUnit tags from one table.
-  That table reads them from bt's lane table. Neither tool keeps a lane table of its own.
+- The planner and the controller read the UI lanes and their test labels from one table. That table reads them
+  from bt's lane table. Neither tool keeps a list of lanes of its own. The lane table of bt names no JUnit tag. The
+  JVM runner of the controller selects a lane by the JUnit tag of its suites, and it keeps that tag in its own table.
   [@test] ../crates/avl-affected/src/lanes/tests.rs
   [@test] ../../bt/crates/bt-core/src/lanes/tests.rs
+  [@test] ../crates/avl-vm/src/lane/lanes/tests.rs
 
 ## User Experience
 
