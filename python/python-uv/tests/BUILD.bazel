@@ -74,6 +74,8 @@ jvm_library(
         "//python/python-pyproject:pyproject_test_lib",
         "//python/python-pytools/backend",
         "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-pytools-runtime/backend:python-pytools-backend-runtime",
+        "//python/python-pytools-runtime/backend:python-pytools-backend-runtime_test_lib",
         "//python/python-sdk/backend",
         "//python/python-sdk/backend:backend_test_lib",
     ],

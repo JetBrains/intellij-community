@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.sdk.backend
+package com.intellij.python.pytools.backend.runtime
 
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -7,6 +7,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
@@ -17,15 +18,13 @@ import com.intellij.python.community.execService.processSemiInteractiveHandler
 import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsBundle
-import com.intellij.python.pytools.backend.Version
 import com.intellij.python.pytools.backend.findExecutableInPath
 import com.intellij.python.pytools.backend.getCustomExecutablePath
-import com.intellij.python.pytools.backend.parseVersion
+import com.intellij.python.sdk.backend.findToolExecutable
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.findPyProject
 import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,7 +47,8 @@ private const val UVX_COMMAND: String = "uvx"
 /**
  * How to launch [tool] here: the binary to exec, plus the leading arguments that binary needs.
  *
- * The resolution chain is fixed (discovery mode is no longer selectable): the module interpreter's scripts directory,
+ * The resolution chain is fixed (discovery mode is no longer selectable): the scripts directory of the interpreter of
+ * the Python project, which waits for the first snapshot,
  * then the user's custom path, then `PATH`. When none of those has it, the tool is run through `uvx`, which needs
  * `--from <package> <executable>` whenever the executable's name differs from its package's (pyright →
  * pyright-langserver).
@@ -62,7 +62,7 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
   val eelApi = eelDescriptor.toEelApi()
   val customPath = tool.getCustomExecutablePath(eelDescriptor)
 
-  val interpreter = moduleIfExists?.pythonSdk?.pythonInterpreterResult()?.successOrNull
+  val interpreter = findPyProject()?.getInterpreter()
   val toolBinaryPath = interpreter?.findToolExecutable(tool, executableName)
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)
@@ -114,10 +114,4 @@ suspend fun <T> ModuleOrProject.executeToolInteractive(
     options = execOptions,
     processInteractiveHandler = processSemiInteractiveHandler(code = processSemiInteractiveFun),
   )
-}
-
-/** [tool]'s own reported version, as run here — `<tool> --version`, parsed. */
-suspend fun ModuleOrProject.resolveToolVersion(tool: PyTool): PyResult<Version> {
-  val versionOutput = executeTool(tool, Args("--version")).getOr { return it }
-  return versionOutput.parseVersion(tool.packageName.name)
 }

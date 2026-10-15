@@ -80,7 +80,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.isFor
-import com.intellij.python.sdk.backend.toolExecutableWithBaseArgs
+import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgs
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.PythonPluginDisposable

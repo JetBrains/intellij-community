@@ -34,6 +34,9 @@
             "module": "intellij.python.pytools.backend"
         },
         {
+            "module": "intellij.python.pytools.backend.runtime"
+        },
+        {
             "module": "intellij.python.pytools.frontend"
         },
         {

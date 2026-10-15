@@ -13,7 +13,7 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.sdk.backend.executeToolInteractive
+import com.intellij.python.pytools.backend.runtime.executeToolInteractive
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult

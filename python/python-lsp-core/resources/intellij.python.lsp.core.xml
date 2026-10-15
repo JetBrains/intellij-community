@@ -25,6 +25,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

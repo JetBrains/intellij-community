@@ -4,6 +4,7 @@
     <module name="intellij.commandInterface"/>
     <module name="intellij.json"/>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.commons.compress"/>
     <module name="intellij.libraries.commons.lang3"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
@@ -116,6 +117,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
@@ -129,7 +131,6 @@
     <module name="intellij.toml.core"/>
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.yaml"/>
-    <module name="intellij.libraries.commons.compress"/>
   </dependencies>
   <!-- endregion -->
 

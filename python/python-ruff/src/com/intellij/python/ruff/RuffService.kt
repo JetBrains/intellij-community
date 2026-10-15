@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.executeOn
+import com.intellij.python.pytools.backend.runtime.executeTool
 import com.jetbrains.python.orLogException
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -304,8 +304,8 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
 
   private suspend fun queryConfigOptionInformation(): Boolean {
     val started = generation.get()
-    val output = RuffPyTool.getInstance().executeOn(
-      queryScope(),
+    val output = queryScope().executeTool(
+      RuffPyTool.getInstance(),
       Args("config", "--output-format=json")
     ).orLogException(LOG) ?: return false
 
@@ -392,8 +392,8 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
 
   private suspend fun queryRuleInformation(): Boolean {
     val started = generation.get()
-    val output = RuffPyTool.getInstance().executeOn(
-      queryScope(),
+    val output = queryScope().executeTool(
+      RuffPyTool.getInstance(),
       Args("rule", "--output-format", "json", "--all")
     ).orLogException(LOG) ?: return false
 

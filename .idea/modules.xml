@@ -2201,6 +2201,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-pyright/common/intellij.python.pyright.common.iml" filepath="$PROJECT_DIR$/python/python-pyright/common/intellij.python.pyright.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-pyright/frontend/intellij.python.pyright.frontend.iml" filepath="$PROJECT_DIR$/python/python-pyright/frontend/intellij.python.pyright.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-pytools/backend/intellij.python.pytools.backend.iml" filepath="$PROJECT_DIR$/python/python-pytools/backend/intellij.python.pytools.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-pytools-runtime/backend/intellij.python.pytools.backend.runtime.iml" filepath="$PROJECT_DIR$/python/python-pytools-runtime/backend/intellij.python.pytools.backend.runtime.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-pytools/common/intellij.python.pytools.common.iml" filepath="$PROJECT_DIR$/python/python-pytools/common/intellij.python.pytools.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-pytools/frontend/intellij.python.pytools.frontend.iml" filepath="$PROJECT_DIR$/python/python-pytools/frontend/intellij.python.pytools.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-pytools/tests/intellij.python.pytools.tests.iml" filepath="$PROJECT_DIR$/python/python-pytools/tests/intellij.python.pytools.tests.iml" />

@@ -209,6 +209,7 @@
     <orderEntry type="module" module-name="intellij.python.requirements.backend" exported="" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
     <orderEntry type="module" module-name="intellij.python.pytools.backend" />
+    <orderEntry type="module" module-name="intellij.python.pytools.backend.runtime" />
     <orderEntry type="module" module-name="intellij.python.uv.backend" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
