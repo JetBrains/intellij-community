@@ -337,13 +337,32 @@ internal class BuildConsoleViewImplV2(
     private val nodeToOutputMarkers = HashMap<Any, MutableSet<RangeMarker>>()
     private val nodeToInlays = HashMap<Any, MutableList<Inlay<ComponentInlayRenderer<JComponent>>>>()
 
+    private val pendingStateActions = ArrayDeque<ConsoleViewStateAccessor.() -> Unit>()
+    private var isDrainScheduled = false
+
     fun access(action: ConsoleViewStateAccessor.() -> Unit) {
       invokeAndWaitIfNeeded {
-        consoleView.performWhenNoDeferredOutput {
-          val editor = consoleView.editor ?: return@performWhenNoDeferredOutput
-          val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
-          val accessor = ConsoleViewStateAccessor(targetEditor)
-          accessor.action()
+        pendingStateActions.addLast(action)
+        drainPendingActions()
+      }
+    }
+
+    private fun drainPendingActions() {
+      if (isDrainScheduled) {
+        return
+      }
+      isDrainScheduled = true
+      consoleView.performWhenNoDeferredOutput {
+        isDrainScheduled = false
+        val editor = consoleView.editor
+        if (editor == null) {
+          pendingStateActions.clear()
+          return@performWhenNoDeferredOutput
+        }
+        val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
+        while (pendingStateActions.isNotEmpty()) {
+          val action = pendingStateActions.removeFirst()
+          action(ConsoleViewStateAccessor(targetEditor))
         }
       }
     }
