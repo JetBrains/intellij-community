@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.ProjectLocator
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,9 +17,11 @@ import org.jetbrains.annotations.ApiStatus
  * (`EditorNotificationsImpl.kt:97-132`). Editing a file is none of those, so without this the offer
  * over a file that is already open waits for the file to be opened again.
  *
- * Every document in the IDE reaches [documentChanged], which is why the questions are asked in the
- * order below: two map reads and an extension check answer a keystroke that has nothing to do with
- * Markdown, and the scan that follows reads a window around the change rather than the file.
+ * Every document in the IDE reaches [documentChanged], on both sides of split mode. So the listener
+ * reads no property of the file until the change has met a Figma link. A file of a split frontend
+ * can answer its name and path only from the backend. That read can wait for seconds under the
+ * write action that delivers the event. The scan reads a window around the change, not the file.
+ * A whole-document reset makes that window the whole text.
  */
 // `SplitModeApiUsage` asks for a frontend module, and this one is shared. What the listener does with
 // the document is read the text around a change, and what it then asks for is a recompute of one
@@ -29,8 +32,12 @@ class FigmaLinkDocumentListener : DocumentListener {
 
   override fun documentChanged(event: DocumentEvent) {
     if (!FigmaAdvertiserRegistry.isSuggestionAllowed) return
+    // A frontend process never shows the banner: its projects drop the platform's advertiser
+    // notification, which is the only caller of `FigmaConnectPluginSuggestionProvider`. In split
+    // mode, the backend runs this listener over its own copy of the same document.
+    if (IdeProductMode.isFrontend) return
+    // `FileDocumentManagerBase` answers from the document's own user data and reads no property of the file.
     val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
-    if (!isMarkdownSuggestionFile(file.path)) return
 
     // Nothing below runs unless a Figma link meets the change itself, so an edit beside a link that
     // was already there costs nothing and a link typed character by character is answered once. The
@@ -38,6 +45,7 @@ class FigmaLinkDocumentListener : DocumentListener {
     // again and an edit in the file key after it does not. The platform coalesces the recompute per
     // file (`EditorNotificationsImpl.kt:250-334`).
     if (!changeTouchesFigmaUrl(event.document.immutableCharSequence, event.offset, event.offset + event.newLength)) return
+    if (!isMarkdownSuggestionFile(file.path)) return
     if (isFigmaConnectLoaded()) return
 
     // Every open project the file belongs to. A file outside every content root is edited without a
