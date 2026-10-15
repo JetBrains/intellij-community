@@ -654,7 +654,7 @@ fn authored_tree() -> Tree {
         &mut tree,
         authored_file(),
         authored_suites_text(&[
-            ["problem-feedback", "GUI_CHAT", "AcpProblemFeedbackUiTest"],
+            ["plugin-reload", "GUI_CHAT", "AirPluginUnloadLeakTest"],
             ["session-tool-window-composer", "UI", "AgentSessionToolWindowComposerUiTest"],
         ]),
     );
@@ -662,7 +662,7 @@ fn authored_tree() -> Tree {
     tree
 }
 
-const AUTHORED_SOURCE: &str = "plugins/air/tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt";
+const AUTHORED_SOURCE: &str = "plugins/air/tests/integration/gui-chat/test/AirPluginUnloadLeakTest.kt";
 
 /// An authored suite has no document, so its test class source is the only file that is the suite.
 #[test]
@@ -671,10 +671,10 @@ fn an_authored_test_class_reaches_its_own_suite() {
     assert_eq!(
         affected.suites,
         [AffectedSuite {
-            suite: "problem-feedback".to_owned(),
+            suite: "plugin-reload".to_owned(),
             lane: "gui-chat".to_owned(),
-            class: "AcpProblemFeedbackUiTest".to_owned(),
-            via: vec!["suite:problem-feedback".to_owned()],
+            class: "AirPluginUnloadLeakTest".to_owned(),
+            via: vec!["suite:plugin-reload".to_owned()],
             authored: true,
         }]
     );
@@ -686,7 +686,7 @@ fn a_harness_path_reaches_the_authored_suites_of_its_lane() {
     let affected = affected_of(&FakeRuntime::with_tree(&authored_tree()), &[GUI_CHAT_GENERATED]);
     assert_eq!(
         classes_of(&affected),
-        "gui-chat/AirManageLaunchPresetGeneratedFlowUiTest,gui-chat/AcpProblemFeedbackUiTest"
+        "gui-chat/AirManageLaunchPresetGeneratedFlowUiTest,gui-chat/AirPluginUnloadLeakTest"
     );
 }
 
@@ -721,7 +721,7 @@ fn an_authored_suite_that_clashes_with_a_generated_one_is_refused() {
 #[test]
 fn a_malformed_authored_suite_file_is_refused_with_its_regeneration() {
     let fake = FakeRuntime::with_tree(&authored_tree());
-    fake.put(authored_file(), r#"{ "suites": [ { "suite": "problem-feedback" } ] }"#);
+    fake.put(authored_file(), r#"{ "suites": [ { "suite": "plugin-reload" } ] }"#);
     let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
     assert_eq!(failure.exit, exit::INFRA);
     assert!(failure.message.contains("prints the text to commit"), "{}", failure.message);
@@ -750,7 +750,7 @@ fn spec_tree() -> Tree {
             "# Feedback",
             "",
             "- The dialog opens.",
-            "  [@test] ../../tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt",
+            "  [@test] ../../tests/integration/gui-chat/test/AirPluginUnloadLeakTest.kt",
             "  [@test] ../../tests/integration/flow-profiles/resources/flow-profiles/new-session-terminal.json",
         ]
         .join("\n"),
@@ -772,7 +772,7 @@ fn spec_tree() -> Tree {
     tree
 }
 
-const FEEDBACK_SUITES: &str = "gui-chat/AcpProblemFeedbackUiTest,ui-real/AirNewSessionTerminalGeneratedFlowUiTest";
+const FEEDBACK_SUITES: &str = "gui-chat/AirPluginUnloadLeakTest,ui-real/AirNewSessionTerminalGeneratedFlowUiTest";
 
 /// A path a spec owns reaches the suites the spec links, authored or generated, and the entry names the spec.
 #[test]
@@ -800,11 +800,11 @@ fn the_spec_relation_and_the_module_relation_both_answer_an_untagged_path() {
     let mut tree = spec_tree();
     let relinked = tree[GENERATED_SPEC].replace(
         GENERATED_LINK,
-        "  [@test] ../../tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt",
+        "  [@test] ../../tests/integration/gui-chat/test/AirPluginUnloadLeakTest.kt",
     );
     put(&mut tree, GENERATED_SPEC, relinked);
     let affected = affected_of(&FakeRuntime::with_tree(&tree), &["plugins/air/session/src/Quiet.kt"]);
-    assert_eq!(classes_of(&affected), format!("gui-chat/AcpProblemFeedbackUiTest,{QUICK_START}"));
+    assert_eq!(classes_of(&affected), format!("gui-chat/AirPluginUnloadLeakTest,{QUICK_START}"));
 }
 
 /// A link to a lane's generated file names every suite of the lane, not one, so it links no suite.
@@ -870,8 +870,8 @@ fn the_answer_serializes_with_the_agent_facing_names() {
     assert_eq!(
         json,
         serde_json::json!({
-            "suites": [{"suite": "problem-feedback", "lane": "gui-chat", "class": "AcpProblemFeedbackUiTest",
-                        "via": ["suite:problem-feedback"], "authored": true}],
+            "suites": [{"suite": "plugin-reload", "lane": "gui-chat", "class": "AirPluginUnloadLeakTest",
+                        "via": ["suite:plugin-reload"], "authored": true}],
             "unmapped": [{"path": "plugins/air/notes/src/Notes.kt", "reason": "module_not_walked",
                           "module": "intellij.air.notes"}],
             "lanes": ["gui-chat"],
