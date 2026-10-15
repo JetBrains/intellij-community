@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -37,6 +38,9 @@ abstract class FileEditorManager {
 
     @JvmStatic
     fun getInstance(project: Project): FileEditorManager = project.service()
+
+    @JvmStatic
+    suspend fun getInstanceAsync(project: Project): FileEditorManager = project.serviceAsync()
 
     @JvmField
     val SEPARATOR_DISABLED: Key<Boolean> = Key.create("FileEditorSeparatorDisabled")

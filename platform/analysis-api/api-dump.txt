@@ -1657,6 +1657,7 @@ Fa:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - getFocusedEditor():com.intellij.openapi.fileEditor.FileEditor
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.FileEditorManager
+- sf:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - a:getOpenFiles():com.intellij.openapi.vfs.VirtualFile[]
 - a:getProject():com.intellij.openapi.project.Project
 - getSelectedEditor():com.intellij.openapi.fileEditor.FileEditor
@@ -1671,6 +1672,7 @@ Fa:com.intellij.openapi.fileEditor.FileEditorManager
 - updateFilePresentation(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.fileEditor.FileEditorManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.FileEditorManager
+- f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.fileEditor.FileEditorManagerEvent
 - f:getManager():com.intellij.openapi.fileEditor.FileEditorManager
 - f:getNewEditor():com.intellij.openapi.fileEditor.FileEditor
