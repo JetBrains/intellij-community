@@ -1,0 +1,25 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit6"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>
