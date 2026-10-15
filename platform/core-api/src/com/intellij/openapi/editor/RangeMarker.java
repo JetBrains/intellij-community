@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,6 +78,22 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * @param greedy true if text added at the end is included in the range, false otherwise.
    */
   void setGreedyToRight(boolean greedy);
+
+  /**
+   * Controls how an empty range marker reacts to an insertion at its offset.
+   * <p>
+   * When the value is {@code true}, the marker moves to the end of the inserted text and stays empty.
+   * When the value is {@code false}, the marker stays at the start of the inserted text.
+   * {@link #setGreedyToRight(boolean) Greedy to right} has priority: a greedy marker expands to cover the inserted text.
+   * <p>
+   * The flag has no effect on a non-empty marker.
+   * The default implementation does nothing.
+   * The call has no effect on an invalid marker.
+   *
+   * @param value {@code true} to make the empty marker follow an insertion at its offset
+   */
+  @ApiStatus.Experimental
+  default void setStickingToRight(boolean value) { }
 
   Comparator<? super RangeMarker> BY_START_OFFSET = BY_START_OFFSET_THEN_END_OFFSET;
 

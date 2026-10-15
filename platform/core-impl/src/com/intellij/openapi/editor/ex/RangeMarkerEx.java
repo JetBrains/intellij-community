@@ -27,9 +27,6 @@ public interface RangeMarkerEx extends RangeMarker {
    */
   long getId();
 
-  @ApiStatus.Internal
-  default void setStickingToRight(boolean value) {}
-
   /**
    * Some intervals could be marked with one or several "flavor" flags,
    * because some range markers can taste bitter, while others are sweet, I mean some range highlighters should be shown on the gutter area,
