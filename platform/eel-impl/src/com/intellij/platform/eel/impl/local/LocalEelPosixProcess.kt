@@ -15,7 +15,6 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.impl.ToJvmConvertableProcess
 import com.intellij.platform.eel.provider.utils.asEelChannel
-import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -56,15 +55,16 @@ internal class LocalEelPosixProcess private constructor(
 
   override val pid: EelApi.Pid = LocalPid(process.pid())
   override val stdin: EelSendChannel = process.outputStream.asEelChannel()
-  override val stdout: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.inputStream.consumeAsEelChannel())
-  override val stderr: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.errorStream.consumeAsEelChannel())
+  private val output = DestroyAwareOutput(process)
+  override val stdout: EelReceiveChannel = output.stdout
+  override val stderr: EelReceiveChannel = output.stderr
   override val exitCode: SafeDeferred<Int> = SafeDeferred(scope.async(CoroutineName("LocalEelPosixProcess pid=${process.pid()}")) {
     process.awaitExit()
   })
 
   override suspend fun kill() {
     sendSignalToProcessGroup(process, UnixSignal.SIGKILL, platform)
-    process.destroyForcibly() // When signal failed, we still need to kill it
+    output.destroyForcibly() // When signal failed, we still need to kill it
   }
 
   override fun convertToJVMProcess(): Process = process
