@@ -87,8 +87,6 @@ internal class FrozenColumnsController(
   /** The strip, or null while nothing is pinned. */
   val frozenView: TableResultView? get() = region?.view
 
-  fun isCellComponent(component: Component?): Boolean = component === primaryView || component === frozenView
-
   fun isEditingInFrozenView(): Boolean = frozenView?.isEditing == true
 
   /** Installs navigation that treats the frozen strip and the primary table as one displayed column sequence. */

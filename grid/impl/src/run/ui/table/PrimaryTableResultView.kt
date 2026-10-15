@@ -22,7 +22,8 @@ class PrimaryTableResultView(
     installGridIntegration()
   }
 
-  override fun isCellComponent(component: Component?): Boolean = frozenColumnsController.isCellComponent(component)
+  /** Lists both tables, or only the main table when no columns are pinned. */
+  override fun getCellComponents(): List<Component> = listOfNotNull(this, frozenView)
 
   override fun getFrozenView(): TableResultView? = frozenColumnsControllerIfBuilt?.frozenView
 

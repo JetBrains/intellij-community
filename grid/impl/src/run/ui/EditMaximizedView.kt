@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.SideBorder
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 /**
@@ -155,6 +156,12 @@ class EditMaximizedView(private val grid: DataGrid) : CheckedDisposable, Removab
 
   fun getCurrentTabInfoProvider(): TabInfoProvider {
     return tabInfoProviders.find { runnerTabs.selectedInfo == it.tabInfo }!!
+  }
+
+  @RequiresEdt
+  fun isValueTabSelected(): Boolean {
+    val selected = runnerTabs.selectedInfo ?: return false
+    return tabInfoProviders.any { it is ValueTabInfoProvider && it.tabInfo == selected }
   }
 }
 

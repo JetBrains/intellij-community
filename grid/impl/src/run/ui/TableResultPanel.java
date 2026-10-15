@@ -65,6 +65,7 @@ import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.database.settings.DataGridAppearanceSettings;
 import com.intellij.database.settings.DataGridAppearanceSettings.BooleanMode;
 import com.intellij.database.settings.DataGridSettings;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.ide.ActivityTracker;
@@ -1430,6 +1431,7 @@ public class TableResultPanel extends UserDataHolderBase
     sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       return ContainerUtil.ar(getPsiElementForSelection(this));
     });
+    sink.set(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY, GridActionUiState.capture(this));
   }
 
   @Override

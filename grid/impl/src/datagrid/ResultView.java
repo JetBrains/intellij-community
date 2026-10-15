@@ -7,6 +7,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,9 +64,20 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
     return isEditing();
   }
 
+  /** Returns the components this view renders cells in, such as a table and its pinned-column strip. */
+  @RequiresEdt
+  default @NotNull List<Component> getCellComponents() {
+    return List.of(getComponent());
+  }
+
   /** Whether {@code component} is one of the components this view renders cells in. */
+  @RequiresEdt
   default boolean isCellComponent(@Nullable Component component) {
-    return component == getComponent();
+    if (component == null) return false;
+    for (var cellComponent : getCellComponents()) {
+      if (component == cellComponent) return true;
+    }
+    return false;
   }
 
   boolean isMultiEditingAllowed();
