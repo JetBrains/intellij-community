@@ -14090,6 +14090,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/jvmStaticPropertyFromCompanionObject.kt");
         }
 
+        @TestMetadata("lastCompanionObjectMemberWithImplicitReceiver.kt")
+        public void testLastCompanionObjectMemberWithImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/lastCompanionObjectMemberWithImplicitReceiver.kt");
+        }
+
+        @TestMetadata("lastCompanionObjectMemberWithThis.kt")
+        public void testLastCompanionObjectMemberWithThis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/lastCompanionObjectMemberWithThis.kt");
+        }
+
+        @TestMetadata("lastNamedCompanionObjectMemberWithThis.kt")
+        public void testLastNamedCompanionObjectMemberWithThis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/lastNamedCompanionObjectMemberWithThis.kt");
+        }
+
         @TestMetadata("memberExtensionFun.kt")
         public void testMemberExtensionFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/memberExtensionFun.kt");
@@ -14108,6 +14123,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("memberFunctionShortening.kt")
         public void testMemberFunctionShortening() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/memberFunctionShortening.kt");
+        }
+
+        @TestMetadata("memberFunctionWithCompanionObjectThis.kt")
+        public void testMemberFunctionWithCompanionObjectThis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/memberFunctionWithCompanionObjectThis.kt");
         }
 
         @TestMetadata("memberFunctionWithInstanceAccess.kt")

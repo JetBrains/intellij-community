@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
@@ -54,7 +53,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInsta
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -62,7 +60,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtImportList
-import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -77,7 +74,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
@@ -161,10 +157,11 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * Deletes the [element] from its file but also deletes the containing declaration or file
      * if it can be deleted and is
      */
-    private fun deleteMovedElement(element: KtNamedDeclaration) {
+    private fun deleteMovedElement(element: KtNamedDeclaration, companionObjectsToKeep: Set<KtObjectDeclaration>) {
         val containingClass = element.containingClassOrObject
         element.deleteSingle()
-        if (containingClass is KtObjectDeclaration && containingClass.isCompanion() && containingClass.isEffectivelyEmpty()) {
+        if (containingClass is KtObjectDeclaration && containingClass.isCompanion() &&
+            containingClass !in companionObjectsToKeep && containingClass.isEffectivelyEmpty()) {
             containingClass.deleteSingle()
         }
     }
@@ -200,7 +197,9 @@ open class K2MoveDeclarationsRefactoringProcessor(
         val movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>> = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
-                    preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
+                    val companionObjectsToKeep = preprocessUsages(
+                        moveDescriptor.project, moveDescriptor.source, moveDescriptor.target, usages.toList()
+                    )
 
                     val declarationsToMove = moveDescriptor.source.elements
                     val listeners = declarationsToMove.associateWith { transaction.getElementListener(it) }
@@ -214,7 +213,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     val elementsToMove = declarationsToMove.withContext()
                     val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
                     val oldToNewMap = moveDescriptor.target.addElementsToTarget(elementsToMove, operationDescriptor.dirStructureMatchesPkg)
-                    moveDescriptor.source.elements.forEach(::deleteMovedElement)
+                    moveDescriptor.source.elements.forEach { deleteMovedElement(it, companionObjectsToKeep) }
                     // Delete files if they are effectively empty after moving declarations out of them
                     sourceFiles.filter { it.isEffectivelyEmpty() }.forEach { it.delete() }
 
@@ -347,11 +346,31 @@ open class K2MoveDeclarationsRefactoringProcessor(
     private fun preprocessUsages(
         project: Project,
         moveSource: K2MoveSourceDescriptor<*>,
+        moveTarget: K2MoveTargetDescriptor,
         usages: List<UsageInfo>
-    ) {
+    ): Set<KtObjectDeclaration> {
         val psiFactory = KtPsiFactory(project)
+        val companionObjectsToKeep = mutableSetOf<KtObjectDeclaration>()
         for (declarationToMove in moveSource.elements) {
             if (declarationToMove !is KtNamedDeclaration) continue
+            val companionObject = (declarationToMove.containingClassOrObject as? KtObjectDeclaration)
+                ?.takeIf { it.isCompanion() && moveTarget is K2MoveTargetDescriptor.CompanionExtension }
+            if (companionObject != null) {
+                val companionUsages = usages.filterIsInstance<OuterInstanceReferenceUsageInfo>()
+                    .filter { it.upToDateMember == declarationToMove }
+                if (companionUsages.isNotEmpty()) companionObjectsToKeep.add(companionObject)
+                val companionName = companionObject.fqName?.shortName()?.asString() ?: "Companion"
+                for (usage in companionUsages) {
+                    when (usage) {
+                        is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
+                            usage.expression.replace(psiFactory.createExpression(companionName))
+                        }
+                        is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
+                            usage.callElement.replace(psiFactory.createExpressionByPattern("$0.$1", companionName, usage.callElement))
+                        }
+                    }
+                }
+            }
             val outerInstanceParameterName = declarationToMove.computeOrGetOuterInstanceName() ?: continue
 
             for (usage in usages) {
@@ -392,6 +411,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                 }
             }
         }
+        return companionObjectsToKeep
     }
 
     private fun quoteNameIfNeeded(name: String): String {
