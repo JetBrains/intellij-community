@@ -21,3 +21,12 @@ fun Properties.getBooleanProperty(key: String, propertiesPath: Path): Property<B
   val property = getProperty(key) ?: return null
   return Property(property.toBoolean(), propertiesPath)
 }
+
+fun Properties.getBooleanPropertyWithFallback(
+  key: String,
+  fallbackKey: String,
+  propertiesPath: Path
+): Property<Boolean>? {
+  val property = getProperty(key) ?: getProperty(fallbackKey) ?: return null
+  return Property(property.toBoolean(), propertiesPath)
+}

@@ -43,7 +43,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "javaHome")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "info")
       setProperty(GRADLE_PARALLEL_PROPERTY, "true")
-      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "true")
+      setProperty(GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY, "true")
       setProperty(GRADLE_JVM_OPTIONS_PROPERTY, "-Xmx20G")
     }
     assertGradlePropertiesFile(projectPath) {
@@ -68,7 +68,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "value2")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "debug")
       setProperty(GRADLE_PARALLEL_PROPERTY, "true")
-      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "true")
+      setProperty(GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY, "true")
       setProperty(GRADLE_JVM_OPTIONS_PROPERTY, "-Xmx20G")
       setProperty("another.property.2", "value4")
     }
@@ -84,6 +84,50 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertEquals(projectPropertiesPath, isolatedProjects?.location)
       Assertions.assertEquals("-Xmx20G", jvmOptions?.value)
       Assertions.assertEquals(projectPropertiesPath, jvmOptions?.location)
+    }
+  }
+
+  @Test
+  fun `test isolated projects property without unsafe fallback`() {
+    createGradlePropertiesFile(projectPath) {
+      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "true")
+    }
+    assertGradlePropertiesFile(projectPath) {
+      Assertions.assertEquals(true, isolatedProjects?.value)
+      Assertions.assertEquals(projectPropertiesPath, isolatedProjects?.location)
+    }
+  }
+
+  @Test
+  fun `test isolated projects property falls back to unsafe property`() {
+    createGradlePropertiesFile(projectPath) {
+      setProperty(GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY, "true")
+    }
+    assertGradlePropertiesFile(projectPath) {
+      Assertions.assertEquals(true, isolatedProjects?.value)
+      Assertions.assertEquals(projectPropertiesPath, isolatedProjects?.location)
+    }
+  }
+
+  @Test
+  fun `test isolated projects property takes precedence over unsafe property`() {
+    createGradlePropertiesFile(projectPath) {
+      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "false")
+      setProperty(GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY, "true")
+    }
+    assertGradlePropertiesFile(projectPath) {
+      Assertions.assertEquals(false, isolatedProjects?.value)
+      Assertions.assertEquals(projectPropertiesPath, isolatedProjects?.location)
+    }
+  }
+
+  @Test
+  fun `test isolated projects unsafe property false when stable property is absent`() {
+    createGradlePropertiesFile(projectPath) {
+      setProperty(GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY, "false")
+    }
+    assertGradlePropertiesFile(projectPath) {
+      Assertions.assertEquals(false, isolatedProjects?.value)
     }
   }
 

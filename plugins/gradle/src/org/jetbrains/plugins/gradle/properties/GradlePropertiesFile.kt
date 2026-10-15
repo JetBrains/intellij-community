@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile.getPropertyPaths
 import org.jetbrains.plugins.gradle.properties.models.getBooleanProperty
+import org.jetbrains.plugins.gradle.properties.models.getBooleanPropertyWithFallback
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
@@ -26,7 +27,8 @@ const val GRADLE_JAVA_HOME_PROPERTY: String = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY: String = "org.gradle.logging.level"
 const val GRADLE_PARALLEL_PROPERTY: String = "org.gradle.parallel"
 const val GRADLE_JVM_OPTIONS_PROPERTY: String = "org.gradle.jvmargs"
-const val GRADLE_ISOLATED_PROJECTS_PROPERTY: String = "org.gradle.unsafe.isolated-projects"
+const val GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY: String = "org.gradle.unsafe.isolated-projects"
+const val GRADLE_ISOLATED_PROJECTS_PROPERTY: String = "org.gradle.isolated-projects"
 
 object GradlePropertiesFile {
 
@@ -156,7 +158,11 @@ object GradlePropertiesFile {
       javaHomeProperty = properties.getStringProperty(GRADLE_JAVA_HOME_PROPERTY, propertiesPath),
       logLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
       parallel = properties.getBooleanProperty(GRADLE_PARALLEL_PROPERTY, propertiesPath),
-      isolatedProjects = properties.getBooleanProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, propertiesPath),
+      isolatedProjects = properties.getBooleanPropertyWithFallback(
+        GRADLE_ISOLATED_PROJECTS_PROPERTY,
+        GRADLE_ISOLATED_PROJECTS_UNSAFE_PROPERTY,
+        propertiesPath
+      ),
       jvmOptions = properties.getStringProperty(GRADLE_JVM_OPTIONS_PROPERTY, propertiesPath)
     )
   }
