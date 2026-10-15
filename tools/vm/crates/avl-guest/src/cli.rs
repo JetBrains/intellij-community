@@ -69,7 +69,9 @@ inputs from the runtime descriptor, publishes STATE_DIR/daemon.json with its tok
 lane IDE. It writes its log on standard error.
 
 lane-run runs one iteration of --lane from the runfiles of --descriptor, with no control channel. It writes the run \
-stream on standard output and into RUNTIME_ROOT/run.ndjson, quits the IDE, and exits 0 when the run is green.
+stream on standard output and into RUNTIME_ROOT/run.ndjson, quits the IDE, and exits 0 when the run is green. With \
+--plan-only it stages the inputs, writes the plan of the run as one JSON document on standard output, and launches no \
+IDE.
 
 cancel --thread-dump JCMD runs JCMD PID Thread.print before the TERM, and writes the dump into the log directory of an \
 IDE launch or into the run directory.
@@ -328,6 +330,9 @@ pub(crate) struct LaneRunArgs {
     /// The budget between two records of the run, in seconds.
     #[arg(long, value_name = "SECONDS", default_value_t = 300)]
     pub progress_gap_timeout_sec: u64,
+    /// Stage the inputs, select the suite documents, write the plan of the run on standard output, and launch no IDE.
+    #[arg(long)]
+    pub plan_only: bool,
 }
 
 // --- the image and Linux worker verbs -----------------------------------------------------------------------

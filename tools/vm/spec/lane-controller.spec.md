@@ -1427,6 +1427,11 @@ after that move.
 - `lane-run` refuses a run that Bazel splits into more than one shard, because a lane IDE takes the fixed bridge port.
   The lane test touches no shard status file, so Bazel refuses such a run too where its check is on.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_of_more_than_one_shard_is_refused`)
+
+- `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
+  standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
+  and a plan of suites of a bare IDE alone names no lane key.
+  [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_selectors_and_the_filters_come_from_the_flags_and_the_environment`)
 
 - An iteration runs the suite documents of its lane. A selector narrows them by the test class, with or without a

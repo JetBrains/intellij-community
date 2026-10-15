@@ -6,6 +6,9 @@
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
 //! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green.
+//!
+//! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
+//! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
 
 use std::fs::{self, File};
 use std::io::{self, Write};
@@ -14,6 +17,7 @@ use std::path::{Path, PathBuf};
 
 use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
+use serde::Serialize;
 
 use super::channel::{self, BOOT_CODE, log};
 use super::inputs::{self, guest_platform};
@@ -111,6 +115,15 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         lane_inputs: Some(lane_inputs),
         lane_classes: Vec::new(),
     };
+    if args.plan_only {
+        let plan = plan(&daemon, &request)?;
+        let mut out = io::stdout().lock();
+        serde_json::to_writer_pretty(&mut out, &plan)
+            .map_err(io::Error::from)
+            .and_then(|()| writeln!(out))
+            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the plan: {error}")))?;
+        return Ok(0);
+    }
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
@@ -125,6 +138,70 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let green = is_green(&stream) && finished.is_ok();
     written?;
     Ok(u8::from(!green))
+}
+
+/// The refusal code of a plan whose documents do not select.
+pub(crate) const PLAN_CODE: &str = "lane_run_plan";
+
+/// What a run would run, as `--plan-only` writes it: the lane, its IDE, its inputs, and its suites in run order.
+#[derive(Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct RunPlan {
+    pub lane: String,
+    /// The config key of the IDE of the lane, or `None` when every suite launches a bare IDE of its own.
+    pub lane_key: Option<String>,
+    pub product_stamp: String,
+    /// The digests of the lane inputs in the jar store.
+    pub lane_inputs: LaneInputs,
+    pub context_plugin_files: usize,
+    /// The suites of the shared IDE, then the suites of a bare IDE, as the program runner runs them.
+    pub suites: Vec<PlannedSuite>,
+}
+
+/// One suite of a [`RunPlan`].
+#[derive(Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PlannedSuite {
+    pub test_class_name: String,
+    pub suite: String,
+    pub scenarios: Vec<String>,
+    /// The launch key of a suite of a bare IDE.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bare_launch_key: Option<String>,
+}
+
+/// The plan of `request`: the selection of a run, and the key of the IDE that the run would launch.
+pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest) -> Result<RunPlan, AgentRefusal> {
+    let refused = |message: String| AgentRefusal::refused(PLAN_CODE, message);
+    let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
+        return Err(refused("the run request names no lane and no lane inputs".to_owned()));
+    };
+    let selection = iteration::selection_of(daemon, lane, lane_inputs, request).map_err(refused)?;
+    let shared = selection.suites.iter().any(|suite| suite.program.launch.is_none());
+    let lane_key = if shared {
+        Some(iteration::lane_key(daemon, &selection, &request.product_stamp).map_err(refused)?)
+    } else {
+        None
+    };
+    let (bare, shared): (Vec<_>, Vec<_>) = selection.suites.iter().partition(|suite| suite.program.launch.is_some());
+    let suites = shared
+        .into_iter()
+        .chain(bare)
+        .map(|suite| PlannedSuite {
+            test_class_name: suite.program.test_class_name.clone(),
+            suite: suite.program.suite.clone(),
+            scenarios: suite.program.profiles.iter().map(|profile| profile.name.clone()).collect(),
+            bare_launch_key: suite.program.launch.as_ref().map(|launch| launch.key.clone()),
+        })
+        .collect();
+    Ok(RunPlan {
+        lane: lane.clone(),
+        lane_key,
+        product_stamp: request.product_stamp.clone(),
+        lane_inputs: lane_inputs.clone(),
+        context_plugin_files: request.ide_plugins.len(),
+        suites,
+    })
 }
 
 /// Writes `xml` into the run directory `root`, and to the file that `$JB_XML_OUTPUT_FILE` or `$XML_OUTPUT_FILE` names.

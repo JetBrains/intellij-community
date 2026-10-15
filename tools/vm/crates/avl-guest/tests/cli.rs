@@ -141,11 +141,11 @@ impl Drop for Daemon {
 /// The test runs the binary, because the stream setup of `main` decides whether a thread other than the main one can
 /// write on standard error. A lock of standard error for the whole run blocked the run thread at its first log line,
 /// and the run hung with no record.
-#[test]
-fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_summary() {
-    use std::time::{Duration, Instant};
-    let root = tempfile::tempdir().unwrap();
-    let runfiles = root.path().join("runfiles");
+/// The runfiles tree of a lane under `root`: a distribution config, a JBR whose `java` exits 1, the IDE flags, the two
+/// declared CLI runtimes and the runtime descriptor. The lane inputs are files of the tree, which a test writes itself.
+/// Answers the runfiles root and the descriptor.
+fn lane_runfiles(root: &std::path::Path) -> (PathBuf, PathBuf) {
+    let runfiles = root.join("runfiles");
     let main = runfiles.join("_main");
     put(
         &main.join("dist/ide.properties"),
@@ -191,6 +191,45 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     });
     let descriptor_path = main.join("ui_daemon.runtime.json");
     put(&descriptor_path, descriptor.to_string().as_bytes(), false);
+    (runfiles, descriptor_path)
+}
+
+/// The documents jar of a lane: the smallest lane document of `UI` that the daemon launches as it states, with no agent,
+/// the two CLI runtimes of the descriptor and the two services that the daemon serves, and each suite document of
+/// `suites` under `flow-profiles/<name>.json`.
+fn documents_jar(suites: &[(&str, serde_json::Value)]) -> Vec<u8> {
+    use std::io::Write as _;
+    let lane = serde_json::json!({
+        "schemaVersion": 1, "lane": "UI", "vocabularyDigest": "v", "launchProperties": [], "requirements": [],
+        "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": ["codex", "pi"],
+        "services": {"codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply", "jetBrainsCloud": "jba-jcp-emulator-1"},
+        "journeySuites": [],
+    });
+    let mut writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    writer.start_file("lanes/ui.json", options).unwrap();
+    writer.write_all(lane.to_string().as_bytes()).unwrap();
+    for (name, suite) in suites {
+        writer.start_file(format!("flow-profiles/{name}.json"), options).unwrap();
+        writer.write_all(suite.to_string().as_bytes()).unwrap();
+    }
+    writer.finish().unwrap().into_inner()
+}
+
+/// The suite document `rename-session` of the lane `UI`, with no scenario.
+fn rename_session() -> serde_json::Value {
+    serde_json::json!({
+        "schemaVersion": 2, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
+        "restartsIde": false, "labels": [], "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}}, "profiles": [],
+    })
+}
+
+#[test]
+fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_summary() {
+    use std::time::{Duration, Instant};
+    let root = tempfile::tempdir().unwrap();
+    let (runfiles, descriptor_path) = lane_runfiles(root.path());
 
     let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
     let state_dir = root.path().join("state");
@@ -223,31 +262,7 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     let token = state["token"].as_str().unwrap().to_owned();
     let call = |method: &str, target: &str, body: &[u8]| exchange(port, &token, method, target, body, Duration::from_secs(60));
 
-    // The smallest lane document that the daemon launches as it states: no agent, the two CLI runtimes of the
-    // descriptor, and the two services that the daemon serves.
-    let lane = serde_json::json!({
-        "schemaVersion": 1, "lane": "UI", "vocabularyDigest": "v", "launchProperties": [], "requirements": [],
-        "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": ["codex", "pi"],
-        "services": {"codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply", "jetBrainsCloud": "jba-jcp-emulator-1"},
-        "journeySuites": [],
-    })
-    .to_string()
-    .into_bytes();
-    let suite = serde_json::json!({
-        "schemaVersion": 2, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
-        "restartsIde": false, "labels": [], "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}}, "profiles": [],
-    });
-    let documents = {
-        use std::io::Write as _;
-        let mut writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
-        let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-        writer.start_file("lanes/ui.json", options).unwrap();
-        writer.write_all(&lane).unwrap();
-        writer.start_file("flow-profiles/rename-session.json", options).unwrap();
-        writer.write_all(suite.to_string().as_bytes()).unwrap();
-        writer.finish().unwrap().into_inner()
-    };
+    let documents = documents_jar(&[("rename-session", rename_session())]);
     let agent_jar = b"agent jar".to_vec();
     let (bridge, resident) = (b"bridge".to_vec(), b"resident".to_vec());
     for content in [&documents, &agent_jar, &bridge, &resident] {
@@ -294,4 +309,67 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
         std::thread::sleep(Duration::from_millis(50));
     };
     assert_eq!(exit.code(), Some(0), "{}", std::fs::read_to_string(&log).unwrap());
+}
+
+/// `lane-run --plan-only` proves a lane rule and its runfiles with no lane IDE. It stages the inputs of the runfiles,
+/// selects the documents, and writes the plan: the key of the lane IDE and the suites in run order, the suite of a bare
+/// IDE last. It launches no IDE, so no context of a launch key appears under the run directory. A selection of bare
+/// suites alone needs no lane IDE, so its plan names no lane key.
+#[test]
+fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
+    let root = tempfile::tempdir().unwrap();
+    let (runfiles, descriptor) = lane_runfiles(root.path());
+    let main = runfiles.join("_main");
+    let startup = serde_json::json!({
+        "schemaVersion": 2, "suite": "startup-class-loading", "lane": "UI", "testClassName": "AirStartupClassLoadingBudgetUiTest",
+        "authored": true, "launch": {"profile": "bare", "key": "air-startup-class-loading"},
+        "restartsIde": false, "labels": [], "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}},
+        "profiles": [{"name": "within budget", "fixture": "bare", "flags": {}, "setups": [], "steps": [], "program": []}],
+    });
+    let jar = documents_jar(&[("startup-class-loading", startup), ("rename-session", rename_session())]);
+    put(&main.join("documents.jar"), &jar, false);
+    put(&main.join("agent.jar"), b"agent jar", false);
+    put(&main.join("dist/fingerprint.txt"), b"product-1", false);
+    let run_root = root.path().join("run");
+    let path = |path: &std::path::Path| path.display().to_string();
+    let plan = |extra: &[&str]| {
+        let mut args = vec!["lane-run", "--lane", "ui", "--plan-only"];
+        let (descriptor, runfiles, run_root) = (path(&descriptor), path(&runfiles), path(&run_root));
+        args.extend([
+            "--descriptor",
+            &descriptor,
+            "--runfiles-root",
+            &runfiles,
+            "--runtime-root",
+            &run_root,
+        ]);
+        args.extend(extra);
+        let (code, stdout, stderr) = answer(&args);
+        assert_eq!(code, Some(0), "{stderr}");
+        serde_json::from_str::<serde_json::Value>(&stdout).unwrap_or_else(|error| panic!("{error}: {stdout}"))
+    };
+    let whole = plan(&[]);
+    assert_eq!(whole["lane"], "ui");
+    assert!(whole["laneKey"].as_str().unwrap().starts_with("air-ui-"), "{whole}");
+    assert_eq!(whole["productStamp"], sha256(b"product-1"));
+    assert_eq!(whole["laneInputs"]["suiteDocuments"], sha256(&jar));
+    let suites: Vec<(&str, Option<&str>)> = whole["suites"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|suite| (suite["testClassName"].as_str().unwrap(), suite["bareLaunchKey"].as_str()))
+        .collect();
+    assert_eq!(
+        suites,
+        [
+            ("AirRenameSessionGeneratedFlowUiTest", None),
+            ("AirStartupClassLoadingBudgetUiTest", Some("air-startup-class-loading")),
+        ]
+    );
+    let contexts: Vec<_> = std::fs::read_dir(run_root.join("ide")).unwrap().collect();
+    assert!(contexts.is_empty(), "the plan launched an IDE: {contexts:?}");
+    let bare_only = plan(&["--selector", "AirStartupClassLoadingBudgetUiTest"]);
+    assert_eq!(bare_only["laneKey"], serde_json::Value::Null, "{bare_only}");
+    assert_eq!(bare_only["suites"].as_array().unwrap().len(), 1);
 }

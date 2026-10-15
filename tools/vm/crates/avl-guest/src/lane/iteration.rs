@@ -16,7 +16,7 @@ use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
 use avl_trace::protocol;
-use avl_wire::daemon::{LaneClass, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
+use avl_wire::daemon::{LaneClass, LaneInputs, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
 use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents};
 use regex::Regex;
@@ -300,23 +300,48 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + 
     xml
 }
 
-/// The part of an iteration that can fail as a whole: the documents, the IDE, the plan and the scenarios. It answers
-/// whether the watchdog ended the run.
-fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration_dir: &Path, iteration_id: &str) -> Result<bool, String> {
-    let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
-        return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
-    };
+/// The selection of `request` from the documents that the push stored: the documents of `lane`, narrowed by the
+/// selectors and the filters of the request.
+pub(crate) fn selection_of(daemon: &Daemon, lane: &str, lane_inputs: &LaneInputs, request: &RunRequest) -> Result<Selection, String> {
     let lane_documents = daemon.stored(&lane_inputs.lane_documents)?;
     let suite_documents = daemon.stored(&lane_inputs.suite_documents)?;
-    let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
-    let selection = select(&SelectionInputs {
+    select(&SelectionInputs {
         lane,
         lane_documents: &lane_documents,
         suite_documents: &suite_documents,
         selectors: &request.selectors,
         junit5_filters: &request.junit5_filters,
         lane_classes: &request.lane_classes,
-    })?;
+    })
+}
+
+/// The config key of the IDE of the lane of `selection` for the product `product_stamp`: the lane, its document, the
+/// identity of each declared CLI runtime, and the option files.
+pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &str) -> Result<String, String> {
+    let runtimes: BTreeMap<String, String> = daemon
+        .with_ide(|owner| owner.runtimes_named(&selection.lane.cli_runtimes))
+        .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?
+        .into_iter()
+        .map(|runtime| (runtime.name, runtime.identity))
+        .collect();
+    Ok(KeyInputs {
+        lane: &selection.lane.lane,
+        lane_document: &sha256_hex(&selection.lane_bytes),
+        product_stamp: Some(product_stamp),
+        runtimes: &runtimes,
+        option_files: &option_files_digest(),
+    }
+    .config_key())
+}
+
+/// The part of an iteration that can fail as a whole: the documents, the IDE, the plan and the scenarios. It answers
+/// whether the watchdog ended the run.
+fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration_dir: &Path, iteration_id: &str) -> Result<bool, String> {
+    let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
+        return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
+    };
+    let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
+    let selection = selection_of(daemon, lane, lane_inputs, request)?;
     let plugins: Vec<ContextPlugin> = request
         .ide_plugins
         .iter()
@@ -336,20 +361,7 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         plugins.len()
     ));
     stream.emit(&watchdog_record("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
-    let runtimes: BTreeMap<String, String> = daemon
-        .with_ide(|owner| owner.runtimes_named(&selection.lane.cli_runtimes))
-        .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?
-        .into_iter()
-        .map(|runtime| (runtime.name, runtime.identity))
-        .collect();
-    let key = KeyInputs {
-        lane: &selection.lane.lane,
-        lane_document: &sha256_hex(&selection.lane_bytes),
-        product_stamp: Some(&request.product_stamp),
-        runtimes: &runtimes,
-        option_files: &option_files_digest(),
-    }
-    .config_key();
+    let key = lane_key(daemon, &selection, &request.product_stamp)?;
     let identity = LaneIdentity::new(key, daemon.port());
     let launch = LaneLaunch {
         document: &selection.lane,
