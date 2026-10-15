@@ -449,6 +449,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/foldings",
+        "//platform/foldings:foldings_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/consoleView",

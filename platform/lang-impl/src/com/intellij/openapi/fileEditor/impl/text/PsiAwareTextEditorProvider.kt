@@ -236,15 +236,16 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     // folding
     val foldState = state.foldingState
-    // folding state is restored by PsiAwareTextEditorImpl.loadEditorInBackground, that's why here we check isEditorLoaded
-    if (project != null && foldState != null && isEditorLoaded(editor)) {
-      val psiDocumentManager = PsiDocumentManager.getInstance(project)
-      if (!psiDocumentManager.isCommitted(editor.document)) {
-        psiDocumentManager.commitDocument(editor.document)
-        logger<PsiAwareTextEditorProvider>()
-          .error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time")
+    if (project != null && foldState != null) {
+      if (isEditorLoaded(editor)) {
+        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+        if (!psiDocumentManager.isCommitted(editor.document)) {
+          psiDocumentManager.commitDocument(editor.document)
+          logger<PsiAwareTextEditorProvider>()
+            .error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time")
+        }
       }
-      editor.foldingModel.runBatchFoldingOperation { CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState) }
+      CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
     }
   }
 
