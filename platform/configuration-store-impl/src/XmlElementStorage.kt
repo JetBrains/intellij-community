@@ -33,7 +33,6 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentHashMap
 import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
@@ -46,23 +45,6 @@ abstract class XmlElementStorage protected constructor(
   private val provider: StreamProvider? = null,
   private val listener: OperationListener? = null
 ) : StateStorageBase<StateMap>() {
-  /** Stores the XML and the serialized component state that correspond to the same disk contents. */
-  private class ElementStateBaseline(val stored: Element, val serialized: Element)
-
-  private val elementStateBaselines = ConcurrentHashMap<String, ElementStateBaseline>()
-
-  internal fun hasElementStateBaseline(componentName: String, stored: Element): Boolean =
-    elementStateBaselines[componentName]?.let { JDOMUtil.areElementsEqual(it.stored, stored) } == true
-
-  /** Records the local serialized baseline before the controller changes the state. */
-  internal fun archiveElementState(
-    componentName: String,
-    stored: Element,
-    serialized: Element?,
-  ) {
-    elementStateBaselines[componentName] = ElementStateBaseline(stored.clone(), serialized?.clone() ?: Element(ComponentStorageUtil.COMPONENT))
-  }
-
   final override val saveStorageDataOnReload: Boolean
     get() = provider == null || provider.saveStorageDataOnReload
 
@@ -89,8 +71,6 @@ abstract class XmlElementStorage protected constructor(
       storageData = getStorageData(reload),
       stateClass = stateClass,
       storage = this,
-      // the baseline is needed only to apply a controller change to the stored XML
-      preserveElementState = archiveLoadedState && stateClass == Element::class.java && controller != null,
       archiveLoadedState = archiveLoadedState,
     )
   }
@@ -204,34 +184,12 @@ abstract class XmlElementStorage protected constructor(
   ) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
-    private val newElementStateBaselines = HashMap<String, ElementStateBaseline>()
 
     override val controller: SettingsController?
       get() = storage.controller
 
     override val roamingType: RoamingType?
       get() = storage.roamingType
-
-    override fun prepareSerializedState(componentName: String, state: Any?, element: Element?): Element? {
-      if (state == null || state is Element && element != null) {
-        val stored = originalStates.getElement(componentName)
-        val baseline = storage.elementStateBaselines[componentName]
-        if (baseline != null && JDOMUtil.areElementsEqual(baseline.stored, stored)) {
-          val serialized = element?.let { normalizeRootName(it.clone()) } ?: Element(ComponentStorageUtil.COMPONENT)
-          val merged = mergeElementState(stored, baseline.serialized, serialized)!!
-          newElementStateBaselines[componentName] = ElementStateBaseline(merged.clone(), serialized)
-          return merged
-        }
-        if (state is Element && storage.controller != null) {
-          val serialized = normalizeRootName(element!!.clone())
-          newElementStateBaselines[componentName] = ElementStateBaseline(serialized.clone(), serialized)
-        }
-      }
-      if (state == null || storage.controller == null) {
-        return element
-      }
-      return preserveExplicitDefaults(state = state, element = element, existingState = originalStates.getElement(componentName))
-    }
 
     protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
 
@@ -350,7 +308,6 @@ abstract class XmlElementStorage protected constructor(
         }
 
         storage.setStates(originalStates, stateMap)
-        storage.elementStateBaselines.putAll(newElementStateBaselines)
       }
 
       private fun removeOrSaveLocally(events: MutableList<VFileEvent>?) {
@@ -498,22 +455,18 @@ private class StateGetterImpl<S : Any>(
   private val storageData: StateMap,
   private val stateClass: Class<S>,
   private val storage: XmlElementStorage,
-  private val preserveElementState: Boolean,
   private val archiveLoadedState: Boolean,
 ) : StateGetter<S> {
   private var serializedState: Element? = null
   private val overrideTracker = ControllerOverrideTracker()
 
-  override var requiresControllerReload: Boolean = false
-    private set
-
   override val isStateChangedByController: Boolean
-    get() = overrideTracker.isLocalValueOverridden && !requiresControllerReload
+    get() = overrideTracker.isLocalValueOverridden
 
   override suspend fun getState(mergeInto: S?): S? {
     LOG.assertTrue(serializedState == null)
     serializedState = storage.getSerializedState(storageData = storageData, component = component, componentName = componentName, archive = false)
-    val state = deserializeStateWithController(
+    return deserializeStateWithController(
       stateElement = serializedState,
       stateClass = stateClass,
       mergeInto = mergeInto,
@@ -523,20 +476,10 @@ private class StateGetterImpl<S : Any>(
       roamingType = storage.roamingType,
       overrideTracker = overrideTracker,
     )
-    val stored = serializedState
-    requiresControllerReload = preserveElementState && overrideTracker.isLocalValueOverridden && stored != null &&
-                               !storage.hasElementStateBaseline(componentName, stored)
-    return if (requiresControllerReload) {
-      @Suppress("UNCHECKED_CAST")
-      stored!!.clone() as S
-    }
-    else {
-      state
-    }
   }
 
   override fun archiveState(): S? {
-    if (serializedState == null || !archiveLoadedState || (isStateChangedByController && !preserveElementState)) {
+    if (serializedState == null || !archiveLoadedState || isStateChangedByController) {
       return null
     }
 
@@ -552,7 +495,7 @@ private class StateGetterImpl<S : Any>(
     }
 
     val serializedStateAfterLoad = if (stateAfterLoad == null) {
-      if (preserveElementState) null else serializedState
+      serializedState
     }
     else {
       serializeState(state = stateAfterLoad, componentName = componentName, pluginId = pluginId, controller = null, roamingType = null)?.let {
@@ -560,30 +503,17 @@ private class StateGetterImpl<S : Any>(
       }?.takeIf { !it.isEmpty }
     }
 
-    if (preserveElementState) {
-      if (!isStateChangedByController) {
-        storage.archiveElementState(componentName = componentName, stored = serializedState!!, serialized = serializedStateAfterLoad)
-      }
-      storageData.archive(key = componentName, state = serializedState)
-      return stateAfterLoad
-    }
-    val stateToArchive = if (storage.controller == null || stateAfterLoad == null) {
-      serializedStateAfterLoad
-    }
-    else {
-      preserveExplicitDefaults(state = stateAfterLoad, element = serializedStateAfterLoad, existingState = serializedState)
-    }
     if (ApplicationManager.getApplication().isUnitTestMode &&
-        serializedState != stateToArchive &&
-        (stateToArchive == null || !JDOMUtil.areElementsEqual(serializedState, stateToArchive))) {
+        serializedState != serializedStateAfterLoad &&
+        (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
       LOG.debug {
         "$componentName (from ${component.javaClass.name}) state changed after load. " +
         "\nOld: ${JDOMUtil.writeElement(serializedState!!)}\n" +
-        "\nNew: ${stateToArchive?.let { JDOMUtil.writeElement(it) } ?: "null"}\n"
+        "\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n"
       }
     }
 
-    storageData.archive(key = componentName, state = stateToArchive)
+    storageData.archive(key = componentName, state = serializedStateAfterLoad)
 
     return stateAfterLoad
   }
@@ -618,10 +548,6 @@ interface StateGetter<S : Any> {
   suspend fun getState(mergeInto: S? = null): S?
 
   val isStateChangedByController: Boolean
-    get() = false
-
-  /** Requires a controller reload after the local state establishes the baseline. */
-  val requiresControllerReload: Boolean
     get() = false
 
   fun archiveState(): S?

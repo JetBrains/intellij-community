@@ -144,15 +144,14 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
   final override fun setState(component: Any?, componentName: String, pluginId: PluginId, state: Any?) {
     if (state == null) {
       if (ClientId.isCurrentlyUnderLocalId) {
-        setSerializedState(componentName = componentName, element = prepareSerializedState(componentName, null, null))
+        setSerializedState(componentName = componentName, element = null)
       }
       return
     }
 
     val element: Element?
     try {
-      val serializedState = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
-      element = if (ClientId.isCurrentlyUnderLocalId) prepareSerializedState(componentName, state, serializedState) else serializedState
+      element = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -169,36 +168,6 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
   }
 
   abstract fun setSerializedState(componentName: String, element: Element?)
-
-  /** Prepares the XML for a local save. */
-  protected open fun prepareSerializedState(componentName: String, state: Any?, element: Element?): Element? = element
-}
-
-/** Keeps explicit defaults when the stored value and the current value both equal the default. */
-@Suppress("DEPRECATION")
-internal fun preserveExplicitDefaults(state: Any, element: Element?, existingState: Element?): Element? {
-  if (existingState == null || state is Element || state is com.intellij.openapi.util.JDOMExternalizable) {
-    return element
-  }
-  val rootBinding = __platformSerializer().getRootBinding(state.javaClass) as? BeanBinding ?: return element
-  val filter = jdomSerializer.getDefaultSerializationFilter()
-  val defaultBean = filter.getDefaultValue(state.javaClass) { rootBinding.newInstance() }
-  var result = element
-  for (binding in rootBinding.bindings!!) {
-    if (result != null && deserializeNestedBindingToJson(element = result, binding = binding) != null) {
-      continue
-    }
-    if (deserializeNestedBindingToJson(element = existingState, binding = binding) == null ||
-        !isStoredValueDefault(element = existingState, binding = binding, rootBinding = rootBinding) ||
-        binding.toJson(state, filter = null) != binding.toJson(defaultBean, filter = null)) {
-      continue
-    }
-    if (result == null) {
-      result = Element(rootBinding.tagName)
-    }
-    binding.serialize(bean = state, parent = result, filter = null)
-  }
-  return result
 }
 
 internal fun serializeState(state: Any, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {

@@ -81,42 +81,6 @@ class ControllerBackedStoreTest {
   }
 
   @Test
-  fun `application controller changes and resets preserve an untouched explicit default`(): Unit = timeoutRunBlocking(context = ClientId.localId.asContextElement()) {
-    val file = writeConfig(TEST_COMPONENT_FILE_NAME, """
-      <application>
-        <component name="TestState" foo="" bar="A" />
-      </application>
-    """.trimIndent())
-    val store = createStore { key ->
-      if (data.containsKey(key.key)) GetResult.resolved(data[key.key]) else GetResult.inapplicable()
-    }
-    val component = ControllerTestComponent()
-    store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    assertThat(component.state.bar).isEqualTo("A")
-
-    data["TestState.bar"] = JsonPrimitive("B")
-    store.reloadStates(setOf("TestState"))
-    store.resetModificationCount("TestState")
-    store.save(forceSavingAllSettings = false)
-    val updated = JDOMUtil.load(file).getChild("component")
-    assertThat(updated.getAttributeValue("foo")).isEmpty()
-    assertThat(updated.getAttributeValue("bar")).isEqualTo("B")
-
-    data["TestState.bar"] = null
-    store.reloadStates(setOf("TestState"))
-    store.resetModificationCount("TestState")
-    assertThat(component.state.bar).isEmpty()
-    store.save(forceSavingAllSettings = false)
-    val reset = JDOMUtil.load(file).getChild("component")
-    assertThat(reset.getAttributeValue("foo")).isEmpty()
-    assertThat(reset.getAttributeValue("bar")).isNull()
-
-    val reloaded = ControllerTestComponent()
-    createStore { GetResult.inapplicable() }.initComponent(reloaded, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    assertThat(reloaded.state).isEqualTo(ControllerTestState())
-  }
-
-  @Test
   fun get() = runBlocking<Unit>(Dispatchers.Default) {
     val store = createStore { key ->
       if (data.containsKey(key.key)) {
@@ -169,20 +133,20 @@ class ControllerBackedStoreTest {
     val store = createRemoteSaveStore()
     val component = ControllerTestComponent()
     store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    component.update(ControllerTestState(foo = "new"))
-
-    withContext(ClientId("remote-save-test").asContextElement()) {
-      store.save(forceSavingAllSettings = true)
-    }
-
     val file = appConfig.resolve(TEST_COMPONENT_FILE_NAME)
-    assertThat(file).doesNotExist()
-    assertThat(data.get("TestState.foo")).isEqualTo(JsonPrimitive("new"))
+    for (value in listOf("first", "latest")) {
+      component.update(ControllerTestState(foo = value))
+      withContext(ClientId("remote-save-test").asContextElement()) {
+        store.save(forceSavingAllSettings = true)
+      }
+      assertThat(file).doesNotExist()
+      assertThat(data.get("TestState.foo")).isEqualTo(JsonPrimitive(value))
+    }
 
     store.save(forceSavingAllSettings = false)
     assertThat(JDOMUtil.load(file)).isEqualTo("""
       <application>
-        <component name="TestState" foo="new" />
+        <component name="TestState" foo="latest" />
       </application>
     """.trimIndent())
 
@@ -242,27 +206,6 @@ class ControllerBackedStoreTest {
 
     store.save(forceSavingAllSettings = false)
     assertThat(file).doesNotExist()
-  }
-
-  @Test
-  @RegistryKey(key = "store.save.use.modificationCount", value = "true")
-  fun `repeated remote saves preserve the latest pending local value`(): Unit = timeoutRunBlocking(context = ClientId.localId.asContextElement()) {
-    val store = createRemoteSaveStore()
-    val component = ControllerTestComponent()
-    store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    for (value in listOf("first", "latest")) {
-      component.update(ControllerTestState(foo = value))
-      withContext(ClientId("remote-save-test").asContextElement()) {
-        store.save(forceSavingAllSettings = true)
-      }
-      assertThat(data.get("TestState.foo")).isEqualTo(JsonPrimitive(value))
-      assertThat(appConfig.resolve(TEST_COMPONENT_FILE_NAME)).doesNotExist()
-    }
-
-    store.save(forceSavingAllSettings = false)
-    val reloaded = ControllerTestComponent()
-    createStore { GetResult.inapplicable() }.initComponent(reloaded, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    assertThat(reloaded.state.foo).isEqualTo("latest")
   }
 
   @Test
