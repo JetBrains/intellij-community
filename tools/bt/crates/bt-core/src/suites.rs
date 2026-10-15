@@ -130,6 +130,10 @@ pub fn affected_answer(area: &Area, documents: &[SuiteDocument], via: &Via, unma
     let mut lane_names = BTreeSet::new();
     for (&index, reasons) in via {
         let document = &documents[index];
+        // A changed path or a flow never reaches a suite of an explicit-only lane (ADR 0200).
+        if document.is_explicit_only(lanes) {
+            continue;
+        }
         let Some(lane) = document.lane_name(lanes) else {
             return Err(fail_infra(format!(
                 "suite {} declares lane {}, which the lane table {} does not declare; it declares {}",
@@ -322,12 +326,30 @@ pub fn named_suites(runtime: &dyn Runtime, area: &Area, selector: &Selector) -> 
                 ),
             ));
         };
+        let document = &documents[suite];
+        if document.is_explicit_only(area.lanes()) {
+            let lane = document.lane_name(area.lanes()).unwrap_or_default();
+            return Err(Refusal::new(
+                "explicit_only_lane",
+                exit::USAGE,
+                format!(
+                    "the suite {} belongs to the explicit-only lane {lane}, which no suite id, flow or changed path \
+                     reaches; run it with --lane {lane}",
+                    selector.name
+                ),
+            ));
+        }
         note_via(&mut via, suite, format!("suite:{}", selector.name));
         return affected_answer(area, &documents, &via, Vec::new());
     }
 
     let by_flow = suites_by_flow(&documents);
-    for &suite in by_flow.get(&selector.name).into_iter().flatten() {
+    let reached = by_flow
+        .get(&selector.name)
+        .into_iter()
+        .flatten()
+        .filter(|&&suite| !documents[suite].is_explicit_only(area.lanes()));
+    for &suite in reached {
         note_via(&mut via, suite, format!("flow:{}", selector.name));
     }
     if !via.is_empty() {

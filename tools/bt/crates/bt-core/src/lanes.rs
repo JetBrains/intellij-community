@@ -98,6 +98,11 @@ pub struct LaneSpec {
     /// The flow catalog's name for this lane (`UI_REAL`), for an IDE-launching lane.
     #[serde(default)]
     pub catalog_lane: Option<String>,
+    /// The flow catalog's name for the suites of an explicit-only lane (`UI_PERF`). A suite document of this lane
+    /// belongs to the lane, and no changed path, flow or suite id reaches it (ADR 0200). A lane states this or
+    /// [`LaneSpec::catalog_lane`], never both.
+    #[serde(default)]
+    pub document_lane: Option<String>,
     /// The one test target of an IDE-launching lane, for a caller that has a resolved label and asks whose lane
     /// it is.
     #[serde(default)]
@@ -172,7 +177,36 @@ impl Lanes {
             return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
         }
         lanes.check_tags()?;
+        lanes.check_document_lanes()?;
         Ok(lanes)
+    }
+
+    /// Refuses a lane that is reached and explicit-only at once, a document lane of a lane that launches no IDE, and a
+    /// suite lane that two lanes name.
+    fn check_document_lanes(&self) -> Result<(), String> {
+        let mut named = BTreeSet::new();
+        for lane in &self.lanes {
+            if let Some(document_lane) = &lane.document_lane {
+                if lane.catalog_lane.is_some() {
+                    return Err(format!(
+                        "the lane {} states catalogLane and documentLane; a lane is reached or explicit-only, never both",
+                        lane.name
+                    ));
+                }
+                if lane.integration_tag.is_none() {
+                    return Err(format!(
+                        "the lane {} states the documentLane {document_lane} and launches no IDE",
+                        lane.name
+                    ));
+                }
+            }
+            for suite_lane in lane.catalog_lane.iter().chain(&lane.document_lane) {
+                if !named.insert(suite_lane.as_str()) {
+                    return Err(format!("two lanes name the suite lane {suite_lane}"));
+                }
+            }
+        }
+        Ok(())
     }
 
     /// The tags and the lanes agree: each tag is described once, a lane tag names a described category and a lane
@@ -259,6 +293,14 @@ impl Lanes {
     /// The lane the flow catalog calls `UI`, `UI_REAL` or `GUI_CHAT`.
     pub fn by_catalog_lane(&self, catalog_lane: &str) -> Option<&LaneSpec> {
         self.lanes.iter().find(|lane| lane.catalog_lane.as_deref() == Some(catalog_lane))
+    }
+
+    /// The lane of a suite document whose lane is `suite_lane`: a catalog lane, or the document lane of an
+    /// explicit-only lane.
+    pub fn by_suite_lane(&self, suite_lane: &str) -> Option<&LaneSpec> {
+        self.lanes
+            .iter()
+            .find(|lane| lane.catalog_lane.as_deref() == Some(suite_lane) || lane.document_lane.as_deref() == Some(suite_lane))
     }
 
     /// Every catalog lane name, sorted.

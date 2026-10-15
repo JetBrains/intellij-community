@@ -582,6 +582,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - A plan for one scenario of a class that runs several says so. Both runners select a whole class.
   [@test] ../crates/air-trace/src/plan/tests.rs
 
+- The planner plans a suite of an explicit-only lane when its own class names it. Its warning names the cost of the
+  lane. Each scenario of `ui-live` spends a billed turn, and another lane runs only when a caller names it.
+  [@test] ../crates/air-trace/src/plan/tests.rs (`an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run`)
+
 - The planner answers commands and never starts a run. The exit is 0 when it reached something, 3 when it
   reached nothing, 2 for usage, and 1 for an unreadable checkout.
   [@test] ../crates/air-trace/src/plan/tests.rs

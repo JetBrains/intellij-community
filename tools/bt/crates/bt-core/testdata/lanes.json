@@ -165,6 +165,7 @@
       ],
       "shards": 1,
       "integrationTag": "air-integration-ui-live",
+      "documentLane": "UI_LIVE",
       "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test"
     },
     {
@@ -174,6 +175,7 @@
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-perf",
+      "documentLane": "UI_PERF",
       "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test"
     },
     {

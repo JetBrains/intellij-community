@@ -309,6 +309,13 @@ The generator publishes the suite facts that the controller reads, as
   [@test] ../../bt/crates/bt-core/src/lanes/tests.rs (`the_parser_refuses_a_document_lane_that_contradicts_its_lane`)
   [@test] ../crates/avl-affected/src/affected/tests.rs (`a_harness_path_reaches_no_suite_of_an_explicit_only_lane`)
 
+- The lane table names the document lane of each explicit-only lane, `UI_PERF` for `ui-perf`. A changed path, a flow
+  and a suite id never reach a suite of such a lane. A suite id of one is refused as `explicit_only_lane`, and the
+  refusal names `--lane <lane>`. The table refuses a lane that states both a catalog lane and a document lane.
+  [@test] ../../bt/crates/bt-core/src/suites/tests.rs (`no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane`)
+  [@test] ../../bt/crates/bt-core/src/lanes/tests.rs (`the_parser_refuses_a_document_lane_that_contradicts_its_lane`)
+  [@test] ../crates/avl-affected/src/affected/tests.rs (`a_harness_path_reaches_no_suite_of_an_explicit_only_lane`)
+
 - An unknown flow id or suite id is refused as `usage`, and the refusal names the nearest known ids. A story
   flow which no generated suite tests is refused as `no_affected_suite`, with the reason "no e2e suite tests
   this flow". The two refusals come before a build and before a lease.

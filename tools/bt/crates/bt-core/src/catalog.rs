@@ -80,10 +80,16 @@ pub struct Instruction {
 }
 
 impl SuiteDocument {
-    /// The lane table's name for the suite's lane (`ui-real` for `UI_REAL`), or `None` for a lane it does not
-    /// declare.
+    /// The lane table's name for the suite's lane (`ui-real` for `UI_REAL`, `ui-perf` for `UI_PERF`), or `None` for a
+    /// lane it does not declare.
     pub fn lane_name<'l>(&self, lanes: &'l Lanes) -> Option<&'l str> {
-        lanes.by_catalog_lane(&self.lane).map(|lane| lane.name.as_str())
+        lanes.by_suite_lane(&self.lane).map(|lane| lane.name.as_str())
+    }
+
+    /// Whether the suite belongs to an explicit-only lane, whose suites no changed path, flow or suite id reaches
+    /// (ADR 0200).
+    pub fn is_explicit_only(&self, lanes: &Lanes) -> bool {
+        lanes.by_suite_lane(&self.lane).is_some_and(|lane| lane.document_lane.is_some())
     }
 }
 

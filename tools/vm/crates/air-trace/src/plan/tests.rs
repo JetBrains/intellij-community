@@ -14,7 +14,7 @@ use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::cli::run_plan;
-use super::commands::{BILLED_WARNING, HOST_WARNING, render, vm_run};
+use super::commands::{BILLED_WARNING, EXPLICIT_WARNING, HOST_WARNING, explicit_only, explicit_warning, render, vm_run};
 use super::names::git_list_files;
 use super::*;
 
@@ -158,7 +158,13 @@ fn every_committed_class_plans_its_suites_scenarios() {
             vec![format!("./community/tools/bt.cmd {}", document.test_class_name)],
             "{suite}"
         );
-        assert_eq!(host.warning.as_deref(), Some(HOST_WARNING), "{suite}");
+        // A suite of an explicit-only lane is planned when its own class names it, with the warning of its lane.
+        let warning = if explicit_only(lane) {
+            format!("{HOST_WARNING}; {}", explicit_warning(lane))
+        } else {
+            HOST_WARNING.to_owned()
+        };
+        assert_eq!(host.warning.as_deref(), Some(warning.as_str()), "{suite}");
         assert!(HOST_WARNING.contains("takes your screen"));
         // The fully qualified spelling is the same class.
         let qualified = plan(
@@ -269,6 +275,14 @@ fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
              | ./community/tools/vm.cmd run AirLiveLaneEnvironmentUiTest --test-env AIR_LIVE_CENTRAL_LOGIN=@-\n"
         ),
         "{text}"
+    );
+
+    let perf = plan_classes(&[("AirLongSessionPerformanceUiTest", "ui-perf")]);
+    let perf_host = command_of(&perf, CommandKind::Host, "ui-perf");
+    assert_eq!(
+        perf_host.warning.as_deref(),
+        Some(format!("{HOST_WARNING}; {EXPLICIT_WARNING}").as_str()),
+        "the perf lane is explicit-only, and its scenarios spend no billed turn"
     );
 
     let ui = command_of(&result, CommandKind::Vm, "ui");

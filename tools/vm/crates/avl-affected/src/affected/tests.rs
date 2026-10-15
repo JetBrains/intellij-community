@@ -559,6 +559,25 @@ fn a_harness_path_reaches_every_suite_of_every_lane() {
     }
 }
 
+/// A harness path reaches every suite of every lane, and still never a suite of an explicit-only lane (ADR 0200). Its
+/// document maps to its lane, so the join refuses no lane, and the answer leaves the suite out.
+#[test]
+fn a_harness_path_reaches_no_suite_of_an_explicit_only_lane() {
+    let fake = FakeRuntime::with_tree(&harness_tree());
+    fake.put(
+        &document_path("long-session-performance"),
+        &suite_document_text(
+            "long-session-performance",
+            "UI_PERF",
+            "AirLongSessionPerformanceUiTest",
+            "flow-manage-launch-preset",
+        ),
+    );
+    let affected = affected_of(&fake, &["plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt"]);
+    assert_eq!(classes_of(&affected), format!("{LAUNCH_PRESET_BOTH},{TERMINAL}"));
+    assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
+}
+
 /// A file without a module of its own belongs to the module above it. For a lane `.bzl` rule that is the root
 /// integration module, which serves every lane.
 #[test]

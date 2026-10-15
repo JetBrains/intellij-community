@@ -16,9 +16,16 @@ const BT_WRAPPER: &str = "./community/tools/bt.cmd";
 pub(crate) const HOST_WARNING: &str = "takes your screen: the lane launches a real IDE on this machine's display, \
                                        which holds the pointer and the focus until it finishes";
 
-/// What a run of an explicit-only lane costs beyond its time, on either side.
+/// What a run of the live lane costs beyond its time, on either side.
 pub(crate) const BILLED_WARNING: &str = "explicit-only: every scenario spends a billed turn on a real account, so no \
                                          --changed, suites, shard or flake runs it";
+
+/// What a run of another explicit-only lane, such as ui-perf, costs beyond its time.
+pub(crate) const EXPLICIT_WARNING: &str = "explicit-only: the lane runs only when a caller names it, so no --changed, \
+                                           suites, shard or flake runs it";
+
+/// The live lane, whose scenarios spend billed turns on a real account and whose guest run needs the Central login.
+const LIVE_LANE: &str = "ui-live";
 
 /// The run input of the live lane's guest run, and the host command whose output it is: the developer's own Central
 /// session, piped into the run so no file on the host holds it (ADR 0200).
@@ -26,15 +33,20 @@ const LIVE_LOGIN_INPUT: &str = "AIR_LIVE_CENTRAL_LOGIN";
 const LIVE_LOGIN_SOURCE: &str = "central login export";
 
 /// Whether the lane runs only when a caller names it: the lane table gives it no catalog lane.
-fn explicit_only(lane: &str) -> bool {
+pub(crate) fn explicit_only(lane: &str) -> bool {
     avl_affected::ui_lane(lane).is_ok_and(|lane| lane.explicit_only)
+}
+
+/// The warning of an explicit-only lane: the billed turns of the live lane, and the explicit selection of another.
+pub(crate) fn explicit_warning(lane: &str) -> &'static str {
+    if lane == LIVE_LANE { BILLED_WARNING } else { EXPLICIT_WARNING }
 }
 
 /// The guest run's input of a lane that needs one, as the pipe that feeds it and the `--test-env` that names it.
 ///
 /// Only the live lane has one. Without it the guest run of that lane fails, naming the input.
 fn guest_input(lane: &str) -> Option<(&'static str, String)> {
-    (lane == "ui-live").then(|| (LIVE_LOGIN_SOURCE, format!("--test-env {LIVE_LOGIN_INPUT}=@-")))
+    (lane == LIVE_LANE).then(|| (LIVE_LOGIN_SOURCE, format!("--test-env {LIVE_LOGIN_INPUT}=@-")))
 }
 
 /// The host passthroughs of a lane, as `bt` takes them for one class: only `--lane` applies the lane's `extra`, so a
@@ -97,14 +109,14 @@ impl Planner<'_> {
                 kind: CommandKind::Vm,
                 title: format!("the {lane} lane on {guest}{kind} ({} class(es))", classes.len()),
                 lines,
-                warning: explicit.then(|| BILLED_WARNING.to_owned()),
+                warning: explicit.then(|| explicit_warning(lane).to_owned()),
             });
             commands.push(Command {
                 kind: CommandKind::Host,
                 title: format!("the {lane} lane on this machine{kind} ({} class(es))", classes.len()),
                 lines: classes.iter().map(|class| host_run(class, &passthroughs)).collect(),
                 warning: Some(if explicit {
-                    format!("{HOST_WARNING}; {BILLED_WARNING}")
+                    format!("{HOST_WARNING}; {}", explicit_warning(lane))
                 } else {
                     HOST_WARNING.to_owned()
                 }),
