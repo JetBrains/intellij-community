@@ -976,7 +976,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         LOG.warn("The node provider $nodeProvider returned ${roots.size} roots. This is not supported, only the first root will be used")
       }
       val root = roots.first()
-      val rootModel = getOrCreateNodeModel(root) ?: return null
+      val rootModel = createNewModel(root) ?: return null
       setChildrenModels(parent = null, listOf(rootModel))
       return rootModel
     }
@@ -1020,7 +1020,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       var effectiveOptions = updateOptions
       var newNodeModel: BackendProjectViewNodeModel<T>?
       while (true) {
-        newNodeModel = createUpdatedModel(node)
+        newNodeModel = createUpdatedModel(node.id, node.userObject)
         if (newNodeModel != null) break
         // A structural update like this can happen, for example, if there was some restructuring of a subtree.
         // For example, we had "org.example", and created "org.something", which means "org.example" no longer exists as a single flattened node,
@@ -1091,7 +1091,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
       if (oldModels == null) { // first time loaded, must send even if empty
         LOG.trace { "The children were loaded for the first time, applying as-is" }
-        setChildren(parentModel, newChildren)
+        setNewChildren(parentModel, newChildren)
         return
       }
 
@@ -1102,7 +1102,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
       if (oldModels.isEmpty()) { // empty -> non-empty
         LOG.trace { "The children list becomes non-empty" }
-        setChildren(parentModel, newChildren)
+        setNewChildren(parentModel, newChildren)
         return
       }
 
@@ -1133,7 +1133,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         }
         else {
           updated = true
-          updateModel(oldModel, newChild)
+          createUpdatedModel(oldModel.id, newChild)
         }
         if (newModel == null) { // null means it was invalidated before we even managed to build its model
           if (oldModel != null) { // we thought it was just updated, but since it's invalid now, it's effectively removed
@@ -1178,44 +1178,25 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       }
     }
 
-    private suspend fun getOrCreateNodeModel(node: T): BackendProjectViewNodeModel<T>? {
-      val existingModel = suspendingState.getNodeByUserObject(node)
-      if (existingModel != null) return existingModel
-      return createNewModel(node)
-    }
-
     private suspend fun createNewModel(node: T): BackendProjectViewNodeModel<T>? {
       val id = nextId++
-      return createNodeModel(id, node)
+      // Return the first value, compute the full presentation async.
+      val computation = NodeModelComputation(id, node)
+      modelComputations[id] = computation
+      return computation.firstValue()
     }
 
-    private suspend fun createUpdatedModel(node: BackendProjectViewNodeModel<T>): BackendProjectViewNodeModel<T>? {
-      if (node.id == SUPER_ROOT_ID) return state.getNodeById(SUPER_ROOT_ID) // immutable, reuse (and avoid NPE, because userObject is null)
-      return createNodeModel(node.id, node.userObject)
-    }
-
-    private suspend fun updateModel(oldModel: BackendProjectViewNodeModel<T>, newNode: T): BackendProjectViewNodeModel<T>? {
-      return createNodeModel(oldModel.id, newNode)
-    }
-
-    private suspend fun createNodeModel(id: Long, node: T): BackendProjectViewNodeModel<T>? {
+    private suspend fun createUpdatedModel(id: Long, node: T): BackendProjectViewNodeModel<T>? {
+      // The super root is immutable, reuse it. And avoid possible exceptions because of an unusual userObject.
+      if (id == SUPER_ROOT_ID) return state.getNodeById(SUPER_ROOT_ID)
       modelComputations.remove(id)?.cancelAndJoin()
-      val existingModel = suspendingState.getNodeByUserObject(node)
-      if (existingModel == null) {
-        // Return the first value, compute the full presentation async.
-        val computation = NodeModelComputation(id, node)
-        modelComputations[id] = computation
-        return computation.firstValue()
-      }
-      else {
-        // When updating an existing presentation, skip draft ones to prevent flickering
-        // (old full presentation -> new draft presentation -> new full presentation).
-        return nodeProvider.getNodeModelFlow(id, node).lastOrNull()
-      }
+      // When updating an existing presentation, skip draft ones to prevent flickering
+      // (old full presentation -> new draft presentation -> new full presentation).
+      return nodeProvider.getNodeModelFlow(id, node).lastOrNull()
     }
 
-    private suspend fun setChildren(parent: ProjectViewNodeModelImpl<T>?, children: List<T>) {
-      setChildrenModels(parent, children.mapNotNull { getOrCreateNodeModel(it) })
+    private suspend fun setNewChildren(parent: ProjectViewNodeModelImpl<T>?, children: List<T>) {
+      setChildrenModels(parent, children.mapNotNull { createNewModel(it) })
     }
 
     private suspend fun setChildrenModels(parent: ProjectViewNodeModelImpl<T>?, children: List<BackendProjectViewNodeModel<T>>) {
