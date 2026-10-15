@@ -3,8 +3,12 @@ package com.intellij.searchEverywhereMl
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.VERSION
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption
 import com.intellij.util.MathUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -80,6 +84,34 @@ object SearchEverywhereMlExperiment {
     val mlseLogConfiguration = EventLogConfiguration.getInstance().getOrCreate(MLSE_RECORDER_ID)
     // experiment groups get updated on the VERSION property change:
     MathUtil.nonNegativeAbs((mlseLogConfiguration.deviceId + VERSION).hashCode()) % NUMBER_OF_GROUPS
+  }
+
+  /**
+   * Overrides [isNoMlSortingPlatformAbExperimentGroup] for testing purposes.
+   * A null value means that the platform A/B experiment decides.
+   */
+  @TestOnly
+  var noMlSortingAbPlatformExperimentGroupOverride: Boolean? = null
+
+  /**
+   * Indicates whether the user is in the experiment group of the platform A/B experiment
+   * [ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING].
+   */
+  val isNoMlSortingPlatformAbExperimentGroup: Boolean
+    get() = noMlSortingAbPlatformExperimentGroupOverride
+            ?: SearchEverywhereMlRegistry.forcedNoMlSortingExperimentDecision
+            ?: noMlSortingAbPlatformExperimentDecision
+
+  private val noMlSortingAbPlatformExperimentDecision: Boolean by lazy {
+    !ApplicationManager.getApplication().isUnitTestMode && ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING.isEnabled()
+  }
+
+  internal class NoMlSortingPlatformAbExperimentInitializer : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      withContext(Dispatchers.IO) {
+        noMlSortingAbPlatformExperimentDecision
+      }
+    }
   }
 
   sealed interface ExperimentType {

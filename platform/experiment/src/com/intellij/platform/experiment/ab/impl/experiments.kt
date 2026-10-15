@@ -25,6 +25,7 @@ enum class ABExperimentOption {
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
   CLION_WIZARD_REMOVAL,
+  SEARCH_EVERYWHERE_NO_ML_SORTING,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -76,6 +77,12 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
     controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
     majorVersion = "2026.2",
     products = EnumSet.of(IntelliJPlatformProduct.CLION),
+  ),
+  ExperimentAssignment(
+    experiment = ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING,
+    experimentBuckets = (0 until 103).toSet(),
+    controlBuckets = (103 until 1024).toSet(),
+    majorVersion = "2026.3 EAP",
   ),
   // the rest belongs to the "unassigned" experiment
 )

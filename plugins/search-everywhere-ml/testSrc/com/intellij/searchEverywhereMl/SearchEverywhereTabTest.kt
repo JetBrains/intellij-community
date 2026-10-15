@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl
 
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -73,6 +74,53 @@ internal class SearchEverywhereTabTest : BasePlatformTestCase() {
     Assert.assertFalse(tab.isMlRankingEnabled)
   }
 
+  fun `test no ml sorting ab experiment disables ml ranking if it was enabled by default`() {
+    for (tab in tabsWithMlRankingByDefault()) {
+      SearchEverywhereMlExperiment.noMlSortingAbPlatformExperimentGroupOverride = false
+      val experimentType = tab.currentExperimentType
+      Assert.assertTrue(tab.tabId, tab.isMlRankingEnabled)
+
+      SearchEverywhereMlExperiment.noMlSortingAbPlatformExperimentGroupOverride = true
+      Assert.assertFalse(tab.tabId, tab.isMlRankingEnabled)
+      // The settings UI reads the experiment type, so the platform A/B experiment must not change it
+      Assert.assertEquals(tab.tabId, experimentType, tab.currentExperimentType)
+    }
+  }
+
+  fun `test registry key forces the no ml sorting experiment decision`() {
+    val tabs = tabsWithMlRankingByDefault()
+    val registryValue = Registry.get(SearchEverywhereMlRegistry.FORCE_NO_ML_SORTING_EXPERIMENT_DECISION_KEY)
+
+    // In unit test mode, the platform A/B experiment puts the user in the ML group
+    for ((value, isNoMlGroup) in listOf(1 to true, -1 to false, 0 to false)) {
+      registryValue.setValue(value, testRootDisposable)
+
+      Assert.assertEquals("registry value $value", isNoMlGroup, SearchEverywhereMlExperiment.isNoMlSortingPlatformAbExperimentGroup)
+      for (tab in tabs) {
+        Assert.assertEquals("${tab.tabId}, registry value $value", !isNoMlGroup, tab.isMlRankingEnabled)
+      }
+    }
+  }
+
+  private fun tabsWithMlRankingByDefault(): List<SearchEverywhereTab.TabWithMlRanking> {
+    val tabs = listOf(SearchEverywhereTab.Actions, SearchEverywhereTab.Classes, SearchEverywhereTab.Files)
+    maskAdvancedSettingDefaults(tabs.associateWith { true })
+    for (tab in tabs) {
+      AdvancedSettings.setBoolean(tab.advancedSettingKey, true)
+    }
+    return tabs
+  }
+
+  private fun maskAdvancedSettingDefaults(defaults: Map<SearchEverywhereTab.TabWithMlRanking, Boolean>) {
+    val settings = defaults.map { (tab, defaultValue) ->
+      AdvancedSettingBean().apply {
+        id = tab.advancedSettingKey
+        this.defaultValue = defaultValue.toString()
+      }
+    }
+    ExtensionTestUtil.maskExtensions(AdvancedSettingBean.EP_NAME, settings, testRootDisposable)
+  }
+
   private fun SearchEverywhereTab.Companion.findTabWithActiveExperiment(experimentCondition: (ActiveExperiment) -> Boolean): Pair<SearchEverywhereTab.TabWithMlRanking, Int>? {
    return SearchEverywhereTab.tabsWithLogging
      .asSequence()
@@ -98,5 +146,6 @@ internal class SearchEverywhereTabTest : BasePlatformTestCase() {
   override fun tearDown() {
     super.tearDown()
     SearchEverywhereMlExperiment.experimentGroupOverride = null
+    SearchEverywhereMlExperiment.noMlSortingAbPlatformExperimentGroupOverride = null
   }
 }

@@ -18,6 +18,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.experiment"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
@@ -48,6 +49,9 @@
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="0"
+                 description="Overrides the group of the no ML sorting A/B experiment. 1 forces the no ML group, -1 forces the ML group, 0 keeps the computed group."
+                 key="search.everywhere.force.no.ml.sorting.experiment.decision"/>
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
@@ -96,6 +100,7 @@
       implementation="com.intellij.searchEverywhereMl.SearchEverywhereEventLoggerProvider"
       order="first"/>
     <applicationSettings service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment$NoMlSortingPlatformAbExperimentInitializer"/>
   </extensions>
 
   <extensionPoints>

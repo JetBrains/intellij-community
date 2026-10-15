@@ -8,6 +8,21 @@ object SearchEverywhereMlRegistry {
   val experimentGroupNumber: Int
     get() = Registry.intValue(EXPERIMENT_GROUP_KEY, -1, -1, SearchEverywhereMlExperiment.NUMBER_OF_GROUPS - 1)
 
+  @VisibleForTesting
+  const val FORCE_NO_ML_SORTING_EXPERIMENT_DECISION_KEY: String = "search.everywhere.force.no.ml.sorting.experiment.decision"
+
+  /**
+   * Overrides [SearchEverywhereMlExperiment.isNoMlSortingPlatformAbExperimentGroup].
+   * The registry value 1 gives `true`, -1 gives `false`, and 0 gives `null`.
+   * A null value means that the platform A/B experiment decides.
+   */
+  val forcedNoMlSortingExperimentDecision: Boolean?
+    get() = when (Registry.intValue(FORCE_NO_ML_SORTING_EXPERIMENT_DECISION_KEY, 0, -1, 1)) {
+      1 -> true
+      -1 -> false
+      else -> null
+    }
+
   private const val DISABLE_LOGGING_KEY = "search.everywhere.force.disable.logging.ml"
   val disableLogging: Boolean
     get() = Registry.`is`(DISABLE_LOGGING_KEY,  false)
