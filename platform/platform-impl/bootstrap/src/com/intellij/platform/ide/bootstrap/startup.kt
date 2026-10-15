@@ -664,7 +664,16 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
   log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
+  log.info("Dispatchers.Default parallelism: ${coroutineDefaultDispatcherParallelism(cores)}")
 }
+
+/**
+ * Mirrors the `kotlinx.coroutines` scheduler: the `kotlinx.coroutines.scheduler.core.pool.size` property wins,
+ * otherwise the pool size is the CPU count, but at least 2.
+ */
+private fun coroutineDefaultDispatcherParallelism(cores: Int): Int =
+  // Kotlin coroutines do not provide a way to get the effective parallelism, so it is recalculated
+  System.getProperty("kotlinx.coroutines.scheduler.core.pool.size")?.trim()?.toIntOrNull() ?: maxOf(2, cores)
 
 private fun logEnvVar(log: Logger, variable: String) {
   System.getenv(variable)?.let {
