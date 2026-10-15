@@ -47,10 +47,12 @@ rebase, stash, or cherry-pick. It refuses only when the current checkout itself 
 one checkout can hold several leases.
 
 Treehouse copies the ignored files that `.worktreeinclude` in the root of the caller lists, for
-example `.claude/settings.local.json`. A return removes them. On macOS, a fresh workspace shares
-its large tracked files with the main checkout as APFS copy-on-write clones. Set
-`TREEHOUSE_APFS_SHARING=off` to stop that. The `native_stderr` field of the result holds the
-diagnostics of Treehouse.
+example `.claude/settings.local.json`. A return removes them. The `native_stderr` field of the
+result holds the diagnostics of Treehouse.
+
+A fresh workspace is a full checkout, and the acquire waits for it. The wrapper keeps the APFS
+sharing of Treehouse off. That sharing walks every tracked file after the checkout, and in the
+Ultimate monorepo the walk took over 40 minutes. Do not set `TREEHOUSE_APFS_SHARING=fresh`.
 
 The receipt is `out/treehouse/lease.json` inside the acquired workspace. It has schema version 2
 and records the captured `source_head`. Both repository layouts ignore `out/`. Do not edit, move,

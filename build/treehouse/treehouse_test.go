@@ -134,12 +134,11 @@ func TestWriteAcquireForcesTheDetachButNeverForcesTheCLI(t *testing.T) {
 	assertQueueDrained(t, rt)
 }
 
-// The source checkout names its seed manifest, and macOS asks for APFS sharing, unless
-// TREEHOUSE_APFS_SHARING already decides it.
-func TestWriteAcquireAddsTheSeedManifestAndApfsSharing(t *testing.T) {
+// The source checkout names its seed manifest. No host asks for APFS sharing: the full tree walk
+// of a fresh slot took over 40 minutes in the ultimate monorepo.
+func TestWriteAcquireAddsTheSeedManifestOnly(t *testing.T) {
 	base := []string{"treehouse", "get", "--lease", "--json", "--no-fetch", "--lease-holder", "agent-session"}
 	manifest := []string{"--include-file", testRoot + "/.worktreeinclude"}
-	sharing := []string{"--apfs-sharing", "fresh"}
 	cases := []struct {
 		name     string
 		os       string
@@ -149,9 +148,9 @@ func TestWriteAcquireAddsTheSeedManifestAndApfsSharing(t *testing.T) {
 	}{
 		{"linux without a manifest", "linux", nil, false, nil},
 		{"linux with a manifest", "linux", nil, true, [][]string{manifest}},
-		{"macOS", "darwin", nil, false, [][]string{sharing}},
-		{"macOS with a manifest", "darwin", nil, true, [][]string{manifest, sharing}},
-		{"macOS with the variable", "darwin", map[string]string{"TREEHOUSE_APFS_SHARING": "off"}, false, nil},
+		{"macOS", "darwin", nil, false, nil},
+		{"macOS with a manifest", "darwin", nil, true, [][]string{manifest}},
+		{"macOS with the variable", "darwin", map[string]string{"TREEHOUSE_APFS_SHARING": "fresh"}, false, nil},
 	}
 	for _, item := range cases {
 		t.Run(item.name, func(t *testing.T) {

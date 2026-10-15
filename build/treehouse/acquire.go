@@ -314,17 +314,13 @@ const worktreeIncludeName = ".worktreeinclude"
 // manifest at the HEAD of the slot before the detach, and that HEAD can be older than the
 // HEAD of the caller.
 //
-// `--apfs-sharing fresh` on macOS shares the large tracked files of a fresh slot with the
-// source checkout as copy-on-write clones. The flag overrides TREEHOUSE_APFS_SHARING, so the
-// wrapper leaves the flag out when the variable is set.
+// The command has no `--apfs-sharing`, so the APFS sharing of Treehouse stays at its default,
+// off. TREEHOUSE_APFS_SHARING=fresh reaches the CLI unchanged and turns it on.
 func acquireCommand(rt Runtime, root string, holder string) []string {
 	command := []string{treehouseCommandName, "get", "--lease", "--json", "--no-fetch", "--lease-holder", holder}
 	manifest := filepath.Join(root, worktreeIncludeName)
 	if _, err := rt.ReadTextFile(manifest); err == nil {
 		command = append(command, "--include-file", manifest)
-	}
-	if _, set := rt.Env("TREEHOUSE_APFS_SHARING"); !set && rt.OS() == "darwin" {
-		command = append(command, "--apfs-sharing", "fresh")
 	}
 	return command
 }
