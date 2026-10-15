@@ -40,12 +40,10 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     myGrouped = grouped;
   }
 
-  @RequiresReadLock
   public @Nullable IProperty getProperty() {
     return getPsiElement() != null ? myProperty : null;
   }
 
-  @RequiresReadLock
   public @Nullable PsiElement getPsiElement() {
     PsiElement element = myProperty.getPsiElement();
     return element.isValid() ? element : null;

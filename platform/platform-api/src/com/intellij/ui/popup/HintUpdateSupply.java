@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
@@ -122,10 +123,13 @@ public abstract class HintUpdateSupply {
 
         TreePath path = tree.getSelectionPath();
         if (path != null) {
-          final PsiElement psiElement = getPsiElementForHint(path.getLastPathComponent());
-          if (psiElement != null && psiElement.isValid()) {
-            updateHint(psiElement);
-          }
+          PsiVersioningService.freezePsiVersion(() -> {
+            final PsiElement psiElement = getPsiElementForHint(path.getLastPathComponent());
+            if (psiElement != null && psiElement.isValid()) {
+              updateHint(psiElement);
+            }
+            return null;
+          });
         }
       }
     });
