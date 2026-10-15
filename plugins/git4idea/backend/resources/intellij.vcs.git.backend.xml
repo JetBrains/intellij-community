@@ -1006,6 +1006,7 @@
                         isInCommitToolWindow="false"/>
     <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
     <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
+    <editorNotificationProvider implementation="git4idea.workingTrees.GitWorktreeIncludeEditorNotificationProvider"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
