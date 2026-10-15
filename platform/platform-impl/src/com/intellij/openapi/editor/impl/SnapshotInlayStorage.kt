@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import it.unimi.dsi.fastutil.longs.LongLists
 
@@ -33,7 +33,7 @@ internal class SnapshotInlayStorage(
   private val editor: EditorImpl,
   val document: DocumentImpl,
 ) {
-  private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = Java11Shim.createConcurrentLongObjectMap()
+  private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::saveInvalidatedMarkers,

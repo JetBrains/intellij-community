@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.CustomFoldRegionRendererEx
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.FoldRegion
@@ -25,7 +26,6 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import java.awt.Point
 import java.util.Arrays
@@ -39,7 +39,7 @@ internal class SnapshotFoldingRegionStorage(
   internal val editor: EditorImpl,
   val document: DocumentImpl,
 ) : FoldingRegionStorage {
-  private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = Java11Shim.createConcurrentLongObjectMap()
+  private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   private val foldRegionMarkerPolicy: MarkerPolicy = FoldRegionMarkerPolicy {
     model.setComplexDocumentChange(true)
   }

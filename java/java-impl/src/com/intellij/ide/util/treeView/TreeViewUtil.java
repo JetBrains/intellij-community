@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.AnyPsiChangeListener;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ public final class TreeViewUtil {
     final Project project = aPackage.getProject();
     ConcurrentMap<PsiPackage, Boolean> map = project.getUserData(SHOULD_ABBREV_PACK_KEY);
     if (map == null) {
-      final ConcurrentMap<PsiPackage, Boolean> newMap = ContainerUtil.createConcurrentWeakMap();
+      final ConcurrentMap<PsiPackage, Boolean> newMap = ConcurrentCollectionFactory.createConcurrentWeakMap();
       map = ((UserDataHolderEx)project).putUserDataIfAbsent(SHOULD_ABBREV_PACK_KEY, newMap);
       if (map == newMap) {
         project.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {

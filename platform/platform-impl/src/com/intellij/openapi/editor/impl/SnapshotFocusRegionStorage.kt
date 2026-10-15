@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
@@ -11,14 +12,13 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 
 /** Stores focus regions for one editor without adding them to the document marker root. */
 internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   private val regionQueue: ReferenceQueue<SnapshotFocusRegion> = ReferenceQueue<SnapshotFocusRegion>()
-  private val regionsById: ConcurrentLongObjectMap<RegionReference> = Java11Shim.createConcurrentLongObjectMap()
+  private val regionsById: ConcurrentLongObjectMap<RegionReference> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document)
 
   fun dispose() {

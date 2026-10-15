@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +43,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +152,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private @NotNull Collection<PsiVariable> getVariablesToFix() {
     final Map<PsiVariable, Boolean> finalVars =
-      ConcurrencyUtil.computeIfAbsent(myContext, VARS[myFixType], () -> ContainerUtil.createConcurrentWeakMap());
+      ConcurrencyUtil.computeIfAbsent(myContext, VARS[myFixType], () -> ConcurrentCollectionFactory.createConcurrentWeakMap());
     return new AbstractCollection<>() {
       @Override
       public boolean add(PsiVariable psiVariable) {
