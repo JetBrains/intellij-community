@@ -119,7 +119,7 @@ internal class GitWorktreeConfigCategoriesPanel(
           val repository = getCurrentRepository()
           val includeIdeaSettings = !isIdeaConfigCommittedToGitBlocking(repository)
           val content = GitWorktreeIncludeFileService.generateWorktreeIncludeContent(includeIdeaSettings)
-          if (includeFileService.writeWorktreeIncludeFile(repository, content, includeIdeaSettings)) {
+          if (includeFileService.writeWorktreeIncludeFile(repository, content)) {
             openWorktreeIncludeFileAndClose()
           }
           else {

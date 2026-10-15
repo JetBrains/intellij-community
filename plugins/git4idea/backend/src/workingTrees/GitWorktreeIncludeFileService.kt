@@ -20,8 +20,8 @@ internal const val WORKTREE_INCLUDE_FILE_NAME: String = ".worktreeinclude"
 
 /**
  * File I/O for the New Worktree dialog's "Copy project config" section: creating and editing a repository's
- * `.worktreeinclude` file, plus the idea-settings AI-agent skill file that travels with it. Kept separate from
- * [git4idea.workingTrees.dialog.GitWorktreeConfigCategoriesPanel], which only builds and wires up the UI.
+ * `.worktreeinclude` file. Kept separate from [git4idea.workingTrees.dialog.GitWorktreeConfigCategoriesPanel],
+ * which only builds and wires up the UI.
  */
 @Service(Service.Level.PROJECT)
 internal class GitWorktreeIncludeFileService {
@@ -35,15 +35,6 @@ internal class GitWorktreeIncludeFileService {
      * section" locale-dependent too, and could silently duplicate the section.
      */
     private const val IDEA_SETTINGS_SECTION_MARKER: String = "# --- IntelliJ project settings, added automatically ---"
-
-    /** Directory, relative to the repository root, that holds [IDEA_SETTINGS_SKILL_FILE_NAME] for this project. */
-    internal const val IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH: String = ".claude/skills/worktree-idea-settings"
-
-    /** Name of the AI-agent skill file [ideaSettingsSkillFileContent] generates. */
-    internal const val IDEA_SETTINGS_SKILL_FILE_NAME: String = "SKILL.md"
-
-    /** Classloader path of [ideaSettingsSkillFileContent]'s resource, relative to this module's resource root. */
-    private const val IDEA_SETTINGS_SKILL_RESOURCE_PATH: String = "worktree/worktree-idea-settings-skill.md"
 
     /**
      * Name patterns for files that are typically local overrides, never meant to be committed. The list
@@ -66,7 +57,6 @@ internal class GitWorktreeIncludeFileService {
       ".idea/codeStyles/",
       ".idea/inspectionProfiles/",
       ".run/",
-      "$IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH/",
     )
 
     fun getInstance(project: Project): GitWorktreeIncludeFileService =
@@ -117,33 +107,20 @@ internal class GitWorktreeIncludeFileService {
       "$IDEA_SETTINGS_SECTION_MARKER\n" +
       GitBundle.message("working.tree.dialog.worktree.include.idea.settings.comment") + "\n" +
       IDEA_SETTINGS_NAME_PATTERNS.joinToString("\n") + "\n"
-
-    /**
-     * Content of the AI-agent skill file this project gets under [IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH] once
-     * its `.worktreeinclude` file includes idea settings.
-     */
-    internal fun ideaSettingsSkillFileContent(): String {
-      val resourceLoader = GitWorktreeIncludeFileService::class.java.classLoader
-      val stream = resourceLoader.getResourceAsStream(IDEA_SETTINGS_SKILL_RESOURCE_PATH)
-                   ?: error("Missing resource $IDEA_SETTINGS_SKILL_RESOURCE_PATH")
-      return stream.bufferedReader().use { it.readText() }
-    }
   }
 
   /**
-   * Writes a new `.worktreeinclude` file with [content] under [repository]'s root. Also writes this project's
-   * own copy of the idea-settings AI-agent skill file when [includeIdeaSettings] is `true`, so an agent working
-   * in this project can find and follow the manual copy procedure. Returns `true` on success; the file always
-   * lands at the fixed [WORKTREE_INCLUDE_FILE_NAME] path under [repository]'s root, so the caller already knows it.
+   * Writes a new `.worktreeinclude` file with [content] under [repository]'s root. Returns `true` on success;
+   * the file always lands at the fixed [WORKTREE_INCLUDE_FILE_NAME] path under [repository]'s root, so the
+   * caller already knows it.
    */
-  fun writeWorktreeIncludeFile(repository: GitRepository, content: String, includeIdeaSettings: Boolean): Boolean {
+  fun writeWorktreeIncludeFile(repository: GitRepository, content: String): Boolean {
     val root = repository.root
     val fileContent = GitBundle.message("working.tree.dialog.worktree.include.close.comment") + "\n" + content
     return try {
       runWriteAction {
         val newFile = root.createChildData(root, WORKTREE_INCLUDE_FILE_NAME)
         VfsUtil.saveText(newFile, fileContent)
-        if (includeIdeaSettings) ensureIdeaSettingsSkillFile(root)
       }
       true
     }
@@ -164,7 +141,6 @@ internal class GitWorktreeIncludeFileService {
       val updatedContent = appendIdeaSettingsSection(VfsUtil.loadText(file))
       runWriteAction {
         VfsUtil.saveText(file, updatedContent)
-        ensureIdeaSettingsSkillFile(root)
       }
       true
     }
@@ -172,17 +148,5 @@ internal class GitWorktreeIncludeFileService {
       LOG.warn("Failed to update $WORKTREE_INCLUDE_FILE_NAME under ${root.path}", e)
       false
     }
-  }
-
-  /**
-   * Writes this project's own idea-settings AI-agent skill file under [IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH],
-   * relative to [root], unless one is already there. Distinct from, and in addition to, any personal skill an
-   * agent's own user may have: this copy travels with the project, so any agent working in it can find it.
-   */
-  private fun ensureIdeaSettingsSkillFile(root: VirtualFile) {
-    val skillDir = VfsUtil.createDirectoryIfMissing(root, IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH)
-    if (skillDir.findChild(IDEA_SETTINGS_SKILL_FILE_NAME) != null) return
-    val skillFile = skillDir.createChildData(root, IDEA_SETTINGS_SKILL_FILE_NAME)
-    VfsUtil.saveText(skillFile, ideaSettingsSkillFileContent())
   }
 }
