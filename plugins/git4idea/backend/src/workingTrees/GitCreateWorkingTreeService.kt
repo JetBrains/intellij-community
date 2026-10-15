@@ -211,12 +211,19 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
             }
             GitWorkingTreeDialog.CREATE_WORKTREE_INCLUDE_EXIT_CODE -> {
               // The dialog already wrote the file and opened it for editing. Keep its field values, so the
-              // dialog can reopen with the same choices once that editor tab closes.
+              // dialog can reopen with the same choices once the user asks to return to it.
               currentDialogContext = currentDialogContext.copy(initialState = dialog.captureState())
-              dialog.worktreeIncludeFile?.let { waitForEditorClosed(project, it) }
-              // waitForEditorClosed also resumes when the project disposes first (see its doc comment), so
-              // that case must not be mistaken for "the editor tab closed" and reopen the dialog.
-              if (project.isDisposed) return@withContext
+              val targetFile = dialog.worktreeIncludeFile
+              val result = if (targetFile != null) {
+                waitForReturnToDialogAction(project, targetFile)
+              }
+              else {
+                WorktreeIncludeEditResult.ABORTED
+              }
+              // waitForReturnToDialogAction also resumes when the project disposes first (see its doc
+              // comment) or when the user closes the editor tab without clicking the banner action.
+              // In those cases, terminate the wizard loop instead of reopening the dialog.
+              if (project.isDisposed || result == WorktreeIncludeEditResult.ABORTED) return@withContext
             }
             else -> return@withContext
           }
@@ -226,30 +233,54 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   }
 
   /**
-   * Suspends until [file]'s editor tab is closed, or returns immediately if it isn't open. Teardown
-   * runs through a [Disposer]-registered [Disposable] so it also fires if [project] disposes first,
-   * instead of leaking the coroutine and its [com.intellij.util.messages.MessageBusConnection].
+   * Suspends until the user invokes the "Return to the dialog" action on [file]'s editor notification
+   * banner (see [GitWorktreeIncludeEditorNotificationProvider]) or closes the editor tab. Teardown runs
+   * through a [Disposer]-registered [Disposable] so it also fires if [project] disposes first, instead of leaking
+   * the coroutine.
    */
   @VisibleForTesting
-  @Suppress("SplitModeApiUsage")
-  internal suspend fun waitForEditorClosed(project: Project, file: VirtualFile) {
-    if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
-    suspendCancellableCoroutine { continuation ->
-      val connection = project.messageBus.connect()
-      val disposable = Disposable {
-        connection.disconnect()
-        if (continuation.isActive) continuation.resume(Unit)
-      }
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileClosed(source: FileEditorManager, closedFile: VirtualFile) {
-          if (closedFile == file) {
-            Disposer.dispose(disposable)
+  internal suspend fun waitForReturnToDialogAction(project: Project, file: VirtualFile): WorktreeIncludeEditResult {
+    val session = GitWorktreeIncludeEditingSessionService.getInstance(project)
+    // Registered under project so a project disposal still resumes the coroutine, but disposed in the `finally`
+    // below so it doesn't linger on the project's disposable tree once this call is done, e.g. after just closing
+    // the editor tab.
+    val disposable = Disposer.newDisposable()
+    try {
+      return suspendCancellableCoroutine { continuation ->
+        val connection = project.messageBus.connect()
+        var resumed = false
+
+        fun finish(result: WorktreeIncludeEditResult) {
+          if (resumed) return
+          resumed = true
+          session.clearPendingReturn(file)
+          connection.disconnect()
+          if (continuation.isActive) {
+            continuation.resume(result)
           }
         }
-      })
-      @Suppress("IncorrectParentDisposable")
-      Disposer.register(project, disposable)
-      continuation.invokeOnCancellation { Disposer.dispose(disposable) }
+
+        session.setPendingReturn(file) {
+          finish(WorktreeIncludeEditResult.RETURN_TO_DIALOG)
+        }
+
+        @Suppress("SplitModeApiUsage")
+        connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          override fun fileClosed(source: FileEditorManager, closedFile: VirtualFile) {
+            if (closedFile == file) {
+              finish(WorktreeIncludeEditResult.ABORTED)
+            }
+          }
+        })
+
+        Disposer.register(disposable, Disposable { finish(WorktreeIncludeEditResult.ABORTED) })
+        @Suppress("IncorrectParentDisposable")
+        Disposer.register(project, disposable)
+        continuation.invokeOnCancellation { finish(WorktreeIncludeEditResult.ABORTED) }
+      }
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 
@@ -532,4 +563,9 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     }
     return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
   }
+}
+
+internal enum class WorktreeIncludeEditResult {
+  RETURN_TO_DIALOG,
+  ABORTED,
 }

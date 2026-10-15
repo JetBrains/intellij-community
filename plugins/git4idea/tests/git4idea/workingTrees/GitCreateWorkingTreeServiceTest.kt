@@ -9,6 +9,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -134,17 +135,61 @@ internal class GitCreateWorkingTreeServiceTest {
   }
 
   @Test
-  fun `test cancelling waitForEditorClosed disposes its message bus connection without hanging`(): Unit = with(context) {
+  fun `test cancelling waitForReturnToDialogAction clears the pending notification state without hanging`(): Unit = with(context) {
     touch("notes.txt", "content")
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(repo.root.toNioPath().resolve("notes.txt"))!!
-    invokeAndWaitIfNeeded { FileEditorManager.getInstance(project).openFile(file, false) }
+    val session = GitWorktreeIncludeEditingSessionService.getInstance(project)
 
     timeoutRunBlocking(timeout = 10.seconds) {
-      val job = launch { GitCreateWorkingTreeService.getInstance().waitForEditorClosed(project, file) }
+      val job = launch { GitCreateWorkingTreeService.getInstance().waitForReturnToDialogAction(project, file) }
       delay(500.milliseconds)
+      assertThat(session.hasPendingReturn(file)).isTrue()
       job.cancel()
       job.join()
     }
+    assertThat(session.hasPendingReturn(file)).isFalse()
+  }
+
+  @Test
+  fun `test returnToDialog resumes a waiting waitForReturnToDialogAction with return to dialog result`(): Unit = with(context) {
+    touch("notes.txt", "content")
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(repo.root.toNioPath().resolve("notes.txt"))!!
+    val session = GitWorktreeIncludeEditingSessionService.getInstance(project)
+
+    val resultDeferred = CompletableDeferred<WorktreeIncludeEditResult>()
+    timeoutRunBlocking(timeout = 10.seconds) {
+      val job = launch {
+        val result = GitCreateWorkingTreeService.getInstance().waitForReturnToDialogAction(project, file)
+        resultDeferred.complete(result)
+      }
+      delay(500.milliseconds)
+      session.returnToDialog(file)
+      job.join()
+    }
+    assertThat(session.hasPendingReturn(file)).isFalse()
+    assertThat(runBlocking { resultDeferred.await() }).isEqualTo(WorktreeIncludeEditResult.RETURN_TO_DIALOG)
+  }
+
+  @Test
+  fun `test closing editor tab resumes waitForReturnToDialogAction with aborted result and clears session`(): Unit = with(context) {
+    touch("notes.txt", "content")
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(repo.root.toNioPath().resolve("notes.txt"))!!
+    val session = GitWorktreeIncludeEditingSessionService.getInstance(project)
+
+    val resultDeferred = CompletableDeferred<WorktreeIncludeEditResult>()
+    timeoutRunBlocking(timeout = 10.seconds) {
+      val job = launch {
+        val result = GitCreateWorkingTreeService.getInstance().waitForReturnToDialogAction(project, file)
+        resultDeferred.complete(result)
+      }
+      delay(500.milliseconds)
+      assertThat(session.hasPendingReturn(file)).isTrue()
+      val editorManager = FileEditorManager.getInstance(project)
+      project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(editorManager, file)
+      job.join()
+    }
+    assertThat(session.hasPendingReturn(file)).isFalse()
+    assertThat(runBlocking { resultDeferred.await() }).isEqualTo(WorktreeIncludeEditResult.ABORTED)
   }
 
   @Test
