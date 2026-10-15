@@ -11809,7 +11809,6 @@ c:com.intellij.util.ui.FormBuilder
 - addVerticalGap(I):com.intellij.util.ui.FormBuilder
 - sf:createFormBuilder():com.intellij.util.ui.FormBuilder
 - p:getFill(javax.swing.JComponent):I
-- getLineCount():I
 - getPanel():javax.swing.JPanel
 - setAlignLabelOnRight(Z):com.intellij.util.ui.FormBuilder
 - setFormLeftIndent(I):com.intellij.util.ui.FormBuilder

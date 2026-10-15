@@ -53,9 +53,7 @@ import javax.swing.border.Border
 import javax.swing.event.HyperlinkListener
 import javax.swing.plaf.LabelUI
 
-@Deprecated(
-  """Provides incorrect spacing between components and out-dated. The functionality is covered by Kotlin UI DSL,
-  which should be used instead. ComponentPanelBuilder will be removed after moving Kotlin UI DSL into platform API package""")
+@Deprecated("Uses outdated component spacing and alignment. The functionality is covered by Kotlin UI DSL, which should be used instead.")
 @ApiStatus.ScheduledForRemoval
 open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagPanelBuilder {
 

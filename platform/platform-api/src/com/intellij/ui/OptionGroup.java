@@ -42,8 +42,7 @@ private val myLabel: JLabel by lazy { JLabel(message("some.message.key")) }
 </pre>
  * </p>
  *
- * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
- * OptionGroup will be removed after moving Kotlin UI DSL into platform API package
+ * @deprecated Uses outdated component spacing and alignment. The functionality is covered by Kotlin UI DSL, which should be used instead.
  */
 @Deprecated(forRemoval = true)
 public class OptionGroup implements PanelWithAnchor {

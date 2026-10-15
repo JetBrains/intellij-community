@@ -8,10 +8,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JPanel
 
-@Deprecated(
-  """Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
-  PanelGridBuilder will be removed after moving Kotlin UI DSL into platform API package"""
-)
+@Deprecated("Uses outdated component spacing and alignment. The functionality is covered by Kotlin UI DSL, which should be used instead.")
 @ApiStatus.ScheduledForRemoval
 open class PanelGridBuilder : PanelBuilder {
 

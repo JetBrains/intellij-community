@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.util.ui
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagConstraints
 import java.awt.GridBagConstraints.BOTH
 import java.awt.GridBagConstraints.CENTER
@@ -26,16 +29,17 @@ import javax.swing.JSeparator
 import javax.swing.JSpinner
 import javax.swing.JTextField
 
-/**
- * also consider using [UI.PanelFactory] for non-trivial forms
- */
+@Deprecated("Uses outdated component spacing and alignment. The functionality is covered by Kotlin UI DSL, which should be used instead.")
 open class FormBuilder {
+
   private var alignLabelOnRight = false
 
-  private var lines = 0
-  open val panel: JPanel = JPanel(GridBagLayout())
-  private var vertical = false
+  open val panel: JPanel = JPanel(GridBagLayout()).apply {
+    UIUtil.applyDeprecatedBackground(this)
+  }
 
+  private var lines = 0
+  private var vertical = false
   private var verticalGap = DEFAULT_VGAP
   private var horizontalGap = DEFAULT_HGAP
   private var formLeftIndent = 0
@@ -69,7 +73,12 @@ open class FormBuilder {
     return addLabeledComponent(labelText, component, verticalGap, labelOnTop)
   }
 
-  open fun addLabeledComponent(@NlsContexts.Label labelText: String, component: JComponent, topInset: Int, labelOnTop: Boolean): FormBuilder {
+  open fun addLabeledComponent(
+    @NlsContexts.Label labelText: String,
+    component: JComponent,
+    topInset: Int,
+    labelOnTop: Boolean,
+  ): FormBuilder {
     val label = createLabelForComponent(labelText, component)
     return addLabeledComponent(label, component, topInset, labelOnTop)
   }
@@ -124,10 +133,12 @@ open class FormBuilder {
     return addLabeledComponent(JLabel(), component, topInset)
   }
 
-  open fun addLabeledComponent(label: JComponent?,
-                               component: JComponent,
-                               topInset: Int,
-                               labelOnTop: Boolean): FormBuilder {
+  open fun addLabeledComponent(
+    label: JComponent?,
+    component: JComponent,
+    topInset: Int,
+    labelOnTop: Boolean,
+  ): FormBuilder {
     val fillVertically = component is JScrollPane
     return addLabeledComponent(label, component, topInset, labelOnTop, fillVertically)
   }
@@ -137,7 +148,13 @@ open class FormBuilder {
     return addLabeledComponent(label, component, verticalGap, true, true)
   }
 
-  private fun addLabeledComponent(label: JComponent?, component: JComponent, topInset: Int, labelOnTop: Boolean, fillVertically: Boolean): FormBuilder {
+  private fun addLabeledComponent(
+    label: JComponent?,
+    component: JComponent,
+    topInset: Int,
+    labelOnTop: Boolean,
+    fillVertically: Boolean,
+  ): FormBuilder {
     val c = GridBagConstraints()
     val actualTopInset = if (lines > 0) topInset else 0
 
@@ -182,7 +199,7 @@ open class FormBuilder {
       c.weighty = getWeightY(fillVertically)
       c.fill = getFill(component, fillVertically)
       c.anchor = WEST
-      c.insets = JBUI.insets(actualTopInset, 0, 0, 0)
+      c.insets = JBUI.insetsTop(actualTopInset)
 
       panel.add(component, c)
 
@@ -218,6 +235,7 @@ open class FormBuilder {
     return if (fillVertically) 1.0 else 0.0
   }
 
+  @get:ApiStatus.Internal
   open val lineCount: Int
     get() = lines
 
