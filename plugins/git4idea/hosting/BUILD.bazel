@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//plugins/git4idea/shared"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

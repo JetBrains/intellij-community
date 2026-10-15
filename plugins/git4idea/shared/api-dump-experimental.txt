@@ -1,0 +1,3 @@
+*:git4idea.remote.hosting.HostedRepositoryCoordinates
+- a:getServerPath():com.intellij.collaboration.api.ServerPath
+- a:getWebURI():java.net.URI

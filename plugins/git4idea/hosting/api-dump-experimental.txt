@@ -8,9 +8,6 @@
 *:git4idea.remote.hosting.HostedGitRepositoryMapping
 - a:getRemote():git4idea.remote.GitRemoteUrlCoordinates
 - a:getRepository():git4idea.remote.hosting.HostedRepositoryCoordinates
-*:git4idea.remote.hosting.HostedRepositoryCoordinates
-- a:getServerPath():com.intellij.collaboration.api.ServerPath
-- a:getWebURI():java.net.URI
 *a:git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
 - com.intellij.openapi.Disposable
 - <init>(kotlin.jvm.functions.Function0,kotlinx.coroutines.CoroutineScope):V
