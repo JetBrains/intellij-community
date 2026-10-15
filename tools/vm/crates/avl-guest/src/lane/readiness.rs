@@ -98,6 +98,11 @@ impl Bridge {
             .post_json(REQUEST_ROUTE, &request.to_string(), Instant::now() + within + TRANSPORT_GRACE)
     }
 
+    /// GETs the route `route`, whose answer has the media type `accept`, within `within`.
+    pub(crate) fn get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error> {
+        self.client.get(route, accept, Instant::now() + within)
+    }
+
     /// The lifecycle reader of the IDE of `launch`.
     fn reader(&self, launch: &str) -> Reader {
         Reader::new(self.client.clone(), Some(launch))

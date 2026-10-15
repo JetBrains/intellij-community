@@ -1490,6 +1490,18 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/values/tests.rs (`a_part_takes_and_answers_exactly_its_declared_values`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_passes_its_values_and_reports_its_notes`)
 
+- After each part of an authored program, and before its `restart-ide`, the verb lists the trace attachments that the
+  IDE queued. It fetches each listed id at once. Each still, capture or file goes to the span of the instruction as a
+  named attachment. The run log notes a count of dropped stills and each fetch that fails, and neither fails the
+  part.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid`)
+
+- The verb reads the list in the shape of the IDE side. It refuses an unknown field, and an id that is no path
+  segment.
+  [@test] ../crates/avl-trace/src/bridge/tests.rs (`the_attachment_list_reads_and_writes_the_document_of_the_kotlin_side`)
+  [@test] ../crates/avl-trace/src/bridge/tests.rs (`an_attachment_id_that_is_no_path_segment_and_an_unknown_field_are_refused`)
+
 - A failed scenario has a typed failure. The type is the class of the failure in the IDE, and the detail is its
   stack and its causes.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)

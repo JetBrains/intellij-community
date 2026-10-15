@@ -199,3 +199,49 @@ fn ide_spans_decode_and_refuse() {
     let decoded = decode_ide_spans(minimal.as_bytes()).unwrap();
     assert_eq!(crate::encode(&decoded).unwrap(), minimal.as_bytes());
 }
+
+/// The document of the attachments route that `AirUiTraceAttachmentsTest` pins on the Kotlin side, byte for byte.
+const ATTACHMENT_LIST: &str = concat!(
+    r#"{"attachments":[{"id":"a1","kind":"still","name":"after open","mime":"image/png","bytes":10,"required":false,"#,
+    r#""atMs":1790000000000,"traceId":"0af7651916cd43dd8448eb211c80319c","spanId":"b7ad6b7169203331","#,
+    r#""part":"genui-host/theme/main","step":"open","waitMs":3,"paintMs":40,"encodeMs":25},"#,
+    r#"{"id":"a2","kind":"file","name":"facts.json","mime":"application/json","bytes":2,"required":true,"atMs":1790000000001}],"#,
+    r#""dropped":0}"#
+);
+
+// The reader decodes the document that the Kotlin test pins, and writes the same bytes back: the same fields, in the
+// same order, and a field with no value left out. So the two sides agree on the shape.
+#[test]
+fn the_attachment_list_reads_and_writes_the_document_of_the_kotlin_side() {
+    let list = decode_attachment_list(ATTACHMENT_LIST.as_bytes()).unwrap();
+    assert_eq!(list.attachments.len(), 2);
+    let still = &list.attachments[0];
+    assert_eq!(
+        (still.kind, still.required, still.step.as_deref(), still.encode_ms),
+        (AttachmentKind::Still, false, Some("open"), Some(25))
+    );
+    let file = &list.attachments[1];
+    assert_eq!(
+        (file.kind, file.required, file.span_id.as_deref()),
+        (AttachmentKind::File, true, None)
+    );
+    assert_eq!(serde_json::to_string(&list).unwrap(), ATTACHMENT_LIST);
+    assert_eq!(attachment_route("a17"), "/api/air/ui-test-trace/attachments/a17");
+    assert!(
+        ATTACHMENTS_ROUTE
+            .strip_prefix(ROUTE_PREFIX)
+            .is_some_and(|rest| rest.starts_with('/'))
+    );
+}
+
+// An id is a segment of the fetch route, so an id with a slash is refused. A field that the reader does not know is
+// refused too, so a change of the shape on one side fails a lane loudly.
+#[test]
+fn an_attachment_id_that_is_no_path_segment_and_an_unknown_field_are_refused() {
+    let slash = ATTACHMENT_LIST.replace(r#""id":"a2""#, r#""id":"a/2""#);
+    let error = decode_attachment_list(slash.as_bytes()).unwrap_err();
+    assert!(error.to_string().contains(r#"the id "a/2", which is no path segment"#), "{error}");
+    let unknown = ATTACHMENT_LIST.replace(r#""bytes":2,"#, r#""bytes":2,"sha256":"00","#);
+    let error = decode_attachment_list(unknown.as_bytes()).unwrap_err();
+    assert!(error.to_string().contains("unknown field `sha256`"), "{error}");
+}

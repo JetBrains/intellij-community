@@ -527,6 +527,10 @@ impl Lane for DaemonLane<'_, '_> {
         launched.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
     }
 
+    fn trace_get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error> {
+        self.bridge.get(route, accept, within)
+    }
+
     fn end_bare(&self) -> Result<(), String> {
         let ended = self
             .daemon

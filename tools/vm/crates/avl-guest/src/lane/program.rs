@@ -21,7 +21,9 @@
 //! before the first instruction.
 //!
 //! An instruction that answers `attachments`, each `{title, contentType, fileName, text}`, gets each file attached to
-//! its span in the trace, and its text written into the run log.
+//! its span in the trace, and its text written into the run log. After each part of an authored program, and before its
+//! `restart-ide`, the runner reads the trace attachments that the IDE queued, see
+//! [`Runner::collect_trace_attachments`].
 //!
 //! The run thread owns every call of the loop. The watchdog thread of [`super::watchdog`] watches it.
 
@@ -32,6 +34,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use avl_bridge::{BridgeFailure, ErrorKind};
+use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
 use avl_wire::program::lane::LaneDocument;
@@ -103,6 +106,8 @@ const AUTHORED_STEP: &str = "authored-step";
 const AUTHORED_HOST_IDS: [HostAction; 2] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset];
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
+/// How long one read of a trace attachment route may take: the list, or the fetch of one entry.
+const TRACE_READ: Duration = Duration::from_secs(10);
 /// How many lines of a reset failure a skip reason and a failure carry.
 const CARRIED_FAILURE_LINES: usize = 20;
 
@@ -141,16 +146,29 @@ pub(crate) trait Lane: Probes {
 
     /// Quits the bare IDE. The next run launches the IDE of the lane again.
     fn end_bare(&self) -> Result<(), String>;
+
+    /// GETs the trace route `route` of the bridge, whose answer has the media type `accept`, within `within`.
+    fn trace_get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error>;
 }
 
 /// One file that an instruction answered for the evidence of its scenario, an element of `attachments` of its answer.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Attachment {
+struct AnswerAttachment {
     title: String,
     content_type: String,
     file_name: String,
     text: String,
+}
+
+/// One file for the trace of the open scenario, which the trace did not take yet.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Attachment {
+    name: String,
+    mime: String,
+    /// The extension of the file in the bundle.
+    extension: String,
+    bytes: Vec<u8>,
 }
 
 /// The process of the lane IDE as two readers know it: the pid of the run that the supervisor launched, and the pid
@@ -804,6 +822,7 @@ impl<'r, 's> Runner<'r, 's> {
         );
         if authored {
             self.collect_authored_artifacts(instruction);
+            self.collect_trace_attachments(label);
         }
         // The IDE names the id in a failure of its own. A request that got no answer is named here.
         let answer = answer.map_err(|mut failure| {
@@ -846,6 +865,10 @@ impl<'r, 's> Runner<'r, 's> {
                 kind::DOCUMENT,
                 format!("the authored program runs '{label}', which no authored program may run"),
             ));
+        }
+        // A restart loses what the IDE queued and nobody read, so the runner reads it first.
+        if suite.authored && host == HostId::Action(HostAction::RestartIde) {
+            self.collect_trace_attachments(label);
         }
         let mut side = RunnerHost {
             runner: self,
@@ -904,11 +927,21 @@ impl<'r, 's> Runner<'r, 's> {
     /// the run log.
     fn keep_attachments(&self, label: &str, answer: &Value) {
         let Some(files) = answer.get("attachments") else { return };
-        match serde_json::from_value::<Vec<Attachment>>(files.clone()) {
+        match serde_json::from_value::<Vec<AnswerAttachment>>(files.clone()) {
             Ok(files) => {
                 for file in files {
                     self.stream.note(format!("[attachment] {label}: {}\n{}", file.title, file.text));
-                    self.attachments.borrow_mut().push(file);
+                    let extension = Path::new(&file.file_name)
+                        .extension()
+                        .and_then(|extension| extension.to_str())
+                        .unwrap_or("txt")
+                        .to_owned();
+                    self.attachments.borrow_mut().push(Attachment {
+                        name: file.title,
+                        mime: file.content_type,
+                        extension,
+                        bytes: file.text.into_bytes(),
+                    });
                 }
             }
             Err(error) => self.stream.note(format!(
@@ -920,12 +953,58 @@ impl<'r, 's> Runner<'r, 's> {
     /// Attaches each file that the instructions answered to the innermost open span of the trace.
     fn attach_answers(&self) {
         for file in self.attachments.take() {
-            let extension = Path::new(&file.file_name)
-                .extension()
-                .and_then(|extension| extension.to_str())
-                .unwrap_or("txt");
-            self.trace()
-                .attach(&file.title, &file.content_type, file.text.as_bytes(), extension);
+            self.trace().attach(&file.name, &file.mime, &file.bytes, &file.extension);
+        }
+    }
+
+    /// Keeps the trace attachments that the IDE queued during the part `label` for the trace: the stills of its steps,
+    /// and its named captures and files. The IDE forgets an entry that a fetch took, and its next list forgets the rest
+    /// of this one, so the runner fetches each listed id at once. A read that fails is a note and fails no part, because
+    /// an attachment is evidence. The JVM host reads the same two routes after each part.
+    fn collect_trace_attachments(&self, label: &str) {
+        let listed = self
+            .lane
+            .trace_get(ATTACHMENTS_ROUTE, avl_bridge::JSON, TRACE_READ)
+            .map_err(|error| error.to_string())
+            .and_then(|document| decode_attachment_list(&document).map_err(|error| error.to_string()));
+        let list = match listed {
+            Ok(list) => list,
+            Err(error) => {
+                self.stream.note(format!(
+                    "[attachment] {label}: cannot list the trace attachments of the IDE: {error}"
+                ));
+                return;
+            }
+        };
+        if list.dropped > 0 {
+            self.stream.note(format!(
+                "[attachment] {label}: the IDE dropped {} still(s) before the runner read them",
+                list.dropped
+            ));
+        }
+        for entry in list.attachments {
+            let media_type = entry.mime.split(';').next().unwrap_or_default().trim().to_owned();
+            match self.lane.trace_get(&attachment_route(&entry.id), &media_type, TRACE_READ) {
+                Ok(bytes) => self.attachments.borrow_mut().push(Attachment {
+                    extension: extension_of_media_type(&media_type).to_owned(),
+                    name: entry.name,
+                    mime: entry.mime,
+                    bytes,
+                }),
+                Err(error) => {
+                    let kind = match entry.kind {
+                        AttachmentKind::Still => "still",
+                        AttachmentKind::Capture => "capture",
+                        AttachmentKind::File => "file",
+                    };
+                    self.stream.note(format!(
+                        "[attachment] {label}: cannot fetch the {kind} '{}' ({}) of the IDE{}: {error}",
+                        entry.name,
+                        entry.id,
+                        if entry.required { ", which its body named" } else { "" }
+                    ));
+                }
+            }
         }
     }
 
@@ -1173,6 +1252,16 @@ impl HostSide for RunnerHost<'_, '_, '_> {
             .reset
             .ok_or_else(|| "the suite document states no reset section, and the proof of the recycle runs that reset".to_owned())?;
         self.runner.recycle_through_failed_reset(self.scenario, reset)
+    }
+}
+
+/// The extension of a file of the media type `media_type` in the bundle, as the JVM host names it.
+fn extension_of_media_type(media_type: &str) -> &'static str {
+    match media_type {
+        "image/png" => "png",
+        "application/json" => "json",
+        text if text.starts_with("text/") => "txt",
+        _ => "bin",
     }
 }
 

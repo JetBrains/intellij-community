@@ -56,6 +56,18 @@ pub const SPANS_ROUTE: &str = "/api/air/ui-test-trace/spans";
 /// a scenario ends. A flush can take seconds, so a snapshot never asks it.
 pub const FLUSHED_SPANS_ROUTE: &str = "/api/air/ui-test-trace/spans/flushed";
 
+/// Answers [AttachmentList], and drains the queue of the trace attachments of the IDE: the stills of the steps of an
+/// authored part, and the named captures and files of its body. The far end is `AirUiTraceAttachmentQueue`. The next
+/// list forgets each entry of this list that no fetch of [attachment_route] took, so a reader fetches every listed id
+/// before it lists again. The route reads no state of the event thread, so it ignores [WITHIN_HEADER].
+pub const ATTACHMENTS_ROUTE: &str = "/api/air/ui-test-trace/attachments";
+
+/// The route of the attachment `id` of the last list. It answers the bytes, with the mime of the entry as the content
+/// type, and a fetch that the reader got forgets the attachment in the IDE.
+pub fn attachment_route(id: &str) -> String {
+    format!("{ATTACHMENTS_ROUTE}/{id}")
+}
+
 /// A rectangle in screen coordinates.
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[serde(deny_unknown_fields)]
@@ -422,6 +434,82 @@ impl IdeSpan {
         }
         Ok(())
     }
+}
+
+/// The answer of [ATTACHMENTS_ROUTE]: the attachments that the IDE queued since the last list, oldest first.
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
+#[serde(deny_unknown_fields)]
+pub struct AttachmentList {
+    pub attachments: Vec<TraceAttachment>,
+    /// Counts the stills that the queue dropped since the last list. The queue never drops a capture or a file.
+    pub dropped: u64,
+}
+
+/// What made a [TraceAttachment].
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum AttachmentKind {
+    /// The paint of the showing windows at the end of one step of an authored part.
+    Still,
+    /// A named still that a body asks for.
+    Capture,
+    /// A named file that a body attaches.
+    File,
+}
+
+/// One entry of an [AttachmentList]. A field with no value is left out.
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TraceAttachment {
+    /// One path segment, which [attachment_route] takes.
+    pub id: String,
+    pub kind: AttachmentKind,
+    /// `after <step>` for a still, the name that the body states for a capture or a file.
+    pub name: String,
+    /// `image/png` for a still, or `text/plain; charset=utf-8` with the reason as the bytes when its paint failed.
+    pub mime: String,
+    pub bytes: u64,
+    /// False for a still, which the queue may drop, and true for a capture or a file.
+    pub required: bool,
+    /// When the IDE queued the attachment, in milliseconds since the epoch.
+    pub at_ms: i64,
+    /// The IDE span of the step for a still, and the innermost IDE span of the body for a capture or a file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trace_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub span_id: Option<String>,
+    /// The authored part, `<suite>/<scenario>/<part>`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub part: Option<String>,
+    /// The step of a still.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub step: Option<String>,
+    /// What the paint of a still cost the IDE: the wait for the event thread, the paint on it, and the PNG encode off
+    /// it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait_ms: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub paint_ms: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encode_ms: Option<i64>,
+}
+
+/// Reads the answer of [ATTACHMENTS_ROUTE]. An id that is no path segment is refused, because [attachment_route] takes
+/// it.
+pub fn decode_attachment_list(document: &[u8]) -> Result<AttachmentList, Error> {
+    let list: AttachmentList = serde_json::from_slice(document)
+        .map_err(|error| Error::new(format!("the attachments route answered outside the contract: {error}")))?;
+    if let Some(entry) = list
+        .attachments
+        .iter()
+        .find(|entry| entry.id.is_empty() || entry.id.contains(['/', '?', '#']))
+    {
+        return Err(Error::new(format!(
+            "the attachments route answered the id {:?}, which is no path segment",
+            entry.id
+        )));
+    }
+    Ok(list)
 }
 
 /// Reads a spans route's answer.

@@ -83,6 +83,8 @@ struct Script {
     answers: BTreeMap<String, Value>,
     /// How long each request type takes.
     delays: BTreeMap<String, Duration>,
+    /// The successive answers of each GET route, its content type and its bytes. A route past its answers is 404.
+    routes: BTreeMap<String, VecDeque<(String, Vec<u8>)>>,
     requests: Vec<(u32, Value)>,
 }
 
@@ -113,6 +115,16 @@ impl Fake {
         let http = {
             let (script, pid, killed) = (Arc::clone(&script), Arc::clone(&pid), Arc::clone(&killed));
             FakeHttp::start(move |request| {
+                if request.method == "GET" {
+                    let mut script = script.lock().unwrap();
+                    script
+                        .requests
+                        .push((pid.load(Ordering::SeqCst), json!({ "type": format!("GET {}", request.path) })));
+                    return match script.routes.get_mut(&request.path).and_then(VecDeque::pop_front) {
+                        Some((content_type, body)) => Response::ok(&content_type, body),
+                        None => Response::error(404, "no such attachment"),
+                    };
+                }
                 let body: Value = serde_json::from_slice(&request.body).unwrap();
                 let kind = body["type"].as_str().unwrap_or_default().to_owned();
                 let delay = {
@@ -290,6 +302,10 @@ impl Lane for Fake {
     fn end_bare(&self) -> Result<(), String> {
         self.bare.lock().unwrap().push("end");
         Ok(())
+    }
+
+    fn trace_get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error> {
+        self.client.get(route, accept, Instant::now() + within)
     }
 }
 
@@ -838,6 +854,17 @@ fn the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid() {
         .find(|(_, kind)| kind == "action/authored-step")
         .unwrap();
     assert_eq!(part.0, 3, "the part reads the IDE of the restart");
+    let lists: Vec<u32> = fake
+        .requests()
+        .into_iter()
+        .filter(|(_, kind)| kind == "GET /api/air/ui-test-trace/attachments")
+        .map(|(pid, _)| pid)
+        .collect();
+    assert_eq!(
+        lists,
+        [2, 3],
+        "the runner reads the attachments before the restart quits the IDE, and after the part"
+    );
     assert!(
         ran.events("output")
             .iter()
@@ -976,6 +1003,116 @@ fn a_bare_ide_that_does_not_get_ready_fails_its_suite_and_the_lane_takes_its_ide
     );
     assert!(ran.events("testStarted").is_empty());
     assert!(fake.requests().is_empty(), "{:?}", fake.requests());
+}
+
+/// An authored suite of one part, `open`, which answers no value.
+fn one_part_suite() -> Suite {
+    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open"], "optional": false},
+            "scenario": {"type": "enum", "values": ["theme"], "optional": false},
+            "suite": {"type": "enum", "values": ["genui-host"], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}});
+    let document = json!({
+        "schemaVersion": 2, "suite": "genui-host", "lane": "UI", "testClassName": "AirGenUiHostUiTest", "authored": true,
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.genui.AirGenUiHostUiTest"}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "fixtures": {"authored": {}},
+        "profiles": [{"name": "the theme follows the IDE", "key": "theme", "fixture": "authored", "flags": {}, "flagKeys": [],
+            "requiredExecutables": [], "setups": [], "steps": [],
+            "program": [{"action": "authored-step", "args": {"part": "open", "scenario": "theme", "suite": "genui-host",
+                "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}}]}],
+    });
+    let bytes = document.to_string().into_bytes();
+    let program = parse_suite_program(&bytes).unwrap();
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+}
+
+// After a part, the runner lists the trace attachments that the IDE queued and fetches each one: the still of a step
+// and a capture of the body go to the span of the part, as PNG attachments under their names. The count of dropped
+// stills is a note. A fetch that fails is a note that says that the body named the file, and it fails no part.
+#[test]
+fn an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued() {
+    let list = json!({"attachments": [
+        {"id": "a1", "kind": "still", "name": "after open", "mime": "image/png", "bytes": 3, "required": false,
+            "atMs": 1_790_000_000_000_i64, "step": "open", "waitMs": 3, "paintMs": 40, "encodeMs": 25},
+        {"id": "a2", "kind": "capture", "name": "01-session-view-pane-initial-theme", "mime": "image/png", "bytes": 3,
+            "required": true, "atMs": 1_790_000_000_001_i64},
+        {"id": "a3", "kind": "file", "name": "facts.txt", "mime": "text/plain; charset=utf-8", "bytes": 2, "required": true,
+            "atMs": 1_790_000_000_002_i64},
+    ], "dropped": 2});
+    let png = |byte: u8| ("image/png".to_owned(), vec![0x89, byte, byte]);
+    let fake = Fake::new(Script {
+        routes: BTreeMap::from([
+            (
+                ATTACHMENTS_ROUTE.to_owned(),
+                VecDeque::from([("application/json".to_owned(), list.to_string().into_bytes())]),
+            ),
+            ("/api/air/ui-test-trace/attachments/a1".to_owned(), VecDeque::from([png(1)])),
+            ("/api/air/ui-test-trace/attachments/a2".to_owned(), VecDeque::from([png(2)])),
+        ]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[one_part_suite()], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    let after_part: Vec<String> = fake
+        .requests()
+        .into_iter()
+        .map(|(_, kind)| kind)
+        .skip_while(|kind| kind != "action/authored-step")
+        .skip(1)
+        .take(4)
+        .collect();
+    assert_eq!(
+        after_part,
+        [
+            "GET /api/air/ui-test-trace/attachments",
+            "GET /api/air/ui-test-trace/attachments/a1",
+            "GET /api/air/ui-test-trace/attachments/a2",
+            "GET /api/air/ui-test-trace/attachments/a3",
+        ]
+    );
+    let span_of = |line: &str| serde_json::from_str::<Value>(line).unwrap()["span"].clone();
+    let part_span = ran
+        .trace
+        .iter()
+        .find(|line| line.starts_with(r#"{"op":"span""#) && line.contains("[action] authored-step"))
+        .map(|line| serde_json::from_str::<Value>(line).unwrap()["id"].clone())
+        .unwrap();
+    let attached: Vec<(String, String, Value)> = ran
+        .trace
+        .iter()
+        .filter(|line| line.starts_with(r#"{"op":"attach""#))
+        .map(|line| {
+            let command: Value = serde_json::from_str(line).unwrap();
+            let extension = command["file"].as_str().unwrap().rsplit('.').next().unwrap().to_owned();
+            (command["name"].as_str().unwrap().to_owned(), extension, span_of(line))
+        })
+        .collect();
+    assert_eq!(
+        attached,
+        [
+            ("after open".to_owned(), "png".to_owned(), part_span.clone()),
+            ("01-session-view-pane-initial-theme".to_owned(), "png".to_owned(), part_span),
+        ]
+    );
+    let notes: Vec<&str> = ran
+        .events("output")
+        .iter()
+        .filter_map(|record| record["text"].as_str())
+        .filter(|text| text.starts_with("[attachment]"))
+        .collect();
+    assert_eq!(notes.len(), 2, "{notes:?}");
+    assert!(
+        notes[0].ends_with("the IDE dropped 2 still(s) before the runner read them"),
+        "{notes:?}"
+    );
+    assert!(
+        notes[1].contains("cannot fetch the file 'facts.txt' (a3) of the IDE, which its body named: "),
+        "{notes:?}"
+    );
 }
 
 // The transport of an instruction waits its deadline and a margin. An IDE that does not answer by then fails the
