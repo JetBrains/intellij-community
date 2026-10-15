@@ -10,9 +10,14 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +68,25 @@ public final class PsiConsistencyAssertions {
     message += "\npsiFile.length=" + psiLength;
     message += "\ncached.psiFiles=" + PsiManagerEx.getInstanceEx(psiFile.getProject()).getFileManagerEx().findCachedViewProviders(viewProvider.getVirtualFile()).size();
     message += "\ncode.insight.contexts=" + CodeInsightContextManager.getInstance(psiFile.getProject()).getCodeInsightContexts(viewProvider.getVirtualFile()).size();
+    message += "\ndoc.stamp=" + document.getModificationStamp();
+    message += "\nlastCommitted.stamp=" + documentManager.getLastCommittedStamp(document);
+    message += "\nviewProvider.stamp=" + viewProvider.getModificationStamp();
+    message += "\nlast.commit.reason=" + PsiDocumentManagerBase.getLastCommitReason(document);
+    message += "\nversioned.env=" + InternalPsiVersioning.isInsideVersioningButNotLocks();
+    message += "\nforked.timeline=" + InternalPsiVersioning.isInForkedTimeline();
+    if (node != null) {
+      String treeLoadInfo = PsiFileImpl.getTreeLoadInfo(node);
+      message += "\ntree.load=" + (treeLoadInfo == null ? "unknown" : treeLoadInfo);
+      if (node instanceof TreeElement) {
+        message += "\ntree.versioned=" + ((TreeElement)node).isVersioned();
+      }
+      CharSequence nodeChars = node.getChars();
+      CharSequence docChars = document.getImmutableCharSequence();
+      int prefix = StringUtil.commonPrefixLength(nodeChars, docChars);
+      message += "\ncommon.prefix=" + prefix;
+      message += "\ncommon.suffix=" + Math.min(StringUtil.commonSuffixLength(nodeChars, docChars),
+                                               Math.min(nodeChars.length(), docChars.length()) - prefix);
+    }
 
     String psiFileTextLength;
     try {

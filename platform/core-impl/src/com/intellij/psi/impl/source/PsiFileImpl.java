@@ -139,6 +139,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private volatile boolean myPossiblyInvalidated;
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
+  private static final Key<String> TREE_LOAD_INFO = Key.create("TREE_LOAD_INFO");
   private final PsiLock myPsiLock;
   private volatile boolean myLoadingAst;
 
@@ -299,6 +300,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           }
         });
         treeElement.setPsi(this);
+        treeElement.putUserData(TREE_LOAD_INFO, "length=" + treeElement.getTextLength() +
+                                                ", stamp=" + viewProvider.getModificationStamp() +
+                                                ", versionedEnv=" + InternalPsiVersioning.isInsideVersioningButNotLocks() +
+                                                ", forkedTimeline=" + InternalPsiVersioning.isInForkedTimeline());
 
         myLoadingAst = true;
         try {
@@ -318,6 +323,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
       throw e.createCompleteException();
     }
+  }
+
+  /**
+   * Returns the state of the file content at the time when {@link #loadTreeElement} created {@code tree}, for diagnostics only.
+   * Returns {@code null} when the tree has another origin, for example a clone.
+   */
+  @ApiStatus.Internal
+  public static @Nullable @NonNls String getTreeLoadInfo(@NotNull ASTNode tree) {
+    return tree.getUserData(TREE_LOAD_INFO);
   }
 
   /**
