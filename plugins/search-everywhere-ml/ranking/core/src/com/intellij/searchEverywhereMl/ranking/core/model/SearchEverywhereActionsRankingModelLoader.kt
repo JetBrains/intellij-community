@@ -9,19 +9,10 @@ import com.intellij.searchEverywhereMl.SearchEverywhereTab
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"
-  private val expResourceDirectory = "actions_features_exp"
-  private val expModelDirectory = "actions_model_exp"
 
   override val supportedTab = SearchEverywhereTab.Actions
 
-  override fun getBundledModel(): DecisionFunction {
-    return if (useExperimentalModel) {
-      getExperimentalModel()
-    }
-    else {
-      getStandardModel()
-    }
-  }
+  override fun getBundledModel(): DecisionFunction = getStandardModel()
 
   private fun getStandardModel(): SearchEverywhereMlModel {
     val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
@@ -29,6 +20,4 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
       override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
     }
   }
-
-  private fun getExperimentalModel(): DecisionFunction = getCatBoostModel(expResourceDirectory, expModelDirectory)
 }

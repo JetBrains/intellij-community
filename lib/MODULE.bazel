@@ -15625,20 +15625,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http",
-    downloaded_file_path = "find-action-model-252.0.1.jar",
-    sha256 = "f8544a3f781d84ff4983cd72cd5822d581aab0855857db31a3a358b6f1035492",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/252.0.1/find-action-model-252.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1-sources_http",
-    downloaded_file_path = "find-action-model-252.0.1-sources.jar",
-    sha256 = "5312bc85f7925553b304ca85420939492a73e79edb510506af4c6b53253caef7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/252.0.1/find-action-model-252.0.1-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http",
     downloaded_file_path = "find-classes-model-252.0.0.jar",
     sha256 = "925e272431706c9044c296f007249f360b57acdf0f762eeb29fa451f4a955adc",
@@ -15653,20 +15639,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http",
-    downloaded_file_path = "find-classes-model-252.0.1.jar",
-    sha256 = "808170665e62250dcf80bb5d2adc56105a5d9c0a550bfba8e901f1563479858f",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252.0.1/find-classes-model-252.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http",
-    downloaded_file_path = "find-classes-model-252.0.1-sources.jar",
-    sha256 = "7ccd101c540116990dd95869f8dbf36657bb808dcc05df032af4a903df952eb3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252.0.1/find-classes-model-252.0.1-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0_http",
     downloaded_file_path = "find-file-model-252.0.0.jar",
     sha256 = "79a649df8091ebf33aecb28d91eabd8f0b9fb3f6f6aa834665855aacf0dc2044",
@@ -15678,20 +15650,6 @@ http_file(
     downloaded_file_path = "find-file-model-252.0.0-sources.jar",
     sha256 = "2b96be7a854f4704eef7e4dc297d48f9687ca040e879c21f86077499e838b94b",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252.0.0/find-file-model-252.0.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http",
-    downloaded_file_path = "find-file-model-252.0.1.jar",
-    sha256 = "a90e92a95dc07a7dfdea9e7fd274c7d64678bb89effc4b756b52acb7137782fa",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252.0.1/find-file-model-252.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1-sources_http",
-    downloaded_file_path = "find-file-model-252.0.1-sources.jar",
-    sha256 = "bb758035f8fa50e40de212810911f1b76f3201f144d4ea9a2c9d46c572e395d0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252.0.1/find-file-model-252.0.1-sources.jar",
 )
 
 http_file(

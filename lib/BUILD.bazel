@@ -19548,21 +19548,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-action-model-252.0.1.jar_copy",
-    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http//file",
-    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-action-model-252.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-find-action-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.0.jar_copy",
     src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
     out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.0.jar",
@@ -19574,21 +19559,6 @@ jvm_import(
     name = "search_everywhere_ml-ranking-core-find-classes-model",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.1.jar_copy",
-    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
-    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-find-classes-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19607,32 +19577,10 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-file-model-252.0.1.jar_copy",
-    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http//file",
-    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-file-model-252.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-find-file-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
 jvm_import(
     name = "search_everywhere_ml-ranking-core-tests-find-action-model",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-tests-find-action-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19644,23 +19592,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "search_everywhere_ml-ranking-core-tests-find-classes-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
     name = "search_everywhere_ml-ranking-core-tests-find-file-model",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-tests-find-file-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

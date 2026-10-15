@@ -29,8 +29,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
    * If a path to a local model is specified, a local model will be returned, provided that the user is in an experimental group.
    * This is so that, a new model can be easily compared to an existing one.
    *
-   * If no path is specified, then a bundled model will be provided which can either be experimental or standard,
-   * depending on the return value of [useExperimentalModel].
+   * If no path is specified, then a bundled model will be provided.
    */
   fun loadModel(): DecisionFunction {
     if (shouldProvideLocalModel() && useExperimentalModel) {
@@ -41,10 +40,6 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
 
   /**
    * Returns a model bundled with the IDE.
-   * This function, if implemented in a ranking provider where sorting by ML is enabled by default,
-   * should use [useExperimentalModel] function to return an appropriate model.
-   *
-   * For providers that only have one experimental model, just returning that model will suffice.
    */
   protected abstract fun getBundledModel(): DecisionFunction
 
