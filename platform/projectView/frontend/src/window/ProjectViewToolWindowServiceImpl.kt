@@ -16,6 +16,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
@@ -145,6 +147,13 @@ internal class ProjectViewToolWindowServiceImpl(
         paneContentManager.manageContent()
       }
       val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
+      val startupPaneId = serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicy(project)
+        ?.projectPaneToActivateId
+        ?.let { projectViewPaneId(it) }
+      // The frame UI policy wins over the saved selection, as in the monolith.
+      // The saved selection is read once, after the state is loaded: the content manager selects the first added content,
+      // and that selection overwrites the saved value (IJPL-256315).
+      val initialSelection = lazy { startupPaneId ?: persistentState.getSelectedPaneState() }
       launch(CoroutineName("Pane management")) {
         val managementScope = this
         val activeJobs = CopyOnWriteArraySet<ManagePaneJob>()
@@ -183,7 +192,7 @@ internal class ProjectViewToolWindowServiceImpl(
               )
               continue
             }
-            val paneManager = PaneManager(paneContentManager, pane)
+            val paneManager = PaneManager(paneContentManager, pane, initialSelection)
             val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
                 paneManager.managePane()
@@ -376,6 +385,7 @@ internal class ProjectViewToolWindowServiceImpl(
   private inner class PaneManager(
     private val paneContentManager: PaneContentManager,
     private val pane: FrontendProjectViewPane,
+    private val initialSelection: Lazy<ProjectViewPaneId?>,
   ) {
     val descriptor: ProjectViewPaneDescriptorImpl
       get() = pane.descriptor as ProjectViewPaneDescriptorImpl
@@ -402,9 +412,13 @@ internal class ProjectViewToolWindowServiceImpl(
               savePaneStateIfActive(pane)
             }
           }
-          val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
+          val selectedPaneId = initialSelection.value ?: defaultSelection
           val mustSelectThisPane = selectedPaneId == pane.id
-          if (!mustSelectThisPane) {
+          // The wait lets the selected pane be added first, so the content manager selects it.
+          // The next snapshot of descriptors is processed only after this pane is initialized.
+          // So a selected pane that is absent from the current snapshot cannot arrive during the wait, and the wait only delays the snapshot.
+          val selectedPaneIsInSnapshot = orderedDescriptors.value.any { it.id == selectedPaneId }
+          if (!mustSelectThisPane && selectedPaneIsInSnapshot) {
             withTimeoutOrNull(5.seconds) { // at this point the state is already received, and panes are added very quickly
               paneSelectJob.await()
             }
@@ -416,8 +430,9 @@ internal class ProjectViewToolWindowServiceImpl(
             LOG.debug { "Canceling the pane ${pane.id} because the TW content is disposed, descriptor = ${pane.descriptor}" }
             mainScope.cancel("TW content disposed")
           }
-          if (mustSelectThisPane) {
-            paneSelectJob.complete(Unit)
+          if (mustSelectThisPane && paneSelectJob.complete(Unit)) {
+            // Another pane can be added and selected by the content manager before this one, so select this pane explicitly.
+            paneContentManager.setSelectedContent(paneContent)
           }
           LOG.debug { "The pane has been initialized, ID = ${pane.id}, descriptor = ${pane.descriptor}" }
           initialized.complete(Unit)
