@@ -6,6 +6,7 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.withScheme
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.URL
 
@@ -69,7 +70,8 @@ class GitLabServerPath : ServerPath {
 /**
  * Gets the URI for this server path with HTTP schemas replaced with HTTPS.
  */
-internal fun GitLabServerPath.toHttpsNormalizedURI(): URI {
+@ApiStatus.Internal
+fun GitLabServerPath.toHttpsNormalizedURI(): URI {
   val uri = toURI()
   return uri.withScheme(if (uri.scheme == "http") "https" else uri.scheme)
 }

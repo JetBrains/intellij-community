@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.util.withQuery
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.URLEncoder
 
@@ -29,7 +30,8 @@ import java.net.URLEncoder
  * - Arrays: `ids[]=1&ids[]=2&ids[]=3`
  * - Nested objects: `position[base_sha]=sha&position[line_range][start][line_code]=code`
  */
-internal class GitLabApiUriQueryBuilder {
+@ApiStatus.Internal
+class GitLabApiUriQueryBuilder {
   private val params = mutableListOf<Pair<String, String>>()
   private val pathStack = mutableListOf<String>()
 
@@ -144,5 +146,6 @@ internal class GitLabApiUriQueryBuilder {
  * }
  * ```
  */
-internal fun URI.withQuery(queryBuilder: GitLabApiUriQueryBuilder.() -> Unit): URI =
+@ApiStatus.Internal
+fun URI.withQuery(queryBuilder: GitLabApiUriQueryBuilder.() -> Unit): URI =
   withQuery(GitLabApiUriQueryBuilder.build(queryBuilder))
