@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -32,7 +33,6 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -219,7 +219,7 @@ class PyBuiltinCache private constructor(
     fun findSdkForFile(psiFile: PsiFileSystemItem?): Sdk? {
       psiFile ?: return null
       val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
-      return if (module != null) PythonSdkUtil.findPythonSdk(module) else findSdkForNonModuleFile(psiFile)
+      return if (module != null) module.pythonSdkIfReady() else findSdkForNonModuleFile(psiFile)
     }
 
     fun findSdkForNonModuleFile(psiFile: PsiFileSystemItem): Sdk? {
@@ -246,7 +246,7 @@ class PyBuiltinCache private constructor(
               sdk = orderEntry.jdk
             }
             else if (OrderEntryUtil.isModuleLibraryOrderEntry(orderEntry)) {
-              sdk = PythonSdkUtil.findPythonSdk(orderEntry!!.ownerModule)
+              sdk = orderEntry!!.ownerModule.pythonSdkIfReady()
             }
           }
         }

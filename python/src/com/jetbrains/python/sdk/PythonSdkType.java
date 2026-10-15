@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
@@ -578,7 +579,7 @@ public final class PythonSdkType extends SdkType {
 
   @ApiStatus.Internal
   public static @Nullable Sdk findLocalCPython(@Nullable Module module) {
-    final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
+    final Sdk moduleSDK = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     return findLocalCPythonForSdk(moduleSDK);
   }
 

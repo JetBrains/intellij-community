@@ -6,11 +6,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +116,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
     if (module == null) {
       return true;
     }
-    var sdk = PythonSdkUtil.findPythonSdk(module);
+    var sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) {
       return true;
     }

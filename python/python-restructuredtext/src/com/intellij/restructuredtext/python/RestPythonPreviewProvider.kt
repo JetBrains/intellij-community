@@ -8,14 +8,14 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.REST_RUNNER
+import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal fun toHtml(text: String, virtualFile: VirtualFile, project: Project): Pair<String, String>? {
   val module = ApplicationManager.getApplication().runReadAction<Module?> {
     ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
   } ?: return null
-  val sdk = PythonSdkUtil.findPythonSdk(module) ?: return Pair("", PyBundle.message("python.sdk.no.interpreter.configured.warning"))
+  val sdk = findModuleSdkIfReady(module) ?: return Pair("", PyBundle.message("python.sdk.no.interpreter.configured.warning"))
   val commandLine = REST_RUNNER.newCommandLine(sdk, listOf("rst2html"))
   val output = PySdkUtil.getProcessOutput(commandLine, virtualFile.parent.path, null, 5000,
                                           text.toByteArray(Charsets.UTF_8), false)

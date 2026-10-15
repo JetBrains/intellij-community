@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -15,7 +15,7 @@ final class PyManagePackagesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (module != null && sdk != null) {
       new PyManagePackagesDialog(module.getProject(), sdk).show();
     }
@@ -29,6 +29,6 @@ final class PyManagePackagesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PythonSdkUtil.findPythonSdk(module) != null);
+    e.getPresentation().setEnabled(PyModuleInterpreterReader.findModuleSdkIfReady(module) != null);
   }
 }

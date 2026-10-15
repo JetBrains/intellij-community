@@ -230,7 +230,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (module == null) {
       return null;
     }
-    final Sdk sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(module);
+    final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       return sdk;
     }

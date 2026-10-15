@@ -6,17 +6,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.jetbrains.python.extensions.getSdk
+import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUtil
 
+/** The SDK of the interpreter of the Python project of [psiFile], read from the snapshot. */
 fun getPythonSdk(psiFile: PsiFile): Sdk? {
-  return PythonSdkUtil.findPythonSdk(psiFile)
+  return findModuleSdkIfReady(ModuleUtil.findModuleForPsiElement(psiFile))
 }
 
 fun getPythonSdk(project: Project, virtualFile: VirtualFile): Sdk? {
   val module = ModuleUtil.findModuleForFile(virtualFile, project) ?: return null
-  val moduleSdk = module.getSdk() ?: return null
+  val moduleSdk = findModuleSdkIfReady(module) ?: return null
   if (moduleSdk.sdkType is PythonSdkType) {
     return moduleSdk
   }

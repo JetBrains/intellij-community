@@ -23,6 +23,7 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
@@ -114,7 +115,6 @@ import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
 
@@ -1781,8 +1781,9 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    // Peeks at the snapshot. Each new snapshot restarts the analysis.
     private fun isSdkAvailable(element: PsiElement): Boolean =
-      PythonSdkUtil.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element)) != null
+      ModuleUtilCore.findModuleForPsiElement(element)?.findEvoPyProjectIfReady()?.interpreter != null
 
     private fun isParamSpecOrConcatenate(expression: PyExpression, context: TypeEvalContext): Boolean {
       if (expression !is PyReferenceExpression && expression !is PySubscriptionExpression) return false

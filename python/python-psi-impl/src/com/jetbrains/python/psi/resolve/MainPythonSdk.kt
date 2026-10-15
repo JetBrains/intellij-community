@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.psi.PsiElement
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.getSdkAPI
 
@@ -12,9 +16,22 @@ import com.intellij.python.sdk.backend.getSdkAPI
  * Replaces `ProjectRootManager.getProjectSdk()`, which reads `project-jdk-name` from `.idea/misc.xml`. That attribute
  * is missing or stale in the projects PY-89831 reports.
  *
- * Internal to resolve, which cannot suspend. It answers `null` until the first structure lands, and nothing
- * invalidates what was resolved in that window, so it is not an answer to hand out. Everything else asks
+ * Internal to resolve, which cannot suspend. It answers `null` until the first structure lands.
+ * [PyResolveCachesInvalidator] drops what was resolved in that window. Everything else asks
  * [com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter], which waits.
  */
 @Suppress("DEPRECATION")
 internal fun Project.mainPythonSdk(): Sdk? = findMainEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+
+/**
+ * The SDK of the interpreter of the Python project that resides on this module, read from the snapshot. `null` before
+ * the first snapshot and for a module that is not Python.
+ *
+ * Internal to resolve and code insight, which cannot suspend. [PyResolveCachesInvalidator] drops what was resolved
+ * before a snapshot changed the interpreter of the module.
+ */
+@Suppress("DEPRECATION") // Resolve still reads the roots of an SDK.
+internal fun Module.pythonSdkIfReady(): Sdk? = findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+
+/** [pythonSdkIfReady] for the module of this element, as `PythonSdkUtil.findPythonSdk(PsiElement)` found it. */
+internal fun PsiElement.pythonSdkIfReady(): Sdk? = ModuleUtilCore.findModuleForPsiElement(this)?.pythonSdkIfReady()

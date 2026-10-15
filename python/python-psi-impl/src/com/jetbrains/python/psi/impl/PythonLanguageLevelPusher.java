@@ -123,7 +123,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   private static @Nullable Sdk getFileSdk(@NotNull Project project, @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      return PythonSdkUtil.findPythonSdk(module);
+      return PythonSdkUtil.readStoredPythonSdk(module);
     }
     else {
       return findSdkForFileOutsideTheProject(project, file);
@@ -149,7 +149,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    final Sdk sdk = PythonSdkUtil.readStoredPythonSdk(module);
     return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
   }
 
@@ -237,7 +237,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
     final Map<Module, Sdk> result = new LinkedHashMap<>();
     for (Module module : moduleManager.getModules()) {
-      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.readStoredPythonSdk(module);
       if (sdk != null) {
         result.put(module, sdk);
       }

@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.python.pyproject.icons.PythonPyprojectIcons
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -75,8 +75,7 @@ internal fun AnActionEvent.projectCreationPresenter(forNewProject: Boolean): PyP
 
   val module = LangDataKeys.MODULE.getData(dataContext) ?: return null
   // The action's update cannot suspend, so it peeks at the snapshot. Before the first one, the action stays hidden.
-  val snapshot = EvoPyProjectModel.getInstance(module.project).snapshotOrNull() ?: return null
-  val interpreter = snapshot.evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.interpreter ?: return null
+  val interpreter = module.findEvoPyProjectIfReady()?.interpreter ?: return null
   return PyProjectPresenter.create(where = vPath, interpreter = interpreter, forNewProject = forNewProject)
 }
 

@@ -273,6 +273,7 @@
     <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.PythonDapPluginSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
+    <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyResolveCachesInvalidatorActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.debugger.PyDebuggerBackendToolWindowSetup"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>

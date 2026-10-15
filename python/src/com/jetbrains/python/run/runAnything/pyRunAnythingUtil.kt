@@ -14,24 +14,17 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.run.PythonRunConfiguration
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal val DataContext.project: Project
   get() = RunAnythingUtil.fetchProject(this)
 
 internal val DataContext.virtualFile: VirtualFile?
   get() = CommonDataKeys.VIRTUAL_FILE.getData(this)
-
-internal fun VirtualFile.findPythonSdk(project: Project): Sdk? {
-  val module = ModuleUtil.findModuleForFile(this, project)
-  return PythonSdkUtil.findPythonSdk(module)
-}
 
 internal fun GeneralCommandLine.findExecutableInPath(): String? {
   val executable = exePath

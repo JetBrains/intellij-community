@@ -136,7 +136,7 @@ import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.slowLoadThreshold
 import com.jetbrains.python.sdk.getAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.readPythonSdkForConfiguration
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
@@ -982,7 +982,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return withSdkConfigurationLock(workspace.project) {
       // TOCTOU: an SDK may have appeared since the row was listed. Logged, because from the outside this reads exactly
       // like a click that failed — the row is gone and no environment was made for it.
-      PythonSdkUtil.findPythonSdk(module)?.let {
+      // The stored SDK, because the snapshot may not hold one that another writer set under this lock a moment ago.
+      module.readPythonSdkForConfiguration()?.let {
         LOG.info("Evo: '$toolId' for '${module.name}' did nothing, because '${it.name}' was configured meanwhile")
         return@withSdkConfigurationLock EvoSelectResultDto.Ok
       }

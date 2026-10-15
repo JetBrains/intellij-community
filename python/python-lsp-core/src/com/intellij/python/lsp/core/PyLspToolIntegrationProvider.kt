@@ -81,6 +81,7 @@ import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.isFor
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgs
+import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgsIfReady
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.PythonPluginDisposable
@@ -401,9 +402,12 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     private val versionByInterpreter: ConcurrentMap<PythonInterpreter, String> = ConcurrentHashMap()
 
     /** Whether a client of this provider serves a module whose interpreter is [interpreter]. */
-    private suspend fun runsFor(interpreter: PythonInterpreter): Boolean = readAction {
-      LspClientManager.getInstance(project).getClients(this@PyLspToolIntegrationProvider::class.java)
-        .any { client -> client.pyServedModules.any { !it.isDisposed && it.pythonSdk?.let(interpreter::isFor) == true } }
+    private suspend fun runsFor(interpreter: PythonInterpreter): Boolean {
+      val modules = project.evoPyProjects().filter { it.interpreter == interpreter }.mapTo(HashSet()) { it.pyProject.residesOnModule }
+      return readAction {
+        LspClientManager.getInstance(project).getClients(this@PyLspToolIntegrationProvider::class.java)
+          .any { client -> client.pyServedModules.any { !it.isDisposed && it in modules } }
+      }
     }
 
     override fun packagesChanged(interpreter: PythonInterpreter) {
@@ -577,11 +581,11 @@ abstract class PyLspToolDescriptor(
    * [executableCandidates]. The lookup falls back to `PATH` and `uvx` for any module, so without that
    * order the primary module would win with a binary the user did not install.
    */
-  private fun findExecutable(): Pair<BinaryToExec, List<String>>? {
+  private suspend fun findExecutable(waitForInterpreters: Boolean): Pair<BinaryToExec, List<String>>? {
     for (served in executableCandidates()) {
-      val executable = runBlockingMaybeCancellable {
-        ModuleOrProject.ModuleAndProject(served).toolExecutableWithBaseArgs(pyTool, executableName)
-      }
+      val moduleOrProject = ModuleOrProject.ModuleAndProject(served)
+      val executable = if (waitForInterpreters) moduleOrProject.toolExecutableWithBaseArgs(pyTool, executableName)
+      else moduleOrProject.toolExecutableWithBaseArgsIfReady(pyTool, executableName)
       executable.successOrNull?.let { return it }
       thisLogger().info("$presentableName has no executable in module '${served.name}'.")
     }
@@ -696,7 +700,8 @@ abstract class PyLspToolDescriptor(
     val noExecutable = liveServedModules.ifEmpty { null }
                          ?.let { "No module of ${it.joinToString { m -> m.name }} provides the $presentableName executable" }
                        ?: "Every module the $presentableName server serves is gone"
-    val (binary, baseArgs) = findExecutable() ?: throw ExecutionException(noExecutable)
+    // Outside a read action, when the server starts, so it waits for the interpreters.
+    val (binary, baseArgs) = findExecutable(waitForInterpreters = true) ?: throw ExecutionException(noExecutable)
     val cmd = binary.asGeneralCommandLine().getOr { throw ExecutionException(it.error.message) }
       .withParameters(*baseArgs.toTypedArray(), *lspArguments().toTypedArray())
     return cmd
@@ -707,7 +712,8 @@ abstract class PyLspToolDescriptor(
     resolveCommandLine()
   }
 
-  open fun hasExecutable(): Boolean = findExecutable() != null
+  /** Whether a served module provides the binary. Called in a read action, so it does not wait for the interpreters. */
+  open fun hasExecutable(): Boolean = runBlockingMaybeCancellable { findExecutable(waitForInterpreters = false) } != null
 
   lateinit var supportProvider: PyLspToolIntegrationProvider
 

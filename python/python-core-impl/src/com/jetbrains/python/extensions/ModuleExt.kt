@@ -20,4 +20,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 
+@Deprecated("Use the interpreter of the Python project: `PyProject.getInterpreter`, or the snapshot of `EvoPyProjectModel` when the caller cannot wait")
+@Suppress("DEPRECATION")
 fun Module.getSdk(): Sdk? = PythonSdkUtil.findPythonSdk(this)

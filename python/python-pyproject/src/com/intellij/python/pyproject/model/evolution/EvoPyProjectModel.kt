@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -195,7 +196,8 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       return main.takeIf { fallsBackToMain }
     }
 
-    private fun forModule(module: Module): EvoPyProject? =
+    /** The entry of this generation whose `PyProject` resides on [module], or `null`. A disposed module is rejected. */
+    fun forModule(module: Module): EvoPyProject? =
       evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.takeUnless { module.isDisposed }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
@@ -235,9 +237,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
           val snapshot = computeSnapshot()
           state.value = snapshot
           // An inspection can have read the previous snapshot. Run it again on the new one. A project without Python
-          // projects has nothing that reads it.
+          // projects has nothing that reads it. A daemon that does not exist yet has run nothing, and creating it here
+          // can register it on a project that is already closed.
           if (snapshot.workspaces.isNotEmpty()) {
-            DaemonCodeAnalyzer.getInstance(project).restart("Python project structure changed")
+            project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart("Python project structure changed")
           }
         }
     }
@@ -467,6 +470,14 @@ fun Project.currentPythonInterpreter(): PythonInterpreter? = EvoPyProjectModel.g
  */
 @ApiStatus.Internal
 suspend fun Project.pythonProjectBaseDirs(): Set<Path> = EvoPyProjectModel.getInstance(this).snapshot().baseDirs
+
+/**
+ * The Python project that resides on [this] module, by [EvoPyProjectModel.Snapshot.forModule]. `null` before the first
+ * snapshot and for a module that is not Python. For code that cannot suspend and gets a module from the platform, such
+ * as an action `update` or a configurable. A caller that can suspend calls [PyProject.getInterpreter] instead.
+ */
+@ApiStatus.Internal
+fun Module.findEvoPyProjectIfReady(): EvoPyProject? = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.forModule(this)
 
 /**
  * The Python project of [this] element, by [EvoPyProjectModel.Snapshot.forFile]. `null` before the first snapshot.

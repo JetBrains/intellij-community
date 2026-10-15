@@ -16,9 +16,11 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
+import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.resolve.PackageAvailabilityService
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.isPackageAvailableKey
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
@@ -79,7 +81,7 @@ internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageA
   }
 
   override fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean {
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return false
+    val sdk = findModuleSdkIfReady(module) ?: return false
 
     // 1. First check package manager (has its own snapshot cache)
     if (isPackageInstalledInPackageManager(module.project, sdk, spec.packageName)) {
@@ -111,10 +113,12 @@ internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageA
 
   private fun canResolveFqnCached(module: Module, spec: PackageAvailabilitySpec): Boolean {
     return CachedValuesManager.getManager(module.project).getCachedValue(module, spec.cacheKey, {
-      val sdk = PythonSdkUtil.findPythonSdk(module)
+      val sdk = findModuleSdkIfReady(module)
       CachedValueProvider.Result.create(
         sdk != null && canResolveFqn(module.project, sdk, spec.fqns),
-        VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS
+        VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
+        // The SDK comes from the snapshot, so a snapshot that changes an interpreter computes the value again.
+        PyResolveCachesInvalidator.getInstance(module.project).modificationTracker,
       )
     }, false)
   }

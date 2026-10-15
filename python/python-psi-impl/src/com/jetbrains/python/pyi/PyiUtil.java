@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -120,7 +121,7 @@ public final class PyiUtil {
     if (!(element.getContainingFile() instanceof PyFile file) || file instanceof PyiFile) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(file);
+    final Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(file);
     if (sdk == null) return false;
     final VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);

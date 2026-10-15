@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.requirementsTxt
 
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.associatedModuleDir
 import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -26,7 +27,6 @@ import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -136,7 +136,7 @@ object PythonRequirementTxtSdkUtils {
   private fun getRequirementsTxtFromModule(module: Module): String? {
     val settings = PyPackageRequirementsSettings.getInstance(module)
 
-    if (module.pythonSdk == null)
+    if (module.findEvoPyProjectIfReady()?.interpreter == null)
       return null
 
     val requirementsPath = settings.state.myRequirementsPath

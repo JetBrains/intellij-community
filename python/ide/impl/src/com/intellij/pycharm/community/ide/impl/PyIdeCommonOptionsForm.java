@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
@@ -332,7 +333,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private @Nullable Sdk getSdkSelected() {
     String sdkHome = getSdkHome();
     if (StringUtil.isEmptyOrSpaces(sdkHome)) {
-      final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
+      final Sdk projectJdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
       if (projectJdk != null) {
         sdkHome = projectJdk.getHomePath();
       }

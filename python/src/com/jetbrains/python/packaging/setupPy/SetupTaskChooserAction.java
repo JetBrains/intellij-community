@@ -19,10 +19,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonTask;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class SetupTaskChooserAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkUtil.findPythonSdk(module) != null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PyModuleInterpreterReader.findModuleSdkIfReady(module) != null);
   }
 
   private static void runSetupTask(@NlsSafe String taskName, @NotNull Module module) {

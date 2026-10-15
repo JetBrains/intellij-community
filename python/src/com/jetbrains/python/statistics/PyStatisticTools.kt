@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
@@ -73,7 +74,7 @@ val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
  */
 @ApiStatus.Internal
 fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
-  module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
+  findModuleSdkIfReady(module)?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
 
 /**
  * Adds python language and interpreter version.

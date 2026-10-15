@@ -42,6 +42,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 
 class PySdkPopupFactory(val module: Module) {
 
@@ -83,7 +85,9 @@ class PySdkPopupFactory(val module: Module) {
   fun createPopup(context: DataContext): ListPopup {
     val asyncContext = Utils.createAsyncDataContext(context)
     val title = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
-    val currentSdk = module.pythonSdk
+    // The popup opens on the EDT, so it peeks at the snapshot to mark the current row.
+    @Suppress("DEPRECATION") // A row holds an SDK.
+    val currentSdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
     val options = ActionPopupOptions.forAid(
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, -1,
       Condition { it is SwitchToSdkAction && it.sdk == currentSdk },

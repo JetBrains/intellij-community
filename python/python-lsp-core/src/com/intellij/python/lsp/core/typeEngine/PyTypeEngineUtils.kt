@@ -5,9 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.isReadOnly
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.executionType
 
@@ -55,7 +56,9 @@ object PyTypeEngineUtils {
    * a separate [isLocalNonReadOnlySdk] call and SDK lookup when you need the SDK itself.
    */
   fun localNonReadOnlySdk(module: Module): Sdk? {
-    val pythonSdk = module.pythonSdk ?: return null
+    // Peeks at the snapshot. Before the first one, the module has no interpreter here.
+    @Suppress("DEPRECATION") // The read-only and local checks read an SDK.
+    val pythonSdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI() ?: return null
     return pythonSdk.takeIf { !it.isReadOnly && isLocalSdk(it) }
   }
 

@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonRuntimeService;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,8 @@ public final class PyUnresolvedReferenceDefaultInspectionExtension extends PyIns
     }
     else {
       var pythonRuntimeService = PythonRuntimeService.getInstance();
-      result = PythonSdkUtil.findPythonSdk(file) != null || pythonRuntimeService.isInScratchFile(file) || pythonRuntimeService.isExternallyIndexedFile(file);
+      // Peeks at the snapshot. Each new snapshot restarts the analysis.
+      result = PyModuleInterpreterReader.findModuleInterpreterIfReady(ModuleUtilCore.findModuleForPsiElement(file)) != null || pythonRuntimeService.isInScratchFile(file) || pythonRuntimeService.isExternallyIndexedFile(file);
     }
     return result;
   }

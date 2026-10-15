@@ -41,7 +41,6 @@ import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationsModel;
@@ -310,7 +309,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myModule == null) {
       return "";
     }
-    Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
     if (sdk == null) {
       return "";
     }
@@ -327,7 +326,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return;
     }
 
-    Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
     if (sdk == null) {
       return;
     }
@@ -347,7 +346,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public @NotNull ValidationResult check() {
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
+        final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
         if (sdk != null) {
           var factory = myModel.getSelected();
           if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
@@ -391,7 +390,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     if (myModule != null) {
       Project project = myModule.getProject();
-      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule), project));
+      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PyModuleInterpreterReader.findModuleSdkIfReady(myModule), project));
     }
 
     for (@NotNull DialogPanel panel : myCustomizePanels) {

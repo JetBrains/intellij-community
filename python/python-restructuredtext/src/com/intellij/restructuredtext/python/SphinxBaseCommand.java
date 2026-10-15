@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.system.OS;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -196,7 +197,7 @@ public class SphinxBaseCommand {
   }
 
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) {
       throw new ExecutionException(PythonRestBundle.message("python.rest.no.sdk.specified"));
     }

@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.ModuleOrProject;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -155,7 +154,7 @@ public final class PySearchScopeBuilder {
 
   private static @NotNull List<Sdk> findEffectivePythonSdks(@NotNull ModuleOrProject moduleOrProject) {
     if (moduleOrProject instanceof ModuleOrProject.ModuleAndProject moduleAndProject) {
-      Sdk sdk = PythonSdkUtil.findPythonSdk(moduleAndProject.getModule());
+      Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(moduleAndProject.getModule());
       if (sdk != null) {
         return List.of(sdk);
       }
@@ -165,7 +164,7 @@ public final class PySearchScopeBuilder {
       ModuleManager moduleManager = ModuleManager.Companion.getInstanceIfDefined(moduleOrProject.getProject());
       if (moduleManager != null) {
         return StreamEx.of(moduleManager.getModules())
-          .map(m -> PythonSdkUtil.findPythonSdk(m))
+          .map(m -> MainPythonSdkKt.pythonSdkIfReady(m))
           .nonNull()
           .distinct()
           .toList();

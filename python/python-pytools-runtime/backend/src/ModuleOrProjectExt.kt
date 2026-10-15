@@ -7,6 +7,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
@@ -20,11 +21,13 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsBundle
 import com.intellij.python.pytools.backend.findExecutableInPath
 import com.intellij.python.pytools.backend.getCustomExecutablePath
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.findToolExecutable
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.findPyProject
+import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,21 +51,41 @@ private const val UVX_COMMAND: String = "uvx"
  * How to launch [tool] here: the binary to exec, plus the leading arguments that binary needs.
  *
  * The resolution chain is fixed (discovery mode is no longer selectable): the scripts directory of the interpreter of
- * the Python project, which waits for the first snapshot,
- * then the user's custom path, then `PATH`. When none of those has it, the tool is run through `uvx`, which needs
- * `--from <package> <executable>` whenever the executable's name differs from its package's (pyright →
- * pyright-langserver).
+ * the Python project, then the user's custom path, then `PATH`. When none of those has it, the tool is run through
+ * `uvx`, which needs `--from <package> <executable>` whenever the executable's name differs from its package's
+ * (pyright → pyright-langserver).
+ *
+ * Waits for the first snapshot to find the interpreter. A caller in a read action calls
+ * [toolExecutableWithBaseArgsIfReady] instead, so it does not wait under the lock.
  */
 suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
   tool: PyTool,
   executableName: String = tool.packageName.name,
   workingDir: Path? = null,
+): PyResult<Pair<BinaryToExec, List<String>>> =
+  toolExecutableWithBaseArgs(tool, executableName, workingDir, findPyProject()?.getInterpreter())
+
+/**
+ * [toolExecutableWithBaseArgs] that reads the interpreter from the snapshot and does not wait for it. Before the first
+ * snapshot, the lookup skips the interpreter and goes on with the custom path.
+ */
+suspend fun ModuleOrProject.toolExecutableWithBaseArgsIfReady(
+  tool: PyTool,
+  executableName: String = tool.packageName.name,
+  workingDir: Path? = null,
+): PyResult<Pair<BinaryToExec, List<String>>> =
+  toolExecutableWithBaseArgs(tool, executableName, workingDir, moduleIfExists?.findEvoPyProjectIfReady()?.interpreter)
+
+private suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
+  tool: PyTool,
+  executableName: String,
+  workingDir: Path?,
+  interpreter: PythonInterpreter?,
 ): PyResult<Pair<BinaryToExec, List<String>>> {
   val eelDescriptor = project.getEelDescriptor()
   val eelApi = eelDescriptor.toEelApi()
   val customPath = tool.getCustomExecutablePath(eelDescriptor)
 
-  val interpreter = findPyProject()?.getInterpreter()
   val toolBinaryPath = interpreter?.findToolExecutable(tool, executableName)
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)

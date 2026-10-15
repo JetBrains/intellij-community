@@ -2,9 +2,7 @@
 package com.intellij.python.terminal
 
 import com.intellij.python.sdk.backend.NativePythonInterpreter
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -21,15 +19,15 @@ import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.ShellActivation
-import com.intellij.python.sdk.backend.pythonInterpreterResult
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.ShellType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -127,7 +125,8 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
 
   /**
    * Computes the virtual env activation for a shell running [shellName] in [workingDirectory], writing the
-   * activation environment variables into [envs]. The SDK is taken from the module that owns [workingDirectory].
+   * activation environment variables into [envs]. The interpreter is the one of the Python project that owns
+   * [workingDirectory], read from the snapshot.
    *
    * Activation is skipped if the SDK lives in an environment other than [terminalEelDescriptor]
    * (e.g. a Windows interpreter for a WSL shell), to avoid injecting cross-environment paths.
@@ -163,13 +162,17 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val sdk = runReadActionBlocking { ModuleUtilCore.findModuleForFile(directory, project)?.pythonSdk } ?: run {
-      logger.warn("Cannot find Python SDK for directory ${directory} in project ${project.name}")
+    // A background thread outside a read action, so it waits for the snapshot. A terminal restored at startup gets
+    // the interpreter too.
+    val pythonInterpreter = runBlockingMaybeCancellable { project.findPythonInterpreter(directory, mainForOrphans = false) } ?: run {
+      logger.warn("Cannot find Python interpreter for directory ${directory} in project ${project.name}")
       return
     }
+    @Suppress("DEPRECATION") // The activation of an unknown shell takes an SDK.
+    val sdk = pythonInterpreter.getSdkAPI()
 
-    // A broken SDK names no interpreter, and a target one has no environment on this machine.
-    val interpreter = sdk.pythonInterpreterResult().successOrNull as? NativePythonInterpreter
+    // A target interpreter has no environment on this machine.
+    val interpreter = pythonInterpreter as? NativePythonInterpreter
     val pythonEnvironment = interpreter?.environmentResult?.orLogException(logger) ?: run {
       logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
       return

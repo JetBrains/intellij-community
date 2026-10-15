@@ -128,6 +128,16 @@ public final class PythonSdkUtil {
    */
   @Deprecated
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
+    return readStoredPythonSdk(module);
+  }
+
+  /**
+   * The Python SDK stored on {@code module}, read now. For low-level code that runs inside the platform roots-change
+   * cycle and fills an index from it, such as the language level pusher. Every other caller reads the interpreter of
+   * the Python project.
+   */
+  @ApiStatus.Internal
+  public static @Nullable Sdk readStoredPythonSdk(@Nullable Module module) {
     if (module == null || module.isDisposed()) {
       return null;
     }

@@ -116,6 +116,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+    // Resolve reads the interpreter from the snapshot, so a test starts only when the snapshot holds the fixture SDK.
+    PyProjectStructureTestUtilKt.awaitPythonInterpreters(myFixture.getProject());
 
     // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
     Registry.get(PyAnyType.REGISTRY_KEY).setValue(!isPyAnyTypeDisabledForCurrentTest());

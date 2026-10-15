@@ -21,6 +21,8 @@ import java.util.function.Consumer
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 
 internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : SettingsEditorFragment<T, JPanel>(
   "py.plugin.interpreter", null, null, JPanel(GridBagLayout()), SettingsEditorFragmentType.COMMAND_LINE, null, null,
@@ -155,7 +157,9 @@ internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : Sett
   private fun getSelectedSdk(): Sdk? {
     if (currentMode == SDK_OF_MODULE) {
       ((modulesCombo?.selectedItem) as? Module)?.let {
-        return PythonSdkUtil.findPythonSdk(it)
+        // A fragment cannot suspend, so it peeks at the snapshot.
+        @Suppress("DEPRECATION") // The run configuration takes an SDK.
+        return it.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
       }
     }
     else if (currentMode == SDK_FROM_LIST) {

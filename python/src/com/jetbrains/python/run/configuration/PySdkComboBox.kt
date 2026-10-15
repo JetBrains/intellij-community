@@ -21,8 +21,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonSdk
 import java.util.function.Consumer
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * The interpreter combo of a run configuration.
@@ -76,7 +77,9 @@ class PySdkComboBox @ApiStatus.Internal constructor(
   }
 
   private fun updateDefaultInterpreter(module: Module?) {
-    val sdk = module?.pythonSdk
+    // A combo cannot suspend, so it peeks at the snapshot. Before the first one, no default interpreter is shown.
+    @Suppress("DEPRECATION") // The renderer and the run configuration take an SDK.
+    val sdk = module?.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
     setRenderer(
       if (sdk == null) PySdkListCellRenderer()
       else PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.name), itemFor(sdk))
@@ -99,7 +102,8 @@ class PySdkComboBox @ApiStatus.Internal constructor(
     else {
       if (isUseModuleSdk()) {
         moduleProvider.get()?.let {
-          return@getSelectedSdk PythonSdkUtil.findPythonSdk(it)
+          @Suppress("DEPRECATION") // The run configuration takes an SDK.
+          return@getSelectedSdk it.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
         }
       }
     }

@@ -7,14 +7,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,18 +34,11 @@ final class InterpreterDirectoryMacro extends Macro implements PathMacro {
   @Override
   public @Nullable String expand(@NotNull DataContext dataContext) {
     Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-    if (module == null) {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project == null) {
-        return null;
-      }
-      Module[] modules = ModuleManager.getInstance(project).getModules();
-      if (modules.length == 0) {
-        return null;
-      }
-      module = modules[0];
-    }
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    // Without a module, the interpreter of the main Python project.
+    Sdk sdk = module != null || project == null
+              ? PyModuleInterpreterReader.findModuleSdkIfReady(module)
+              : PyModuleInterpreterReader.findMainSdkIfReady(project);
     if (sdk != null) {
       VirtualFile homeDir = sdk.getHomeDirectory();
       if (homeDir == null) {
