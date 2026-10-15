@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -64,8 +67,9 @@ internal class KotlinCallableReferenceUsage(expression: KtCallableReferenceExpre
         allUsages: Array<out UsageInfo>
     ): KtElement? {
         val expression = element as? KtCallableReferenceExpression ?: return null
+        val newName = if (changeInfo.isNameChanged) changeInfo.newName else expression.callableReference.text
         val newText = when (val fix = fix) {
-            is SetQualifier -> "${fix.prefix}::${expression.callableReference.text}"
+            is SetQualifier -> "${fix.prefix}::${newName}"
             is Conflict, None -> return null
         }
         return expression.replace(KtPsiFactory(element.project).createExpression(newText)) as KtElement
@@ -179,7 +183,7 @@ private fun classifyConversion(
             qualified -> conflictFix(expression, QUALIFIER_OCCUPIED_CONFLICT)
             // `(X, Y) -> R` and `X.(Y) -> R` have the same shape only when `X` is first.
             changeInfo.receiverParameterInfo?.oldIndex != 0 -> conflictFix(expression, TYPE_CHANGE_CONFLICT)
-            else -> SetQualifier(fullyQualifiedReceiverType(changeInfo))
+            else -> receiverTypeQualifier(expression, changeInfo)
         }
 
         ParamConversion.RECEIVER_ADDED ->
@@ -208,7 +212,7 @@ private fun classifyConversion(
         }
 
         ParamConversion.RECEIVER_RETYPED ->
-            if (isUnboundTypeQualifier(expression)) SetQualifier(fullyQualifiedReceiverType(changeInfo)) else None
+            if (isUnboundTypeQualifier(expression)) receiverTypeQualifier(expression, changeInfo) else None
 
         ParamConversion.VALUE_TO_CONTEXT ->
             conflictFix(expression, PARAMETER_TO_CONTEXT_CONFLICT, convertedToContextParameterName(changeInfo))
@@ -221,17 +225,35 @@ private fun classifyConversion(
     }
 }
 
+private fun receiverTypeQualifier(
+    expression: KtCallableReferenceExpression,
+    changeInfo: KotlinChangeInfoBase,
+): CallableReferenceFix {
+    val qualifier = fullyQualifiedReceiverType(changeInfo)
+    return if (qualifier != null) SetQualifier(qualifier) else conflictFix(expression, TYPE_CHANGE_CONFLICT)
+}
 
-private fun fullyQualifiedReceiverType(changeInfo: KotlinChangeInfoBase): String {
-    val receiverInfo = changeInfo.receiverParameterInfo ?: return ""
-    val context = changeInfo.method.unwrapped as? KtElement ?: return receiverInfo.typeText
+private fun fullyQualifiedReceiverType(changeInfo: KotlinChangeInfoBase): String? {
+    val receiverInfo = changeInfo.receiverParameterInfo ?: return null
+    val context = changeInfo.method.unwrapped as? KtElement ?: return null
     val typeRef = KtPsiFactory(context.project)
         .createTypeCodeFragment(receiverInfo.typeText, context)
         .getContentElement()
-        ?: return receiverInfo.typeText
+        ?: return null
     // The code fragment lives in its own (dangling file) module -> needs its own session.
     return analyze(typeRef) {
-        typeRef.type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)
+        val type = typeRef.type
+        if (!type.isSafeQualifierType()) return@analyze null
+        type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)
+    }
+}
+
+private fun KaType.isSafeQualifierType(): Boolean {
+    if (this !is KaClassType) return false
+    if (this is KaFunctionType) return false
+    return typeArguments.all { argument ->
+        val argumentType = argument.type ?: return@all true
+        argumentType.isSafeQualifierType()
     }
 }
 

@@ -109,20 +109,33 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                                 return KotlinCallerCallUsage(callElementParent)
                             }
                         }
+
                         return KotlinFunctionCallUsage(callElementParent, method)
                     }
+
                     parent is KtConstructorDelegationCall ->
                         return KotlinConstructorDelegationCallUsage(parent, method)
-                    parent is KtCallableReferenceExpression ->{
+
+                    parent is KtCallableReferenceExpression && parent.callableReference == element -> {
                         val usage = fromJavaChangeInfo(changeInfo, UsageInfo(parent), true)
-                            ?.let { kotlinInfo -> allowAnalysisFromWriteActionInEdt(parent) { KotlinCallableReferenceUsage.create(parent, kotlinInfo) } }
+                            ?.let { kotlinInfo ->
+                                allowAnalysisFromWriteActionInEdt(parent) {
+                                    KotlinCallableReferenceUsage.create(
+                                        parent,
+                                        kotlinInfo
+                                    )
+                                }
+                            }
                             ?: KotlinCallableReferenceUsage(parent, CallableReferenceFix.None)
                         return usage
                     }
+
                     element is KtSimpleNameExpression && (method is KtProperty || method is KtParameter) ->
                         return KotlinPropertyCallUsage(element, changeInfo as KotlinChangeInfoBase)
+
                     element is KtSuperTypeCallEntry ->
                         return KotlinFunctionCallUsage(element, method)
+
                     else -> {
                         //skip imports for now, they are removed by optimize imports
                         if (PsiTreeUtil.getParentOfType(element, KtImportDirective::class.java, true, KtDeclaration::class.java) != null) {
