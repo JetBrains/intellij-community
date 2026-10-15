@@ -5,6 +5,8 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
 
+use avl_wire::daemon::LaneClass;
+
 use super::*;
 
 /// A suite document of `lane` with the test class `class` and `scenarios` scenarios that run nothing.
@@ -50,6 +52,10 @@ fn selected(root: &Path, lane: &str, selectors: &[&str]) -> Result<Selection, St
 }
 
 fn filtered(root: &Path, lane: &str, selectors: &[&str], filters: &[&str]) -> Result<Selection, String> {
+    planned(root, lane, selectors, filters, &[])
+}
+
+fn planned(root: &Path, lane: &str, selectors: &[&str], filters: &[&str], lane_classes: &[LaneClass]) -> Result<Selection, String> {
     let owned = |texts: &[&str]| texts.iter().map(|text| (*text).to_owned()).collect::<Vec<String>>();
     select(&SelectionInputs {
         lane,
@@ -57,7 +63,90 @@ fn filtered(root: &Path, lane: &str, selectors: &[&str], filters: &[&str]) -> Re
         suite_documents: root,
         selectors: &owned(selectors),
         junit5_filters: &owned(filters),
+        lane_classes,
     })
+}
+
+fn lane_class(suite: &str, test_class_name: &str, authored: bool) -> LaneClass {
+    LaneClass {
+        suite: suite.to_owned(),
+        test_class_name: test_class_name.to_owned(),
+        authored,
+    }
+}
+
+// The plan names every suite of the lane that the controller names. A suite with no suite document is planned as an
+// undocumented suite, and the selectors and the class filters narrow it as they narrow a document.
+#[test]
+fn a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document() {
+    let root = documents();
+    let lane_classes = [
+        lane_class("add-to-agent-context", "AirAddToAgentContextGeneratedFlowUiTest", false),
+        lane_class("genui-host", "AirGenUiHostUiTest", true),
+    ];
+    let undocumented =
+        |selection: &Selection| -> Vec<String> { selection.undocumented.iter().map(|class| class.test_class_name.clone()).collect() };
+
+    let all = planned(root.path(), "ui", &[], &[], &lane_classes).unwrap();
+    assert_eq!(
+        all.class_names(),
+        [
+            "AirAddToAgentContextGeneratedFlowUiTest",
+            "AirGenUiHostUiTest",
+            "AirRenameSessionGeneratedFlowUiTest"
+        ]
+    );
+    assert_eq!(undocumented(&all), ["AirGenUiHostUiTest"]);
+
+    let selected = planned(root.path(), "ui", &["com.intellij.air.AirGenUiHostUiTest"], &[], &lane_classes).unwrap();
+    assert!(selected.suites.is_empty());
+    assert_eq!(selected.class_names(), ["AirGenUiHostUiTest"]);
+
+    let by_class = planned(
+        root.path(),
+        "ui",
+        &[],
+        &[r"include-classname=(^|.*\.)AirGenUiHostUiTest$"],
+        &lane_classes,
+    )
+    .unwrap();
+    assert!(by_class.suites.is_empty());
+    assert_eq!(undocumented(&by_class), ["AirGenUiHostUiTest"]);
+
+    let excluded = planned(
+        root.path(),
+        "ui",
+        &[],
+        &[r"exclude-classname=(^|.*\.)AirGenUiHostUiTest$"],
+        &lane_classes,
+    )
+    .unwrap();
+    assert!(excluded.undocumented.is_empty());
+    assert_eq!(
+        classes(&excluded),
+        ["AirAddToAgentContextGeneratedFlowUiTest", "AirRenameSessionGeneratedFlowUiTest"]
+    );
+}
+
+// A suite with no suite document fails as unsupported, and the reason says why the lane daemon cannot run it.
+#[test]
+fn an_undocumented_suite_fails_as_unsupported_with_its_reason() {
+    let authored = undocumented_failure(&lane_class("genui-host", "AirGenUiHostUiTest", true), "ui").typed();
+    assert_eq!(authored.kind.as_deref(), Some("lane_unsupported"));
+    assert!(
+        authored
+            .message
+            .as_deref()
+            .unwrap()
+            .starts_with("the suite 'genui-host' (AirGenUiHostUiTest) is an authored suite"),
+        "{authored:?}"
+    );
+    let generated = undocumented_failure(&lane_class("composer", "AirComposerGeneratedFlowUiTest", false), "ui").typed();
+    assert_eq!(generated.kind.as_deref(), Some("lane_unsupported"));
+    assert!(
+        generated.message.as_deref().unwrap().contains("hold no document of it"),
+        "{generated:?}"
+    );
 }
 
 fn classes(selection: &Selection) -> Vec<&str> {

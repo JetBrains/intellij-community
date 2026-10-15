@@ -1419,6 +1419,17 @@ after that move.
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane`)
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
 
+- The controller sends the lane daemon every suite of the lane that the catalog names: the suite documents and the
+  authored suites, by test class. The JVM runner runs each of them, because each carries the JUnit tag of the lane.
+  [@test] ../crates/avl-vm/src/lane/affected/tests.rs (`the_lane_classes_are_the_suite_documents_and_the_authored_suites_of_the_lane`)
+
+- The plan names each of these suites, also a suite with no suite document. The selectors and the class filters
+  narrow such a suite by its test class, and a package filter drops it. `planStarted` names every planned class, and
+  each suite with no document ends as a failed container `lane_unsupported` that names the reason. A class that no
+  data file lists is outside the plan.
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`an_undocumented_suite_fails_as_unsupported_with_its_reason`)
+
 - The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
 

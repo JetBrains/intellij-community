@@ -30,6 +30,8 @@ use bt_core::{
 };
 use serde::Serialize;
 
+use avl_wire::daemon::LaneClass;
+
 use crate::lane::lanes::{JUNIT5_FILTERS, Selection, as_usage, lane_selection};
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
@@ -136,6 +138,26 @@ pub(crate) fn resolve_changed_suites(settings: &Config, paths: &[String], report
         affected: resolve_affected(settings, paths, reporter)?,
         subject: CHANGED_PATHS_SUBJECT.to_owned(),
     })
+}
+
+/// Every suite of the lane `lane` that the catalog names, by test class: the generated suite documents and the authored
+/// suites. The JVM runner runs each of them, because each carries the JUnit tag of the lane. The lane daemon plans each
+/// one, so a suite that it cannot run is a failed container and never an omission.
+pub(crate) fn lane_classes(settings: &Config, lane: &str, reporter: &Reporter) -> Result<Vec<LaneClass>, Refusal> {
+    let runtime = bt_runtime(settings.host_repo()?, reporter);
+    let area = air_area();
+    let mut classes: Vec<LaneClass> = bt_core::catalog::read_suite_documents(&runtime, area)
+        .map_err(as_usage)?
+        .into_iter()
+        .filter(|document| document.lane_name(area.lanes()) == Some(lane))
+        .map(|document| LaneClass {
+            suite: document.suite,
+            test_class_name: document.test_class_name,
+            authored: document.authored,
+        })
+        .collect();
+    classes.sort_by(|left, right| left.test_class_name.cmp(&right.test_class_name));
+    Ok(classes)
 }
 
 /// The generated suites a flow or a suite selector names.

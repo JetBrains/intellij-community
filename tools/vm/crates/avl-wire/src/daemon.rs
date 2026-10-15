@@ -258,6 +258,22 @@ pub struct RunRequest {
     /// The digests that the push stored the lane inputs under. The lane daemon only.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub lane_inputs: Option<LaneInputs>,
+    /// Every suite of the lane that the catalog names, which the JVM runner runs: the suite documents and the authored
+    /// suites. The lane daemon plans each one, and a suite without a suite document ends as a failed container. The
+    /// lane daemon only. Empty plans the suite documents alone.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lane_classes: Vec<LaneClass>,
+}
+
+/// One suite of a lane: its id and its test class, by its simple name.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaneClass {
+    pub suite: String,
+    pub test_class_name: String,
+    /// A suite of the authored suites file, which has no suite document yet.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub authored: bool,
 }
 
 /// One context plugin file of a run: its destination below the plugin directory of the IDE context, and the digest

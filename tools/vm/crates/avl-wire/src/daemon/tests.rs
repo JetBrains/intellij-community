@@ -247,6 +247,7 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         }],
         lane: None,
         lane_inputs: None,
+        lane_classes: Vec::new(),
     };
     assert_eq!(
         serde_json::to_string(&request).unwrap(),
@@ -261,6 +262,26 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
     let encoded = serde_json::to_string(&request).unwrap();
     assert!(
         encoded.ends_with(r#""lane":"ui","laneInputs":{"fakeAgentJar":"f","laneDocuments":"d","suiteDocuments":"d"}}"#),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+    request.lane_classes = vec![
+        LaneClass {
+            suite: "composer".to_owned(),
+            test_class_name: "AirComposerGeneratedFlowUiTest".to_owned(),
+            authored: false,
+        },
+        LaneClass {
+            suite: "genui-host".to_owned(),
+            test_class_name: "AirGenUiHostUiTest".to_owned(),
+            authored: true,
+        },
+    ];
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(
+            r#""laneClasses":[{"suite":"composer","testClassName":"AirComposerGeneratedFlowUiTest"},{"suite":"genui-host","testClassName":"AirGenUiHostUiTest","authored":true}]}"#
+        ),
         "{encoded}"
     );
     assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);

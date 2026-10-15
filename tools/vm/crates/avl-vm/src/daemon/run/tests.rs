@@ -956,6 +956,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             ide_plugins: Vec::new(),
             lane: None,
             lane_inputs: None,
+            lane_classes: Vec::new(),
         })
         .unwrap();
         assert!(encoded["selectors"].is_array(), "{filter}: {encoded}");
@@ -974,9 +975,9 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
         lane: Some("ui".to_owned()),
         ..RunSelection::default()
     };
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm).unwrap();
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new()).unwrap();
     assert_eq!((jvm.lane, jvm.lane_inputs), (None, None));
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon).unwrap();
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new()).unwrap();
     assert_eq!(verb.lane.as_deref(), Some("ui"));
     let digest = |field: &str| {
         prep.lane_inputs
@@ -995,7 +996,7 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
             suite_documents: digest("suiteDocuments"),
         })
     );
-    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon).unwrap_err();
+    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon, Vec::new()).unwrap_err();
     assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
 }
 
@@ -1011,8 +1012,8 @@ async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_it
         junit5_filters: vec!["include-tag=air-flow-ui".to_owned(), class.clone()],
         ..RunSelection::default()
     };
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon).unwrap();
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new()).unwrap();
     assert_eq!(verb.junit5_filters, std::slice::from_ref(&class));
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm).unwrap();
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new()).unwrap();
     assert_eq!(jvm.junit5_filters, ["include-tag=air-flow-ui".to_owned(), class]);
 }

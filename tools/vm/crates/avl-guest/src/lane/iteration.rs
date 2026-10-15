@@ -6,7 +6,7 @@
 //! with the recorder of [`super::trace`]. The bundles of the recorder go to `<iterationDir>/air-traces`, which the
 //! trace pull of the controller packs.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::Write;
 use std::panic::{self, AssertUnwindSafe};
@@ -15,7 +15,7 @@ use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
 use avl_trace::protocol;
-use avl_wire::daemon::{PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
+use avl_wire::daemon::{LaneClass, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
 use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents};
 use regex::Regex;
@@ -27,7 +27,7 @@ use super::ide::{ContextPlugin, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::package::sha256_hex;
-use super::program::{Lane, Runner, Suite, class_label};
+use super::program::{Failure, Lane, Runner, Suite, class_label, kind};
 use super::readiness::{Bridge, READY_TIMEOUT, request};
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
@@ -48,6 +48,22 @@ pub(crate) struct Selection {
     pub lane_bytes: Vec<u8>,
     pub lane: LaneDocument,
     pub suites: Vec<Suite>,
+    /// The suites of the lane that the controller names and that have no suite document. The plan names each one, and
+    /// each ends as a failed container [`kind::UNSUPPORTED`].
+    pub undocumented: Vec<LaneClass>,
+}
+
+impl Selection {
+    /// The test class of every planned suite, in name order: the suite documents and the undocumented suites.
+    pub(crate) fn class_names(&self) -> Vec<String> {
+        let names: BTreeSet<String> = self
+            .suites
+            .iter()
+            .map(|suite| suite.program.test_class_name.clone())
+            .chain(self.undocumented.iter().map(|class| class.test_class_name.clone()))
+            .collect();
+        names.into_iter().collect()
+    }
 }
 
 /// What a selection is read from: the lane, the jars of the documents, and the selectors.
@@ -58,11 +74,16 @@ pub(crate) struct SelectionInputs<'a> {
     pub selectors: &'a [String],
     /// The JUnit5 filters of the request, `<option>=<value>`.
     pub junit5_filters: &'a [String],
+    /// The suites of the lane that the catalog names, `laneClasses` of the request.
+    pub lane_classes: &'a [LaneClass],
 }
 
 /// Reads the lane document `<lane>.json` and the suite documents of its lane. A selector names the `testClassName` of a
 /// document, with or without a package. A `#<scenario>` part keeps only the scenario of that name or key. No selector
 /// selects every document of the lane. The JUnit5 filters then narrow the documents, see [`apply_filters`].
+///
+/// A suite of `lane_classes` that has no suite document is planned too, so that the plan names every class that the JVM
+/// runner runs. The selectors and the filters narrow these suites by their test class as well.
 pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> {
     let lanes = read_lane_documents(inputs.lane_documents)?;
     let name = format!("{}.json", inputs.lane);
@@ -81,6 +102,13 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
         }
     }
     let mut suites = super::program::suites_of(documents)?;
+    let documented: BTreeSet<&str> = suites.iter().map(|suite| suite.program.test_class_name.as_str()).collect();
+    let mut undocumented: Vec<LaneClass> = inputs
+        .lane_classes
+        .iter()
+        .filter(|class| !documented.contains(class.test_class_name.as_str()))
+        .cloned()
+        .collect();
     // The scenarios that the selectors name, by class: `None` keeps every scenario of the class.
     let mut wanted: BTreeMap<&str, Option<Vec<&str>>> = BTreeMap::new();
     for selector in inputs.selectors {
@@ -96,7 +124,8 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
     }
     if !wanted.is_empty() {
         suites.retain(|suite| wanted.contains_key(suite.program.test_class_name.as_str()));
-        if suites.is_empty() {
+        undocumented.retain(|class| wanted.contains_key(class.test_class_name.as_str()));
+        if suites.is_empty() && undocumented.is_empty() {
             return Err(format!(
                 "no suite document of the lane {} has the test class {:?}",
                 lane.lane,
@@ -111,17 +140,48 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
             }
         }
     }
-    apply_filters(&mut suites, inputs.junit5_filters, &lane.lane)?;
+    apply_filters(&mut suites, &mut undocumented, inputs.junit5_filters, &lane.lane)?;
     suites.sort_by(|left, right| left.program.test_class_name.cmp(&right.program.test_class_name));
-    Ok(Selection { lane_bytes, lane, suites })
+    Ok(Selection {
+        lane_bytes,
+        lane,
+        suites,
+        undocumented,
+    })
+}
+
+/// The failure of a planned suite that has no suite document, [`kind::UNSUPPORTED`].
+pub(crate) fn undocumented_failure(class: &LaneClass, lane: &str) -> Failure {
+    let message = if class.authored {
+        format!(
+            "the suite '{}' ({}) is an authored suite of the JVM host, and the lane daemon runs it only when a suite \
+             document states it",
+            class.suite, class.test_class_name
+        )
+    } else {
+        format!(
+            "the catalog names the suite '{}' ({}) for the lane {lane}, and the suite documents of the run hold no \
+             document of it",
+            class.suite, class.test_class_name
+        )
+    };
+    Failure::runner(kind::UNSUPPORTED, message)
 }
 
 /// Keeps the documents that the JUnit5 `filters` select, as JUnit applies them to the class of each document: the
 /// `testClass` label. An `include-classname` pattern must match the whole class name, and a document passes when one
 /// of them matches. An `exclude-classname` pattern that matches drops it. A package filter takes the package and its
 /// sub-packages. The lane of the request selects the lane, so a tag filter, which the documents do not carry, is a
-/// refusal, and so is a set of filters that keeps no document.
-pub(crate) fn apply_filters(suites: &mut Vec<Suite>, filters: &[String], lane: &str) -> Result<(), String> {
+/// refusal, and so is a set of filters that keeps no suite.
+///
+/// The filters narrow the `undocumented` suites by their simple class name, which a simple-name pattern matches. A
+/// package filter keeps none of them, because no document states their package.
+pub(crate) fn apply_filters(
+    suites: &mut Vec<Suite>,
+    undocumented: &mut Vec<LaneClass>,
+    filters: &[String],
+    lane: &str,
+) -> Result<(), String> {
     if filters.is_empty() {
         return Ok(());
     }
@@ -152,14 +212,15 @@ pub(crate) fn apply_filters(suites: &mut Vec<Suite>, filters: &[String], lane: &
         }
     }
     let in_package = |class: &str, package: &str| class.strip_prefix(package).is_some_and(|rest| rest.starts_with('.'));
-    suites.retain(|suite| {
-        let class = class_label(&suite.program);
-        (include_classes.is_empty() || include_classes.iter().any(|include| include.is_match(&class)))
-            && !exclude_classes.iter().any(|exclude| exclude.is_match(&class))
-            && (include_packages.is_empty() || include_packages.iter().any(|package| in_package(&class, package)))
-            && !exclude_packages.iter().any(|package| in_package(&class, package))
-    });
-    if suites.is_empty() {
+    let keeps = |class: &str| {
+        (include_classes.is_empty() || include_classes.iter().any(|include| include.is_match(class)))
+            && !exclude_classes.iter().any(|exclude| exclude.is_match(class))
+            && (include_packages.is_empty() || include_packages.iter().any(|package| in_package(class, package)))
+            && !exclude_packages.iter().any(|package| in_package(class, package))
+    };
+    suites.retain(|suite| keeps(&class_label(&suite.program)));
+    undocumented.retain(|class| keeps(&class.test_class_name));
+    if suites.is_empty() && undocumented.is_empty() {
         return Err(format!(
             "the JUnit5 filters {filters:?} select no suite document of the lane {lane}"
         ));
@@ -243,6 +304,7 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         suite_documents: &suite_documents,
         selectors: &request.selectors,
         junit5_filters: &request.junit5_filters,
+        lane_classes: &request.lane_classes,
     })?;
     let plugins: Vec<ContextPlugin> = request
         .ide_plugins
@@ -256,9 +318,10 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         })
         .collect::<Result<_, String>>()?;
     stream.note(format!(
-        "lane {lane}: {} suite document(s) of {}, {} context plugin file(s)",
+        "lane {lane}: {} suite document(s) of {}, {} suite(s) with no document, {} context plugin file(s)",
         selection.suites.len(),
         selection.lane.lane,
+        selection.undocumented.len(),
         plugins.len()
     ));
     stream.emit(&watchdog_record("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
@@ -294,8 +357,16 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
     stream.emit(&RunEventKind::PlanStarted(PlanStarted {
         timestamp: now_stamp(),
         discovered_executions: discovered,
-        class_names: selection.suites.iter().map(|suite| suite.program.test_class_name.clone()).collect(),
+        class_names: selection.class_names(),
     }));
+    for class in &selection.undocumented {
+        stream.container_failed(
+            &class.suite,
+            &class.test_class_name,
+            &class.test_class_name,
+            undocumented_failure(class, lane).typed(),
+        );
+    }
     let token = identity.secret(BRIDGE_TOKEN_PURPOSE);
     let daemon_lane = DaemonLane {
         daemon,

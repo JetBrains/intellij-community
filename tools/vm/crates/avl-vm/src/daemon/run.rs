@@ -12,7 +12,8 @@ use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
 use avl_report::digest::PathDigest;
 use avl_wire::daemon::{
-    self as wire, IdePlugin, LaneInputs, RunEvent, RunEventKind, RunFailed, RunRequest, Runner, Summary, WatchdogExpired, conflict,
+    self as wire, IdePlugin, LaneClass, LaneInputs, RunEvent, RunEventKind, RunFailed, RunRequest, Runner, Summary, WatchdogExpired,
+    conflict,
 };
 use avl_wire::progress::Event;
 use bt_junit::simple_class_name_pattern;
@@ -607,18 +608,20 @@ pub(crate) struct RunExecution {
 
 /// The `/run` request of `selection` for the build `prep` and the daemon of `runner`.
 ///
-/// The lane daemon also gets the lane and the digests of the lane inputs. It refuses a run of no lane here, before the
-/// request goes out, because it cannot choose a lane IDE for it. The `lane` field selects the documents of the lane, so
-/// the JUnit5 filter of the lane's own tag does not go to the lane daemon; every other filter does.
+/// The lane daemon also gets the lane, the digests of the lane inputs and `lane_classes`, the suites of the lane that
+/// the catalog names. It refuses a run of no lane here, before the request goes out, because it cannot choose a lane
+/// IDE for it. The `lane` field selects the documents of the lane, so the JUnit5 filter of the lane's own tag does not
+/// go to the lane daemon; every other filter does.
 pub(crate) fn run_request(
     prep: &PreparedBuild,
     selection: &RunSelection,
     policy: WatchdogPolicy,
     runner: Runner,
+    lane_classes: Vec<LaneClass>,
 ) -> Result<RunRequest, Refusal> {
     let mut junit5_filters = selection.junit5_filters.clone();
-    let (lane, lane_inputs) = match runner {
-        Runner::Jvm => (None, None),
+    let (lane, lane_inputs, lane_classes) = match runner {
+        Runner::Jvm => (None, None, Vec::new()),
         Runner::Daemon => {
             let Some(lane) = &selection.lane else {
                 return Err(Refusal::new(
@@ -644,7 +647,7 @@ pub(crate) fn run_request(
             };
             let own_tag = format!("include-tag={}", avl_affected::ui_lane(lane)?.junit_tag);
             junit5_filters.retain(|filter| *filter != own_tag);
-            (Some(lane.clone()), Some(inputs))
+            (Some(lane.clone()), Some(inputs), lane_classes)
         }
     };
     Ok(RunRequest {
@@ -665,6 +668,7 @@ pub(crate) fn run_request(
             .collect(),
         lane,
         lane_inputs,
+        lane_classes,
     })
 }
 
@@ -686,7 +690,12 @@ impl Host {
         policy: WatchdogPolicy,
         observe: &mut (dyn FnMut(&RunEvent) + Send),
     ) -> Result<RunExecution, Refusal> {
-        let body = encode(&run_request(prep, selection, policy, self.daemon.runner())?)?;
+        // The JVM runner discovers the classes of its lane by the tag, so only the lane daemon gets the catalog.
+        let lane_classes = match (self.daemon.runner(), &selection.lane) {
+            (Runner::Daemon, Some(lane)) => crate::lane::lane_classes(&self.settings, lane, &self.reporter)?,
+            _ => Vec::new(),
+        };
+        let body = encode(&run_request(prep, selection, policy, self.daemon.runner(), lane_classes)?)?;
         let mut watchdog = TransportWatchdog::armed(policy.progress_gap + TRANSPORT_MARGIN);
         let run_failed = |message: String| Refusal::new("daemon_run_failed", Exit::SOFTWARE, message);
         let run = wire::RUN;
