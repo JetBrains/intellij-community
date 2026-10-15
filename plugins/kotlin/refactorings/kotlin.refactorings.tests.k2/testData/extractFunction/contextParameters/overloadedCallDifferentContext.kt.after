@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(c: String)
+fun foo() {
+    __dummyTestFun__()
+}
+
+context(s: String)
+private fun __dummyTestFun__() {
+    bar('x')
+}
+
+context(s: String) fun bar(c: Char) {}
+context(s: Int) fun bar(b: Boolean) {}

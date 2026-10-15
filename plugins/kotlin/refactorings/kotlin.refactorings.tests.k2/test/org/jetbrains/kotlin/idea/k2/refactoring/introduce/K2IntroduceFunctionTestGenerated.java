@@ -409,6 +409,21 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("testData/extractFunction/contextParameters/multipleParametersOnePropertyAccess.kt");
         }
 
+        @TestMetadata("overloadedCall.kt")
+        public void testOverloadedCall() throws Exception {
+            runTest("testData/extractFunction/contextParameters/overloadedCall.kt");
+        }
+
+        @TestMetadata("overloadedCallDifferentContext.kt")
+        public void testOverloadedCallDifferentContext() throws Exception {
+            runTest("testData/extractFunction/contextParameters/overloadedCallDifferentContext.kt");
+        }
+
+        @TestMetadata("overloadedCallWithProvidedContext.kt")
+        public void testOverloadedCallWithProvidedContext() throws Exception {
+            runTest("testData/extractFunction/contextParameters/overloadedCallWithProvidedContext.kt");
+        }
+
         @TestMetadata("parameterizedContextParameters.kt")
         public void testParameterizedContextParameters() throws Exception {
             runTest("testData/extractFunction/contextParameters/parameterizedContextParameters.kt");
