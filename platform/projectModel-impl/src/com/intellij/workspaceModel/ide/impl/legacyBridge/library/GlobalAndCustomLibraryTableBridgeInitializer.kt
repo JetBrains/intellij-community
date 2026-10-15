@@ -22,12 +22,13 @@ internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer 
   override fun initializeBridges(project: Project,
                                  changes: Map<Class<*>, List<EntityChange<*>>>,
                                  builder: MutableEntityStorage) = GlobalLibraryTableBridgeImpl.initializeLibraryBridgesTimeMs.addMeasuredTime {
-    val machine = project.getEelMachine()
-    val entityStorage = GlobalWorkspaceModel.getInstance(machine).entityStorage
-
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
     val addChanges = libraryChanges.filterGlobalOrCustomLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+    if (addChanges.isEmpty()) return@addMeasuredTime
+
+    val machine = project.getEelMachine()
+    val entityStorage = GlobalWorkspaceModel.getInstance(machine).entityStorage
 
     for (addChange in addChanges) {
       val libraryEntity = addChange.newEntity
