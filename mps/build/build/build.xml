@@ -58,7 +58,6 @@
   <!-- Code changes required for MPS not yet integrated into the codebase -->
   <target name="patch" description="Apply MPS patches to IDEA Community sources">
     <apply.patch file="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
-    <apply.patch file="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
     <apply.patch file="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
     <apply.patch file="${basedir}/patches/IJPL-156181.patch"/>
     <apply.patch file="${basedir}/patches/jps.patch"/>
