@@ -13,6 +13,7 @@ import git4idea.repo.GitRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
@@ -112,6 +113,7 @@ internal class GitLabMergeRequestChangesLoadTest {
   fun stopServer() {
     server.stop(0)
     serverExecutor.shutdownNow()
+    unmockkAll()
   }
 
   @Test

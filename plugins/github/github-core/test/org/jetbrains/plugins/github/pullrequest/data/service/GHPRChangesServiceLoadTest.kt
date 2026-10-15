@@ -16,6 +16,7 @@ import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.github.api.DEFAULT_MAX_CONCURRENT_REQUESTS
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -120,6 +121,7 @@ internal class GHPRChangesServiceLoadTest {
   fun stopServer() {
     server.stop(0)
     serverExecutor.shutdownNow()
+    unmockkAll()
   }
 
   @Test
