@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -118,11 +119,6 @@ public final class KeyHashLog<Key> implements Closeable {
     if (!ENABLE_CACHED_HASH_IDS || filter.getFilteringScopeType() != IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES) {
       return getSuitableKeyHashes(filter);
     }
-
-    //BEWARE: the caching below relies on the fact that IdFilter[PROJECT_AND_LIBRARIES] is _stable_ -- i.e. if filter[fileId]
-    //        is true/false on this turn, it will be the same true/false on any turn that follows. This is NOT really the case
-    //        for PROJECT_AND_LIBRARIES -- it DOES change as libraries/directories are added/removed to the project.
-    //        Not sure yet how this is expected to be processed...
 
     long startedAt = System.currentTimeMillis();
     IntSet keyHashes = myPerProjectKeyHashes.getKeyHashes(project, filter);
@@ -409,8 +405,13 @@ public final class KeyHashLog<Key> implements Closeable {
         }
       }
 
-      if (state == null || state.needsFullRescan() || state.scannedUpToOffsetExclusive > currentFileLength) {
-        state = createState(project, filter, currentFileLength);
+      //IdFilter[PROJECT_AND_LIBRARIES] could change, and we need to account for its changes
+      long currentRootsModificationCount = ProjectRootModificationTracker.getInstance(project).getModificationCount();
+      if (state == null ||
+          state.rootsModificationCount != currentRootsModificationCount ||
+          state.needsFullRescan() ||
+          state.scannedUpToOffsetExclusive > currentFileLength) {
+        state = createState(project, filter, currentFileLength, currentRootsModificationCount);
       }
       else if (state.scannedUpToOffsetExclusive < currentFileLength) {
         try {
@@ -426,12 +427,14 @@ public final class KeyHashLog<Key> implements Closeable {
 
     private @NotNull InternalState createState(@NotNull Project project,
                                                @NotNull IdFilter filter,
-                                               int currentFileLength) throws StorageException {
+                                               int currentFileLength,
+                                               long rootsModificationCount) throws StorageException {
       var state = new InternalState(
         project,
         pathForCachedKeyHashesPerProject(project),
         new IntOpenHashSet(KeyHashLog.this.getSuitableKeyHashes(filter)),
-        currentFileLength
+        currentFileLength,
+        rootsModificationCount
       );
       state.save();
       return state;
@@ -450,7 +453,7 @@ public final class KeyHashLog<Key> implements Closeable {
     /// rate of false-positives increases with incremental updates, so the mask needs periodical re-creation to remain reasonably
     /// effective -- [#removesUnaccountedFor] is a gauge for that.
     private static final class InternalState {
-      private static final int STORE_FORMAT_VERSION = 1;
+      private static final int STORE_FORMAT_VERSION = 2;
 
       private final @NotNull Project project;
       private final @NotNull Path cacheFile;
@@ -460,25 +463,31 @@ public final class KeyHashLog<Key> implements Closeable {
       /// The range `[0, scannedUpToOffsetExclusive)` of the main log is already accounted for
       private long scannedUpToOffsetExclusive;
 
+      /// `ProjectRootModificationTracker.getInstance(project).getModificationCount()` at creation
+      private final long rootsModificationCount;
+
       /// Incremental updates keep removed hashes because another file can still use the same hash
       private int removesUnaccountedFor;
 
       private InternalState(@NotNull Project project,
                             @NotNull Path cacheFile,
                             @NotNull IntSet keyHashes,
-                            long scannedUpToOffsetExclusive) {
-        this(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, 0);
+                            long scannedUpToOffsetExclusive,
+                            long rootsModificationCount) {
+        this(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, rootsModificationCount, 0);
       }
 
       private InternalState(@NotNull Project project,
                             @NotNull Path cacheFile,
                             @NotNull IntSet keyHashes,
                             long scannedUpToOffsetExclusive,
+                            long rootsModificationCount,
                             int removesUnaccountedFor) {
         this.project = project;
         this.cacheFile = cacheFile;
         this.keyHashes = keyHashes;
         this.scannedUpToOffsetExclusive = scannedUpToOffsetExclusive;
+        this.rootsModificationCount = rootsModificationCount;
         this.removesUnaccountedFor = removesUnaccountedFor;
       }
 
@@ -496,6 +505,7 @@ public final class KeyHashLog<Key> implements Closeable {
             throw new IOException("Invalid scanned offset: " + scannedUpToOffsetExclusive + ", current log length: " + currentFileLength);
           }
 
+          long rootsModificationCount = DataInputOutputUtil.readLONG(input);
           int removesUnaccountedFor = DataInputOutputUtil.readINT(input);
           int hashesCount = DataInputOutputUtil.readINT(input);
           if (removesUnaccountedFor < 0 || removesUnaccountedFor > currentFileLength ||
@@ -507,7 +517,7 @@ public final class KeyHashLog<Key> implements Closeable {
           for (int i = 0; i < hashesCount; i++) {
             keyHashes.add(DataInputOutputUtil.readINT(input));
           }
-          return new InternalState(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, removesUnaccountedFor);
+          return new InternalState(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, rootsModificationCount, removesUnaccountedFor);
         }
       }
 
@@ -515,6 +525,7 @@ public final class KeyHashLog<Key> implements Closeable {
         try (var output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(cacheFile)))) {
           DataInputOutputUtil.writeINT(output, STORE_FORMAT_VERSION);
           DataInputOutputUtil.writeLONG(output, scannedUpToOffsetExclusive);
+          DataInputOutputUtil.writeLONG(output, rootsModificationCount);
           DataInputOutputUtil.writeINT(output, removesUnaccountedFor);
           DataInputOutputUtil.writeINT(output, keyHashes.size());
           IntIterator iterator = keyHashes.iterator();

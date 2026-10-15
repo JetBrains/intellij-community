@@ -2,9 +2,12 @@
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.IdFilter.FilterScopeType
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -32,6 +35,10 @@ class KeyHashLogTest {
   @Rule
   @JvmField
   val temporaryDirectory: TemporaryDirectory = TemporaryDirectory()
+
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   @Test
   fun testAdd() {
@@ -246,6 +253,34 @@ class KeyHashLogTest {
   }
 
   @Test
+  fun testProjectAndLibrariesCacheIsRebuiltAfterProjectRootsChange() {
+    assumeProjectAndLibrariesCacheEnabled()
+
+    val rootsTracker = TestProjectRootModificationTracker()
+    project.registerOrReplaceServiceInstance(ProjectRootModificationTracker::class.java, rootsTracker, disposableRule.disposable)
+
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+      keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
+      keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
+
+      val initialHashes = keyHashLog.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES), project)
+      TestCase.assertEquals(setOf("qwe").toHashes(), initialHashes)
+      val initialCache = keyHashLog.getCachedProjectKeyHashes()
+
+      rootsTracker.incModificationCount()
+
+      val rebuiltHashes = keyHashLog.getSuitableKeyHashes(setOf(1, 2).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES), project)
+      TestCase.assertEquals(
+        "The cache must include mappings that became project mappings after the roots changed",
+        setOf("qwe", "asd").toHashes(),
+        rebuiltHashes,
+      )
+      TestCase.assertNotSame("A roots change must replace the cache state", initialCache, keyHashLog.getCachedProjectKeyHashes())
+    }
+  }
+
+  @Test
   fun testProjectAndLibrariesCacheRestoresCheckpointAfterSoftReferenceIsCleared() {
     assumeProjectAndLibrariesCacheEnabled()
 
@@ -349,6 +384,16 @@ class KeyHashLogTest {
       "The project and libraries cache is disabled",
       KeyHashLog.ENABLE_CACHED_HASH_IDS,
     )
+  }
+
+  private class TestProjectRootModificationTracker : ProjectRootModificationTracker() {
+    private var modificationCount = 0L
+
+    override fun getModificationCount(): Long = modificationCount
+
+    fun incModificationCount() {
+      modificationCount++
+    }
   }
 
   private fun Set<Int>.toFilter(type: FilterScopeType = FilterScopeType.PROJECT): IdFilter = object : IdFilter() {
