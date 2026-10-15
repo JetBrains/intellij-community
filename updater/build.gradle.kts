@@ -4,7 +4,7 @@ plugins {
 }
 
 repositories {
-  mavenCentral()
+  maven("https://cache-redirector.jetbrains.com/maven-central")
 }
 
 sourceSets.main {
@@ -24,8 +24,9 @@ dependencies {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  // 25: 262, 21: 253, 17: 223, ...
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.test {
@@ -33,6 +34,7 @@ tasks.test {
 }
 
 tasks.register<Jar>("fatJar") {
+  description = "Building the self-containing .jar file"
   archiveFileName = "updater-full.jar"
   group = "build"
   manifest.attributes["Main-Class"] = "com.intellij.updater.Bootstrap"
