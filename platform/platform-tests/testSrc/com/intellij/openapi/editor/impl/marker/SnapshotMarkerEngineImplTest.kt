@@ -75,7 +75,7 @@ class SnapshotMarkerEngineImplTest {
   fun `root reference cache releases unused snapshots and roots`() {
     val fixture = Fixture("abcdef")
     fun cacheDetachedRoot(): Pair<WeakReference<DocumentSnapshot>, WeakReference<AtomicReference<PMarkerRoot>>> {
-      val snapshot = fixture.initialSnapshot.copyWithNewIdentity()
+      val snapshot = fixture.initialSnapshot.newInstance()
       val reference = fixture.rootStore.rootReference(snapshot)
       assertSame(reference, fixture.rootStore.rootReference(snapshot))
       return WeakReference(snapshot) to WeakReference(reference)
