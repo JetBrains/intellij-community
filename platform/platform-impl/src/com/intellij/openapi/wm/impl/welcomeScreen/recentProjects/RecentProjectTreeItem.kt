@@ -156,6 +156,7 @@ internal data class RecentProjectItem(
                               event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
     openProjectAndLogRecent(file, OpenProjectTask {
+      projectToClose = event.project
       this.forceOpenInNewFrame = forceOpenInNewFrame
       runConfigurators = true
     }, projectGroup)
