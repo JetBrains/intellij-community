@@ -38,7 +38,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -443,16 +442,6 @@ open class McpServerService(val cs: CoroutineScope) {
         // save to settings can be done asynchronously
         val selectedPort = server.engine.resolvedConnectors().first().port
         settings.mcpServerPort = selectedPort
-        if (selectedPort != desiredPort) {
-          withContext(Dispatchers.EDT) {
-            // We want to warn the user that the used port is different from what was used last, or directly requested by the user.
-            Messages.showWarningDialog(null,
-                                       McpServerBundle.message("mcp.server.port.changed.warning.message",
-                                                               desiredPort.toString(),
-                                                               selectedPort.toString()),
-                                       McpServerBundle.message("mcp.server.port.changed.warning.title"))
-          }
-        }
       }
     }
     // Warm the tool list up here rather than lazily on first use: this is where the latency matters, and it keeps the
