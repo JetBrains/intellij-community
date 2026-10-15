@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.TestOnlyThreading
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -134,10 +135,10 @@ private class IndexWaiter(private val project: Project) {
 
     dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
-    val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
+    val scannerExecutor = project.serviceOrNull<UnindexedFilesScannerExecutor>()
 
     // Scheduled tasks will become running tasks soon. To avoid a race, we check scheduled tasks first
-    if (scannerExecutor.hasQueuedTasks) {
+    if (scannerExecutor != null && scannerExecutor.hasQueuedTasks) {
       return if (scannerExecutor.scanningWaitsForNonDumbMode() && dumbService.isDumb) {
         val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
         if (isEternal) {
@@ -153,7 +154,7 @@ private class IndexWaiter(private val project: Project) {
     else if (dumbService.hasScheduledTasks()) {
       return true
     }
-    else if (scannerExecutor.isRunning.value || dumbService.isRunning()) {
+    else if (scannerExecutor?.isRunning?.value == true || dumbService.isRunning()) {
       return true
     }
     else if (dumbService.isDumb) {
