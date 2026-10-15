@@ -10,6 +10,7 @@
       <module name="intellij.platform.projectModel"/>
       <module name="intellij.rustrover.common"/>
       <module name="intellij.rustrover.core"/>
+      <module name="intellij.rustrover.light.base"/>
     </dependencies>
     <!-- endregion -->
 
