@@ -2,14 +2,26 @@
 package com.intellij.xray.impl
 
 import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.xray.impl.editorTracking.XRayModeTracker
+import com.intellij.xray.impl.editorTracking.attachXRayTracker
+import com.intellij.xray.impl.editorTracking.detachXRayTracker
+
+private const val XRAY_PLUGIN_ID: String = "com.intellij.xray"
 
 internal class XRayDynamicPluginListener: DynamicPluginListener {
+
   override fun pluginsLoaded() {
-    val tracker = XRayModeTracker()
     EditorFactory.getInstance().allEditors.forEach { editor ->
-      tracker.attach(editor)
+      attachXRayTracker(editor)
+    }
+  }
+
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    if (pluginDescriptor.pluginId.idString == XRAY_PLUGIN_ID) {
+      EditorFactory.getInstance().allEditors.forEach { editor ->
+        detachXRayTracker(editor)
+      }
     }
   }
 }
