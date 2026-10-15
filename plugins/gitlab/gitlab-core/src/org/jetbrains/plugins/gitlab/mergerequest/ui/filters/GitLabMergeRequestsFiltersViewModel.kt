@@ -112,7 +112,15 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       // with debounce to avoid collecting intermediate state
       searchState.drop(1).debounce(5000).collect {
         if (it.filterCount > 0) {
-          GitLabStatistics.logMrFiltersApplied(project, it)
+          GitLabStatistics.logMrFiltersApplied(
+            project,
+            hasSearch = it.searchQuery != null,
+            hasState = it.state != null,
+            hasAuthor = it.author != null,
+            hasAssignee = it.assignee != null,
+            hasReviewer = it.reviewer != null,
+            hasLabel = it.label != null,
+          )
         }
       }
     }
