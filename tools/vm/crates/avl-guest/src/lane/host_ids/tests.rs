@@ -161,3 +161,79 @@ fn a_file_operation_outside_the_context_or_on_a_missing_file_is_refused() {
     assert!(refused(json!([{"type": "read", "path": "/etc/hosts"}])).contains("is not a file of the IDE context"));
     assert!(refused(json!([{"type": "append", "path": "home/missing.jsonl", "text": "x"}])).contains("finds no file"));
 }
+
+// The authority ends at the first '/', '?' or '#'. A callback URL with a query and no path, which the IDE gets from
+// the emulator, keeps its query in the target, and a fragment is no part of the target.
+#[test]
+fn a_url_with_a_query_and_no_path_splits_after_its_port() {
+    let split = |url: &str| split_http_url(url).map(|(authority, target)| (authority.to_owned(), target));
+    assert_eq!(
+        split("http://localhost:62345?code=air-lane-authorization-code&state=s-1"),
+        Ok((
+            "localhost:62345".to_owned(),
+            "/?code=air-lane-authorization-code&state=s-1".to_owned()
+        ))
+    );
+    assert_eq!(
+        split("http://127.0.0.1:1/oauth2/auth?x=1#fragment"),
+        Ok(("127.0.0.1:1".to_owned(), "/oauth2/auth?x=1".to_owned()))
+    );
+    assert_eq!(split("http://127.0.0.1:1"), Ok(("127.0.0.1:1".to_owned(), "/".to_owned())));
+    assert_eq!(split("http://#x"), Err("the URL http://#x names no address".to_owned()));
+    assert_eq!(split("https://h:1/"), Err("the URL https://h:1/ is not http://".to_owned()));
+}
+
+/// Answers one request on `listener` with `answer`, and gives the request line.
+fn serve_once(listener: std::net::TcpListener, answer: String) -> std::thread::JoinHandle<String> {
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut head = Vec::new();
+        let mut byte = [0_u8; 1];
+        while !head.ends_with(b"\r\n\r\n") && stream.read(&mut byte).unwrap() == 1 {
+            head.push(byte[0]);
+        }
+        stream.write_all(answer.as_bytes()).unwrap();
+        String::from_utf8_lossy(&head).lines().next().unwrap_or_default().to_owned()
+    })
+}
+
+// `account-approve-sign-in` follows the redirect of the emulator to the callback of the IDE, as the JVM host does. The
+// callback URL has a query and no path, and the callback gets that query.
+#[test]
+fn the_sign_in_approval_follows_the_redirect_to_a_callback_with_a_query_and_no_path() {
+    let emulator = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let callback = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let base_url = format!("http://{}", emulator.local_addr().unwrap());
+    let callback_url = format!("http://localhost:{}?code=c-1&state=s-1", callback.local_addr().unwrap().port());
+    let emulated = serve_once(
+        emulator,
+        format!("HTTP/1.1 302 Found\r\nLocation: {callback_url}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"),
+    );
+    let called = serve_once(
+        callback,
+        "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".to_owned(),
+    );
+    let services = FakeServices::default();
+    *services.cloud_base_url.lock().unwrap() = base_url.clone();
+    let context = TempDir::new().unwrap();
+    let mut side = Side {
+        services: &services,
+        context: context.path(),
+        restarts: RefCell::new(0),
+    };
+    let mut values = Values::default();
+    values.set(SIGN_IN_URL, json!(format!("{base_url}/oauth2/auth?client_id=ide")));
+    perform_id(HostId::Action(HostAction::AccountApproveSignIn), json!({}), &mut values, &mut side).unwrap();
+    assert_eq!(emulated.join().unwrap(), "GET /oauth2/auth?client_id=ide HTTP/1.1");
+    assert_eq!(called.join().unwrap(), "GET /?code=c-1&state=s-1 HTTP/1.1");
+}
+
+// A sign-in URL of another server is refused before any request, because the IDE must open the emulated JetBrains
+// Account.
+#[test]
+fn a_sign_in_url_of_another_server_is_refused() {
+    assert_eq!(
+        approve_sign_in("http://127.0.0.1:9/oauth2/auth", "http://127.0.0.1:8"),
+        Err("the IDE opened http://127.0.0.1:9/oauth2/auth, which is not the emulated JetBrains Account at http://127.0.0.1:8".to_owned())
+    );
+}

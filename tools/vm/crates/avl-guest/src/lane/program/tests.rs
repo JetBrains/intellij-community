@@ -25,6 +25,8 @@ const BRIDGE: &str = "com.intellij.air.integration.bridge.";
 pub(crate) struct FakeServices {
     pub paths: Mutex<Vec<String>>,
     pub fault: Mutex<(String, Option<u16>, Option<u64>)>,
+    /// The base URL of the emulated JetBrains Cloud that `account-approve-sign-in` requires.
+    pub cloud_base_url: Mutex<String>,
 }
 
 impl ServiceControl for FakeServices {
@@ -63,6 +65,10 @@ impl ServiceControl for FakeServices {
 
     fn cloud_clear(&self) -> Result<(), String> {
         Ok(())
+    }
+
+    fn cloud_base_url(&self) -> Result<String, String> {
+        Ok(self.cloud_base_url.lock().unwrap().clone())
     }
 }
 

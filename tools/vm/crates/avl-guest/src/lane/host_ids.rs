@@ -64,6 +64,8 @@ pub(crate) trait ServiceControl: Sync {
     fn feedback_clear(&self) -> Result<(), String>;
     /// Empties the record of the JetBrains Cloud emulator.
     fn cloud_clear(&self) -> Result<(), String>;
+    /// The base URL of the JetBrains Cloud emulator, which every sign-in URL of the IDE starts with.
+    fn cloud_base_url(&self) -> Result<String, String>;
 }
 
 /// What a host id needs beyond the services: the restart of the IDE.
@@ -106,7 +108,7 @@ pub(crate) fn perform(
                 .require(label, SIGN_IN_URL)?
                 .as_str()
                 .ok_or_else(|| format!("the value '{SIGN_IN_URL}' is no text"))?;
-            approve_sign_in(url)
+            approve_sign_in(url, &side.services().cloud_base_url()?)
         }
         HostId::Action(HostAction::ConsentHoldDownload) => side.services().registry_arm(SLOW_PACKAGE_RESPONSE, None, Some(HOLD_MS)),
         HostId::Action(HostAction::RegistryFailNextDownload) => {
@@ -221,9 +223,15 @@ pub(crate) fn apply_context_file_ops(context: &Path, operations: &[ContextFileOp
     Ok(reads)
 }
 
-/// Approves the login of `url` in the emulator: the authorization answers a redirect to the callback of the IDE, and
-/// the callback must answer a success or a redirect.
-fn approve_sign_in(url: &str) -> Result<(), String> {
+/// Approves the login of `url` in the emulator at `base_url`, as `AirJetBrainsCloudEmulator.authorize` does. The
+/// authorization answers a redirect to the callback of the IDE, and the callback must answer a success or a redirect.
+/// A `url` of another server is refused, because the IDE must open the emulated JetBrains Account.
+pub(crate) fn approve_sign_in(url: &str, base_url: &str) -> Result<(), String> {
+    if !url.starts_with(base_url) {
+        return Err(format!(
+            "the IDE opened {url}, which is not the emulated JetBrains Account at {base_url}"
+        ));
+    }
     let (status, location) = get(url)?;
     if status != 302 {
         return Err(format!(
@@ -239,16 +247,46 @@ fn approve_sign_in(url: &str) -> Result<(), String> {
     }
 }
 
+/// The authority and the request target of an `http://` URL. The authority ends at the first `/`, `?` or `#`, so a
+/// callback URL with a query and no path, `http://localhost:62345?code=c`, has the target `/?code=c`. The fragment
+/// stays with the client and is no part of the target.
+pub(crate) fn split_http_url(url: &str) -> Result<(&str, String), String> {
+    let rest = url.strip_prefix("http://").ok_or_else(|| format!("the URL {url} is not http://"))?;
+    let rest = rest.split_once('#').map_or(rest, |(before, _)| before);
+    let end = rest.find(['/', '?']).unwrap_or(rest.len());
+    let (authority, target) = rest.split_at(end);
+    if authority.is_empty() {
+        return Err(format!("the URL {url} names no address"));
+    }
+    let target = if target.starts_with('/') {
+        target.to_owned()
+    } else {
+        format!("/{target}")
+    };
+    Ok((authority, target))
+}
+
+/// A connection to the first address of `authority` that accepts one. A name such as `localhost` resolves to the IPv6
+/// and the IPv4 loopback, and a server listens on one of them, so each address is tried in turn, as a browser does.
+fn connect_any(authority: &str) -> Result<TcpStream, String> {
+    let addresses: Vec<SocketAddr> = authority
+        .to_socket_addrs()
+        .map_err(|error| format!("the address {authority} does not resolve: {error}"))?
+        .collect();
+    let mut last = format!("the address {authority} resolves to nothing");
+    for address in addresses {
+        match TcpStream::connect_timeout(&address, SIGN_IN_WAIT) {
+            Ok(stream) => return Ok(stream),
+            Err(error) => last = format!("{address}: {error}"),
+        }
+    }
+    Err(last)
+}
+
 /// One `GET` of an `http://` URL on this machine: the status and the `Location` header of the answer.
 fn get(url: &str) -> Result<(u16, Option<String>), String> {
-    let rest = url.strip_prefix("http://").ok_or_else(|| format!("the URL {url} is not http://"))?;
-    let (authority, target) = rest.find('/').map_or((rest, "/"), |slash| rest.split_at(slash));
-    let address: SocketAddr = authority
-        .to_socket_addrs()
-        .ok()
-        .and_then(|mut addresses| addresses.next())
-        .ok_or_else(|| format!("the URL {url} names no address"))?;
-    let mut stream = TcpStream::connect_timeout(&address, SIGN_IN_WAIT).map_err(|error| format!("cannot connect to {url}: {error}"))?;
+    let (authority, target) = split_http_url(url)?;
+    let mut stream = connect_any(authority).map_err(|error| format!("cannot connect to {url}: {error}"))?;
     let _ = stream.set_read_timeout(Some(SIGN_IN_WAIT));
     let _ = stream.set_write_timeout(Some(SIGN_IN_WAIT));
     let request = format!("GET {target} HTTP/1.1\r\nHost: {authority}\r\nConnection: close\r\n\r\n");

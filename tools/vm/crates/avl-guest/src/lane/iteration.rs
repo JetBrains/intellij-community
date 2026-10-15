@@ -459,6 +459,10 @@ impl super::host_ids::ServiceControl for DaemonLane<'_, '_> {
             Ok(())
         })
     }
+
+    fn cloud_base_url(&self) -> Result<String, String> {
+        self.with_services(|services| Ok(services.cloud().base_url().to_owned()))
+    }
 }
 
 fn registry(services: &super::ide::LaneServices) -> Result<&super::services::registry::Registry, String> {

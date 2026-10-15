@@ -1463,6 +1463,13 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_registry_ids_arm_hold_release_and_check_the_package_fault`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_request_count_reads_the_package_requests_after_the_mark`)
 
+- `account-approve-sign-in` approves the sign-in as `AirJetBrainsCloudEmulator.authorize` does. The URL must start
+  with the base URL of the emulator. The emulator must answer a redirect, and the callback of the IDE must answer 200
+  to 399. A callback URL with a query and no path keeps its query, and each address of its host is tried in turn.
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_sign_in_approval_follows_the_redirect_to_a_callback_with_a_query_and_no_path`)
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_url_with_a_query_and_no_path_splits_after_its_port`)
+  [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_sign_in_url_of_another_server_is_refused`)
+
 The verb owns the lane services of one config key. They bind once for the key and live until `/shutdown`. A run of
 another key stops them and binds the services of the new key. Each iteration then decides about the IDE of the key:
 
