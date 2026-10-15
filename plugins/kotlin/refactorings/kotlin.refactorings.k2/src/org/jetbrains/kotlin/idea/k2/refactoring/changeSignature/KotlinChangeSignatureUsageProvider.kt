@@ -101,14 +101,8 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                                     functionSymbol.name.asString() == "copy" && (functionSymbol.containingSymbol as? KaNamedClassSymbol)?.isData == true
                         }
                         if (isCopyOfDataClass) return null
-                        isCaller(changeInfo, reference.resolve())
-                        val callers = (changeInfo as? JavaChangeInfo)?.methodsToPropagateParameters
-                        if (callers != null && callers.isNotEmpty()) {
-                            val targets = reference.resolve()?.toLightMethods()
-                            if (targets != null && targets.any { child -> callers.any { child == it || PsiSuperMethodUtil.isSuperMethod(child, it) } } ) {
-                                return KotlinCallerCallUsage(callElementParent)
-                            }
-                        }
+                        if (isCaller(changeInfo, reference.resolve()))
+                            return KotlinCallerCallUsage(callElementParent)
 
                         return KotlinFunctionCallUsage(callElementParent, method)
                     }
