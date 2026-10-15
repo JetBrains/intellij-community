@@ -4,12 +4,12 @@ use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind, T
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::testing::{RUN_STREAM_JUNIT, assert_golden, run_stream};
+use crate::testing::{run_stream, testdata};
 
 #[test]
 fn the_recorded_stream_renders_its_golden() {
     let events = run_stream();
-    assert_golden("run-stream.xml", RUN_STREAM_JUNIT, &render([events.as_slice()]));
+    expect_test::expect_file![testdata("run-stream.xml")].assert_eq(&render([events.as_slice()]));
 }
 
 #[test]

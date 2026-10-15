@@ -1,13 +1,12 @@
 //! The run stream of one iteration as test cases: one case for each scenario, each failed container and each skipped
 //! container, in the order of the stream.
 //!
-//! The JUnit XML and the run report read the stream through this one reading, so the two never disagree about what a
-//! scenario did. The TeamCity messages follow the stream record by record and use [`failure_of_test`] and
-//! [`failure_of_container`] for the text of a failure.
+//! The JUnit XML and the run report of the controller read the stream through this one reading, so the two never
+//! disagree about what a scenario did. The TeamCity messages follow the stream record by record and use
+//! [`failure_of_test`] and [`failure_of_container`] for the text of a failure.
 
 use std::collections::HashSet;
 
-use avl_base::format::first_line;
 use avl_wire::daemon::{ContainerFailed, ExecutionIdentity, RunEvent, RunEventKind, TestFinished};
 use avl_wire::report::ScenarioReport;
 
@@ -145,6 +144,11 @@ fn failure(kind: FailureOrigin, execution: &ExecutionIdentity, error: Option<&st
 /// its document, and the records name it by its FQN, so a class is matched by this name.
 pub fn simple_class_name(class_name: &str) -> &str {
     class_name.rsplit('.').next().unwrap_or(class_name)
+}
+
+/// The first line of `text`, or the whole of it when it has no line end.
+fn first_line(text: &str) -> &str {
+    text.lines().next().unwrap_or_default()
 }
 
 /// The class of a record: its `className`, or its display name when it names none.

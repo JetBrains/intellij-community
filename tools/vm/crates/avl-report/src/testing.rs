@@ -1,39 +1,21 @@
-//! The fixture that the readers of the run stream share: one recorded stream, and the golden of each form.
+//! The fixture of the tests of the TeamCity messages: the recorded run stream of `avl-junit`, and the path of each
+//! golden of `testdata/`.
 
 use std::path::PathBuf;
 
 use avl_wire::daemon::{RunEvent, decode_run_event};
-use pretty_assertions::assert_eq;
 
-/// One recorded iteration of the lane daemon: a green scenario with a note and two metrics, a failed instruction with
-/// a typed failure, a skipped scenario, a prologue failure, and the summary.
-pub(crate) const RUN_STREAM: &str = include_str!("../testdata/run-stream.ndjson");
-
-/// The JUnit XML of [`RUN_STREAM`].
-pub(crate) const RUN_STREAM_JUNIT: &str = include_str!("../testdata/run-stream.xml");
-
-/// The TeamCity messages of [`RUN_STREAM`] on the worker `air-linux-1`, with the trace of the failed scenario.
-pub(crate) const RUN_STREAM_TEAMCITY: &str = include_str!("../testdata/run-stream.teamcity.txt");
-
-/// The records of [`RUN_STREAM`].
-pub(crate) fn run_stream() -> Vec<RunEvent> {
-    RUN_STREAM
-        .lines()
-        .map(|line| decode_run_event(line.as_bytes()).unwrap_or_else(|error| panic!("the fixture line {line} reads: {error}")))
-        .collect()
+/// The absolute path of `testdata/<name>`, because `expect_file!` reads a relative path from the source file.
+pub(crate) fn testdata(name: &str) -> PathBuf {
+    let path = avl_testkit::crate_path!(&format!("testdata/{name}"));
+    std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
-/// Asserts that `actual` is the golden `expected` of `testdata/<name>`. With `UPDATE_EXPECT` set, under cargo, it
-/// writes `actual` over the golden instead.
-pub(crate) fn assert_golden(name: &str, expected: &str, actual: &str) {
-    if std::env::var_os("UPDATE_EXPECT").is_some() {
-        let directory = std::env::var_os("CARGO_MANIFEST_DIR").expect("the update path runs under cargo");
-        let path = PathBuf::from(directory).join("testdata").join(name);
-        std::fs::write(&path, actual).unwrap_or_else(|error| panic!("cannot write {}: {error}", path.display()));
-        return;
-    }
-    assert_eq!(
-        expected, actual,
-        "the golden testdata/{name}; run the test with UPDATE_EXPECT=1 to write it"
-    );
+/// The records of the recorded iteration that the JUnit XML of `avl-junit` has its golden of.
+pub(crate) fn run_stream() -> Vec<RunEvent> {
+    let path = avl_testkit::repo_path("tools/vm/crates/avl-junit/testdata/run-stream.ndjson");
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+    text.lines()
+        .map(|line| decode_run_event(line.as_bytes()).unwrap_or_else(|error| panic!("the fixture line {line} reads: {error}")))
+        .collect()
 }

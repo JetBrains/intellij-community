@@ -257,6 +257,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl-junit"
+version = "0.1.0"
+dependencies = [
+ "avl-testkit",
+ "avl-wire",
+ "bt-junit",
+ "expect-test",
+ "pretty_assertions",
+]
+
+[[package]]
 name = "avl-record"
 version = "0.1.0"
 dependencies = [
@@ -284,8 +295,10 @@ name = "avl-report"
 version = "0.1.0"
 dependencies = [
  "avl-base",
+ "avl-junit",
+ "avl-testkit",
  "avl-wire",
- "bt-junit",
+ "expect-test",
  "hex",
  "jiff",
  "pretty_assertions",
@@ -350,6 +363,7 @@ dependencies = [
  "avl-base",
  "avl-host-sys",
  "avl-host-testkit",
+ "avl-junit",
  "avl-report",
  "avl-testkit",
  "avl-trace",

@@ -5,7 +5,7 @@ use avl_wire::progress::TraceReady;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::testing::{RUN_STREAM_TEAMCITY, assert_golden, run_stream};
+use crate::testing::{run_stream, testdata};
 
 const WORKER: &str = "air-linux-1";
 
@@ -51,7 +51,7 @@ fn the_recorded_stream_renders_its_golden() {
         }
     }
     lines.extend(messages.finish());
-    assert_golden("run-stream.teamcity.txt", RUN_STREAM_TEAMCITY, &(lines.join("\n") + "\n"));
+    expect_test::expect_file![testdata("run-stream.teamcity.txt")].assert_eq(&(lines.join("\n") + "\n"));
 }
 
 #[test]

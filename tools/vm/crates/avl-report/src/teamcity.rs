@@ -17,11 +17,11 @@ use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind};
 use avl_wire::progress::TraceReady;
 use avl_wire::report::ScenarioReport;
 
-use crate::cases::{
+use avl_junit::cases::{
     self, CaseFailure, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, UNFINISHED_MESSAGE, failure_of_container, failure_of_test,
     simple_class_name,
 };
-use crate::junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
+use avl_junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
 
 #[cfg(test)]
 mod tests;

@@ -66,8 +66,8 @@ targets:
   - ../crates/avl-report/src/report.rs
   - ../crates/avl-report/src/aggregate.rs
   - ../crates/avl-report/src/aggregate/persist.rs
-  - ../crates/avl-report/src/cases.rs
-  - ../crates/avl-report/src/junit.rs
+  - ../crates/avl-junit/src/lib.rs
+  - ../crates/avl-junit/src/cases.rs
   - ../crates/avl-report/src/teamcity.rs
   - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
@@ -727,15 +727,15 @@ The daemon's half and the IDE's half of supervision are in
   class. Each scenario is one `testcase`: its class is the `testClassName` of the document, and its name is the
   scenario. A failure holds its type, the first line of its message, and the message and the detail as CDATA. A skip
   holds its reason. A prologue failure is one case named after the suite.
-  [@test] ../crates/avl-report/src/junit/tests.rs (`the_recorded_stream_renders_its_golden`)
-  [@test] ../crates/avl-report/src/junit/tests.rs (`the_rendered_document_reads_back_with_the_counts_of_the_stream`)
-  [@test] ../crates/avl-report/src/cases/tests.rs (`a_typed_failure_keeps_its_type_message_and_detail`)
+  [@test] ../crates/avl-junit/src/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-junit/src/tests.rs (`the_rendered_document_reads_back_with_the_counts_of_the_stream`)
+  [@test] ../crates/avl-junit/src/cases/tests.rs (`a_typed_failure_keeps_its_type_message_and_detail`)
 
 - A run that the stream cuts off fails in the XML. A scenario that started and never finished fails as
   `unfinished`. A class of the plan that no record reached fails as `unreported`, in one case named after the class.
   A class of the plan and a class of a record match by the name without the package.
-  [@test] ../crates/avl-report/src/junit/tests.rs (`a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached`)
-  [@test] ../crates/avl-report/src/cases/tests.rs (`a_plan_of_simple_names_is_reached_by_records_of_fqns`)
+  [@test] ../crates/avl-junit/src/tests.rs (`a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached`)
+  [@test] ../crates/avl-junit/src/cases/tests.rs (`a_plan_of_simple_names_is_reached_by_records_of_fqns`)
   [@test] ../crates/avl-report/src/report/tests.rs (`a_plan_of_simple_names_is_covered_by_records_of_fqns`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_plan_of_simple_names_is_reached_by_records_of_fqns`)
 
@@ -744,7 +744,7 @@ The daemon's half and the IDE's half of supervision are in
   it again after each iteration and at the end of the run. A write that fails is a note, and the run goes on.
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_bazel_test_gets_the_xml_of_the_command_and_each_report_gets_its_own`)
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_write_that_fails_is_noted_when_the_readers_detach`)
-  [@test] ../crates/avl-report/src/junit/tests.rs (`the_named_file_wins_over_the_bazel_file_and_a_blank_name_is_none`)
+  [@test] ../crates/avl-junit/src/tests.rs (`the_named_file_wins_over_the_bazel_file_and_a_blank_name_is_none`)
 
 - The controller is the build step of a TeamCity build when `TEAMCITY_VERSION` is set and `XML_OUTPUT_FILE` is
   not. Then it writes the TeamCity service messages on stdout as the records arrive. A test class is a suite, and a

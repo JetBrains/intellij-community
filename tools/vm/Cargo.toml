@@ -12,6 +12,7 @@ members = [
     "crates/avl-guest",
     "crates/avl-host-sys",
     "crates/avl-host-testkit",
+    "crates/avl-junit",
     "crates/avl-record",
     "crates/avl-report",
     "crates/avl-testkit",
@@ -147,6 +148,7 @@ avl-bridge = { path = "crates/avl-bridge" }
 avl-guest = { path = "crates/avl-guest" }
 avl-host-sys = { path = "crates/avl-host-sys" }
 avl-host-testkit = { path = "crates/avl-host-testkit" }
+avl-junit = { path = "crates/avl-junit" }
 avl-report = { path = "crates/avl-report" }
 avl-testkit = { path = "crates/avl-testkit" }
 avl-trace = { path = "crates/avl-trace" }

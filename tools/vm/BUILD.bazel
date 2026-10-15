@@ -7,13 +7,15 @@
 # its own goldens (`avl-report`); code that one binary uses is a module of that binary:
 #
 #   avl-wire, avl-trace          the documents that cross a boundary, each declared once; they depend on no sibling
+#   avl-junit                    the JUnit XML of a run stream, over `avl-wire`, which the controller and the guest
+#                                agent share
 #   avl-trace-tools              the packer, the discovery of bundles and the viewer's URLs, over `avl-trace`
 #   avl-bridge                   the client of the IDE's bridge, over `avl-trace`, which the recorder and the guest
 #                                agent share
 #   avl-base                     refusals, the envelope, the settings and the journal: what every host program
 #                                stands on
 #   avl-guest                    what runs inside a worker VM, and the one binary the controller installs; it stands
-#                                on avl-wire, avl-trace-tools and avl-bridge alone, never on avl-base
+#                                on avl-wire, avl-trace, avl-trace-tools and avl-bridge alone, never on avl-base
 #   avl-host-sys, avl-report, avl-vm
 #                                the controller itself, which runs on the host; `avl-vm` is the `vm` binary, run
 #                                through `community/tools/vm.cmd`, with the console, the runs, the lanes and

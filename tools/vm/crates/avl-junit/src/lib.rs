@@ -1,5 +1,8 @@
 //! The JUnit XML of a run, written from the run stream of its iterations: the file that Bazel and `bt` count.
 //!
+//! The controller and the guest agent both write it, so it is a crate of its own. It stands on `avl-wire` alone and
+//! does no file I/O, so it adds one crate to the closure of the guest agent.
+//!
 //! The shape follows `community/build/rust-tools/libtest-junit-wrapper/src/junit.rs`. The document holds one
 //! `testsuite` for each test class, in the order the stream first names it. A case is
 //! `<testcase classname="<testClassName>" name="<scenario>" time>`, which is the name `<FQN>.<scenario>` of ADR 0128,
@@ -10,13 +13,14 @@
 //! scenario that started and never finished, and a class of the plan that the run never reached.
 
 use std::fmt::Write as _;
-use std::path::Path;
 
-use avl_base::Refusal;
 use avl_wire::daemon::RunEvent;
 
-use crate::cases::{self, CaseFailure, CaseOutcome, FailureOrigin, StreamCase, UNFINISHED_MESSAGE};
+use crate::cases::{CaseFailure, CaseOutcome, FailureOrigin, StreamCase, UNFINISHED_MESSAGE};
 
+pub mod cases;
+#[cfg(test)]
+mod testing;
 #[cfg(test)]
 mod tests;
 
@@ -71,11 +75,6 @@ pub fn render<'a>(iterations: impl IntoIterator<Item = &'a [RunEvent]>) -> Strin
     }
     out.push_str("</testsuites>\n");
     out
-}
-
-/// Writes `xml` to `path`, replacing what was there, so a reader never sees half a document.
-pub fn write(path: &Path, xml: &str) -> Result<(), Refusal> {
-    avl_base::fs::write_atomically(path, xml.as_bytes(), 0o644)
 }
 
 struct Suite {

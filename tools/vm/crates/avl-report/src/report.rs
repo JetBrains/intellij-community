@@ -2,7 +2,7 @@
 //! overwritten.
 //!
 //! The document itself lives in `avl_wire::report`; what is here is the arithmetic that decides what goes in it.
-//! The run stream of the daemon is the first account of a run, and [`crate::cases`] reads it as cases. The recorder
+//! The run stream of the daemon is the first account of a run, and [`avl_junit::cases`] reads it as cases. The recorder
 //! is the second account: it closes the trace bundle of each scenario with a status of its own. Every disagreement
 //! that [`build`] can see becomes a diagnostic, and every diagnostic makes the run an `infrastructure_error`.
 //!
@@ -28,7 +28,9 @@ use avl_wire::report::{
     TraceBundle, Tree, Watchdog, WatchdogExpiry, WatchdogState, expiry_evidence_paths,
 };
 
-use crate::cases::{self, CaseOutcome, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, StreamCase, simple_class_name, unreported_classes};
+use avl_junit::cases::{
+    self, CaseOutcome, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, StreamCase, simple_class_name, unreported_classes,
+};
 
 #[cfg(test)]
 mod tests;

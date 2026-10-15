@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use avl_base::report::{SharedWriter, SinkGuard};
 use avl_base::sync::lock;
 use avl_base::{Environment, Reporter};
-use avl_report::junit;
+use avl_junit as junit;
 use avl_report::teamcity::{self, Messages};
 use avl_trace::bundle::VIDEO_FILE;
 use avl_wire::daemon::{RunEvent, RunEventKind, decode_run_event};
@@ -150,7 +150,7 @@ impl Results {
         if let Some(iteration) = iteration {
             let path = Path::new(&reported.report_path).with_extension("xml");
             let xml = junit::render([iteration.events.as_slice()]);
-            self.store(junit::write(&path, &xml).err().map(|refusal| refusal.message));
+            self.store(write_xml(&path, &xml));
         }
         self.write_command_xml();
     }
@@ -160,7 +160,7 @@ impl Results {
             return;
         };
         let xml = junit::render(self.iterations.iter().map(|iteration| iteration.events.as_slice()));
-        self.store(junit::write(path, &xml).err().map(|refusal| refusal.message));
+        self.store(write_xml(path, &xml));
     }
 
     /// Keeps the first failure, which [`ResultsGuard`] notes.
@@ -169,6 +169,13 @@ impl Results {
             lock(&self.failure).get_or_insert(format!("cannot write the JUnit XML: {failure}"));
         }
     }
+}
+
+/// Writes `xml` to `path`, replacing what was there, so a reader never sees half a document. Answers why it could not.
+fn write_xml(path: &Path, xml: &str) -> Option<String> {
+    avl_base::fs::write_atomically(path, xml.as_bytes(), 0o644)
+        .err()
+        .map(|refusal| refusal.message)
 }
 
 fn data<T: DeserializeOwned>(record: &Record) -> Option<T> {

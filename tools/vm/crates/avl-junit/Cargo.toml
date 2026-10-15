@@ -1,0 +1,19 @@
+[package]
+name = "avl-junit"
+description = "The JUnit XML of a run, written from its run stream: the case fold and the render, for the controller and the guest agent."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-wire.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+bt-junit.workspace = true
+expect-test.workspace = true
+pretty_assertions.workspace = true
