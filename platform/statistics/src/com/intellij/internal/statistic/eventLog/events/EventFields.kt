@@ -61,6 +61,7 @@ object EventFields {
    * @param defaultValue optional default value applied when the field is missing or invalid
    */
   @JvmStatic
+  @JvmOverloads
   fun StringValidatedByRegexpReferenceWithDefault(
     @NonNls name: String,
     @NonNls regexpRef: String,
