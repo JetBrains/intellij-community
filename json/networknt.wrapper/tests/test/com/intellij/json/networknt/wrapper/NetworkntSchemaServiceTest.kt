@@ -158,4 +158,25 @@ class NetworkntSchemaServiceTest : BasePlatformTestCase() {
 
     assertNotSame("After invalidation, a new Schema instance should be compiled", schema1, schema2)
   }
+
+  fun `test YAML schema compilation and validation`() {
+    val yamlSchema = $$"""
+      $schema: "https://json-schema.org/draft/2020-12/schema"
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties: false
+        properties:
+          foo:
+            type: boolean
+    """.trimIndent()
+    val schemaFile = myFixture.addFileToProject("schema.yaml", yamlSchema).virtualFile
+    val schema = service().getNetworkntSchema(schemaFile, SpecificationVersion.DRAFT_2020_12)
+
+    val errors = schema.validate("""{"anykey": {"foo": true, "bar": "test"}}""", com.networknt.schema.InputFormat.JSON)
+    assertTrue(
+      "Expected additionalProperties error for unexpected property 'bar', got: ${errors.map { it.keyword }}",
+      errors.any { it.keyword == "additionalProperties" }
+    )
+  }
 }

@@ -19,10 +19,6 @@
     libraries:
       json-schema-validator-jetbrains:
       - name: $MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3/json-schema-validator-3.jar
-      jackson-databind-3:
-      - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3/jackson-databind-3.jar
-      jackson-core-3:
-      - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3/jackson-core-3.jar
   library: joni
   files:
   - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
