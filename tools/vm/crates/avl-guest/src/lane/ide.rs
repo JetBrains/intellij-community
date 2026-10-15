@@ -381,6 +381,14 @@ impl IdeOwner {
             // The Codex model has one fixed port, so the services of the previous key close first.
             self.services = None;
             self.services = Some(LaneServices::start(&context, ports)?);
+            let port = |port: Option<u16>| port.map_or_else(|| "none".to_owned(), |port| port.to_string());
+            records.note(format!(
+                "the lane services of '{key}' listen: registry {}, cloud {}, feedback {}, codex {}",
+                port(ports.registry),
+                ports.cloud,
+                port(ports.feedback),
+                port(ports.codex)
+            ));
         }
         if self.held.is_none()
             && let Some(adopted) = self.adopt(&key, launch.product_stamp)
@@ -399,6 +407,10 @@ impl IdeOwner {
             IdeAction::Relaunch => self.relaunch(launch, records)?,
             IdeAction::Fresh => self.launch_fresh(launch, &context, records)?,
         }
+        records.note(format!(
+            "waiting up to {} s for the IDE of '{key}' to get ready",
+            readiness::READY_TIMEOUT.as_secs()
+        ));
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         readiness::await_ready(&bridge, &key, &launch.document.vocabulary_digest, false, &mut |text| {
             records.note(text);
@@ -497,6 +509,11 @@ impl IdeOwner {
                 run.run_id, run.launch_key
             ));
         }
+        records.note(format!(
+            "preparing a fresh context of '{}' under {}",
+            launch.identity.key(),
+            self.inputs.ide_root.display()
+        ));
         let paths = crate::ide::prepare::prepare(
             &system,
             &IdeContext {

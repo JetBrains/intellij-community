@@ -8,6 +8,7 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
+use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -18,7 +19,7 @@ use avl_wire::daemon::{
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
 use avl_wire::program::{SuiteProgram, parse_suite_program, read_lane_documents, read_suite_documents};
 
-use super::channel::Daemon;
+use super::channel::{Daemon, log};
 use super::context::option_files_digest;
 use super::ide::{ContextPlugin, LaneLaunch, Records};
 use super::identity::{KeyInputs, LaneIdentity};
@@ -47,10 +48,17 @@ impl<'a> Stream<'a> {
         Self { out, broken: false }
     }
 
-    /// Writes one record. The run log of the daemon gets an `output` record too.
+    /// Writes one record. The run log of the daemon gets each `output` record and each failure too.
     pub(crate) fn emit(&mut self, record: &RunEventKind) {
-        if let RunEventKind::Output(output) = record {
-            eprintln!("{}", output.text);
+        match record {
+            RunEventKind::Output(output) => log(&output.text),
+            RunEventKind::RunFailed(failed) => log(&format!("the iteration failed: {}", failed.error)),
+            RunEventKind::IdeLaunched(launched) => log(&format!(
+                "the IDE of '{}' runs as pid {}, launch {}, log {}",
+                launched.launch_key, launched.pid, launched.launch_name, launched.log_dir
+            )),
+            RunEventKind::IdeExited(exited) => log(&format!("the IDE pid {} exited with {}", exited.pid, exited.exit_code)),
+            _ => {}
         }
         if self.broken {
             return;
@@ -146,7 +154,20 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
         daemon_boot_stamp: daemon.boot_stamp().to_owned(),
         started_at: started_at.clone(),
     }));
-    let counts = match execute(daemon, request, &mut stream) {
+    log(&format!(
+        "iteration {iteration_id} started: lane {}",
+        request.lane.as_deref().unwrap_or("<none>")
+    ));
+    // A panic of the run is a failed iteration with a summary, so the stream never ends without one.
+    let executed = panic::catch_unwind(AssertUnwindSafe(|| execute(daemon, request, &mut stream))).unwrap_or_else(|panic| {
+        let message = panic
+            .downcast_ref::<String>()
+            .cloned()
+            .or_else(|| panic.downcast_ref::<&str>().map(|text| (*text).to_owned()))
+            .unwrap_or_default();
+        Err(format!("the run thread panicked: {message}"))
+    });
+    let counts = match executed {
         Ok(counts) => counts,
         Err(error) => {
             stream.emit(&RunEventKind::RunFailed(RunFailed { error }));
@@ -158,7 +179,7 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
     };
     stream.emit(&watchdog("completed", request, None));
     stream.emit(&RunEventKind::Summary(Summary {
-        iteration_id,
+        iteration_id: iteration_id.clone(),
         daemon_boot_stamp: daemon.boot_stamp().to_owned(),
         started_at,
         tests_started: 0,
@@ -169,6 +190,11 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut dyn Write) {
         has_failures: counts.failed || counts.container_failures > 0,
         ide_running: daemon.ide_running(),
     }));
+    log(&format!(
+        "iteration {iteration_id} ended: {} container failure(s){}",
+        counts.container_failures,
+        if counts.failed { ", failed" } else { "" }
+    ));
 }
 
 /// The part of an iteration that can fail as a whole: the documents, the IDE and the plan.
@@ -196,6 +222,12 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &mut Stream<'_>) -> Re
             })
         })
         .collect::<Result<_, String>>()?;
+    stream.note(format!(
+        "lane {lane}: {} suite document(s) of {}, {} context plugin file(s)",
+        selection.suites.len(),
+        selection.lane.lane,
+        plugins.len()
+    ));
     stream.emit(&watchdog("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
     let decision = daemon.with_ide(|owner| {
         let runtimes: BTreeMap<String, String> = owner

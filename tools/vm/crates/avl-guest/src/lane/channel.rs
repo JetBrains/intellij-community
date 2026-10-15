@@ -53,6 +53,12 @@ pub(crate) const EXIT_WEDGED: u8 = 3;
 /// The largest file of the jar push. A context plugin file is the largest, and every one is below it.
 const MAX_JAR_BYTES: usize = 512 << 20;
 
+/// Writes one line of the log of the lane daemon on standard error, which the run supervisor keeps as `run.log`. Each
+/// line starts with the time, so a reader sees where a run spent its time.
+pub(crate) fn log(text: &str) {
+    eprintln!("{} lane daemon: {text}", crate::clock::now_stamp());
+}
+
 /// The state of one lane daemon, which every connection thread shares.
 pub(crate) struct Daemon {
     state_dir: PathBuf,
@@ -178,23 +184,23 @@ pub(crate) fn serve(args: &LaneDaemonArgs) -> Result<u8, AgentRefusal> {
     let daemon = Arc::new(boot(args, inputs)?);
     let channel = bind(&daemon, SocketAddr::new(args.bind, args.port))?;
     publish_state_file(&daemon, channel.address().port())?;
-    eprintln!(
-        "lane daemon listening on {} (controller launch digest {})",
+    log(&format!(
+        "listening on {} (controller launch digest {})",
         channel.address(),
         daemon.launch_digest
-    );
+    ));
     daemon.await_shutdown();
     let deadline = Instant::now() + WEDGE_GRACE;
     while daemon.busy.load(Ordering::SeqCst) {
         if Instant::now() >= deadline {
-            eprintln!("lane daemon: the run outlived the shutdown grace of {} s", WEDGE_GRACE.as_secs());
+            log(&format!("the run outlived the shutdown grace of {} s", WEDGE_GRACE.as_secs()));
             return Ok(EXIT_WEDGED);
         }
         std::thread::sleep(Duration::from_millis(100));
     }
     daemon.lock_owner().close_services();
     drop(channel);
-    eprintln!("lane daemon: shut down; the lane IDE keeps running");
+    log("shut down; the lane IDE keeps running");
     Ok(0)
 }
 
@@ -358,7 +364,7 @@ impl Channel {
         let stopped = daemon.with_ide(|owner| {
             owner.quit(&mut Records(&mut |record| {
                 if let wire::RunEventKind::Output(output) = record {
-                    eprintln!("{}", output.text);
+                    log(&output.text);
                 }
             }))
         });
