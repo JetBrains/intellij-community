@@ -562,7 +562,6 @@ f:com.intellij.codeInsight.daemon.impl.MainPassesRunner
 - runMainPasses(java.util.List):java.util.Map
 f:com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 - com.intellij.openapi.Disposable
-- sf:PARAMETER_HINT_OPTION_ID:com.intellij.openapi.util.Key
 - getHintText(com.intellij.openapi.editor.Inlay):java.lang.String
 - s:getInstance():com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 f:com.intellij.codeInsight.daemon.impl.ShowAutoImportPass

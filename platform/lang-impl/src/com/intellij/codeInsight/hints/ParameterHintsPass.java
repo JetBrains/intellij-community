@@ -30,7 +30,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
@@ -156,8 +155,6 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (hints.isEmpty()) return;
     HintInfo info = provider.getHintInfo(element, myFile);
 
-    String optionId = info instanceof HintInfo.OptionInfo optionInfo ? optionInfo.getOptionId() : null;
-
     boolean showHints = info == null || info instanceof HintInfo.OptionInfo || myHintInfoFilter.showHint(info);
 
     Stream<InlayInfo> inlays = hints.stream();
@@ -179,7 +176,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
         List<HintData> hintList = myHints.get(offset);
         if (hintList == null) myHints.put(offset, hintList = new ArrayList<>());
         HintWidthAdjustment widthAdjustment = convertHintPresentation(hint.getWidthAdjustment(), provider);
-        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment, optionId));
+        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment));
       }
     });
   }
@@ -251,17 +248,11 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     final String presentationText;
     final boolean relatesToPrecedingText;
     final HintWidthAdjustment widthAdjustment;
-    final String optionId;
 
     HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
-      this(text, relatesToPrecedingText, widthAdjustment, null);
-    }
-
-    HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment, @Nullable String optionId) {
       presentationText = text;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.widthAdjustment = widthAdjustment;
-      this.optionId = optionId;
     }
 
     @Override

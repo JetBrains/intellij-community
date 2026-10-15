@@ -33,7 +33,6 @@ import java.util.Set;
 public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
   private static final Key<Boolean> PREVIEW_MODE = Key.create("ParameterHintsPreviewMode");
-  public static final Key<String> PARAMETER_HINT_OPTION_ID = Key.create("parameter.hint.option.id");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
