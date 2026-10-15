@@ -103,10 +103,7 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
       var skippedHumps = 0
       var nextHumpStart = 0
       var humpStartMatchedUpperCase = false
-      var prevEnd = first.startOffset
       for (range in fragments) {
-        skippedHumps += countSkippedUpperCaseInsideWord(name, prevEnd, range.startOffset)
-        prevEnd = range.endOffset
         for (i in range.startOffset..<range.endOffset) {
           val afterGap = i == range.startOffset && first !== range
           var isHumpStart = false
@@ -161,22 +158,6 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
              (if (afterSeparator) 0 else 2) +
              (if (startMatch) 1 else 0) +
              (if (finalMatch) 1 else 0)
-    }
-
-    /**
-     * Counts the uppercase letters in `[start, end)` of `name` that are not word starts.
-     * Each such letter is a skipped part of an all-caps hump, for example the `A` and the `O` in `DAOHolder`.
-     */
-    internal fun countSkippedUpperCaseInsideWord(name: String, start: Int, end: Int): Int {
-      var count = 0
-      var i = start
-      while (i < end) {
-        if (name[i].isUpperCase() && !isWordStart(name, i)) {
-          count++
-        }
-        i++
-      }
-      return count
     }
 
     internal fun evaluateCaseMatching(

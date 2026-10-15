@@ -140,10 +140,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
     var skippedHumps = 0
     var nextHumpStart = 0
     var humpStartMatchedUpperCase = false
-    var prevEnd = first.startOffset
     for (range in fragments) {
-      skippedHumps += countSkippedUpperCaseInsideWord(name, prevEnd, range.startOffset)
-      prevEnd = range.endOffset
       for (i in range.startOffset..<range.endOffset) {
         val afterGap = i == range.startOffset && first !== range
         var isHumpStart = false
