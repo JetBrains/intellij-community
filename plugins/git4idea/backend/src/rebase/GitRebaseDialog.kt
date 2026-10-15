@@ -485,18 +485,24 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createPopupBuilder() = GitOptionsPopupBuilder(
     project,
     GitBundle.message("rebase.options.modify.dialog.title"),
-    { GitRebaseOption.entries - GitRebaseOption.NO_AUTOSQUASH },
+    { GitRebaseOption.entries },
     ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen, ::hasSeparatorAbove
   )
 
   private fun isOptionSelected(option: GitRebaseOption) = option in selectedOptions
 
   private fun isOptionEnabled(option: GitRebaseOption): Boolean {
-    if (rebaseMergesAvailable) {
-      return true
+    return when (option) {
+      GitRebaseOption.AUTOSQUASH -> GitRebaseOption.NO_AUTOSQUASH !in selectedOptions
+      GitRebaseOption.NO_AUTOSQUASH -> GitRebaseOption.AUTOSQUASH !in selectedOptions
+      GitRebaseOption.REBASE_MERGES -> rebaseMergesAvailable || GitRebaseOption.INTERACTIVE !in selectedOptions
+      GitRebaseOption.INTERACTIVE -> rebaseMergesAvailable || GitRebaseOption.REBASE_MERGES !in selectedOptions
+      GitRebaseOption.SWITCH_BRANCH,
+      GitRebaseOption.ONTO,
+      GitRebaseOption.KEEP_EMPTY,
+      GitRebaseOption.ROOT,
+      GitRebaseOption.UPDATE_REFS -> true
     }
-    return !(option == GitRebaseOption.REBASE_MERGES && selectedOptions.contains(GitRebaseOption.INTERACTIVE)
-             || option == GitRebaseOption.INTERACTIVE && selectedOptions.contains(GitRebaseOption.REBASE_MERGES))
   }
 
   private fun hasSeparatorAbove(option: GitRebaseOption): Boolean = option == GitRebaseOption.INTERACTIVE
