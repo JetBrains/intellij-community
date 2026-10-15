@@ -272,7 +272,8 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Override
   public @Nullable Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
     XmlTag parent = attribute.getParent();
-    final int spaces = addSpaceIntoEmptyTag() && parent.isEmpty() && FormatterUtil.isFollowedBy(attribute.getNode(), XmlTokenType.XML_EMPTY_ELEMENT_END) ? 1 : 0;
+    final boolean beforeEmptyElementEnd = FormatterUtil.isFollowedBy(attribute.getNode(), XmlTokenType.XML_EMPTY_ELEMENT_END);
+    final int spaces = beforeEmptyElementEnd && (addSpaceIntoEmptyTag() && parent.isEmpty() || hasUnquotedValue(attribute)) ? 1 : 0;
     boolean isEnabled = myHtmlCodeStyleSettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     return getStartTagDependantSpacingOrNull(parent, isEnabled, spaces);
   }

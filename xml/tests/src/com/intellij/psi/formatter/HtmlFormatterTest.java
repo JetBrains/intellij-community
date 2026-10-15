@@ -794,6 +794,31 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   @Test
+  public void testWeb44449() {
+    doTextTest("""
+                 <input value=1000 />
+                 <input value=1000   />
+                 <input value="1000" />
+                 <input disabled />""",
+               """
+                 <input value=1000 />
+                 <input value=1000 />
+                 <input value="1000"/>
+                 <input disabled/>""");
+  }
+
+  @Test
+  public void testWeb44449NewLineAfterLastAttribute() {
+    getHtmlSettings().HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    doTextTest("""
+                 <input value=1000 />
+                 <input value="1000" />""",
+               """
+                 <input value=1000 />
+                 <input value="1000"/>""");
+  }
+
+  @Test
   public void testWeb77174DefaultTagListsHaveNoDuplicates() {
     HtmlCodeStyleSettings settings = getHtmlSettings();
     for (String tagList : List.of(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE,

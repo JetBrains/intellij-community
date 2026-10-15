@@ -15,7 +15,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,5 +186,17 @@ public abstract class XmlFormattingPolicy {
    */
   public boolean isKeepSpacesAroundInlineTags() {
     return false;
+  }
+
+  /**
+   * Checks if {@code element} is an attribute with a value that has no quotes, that is, the value ends with a value token.
+   * A {@code /} right after such a value becomes a part of the value.
+   */
+  static boolean hasUnquotedValue(@Nullable PsiElement element) {
+    if (!(element instanceof XmlAttribute attribute)) return false;
+    XmlAttributeValue value = attribute.getValueElement();
+    if (value == null) return false;
+    ASTNode last = value.getNode().getLastChildNode();
+    return last != null && last.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 }

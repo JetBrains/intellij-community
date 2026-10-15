@@ -125,7 +125,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
 
     if (isXmlTagName(type1, type2)) {
-      final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
+      final int spaces = shouldAddSpaceAroundTagName(node1, node2) ||
+                         type2 == XmlTokenType.XML_EMPTY_ELEMENT_END && XmlFormattingPolicy.hasUnquotedValue(node1.getPsi()) ? 1 : 0;
       return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
