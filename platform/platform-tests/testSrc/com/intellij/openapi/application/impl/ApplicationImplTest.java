@@ -5,6 +5,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockApplication;
@@ -42,6 +43,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.SwingUtilities;
@@ -49,6 +51,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -77,12 +80,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private volatile Throwable exception;
 
   @PerformanceUnitTest
-  public void testRead50Write50LockPerformance() throws NoSuchMethodException {
+  public void testRead50Write50LockPerformance() {
     runReadWrites(500_000, 500_000);
   }
 
   @PerformanceUnitTest
-  public void testRead100Write0LockPerformance() throws NoSuchMethodException {
+  public void testRead100Write0LockPerformance() {
     runReadWrites(5_000_000, 0);
   }
 
@@ -403,6 +406,46 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
+  public void testNestedReadActionMustStartEvenIfWriteIsPending() throws Throwable {
+    ThreadingAssertions.assertEventDispatchThread();
+    CountDownLatch outerReadStarted = new CountDownLatch(1);
+    CountDownLatch innerReadStarted = new CountDownLatch(1);
+    CountDownLatch writeAttempted = new CountDownLatch(1);
+    CountDownLatch writeExecuted = new CountDownLatch(1);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ApplicationManager.getApplication().runReadAction(()->{
+        try {
+          outerReadStarted.countDown();
+          writeAttempted.await();
+          ThreadContext.resetThreadContext(() -> {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              innerReadStarted.countDown();
+            });
+            return Unit.INSTANCE;
+          });
+        }
+        catch (InterruptedException | RuntimeException e) {
+          throw new RuntimeException(e);
+        }
+      });
+    });
+    outerReadStarted.await();
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+      @Override
+      public void beforeWriteActionStart(@NotNull Object action) {
+        writeAttempted.countDown();
+      }
+    }, getTestRootDisposable());
+    ApplicationManager.getApplication().runWriteAction(()->{
+        writeExecuted.countDown();
+    });
+    future.get();
+    assertEquals(0, innerReadStarted.getCount());
+    assertEquals(0, outerReadStarted.getCount());
+    assertEquals(0, writeAttempted.getCount());
+    assertEquals(0, writeExecuted.getCount());
+  }
+
   private void assertThat(boolean condition, String msg) {
     if (!condition) {
       exception = new Exception(msg);
@@ -491,7 +534,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
       mayStartReadAction.waitFor();
-      ReadAction.run(() -> fail("should be canceled before entering read action"));
+      ReadAction.runBlocking(() -> fail("should be canceled before entering read action"));
     }, progress));
 
     WriteAction.run(() -> {
@@ -514,9 +557,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     Runnable runnable = ExternalChangeActionUtil.externalChangeAction(() -> {
       assertTrue(app.hasWriteAction(ExternalChangeAction.class));
-        app.executeSuspendingWriteAction(getProject(), "", () -> ReadAction.run(() -> {
+        app.executeSuspendingWriteAction(getProject(), "", () -> ReadAction.runBlocking(() -> {
           assertTrue(app.hasWriteAction(ExternalChangeAction.class));
-          waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(ExternalChangeAction.class)))));
+          waitForFuture(app.executeOnPooledThread(() -> ReadAction.runBlocking(() -> assertTrue(app.hasWriteAction(ExternalChangeAction.class)))));
         }));
     });
 
@@ -524,7 +567,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     safeWrite(runnable);
   }
 
-  private static <T> void safeWrite(Runnable r) throws Throwable {
+  private static void safeWrite(Runnable r) throws Throwable {
     AtomicReference<Throwable> e = new AtomicReference<>();
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
