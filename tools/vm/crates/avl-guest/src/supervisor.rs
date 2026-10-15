@@ -27,6 +27,7 @@ use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
+use avl_wire::ide::{ABANDONED_FILE, AbandonedRun};
 use avl_wire::supervisor::{
     ActiveReply, CancellationRecord, CancellationRequest, Contract, EnvironmentPolicy, LogReply, Outcome, Phase, RunState, SCHEMA_VERSION,
     Spec,
@@ -282,14 +283,14 @@ fn request_cancellation(system: &dyn System, paths: &RunPaths, run_id: &str, gra
 }
 
 /// Cancels a run whose supervisor is gone, synthesizing the exit status nobody reaped.
-fn orphan_cancel(system: &dyn System, root: &Path, state: RunState, request: &CancellationRequest) -> Result<RunState, AgentRefusal> {
+fn orphan_cancel(system: &dyn System, root: &Path, state: RunState, request: &CancellationRequest) -> Result<CancelEnd, AgentRefusal> {
     let expected = ProcessIdentity {
         pid: state.pid.unwrap_or_default(),
         pgid: state.pgid.unwrap_or_default(),
         process_start: state.process_start.clone().unwrap_or_default(),
     };
     if !identity_matches(system, &expected) {
-        return reconcile(system, root, state);
+        return reconcile(system, root, state).map(CancelEnd::Finished);
     }
     system.signal_group(expected.pgid, Signal::SIGTERM);
     let mut cancellation = CancellationRecord {
@@ -316,10 +317,7 @@ fn orphan_cancel(system: &dyn System, root: &Path, state: RunState, request: &Ca
         }
     }
     if identity_matches(system, &expected) {
-        return Err(AgentRefusal::failure(
-            "cancel_timeout",
-            format!("process group for {} did not exit", updated.run_id),
-        ));
+        return abandon(system, root, &updated, expected.pgid, cancellation);
     }
     let finished = finish_state(
         system,
@@ -335,16 +333,44 @@ fn orphan_cancel(system: &dyn System, root: &Path, state: RunState, request: &Ca
         },
     )?;
     state::clear_active(root, &updated.run_id);
-    Ok(finished)
+    Ok(CancelEnd::Finished(finished))
 }
 
+/// How a cancel ended.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum CancelEnd {
+    /// The run finished: its supervisor ended it, the orphan cancel ended it, or it had ended before.
+    Finished(RunState),
+    /// The supervisor did not end the cancel in time, so the agent killed the supervisor and the process group of the
+    /// child.
+    Killed(RunState),
+    /// The processes of the run outlived the kill. The agent freed the slot and wrote [`ABANDONED_FILE`] in its root.
+    Abandoned(RunState),
+}
+
+impl CancelEnd {
+    pub(crate) fn into_state(self) -> RunState {
+        match self {
+            Self::Finished(state) | Self::Killed(state) | Self::Abandoned(state) => state,
+        }
+    }
+}
+
+/// Cancels a run and answers its finished state. A cancel never leaves the slot held: see [`cancel_to_end`].
 pub(crate) fn cancel(system: &dyn System, args: &CancelArgs) -> Result<RunState, AgentRefusal> {
+    cancel_to_end(system, args).map(CancelEnd::into_state)
+}
+
+/// Cancels a run. The supervisor of the run gets the grace of the request and its own deadlines to end it. Past them,
+/// the agent kills the supervisor and the process group of the child itself. A group that outlives that kill is
+/// abandoned: the slot is free, and the record of the abandoned run names its processes.
+pub(crate) fn cancel_to_end(system: &dyn System, args: &CancelArgs) -> Result<CancelEnd, AgentRefusal> {
     let root = prepare_root(&args.run.root.root)?;
     let run_id = args.run.run_id.as_str();
     let paths = RunPaths::new(&root, run_id);
     let current = reconcile(system, &root, read_state(&root, run_id)?)?;
     if current.phase == Phase::Finished {
-        return Ok(current);
+        return Ok(CancelEnd::Finished(current));
     }
     if let Some(jcmd) = &args.thread_dump {
         dump_threads(system, &root, &paths, &current, jcmd);
@@ -360,19 +386,107 @@ pub(crate) fn cancel(system: &dyn System, args: &CancelArgs) -> Result<RunState,
     loop {
         let latest = reconcile(system, &root, read_state(&root, run_id)?)?;
         if latest.phase == Phase::Finished {
-            return Ok(latest);
+            return Ok(CancelEnd::Finished(latest));
         }
         // A heavily loaded host can resume this process just after the supervisor's terminal rename, so the
-        // state is observed once more after the deadline before a timeout is reported.
+        // state is observed once more after the deadline before the agent acts itself.
         if system.now() >= until {
-            break;
+            return kill_after_deadline(system, &root, &latest, &request);
         }
         system.sleep(POLL_INTERVAL);
     }
-    Err(AgentRefusal::failure(
-        "cancel_timeout",
-        format!("run {run_id} did not finish after cancellation"),
-    ))
+}
+
+/// Ends a run whose supervisor did not end the cancel in time: a KILL to the supervisor, so it writes no state after
+/// this one, then a KILL to the process group of the child. Each signal is identity-checked or group-checked first.
+fn kill_after_deadline(
+    system: &dyn System,
+    root: &Path,
+    state: &RunState,
+    request: &CancellationRequest,
+) -> Result<CancelEnd, AgentRefusal> {
+    if supervisor_is_alive(system, state)
+        && let Some(pgid) = state.supervisor_pgid
+    {
+        system.signal_group(pgid, Signal::SIGKILL);
+    }
+    let pgid = state.pgid.unwrap_or_default();
+    let cancellation = CancellationRecord {
+        requested_at: request.requested_at.clone(),
+        grace_ms: request.grace_ms,
+        term_sent_at: state.cancellation.as_ref().and_then(|record| record.term_sent_at.clone()),
+        kill_sent_at: Some(stamp(system.now())),
+    };
+    if system.group_alive(pgid) {
+        system.signal_group(pgid, Signal::SIGKILL);
+        let kill_deadline = deadline(system, FINISH_TIMEOUT);
+        while system.now() < kill_deadline && system.group_alive(pgid) {
+            system.sleep(POLL_INTERVAL);
+        }
+    }
+    if system.group_alive(pgid) {
+        return abandon(system, root, state, pgid, cancellation);
+    }
+    let finished = finish_state(
+        system,
+        root,
+        state,
+        None,
+        Some(Signal::SIGKILL.as_str().to_owned()),
+        Outcome::CanceledOrphan,
+        FinishExtra {
+            cancellation: Some(cancellation),
+            failure: Some(format!(
+                "the supervisor did not end the cancel within its deadline, so the agent killed it and the process group \
+                 {pgid}"
+            )),
+            ..FinishExtra::default()
+        },
+    )?;
+    state::clear_active(root, &state.run_id);
+    Ok(CancelEnd::Killed(finished))
+}
+
+/// Gives up a run whose process group `pgid` outlived a KILL: the run finishes as canceled with the survivors named,
+/// [`ABANDONED_FILE`] records them in the slot root, and the slot is free. Nothing a later signal can do frees the
+/// processes; a recycle of the worker discards them.
+fn abandon(
+    system: &dyn System,
+    root: &Path,
+    state: &RunState,
+    pgid: i32,
+    cancellation: CancellationRecord,
+) -> Result<CancelEnd, AgentRefusal> {
+    let members: Vec<String> = system
+        .group_members(pgid)
+        .into_iter()
+        .map(|member| format!("{} {}", member.pid, member.command))
+        .collect();
+    let record = AbandonedRun {
+        run_id: state.run_id.clone(),
+        pgid,
+        members: members.clone(),
+        abandoned_at: stamp(system.now()),
+    };
+    state::write_json_atomic(&root.join(ABANDONED_FILE), &record).map_err(AgentRefusal::internal)?;
+    let finished = finish_state(
+        system,
+        root,
+        state,
+        None,
+        Some(Signal::SIGKILL.as_str().to_owned()),
+        Outcome::CanceledOrphan,
+        FinishExtra {
+            cancellation: Some(cancellation),
+            failure: Some(format!(
+                "the process group {pgid} outlived SIGKILL, so the agent abandoned the run and freed its slot; a recycle of \
+                 the worker discards {members:?}"
+            )),
+            ..FinishExtra::default()
+        },
+    )?;
+    state::clear_active(root, &state.run_id);
+    Ok(CancelEnd::Abandoned(finished))
 }
 
 /// Takes the thread dump of the live child of `state` before the cancellation request exists, so the dump comes

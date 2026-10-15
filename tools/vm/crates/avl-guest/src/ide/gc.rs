@@ -5,18 +5,22 @@
 //! an IDE whose launch record names the same product digest survives the restart. Without either flag it cancels
 //! nothing. Each call also keeps only the newest `--keep-logs` log directories of each context, and never the log
 //! directory of a live IDE.
+//!
+//! A cancel that its supervisor does not end in time ends with a kill, and the run is `killed`. A run whose processes
+//! outlive the kill is `abandoned`: its slot is free, and the record [`ABANDONED_FILE`] in its context names it on
+//! each later call, until its processes are gone.
 
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use avl_wire::ide::{self, IdeGcResult, IdeRun, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord};
+use avl_wire::ide::{self, ABANDONED_FILE, AbandonedRun, IdeGcResult, IdeRun, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord};
 use avl_wire::verb::AgentVerb;
 
 use super::live_run;
 use crate::cli::{CancelArgs, IdeGcArgs, RootArgs, RunArgs};
 use crate::reply::{AgentRefusal, AgentRefusalExt};
-use crate::supervisor::{self, System};
+use crate::supervisor::{self, CancelEnd, System};
 
 #[cfg(test)]
 mod tests;
@@ -33,7 +37,7 @@ pub(crate) fn collect(system: &dyn System, args: &IdeGcArgs) -> Result<IdeGcResu
                 run_id: run.run_id.clone(),
             };
             if should_stop(&context, args) {
-                supervisor::cancel(
+                let end = supervisor::cancel_to_end(
                     system,
                     &CancelArgs {
                         run: RunArgs {
@@ -44,17 +48,40 @@ pub(crate) fn collect(system: &dyn System, args: &IdeGcArgs) -> Result<IdeGcResu
                         thread_dump: None,
                     },
                 )?;
-                result.stopped.push(entry);
+                match end {
+                    CancelEnd::Finished(_) => result.stopped.push(entry),
+                    CancelEnd::Killed(_) => result.killed.push(entry),
+                    // The record of the abandoned run is read below, with the records of earlier calls.
+                    CancelEnd::Abandoned(_) => {}
+                }
             } else {
                 live_launch = ide::launch_name_of(&run.run_id).map(str::to_owned);
                 result.kept.push(entry);
             }
+        }
+        if let Some(abandoned) = abandoned_run(system, &context) {
+            result.abandoned.push(IdeRun {
+                launch_key: launch_key.clone(),
+                run_id: abandoned.run_id,
+            });
         }
         result
             .removed
             .extend(trim_logs(&context, args.keep_logs as usize, live_launch.as_deref()));
     }
     Ok(result)
+}
+
+/// The abandoned run that the context `context` records, while a process of its group is still there. A record whose
+/// group is gone is removed, and a record that cannot be read names no run.
+fn abandoned_run(system: &dyn System, context: &Path) -> Option<AbandonedRun> {
+    let file = context.join(ABANDONED_FILE);
+    let record: AbandonedRun = serde_json::from_slice(&fs::read(&file).ok()?).ok()?;
+    if system.group_alive(record.pgid) {
+        return Some(record);
+    }
+    let _ = fs::remove_file(&file);
+    None
 }
 
 /// The context directories under `root`, by name, in order. A root that does not exist holds none.

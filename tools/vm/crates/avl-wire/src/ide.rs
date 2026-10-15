@@ -217,16 +217,39 @@ pub struct IdeRun {
     pub run_id: String,
 }
 
-/// What `ide-gc` answers. Each list is always an array.
+/// What `ide-gc` answers. Each list is always an array. An agent of an older build sends no `killed` and no
+/// `abandoned`, and a reader then reads empty lists.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeGcResult {
     /// The live IDE runs that it canceled.
     pub stopped: Vec<IdeRun>,
+    /// The live IDE runs whose cancel did not end in time, so that the agent killed their process groups.
+    #[serde(default)]
+    pub killed: Vec<IdeRun>,
+    /// The IDE runs whose processes outlived a kill. Their slots are free, and a recycle of the worker discards them.
+    #[serde(default)]
+    pub abandoned: Vec<IdeRun>,
     /// The live IDE runs that it kept.
     pub kept: Vec<IdeRun>,
     /// The log directories and the finished run directories that it removed, as guest paths.
     pub removed: Vec<String>,
+}
+
+/// The file in the slot root of a context that records an abandoned run, [`AbandonedRun`].
+pub const ABANDONED_FILE: &str = "abandoned.json";
+
+/// A run whose processes outlived the kill of its process group. The agent freed its slot and wrote this record, so
+/// `ide-gc` and the `status` of the worker name it until its processes are gone or a recycle discards the guest.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AbandonedRun {
+    pub run_id: String,
+    /// The process group that outlived the kill.
+    pub pgid: i32,
+    /// Each process of the group when the agent gave up, as `<pid> <command>`.
+    pub members: Vec<String>,
+    pub abandoned_at: String,
 }
 
 // --- decoding -----------------------------------------------------------------------------------------------

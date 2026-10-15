@@ -195,6 +195,7 @@ async fn tri_state_facts_are_null_never_false() {
         workers(&outcome),
         [
             json!({
+                "abandonedIdeRuns": null,
                 "worker": "air-macos-1",
                 "exists": true,
                 "provenanceReady": false,
@@ -221,6 +222,7 @@ async fn tri_state_facts_are_null_never_false() {
             }),
             // A missing VM is still reported, with the one error that fact implies, and the guest facts still null.
             json!({
+                "abandonedIdeRuns": null,
                 "worker": "air-macos-2",
                 "exists": false,
                 "provenanceReady": false,
@@ -674,6 +676,7 @@ async fn an_absent_docker_worker_reports_every_key() {
             "poolSize": 1,
             "poolRule": "AIR_VM_MAX_WORKERS",
             "workers": [{
+                "abandonedIdeRuns": null,
                 "worker": "air-docker-1",
                 "exists": false,
                 "state": "absent",
@@ -747,6 +750,30 @@ async fn a_running_docker_worker_with_a_current_declaration_is_ready() {
         );
     }
     assert_docker_status_wrote_nothing(&fixture);
+}
+
+/// A guest whose agent abandoned an IDE run names the run on its row, and its line asks for a recycle, because the
+/// processes of that run stay until a recycle discards the guest.
+#[tokio::test]
+async fn a_guest_that_abandoned_an_ide_run_names_it_on_its_row() {
+    let fixture = Fixture::new(Backend::Docker, GuestOs::Linux);
+    running_docker_worker(&fixture);
+    let record = r#"{"runId":"run-ide-recycle-23-mv93j76j","pgid":4242,"members":["4242 java"],"abandonedAt":"t"}"#;
+    for channel in fixture.channels() {
+        channel.answer(answer_linux_guest(vec![
+            (" active ", active_reply(None)),
+            ("abandoned.json", said(&format!("{record}\n"))),
+        ]));
+    }
+    let outcome = status(&fixture).await;
+    assert_eq!(docker_row(&outcome)["abandonedIdeRuns"], json!(["run-ide-recycle-23-mv93j76j"]));
+    assert!(
+        outcome
+            .text
+            .ends_with(" parity=ready abandoned_ide=run-ide-recycle-23-mv93j76j (recycle the worker)"),
+        "{}",
+        outcome.text
+    );
 }
 
 /// The engine cannot tell a pulled image from a built one, so `status` reads the pool's image record: `pulled` for

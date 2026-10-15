@@ -826,6 +826,22 @@ The daemon's half and the IDE's half of supervision are in
 - `ide-gc` keeps the newest log directories of each context. It always keeps the log directory of a live IDE.
   [@test] ../crates/avl-guest/src/ide/gc/tests.rs
 
+- A cancel never refuses with `cancel_timeout` and never leaves the slot held. When the supervisor does not end the
+  cancel within its deadline, the agent kills the supervisor and the process group of the child. The run then
+  finishes as canceled, and `ide-gc` reports the IDE as killed.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_cancel_past_its_deadline_kills_the_supervisor_and_the_group_and_frees_the_slot`)
+  [@test] ../crates/avl-vm/src/lane/ide/tests.rs (`the_gc_note_names_what_the_gc_did`)
+
+- A process group that outlives the kill is abandoned. The run finishes as canceled with the survivors named, the
+  slot is free, and `abandoned.json` in the context records the run. Only a recycle of the worker discards these
+  processes.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_group_that_outlives_the_kill_is_abandoned_and_its_slot_freed`)
+
+- `ide-gc` names each abandoned run while its process group lives, and it removes the record of a group that is
+  gone. The `status` row of the worker gives these runs in `abandonedIdeRuns`, and its text asks for a recycle.
+  [@test] ../crates/avl-guest/src/ide/gc/tests.rs (`an_abandoned_run_is_named_while_its_group_lives`)
+  [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs (`a_guest_that_abandoned_an_ide_run_names_it_on_its_row`)
+
 - A fresh preparation deletes the data directories, the project, the `home` and `bin` directories, the argument
   file and the launch record. It keeps the log directories and the run directories of earlier launches, and
   `ide-gc` trims them.

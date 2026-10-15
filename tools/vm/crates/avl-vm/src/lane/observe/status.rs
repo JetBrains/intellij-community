@@ -8,13 +8,15 @@
 #[cfg(unix)]
 use std::sync::LazyLock;
 
+use crate::lane::ide::guest_ide_root;
 use crate::worker::docker::{ContainerState, Docker, ImageSource};
 use crate::worker::hypervisor::Machine;
 use crate::worker::worker::{Manager, read_idle_stop_record, read_lease};
 use avl_base::format::words;
 use avl_base::{Backend, Config, Outcome, Refusal};
 use avl_host_sys::guest::{GUEST_COMMAND_TIMEOUT, Guest, ensure_host_paths};
-use avl_host_sys::{Ctx, Runner};
+use avl_host_sys::{Ctx, Runner, SpawnOptions};
+use avl_wire::ide::{ABANDONED_FILE, AbandonedRun};
 #[cfg(unix)]
 use avl_wire::supervisor::RunState;
 use futures::future::join_all;
@@ -140,12 +142,14 @@ impl Verdict {
     }
 }
 
-/// The two layout questions the Tart, the Docker and the container-linux rows ask of a running guest. The Parallels row
+/// The layout questions the Tart, the Docker and the container-linux rows ask of a running guest. The Parallels row
 /// asks parity behind two gates of its own and has no storage fact.
 #[derive(Debug, Default)]
 struct Layout {
     worker_storage_ready: bool,
     parity: Verdict,
+    /// The IDE runs that the guest agent abandoned, see [`abandoned_ide_runs`].
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 impl Layout {
@@ -164,7 +168,40 @@ impl Layout {
         Self {
             worker_storage_ready,
             parity,
+            abandoned_ide_runs: abandoned_ide_runs(guest).await,
         }
+    }
+}
+
+/// The run ids that the records [`ABANDONED_FILE`] of the IDE contexts name: runs whose processes outlived a kill.
+/// Their slots are free, and the processes stay until a recycle discards the guest. `None` when the guest did not
+/// answer, and an empty list when it records no such run.
+async fn abandoned_ide_runs(guest: &Guest<'_>) -> Option<Vec<String>> {
+    let root = guest_ide_root(guest.settings);
+    let pattern = format!("\"$1\"/*/{ABANDONED_FILE}");
+    let script = format!("for file in {pattern}; do test -f \"$file\" && /bin/cat \"$file\" && echo; done; exit 0");
+    let listed = guest
+        .as_user(
+            &words(["/bin/sh", "-c", &script, "sh", &root]),
+            &SpawnOptions::within(GUEST_COMMAND_TIMEOUT),
+        )
+        .await
+        .ok()
+        .filter(|listed| listed.exit_code == 0)?;
+    Some(
+        serde_json::Deserializer::from_str(&listed.stdout)
+            .into_iter::<AbandonedRun>()
+            .filter_map(Result::ok)
+            .map(|run| run.run_id)
+            .collect(),
+    )
+}
+
+/// The ` abandoned_ide=<run ids>` part of a text row, and nothing when the guest records no abandoned run.
+fn abandoned_fragment(runs: Option<&[String]>) -> String {
+    match runs {
+        Some(runs) if !runs.is_empty() => format!(" abandoned_ide={} (recycle the worker)", runs.join(",")),
+        _ => String::new(),
     }
 }
 
@@ -284,6 +321,9 @@ struct DockerWorkerStatus {
     /// When the idle stop of the last release stops the worker, on the Apple `container` engine. Null when no
     /// idle stop waits.
     idle_stop_at: Option<String>,
+    /// The IDE runs whose processes outlived a kill, so the worker is unusable until a recycle. Null where the guest was
+    /// not asked.
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -469,6 +509,7 @@ async fn docker_worker_status(
         parity_error: layout.parity.error,
         lease,
         idle_stop_at: idle_stop_at(settings, worker),
+        abandoned_ide_runs: layout.abandoned_ide_runs,
     })
 }
 
@@ -495,6 +536,7 @@ fn unreachable_docker_worker_status(settings: &Config, worker: &str, image: &Doc
         parity_error: None,
         lease: lease_summary(settings, worker)?,
         idle_stop_at: idle_stop_at(settings, worker),
+        abandoned_ide_runs: None,
     })
 }
 
@@ -506,13 +548,14 @@ fn render_docker_status_line(row: &DockerWorkerStatus) -> String {
         .map(|deadline| format!(" idle_stop={deadline}"))
         .unwrap_or_default();
     format!(
-        "{}: {}{exit_code} lease={} image={} declaration={} parity={}{idle_stop}",
+        "{}: {}{exit_code} lease={} image={} declaration={} parity={}{idle_stop}{}",
         row.worker,
         row.state,
         leased_word(row.lease.as_ref()),
         row.image_source.as_str(),
         verdict_words(row.declaration_current, row.declaration_error.as_deref(), "current", "stale"),
         verdict_word(row.parity_ready, row.parity_error.as_deref()),
+        abandoned_fragment(row.abandoned_ide_runs.as_deref()),
     )
 }
 

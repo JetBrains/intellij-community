@@ -225,9 +225,16 @@ fn a_launch_record_round_trips_and_checks_its_version() {
 
 // Every list of the collection answer is an array, also when it is empty.
 #[test]
-fn an_empty_collection_writes_three_arrays() {
+fn an_empty_collection_writes_five_arrays() {
     assert_eq!(
         serde_json::to_string(&IdeGcResult::default()).unwrap(),
-        r#"{"stopped":[],"kept":[],"removed":[]}"#
+        r#"{"stopped":[],"killed":[],"abandoned":[],"kept":[],"removed":[]}"#
     );
+}
+
+// An answer of an older agent names no killed and no abandoned run, and it still decodes.
+#[test]
+fn an_older_collection_answer_decodes_without_killed_and_abandoned() {
+    let older: IdeGcResult = serde_json::from_str(r#"{"stopped":[],"kept":[],"removed":[]}"#).unwrap();
+    assert_eq!(older, IdeGcResult::default());
 }

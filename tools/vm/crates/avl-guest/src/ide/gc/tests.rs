@@ -93,3 +93,24 @@ fn only_launch_key_directories_are_contexts() {
     fs::write(directory.path().join("file"), "").unwrap();
     assert_eq!(context_names(directory.path()).unwrap(), ["a", "b"]);
 }
+
+// The record of an abandoned run names it while its group lives, and goes once the group is gone.
+#[test]
+fn an_abandoned_run_is_named_while_its_group_lives() {
+    let directory = tempfile::tempdir().unwrap();
+    let record = |pgid: i32| AbandonedRun {
+        run_id: "run-ide-launch-1".to_owned(),
+        pgid,
+        members: vec![format!("{pgid} java")],
+        abandoned_at: "2026-10-15T10:00:00.000Z".to_owned(),
+    };
+    let file = directory.path().join(ABANDONED_FILE);
+    let own_group = nix::unistd::getpgrp().as_raw();
+    fs::write(&file, serde_json::to_vec(&record(own_group)).unwrap()).unwrap();
+    assert_eq!(abandoned_run(&LiveSystem, directory.path()).map(|run| run.pgid), Some(own_group));
+    assert!(file.exists());
+    // A pgid above the pid range of Linux and macOS names no group.
+    fs::write(&file, serde_json::to_vec(&record(i32::MAX - 1)).unwrap()).unwrap();
+    assert_eq!(abandoned_run(&LiveSystem, directory.path()), None);
+    assert!(!file.exists(), "the record of a gone group stayed");
+}

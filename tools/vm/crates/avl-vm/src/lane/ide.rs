@@ -36,14 +36,30 @@ pub(crate) enum IdeRetention<'a> {
     KeepProduct(&'a str),
 }
 
-/// The note of a gc that stopped or kept an IDE, or `None` when the worker had no live IDE.
+/// The note of a gc that stopped, kept, killed or abandoned an IDE, or `None` when the worker had no live IDE and no
+/// abandoned one.
 pub(crate) fn gc_note(result: &IdeGcResult) -> Option<String> {
+    let mut notes: Vec<String> = Vec::new();
     match (result.kept.len(), result.stopped.len()) {
-        (0, 0) => None,
-        (kept, 0) => Some(format!("kept {kept} lane IDE(s) of this product")),
-        (0, stopped) => Some(format!("stopped {stopped} lane IDE(s)")),
-        (kept, stopped) => Some(format!("kept {kept} lane IDE(s) of this product and stopped {stopped}")),
+        (0, 0) => {}
+        (kept, 0) => notes.push(format!("kept {kept} lane IDE(s) of this product")),
+        (0, stopped) => notes.push(format!("stopped {stopped} lane IDE(s)")),
+        (kept, stopped) => notes.push(format!("kept {kept} lane IDE(s) of this product and stopped {stopped}")),
     }
+    if !result.killed.is_empty() {
+        notes.push(format!(
+            "killed {} lane IDE(s) whose cancel did not end in time",
+            result.killed.len()
+        ));
+    }
+    if !result.abandoned.is_empty() {
+        let runs: Vec<&str> = result.abandoned.iter().map(|run| run.run_id.as_str()).collect();
+        notes.push(format!(
+            "the processes of the lane IDE run(s) {} outlived a kill; their slots are free, and `pool recycle` discards them",
+            runs.join(", ")
+        ));
+    }
+    (!notes.is_empty()).then(|| notes.join("; "))
 }
 
 /// Stops the lane IDEs of the guest that `retention` does not keep, through the guest agent's `ide-gc`.

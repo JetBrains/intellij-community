@@ -65,6 +65,8 @@ struct FakeSystem {
     identities: RefCell<HashMap<i32, ProcessIdentity>>,
     groups: RefCell<HashSet<i32>>,
     ignores_term: RefCell<HashSet<i32>>,
+    /// The groups that even a KILL does not end, as a process in the D state or a zombie of a live parent does.
+    survives_kill: RefCell<HashSet<i32>>,
     signals: RefCell<Vec<(i32, Signal)>>,
     commands: RefCell<HashMap<i32, String>>,
     on_sleep: RefCell<Option<Box<dyn FnOnce()>>>,
@@ -77,6 +79,7 @@ impl FakeSystem {
             identities: RefCell::default(),
             groups: RefCell::default(),
             ignores_term: RefCell::default(),
+            survives_kill: RefCell::default(),
             signals: RefCell::default(),
             commands: RefCell::default(),
             on_sleep: RefCell::default(),
@@ -127,7 +130,12 @@ impl System for FakeSystem {
 
     fn signal_group(&self, pgid: i32, signal: Signal) {
         self.signals.borrow_mut().push((pgid, signal));
-        if signal == Signal::SIGKILL || !self.ignores_term.borrow().contains(&pgid) {
+        let ends = if signal == Signal::SIGKILL {
+            !self.survives_kill.borrow().contains(&pgid)
+        } else {
+            !self.ignores_term.borrow().contains(&pgid)
+        };
+        if ends {
             self.end_group(pgid);
         }
     }
@@ -455,6 +463,60 @@ fn an_orphan_cancel_kills_a_group_that_ignores_term() {
     assert_eq!(finished.signal, Some(Some("SIGKILL".to_owned())));
     assert_eq!(finished.exit_code, Some(137));
     assert!(finished.cancellation.unwrap().kill_sent_at.is_some());
+}
+
+/// A running run whose live supervisor and live child it records, and the slot that the supervisor owns.
+fn stuck_run(system: &FakeSystem) -> (RunState, tempfile::TempDir) {
+    let supervisor = system.process(10, 10, "Sat Sep 26 10:00:00 2026");
+    let child = system.process(700, 700, "Sat Sep 26 10:00:04 2026");
+    let mut running = run_state("run-a", Phase::Running, system);
+    running.supervisor_pid = Some(supervisor.pid);
+    running.supervisor_pgid = Some(supervisor.pgid);
+    running.supervisor_start = Some(supervisor.process_start);
+    running.pid = Some(child.pid);
+    running.pgid = Some(child.pgid);
+    running.process_start = Some(child.process_start);
+    let root = seeded(&running, true);
+    (running, root)
+}
+
+/// A supervisor that does not end the cancel within the grace and its deadlines is killed, and so is the process group
+/// of its child. The run finishes as canceled, and the slot is free.
+#[test]
+fn a_cancel_past_its_deadline_kills_the_supervisor_and_the_group_and_frees_the_slot() {
+    let system = FakeSystem::new();
+    let (_, root) = stuck_run(&system);
+    let end = cancel_to_end(&system, &cancel_args(root.path(), 1_000)).unwrap();
+    let CancelEnd::Killed(finished) = end else {
+        panic!("not killed: {end:?}")
+    };
+    assert_eq!(system.signals.borrow().as_slice(), [(10, Signal::SIGKILL), (700, Signal::SIGKILL)]);
+    assert_eq!(finished.phase, Phase::Finished);
+    assert_eq!(finished.outcome, Some(Outcome::CanceledOrphan));
+    assert_eq!(finished.signal, Some(Some("SIGKILL".to_owned())));
+    assert!(finished.failure.unwrap().contains("killed it and the process group 700"));
+    assert!(read_active(root.path()).unwrap().is_none(), "the killed run kept the slot");
+    assert!(!root.path().join(ABANDONED_FILE).exists());
+}
+
+/// A process group that outlives the KILL is abandoned: the run finishes with the survivors named, the record names
+/// them in the slot root, and the slot is free. The cancel verb answers the finished state, not a refusal.
+#[test]
+fn a_group_that_outlives_the_kill_is_abandoned_and_its_slot_freed() {
+    let system = FakeSystem::new();
+    let (_, root) = stuck_run(&system);
+    system.survives_kill.borrow_mut().insert(700);
+    system.commands.borrow_mut().insert(700, "jcef_helper --type=gpu".to_owned());
+    let end = cancel_to_end(&system, &cancel_args(root.path(), 1_000)).unwrap();
+    let CancelEnd::Abandoned(finished) = end else {
+        panic!("not abandoned: {end:?}")
+    };
+    assert_eq!(finished.outcome, Some(Outcome::CanceledOrphan));
+    assert!(finished.failure.unwrap().contains("outlived SIGKILL"));
+    assert!(read_active(root.path()).unwrap().is_none(), "the abandoned run kept the slot");
+    let record: AbandonedRun = serde_json::from_slice(&fs::read(root.path().join(ABANDONED_FILE)).unwrap()).unwrap();
+    assert_eq!((record.run_id.as_str(), record.pgid), ("run-a", 700));
+    assert_eq!(record.members, ["700 jcef_helper --type=gpu"]);
 }
 
 /// A finished run is answered as it is: nothing is signalled and no request is dropped.

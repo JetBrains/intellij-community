@@ -8,7 +8,7 @@ use avl_host_sys::Ctx;
 use avl_host_sys::guest::{GUEST_COMMAND_TIMEOUT, Guest};
 use serde::Serialize;
 
-use super::{HostPaths, Layout, LeaseSummary, lease_summary, leased_word, pool_report, tri_state_word, verdict_word};
+use super::{HostPaths, Layout, LeaseSummary, abandoned_fragment, lease_summary, leased_word, pool_report, tri_state_word, verdict_word};
 
 /// The container-linux worker's row, whose field order is the JSON order.
 ///
@@ -30,6 +30,8 @@ struct ContainerLinuxWorkerStatus {
     /// The noVNC page of the container's display, once the guest wrote it, and null after a stop.
     novnc: Option<String>,
     lease: Option<LeaseSummary>,
+    /// The IDE runs whose processes outlived a kill, as on the Docker row.
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -87,6 +89,7 @@ pub(super) async fn status(ctx: &Ctx, manager: &Manager, container_linux: &Conta
             parity_error: layout.parity.error,
             novnc: novnc.clone(),
             lease,
+            abandoned_ide_runs: layout.abandoned_ide_runs,
         });
     }
     let text = pool_report(host_paths.error.as_deref(), workers.iter().map(render_line));
@@ -104,12 +107,13 @@ pub(super) async fn status(ctx: &Ctx, manager: &Manager, container_linux: &Conta
 
 fn render_line(row: &ContainerLinuxWorkerStatus) -> String {
     format!(
-        "{}: {} lease={} parity={} novnc={}",
+        "{}: {} lease={} parity={} novnc={}{}",
         row.worker,
         row.state,
         leased_word(row.lease.as_ref()),
         verdict_word(row.parity_ready, row.parity_error.as_deref()),
         row.novnc.as_deref().unwrap_or("none"),
+        abandoned_fragment(row.abandoned_ide_runs.as_deref()),
     )
 }
 
