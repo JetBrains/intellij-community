@@ -134,9 +134,9 @@ fn a_kept_junie_offer_is_not_answered() {
 }
 
 // The bridge serves the vocabulary of one build and the documents name another: the gate names both digests. A
-// bridge that names no digest predates it, and the gate notes that and passes.
+// bridge that names no digest is refused too, because readiness cannot hold it to the documents.
 #[test]
-fn a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_a_note() {
+fn a_vocabulary_of_another_build_and_a_missing_one_are_refused() {
     let (server, _) = fake_ide(Some("0000"), INPUT_EVENTS_ROBOT, false);
     let refusal = ready(&server, false).0.unwrap_err();
     assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
@@ -146,9 +146,9 @@ fn a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_a_note() {
         refusal.message
     );
     let (server, _) = fake_ide(None, INPUT_EVENTS_ROBOT, false);
-    let (result, notes) = ready(&server, false);
-    result.unwrap();
-    assert!(notes.iter().any(|note| note.contains("names no vocabulary digest")), "{notes:?}");
+    let refusal = ready(&server, false).0.unwrap_err();
+    assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
+    assert!(refusal.message.contains("names no vocabulary digest"), "{}", refusal.message);
 }
 
 // An IDE that drives gestures with the real pointer is refused, because a lane gesture must not depend on the screen.

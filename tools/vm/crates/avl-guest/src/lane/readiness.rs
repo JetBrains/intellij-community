@@ -120,7 +120,7 @@ pub(crate) fn await_ready(
         state.pid,
         started.elapsed().as_millis()
     ));
-    check_vocabulary(launch, state.vocabulary_digest.as_deref(), vocabulary_digest, note)?;
+    check_vocabulary(launch, state.vocabulary_digest.as_deref(), vocabulary_digest)?;
     let nonce = format!("air-ui-test-bridge-{}", nanos());
     check_robot_and_ping(
         &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
@@ -147,14 +147,10 @@ fn not_ready(launch: &str, error: &WaitError) -> AgentRefusal {
     AgentRefusal::refused(NOT_READY_CODE, format!("the IDE of '{launch}' did not get ready: {error}"))
 }
 
-/// Refuses a bridge whose vocabulary is not the vocabulary of the lane document. A bridge that names none predates the
-/// digest, so the check notes it and passes.
-pub(crate) fn check_vocabulary(
-    launch: &str,
-    served: Option<&str>,
-    expected: &str,
-    note: &mut dyn FnMut(String),
-) -> Result<(), AgentRefusal> {
+/// Refuses a bridge whose vocabulary is not the vocabulary of the lane document, and a bridge that names no
+/// vocabulary. The resident plugin reads the digest of the loaded bridge plugin, so a bridge without one is a bridge
+/// plugin that the lane cannot hold to its documents.
+pub(crate) fn check_vocabulary(launch: &str, served: Option<&str>, expected: &str) -> Result<(), AgentRefusal> {
     match served {
         Some(served) if served != expected => Err(AgentRefusal::refused(
             VOCABULARY_SKEW_CODE,
@@ -164,12 +160,14 @@ pub(crate) fn check_vocabulary(
             ),
         )),
         Some(_) => Ok(()),
-        None => {
-            note(format!(
-                "the bridge of '{launch}' names no vocabulary digest, so readiness cannot hold it to {expected}"
-            ));
-            Ok(())
-        }
+        None => Err(AgentRefusal::refused(
+            VOCABULARY_SKEW_CODE,
+            format!(
+                "the bridge of '{launch}' names no vocabulary digest, so readiness cannot hold it to {expected}; the \
+                 loaded bridge plugin has no AirFlowVocabularyDigest class, or the resident plugin cannot read it, and \
+                 idea.log of the IDE names which"
+            ),
+        )),
     }
 }
 
