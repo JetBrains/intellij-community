@@ -176,9 +176,21 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+com.intellij.collaboration.auth.AccountDetails
+- a:getAvatarUrl():java.lang.String
+- a:getName():java.lang.String
 f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+e:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- java.lang.Enum
+- sf:CLOSED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- sf:DRAFT:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- sf:MERGED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- sf:OPENED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+- s:values():com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState[]
 a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsToggleAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
@@ -251,12 +263,16 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - a:getAvatarUrl():java.lang.String
 f:com.intellij.collaboration.ui.util.popup.PopupAwaitingKt
 - sf:awaitClose(com.intellij.openapi.ui.popup.JBPopup,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.collaboration.util.ChangesSelectionKt
+- sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.openapi.vcs.changes.RefComparisonChange
+- sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
 f:com.intellij.collaboration.util.CollectionDelta
 - <init>(java.util.Collection,java.util.Collection):V
 - f:getNewCollection():java.util.Collection
 - f:getNewItems():java.util.Collection
 - f:getRemovedItems():java.util.Collection
 - f:isEmpty():Z
+f:com.intellij.collaboration.util.ComputableSequenceKt
 f:com.intellij.collaboration.util.ComputedResult
 - sf:Companion:com.intellij.collaboration.util.ComputedResult$Companion
 - bsf:box-impl(kotlin.Result):com.intellij.collaboration.util.ComputedResult
@@ -328,6 +344,11 @@ f:com.intellij.collaboration.util.IncrementallyComputedValue$Value
 f:com.intellij.collaboration.util.RefComparisonChangeKt
 - sf:getFilePath(com.intellij.openapi.vcs.changes.RefComparisonChange):com.intellij.openapi.vcs.FilePath
 - sf:getFileStatus(com.intellij.openapi.vcs.changes.RefComparisonChange):com.intellij.openapi.vcs.FileStatus
+f:com.intellij.collaboration.util.ResultUtil
+- sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
+- f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
+- f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
+f:com.intellij.collaboration.util.SequenceItemKt
 f:com.intellij.collaboration.util.SingleCoroutineLauncher
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:cancel():V

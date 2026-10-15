@@ -347,6 +347,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:getPrimaryAction():kotlinx.coroutines.flow.StateFlow
 - f:getSecondaryActions():kotlinx.coroutines.flow.StateFlow
 - f:getSubmitHint():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.collaboration.ui.codereview.commits.CommitsUtilKt
+- sf:splitCommitMessage(java.lang.String):kotlin.Pair
 *a:com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -677,6 +679,51 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - sf:bindTooltipTextIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindVisibilityIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
+*:com.intellij.collaboration.util.ChangesSelection
+- a:getChanges():java.util.List
+- a:getSelectedIdx():I
+*f:com.intellij.collaboration.util.ChangesSelection$Fuzzy
+- com.intellij.collaboration.util.ChangesSelection
+- <init>(java.util.List,I):V
+- b:<init>(java.util.List,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.List
+- f:component2():I
+- f:copy(java.util.List,I):com.intellij.collaboration.util.ChangesSelection$Fuzzy
+- bs:copy$default(com.intellij.collaboration.util.ChangesSelection$Fuzzy,java.util.List,I,I,java.lang.Object):com.intellij.collaboration.util.ChangesSelection$Fuzzy
+- equals(java.lang.Object):Z
+- getChanges():java.util.List
+- getSelectedIdx():I
+- hashCode():I
+*f:com.intellij.collaboration.util.ChangesSelection$Precise
+- com.intellij.collaboration.util.ChangesSelection
+- <init>(java.util.List,I,kotlin.Pair):V
+- b:<init>(java.util.List,I,kotlin.Pair,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.util.List,com.intellij.openapi.vcs.changes.RefComparisonChange,kotlin.Pair):V
+- b:<init>(java.util.List,com.intellij.openapi.vcs.changes.RefComparisonChange,kotlin.Pair,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.List
+- f:component2():I
+- f:component3():kotlin.Pair
+- f:copy(java.util.List,I,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
+- bs:copy$default(com.intellij.collaboration.util.ChangesSelection$Precise,java.util.List,I,kotlin.Pair,I,java.lang.Object):com.intellij.collaboration.util.ChangesSelection$Precise
+- equals(java.lang.Object):Z
+- getChanges():java.util.List
+- f:getLocation():kotlin.Pair
+- getSelectedIdx():I
+- hashCode():I
+f:com.intellij.collaboration.util.ChangesSelectionKt
+- *sf:equalChanges(com.intellij.collaboration.util.ChangesSelection,java.lang.Object):Z
+*:com.intellij.collaboration.util.ComputableSequence
+- *sf:Companion:com.intellij.collaboration.util.ComputableSequence$Companion
+- a:getComputer():com.intellij.collaboration.util.SequenceComputer
+*f:com.intellij.collaboration.util.ComputableSequence$Companion
+- f:byCursor(java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.collaboration.util.ComputableSequence
+- f:byPointer(java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.collaboration.util.ComputableSequence
+f:com.intellij.collaboration.util.ComputableSequenceKt
+- *sf:asComputedSequence(kotlin.sequences.Sequence):com.intellij.collaboration.util.ComputableSequence
+- *sf:asFlow(com.intellij.collaboration.util.ComputableSequence):kotlinx.coroutines.flow.Flow
+- *sf:map(com.intellij.collaboration.util.ComputableSequence,kotlin.jvm.functions.Function1):com.intellij.collaboration.util.ComputableSequence
+- *sf:mapItems(com.intellij.collaboration.util.ComputableSequence,kotlin.jvm.functions.Function1):com.intellij.collaboration.util.ComputableSequence
+- *sf:toList(com.intellij.collaboration.util.ComputableSequence,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.util.Hideable
 - a:getHiddenState():kotlinx.coroutines.flow.StateFlow
 - a:setHidden(Z):V
@@ -684,3 +731,27 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:collectIncrementallyTo(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.FlowCollector,kotlin.coroutines.Continuation):java.lang.Object
 - sf:onNoValue(com.intellij.collaboration.util.IncrementallyComputedValue,kotlin.jvm.functions.Function0):com.intellij.collaboration.util.IncrementallyComputedValue
 - sf:onValueAvailable(com.intellij.collaboration.util.IncrementallyComputedValue,kotlin.jvm.functions.Function1):com.intellij.collaboration.util.IncrementallyComputedValue
+*:com.intellij.collaboration.util.SequenceComputer
+- *sf:Companion:com.intellij.collaboration.util.SequenceComputer$Companion
+- a:computeNext(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.collaboration.util.SequenceComputer$Companion
+- f:byCursor(java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.collaboration.util.SequenceComputer
+- f:byPointer(java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.collaboration.util.SequenceComputer
+*:com.intellij.collaboration.util.SequenceComputer$ComputationOutcome
+*f:com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Done
+- com.intellij.collaboration.util.SequenceComputer$ComputationOutcome
+- sf:INSTANCE:com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Done
+*f:com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Item
+- com.intellij.collaboration.util.SequenceComputer$ComputationOutcome
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Item
+- bs:copy$default(com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Item,java.lang.Object,I,java.lang.Object):com.intellij.collaboration.util.SequenceComputer$ComputationOutcome$Item
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.Object
+- hashCode():I
+*:com.intellij.collaboration.util.SequenceItem
+- a:getValue():java.lang.Object
+- a:isLast():Z
+f:com.intellij.collaboration.util.SequenceItemKt
+- *sf:SequenceItem(java.lang.Object,Z):com.intellij.collaboration.util.SequenceItem

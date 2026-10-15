@@ -7,9 +7,6 @@ a:com.intellij.collaboration.auth.Account
 - f:hashCode():I
 f:com.intellij.collaboration.auth.Account$Companion
 - f:generateId():java.lang.String
-com.intellij.collaboration.auth.AccountDetails
-- a:getAvatarUrl():java.lang.String
-- a:getName():java.lang.String
 com.intellij.collaboration.auth.AccountManager
 - a:findCredentials(com.intellij.collaboration.auth.Account,kotlin.coroutines.Continuation):java.lang.Object
 - a:getAccountsState():kotlinx.coroutines.flow.StateFlow
@@ -148,15 +145,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 - s:values():com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState[]
-e:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- java.lang.Enum
-- sf:CLOSED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- sf:DRAFT:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- sf:MERGED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- sf:OPENED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
-- s:values():com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState[]
 e:com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 - java.lang.Enum
 - sf:AUTHOR:com.intellij.collaboration.ui.codereview.details.data.ReviewRole
@@ -173,12 +161,8 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - s:values():com.intellij.collaboration.ui.codereview.details.data.ReviewState[]
-f:com.intellij.collaboration.util.ChangesSelectionKt
-- sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.openapi.vcs.changes.RefComparisonChange
-- sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
 f:com.intellij.collaboration.util.CodeReviewFilesUtil
 - sf:INSTANCE:com.intellij.collaboration.util.CodeReviewFilesUtil
-f:com.intellij.collaboration.util.ComputableSequenceKt
 f:com.intellij.collaboration.util.KeyValuePairKt
 f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - com.intellij.openapi.Disposable
@@ -186,8 +170,3 @@ f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - f:acquireIndicator():com.intellij.openapi.progress.ProgressIndicator
 - dispose():V
 - f:releaseIndicator(com.intellij.openapi.progress.ProgressIndicator):Z
-f:com.intellij.collaboration.util.ResultUtil
-- sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
-- f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
-- f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
-f:com.intellij.collaboration.util.SequenceItemKt
