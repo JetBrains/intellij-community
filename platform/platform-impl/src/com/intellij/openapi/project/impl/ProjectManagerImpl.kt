@@ -77,6 +77,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectCloseHandler
+import com.intellij.openapi.project.ProjectCloseConfirmationChecker
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
@@ -651,6 +652,23 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
     return true
+  }
+
+  private suspend fun needsConfirmationToClose(project: Project): Boolean {
+    if (project.isDisposed) {
+      return false
+    }
+    for (listener in getAllListeners(project)) {
+      try {
+        if (listener is ProjectCloseConfirmationChecker && listener.needsConfirmationToClose(project)) {
+          return true
+        }
+      }
+      catch (e: Throwable) {
+        handleListenerError(e, listener)
+      }
+    }
+    return false
   }
 
   private fun getAllListeners(project: Project): List<ProjectManagerListener> {
@@ -1277,11 +1295,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   /**
    * A welcome project without user data gives its frame to the new project without a confirmation.
+   * A [ProjectCloseConfirmationChecker] that needs a confirmation to close the project also counts as user data.
    * An IDE that always opens a project in a new window does not place the project itself, so its welcome project stays open.
    */
   private suspend fun reusesWelcomeFrameWithoutConfirmation(projectToClose: Project): Boolean {
     return !ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow &&
-           WelcomeUtils.noCheckOpenConfirmation(projectToClose)
+           WelcomeUtils.noCheckOpenConfirmation(projectToClose) &&
+           !needsConfirmationToClose(projectToClose)
   }
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
