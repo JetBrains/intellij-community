@@ -637,11 +637,21 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     fun updateNode(nodeId: Long, options: ((ProjectViewNodeUpdateOptionsBuilder) -> Unit)?) {
       val newUpdate = ProjectViewNodeUpdateOptionsBuilderImpl()
       options?.invoke(newUpdate)
-      // remove-reinsert ensures no concurrent access from the update routine
-      val existingUpdate = pendingUpdates.remove(nodeId)
-      val resultingUpdate = existingUpdate?.merge(newUpdate) ?: newUpdate
-      pendingUpdates[nodeId] = resultingUpdate
+      addPendingUpdate(nodeId, newUpdate)
+    }
+
+    private fun addPendingUpdate(nodeId: Long, update: ProjectViewNodeUpdateOptions) {
+      // merge() is atomic, because both the updater and the retries can add updates concurrently
+      pendingUpdates.merge(nodeId, update) { existingUpdate, newUpdate -> existingUpdate.merge(newUpdate) }
       pendingUpdatesSignal.update { it + 1L }
+    }
+
+    private fun retryNodeUpdate(nodeId: Long, update: ProjectViewNodeUpdateOptions) {
+      // Do not add the update immediately, as processPendingUpdates() would then retry it without a delay.
+      retryScope.launch(CoroutineName("Retry of the update of the node $nodeId of the pane $id")) {
+        delay(10.milliseconds)
+        addPendingUpdate(nodeId, update)
+      }
     }
 
     suspend fun visitTree(allowLoading: Boolean, visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
@@ -1009,25 +1019,36 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       for ((nodeId, updateOptions) in updatesForPath) {
         LOG.trace { "Update for ${n(nodeId)}: $updateOptions" }
         if (updateOptions == null) continue
-        val effectiveOptions = applyNodeUpdate(nodeId, updateOptions)
-        if (effectiveOptions == null) break // the node is gone with all its children
-        if (effectiveOptions.deep) break // we've just updated all deeper nodes
+        when (val result = applyNodeUpdate(nodeId, updateOptions)) {
+          NodeUpdateResult.Gone -> break // the node is gone with all its children
+          NodeUpdateResult.Retry -> continue // the deeper updates were removed above, so apply them now
+          is NodeUpdateResult.Updated -> if (result.effectiveOptions.deep) break // we've just updated all deeper nodes
+        }
       }
     }
 
-    private suspend fun applyNodeUpdate(nodeId: Long, updateOptions: ProjectViewNodeUpdateOptions): ProjectViewNodeUpdateOptions? {
-      var node = suspendingState.getNodeById(nodeId) ?: return null // was removed earlier, nothing to update
+    @Suppress("IncorrectCancellationExceptionHandling") // it IS rethrown by ensureActive()
+    private suspend fun applyNodeUpdate(nodeId: Long, updateOptions: ProjectViewNodeUpdateOptions): NodeUpdateResult {
+      var node = suspendingState.getNodeById(nodeId) ?: return NodeUpdateResult.Gone // was removed earlier, nothing to update
       var effectiveOptions = updateOptions
       var newNodeModel: BackendProjectViewNodeModel<T>?
       while (true) {
-        newNodeModel = createUpdatedModel(node.id, node.userObject)
+        newNodeModel = try {
+          createUpdatedModel(node.id, node.userObject)
+        }
+        catch (e: CancellationException) {
+          currentCoroutineContext().ensureActive()
+          LOG.debug(e) { "Re-scheduling the update of the node ${n(node.id)} because of a CE, options = $effectiveOptions" }
+          retryNodeUpdate(node.id, effectiveOptions)
+          return NodeUpdateResult.Retry
+        }
         if (newNodeModel != null) break
         // A structural update like this can happen, for example, if there was some restructuring of a subtree.
         // For example, we had "org.example", and created "org.something", which means "org.example" no longer exists as a single flattened node,
         // and we have "org" instead with two children. Trying to update "org.example" will find out that it's gone, so we need to update its parent's children instead.
         // Otherwise, it'll simply disappear (IJPL-255213).
         LOG.trace { "The node ${n(node.id)} no longer exists, meaning it's a structural update of an ancestor, propagating..." }
-        node = suspendingState.getParentByChildId(node.id) ?: return null // was removed earlier, nothing to update
+        node = suspendingState.getParentByChildId(node.id) ?: return NodeUpdateResult.Gone // was removed earlier, nothing to update
         LOG.trace { "Trying ${n(node.id)}..." }
         effectiveOptions = updateOptions.withDeep()
       }
@@ -1036,7 +1057,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       if (effectiveOptions.deep) { // update recursively, but only already loaded children
         updateChildrenWithRetry(parentId = node.id, allowLoading = false, deep = true)
       }
-      return effectiveOptions
+      return NodeUpdateResult.Updated(effectiveOptions)
     }
 
     @Suppress("IncorrectCancellationExceptionHandling") // (sigh) it IS rethrown, it CAN be logged as debug
@@ -1225,18 +1246,31 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     private inner class NodeModelComputation(id: Long, node: T) {
       private val firstValue = CompletableDeferred<BackendProjectViewNodeModel<T>?>()
       
+      @Suppress("IncorrectCancellationExceptionHandling") // yes, it's allowed to log CEs if it's debug()
       private val job = modelComputationScope.launch {
         var first = true
-        nodeProvider.getNodeModelFlow(id, node).collect { model ->
-          if (first) {
-            first = false
-            firstValue.complete(model)
-          }
-          else {
-            schedule { epoch ->
-              UpdateNodeModelRequest(epoch, id, model)
+        try {
+          nodeProvider.getNodeModelFlow(id, node).collect { model ->
+            if (first) {
+              first = false
+              firstValue.complete(model)
+            }
+            else {
+              schedule { epoch ->
+                UpdateNodeModelRequest(epoch, id, model)
+              }
             }
           }
+        }
+        catch (e: CancellationException) {
+          if (!firstValue.completeExceptionally(e)) {
+            // The first value is already provided to the caller, retry the full model, but only if this computation is still active.
+            currentCoroutineContext().ensureActive()
+            LOG.debug(e) { "Re-scheduling the update of the node $id because of a CE" }
+            retryNodeUpdate(id, ProjectViewNodeUpdateOptionsBuilderImpl())
+          }
+          // Else: no first value yet, completeExceptionally gave the CE to the caller of firstValue(), whatever the cause was.
+          throw e // not strictly necessary, but let's keep coroutines happy
         }
       }.also { job ->
         job.invokeOnCompletion {
@@ -1321,6 +1355,12 @@ private data class SetSortKeyRequest(override val epoch: Long, val sortKey: Proj
 private data class SetFileNestingRequest(override val epoch: Long, val fileNesting: ProjectViewPaneFileNestingValue) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath, val requestFocus: Boolean) : StateUpdateRequest()
 private data class UpdateNodeModelRequest<T : ProjectViewNodeUserObject>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
+
+private sealed interface NodeUpdateResult {
+  data object Gone : NodeUpdateResult
+  data object Retry : NodeUpdateResult
+  data class Updated(val effectiveOptions: ProjectViewNodeUpdateOptions) : NodeUpdateResult
+}
 
 private data class RetryLoadChildrenRequest(
   val allowLoading: Boolean,
