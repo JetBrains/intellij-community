@@ -26,7 +26,8 @@ import com.intellij.platform.eel.provider.utils.impl.getActualWslPath
 import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
@@ -62,7 +63,7 @@ private val WSLDistribution.preferredRoot: String
 @ApiStatus.Internal
 @VisibleForTesting
 class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRoutingFileSystemBackend {
-  private val providersCache = ContainerUtil.createConcurrentWeakMap<String, FileSystem>()
+  private val providersCache: ConcurrentMap<String, FileSystem> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   private val reportedNonExistentWslIds = AtomicReference<List<String>>(listOf())
 

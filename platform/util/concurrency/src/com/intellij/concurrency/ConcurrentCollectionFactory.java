@@ -220,8 +220,7 @@ public final class ConcurrentCollectionFactory {
    * Creates a concurrent map with soft keys, soft values, and the specified hashing strategy.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(
-    @NotNull HashingStrategy<? super K> hashingStrategy) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     return createConcurrentSoftKeySoftValueMap(ConcurrentWeakKeySoftValueHashMap.DEFAULT_CAPACITY,
                                                ConcurrentWeakKeySoftValueHashMap.DEFAULT_LOAD_FACTOR,
                                                ConcurrentWeakKeySoftValueHashMap.DEFAULT_CONCURRENCY_LEVEL,
@@ -229,11 +228,10 @@ public final class ConcurrentCollectionFactory {
   }
 
   @Contract(value = "_,_,_,_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(
-    int initialCapacity,
-    float loadFactor,
-    int concurrencyLevel,
-    @NotNull HashingStrategy<? super K> hashingStrategy) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
+                                                                                                          float loadFactor,
+                                                                                                          int concurrencyLevel,
+                                                                                                          @NotNull HashingStrategy<? super K> hashingStrategy) {
     return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 

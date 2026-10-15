@@ -2823,21 +2823,42 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakValueMap();
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftKeySoftValueMap(int, float, int, HashingStrategy)}
+   * with {@link HashingStrategy#canonical()} instead.
+   */
+  @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap() {
     return CollectionFactory.createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeySoftValueMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakKeySoftValueMap() {
     return CollectionFactory.createConcurrentWeakKeySoftValueMap();
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeyWeakValueMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakKeyWeakValueMap() {
     return CollectionFactory.createConcurrentWeakKeyWeakValueMap();
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeyWeakValueMap(HashingStrategy)} instead.
+   */
+  @Deprecated
   @ApiStatus.Internal
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakKeyWeakValueMap(@NotNull HashingStrategy<? super K> strategy) {
@@ -2849,12 +2870,24 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentSoftValueMap();
   }
 
+  /**
+   * Concurrent weak key:K -> strong value:V map.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentSoftMap() {
     return CollectionFactory.createConcurrentSoftMap();
   }
 
+  /**
+   * Concurrent weak key:K -> strong value:V map.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakMap() {
     return CollectionFactory.createConcurrentWeakMap();
   }

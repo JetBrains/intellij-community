@@ -49,5 +49,5 @@ abstract class Java11Shim {
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 
   @Contract(value = "_, -> new", pure = true)
-  abstract fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any>
+  abstract fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any> = HashingStrategy.canonical()): ConcurrentMap<K & Any, V & Any>
 }

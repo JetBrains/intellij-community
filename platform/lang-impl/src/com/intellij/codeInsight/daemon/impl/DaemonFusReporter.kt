@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
@@ -21,17 +22,17 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentMap
 import kotlin.math.log10
 import kotlin.math.pow
 
 internal class DaemonFusReporter(private val project: Project, val coroutineScope: CoroutineScope) : DaemonCodeAnalyzer.DaemonListener {
-  private val sessions = ContainerUtil.createConcurrentWeakMap<FileEditor, SessionData>()
+  private val sessions: ConcurrentMap<FileEditor, SessionData> = ConcurrentCollectionFactory.createConcurrentWeakMap()
 
   private data class SessionData(
     val daemonStartTime: Long = -1L,

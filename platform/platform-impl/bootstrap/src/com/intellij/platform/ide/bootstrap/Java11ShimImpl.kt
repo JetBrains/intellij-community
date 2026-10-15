@@ -17,7 +17,7 @@ class Java11ShimImpl : Java11Shim() {
     VarHandleWrapperImpl.useVarHandlesInConcurrentCollections()
   }
 
-  private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
+  private val walker: StackWalker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
 
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
 
@@ -59,14 +59,14 @@ class Java11ShimImpl : Java11Shim() {
           val newResult = arrayOfNulls<Any>(size)
           System.arraycopy(array, 0, newResult, 0, size)
           @Suppress("UNCHECKED_CAST", "KotlinConstantConditions")
-          return java.util.List.of(*newResult) as List<E>
+          java.util.List.of(*newResult) as List<E>
         }
       }
     }
   }
 
   override fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any> {
-    return ConcurrentCollectionFactory.createConcurrentWeakMap(hashingStrategy)
+    return if (hashingStrategy === HashingStrategy.canonical<K>()) ConcurrentCollectionFactory.createConcurrentWeakMap() else ConcurrentCollectionFactory.createConcurrentWeakMap(hashingStrategy)
   }
 
   override fun getCallerClass(stackFrameIndex: Int): Class<*>? {

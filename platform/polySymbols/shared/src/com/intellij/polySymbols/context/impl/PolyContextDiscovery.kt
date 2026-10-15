@@ -50,8 +50,9 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lazyUnsafe
+import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -433,7 +434,7 @@ private val Project.contextInfo
 private class PolyContextDiscoveryInfo(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
   private val previousContext = ConcurrentHashMap<PolyContextKind, MutableMap<VirtualFile, String>>()
-  private val cachedData = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedData>()
+  private val cachedData: ConcurrentMap<VirtualFile, CachedData> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   init {
     val messageBus = project.messageBus.connect(this)
@@ -475,7 +476,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
       .value
 
   fun updateContext(contextFile: VirtualFile, kind: PolyContextKind, name: PolyContextName): String? =
-    previousContext.computeIfAbsent(kind) { ContainerUtil.createConcurrentWeakMap() }
+    previousContext.computeIfAbsent(kind) { Java11Shim.INSTANCE.createConcurrentWeakMap() }
       .put(contextFile, name)
 
   fun getContextRulesConfigInDir(dir: VirtualFile): ContextRulesConfigInDir =

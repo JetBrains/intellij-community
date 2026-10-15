@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.util.asSafely
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -14,7 +14,7 @@ import java.lang.reflect.Method
 object PolySymbolPropertyGetter {
 
   private val accessorsMap: MutableMap<Class<out PolySymbol>, Map<PolySymbolProperty<*>, (PolySymbol) -> Any?>> =
-    ContainerUtil.createConcurrentWeakMap()
+    Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   fun <T : Any> get(symbol: PolySymbol, property: PolySymbolProperty<T>): T? =
     accessorsMap.computeIfAbsent(symbol::class.java) {

@@ -17,8 +17,8 @@ import com.intellij.psi.impl.source.tree.mvcc.PsiVersionCleanable
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
@@ -43,7 +43,7 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
    */
   private val stateKey = Key.create<DocumentState>("UNCOMMITTED_DOCUMENT_STATE")
 
-  private val liveStates: MutableMap<DocumentState, Boolean> = CollectionFactory.createConcurrentWeakMap()
+  private val liveStates: MutableMap<DocumentState, Boolean> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   private val timelineLock = Any()
 
@@ -53,7 +53,8 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
       return _isolatedTimelines
     }
 
-  private val _isolatedTimelines: ConcurrentMap<Document, IsolatedTimeline> = CollectionFactory.createConcurrentWeakMap()
+  private val _isolatedTimelines: ConcurrentMap<Document, IsolatedTimeline> =
+    Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   /**
    * A tracker of live timelines, that is needed for garbage collection after document ceases to be strongly reachable.
