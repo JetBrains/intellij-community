@@ -31,6 +31,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/caffeine",
         "//libraries/fastutil",
+        "//libraries/http-client",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/miglayout-swing",
         "//platform/analysis-api:analysis",

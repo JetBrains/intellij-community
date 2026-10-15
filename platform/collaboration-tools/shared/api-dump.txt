@@ -1,3 +1,181 @@
+f:com.intellij.collaboration.api.HttpApiHelperKt
+- sf:logName(java.net.http.HttpRequest):java.lang.String
+- sf:request(com.intellij.collaboration.api.HttpApiHelper,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- sf:sendAndAwait(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,kotlin.coroutines.Continuation):java.lang.Object
+- sf:sendAndRead(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,java.lang.String,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+- bs:sendAndRead$default(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,java.lang.String,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:sendAndReadBody(com.intellij.collaboration.api.HttpApiHelper,java.net.http.HttpRequest,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.collaboration.api.HttpStatusErrorException
+- java.lang.RuntimeException
+- <init>(java.lang.String,I,java.lang.String):V
+- f:getBody():java.lang.String
+- getLocalizedMessage():java.lang.String
+- f:getStatusCode():I
+com.intellij.collaboration.api.ServerPath
+- a:toString():java.lang.String
+- a:toURI():java.net.URI
+f:com.intellij.collaboration.api.data.GraphQLRequestPagination
+- sf:Companion:com.intellij.collaboration.api.data.GraphQLRequestPagination$Companion
+- sf:DEFAULT_PAGE_SIZE:I
+- <init>(I):V
+- b:<init>(I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,I):V
+- b:<init>(java.lang.String,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.util.Date,I):V
+- b:<init>(java.util.Date,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getAfterCursor():java.lang.String
+- f:getPageSize():I
+- f:getSince():java.util.Date
+f:com.intellij.collaboration.api.data.GraphQLRequestPagination$Companion
+- f:getDEFAULT():com.intellij.collaboration.api.data.GraphQLRequestPagination
+f:com.intellij.collaboration.api.data.GraphQLRequestPaginationKt
+- sf:asParameters(com.intellij.collaboration.api.data.GraphQLRequestPagination):java.util.Map
+- sf:orDefault(com.intellij.collaboration.api.data.GraphQLRequestPagination):com.intellij.collaboration.api.data.GraphQLRequestPagination
+c:com.intellij.collaboration.api.dto.GraphQLConnectionDTO
+- com.intellij.collaboration.api.dto.GraphQLNodesDTO
+- com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
+- <init>(com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO,java.util.List):V
+- getPageInfo():com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+f:com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+- <init>(java.lang.String,Z,java.lang.String,Z):V
+- f:getEndCursor():java.lang.String
+- f:getHasNextPage():Z
+- f:getHasPreviousPage():Z
+- f:getStartCursor():java.lang.String
+c:com.intellij.collaboration.api.dto.GraphQLErrorDTO
+- <init>(java.lang.String):V
+- f:getMessage():java.lang.String
+@:com.intellij.collaboration.api.dto.GraphQLFragment
+- java.lang.annotation.Annotation
+- a:filePath():java.lang.String
+@:com.intellij.collaboration.api.dto.GraphQLFragment$Container
+- java.lang.annotation.Annotation
+- a:value():com.intellij.collaboration.api.dto.GraphQLFragment[]
+c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getNodes():java.util.List
+- hashCode():I
+com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
+- a:getNodes():java.util.List
+- a:getPageInfo():com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+f:com.intellij.collaboration.api.dto.GraphQLRequestDTO
+- <init>(java.lang.String,java.lang.Object):V
+- f:component1():java.lang.String
+- f:component2():java.lang.Object
+- f:copy(java.lang.String,java.lang.Object):com.intellij.collaboration.api.dto.GraphQLRequestDTO
+- bs:copy$default(com.intellij.collaboration.api.dto.GraphQLRequestDTO,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.collaboration.api.dto.GraphQLRequestDTO
+- equals(java.lang.Object):Z
+- f:getQuery():java.lang.String
+- f:getVariables():java.lang.Object
+- hashCode():I
+f:com.intellij.collaboration.api.dto.GraphQLResponseDTO
+- <init>(java.lang.Object,java.util.List):V
+- f:getData():java.lang.Object
+- f:getErrors():java.util.List
+f:com.intellij.collaboration.api.dto.GraphQLResponseDTOKt
+- sf:getOrThrow(com.intellij.collaboration.api.dto.GraphQLResponseDTO):java.lang.Object
+f:com.intellij.collaboration.api.graphql.GraphQLApiHelperKt
+f:com.intellij.collaboration.api.graphql.GraphQLErrorException
+- java.lang.RuntimeException
+- <init>(java.util.List):V
+- f:getErrors():java.util.List
+- getLocalizedMessage():java.lang.String
+f:com.intellij.collaboration.api.graphql.GraphQLFileNotFoundException
+- java.io.FileNotFoundException
+- <init>(java.lang.String):V
+com.intellij.collaboration.api.graphql.GraphQLQueryLoader
+- a:loadQuery(java.lang.String):java.lang.String
+a:com.intellij.collaboration.api.httpclient.AuthorizationConfigurer
+- com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+- <init>():V
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
+- pa:getAuthorizationHeaderValue():java.lang.String
+c:com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
+- com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+- <init>():V
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
+- p:getCommonHeaders():java.util.Map
+f:com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
+- com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+- <init>(java.util.List):V
+- <init>(com.intellij.collaboration.api.httpclient.HttpRequestConfigurer[]):V
+- configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.collaboration.api.httpclient.HttpClientFactory
+- a:createClient():java.net.http.HttpClient
+c:com.intellij.collaboration.api.httpclient.HttpClientFactoryBase
+- com.intellij.collaboration.api.httpclient.HttpClientFactory
+- <init>():V
+- createClient():java.net.http.HttpClient
+- p:getConnectionTimeoutMillis():J
+- p:getUseProxy():Z
+f:com.intellij.collaboration.api.httpclient.HttpClientUtil
+- sf:ACCEPT_ENCODING_HEADER:java.lang.String
+- sf:ACCEPT_HEADER:java.lang.String
+- sf:CONTENT_ENCODING_GZIP:java.lang.String
+- sf:CONTENT_ENCODING_HEADER:java.lang.String
+- sf:CONTENT_LENGTH_HEADER:java.lang.String
+- sf:CONTENT_TYPE_HEADER:java.lang.String
+- sf:ETAG_HEADER:java.lang.String
+- sf:IF_NONE_MATCH_HEADER:java.lang.String
+- sf:INSTANCE:com.intellij.collaboration.api.httpclient.HttpClientUtil
+- sf:MIME_TYPE_APPLICATION_PREFIX:java.lang.String
+- sf:MIME_TYPE_ENCODED_FORM:java.lang.String
+- sf:MIME_TYPE_JSON:java.lang.String
+- sf:MIME_TYPE_JSON_SUFFIX:java.lang.String
+- sf:MIME_TYPE_TEXT_PREFIX:java.lang.String
+- sf:MIME_TYPE_XML_SUFFIX:java.lang.String
+- sf:USER_AGENT_HEADER:java.lang.String
+- f:getRequestName(java.lang.String,java.net.URI):java.lang.String
+- f:getRequestName(java.net.http.HttpRequest):java.lang.String
+- f:getUserAgentValue(java.lang.String):java.lang.String
+- f:isJsonMimeType(java.lang.String):Z
+f:com.intellij.collaboration.api.httpclient.HttpClientUtilKt
+com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+- configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
+- com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+- <init>():V
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
+- p:getReadTimeoutMillis():J
+f:com.intellij.collaboration.api.json.HttpJsonDeserializationException
+- java.lang.RuntimeException
+- <init>(java.lang.String,java.lang.Throwable):V
+f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
+f:com.intellij.collaboration.api.page.ApiPageUtil
+- sf:INSTANCE:com.intellij.collaboration.api.page.ApiPageUtil
+- f:createGQLPagesFlow(Z,com.intellij.collaboration.api.data.GraphQLRequestPagination,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
+- bs:createGQLPagesFlow$default(com.intellij.collaboration.api.page.ApiPageUtil,Z,com.intellij.collaboration.api.data.GraphQLRequestPagination,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- f:createPagesFlowByLinkHeader(java.net.URI,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
+f:com.intellij.collaboration.api.page.ApiPageUtilKt
+- sf:foldToList(kotlinx.coroutines.flow.Flow,kotlin.coroutines.Continuation):java.lang.Object
+- sf:foldToList(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- sf:Companion:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
+- sf:HEADER_NAME:java.lang.String
+- <init>():V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():Z
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- bs:copy$default(com.intellij.collaboration.api.util.LinkHttpHeaderValue,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- equals(java.lang.Object):Z
+- f:getFirstLink():java.lang.String
+- f:getLastLink():java.lang.String
+- f:getNextLink():java.lang.String
+- f:getPrevLink():java.lang.String
+- hashCode():I
+- f:isDeprecated():Z
+- sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
+- f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -156,6 +334,17 @@ f:com.intellij.collaboration.util.SingleCoroutineLauncher
 - f:getBusy():kotlinx.coroutines.flow.StateFlow
 - f:launch(kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2):V
 - bs:launch$default(com.intellij.collaboration.util.SingleCoroutineLauncher,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+f:com.intellij.collaboration.util.URIUtil
+- sf:INSTANCE:com.intellij.collaboration.util.URIUtil
+- f:createUriWithCustomScheme(java.lang.String,java.lang.String):java.net.URI
+- f:encodePath(java.lang.String):java.lang.String
+- f:equalWithoutSchema(java.net.URI,java.net.URI):Z
+- f:isValidHttpUri(java.lang.String):Z
+- f:normalizeAndValidateHttpUri(java.lang.String):java.lang.String
+- f:toStringWithoutScheme(java.net.URI):java.lang.String
+f:com.intellij.collaboration.util.URIUtilKt
+- sf:resolveRelative(java.net.URI,java.lang.String):java.net.URI
+- sf:withQuery(java.net.URI,java.lang.String):java.net.URI
 f:icons.CollaborationToolsIcons
 - sf:AddEmoji:javax.swing.Icon
 - sf:AddEmojiHovered:javax.swing.Icon
