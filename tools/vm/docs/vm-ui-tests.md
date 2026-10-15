@@ -687,11 +687,12 @@ reports a stream that ends mid-run as `daemon_died` (exit 70). `daemon log` stil
 daemon is gone. The next run starts a new daemon, and that start stops a lane IDE that the dead daemon
 left alive.
 
-**The versioned JSON report is the contract, and JUnit XML is only the daemon's producer format.**
-The controller fetches the XML through an authenticated endpoint, and it falls back to a guest pull
-after daemon death. It returns the report in both the success and the error envelope. Missing,
-stale, truncated, malformed, oversized or summary-mismatched producer evidence can never be green.
-Agents consume the JSON report.
+**The versioned JSON report is the contract, and the run stream is its one source.** The report, the
+JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
+the XML of each iteration beside its report, and the XML of the command to the file that
+`XML_OUTPUT_FILE` names. It returns the report in both the success and the error envelope. A stream
+that ends without a summary, a summary that contradicts its records, and a recorder that contradicts
+the stream can never be green. Agents consume the JSON report.
 
 ## What it costs
 
@@ -779,7 +780,7 @@ Normal execution requires neither Peekaboo nor guest Screen Recording or Accessi
 
 | what | where in the guest |
 | --- | --- |
-| JUnit XML, per iteration. A wedged exit flushes partial XML | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
+| JUnit XML of the JVM daemon, per iteration. A wedged exit flushes partial XML. The controller writes its own XML of the stream beside the report on the host | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
 | `idea.log`, the heartbeat screenshots and the other IDE logs, per IDE launch | `$AIR_VM_DATA/ide/<launchKey>/log/<launchName>/` |
 | the thread dump of an IDE that the watchdog or a stop killed | `threadDump-before-kill-<millis>.txt` in that same directory |
 | the standard output and error of one IDE launch, and its supervisor log | `$AIR_VM_DATA/ide/<launchKey>/run-ide-<launchName>/` |

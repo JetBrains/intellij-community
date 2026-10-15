@@ -1,4 +1,4 @@
-//! One iteration as a value: the daemon decision, the push, the run, the JUnit retrieval and the report.
+//! One iteration as a value: the daemon decision, the push, the run, the evidence and the report.
 
 use std::path::PathBuf;
 use std::time::Instant;
@@ -7,25 +7,21 @@ use crate::worker::worker::Lease;
 use avl_base::clock::stamp;
 use avl_base::format::{clip, seconds};
 use avl_base::fs::create_private_dir;
-use avl_base::{Exit, OrRefuse, Refusal, Scope};
+use avl_base::{Exit, Refusal, Scope};
 use avl_host_sys::Ctx;
-use avl_host_sys::guest::guest_join;
 use avl_report::report::{self as run_report, Input};
 use avl_wire::daemon::{self as wire, RunEvent, RunEventKind, Runner};
 use avl_wire::progress::{Decision, Event, IterationReported, Phase, Subject};
-use avl_wire::report::{
-    EvidenceArtifact, MAX_JUNIT_XML_BYTES, Retrieval, RetrievedIntegrity, RetrievedXml, RunReport, safe_evidence_paths,
-};
+use avl_wire::report::{EvidenceArtifact, RunReport, safe_evidence_paths};
 use jiff::Timestamp;
 use serde::Serialize;
 use serde_json::json;
-use tempfile::TempPath;
 use tokio_util::sync::CancellationToken;
 
 use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_note};
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
-use crate::daemon::state::{HostState, guest_state_dir};
+use crate::daemon::state::HostState;
 use crate::daemon::traces::TraceSync;
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
 use crate::lane::secrets::{RunSecrets, remove_run_secrets, scan_artifacts, stage_run_secrets, withhold};
@@ -512,7 +508,6 @@ impl Host {
                 let Some(iteration_id) = execution.iteration_id.clone() else {
                     return Err(unaddressed_iteration(execution, &attempt.timing));
                 };
-                let source = self.retrieve_iteration_junit_xml(ctx, worker, &state, &iteration_id).await?;
                 let evidence = self
                     .pull_run_evidence(ctx, worker, &state.run_id, &iteration_id, &execution.events)
                     .await?;
@@ -520,11 +515,11 @@ impl Host {
                 // and a shard's wall time built from it, is the run's, and the evidence that explains a run must not
                 // lengthen it.
                 let completed_at = stamp(Timestamp::now());
-                Ok::<_, Refusal>((iteration_id, source, evidence, completed_at))
+                Ok::<_, Refusal>((iteration_id, evidence, completed_at))
             },
             traces.run(self, ctx, &stop),
         );
-        let (iteration_id, source, evidence, completed_at) = collected?;
+        let (iteration_id, evidence, completed_at) = collected?;
         let Some(execution) = attempt.execution.as_ref() else {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
@@ -546,7 +541,6 @@ impl Host {
             completed_at,
             summary: execution.summary.clone(),
             events: execution.events.clone(),
-            source,
             evidence,
             protocol_diagnostic: protocol_diagnostic(execution),
             notes: drift.into_iter().collect(),
@@ -554,7 +548,7 @@ impl Host {
             traces_error,
             tree: prep.tree.clone().ok(),
             tree_error: prep.tree.as_ref().err().map(|refusal| refusal.message.clone()),
-        })?;
+        });
         attempt.report = Some(self.publish_report(worker, &scope, selection, document)?);
         Ok(())
     }
@@ -769,90 +763,6 @@ impl Host {
             }),
             Some(scope),
         );
-    }
-
-    /// One iteration's JUnit XML: the daemon's own `/results` route first, the guest-file pull as the fallback, and
-    /// an honest account of both when neither worked.
-    ///
-    /// The HTTP diagnostic is carried into the fallback's answer rather than dropped, because a report that says
-    /// only "guest pull failed" hides the first half of the story. [`MAX_JUNIT_XML_BYTES`] is enforced on both
-    /// paths - an oversized document is a producer bug, and parsing it would spend the report's memory budget
-    /// proving so.
-    pub(crate) async fn retrieve_iteration_junit_xml(
-        &self,
-        ctx: &Ctx,
-        worker: &str,
-        state: &HostState,
-        iteration_id: &str,
-    ) -> Result<RetrievedXml, Refusal> {
-        let guest_path = guest_join(
-            &guest_join(&guest_join(&guest_state_dir(&self.settings), "iterations"), iteration_id),
-            "test.xml",
-        );
-        let retrieved = |retrieval, integrity, xml: Option<String>, diagnostic: Option<String>| RetrievedXml {
-            guest_path: guest_path.clone(),
-            retrieval,
-            integrity,
-            xml,
-            diagnostic,
-        };
-        let oversized = |bytes: u64| format!("JUnit XML is {bytes} bytes; limit is {MAX_JUNIT_XML_BYTES}");
-        let http_diagnostic = match self.daemon.http(ctx, state, &wire::iteration_result(iteration_id), None).await {
-            Err(refusal) => format!("daemon result endpoint unavailable: {}", refusal.message),
-            Ok((status, content)) if status.is_success() => {
-                if content.len() > MAX_JUNIT_XML_BYTES {
-                    return Ok(retrieved(
-                        Retrieval::DaemonHttp,
-                        RetrievedIntegrity::Oversized,
-                        None,
-                        Some(oversized(content.len() as u64)),
-                    ));
-                }
-                return Ok(retrieved(
-                    Retrieval::DaemonHttp,
-                    RetrievedIntegrity::Available,
-                    Some(String::from_utf8_lossy(&content).into_owned()),
-                    None,
-                ));
-            }
-            Ok((status, _)) => format!("/results returned HTTP {}", status.as_u16()),
-        };
-
-        let incoming = self.settings.worker_dir(worker).join("reports").join(".incoming");
-        create_private_dir(&incoming)?;
-        // Removed when it goes out of scope, pulled or not.
-        let temporary = TempPath::try_from_path(incoming.join(format!("{}-{iteration_id}-{}.xml", state.run_id, avl_base::new_id())))
-            .or_refuse("state_write_failed", Exit::FAILURE, || {
-                format!("cannot name a temporary under {}", incoming.display())
-            })?;
-        let pulled = match crate::lane::pull_guest_file(ctx, &self.manager, worker, &guest_path, &temporary).await {
-            Ok(pulled) => pulled,
-            Err(refusal) => {
-                return Ok(retrieved(
-                    Retrieval::Unavailable,
-                    RetrievedIntegrity::Missing,
-                    None,
-                    Some(format!("{http_diagnostic}; guest pull failed: {}", refusal.message)),
-                ));
-            }
-        };
-        if pulled > MAX_JUNIT_XML_BYTES as u64 {
-            return Ok(retrieved(
-                Retrieval::GuestPull,
-                RetrievedIntegrity::Oversized,
-                None,
-                Some(oversized(pulled)),
-            ));
-        }
-        let xml = std::fs::read(&temporary).or_refuse("state_read_failed", Exit::FAILURE, || {
-            format!("cannot read the pulled JUnit XML {}", temporary.display())
-        })?;
-        Ok(retrieved(
-            Retrieval::GuestPull,
-            RetrievedIntegrity::Available,
-            Some(String::from_utf8_lossy(&xml).into_owned()),
-            Some(http_diagnostic),
-        ))
     }
 
     /// Fetches whatever the daemon named as evidence for an expiry, next to the report it belongs to.

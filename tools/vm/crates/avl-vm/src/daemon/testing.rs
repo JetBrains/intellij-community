@@ -108,11 +108,10 @@ pub(crate) struct DaemonScript {
     pub(crate) close_mid_stream: bool,
     /// Holds a `/run` open until cancelled, so a suite can interrupt an iteration in flight.
     pub(crate) block: Option<CancellationToken>,
-    /// `None` answers the results XML.
+    /// The status of `/results`; `None` answers `results_xml`. The report reads the run stream and no result file, so
+    /// only the test of the control channel reads this route.
     pub(crate) results_status: Option<u16>,
     pub(crate) results_xml: Vec<u8>,
-    /// Is to `results_xml` what `run_queue` is to `run_lines`.
-    pub(crate) results_queue: VecDeque<Vec<u8>>,
 }
 
 /// The control channel's double: an axum router, routed by the wire's own route table. It serves on a loopback
@@ -171,7 +170,6 @@ impl FakeDaemon {
             block: None,
             results_status: None,
             results_xml: Vec::new(),
-            results_queue: VecDeque::new(),
         }));
         let address = listener.local_addr().expect("a bound listener has an address");
         let app = axum::Router::new().fallback(serve).with_state(Served {
@@ -306,12 +304,11 @@ async fn serve(State(served): State<Served>, request: Request) -> Response {
         Some(Route::UploadJar) => upload(&served.script, path).await,
         Some(Route::Run) => run(&served.script, body).await,
         Some(Route::Results) => {
-            let mut script = lock(&served.script);
+            let script = lock(&served.script);
             if let Some(code) = script.results_status {
                 return status(code).into_response();
             }
-            let xml = script.results_queue.pop_front().unwrap_or_else(|| script.results_xml.clone());
-            xml.into_response()
+            script.results_xml.clone().into_response()
         }
         // 200 with no body, which is all the client reads of them.
         Some(Route::IdeStop | Route::Shutdown) => StatusCode::OK.into_response(),
@@ -417,19 +414,6 @@ pub(crate) fn run_started_record(iteration_id: &str) -> Value {
         "startedAt": "2026-08-23T12:00:00.000Z"})
 }
 
-/// A complete document whose counts agree with [`passing_run_lines`]'s summary, so the report's verdict is `passed`
-/// rather than an infrastructure mismatch.
-pub(crate) const PASSING_XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-<testsuite name="com.example.MyTest" tests="1" failures="0" errors="0" skipped="0" time="1.0" timestamp="2026-08-23T12:00:01">
-<testcase classname="com.example.MyTest" name="works" time="1.0"/>
-</testsuite>
-</testsuites>
-"#;
-
-/// A complete document with no suite at all.
-pub(crate) const EMPTY_COMPLETE_XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>"#;
-
 /// One green iteration's stream: one test that passed.
 pub(crate) fn passing_run_lines(iteration_id: &str) -> Vec<String> {
     vec![
@@ -443,9 +427,9 @@ pub(crate) fn passing_run_lines(iteration_id: &str) -> Vec<String> {
     ]
 }
 
-/// One red iteration: its stream, and the XML that agrees with it.
-pub(crate) fn failing_run(iteration_id: &str) -> (Vec<String>, String) {
-    let lines = vec![
+/// One red iteration's stream: one test that failed.
+pub(crate) fn failing_run(iteration_id: &str) -> Vec<String> {
+    vec![
         ndjson_line(&run_started_record(iteration_id)),
         ndjson_line(
             &json!({"event": "testStarted", "timestamp": "t", "displayName": "works", "id": "t1",
@@ -456,15 +440,7 @@ pub(crate) fn failing_run(iteration_id: &str) -> (Vec<String>, String) {
             "className": "com.example.MyTest", "status": "FAILED", "durationMs": 5, "error": "boom\nstack"}),
         ),
         ndjson_line(&summary_record(iteration_id, 1, 1, 0, 0, 0, true)),
-    ];
-    let xml = concat!(
-        r#"<?xml version="1.0" encoding="UTF-8"?><testsuites>"#,
-        r#"<testsuite name="com.example.MyTest" tests="1" failures="1" errors="0" skipped="0" time="1.0" timestamp="2026-08-23T12:00:01">"#,
-        r#"<testcase classname="com.example.MyTest" name="works" time="1.0">"#,
-        "<failure message=\"boom\" type=\"AssertionError\">boom\nstack</failure>",
-        "</testcase></testsuite></testsuites>",
-    );
-    (lines, xml.to_owned())
+    ]
 }
 
 // --- the runtime-descriptor fixture ------------------------------------------------------------------------------
@@ -1101,18 +1077,14 @@ impl DaemonFixture {
         avl_host_sys::guest::write_init_receipt(&self.settings, &self.worker).expect("the init receipt is written");
     }
 
-    /// Makes the double answer one stream and one XML per `/run`, in order.
-    pub(crate) fn queue_runs(&self, streams: Vec<Vec<String>>, documents: &[&str]) {
-        let mut script = self.daemon.script();
-        script.run_queue = streams.into();
-        script.results_queue = documents.iter().map(|document| document.as_bytes().to_vec()).collect();
+    /// Makes the double answer one stream per `/run`, in order.
+    pub(crate) fn queue_runs(&self, streams: Vec<Vec<String>>) {
+        self.daemon.script().run_queue = streams.into();
     }
 
-    /// Scripts the double for one iteration: its stream and the XML its report reads.
-    pub(crate) fn script_run(&self, lines: Vec<String>, xml: &str) {
-        let mut script = self.daemon.script();
-        script.run_lines = lines;
-        script.results_xml = xml.as_bytes().to_vec();
+    /// Scripts the double for one iteration: the stream its report reads.
+    pub(crate) fn script_run(&self, lines: Vec<String>) {
+        self.daemon.script().run_lines = lines;
     }
 
     /// Writes a live lease on `worker` held by `holder` on `guest_os`, the way an acquisition would have.

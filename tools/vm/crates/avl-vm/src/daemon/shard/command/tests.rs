@@ -101,12 +101,7 @@ async fn warm_pool(fixture: &Fixture) -> Vec<Arc<FakeDaemon>> {
     let mut daemons = Vec::new();
     for (index, worker) in fixture.workers().iter().enumerate() {
         let daemon = fixture.warm_daemon(worker, &prep).await;
-        let (lines, xml) = passing_run(&format!("iter-{worker}"), &format!("com.example.Shard{}Test", index + 1));
-        {
-            let mut script = daemon.script();
-            script.run_lines = lines;
-            script.results_xml = xml.into_bytes();
-        }
+        daemon.script().run_lines = passing_run(&format!("iter-{worker}"), &format!("com.example.Shard{}Test", index + 1));
         daemons.push(daemon);
     }
     daemons
@@ -392,7 +387,6 @@ async fn a_daemon_that_dies_mid_stream_cannot_make_the_run_green() {
         let mut dying = daemons[1].script();
         dying.run_lines.truncate(1);
         dying.close_mid_stream = true;
-        dying.results_status = Some(404);
     }
 
     let refusal = refused(run(&fixture, &["--shards", "2", "--holder", "suite", "--lane", "ui"]).await);

@@ -5,8 +5,7 @@ use avl_testkit::traces::{example_bundle, example_file};
 use avl_trace::bundle::{BundleStatus, MANIFEST_FILE, Manifest, ROOT_DIR_NAME, SPANS_FILE, bundle_path, decode_manifest};
 use avl_trace_tools::discover::{SourceKind, Status};
 use avl_wire::report::{
-    self, ExecutionCounts, Failure, FailureKind, FailureSource, Integrity, ORDERING, RUN_REPORT_SCHEMA_VERSION, Retrieval, RunReport,
-    TraceArchive, Watchdog, XmlCounts,
+    self, ExecutionCounts, Failure, FailureKind, ORDERING, RUN_REPORT_SCHEMA_VERSION, RunReport, TraceArchive, Watchdog,
 };
 use bt_core::ResolutionInputs;
 use bt_core::catalog::SuiteDocument;
@@ -507,21 +506,11 @@ fn failed_report(document: &SuiteDocument, scenario: &str, traces: Vec<TraceArch
         duration_ms: 300_000.0,
         ordering: ORDERING.to_owned(),
         execution: ExecutionCounts::default(),
-        xml: XmlCounts::default(),
-        source: report::Source {
-            guest_path: "/x/test.xml".to_owned(),
-            retrieval: Retrieval::DaemonHttp,
-            integrity: Integrity::Complete,
-            diagnostic: None,
-        },
-        suites: Vec::new(),
+        cases: Vec::new(),
         failures: vec![Failure {
-            source: FailureSource::JunitXml,
-            suite: Some(class_name.clone()),
-            suite_timestamp: None,
             class_name: Some(class_name),
             test_name: scenario.to_owned(),
-            kind: FailureKind::Failure,
+            kind: FailureKind::Test,
             r#type: None,
             message: "boom".to_owned(),
             detail: None,

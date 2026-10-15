@@ -729,6 +729,35 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_zip_is_published_once_for_its_bundles`)
 
+- The run report is of schema 3. It holds one case for each scenario, each failed container and each skipped
+  container of the run stream, in the order of their start. A case that never finished is an active test instead.
+  The report holds no count of a JUnit XML, no source of one and no suite. A report of schema 2 is refused by its
+  version.
+  [@test] ../crates/avl-report/src/report/tests.rs (`a_healthy_run_is_passed_and_explains_nothing`)
+  [@test] ../crates/avl-report/src/report/tests.rs (`the_cases_are_in_start_order`)
+  [@test] ../crates/avl-report/src/report/tests.rs (`the_stream_names_the_test_a_killed_run_died_on`)
+  [@test] ../crates/avl-wire/src/report/tests.rs (`a_report_of_schema_2_is_refused_by_its_version`)
+
+- A failure of the report keeps the type, the message and the detail that the stream sent. From the JVM daemon, the
+  first line of the error text is the message.
+  [@test] ../crates/avl-report/src/report/tests.rs (`a_typed_failure_keeps_its_type_message_and_detail`)
+  [@test] ../crates/avl-report/src/report/tests.rs (`the_error_text_of_the_jvm_daemon_is_the_message_and_the_stack`)
+
+- Each count of the summary is compared with the records of its stream. A count that differs is a diagnostic, so
+  the run is an `infrastructure_error`.
+  [@test] ../crates/avl-report/src/report/tests.rs (`the_summary_and_the_stream_are_reconciled_field_by_field`)
+
+- The recorder is the second account of each case. The case names the status of its trace bundle as `recorded`. A
+  status of the recorder's `done` that contradicts the stream is a diagnostic. A case with no bundle and a bundle the
+  recorder never closed are not compared, and a traces error decides nothing.
+  [@test] ../crates/avl-report/src/report/tests.rs (`the_recorder_is_the_second_account_of_each_case`)
+  [@test] ../crates/avl-report/src/report/tests.rs (`traces_are_carried_and_never_decide_the_verdict`)
+
+- The controller reads no result file of the guest. A shard verdict and a flake summary are of aggregate schema 2.
+  A shard verdict holds the cases of every shard in the order of their start.
+  [@test] ../crates/avl-report/src/aggregate/tests.rs (`merged_cases_are_ordered_by_instant_across_shards`)
+  [@test] ../crates/avl-wire/src/report/aggregate/tests.rs
+
 - `report time <run or iteration>` says where the time of a run went. It reads the journal of the run, the report of
   each iteration and the spans of the trace bundles, and needs no worker. The answer is the total, and the time
   inside the test cases and outside them. It adds the launches of the lane IDE and the time of the `restart` spans.

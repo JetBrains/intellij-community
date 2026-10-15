@@ -256,15 +256,14 @@ pub(crate) fn failures_of(failures: &[ReportFailure], bundles: &[TraceBundle]) -
         .collect()
 }
 
-/// The class a failure names, or its suite.
+/// The class a failure names.
 fn failure_class(failure: &ReportFailure) -> Option<&str> {
-    failure.class_name.as_deref().or(failure.suite.as_deref())
+    failure.class_name.as_deref()
 }
 
 /// The trace of a failure's scenario. A bundle names its class by the simple name and the report by the FQN, so
-/// the simple names are compared. A failure from the stream names its test by the scenario; one from the XML names
-/// it as the JUnit reporter does, which can add an index or parentheses, so the test name must contain the
-/// scenario.
+/// the simple names are compared. The JVM daemon names a dynamic test as the JUnit reporter does, which can add an
+/// index or parentheses, so the test name must contain the scenario.
 fn trace_of(failure: &ReportFailure, bundles: &[TraceBundle]) -> Option<TraceRef> {
     let class = simple_name(failure.class_name.as_deref()?);
     bundles

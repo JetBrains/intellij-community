@@ -48,7 +48,8 @@ pin the Kotlin and TypeScript ends to it.
 
 ## Non-goals
 
-- Deciding a verdict. A trace is evidence, and every capture problem is recorded instead of thrown.
+- Deciding a verdict from a capture problem. A trace is evidence, and every capture problem is recorded instead of
+  thrown. The status of a bundle that arrived is the second account of its scenario, which the run report states.
 - Uploading traces. Storage is local, and CI storage is a later decision.
 - A generic OpenTelemetry viewer. The bundle is OTLP JSON so that such tools read it, but the viewer is
   Air's own.

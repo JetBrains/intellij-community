@@ -17,7 +17,7 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::daemon::fixture::{Fixture, passing_run};
 use crate::daemon::shard::read_shard_baseline;
-use crate::daemon::testing::{FakeDaemon, PASSING_XML, Recorded, passing_run_lines};
+use crate::daemon::testing::{FakeDaemon, Recorded, passing_run_lines};
 
 // --- the decisions -------------------------------------------------------------------------------------------
 
@@ -129,9 +129,7 @@ async fn leased_warm_worker(fixture: &Fixture) -> PathBuf {
 
 /// One green trial per entry of `iterations`, on the first worker's double, in order.
 fn passing_trials(fixture: &Fixture, iterations: &[&str]) {
-    let streams = iterations.iter().map(|id| passing_run_lines(id)).collect();
-    let documents = vec![PASSING_XML; iterations.len()];
-    fixture.queue_runs(streams, &documents);
+    fixture.queue_runs(iterations.iter().map(|id| passing_run_lines(id)).collect());
 }
 
 /// A daemon that walks away with no transcript at all, which is one unusable trial.
@@ -142,8 +140,7 @@ fn trials(fixture: &Fixture, script: &[&str]) {
         .iter()
         .map(|id| if id.is_empty() { Vec::new() } else { passing_run_lines(id) })
         .collect();
-    let documents: Vec<&str> = script.iter().filter(|id| !id.is_empty()).map(|_| PASSING_XML).collect();
-    fixture.queue_runs(streams, &documents);
+    fixture.queue_runs(streams);
 }
 
 // --- a measurement ------------------------------------------------------------------------------------------------
@@ -256,10 +253,7 @@ async fn a_release_this_run_cannot_complete_is_named_rather_than_swallowed() {
     let prep = fixture.pool_build().await;
     for worker in &workers {
         let daemon = fixture.warm_daemon(worker, &prep).await;
-        let (lines, xml) = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
-        let mut script = daemon.script();
-        script.run_lines = lines;
-        script.results_xml = xml.into_bytes();
+        daemon.script().run_lines = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
     }
     let receipt = fixture.leased_by(&workers[0], "suite", GuestOs::Macos);
     fixture.read_as_running(borrowed).await;
@@ -312,11 +306,9 @@ async fn an_interrupt_keeps_the_leases_this_run_took_and_writes_no_summary() {
     let mut daemons = Vec::new();
     for worker in &workers {
         let daemon = fixture.warm_daemon(worker, &prep).await;
-        let (lines, xml) = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
         {
             let mut script = daemon.script();
-            script.run_lines = lines;
-            script.results_xml = xml.into_bytes();
+            script.run_lines = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
             script.block = Some(gate.clone());
         }
         daemons.push(daemon);

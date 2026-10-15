@@ -25,7 +25,7 @@ use avl_base::RefusalExt;
 
 /// The pack verb, as the fake channel matches it in an argv.
 const TRACE_PACK_READY_VERB: &str = AgentVerb::TracePackReady.as_str();
-use crate::daemon::testing::{PASSING_XML, PLENTIFUL_DF, Recorded, passing_run_lines};
+use crate::daemon::testing::{PLENTIFUL_DF, Recorded, passing_run_lines};
 use crate::daemon::traces::TRACE_PACK_TIMEOUT;
 
 // --- the decisions ---------------------------------------------------------------------------------------------
@@ -237,7 +237,7 @@ async fn iteration_fixture_over(fixture: Fixture, iteration_id: &str) -> (Fixtur
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
     fixture.seed_current_container().await;
-    fixture.script_run(passing_run_lines(iteration_id), PASSING_XML);
+    fixture.script_run(passing_run_lines(iteration_id));
     (fixture, prep, state)
 }
 
@@ -524,7 +524,7 @@ async fn no_healthy_daemon_restarts_the_daemon() {
     let prep = fixture.prepared().await;
     fixture.install_happy_guest(&prep);
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
-    fixture.script_run(passing_run_lines("it-13"), PASSING_XML);
+    fixture.script_run(passing_run_lines("it-13"));
     // Readiness needs a live run process and a provisioned layout; both are the suite's to arrange.
     fixture.mark_ready().await;
     let recorded = Recorded::start(&fixture.host.reporter);
@@ -658,87 +658,6 @@ async fn an_unclassified_failure_becomes_internal_error() {
     assert!(attempt.report.is_none());
 }
 
-// The JUnit XML falls back to the guest pull when the daemon's endpoint cannot answer, and the HTTP half of the story
-// is carried into the fallback's diagnostic.
-#[tokio::test]
-async fn junit_retrieval_falls_back_to_the_guest_pull() {
-    let (fixture, _, state) = iteration_fixture("it-15").await;
-    fixture.daemon.script().results_status = Some(500);
-    answer_pull(&fixture.tart, PASSING_XML.as_bytes());
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&Ctx::background(), &fixture.worker, &state, "it-15")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::GuestPull, RetrievedIntegrity::Available)
-    );
-    assert_eq!(retrieved.xml.as_deref(), Some(PASSING_XML));
-    assert!(
-        retrieved
-            .diagnostic
-            .as_deref()
-            .is_some_and(|diagnostic| diagnostic.contains("/results returned HTTP 500")),
-        "{:?}",
-        retrieved.diagnostic
-    );
-    assert_eq!(retrieved.guest_path, "/vm/data/daemon/iterations/it-15/test.xml");
-}
-
-// Both retrieval paths enforce the size limit; an oversized document is never read into a report.
-#[tokio::test]
-async fn oversized_junit_xml_is_refused_on_both_paths() {
-    let (fixture, _, state) = iteration_fixture("it-16").await;
-    let oversized = vec![b'x'; MAX_JUNIT_XML_BYTES + 1];
-    fixture.daemon.script().results_xml = oversized.clone();
-    let ctx = Ctx::background();
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&ctx, &fixture.worker, &state, "it-16")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::DaemonHttp, RetrievedIntegrity::Oversized)
-    );
-
-    fixture.daemon.script().results_status = Some(404);
-    answer_pull(&fixture.tart, &oversized);
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&ctx, &fixture.worker, &state, "it-16b")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::GuestPull, RetrievedIntegrity::Oversized)
-    );
-    assert!(retrieved.xml.is_none());
-}
-
-// A JUnit XML nobody can produce is an honest unavailable/missing with both halves of the story joined.
-#[tokio::test]
-async fn unretrievable_junit_xml_carries_both_diagnostics() {
-    let (fixture, _, state) = iteration_fixture("it-17").await;
-    fixture.daemon.script().results_status = Some(500);
-    fixture.tart.answer(Answer::ReadFileFails, "1");
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&Ctx::background(), &fixture.worker, &state, "it-17")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::Unavailable, RetrievedIntegrity::Missing)
-    );
-    let diagnostic = retrieved.diagnostic.unwrap_or_default();
-    assert!(
-        diagnostic.contains("/results returned HTTP 500") && diagnostic.contains("guest pull failed"),
-        "{diagnostic:?}"
-    );
-}
-
 // Evidence file names join the last two guest path segments with `_` and sanitize the rest, so
 // `001_heartbeat/dialog0.png` and `005_heartbeat/dialog0.png` stay distinct; a file that cannot be fetched is recorded
 // with its reason, never dropped.
@@ -809,7 +728,7 @@ async fn traces_fixture(iteration_id: &str) -> (Fixture, Arc<Mutex<Vec<Vec<Strin
 /// the iteration's trace directory, the agent's pack verb packs one bundle on its first call and nothing after, and
 /// the pull answers that bundle's zip. A test arms it again for each of its cases. Answers the argv of every pack.
 fn arm_traces(fixture: &Fixture, iteration_id: &str) -> Arc<Mutex<Vec<Vec<String>>>> {
-    fixture.script_run(passing_run_lines(iteration_id), PASSING_XML);
+    fixture.script_run(passing_run_lines(iteration_id));
     fixture.on("test", answer_exit(0));
     let packed: Arc<Mutex<Vec<Vec<String>>>> = Arc::default();
     fixture.on(TRACE_PACK_READY_VERB, {
@@ -1116,7 +1035,7 @@ async fn a_run_secret_travels_on_stdin_and_is_removed_after_the_run() {
 #[tokio::test]
 async fn a_failed_run_still_removes_its_secret() {
     let (fixture, _, _) = iteration_fixture("it-61").await;
-    fixture.script_run(Vec::new(), PASSING_XML);
+    fixture.script_run(Vec::new());
     let directory = tempfile::tempdir().unwrap();
     let attempt = run_iteration_with(&fixture, &Ctx::background(), false, &login_secret(directory.path())).await;
     assert_eq!(error_of(&attempt).code, "daemon_run_failed");
@@ -1152,7 +1071,7 @@ async fn a_secret_in_the_report_refuses_the_run_and_withholds_the_report() {
         .into_iter()
         .map(|line| line.replace("\"works\"", &format!("\"{SECRET}\"")))
         .collect();
-    fixture.script_run(leaked, &PASSING_XML.replace("name=\"works\"", &format!("name=\"{SECRET}\"")));
+    fixture.script_run(leaked);
     let directory = tempfile::tempdir().unwrap();
     let attempt = run_iteration_with(&fixture, &Ctx::background(), false, &login_secret(directory.path())).await;
     let error = error_of(&attempt);
