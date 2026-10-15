@@ -124,6 +124,34 @@ fn a_launch_name_is_the_base_and_the_time_in_base_36() {
     assert!(wire_ide::is_launch_name(&name), "{name}");
 }
 
+// A bare IDE is the IDE of a user, so it keeps the plugin set of the product. The IDE of the lane disables the plugins
+// of the lane document, and the one of the test document is AI Assistant.
+#[test]
+fn a_bare_context_disables_no_plugin_and_a_lane_context_disables_those_of_the_document() {
+    let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
+    let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
+    let inputs = LaunchInputs {
+        ide_root: "/vm/data/ide".into(),
+        home: "/vm/home".into(),
+        dist_home: "/d".into(),
+        ide_config: "/d.properties".into(),
+        java_home: "/d/jbr".into(),
+        flags_file: "/f".into(),
+        project_archive: "/p.zip".into(),
+        project_root: "plain-project".to_owned(),
+        runtimes: Vec::new(),
+        distribution_plugins: std::collections::BTreeSet::new(),
+        trace: crate::lane::inputs::TraceInputs::default(),
+    };
+    let lane = fresh_context(&inputs, "air-ui-lane", &document, false);
+    assert_eq!(lane.disabled_plugin_ids, ["com.intellij.ml.llm"]);
+    let bare = fresh_context(&inputs, "air-startup", &document, true);
+    assert_eq!(bare.disabled_plugin_ids, Vec::<String>::new());
+    assert_eq!(bare.launch_key, "air-startup");
+    assert_eq!(bare.ide_root, lane.ide_root);
+    assert_eq!(bare.project.archive, "/p.zip");
+}
+
 // A bare IDE starts as the IDE of a user: the stated defaults of the lane without the internal mode, and without the
 // properties of the requirements, such as the workflows and the debug server of the lane. The IDE of the lane gets
 // both.

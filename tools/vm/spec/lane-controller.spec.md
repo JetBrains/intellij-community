@@ -1594,6 +1594,10 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements`)
 
+- A bare IDE keeps the plugin set of the product, as the IDE of a user does. So it disables no plugin of the lane
+  document, and AI Assistant stays on.
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_context_disables_no_plugin_and_a_lane_context_disables_those_of_the_document`)
+
 - The readiness of a bare IDE is the lifecycle and the vocabulary digest only. Its scenarios run no reset, and the
   watchdog sends it no probe and no dump. So the first request of the bridge that a bare IDE gets is the first
   instruction of its suite. The trace of its scenario opens after the program, because the recorder asks the IDE for

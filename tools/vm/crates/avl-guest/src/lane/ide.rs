@@ -608,18 +608,7 @@ impl IdeOwner {
         ));
         let paths = crate::ide::prepare::prepare(
             &LiveSystem,
-            &IdeContext {
-                schema_version: wire_ide::SCHEMA_VERSION,
-                ide_root: self.inputs.ide_root.display().to_string(),
-                launch_key: launch.identity.key().to_owned(),
-                fresh: true,
-                project: ProjectSource {
-                    archive: self.inputs.project_archive.display().to_string(),
-                    archive_root: self.inputs.project_root.clone(),
-                    relocate_to: None,
-                },
-                disabled_plugin_ids: launch.document.disabled_plugin_ids.clone(),
-            },
+            &fresh_context(&self.inputs, launch.identity.key(), launch.document, false),
         )?;
         context.write(&paths)?;
         let held = HeldIde {
@@ -757,8 +746,8 @@ impl IdeOwner {
     /// run under the IDE root, and prepares a fresh context of `key` with the option files and the token of the bridge
     /// alone, installs the context
     /// plugins of `launch`, and launches the IDE with the launch properties of the lane document without the internal
-    /// mode. The readiness is the lifecycle and the vocabulary only, so the IDE gets no request before the first
-    /// instruction of its suite.
+    /// mode. The context disables no plugin, as [`fresh_context`] says. The readiness is the lifecycle and the
+    /// vocabulary only, so the IDE gets no request before the first instruction of its suite.
     pub(crate) fn launch_bare(&mut self, launch: &LaneLaunch<'_>, key: &str, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         if key == launch.identity.key() {
             return Err(refused(format!(
@@ -783,21 +772,7 @@ impl IdeOwner {
             "preparing a fresh context of '{key}' under {}",
             self.inputs.ide_root.display()
         ));
-        let paths = crate::ide::prepare::prepare(
-            &LiveSystem,
-            &IdeContext {
-                schema_version: wire_ide::SCHEMA_VERSION,
-                ide_root: self.inputs.ide_root.display().to_string(),
-                launch_key: key.to_owned(),
-                fresh: true,
-                project: ProjectSource {
-                    archive: self.inputs.project_archive.display().to_string(),
-                    archive_root: self.inputs.project_root.clone(),
-                    relocate_to: None,
-                },
-                disabled_plugin_ids: launch.document.disabled_plugin_ids.clone(),
-            },
-        )?;
+        let paths = crate::ide::prepare::prepare(&LiveSystem, &fresh_context(&self.inputs, key, launch.document, true))?;
         // The bare IDE serves the token of the lane, so the bridge of the run reaches both IDEs.
         let token = launch.identity.secret(BRIDGE_TOKEN_PURPOSE);
         super::context::write_bare(&paths, &token)?;
@@ -897,6 +872,23 @@ impl IdeOwner {
     /// Stops the lane services. The IDE keeps running: it outlives the daemon.
     pub(crate) fn close_services(&mut self) {
         self.services = None;
+    }
+}
+
+/// The request of a fresh context of `key`. The IDE of the lane disables the plugins of the lane `document`. A bare IDE
+/// disables none: it is the IDE of a user, so it keeps the plugin set of the product, AI Assistant included.
+pub(crate) fn fresh_context(inputs: &LaunchInputs, key: &str, document: &LaneDocument, bare: bool) -> IdeContext {
+    IdeContext {
+        schema_version: wire_ide::SCHEMA_VERSION,
+        ide_root: inputs.ide_root.display().to_string(),
+        launch_key: key.to_owned(),
+        fresh: true,
+        project: ProjectSource {
+            archive: inputs.project_archive.display().to_string(),
+            archive_root: inputs.project_root.clone(),
+            relocate_to: None,
+        },
+        disabled_plugin_ids: if bare { Vec::new() } else { document.disabled_plugin_ids.clone() },
     }
 }
 
