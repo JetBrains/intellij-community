@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -20,7 +22,12 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongLists
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import java.awt.Color
 import java.lang.ref.WeakReference
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
+import java.util.function.LongConsumer
 
 @TestApplication
 @UsePMarkerImplementation
@@ -311,6 +318,242 @@ class SnapshotRangeHighlighterImplTest {
     Assertions.assertThat(highlighter.isValid).isTrue()
     Assertions.assertThat(highlighter.startOffset).isEqualTo(start)
     Assertions.assertThat(highlighter.endOffset).isEqualTo(end)
+  }
+
+  @Test
+  fun `snapshot publication retains concurrently added highlighters`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val first = model.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val reference = changeHighlighterDuringSnapshotChange(model) { createWeakHighlighter(model) }
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      val added = checkNotNull(reference.get()) as RangeHighlighterEx
+      assertValidHighlighter(added, 2, 4)
+      Assertions.assertThat(model.allHighlighters).containsExactly(first, added)
+      model.overlappingIterator(0, document.textLength).use { iterator ->
+        Assertions.assertThat(iterator.asSequence().toList()).containsExactly(first, added)
+      }
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication preserves concurrent highlighter specifications`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      changeHighlighterDuringSnapshotChange(model) { highlighter.isGreedyToRight = true }
+
+      val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      val entry = root.overlappingIterator(0, document.textLength, 0).next()
+      Assertions.assertThat(entry.spec.isGreedyToRight).isTrue()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication preserves concurrent highlighter flavors`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      changeHighlighterDuringSnapshotChange(model) { highlighter.setErrorStripeMarkColor(Color.RED) }
+
+      val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      val entries = root.overlappingIterator(0, document.textLength, RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG.toInt())
+      Assertions.assertThat(entries.asSequence().map { it.markerReference?.get()?.id }.toList())
+        .containsExactly((highlighter as RangeHighlighterEx).id)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication preserves concurrent highlighter removal`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      changeHighlighterDuringSnapshotChange(model) { model.removeHighlighter(highlighter) }
+
+      Assertions.assertThat(model.allHighlighters).isEmpty()
+      model.overlappingIterator(0, document.textLength).use { iterator ->
+        Assertions.assertThat(iterator.hasNext()).isFalse()
+      }
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication includes the first highlighter in an existing store`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    val emptyModel = MarkupModelImpl(document)
+    try {
+      model.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      Assertions.assertThat(emptyModel.rootStore().containsSnapshot(document.core.snapshot())).isFalse()
+
+      val highlighter = changeHighlighterDuringSnapshotChange(model, insertOffset = 0) {
+        emptyModel.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      }
+
+      assertValidHighlighter(highlighter, 3, 5)
+      Assertions.assertThat(emptyModel.allHighlighters).containsExactly(highlighter)
+    }
+    finally {
+      model.dispose()
+      emptyModel.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication includes a concurrently registered store`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    var addedModel: MarkupModelImpl? = null
+    try {
+      model.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      val highlighter = changeHighlighterDuringSnapshotChange(model, insertOffset = 0) {
+        val newModel = MarkupModelImpl(document)
+        addedModel = newModel
+        newModel.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      }
+
+      assertValidHighlighter(highlighter, 3, 5)
+      Assertions.assertThat(checkNotNull(addedModel).allHighlighters).containsExactly(highlighter)
+    }
+    finally {
+      model.dispose()
+      addedModel?.dispose()
+    }
+  }
+
+  @Test
+  fun `snapshot publication does not restore a concurrently disposed store`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    val removedModel = MarkupModelImpl(document)
+    val removedStore = removedModel.rootStore()
+    try {
+      model.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      removedModel.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+
+      changeHighlighterDuringSnapshotChange(model) { removedModel.dispose() }
+
+      Assertions.assertThat(removedStore.containsSnapshot(document.core.snapshot())).isFalse()
+    }
+    finally {
+      model.dispose()
+      removedModel.dispose()
+    }
+  }
+
+  @Test
+  fun `highlighter specification retries after concurrent snapshot publication`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val marker = highlighter as SnapshotRangeMarkerImpl
+      val reference = marker.currentRootReference()
+      val root = reference.get() as CompoundPMarkerRoot
+      val transformed = CountDownLatch(1)
+      val commit = CountDownLatch(1)
+      val pausingRoot = object : PMarkerRoot by root.exactRangeRoot {
+        override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+          Assertions.assertThat(Thread.holdsLock(document.snapshotMarkerStores)).isFalse()
+          val result = root.exactRangeRoot.updateSpec(markerId, spec)
+          transformed.countDown()
+          check(commit.await(10, TimeUnit.SECONDS)) { "The highlighter change did not resume" }
+          return result
+        }
+      }
+      reference.set(root.withExactRangeRoot(pausingRoot))
+      val modification = FutureTask { highlighter.isGreedyToRight = true }
+      val modificationThread = Thread(modification, "Concurrent highlighter specification change")
+      modificationThread.start()
+      try {
+        check(transformed.await(10, TimeUnit.SECONDS)) { "The highlighter specification was not transformed" }
+        document.insertString(0, "x")
+        commit.countDown()
+        modification.get(10, TimeUnit.SECONDS)
+      }
+      finally {
+        commit.countDown()
+        modificationThread.join(TimeUnit.SECONDS.toMillis(10))
+        check(!modificationThread.isAlive) { "The highlighter specification thread did not stop" }
+      }
+
+      assertValidHighlighter(highlighter, 3, 5)
+      val entry = marker.currentRootReference().get().overlappingIterator(0, document.textLength, 0).next()
+      Assertions.assertThat(entry.spec.isGreedyToRight).isTrue()
+      Assertions.assertThat(highlighter.isGreedyToRight).isTrue()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  private fun <T> changeHighlighterDuringSnapshotChange(
+    model: MarkupModelImpl,
+    insertOffset: Int = model.document.textLength,
+    change: () -> T,
+  ): T {
+    val document = model.document as DocumentImpl
+    val rootReference = model.rootStore().rootReference(document.core.snapshot())
+    val root = rootReference.get() as CompoundPMarkerRoot
+    val transformed = CountDownLatch(1)
+    val publish = CountDownLatch(1)
+    val pausingRoot = object : PMarkerRoot by root.exactRangeRoot {
+      override fun applyPatch(
+        patch: DocumentPatch,
+        beforeText: DocumentText,
+        afterText: DocumentText,
+        invalidatedMarkerConsumer: LongConsumer,
+        affectedMarkerConsumer: LongConsumer,
+      ): PMarkerRoot {
+        Assertions.assertThat(Thread.holdsLock(document.snapshotMarkerStores)).isFalse()
+        val result = root.exactRangeRoot.applyPatch(patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+        transformed.countDown()
+        check(publish.await(10, TimeUnit.SECONDS)) { "The snapshot publication did not resume" }
+        return result
+      }
+    }
+    rootReference.set(root.withExactRangeRoot(pausingRoot))
+    val transition = FutureTask { document.insertString(insertOffset, "x") }
+    val modification = FutureTask { change() }
+    val transitionThread = Thread(transition, "Highlighter snapshot transition")
+    val modificationThread = Thread(modification, "Concurrent highlighter change")
+    transitionThread.start()
+    try {
+      check(transformed.await(10, TimeUnit.SECONDS)) { "The snapshot root was not transformed" }
+      modificationThread.start()
+      val result = modification.get(10, TimeUnit.SECONDS)
+      publish.countDown()
+      transition.get(10, TimeUnit.SECONDS)
+      return result
+    }
+    finally {
+      publish.countDown()
+      transitionThread.join(TimeUnit.SECONDS.toMillis(10))
+      modificationThread.join(TimeUnit.SECONDS.toMillis(10))
+      check(!transitionThread.isAlive && !modificationThread.isAlive) { "The concurrent highlighter threads did not stop" }
+    }
   }
 
   @Test

@@ -4,12 +4,12 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
-import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
 /**
@@ -85,8 +85,25 @@ internal class DocumentCoreImpl private constructor(
       return this@DocumentCoreImpl.snapshot
     }
 
-    override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
-      return SNAPSHOT_UPDATER.updateAndGet(this@DocumentCoreImpl, update)
+    override fun updateAndGet(
+      initialSnapshot: DocumentSnapshot?,
+      patch: DocumentPatch?,
+      update: (DocumentSnapshot) -> DocumentSnapshot,
+    ): DocumentSnapshot {
+      while (true) {
+        val expected = this@DocumentCoreImpl.snapshot
+        val before = if (initialSnapshot == null || expected.text() === initialSnapshot.text()) expected else initialSnapshot
+        val after = update(before)
+        if (snapshotMarkerStores.tryCommit(
+            before,
+            after,
+            patch,
+            isCurrent = { this@DocumentCoreImpl.snapshot === expected },
+            publish = { SNAPSHOT_UPDATER.set(this@DocumentCoreImpl, after) },
+          )) {
+          return after
+        }
+      }
     }
   }
 

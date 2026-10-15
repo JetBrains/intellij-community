@@ -43,6 +43,20 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
   private val roots: ConcurrentMap<DocumentSnapshot, RootState> = CollectionFactory.createConcurrentWeakIdentityMap()
+  private var disposed: Boolean = false
+
+  /** Validates and publishes editor-owned marker changes under the commit gate. */
+  internal val currentRootUpdater: MarkerRootUpdater = object : MarkerRootUpdater() {
+    override fun currentRootReference(): AtomicReference<PMarkerRoot> = this@SnapshotMarkerRootStore.currentRootReference()
+
+    override fun updateRootAtomically(
+      rootReference: AtomicReference<PMarkerRoot>?,
+      update: (PMarkerRoot) -> PMarkerRoot,
+    ): PMarkerRoot? {
+      if (rootReference != null) return super.updateRootAtomically(rootReference, update)
+      return updateCurrentRootAtomically(PMarkerRootImpl.empty(), update)
+    }
+  }
 
   private val documentListener: PrioritizedDocumentListener? =
     if (onMarkersInvalidated != null || onDocumentChanged != null || onMarkersAffected != null) {
@@ -71,7 +85,11 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   fun dispose(markerStores: SnapshotMarkerStores) {
     processQueue()
     documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
-    markerStores.unregister(this)
+    synchronized(markerStores) {
+      if (disposed) return
+      disposed = true
+      markerStores.unregister(this)
+    }
     roots.clear()
   }
 
@@ -84,6 +102,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     (root(snapshot) as? PMarkerRootImpl)?.containsMarkerId(markerId) == true
 
   fun rootReference(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = PMarkerRootImpl.empty()): AtomicReference<PMarkerRoot> {
+    processQueue()
     return rootState(snapshot, initialRoot).rootReference
   }
 
@@ -96,6 +115,34 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     updateRootAtomically(rootReference(snapshot, initialRoot), update)
   }
 
+  fun updateCurrentRoot(initialRoot: PMarkerRoot, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
+    return updateCurrentRootAtomically(initialRoot, update) != null
+  }
+
+  private fun updateCurrentRootAtomically(initialRoot: PMarkerRoot, update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
+    val document = checkNotNull(documentReference.get()) { "The document is unavailable" }
+    val markerStores = document.snapshotMarkerStores
+    while (true) {
+      processQueue()
+      val snapshot: DocumentSnapshot
+      val reference: AtomicReference<PMarkerRoot>
+      val oldRoot: PMarkerRoot
+      synchronized(markerStores) {
+        if (disposed) return null
+        snapshot = document.core.snapshot()
+        reference = rootState(snapshot, initialRoot).rootReference
+        oldRoot = reference.get()
+      }
+      val newRoot = update(oldRoot)
+      synchronized(markerStores) {
+        if (disposed) return null
+        if (document.core.snapshot() === snapshot && reference.compareAndSet(oldRoot, newRoot)) {
+          return if (newRoot === oldRoot) null else newRoot
+        }
+      }
+    }
+  }
+
   private fun updateRootIfPresent(snapshot: DocumentSnapshot, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
     processQueue()
     val rootReference = roots[snapshot]?.rootReference ?: return false
@@ -106,16 +153,16 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     return updateRootIfPresent(snapshot) { it.purge(markerId) }
   }
 
-  internal fun captureRoot(snapshot: DocumentSnapshot): PMarkerRoot? {
-    return roots[snapshot]?.rootReference?.get()
+  internal fun captureRoot(snapshot: DocumentSnapshot): CapturedRoot {
+    return CapturedRoot(this, root(snapshot))
   }
 
-  internal fun applyPatch(
+  internal fun preparePatch(
       beforeRoot: PMarkerRoot,
       beforeSnapshot: DocumentSnapshot,
       afterSnapshot: DocumentSnapshot,
       patch: DocumentPatch,
-  ) {
+  ): RootState {
     processQueue()
     val invalidatedMarkerIds: LongList? = if (onMarkersInvalidated == null) null else LongArrayList()
     val invalidatedMarkerConsumer = if (invalidatedMarkerIds == null) {
@@ -141,13 +188,11 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
       invalidatedMarkerConsumer,
       affectedMarkerConsumer,
     )
-    val newState = RootState(afterRoot, invalidatedMarkerIds ?: LongLists.EMPTY_LIST, affectedMarkerIds ?: LongLists.EMPTY_LIST)
-    roots.putIfAbsent(afterSnapshot, newState)
+    return RootState(afterRoot, invalidatedMarkerIds ?: LongLists.EMPTY_LIST, affectedMarkerIds ?: LongLists.EMPTY_LIST)
   }
 
-  internal fun inherit(beforeRoot: PMarkerRoot, afterSnapshot: DocumentSnapshot) {
-    processQueue()
-    roots.putIfAbsent(afterSnapshot, RootState(beforeRoot))
+  internal fun installRoot(snapshot: DocumentSnapshot, state: RootState) {
+    roots.putIfAbsent(snapshot, state)
   }
 
   internal fun merge(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot, mergedSnapshot: DocumentSnapshot) {
@@ -166,7 +211,6 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   }
 
   private fun rootState(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot): RootState {
-    processQueue()
     return roots[snapshot] ?: roots.computeIfAbsent(snapshot) { RootState(initialRoot) }
   }
 
@@ -177,7 +221,14 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
    */
   fun processQueue(): Boolean = (roots as ReferenceQueueable).processQueue()
 
-  private class RootState(
+  internal class CapturedRoot(
+    val store: SnapshotMarkerRootStore,
+    val root: PMarkerRoot?,
+  ) {
+    var afterState: RootState? = null
+  }
+
+  internal class RootState(
     root: PMarkerRoot,
     val invalidatedMarkerIds: LongList = LongLists.EMPTY_LIST,
     val affectedMarkerIds: LongList = LongLists.EMPTY_LIST,

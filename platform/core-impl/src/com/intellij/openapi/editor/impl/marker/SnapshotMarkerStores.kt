@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore.CapturedRoot
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -13,23 +14,33 @@ import org.jetbrains.annotations.TestOnly
  *
  * The registry holds each active store strongly. This ownership ensures that every active store receives each document operation.
  * A store registers itself during construction. [SnapshotMarkerRootStore.dispose] removes the store from this registry.
+ *
+ * Its monitor guards validation and publication. Tree transformations run outside the monitor.
  */
 @ApiStatus.Internal
 class SnapshotMarkerStores {
   private val stores: MutableList<SnapshotMarkerRootStore> = ContainerUtil.createEmptyCOWList()
+  private var storeVersion: Long = 0
 
   internal fun register(store: SnapshotMarkerRootStore) {
-    stores.add(store)
+    synchronized(this) {
+      stores.add(store)
+      storeVersion++
+    }
   }
 
   internal fun unregister(store: SnapshotMarkerRootStore) {
-    stores.remove(store)
+    synchronized(this) {
+      stores.remove(store)
+      storeVersion++
+    }
   }
 
   fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch?): DocumentSnapshot {
     if (afterSnapshot === beforeSnapshot) return afterSnapshot
-    val capturedRoots = captureRoots(beforeSnapshot)
-    return additionalApply(patch, beforeSnapshot, afterSnapshot, capturedRoots)
+    while (true) {
+      if (tryCommit(beforeSnapshot, afterSnapshot, patch, isCurrent = { true }, publish = {})) return afterSnapshot
+    }
   }
 
   @TestOnly
@@ -41,17 +52,31 @@ class SnapshotMarkerStores {
     return applyPatch(beforeSnapshot, afterSnapshot, patch)
   }
 
-  private fun additionalApply(
-    patch: DocumentPatch?,
+  internal fun tryCommit(
     beforeSnapshot: DocumentSnapshot,
     afterSnapshot: DocumentSnapshot,
-    capturedRoots: List<CapturedRoot>,
-  ): DocumentSnapshot {
+    patch: DocumentPatch?,
+    isCurrent: () -> Boolean,
+    publish: () -> Unit,
+  ): Boolean {
+    SnapshotMarkerEngineImpl.processQueue()
+    val version: Long
+    val capturedRoots: List<CapturedRoot>
+    synchronized(this) {
+      version = storeVersion
+      capturedRoots = if (beforeSnapshot === afterSnapshot) {
+        emptyList()
+      }
+      else {
+        stores.map { it.captureRoot(beforeSnapshot) }
+      }
+    }
     if (patch != null) {
       validatePatch(beforeSnapshot, afterSnapshot, patch)
       for (i in capturedRoots.indices) {
         val it = capturedRoots[i]
-        it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, patch)
+        val root = it.root ?: continue
+        it.afterState = it.store.preparePatch(root, beforeSnapshot, afterSnapshot, patch)
       }
     }
     else {
@@ -59,11 +84,24 @@ class SnapshotMarkerStores {
         "Snapshots must share the same text instance, but op corrupted the text"
       }
       for (i in capturedRoots.indices) {
-        val it = capturedRoots[i]
-        it.store.inherit(it.root, afterSnapshot)
+        val captured = capturedRoots[i]
+        captured.afterState = captured.root?.let { root -> SnapshotMarkerRootStore.RootState(root) }
       }
     }
-    return afterSnapshot
+    return synchronized(this) {
+      if (!isCurrent() || storeVersion != version) return false
+      for (i in capturedRoots.indices) {
+        val captured = capturedRoots[i]
+        if (captured.store.root(beforeSnapshot) !== captured.root) return false
+      }
+      for (i in capturedRoots.indices) {
+        val captured = capturedRoots[i]
+        val state = captured.afterState ?: continue
+        captured.store.installRoot(afterSnapshot, state)
+      }
+      publish()
+      true
+    }
   }
 
   fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot {
@@ -80,22 +118,6 @@ class SnapshotMarkerStores {
     return mergedSnapshot
   }
 
-  /**
-   * Captures the current marker root of each store for [snapshot].
-   * If a caller adds a marker to [snapshot] after this call, the next snapshot does not get that marker.
-   */
-  private fun captureRoots(snapshot: DocumentSnapshot): List<CapturedRoot> {
-    SnapshotMarkerEngineImpl.processQueue()
-    val result = ArrayList<CapturedRoot>(stores.size)
-    stores.forEach { store ->
-      val capturedRoot = store.captureRoot(snapshot)?.let { CapturedRoot(store, it) }
-      if (capturedRoot != null) {
-        result.add(capturedRoot)
-      }
-    }
-    return result
-  }
-
   private fun validatePatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch) {
     val beforeLength = beforeSnapshot.text().length()
     val afterLength = afterSnapshot.text().length()
@@ -109,9 +131,4 @@ class SnapshotMarkerStores {
       "After snapshot length is inconsistent with DocumentTextPatch"
     }
   }
-
-  private class CapturedRoot(
-    val store: SnapshotMarkerRootStore,
-    val root: PMarkerRoot,
-  )
 }

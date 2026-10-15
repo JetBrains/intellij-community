@@ -51,13 +51,16 @@ internal class SnapshotHighlighterStorage(
   fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: MarkerSpec) {
     assertMayChange()
     processHighlighterQueue()
-    val snapshot = currentSnapshot()
     val markerId = highlighter.idForStorage()
-    val previous = highlightersById.putIfAbsent(markerId, HighlighterReference(highlighter, highlighterQueue))
-    check(previous == null) { "Highlighter $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
-    rootStore.updateRoot(snapshot, CompoundPMarkerRoot.empty()) {
-      it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
+    val flavorFlags = highlighter.flavorFlags
+    val reference = HighlighterReference(highlighter, highlighterQueue)
+    val previous = highlightersById.putIfAbsent(markerId, reference)
+    check(previous == null) { "Highlighter $markerId is already registered" }
+    if (!rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
+        it.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference)
+      }) {
+      highlightersById.remove(markerId, reference)
     }
     model.invalidateHighlighterCache()
   }
@@ -65,8 +68,9 @@ internal class SnapshotHighlighterStorage(
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
-    rootStore.updateRoot(currentSnapshot(), CompoundPMarkerRoot.empty()) {
-      it.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
+    val flavorFlags = highlighter.flavorFlags
+    rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
+      it.updateFlavor(highlighter.idForStorage(), flavorFlags)
     }
   }
 

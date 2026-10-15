@@ -51,7 +51,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(document, null, rootStore, markerId, initialSpec, initialRange)
+  ) : this(document, null, rootStore.currentRootUpdater, markerId, initialSpec, initialRange)
 
   @Volatile
   internal var disposed: Boolean = false
