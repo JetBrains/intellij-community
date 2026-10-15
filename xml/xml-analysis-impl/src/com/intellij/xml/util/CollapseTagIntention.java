@@ -17,12 +17,16 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -88,12 +92,24 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     final int offset = child.getTextRange().getStartOffset();
     final Document document = tag.getContainingFile().getViewProvider().getDocument();
     assert document != null;
-    document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+    document.replaceString(offset, tag.getTextRange().getEndOffset(), endsWithUnquotedValue(child.getTreePrev()) ? " />" : "/>");
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(tag);
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement restored = pointer.getElement();
     if (restored != null) {
       CodeStyleManager.getInstance(project).reformat(restored);
     }
+  }
+
+  /**
+   * Checks if {@code node} is an attribute with a value that has no quotes.
+   * A {@code /} right after such a value becomes a part of the value.
+   */
+  private static boolean endsWithUnquotedValue(@Nullable ASTNode node) {
+    if (node == null || !(node.getPsi() instanceof XmlAttribute attribute)) return false;
+    XmlAttributeValue value = attribute.getValueElement();
+    if (value == null) return false;
+    ASTNode last = value.getNode().getLastChildNode();
+    return last != null && last.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 }
