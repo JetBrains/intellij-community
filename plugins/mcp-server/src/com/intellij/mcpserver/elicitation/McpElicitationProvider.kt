@@ -4,12 +4,16 @@ import com.intellij.lang.Language
 import com.intellij.mcpserver.projectOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
+import io.modelcontextprotocol.kotlin.sdk.shared.RequestOptions
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.serializer
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /** Returns the applicable [McpElicitationProvider] for the current session, or `null`. */
 suspend fun elicitationProvider(): McpElicitationProvider? {
@@ -76,10 +80,13 @@ abstract class McpTransportElicitationProvider : McpElicitationProvider {
     // Code highlighting and styling are safe only in the read-only message.
     val message = renderer.render(form.messageParts, currentProjectOrNull())
     return session
-      .createElicitation(message, form.toRequestedSchema())
+      .createElicitation(message, form.toRequestedSchema(), RequestOptions(timeout = elicitationTimeout()))
       .toElicitationResult(deserializer)
   }
 }
+
+/** How long to wait for the answer of the user. After it, the request fails with the SDK timeout error. */
+private fun elicitationTimeout(): Duration = Registry.intValue("mcp.server.elicitation.timeout.seconds").seconds
 
 /**
  * The project a highlighting [ElicitationFormRenderer] may want, or `null`.
