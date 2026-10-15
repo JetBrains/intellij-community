@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.awaitOccurred
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
@@ -90,7 +91,6 @@ import javax.swing.JFrame
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
@@ -141,9 +141,7 @@ open class DistributedTestHost(private val coroutineScope: CoroutineScope) : App
           delay(20.seconds)
           LOG.warn("LoadingState.COMPONENTS_LOADED has not occurred in 20 seconds: ${dumpCoroutines()}")
         }
-        while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
-          delay(10.milliseconds)
-        }
+        LoadingState.COMPONENTS_LOADED.awaitOccurred()
         coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           createProtocol(hostAddress, port)
