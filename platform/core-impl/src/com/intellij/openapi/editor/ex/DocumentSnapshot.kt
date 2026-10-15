@@ -36,7 +36,7 @@ interface DocumentSnapshot {
   fun applyOp(op: DocumentOp): DocumentSnapshot
 
   @Contract(pure = true)
-  fun copyWithNewIdentity(): DocumentSnapshot
+  fun newInstance(): DocumentSnapshot
 
   /**
    * Returns a human-readable dump of the snapshot state, used for diagnostics only

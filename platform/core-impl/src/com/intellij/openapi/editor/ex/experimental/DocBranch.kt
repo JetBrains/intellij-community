@@ -86,6 +86,17 @@ interface DocBranch {
    */
   fun mergeWithOps(other: DocBranch): DocMerge
 
+  /**
+   * A branch with the same text, mod state, agent and history. It is never `===` to this branch.
+   * Edit only one of the two, because they share the agent.
+   */
+  fun newInstance(): DocBranch
+
+  /**
+   * A list of the line ranges of [text], for diagnostics only.
+   */
+  fun dumpState(): String
+
   companion object {
     /**
      * A new branch with the text [chars] that edits under [agent].

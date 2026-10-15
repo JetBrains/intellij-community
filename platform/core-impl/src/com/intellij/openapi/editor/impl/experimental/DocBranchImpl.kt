@@ -19,14 +19,14 @@ import java.util.Collections
  * See [DocBranch].
  *
  * The value holds the [graph] that records the history, the [agent] that authors new events, the
- * [docText] that holds the materialized text, and the [modState] of that text. [text] returns
- * [docText] as is, so the text and the line data behave exactly like [DocumentTextImpl]. A local
- * [applyOp] appends events at the graph's frontier and edits [docText] directly. The
- * Eg-walker replay runs only inside [merge], and in the ops of a fast-forward.
+ * [text] that holds the materialized text, and the [modState] of that text. [text] returns the
+ * materialized text as is, so the text and the line data behave exactly like [DocumentTextImpl]. A
+ * local [applyOp] appends events at the graph's frontier and edits [text] directly. The Eg-walker
+ * replay runs only inside [merge], and in the ops of a fast-forward.
  *
  * A merge with concurrent history replays only the region above the common ancestor, which is the
  * partial replay of the paper. One placeholder item stands in for the older document, and it splits
- * only where an op needs it. The new units apply to [docText] as ordinary [DocumentOp.Text]s. Those
+ * only where an op needs it. The new units apply to [text] as ordinary [DocumentOp.Text]s. Those
  * ops are the op stream of [mergeWithOps]. The merge cost depends on the size of the change and of
  * the concurrent region, not on the size of either history.
  *
@@ -35,8 +35,8 @@ import java.util.Collections
  *   backspace never does. Each backspace therefore still costs a run of its own.
  */
 internal class DocBranchImpl private constructor(
-  private val docText: DocumentText,
-  private val branchModState: BranchModState,
+  private val text: DocumentText,
+  private val modState: BranchModState,
   private val agent: Agent,
   private val graph: EventGraphImpl,
 ) : DocBranch {
@@ -47,11 +47,11 @@ internal class DocBranchImpl private constructor(
   }
 
   override fun text(): DocumentText {
-    return docText
+    return text
   }
 
   override fun modState(): DocumentModState {
-    return branchModState.resolved()
+    return modState.resolved()
   }
 
   override fun version(): Version {
@@ -77,8 +77,8 @@ internal class DocBranchImpl private constructor(
 
   override fun fork(agent: Agent): DocBranch {
     return DocBranchImpl(
-      docText = docText,
-      branchModState = branchModState,
+      text = text,
+      modState = modState,
       agent = agent,
       graph = graph,
     )
@@ -97,44 +97,67 @@ internal class DocBranchImpl private constructor(
     }
     val merged = result.graph()
     if (result.isFastForward()) {
-      return fastForward(merged, otherImpl.docText)
+      return fastForward(merged, otherImpl.text)
     }
     // A partial replay: the walk covers only the region above the common ancestor. Only the new
     // units reach the sink, which joins them into ordinary ops over the text.
-    val sink = replayOnto(merged, docText)
+    val sink = replayOnto(merged, text)
     val ops = sink.ops()
-    val mergedModState = foldModState(docText, modState(), ops)
+    val mergedModState = BranchModState.foldModState(text, modState(), ops)
     val branch = DocBranchImpl(
-      docText = sink.result(),
-      branchModState = BranchModState.Resolved(mergedModState),
+      text = sink.result(),
+      modState = BranchModState.ready(mergedModState),
       agent = agent,
       graph = merged,
     )
     return DocMerge.ready(branch, ops)
   }
 
+  override fun newInstance(): DocBranch {
+    return DocBranchImpl(text, modState, agent, graph)
+  }
+
+  override fun dumpState(): String {
+    val dump = StringBuilder()
+    dump.append("intervals:\n")
+    val lineCount: Int = text.lineCount()
+    for (line in 0..<lineCount) {
+      dump
+        .append(line)
+        .append(": ")
+        .append(text.lineStartOffset(line))
+        .append("-")
+        .append(text.lineEndOffset(line))
+        .append(", ")
+    }
+    if (lineCount > 0) {
+      dump.setLength(dump.length - 2)
+    }
+    return dump.toString()
+  }
+
   /**
-   * The fast-forward to [merged], whose text is [text].
+   * The fast-forward to [merged], whose text is [mergedText].
    *
    * This branch's history is inside [merged], so the text is ready. The ops would cost a replay of
    * the change, so they wait until a caller asks for them, and the mod state waits for the ops. The
    * lambdas take the text and not the other branch, so they do not keep the other graph alive.
    */
-  private fun fastForward(merged: EventGraphImpl, text: DocumentText): DocMerge {
+  private fun fastForward(merged: EventGraphImpl, mergedText: DocumentText): DocMerge {
     val replay by lazy(LazyThreadSafetyMode.PUBLICATION) {
       replayFastForward(merged)
     }
-    val mergedModState = BranchModState.Deferred(docText, modState()) {
+    val mergedModState = BranchModState.deferred(text, modState()) {
       replay.ops
     }
     val branch = DocBranchImpl(
-      docText = text,
-      branchModState = mergedModState,
+      text = mergedText,
+      modState = mergedModState,
       agent = agent,
       graph = merged,
     )
     return DocMerge.deferred(branch) {
-      checkFoldsInto(replay.text, text)
+      checkFoldsInto(replay.text, mergedText)
       replay.ops
     }
   }
@@ -145,12 +168,12 @@ internal class DocBranchImpl private constructor(
       return this
     }
     // The inner text validates the offset before the graph changes.
-    val newDocText = docText.applyOp(op)
-    val newModState = modState().applyOp(docText, newDocText, op)
+    val newDocText = text.applyOp(op)
+    val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedInsert(op, newDocText)
     return DocBranchImpl(
-      docText = newDocText,
-      branchModState = BranchModState.Resolved(newModState),
+      text = newDocText,
+      modState = BranchModState.ready(newModState),
       agent = agent,
       graph = appendLocal(recorded),
     )
@@ -161,12 +184,12 @@ internal class DocBranchImpl private constructor(
     if (length == 0) {
       return this
     }
-    val newDocText = docText.applyOp(op)
-    val newModState = modState().applyOp(docText, newDocText, op)
+    val newDocText = text.applyOp(op)
+    val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedDelete(op)
     return DocBranchImpl(
-      docText = newDocText,
-      branchModState = BranchModState.Resolved(newModState),
+      text = newDocText,
+      modState = BranchModState.ready(newModState),
       agent = agent,
       graph = appendLocal(recorded),
     )
@@ -177,13 +200,13 @@ internal class DocBranchImpl private constructor(
    */
   private fun applyMetadata(op: DocumentOp): DocBranch {
     val current = modState()
-    val newModState = current.applyOp(docText, docText, op)
+    val newModState = current.applyOp(text, text, op)
     if (newModState === current) {
       return this
     }
     return DocBranchImpl(
-      docText = docText,
-      branchModState = BranchModState.Resolved(newModState),
+      text = text,
+      modState = BranchModState.ready(newModState),
       agent = agent,
       graph = graph,
     )
@@ -211,25 +234,11 @@ internal class DocBranchImpl private constructor(
     }
     val start = op.offset()
     val end = start + op.length()
-    val deleted = docText.chars().subSequence(start, end)
-    if (isValidMove(op, docText, deleted)) {
+    val deleted = text.chars().subSequence(start, end)
+    if (isValidMove(op, text, deleted)) {
       return op
     }
     return DocumentOp.deleteOp(start, op.length())
-  }
-
-  /**
-   * Whether [text] holds [moved] at the move offset of [op], apart from the text that [op] changes. A
-   * wrong move offset would move markers onto other text in every branch that merges the op.
-   */
-  private fun isValidMove(op: DocumentOp.Text, text: DocumentText, moved: CharSequence): Boolean {
-    val moveOffset = op.moveOffset()
-    val fitsText = moveOffset >= 0 && moved.length <= text.length() - moveOffset
-    if (!fitsText || !op.isMovedTextApart()) {
-      return false
-    }
-    val atMoveOffset = text.chars().subSequence(moveOffset, moveOffset + moved.length)
-    return atMoveOffset.contentEquals(moved)
   }
 
   /**
@@ -262,7 +271,7 @@ internal class DocBranchImpl private constructor(
    * result. With line data, each op would copy the line arrays of the whole document.
    */
   private fun replayFastForward(merged: EventGraphImpl): FastForwardReplay {
-    val sink = replayOnto(merged, DocumentText.createText(docText.chars()))
+    val sink = replayOnto(merged, DocumentText.createText(text.chars()))
     return FastForwardReplay(sink.result(), sink.ops())
   }
 
@@ -279,7 +288,7 @@ internal class DocBranchImpl private constructor(
   }
 
   override fun toString(): String {
-    return "DocBranch(agent=$agent, events=${graph.size()}, length=${docText.length()})"
+    return "DocBranch(agent=$agent, events=${graph.size()}, length=${text.length()})"
   }
 
   companion object {
@@ -290,8 +299,8 @@ internal class DocBranchImpl private constructor(
       }
       val text = DocumentText.createText(chars)
       return DocBranchImpl(
-        docText = text,
-        branchModState = BranchModState.Resolved(RangeModState.create(text)),
+        text = text,
+        modState = BranchModState.ready(RangeModState.create(text)),
         agent = agent,
         graph = graph,
       )
@@ -303,6 +312,20 @@ internal class DocBranchImpl private constructor(
       }
       return branch
     }
+
+    /**
+     * Whether [text] holds [moved] at the move offset of [op], apart from the text that [op] changes. A
+     * wrong move offset would move markers onto other text in every branch that merges the op.
+     */
+    private fun isValidMove(op: DocumentOp.Text, text: DocumentText, moved: CharSequence): Boolean {
+      val moveOffset = op.moveOffset()
+      val fitsText = moveOffset >= 0 && moved.length <= text.length() - moveOffset
+      if (!fitsText || !op.isMovedTextApart()) {
+        return false
+      }
+      val atMoveOffset = text.chars().subSequence(moveOffset, moveOffset + moved.length)
+      return atMoveOffset.contentEquals(moved)
+    }
   }
 }
 
@@ -311,54 +334,3 @@ internal class DocBranchImpl private constructor(
  * editor also needs the check that the ops build the merged text.
  */
 private class FastForwardReplay(val text: DocumentText, val ops: List<DocumentOp.Text>)
-
-/**
- * The mod state of a branch: [Resolved], or [Deferred] until the first read.
- *
- * Only a fast-forward makes a [Deferred] state, because its ops wait until a caller asks for them. It
- * starts from a resolved mod state, and every other transition resolves first. So folds never nest.
- */
-private sealed interface BranchModState {
-  fun resolved(): DocumentModState
-
-  class Resolved(private val modState: DocumentModState) : BranchModState {
-    override fun resolved(): DocumentModState {
-      return modState
-    }
-  }
-
-  /**
-   * [start] with [ops] folded in, starting from [startText]. The fold runs once, on the first read.
-   */
-  class Deferred(
-    startText: DocumentText,
-    start: DocumentModState,
-    ops: () -> List<DocumentOp.Text>,
-  ) : BranchModState {
-    private val folded by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      foldModState(startText, start, ops())
-    }
-
-    override fun resolved(): DocumentModState {
-      return folded
-    }
-  }
-}
-
-/**
- * [modState] with [ops] applied one after another, starting from [text].
- */
-private fun foldModState(
-  text: DocumentText,
-  modState: DocumentModState,
-  ops: List<DocumentOp.Text>,
-): DocumentModState {
-  var before = text
-  var folded = modState
-  for (op in ops) {
-    val after = before.applyOp(op)
-    folded = folded.applyOp(before, after, op)
-    before = after
-  }
-  return folded
-}

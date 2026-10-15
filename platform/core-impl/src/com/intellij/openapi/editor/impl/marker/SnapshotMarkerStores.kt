@@ -75,7 +75,7 @@ class SnapshotMarkerStores {
       return metadataSnapshot
     }
 
-    val mergedSnapshot = metadataSnapshot.copyWithNewIdentity()
+    val mergedSnapshot = metadataSnapshot.newInstance()
     relevantStores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
   }

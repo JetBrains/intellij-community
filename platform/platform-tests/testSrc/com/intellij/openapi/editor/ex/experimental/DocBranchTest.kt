@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.util.TextRange
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -149,6 +150,26 @@ class DocBranchTest {
     val noModifiedLines = unmodifiedLinesOp(0, 1, IntArray(0))
     assertSame(base, base.applyOp(sameStamp))
     assertSame(base, base.applyOp(noModifiedLines))
+  }
+
+  @Test
+  fun `a new instance keeps the state and the agent`() {
+    val base = DocBranch.createBranch("abc", agent("a"))
+    // A fast-forward defers its mod state. The new instance must give the same one.
+    val forward = base.merge(base.fork(agent("b")).applyOp(insertOp(1, "x")))
+    val copy = forward.newInstance()
+    assertNotSame(forward, copy)
+    assertSame(forward.text(), copy.text())
+    assertSame(forward.modState(), copy.modState())
+    assertSame(forward.graph(), copy.graph())
+    assertEquals(forward.agent(), copy.agent())
+    assertEquals(forward.version(), copy.version())
+  }
+
+  @Test
+  fun `dumpState lists the line ranges of the text`() {
+    val branch = DocBranch.createBranch("ab", agent("a")).applyOp(insertOp(2, "\ncd"))
+    assertEquals("intervals:\n0: 0-2, 1: 3-5", branch.dumpState())
   }
 
   @Test
