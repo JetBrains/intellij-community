@@ -2,7 +2,6 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileActions
 import com.intellij.ide.scratch.ScratchFileActions.ChangeLanguageAction
@@ -106,10 +105,16 @@ class WelcomeFilesRootType : RootType("HomeFiles", "") {
   }
 }
 
-internal class WelcomeNonProjectFileWritingAccessExtension : NonProjectFileWritingAccessExtension {
+/**
+ * Lets the user write a Home file and a standalone file that is open at Home.
+ * An open file stays writable in a later session, where the access granted on the first open is gone.
+ */
+internal class WelcomeNonProjectFileWritingAccessExtension(private val project: Project) : NonProjectFileWritingAccessExtension {
   override fun isWritable(file: VirtualFile): Boolean {
-    val project = ProjectUtil.getActiveProject()
-    return project != null && WelcomeFilesRootType.Util.isWelcomeFile(project, file)
+    if (!WelcomeUtils.isWelcomeProject(project)) {
+      return false
+    }
+    return WelcomeFilesRootType.Util.instance.containsFile(file) || FileEditorManager.getInstance(project).isFileOpen(file)
   }
 }
 
