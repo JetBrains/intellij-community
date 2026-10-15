@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+import com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -47,9 +48,12 @@ class ProjectCodeVisionModel(val project: Project) {
   }
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
+    val groupId = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
+
+    if (CodeVisionEntryExtraActionContributor.EP_NAME.extensionList.any { it.handle(editor, groupId, actionId) }) return
+
     if (actionId == HIDE_PROVIDER_ID && !IdeProductMode.isFrontend) {
-      val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
-      CodeVisionSettings.getInstance().setProviderEnabled(id, false)
+      CodeVisionSettings.getInstance().setProviderEnabled(groupId, false)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
         CodeVisionHost.LensInvalidateSignal(null))
       return

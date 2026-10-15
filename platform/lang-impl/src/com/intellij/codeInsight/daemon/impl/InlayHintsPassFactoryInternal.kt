@@ -11,6 +11,9 @@ import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintsPass
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintsSinkImpl
+import com.intellij.codeInsight.hints.InlayVisibilityPolicy
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.LegacyInlayHintVisibilityKey
 import com.intellij.codeInsight.hints.ProviderWithSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.getCollectorWrapperFor
@@ -118,6 +121,9 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
     DumbService.getInstance(project).isUsableInCurrentContext(it.provider) &&
     // to avoid cases when old and new code vision UI are shown
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
-    (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))
+    ((settings.hintsShouldBeShown(it.provider.key, language) && InlayVisibilityPolicy
+        .isVisible(InlayVisibilityRequest(project, editor,
+                                          LegacyInlayHintVisibilityKey(language, it.provider.key.id))) != false) ||
+     isProviderAlwaysEnabledForEditor(editor, it.provider.key))
   }
 }

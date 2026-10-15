@@ -8,7 +8,9 @@ import com.intellij.codeInsight.hints.HintInfoFilter
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.codeInsight.hints.Option
+import com.intellij.codeInsight.hints.ParameterHintsInlayVisibilityKey
 import com.intellij.codeInsight.hints.ParameterHintsPass
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.getLanguageForSettingKey
@@ -24,6 +26,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -143,5 +146,10 @@ class ParameterInlayProviderSettingsModel(
     fun apply() {
       option.set(state)
     }
+  }
+
+  override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
+    return InlayVisibilityRequest(project, null,
+                                  ParameterHintsInlayVisibilityKey(getLanguageForSettingKey(language), case?.id))
   }
 }

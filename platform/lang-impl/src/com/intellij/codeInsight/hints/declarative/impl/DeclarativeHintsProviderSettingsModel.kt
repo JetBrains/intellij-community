@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProvider
@@ -57,18 +59,21 @@ class DeclarativeHintsProviderSettingsModel(
       MutableOption(it, enabled)
     }
 
-  private val _cases: List<ImmediateConfigurable.Case> = options
-    .filter { it.description.showInTree }
-    .map { option ->
-      ImmediateConfigurable.Case(option.description.getName(providerDescription),
-                                 option.description.requireOptionId(),
-                                 loadFromSettings = {
-                                   option.isEnabled
-                                 },
-                                 onUserChanged = { newValue ->
-                                   option.isEnabled = newValue
-                                 },
-                                 extendedDescription = option.description.getDescription(providerDescription))
+  private val _cases: List<ImmediateConfigurable.Case>
+    get() {
+      return options
+        .filter { it.description.showInTree }
+        .map { option ->
+          ImmediateConfigurable.Case(option.description.getName(providerDescription),
+                                     option.description.requireOptionId(),
+                                     loadFromSettings = {
+                                       option.isEnabled
+                                     },
+                                     onUserChanged = { newValue ->
+                                       option.isOptionEnabled = newValue
+                                     },
+                                     extendedDescription = option.description.getDescription(providerDescription))
+        }
     }
 
   override val group: InlayGroup = providerDescription.requiredGroup()
@@ -83,7 +88,7 @@ class DeclarativeHintsProviderSettingsModel(
           checkBox(opt.description.getName(providerDescription))
             .selected(opt.isEnabled)
             .onChanged {
-              opt.isEnabled = it.isSelected
+              opt.isOptionEnabled = it.isSelected
               onChangeListener!!.settingsChanged()
             }
             .component.toolTipText = opt.description.getDescription(providerDescription)
@@ -214,7 +219,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun reset() {
     for (option in options) {
-      option.isEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
+      option.isOptionEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
     }
     isEnabled = isProviderEnabledInSettings()
     customSettingsProvider.persistSettings(project, savedSettings, language)
@@ -237,9 +242,24 @@ class DeclarativeHintsProviderSettingsModel(
     override fun putSettings(project: Project, settings: Unit, language: Language) {}
     override fun persistSettings(project: Project, settings: Unit, language: Language) {}
   }
+
+  override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
+    return InlayVisibilityRequest(project, null,
+                                  DeclarativeInlayHintVisibilityKey(id, case?.id))
+  }
 }
 
-private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
+private class MutableOption(
+  val description: InlayProviderOption, var isOptionEnabled: Boolean = false,
+) {
+  var isEnabled: Boolean
+    get() {
+      return isOptionEnabled
+    }
+    set(value) {
+      isOptionEnabled = value
+    }
+}
 
 private class PreviewInlayTreeSink(
   val providerBean: InlayHintsProviderExtensionBean,
@@ -264,7 +284,8 @@ private class PreviewInlayTreeSink(
       disabled = !enabled || !providerEnabled || activeOptions.any { !it.isEnabled },
       payloads = emptyList(),
       providerClass = providerBean.instance.javaClass,
-      sourceId = sourceId
+      sourceId = sourceId,
+      optionId = activeOptions.lastOrNull()?.description?.requireOptionId()
     ))
   }
 

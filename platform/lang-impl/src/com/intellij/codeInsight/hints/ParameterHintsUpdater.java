@@ -129,6 +129,9 @@ public final class ParameterHintsUpdater {
       if (action == InlayUpdateInfo.Action.ADD) {
         boolean useAnimation = !myForceImmediateUpdate && !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
         Inlay<?> inlay = myHintsManager.addHint(myEditor, info.offset, info.relatesToPrecedingText, newText, info.widthAdjustment, useAnimation);
+        if (inlay != null) {
+          inlay.putUserData(ParameterHintsPresentationManager.PARAMETER_HINT_OPTION_ID, info.optionId);
+        }
         if (inlay != null && !isInBulkMode) {
           VisualPosition inlayPosition = inlay.getVisualPosition();
           VisualPosition visualPosition = new VisualPosition(inlayPosition.line,
@@ -144,6 +147,7 @@ public final class ParameterHintsUpdater {
       }
       else if (action == InlayUpdateInfo.Action.REPLACE) {
         myHintsManager.replaceHint(myEditor, info.inlay, newText, info.widthAdjustment, !myForceImmediateUpdate);
+        info.inlay.putUserData(ParameterHintsPresentationManager.PARAMETER_HINT_OPTION_ID, info.optionId);
       }
     }
   }
@@ -195,6 +199,7 @@ public final class ParameterHintsUpdater {
     public final String oldText;
     public final boolean relatesToPrecedingText;
     public final HintWidthAdjustment widthAdjustment;
+    public final String optionId;
 
     InlayUpdateInfo(int offset, @Nullable Inlay<?> current, @Nullable ParameterHintsPass.HintData newHintData) {
       this.offset = offset;
@@ -204,11 +209,13 @@ public final class ParameterHintsUpdater {
         newText = null;
         relatesToPrecedingText = false;
         widthAdjustment = null;
+        optionId = null;
       }
       else {
         newText = newHintData.presentationText;
         relatesToPrecedingText = newHintData.relatesToPrecedingText;
         widthAdjustment = newHintData.widthAdjustment;
+        optionId = newHintData.optionId;
       }
     }
 

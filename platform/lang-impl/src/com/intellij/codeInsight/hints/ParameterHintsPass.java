@@ -28,12 +28,16 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.forceHintsUpdateOnNextPass;
@@ -47,14 +51,26 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final HintInfoFilter myHintInfoFilter;
   private final boolean myForceImmediateUpdate;
 
+  private final boolean myApplyVisibilityPolicy;
+
   public ParameterHintsPass(@NotNull PsiElement element,
                             @NotNull Editor editor,
                             @NotNull HintInfoFilter hintsFilter,
                             boolean forceImmediateUpdate) {
+    this(element, editor, hintsFilter, forceImmediateUpdate, true);
+  }
+
+  @ApiStatus.Internal
+  public ParameterHintsPass(@NotNull PsiElement element,
+                            @NotNull Editor editor,
+                            @NotNull HintInfoFilter hintsFilter,
+                            boolean forceImmediateUpdate,
+                            boolean applyVisibilityPolicy) {
     super(editor, element.getContainingFile(), true);
     myRootElement = element;
     myHintInfoFilter = hintsFilter;
     myForceImmediateUpdate = forceImmediateUpdate;
+    myApplyVisibilityPolicy = applyVisibilityPolicy;
   }
 
   /**
@@ -107,13 +123,31 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (!HighlightingLevelManager.getInstance(myFile.getProject()).shouldHighlight(myFile)) return;
 
     PluginExceptionUtil.computeOrLogPluginException(provider.getClass(), () -> {
-      provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
+      Runnable traversal = () -> provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
+      if (myApplyVisibilityPolicy && InlayVisibilityPolicy.isActive()) {
+        Map<String, Boolean> visibilityMap = new HashMap<>();
+        Language settingsLanguage = HintUtilsKt.getLanguageForSettingKey(language);
+        for (Option option : provider.getSupportedOptions()) {
+          Boolean isVisible = InlayVisibilityPolicy.isVisible(
+            new InlayVisibilityRequest(myProject, myEditor, new ParameterHintsInlayVisibilityKey(settingsLanguage, option.getId())));
+          if (isVisible != null) {
+            visibilityMap.put(option.getId(), isVisible);
+          }
+        }
+        InlayPassContext.run(visibilityMap, traversal);
+      }
+      else {
+        traversal.run();
+      }
       return true;
     });
   }
 
-  private static boolean isEnabled(Language language) {
-    return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
+  private boolean isEnabled(Language language) {
+    if (!myApplyVisibilityPolicy) {
+      return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
+    }
+    return HintUtilsKt.isParameterHintsVisibleForLanguage(language, myFile.getProject());
   }
 
   private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {
@@ -121,6 +155,8 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     List<InlayInfo> hints = provider.getParameterHints(element, myFile);
     if (hints.isEmpty()) return;
     HintInfo info = provider.getHintInfo(element, myFile);
+
+    String optionId = info instanceof HintInfo.OptionInfo optionInfo ? optionInfo.getOptionId() : null;
 
     boolean showHints = info == null || info instanceof HintInfo.OptionInfo || myHintInfoFilter.showHint(info);
 
@@ -143,7 +179,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
         List<HintData> hintList = myHints.get(offset);
         if (hintList == null) myHints.put(offset, hintList = new ArrayList<>());
         HintWidthAdjustment widthAdjustment = convertHintPresentation(hint.getWidthAdjustment(), provider);
-        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment));
+        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment, optionId));
       }
     });
   }
@@ -215,11 +251,17 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     final String presentationText;
     final boolean relatesToPrecedingText;
     final HintWidthAdjustment widthAdjustment;
+    final String optionId;
 
     HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
+      this(text, relatesToPrecedingText, widthAdjustment, null);
+    }
+
+    HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment, @Nullable String optionId) {
       presentationText = text;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.widthAdjustment = widthAdjustment;
+      this.optionId = optionId;
     }
 
     @Override

@@ -562,6 +562,7 @@ f:com.intellij.codeInsight.daemon.impl.MainPassesRunner
 - runMainPasses(java.util.List):java.util.Map
 f:com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 - com.intellij.openapi.Disposable
+- sf:PARAMETER_HINT_OPTION_ID:com.intellij.openapi.util.Key
 - getHintText(com.intellij.openapi.editor.Inlay):java.lang.String
 - s:getInstance():com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 f:com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
@@ -1131,6 +1132,7 @@ f:com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 - com.intellij.openapi.options.Configurable$NoScroll
 - com.intellij.openapi.options.Configurable$VariableProjectAppLevel
 - com.intellij.openapi.options.SearchableConfigurable
+- selectModel(com.intellij.lang.Language,java.util.function.Predicate):V
 f:com.intellij.codeInsight.hints.settings.language.SingleLanguageInlayHintsSettingsPanelKt
 - sf:isInlaySettingsEditor(com.intellij.openapi.editor.Editor):Z
 com.intellij.codeInsight.intention.impl.AbstractIntentionPopup

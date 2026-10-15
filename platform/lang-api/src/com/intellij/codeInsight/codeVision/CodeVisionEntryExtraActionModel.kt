@@ -7,4 +7,13 @@ import org.jetbrains.annotations.Nls
  * @property actionId Action ID passed to provider when this action is invoked. null for non-clickable line
  */
 data class CodeVisionEntryExtraActionModel(@Nls val displayText: String,
-                                           val actionId: String?)
+                                           val actionId: String?) {
+  var children: List<CodeVisionEntryExtraActionModel> = emptyList()
+    private set
+
+  constructor(@Nls displayText: String,
+              actionId: String?,
+              children: List<CodeVisionEntryExtraActionModel>) : this(displayText, actionId) {
+    this.children = children
+  }
+}

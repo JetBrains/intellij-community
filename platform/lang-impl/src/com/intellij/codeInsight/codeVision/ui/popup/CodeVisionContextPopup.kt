@@ -5,11 +5,13 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
+import com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.popup.list.ListPopupImpl
 
 class CodeVisionContextPopup private constructor(project: Project, aStep: ListPopupStep<CodeVisionEntryExtraActionModel>)
@@ -18,7 +20,8 @@ class CodeVisionContextPopup private constructor(project: Project, aStep: ListPo
   companion object {
     fun createLensList(entry: CodeVisionEntry, model: CodeVisionListData, project: Project): CodeVisionContextPopup {
       val activeProvider = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId) ?: error("Can't find provider with id: ${entry.providerId}")
-      val lst = entry.extraActions +
+      val lst = entry.extraActions + (CodeVisionEntryExtraActionContributor.EP_NAME.extensionList
+                   .firstNotNullOfOrNull { it.contribute(project, activeProvider.groupId) } ?: listOf()) +
                 CodeVisionEntryExtraActionModel(CodeVisionMessageBundle.message("action.hide.this.metric.text", activeProvider.name), ProjectCodeVisionModel.HIDE_PROVIDER_ID) +
                 CodeVisionEntryExtraActionModel(CodeVisionMessageBundle.message("action.hide.all.text"), ProjectCodeVisionModel.HIDE_ALL) +
                 CodeVisionEntryExtraActionModel(CodeVisionMessageBundle.message("LensListPopup.tooltip.settings"), CodeVisionHost.settingsLensProviderId)
@@ -31,6 +34,11 @@ class CodeVisionContextPopup private constructor(project: Project, aStep: ListPo
 
         override fun getSeparatorAbove(value: CodeVisionEntryExtraActionModel): ListSeparator? {
           return null
+        }
+
+        override fun getAdText(): @NlsContexts.PopupAdvertisement String? {
+          return CodeVisionEntryExtraActionContributor.EP_NAME
+            .extensionList.firstNotNullOfOrNull { it.adText(project, activeProvider.groupId) }
         }
       }
 

@@ -67,6 +67,7 @@
 - disable():V
 - enable():V
 - pf:getOption():com.intellij.codeInsight.hints.Option
+- f:getOptionId():java.lang.String
 - getOptionName():java.lang.String
 - f:isOptionEnabled():Z
 *c:com.intellij.codeInsight.hints.HintWidthAdjustment

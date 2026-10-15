@@ -1737,7 +1737,6 @@ f:com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 - isModified():Z
 - isProjectLevel():Z
 - reset():V
-- f:selectModel(com.intellij.lang.Language,java.util.function.Predicate):V
 f:com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt
 - sf:INLAY_ID:java.lang.String
 - sf:showInlaySettings(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.util.function.Predicate):Z

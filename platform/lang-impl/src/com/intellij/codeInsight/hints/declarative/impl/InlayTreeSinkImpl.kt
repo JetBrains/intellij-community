@@ -30,13 +30,14 @@ class InlayTreeSinkImpl(
   private val inlayDataToPresentation = ArrayList<InlayData>()
 
   // id -> isEnabled
-  private val activeOptions = HashMap<String, Boolean>()
+  private val activeOptions = LinkedHashMap<String, Boolean>()
 
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
                                @NlsContexts.HintText tooltip: String?,
                                hintFormat: HintFormat,
                                builder: PresentationTreeBuilder.() -> Unit) {
+    val optionId = activeOptions.keys.lastOrNull()
     val b = PresentationTreeBuilderImpl.createRoot(position)
     b.builder()
     val tree = b.complete()
@@ -51,7 +52,7 @@ class InlayTreeSinkImpl(
       false
     }
     inlayDataToPresentation.add(
-      InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads ?: emptyList(), providerClass, sourceId)
+      InlayData(position, tooltip, hintFormat, tree, providerId, optionId, disabled, payloads ?: emptyList(), providerClass, sourceId)
     )
   }
 
@@ -62,6 +63,7 @@ class InlayTreeSinkImpl(
     }
     if (!isInPreview) {
       if (!isEnabled) return
+      if (!isVisible(optionId)) return
     }
     val wasNotEnabledEarlier = activeOptions.put(optionId, isEnabled) != null
     try {
@@ -72,6 +74,10 @@ class InlayTreeSinkImpl(
         activeOptions.remove(optionId)
       }
     }
+  }
+
+  private fun isVisible(optionId: String?): Boolean {
+    return optionId == null || enabledOptions[optionId] ?: true
   }
 
   fun finish(): List<InlayData> {

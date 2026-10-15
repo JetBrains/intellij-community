@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -73,6 +75,9 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
+
+  @ApiStatus.Internal
+  open fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest? = null
 
   /**
    * Short description to be displayed in the model's details

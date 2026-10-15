@@ -14,7 +14,7 @@ import javax.swing.JComponent
 
 const val INLAY_ID: String = "inlay.hints"
 
-class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
+class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel, InlaySettingsConfigurableApi {
 
   private val panel: InlaySettingsPanel by lazy  { InlaySettingsPanel(project) }
 
@@ -42,7 +42,7 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
     return panel.enableSearch(option)
   }
 
-  fun selectModel(language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
+  override fun selectModel(language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
     panel.selectModel(language, selector)
   }
 
@@ -53,6 +53,11 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
   override fun getHelpTopic(): String = "settings.inlays"
 
   override fun isProjectLevel(): Boolean = false
+}
+
+@ApiStatus.Internal
+interface InlaySettingsConfigurableApi : Configurable {
+  fun selectModel(language: Language, selector: Predicate<InlayProviderSettingsModel>?)
 }
 
 @ApiStatus.Internal
@@ -67,7 +72,7 @@ class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvi
 }
 
 fun showInlaySettings(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?): Boolean {
-  ShowSettingsUtil.getInstance().showSettingsDialog(project, InlaySettingsConfigurable::class.java) {
+  ShowSettingsUtil.getInstance().showSettingsDialog(project, InlaySettingsConfigurableApi::class.java) {
     if (selector != null) {
       it.selectModel(language, selector)
     }

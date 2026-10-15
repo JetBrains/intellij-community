@@ -8,6 +8,9 @@ import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
+import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayVisibilityPolicy
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.concurrency.JobLauncher
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -128,7 +131,13 @@ class CodeVisionPass(
     if (!settings.codeVisionEnabled) return
     if (!CodeVisionProjectSettings.getInstance(myProject).isEnabledForProject()) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
-      .filter {  settings.isProviderEnabled(it.groupId) }
+      .filter { provider ->
+        settings.isProviderEnabled(provider.groupId) &&
+        (InlayVisibilityPolicy.isVisible(
+          InlayVisibilityRequest(project = project, editor = editor,
+                                 visibilityKey = CodeVisionInlayVisibilityKey(groupId = provider.groupId))) != false)
+      }
+    if (providers.isEmpty()) return
     collect(editor, myFile, providerIdToLenses, providers)
   }
 

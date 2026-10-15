@@ -107,6 +107,8 @@ sealed class HintInfo {
 
     open val optionName: String = option.name
 
+    val optionId: String get() = option.id
+
     fun isOptionEnabled(): Boolean = option.isEnabled()
 
   }
@@ -139,7 +141,11 @@ data class Option(@NonNls val id: String,
   fun isEnabled(): Boolean = get()
 
   fun get(): Boolean {
-    return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue
+    val settings = ParameterNameHintsSettings.getInstance()
+    val enabledInSettings = settings.getOption(id)
+    val contextOverride = InlayPassContext.get()?.get(id)
+
+    return (enabledInSettings ?: defaultValue) && contextOverride != false
   }
 
   fun set(newValue: Boolean) {

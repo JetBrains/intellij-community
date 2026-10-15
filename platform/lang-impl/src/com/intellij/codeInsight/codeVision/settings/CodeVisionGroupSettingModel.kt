@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
+import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : InlayProviderSettingsModel(isEnabled, id, Language.ANY) {
 
@@ -32,4 +36,9 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
 
   final override val cases: List<ImmediateConfigurable.Case>
     get() = emptyList()
+
+  @ApiStatus.Internal
+  final override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
+    return InlayVisibilityRequest(project, null, CodeVisionInlayVisibilityKey(id))
+  }
 }

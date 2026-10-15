@@ -58,6 +58,9 @@ a:com.intellij.codeInsight.codeVision.CodeVisionEntry
 - f:getProviderId():java.lang.String
 - f:getTooltip():java.lang.String
 - f:setShowInMorePopup(Z):V
+f:com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
+- <init>(java.lang.String,java.lang.String,java.util.List):V
+- f:getChildren():java.util.List
 a:com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 f:com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering$CodeVisionRelativeOrderingAfter
 - com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
@@ -85,6 +88,7 @@ f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$Companion
 - f:getCODE_LENS_SETTINGS_CHANGED():com.intellij.util.messages.Topic
 - f:getInstance():com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 - f:instance():com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$State
 c:com.intellij.codeInsight.completion.NextPrevParameterHandler
 - com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler$ForEachCaret
 com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
@@ -267,6 +271,7 @@ f:com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 - f:isProviderEnabled(java.lang.String):java.lang.Boolean
 f:com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings$Companion
 - f:getInstance():com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+f:com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings$HintsState
 f:com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 - com.intellij.codeInsight.hints.declarative.InlayPosition
 - <init>(I):V
@@ -300,8 +305,11 @@ com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 - sf:Companion:com.intellij.codeInsight.hints.declarative.InlayHintsProvider$Companion
 - a:createCollector(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 - s:getINLAY_PAYLOADS():com.intellij.openapi.actionSystem.DataKey
+- s:getOPTION_ID():com.intellij.openapi.actionSystem.DataKey
 - s:getPROVIDER_ID():com.intellij.openapi.actionSystem.DataKey
 - s:getPROVIDER_NAME():com.intellij.openapi.actionSystem.DataKey
+f:com.intellij.codeInsight.hints.declarative.InlayHintsProvider$Companion
+- f:getOPTION_ID():com.intellij.openapi.actionSystem.DataKey
 f:com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
 - com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 - com.intellij.util.KeyedLazyInstance
@@ -314,9 +322,12 @@ com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
 - a:getProviderInfo(com.intellij.lang.Language,java.lang.String):com.intellij.codeInsight.hints.declarative.InlayProviderInfo
 - a:getProvidersForLanguage(com.intellij.lang.Language):java.util.List
 - a:getSupportedLanguages():java.util.Set
+f:com.intellij.codeInsight.hints.declarative.InlayOptionInfo
 com.intellij.codeInsight.hints.declarative.InlayPosition
 f:com.intellij.codeInsight.hints.declarative.InlayProviderInfo
 - f:getProviderId():java.lang.String
+f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
+f:com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 com.intellij.codeInsight.hints.declarative.InlayTreeSink
 - a:addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1):V
 - addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1):V

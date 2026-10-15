@@ -296,6 +296,14 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.codeVisionSupport"
                     interface="com.intellij.refactoring.RefactoringCodeVisionSupport"
                     dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayVisibilityPolicy"
+                    interface="com.intellij.codeInsight.hints.InlayVisibilityPolicy" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayContextMenuContributor"
+                    interface="com.intellij.codeInsight.hints.InlayContextMenuContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeVision.codeVisionEntryExtraActionContributor"
+                    interface="com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
     <extensionPoint qualifiedName="com.intellij.defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
     <extensionPoint qualifiedName="com.intellij.defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP" dynamic="true"/>

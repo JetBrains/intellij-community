@@ -336,6 +336,7 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - sf:getHintProviders():java.util.List
 - sf:getLanguageForSettingKey(com.intellij.lang.Language):com.intellij.lang.Language
 - sf:isParameterHintsEnabledForLanguage(com.intellij.lang.Language):Z
+- sf:isParameterHintsVisibleForLanguage(com.intellij.lang.Language,com.intellij.openapi.project.Project):Z
 - sf:setShowParameterHintsForLanguage(Z,com.intellij.lang.Language):V
 *f:com.intellij.codeInsight.hints.InlayContentListener
 - com.intellij.codeInsight.hints.presentation.PresentationListener

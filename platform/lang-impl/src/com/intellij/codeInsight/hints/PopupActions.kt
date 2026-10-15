@@ -21,17 +21,23 @@ import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -370,3 +376,28 @@ private fun getInfoForElement(file: PsiFile,
 }
 
 private fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+
+@ApiStatus.Internal
+fun parameterHintContextMenuGroup(inlay: Inlay<*>): ActionGroup? {
+
+  val base: ActionGroup? = (ActionManager.getInstance().getAction("ParameterNameHints") as? ActionGroup)
+
+  if (InlayContextMenuContributor.EP_NAME.extensionList.isEmpty()) return base
+
+  val editor = inlay.editor
+  val project = editor.project ?: return base
+  val language = ReadAction.computeBlocking<Language?, Throwable> {
+    PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)?.language
+  }?.let { getLanguageForSettingKey(it) } ?: return base
+
+  val extra = InlayContextMenuContributor.EP_NAME.extensionList.firstNotNullOfOrNull {
+    it.contribute(ParameterHintsInlayVisibilityKey(language = language,
+                                                   optionId = inlay.getUserData(ParameterHintsPresentationManager.PARAMETER_HINT_OPTION_ID)))
+  } ?: return base
+
+  return DefaultActionGroup().apply {
+    add(extra)
+    addSeparator()
+    base?.let { add(it) }
+  }
+}

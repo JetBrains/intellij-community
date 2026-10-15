@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.InlayVisibilityPolicy
+import com.intellij.codeInsight.hints.InlayVisibilityRequest
 import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
@@ -54,12 +57,23 @@ class DeclarativeInlayHintsPass(
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
     val sinks = ArrayList<InlayTreeSinkImpl>()
     val ignoredProviderIds = mutableSetOf<String>()
+    val policyActive = InlayVisibilityPolicy.isActive()
+
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider)) {
         ignoredProviderIds.add(providerInfo.providerId)
         continue
       }
+
+      val optionVisibility =
+        if (!policyActive) providerInfo.optionToEnabled
+        else providerInfo.optionToEnabled.mapValues { (optionId, enabled) ->
+          enabled &&
+          (InlayVisibilityPolicy.isVisible(
+            InlayVisibilityRequest(myProject, myEditor,
+                                   DeclarativeInlayHintVisibilityKey(providerInfo.providerId, optionId))) != false)
+        }
 
       val providerClass = provider.javaClass
       val collector = runProviderOrLogError(providerClass) {
@@ -69,8 +83,8 @@ class DeclarativeInlayHintsPass(
         continue
       }
 
-      val sink = InlayTreeSinkImpl(providerInfo.providerId, providerInfo.optionToEnabled, isPreview, isProviderDisabled,
-                                   providerClass, passSourceId)
+      val sink = InlayTreeSinkImpl(providerInfo.providerId, optionVisibility, isPreview,
+                                   isProviderDisabled, providerClass, passSourceId)
       sinks.add(sink)
       when (val collector = collector) {
         is OwnBypassCollector -> ownCollectors.add(CollectionInfo(sink, collector, providerClass))

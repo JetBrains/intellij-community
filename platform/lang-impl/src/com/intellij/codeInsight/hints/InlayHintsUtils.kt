@@ -11,6 +11,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -169,12 +170,17 @@ fun InlayHintsSink.addCodeVisionElement(editor: Editor, offset: Int, priority: I
 object InlayHintsUtils {
   fun getDefaultInlayHintsProviderPopupActions(
     providerKey: SettingsKey<*>,
-    providerName: Supplier<@Nls(capitalization = Title) String>
-  ): List<AnAction> =
-    listOf(
+    providerName: Supplier<@Nls(capitalization = Title) String>,
+  ): List<AnAction> {
+    val base = listOf(
       DisableInlayHintsProviderAction(providerKey, providerName, false),
       ConfigureInlayHintsProviderAction(providerKey)
     )
+    val extra = InlayContextMenuContributor.EP_NAME.extensionList.firstNotNullOfOrNull {
+      it.contribute(LegacyInlayHintVisibilityKey(null, providerKey.id))
+    } ?: return base
+    return listOf(extra, Separator.getInstance()) + base
+  }
 
   /**
    * Function updates the list of old presentations with a new list, taking into account priorities.

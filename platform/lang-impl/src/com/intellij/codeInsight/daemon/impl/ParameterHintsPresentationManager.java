@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
 import com.intellij.codeInsight.hints.InlayHintsUtilsKt;
+import com.intellij.codeInsight.hints.PopupActionsKt;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,6 +33,7 @@ import java.util.Set;
 public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
   private static final Key<Boolean> PREVIEW_MODE = Key.create("ParameterHintsPreviewMode");
+  public static final Key<String> PARAMETER_HINT_OPTION_ID = Key.create("parameter.hint.option.id");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
@@ -184,6 +187,11 @@ public final class ParameterHintsPresentationManager implements Disposable {
         return aBoolean != null && aBoolean ? InlayHintsUtilsKt.strikeOutBuilder(editor).applyTo(attributes.clone()) : attributes;
       }
       return null;
+    }
+
+    @Override
+    public @Nullable ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
+      return PopupActionsKt.parameterHintContextMenuGroup(inlay);
     }
 
     @Override
