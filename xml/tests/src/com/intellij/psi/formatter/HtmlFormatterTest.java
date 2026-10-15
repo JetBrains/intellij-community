@@ -30,6 +30,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @TestApplication
 public class HtmlFormatterTest extends XmlFormatterTestBase {
   @Override
@@ -786,6 +791,20 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                          <img class="circle-mask" src="avatar_2x.png">
                      </div>
                  </div>""");
+  }
+
+  @Test
+  public void testWeb77174DefaultTagListsHaveNoDuplicates() {
+    HtmlCodeStyleSettings settings = getHtmlSettings();
+    for (String tagList : List.of(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE,
+                                  settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE,
+                                  settings.HTML_DO_NOT_INDENT_CHILDREN_OF,
+                                  settings.HTML_KEEP_WHITESPACES_INSIDE,
+                                  settings.HTML_INLINE_ELEMENTS,
+                                  settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT)) {
+      List<String> names = List.of(tagList.split(","));
+      assertEquals(new HashSet<>(names).size(), names.size(), tagList);
+    }
   }
 
   @NotNull
