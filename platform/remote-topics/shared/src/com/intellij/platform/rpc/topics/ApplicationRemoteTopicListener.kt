@@ -41,6 +41,7 @@ interface ApplicationRemoteTopicListener<E : Any> {
   fun handleEvent(event: E)
 
   companion object {
+    @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<ApplicationRemoteTopicListener<*>> = ExtensionPointName<ApplicationRemoteTopicListener<*>>("com.intellij.platform.rpc.applicationRemoteTopicListener")
   }
 }
