@@ -14,6 +14,7 @@ import com.intellij.markdown.figmaAdvertiser.FIGMA_SUGGESTION_DISMISSED_KEY
 import com.intellij.markdown.figmaAdvertiser.FigmaAdvertiserRegistry
 import com.intellij.markdown.figmaAdvertiser.FigmaAdvertiserUsagesCollector
 import com.intellij.markdown.figmaAdvertiser.FigmaConnectPluginSuggestionProvider
+import com.intellij.markdown.figmaAdvertiser.FigmaLinkDocumentListener
 import com.intellij.markdown.figmaAdvertiser.FigmaSuggestionOffer
 import com.intellij.markdown.figmaAdvertiser.MarkdownFigmaAdvertiserBundle
 import com.intellij.markdown.figmaAdvertiser.ShownSuggestions
@@ -21,8 +22,11 @@ import com.intellij.markdown.figmaAdvertiser.dismissFigmaSuggestion
 import com.intellij.markdown.figmaAdvertiser.isFigmaSuggestionDismissed
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -31,12 +35,15 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.EditorNotificationPanel
@@ -51,6 +58,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * The banner over a Markdown file, and the wiring that puts it there.
@@ -366,7 +374,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     notifications.updated.shouldBeEmpty()
   }
 
-  /** The path decides first here as well: a file Markdown does not claim is never scanned. */
+  /** The scan finds the link, and the path then rejects a file Markdown does not claim. */
   fun `test a Figma link typed into a file that is not Markdown asks for no recompute`() {
     myFixture.configureByText("notes.txt", "# Checkout\n")
     val notifications = recordNotifications()
@@ -399,6 +407,54 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
 
     notifications.updated.shouldBeEmpty()
+  }
+
+  /**
+   * A split frontend applies the backend's text as a whole-document reset. The file of such a
+   * document answers its name and path only from the backend, which can wait for seconds. The
+   * banner is never shown on a frontend, so the listener leaves before it reads either one, also
+   * when the new text does link to a design.
+   *
+   * The document is changed through the platform, so the listener is the instance the extension
+   * point holds.
+   */
+  fun `test a split frontend reads no file property when a Figma link is written`() {
+    val file = PropertyRecordingFile("design.md")
+    val document = documentOf(file)
+
+    asFrontend {
+      resetText(document, "The spec is at https://www.figma.com/design/AbC123/Checkout\n")
+    }
+
+    file.readsByListener().shouldBeEmpty()
+  }
+
+  /**
+   * Every document in the IDE reaches the listener, so a change that links to nothing must cost no
+   * read of the file. The file here is one the listener does read when the change links to a design,
+   * which is the case below.
+   */
+  fun `test a change that links to nothing reads no file property`() {
+    val file = PropertyRecordingFile("design.md")
+    val document = documentOf(file)
+
+    resetText(document, "We talked about the design in the meeting.\n")
+
+    file.readsByListener().shouldBeEmpty()
+  }
+
+  /**
+   * The control for the two cases above. The same file and the same platform path, with a change that
+   * links to a design, do make the listener read the path. Without this, a recorder that never sees
+   * the listener would pass both.
+   */
+  fun `test a change that links to a design outside a frontend reads the path`() {
+    val file = PropertyRecordingFile("design.md")
+    val document = documentOf(file)
+
+    resetText(document, "The spec is at https://www.figma.com/design/AbC123/Checkout\n")
+
+    file.readsByListener().firstOrNull() shouldBe "getPath"
   }
 
   /** The dismissal records what the user answered and nothing else. */
@@ -455,6 +511,55 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     override fun updateNotifications(provider: EditorNotificationProvider) = Unit
 
     override fun updateAllNotifications() = Unit
+  }
+
+  /**
+   * Stands in for the file of a split frontend's in-memory document: it records each read of its
+   * name and path, with the stack that made it. It does not wait and does not ask a backend.
+   */
+  private class PropertyRecordingFile(name: String) : LightVirtualFile(name, "# Checkout\n") {
+    private val reads = ConcurrentLinkedQueue<Pair<String, Array<StackTraceElement>>>()
+
+    override fun getPath(): String {
+      reads += "getPath" to Throwable().stackTrace
+      return super.getPath()
+    }
+
+    override fun getName(): String {
+      reads += "getName" to Throwable().stackTrace
+      return super.getName()
+    }
+
+    /**
+     * The reads [FigmaLinkDocumentListener] made, in order. Other document listeners and the
+     * document's own creation read the file as well, so a read is counted by the stack that made it.
+     */
+    fun readsByListener(): List<String> = reads
+      .filter { (_, stack) -> stack.any { it.className == FigmaLinkDocumentListener::class.java.name } }
+      .map { (property, _) -> property }
+  }
+
+  private fun documentOf(file: VirtualFile): Document = FileDocumentManager.getInstance().getDocument(file).shouldNotBeNull()
+
+  /** Replaces the whole text, which is how a split frontend applies the text the backend sent. */
+  private fun resetText(document: Document, text: String) {
+    WriteCommandAction.runWriteCommandAction(project) { document.setText(text) }
+  }
+
+  /** Runs [body] while [IdeProductMode] reports a split frontend. The test application is a monolith. */
+  private fun asFrontend(body: () -> Unit) {
+    val disposable = Disposer.newDisposable(testRootDisposable)
+    try {
+      ApplicationManager.getApplication().replaceService(IdeProductMode::class.java, object : IdeProductMode {
+        override val currentMode: ProductMode
+          get() = ProductMode.FRONTEND
+      }, disposable)
+      IdeProductMode.isFrontend.shouldBeTrue()
+      body()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   private fun offerForTest(): FigmaSuggestionOffer = FigmaSuggestionOffer(
