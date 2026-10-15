@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -100,6 +102,17 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     paintInlay(bar)
     assertEquals(hiddenWidth, bar.widthInPixels)
     assertEquals(content, myFixture.editor.document.text)
+  }
+
+  fun `test the pass adds the bar in dumb mode`() {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      configureTable()
+
+      myFixture.doHighlighting()
+
+      assertEquals(expectedBarWidth(), getInlayWidth())
+    }
   }
 
   private fun configureTable() {

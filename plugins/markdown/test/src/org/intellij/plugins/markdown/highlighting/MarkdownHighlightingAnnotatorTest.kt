@@ -4,7 +4,9 @@ package org.intellij.plugins.markdown.highlighting
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import java.awt.Font
 
 class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
@@ -419,6 +421,19 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       .filterValues { it.size > 1 }
 
     assertTrue("Duplicate forced text attribute annotations: ${duplicates.keys.joinToString()}", duplicates.isEmpty())
+  }
+
+  fun testHeadingsEmphasisAndCodeSpansAreHighlightedInDumbMode() {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      val text = "# Header\n\n**bold** `code`\n"
+      myFixture.configureByText("test.md", text)
+      val highlights = myFixture.doHighlighting()
+
+      assertElementHighlightedWithKey(highlights, "Header", MarkdownHighlighterColors.HEADER_LEVEL_1)
+      assertElementHighlightedWithKey(highlights, "bold", MarkdownHighlighterColors.BOLD)
+      assertElementHighlightedWithKey(highlights, "code", MarkdownHighlighterColors.CODE_SPAN)
+    }
   }
 
   private fun assertElementHighlightedWithKey(
