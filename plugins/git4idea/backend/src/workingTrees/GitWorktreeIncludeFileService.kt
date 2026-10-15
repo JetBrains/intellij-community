@@ -116,11 +116,10 @@ internal class GitWorktreeIncludeFileService {
    */
   fun writeWorktreeIncludeFile(repository: GitRepository, content: String): Boolean {
     val root = repository.root
-    val fileContent = GitBundle.message("working.tree.dialog.worktree.include.close.comment") + "\n" + content
     return try {
       runWriteAction {
         val newFile = root.createChildData(root, WORKTREE_INCLUDE_FILE_NAME)
-        VfsUtil.saveText(newFile, fileContent)
+        VfsUtil.saveText(newFile, content)
       }
       true
     }
