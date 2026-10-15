@@ -37,6 +37,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.maven.testFramework",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -151,6 +155,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.testFramework.iml",
+        "resources/intellij.maven.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )
