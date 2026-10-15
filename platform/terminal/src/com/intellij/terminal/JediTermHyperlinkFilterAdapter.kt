@@ -126,6 +126,11 @@ internal fun convertLinkResult(result: Filter.Result, project: Project, widget: 
 
 private fun convertResultItem(item: ResultItem, project: Project, widget: JBTerminalWidget): LinkResultItem? {
   val info = item.hyperlinkInfo ?: return null
+  if (item.isInvisibleLink) {
+    // JediTerm UI doesn't support invisible links as of now.
+    // However, it's relatively easy to support them.
+    return null
+  }
   return LinkResultItem(item.highlightStartOffset, item.highlightEndOffset, convertInfo(info, project, widget))
 }
 
