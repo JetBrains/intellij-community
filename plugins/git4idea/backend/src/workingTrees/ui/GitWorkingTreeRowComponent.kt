@@ -47,7 +47,7 @@ internal class GitWorkingTreeRowComponent {
   private val nameLabel = createTextComponent()
   private val statusIconLabel = JBLabel()
   private val submoduleHintLabel = JBLabel(GitBundle.message("toolwindow.working.trees.worktree.kind.submodule.hint"))
-  private val branchIconLabel = JBLabel(AllIcons.Vcs.Branch)
+  private val branchIconLabel = JBLabel()
   private val branchLabel = createTextComponent().apply { minimumSize = Dimension(0, minimumSize.height) }
   private val prIconLabel = JBLabel()
   private val prTitleLabel = JBLabel().apply { minimumSize = Dimension(0, minimumSize.height) }
@@ -90,7 +90,8 @@ internal class GitWorkingTreeRowComponent {
     speedSearch: SpeedSearchSupply?,
   ) {
     val worktree = (row as? GitWorktreeRow)?.gitWorkingTree
-    applySelectionColors(selected, hovered, focused, font, dimmed = row is GitWorktreeCreatingRow || worktree?.isPrunable == true)
+    val dimmed = row is GitWorktreeCreatingRow || worktree?.isPrunable == true
+    applySelectionColors(selected, hovered, focused, font, dimmed)
     leadingIconLabel.icon = when {
       row is GitWorktreeCreatingRow -> AnimatedIcon.Default.INSTANCE
       worktree?.isCurrent == true -> AllIcons.Actions.Checked
@@ -103,6 +104,7 @@ internal class GitWorkingTreeRowComponent {
     submoduleHintLabel.isVisible = row is GitWorktreeRow && row.repositoryKind == GitRepositoryKind.SUBMODULE
     branchLabel.clear()
     branchLabel.append(row.presentableBranchName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    branchIconLabel.icon = if (dimmed) tint(BRANCH_ICON, branchLabel.foreground) else BRANCH_ICON
     prIconLabel.icon = if (review != null) IconUtil.colorize(CollaborationToolsIcons.PullRequestOpen, prTitleLabel.foreground) else null
     prIconLabel.isVisible = review != null
     prTitleLabel.text = review?.title
@@ -193,8 +195,12 @@ internal class GitWorkingTreeRowComponent {
 
   private fun statusIcon(locked: Boolean): Icon? = if (locked) LOCKED_ICON else null
 
+  // The default `keepBrightness` multiplies the brightness of the icon by the one of the color, which darkens the result.
+  private fun tint(icon: Icon, color: Color): Icon = IconUtil.colorize(icon, color, keepBrightness = false)
+
   companion object {
     private val LOCKED_ICON = AllIcons.Ide.Readonly
+    private val BRANCH_ICON = AllIcons.Vcs.Branch
     private val SELECTION_ARC get() = JBUI.CurrentTheme.Popup.Selection.ARC.get()
     private val STRIPE_RIGHT_GAP get() = JBUI.scale(4)
 
