@@ -72,7 +72,7 @@ fn a_single_class_runs_unsharded_and_everything_else_is_forced() {
 /// Each shard is another test JVM and another IDE, and the flow lanes rely on one shared instance.
 #[test]
 fn an_ide_launching_lane_pins_one_shard() {
-    for name in ["ui", "ui-real", "ui-live", "ui-perf", "gui-chat"] {
+    for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {
         let spec = lane(name);
         assert_eq!(spec.shards, Some(1), "lane {name}");
         let resolution = Resolution {
@@ -203,7 +203,7 @@ fn the_fast_lane_builds_what_it_excludes_from_the_run() {
 /// spawn. `AirIntegrationTagTest` checks the whole list against the BUILD files.
 #[test]
 fn every_ide_launching_lane_has_its_library_in_the_build_spawn() {
-    for name in ["ui", "ui-real", "ui-live", "ui-perf", "gui-chat"] {
+    for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {
         let mut target = lane(name).targets[0].clone();
         if let Some(directory) = target.strip_suffix("/...") {
             // A lane rooted at a package runs the one target named after that package.
@@ -366,13 +366,16 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
             spec.name
         );
     }
-    assert_eq!(lanes().integration_lane_names(), ["ui", "ui-real", "ui-live", "ui-perf", "gui-chat"]);
+    assert_eq!(
+        lanes().integration_lane_names(),
+        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"]
+    );
 }
 
 /// An integration lane without a catalog name is explicit-only: the suite join maps lanes through the catalog, so no
 /// flow, suite or changed path reaches it, and it runs only when a caller names it. Its one target is a label, never a
-/// pattern, so no wildcard a caller spells reaches it through the lane either. `ui-live` spends billed turns, and
-/// `ui-perf` takes hours.
+/// pattern, so no wildcard a caller spells reaches it through the lane either. `ui-live` spends billed turns,
+/// `ui-perf` takes hours, and `jcp` drives a real preprod account.
 #[test]
 fn an_integration_lane_without_a_catalog_name_is_explicit_only() {
     let explicit: Vec<&str> = lanes()
@@ -380,8 +383,8 @@ fn an_integration_lane_without_a_catalog_name_is_explicit_only() {
         .filter(|spec| spec.integration_tag.is_some() && spec.catalog_lane.is_none())
         .map(|spec| spec.name.as_str())
         .collect();
-    assert_eq!(explicit, ["ui-live", "ui-perf"]);
-    for (name, catalog_lane) in [("ui-live", "UI_LIVE"), ("ui-perf", "UI_PERF")] {
+    assert_eq!(explicit, ["ui-live", "ui-perf", "jcp"]);
+    for (name, catalog_lane) in [("ui-live", "UI_LIVE"), ("ui-perf", "UI_PERF"), ("jcp", "JCP")] {
         let spec = lane(name);
         assert!(!spec.is_multi_target(), "{:?}", spec.targets);
         assert_eq!(spec.test_label.as_deref(), Some(spec.targets[0].as_str()));
@@ -440,6 +443,7 @@ fn the_parser_refuses_a_table_whose_lanes_and_tags_disagree() {
             "air-integration-ui-real",
             "air-integration-ui-live",
             "air-integration-ui-perf",
+            "air-integration-jcp",
         ]
     );
 }
@@ -453,7 +457,7 @@ fn lane_names_cover_every_lane_exactly_once() {
     assert_eq!(
         names,
         [
-            "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "gui-chat", "headless", "all", "claude", "codex", "pi",
+            "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "headless", "all", "claude", "codex", "pi",
             "junie", "acp"
         ]
     );

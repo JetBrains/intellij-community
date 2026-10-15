@@ -57,6 +57,12 @@
       "axis": "lane",
       "category": "air-integration-ui",
       "description": "The performance tests on the product heap, `ui-perf_test`. `BT --lane ui-perf` selects it."
+    },
+    {
+      "name": "air-integration-jcp",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The JCP cloud-task e2e, `jcp_test`. `BT --lane jcp` selects it."
     }
   ],
   "excludedTestLibs": [
@@ -69,6 +75,7 @@
     "//plugins/air/tests/integration/headless/codex:codex_test_lib",
     "//plugins/air/tests/integration/headless/junie:junie_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
+    "//plugins/air/tests/integration/jcp:jcp_test_lib",
     "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
     "//plugins/air/tests/integration/ui-perf:ui-perf_test_lib",
     "//plugins/air/tests/integration/ui-real:ui-real_test_lib",
@@ -170,6 +177,19 @@
       "integrationTag": "air-integration-ui-perf",
       "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test",
       "junitTag": "air-ui-perf"
+    },
+    {
+      "name": "jcp",
+      "description": "the JCP cloud-task e2e on a real preprod account, explicit-only (the target is manual, and no --changed, suites, shard or flake picks it; the test launches its own IDE through IDE Starter, so run it on the host: BT --lane jcp)",
+      "target": "//plugins/air/tests/integration/jcp:jcp_test",
+      "extra": [
+        "--test_env=AIR_CLOUD_TASK_ACCOUNT_PASSWORD",
+        "--test_env=AIR_CLOUD_TASK_ACCOUNT_USERNAME"
+      ],
+      "shards": 1,
+      "integrationTag": "air-integration-jcp",
+      "testLabel": "//plugins/air/tests/integration/jcp:jcp_test",
+      "junitTag": "air-jcp"
     },
     {
       "name": "gui-chat",
