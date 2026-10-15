@@ -1423,6 +1423,10 @@ after that move.
 - `lane-run` takes its run directory from `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then
   `$TEST_TMPDIR/air-lane`. A Bazel `--test_filter` adds selectors, and `$JB_TEST_JUNIT5_FILTERS` adds JUnit5 filters.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_run_directory_comes_from_the_flag_the_variable_or_the_test_directory`)
+
+- `lane-run` refuses a run that Bazel splits into more than one shard, because a lane IDE takes the fixed bridge port.
+  The lane test touches no shard status file, so Bazel refuses such a run too where its check is on.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_of_more_than_one_shard_is_refused`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_selectors_and_the_filters_come_from_the_flags_and_the_environment`)
 
 - An iteration runs the suite documents of its lane. A selector narrows them by the test class, with or without a

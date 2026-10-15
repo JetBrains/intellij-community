@@ -39,10 +39,15 @@ pub(crate) const RUNTIME_ROOT_VARIABLE: &str = "AIR_LANE_RUNTIME_ROOT";
 const TEST_FILTER_VARIABLE: &str = "TESTBRIDGE_TEST_ONLY";
 /// The variable of the JUnit5 filters, `;`-separated, as the lane table spells them.
 const JUNIT5_FILTERS_VARIABLE: &str = "JB_TEST_JUNIT5_FILTERS";
+/// The variable of the shard count of a Bazel test.
+const TOTAL_SHARDS_VARIABLE: &str = "TEST_TOTAL_SHARDS";
+/// The refusal code of a run that Bazel splits into shards.
+pub(crate) const SHARDED_CODE: &str = "lane_run_sharded";
 
 /// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
 /// environment.
 pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
+    refuse_shards(variable)?;
     let root = runtime_root(args, variable)?;
     let runfiles_root = args
         .runfiles_root
@@ -136,6 +141,21 @@ pub(crate) fn write_xml(root: &Path, xml: &str, variable: &dyn Fn(&str) -> Optio
             .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the JUnit XML {}: {error}", file.display())))?;
     }
     Ok(())
+}
+
+/// Refuses a run that Bazel splits into more than one shard. A lane IDE takes the fixed bridge port, so the shards of one
+/// lane cannot run beside each other, and one iteration runs the whole selection.
+pub(crate) fn refuse_shards(variable: &dyn Fn(&str) -> Option<String>) -> Result<(), AgentRefusal> {
+    match variable(TOTAL_SHARDS_VARIABLE).and_then(|total| total.trim().parse::<u32>().ok()) {
+        Some(total) if total > 1 => Err(AgentRefusal::refused(
+            SHARDED_CODE,
+            format!(
+                "Bazel splits the lane test into {total} shards, and lane-run runs one iteration of the lane on the \
+                 fixed bridge port; run the lane test as one shard"
+            ),
+        )),
+        _ => Ok(()),
+    }
 }
 
 /// The run directory: `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then `$TEST_TMPDIR/air-lane`.

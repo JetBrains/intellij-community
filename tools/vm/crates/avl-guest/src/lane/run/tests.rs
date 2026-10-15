@@ -130,3 +130,14 @@ fn the_junit_xml_goes_to_the_run_directory_and_to_the_file_of_the_bazel_test() {
     .unwrap();
     assert_eq!(fs::read_to_string(&named).unwrap(), xml);
 }
+
+// A lane IDE takes the fixed bridge port, so a lane test runs as one shard. A run of more shards is refused before it
+// prepares anything, and one shard is no split.
+#[test]
+fn a_run_of_more_than_one_shard_is_refused() {
+    let refused = run(&args(&[]), &environment(&[("TEST_TOTAL_SHARDS", "6"), ("TEST_SHARD_INDEX", "2")])).unwrap_err();
+    assert_eq!(refused.code, SHARDED_CODE);
+    assert!(refused.message.contains("6 shards"), "{}", refused.message);
+    refuse_shards(&environment(&[("TEST_TOTAL_SHARDS", "1")])).unwrap();
+    refuse_shards(&environment(&[])).unwrap();
+}
