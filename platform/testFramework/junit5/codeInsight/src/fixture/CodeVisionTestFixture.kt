@@ -54,7 +54,7 @@ class CodeVisionTestFixture(
     project.waitForSmartMode()
     val codeVisionHost = readAction { CodeVisionInitializer.getInstance(project).getCodeVisionHost() }
 
-    withContext(Dispatchers.EDT) {
+    val newFile = withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         val settings = CodeVisionSettings.getInstance()
         val file = requireNotNull(PsiManager.getInstance(project).findFile(virtualFile, context))
@@ -73,8 +73,12 @@ class CodeVisionTestFixture(
           document.setText(sourceText)
           PsiDocumentManager.getInstance(project).commitDocument(editor.document)
         }
-        val newFile = requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(document, context))
-        doHighlighting(newFile)
+        requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(document, context))
+      }
+    }
+    doHighlighting(newFile)
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
         CodeVisionTestUtil.waitForCodeVisionSync(editor, codeVisionHost, disposable)
       }
     }

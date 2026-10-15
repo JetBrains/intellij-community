@@ -81,7 +81,7 @@ public final class CodeVisionTestUtil {
    * {@code configureFile} must open the file in the editor of {@code fixture}.
    * Then runs the highlighting, waits for the code vision, and compares the dump of the code vision hints with {@code expectedText}.
    * When {@code onlyCodeVisionHintsAllowed} is {@code true}, other inlays in the editor fail the test.
-   * Call it from any thread. The highlighting and the code vision run on the EDT.
+   * Call it from any thread. The code vision runs on the EDT.
    */
   public static void testProviders(@NotNull CodeInsightTestFixture fixture,
                                    @NotNull String expectedText,
@@ -96,15 +96,17 @@ public final class CodeVisionTestUtil {
     String sourceText = InlayDumpUtil.INSTANCE.removeInlays(expectedText);
     configureFile.accept(sourceText);
 
-    String actualText = EdtTestUtil.runInEdtAndGet(() -> {
-      Editor editor = fixture.getEditor();
-      project.putUserData(CodeVisionHost.Companion.isCodeVisionTestKey(), true);
+    Editor editor = fixture.getEditor();
+    project.putUserData(CodeVisionHost.Companion.isCodeVisionTestKey(), true);
+    EdtTestUtil.runInEdtAndWait(() -> {
       for (CodeVisionProvider<?> provider : codeVisionHost.getProviders()) {
         if (provider.getId().equals("vcs.code.vision") && enabledIds.contains(provider.getGroupId())) {
           provider.preparePreview(editor, fixture.getFile());
         }
       }
-      fixture.doHighlighting();
+    });
+    fixture.doHighlighting();
+    String actualText = EdtTestUtil.runInEdtAndGet(() -> {
       waitForCodeVisionSync(editor, codeVisionHost, fixture.getTestRootDisposable());
       return dumpCodeVisionHints(sourceText, editor, onlyCodeVisionHintsAllowed);
     });

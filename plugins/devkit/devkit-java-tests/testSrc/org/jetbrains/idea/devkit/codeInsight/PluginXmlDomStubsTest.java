@@ -136,8 +136,8 @@ public class PluginXmlDomStubsTest {
       prepareFile("pluginWithXInclude-extensionPoints.xml");
       prepareFile("pluginWithXInclude-main.xml");
       prepareFile("pluginWithXInclude.xml");
-      codeInsightFixture.get().testHighlighting("pluginWithXInclude.xml");
     });
+    codeInsightFixture.get().testHighlighting("pluginWithXInclude.xml");
   }
 
   @Test
