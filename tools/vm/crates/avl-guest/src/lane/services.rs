@@ -26,6 +26,8 @@ pub(crate) mod http;
 pub(crate) mod registry;
 #[cfg(test)]
 pub(crate) mod testing;
+#[cfg(test)]
+mod tests;
 
 /// The refusal code of a listener that cannot bind its port.
 pub(crate) const BIND_CODE: &str = "lane_service_bind";
