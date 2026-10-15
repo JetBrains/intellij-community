@@ -83,7 +83,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.properties",
             "intellij.terminal",
             "intellij.vcs.git",
-            "intellij.vcs.svn",
             "intellij.vcs.github",
             "intellij.vcs.git.commit.modal",
             //"intellij.ant",
