@@ -33,6 +33,7 @@ use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
 
 use super::host_ids::{self, HostId, HostSide, ServiceControl};
+use super::ide::Relaunch;
 use super::readiness::request;
 use super::recycle::{Isolation, ResetPhase, never_ran};
 use super::stream::{CaseIdentity, CaseStatus, Stream};
@@ -98,7 +99,12 @@ pub(crate) trait Lane: Probes {
 
     /// Quits the IDE, performs `while_down` on its context directory, launches it again on the same context, and waits
     /// for readiness. With `keep_junie_offer`, the Junie offer of the new start stays open.
-    fn relaunch(&self, keep_junie_offer: bool, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String>;
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        keep_junie_offer: bool,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+    ) -> Result<(), String>;
 
     fn services(&self) -> &dyn ServiceControl;
 
@@ -462,7 +468,7 @@ impl<'r, 's> Runner<'r, 's> {
             self.isolation
                 .borrow_mut()
                 .ensure_clean(phase, scenario, &mut || self.reset(phase, scenario, reset), &mut || {
-                    self.relaunch_span("recycle", false, &mut |_| Ok(()))
+                    self.relaunch_span(Relaunch::Recycle, false, &mut |_| Ok(()))
                 })
         });
         self.attach_dumps();
@@ -502,17 +508,22 @@ impl<'r, 's> Runner<'r, 's> {
         if failures.is_empty() { Ok(()) } else { Err(failures.join("\n")) }
     }
 
-    /// A relaunch of the IDE as a `restart` span with the key `restart:<id>`.
+    /// A relaunch of the IDE as a `restart` span with the key `restart:ide` for `restart-ide` and `restart:recycle` for a
+    /// recycle, as the recorder keys them.
     fn relaunch_span(
         &self,
-        id: &str,
+        cause: Relaunch,
         keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
     ) -> Result<(), String> {
+        let id = match cause {
+            Relaunch::Restart => "ide",
+            Relaunch::Recycle => "recycle",
+        };
         let span = self.trace().open_span(SpanKind::Restart, id, &format!("[restart] {id}"), None);
         self.trace().restart();
         let outcome = self.watch.step(&format!("relaunch for {id}"), || {
-            self.watch.relaunching(|| self.lane.relaunch(keep_junie_offer, while_down))
+            self.watch.relaunching(|| self.lane.relaunch(cause, keep_junie_offer, while_down))
         });
         let failure = outcome
             .as_ref()
@@ -955,7 +966,7 @@ impl HostSide for RunnerHost<'_, '_, '_> {
 
     fn restart_ide(&mut self, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         self.runner
-            .relaunch_span("ide", self.fixture.keeps_junie_startup_offer, while_down)?;
+            .relaunch_span(Relaunch::Restart, self.fixture.keeps_junie_startup_offer, while_down)?;
         // The restarted IDE holds no fixture facts, so a story scenario states them again.
         if !self.authored
             && let Some(bridge) = &self.fixture.bridge

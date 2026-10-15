@@ -23,7 +23,7 @@ use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
-use super::ide::{ContextPlugin, LaneLaunch, Records};
+use super::ide::{ContextPlugin, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::package::sha256_hex;
@@ -369,10 +369,16 @@ impl Lane for DaemonLane<'_, '_> {
         self.bridge.post(request, within)
     }
 
-    fn relaunch(&self, keep_junie_offer: bool, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        keep_junie_offer: bool,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+    ) -> Result<(), String> {
         let restarted = self.daemon.with_ide(|owner| {
             owner.restart(
                 self.launch,
+                cause,
                 keep_junie_offer,
                 while_down,
                 &mut Records(&mut |record| self.stream.emit(&record)),

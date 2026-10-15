@@ -50,6 +50,8 @@ use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::supervisor::{self, Launcher, LiveSystem};
 
 mod restart;
+
+pub(crate) use restart::Relaunch;
 #[cfg(test)]
 mod tests;
 
@@ -427,7 +429,7 @@ impl IdeOwner {
         let decision = match decision.action {
             IdeAction::Reuse => decision,
             IdeAction::Relaunch => {
-                self.relaunch(launch, records)?;
+                self.relaunch(launch, RELAUNCH, records)?;
                 decision
             }
             IdeAction::Fresh => {
@@ -442,7 +444,7 @@ impl IdeOwner {
                         reason,
                     };
                     records.decide(&fallback);
-                    self.relaunch(launch, records)?;
+                    self.relaunch(launch, RELAUNCH, records)?;
                     fallback
                 }
             },
@@ -634,15 +636,16 @@ impl IdeOwner {
         self.start_run(held, launch, records)
     }
 
-    /// Quits the held IDE and launches it again on its context as `recycle-<n>-<millis>`.
-    fn relaunch(&mut self, launch: &LaneLaunch<'_>, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+    /// Quits the held IDE and launches it again on its context as `<base>-<n>-<millis>`. The count `n` counts every
+    /// relaunch of the context.
+    fn relaunch(&mut self, launch: &LaneLaunch<'_>, base: &str, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let Some(previous) = self.held.clone() else {
             return Err(AgentRefusal::internal("a relaunch was decided without an IDE"));
         };
         self.quit(records)?;
         let relaunches = previous.relaunches + 1;
         let held = HeldIde {
-            launch_name: launch_name(&format!("{RELAUNCH}-{relaunches}")),
+            launch_name: launch_name(&format!("{base}-{relaunches}")),
             pid: None,
             relaunches,
             exit_reported: false,

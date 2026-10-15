@@ -14,15 +14,43 @@ use crate::lane::services::feedback::Feedback;
 use crate::lane::services::registry::Registry;
 use crate::reply::AgentRefusal;
 
+/// Why the program runner relaunches the IDE: the base of the launch name, and the line of the run log.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Relaunch {
+    /// A scenario runs `restart-ide`.
+    Restart,
+    /// A reset did not hold.
+    Recycle,
+}
+
+impl Relaunch {
+    /// The base of the launch name.
+    pub(crate) const fn as_str(self) -> &'static str {
+        match self {
+            Self::Restart => "restart",
+            Self::Recycle => "recycle",
+        }
+    }
+
+    const fn reason(self) -> &'static str {
+        match self {
+            Self::Restart => "the scenario runs restart-ide",
+            Self::Recycle => "a reset did not hold",
+        }
+    }
+}
+
 impl IdeOwner {
-    /// Quits the held IDE, performs `while_down` on its context directory, launches it again on the same context, and
-    /// waits for readiness. With `keep_junie_offer`, the Junie offer of the new start stays open.
+    /// Quits the held IDE, performs `while_down` on its context directory, launches it again on the same context as
+    /// `<cause>-<n>-<millis>`, and waits for readiness. With `keep_junie_offer`, the Junie offer of the new start stays
+    /// open.
     ///
     /// The launch happens even when `while_down` fails, so the lane keeps an IDE. The failure of `while_down` is then the
     /// failure of the restart.
     pub(crate) fn restart(
         &mut self,
         launch: &LaneLaunch<'_>,
+        cause: Relaunch,
         keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
         records: &mut Records<'_>,
@@ -30,12 +58,17 @@ impl IdeOwner {
         let Some(mut previous) = self.held.clone() else {
             return Err(refused("a restart was asked for, and the owner holds no IDE"));
         };
+        records.note(format!(
+            "the IDE of '{}' relaunches on its context, because {}",
+            launch.identity.key(),
+            cause.reason()
+        ));
         self.quit(records)?;
         let down = while_down(previous.context());
         // The quit reported the end of this run already, so the relaunch below reports no second end.
         previous.exit_reported = true;
         self.held = Some(previous);
-        self.relaunch(launch, records)?;
+        self.relaunch(launch, cause.as_str(), records)?;
         let key = launch.identity.key();
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         readiness::await_ready(&bridge, key, &launch.document.vocabulary_digest, keep_junie_offer, &mut |text| {

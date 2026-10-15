@@ -787,8 +787,9 @@ Normal execution requires neither Peekaboo nor guest Screen Recording or Accessi
 
 Three properties of those paths are worth stating. Each IDE launch writes its own log directory, so
 iterations never overwrite each other, and `TEST_UNDECLARED_OUTPUTS_DIR` stays empty for that reason.
-The first launch of a context is `start-<stamp>`, and a relaunch is `recycle-N`, so list the `log`
-directory rather than assuming the path. The guest agent keeps the newest five log directories of each
+The first launch of a context is `start-<stamp>`. Under the lane daemon, a relaunch for `restart-ide` is
+`restart-N` and a relaunch after a reset that did not hold is `recycle-N`. So list the `log` directory rather than
+assuming the path. The guest agent keeps the newest five log directories of each
 context, and always the one of a live IDE. A fresh preparation deletes the data directories, the project, the
 argument file and the launch record. It keeps the log directories and the run directories of earlier launches, and
 `ide-gc` trims them. An iteration id includes the daemon boot identity, and each

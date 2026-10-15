@@ -86,7 +86,7 @@ struct Fake {
     client: avl_bridge::Client,
     script: Arc<Mutex<Script>>,
     pid: Arc<AtomicU32>,
-    relaunches: Mutex<Vec<bool>>,
+    relaunches: Mutex<Vec<(Relaunch, bool)>>,
     context: TempDir,
     services: FakeServices,
     /// Set by the kill of the watchdog. A request that answers after it fails, as a request to a dead IDE does.
@@ -221,8 +221,13 @@ impl Lane for Fake {
             .post_json("/api/air/ui-test", &request.to_string(), Instant::now() + within)
     }
 
-    fn relaunch(&self, keep_junie_offer: bool, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
-        self.relaunches.lock().unwrap().push(keep_junie_offer);
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        keep_junie_offer: bool,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+    ) -> Result<(), String> {
+        self.relaunches.lock().unwrap().push((cause, keep_junie_offer));
         let down = while_down(self.context.path());
         self.pid.fetch_add(1, Ordering::SeqCst);
         down
@@ -522,7 +527,7 @@ fn a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid() {
     let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
     let instructions = json!([{"action": "rename-session-select"}]);
     let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
-    assert_eq!(*fake.relaunches.lock().unwrap(), [false]);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [(Relaunch::Recycle, false)]);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
     let select = fake
         .requests()
@@ -614,7 +619,7 @@ fn a_restart_performs_while_down_and_states_the_fixture_again() {
     ]);
     let ran = run(&fake, &[story(&vocabulary, &json!([scenario("restarts", &instructions)]))], None);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL", "{:?}", ran.records);
-    assert_eq!(*fake.relaunches.lock().unwrap(), [true]);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [(Relaunch::Restart, true)]);
     assert_eq!(fs::read_to_string(&file).unwrap(), "<before/><after/>");
     let kinds: Vec<(u32, String)> = fake.requests();
     let restated = kinds

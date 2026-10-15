@@ -1446,6 +1446,11 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_restart_performs_while_down_and_states_the_fixture_again`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_restart_performs_while_down_and_answers_the_reads`)
 
+- A relaunch for `restart-ide` launches as `restart-<n>`, and a recycle launches as `recycle-<n>`. Its line in the run
+  log names the cause.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_restart_performs_while_down_and_states_the_fixture_again`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid`)
+
 - The registry host ids hold, fail and release a package download, and they count the package requests after a mark.
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_registry_ids_arm_hold_release_and_check_the_package_fault`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_request_count_reads_the_package_requests_after_the_mark`)
