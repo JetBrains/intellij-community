@@ -178,9 +178,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                             @NotNull HighlighterTargetArea targetArea,
                                                                             boolean isPersistent,
                                                                             @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    if (mySnapshotHighlighterStorage != null) mySnapshotHighlighterStorage.assertMayChange();
     RangeHighlighterEx highlighter;
     if (mySnapshotHighlighterStorage != null) {
+      mySnapshotHighlighterStorage.assertMayChange();
       highlighter = isPersistent ?
                     SnapshotRangeHighlighterImpl.createPersistent(
                       mySnapshotHighlighterStorage, startOffset, layer, targetArea, textAttributesKey, true
