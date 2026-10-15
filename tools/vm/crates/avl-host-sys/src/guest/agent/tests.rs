@@ -107,6 +107,12 @@ async fn install_agent_renames_onto_the_running_binary_and_records_what_it_pushe
         ]
     );
     assert_eq!(channel.calls()[0].options.stdin.as_deref(), Some(&b"new agent bytes"[..]));
+    // `tee` echoes the binary to stdout. The agent of 2026-10-15 is 8.4 MB, above the capture limit of 8 MiB, so the
+    // write permits a truncated capture; the install failed as `subprocess_output_limit` without it.
+    assert!(
+        channel.calls()[0].options.allow_truncated,
+        "the agent write must permit the tee echo past the capture limit"
+    );
     let installed = installed_agent_receipt(settings, "air-docker-1", &host.quiet).unwrap();
     assert_eq!(installed, receipt(&host, &source, "new agent bytes"));
 }

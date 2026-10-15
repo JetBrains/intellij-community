@@ -310,9 +310,12 @@ impl Guest<'_> {
     /// write failed" from "the command failed".
     pub async fn write_file(&self, path: &str, content: &[u8], mode: &str) -> Result<(), Refusal> {
         let argv = user_argv(self.settings, &words(["/usr/bin/tee", path]));
-        // Some even for empty content: no stdin would leave `tee` reading whatever the channel inherits.
+        // Some even for empty content: no stdin would leave `tee` reading whatever the channel inherits. `tee` echoes
+        // its stdin to stdout, and that echo is no document: a file above the capture limit, such as the guest agent
+        // binary, must still install.
         let options = SpawnOptions {
             stdin: Some(content.to_vec()),
+            allow_truncated: true,
             ..SpawnOptions::within(GUEST_WRITE_TIMEOUT)
         };
         let captured = self.channel.exec(self.ctx, &argv, &options).await?;
