@@ -302,3 +302,63 @@ fn a_digest_that_the_lifecycle_never_names_ends_the_wait() {
         "the lifecycle state named no bridge plugin aaaaaaaaaaaa within 300 ms; the latest state names cccccccccccc"
     );
 }
+
+// The reload of Air posts the plugin id alone, with no staged directory, and waits until the lifecycle names the bridge
+// plugin of before the reload again. Old class loaders are a note, because the next part counts them.
+#[test]
+fn a_reload_of_air_waits_for_the_same_bridge_plugin_and_counts_no_loader() {
+    let digest = "d".repeat(64);
+    let answer = json!({ "unloaded": true, "oldLoaders": 2, "loaded": true, "digest": null, "reason": null });
+    let resident = FakeResident::start(200, answer, Some(digest.clone()), Some(digest.clone()), 1);
+    let client = Client::new(resident.server.url(), TOKEN).unwrap();
+    let mut notes = Vec::new();
+    reload_air(&client, LAUNCH, Duration::from_secs(5), &mut |note| notes.push(note)).unwrap();
+    assert_eq!(*resident.requests.lock().unwrap(), [json!({ "pluginId": AIR_PLUGIN_ID })]);
+    assert_eq!(notes.len(), 2, "{notes:?}");
+    assert!(
+        notes[0].starts_with("reload-air: unloaded, 2 old class loader(s), loaded"),
+        "{notes:?}"
+    );
+    assert!(
+        notes[1].starts_with(&format!("reload-air: the lifecycle names the bridge plugin {}", &digest[..12])),
+        "{notes:?}"
+    );
+}
+
+// A refusal, an unload or a load that did not happen, and a lifecycle that names no bridge plugin each fail the reload
+// of Air with the reason.
+#[test]
+fn a_reload_of_air_that_did_not_complete_fails_with_its_reason() {
+    let digest = Some("d".repeat(64));
+    for (status, answer, before, expected) in [
+        (
+            409,
+            json!({ "unloaded": false, "oldLoaders": -1, "loaded": false, "digest": null, "reason": "a reload runs" }),
+            digest.clone(),
+            "the resident plugin refused the reload of Air: a reload runs",
+        ),
+        (
+            200,
+            json!({ "unloaded": false, "oldLoaders": -1, "loaded": false, "digest": null, "reason": "a dynamic plugin vetoed" }),
+            digest.clone(),
+            "the platform did not unload Air: a dynamic plugin vetoed",
+        ),
+        (
+            200,
+            json!({ "unloaded": true, "oldLoaders": 0, "loaded": false, "digest": null, "reason": "the load failed" }),
+            digest,
+            "the platform did not load Air again: the load failed",
+        ),
+        (
+            200,
+            json!({ "unloaded": true, "oldLoaders": 0, "loaded": true, "digest": null, "reason": null }),
+            None,
+            "the lifecycle names no bridge plugin before the reload of Air",
+        ),
+    ] {
+        let resident = FakeResident::start(status, answer, before.clone(), before, 0);
+        let client = Client::new(resident.server.url(), TOKEN).unwrap();
+        let reason = reload_air(&client, LAUNCH, Duration::from_secs(5), &mut |_| {}).unwrap_err();
+        assert_eq!(reason, expected);
+    }
+}

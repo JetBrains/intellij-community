@@ -105,6 +105,10 @@ struct Fake {
     bare: Mutex<Vec<&'static str>>,
     /// A bare launch fails, as an IDE that never gets ready does.
     bare_launch_fails: AtomicBool,
+    /// The deadline of each reload of Air, in order.
+    air_reloads: Mutex<Vec<Duration>>,
+    /// A reload of Air fails, as one that the resident plugin refuses does.
+    air_reload_fails: AtomicBool,
 }
 
 impl Fake {
@@ -155,6 +159,8 @@ impl Fake {
             relaunch_keeps_pid: AtomicBool::new(false),
             bare: Mutex::new(Vec::new()),
             bare_launch_fails: AtomicBool::new(false),
+            air_reloads: Mutex::new(Vec::new()),
+            air_reload_fails: AtomicBool::new(false),
         }
     }
 
@@ -306,6 +312,14 @@ impl Lane for Fake {
 
     fn trace_get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error> {
         self.client.get(route, accept, Instant::now() + within)
+    }
+
+    fn reload_air(&self, within: Duration) -> Result<(), String> {
+        self.air_reloads.lock().unwrap().push(within);
+        if self.air_reload_fails.load(Ordering::SeqCst) {
+            return Err("the resident plugin refused the reload of Air: a reload runs".to_owned());
+        }
+        Ok(())
     }
 }
 
@@ -1187,6 +1201,89 @@ fn a_failed_install_and_a_missing_install_request_fail_the_suite() {
         failed[0]["message"]
     );
     assert!(fake.requests().is_empty(), "{:?}", fake.requests());
+}
+
+/// The authored suite `plugin-reload`: a part, the reload of Air, and a part that counts after it.
+fn plugin_reload() -> Suite {
+    let part = |name: &str| {
+        json!({"action": "authored-step", "args": {"part": name, "scenario": "reload", "suite": "plugin-reload",
+            "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}})
+    };
+    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open-session-and-count", "count-after-reload"],
+            "optional": false},
+            "scenario": {"type": "enum", "values": ["reload"], "optional": false},
+            "suite": {"type": "enum", "values": ["plugin-reload"], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}});
+    let document = json!({
+        "schemaVersion": 2, "suite": "plugin-reload", "lane": "GUI_CHAT", "testClassName": "AirPluginUnloadLeakTest",
+        "authored": true,
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirPluginUnloadLeakTest"}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
+            "reload-air": {"side": "host", "timeoutMs": 420_000, "restarts": 0, "answers": [], "mayAnswer": [],
+                "takes": [], "mayTake": [], "params": {}}}, "assertions": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "fixtures": {"authored": {}},
+        "profiles": [{"name": "Air reloads and leaves no class loader", "key": "reload", "fixture": "authored",
+            "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+            "program": [part("open-session-and-count"), {"action": "reload-air"}, part("count-after-reload")]}],
+    });
+    suite_of(&document)
+}
+
+// The reload of Air runs between two parts on the same IDE, within the deadline of its vocabulary entry. The runner
+// reads the attachments of the part before it first, and the trace shows the reload as a restart span. A reload that
+// fails fails the scenario as a host id.
+#[test]
+fn a_reload_of_air_runs_between_two_parts_on_the_same_ide() {
+    let fake = Fake::new(Script::default());
+    let ran = run(&fake, &[plugin_reload()], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    assert_eq!(*fake.air_reloads.lock().unwrap(), [Duration::from_secs(420)]);
+    assert!(fake.relaunches.lock().unwrap().is_empty());
+    let kinds: Vec<(u32, String)> = fake
+        .requests()
+        .into_iter()
+        .filter(|(_, kind)| kind == "action/authored-step" || kind == "GET /api/air/ui-test-trace/attachments")
+        .collect();
+    assert_eq!(
+        kinds.iter().map(|(_, kind)| kind.as_str()).collect::<Vec<_>>(),
+        [
+            "action/authored-step",
+            "GET /api/air/ui-test-trace/attachments",
+            "GET /api/air/ui-test-trace/attachments",
+            "action/authored-step",
+            "GET /api/air/ui-test-trace/attachments",
+        ],
+        "a list after the first part, a list before the reload, and a list after the last part"
+    );
+    assert!(
+        kinds.iter().all(|(pid, _)| *pid == 1),
+        "the reload keeps the IDE process: {kinds:?}"
+    );
+    assert!(
+        ran.trace.iter().any(|line| line.contains(r#""key":"restart:reload""#)),
+        "{:?}",
+        ran.trace
+    );
+
+    let failing = Fake::new(Script::default());
+    failing.air_reload_fails.store(true, Ordering::SeqCst);
+    let ran = run(&failing, &[plugin_reload()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(
+        (
+            finished[0]["status"].as_str(),
+            finished[0]["type"].as_str(),
+            finished[0]["message"].as_str()
+        ),
+        (
+            Some("FAILED"),
+            Some("lane_host_id"),
+            Some("the resident plugin refused the reload of Air: a reload runs")
+        )
+    );
 }
 
 // The transport of an instruction waits its deadline and a margin. An IDE that does not answer by then fails the

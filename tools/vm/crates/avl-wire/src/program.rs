@@ -50,6 +50,9 @@ vocabulary! {
         RecycleThroughFailedReset = "recycle-through-failed-reset",
         /// Lets the paused package download of the fake registry finish.
         ReleaseDownload = "release-download",
+        /// Reloads Air in place in the lane IDE, which reloads the bridge plugin that depends on it, and waits until the
+        /// lifecycle names the same bridge plugin again and the new copy answers. The IDE keeps its process.
+        ReloadAir = "reload-air",
         /// Quits the IDE the way a user does and starts it again on the same context. Between the quit and the launch it
         /// performs the file operations of the value `whileDown`, each on a path relative to the IDE context, and it
         /// answers the text of each read in `whileDownReads`.

@@ -531,6 +531,12 @@ impl Lane for DaemonLane<'_, '_> {
         self.bridge.get(route, accept, within)
     }
 
+    fn reload_air(&self, within: Duration) -> Result<(), String> {
+        let client = avl_bridge::Client::new(&avl_bridge::url(BRIDGE_PORT), &self.token).map_err(|error| error.to_string())?;
+        super::reload::reload_air(&client, self.launch.identity.key(), within, &mut |text| self.stream.note(text))?;
+        readiness::ping(&self.bridge).map_err(|refusal| format!("the reloaded bridge plugin does not answer: {}", refusal.message))
+    }
+
     fn end_bare(&self) -> Result<(), String> {
         let ended = self
             .daemon

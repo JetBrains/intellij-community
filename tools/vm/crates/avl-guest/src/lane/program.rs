@@ -102,8 +102,9 @@ const TERMINAL_SURFACE: &str = "terminal";
 const REGISTRY_AGENT_PREFIX: &str = "acp.registry.";
 /// The id of the part of an authored program.
 const AUTHORED_STEP: &str = "authored-step";
-/// The host ids that an authored program may run between its parts: the restart, and the proof of the recycle.
-const AUTHORED_HOST_IDS: [HostAction; 2] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset];
+/// The host ids that an authored program may run between its parts: the restart, the proof of the recycle, and the
+/// reload of Air.
+const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset, HostAction::ReloadAir];
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
 /// How long one read of a trace attachment route may take: the list, or the fetch of one entry.
@@ -149,6 +150,10 @@ pub(crate) trait Lane: Probes {
 
     /// GETs the trace route `route` of the bridge, whose answer has the media type `accept`, within `within`.
     fn trace_get(&self, route: &str, accept: &str, within: Duration) -> Result<Vec<u8>, avl_bridge::Error>;
+
+    /// Reloads Air in place within `within`, waits until the lifecycle names the same bridge plugin again, and pings the
+    /// new copy. The IDE keeps its process.
+    fn reload_air(&self, within: Duration) -> Result<(), String>;
 }
 
 /// One file that an instruction answered for the evidence of its scenario, an element of `attachments` of its answer.
@@ -880,8 +885,8 @@ impl<'r, 's> Runner<'r, 's> {
                 format!("the authored program runs '{label}', which no authored program may run"),
             ));
         }
-        // A restart loses what the IDE queued and nobody read, so the runner reads it first.
-        if suite.authored && host == HostId::Action(HostAction::RestartIde) {
+        // A restart and a reload lose what the IDE queued and nobody read, so the runner reads it first.
+        if suite.authored && matches!(host, HostId::Action(HostAction::RestartIde | HostAction::ReloadAir)) {
             self.collect_trace_attachments(label);
         }
         let mut side = RunnerHost {
@@ -890,8 +895,23 @@ impl<'r, 's> Runner<'r, 's> {
             authored: suite.authored,
             scenario: operation,
             reset: suite.reset.as_ref(),
+            deadline: Duration::from_millis(suite.spec_of(instruction).map_or(0, |spec| spec.timeout_ms)),
         };
         host_ids::perform(host, label, &instruction.args, values, &mut side).map_err(|message| Failure::runner(kind::HOST, message))
+    }
+
+    /// A reload of Air as a `restart` span with the key `restart:reload`. The bridge of the test plugin goes away during
+    /// the reload, so the recorder hears of it first, and the watchdog probe waits.
+    fn reload_air_span(&self, within: Duration) -> Result<(), String> {
+        let span = self.trace().open_span(SpanKind::Restart, "reload", "[restart] reload of Air", None);
+        self.trace().restart();
+        let outcome = self.watch.relaunching(|| self.lane.reload_air(within));
+        let failure = outcome
+            .as_ref()
+            .err()
+            .map(|error| Failure::runner(kind::HOST, error.clone()).trace());
+        self.trace().end_span(span, failure.as_ref());
+        outcome
     }
 
     /// Fails the next reset on purpose, so the isolation recycles the IDE and resets the replacement, as after any reset
@@ -1239,6 +1259,8 @@ struct RunnerHost<'a, 'r, 's> {
     /// The label of the scenario or operation of the instruction, which the reset names.
     scenario: &'a str,
     reset: Option<&'a SuiteReset>,
+    /// The deadline of the instruction, its `timeoutMs`.
+    deadline: Duration,
 }
 
 impl HostSide for RunnerHost<'_, '_, '_> {
@@ -1266,6 +1288,10 @@ impl HostSide for RunnerHost<'_, '_, '_> {
             .reset
             .ok_or_else(|| "the suite document states no reset section, and the proof of the recycle runs that reset".to_owned())?;
         self.runner.recycle_through_failed_reset(self.scenario, reset)
+    }
+
+    fn reload_air(&mut self) -> Result<(), String> {
+        self.runner.reload_air_span(self.deadline)
     }
 }
 

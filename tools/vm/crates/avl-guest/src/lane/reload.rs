@@ -13,6 +13,9 @@
 //! The caller then waits for readiness, which pings the new copy. Each step that fails gives the reason of a relaunch.
 //! The relaunch starts the new copy: after a rename, the directory and the manifest are already in place, and
 //! otherwise the install of the relaunch writes them.
+//!
+//! The host action `reload-air` reloads Air in place, see [`reload_air`]. The bridge plugin depends on Air, so it
+//! reloads from the same files with the same digest.
 
 use std::fs;
 use std::io;
@@ -49,6 +52,9 @@ pub(crate) const DIGEST_WAIT: Duration = Duration::from_secs(30);
 /// How long the reload route may take to answer. The driver waits up to 60 s for each step on the event thread to start,
 /// counts the old class loaders for up to 10 s, and then loads the new copy.
 const RELOAD_WAIT: Duration = Duration::from_mins(2);
+
+/// The id of Air, which `reload-air` reloads in place.
+pub(crate) const AIR_PLUGIN_ID: &str = "com.intellij.air";
 
 /// The status of a reload that the driver refused before the unload. Its answer is a document too.
 const REFUSED_STATUS: u16 = 409;
@@ -144,6 +150,62 @@ pub(crate) fn fallback_reason(answer: &ReloadAnswer, refused: bool, wanted: &str
             short(wanted)
         )),
     }
+}
+
+/// Reloads Air in place in the IDE behind `client`, the IDE of `launch`, within `within`, and waits until the lifecycle
+/// names the bridge plugin of before the reload again.
+///
+/// The route gets no staged directory and no digest, so the resident plugin unloads Air and loads it again from the same
+/// files. The bridge plugin depends on Air, so it reloads too, with the same digest. The resident plugin outlives the
+/// reload, so it answers after the load. A refusal, an unload that did not happen and a load that did not happen fail
+/// the reload. Old class loaders that stayed reachable fail nothing: the next part of the scenario counts them. `note`
+/// gets one line for the answer and one for the wait. The caller then pings the new copy.
+pub(crate) fn reload_air(client: &Client, launch: &str, within: Duration, note: &mut dyn FnMut(String)) -> Result<(), String> {
+    let reader = Reader::new(client.clone(), Some(launch));
+    let digest = reader
+        .poll(None, Duration::ZERO)
+        .map_err(|error| format!("the lifecycle did not answer before the reload of Air: {error}"))?
+        .state
+        .bridge_plugin
+        .ok_or_else(|| "the lifecycle names no bridge plugin before the reload of Air".to_owned())?;
+    let requested = Instant::now();
+    let (status, body) = client
+        .post_document(
+            RELOAD_ROUTE,
+            &json!({ "pluginId": AIR_PLUGIN_ID }).to_string(),
+            &[REFUSED_STATUS],
+            requested + within,
+        )
+        .map_err(|error| format!("the reload request of Air failed: {error}"))?;
+    let answer: ReloadAnswer = serde_json::from_slice(&body).map_err(|error| {
+        format!(
+            "the reload route answered {}, not a reload answer: {error}",
+            String::from_utf8_lossy(&body)
+        )
+    })?;
+    let because = answer.reason.as_deref().map_or_else(String::new, |reason| format!(": {reason}"));
+    if status == REFUSED_STATUS {
+        return Err(format!("the resident plugin refused the reload of Air{because}"));
+    }
+    if !answer.unloaded {
+        return Err(format!("the platform did not unload Air{because}"));
+    }
+    if !answer.loaded {
+        return Err(format!("the platform did not load Air again{because}"));
+    }
+    note(format!(
+        "reload-air: unloaded, {} old class loader(s), loaded, in {} ms",
+        answer.old_loaders,
+        requested.elapsed().as_millis()
+    ));
+    let polled = Instant::now();
+    await_bridge_plugin(&reader, &digest, DIGEST_WAIT)?;
+    note(format!(
+        "reload-air: the lifecycle names the bridge plugin {} after {} ms",
+        short(&digest),
+        polled.elapsed().as_millis()
+    ));
+    Ok(())
 }
 
 /// Reloads the bridge plugin of the IDE behind `client` from `files`, the context plugin files of the run, and waits

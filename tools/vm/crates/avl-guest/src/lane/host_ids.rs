@@ -3,7 +3,8 @@
 //!
 //! The words are [`HostAction`] and [`HostAssertion`] of the suite program. `restart-ide` quits the IDE and launches it
 //! again on the same context, and performs the file operations of the value `whileDown` in between.
-//! `recycle-through-failed-reset` proves the recycle of an IDE whose reset did not hold. The registry ids
+//! `recycle-through-failed-reset` proves the recycle of an IDE whose reset did not hold. `reload-air` reloads Air in
+//! place, and the IDE keeps its process. The registry ids
 //! hold, fail, release and count the package downloads of the fake registry. `account-approve-sign-in` approves the
 //! JetBrains Account login that the IDE started, in the emulator, and follows its redirect to the callback of the IDE.
 
@@ -79,6 +80,9 @@ pub(crate) trait HostSide {
     /// Fails the next state reset on purpose, recycles the IDE as a reset that does not hold does, and resets the
     /// replacement. It fails unless that reset passed on a new IDE process that answers the bridge.
     fn recycle_through_failed_reset(&mut self) -> Result<(), String>;
+
+    /// Reloads Air in place, waits until the lifecycle names the same bridge plugin again, and pings the new copy.
+    fn reload_air(&mut self) -> Result<(), String>;
 }
 
 /// One host id of an instruction.
@@ -126,6 +130,7 @@ pub(crate) fn perform(
         }
         HostId::Action(HostAction::RecycleThroughFailedReset) => side.recycle_through_failed_reset(),
         HostId::Action(HostAction::ReleaseDownload) => side.services().registry_clear(),
+        HostId::Action(HostAction::ReloadAir) => side.reload_air(),
         HostId::Action(HostAction::RestartIde) => restart_ide(values, side),
         HostId::Assertion(HostAssertion::ConsentDownloadFaultArmed) => {
             let fault = side.services().registry_fault()?;

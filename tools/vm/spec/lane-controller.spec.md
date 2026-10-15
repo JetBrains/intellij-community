@@ -1497,8 +1497,8 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/values/tests.rs (`a_part_takes_and_answers_exactly_its_declared_values`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_passes_its_values_and_reports_its_notes`)
 
-- After each part of an authored program, and before its `restart-ide`, the verb lists the trace attachments that the
-  IDE queued. It fetches each listed id at once. Each still, capture or file goes to the span of the instruction as a
+- After each part of an authored program, and before its `restart-ide` or `reload-air`, the verb lists the trace
+  attachments that the IDE queued. It fetches each listed id at once. Each still, capture or file goes to the span of the instruction as a
   named attachment. The run log notes a count of dropped stills and each fetch that fails, and neither fails the
   part.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued`)
@@ -1525,10 +1525,19 @@ after that move.
 
 - The host action `recycle-through-failed-reset` proves the recycle. It fails the next reset on purpose, so the IDE
   recycles and the reset runs again on the replacement. The action fails unless that reset passed on a new IDE
-  process that answers the bridge. The proof spends no recycle of the run. An authored program may run this action
-  and `restart-ide`, and no other host id.
+  process that answers the bridge. The proof spends no recycle of the run. An authored program may run this action,
+  `restart-ide` and `reload-air`, and no other host id.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_recycle_that_keeps_the_ide_process_fails_the_proof`)
+
+- The host action `reload-air` reloads Air in place, and the IDE keeps its process. The verb reads the bridge digest
+  from the lifecycle first. It posts the reload of `com.intellij.air` to the resident route, with no staged directory,
+  within the deadline of the action. It then waits until the lifecycle names that digest again, and it pings the new
+  copy. A refusal fails the action, and so does an unload or a load that did not happen. Old class loaders fail
+  nothing, because the next part counts them.
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`a_reload_of_air_waits_for_the_same_bridge_plugin_and_counts_no_loader`)
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`a_reload_of_air_that_did_not_complete_fails_with_its_reason`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_reload_of_air_runs_between_two_parts_on_the_same_ide`)
 
 - A suite document may state `launch: {profile: "bare", key: <launch key>}`. Such a suite runs after the suites of
   the shared IDE, on an IDE of its own. The verb quits the IDE of the lane and launches a bare IDE on a fresh context of

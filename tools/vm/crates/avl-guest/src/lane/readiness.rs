@@ -120,11 +120,7 @@ pub(crate) fn await_ready(
     note: &mut dyn FnMut(String),
 ) -> Result<(), AgentRefusal> {
     await_lifecycle_ready(bridge, launch, vocabulary_digest, note)?;
-    let nonce = format!("air-ui-test-bridge-{}", nanos());
-    check_robot_and_ping(
-        &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
-        &nonce,
-    )?;
+    ping(bridge)?;
     if !keep_junie_offer {
         skip_junie_offer(bridge, note)?;
     }
@@ -156,6 +152,16 @@ pub(crate) fn await_lifecycle_ready(
         vocabulary_digest,
         &MISSING_DIGEST_NOTED,
         note,
+    )
+}
+
+/// Proves that the bridge answers and drives gestures through the input-events robot: one chain of `InputRobot` and a
+/// `Ping` of a fresh nonce.
+pub(crate) fn ping(bridge: &Bridge) -> Result<(), AgentRefusal> {
+    let nonce = format!("air-ui-test-bridge-{}", nanos());
+    check_robot_and_ping(
+        &bridge.call(&robot_and_ping(&nonce), 2 * (DEFAULT_OPERATION + TRANSPORT_GRACE))?,
+        &nonce,
     )
 }
 
