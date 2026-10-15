@@ -1422,7 +1422,14 @@ def should_stop_on_exception(py_db, PyDBAdditionalThreadInfo info, frame, thread
 
             if not should_stop:
                 # Apply checks that don't need the exception breakpoint (where we shouldn't ever stop).
-                if exception == SystemExit and py_db.ignore_system_exit_code(value):
+                # JetBrains extension (PY-89654): the ignored SystemExit codes only apply to the uncaught breakpoints
+                # ("On termination"). A "raised" breakpoint ("On raise") stops on SystemExit like any exception, as in
+                # pydevd.
+                if (
+                    exception == SystemExit
+                    and py_db.ignore_system_exit_code(value)
+                    and py_db.get_exception_breakpoint(exception, py_db.break_on_caught_exceptions) is None
+                ):
                     pass
 
                 elif exception in (GeneratorExit, StopIteration, StopAsyncIteration):
