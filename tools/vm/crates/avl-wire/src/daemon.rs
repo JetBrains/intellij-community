@@ -15,6 +15,7 @@
 //!   field is a rename that landed halfway, and is refused too.
 
 use std::borrow::Cow;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::time::Duration;
 
@@ -22,6 +23,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use serde_json::{Map, Value};
+use sha2::{Digest, Sha256};
 
 #[cfg(test)]
 mod tests;
@@ -266,6 +268,34 @@ pub struct IdePlugin {
     pub sha256: String,
 }
 
+/// The digest of each context plugin directory, by the name of the directory: the first component of a destination.
+///
+/// `files` holds one `(destination, sha256)` pair per file. The digest of a directory is the SHA-256 of the destination
+/// and the content digest of each of its files, each followed by a NUL byte, in destination order. The resident plugin
+/// computes the `bridgePlugin` value of the lifecycle state by the same formula, so the controller, the guest agent and
+/// the IDE name one copy of a plugin by one value.
+pub fn plugin_directory_digests<'a>(files: impl IntoIterator<Item = (&'a str, &'a str)>) -> BTreeMap<String, String> {
+    let mut by_directory: BTreeMap<&str, Vec<(&str, &str)>> = BTreeMap::new();
+    for (destination, sha256) in files {
+        let directory = destination.split('/').next().unwrap_or_default();
+        by_directory.entry(directory).or_default().push((destination, sha256));
+    }
+    by_directory
+        .into_iter()
+        .map(|(directory, mut files)| {
+            files.sort_unstable();
+            let mut hash = Sha256::new();
+            for (destination, sha256) in files {
+                hash.update(destination.as_bytes());
+                hash.update([0]);
+                hash.update(sha256.as_bytes());
+                hash.update([0]);
+            }
+            (directory.to_owned(), hex::encode(hash.finalize()))
+        })
+        .collect()
+}
+
 /// The digests of the three lane inputs of the runtime descriptor, as the push stored them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -337,6 +367,9 @@ vocabulary! {
         /// A relaunch, a reset or a readiness gate of the lane was open past its budget, and the daemon wrote its
         /// dumps.
         SlowStep = "slowStep",
+        /// A choice the lane daemon made about the lane IDE, and why: a reuse, a reload of the bridge plugin, a
+        /// relaunch or a fresh context. The controller publishes it as its own `decision` record.
+        Decision = "decision",
     }
 }
 
@@ -576,6 +609,7 @@ pub enum RunEventKind {
     IdeLaunched(IdeLaunched),
     IdeExited(IdeExited),
     SlowStep(SlowStep),
+    Decision(crate::progress::Decision),
 }
 
 /// One decoded record: what the daemon sent, and the reading of it.
@@ -626,6 +660,7 @@ impl RunEvent {
             RunEventKind::IdeLaunched(_) => Event::IdeLaunched,
             RunEventKind::IdeExited(_) => Event::IdeExited,
             RunEventKind::SlowStep(_) => Event::SlowStep,
+            RunEventKind::Decision(_) => Event::Decision,
         }
     }
 
@@ -747,6 +782,7 @@ pub fn decode_run_event(line: &[u8]) -> Result<RunEvent, DecodeError> {
         Event::IdeLaunched => RunEventKind::IdeLaunched(record(event, body)?),
         Event::IdeExited => RunEventKind::IdeExited(record(event, body)?),
         Event::SlowStep => RunEventKind::SlowStep(record(event, body)?),
+        Event::Decision => RunEventKind::Decision(record(event, body)?),
     };
     Ok(RunEvent { raw: Some(raw), kind })
 }

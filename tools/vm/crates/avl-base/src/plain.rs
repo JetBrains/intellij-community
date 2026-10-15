@@ -360,7 +360,9 @@ impl State {
                 );
                 self.line(scope, &text);
             }
-            RunEventKind::PlanStarted(_)
+            // The controller publishes a decision of the daemon as its own decision, which has its own line.
+            RunEventKind::Decision(_)
+            | RunEventKind::PlanStarted(_)
             | RunEventKind::ContainerSkipped(_)
             | RunEventKind::RunFailed(_)
             | RunEventKind::Summary(_)

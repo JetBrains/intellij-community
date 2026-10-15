@@ -534,3 +534,55 @@ fn the_ide_life_records_decode_and_refuse_a_wrong_field() {
         assert_eq!(protocol_code(&line), CODE_FIELD_MISSING, "{line}");
     }
 }
+
+// A decision of the lane daemon about its IDE decodes as the decision of the controller, keeps its bytes, and
+// serializes back to its own shape.
+#[test]
+fn a_decision_record_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
+    let line = r#"{"event":"decision","subject":"ide","action":"reload","reason":"only the bridge plugin changed"}"#;
+    let event = decode(line);
+    assert_eq!(event.event(), Event::Decision);
+    assert_eq!(event.to_raw().get(), line);
+    let RunEventKind::Decision(decision) = &event.kind else {
+        panic!("read {:?}", event.kind);
+    };
+    assert_eq!(decision.line(), "ide reload: only the bridge plugin changed");
+    let synthesized = RunEvent::synthesized(event.kind.clone());
+    assert_eq!(synthesized.to_raw().get(), line);
+    assert_eq!(
+        protocol_code(r#"{"event":"decision","subject":"plugin","action":"reload"}"#),
+        CODE_FIELD_MISSING
+    );
+}
+
+// The digest of a plugin directory reads each destination and content digest of its files in destination order, so
+// the order of the files does not move it, and a file of another directory does not either.
+#[test]
+fn the_digest_of_a_plugin_directory_is_over_its_own_files_in_destination_order() {
+    let by_hand = |files: &[(&str, &str)]| {
+        let mut hash = Sha256::new();
+        for (destination, sha256) in files {
+            hash.update(destination.as_bytes());
+            hash.update([0]);
+            hash.update(sha256.as_bytes());
+            hash.update([0]);
+        }
+        hex::encode(hash.finalize())
+    };
+    let digests = plugin_directory_digests([("bridge/lib/b.jar", "2"), ("resident/lib/r.jar", "3"), ("bridge/lib/a.jar", "1")]);
+    assert_eq!(
+        digests,
+        BTreeMap::from([
+            (
+                "bridge".to_owned(),
+                by_hand(&[("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])
+            ),
+            ("resident".to_owned(), by_hand(&[("resident/lib/r.jar", "3")])),
+        ])
+    );
+    assert_eq!(
+        plugin_directory_digests([("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])["bridge"],
+        digests["bridge"]
+    );
+    assert!(plugin_directory_digests([]).is_empty());
+}

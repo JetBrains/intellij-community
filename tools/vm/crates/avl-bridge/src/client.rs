@@ -92,6 +92,16 @@ impl Client {
             .map_err(|kind| call.error(kind))
     }
 
+    /// POSTs the JSON text `request` to a route that answers a JSON document of its own, and answers the status and the
+    /// document. The route states a refusal with one of `statuses` in the same document as a success, so such an
+    /// answer is not an [Error]. Every other status than 200 and `statuses` is.
+    pub fn post_document(&self, route: &str, request: &str, statuses: &[u16], deadline: Instant) -> Result<(u16, Vec<u8>), Error> {
+        let call = Call { method: "POST", route };
+        self.exchange(&call, JSON, Some(request), deadline)
+            .and_then(|answer| answer.documented(JSON, statuses))
+            .map_err(|kind| call.error(kind))
+    }
+
     /// Sends the request and reads the answer. The IDE always sends `Content-Length`, and it closes the connection
     /// after an answer to a request with `Connection: close`, so a body without a length ends at EOF.
     fn exchange(&self, call: &Call<'_>, accept: &str, body: Option<&str>, deadline: Instant) -> Result<Answer, ErrorKind> {
@@ -190,6 +200,12 @@ struct Answer {
 impl Answer {
     /// The body of a 200 answer of the media type `accept`, within [MAX_BODY_BYTES].
     fn accepted(self, accept: &str) -> Result<Vec<u8>, ErrorKind> {
+        self.documented(accept, &[]).map(|(_, body)| body)
+    }
+
+    /// The status and the body of an answer of the media type `accept`, within [MAX_BODY_BYTES], whose status is 200 or
+    /// one of `statuses`. Every other status is [ErrorKind::Rejected], and 401 is [ErrorKind::Unauthorized].
+    fn documented(self, accept: &str, statuses: &[u16]) -> Result<(u16, Vec<u8>), ErrorKind> {
         let Self {
             status,
             content_type,
@@ -198,6 +214,7 @@ impl Answer {
         match status {
             200 => {}
             401 => return Err(ErrorKind::Unauthorized(Rejection::of(&body))),
+            _ if statuses.contains(&status) => {}
             _ => {
                 return Err(ErrorKind::Rejected {
                     status,
@@ -214,7 +231,7 @@ impl Answer {
                 "the bridge answered the content type {content_type:?}, not {accept}"
             )));
         }
-        Ok(body)
+        Ok((status, body))
     }
 }
 

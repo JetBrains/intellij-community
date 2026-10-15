@@ -318,3 +318,27 @@ fn a_base_that_is_not_a_loopback_url_is_refused() {
         Some("the bridge token holds a control character, which no request header can carry")
     );
 }
+
+// A route that states a refusal in its own document answers it with a status that the caller names, and the caller
+// reads the document. A status that the caller does not name stays a rejection, and a refused token stays final.
+#[test]
+fn a_documented_post_answers_the_named_statuses_with_their_document() {
+    let server = FakeHttp::start(|request| match request.path.as_str() {
+        "/ok" => Response::json(200, r#"{"done":true}"#),
+        "/refused" => Response::json(409, r#"{"done":false}"#),
+        "/token" => Response::json(401, r#"{"failure":{"type":"java.lang.SecurityException","message":"bad token"}}"#),
+        _ => Response::error(500, "the driver failed"),
+    });
+    let client = Client::new(server.url(), "t").unwrap();
+    let post = |route: &str| client.post_document(route, "{}", &[409], soon());
+    assert_eq!(post("/ok").unwrap(), (200, br#"{"done":true}"#.to_vec()));
+    assert_eq!(post("/refused").unwrap(), (409, br#"{"done":false}"#.to_vec()));
+    let failed = post("/failed").unwrap_err();
+    assert!(
+        matches!(failed.kind(), ErrorKind::Rejected { status: 500, rejection } if rejection.excerpt == "the driver failed"),
+        "{failed:?}"
+    );
+    assert!(matches!(post("/token").unwrap_err().kind(), ErrorKind::Unauthorized(_)));
+    let not_named = client.post_document("/refused", "{}", &[], soon()).unwrap_err();
+    assert!(matches!(not_named.kind(), ErrorKind::Rejected { status: 409, .. }), "{not_named:?}");
+}

@@ -69,6 +69,9 @@ pub(crate) struct PreparedBuild {
     /// The identity of [`Self::plugin_files`]: each destination with its content digest. Neither the product digest
     /// nor the mount digest reads it, so a change of the context plugins alone refreshes no share.
     pub plugins_digest: String,
+    /// The digest of each context plugin directory, such as the bridge plugin and its resident part, by directory
+    /// name. The lane daemon decides by them whether a change reloads the bridge plugin or relaunches the IDE.
+    pub plugin_directories: BTreeMap<String, String>,
     /// The immutable environment the daemon is exec'd with that no build produces: what every lane sets by value,
     /// plus the guest's Node. Its [`lane_environment_digest`] is part of the launch digest, so a change here
     /// re-execs the daemon.
@@ -104,6 +107,21 @@ pub(crate) fn lane_inputs_note(inputs: &[LaneInput]) -> String {
         .map(|input| format!("{} {}", input.field, input.host.sha256.get(..12).unwrap_or(&input.host.sha256)))
         .collect();
     format!("lane inputs by digest: {}", named.join(", "))
+}
+
+/// The digest of each context plugin directory, by the formula of the lane daemon and of the resident plugin.
+pub(crate) fn plugin_directories(files: &[PluginFile]) -> BTreeMap<String, String> {
+    avl_wire::daemon::plugin_directory_digests(files.iter().map(|file| (file.destination.as_str(), file.host.sha256.as_str())))
+}
+
+/// The note that names the digest of each context plugin directory, in name order, as `<directory> <first 12 hex
+/// digits>`.
+pub(crate) fn plugin_directories_note(directories: &BTreeMap<String, String>) -> String {
+    let named: Vec<String> = directories
+        .iter()
+        .map(|(directory, digest)| format!("{directory} {}", digest.get(..12).unwrap_or(digest)))
+        .collect();
+    format!("context plugins by digest: {}", named.join(", "))
 }
 
 /// The identity of the context plugin files: each destination with its content digest, so a moved file and a changed
@@ -507,6 +525,7 @@ impl Host {
             descriptor,
             hot_jars: stamped.hot_jars,
             plugins_digest: plugins_digest(&stamped.plugin_files),
+            plugin_directories: plugin_directories(&stamped.plugin_files),
             plugin_files: stamped.plugin_files,
             lane_inputs: stamped.lane_inputs,
             runtime_digest: stamped.runtime_digest,

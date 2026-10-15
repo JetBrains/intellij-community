@@ -267,6 +267,7 @@ async fn a_changed_context_plugin_file_changes_only_the_plugins_digest() {
     let after = fixture.prepared().await;
     assert_ne!(before.plugins_digest, after.plugins_digest);
     assert_ne!(before.plugin_files[0].host.sha256, after.plugin_files[0].host.sha256);
+    assert_ne!(before.plugin_directories["bridge"], after.plugin_directories["bridge"]);
     assert_eq!(before.product_digest, after.product_digest);
     assert_eq!(before.mount_digest, after.mount_digest);
     assert_eq!(before.runtime_digest, after.runtime_digest);
@@ -305,6 +306,29 @@ fn the_lane_inputs_note_names_each_key_with_its_digest() {
     assert_eq!(
         lane_inputs_note(&[input("fakeAgentJar", "0123456789abcdef"), input("laneDocuments", "short")]),
         "lane inputs by digest: fakeAgentJar 0123456789ab, laneDocuments short"
+    );
+}
+
+// Each context plugin directory has its own digest, so a bridge edit moves the bridge digest and keeps the digest of the
+// resident part. The note names each directory with the first 12 hex digits.
+#[test]
+fn each_context_plugin_directory_has_its_own_digest_and_a_note() {
+    let file = |destination: &str, sha256: &str| PluginFile {
+        destination: destination.to_owned(),
+        host: PathDigest::new("/host/x.jar", sha256),
+    };
+    let before = plugin_directories(&[file("bridge/lib/b.jar", "1"), file("resident/lib/r.jar", "2")]);
+    let after = plugin_directories(&[file("bridge/lib/b.jar", "3"), file("resident/lib/r.jar", "2")]);
+    assert_eq!(before.keys().collect::<Vec<_>>(), ["bridge", "resident"]);
+    assert_ne!(before["bridge"], after["bridge"]);
+    assert_eq!(before["resident"], after["resident"]);
+    assert_eq!(
+        plugin_directories_note(&before),
+        format!(
+            "context plugins by digest: bridge {}, resident {}",
+            &before["bridge"][..12],
+            &before["resident"][..12]
+        )
     );
 }
 

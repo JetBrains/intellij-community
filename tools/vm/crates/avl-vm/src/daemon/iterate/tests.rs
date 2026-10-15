@@ -123,11 +123,62 @@ fn the_daemon_decision_names_the_axis_that_moved() {
         ),
     ] {
         assert_eq!(
-            decide_daemon_action(seen, BUILD, fresh_ide),
+            decide_daemon_action(seen, BUILD, fresh_ide, Runner::Jvm),
             expected,
             "{seen:?} fresh_ide={fresh_ide}"
         );
     }
+}
+
+// The lane daemon compares the digest of each context plugin directory itself, so a change of the context plugins alone
+// leaves the IDE to it. Every other axis decides as for the JVM daemon.
+#[test]
+fn the_lane_daemon_decides_a_change_of_the_context_plugins_itself() {
+    let plugins_moved = healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true);
+    assert_eq!(
+        decide_daemon_action(Some(plugins_moved), BUILD, false, Runner::Daemon),
+        DaemonAction::Reuse
+    );
+    for (seen, fresh_ide) in [
+        (healthy_with_plugins("launch-1", "mount-0", "runtime-1", "plugins-0", true), false),
+        (healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", false), false),
+        (plugins_moved, true),
+        (healthy("launch-0", "mount-1", "runtime-1", true), false),
+    ] {
+        assert_eq!(
+            decide_daemon_action(Some(seen), BUILD, fresh_ide, Runner::Daemon),
+            decide_daemon_action(Some(seen), BUILD, fresh_ide, Runner::Jvm),
+            "{seen:?} fresh_ide={fresh_ide}"
+        );
+    }
+}
+
+// The IDE action of a lane daemon iteration is the word of its last decision about the IDE, and a fallback after a
+// reload is a relaunch. A decision about another subject or of an unknown word names none.
+#[test]
+fn the_ide_action_of_the_lane_daemon_is_its_last_decision_about_the_ide() {
+    let decision = |subject: Subject, action: &str| {
+        RunEvent::synthesized(RunEventKind::Decision(Decision {
+            subject,
+            action: action.to_owned(),
+            reason: Some("why".to_owned()),
+        }))
+    };
+    assert_eq!(IdeAction::of_lane_daemon(&[]), None);
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "reload")]),
+        Some(IdeAction::Reload)
+    );
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "reload"), decision(Subject::Ide, "relaunch")]),
+        Some(IdeAction::Relaunch)
+    );
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "fresh"), decision(Subject::Jars, "push")]),
+        Some(IdeAction::Fresh)
+    );
+    assert_eq!(IdeAction::of_lane_daemon(&[decision(Subject::Ide, "explode")]), None);
+    assert_eq!(IdeAction::Reload.as_str(), "reload");
 }
 
 #[test]

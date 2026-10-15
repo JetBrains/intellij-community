@@ -1138,12 +1138,19 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The push offers the context plugin files with the test jars, and uploads only the files that the guest does not
-  hold. When only the context plugins changed, the run relaunches the IDE and refreshes no share. The decision and
-  the timing line say `relaunch`, and the reason is `the bridge plugin changed`. No lane distribution carries the
-  bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a plugin
-  identity decides nothing on it.
+  hold. With the JVM daemon, a change of only the context plugins relaunches the IDE and refreshes no share. The
+  decision and the timing line say `relaunch`, and the reason is `the bridge plugin changed`. No lane distribution
+  carries the bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a
+  plugin identity decides nothing on it.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
+
+- The controller stamps each context plugin directory into a digest of its own. The run log names each directory
+  with its digest. With the lane daemon, a change of only the context plugins leaves the IDE to the lane daemon. The
+  timing line then says the action of its last decision about the IDE.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`each_context_plugin_directory_has_its_own_digest_and_a_note`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_lane_daemon_decides_a_change_of_the_context_plugins_itself`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_ide_action_of_the_lane_daemon_is_its_last_decision_about_the_ide`)
 
 - Every other daemon start stops every lane IDE of the worker. A restart that remounts a VirtioFS share also stops
   them, because each IDE runs from the share.
@@ -1288,7 +1295,8 @@ another key stops them and binds the services of the new key. Each iteration the
 | none, or the launch record names another product | `fresh`: every IDE run under the IDE root stops, and the context is made again |
 | its run is live, its bridge answers, and it holds the wanted context plugins | `reuse` |
 | its run ended, or its bridge does not answer | `relaunch` on the same context |
-| it holds other context plugins | `relaunch` on the same context |
+| only the bridge plugin directory of its context plugins changed | `reload` of the bridge plugin in the running IDE |
+| another context plugin directory changed | `relaunch` on the same context |
 
 A daemon that boots again keeps the IDE of a key when the launch record names the same product and the run is live.
 The proof of the decisions is a lane run on a worker, because each one needs a real IDE process.
@@ -1297,6 +1305,33 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
   or its resident part is refused, and so is a plugin that the distribution also carries.
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`an_install_replaces_the_plugin_directories_and_writes_the_manifest_last`)
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`an_install_refuses_a_missing_bridge_and_a_doubled_plugin`)
+
+- The decision compares the digest of each context plugin directory. A change of the bridge directory alone is a
+  `reload`. Each other change is a `relaunch`, and its reason names the directories that changed. The controller, the
+  verb and the resident plugin compute the digest of a directory by one formula.
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`only_a_change_of_the_bridge_directory_alone_is_a_reload`)
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_digest_of_a_plugin_directory_is_over_its_own_files_in_destination_order`)
+
+- A reload writes the bridge directory to `<context>/plugin-staging/<the first 12 hex digits of its digest>`, outside
+  the plugin directory. It then asks the resident plugin to reload the bridge plugin from there. It waits up to 30 s
+  until the lifecycle state names the new digest. Readiness then pings the new copy. Each step writes a timed line
+  into the run log.
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`the_staged_copy_holds_the_bridge_files_outside_the_plugin_directory`)
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`a_clean_reload_waits_for_the_new_digest_in_the_lifecycle`)
+  [@test] ../crates/avl-bridge/src/client/tests.rs (`a_documented_post_answers_the_named_statuses_with_their_document`)
+
+- A reload that fails is a `relaunch`, and its reason names the failure. A refused reload fails. So does an unload or
+  a load that did not run. An old class loader that stays reachable fails too. A reason in the answer, another
+  digest, and no new digest within 30 s also fail. The relaunch starts the new copy. Either the reload put the
+  directory in place, or the install of the relaunch writes it.
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`each_answer_that_is_not_a_clean_reload_names_its_relaunch`)
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`a_refusal_a_leak_and_a_driver_failure_are_each_a_relaunch`)
+  [@test] ../crates/avl-guest/src/lane/reload/tests.rs (`a_digest_that_the_lifecycle_never_names_ends_the_wait`)
+
+- Each decision about the IDE is a `decision` record of the run stream, and its line goes into the run log. The
+  controller publishes the record as its own `decision` record.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_decision_record_of_the_lane_daemon_decodes_and_keeps_its_bytes`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`a_decision_of_the_lane_daemon_is_published_as_a_decision`)
 
 - An IDE is ready when the lifecycle says `READY`, the robot is the input-events robot, and the ping echoes its
   nonce. The Junie offer of the IDE start then gets `Skip`.

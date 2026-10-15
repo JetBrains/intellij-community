@@ -11,7 +11,7 @@ use avl_base::{Exit, OrRefuse, Refusal, Scope};
 use avl_host_sys::Ctx;
 use avl_host_sys::guest::guest_join;
 use avl_report::report::{self as run_report, Input};
-use avl_wire::daemon::{self as wire, RunEvent};
+use avl_wire::daemon::{self as wire, RunEvent, RunEventKind, Runner};
 use avl_wire::progress::{Decision, Event, IterationReported, Phase, Subject};
 use avl_wire::report::{
     EvidenceArtifact, MAX_JUNIT_XML_BYTES, Retrieval, RetrievedIntegrity, RetrievedXml, RunReport, safe_evidence_paths,
@@ -22,7 +22,7 @@ use serde_json::json;
 use tempfile::TempPath;
 use tokio_util::sync::CancellationToken;
 
-use crate::daemon::build::{PreparedBuild, lane_inputs_note};
+use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_note};
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::state::{HostState, guest_state_dir};
@@ -61,6 +61,12 @@ pub(crate) enum IdeAction {
     Remount,
     #[serde(rename = "relaunch")]
     Relaunch,
+    /// The lane daemon reloaded the bridge plugin in the running IDE.
+    #[serde(rename = "reload")]
+    Reload,
+    /// The lane daemon launched the IDE on a fresh context.
+    #[serde(rename = "fresh")]
+    Fresh,
 }
 
 impl IdeAction {
@@ -71,7 +77,24 @@ impl IdeAction {
             Self::Keep => "keep",
             Self::Remount => "remount",
             Self::Relaunch => "relaunch",
+            Self::Reload => "reload",
+            Self::Fresh => "fresh",
         }
+    }
+
+    /// The action that the last `decision` record of the lane daemon about the IDE names, or `None` without one. The
+    /// lane daemon decides the IDE of each iteration by the context plugin directories, so its word is the action.
+    pub(crate) fn of_lane_daemon(events: &[RunEvent]) -> Option<Self> {
+        events.iter().rev().find_map(|event| match &event.kind {
+            RunEventKind::Decision(decision) if decision.subject == Subject::Ide => match decision.action.as_str() {
+                "reuse" => Some(Self::Reuse),
+                "reload" => Some(Self::Reload),
+                "relaunch" => Some(Self::Relaunch),
+                "fresh" => Some(Self::Fresh),
+                _ => None,
+            },
+            _ => None,
+        })
     }
 }
 
@@ -103,8 +126,10 @@ pub(crate) enum DaemonAction {
     /// `--fresh-ide`, or a healthy daemon whose IDE is not running: the run launches the IDE again, after a stop of the
     /// running one when there is one.
     Relaunch { stop_ide: bool },
-    /// Only the context plugins changed. The controller pushes their files with the hot tier, and the run relaunches
-    /// the IDE on the same context. No share is refreshed and no context is made again.
+    /// Only the context plugins changed, and the JVM daemon runs. The controller pushes their files with the hot tier,
+    /// and the run relaunches the IDE on the same context. No share is refreshed and no context is made again. The lane
+    /// daemon gets [`Self::Reuse`] instead: it compares the digest of each plugin directory itself, and it reloads the
+    /// bridge plugin when only that directory changed.
     RelaunchForPlugins,
     /// A daemon is started: `verb` is `restart` or `start`, and `reason` names the axis that moved. `keep_ide` is true
     /// for a restart: the healthy daemon had an IDE that the new one can attach to.
@@ -119,11 +144,16 @@ pub(crate) enum DaemonAction {
 ///
 /// A healthy daemon of this launch serves the iteration: after a refresh of the shares when the mount digest moved,
 /// after an IDE stop for `--fresh-ide`, after a launch of the IDE when the daemon holds none, after a relaunch on the
-/// same context when only the context plugins moved, or as it is. Any other
+/// same context when only the context plugins moved and `runner` is the JVM daemon, or as it is. Any other
 /// daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot say whether
 /// the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's product. A start
 /// without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
-pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: DaemonDigests<'_>, fresh_ide: bool) -> DaemonAction {
+pub(crate) fn decide_daemon_action(
+    healthy: Option<HealthyDaemon<'_>>,
+    build: DaemonDigests<'_>,
+    fresh_ide: bool,
+    runner: Runner,
+) -> DaemonAction {
     let Some(HealthyDaemon { recorded, ide_running }) = healthy else {
         return DaemonAction::Start {
             verb: "start",
@@ -138,7 +168,7 @@ pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: Da
             DaemonAction::Relaunch { stop_ide: ide_running }
         } else if !ide_running {
             DaemonAction::Relaunch { stop_ide: false }
-        } else if !recorded.plugins.is_empty() && recorded.plugins != build.plugins {
+        } else if runner == Runner::Jvm && !recorded.plugins.is_empty() && recorded.plugins != build.plugins {
             DaemonAction::RelaunchForPlugins
         } else {
             DaemonAction::Reuse
@@ -423,13 +453,16 @@ impl Host {
         let push_started = Instant::now();
         let pushed = push_jars(ctx, &self.daemon, &state, prep).await?;
         let push_ms = push_started.elapsed().as_secs_f64() * 1000.0;
-        if ide_action == IdeAction::Reuse {
+        // The lane daemon decides about its IDE itself, and its `decision` record reaches the journal as one.
+        let runner = self.daemon.runner();
+        if ide_action == IdeAction::Reuse && runner == Runner::Jvm {
             self.decide(Subject::Ide, "reuse", reuse_reason(pushed), &scope);
         }
         if let Some(reason) = jar_push_reason(pushed) {
             self.decide(Subject::Jars, "push", &reason, &scope);
         }
         self.reporter.note(lane_inputs_note(&prep.lane_inputs), Some(&scope));
+        self.reporter.note(plugin_directories_note(&prep.plugin_directories), Some(&scope));
         if !secrets.is_empty() {
             // The names and never the files: a path a caller made with `mktemp` says nothing a reader needs.
             self.reporter
@@ -463,7 +496,13 @@ impl Host {
                 }
                 let execution = execution?;
                 let run_ms = run_started.elapsed().as_secs_f64() * 1000.0;
-                attempt.timing = timing_line(prep, pushed, push_ms, ide_action, run_ms);
+                if ide_action == IdeAction::Reuse
+                    && runner == Runner::Daemon
+                    && let Some(decided) = IdeAction::of_lane_daemon(&execution.events)
+                {
+                    attempt.ide_action = decided;
+                }
+                attempt.timing = timing_line(prep, pushed, push_ms, attempt.ide_action, run_ms);
                 // Kept on the attempt from here on: the events are its evidence whatever fails next.
                 let execution = attempt.execution.insert(execution);
                 state.last_product_digest = prep.product_digest.clone();
@@ -564,7 +603,7 @@ impl Host {
         if status.is_none() && !recreated {
             self.manager.require_ready(ctx, lease).await?;
         }
-        let action = decide_daemon_action(healthy, prep.daemon_digests(), fresh_ide);
+        let action = decide_daemon_action(healthy, prep.daemon_digests(), fresh_ide, self.daemon.runner());
         let state = match (action, recorded) {
             (DaemonAction::Start { verb, reason, keep_ide }, _) => {
                 self.decide(Subject::Daemon, verb, reason, scope);

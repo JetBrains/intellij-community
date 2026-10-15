@@ -10,7 +10,11 @@
 //! | none, or another product | `fresh`: every IDE run under the IDE root stops, the context is made again |
 //! | live, and its bridge answers, with the wanted context plugins | `reuse` |
 //! | ended, or its bridge does not answer | `relaunch` on the same context |
-//! | live, with other context plugins | `relaunch` on the same context. A reload is a later slice |
+//! | live, and only the bridge plugin directory changed | `reload` of the bridge plugin in place |
+//! | live, and another context plugin directory changed | `relaunch` on the same context |
+//!
+//! A reload that fails is a `relaunch`, with the failure as its reason ([`super::reload`]). Each decision is a
+//! `decision` record of the run stream.
 //!
 //! A relaunch keeps the config, system and project directories of the context, which a restart scenario asserts
 //! across. A quit asks the IDE through its bridge and waits for the run to end. It kills the process after a grace,
@@ -27,6 +31,7 @@ use avl_bridge::{Client, url};
 use avl_wire::daemon::{IdeExited, IdeLaunched as IdeLaunchedRecord, Output, RunEventKind};
 use avl_wire::ide::{self as wire_ide, IdeContext, IdeLaunch, IdePrepared, LaunchRecord, ProjectSource};
 use avl_wire::program::lane::{Delivery, LaneDocument, LaunchHost};
+use avl_wire::progress::{Decision, Subject};
 use avl_wire::supervisor::{Phase, RunState};
 
 use super::context::{LaneContext, ServicePorts};
@@ -34,6 +39,7 @@ use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, 
 use super::inputs::LaunchInputs;
 use super::package::Packages;
 use super::readiness::{self, Bridge};
+use super::reload::{self, PluginChange};
 use super::services::Service;
 use super::services::cloud::{self, Cloud, Organization};
 use super::services::codex::{self, Codex};
@@ -272,6 +278,17 @@ impl Records<'_> {
     pub(crate) fn note(&mut self, text: String) {
         (self.0)(RunEventKind::Output(Output { text }));
     }
+
+    /// Writes `decision` as a `decision` record about the IDE, and its line into the run log of the daemon.
+    pub(crate) fn decide(&mut self, decision: &IdeDecision) {
+        let record = Decision {
+            subject: Subject::Ide,
+            action: decision.action.as_str().to_owned(),
+            reason: Some(decision.reason.clone()),
+        };
+        super::channel::log(&record.line());
+        (self.0)(RunEventKind::Decision(record));
+    }
 }
 
 /// What one iteration asks of the IDE: the lane, its identity, and the context plugins.
@@ -311,6 +328,8 @@ impl HeldIde {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum IdeAction {
     Reuse,
+    /// The bridge plugin reloads in the running IDE, and the IDE keeps its process.
+    Reload,
     Relaunch,
     Fresh,
 }
@@ -320,6 +339,7 @@ impl IdeAction {
     pub(crate) const fn as_str(self) -> &'static str {
         match self {
             Self::Reuse => "reuse",
+            Self::Reload => "reload",
             Self::Relaunch => "relaunch",
             Self::Fresh => "fresh",
         }
@@ -401,21 +421,76 @@ impl IdeOwner {
             self.held = Some(adopted);
         }
         let decision = self.decide(launch, &key);
-        records.note(format!("ide {}: {}", decision.action.as_str(), decision.reason));
-        match decision.action {
-            IdeAction::Reuse => {}
-            IdeAction::Relaunch => self.relaunch(launch, records)?,
-            IdeAction::Fresh => self.launch_fresh(launch, &context, records)?,
-        }
+        records.decide(&decision);
+        let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
+        let decision = match decision.action {
+            IdeAction::Reuse => decision,
+            IdeAction::Relaunch => {
+                self.relaunch(launch, records)?;
+                decision
+            }
+            IdeAction::Fresh => {
+                self.launch_fresh(launch, &context, records)?;
+                decision
+            }
+            IdeAction::Reload => match self.reload(launch, &bridge, records) {
+                Ok(()) => return Ok(decision),
+                Err(reason) => {
+                    let fallback = IdeDecision {
+                        action: IdeAction::Relaunch,
+                        reason,
+                    };
+                    records.decide(&fallback);
+                    self.relaunch(launch, records)?;
+                    fallback
+                }
+            },
+        };
         records.note(format!(
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         readiness::await_ready(&bridge, &key, &launch.document.vocabulary_digest, false, &mut |text| {
             records.note(text);
         })?;
         Ok(decision)
+    }
+
+    /// Reloads the bridge plugin of the held IDE from the context plugins of `launch`, and waits until the new copy is
+    /// ready. The Junie offer belongs to the IDE start, so the gate after a reload asks nothing of it. The error is the
+    /// reason of the relaunch that follows, and the staged copy is gone then.
+    fn reload(&self, launch: &LaneLaunch<'_>, bridge: &Bridge, records: &mut Records<'_>) -> Result<(), String> {
+        let Some(held) = &self.held else {
+            return Err("a reload was decided without an IDE".to_owned());
+        };
+        let started = Instant::now();
+        let key = launch.identity.key();
+        let reloaded = Client::new(&url(BRIDGE_PORT), &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))
+            .map_err(|error| error.to_string())
+            .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
+            .and_then(|()| {
+                readiness::await_ready(bridge, key, &launch.document.vocabulary_digest, true, &mut |text| {
+                    records.note(text);
+                })
+                .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))
+            });
+        match &reloaded {
+            Ok(()) => records.note(format!(
+                "reload: the bridge plugin of '{key}' reloaded in {} ms, and the IDE keeps pid {}",
+                started.elapsed().as_millis(),
+                held.pid.map_or_else(|| "unknown".to_owned(), |pid| pid.to_string())
+            )),
+            Err(reason) => {
+                records.note(format!(
+                    "reload: the bridge plugin of '{key}' did not reload after {} ms: {reason}",
+                    started.elapsed().as_millis()
+                ));
+                if let Err(error) = reload::clear_staging(held.context()) {
+                    records.note(format!("reload: cannot remove the staged copy: {error}"));
+                }
+            }
+        }
+        reloaded
     }
 
     /// The decision for the held IDE, after a possible adoption. It reads the run, the bridge and the plugin manifest.
@@ -433,8 +508,24 @@ impl IdeOwner {
                 format!("the IDE of '{key}' is alive, and its bridge does not answer"),
             );
         }
-        if installed_manifest(Path::new(&held.paths.plugins_dir)) != manifest(launch.plugins) {
-            return decision(IdeAction::Relaunch, "the context plugins changed".to_owned());
+        match reload::plugin_change(&installed_manifest(Path::new(&held.paths.plugins_dir)), launch.plugins) {
+            PluginChange::Same => {}
+            PluginChange::Bridge { installed, wanted } => {
+                return decision(
+                    IdeAction::Reload,
+                    format!(
+                        "only the bridge plugin changed, from {} to {}",
+                        reload::short(&installed),
+                        reload::short(&wanted)
+                    ),
+                );
+            }
+            PluginChange::Others(directories) => {
+                return decision(
+                    IdeAction::Relaunch,
+                    format!("the context plugin directories {} changed", directories.join(", ")),
+                );
+            }
         }
         decision(
             IdeAction::Reuse,
@@ -788,7 +879,8 @@ fn real_path(path: &Path) -> Result<PathBuf, AgentRefusal> {
     fs::canonicalize(path).map_err(|error| failed(format!("cannot resolve {}: {error}", path.display())))
 }
 
-fn remove_tree(path: &Path) -> io::Result<()> {
+/// Removes the directory `path` and everything in it. A path that does not exist is no error.
+pub(crate) fn remove_tree(path: &Path) -> io::Result<()> {
     match fs::remove_dir_all(path) {
         Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
         _ => Ok(()),

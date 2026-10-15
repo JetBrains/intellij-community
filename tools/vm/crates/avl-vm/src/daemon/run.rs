@@ -742,8 +742,9 @@ impl Host {
                     watchdog = TransportWatchdog::armed(delay);
                 }
                 // One publish per record. The terminal, `--stream` and every sink derive their own form from it,
-                // so the line a person reads and the record an agent parses are one fact.
-                self.reporter.publish(Event::Daemon(event.clone()), Some(&scope));
+                // so the line a person reads and the record an agent parses are one fact. A decision of the lane
+                // daemon is a `decision` record of the journal, as each decision of the controller is.
+                self.reporter.publish(published(&event), Some(&scope));
                 observe(&event);
                 execution.absorb(event);
             }
@@ -763,6 +764,14 @@ impl Host {
 }
 
 // --- the decisions of a run stream: values in, an answer out, no I/O --------------------------------------------
+
+/// What the controller publishes for one record of the stream: the record itself, or the decision that it names.
+pub(crate) fn published(event: &RunEvent) -> Event {
+    match &event.kind {
+        RunEventKind::Decision(decision) => Event::Decision(decision.clone()),
+        _ => Event::Daemon(event.clone()),
+    }
+}
 
 impl RunExecution {
     /// Takes one record of the stream: the identity of the iteration from `runStarted`, the watchdog expiry, the

@@ -14,6 +14,18 @@ use crate::daemon::testing::{ndjson_line, run_started_record, summary_record};
 
 // --- the decisions of a run stream ----------------------------------------------------------------------------
 
+// A decision of the lane daemon is published as a decision of the journal, and every other record as itself.
+#[test]
+fn a_decision_of_the_lane_daemon_is_published_as_a_decision() {
+    let line = r#"{"event":"decision","subject":"ide","action":"reload","reason":"only the bridge plugin changed"}"#;
+    let decision = wire::decode_run_event(line.as_bytes()).unwrap();
+    let Event::Decision(record) = published(&decision) else {
+        panic!("not a decision");
+    };
+    assert_eq!(record.line(), "ide reload: only the bridge plugin changed");
+    assert_eq!(published(&RunEvent::output("a line")).kind(), avl_wire::progress::Kind::Run);
+}
+
 // A 409 answers by its reason: a stale daemon names both generations, and any other reason is busy.
 #[test]
 fn a_conflict_answers_by_its_reason() {
