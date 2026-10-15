@@ -1517,7 +1517,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-browser-debug"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-proto"),
-    jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlin-test-junit5"),
     jetbrainsLibrary("kotlin-tooling-core"),

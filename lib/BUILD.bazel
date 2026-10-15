@@ -5137,21 +5137,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.21-RC.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_21-RC_http//file",
-    out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.21-RC.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-script-runtime",
-    jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_21-RC_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_21-RC-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-stdlib-2.4.21-RC.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-stdlib-2_4_21-RC_http//file",
     out = "org.jetbrains.kotlin/kotlin-stdlib-2.4.21-RC.jar",

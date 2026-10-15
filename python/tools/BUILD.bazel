@@ -34,7 +34,6 @@ jvm_library(
         "//python:python-community-impl",
         "//libraries/guava",
         "//python/python-sdk/backend",
-        "@lib//:kotlin-script-runtime",
         "//python/testFramework",
     ],
 )

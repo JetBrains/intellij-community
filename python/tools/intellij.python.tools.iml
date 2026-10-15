@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
-    <orderEntry type="library" name="kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />

@@ -283,9 +283,7 @@ private fun regenerateAnchorsXml(dotIdea: Path, libraries: List<JpsLibrary>) {
 internal fun renderAnchorsXml(libraries: List<JpsLibrary>): String {
     val anchorModule = "kotlin.util.compiler-classpath"
 
-    // Some non-kotlinc libraries might require anchors as well
-    val hardcodedLibraries = listOf("kotlin-script-runtime")
-    val libraryNames = libraries.map { it.name } + hardcodedLibraries
+    val libraryNames = libraries.map { it.name }
     return xml("project", "version" to "4") {
         xml("component", "name" to "KotlinIdeAnchorService") {
             xml("option", "name" to "moduleNameToAnchorName") {
