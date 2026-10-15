@@ -751,8 +751,8 @@ fn the_help_names_the_wrapper_and_interpolates_the_lists_it_does_not_own() {
     // Each of these has exactly one owner; the help text reads it rather than restating it.
     let text = every_long_help().join("\n");
     for expected in [
-        "ui|ui-real|ui-live|ui-perf|gui-chat",
-        "explicit-only lane (ui-live, ui-perf)",
+        "ui|ui-real|ui-live|ui-perf|jcp|gui-chat",
+        "explicit-only lane (ui-live, ui-perf, jcp)",
         "none|fresh-ide|daemon",
         "capped at 5",
         "default --reset fresh-ide",
