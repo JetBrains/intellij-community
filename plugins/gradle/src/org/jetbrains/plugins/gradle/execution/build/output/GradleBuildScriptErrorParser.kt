@@ -73,6 +73,9 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     loop@ while (true) {
       val nextLine = reader.readLine()?.text ?: return false
       if (nextLine.isBlank()) break
+      if (nextLine.isCompilationError()) {
+        return false
+      }
       description.appendLine(nextLine)
       val trimStart = nextLine.trimStart()
       if (trimStart.startsWith("> ")) {
@@ -109,11 +112,9 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
       }
     }
 
-    // compilation errors should be added by the respective compiler output parser
-    if (reason.startsWith("Compilation failed") ||
-        reason == "Compilation error. See log for more details" ||
-        reason == "Script compilation error:" ||
-        reason.contains("compiler failed")) return false
+    if (reason.isCompilationError()) {
+      return false
+    }
 
     val errorText = description.toString()
     for (issueChecker in GradleIssueChecker.getKnownIssuesCheckList()) {
@@ -200,6 +201,11 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     val line = matcher.group(LINE_GROUP)?.toIntOrNull() ?: return null
     return FilePosition(Path.of(path), line - 1, 0)
   }
+
+  private fun String.isCompilationError(): Boolean = contains("Compilation failed") ||
+                                                     this == "Compilation error. See log for more details" ||
+                                                     this == "Script compilation error:" ||
+                                                     this.contains("compiler failed")
 
   private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any, outputIds: List<OutputId>): BuildEvent? {
     val noCachedVersionPrefix = "No cached version of "
