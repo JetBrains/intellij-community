@@ -135,6 +135,21 @@ register_toolchains(
     dev_dependency = True,
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module
 
+# The macOS SDK from the cache redirector. The downloader config blocks the default URLs of `llvm`. The roots that use
+# this module have their own tags, so this is a dev dependency.
+osx = use_extension("@llvm//extensions:osx.bzl", "osx", dev_dependency = True)
+osx.from_archive(
+    sha256 = "debe353b27a13cd678b26ab216a040acf07b62c0639d8ac522df4ca07d121eb2",
+    strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+    type = "pkg",
+    urls = [
+        # /!\ DO NOT TWEAK that list of URLs before having checked the original requirements in MRI-5579
+        "https://cache-redirector.jetbrains.com/swcdn.apple.com/content/downloads/33/19/140-17812-A_21ZLMMLY4E/zu3xwktttpoe71qiawhzgzvqss6rovawsa/CLTools_macOSNMOS_SDK.pkg",
+        # Copies the `llvm` upstream logic, but with a cache redirection to avoid abuse of web.archive.org
+        "https://cache-redirector.jetbrains.com/web.archive.org/web/20260902184416id_/https:%2F%2Fswcdn.apple.com/content/downloads/33/19/140-17812-A_21ZLMMLY4E/zu3xwktttpoe71qiawhzgzvqss6rovawsa/CLTools_macOSNMOS_SDK.pkg",
+    ],
+)
+
 # Not a dev_dependency on purpose: dependent modules must also resolve this
 # toolchain, or they compile `@protobuf//java/core` from source.
 register_toolchains("//:protoc_java_toolchain_toolchain")
