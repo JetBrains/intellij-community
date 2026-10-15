@@ -119,6 +119,7 @@ import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.isProjectOpenWithoutModule
@@ -1216,7 +1217,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    * The function confirms the trusted state of [projectDir] when [projectDir] opens in this process.
    */
   private suspend fun attachToExistingOrOpenInTheSameFrame(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
-    if (options.forceReuseFrame || WelcomeUtils.noCheckOpenConfirmation(projectToClose)) {
+    if (options.forceReuseFrame || reusesWelcomeFrameWithoutConfirmation(projectToClose)) {
       confirmTrustedStateOrCancel(projectDir, options)
       return !closeAndDisposeKeepingFrame(projectToClose, options.forceReuseFrame)
     }
@@ -1269,6 +1270,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return true
       }
     }
+  }
+
+  /**
+   * A welcome project without user data gives its frame to the new project without a confirmation.
+   * An IDE that always opens a project in a new window does not place the project itself, so its welcome project stays open.
+   */
+  private suspend fun reusesWelcomeFrameWithoutConfirmation(projectToClose: Project): Boolean {
+    return !ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow &&
+           WelcomeUtils.noCheckOpenConfirmation(projectToClose)
   }
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
