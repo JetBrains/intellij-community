@@ -346,8 +346,9 @@ pub(crate) enum PoolVerb {
     /// The repair for a worker whose guest is unusable: stop, delete the clone, re-clone, start, provision. The target
     /// is never defaulted, because this deletes clones. A leased worker is refused when it is named, and reported
     /// unrecycled by "all", which recycles the rest and then refuses: 75 when a lease was the only thing in its way, 1
-    /// when something is broken. On the macOS pool the sealed golden and the per-worker provenance still hold: a
-    /// recycle is pool gc plus a re-clone, not a way around the image.
+    /// when something is broken. With --lease-file, the holder recycles the worker of its lease and gives the lease
+    /// back, also when the guest refuses a release. On the macOS pool the sealed golden and the per-worker provenance
+    /// still hold: a recycle is pool gc plus a re-clone, not a way around the image.
     Recycle {
         #[arg(value_name = "all|worker", value_parser = pool_target)]
         target: PoolTarget,

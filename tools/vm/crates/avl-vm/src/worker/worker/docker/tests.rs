@@ -150,7 +150,11 @@ async fn a_pool_start_of_all_starts_the_other_slots_and_names_the_refused_one() 
     declare_stale_container(&fixture, &leased);
     let before = fixture.fake.calls().len();
 
-    let refusal = fixture.manager.pool(&ctx(), PoolCommand::Start(PoolTarget::All)).await.unwrap_err();
+    let refusal = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Start(PoolTarget::All), None)
+        .await
+        .unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("start_incomplete", Exit::TEMP_FAIL),
@@ -316,7 +320,11 @@ async fn a_pool_stop_names_its_workers_and_no_engine() {
     let fixture = Fixture::docker();
     let worker = fixture.worker(0).to_owned();
     fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Stop(PoolTarget::All)).await.unwrap();
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
+        .await
+        .unwrap();
     assert_eq!(outcome.data["workers"][&worker], "stopped");
     assert!(outcome.data.get("engine").is_none(), "{}", outcome.data);
     assert_eq!(outcome.text, format!("{worker}=stopped"));
@@ -349,12 +357,17 @@ async fn pool_init_on_docker_builds_the_image_and_creates_every_slot() {
             PoolCommand::Init {
                 golden: Some("air-macos-golden".to_owned()),
             },
+            None,
         )
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "usage");
 
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Init { golden: None }).await.unwrap();
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
+        .await
+        .unwrap();
     assert_eq!(outcome.data["created"], serde_json::json!(["air-docker-1"]));
     assert_eq!(outcome.data["image"], docker(&fixture).image_tag());
     // Nothing is started: the first lease operation starts a slot.
@@ -364,7 +377,11 @@ async fn pool_init_on_docker_builds_the_image_and_creates_every_slot() {
         fixture.fake.calls()
     );
     // A second init finds every container current.
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Init { golden: None }).await.unwrap();
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
+        .await
+        .unwrap();
     assert_eq!(outcome.data["created"], serde_json::json!([]));
 }
 
@@ -385,7 +402,7 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     ] {
         fixture.fake.forget_calls();
         fixture.fake.answer(Answer::ContainerState, state);
-        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
         match kept {
             None => {
                 assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-1"]), "{state}");
@@ -404,7 +421,7 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     fixture.fake.forget_calls();
     fixture.fake.answer(Answer::ContainerState, "exited/0\n");
     fixture.write_lease("air-docker-1", "token");
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "leased" }));
     assert!(!fixture.fake.saw_call_containing("rm "));
 }
@@ -417,7 +434,7 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
     let worker = fixture.worker(0).to_owned();
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     let before = fixture.fake.calls().len();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "running" }));
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
     assert!(
@@ -438,7 +455,7 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
         .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(&worker), "pool-start", "busy")
         .await
         .unwrap();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "busy" }));
 }
 
@@ -455,7 +472,7 @@ async fn pool_gc_on_docker_keeps_a_busy_slot_and_goes_on() {
         .await
         .unwrap();
     fixture.fake.answer(Answer::ContainerState, "exited/0\n");
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-2"]));
     assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "busy" }));
     assert!(!fixture.fake.saw_call_containing("rm air-docker-1"));
@@ -472,7 +489,7 @@ async fn pool_recycle_on_docker_drops_the_volume_and_starts_again() {
     let before = fixture.fake.calls().len();
     fixture
         .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
+        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
         .await
         .unwrap();
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
@@ -489,6 +506,66 @@ async fn pool_recycle_on_docker_drops_the_volume_and_starts_again() {
     assert!(position("create ") < position(&format!("start {worker}")));
     assert!(!receipt.exists(), "a receipt of the dropped volume survived");
     assert!(fixture.manager.lifecycle_lock_path(&worker).exists());
+}
+
+/// The holder of a lease recycles its own worker under its receipt, also when the guest refuses the gc of its lane
+/// IDEs: the recycle discards that guest. The recycle passes the lease guard and gives the lease back, so neither the
+/// lease nor its receipt survives.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_holder_recycles_its_leased_worker_under_its_receipt_and_gives_the_lease_back() {
+    let fixture = Fixture::docker();
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.prepare_runtime_dirs().unwrap();
+    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
+    let lease = fixture.write_lease(&worker, "holder-token");
+    let receipt = crate::worker::lease::write_lease_receipt(&fixture.settings, &lease).unwrap();
+    fixture.guest.channel(&worker).answer(answer_guest(vec![(
+        "ide-gc",
+        avl_host_testkit::failed(1, "the process group 4242 did not exit"),
+    )]));
+    let notes = crate::worker::testing::Notes::start(fixture.manager.reporter());
+
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), Some(&receipt))
+        .await
+        .unwrap();
+
+    assert_eq!(outcome.data["recycled"], serde_json::json!([worker]));
+    assert_eq!(outcome.data["leaseReleased"], serde_json::json!(worker));
+    assert!(fixture.fake.saw_call_containing(&format!("volume rm --force air-{worker}-data")));
+    assert_eq!(read_lease(&fixture.settings.lease_path(&worker)).unwrap(), None);
+    assert!(!receipt.exists(), "the receipt of the given-back lease survived");
+    let notes = notes.all();
+    assert!(
+        notes.iter().any(|note| note.contains("were not stopped before the recycle")),
+        "{notes:#?}"
+    );
+    assert!(notes.iter().any(|note| note.contains("gave back the lease")), "{notes:#?}");
+}
+
+/// A receipt authorizes the recycle of its own worker only. A recycle of another worker or of `all` under it is refused
+/// before anything is deleted, and the lease stays.
+#[tokio::test]
+async fn a_receipt_does_not_authorize_the_recycle_of_another_target() {
+    let fixture = Fixture::docker();
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.prepare_runtime_dirs().unwrap();
+    let lease = fixture.write_lease(&worker, "holder-token");
+    let receipt = crate::worker::lease::write_lease_receipt(&fixture.settings, &lease).unwrap();
+    for target in [PoolTarget::Worker("air-docker-2".to_owned()), PoolTarget::All] {
+        let refusal = fixture
+            .manager
+            .pool(&ctx(), PoolCommand::Recycle(target), Some(&receipt))
+            .await
+            .unwrap_err();
+        assert_eq!(refusal.code, "usage", "{refusal:?}");
+        assert!(refusal.message.contains(&format!("pool recycle {worker}")), "{refusal}");
+    }
+    assert!(!fixture.fake.saw_call_containing("rm "));
+    assert_eq!(read_lease(&fixture.settings.lease_path(&worker)).unwrap(), Some(lease));
+    assert!(receipt.exists());
 }
 
 /// The readiness gate is lazy on Docker as on Tart: a slot with no container is created and started. A running

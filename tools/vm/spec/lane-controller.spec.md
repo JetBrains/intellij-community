@@ -1026,10 +1026,19 @@ The daemon's half and the IDE's half of supervision are in
   Parallels backend refuses a recycle as `unsupported_backend_operation`.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
-- A recycle never touches a leased worker. `pool recycle <worker>` on a leased worker is refused as
-  `worker_leased`, and that refusal names the command which releases the lease. The worker keeps its lease,
-  its machine and its clone.
-  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+- A recycle never touches a worker that another holder leased. `pool recycle <worker>` on such a worker is refused
+  as `worker_leased`. That refusal names the command which releases the lease, and the recycle of the holder. The
+  worker keeps its lease, its machine and its clone.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs (`recycle_refuses_a_leased_worker_and_deletes_nothing`)
+
+- The holder recycles the worker of its lease with `--lease-file FILE pool recycle <worker>`, and the recycle gives
+  the lease back. A guest that refuses does not stop it, because the recycle discards that guest. This is the
+  repair for a lease that `lease release` cannot give back.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs (`a_holder_recycles_its_leased_worker_under_its_receipt_and_gives_the_lease_back`)
+
+- A receipt authorizes the recycle of its own worker only. A recycle of another worker or of `all` under that receipt
+  is refused as `usage`, and nothing is deleted.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs (`a_receipt_does_not_authorize_the_recycle_of_another_target`)
 
 - `pool recycle all` recycles the workers which it can, and reports each worker which it did not recycle.
   The answer names the recycled workers, and gives one refusal code for each other worker. A recycle which

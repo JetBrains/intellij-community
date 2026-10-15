@@ -291,12 +291,17 @@ impl Manager {
             return Ok(());
         }
         // Deliberately no holder name: `status` and `lease show` hide it from an unauthorized caller too.
+        let holder_recycle = if operation == "recycle" {
+            format!(". The holder can also run `--lease-file FILE pool recycle {worker}`, which gives the lease back")
+        } else {
+            String::new()
+        };
         Err(Refusal::new(
             "worker_leased",
             Exit::TEMP_FAIL,
             format!(
                 "refusing to {operation} {worker}: it is leased by another holder. Wait for that lease to end, or \
-                 release it with `--lease-file FILE lease release`, then run `pool {operation} {worker}`"
+                 release it with `--lease-file FILE lease release`, then run `pool {operation} {worker}`{holder_recycle}"
             ),
         ))
     }

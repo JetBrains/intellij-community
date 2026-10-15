@@ -4,7 +4,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use avl_base::{Exit, Outcome, Refusal};
@@ -12,8 +12,9 @@ use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
 use serde_json::{Value, json};
 
-use super::{Manager, StartState, StopState, read_lease};
+use super::{Lease, Manager, StartState, StopState, read_lease};
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note};
+use crate::worker::lease::{receipt_for_path, remove_lease_receipts};
 use avl_base::RefusalExt;
 
 /// One `pool` invocation.
@@ -176,12 +177,12 @@ impl PartialPool {
 }
 
 impl Manager {
-    /// The `pool` command.
-    pub(crate) async fn pool(&self, ctx: &Ctx, command: PoolCommand) -> Result<Outcome, Refusal> {
+    /// The `pool` command. `lease_file` is `--lease-file`, which only `recycle` reads: see [`Manager::pool_recycle`].
+    pub(crate) async fn pool(&self, ctx: &Ctx, command: PoolCommand, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
         match command {
             PoolCommand::Init { golden } => self.pool_init(ctx, golden.as_deref()).await,
             PoolCommand::Gc => self.pool_gc(ctx).await,
-            PoolCommand::Recycle(target) => self.pool_recycle(ctx, &target).await,
+            PoolCommand::Recycle(target) => self.pool_recycle(ctx, &target, lease_file).await,
             PoolCommand::Start(target) => self.pool_start_or_stop(ctx, Switch::Start, &target).await,
             PoolCommand::Stop(target) => self.pool_start_or_stop(ctx, Switch::Stop, &target).await,
             PoolCommand::IdleStop { worker, nonce } => self.pool_idle_stop(ctx, &worker, &nonce).await,
@@ -345,8 +346,13 @@ impl Manager {
     /// What makes it cheap is that a worker holds nothing: no checkout, no credentials, no cache. On the macOS pool
     /// the golden image's guarantees are untouched: the re-clone goes through [`Manager::materialize_tart_worker`]
     /// like every other one, so the seal is re-read and the new worker's provenance receipt is written.
-    pub(crate) async fn pool_recycle(&self, ctx: &Ctx, target: &PoolTarget) -> Result<Outcome, Refusal> {
+    ///
+    /// Under `--lease-file`, the holder recycles the worker of its own lease, and only that worker. The recycle then
+    /// also gives the lease back. It is the repair for a lease that `lease release` cannot give back, because the
+    /// guest refuses: the recycle discards that guest, so it asks the guest nothing it must answer.
+    pub(crate) async fn pool_recycle(&self, ctx: &Ctx, target: &PoolTarget, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
         self.require_recyclable()?;
+        let authorized = lease_file.map(|path| self.recycle_receipt(path, target)).transpose()?;
         // Before the gate: the builder delete leaves an Apple `container` server that is down as it is, and the gate
         // would start it.
         if *target == PoolTarget::All {
@@ -364,14 +370,24 @@ impl Manager {
         let mut pool = PartialPool::new(target);
         for worker in self.targets(target) {
             let answer = self
-                .with_lifecycle_lock(ctx, &worker, "pool-recycle", self.recycle_one_worker(ctx, &worker))
+                .with_lifecycle_lock(
+                    ctx,
+                    &worker,
+                    "pool-recycle",
+                    self.recycle_one_worker(ctx, &worker, authorized.as_ref()),
+                )
                 .await;
             pool.add(ctx, &worker, answer)?;
         }
-        let data: Value = json!({
+        let mut data: Value = json!({
             "backend": self.settings.backend, "action": "recycle", "target": target.to_string(),
             "recycled": pool.done, "refused": pool.refused,
         });
+        if let Some(lease) = &authorized
+            && pool.done.contains(&lease.worker)
+        {
+            data["leaseReleased"] = json!(lease.worker);
+        }
         if !pool.refused.is_empty() {
             return Err(pool.incomplete("recycle_incomplete", "recycled", data));
         }
@@ -381,16 +397,38 @@ impl Manager {
         })
     }
 
+    /// The lease of the receipt `path`, when the recycle `target` names the worker of that lease. A receipt authorizes
+    /// the recycle of its own worker only, so `all` and another worker are refused.
+    fn recycle_receipt(&self, path: &Path, target: &PoolTarget) -> Result<Lease, Refusal> {
+        let (_, lease) = receipt_for_path(&self.settings, path)?;
+        match target {
+            PoolTarget::Worker(worker) if *worker == lease.worker => Ok(lease),
+            PoolTarget::Worker(_) | PoolTarget::All => Err(Refusal::usage(format!(
+                "--lease-file authorizes the recycle of its own worker only; run `--lease-file FILE pool recycle {}`",
+                lease.worker
+            ))),
+        }
+    }
+
     /// The repair itself, for a caller holding the worker's lifecycle lock.
     ///
-    /// The lease guard is first and it is the one `pool stop` uses, so a recycle refuses another session's worker with
-    /// the message that names the release command. Nothing is deleted until that guard has passed, so a refusal
-    /// leaves the slot exactly as it was found. The backend then unmakes the slot: see [`Manager::unmake_worker`].
-    /// Tart stops the machine before the delete, so a stop that timed out also leaves the slot as it was.
-    async fn recycle_one_worker(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
-        self.require_unleased(worker, "recycle", None)?;
+    /// The run guard and the lease guard come first, as for `pool stop`. A recycle refuses another session's worker
+    /// with the message that names the release command. `authorized` is the lease of the caller's receipt, which
+    /// passes the lease guard. Nothing is deleted until both guards have passed, so a refusal leaves the slot exactly
+    /// as it was found. The backend then unmakes the slot: see [`Manager::unmake_worker`]. Tart stops the machine
+    /// before the delete, so a stop that timed out also leaves the slot as it was.
+    ///
+    /// The unmake removes the lease file with the rest of the host state. An authorized recycle also removes the
+    /// receipts of the lease, so the lease is given back and no receipt names it.
+    async fn recycle_one_worker(&self, ctx: &Ctx, worker: &str, authorized: Option<&Lease>) -> Result<(), Refusal> {
+        self.require_no_run(ctx, worker, "recycle").await?;
+        self.require_unleased(worker, "recycle", authorized)?;
         self.stop_lane_ides(ctx, worker).await;
         self.unmake_worker(ctx, worker).await?;
+        if let Some(lease) = authorized {
+            remove_lease_receipts(&self.settings, lease);
+            self.note(worker, format!("the recycle gave back the lease of {worker}"));
+        }
         self.start_without_lifecycle_lock(ctx, worker).await.map(drop)
     }
 

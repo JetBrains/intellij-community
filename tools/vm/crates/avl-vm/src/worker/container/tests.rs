@@ -562,7 +562,11 @@ mod lifecycle {
         let worker = fixture.worker(0);
         fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap();
         fixture.fake.forget_calls();
-        fixture.manager.pool(&ctx(), PoolCommand::Stop(PoolTarget::All)).await.unwrap();
+        fixture
+            .manager
+            .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
+            .await
+            .unwrap();
         let calls = fixture.fake.calls();
         position(&calls, &format!("stop -t 10 {worker}"));
         assert!(
@@ -577,7 +581,7 @@ mod lifecycle {
     #[tokio::test]
     async fn a_pool_gc_on_a_stopped_server_starts_nothing() {
         let fixture = Fixture::docker_container();
-        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
         assert_eq!(outcome.data["kept"][fixture.worker(0)], "engine-stopped");
         assert_eq!(outcome.text, "removed=(none)");
         let calls = fixture.fake.calls();
@@ -592,7 +596,11 @@ mod lifecycle {
         let worker = fixture.worker(0);
         fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap();
         fixture.fake.forget_calls();
-        fixture.manager.pool(&ctx(), PoolCommand::Recycle(PoolTarget::All)).await.unwrap();
+        fixture
+            .manager
+            .pool(&ctx(), PoolCommand::Recycle(PoolTarget::All), None)
+            .await
+            .unwrap();
         let calls = fixture.fake.calls();
         assert!(position(&calls, "builder stop") < position(&calls, "builder delete"));
         assert!(position(&calls, "builder delete") < position(&calls, &format!("delete --force {worker}")));
