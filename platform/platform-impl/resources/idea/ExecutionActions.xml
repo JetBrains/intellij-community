@@ -87,7 +87,7 @@
     </reference>
     <reference ref="RerunTests"/>
 
-    <group id="RunMenu" popup="true">
+    <group id="RunMenu" class="com.intellij.execution.actions.RunMenuGroup" popup="true">
       <group id="RunnerActions"/>
       <separator/>
       <reference ref="ChooseRunConfiguration"/>

@@ -12,6 +12,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
+import com.intellij.execution.actions.areExecutionActionsHiddenInLightMode
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
@@ -459,6 +460,14 @@ internal class MoreRunToolbarActions : TogglePopupAction(
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (areExecutionActionsHiddenInLightMode()) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 internal fun filterOutRunIfDebugResumeIsPresent(e: AnActionEvent, actions: List<AnAction>): List<AnAction> {
