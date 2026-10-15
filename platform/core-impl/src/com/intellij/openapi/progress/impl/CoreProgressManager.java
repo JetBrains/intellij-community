@@ -944,7 +944,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * It is off by default, because {@code UiThreadPriority} raises the EDT priority in the OS scheduler. See IJPL-258607.
    */
   private static final boolean SLEEP_TO_GIVE_PRIORITY_ENABLED =
-    SystemProperties.getBooleanProperty("intellij.progress.sleep.to.give.priority", true);
+    SystemProperties.getBooleanProperty("intellij.progress.sleep.to.give.priority", false);
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
   private static final long MIN_PRIORITIZATION_NANOS = TimeUnit.MILLISECONDS.toNanos(5); // minimum duration of process to consider prioritizing it down
   private final Set<Thread> myPrioritizedThreads = ConcurrentHashMap.newKeySet();
