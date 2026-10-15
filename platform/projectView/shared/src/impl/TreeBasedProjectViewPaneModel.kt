@@ -125,6 +125,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -704,9 +705,9 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
     private suspend fun awaitPendingRetries(parentId: Long) {
       while (true) {
-        val activity = retryActivities[parentId] ?: return // no pending retries
+        val activity = retryActivities[parentId] ?: return // there are no pending retries
         activity.awaitDone()
-        val newActivity = retryActivities[parentId] ?: return // no more pending retries
+        val newActivity = retryActivities[parentId] ?: return // there are no pending retries anymore
         if (newActivity === activity) return // done, but not gone => its scope is canceled => pointless to continue waiting
         // otherwise, there's a new non-null activity, run another loop to wait for it to finish
       }
@@ -1248,11 +1249,11 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       
       @Suppress("IncorrectCancellationExceptionHandling") // yes, it's allowed to log CEs if it's debug()
       private val job = modelComputationScope.launch {
-        var first = true
+        val first = AtomicBoolean(true)
         try {
           nodeProvider.getNodeModelFlow(id, node).collect { model ->
-            if (first) {
-              first = false
+            if (first.load()) {
+              first.store(false)
               firstValue.complete(model)
             }
             else {
