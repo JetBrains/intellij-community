@@ -457,12 +457,29 @@ public class XmlTagBlock extends AbstractXmlBlock {
       return Spacing.createSpacing(0, 0, 1, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
+      TextRange startTagLineBreakRange = getStartTagLineBreakRange(syntheticBlock1);
+      if (startTagLineBreakRange != null && syntheticBlock1.insertLineFeedAfter(getTag())) { //<inline/></tag
+        return Spacing.createDependentLFSpacing(0, 0, startTagLineBreakRange, true, myXmlFormattingPolicy.getKeepBlankLines());
+      }
       return Spacing.createSpacing(0, 0, myXmlFormattingPolicy.insertLineBreakAfterTagBegin(getTag()) ? 2 : 0,
                                    true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(true, true);
     }
+  }
+
+  /**
+   * Returns the range from the {@code >} token of the start tag to the first character of {@code contentBlock}.
+   * A dependent spacing on this range adds a line break only when the whitespace after the start tag has a line break.
+   * The range starts and ends inside blocks, because the dependent spacing checks the whitespace before each block in the range.
+   * Returns {@code null} when the start tag has no {@code >} token before the content.
+   */
+  private @Nullable TextRange getStartTagLineBreakRange(@NotNull AbstractSyntheticBlock contentBlock) {
+    ASTNode startTagEnd = myNode.findChildByType(XmlTokenType.XML_TAG_END);
+    int contentStart = contentBlock.getTextRange().getStartOffset();
+    if (startTagEnd == null || startTagEnd.getTextRange().getEndOffset() > contentStart) return null;
+    return new TextRange(startTagEnd.getTextRange().getStartOffset(), contentStart + 1);
   }
 
   @Override
