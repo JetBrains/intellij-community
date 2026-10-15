@@ -2304,6 +2304,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/InvokeFunction.kt");
             }
 
+            @TestMetadata("keepVarargArrayForArrayParameter.kt")
+            public void testKeepVarargArrayForArrayParameter() throws Exception {
+                runTest("testData/inline/namedFunction/keepVarargArrayForArrayParameter.kt");
+            }
+
             @TestMetadata("Kt19459.kt")
             public void testKt19459() throws Exception {
                 runTest("testData/inline/namedFunction/Kt19459.kt");
@@ -2322,11 +2327,6 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("Kt39818.kt")
             public void testKt39818() throws Exception {
                 runTest("testData/inline/namedFunction/Kt39818.kt");
-            }
-
-            @TestMetadata("keepVarargArrayForArrayParameter.kt")
-            public void testKeepVarargArrayForArrayParameter() throws Exception {
-                runTest("testData/inline/namedFunction/keepVarargArrayForArrayParameter.kt");
             }
 
             @TestMetadata("lambdaArgumentInDiffirentPosition.kt")

@@ -517,6 +517,11 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
             runTest("../../idea/tests/testData/joinLines/stringTemplate/firstLineVariable.kt");
         }
 
+        @TestMetadata("higherPrecedenceOperatorBeforePlus.kt")
+        public void testHigherPrecedenceOperatorBeforePlus() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/stringTemplate/higherPrecedenceOperatorBeforePlus.kt");
+        }
+
         @TestMetadata("lineWithMultiStringLiteral.kt")
         public void testLineWithMultiStringLiteral() throws Exception {
             runTest("../../idea/tests/testData/joinLines/stringTemplate/lineWithMultiStringLiteral.kt");
@@ -525,6 +530,21 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
         @TestMetadata("lineWithMultiStringLiteralAndVariable.kt")
         public void testLineWithMultiStringLiteralAndVariable() throws Exception {
             runTest("../../idea/tests/testData/joinLines/stringTemplate/lineWithMultiStringLiteralAndVariable.kt");
+        }
+
+        @TestMetadata("minusBeforePlus.kt")
+        public void testMinusBeforePlus() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/stringTemplate/minusBeforePlus.kt");
+        }
+
+        @TestMetadata("parenthesizedMinusBeforePlus.kt")
+        public void testParenthesizedMinusBeforePlus() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/stringTemplate/parenthesizedMinusBeforePlus.kt");
+        }
+
+        @TestMetadata("plusChainAfterMinus.kt")
+        public void testPlusChainAfterMinus() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/stringTemplate/plusChainAfterMinus.kt");
         }
 
         @TestMetadata("secondLineVariable.kt")
