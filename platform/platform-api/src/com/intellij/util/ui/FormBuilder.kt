@@ -1,265 +1,248 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.components.JBLabel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-
-import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static java.awt.GridBagConstraints.BOTH;
-import static java.awt.GridBagConstraints.CENTER;
-import static java.awt.GridBagConstraints.EAST;
-import static java.awt.GridBagConstraints.HORIZONTAL;
-import static java.awt.GridBagConstraints.NONE;
-import static java.awt.GridBagConstraints.NORTHEAST;
-import static java.awt.GridBagConstraints.NORTHWEST;
-import static java.awt.GridBagConstraints.WEST;
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
+import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
+import java.awt.GridBagConstraints
+import java.awt.GridBagConstraints.BOTH
+import java.awt.GridBagConstraints.CENTER
+import java.awt.GridBagConstraints.EAST
+import java.awt.GridBagConstraints.HORIZONTAL
+import java.awt.GridBagConstraints.NONE
+import java.awt.GridBagConstraints.NORTHEAST
+import java.awt.GridBagConstraints.NORTHWEST
+import java.awt.GridBagConstraints.WEST
+import java.awt.GridBagLayout
+import javax.swing.Box
+import javax.swing.JButton
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JSeparator
+import javax.swing.JSpinner
+import javax.swing.JTextField
 
 /**
- * also consider using {@link UI.PanelFactory} for non-trivial forms
+ * also consider using [UI.PanelFactory] for non-trivial forms
  */
-public class FormBuilder {
-  private boolean myAlignLabelOnRight;
+open class FormBuilder {
+  private var alignLabelOnRight = false
 
-  private int myLineCount = 0;
-  private final JPanel myPanel;
-  private boolean myVertical;
+  private var lines = 0
+  open val panel: JPanel = JPanel(GridBagLayout())
+  private var vertical = false
 
-  private int myVerticalGap;
-  private int myHorizontalGap;
-  private int myFormLeftIndent;
+  private var verticalGap = DEFAULT_VGAP
+  private var horizontalGap = DEFAULT_HGAP
+  private var formLeftIndent = 0
 
-  public FormBuilder() {
-    myPanel = new JPanel(new GridBagLayout());
-    myVertical = false;
-    myAlignLabelOnRight = false;
-    myVerticalGap = DEFAULT_VGAP;
-    myHorizontalGap = DEFAULT_HGAP;
-    myFormLeftIndent = 0;
+  companion object {
+    @JvmStatic
+    fun createFormBuilder(): FormBuilder = FormBuilder()
   }
 
-  public static FormBuilder createFormBuilder() {
-    return new FormBuilder();
+  open fun addLabeledComponent(label: JComponent?, component: JComponent): FormBuilder {
+    return addLabeledComponent(label, component, verticalGap, false)
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JComponent label, @NotNull JComponent component) {
-    return addLabeledComponent(label, component, myVerticalGap, false);
+  open fun addLabeledComponent(label: JComponent?, component: JComponent, topInset: Int): FormBuilder {
+    return addLabeledComponent(label, component, topInset, false)
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JComponent label, @NotNull JComponent component, final int topInset) {
-    return addLabeledComponent(label, component, topInset, false);
+  open fun addLabeledComponent(label: JComponent?, component: JComponent, labelOnTop: Boolean): FormBuilder {
+    return addLabeledComponent(label, component, verticalGap, labelOnTop)
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JComponent label, @NotNull JComponent component, boolean labelOnTop) {
-    return addLabeledComponent(label, component, myVerticalGap, labelOnTop);
+  open fun addLabeledComponent(@NlsContexts.Label labelText: String, component: JComponent): FormBuilder {
+    return addLabeledComponent(labelText, component, verticalGap, false)
   }
 
-  public FormBuilder addLabeledComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    return addLabeledComponent(labelText, component, myVerticalGap, false);
+  open fun addLabeledComponent(@NlsContexts.Label labelText: String, component: JComponent, topInset: Int): FormBuilder {
+    return addLabeledComponent(labelText, component, topInset, false)
   }
 
-  public FormBuilder addLabeledComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component, final int topInset) {
-    return addLabeledComponent(labelText, component, topInset, false);
+  open fun addLabeledComponent(@NlsContexts.Label labelText: String, component: JComponent, labelOnTop: Boolean): FormBuilder {
+    return addLabeledComponent(labelText, component, verticalGap, labelOnTop)
   }
 
-  public FormBuilder addLabeledComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component, boolean labelOnTop) {
-    return addLabeledComponent(labelText, component, myVerticalGap, labelOnTop);
+  open fun addLabeledComponent(@NlsContexts.Label labelText: String, component: JComponent, topInset: Int, labelOnTop: Boolean): FormBuilder {
+    val label = createLabelForComponent(labelText, component)
+    return addLabeledComponent(label, component, topInset, labelOnTop)
   }
 
-  public FormBuilder addLabeledComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component, final int topInset, boolean labelOnTop) {
-    JLabel label = createLabelForComponent(labelText, component);
-    return addLabeledComponent(label, component, topInset, labelOnTop);
+  private fun createLabelForComponent(@NlsContexts.Label labelText: String, component: JComponent): JLabel {
+    val label = JLabel(UIUtil.replaceMnemonicAmpersand(labelText))
+    label.labelFor = component
+    return label
   }
 
-  private static @NotNull JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand(labelText));
-    label.setLabelFor(component);
-    return label;
+  open fun addComponent(component: JComponent): FormBuilder {
+    return addLabeledComponent(null, component, verticalGap, false)
   }
 
-  public FormBuilder addComponent(@NotNull JComponent component) {
-    return addLabeledComponent((JLabel)null, component, myVerticalGap, false);
+  open fun addComponent(component: JComponent, topInset: Int): FormBuilder {
+    return addLabeledComponent(null, component, topInset, false)
   }
 
-  public FormBuilder addComponent(@NotNull JComponent component, final int topInset) {
-    return addLabeledComponent((JLabel)null, component, topInset, false);
+  open fun addComponentFillVertically(component: JComponent, topInset: Int): FormBuilder {
+    return addLabeledComponent(null, component, topInset, false, true)
   }
 
-  public @NotNull FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
-    return addLabeledComponent(null, component, topInset, false, true);
+  open fun addSeparator(topInset: Int): FormBuilder {
+    return addComponent(JSeparator(), topInset)
   }
 
-  public FormBuilder addSeparator(final int topInset) {
-    return addComponent(new JSeparator(), topInset);
+  open fun addSeparator(): FormBuilder {
+    return addSeparator(verticalGap)
   }
 
-  public FormBuilder addSeparator() {
-    return addSeparator(myVerticalGap);
-  }
-
-  public FormBuilder addVerticalGap(final int height) {
+  open fun addVerticalGap(height: Int): FormBuilder {
     if (height == -1) {
-      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBInsets.emptyInsets(), 0, 0));
-      return this;
+      panel.add(JLabel(), GridBagConstraints(0, lines++, 2, 1, 0.0, 1.0, CENTER, NONE, JBInsets.emptyInsets(), 0, 0))
+      return this
     }
 
-    return addLabeledComponent((JLabel)null,
-                               new Box.Filler(new JBDimension(0, height), new JBDimension(0, height), new JBDimension(Short.MAX_VALUE, height)));
+    return addLabeledComponent(null,
+                               Box.Filler(JBDimension(0, height), JBDimension(0, height), JBDimension(Short.MAX_VALUE.toInt(), height)))
   }
 
-  public FormBuilder addTooltip(final @NlsContexts.Label String text) {
-    final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
-    label.setBorder(JBUI.Borders.emptyLeft(10));
-    return addComponentToRightColumn(label, 1);
+  open fun addTooltip(@NlsContexts.Label text: String): FormBuilder {
+    val label = JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER)
+    label.border = JBUI.Borders.emptyLeft(10)
+    return addComponentToRightColumn(label, 1)
   }
 
-  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component) {
-    return addComponentToRightColumn(component, myVerticalGap);
+  open fun addComponentToRightColumn(component: JComponent): FormBuilder {
+    return addComponentToRightColumn(component, verticalGap)
   }
 
-  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component, final int topInset) {
-    return addLabeledComponent(new JLabel(), component, topInset);
+  open fun addComponentToRightColumn(component: JComponent, topInset: Int): FormBuilder {
+    return addLabeledComponent(JLabel(), component, topInset)
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JComponent label,
-                                         @NotNull JComponent component,
-                                         int topInset,
-                                         boolean labelOnTop) {
-    boolean fillVertically = component instanceof JScrollPane;
-    return addLabeledComponent(label, component, topInset, labelOnTop, fillVertically);
+  open fun addLabeledComponent(label: JComponent?,
+                               component: JComponent,
+                               topInset: Int,
+                               labelOnTop: Boolean): FormBuilder {
+    val fillVertically = component is JScrollPane
+    return addLabeledComponent(label, component, topInset, labelOnTop, fillVertically)
   }
 
-  public FormBuilder addLabeledComponentFillVertically(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    JLabel label = createLabelForComponent(labelText, component);
-    return addLabeledComponent(label, component, myVerticalGap, true, true);
+  open fun addLabeledComponentFillVertically(@NlsContexts.Label labelText: String, component: JComponent): FormBuilder {
+    val label = createLabelForComponent(labelText, component)
+    return addLabeledComponent(label, component, verticalGap, true, true)
   }
 
-  private FormBuilder addLabeledComponent(@Nullable JComponent label, @NotNull JComponent component, int topInset, boolean labelOnTop, boolean fillVertically) {
-    GridBagConstraints c = new GridBagConstraints();
-    topInset = myLineCount > 0 ? topInset : 0;
+  private fun addLabeledComponent(label: JComponent?, component: JComponent, topInset: Int, labelOnTop: Boolean, fillVertically: Boolean): FormBuilder {
+    val c = GridBagConstraints()
+    val actualTopInset = if (lines > 0) topInset else 0
 
-    if (myVertical || labelOnTop || label == null) {
-      c.gridwidth = 2;
-      c.gridx = 0;
-      c.gridy = myLineCount;
-      c.weightx = 0;
-      c.weighty = 0;
-      c.fill = NONE;
-      c.anchor = getLabelAnchor(false, fillVertically);
-      c.insets = JBUI.insets(topInset, myFormLeftIndent, DEFAULT_VGAP, 0);
+    if (vertical || labelOnTop || label == null) {
+      c.gridwidth = 2
+      c.gridx = 0
+      c.gridy = lines
+      c.weightx = 0.0
+      c.weighty = 0.0
+      c.fill = NONE
+      c.anchor = getLabelAnchor(false, fillVertically)
+      c.insets = JBUI.insets(actualTopInset, formLeftIndent, DEFAULT_VGAP, 0)
 
-      if (label != null) myPanel.add(label, c);
+      if (label != null) panel.add(label, c)
 
-      c.gridx = 0;
-      c.gridy = myLineCount + 1;
-      c.weightx = 1.0;
-      c.weighty = getWeightY(fillVertically);
-      c.fill = getFill(component, fillVertically);
-      c.anchor = WEST;
-      c.insets = JBUI.insets(label == null ? topInset : 0, myFormLeftIndent, 0, 0);
+      c.gridx = 0
+      c.gridy = lines + 1
+      c.weightx = 1.0
+      c.weighty = getWeightY(fillVertically)
+      c.fill = getFill(component, fillVertically)
+      c.anchor = WEST
+      c.insets = JBUI.insets(if (label == null) actualTopInset else 0, formLeftIndent, 0, 0)
 
-      myPanel.add(component, c);
+      panel.add(component, c)
 
-      myLineCount += 2;
+      lines += 2
     }
     else {
-      c.gridwidth = 1;
-      c.gridx = 0;
-      c.gridy = myLineCount;
-      c.weightx = 0;
-      c.weighty = 0;
-      c.fill = NONE;
-      c.anchor = getLabelAnchor(true, fillVertically);
-      c.insets = JBUI.insets(topInset, myFormLeftIndent, 0, myHorizontalGap);
+      c.gridwidth = 1
+      c.gridx = 0
+      c.gridy = lines
+      c.weightx = 0.0
+      c.weighty = 0.0
+      c.fill = NONE
+      c.anchor = getLabelAnchor(true, fillVertically)
+      c.insets = JBUI.insets(actualTopInset, formLeftIndent, 0, horizontalGap)
 
-      myPanel.add(label, c);
+      panel.add(label, c)
 
-      c.gridx = 1;
-      c.weightx = 1;
-      c.weighty = getWeightY(fillVertically);
-      c.fill = getFill(component, fillVertically);
-      c.anchor = WEST;
-      c.insets = JBUI.insets(topInset, 0, 0, 0);
+      c.gridx = 1
+      c.weightx = 1.0
+      c.weighty = getWeightY(fillVertically)
+      c.fill = getFill(component, fillVertically)
+      c.anchor = WEST
+      c.insets = JBUI.insets(actualTopInset, 0, 0, 0)
 
-      myPanel.add(component, c);
+      panel.add(component, c)
 
-      myLineCount++;
+      lines++
     }
 
-    return this;
+    return this
   }
 
-  private int getLabelAnchor(boolean honorAlignment, boolean fillVertically) {
-    if (fillVertically) return honorAlignment && myAlignLabelOnRight ? NORTHEAST : NORTHWEST;
-    return honorAlignment && myAlignLabelOnRight ? EAST : WEST;
+  private fun getLabelAnchor(honorAlignment: Boolean, fillVertically: Boolean): Int {
+    if (fillVertically) return if (honorAlignment && alignLabelOnRight) NORTHEAST else NORTHWEST
+    return if (honorAlignment && alignLabelOnRight) EAST else WEST
   }
 
-  protected int getFill(JComponent component) {
-    if (component instanceof JComboBox ||
-        component instanceof JSpinner ||
-        component instanceof JButton ||
-        component instanceof JTextField && ((JTextField)component).getColumns() != 0) {
-      return NONE;
+  protected open fun getFill(component: JComponent?): Int {
+    if (component is JComboBox<*> ||
+        component is JSpinner ||
+        component is JButton ||
+        component is JTextField && component.columns != 0) {
+      return NONE
     }
-    return HORIZONTAL;
+    return HORIZONTAL
   }
 
-  private int getFill(JComponent component, boolean fillVertically) {
+  private fun getFill(component: JComponent, fillVertically: Boolean): Int {
     if (fillVertically) {
-      return BOTH;
+      return BOTH
     }
-    return getFill(component);
+    return getFill(component)
   }
 
-  private static int getWeightY(boolean fillVertically) {
-    return fillVertically ? 1 : 0;
+  private fun getWeightY(fillVertically: Boolean): Double {
+    return if (fillVertically) 1.0 else 0.0
   }
 
-  public JPanel getPanel() {
-    return myPanel;
+  open val lineCount: Int
+    get() = lines
+
+  open fun setAlignLabelOnRight(alignLabelOnRight: Boolean): FormBuilder {
+    this.alignLabelOnRight = alignLabelOnRight
+    return this
   }
 
-  public int getLineCount() {
-    return myLineCount;
+  open fun setVertical(vertical: Boolean): FormBuilder {
+    this.vertical = vertical
+    return this
   }
 
-  public FormBuilder setAlignLabelOnRight(boolean alignLabelOnRight) {
-    myAlignLabelOnRight = alignLabelOnRight;
-    return this;
+  open fun setVerticalGap(verticalGap: Int): FormBuilder {
+    this.verticalGap = verticalGap
+    return this
   }
 
-  public FormBuilder setVertical(boolean vertical) {
-    myVertical = vertical;
-    return this;
+  open fun setHorizontalGap(horizontalGap: Int): FormBuilder {
+    this.horizontalGap = horizontalGap
+    return this
   }
 
-  public FormBuilder setVerticalGap(int verticalGap) {
-    myVerticalGap = verticalGap;
-    return this;
-  }
-
-  public FormBuilder setHorizontalGap(int horizontalGap) {
-    myHorizontalGap = horizontalGap;
-    return this;
-  }
-
-  public FormBuilder setFormLeftIndent(int formLeftIndent) {
-    myFormLeftIndent = formLeftIndent;
-    return this;
+  open fun setFormLeftIndent(formLeftIndent: Int): FormBuilder {
+    this.formLeftIndent = formLeftIndent
+    return this
   }
 }

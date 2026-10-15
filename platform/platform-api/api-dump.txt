@@ -11787,6 +11787,7 @@ com.intellij.util.ui.ErrorTreeView
 - a:addMessage(I,java.lang.String[],java.lang.String,com.intellij.pom.Navigatable,java.lang.String,java.lang.String,java.lang.Object):V
 - a:getComponent():javax.swing.JComponent
 c:com.intellij.util.ui.FormBuilder
+- sf:Companion:com.intellij.util.ui.FormBuilder$Companion
 - <init>():V
 - addComponent(javax.swing.JComponent):com.intellij.util.ui.FormBuilder
 - addComponent(javax.swing.JComponent,I):com.intellij.util.ui.FormBuilder
@@ -11806,7 +11807,7 @@ c:com.intellij.util.ui.FormBuilder
 - addSeparator(I):com.intellij.util.ui.FormBuilder
 - addTooltip(java.lang.String):com.intellij.util.ui.FormBuilder
 - addVerticalGap(I):com.intellij.util.ui.FormBuilder
-- s:createFormBuilder():com.intellij.util.ui.FormBuilder
+- sf:createFormBuilder():com.intellij.util.ui.FormBuilder
 - p:getFill(javax.swing.JComponent):I
 - getLineCount():I
 - getPanel():javax.swing.JPanel
@@ -11815,6 +11816,8 @@ c:com.intellij.util.ui.FormBuilder
 - setHorizontalGap(I):com.intellij.util.ui.FormBuilder
 - setVertical(Z):com.intellij.util.ui.FormBuilder
 - setVerticalGap(I):com.intellij.util.ui.FormBuilder
+f:com.intellij.util.ui.FormBuilder$Companion
+- f:createFormBuilder():com.intellij.util.ui.FormBuilder
 a:com.intellij.util.ui.ImmutableColumnInfo
 - com.intellij.util.ui.ColumnInfo
 - <init>(java.lang.String):V
