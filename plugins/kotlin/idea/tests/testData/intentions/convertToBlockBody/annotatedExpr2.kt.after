@@ -8,5 +8,6 @@ annotation class ann2
 
 fun test(): Int {
     @ann
-    @ann2 return 1
+    @ann2
+    return 1
 }

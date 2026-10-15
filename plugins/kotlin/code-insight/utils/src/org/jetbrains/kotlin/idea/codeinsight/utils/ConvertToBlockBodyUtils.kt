@@ -179,7 +179,7 @@ object ConvertToBlockBodyUtils {
                 annotatedExpr != null -> {
                     val returnedExpr = annotatedExpr.baseExpression ?: body
                     val annotations = annotatedExpr.annotationEntries.joinToString("\n") { it.text }
-                    factory.createSingleStatementBlock(factory.createExpressionByPattern("$0 return $1", annotations, returnedExpr))
+                    factory.createSingleStatementBlock(factory.createExpressionByPattern("$0\nreturn $1", annotations, returnedExpr))
                 }
 
                 pullUpExpressionAnnotations && firstChildAnnotatedExpr != null -> {
@@ -189,7 +189,7 @@ object ConvertToBlockBodyUtils {
                     val annotations = firstChildAnnotatedExpr.annotationEntries.joinToString("\n") { it.text }
                     factory.createSingleStatementBlock(
                         factory.createExpressionByPattern(
-                            "$0 return $1",
+                            "$0\nreturn $1",
                             annotations,
                             expressionWithoutAnnotation
                         )
