@@ -1182,6 +1182,57 @@ fn one_part_suite() -> Suite {
     suites_of(vec![(program, bytes)]).unwrap().remove(0)
 }
 
+// A failed part answers no report. So the runner reads the metrics that a performance body wrote to
+// `air-performance.json` before the failure, and they reach the `testFinished` of the scenario beside its failure. A
+// value that is no number is a note, and no metric.
+#[test]
+fn a_failed_part_reports_the_metrics_of_its_performance_file() {
+    let failure = json!({"type": "java.lang.AssertionError", "message": "the open took too long", "stack": []});
+    let fake = Fake::new(Script {
+        failures: BTreeMap::from([("action/authored-step".to_owned(), failure)]),
+        ..Script::default()
+    });
+    let artifacts = fake.context.path().join("air-authored-artifacts/genui-host/theme/open");
+    fs::create_dir_all(&artifacts).unwrap();
+    fs::write(
+        artifacts.join("air-performance.json"),
+        "{\"open.firstPaintMs\":120.5,\"open.freezes\":0,\"open.label\":\"x\"}\n",
+    )
+    .unwrap();
+    let ran = run(&fake, &[one_part_suite()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(finished[0]["status"], "FAILED");
+    assert_eq!(finished[0]["message"], "the open took too long");
+    assert_eq!(
+        finished[0]["report"],
+        json!({"metrics": {"open.firstPaintMs": 120.5, "open.freezes": 0}})
+    );
+    let notes: Vec<&str> = ran
+        .events("output")
+        .iter()
+        .filter_map(|note| note["text"].as_str())
+        .filter(|text| text.contains("air-performance.json"))
+        .collect();
+    assert_eq!(notes.len(), 3, "{notes:#?}");
+    assert!(
+        notes[2].ends_with("the metric open.label of air-performance.json is no number: \"x\""),
+        "{notes:#?}"
+    );
+}
+
+// A part that answered reports its own metrics, so the runner reads no performance file after it.
+#[test]
+fn a_part_that_answered_reports_no_metric_of_its_performance_file() {
+    let fake = Fake::new(Script::default());
+    let artifacts = fake.context.path().join("air-authored-artifacts/genui-host/theme/open");
+    fs::create_dir_all(&artifacts).unwrap();
+    fs::write(artifacts.join("air-performance.json"), "{\"open.firstPaintMs\":120}\n").unwrap();
+    let ran = run(&fake, &[one_part_suite()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(finished[0]["status"], "SUCCESSFUL");
+    assert_eq!(finished[0].get("report"), None);
+}
+
 // After a part, the runner lists the trace attachments that the IDE queued and fetches each one: the still of a step
 // and a capture of the body go to the span of the part, as PNG attachments under their names. The count of dropped
 // stills is a note. A fetch that fails is a note that says that the body named the file, and it fails no part.

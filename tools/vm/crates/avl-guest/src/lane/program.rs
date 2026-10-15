@@ -107,6 +107,10 @@ const AUTHORED_STEP: &str = "authored-step";
 const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset, HostAction::ReloadAir];
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
+
+/// The metrics file of a performance body in the artifacts of its part, `AIR_PERFORMANCE_FILE` of the bridge: one JSON
+/// object of numbers, which the body rewrites after each metric.
+const AIR_PERFORMANCE_FILE: &str = "air-performance.json";
 /// How long one read of a trace attachment route may take: the list, or the fetch of one entry.
 const TRACE_READ: Duration = Duration::from_secs(10);
 /// How many lines of a reset failure a skip reason and a failure carry.
@@ -880,12 +884,18 @@ impl<'r, 's> Runner<'r, 's> {
             &Value::Object(fields),
             Duration::from_millis(timeout) + self.instruction_margin,
         );
-        if authored {
-            self.collect_authored_artifacts(instruction);
+        let artifacts = if authored {
+            let artifacts = self.collect_authored_artifacts(instruction);
             self.collect_trace_attachments(label);
-        }
+            artifacts
+        } else {
+            None
+        };
         // The IDE names the id in a failure of its own. A request that got no answer is named here.
         let answer = answer.map_err(|mut failure| {
+            if let Some(artifacts) = &artifacts {
+                self.report_failed_part(label, artifacts);
+            }
             if failure.kind == kind::BRIDGE {
                 failure.message = format!("the instruction '{label}' got no answer: {}", failure.message);
             }
@@ -1120,15 +1130,51 @@ impl<'r, 's> Runner<'r, 's> {
         }
     }
 
+    /// Keeps the metrics of a failed authored part from [`AIR_PERFORMANCE_FILE`] in its `artifacts`. A failed part
+    /// answers no report, and a performance body rewrites the file after each metric. So the metrics measured before
+    /// the failure still reach the `testFinished` of the scenario, and the IJ Perf file of its series.
+    fn report_failed_part(&self, label: &str, artifacts: &Path) {
+        let file = artifacts.join(AIR_PERFORMANCE_FILE);
+        let text = match fs::read_to_string(&file) {
+            Ok(text) => text,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
+            Err(error) => {
+                self.stream
+                    .note(format!("[authored] {label}: cannot read {}: {error}", file.display()));
+                return;
+            }
+        };
+        let Ok(Value::Object(metrics)) = serde_json::from_str::<Value>(&text) else {
+            self.stream
+                .note(format!("[authored] {label}: {} is no JSON object of metrics", file.display()));
+            return;
+        };
+        let mut kept = self.report.borrow_mut();
+        for (name, value) in metrics {
+            match value {
+                Value::Number(number) => {
+                    self.stream.note(format!(
+                        "[authored] {label} metric {name} = {number}, from {AIR_PERFORMANCE_FILE} of the failed part"
+                    ));
+                    kept.metrics.insert(name, number);
+                }
+                other => self.stream.note(format!(
+                    "[authored] {label}: the metric {name} of {AIR_PERFORMANCE_FILE} is no number: {other}"
+                )),
+            }
+        }
+    }
+
     /// Moves the artifact directory of an authored part out of the IDE context into the iteration directory, also after
-    /// a failed part.
-    fn collect_authored_artifacts(&self, instruction: &Instruction) {
+    /// a failed part, and answers where the artifacts are: the iteration directory, or the context when the move
+    /// failed. `None` is a part that wrote no artifact.
+    fn collect_authored_artifacts(&self, instruction: &Instruction) -> Option<PathBuf> {
         let arg = |name: &str| instruction.args.get(name).and_then(Value::as_str).unwrap_or_default().to_owned();
         let (suite, scenario, part) = (arg("suite"), arg("scenario"), arg("part"));
-        let Some(context) = self.lane.context_dir() else { return };
+        let context = self.lane.context_dir()?;
         let source = context.join(AUTHORED_ARTIFACTS_DIR).join(&suite).join(&scenario).join(&part);
         if !source.is_dir() {
-            return;
+            return None;
         }
         let target = self
             .iteration_dir
@@ -1141,12 +1187,16 @@ impl<'r, 's> Runner<'r, 's> {
             .map_or(Ok(()), fs::create_dir_all)
             .and_then(|()| fs::rename(&source, &target));
         match moved {
-            Ok(()) => self
-                .stream
-                .note(format!("[authored] artifacts of {suite}/{scenario}/{part}: {}", target.display())),
-            Err(error) => self
-                .stream
-                .note(format!("[authored] cannot move the artifacts {}: {error}", source.display())),
+            Ok(()) => {
+                self.stream
+                    .note(format!("[authored] artifacts of {suite}/{scenario}/{part}: {}", target.display()));
+                Some(target)
+            }
+            Err(error) => {
+                self.stream
+                    .note(format!("[authored] cannot move the artifacts {}: {error}", source.display()));
+                Some(source)
+            }
         }
     }
 

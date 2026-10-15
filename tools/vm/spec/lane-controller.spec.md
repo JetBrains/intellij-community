@@ -1536,6 +1536,12 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/values/tests.rs (`a_part_takes_and_answers_exactly_its_declared_values`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_passes_its_values_and_reports_its_notes`)
 
+- A failed part answers no report. A performance body rewrites `air-performance.json` in the artifacts of its part
+  after each metric. So the verb reads that file after a failed part, and its numbers go into the same `report`. The
+  IJ Perf file of the series then holds them too.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_part_reports_the_metrics_of_its_performance_file`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_part_that_answered_reports_no_metric_of_its_performance_file`)
+
 - After each part of an authored program, and before its `restart-ide` or `reload-air`, the verb lists the trace
   attachments that the IDE queued. It fetches each listed id at once. Each still, capture or file goes to the span of the instruction as a
   named attachment. The run log notes a count of dropped stills and each fetch that fails, and neither fails the
