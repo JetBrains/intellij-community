@@ -194,7 +194,24 @@ data class  DocumentSymbol(
     /**
      * Children of this symbol, e.g. properties of a class.
      */
-    val children: List<DocumentSymbol>? = null
+    val children: List<DocumentSymbol>? = null,
+
+    /**
+     * JetBrains extension: sent only to a client that declares `capabilities.experimental.documentSymbolOrigin: true`.
+     * Other servers never send it.
+     */
+    val intellij: DocumentSymbolIntellij? = null,
+)
+
+/**
+ * JetBrains extension of a [DocumentSymbol].
+ */
+@Serializable
+data class DocumentSymbolIntellij(
+    /**
+     * Where the symbol comes from, e.g. `anonymous` for an anonymous class or `lambda` for a lambda.
+     */
+    val origin: String,
 )
 
 /**

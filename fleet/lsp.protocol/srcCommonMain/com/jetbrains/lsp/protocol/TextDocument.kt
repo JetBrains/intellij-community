@@ -119,6 +119,7 @@ private class DocumentSymbolOrInformation(
     val range: Range?,
     val selectionRange: Range?,
     val children: List<DocumentSymbol>?,
+    val intellij: DocumentSymbolIntellij?,
     /** The object has a `location` member, also `null`. */
     val hasLocation: Boolean,
     val location: Location?,
@@ -130,7 +131,7 @@ private class DocumentSymbolOrInformation(
                                 "selectionRange" to selectionRange)
         }
         return DocumentSymbol(name = name, detail = detail, kind = kind, tags = tags, deprecated = deprecated, range = range,
-                              selectionRange = selectionRange, children = children)
+                              selectionRange = selectionRange, children = children, intellij = intellij)
     }
 
     fun symbolInformation(): SymbolInformation {
@@ -153,6 +154,7 @@ private class DocumentSymbolOrInformation(
         private const val CHILDREN = 7
         private const val LOCATION = 8
         private const val CONTAINER_NAME = 9
+        private const val INTELLIJ = 10
 
         private val tagsSerializer = SymbolTagListSerializer().nullable
         private val childrenSerializer = ListSerializer(DocumentSymbol.serializer()).nullable
@@ -169,6 +171,7 @@ private class DocumentSymbolOrInformation(
             element("children", childrenSerializer.descriptor, isOptional = true)
             element("location", Location.serializer().nullable.descriptor, isOptional = true)
             element("containerName", String.serializer().nullable.descriptor, isOptional = true)
+            element("intellij", DocumentSymbolIntellij.serializer().nullable.descriptor, isOptional = true)
         }
 
         override fun deserialize(decoder: Decoder): DocumentSymbolOrInformation {
@@ -183,6 +186,7 @@ private class DocumentSymbolOrInformation(
             var hasLocation = false
             var location: Location? = null
             var containerName: String? = null
+            var intellij: DocumentSymbolIntellij? = null
             decoder.decodeStructure(descriptor) {
                 while (true) {
                     when (val index = decodeElementIndex(descriptor)) {
@@ -199,13 +203,14 @@ private class DocumentSymbolOrInformation(
                             location = decodeNullableSerializableElement(descriptor, index, Location.serializer())
                         }
                         CONTAINER_NAME -> containerName = decodeNullableSerializableElement(descriptor, index, String.serializer())
+                        INTELLIJ -> intellij = decodeNullableSerializableElement(descriptor, index, DocumentSymbolIntellij.serializer())
                         CompositeDecoder.DECODE_DONE -> break
                         else -> throw SerializationException("Unexpected index $index")
                     }
                 }
             }
-            return DocumentSymbolOrInformation(name, detail, kind, tags, deprecated, range, selectionRange, children, hasLocation,
-                                               location, containerName)
+            return DocumentSymbolOrInformation(name, detail, kind, tags, deprecated, range, selectionRange, children, intellij,
+                                               hasLocation, location, containerName)
         }
     }
 }
