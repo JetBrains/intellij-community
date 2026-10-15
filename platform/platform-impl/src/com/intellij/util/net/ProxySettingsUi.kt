@@ -36,7 +36,6 @@ import java.net.URISyntaxException
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -52,27 +51,23 @@ internal class ProxySettingsUi(
   private val disabledPromptsManager: DisabledProxyAuthPromptsManager
 ) : ConfigurableUi<ProxySettings> {
   private var mainPanel: JPanel
-  private lateinit var proxyLoginTextField: JTextField
-  private lateinit var proxyPasswordTextField: JPasswordField
-  private lateinit var proxyAuthCheckBox: JCheckBox
-  private lateinit var proxyPortTextField: JBIntSpinner
-  private lateinit var proxyHostTextField: JTextField
-  private lateinit var rememberProxyPasswordCheckBox: JCheckBox
-  private lateinit var autoDetectProxyRb: JBRadioButton
-  private lateinit var useHttpProxyRb: JBRadioButton
-  private lateinit var systemProxyDefinedWarning: JLabel
-  private lateinit var noProxyRb: JBRadioButton
-  private lateinit var typeHttpRb: JBRadioButton
-  private lateinit var typeSocksRb: JBRadioButton
-  private lateinit var clearPasswordsButton: JButton
-  private lateinit var errorLabel: JLabel
-  private lateinit var checkButton: JButton
   private lateinit var javaPropertiesWarning: JLabel
-  private lateinit var proxyExceptionsField: RawCommandLineEditor
+  private lateinit var pluginOverrideCheckbox: JCheckBox
+  private lateinit var noProxyRb: JBRadioButton
+  private lateinit var autoDetectProxyRb: JBRadioButton
   private lateinit var pacUrlCheckBox: JCheckBox
   private lateinit var pacUrlTextField: JTextField
-  private lateinit var tunnelingAuthSchemeDisabledWarning: JLabel
-  private lateinit var pluginOverrideCheckbox: JCheckBox
+  private lateinit var useHttpProxyRb: JBRadioButton
+  private lateinit var typeHttpRb: JBRadioButton
+  private lateinit var typeSocksRb: JBRadioButton
+  private lateinit var proxyHostTextField: JTextField
+  private lateinit var proxyPortTextField: JBIntSpinner
+  private lateinit var proxyExceptionsField: RawCommandLineEditor
+  private lateinit var proxyAuthCheckBox: JCheckBox
+  private lateinit var proxyLoginTextField: JTextField
+  private lateinit var proxyPasswordTextField: JPasswordField
+  private lateinit var rememberProxyPasswordCheckBox: JCheckBox
+  private lateinit var errorLabel: JLabel
 
   private var lastOverriderProvidedConfiguration: State? = null
   private lateinit var lastUserConfiguration: State
@@ -84,10 +79,10 @@ internal class ProxySettingsUi(
   init {
     mainPanel = panel {
       row {
-        systemProxyDefinedWarning = label(UIBundle.message("proxy.system.label")).applyToComponent {
+        label(UIBundle.message("proxy.system.label")).applyToComponent {
           icon = Messages.getWarningIcon()
           isVisible = System.getProperty(JavaProxyProperty.USE_SYSTEM_PROXY).toBoolean()
-        }.component
+        }
       }
       row {
         javaPropertiesWarning = label("").applyToComponent { icon = Messages.getWarningIcon() }.component
@@ -122,9 +117,9 @@ internal class ProxySettingsUi(
             pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).enabledIf(pacUrlCheckBox.selected).component
           }
           row {
-            clearPasswordsButton = button(UIBundle.message("proxy.pac.pw.clear.button")) {
+            button(UIBundle.message("proxy.pac.pw.clear.button")) {
               clearAllCredentials()
-            }.component
+            }
           }
         }.enabledIf(autoDetectProxyRb.selected and pluginOverrideCheckbox.selected.not())
         row {
@@ -180,10 +175,10 @@ internal class ProxySettingsUi(
       }
       indent {
         row {
-          tunnelingAuthSchemeDisabledWarning = label(UIBundle.message("proxy.tunneling.disabled.warning")).applyToComponent {
+          label(UIBundle.message("proxy.tunneling.disabled.warning")).applyToComponent {
             icon = Messages.getWarningIcon()
             isVisible = JavaNetworkUtils.isTunnelingAuthSchemeDisabled(JavaNetworkUtils.BASIC_AUTH_SCHEME)
-          }.component
+          }
         }
       }
       row {
@@ -192,11 +187,11 @@ internal class ProxySettingsUi(
         }.component
       }
       row {
-        checkButton = button(UIBundle.message("proxy.test.button")) {
+        button(UIBundle.message("proxy.test.button")) {
           checkConnection()
         }.applyToComponent {
           isVisible = proxySettings === ProxySettings.getInstance()
-        }.component
+        }
       }
     }
 
