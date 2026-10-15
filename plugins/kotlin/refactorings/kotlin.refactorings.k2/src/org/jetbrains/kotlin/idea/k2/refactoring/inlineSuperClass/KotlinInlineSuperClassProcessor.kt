@@ -10,10 +10,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -41,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
 import org.jetbrains.kotlin.idea.base.psi.removeSuperType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.createUsageReplacementStrategyForFunction
@@ -53,6 +57,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownContext
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.analyzePushDownConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.sourceDeclarationForPushDown
+import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.replaceUsages
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -134,6 +139,7 @@ internal class KotlinInlineSuperClassProcessor(
                     val conflicts = analyzePushDownConflicts(
                         K2PushDownContext(sourceClass, members + constructorParameters), targetUsages(), inlineSuperclass = true,
                     )
+                    checkExternalUsageModuleConflicts(usages, conflicts)
                     if (constructorParameters.isNotEmpty() && sourceClass.superTypeListEntries.any { it is KtSuperTypeCallEntry }) {
                         for (target in targets.filterIsInstance<KtClassOrObject>()) {
                             analyze(target) {
@@ -218,6 +224,24 @@ internal class KotlinInlineSuperClassProcessor(
     }
 
     private fun targetUsages(): Array<UsageInfo> = targets.map(::UsageInfo).toTypedArray()
+
+    private fun checkExternalUsageModuleConflicts(usages: Array<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
+        val target = targets.firstOrNull() as? KtClassOrObject ?: return
+        val targetFile = target.containingFile.virtualFile ?: return
+        for (usage in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
+            if (usage.referencedElement != sourceClass) continue
+            val element = usage.element ?: continue
+            if (isInheritanceReference(element) || element.resolveScope.contains(targetFile)) continue
+            val module = element.module ?: continue
+            val message = RefactoringBundle.message(
+                "0.referenced.in.1.will.not.be.accessible.from.module.2",
+                RefactoringUIUtil.getDescription(target, true),
+                RefactoringUIUtil.getDescription(element.getContainer(), true),
+                CommonRefactoringUtil.htmlEmphasize(module.name),
+            )
+            conflicts.putValue(element, message.replaceFirstChar { it.uppercaseChar() })
+        }
+    }
 
     private class TargetPlan(
         val target: KtClassOrObject,
