@@ -65,7 +65,7 @@ public interface TestIndexingModeSupporter {
       public void ensureIndexingStatus(@NotNull Project project) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           // if not invoked from EDT scanning will be queued asynchronously
-          UnindexedFilesScannerExecutor.getInstance(project).queueFullScanningInTest(INDEXING_REASON);
+          UnindexedFilesScannerExecutor.getInstance(project).queueFullScanning(INDEXING_REASON);
         });
         IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
@@ -142,7 +142,7 @@ public interface TestIndexingModeSupporter {
     }
 
     private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
-      UnindexedFilesScannerExecutor.getInstance(project).queueFullScanningInTest(INDEXING_REASON);
+      UnindexedFilesScannerExecutor.getInstance(project).queueFullScanning(INDEXING_REASON);
       IndexingTestUtil.waitUntilIndexesAreReady(project);
       return becomeDumb(project);
     }

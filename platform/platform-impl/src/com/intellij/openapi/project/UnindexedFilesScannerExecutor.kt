@@ -55,8 +55,7 @@ interface UnindexedFilesScannerExecutor {
   /**
    * Queues a scanning task for the whole project with [indexingReason].
    */
-  @TestOnly
-  fun queueFullScanningInTest(indexingReason: String): Future<*> {
+  fun queueFullScanning(indexingReason: String): Future<*> {
     throw UnsupportedOperationException()
   }
 
