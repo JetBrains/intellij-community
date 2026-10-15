@@ -51,6 +51,9 @@ open class StateStorageManagerImpl(
   protected val storageLock: ReentrantReadWriteLock = ReentrantReadWriteLock()
   private val storages = HashMap<String, StateStorage>()
 
+  // access under storageLock
+  private var isReleased = false
+
   override val streamProvider: StreamProvider
     get() = compoundStreamProvider
 
@@ -240,7 +243,9 @@ open class StateStorageManagerImpl(
         macroSubstitutor = macroSubstitutor,
         controller = controller,
       )
-      virtualFileTracker?.put(filePath.invariantSeparatorsPathString, storage)
+      if (!isReleased) {
+        virtualFileTracker?.put(filePath.invariantSeparatorsPathString, storage)
+      }
       return storage
     }
 
@@ -256,7 +261,7 @@ open class StateStorageManagerImpl(
       usePathMacroManager = usePathMacroManager,
       rootTagName = if (exclusive) null else rootTagName,
     )
-    if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage && virtualFileTracker != null) {
+    if (!isReleased && isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage && virtualFileTracker != null) {
       virtualFileTracker.put(filePath.invariantSeparatorsPathString, storage)
     }
     return storage
@@ -393,7 +398,10 @@ open class StateStorageManagerImpl(
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 
   final override fun release() {
-    virtualFileTracker?.remove { it.storageManager === this }
+    storageLock.write {
+      isReleased = true
+      virtualFileTracker?.remove { it.storageManager === this }
+    }
     controller?.release()
   }
 }
