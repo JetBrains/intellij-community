@@ -84,12 +84,12 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   /** Removes the document listener and the store registration. It also clears all snapshot roots. */
   fun dispose(markerStores: SnapshotMarkerStores) {
     processQueue()
-    documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
     synchronized(markerStores) {
       if (disposed) return
       disposed = true
       markerStores.unregister(this)
     }
+    documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
     roots.clear()
   }
 
@@ -154,7 +154,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   }
 
   internal fun captureRoot(snapshot: DocumentSnapshot): CapturedRoot {
-    return CapturedRoot(this, root(snapshot))
+    return CapturedRoot(this, roots[snapshot])
   }
 
   internal fun preparePatch(
@@ -223,9 +223,15 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
 
   internal class CapturedRoot(
     val store: SnapshotMarkerRootStore,
-    val root: PMarkerRoot?,
+    private val beforeState: RootState?,
   ) {
+    val root: PMarkerRoot? = beforeState?.rootReference?.get()
     var afterState: RootState? = null
+
+    fun inheritState(): RootState? {
+      val state = beforeState ?: return null
+      return RootState(checkNotNull(root), state.invalidatedMarkerIds, state.affectedMarkerIds)
+    }
   }
 
   internal class RootState(

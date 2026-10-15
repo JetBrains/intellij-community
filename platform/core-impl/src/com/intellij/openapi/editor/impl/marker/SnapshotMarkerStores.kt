@@ -85,7 +85,7 @@ class SnapshotMarkerStores {
       }
       for (i in capturedRoots.indices) {
         val captured = capturedRoots[i]
-        captured.afterState = captured.root?.let { root -> SnapshotMarkerRootStore.RootState(root) }
+        captured.afterState = captured.inheritState()
       }
     }
     return synchronized(this) {
