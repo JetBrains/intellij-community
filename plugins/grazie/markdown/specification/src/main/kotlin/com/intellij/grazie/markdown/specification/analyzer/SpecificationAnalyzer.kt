@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.analyzer
+package com.intellij.grazie.markdown.specification.analyzer
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
@@ -6,7 +6,7 @@ import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
 import ai.grazie.utils.mpp.money.Credit
 import com.intellij.grazie.cloud.APIQueries
-import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
+import com.intellij.grazie.markdown.specification.fus.SpecificationFUSCollector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.runWithCheckCanceled

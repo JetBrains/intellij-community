@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.inspection
+package com.intellij.grazie.markdown.specification.inspection
 
 import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer
 import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.Contradiction
@@ -11,10 +11,10 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.getSkillFiles
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSkillFile
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
+import com.intellij.grazie.markdown.specification.inspection.quickfix.SpecificationReplacementQuickFix
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.getSkillFiles
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isSkillFile
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.markdown.backend.services.MarkdownFileGraphUtils

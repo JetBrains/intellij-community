@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.utils
+package com.intellij.grazie.markdown.specification.utils
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor

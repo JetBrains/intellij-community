@@ -33,6 +33,7 @@
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>
+    <module name="intellij.grazie.markdown.specification"/>
     <module name="intellij.grazie.properties"/>
     <module name="intellij.grazie.vcs"/>
     <module name="intellij.grazie.xml"/>

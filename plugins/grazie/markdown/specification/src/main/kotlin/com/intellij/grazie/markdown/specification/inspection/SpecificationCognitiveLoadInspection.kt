@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.inspection
+package com.intellij.grazie.markdown.specification.inspection
 
 import ai.grazie.rules.promptAnalysis.CognitiveLoadAnalyzer
 import ai.grazie.rules.promptAnalysis.CognitiveLoadAnalyzer.ComplexityIssue

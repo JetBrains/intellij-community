@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.inspection
+package com.intellij.grazie.markdown.specification.inspection
 
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
@@ -9,11 +9,11 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
-import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisAvailable
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
+import com.intellij.grazie.markdown.specification.analyzer.SpecificationAnalyzer
+import com.intellij.grazie.markdown.specification.inspection.quickfix.SpecificationReplacementQuickFix
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isAnalysisAvailable
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager

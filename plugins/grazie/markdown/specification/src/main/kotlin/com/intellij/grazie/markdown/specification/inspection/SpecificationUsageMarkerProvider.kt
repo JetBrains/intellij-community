@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.inspection
+package com.intellij.grazie.markdown.specification.inspection
 
 import com.intellij.application.options.editor.GutterIconsConfigurable
 import com.intellij.codeInsight.daemon.GutterName
@@ -6,10 +6,10 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.icons.GrazieIcons
-import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisAvailable
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisEnabled
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
+import com.intellij.grazie.markdown.specification.analyzer.SpecificationAnalyzer
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isAnalysisAvailable
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isAnalysisEnabled
+import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction

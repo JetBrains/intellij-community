@@ -3577,7 +3577,7 @@ jvm_import(
 )
 
 jvm_import(
-    name = "grazie-markdown-ai-grazie-tasks-library-model-jvm",
+    name = "grazie-markdown-specification-ai-grazie-tasks-library-model-jvm",
     jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_8_256_http//file",
     source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_8_256-sources_http//file",
     visibility = ["//visibility:public"],

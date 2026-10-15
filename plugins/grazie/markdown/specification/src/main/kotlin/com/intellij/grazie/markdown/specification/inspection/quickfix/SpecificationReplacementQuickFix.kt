@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix
+package com.intellij.grazie.markdown.specification.inspection.quickfix
 
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Replacement
 import com.intellij.codeInsight.intention.EventTrackingIntentionAction
@@ -12,7 +12,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix.removeHighlightersWithExactRange
-import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
+import com.intellij.grazie.markdown.specification.fus.SpecificationFUSCollector
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project

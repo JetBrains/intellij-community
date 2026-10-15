@@ -10,6 +10,7 @@ dev_dist_plugin(
         "intellij.grazie.java",
         "intellij.grazie.json",
         "intellij.grazie.markdown",
+        "intellij.grazie.markdown.specification",
         "intellij.grazie.properties",
         "intellij.grazie.vcs",
         "intellij.grazie.xml",
@@ -75,7 +76,7 @@ dev_dist_plugin(
     mode_refused_content_modules = {
         "frontend": [
             "intellij.grazie.java",
-            "intellij.grazie.markdown",
+            "intellij.grazie.markdown.specification",
             "intellij.grazie.properties",
             "intellij.grazie.vcs",
         ],
@@ -104,6 +105,7 @@ jvm_library(
         "//plugins/grazie/java",
         "//plugins/grazie/json",
         "//plugins/grazie/markdown",
+        "//plugins/grazie/markdown/specification",
         "//plugins/grazie/properties",
         "//plugins/grazie/vcs",
         "//plugins/grazie/xml",
@@ -133,6 +135,7 @@ jvm_library(
         "//plugins/grazie/java:java_test_lib",
         "//plugins/grazie/json:json_test_lib",
         "//plugins/grazie/markdown:markdown_test_lib",
+        "//plugins/grazie/markdown/specification:specification_test_lib",
         "//plugins/grazie/properties:properties_test_lib",
         "//plugins/grazie/vcs:vcs_test_lib",
         "//plugins/grazie/xml:xml_test_lib",

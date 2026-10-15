@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.language.markdown.semantics.fus
+package com.intellij.grazie.markdown.specification.fus
 
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification

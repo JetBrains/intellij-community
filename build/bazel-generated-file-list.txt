@@ -1381,6 +1381,7 @@ plugins/grazie
 plugins/grazie/java
 plugins/grazie/json
 plugins/grazie/markdown
+plugins/grazie/markdown/specification
 plugins/grazie/properties
 plugins/grazie/src
 plugins/grazie/src/test
