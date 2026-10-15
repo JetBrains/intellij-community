@@ -103,7 +103,11 @@ fn command_of<'r>(result: &'r PlanResult, kind: CommandKind, lane: &str) -> &'r 
 }
 
 fn widest(documents: &[SuiteDocument]) -> Option<SuiteDocument> {
-    let widest = documents.iter().max_by_key(|document| document.profiles.len())?;
+    // A story suite: the caller walks the steps of its first scenario, and an authored suite has no steps.
+    let widest = documents
+        .iter()
+        .filter(|document| document.profiles.iter().all(|profile| !profile.steps.is_empty()))
+        .max_by_key(|document| document.profiles.len())?;
     if widest.profiles.len() < 2 {
         println!("skipped: no committed suite has two scenarios");
         return None;
