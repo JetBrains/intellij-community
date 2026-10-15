@@ -19,6 +19,7 @@ use avl_wire::report::ScenarioReport;
 
 use crate::cases::{
     self, CaseFailure, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, UNFINISHED_MESSAGE, failure_of_container, failure_of_test,
+    simple_class_name,
 };
 use crate::junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
 
@@ -54,6 +55,7 @@ struct Flow {
     /// The class and the case name of each test the flow named, for the trace of a scenario.
     named: Vec<(String, String)>,
     plan: Vec<String>,
+    /// The simple name of each class a record reached.
     reached: BTreeSet<String>,
 }
 
@@ -172,7 +174,7 @@ impl Messages {
 impl Flow {
     /// Opens the suite of `class`, and finishes the suite before it.
     fn suite(&mut self, out: &mut Vec<String>, class: &str) {
-        self.reached.insert(class.to_owned());
+        self.reached.insert(simple_class_name(class).to_owned());
         if self.suite.as_deref() == Some(class) {
             return;
         }
@@ -276,7 +278,7 @@ impl Flow {
         }
         let unreported: Vec<String> = std::mem::take(&mut self.plan)
             .into_iter()
-            .filter(|class| !self.reached.contains(class))
+            .filter(|class| !self.reached.contains(simple_class_name(class)))
             .collect();
         for class in unreported {
             self.suite(out, &class);
@@ -301,11 +303,10 @@ impl Flow {
     /// The test name of the scenario `scenario` of `test_class`, as the flow named it. A recorder can name the class
     /// without its package, so the simple names are compared.
     fn test_of(&self, test_class: &str, scenario: &str) -> String {
-        let simple = |class: &str| class.rsplit('.').next().unwrap_or(class).to_owned();
         self.named
             .iter()
             .rev()
-            .find(|(class, name)| name == scenario && simple(class) == simple(test_class))
+            .find(|(class, name)| name == scenario && simple_class_name(class) == simple_class_name(test_class))
             .map_or_else(|| format!("{test_class}.{scenario}"), |(class, name)| format!("{class}.{name}"))
     }
 }

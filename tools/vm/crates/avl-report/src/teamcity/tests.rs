@@ -99,3 +99,23 @@ fn the_build_step_is_a_teamcity_agent_outside_a_bazel_test() {
 fn a_value_escapes_as_teamcity_reads_it() {
     assert_eq!(escape("a|b'c[d]e\nf\rg\u{2028}"), "a||b|'c|[d|]e|nf|rg|l");
 }
+
+/// A plan of simple names and records of FQNs name one class, so the end of the iteration fails no class of the plan.
+#[test]
+fn a_plan_of_simple_names_is_reached_by_records_of_fqns() {
+    let mut messages = Messages::default();
+    let plan = RunEvent::synthesized(RunEventKind::PlanStarted(PlanStarted {
+        timestamp: "t".to_owned(),
+        discovered_executions: 1,
+        class_names: vec!["AgentProjectWorkflowsUiTest".to_owned(), "Dropped".to_owned()],
+    }));
+    let mut lines = messages.record(WORKER, &plan);
+    lines.extend(messages.record(
+        WORKER,
+        &started("a", "com.intellij.air.integration.flow.workflows.AgentProjectWorkflowsUiTest"),
+    ));
+    lines.extend(messages.finish());
+    let failed: Vec<&String> = lines.iter().filter(|line| line.starts_with("##teamcity[testFailed")).collect();
+    assert_eq!(failed.len(), 2, "the unfinished scenario and the dropped class only: {failed:?}");
+    assert!(failed[1].contains("name='Dropped.Dropped'"), "{}", failed[1]);
+}

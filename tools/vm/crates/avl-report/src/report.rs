@@ -28,7 +28,7 @@ use avl_wire::report::{
     TraceBundle, Tree, Watchdog, WatchdogExpiry, WatchdogState, expiry_evidence_paths,
 };
 
-use crate::cases::{self, CaseOutcome, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, StreamCase, unreported_classes};
+use crate::cases::{self, CaseOutcome, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, StreamCase, simple_class_name, unreported_classes};
 
 #[cfg(test)]
 mod tests;
@@ -186,11 +186,10 @@ fn report_cases(stream_cases: &[StreamCase], archives: &[TraceArchive]) -> Vec<C
 /// The status of the last bundle of the scenario of `case`. A recorder may name the class without its package, so
 /// the simple names are compared.
 fn recorded_status(bundles: &[&TraceBundle], case: &StreamCase) -> Option<String> {
-    let simple = |class: &str| class.rsplit('.').next().unwrap_or(class).to_owned();
     bundles
         .iter()
         .rev()
-        .find(|bundle| bundle.scenario == case.name && simple(&bundle.test_class) == simple(&case.class_name))
+        .find(|bundle| bundle.scenario == case.name && simple_class_name(&bundle.test_class) == simple_class_name(&case.class_name))
         .map(|bundle| bundle.status.clone())
 }
 

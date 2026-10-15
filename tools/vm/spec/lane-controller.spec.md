@@ -733,7 +733,11 @@ The daemon's half and the IDE's half of supervision are in
 
 - A run that the stream cuts off fails in the XML. A scenario that started and never finished fails as
   `unfinished`. A class of the plan that no record reached fails as `unreported`, in one case named after the class.
+  A class of the plan and a class of a record match by the name without the package.
   [@test] ../crates/avl-report/src/junit/tests.rs (`a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached`)
+  [@test] ../crates/avl-report/src/cases/tests.rs (`a_plan_of_simple_names_is_reached_by_records_of_fqns`)
+  [@test] ../crates/avl-report/src/report/tests.rs (`a_plan_of_simple_names_is_covered_by_records_of_fqns`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_plan_of_simple_names_is_reached_by_records_of_fqns`)
 
 - The XML of each iteration is `<iterationId>.xml` beside the report of the iteration. The XML of the command goes
   to the file that `JB_XML_OUTPUT_FILE` names, else to the file that `XML_OUTPUT_FILE` names. The controller writes

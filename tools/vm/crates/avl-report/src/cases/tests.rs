@@ -194,3 +194,25 @@ fn a_class_of_the_plan_that_no_record_reached_is_unreported() {
     assert_eq!(unreported_classes(&events), ["Dropped"]);
     assert_eq!(unreported_classes(&run_stream()), Vec::<String>::new());
 }
+
+/// The plan of the lane daemon names a class by the `testClassName` of its document, and its records by the FQN. The
+/// two name one class, so the class is reached; a class of the plan that no record names stays unreported.
+#[test]
+fn a_plan_of_simple_names_is_reached_by_records_of_fqns() {
+    let events = [
+        plan(&["AgentProjectWorkflowsUiTest", "AgentWelcomeScreenSurfacesUiTest"]),
+        RunEvent::synthesized(RunEventKind::TestStarted(TestStarted {
+            timestamp: "t".to_owned(),
+            execution: identity(
+                "a",
+                "open",
+                Some("com.intellij.air.integration.flow.workflows.AgentProjectWorkflowsUiTest"),
+            ),
+        })),
+    ];
+    assert_eq!(unreported_classes(&events), ["AgentWelcomeScreenSurfacesUiTest"]);
+    assert_eq!(
+        simple_class_name("com.intellij.air.integration.flow.workflows.AgentProjectWorkflowsUiTest"),
+        "AgentProjectWorkflowsUiTest"
+    );
+}

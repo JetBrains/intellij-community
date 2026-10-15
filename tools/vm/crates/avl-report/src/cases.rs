@@ -141,6 +141,12 @@ fn failure(kind: FailureOrigin, execution: &ExecutionIdentity, error: Option<&st
     }
 }
 
+/// The name of `class_name` without its package. The plan of the lane daemon names a class by the `testClassName` of
+/// its document, and the records name it by its FQN, so a class is matched by this name.
+pub fn simple_class_name(class_name: &str) -> &str {
+    class_name.rsplit('.').next().unwrap_or(class_name)
+}
+
 /// The class of a record: its `className`, or its display name when it names none.
 pub fn class_of(execution: &ExecutionIdentity) -> &str {
     execution.class_name.as_deref().unwrap_or(&execution.display_name)
@@ -230,7 +236,8 @@ fn case(execution: &ExecutionIdentity, timestamp: &str, outcome: CaseOutcome) ->
     }
 }
 
-/// Every class that the last `planStarted` named and that no later record reached, in the order of the plan.
+/// Every class that the last `planStarted` named and that no later record reached, in the order of the plan. A class
+/// is matched by its [`simple_class_name`], so a plan of simple names and records of FQNs agree.
 ///
 /// The one account of a suite that never ran: a watchdog that kills the IDE ends the stream, and the suites queued
 /// behind the failure write no record of their own. A class that started and did not finish is reached, and its
@@ -251,10 +258,11 @@ pub fn unreported_classes(events: &[RunEvent]) -> Vec<String> {
             RunEventKind::ContainerFailed(failed) => failed.execution.class_name.as_deref(),
             _ => None,
         })
+        .map(simple_class_name)
         .collect();
     plan.class_names
         .iter()
-        .filter(|class_name| !reached.contains(class_name.as_str()))
+        .filter(|class_name| !reached.contains(simple_class_name(class_name)))
         .cloned()
         .collect()
 }
