@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,12 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
   @Override
   public final int hashCode() {
     return Objects.hash(myName, myLevel, getClass());
+  }
+
+  /** A Python module, so the module is a Python project and its interpreter is in the project structure. */
+  @Override
+  public @NotNull String getModuleTypeId() {
+    return PySdkNamesKt.PYTHON_MODULE_ID;
   }
 
   @Override

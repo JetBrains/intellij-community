@@ -4,12 +4,14 @@ package com.jetbrains.python.requirements
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
@@ -24,7 +26,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.sdk.pythonSdk
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
@@ -86,8 +87,11 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
   override fun getBasePath(): String = "/community/python/testData/requirements/"
 
   fun setDependencyRoot(providerType: RequirementsProviderType) {
-    val sdk = myFixture.module.pythonSdk!!
-    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, providerType)
+    val interpreter = findPythonInterpreterForTests(myFixture.module)!!
+    TestPythonPackageManager.setRequirementsProvider(interpreter, providerType)
+    // The association is data of the SDK, so the test edits the SDK.
+    @Suppress("DEPRECATION")
+    val sdk = interpreter.getSdkAPI()
     val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
     ApplicationManager.getApplication().runWriteAction {
       val modificator = sdk.sdkModificator

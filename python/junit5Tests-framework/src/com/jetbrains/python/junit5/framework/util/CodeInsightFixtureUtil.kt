@@ -6,18 +6,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.classRoots
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -86,12 +86,13 @@ fun assertNotParsed(file: PsiFile) {
 }
 
 fun CodeInsightTestFixture.assertSdkRootsNotParsed(currentFile: PsiFile) {
-  val testSdk = runReadActionBlocking { PythonSdkUtil.findPythonSdk(currentFile) }
-  if (testSdk == null) {
-    LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped")
+  // The test application waits for the interpreters before a test, so the snapshot holds the fixture SDK.
+  val interpreter = runReadActionBlocking { currentFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter }
+  if (interpreter == null) {
+    LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
     return
   }
-  for (root in testSdk.rootProvider.getFiles(OrderRootType.CLASSES)) {
+  for (root in interpreter.classRoots) {
     assertRootNotParsed(currentFile, root, null)
   }
 }

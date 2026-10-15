@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -36,7 +38,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -92,8 +93,9 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
           final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
 
-          final Sdk sdkFromModule = PythonSdkUtil.findPythonSdk(module);
-          assertNotNull(sdkFromModule);
+          final EvoPyProject evoPyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
+          assertNotNull(evoPyProject);
+          assertNotNull(evoPyProject.getInterpreter());
 
           final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());
           assertNotNull(sdkFromPsi);

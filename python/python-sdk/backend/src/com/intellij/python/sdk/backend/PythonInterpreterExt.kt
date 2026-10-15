@@ -252,12 +252,12 @@ fun Sdk.stdlibLibDirectory(): VirtualFile? {
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   val libRoot = venvLibRoot() ?: return null
-  val classRoots = sdkClassRoots
+  val roots = classRoots
   // Empty in case of a temporary empty SDK created to install package management.
-  if (classRoots.isEmpty()) {
+  if (roots.isEmpty()) {
     return VirtualFileManager.getInstance().findFileByNioPath(libRoot)
   }
-  for (file in classRoots) {
+  for (file in roots) {
     if (file.toNioPath() == libRoot) return file
     val parent = file.parent
     if (file.name == PyNames.SITE_PACKAGES && parent != null && parent.toNioPath() == libRoot) {
@@ -267,8 +267,12 @@ fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   return null
 }
 
-private val PythonInterpreter.sdkClassRoots: Array<VirtualFile>
+/** The class roots of this interpreter: the directories its `sys.path` holds, as the project model stores them. */
+val PythonInterpreter.classRoots: Array<VirtualFile>
   get() = runReadActionBlocking { sdk.rootProvider.getFiles(OrderRootType.CLASSES) }
+
+/** The directory of the generated skeletons of this interpreter, or `null` when it has none. */
+fun PythonInterpreter.skeletonsDirectory(): VirtualFile? = PythonSdkUtil.findSkeletonsDir(sdk)
 
 /**
  * The request that uploads the PyCharm helpers to the machine this interpreter runs on.

@@ -13,6 +13,7 @@ import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.associatedModuleDir
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -100,14 +101,14 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
 
   override val dependenciesFilesRelativePaths: List<Path>
     get() {
-      val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return emptyList()
+      val providerType = requirementsProviderOf(interpreter) ?: return emptyList()
       interpreter.associatedModuleDir ?: return emptyList()
 
       return listOf(Path.of(providerType.filename))
     }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
-    val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
+    val providerType = requirementsProviderOf(interpreter) ?: return null
     val moduleDir = interpreter.associatedModuleDir ?: return null
     val dependenciesFile = moduleDir.findChild(providerType.filename) ?: return null
 
@@ -192,6 +193,17 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
   companion object {
     @JvmField
     val REQUIREMENTS_PROVIDER_KEY: Key<RequirementsProviderType> = Key<RequirementsProviderType>("REQUIREMENTS_PROVIDER_KEY")
+
+    /** Makes this manager read the dependency file of [type] for [interpreter]. The value lives as long as the interpreter. */
+    @JvmStatic
+    fun setRequirementsProvider(interpreter: PythonInterpreter, type: RequirementsProviderType?) {
+      @Suppress("DEPRECATION") // An interpreter keeps its data on its SDK.
+      interpreter.getSdkAPI().putUserData(REQUIREMENTS_PROVIDER_KEY, type)
+    }
+
+    @Suppress("DEPRECATION") // An interpreter keeps its data on its SDK.
+    private fun requirementsProviderOf(interpreter: PythonInterpreter): RequirementsProviderType? =
+      interpreter.getSdkAPI().getUserData(REQUIREMENTS_PROVIDER_KEY)
 
     private val DEFAULT_PACKAGES = listOf(
       PythonPackage(PIP_PACKAGE, EMPTY_STRING, false),

@@ -14,6 +14,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
@@ -21,8 +22,6 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -328,7 +327,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
   // PY-22685
   public void testBuiltinLen() {
-    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+    final LanguageLevel languageLevel = PyProjectStructureTestUtilKt.findLanguageLevelForTests(myFixture.getModule());
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),
@@ -372,7 +371,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testReferenceToMethodQualifiedWithInstance() {
-    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+    final LanguageLevel languageLevel = PyProjectStructureTestUtilKt.findLanguageLevelForTests(myFixture.getModule());
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),

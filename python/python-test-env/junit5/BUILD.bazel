@@ -109,6 +109,8 @@ jvm_library(
         "//python/python-poetry/backend:backend_test_lib",
         "//python/pipenv",
         "//python/pipenv:pipenv_test_lib",
+        "//python/conda",
+        "//python/conda:conda_test_lib",
         "//python/python-uv/backend",
         "//python/python-uv/backend:backend_test_lib",
         "//platform/eel",

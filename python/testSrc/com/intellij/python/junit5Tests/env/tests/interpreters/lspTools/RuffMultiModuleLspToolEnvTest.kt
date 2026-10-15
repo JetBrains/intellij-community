@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.EDT
@@ -38,7 +39,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -198,7 +199,7 @@ class RuffMultiModuleLspToolEnvTest {
    */
   private suspend fun setUpModules(oneInterpreter: Boolean = false): Pair<VirtualFile, VirtualFile> {
     assertNotEquals(pinnedRuffVersion, SERVICE_RUFF_VERSION, "the two interpreters must hold different Ruff versions")
-    assertEquals(serviceSdk, serviceModule.pythonSdk, "the service module must have its own interpreter")
+    assertEquals(serviceSdkFixture.get(), serviceModule.asPyProject()?.getInterpreter(), "the service module must have its own interpreter")
     edtWriteAction {
       ProjectRootManager.getInstance(project).projectSdk = projectSdk
       ModuleRootModificationUtil.setSdkInherited(rootModule)

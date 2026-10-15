@@ -3,14 +3,17 @@ package com.jetbrains.python.inspections
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.setAssociationToModule
 
-internal fun setAssociationToModuleAsync(sdk: Sdk, module: Module) {
+/** Associates [interpreter] with [module]. The association is data of the SDK, so the call edits the SDK. */
+internal fun setAssociationToModuleAsync(interpreter: PythonInterpreter, module: Module) {
   ApplicationManager.getApplication().invokeAndWait {
     runWithModalProgressBlocking(module.project, "D") {
-      sdk.setAssociationToModule(module)
+      @Suppress("DEPRECATION")
+      interpreter.getSdkAPI().setAssociationToModule(module)
     }
   }
 }

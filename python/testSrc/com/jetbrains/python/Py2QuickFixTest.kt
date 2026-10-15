@@ -13,7 +13,6 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
-import com.jetbrains.python.fixtures.PyModuleLightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -53,7 +52,7 @@ import org.jetbrains.annotations.NonNls
 @Subsystems.QuickFixes
 @Layers.Functional
 class Py2QuickFixTest : PyTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = PY2_MODULE_DESCRIPTOR
+  override fun getProjectDescriptor(): LightProjectDescriptor = ourPy2Descriptor
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -1477,6 +1476,3 @@ class Py2QuickFixTest : PyTestCase() {
     }
   }
 }
-
-/** Python 2, in a Python module, so the install fixes find the interpreter. */
-private val PY2_MODULE_DESCRIPTOR = PyModuleLightProjectDescriptor(LanguageLevel.PYTHON27)

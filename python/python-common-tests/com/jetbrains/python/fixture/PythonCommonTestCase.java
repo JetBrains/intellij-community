@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -22,7 +24,6 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -128,8 +129,9 @@ public abstract class PythonCommonTestCase extends TestCase {
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
-    final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
-    for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+    final PythonInterpreter interpreter = myFixture.getPythonInterpreter();
+    assertNotNull(interpreter);
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -370,8 +372,11 @@ public abstract class PythonCommonTestCase extends TestCase {
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
+    final PythonInterpreter interpreter = myFixture.getPythonInterpreter();
+    assertNotNull(interpreter);
+    // A class root belongs to the SDK, so the test edits the SDK of the interpreter.
+    //noinspection deprecation
+    final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
     runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (_) -> runnable.run());
   }
 

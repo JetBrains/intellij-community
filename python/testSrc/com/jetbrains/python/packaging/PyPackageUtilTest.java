@@ -15,21 +15,21 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.requirements.PyRequirementsKt;
 import com.intellij.python.requirements.parser.PyRequirementParser;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +50,9 @@ public class PyPackageUtilTest extends PyTestCase {
 
     myFixture.copyDirectoryToProject("packaging/PyPackageUtil/" + getTestName(false), "");
     Module module = myFixture.getModule();
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    setAssociationToModuleAsync(sdk, module);
+    PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
+    assertNotNull(interpreter);
+    setAssociationToModuleAsync(interpreter, module);
   }
 
   public void testAbsentSetupPyReading() {

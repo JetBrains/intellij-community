@@ -27,6 +27,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.RunAll
@@ -104,7 +106,6 @@ import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrIn
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Unmodifiable
 import org.junit.jupiter.api.AfterAll
@@ -383,7 +384,9 @@ abstract class PyCodeInsightTestCase {
 
   protected fun setAdditionalSdkRoots(additionalSdkRoots: Array<SdkRoot>, addElseRemove: Boolean) {
     if (additionalSdkRoots.isEmpty()) return
-    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)!!
+    // A class root belongs to the SDK, so the test edits the SDK of the interpreter.
+    @Suppress("DEPRECATION")
+    val sdk = findPythonInterpreterForTests(myFixture.module)!!.getSdkAPI()
 
     runWriteAction {
       val modificator = sdk.getSdkModificator()
@@ -571,12 +574,12 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun assertSdkRootsNotParsed(currentFile: PsiFile) {
-    val testSdk = PythonSdkUtil.findPythonSdk(currentFile)
-    if (testSdk == null) {
-      logger.warn("testSdk is null. assertSdkRootsNotParsed is skipped")
+    val interpreter = findPythonInterpreterForTests(myFixture.module)
+    if (interpreter == null) {
+      logger.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
       return
     }
-    for (root in testSdk.rootProvider.getFiles(OrderRootType.CLASSES)) {
+    for (root in interpreter.classRoots) {
       assertRootNotParsed(currentFile, root)
     }
   }
