@@ -7,7 +7,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -18,16 +21,25 @@ internal class MoveMemberToCompanionExtensionIntention: MoveMemberToCompanionBlo
         if (!element.kaModule(null).languageVersionSettings.supportsFeature(LanguageFeature.CompanionExtensions)) {
             return null
         }
+        val targetClass = getTargetClass(element) ?: return null
+        if (generateSequence(targetClass as KtClassOrObject) {
+                it.containingClassOrObject
+            }.any {
+                it.hasModifier(KtTokens.PROTECTED_KEYWORD) || it.hasModifier(KtTokens.PRIVATE_KEYWORD) && it.parent !is KtFile
+            }) return null
         return super.applicabilityRange(element)
     }
 
     override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>? {
+        return getTargetClass(element)?.let { K2MoveTargetDescriptor.CompanionExtension(it) }
+    }
+
+    private fun getTargetClass(element: KtNamedDeclaration): KtClass? {
         val containingClassOrObject = element.containingClassOrObject
-        val targetClass = if (containingClassOrObject is KtObjectDeclaration && containingClassOrObject.isCompanion()) {
+        return if (containingClassOrObject is KtObjectDeclaration && containingClassOrObject.isCompanion()) {
             containingClassOrObject.containingClass()
         } else {
             containingClassOrObject as? KtClass
-        } ?: return null
-        return K2MoveTargetDescriptor.CompanionExtension(targetClass)
+        }
     }
 }

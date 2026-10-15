@@ -14075,6 +14075,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/infixFun.kt");
         }
 
+        @TestMetadata("internalReceiver.kt")
+        public void testInternalReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/internalReceiver.kt");
+        }
+
         @TestMetadata("invokeOperator.kt")
         public void testInvokeOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/invokeOperator.kt");
@@ -14168,6 +14173,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("privateCompanionBlockMember.kt")
         public void testPrivateCompanionBlockMember() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateCompanionBlockMember.kt");
+        }
+
+        @TestMetadata("privateNestedReceiver.kt")
+        public void testPrivateNestedReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateNestedReceiver.kt");
+        }
+
+        @TestMetadata("privateReceiver.kt")
+        public void testPrivateReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateReceiver.kt");
         }
 
         @TestMetadata("privateTopLevelHelper.kt")
