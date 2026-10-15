@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -84,13 +85,14 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
         thisLogger().warn("Could not find enclosing element on its destruction")
         return
       }
-      removeEmphasisFromSelection(editor.document, caret, parent.textRange)
+      removeEmphasisFromSelection(editor.document, caret, parent)
       return
     }
     addEmphasisToSelection(editor.document, caret)
   }
 
-  private fun removeEmphasisFromSelection(document: Document, caret: Caret, nodeRange: TextRange) {
+  private fun removeEmphasisFromSelection(document: Document, caret: Caret, parent: PsiElement) {
+    val nodeRange = parent.textRange
     val text = document.charsSequence
     val boundString = getExistingBoundString(text, nodeRange.startOffset)
     if (boundString == null) {
@@ -100,8 +102,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     val boundLength = boundString.length
 
     // Easy case --- selection corresponds to some emph
-    if (nodeRange.startOffset + boundLength == caret.selectionStart
-        && nodeRange.endOffset - boundLength == caret.selectionEnd) {
+    if (selectionMatchesNodeContent(caret, nodeRange, boundLength) || selectionCoversContent(caret, parent)) {
       document.deleteString(nodeRange.endOffset - boundLength, nodeRange.endOffset)
       document.deleteString(nodeRange.startOffset, nodeRange.startOffset + boundLength)
       return
@@ -127,6 +128,22 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
     else {
       document.insertString(from, boundString)
+    }
+  }
+
+  private fun selectionMatchesNodeContent(caret: Caret, nodeRange: TextRange, boundLength: Int): Boolean {
+    return nodeRange.startOffset + boundLength == caret.selectionStart
+           && nodeRange.endOffset - boundLength == caret.selectionEnd
+  }
+
+  private fun selectionCoversContent(caret: Caret, parent: PsiElement): Boolean {
+    val content = PsiTreeUtil.collectElements(parent) { element ->
+      element.firstChild == null
+      && element.node.elementType != MarkdownTokenTypes.EMPH
+      && element.node.elementType != MarkdownTokenTypes.TILDE
+    }
+    return content.isNotEmpty() && content.all {
+      it.textRange.startOffset >= caret.selectionStart && it.textRange.endOffset <= caret.selectionEnd
     }
   }
 

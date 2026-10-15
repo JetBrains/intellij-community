@@ -30,6 +30,15 @@ class MarkdownStylingActionsConsistencyTest {
       checkResultByText(content)
     }
 
+    fun `test nested formatting`() {
+      val nestedPrefix = if (wrapPrefix == "**") "_" else "**"
+      val content = "$wrapPrefix$nestedPrefix<selection>arbitrary</selection>$nestedPrefix$wrapSuffix"
+      val applied = "$nestedPrefix<selection>arbitrary</selection>$nestedPrefix"
+      configureFromFileText("some.md", content)
+      executeAction(actionId)
+      checkResultByText(applied)
+    }
+
     fun `test disabled inside code span`() {
       // language=Markdown
       val content = """
