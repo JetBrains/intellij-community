@@ -544,6 +544,37 @@ async fn no_healthy_daemon_restarts_the_daemon() {
     );
 }
 
+// A run with `--runner` switched finds the daemon of the other runner on the guest. It retires that daemon and starts
+// its own, and it does not refuse `daemon_protocol_unsupported`.
+#[tokio::test]
+async fn a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_started() {
+    let fixture = Fixture::new().await;
+    let prep = fixture.prepared().await;
+    fixture.install_happy_guest(&prep);
+    fixture.seed_healthy_daemon(&prep);
+    let runner = fixture.host.daemon().runner();
+    let other = Runner::ALL.iter().copied().find(|other| *other != runner).expect("two runners");
+    {
+        let mut script = fixture.daemon.script();
+        script.protocol_version = other.protocol_version();
+        script.protocol_after_shutdown = Some(runner.protocol_version());
+    }
+    fixture.script_run(passing_run_lines("it-13r"));
+    fixture.mark_ready().await;
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    assert_eq!(attempt.ide_action, IdeAction::DaemonRestart);
+    assert!(
+        fixture.daemon.saw_request("POST /shutdown"),
+        "the daemon of the other runner is retired"
+    );
+    assert_eq!(
+        fixture.channel().calls_containing("vm-guest-agent start").len(),
+        1,
+        "a daemon of this runner is started"
+    );
+}
+
 // A restart for a stable-tier change keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc
 // keeps the product, the timing line says `keep`, and the decision names the kept IDE.
 #[tokio::test]

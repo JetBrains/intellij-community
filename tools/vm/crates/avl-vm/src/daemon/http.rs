@@ -224,9 +224,10 @@ impl DaemonClient {
     /// One `/status` probe, classified.
     ///
     /// Every answer but [`StatusProbe::Healthy`] means "start a fresh one" to a caller that only asks whether a
-    /// daemon is usable. A protocol mismatch is *not* one of them: a daemon speaking another protocol version would
-    /// be restarted forever by a controller that is itself the stale half - so it refuses instead, naming both
-    /// versions.
+    /// daemon is usable. A protocol that no runner speaks is *not* one of them: a daemon speaking another protocol
+    /// version would be restarted forever by a controller that is itself the stale half - so it refuses instead,
+    /// naming both versions. The protocol of the other runner is a daemon of that runner. It is
+    /// [`StatusProbe::OtherDaemon`], so a switch of `--runner` retires it ([`other_runner`]).
     pub(crate) async fn probe_status(&self, ctx: &Ctx, state: &HostState) -> Result<StatusProbe, Refusal> {
         let (status, body) = match self.exchange(ctx, state, &wire::STATUS, None).await {
             Ok(answered) => answered,
@@ -249,6 +250,12 @@ impl DaemonClient {
         // An unusable daemon is an answer, but one that answers with a body this controller cannot read is a
         // protocol failure, and folding the two together is what would restart a mismatched daemon forever.
         let decoded = wire::decode_status(&body).map_err(protocol_refusal)?;
+        if let Some(other) = other_runner(decoded.protocol_version, self.runner) {
+            return Ok(StatusProbe::OtherDaemon(format!(
+                "a daemon of the runner {other} (protocol {}), and this controller runs {}",
+                decoded.protocol_version, self.runner
+            )));
+        }
         require_supported_protocol(decoded.protocol_version, self.runner)?;
         // A rebooted daemon has a fresh token, so a matching boot stamp is implied by the 200; still verified.
         if decoded.daemon_boot_stamp != state.daemon_boot_stamp {
@@ -352,6 +359,19 @@ impl StatusProbe {
     }
 }
 
+/// The other runner whose daemon reports the protocol `reported`, for a controller of `runner`. A guest keeps the daemon
+/// of the runner that the last run used, so a run with the other `--runner` finds it. That daemon is no skew: it is a
+/// daemon to retire, as one of another launch is. `None` for the protocol of `runner` itself and for a protocol that no
+/// runner speaks.
+///
+/// A transition rule: it goes with the JVM runner.
+pub(crate) fn other_runner(reported: u32, runner: Runner) -> Option<Runner> {
+    if reported == runner.protocol_version() {
+        return None;
+    }
+    Runner::ALL.iter().copied().find(|other| other.protocol_version() == reported)
+}
+
 /// Refuses a daemon this controller cannot read, by name and at boot. Each runner has its own protocol version.
 ///
 /// The launch digest already restarts a daemon built from another build, and a change of the runner. What this
@@ -373,7 +393,7 @@ pub(crate) fn require_supported_protocol(reported: u32, runner: Runner) -> Resul
         format!(
             "the guest daemon speaks run protocol {reported}, and this controller speaks {expected} for the runner \
              {runner}. One half of {far_end} and `community/tools/vm/crates/avl-wire` was updated without the other, or \
-             the guest still holds a daemon of another runner or from before the change, which `daemon stop` retires."
+             the guest still holds a daemon from before the change, which `daemon stop` retires."
         ),
     ))
 }

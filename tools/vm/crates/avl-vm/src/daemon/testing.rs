@@ -76,6 +76,9 @@ pub(crate) struct DaemonScript {
     /// `METHOD /path` of every request, in order.
     pub(crate) requests: Vec<String>,
     pub(crate) protocol_version: u32,
+    /// The protocol that a `/shutdown` sets, so a suite sees the retired daemon of one runner and the started daemon
+    /// of the other one on the same double.
+    pub(crate) protocol_after_shutdown: Option<u32>,
     pub(crate) boot_stamp: String,
     pub(crate) launch_digest: String,
     pub(crate) ide_running: bool,
@@ -148,6 +151,7 @@ impl FakeDaemon {
         let script = Arc::new(Mutex::new(DaemonScript {
             requests: Vec::new(),
             protocol_version: wire::JVM_PROTOCOL_VERSION,
+            protocol_after_shutdown: None,
             boot_stamp: "boot-1".to_owned(),
             launch_digest: String::new(),
             ide_running: false,
@@ -311,7 +315,14 @@ async fn serve(State(served): State<Served>, request: Request) -> Response {
             script.results_xml.clone().into_response()
         }
         // 200 with no body, which is all the client reads of them.
-        Some(Route::IdeStop | Route::Shutdown) => StatusCode::OK.into_response(),
+        Some(Route::IdeStop) => StatusCode::OK.into_response(),
+        Some(Route::Shutdown) => {
+            let mut script = lock(&served.script);
+            if let Some(protocol) = script.protocol_after_shutdown.take() {
+                script.protocol_version = protocol;
+            }
+            StatusCode::OK.into_response()
+        }
         None => StatusCode::NOT_FOUND.into_response(),
     }
 }

@@ -1348,10 +1348,18 @@ after that move.
 - The runner is a boot setting, so a change of the runner restarts the daemon. The JVM runner keeps its launch digest.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`the_runner_enters_the_launch_digest`)
 
-- The verb speaks protocol 6, and the JVM daemon speaks protocol 5. The controller refuses a daemon that does not
-  speak the protocol of its runner, and it names both versions.
+- The verb speaks protocol 6, and the JVM daemon speaks protocol 5. The controller refuses a daemon that speaks a
+  protocol of no runner, and it names both versions. A daemon that it started refuses the same way when it does not
+  speak the protocol of the runner.
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`each_runner_reports_its_own_protocol_version`)
   [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`daemon_status_answers_only_the_daemon_this_controller_launched`)
+
+- A daemon that speaks the protocol of the other runner is another daemon, as one of another launch is. A run whose
+  `--runner` differs from the runner of the last run retires the daemon on the guest and starts its own. This is a
+  transition rule, and it goes with the JVM runner.
+  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`a_daemon_of_the_other_runner_is_another_daemon`)
+  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`only_the_protocol_of_the_other_runner_names_a_runner`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_started`)
 
 - Protocol 6 has no route that quiesces the shares, and its status has no quiesce field and no metaspace field. The
   status of the JVM daemon still decodes.
