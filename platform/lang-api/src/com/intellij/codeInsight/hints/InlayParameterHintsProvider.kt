@@ -143,7 +143,7 @@ data class Option(@NonNls val id: String,
   fun get(): Boolean {
     val settings = ParameterNameHintsSettings.getInstance()
     val enabledInSettings = settings.getOption(id)
-    val contextOverride = InlayPassContext.get()?.get(id)
+    val contextOverride = ParameterHintsPassContext.get()?.get(id)
 
     return (enabledInSettings ?: defaultValue) && contextOverride != false
   }

@@ -134,7 +134,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
             visibilityMap.put(option.getId(), isVisible);
           }
         }
-        InlayPassContext.run(visibilityMap, traversal);
+        ParameterHintsPassContext.run(visibilityMap, traversal);
       }
       else {
         traversal.run();
