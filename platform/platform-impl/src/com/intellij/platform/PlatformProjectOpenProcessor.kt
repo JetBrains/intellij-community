@@ -48,6 +48,7 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -88,9 +89,12 @@ internal fun isLoadedFromCacheButHasNoModules(project: Project): Boolean {
   return project.getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 }
 
-/** A project opens with no module: directory project configurators do not run, and JPS files do not contribute modules. */
+/**
+ * A project opens with no module: directory project configurators do not run, and JPS files do not contribute modules.
+ * JetBrains Light opens every project this way until it advances to the smart mode, see [IdeProductMode.isMonolithLight].
+ */
 @Internal
-fun isProjectOpenWithoutModule(): Boolean = Registry.`is`("ide.project.open.without.module")
+fun isProjectOpenWithoutModule(): Boolean = Registry.`is`("ide.project.open.without.module") || IdeProductMode.isMonolithLight
 
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
