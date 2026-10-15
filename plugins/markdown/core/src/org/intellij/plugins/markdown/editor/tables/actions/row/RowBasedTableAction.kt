@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
@@ -21,7 +22,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
  *
  * By default, table actions are intended to be updated on BGT.
  */
-internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction() {
+internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction(), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return

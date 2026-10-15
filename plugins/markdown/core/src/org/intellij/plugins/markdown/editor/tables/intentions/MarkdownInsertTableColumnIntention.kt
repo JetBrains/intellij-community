@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -12,7 +13,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
-internal abstract class MarkdownInsertTableColumnIntention(private val insertAfter: Boolean): PsiElementBaseIntentionAction() {
+internal abstract class MarkdownInsertTableColumnIntention(private val insertAfter: Boolean): PsiElementBaseIntentionAction(), DumbAware {
   override fun getFamilyName(): String {
     return MarkdownBundle.message("markdown.insert.table.column.intention.family")
   }

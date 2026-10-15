@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.ImaginaryEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -27,7 +28,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import javax.swing.JPanel
 
-class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
+class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings>, DumbAware {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     return when {
       editor is ImaginaryEditor -> null
