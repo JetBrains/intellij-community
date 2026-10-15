@@ -212,7 +212,6 @@
       <codeInsight.lineMarkerProvider
         language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
 
-      <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
 
       <runLineMarkerContributor language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownRunLineMarkersProvider"/>
 

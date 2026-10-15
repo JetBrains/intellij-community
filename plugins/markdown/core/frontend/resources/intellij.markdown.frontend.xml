@@ -29,6 +29,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
+    <annotator language="Markdown" implementationClass="com.intellij.markdown.frontend.highlighting.MarkdownHighlightingAnnotator"/>
     <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
