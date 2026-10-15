@@ -1,6 +1,7 @@
 package com.intellij.database.run.ui.grid.renderers;
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.CoreGrid;
 import com.intellij.database.datagrid.DataGrid;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextFieldCellRenderer.AbbreviatingRendererComponent;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
@@ -103,7 +103,7 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
   public static class TextRenderer extends GridCellRenderer {
     private static final TextAttributes BOLD_TEXT_ATTRIBUTES = new TextAttributes();
     private final Map<Pair<ModelIndex<GridColumn>, Object>, String> myValueTextCache =
-      CollectionFactory.createConcurrentWeakKeySoftValueMap(10, 0.75f, 1, new HashingStrategy<>() {
+      ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap(10, 0.75f, 1, new HashingStrategy<>() {
         @Override
         public int hashCode(Pair<ModelIndex<GridColumn>, Object> object) {
           return Objects.hash(object.getFirst(), System.identityHashCode(object.getSecond()));

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
+import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
@@ -43,7 +47,7 @@ public final class JsonSchemaCatalogManager {
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
   private VirtualFile myTestSchemaStoreFile;
 
-  private final Map<Runnable, Disposable> myCatalogUpdateListeners = CollectionFactory.createConcurrentWeakMap();
+  private final Map<Runnable, Disposable> myCatalogUpdateListeners = ConcurrentCollectionFactory.createConcurrentWeakMap();
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;

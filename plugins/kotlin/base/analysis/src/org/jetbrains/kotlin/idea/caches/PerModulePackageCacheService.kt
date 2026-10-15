@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -39,7 +40,6 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.Processor
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
@@ -431,10 +431,10 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         checkPendingChanges()
 
         val perSourceInfoCache = cache.value.getOrPut(module) {
-            if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
+            if (useStrongMapForCaching) ConcurrentHashMap() else ConcurrentCollectionFactory.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
-            if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
+            if (useStrongMapForCaching) ConcurrentHashMap() else ConcurrentCollectionFactory.createConcurrentSoftMap()
         }
         if (!DumbService.isDumb(project) || FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) == null) {
             try {
