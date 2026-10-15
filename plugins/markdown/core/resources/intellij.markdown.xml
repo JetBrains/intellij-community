@@ -62,12 +62,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.CommonLinkDestinationReferenceContributor"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.AutoLinkWebReferenceContributor"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
     <gotoDeclarationHandler implementation="org.intellij.plugins.markdown.lang.references.link.MarkdownLinkTextGotoDeclarationHandler"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider"/>
     <registryKey key="markdown.live.preview.enabled"
                  defaultValue="true"
