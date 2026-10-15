@@ -74,6 +74,7 @@
     "//plugins/air/tests/integration/headless/claude:claude_test_lib",
     "//plugins/air/tests/integration/headless/codex:codex_test_lib",
     "//plugins/air/tests/integration/headless/junie:junie_test_lib",
+    "//plugins/air/tests/integration/headless/opencode:opencode_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
     "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
@@ -240,6 +241,12 @@
       "name": "pi",
       "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/pi:pi_test",
+      "extra": []
+    },
+    {
+      "name": "opencode",
+      "description": "one real-agent target, with this lane's --test_env set applied",
+      "target": "//plugins/air/tests/integration/headless/opencode:opencode_test",
       "extra": []
     },
     {
