@@ -1,0 +1,10 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="PARAMETER_HINT|TypeScript|js.param.hints.show.names.for.all.args" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|TypeScript|js.param.hints.show.names.for.tagged" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|TypeScript|ts.param.hints.include.when.argument.matches.name" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|TypeScript|ts.param.hints.show.names.for.literal.args" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

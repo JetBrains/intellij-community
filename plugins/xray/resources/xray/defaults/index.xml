@@ -1,0 +1,14 @@
+<list>
+  <entry value="xray/defaults/codeVision/defaults.xml"/>
+  <entry value="xray/defaults/declarative/defaults_Gradle.xml"/>
+  <entry value="xray/defaults/declarative/defaults_Java.xml"/>
+  <entry value="xray/defaults/declarative/defaults_JS.xml"/>
+  <entry value="xray/defaults/declarative/defaults_Kotlin.xml"/>
+  <entry value="xray/defaults/declarative/defaults_TS.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_Angular.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_Java.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_JS.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_Kotlin.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_TS.xml"/>
+  <entry value="xray/defaults/parameterNames/defaults_Vue.xml"/>
+</list>

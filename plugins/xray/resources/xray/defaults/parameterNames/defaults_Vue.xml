@@ -1,0 +1,9 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="PARAMETER_HINT|Vue|vuejs.show.names.for.all.args" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|Vue|vuejs.show.names.for.filters" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|Vue|vuejs.show.names.for.literal.args" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

@@ -1,0 +1,10 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="PARAMETER_HINT|JavaScript|js.only.show.names.for.all.args" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JavaScript|js.only.show.names.for.literal.args" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JavaScript|js.only.show.names.for.pipes" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JavaScript|js.only.show.names.for.tagged" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

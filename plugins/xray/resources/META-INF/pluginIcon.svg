@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-labelledby="title desc"
+  version="1.1"
+  id="svg23"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <title
+    id="title">Xray Inlay Suggestions Plugin Icon</title>
+  <desc
+    id="desc">Original JetBrains-inspired IDE plugin icon combining x-ray eye, code brackets, and an inline suggestion hint.</desc>
+  <defs
+    id="defs16">
+    <linearGradient
+      id="linearGradient28"
+    >
+      <stop
+        style="stop-color:#0a7efa;stop-opacity:1;"
+        offset="0"
+        id="stop28" />
+      <stop
+        style="stop-color:#ff0008;stop-opacity:1;"
+        offset="1"
+        id="stop29" />
+    </linearGradient>
+    <linearGradient
+      id="tile"
+      x1="8"
+      y1="6"
+      x2="56"
+      y2="58"
+      gradientUnits="userSpaceOnUse">
+      <stop
+        offset="0"
+        stop-color="#1B1D27"
+        id="stop1" />
+      <stop
+        offset="0.55"
+        stop-color="#0E1118"
+        id="stop2" />
+      <stop
+        offset="1"
+        stop-color="#05070B"
+        id="stop3" />
+    </linearGradient>
+    <linearGradient
+      id="leftGrad"
+      x1="12"
+      y1="18"
+      x2="24"
+      y2="46"
+      gradientUnits="userSpaceOnUse"
+      gradientTransform="matrix(1.2414861,0,0,1.2409101,-11.762422,-7.0886734)">
+      <stop
+        offset="0"
+        stop-color="#E627F8"
+        id="stop4" />
+      <stop
+        offset="0.45"
+        stop-color="#FF0007"
+        id="stop5" />
+      <stop
+        offset="1"
+        stop-color="#FF841B"
+        id="stop6" />
+    </linearGradient>
+    <linearGradient
+      id="rightGrad"
+      x1="40"
+      y1="18"
+      x2="52"
+      y2="46"
+      gradientUnits="userSpaceOnUse"
+      gradientTransform="matrix(1.2414861,0,0,1.2409101,-3.6926767,-7.0886734)">
+      <stop
+        offset="0"
+        stop-color="#5E5CFF"
+        id="stop7" />
+      <stop
+        offset="0.45"
+        stop-color="#087CFA"
+        id="stop8" />
+      <stop
+        offset="1"
+        stop-color="#00F5A0"
+        id="stop9" />
+    </linearGradient>
+    <radialGradient
+      id="irisGrad"
+      cx="0"
+      cy="0"
+      r="1"
+      gradientUnits="userSpaceOnUse"
+      gradientTransform="matrix(8.7786324,8.7745607,-8.7786324,8.7745607,32.186272,32.062046)">
+      <stop
+        offset="0"
+        stop-color="#FF841B"
+        id="stop10" />
+      <stop
+        offset="0.34"
+        stop-color="#E627F8"
+        id="stop11" />
+      <stop
+        offset="0.67"
+        stop-color="#087CFA"
+        id="stop12" />
+      <stop
+        offset="1"
+        stop-color="#00F5A0"
+        id="stop13" />
+    </radialGradient>
+    <linearGradient
+      id="inlayGrad"
+      x1="21"
+      y1="45"
+      x2="43"
+      y2="45"
+      gradientUnits="userSpaceOnUse">
+      <stop
+        offset="0"
+        stop-color="#7A2DF4"
+        id="stop14" />
+      <stop
+        offset="0.55"
+        stop-color="#087CFA"
+        id="stop15" />
+      <stop
+        offset="1"
+        stop-color="#00C2FF"
+        id="stop16" />
+    </linearGradient>
+    <filter
+      id="softShadow"
+      x="0"
+      y="0"
+      width="1"
+      height="1"
+      color-interpolation-filters="sRGB">
+      <feDropShadow
+        dx="0"
+        dy="2"
+        stdDeviation="2.5"
+        flood-color="#000000"
+        flood-opacity="0.35" />
+    </filter>
+    <linearGradient
+      xlink:href="#linearGradient28"
+      id="linearGradient29"
+      x1="19.56291"
+      y1="32.049999"
+      x2="44.737091"
+      y2="32.049999"
+      gradientUnits="userSpaceOnUse"
+      gradientTransform="matrix(1.340937,0,0,1.3939609,-10.93264,-12.614261)" />
+  </defs>
+  <!-- Main plugin tile -->
+  <!-- Subtle x-ray scan halo -->
+  <!-- Code brackets -->
+  <path
+    d="M 16.79176,15.247709 4.9976412,31.999998 16.79176,48.752287"
+    stroke="url(#leftGrad)"
+    stroke-width="7.69542"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    id="path17"
+    style="stroke:url(#leftGrad)" />
+  <path
+    d="M 47.208252,15.247709 59.00237,31.999998 47.208252,48.752287"
+    stroke="url(#rightGrad)"
+    stroke-width="7.69542"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    id="path18"
+    style="stroke:url(#rightGrad)" />
+  <!-- Xray eye -->
+  <path
+    d="M 16.087239,32.062186 C 20.37824,24.813589 25.607893,21.18929 32.178483,21.18929 c 6.570591,0 11.800246,3.624299 16.091244,10.872896 -4.290998,7.248596 -9.520653,10.872892 -16.091244,10.872892 -6.57059,0 -11.800243,-3.624296 -16.091244,-10.872892 z"
+    fill="#ffffff"
+    id="path19"
+    style="stroke:url(#linearGradient29);stroke-width:1.02539;stroke-linejoin:miter;stroke-dasharray:2.05077, 1.02539;stroke-dashoffset:0" />
+  <ellipse
+    cx="32.186268"
+    cy="32.062046"
+    fill="url(#irisGrad)"
+    id="circle19"
+    style="fill:url(#irisGrad);stroke-width:1.2412"
+    rx="8.9386978"
+    ry="8.9345541" />
+  <ellipse
+    cx="32.186268"
+    cy="32.062046"
+    fill="#10131a"
+    id="circle20"
+    rx="5.0900927"
+    ry="5.0877314"
+    style="stroke-width:1.2412" />
+  <ellipse
+    cx="36.407322"
+    cy="27.842951"
+    fill="#ffffff"
+    id="circle21"
+    rx="1.9243035"
+    ry="1.923411"
+    style="stroke-width:1.2412" />
+  <!-- Inlay suggestion pill -->
+</svg>

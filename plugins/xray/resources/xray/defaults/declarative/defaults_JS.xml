@@ -1,0 +1,10 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="DECLARATIVE|js.type.hints|function.returns" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|js.type.hints|non.paren.single.param" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|js.type.hints|parameters.in.parens" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|js.type.hints|variables.and.fields" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

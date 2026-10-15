@@ -1,0 +1,54 @@
+<idea-plugin>
+  <id>com.intellij.xray</id>
+  <name>X-Ray Mode</name>
+  <vendor>JetBrains</vendor>
+  <description>X-Ray Mode support for IntelliJ Platform Inlay hints</description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.xdebugger"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+
+  <resource-bundle>messages.XRayBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorFactoryListener implementation="com.intellij.xray.impl.editorTracking.XRayModeTracker"/>
+    <iw.actionProvider implementation="com.intellij.xray.impl.action.XRayModeActionProvider"/>
+    <notificationGroup displayType="BALLOON" id="X-Ray Inlay Visibility" bundle="messages.XRayBundle" key="xray.inlay.notification.group"/>
+
+    <!-- Platform EPs -->
+    <codeInsight.inlayVisibilityPolicy implementation="com.intellij.xray.impl.platform.XRayInlayVisibilityPolicy"/>
+    <codeInsight.inlayContextMenuContributor implementation="com.intellij.xray.impl.platform.XRayInlayContextMenuContributor"/>
+    <codeVision.codeVisionEntryExtraActionContributor implementation="com.intellij.xray.impl.platform.XRayCodeVisionEntryExtraActionContributor"/>
+
+    <configurablesPatcher implementation="com.intellij.xray.impl.platform.XRayConfigurablesPatcher"/>
+
+    <projectConfigurable provider="com.intellij.xray.impl.platform.XRayInlaySettingsConfigurableProvider"
+                         id="inlay.hints"
+                         parentId="editor"
+                         key="settings.hints"
+                         bundle="messages.ApplicationBundle"
+                         dynamic="true"
+                         groupWeight="1"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.xray.impl.editorTracking.XRaySelectionListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.xray.impl.debugger.XRayDebuggerUseModeListener" topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.XRayBundle">
+    <action id="ToggleXRayMode" class="com.intellij.xray.impl.action.ToggleXRayModeAction" icon="AllIcons.General.InspectionsEye">
+      <keyboard-shortcut first-keystroke="ctrl shift X" keymap="$default"/>
+    </action>
+    <group id="XRayHintVisibility" class="com.intellij.xray.impl.action.XRayHintVisibilityGroup">
+      <add-to-group group-id="InlayMenu" anchor="first"/>
+    </group>
+  </actions>
+  
+  <applicationListeners>
+    <listener class="com.intellij.xray.impl.XRayDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+</idea-plugin>

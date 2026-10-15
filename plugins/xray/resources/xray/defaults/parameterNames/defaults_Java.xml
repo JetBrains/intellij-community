@@ -1,0 +1,12 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="PARAMETER_HINT|JAVA|java.clear.expression.type" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JAVA|java.enums" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JAVA|java.method.name.contains.parameter.name" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JAVA|java.multiple.params.same.type" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JAVA|java.new.expr" value="ESSENTIAL" />
+      <entry key="PARAMETER_HINT|JAVA|java.simple.sequentially.numbered" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

@@ -1,0 +1,11 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="DECLARATIVE|ts.type.hints|function.returns" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|ts.type.hints|include.when.variable.type.matches.name" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|ts.type.hints|non.paren.single.param" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|ts.type.hints|parameters.in.parens" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|ts.type.hints|variables.and.fields" value="ESSENTIAL" />
+    </map>
+  </option>
+</State>

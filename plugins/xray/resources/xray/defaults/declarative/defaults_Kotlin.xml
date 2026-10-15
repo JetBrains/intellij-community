@@ -1,0 +1,13 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="DECLARATIVE|kotlin.default.parameters.hints|" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|kotlin.lambdas.hints|hints.lambda.receivers.parameters" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|kotlin.lambdas.hints|hints.lambda.return" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|kotlin.parameters.hints|" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|kotlin.references.types.hints|hints.type.property" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|kotlin.references.types.hints|hints.type.variable" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|kotlin.values.hints|hints.value.kotlin.time" value="ADDITIONAL" />
+    </map>
+  </option>
+</State>

@@ -1,0 +1,11 @@
+<State>
+  <option name="stages">
+    <map>
+      <entry key="DECLARATIVE|java.annotation.hints|showExternal" value="ADDITIONAL" />
+      <entry key="DECLARATIVE|java.annotation.hints|showInferred" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|java.implicit.lambdaParameter|" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|java.implicit.types|" value="ESSENTIAL" />
+      <entry key="DECLARATIVE|java.method.chains|" value="ADDITIONAL" />
+    </map>
+  </option>
+</State>
