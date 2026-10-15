@@ -387,6 +387,10 @@ vocabulary! {
         /// A choice the lane daemon made about the lane IDE, and why: a reuse, a reload of the bridge plugin, a
         /// relaunch or a fresh context. The controller publishes it as its own `decision` record.
         Decision = "decision",
+        /// The recorder of the lane daemon records nothing from here on, or misses a scenario: it did not start, it
+        /// refused the hello or a scenario, or it went away. The controller makes the first reason the report's
+        /// `tracesError`.
+        TraceFailed = "traceFailed",
     }
 }
 
@@ -611,6 +615,15 @@ impl SlowStep {
     }
 }
 
+/// The recorder of the lane daemon stopped recording, or did not record a scenario. `reason` is the first cause the
+/// daemon met, as its log states it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TraceFailed {
+    pub timestamp: String,
+    pub reason: String,
+}
+
 /// The reading of one record, by kind. Serializes back to the record's own shape, `event` included.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "event", rename_all = "camelCase")]
@@ -631,6 +644,7 @@ pub enum RunEventKind {
     IdeExited(IdeExited),
     SlowStep(SlowStep),
     Decision(crate::progress::Decision),
+    TraceFailed(TraceFailed),
 }
 
 /// One decoded record: what the daemon sent, and the reading of it.
@@ -682,6 +696,7 @@ impl RunEvent {
             RunEventKind::IdeExited(_) => Event::IdeExited,
             RunEventKind::SlowStep(_) => Event::SlowStep,
             RunEventKind::Decision(_) => Event::Decision,
+            RunEventKind::TraceFailed(_) => Event::TraceFailed,
         }
     }
 
@@ -804,6 +819,7 @@ pub fn decode_run_event(line: &[u8]) -> Result<RunEvent, DecodeError> {
         Event::IdeExited => RunEventKind::IdeExited(record(event, body)?),
         Event::SlowStep => RunEventKind::SlowStep(record(event, body)?),
         Event::Decision => RunEventKind::Decision(record(event, body)?),
+        Event::TraceFailed => RunEventKind::TraceFailed(record(event, body)?),
     };
     Ok(RunEvent { raw: Some(raw), kind })
 }

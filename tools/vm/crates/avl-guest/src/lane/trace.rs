@@ -311,10 +311,14 @@ pub(crate) struct Trace {
     bounds: AckBounds,
     attach_dir: Option<PathBuf>,
     attach_count: u32,
+    /// Whether the session met a failure that loses a trace, so a later one stays in the log only.
+    failed: bool,
+    /// The first such failure, until [`Trace::take_failure`] takes it for the stream.
+    unreported: Option<String>,
 }
 
 impl Trace {
-    /// A session that records nothing: tracing is off, or the recorder did not start.
+    /// A session that records nothing because tracing is off.
     pub(crate) const fn off() -> Self {
         Self {
             transport: None,
@@ -325,6 +329,28 @@ impl Trace {
             bounds: AckBounds::FRESH,
             attach_dir: None,
             attach_count: 0,
+            failed: false,
+            unreported: None,
+        }
+    }
+
+    /// A session that records nothing because the recorder did not start, for `reason`.
+    pub(crate) fn failed(reason: String) -> Self {
+        let mut trace = Self::off();
+        trace.fail(reason);
+        trace
+    }
+
+    /// Answers, once, the first failure that lost a trace: a recorder that did not start, refused the hello or a
+    /// scenario, or went away. The runner says it on the stream, so a run without bundles names its cause.
+    pub(crate) const fn take_failure(&mut self) -> Option<String> {
+        self.unreported.take()
+    }
+
+    fn fail(&mut self, reason: String) {
+        if !self.failed {
+            self.failed = true;
+            self.unreported = Some(reason);
         }
     }
 
@@ -340,10 +366,12 @@ impl Trace {
                 "the recorder did not answer hello; recording to {root} without its answer"
             )),
             Some(ack) if !ack.ok => {
-                log(&format!(
+                let reason = format!(
                     "the recorder refused to record: {}",
                     ack.error.or(ack.reason).as_deref().unwrap_or("no reason given")
-                ));
+                );
+                log(&reason);
+                trace.fail(reason);
                 trace.quiet();
             }
             Some(ack) => log(&format!(
@@ -385,7 +413,17 @@ impl Trace {
         self.failure_snapped = false;
         self.bounds = AckBounds::FRESH;
         self.scenario_open = true;
-        self.send(&protocol::Command::Scenario(command));
+        let name = command.name.clone();
+        // A scenario that the recorder refused has no bundle, so it gets no further command.
+        if let Some(ack) = self.send(&protocol::Command::Scenario(command))
+            && !ack.ok
+        {
+            self.scenario_open = false;
+            self.fail(format!(
+                "the recorder refused the scenario '{name}': {}",
+                ack.error.as_deref().unwrap_or("no reason given")
+            ));
+        }
     }
 
     /// Opens a span under the innermost open one, and answers its id, or 0 when no scenario is recorded.
@@ -566,7 +604,9 @@ impl Trace {
         let ack = match transport.send(line, ack_within) {
             Ok(ack) => ack,
             Err(reason) => {
-                log(&format!("the recorder is gone, so the rest of this run is not traced: {reason}"));
+                let reason = format!("the recorder is gone, so the rest of this run is not traced: {reason}");
+                log(&reason);
+                self.fail(reason);
                 self.quiet();
                 return None;
             }

@@ -344,9 +344,19 @@ impl<'r, 's> Runner<'r, 's> {
         self.trace.borrow_mut()
     }
 
+    /// Says on the stream, once, why the trace lost a bundle: a recorder that did not start, refused the hello or a
+    /// scenario, or went away. The controller makes it the `tracesError` of the report.
+    fn report_trace_failure(&self) {
+        let failure = self.trace().take_failure();
+        if let Some(reason) = failure {
+            self.stream.trace_failed(reason);
+        }
+    }
+
     /// Runs every scenario of `suites`, in order, and closes the trace. A run that the watchdog ended starts no further
     /// scenario. The suites of a bare IDE run last, so the IDE of the lane quits once per run.
     pub(crate) fn run(self, suites: &[Suite]) {
+        self.report_trace_failure();
         let (bare, shared): (Vec<&Suite>, Vec<&Suite>) = suites.iter().partition(|suite| suite.program.launch.is_some());
         for suite in shared.into_iter().chain(bare) {
             if self.watch.expired().is_some() {
@@ -362,6 +372,7 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.note(report);
         }
         self.trace().close();
+        self.report_trace_failure();
     }
 
     fn suite(&self, suite: &Suite) {
@@ -533,6 +544,7 @@ impl<'r, 's> Runner<'r, 's> {
             ..failure
         });
         self.trace().finish_scenario(failure.as_ref().map(Failure::trace).as_ref());
+        self.report_trace_failure();
         let status = match &failure {
             None => CaseStatus::Successful,
             Some(failure) if failure.aborted => CaseStatus::Aborted,

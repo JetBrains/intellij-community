@@ -4,22 +4,31 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 
-/// A transport that keeps each line and acks each acked one at once, with `ok`.
+/// A transport that keeps each line and acks each acked one at once, with `ok` unless it refuses the line.
 #[derive(Clone, Default)]
 pub(crate) struct Recording {
     pub lines: Arc<Mutex<Vec<String>>>,
     pub refuse_hello: bool,
+    /// Refuses each `scenario` command, as a recorder does that cannot read it.
+    pub refuse_scenarios: bool,
+    /// Breaks once it holds this many lines, as a recorder does that went away.
+    pub gone_after: Option<usize>,
 }
 
 impl Transport for Recording {
     fn send(&mut self, line: Vec<u8>, ack_within: Option<Duration>) -> Result<Option<Ack>, String> {
         let mut lines = self.lines.lock().unwrap();
-        lines.push(String::from_utf8(line).unwrap());
+        if self.gone_after.is_some_and(|count| lines.len() >= count) {
+            return Err("the recorder closed its output".to_owned());
+        }
+        let line = String::from_utf8(line).unwrap();
+        let refused = (lines.is_empty() && self.refuse_hello) || (self.refuse_scenarios && line.starts_with(r#"{"op":"scenario""#));
+        lines.push(line);
         let number = u32::try_from(lines.len()).unwrap();
-        let hello = number == 1;
         Ok(ack_within.map(|_| Ack {
-            ok: !(hello && self.refuse_hello),
+            ok: !refused,
             line: number,
+            error: refused.then(|| "a command line is not a JSON object".to_owned()),
             ..Ack::default()
         }))
     }
@@ -95,7 +104,8 @@ fn a_failure_is_photographed_once_in_its_own_span_and_fails_the_spans_it_unwinds
     }
 }
 
-// A recorder that refuses the hello records nothing, and the session sends no further line.
+// A recorder that refuses the hello records nothing, and the session sends no further line. The refusal is the one
+// failure that the session answers for the stream.
 #[test]
 fn a_refused_hello_makes_the_session_quiet() {
     let recording = Recording {
@@ -107,6 +117,68 @@ fn a_refused_hello_makes_the_session_quiet() {
     trace.call("Ping", 1, 1, None);
     trace.finish_scenario(None);
     assert_eq!(recording.lines.lock().unwrap().len(), 1);
+    assert_eq!(
+        trace.take_failure().as_deref(),
+        Some("the recorder refused to record: a command line is not a JSON object")
+    );
+    assert_eq!(trace.take_failure(), None);
+}
+
+// A scenario that the recorder refuses has no bundle. It gets no span, no snapshot and no done, and the first refusal
+// is the failure of the session. A later refusal stays in the log, so the stream says the cause once.
+#[test]
+fn a_refused_scenario_gets_no_further_command_and_is_the_failure_of_the_session() {
+    let recording = Recording {
+        refuse_scenarios: true,
+        ..Recording::default()
+    };
+    let mut trace = Trace::open(Box::new(recording.clone()), hello());
+    trace.open_scenario(scenario("first"));
+    assert_eq!(trace.open_span(SpanKind::Step, "only", "[flow] only", None), 0);
+    trace.snap(SnapshotPhase::Boundary);
+    trace.finish_scenario(None);
+    trace.open_scenario(scenario("second"));
+    trace.finish_scenario(None);
+    let lines = recording.lines.lock().unwrap().clone();
+    assert_eq!(lines.len(), 3, "{lines:#?}");
+    assert!(lines[1..].iter().all(|line| line.starts_with(r#"{"op":"scenario""#)), "{lines:#?}");
+    assert_eq!(
+        trace.take_failure().as_deref(),
+        Some("the recorder refused the scenario 'first': a command line is not a JSON object")
+    );
+    assert_eq!(trace.take_failure(), None);
+}
+
+// A recorder that went away is the failure of the session, and the rest of the run sends it nothing.
+#[test]
+fn a_recorder_that_went_away_is_the_failure_of_the_session() {
+    let recording = Recording {
+        gone_after: Some(2),
+        ..Recording::default()
+    };
+    let mut trace = Trace::open(Box::new(recording.clone()), hello());
+    trace.open_scenario(scenario("first"));
+    trace.open_span(SpanKind::Step, "only", "[flow] only", None);
+    trace.finish_scenario(None);
+    assert_eq!(recording.lines.lock().unwrap().len(), 2);
+    assert_eq!(
+        trace.take_failure().as_deref(),
+        Some("the recorder is gone, so the rest of this run is not traced: the recorder closed its output")
+    );
+    assert_eq!(trace.take_failure(), None);
+}
+
+// Tracing that is off is no failure. A recorder that did not start is one, and the session answers its reason once.
+#[test]
+fn only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session() {
+    assert_eq!(Trace::off().take_failure(), None);
+    let mut failed = Trace::failed("cannot start the recorder /r: No such file or directory".to_owned());
+    failed.open_scenario(scenario("quiet"));
+    assert_eq!(
+        failed.take_failure().as_deref(),
+        Some("cannot start the recorder /r: No such file or directory")
+    );
+    assert_eq!(failed.take_failure(), None);
 }
 
 // An attachment is a file under `<root>/<runId>/attach`, handed over in the span that is open.

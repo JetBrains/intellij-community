@@ -25,7 +25,7 @@ use avl_base::RefusalExt;
 
 /// The pack verb, as the fake channel matches it in an argv.
 const TRACE_PACK_READY_VERB: &str = AgentVerb::TracePackReady.as_str();
-use crate::daemon::testing::{PLENTIFUL_DF, Recorded, passing_run_lines};
+use crate::daemon::testing::{PLENTIFUL_DF, Recorded, ndjson_line, passing_run_lines};
 use crate::daemon::traces::TRACE_PACK_TIMEOUT;
 
 // --- the decisions ---------------------------------------------------------------------------------------------
@@ -933,6 +933,30 @@ async fn an_iteration_without_traces_reports_neither() {
         fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty(),
         "nothing is packed when nothing was recorded"
     );
+}
+
+// A lane daemon whose recorder recorded nothing says why with `traceFailed`. With no trace directory to pull, that
+// reason is the report's `tracesError`, the verdict stays, and the agent is asked for no pack.
+#[tokio::test]
+async fn a_trace_failure_of_the_daemon_is_the_traces_error_of_an_iteration_without_traces() {
+    let (fixture, _, _) = iteration_fixture("it-33").await;
+    let reason = "the recorder refused the scenario 'works': a command line is not a JSON object";
+    let mut lines = passing_run_lines("it-33");
+    lines.insert(
+        1,
+        ndjson_line(&json!({"event": "traceFailed", "timestamp": "2026-08-23T12:00:00.500Z", "reason": reason})),
+    );
+    lines.insert(
+        2,
+        ndjson_line(&json!({"event": "traceFailed", "timestamp": "2026-08-23T12:00:00.600Z", "reason": "a later one"})),
+    );
+    fixture.script_run(lines);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    let report = report_of(&attempt);
+    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.traces_error.as_deref(), Some(reason));
+    assert_eq!(report.status, Status::Passed);
+    assert!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty());
 }
 
 // A warm iteration passes the hypervisor's gate before its first guest command, as every worker operation must: the

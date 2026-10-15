@@ -18,7 +18,7 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::Duration;
 
 use avl_wire::daemon::{
-    ContainerFailed, ExecutionIdentity, Output, RunEvent, RunEventKind, Skipped, TestFinished, TestStarted, TypedFailure,
+    ContainerFailed, ExecutionIdentity, Output, RunEvent, RunEventKind, Skipped, TestFinished, TestStarted, TraceFailed, TypedFailure,
 };
 use avl_wire::report::ScenarioReport;
 
@@ -155,6 +155,14 @@ impl<'a> Stream<'a> {
     /// Writes one `output` record of `text`.
     pub(crate) fn note(&self, text: impl Into<String>) {
         self.emit(&RunEventKind::Output(Output { text: text.into() }));
+    }
+
+    /// The `traceFailed` record: the recorder records nothing from here on, or missed a scenario, for `reason`.
+    pub(crate) fn trace_failed(&self, reason: String) {
+        self.emit(&RunEventKind::TraceFailed(TraceFailed {
+            timestamp: now_stamp(),
+            reason,
+        }));
     }
 
     /// The `testStarted` record of a scenario.

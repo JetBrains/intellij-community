@@ -422,7 +422,8 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
     Ok(watch.expired().is_some())
 }
 
-/// The trace of the iteration: the recorder of `inputs`, or a quiet session when there is none or it does not start.
+/// The trace of the iteration: the recorder of `inputs`, or a quiet session when there is none or it does not start. A
+/// recorder that does not start is a failure of the session, which the runner says on the stream.
 fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, bridge: Option<protocol::Bridge>) -> Trace {
     let Some(recorder) = &inputs.recorder else {
         log("no recorder is named, so the iteration records no trace");
@@ -431,8 +432,9 @@ fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, b
     match RecorderProcess::start(recorder) {
         Ok(process) => Trace::open(Box::new(process), Trace::hello(iteration_dir, iteration_id, inputs.screen, bridge)),
         Err(error) => {
-            log(&format!("{error}; the iteration records no trace"));
-            Trace::off()
+            let reason = format!("{error}; the iteration records no trace");
+            log(&reason);
+            Trace::failed(reason)
         }
     }
 }

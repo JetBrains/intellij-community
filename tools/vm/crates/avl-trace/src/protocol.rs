@@ -250,9 +250,9 @@ pub struct ScenarioCommand {
     /// differs, as the one to ask from here on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bridge: Option<Bridge>,
-    /// The generated profile, verbatim as `flow-profiles/<suite>.json` holds it: a JSON object, kept as its bytes.
-    /// It goes into the root span so the viewer can show the instructions a failure never reached. A journey has
-    /// none.
+    /// The generated profile as `flow-profiles/<suite>.json` holds it: a JSON object, kept as its bytes except for the
+    /// whitespace between its tokens, which [`encode_command`] drops. It goes into the root span so the viewer can show
+    /// the instructions a failure never reached. A journey has none.
     #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "present_raw")]
     pub program: Option<Box<RawValue>>,
 }
@@ -576,10 +576,13 @@ pub fn encode<T: Serialize + ?Sized>(value: &T) -> Result<Vec<u8>, Error> {
 }
 
 /// Writes one command line in its canonical form: `op` first, then the command's fields in declaration order,
-/// absent optional fields omitted.
+/// absent optional fields omitted, and no whitespace between tokens.
 ///
 /// The golden transcript is in exactly this form, and a test re-encodes every line of it to prove so. That is what
 /// lets the sidecar's contract test compare its output with the golden file byte for byte.
+///
+/// A raw value keeps its bytes through serde_json. So a `program` that a lane read from a pretty-printed document
+/// would put line breaks into the line, and the recorder reads one command per line. The line is therefore compacted.
 pub fn encode_command(command: &Command) -> Result<Vec<u8>, Error> {
     command.validate()?;
     let body = match command {
@@ -598,9 +601,33 @@ pub fn encode_command(command: &Command) -> Result<Vec<u8>, Error> {
         line.push(b'}');
     } else {
         line.push(b',');
-        line.extend_from_slice(&body[1..]);
+        line.extend_from_slice(&compact(&body)[1..]);
     }
     Ok(line)
+}
+
+/// Drops the whitespace between the tokens of `json`, which is JSON text. JSON escapes each control character in a
+/// string, so a line break or a tab outside a string is never data, and a space outside a string is never data either.
+fn compact(json: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(json.len());
+    let mut in_string = false;
+    let mut escaped = false;
+    for &byte in json {
+        if in_string {
+            out.push(byte);
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                in_string = false;
+            }
+        } else if !matches!(byte, b' ' | b'\t' | b'\n' | b'\r') {
+            in_string = byte == b'"';
+            out.push(byte);
+        }
+    }
+    out
 }
 
 /// Reads one command line, and refuses an unknown op, an unknown field, a field of the wrong kind, a vocabulary

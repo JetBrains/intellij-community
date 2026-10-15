@@ -360,6 +360,10 @@ impl State {
                 );
                 self.line(scope, &text);
             }
+            RunEventKind::TraceFailed(failed) => {
+                let text = format!("trace failed: {}", first_line(&failed.reason));
+                self.line(scope, &text);
+            }
             // The controller publishes a decision of the daemon as its own decision, which has its own line.
             RunEventKind::Decision(_)
             | RunEventKind::PlanStarted(_)

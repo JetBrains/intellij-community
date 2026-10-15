@@ -451,6 +451,38 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
     );
 }
 
+// The lane daemon reads each profile from a pretty-printed suite document, and the recorder reads one command per
+// line. So the program goes out on one line, and only the whitespace between its tokens goes. The text of a string,
+// with its spaces, its escaped quote and its escaped line break, stays.
+#[test]
+fn a_program_from_a_pretty_printed_document_is_written_on_one_line() {
+    let profile = serde_json::json!({"name": "a b", "quote": "say \"hi\" ", "steps": [{"text": "one\ntwo"}]});
+    let pretty = serde_json::to_string_pretty(&profile).unwrap();
+    assert!(pretty.contains('\n'));
+    let scenario = Command::Scenario(ScenarioCommand {
+        name: "a b".to_owned(),
+        test_class: "C".to_owned(),
+        suite: None,
+        lane: "UI".to_owned(),
+        flow: None,
+        fixture: None,
+        flags: BTreeMap::new(),
+        labels: Vec::new(),
+        bridge: None,
+        program: Some(RawValue::from_string(pretty).unwrap()),
+    });
+    let line = String::from_utf8(encode_command(&scenario).unwrap()).unwrap();
+    assert_eq!(
+        line,
+        r#"{"op":"scenario","name":"a b","testClass":"C","lane":"UI","program":{"name":"a b","quote":"say \"hi\" ","steps":[{"text":"one\ntwo"}]}}"#
+    );
+    let Command::Scenario(decoded) = decode_command(line.as_bytes()).unwrap() else {
+        panic!("{line} is no scenario");
+    };
+    let program: serde_json::Value = serde_json::from_str(decoded.program.unwrap().get()).unwrap();
+    assert_eq!(program, profile);
+}
+
 #[test]
 fn only_the_four_waiting_ops_are_acked() {
     let acked: Vec<&str> = Op::ALL.iter().filter(|op| op.is_acked()).map(|op| op.as_str()).collect();

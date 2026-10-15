@@ -358,7 +358,11 @@ fn story_document(vocabulary: &Value, profiles: &Value) -> Value {
 
 /// The suite of `document`, which must fit its vocabulary.
 fn suite_of(document: &Value) -> Suite {
-    let bytes = document.to_string().into_bytes();
+    suite_of_bytes(document.to_string().into_bytes())
+}
+
+/// The suite of the document `bytes`, which must fit its vocabulary.
+fn suite_of_bytes(bytes: Vec<u8>) -> Suite {
     let program = parse_suite_program(&bytes).unwrap();
     assert_eq!(program.refusals(), Vec::<String>::new());
     suites_of(vec![(program, bytes)]).unwrap().remove(0)
@@ -396,8 +400,19 @@ fn run(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>) -> Ran {
 
 /// [`run`] with the transport margin `margin` and the active execution timeout `active` of the watchdog.
 fn run_with(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: Duration, active: Duration) -> Ran {
+    run_recorded(fake, suites, slow_step, margin, active, &Recording::default())
+}
+
+/// [`run_with`] with the recorder `recording`.
+fn run_recorded(
+    fake: &Fake,
+    suites: &[Suite],
+    slow_step: Option<Duration>,
+    margin: Duration,
+    active: Duration,
+    recording: &Recording,
+) -> Ran {
     let iteration = TempDir::new().unwrap();
-    let recording = Recording::default();
     let trace = Trace::open(
         Box::new(recording.clone()),
         Trace::hello(iteration.path(), "iter-golden", false, fake.recorder_bridge()),
@@ -431,6 +446,8 @@ fn run_with(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: 
         .collect();
     let trace = recording.lines.lock().unwrap().clone();
     for line in &trace {
+        // The recorder reads one command per line.
+        assert!(!line.contains('\n'), "a command spans lines: {line}");
         protocol::decode_command(line.as_bytes()).unwrap_or_else(|error| panic!("the recorder refuses {line}: {error}"));
     }
     Ran {
@@ -458,6 +475,70 @@ fn without_clock(trace: &[String]) -> String {
             String::from_utf8(protocol::encode_command(&decoded).unwrap()).unwrap() + "\n"
         })
         .collect()
+}
+
+/// The vocabulary and the one scenario of the green story suite.
+fn green_story() -> (Value, Value) {
+    let vocabulary = json!({"runnerAnswers": ["jetBrainsCloudUrl", "terminalBaseline"],
+        "actions": {"rename-session-select": ide(&["session"], &[], &["terminalBaseline"])},
+        "assertions": {"rename-session-title": ide(&[], &[], &["session", "jetBrainsCloudUrl"])}});
+    let instructions = json!([
+        {"action": "rename-session-select", "args": {"surface": "GLOBAL_PROMPT"}},
+        {"assertion": "rename-session-title", "expectation": "The session is listed under the new title."},
+    ]);
+    (vocabulary, scenario("rename-closed-project-session", &instructions))
+}
+
+fn green_fake() -> Fake {
+    Fake::new(Script {
+        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
+        ..Script::default()
+    })
+}
+
+// The generator writes each suite document pretty-printed, and the recorder reads one command per line. So the
+// program of a scenario reaches the recorder on one line, as the same value, and the stream says no trace failure.
+#[test]
+fn a_pretty_printed_suite_document_reaches_the_recorder_one_line_per_command() {
+    let fake = green_fake();
+    let (vocabulary, profile) = green_story();
+    let document = story_document(&vocabulary, &json!([profile]));
+    let ran = run(&fake, &[suite_of_bytes(serde_json::to_vec_pretty(&document).unwrap())], None);
+    let scenario: Value = serde_json::from_str(ran.trace.iter().find(|line| line.starts_with(r#"{"op":"scenario""#)).unwrap()).unwrap();
+    assert_eq!(scenario["program"], profile);
+    assert_eq!(ran.events("traceFailed"), Vec::<&Value>::new());
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+}
+
+// A recorder that refuses the scenarios records no bundle. The stream says the first cause once as `traceFailed`, and
+// the scenarios run as they would with no recorder.
+#[test]
+fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
+    let fake = green_fake();
+    let (vocabulary, profile) = green_story();
+    let mut second = profile.clone();
+    second["name"] = json!("rename-again");
+    let recording = Recording {
+        refuse_scenarios: true,
+        ..Recording::default()
+    };
+    let ran = run_recorded(
+        &fake,
+        &[story(&vocabulary, &json!([profile, second]))],
+        None,
+        INSTRUCTION_MARGIN,
+        Duration::from_mins(30),
+        &recording,
+    );
+    let failed = ran.events("traceFailed");
+    assert_eq!(failed.len(), 1, "{failed:#?}");
+    assert_eq!(
+        failed[0]["reason"],
+        "the recorder refused the scenario 'rename-closed-project-session': a command line is not a JSON object"
+    );
+    assert_eq!(ran.trace.len(), 3, "{:#?}", ran.trace);
+    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
+    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
 }
 
 // A green scenario: the baseline, the reset before, the preparation chain, each instruction as one request with its

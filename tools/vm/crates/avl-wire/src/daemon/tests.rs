@@ -576,6 +576,25 @@ fn a_decision_record_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
     );
 }
 
+// The lane daemon says when its recorder records nothing. The record keeps its bytes, serializes back to its own
+// shape, and needs its reason.
+#[test]
+fn a_trace_failure_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
+    let line = r#"{"event":"traceFailed","timestamp":"2026-10-16T08:00:00Z","reason":"the recorder refused the scenario 'a'"}"#;
+    let event = decode(line);
+    assert_eq!(event.event(), Event::TraceFailed);
+    assert_eq!(event.to_raw().get(), line);
+    let RunEventKind::TraceFailed(failed) = &event.kind else {
+        panic!("read {:?}", event.kind);
+    };
+    assert_eq!(failed.reason, "the recorder refused the scenario 'a'");
+    assert_eq!(RunEvent::synthesized(event.kind.clone()).to_raw().get(), line);
+    assert_eq!(
+        protocol_code(r#"{"event":"traceFailed","timestamp":"2026-10-16T08:00:00Z"}"#),
+        CODE_FIELD_MISSING
+    );
+}
+
 // The digest of a plugin directory reads each destination and content digest of its files in destination order, so
 // the order of the files does not move it, and a file of another directory does not either.
 #[test]
