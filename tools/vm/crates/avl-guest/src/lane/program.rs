@@ -37,7 +37,7 @@ use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
-use avl_wire::program::lane::LaneDocument;
+use avl_wire::program::lane::{Delivery, LaneDocument};
 use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
 };
@@ -353,6 +353,34 @@ impl<'r, 's> Runner<'r, 's> {
         }
     }
 
+    /// Refuses a suite whose scenarios use a Cloud agent of the lane document, before any request reaches the IDE. The
+    /// lane daemon has no Cloud spawner yet (IJAI-4053), so each of its scenarios would wait out the agent start.
+    fn refuse_cloud_agents(&self, suite: &SuiteProgram) -> Result<(), Failure> {
+        let cloud: BTreeSet<&str> = suite
+            .profiles
+            .iter()
+            .filter_map(|profile| suite.fixtures.get(&profile.fixture))
+            .flat_map(|fixture| &fixture.agents)
+            .filter(|key| {
+                self.document
+                    .agents
+                    .iter()
+                    .any(|agent| agent.key == **key && agent.delivery == Delivery::Cloud)
+            })
+            .map(String::as_str)
+            .collect();
+        if cloud.is_empty() {
+            return Ok(());
+        }
+        Err(Failure::runner(
+            kind::UNSUPPORTED,
+            format!(
+                "the suite '{}' uses the Cloud agents {cloud:?}, and there is no Cloud spawner in the lane daemon (IJAI-4053)",
+                suite.suite
+            ),
+        ))
+    }
+
     /// Runs every scenario of `suites`, in order, and closes the trace. A run that the watchdog ended starts no further
     /// scenario. The suites of a bare IDE run last, so the IDE of the lane quits once per run.
     pub(crate) fn run(self, suites: &[Suite]) {
@@ -397,6 +425,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<&'p SuiteReset, Failure> {
         document_fits(suite)?;
+        self.refuse_cloud_agents(suite)?;
         let reset = suite.reset.as_ref().ok_or_else(|| {
             Failure::runner(
                 kind::DOCUMENT,

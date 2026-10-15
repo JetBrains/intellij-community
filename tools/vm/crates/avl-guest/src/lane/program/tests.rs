@@ -400,10 +400,10 @@ fn run(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>) -> Ran {
 
 /// [`run`] with the transport margin `margin` and the active execution timeout `active` of the watchdog.
 fn run_with(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: Duration, active: Duration) -> Ran {
-    run_recorded(fake, suites, slow_step, margin, active, &Recording::default())
+    run_recorded(fake, suites, slow_step, margin, active, &Recording::default(), &lane_document())
 }
 
-/// [`run_with`] with the recorder `recording`.
+/// [`run_with`] with the recorder `recording` and the lane `document`.
 fn run_recorded(
     fake: &Fake,
     suites: &[Suite],
@@ -411,13 +411,13 @@ fn run_recorded(
     margin: Duration,
     active: Duration,
     recording: &Recording,
+    document: &LaneDocument,
 ) -> Ran {
     let iteration = TempDir::new().unwrap();
     let trace = Trace::open(
         Box::new(recording.clone()),
         Trace::hello(iteration.path(), "iter-golden", false, fake.recorder_bridge()),
     );
-    let document = lane_document();
     let mut out = Vec::new();
     {
         let stream = Stream::new(&mut out);
@@ -433,7 +433,7 @@ fn run_recorded(
             if slow_step.is_some() {
                 scope.spawn(|| crate::lane::watchdog::watch(&watch, &stream, fake, iteration.path()));
             }
-            Runner::new(fake, &stream, &watch, &document, iteration.path(), trace)
+            Runner::new(fake, &stream, &watch, document, iteration.path(), trace)
                 .with_instruction_margin(margin)
                 .run(suites);
             watch.completed(&stream);
@@ -529,6 +529,7 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
         INSTRUCTION_MARGIN,
         Duration::from_mins(30),
         &recording,
+        &lane_document(),
     );
     let failed = ran.events("traceFailed");
     assert_eq!(failed.len(), 1, "{failed:#?}");
@@ -831,6 +832,53 @@ fn a_suite_without_its_bridge_requests_fails_its_prologue() {
     assert_eq!(failed[0]["type"], kind::DOCUMENT);
     assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
     assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+}
+
+// The lane daemon has no Cloud spawner yet. So a suite whose fixture uses a Cloud agent of the lane fails at once as one
+// `lane_unsupported` container: no scenario starts, and no request reaches the IDE.
+#[test]
+fn a_suite_with_a_cloud_agent_is_refused_before_any_request() {
+    let fake = green_fake();
+    let (vocabulary, profile) = green_story();
+    let mut suite = story(&vocabulary, &json!([profile]));
+    suite.program.fixtures.get_mut("fixture").unwrap().agents = vec!["remote-scenarios".to_owned()];
+    let mut document = lane_document();
+    let mut cloud = document.agents[0].clone();
+    cloud.key = "remote-scenarios".to_owned();
+    cloud.delivery = Delivery::Cloud;
+    document.agents.push(cloud);
+    let ran = run_recorded(
+        &fake,
+        &[suite],
+        None,
+        INSTRUCTION_MARGIN,
+        Duration::from_mins(30),
+        &Recording::default(),
+        &document,
+    );
+    let failed = ran.events("containerFailed");
+    assert_eq!(failed.len(), 1, "{failed:#?}");
+    assert_eq!(failed[0]["type"], kind::UNSUPPORTED);
+    assert!(
+        failed[0]["message"]
+            .as_str()
+            .is_some_and(|message| message.ends_with("there is no Cloud spawner in the lane daemon (IJAI-4053)")),
+        "{failed:#?}"
+    );
+    assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
+    assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+}
+
+// A fixture with a local agent of the lane is no Cloud suite, and runs.
+#[test]
+fn a_suite_with_a_local_agent_runs() {
+    let fake = green_fake();
+    let (vocabulary, profile) = green_story();
+    let mut suite = story(&vocabulary, &json!([profile]));
+    suite.program.fixtures.get_mut("fixture").unwrap().agents = vec!["air-ui-flow-acp".to_owned()];
+    let ran = run(&fake, &[suite], None);
+    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
 }
 
 // An authored part is one `authored-step` with the values it takes. It answers exactly the values it declares, and its

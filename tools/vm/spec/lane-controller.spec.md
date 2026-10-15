@@ -1492,6 +1492,11 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document`)
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`an_undocumented_suite_fails_as_unsupported_with_its_reason`)
 
+- The lane daemon has no Cloud spawner yet (IJAI-4053). So a suite whose fixture uses a Cloud agent of the lane fails
+  as one container `lane_unsupported` before its first request. No scenario of it starts.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_cloud_agent_is_refused_before_any_request`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_local_agent_runs`)
+
 - The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
 

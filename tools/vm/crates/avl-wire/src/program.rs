@@ -141,6 +141,9 @@ pub struct SuiteFixture {
     /// The registry agent of the fixture starts installed: the suite installs it before its first scenario.
     #[serde(default)]
     pub managed_agent_starts_installed: bool,
+    /// The keys of the agents of the lane document that the fixture uses.
+    #[serde(default)]
+    pub agents: Vec<String>,
     /// The keys of the agents that the suite installs before its first scenario.
     #[serde(default)]
     pub preinstalled: Vec<String>,
