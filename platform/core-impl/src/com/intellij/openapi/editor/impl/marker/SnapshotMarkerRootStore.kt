@@ -7,7 +7,8 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongList
@@ -42,7 +43,9 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
-  private val roots: ConcurrentMap<DocumentSnapshot, RootState> = CollectionFactory.createConcurrentWeakIdentityMap()
+  private val roots: ConcurrentMap<DocumentSnapshot, RootState> = Java11Shim.INSTANCE.createConcurrentWeakMap(HashingStrategy.identity())
+  @Volatile
+  private var cachedRootReference: CachedRootReference? = null
   private var disposed: Boolean = false
 
   /** Validates and publishes editor-owned marker changes under the commit gate. */
@@ -91,6 +94,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     }
     documentListener?.let { listener -> documentReference.get()?.removeDocumentListener(listener) }
     roots.clear()
+    cachedRootReference = null
   }
 
   fun containsSnapshot(snapshot: DocumentSnapshot): Boolean = roots.containsKey(snapshot)
@@ -102,8 +106,15 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     (root(snapshot) as? PMarkerRootImpl)?.containsMarkerId(markerId) == true
 
   fun rootReference(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = PMarkerRootImpl.empty()): AtomicReference<PMarkerRoot> {
+    val cached = cachedRootReference
+    if (cached != null && cached.get() === snapshot) {
+      val reference = cached.reference.get()
+      if (reference != null) return reference
+    }
     processQueue()
-    return rootState(snapshot, initialRoot).rootReference
+    val reference = rootState(snapshot, initialRoot).rootReference
+    cachedRootReference = CachedRootReference(snapshot, reference)
+    return reference
   }
 
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
@@ -220,6 +231,14 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
    * @return `true` when at least one entry was removed
    */
   fun processQueue(): Boolean = (roots as ReferenceQueueable).processQueue()
+
+  /** Caches the lookup without keeping the snapshot or its marker root alive. */
+  private class CachedRootReference(
+    snapshot: DocumentSnapshot,
+    reference: AtomicReference<PMarkerRoot>,
+  ) : WeakReference<DocumentSnapshot>(snapshot) {
+    val reference: WeakReference<AtomicReference<PMarkerRoot>> = WeakReference(reference)
+  }
 
   internal class CapturedRoot(
     val store: SnapshotMarkerRootStore,

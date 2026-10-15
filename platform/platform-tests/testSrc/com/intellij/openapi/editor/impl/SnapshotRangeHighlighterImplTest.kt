@@ -669,6 +669,8 @@ class SnapshotRangeHighlighterImplTest {
     try {
       val first = model.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
       val second = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      Assertions.assertThat(first).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
+      Assertions.assertThat(second).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
       val failure = IllegalStateException("The highlighter removal listener failed")
       model.addMarkupModelListener(disposable, object : MarkupModelListener {
         override fun beforeRemoved(highlighter: RangeHighlighterEx) {

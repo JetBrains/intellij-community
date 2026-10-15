@@ -2,6 +2,8 @@
 package com.intellij.util.containers
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import java.util.concurrent.ConcurrentMap
 
 /**
  * A factory of various containers which implementations are different in pre/after jdk9.
@@ -45,4 +47,7 @@ abstract class Java11Shim {
   abstract fun <E> listOf(array: Array<E>, size: Int): List<E>
 
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
+
+  @Contract(value = "_, -> new", pure = true)
+  abstract fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any>
 }

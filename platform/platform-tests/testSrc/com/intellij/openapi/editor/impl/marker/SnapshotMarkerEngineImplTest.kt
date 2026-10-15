@@ -13,6 +13,7 @@ import com.intellij.util.ref.GCUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -22,6 +23,7 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.LongConsumer
 import kotlin.concurrent.thread
 import kotlin.random.Random
@@ -35,6 +37,58 @@ class SnapshotMarkerEngineImplTest {
     val marker = document.createRangeMarker(1, 3, true)
 
     assertTrue(marker is SnapshotMarker)
+  }
+
+  @Test
+  fun `cached root reference observes marker changes in the same snapshot`() {
+    val fixture = Fixture("abcdef")
+    val snapshot = fixture.initialSnapshot
+    val reference = fixture.rootStore.rootReference(snapshot)
+    val marker = fixture.document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    assertEquals(TextRange(2, 4), marker.textRange)
+
+    fixture.rootStore.updateRoot(snapshot) {
+      it.remove(marker.id).insert(marker.id, 3, 5, nonGreedySpec(), flavorFlags = 0)
+    }
+
+    assertSame(snapshot, fixture.document.core.snapshot())
+    assertSame(reference, marker.currentRootReference())
+    assertEquals(TextRange(3, 5), marker.textRange)
+  }
+
+  @Test
+  fun `cached root reference follows document snapshot changes`() {
+    val fixture = Fixture("abcdef")
+    val marker = fixture.document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val reference = marker.currentRootReference()
+    assertEquals(TextRange(2, 4), marker.textRange)
+
+    fixture.document.insertString(0, "XX")
+
+    assertNotSame(reference, marker.currentRootReference())
+    assertEquals(TextRange(4, 6), marker.textRange)
+    assertSame(reference, fixture.rootStore.rootReference(fixture.initialSnapshot))
+    assertEquals(TextRange(4, 6), marker.textRange)
+  }
+
+  @Test
+  fun `root reference cache releases unused snapshots and roots`() {
+    val fixture = Fixture("abcdef")
+    fun cacheDetachedRoot(): Pair<WeakReference<DocumentSnapshot>, WeakReference<AtomicReference<PMarkerRoot>>> {
+      val snapshot = fixture.initialSnapshot.copyWithNewIdentity()
+      val reference = fixture.rootStore.rootReference(snapshot)
+      assertSame(reference, fixture.rootStore.rootReference(snapshot))
+      return WeakReference(snapshot) to WeakReference(reference)
+    }
+    val (snapshot, reference) = cacheDetachedRoot()
+
+    GCUtil.tryGcSoftlyReachableObjects {
+      fixture.rootStore.processQueue()
+      snapshot.get() == null && reference.get() == null
+    }
+
+    assertNull(snapshot.get())
+    assertNull(reference.get())
   }
 
   @Test

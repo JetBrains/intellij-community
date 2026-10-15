@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.VarHandleWrapperImpl
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentMap
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -60,6 +63,10 @@ class Java11ShimImpl : Java11Shim() {
         }
       }
     }
+  }
+
+  override fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any> {
+    return ConcurrentCollectionFactory.createConcurrentWeakMap(hashingStrategy)
   }
 
   override fun getCallerClass(stackFrameIndex: Int): Class<*>? {

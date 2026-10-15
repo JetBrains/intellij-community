@@ -1732,13 +1732,13 @@ public class RangeMarkerTest {
   @Test
   public void testGetStartEndOffsetPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
-    List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
+    RangeMarker[] markers = new RangeMarker[N];
     for (int i = 0; i < N; i++) {
       int start = i % doc.getTextLength();
       int end = start + 1;
       RangeMarker marker = doc.createRangeMarker(start, end);
-      markers.add(marker);
+      markers[i] = marker;
     }
     insertString(doc, 0, " ");
     for (RangeMarker rm : markers) {
@@ -1750,7 +1750,7 @@ public class RangeMarkerTest {
         for (RangeMarker rm : markers) {
           length += rm.getEndOffset() - rm.getStartOffset();
         }
-        assertEquals(markers.size(), length);
+        assertEquals(markers.length, length);
       }
     }).runAsStressTest().start();
     deleteString(doc, 0, 1);

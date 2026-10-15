@@ -4,6 +4,7 @@ package com.intellij.util.containers
 import com.intellij.util.ReflectionUtil
 import java.util.Arrays
 import java.util.Collections
+import java.util.concurrent.ConcurrentMap
 
 internal class DefaultJava11Shim : Java11Shim() {
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> {
@@ -58,5 +59,9 @@ internal class DefaultJava11Shim : Java11Shim() {
 
   override fun getCallerClass(stackFrameIndex: Int): Class<*>? {
     return ReflectionUtil.getCallerClass(stackFrameIndex + 1) // +1 to accommodate the current frame
+  }
+
+  override fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any> {
+    return CollectionFactory.createConcurrentWeakMap(hashingStrategy)
   }
 }
