@@ -42,7 +42,7 @@ abstract class LanguageServiceWidgetItem {
   /**
    * If not [LanguageServiceItemRunningState.NotRunning] and [isError] is `false`,
    * then the Platform will add a liveness badge (green for [LanguageServiceItemRunningState.Running],
-   * blue for [LanguageServiceItemRunningState.Initializing])
+   * amber for [LanguageServiceItemRunningState.Initializing])
    * to the icon of the action returned by the [createWidgetMainAction] function.
    */
   @ApiStatus.Internal
@@ -58,7 +58,7 @@ abstract class LanguageServiceWidgetItem {
         runningState == LanguageServiceItemRunningState.Running ->
           IconManager.getInstance().withIconBadge(it, JBUI.CurrentTheme.IconBadge.SUCCESS)
         runningState == LanguageServiceItemRunningState.Initializing ->
-          IconManager.getInstance().withIconBadge(it, JBUI.CurrentTheme.IconBadge.INFORMATION)
+          IconManager.getInstance().withIconBadge(it, JBUI.CurrentTheme.IconBadge.WARNING)
         else -> it
       }
     }
