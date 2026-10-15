@@ -281,9 +281,9 @@ common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
 # output base, so without a cache it packs every jar again. See ADR 0019 for the measurements.
 common --modify_execution_info=PackContentModuleJar=+no-remote-cache
 
-# The host platform of rules_rs proc-macros and Rust tools. Each root resolves the label in its own main repository:
-# community defines the platforms in `build/native/platforms`, and the ultimate root aliases them at the same path.
+# Host platforms overrides to ensure some default contraints are set when compiling for the host.
 common:linux --host_platform=//build/native/platforms:local_linux
+common:macos --host_platform=//build/native/platforms:local_macos
 common:windows --host_platform=//build/native/platforms:local_windows
 
 # Rust warnings are errors. The flag applies to the target configuration only, and rules_rust caps the lints of
