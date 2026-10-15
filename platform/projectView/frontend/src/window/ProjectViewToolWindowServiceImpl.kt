@@ -87,6 +87,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 @State(name = "FrontendProjectView", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 internal class ProjectViewToolWindowServiceImpl(
@@ -419,7 +421,7 @@ internal class ProjectViewToolWindowServiceImpl(
           // So a selected pane that is absent from the current snapshot cannot arrive during the wait, and the wait only delays the snapshot.
           val selectedPaneIsInSnapshot = orderedDescriptors.value.any { it.id == selectedPaneId }
           if (!mustSelectThisPane && selectedPaneIsInSnapshot) {
-            withTimeoutOrNull(5.seconds) { // at this point the state is already received, and panes are added very quickly
+            withTimeoutOrNull(PANE_SELECTION_TIMEOUT) { // at this point the state is already received, and panes are added very quickly
               paneSelectJob.await()
             }
           }
@@ -432,7 +434,13 @@ internal class ProjectViewToolWindowServiceImpl(
           }
           if (mustSelectThisPane && paneSelectJob.complete(Unit)) {
             // Another pane can be added and selected by the content manager before this one, so select this pane explicitly.
-            paneContentManager.setSelectedContent(paneContent)
+            // A pane that arrives late keeps the current selection: the user may already work with the shown pane.
+            if (paneContentManager.canTakeOverSelection()) {
+              paneContentManager.setSelectedContent(paneContent)
+            }
+            else {
+              LOG.info("The pane ${pane.id} is the one to select, but it arrived later than $PANE_SELECTION_TIMEOUT after the first pane, keeping the current selection")
+            }
           }
           LOG.debug { "The pane has been initialized, ID = ${pane.id}, descriptor = ${pane.descriptor}" }
           initialized.complete(Unit)
@@ -563,6 +571,8 @@ internal class ProjectViewToolWindowServiceImpl(
   
   private inner class PaneContentManager @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(toolWindow: ToolWindow) {
     private val contentManager = toolWindow.contentManager
+    // Written only in createAndAddContent on the EDT, read from any thread.
+    @Volatile private var firstContentAddedAt: TimeMark? = null
     
     suspend fun manageContent() {
       coroutineScope {
@@ -606,9 +616,21 @@ internal class ProjectViewToolWindowServiceImpl(
       newContent.putUserData(PANE_KEY, pane)
       val index = findSuitableIndex(pane) ?: return null
       contentManager.addContent(newContent, index)
+      if (firstContentAddedAt == null) {
+        firstContentAddedAt = TimeSource.Monotonic.markNow()
+      }
       panes[pane.id] = pane
       LOG.info("Added pane ${pane.id}, descriptor ${pane.descriptor}")
       return PaneContent(pane, newContent)
+    }
+
+    /**
+     * Returns `true` while the pane to select may still take the selection over from an earlier added pane.
+     * The window closes [PANE_SELECTION_TIMEOUT] after the first pane is shown.
+     */
+    fun canTakeOverSelection(): Boolean {
+      val firstContentAddedAt = firstContentAddedAt ?: return true
+      return firstContentAddedAt.elapsedNow() < PANE_SELECTION_TIMEOUT
     }
 
     private fun findSuitableIndex(pane: FrontendProjectViewPane): Int? {
@@ -759,6 +781,14 @@ private class ProjectViewToolWindowServiceState {
 
 private fun defaultSelectedPaneId(): ProjectViewPaneId =
   projectViewPaneId(ProjectViewPane.ID)
+
+/**
+ * How long the tool window waits for the pane to select.
+ * A pane that is not the one to select waits this long before it is added.
+ * The pane to select takes the selection over only if it is added within this time after the first pane is shown.
+ * The two periods do not overlap: the wait ends when a pane is shown, and the take-over window starts at that moment.
+ */
+private val PANE_SELECTION_TIMEOUT = 5.seconds
 
 private val PANE_KEY = Key.create<FrontendProjectViewPane>("FrontendProjectViewPane")
 private val LOG = logger<ProjectViewToolWindowServiceImpl>()
