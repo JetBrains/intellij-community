@@ -4,6 +4,7 @@ package com.intellij.terminal.backend.hyperlinks.filter
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFileHyperlinkInfo
@@ -255,7 +256,7 @@ internal class TerminalAbsolutePathLinkFinder(
     }
   }
 
-  /** Returns [path] parsed for the terminal's environment if a file exists there. */
+  /** Returns [path] parsed for the terminal's environment if it leads to a file that can be opened. */
   private fun lookUp(path: String): EelPath? {
     if (path.isBlank()) return null
     val eelPath = try {
@@ -264,6 +265,7 @@ internal class TerminalAbsolutePathLinkFinder(
     catch (_: EelPathException) {
       return null // not an absolute path in the environment of the terminal, e.g. a Windows path on Linux
     }
+    if (!eelPath.isOpenActionAvailable()) return null
     return eelPath.takeIf { fileLookup.lookupLinkTarget(it) != null }
   }
 
@@ -279,3 +281,15 @@ private fun isTrailingPunctuation(char: Char): Boolean = char == '.' || isNonPat
 
 /** The most trailing punctuation characters removed from the end of one path candidate. */
 private const val MAX_TRAILING_PUNCTUATION: Int = 3
+
+/**
+ * Returns `true` unless the path is under a special directory like `/dev`,
+ * which cannot be opened. For example, the macOS Finder cannot
+ * show `/dev`, so such a link would do nothing.
+ */
+private fun EelPath.isOpenActionAvailable(): Boolean {
+  val topDirectory = parts.firstOrNull() ?: return true
+  return !descriptor.osFamily.isPosix || topDirectory !in SPECIAL_FS_ROOTS
+}
+
+private val SPECIAL_FS_ROOTS: Set<String> = setOf("dev", "proc", "sys")
