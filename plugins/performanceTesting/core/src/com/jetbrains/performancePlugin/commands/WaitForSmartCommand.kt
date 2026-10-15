@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import kotlinx.coroutines.delay
@@ -14,7 +15,8 @@ class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
     private val LOG = logger<WaitForSmartCommand>()
 
     /**
-     * Wait for 3 seconds after the dumb mode completes.
+     * Wait for 3 seconds after the dumb mode and the scanning complete.
+     * If the IDE is not in smart mode after the wait, wait again, up to [MAX_ATTEMPTS] times.
      *
      * There are background IDE processes (<backgroundPostStartupActivity></backgroundPostStartupActivity>)
      * that start after 5 seconds of project opening, or in general, at random time.
@@ -30,13 +32,22 @@ class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
      * call it before every "comparing" command (checkIndices/compareIndexes/etc)
      */
     private const val SMART_MODE_MINIMUM_DELAY_SECONDS = 3
+    private const val MAX_ATTEMPTS = 5
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    smartReadAction(context.project) {
+    val project = context.project
+    for (attempt in 1..MAX_ATTEMPTS) {
+      smartReadAction(project) {
+      }
+      LOG.info("%waitForSmart dumb mode finished, waiting $SMART_MODE_MINIMUM_DELAY_SECONDS seconds more... (attempt $attempt)")
+      delay(SMART_MODE_MINIMUM_DELAY_SECONDS.seconds)
+      if (DumbService.getInstance(project).canRunSmart()) {
+        LOG.info("%waitForSmart command finished")
+        return
+      }
     }
-    LOG.info("%waitForSmart dumb mode finished, waiting $SMART_MODE_MINIMUM_DELAY_SECONDS seconds more...")
-    delay(SMART_MODE_MINIMUM_DELAY_SECONDS.seconds)
-    LOG.info("%waitForSmart command finished")
+    throw IllegalStateException("%waitForSmart: the IDE did not stay in smart mode for $SMART_MODE_MINIMUM_DELAY_SECONDS seconds " +
+                                "in $MAX_ATTEMPTS attempts. Dumb mode or scanning starts again and again.")
   }
 }
