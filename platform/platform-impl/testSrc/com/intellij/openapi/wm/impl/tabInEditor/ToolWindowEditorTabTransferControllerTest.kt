@@ -107,7 +107,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isTrue()
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isTrue()
 
       val tabFile = manager.openTabFile()
       assertThat(manager.isFileOpen(tabFile)).isTrue()
@@ -181,7 +181,7 @@ class ToolWindowEditorTabTransferControllerTest {
       // Without a file editor provider the composite opens empty, and the editor manager closes it at once.
       ExtensionTestUtil.maskExtensions(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, emptyList(), disposable)
 
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isFalse()
 
       assertThat(manager.openTabFiles()).isEmpty()
       // The content is not lost: it is back in the tool window, selected, alive, and no longer temporarily removed.
@@ -328,7 +328,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isFalse()
 
       assertThat(manager.openTabFiles()).isEmpty()
       assertThat(toolWindow.contentManager.contents.toList()).contains(content)

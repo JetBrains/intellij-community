@@ -20,13 +20,19 @@ internal class ToolWindowEditorTabTransferController(private val project: Projec
     return ToolWindowEditorTabSupportUtil.isEnabled() && getSupport(toolWindow)?.canBeMovedToEditor(content) == true
   }
 
+  /**
+   * Moves [content] from [toolWindow] into an editor tab.
+   *
+   * @return `true` if the editor opened the content;
+   * `false` if the content cannot move or the editor did not open it and the content went back to the tool window.
+   */
   fun moveContentToEditor(
     toolWindow: ToolWindow,
     content: Content,
     window: EditorWindow? = null,
     sourceDecorator: InternalDecoratorImpl? = null,
-  ) {
-    if (!canMoveContentToEditor(toolWindow, content)) return
+  ): Boolean {
+    if (!canMoveContentToEditor(toolWindow, content)) return false
 
     val tabManager = ToolWindowEditorTabManager.getInstance(project)
 
@@ -54,7 +60,9 @@ internal class ToolWindowEditorTabTransferController(private val project: Projec
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
       restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
       tabManager.closeEditorTabFile(file, releaseContent = false)
+      return false
     }
+    return true
   }
 
   fun canMoveContentToToolWindow(toolWindow: ToolWindow, file: ToolWindowEditorTabFile): Boolean {
