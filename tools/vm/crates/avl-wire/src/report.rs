@@ -122,6 +122,9 @@ pub struct Case {
     /// closed: the second account of the case. Absent when no bundle of the scenario arrived.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub recorded: Option<String>,
+    /// Why a skipped case did not run, as its `testSkipped` record says. Absent for a case that ran.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
 }
 
 /// What the authored parts of one scenario report beside their values: the notes and the measurements of the

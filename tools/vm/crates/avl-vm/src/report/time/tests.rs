@@ -145,6 +145,7 @@ fn report(
                 duration_ms: *duration_ms,
                 started_at: "2026-10-09T12:00:00Z".to_owned(),
                 recorded: None,
+                reason: None,
             })
             .collect(),
         failures: Vec::new(),

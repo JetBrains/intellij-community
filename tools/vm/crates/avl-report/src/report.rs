@@ -161,14 +161,15 @@ fn report_cases(stream_cases: &[StreamCase], archives: &[TraceArchive]) -> Vec<C
     let mut cases: Vec<Case> = stream_cases
         .iter()
         .filter_map(|case| {
-            let status = match &case.outcome {
-                CaseOutcome::Passed => CaseStatus::Passed,
-                CaseOutcome::Failed(_) => CaseStatus::Failed,
-                CaseOutcome::Skipped(_) => CaseStatus::Skipped,
+            let (status, reason) = match &case.outcome {
+                CaseOutcome::Passed => (CaseStatus::Passed, None),
+                CaseOutcome::Failed(_) => (CaseStatus::Failed, None),
+                CaseOutcome::Skipped(reason) => (CaseStatus::Skipped, Some(reason.clone())),
                 CaseOutcome::Unfinished => return None,
             };
             Some(Case {
                 recorded: recorded_status(&bundles, case),
+                reason,
                 class_name: case.class_name.clone(),
                 name: case.name.clone(),
                 status,

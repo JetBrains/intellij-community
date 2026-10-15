@@ -783,6 +783,10 @@ The daemon's half and the IDE's half of supervision are in
   its diagnostic, and its `hasFailures` contradicts nothing.
   [@test] ../crates/avl-report/src/report/tests.rs (`a_run_that_failed_as_a_whole_explains_its_has_failures`)
 
+- A skipped case names the reason of its `testSkipped` record as `reason`, as the JUnit XML does. A case that ran
+  has no reason.
+  [@test] ../crates/avl-report/src/report/tests.rs (`a_skipped_case_carries_the_reason_of_its_skip`)
+
 - The recorder is the second account of each case. The case names the status of its trace bundle as `recorded`. A
   status of the recorder's `done` that contradicts the stream is a diagnostic. A case with no bundle and a bundle the
   recorder never closed are not compared, and a traces error decides nothing.

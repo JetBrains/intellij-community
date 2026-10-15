@@ -77,6 +77,7 @@ fn with_suite(mut report: RunReport, name: &str, timestamp: Option<&str>, cases:
         duration_ms: 0.0,
         started_at: timestamp.unwrap_or_default().to_owned(),
         recorded: None,
+        reason: None,
     }));
     report.execution.tests_started += tests;
     report.execution.tests_failed += failures;

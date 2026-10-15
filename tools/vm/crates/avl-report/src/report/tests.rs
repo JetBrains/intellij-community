@@ -212,6 +212,33 @@ fn a_healthy_run_is_passed_and_explains_nothing() {
     assert_eq!(cases, [(CLASS, "smoke", CaseStatus::Passed, 12_500.0)]);
 }
 
+// A skipped case says why it did not run, as its `testSkipped` record does, and a case that ran says no reason. The
+// reason reaches the document and survives the wire.
+#[test]
+fn a_skipped_case_carries_the_reason_of_its_skip() {
+    let reason = "scenario 'later' never ran: the shared IDE was recycled 3 time(s) and isolation still failed";
+    let mut events = vec![plan(&[CLASS])];
+    events.extend(scenario("1", "SUCCESSFUL", None));
+    events.push(RunEvent::synthesized(RunEventKind::TestSkipped(Skipped {
+        timestamp: "2026-08-22T10:00:02Z".to_owned(),
+        execution: identity("2", "later", Some(CLASS)),
+        reason: reason.to_owned(),
+    })));
+    let document = built(input(Some(summary(1, 0, 1, 0, 0)), events));
+    assert_eq!(document.status, Status::Passed, "{}", diagnostic(&document));
+    let reasons: Vec<(&str, CaseStatus, Option<&str>)> = document
+        .cases
+        .iter()
+        .map(|case| (case.name.as_str(), case.status, case.reason.as_deref()))
+        .collect();
+    assert_eq!(
+        reasons,
+        [("smoke", CaseStatus::Passed, None), ("later", CaseStatus::Skipped, Some(reason))]
+    );
+    let decoded = decode_run_report(&serde_json::to_vec(&document).unwrap()).unwrap();
+    assert_eq!(decoded.cases[1].reason.as_deref(), Some(reason));
+}
+
 /// The note that a test jar moved on the host while the iteration ran.
 const DRIFT: &str = "1 test jar(s) were rebuilt on the host while this iteration ran: ui_test_lib.jar";
 
