@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -18,13 +19,14 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -42,11 +44,13 @@ object CodeReviewDetailsBranchComponentFactory {
       // the width shrinks to cut a long branch name, the height does not shrink
       override fun getMinimumSize(): Dimension = Dimension(0, preferredSize.height)
     }.apply {
+      setCopyable(true)
       foreground = NamedColorUtil.getInactiveTextColor()
-      val branchesText = combine(branchesVm.targetBranch, branchesVm.sourceBranch) { target, source ->
+      val branchesText = combineState(scope, branchesVm.targetBranch, branchesVm.sourceBranch) { target, source ->
         CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source)
       }
-      bindTextIn(scope, branchesText)
+      // the copyable label renders its text as HTML, and a branch name can contain '<' or '&'
+      bindTextIn(scope, branchesText.map(StringUtil::escapeXmlEntities))
       bindTooltipTextIn(scope, branchesText)
     }
 
