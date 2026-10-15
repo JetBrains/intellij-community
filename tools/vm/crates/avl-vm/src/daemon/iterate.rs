@@ -13,6 +13,7 @@ use avl_report::report::{self as run_report, Input};
 use avl_wire::daemon::{self as wire, RunEvent, RunEventKind, Runner};
 use avl_wire::progress::{Decision, Event, IterationReported, Phase, Subject};
 use avl_wire::report::{EvidenceArtifact, RunReport, safe_evidence_paths};
+use avl_wire::session_log;
 use jiff::Timestamp;
 use serde::Serialize;
 use serde_json::json;
@@ -21,6 +22,7 @@ use tokio_util::sync::CancellationToken;
 use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_note};
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
+use crate::daemon::session_logs;
 use crate::daemon::state::HostState;
 use crate::daemon::traces::TraceSync;
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
@@ -446,11 +448,32 @@ impl Host {
         self.require_guest_free_space(&self.guest(ctx, channel.as_ref()), Some(&scope))
             .await?;
 
-        let push_started = Instant::now();
-        let pushed = push_jars(ctx, &self.daemon, &state, prep).await?;
-        let push_ms = push_started.elapsed().as_secs_f64() * 1000.0;
         // The lane daemon decides about its IDE itself, and its `decision` record reaches the journal as one.
         let runner = self.daemon.runner();
+        let packed = match runner {
+            Runner::Daemon => session_logs::pack(&self.environment, &self.settings.runtime_root)?,
+            Runner::Jvm => {
+                if self.environment.get(session_log::VARIABLE).is_some() {
+                    self.reporter.note(
+                        format!(
+                            "{} is set, and the JVM runner stages no recorded session; run with --runner daemon",
+                            session_log::VARIABLE
+                        ),
+                        Some(&scope),
+                    );
+                }
+                session_logs::Packed::default()
+            }
+        };
+        let push_started = Instant::now();
+        let pushed = push_jars(ctx, &self.daemon, &state, prep, &packed.files).await?;
+        let push_ms = push_started.elapsed().as_secs_f64() * 1000.0;
+        let session_logs = packed.into_logs();
+        if !session_logs.is_empty() {
+            let labels: Vec<&str> = session_logs.iter().map(|log| log.label.as_str()).collect();
+            self.reporter
+                .note(format!("recorded sessions: {}", labels.join(", ")), Some(&scope));
+        }
         if ide_action == IdeAction::Reuse && runner == Runner::Jvm {
             self.decide(Subject::Ide, "reuse", reuse_reason(pushed), &scope);
         }
@@ -483,7 +506,7 @@ impl Host {
             async {
                 let _halt = stop.clone().drop_guard();
                 let execution = self
-                    .execute_run(ctx, worker, &state, prep, selection, policy, &mut |event| {
+                    .execute_run(ctx, worker, &state, prep, selection, policy, &session_logs, &mut |event| {
                         traces.observe(event);
                     })
                     .await;

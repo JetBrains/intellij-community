@@ -248,6 +248,7 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         lane: None,
         lane_inputs: None,
         lane_classes: Vec::new(),
+        session_logs: Vec::new(),
     };
     assert_eq!(
         serde_json::to_string(&request).unwrap(),
@@ -282,6 +283,16 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         encoded.ends_with(
             r#""laneClasses":[{"suite":"composer","testClassName":"AirComposerGeneratedFlowUiTest"},{"suite":"genui-host","testClassName":"AirGenUiHostUiTest","authored":true}]}"#
         ),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+    request.session_logs = vec![SessionLog {
+        label: "thread-7".to_owned(),
+        sha256: "z".to_owned(),
+    }];
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(r#""sessionLogs":[{"label":"thread-7","sha256":"z"}]}"#),
         "{encoded}"
     );
     assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);

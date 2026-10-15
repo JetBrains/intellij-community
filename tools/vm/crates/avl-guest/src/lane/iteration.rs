@@ -30,6 +30,7 @@ use super::inputs::TraceInputs;
 use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
+use super::session_logs;
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
 use super::watchdog::{self, DISMISS_TIMEOUT, DUMP_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
@@ -407,6 +408,19 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         held: Mutex::new(None),
     };
     daemon_lane.refresh_held();
+    // Dropped at the end of the run, which removes the copies from the context.
+    let staged = session_logs::stage(daemon_lane.context_dir().as_deref(), &request.session_logs, &|sha256| {
+        daemon.stored(sha256)
+    })?;
+    if !request.session_logs.is_empty() {
+        stream.note(match staged.logs.len() {
+            0 => format!(
+                "lane {lane}: no IDE of the lane runs, so the {} recorded session(s) stay unstaged",
+                request.session_logs.len()
+            ),
+            count => format!("lane {lane}: {count} recorded session(s) in the context of the lane IDE"),
+        });
+    }
     let trace_inputs = daemon.with_ide(|owner| owner.trace_inputs().clone());
     let trace = start_trace(&trace_inputs, iteration_dir, iteration_id, daemon_lane.recorder_bridge());
     let watch = Watch::new(Policy {
@@ -416,7 +430,9 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
     watch.plan_started(stream, discovered);
     std::thread::scope(|scope| {
         scope.spawn(|| watchdog::watch(&watch, stream, &daemon_lane, iteration_dir));
-        Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace).run(&selection.suites);
+        Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace)
+            .with_session_logs(staged.logs.clone())
+            .run(&selection.suites);
         watch.completed(stream);
     });
     Ok(watch.expired().is_some())

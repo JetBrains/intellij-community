@@ -15,8 +15,9 @@ use std::io::{self, Write};
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
-use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, decode_run_event};
+use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, SessionLog, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
+use avl_wire::session_log;
 use serde::Serialize;
 
 use super::channel::{self, BOOT_CODE, log};
@@ -47,6 +48,36 @@ const JUNIT5_FILTERS_VARIABLE: &str = "JB_TEST_JUNIT5_FILTERS";
 const TOTAL_SHARDS_VARIABLE: &str = "TEST_TOTAL_SHARDS";
 /// The refusal code of a run that Bazel splits into shards.
 pub(crate) const SHARDED_CODE: &str = "lane_run_sharded";
+/// The refusal code of a recorded session that the variable names and that cannot be packed.
+pub(crate) const SESSION_LOG_CODE: &str = "lane_session_log";
+
+/// Packs each recorded session that [`session_log::VARIABLE`] names into the jar store, as the controller pushes them
+/// to a guest. The zip leaves the run directory once the store holds it.
+pub(crate) fn session_logs(
+    daemon: &channel::Daemon,
+    root: &Path,
+    variable: &dyn Fn(&str) -> Option<String>,
+) -> Result<Vec<SessionLog>, AgentRefusal> {
+    let Some(value) = variable(session_log::VARIABLE) else {
+        return Ok(Vec::new());
+    };
+    let logs = session_log::named_logs(&value).map_err(|message| AgentRefusal::refused(SESSION_LOG_CODE, message))?;
+    let directory = root.join("session-logs");
+    fs::create_dir_all(&directory)
+        .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", directory.display())))?;
+    logs.iter()
+        .map(|log| {
+            let zip = directory.join(format!("{}.zip", log.label));
+            session_log::pack(log, &zip).map_err(|message| AgentRefusal::refused(SESSION_LOG_CODE, message))?;
+            let sha256 = daemon.store_file(&zip);
+            let _ = fs::remove_file(&zip);
+            Ok(SessionLog {
+                label: log.label.clone(),
+                sha256: sha256?,
+            })
+        })
+        .collect()
+}
 
 /// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
 /// environment.
@@ -114,6 +145,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         lane: Some(args.lane.clone()),
         lane_inputs: Some(lane_inputs),
         lane_classes: Vec::new(),
+        session_logs: session_logs(&daemon, &root, variable)?,
     };
     if args.plan_only {
         let plan = plan(&daemon, &request)?;

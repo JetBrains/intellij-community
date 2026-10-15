@@ -18,6 +18,7 @@ pub(crate) mod recycle;
 pub(crate) mod reload;
 pub(crate) mod run;
 pub(crate) mod services;
+pub(crate) mod session_logs;
 pub(crate) mod stream;
 pub(crate) mod trace;
 pub(crate) mod values;

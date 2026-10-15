@@ -253,6 +253,10 @@ pub struct ScenarioProgram {
     /// The declared CLI runtimes that an authored scenario drives.
     #[serde(default)]
     pub required_executables: Vec<String>,
+    /// The runner values that the scenario needs. A runner that does not have one of them skips the scenario before
+    /// its reset.
+    #[serde(default)]
+    pub requires_runner_values: Vec<String>,
     pub setups: Vec<OperationProgram>,
     pub steps: Vec<StepProgram>,
     /// The program of an authored scenario: one instruction for each part or host id. Empty for a story scenario, which
@@ -385,6 +389,16 @@ impl SuiteProgram {
         }
         let mut used = BTreeSet::new();
         for scenario in &self.profiles {
+            for name in scenario
+                .requires_runner_values
+                .iter()
+                .filter(|name| !self.vocabulary.runner_answers.contains(name))
+            {
+                refusals.push(format!(
+                    "scenario '{}' requires the runner value '{name}', which the runnerAnswers of the vocabulary do not list",
+                    scenario.name
+                ));
+            }
             let mut answered: BTreeSet<&str> = self.vocabulary.runner_answers.iter().map(String::as_str).collect();
             let operations = scenario
                 .setups

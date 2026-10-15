@@ -151,7 +151,16 @@ const POLICY: WatchdogPolicy = WatchdogPolicy {
 async fn execute(fixture: &Fixture, prep: &PreparedBuild, state: &HostState, selection: &RunSelection) -> Result<RunExecution, Refusal> {
     fixture
         .host
-        .execute_run(&Ctx::background(), &fixture.worker, state, prep, selection, POLICY, &mut |_| {})
+        .execute_run(
+            &Ctx::background(),
+            &fixture.worker,
+            state,
+            prep,
+            selection,
+            POLICY,
+            &[],
+            &mut |_| {},
+        )
         .await
 }
 
@@ -301,12 +310,12 @@ async fn non_record_lines_are_kept_as_output() {
 async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;
     let ctx = Ctx::background();
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 0);
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 0);
     let sha = prep.hot_jars[0].sha256.clone();
     let plugin = prep.plugin_files[0].host.sha256.clone();
     let agent = prep.lane_inputs[0].host.sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     {
         let script = fixture.daemon.script();
         assert_eq!(script.uploads.len(), 1);
@@ -315,7 +324,7 @@ async fn push_jars_uploads_only_missing_digests() {
         assert_eq!(body, json!({ "jars": [sha, plugin, agent] }));
     }
     fixture.daemon.script().missing = vec![plugin.clone()];
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     {
         let script = fixture.daemon.script();
         assert!(
@@ -324,7 +333,7 @@ async fn push_jars_uploads_only_missing_digests() {
         );
     }
     fixture.daemon.script().missing = vec![agent.clone()];
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     assert!(
         fixture.daemon.script().uploads[2].contains(&agent),
         "a changed fake agent jar travels by the same push"
@@ -341,7 +350,9 @@ async fn a_digest_that_two_files_share_is_offered_once() {
     let sha = prep.hot_jars[0].sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(
-        push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep).await.unwrap(),
+        push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[])
+            .await
+            .unwrap(),
         1
     );
     let body: Value = serde_json::from_slice(&fixture.daemon.script().jars_body).unwrap();
@@ -402,7 +413,7 @@ async fn a_small_push_opens_no_relay_more() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
     missing_hot_jars(&fixture, &mut prep, directory.path(), 4, 64 * 1024);
-    let pushed = push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep).await;
+    let pushed = push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[]).await;
     assert_eq!(pushed.unwrap(), 4);
     assert_eq!(relays(&fixture), 1, "{:?}", fixture.channel().lines());
     assert_eq!(fixture.daemon.script().uploads.len(), 4);
@@ -418,7 +429,7 @@ async fn the_hot_jars_upload_with_a_bounded_concurrency() {
     let hold = CancellationToken::new();
     fixture.daemon.script().upload_hold = Some(hold.clone());
     let ctx = Ctx::background();
-    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep);
+    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]);
     let release = async {
         wait_for_uploads_in_flight(&fixture, 2).await;
         hold.cancel();
@@ -452,7 +463,7 @@ async fn a_failed_upload_ends_the_others_and_keeps_its_refusal() {
         script.upload_refused = Some((refused.sha256.clone(), 500));
     }
     let ctx = Ctx::background();
-    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep);
+    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]);
     let refusal = tokio::time::timeout(Duration::from_secs(60), push)
         .await
         .expect("the push waited for the uploads that were still in flight")
@@ -957,6 +968,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             lane: None,
             lane_inputs: None,
             lane_classes: Vec::new(),
+            session_logs: Vec::new(),
         })
         .unwrap();
         assert!(encoded["selectors"].is_array(), "{filter}: {encoded}");
@@ -975,9 +987,9 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
         lane: Some("ui".to_owned()),
         ..RunSelection::default()
     };
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new()).unwrap();
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &[]).unwrap();
     assert_eq!((jvm.lane, jvm.lane_inputs), (None, None));
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new()).unwrap();
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &[]).unwrap();
     assert_eq!(verb.lane.as_deref(), Some("ui"));
     let digest = |field: &str| {
         prep.lane_inputs
@@ -996,8 +1008,29 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
             suite_documents: digest("suiteDocuments"),
         })
     );
-    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon, Vec::new()).unwrap_err();
+    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon, Vec::new(), &[]).unwrap_err();
     assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
+}
+
+// The lane daemon gets the recorded sessions that the push stored. The JVM daemon gets none, because it refuses an
+// unknown field.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_recorded_sessions_and_the_jvm_daemon_none() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let selection = RunSelection {
+        lane: Some("ui-perf".to_owned()),
+        ..RunSelection::default()
+    };
+    let logs = [SessionLog {
+        label: "thread-7".to_owned(),
+        sha256: "z".to_owned(),
+    }];
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &logs).unwrap();
+    assert_eq!(verb.session_logs, logs);
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &logs).unwrap();
+    assert!(jvm.session_logs.is_empty());
+    assert!(!serde_json::to_string(&jvm).unwrap().contains("sessionLogs"));
 }
 
 // The lane field selects the documents of the lane, so the lane daemon gets no filter of the lane's own tag. A suite
@@ -1012,8 +1045,8 @@ async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_it
         junit5_filters: vec!["include-tag=air-flow-ui".to_owned(), class.clone()],
         ..RunSelection::default()
     };
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new()).unwrap();
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &[]).unwrap();
     assert_eq!(verb.junit5_filters, std::slice::from_ref(&class));
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new()).unwrap();
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &[]).unwrap();
     assert_eq!(jvm.junit5_filters, ["include-tag=air-flow-ui".to_owned(), class]);
 }

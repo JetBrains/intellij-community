@@ -400,19 +400,53 @@ fn run(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>) -> Ran {
 
 /// [`run`] with the transport margin `margin` and the active execution timeout `active` of the watchdog.
 fn run_with(fake: &Fake, suites: &[Suite], slow_step: Option<Duration>, margin: Duration, active: Duration) -> Ran {
-    run_recorded(fake, suites, slow_step, margin, active, &Recording::default(), &lane_document())
+    run_set(
+        fake,
+        suites,
+        &Setup {
+            slow_step,
+            margin,
+            active,
+            ..Setup::default()
+        },
+    )
 }
 
-/// [`run_with`] with the recorder `recording` and the lane `document`.
-fn run_recorded(
-    fake: &Fake,
-    suites: &[Suite],
+/// What a test run sets beside its suites: the slow-step budget, the transport margin and the active execution timeout
+/// of the watchdog, the recorder, the lane document and the recorded sessions.
+struct Setup {
     slow_step: Option<Duration>,
     margin: Duration,
     active: Duration,
-    recording: &Recording,
-    document: &LaneDocument,
-) -> Ran {
+    recording: Recording,
+    document: LaneDocument,
+    session_logs: Vec<StagedLog>,
+}
+
+impl Default for Setup {
+    fn default() -> Self {
+        Self {
+            slow_step: None,
+            margin: INSTRUCTION_MARGIN,
+            active: Duration::from_mins(30),
+            recording: Recording::default(),
+            document: lane_document(),
+            session_logs: Vec::new(),
+        }
+    }
+}
+
+/// Runs `suites` against `fake` as `setup` says.
+fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
+    let Setup {
+        slow_step,
+        margin,
+        active,
+        recording,
+        document,
+        session_logs,
+    } = setup;
+    let (slow_step, margin, active) = (*slow_step, *margin, *active);
     let iteration = TempDir::new().unwrap();
     let trace = Trace::open(
         Box::new(recording.clone()),
@@ -435,6 +469,7 @@ fn run_recorded(
             }
             Runner::new(fake, &stream, &watch, document, iteration.path(), trace)
                 .with_instruction_margin(margin)
+                .with_session_logs(session_logs.clone())
                 .run(suites);
             watch.completed(&stream);
         });
@@ -522,14 +557,13 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
         refuse_scenarios: true,
         ..Recording::default()
     };
-    let ran = run_recorded(
+    let ran = run_set(
         &fake,
         &[story(&vocabulary, &json!([profile, second]))],
-        None,
-        INSTRUCTION_MARGIN,
-        Duration::from_mins(30),
-        &recording,
-        &lane_document(),
+        &Setup {
+            recording,
+            ..Setup::default()
+        },
     );
     let failed = ran.events("traceFailed");
     assert_eq!(failed.len(), 1, "{failed:#?}");
@@ -847,14 +881,13 @@ fn a_suite_with_a_cloud_agent_is_refused_before_any_request() {
     cloud.key = "remote-scenarios".to_owned();
     cloud.delivery = Delivery::Cloud;
     document.agents.push(cloud);
-    let ran = run_recorded(
+    let ran = run_set(
         &fake,
         &[suite],
-        None,
-        INSTRUCTION_MARGIN,
-        Duration::from_mins(30),
-        &Recording::default(),
-        &document,
+        &Setup {
+            document,
+            ..Setup::default()
+        },
     );
     let failed = ran.events("containerFailed");
     assert_eq!(failed.len(), 1, "{failed:#?}");
@@ -1231,6 +1264,73 @@ fn a_part_that_answered_reports_no_metric_of_its_performance_file() {
     let finished = ran.events("testFinished");
     assert_eq!(finished[0]["status"], "SUCCESSFUL");
     assert_eq!(finished[0].get("report"), None);
+}
+
+/// An authored suite of one part, `stage`, which takes the recorded sessions, and whose scenario requires them.
+fn session_suite() -> Suite {
+    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {"part": {"type": "enum", "values": ["stage"], "optional": false},
+            "scenario": {"type": "enum", "values": ["cold-open"], "optional": false},
+            "suite": {"type": "enum", "values": ["real-session-cold-open"], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}});
+    suite_of(&json!({
+        "schemaVersion": 2, "suite": "real-session-cold-open", "lane": "UI", "testClassName": "AirRealSessionColdOpenUiTest",
+        "authored": true,
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRealSessionColdOpenUiTest"}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": ["realSessionLogs"], "actions": {"authored-step": authored}, "assertions": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "fixtures": {"authored": {}},
+        "profiles": [{"name": "every recorded session opens", "key": "cold-open", "fixture": "authored", "flags": {},
+            "flagKeys": [], "requiredExecutables": [], "requiresRunnerValues": ["realSessionLogs"], "setups": [], "steps": [],
+            "program": [{"action": "authored-step", "args": {"part": "stage", "scenario": "cold-open",
+                "suite": "real-session-cold-open", "timeoutMs": 180_000}, "uses": {"takes": ["realSessionLogs"], "answers": []}}]}],
+    }))
+}
+
+// A scenario that requires a runner value which the runner has not is skipped before its reset, as the JVM host aborts
+// it. No reset and no part of it reach the IDE.
+#[test]
+fn a_scenario_that_requires_an_absent_runner_value_is_skipped_before_its_reset() {
+    let fake = Fake::new(Script::default());
+    let ran = run(&fake, &[session_suite()], None);
+    let skipped = ran.events("testSkipped");
+    assert_eq!(skipped.len(), 1, "{skipped:#?}");
+    assert_eq!(
+        skipped[0]["reason"],
+        "scenario 'every recorded session opens' never ran: the runner has no value 'realSessionLogs'"
+    );
+    assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
+    let kinds: Vec<String> = fake.requests().into_iter().map(|(_, kind)| kind).collect();
+    assert!(
+        !kinds.iter().any(|kind| kind == "Reset" || kind == "action/authored-step"),
+        "{kinds:?}"
+    );
+}
+
+// The recorded sessions in the context are the runner value of a part that takes them: each label with the absolute
+// path of its events file.
+#[test]
+fn the_recorded_sessions_are_the_runner_value_of_a_part_that_takes_them() {
+    let fake = Fake::new(Script::default());
+    let events = fake.context.path().join("air-real-session-logs/thread-7/events.jsonl");
+    let ran = run_set(
+        &fake,
+        &[session_suite()],
+        &Setup {
+            session_logs: vec![StagedLog {
+                label: "thread-7".to_owned(),
+                events: events.clone(),
+            }],
+            ..Setup::default()
+        },
+    );
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    let parts = fake.bodies("action/authored-step");
+    assert_eq!(
+        parts[0]["values"],
+        json!({"realSessionLogs": [{"label": "thread-7", "eventsPath": events.display().to_string()}]})
+    );
 }
 
 // After a part, the runner lists the trace attachments that the IDE queued and fetches each one: the still of a step

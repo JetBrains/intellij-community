@@ -12,8 +12,8 @@ use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
 use avl_report::digest::PathDigest;
 use avl_wire::daemon::{
-    self as wire, IdePlugin, LaneClass, LaneInputs, RunEvent, RunEventKind, RunFailed, RunRequest, Runner, Summary, WatchdogExpired,
-    conflict,
+    self as wire, IdePlugin, LaneClass, LaneInputs, RunEvent, RunEventKind, RunFailed, RunRequest, Runner, SessionLog, Summary,
+    WatchdogExpired, conflict,
 };
 use avl_wire::progress::Event;
 use bt_junit::simple_class_name_pattern;
@@ -477,18 +477,26 @@ pub(crate) fn upload_concurrency(bytes: u64) -> usize {
         .clamp(1, MAX_PARALLEL_UPLOADS)
 }
 
-/// Offers the hot tier, the context plugin files and the lane inputs by digest, and uploads only what the guest does not
-/// already hold, answering how many files travelled. A digest that two files share is offered once.
+/// Offers the hot tier, the context plugin files, the lane inputs and the zips of the recorded sessions by digest, and
+/// uploads only what the guest does not already hold, answering how many files travelled. A digest that two files
+/// share is offered once.
 ///
 /// [`upload_concurrency`] of the bytes to push decides how many uploads run at once. The first upload that fails ends
 /// the push with its refusal, and the uploads still in flight end with it, because their futures are dropped.
-pub(crate) async fn push_jars(ctx: &Ctx, daemon: &DaemonClient, state: &HostState, prep: &PreparedBuild) -> Result<usize, Refusal> {
+pub(crate) async fn push_jars(
+    ctx: &Ctx,
+    daemon: &DaemonClient,
+    state: &HostState,
+    prep: &PreparedBuild,
+    session_logs: &[PathDigest],
+) -> Result<usize, Refusal> {
     let mut offered = HashSet::new();
     let jars: Vec<&PathDigest> = prep
         .hot_jars
         .iter()
         .chain(prep.plugin_files.iter().map(|file| &file.host))
         .chain(prep.lane_inputs.iter().map(|input| &input.host))
+        .chain(session_logs)
         .filter(|jar| offered.insert(jar.sha256.as_str()))
         .collect();
     let digests: Vec<&str> = jars.iter().map(|jar| jar.sha256.as_str()).collect();
@@ -608,8 +616,8 @@ pub(crate) struct RunExecution {
 
 /// The `/run` request of `selection` for the build `prep` and the daemon of `runner`.
 ///
-/// The lane daemon also gets the lane, the digests of the lane inputs and `lane_classes`, the suites of the lane that
-/// the catalog names. It refuses a run of no lane here, before the request goes out, because it cannot choose a lane
+/// The lane daemon also gets the lane, the digests of the lane inputs, `lane_classes`, the suites of the lane that the
+/// catalog names, and `session_logs`, the recorded sessions that the push stored. It refuses a run of no lane here, before the request goes out, because it cannot choose a lane
 /// IDE for it. The `lane` field selects the documents of the lane, so the JUnit5 filter of the lane's own tag does not
 /// go to the lane daemon; every other filter does.
 pub(crate) fn run_request(
@@ -618,6 +626,7 @@ pub(crate) fn run_request(
     policy: WatchdogPolicy,
     runner: Runner,
     lane_classes: Vec<LaneClass>,
+    session_logs: &[SessionLog],
 ) -> Result<RunRequest, Refusal> {
     let mut junit5_filters = selection.junit5_filters.clone();
     let (lane, lane_inputs, lane_classes) = match runner {
@@ -669,6 +678,10 @@ pub(crate) fn run_request(
         lane,
         lane_inputs,
         lane_classes,
+        session_logs: match runner {
+            Runner::Jvm => Vec::new(),
+            Runner::Daemon => session_logs.to_vec(),
+        },
     })
 }
 
@@ -688,6 +701,7 @@ impl Host {
         prep: &PreparedBuild,
         selection: &RunSelection,
         policy: WatchdogPolicy,
+        session_logs: &[SessionLog],
         observe: &mut (dyn FnMut(&RunEvent) + Send),
     ) -> Result<RunExecution, Refusal> {
         // The JVM runner discovers the classes of its lane by the tag, so only the lane daemon gets the catalog.
@@ -695,7 +709,14 @@ impl Host {
             (Runner::Daemon, Some(lane)) => crate::lane::lane_classes(&self.settings, lane, &self.reporter)?,
             _ => Vec::new(),
         };
-        let body = encode(&run_request(prep, selection, policy, self.daemon.runner(), lane_classes)?)?;
+        let body = encode(&run_request(
+            prep,
+            selection,
+            policy,
+            self.daemon.runner(),
+            lane_classes,
+            session_logs,
+        )?)?;
         let mut watchdog = TransportWatchdog::armed(policy.progress_gap + TRANSPORT_MARGIN);
         let run_failed = |message: String| Refusal::new("daemon_run_failed", Exit::SOFTWARE, message);
         let run = wire::RUN;

@@ -42,6 +42,7 @@ use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
 };
 use avl_wire::report::ScenarioReport;
+use avl_wire::session_log;
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
@@ -50,6 +51,7 @@ use super::host_ids::{self, HostId, HostSide, ServiceControl};
 use super::ide::Relaunch;
 use super::readiness::request;
 use super::recycle::{Isolation, ResetPhase, never_ran};
+use super::session_logs::{self, StagedLog};
 use super::stream::{CaseIdentity, CaseStatus, Stream};
 use super::trace::{Trace, TraceFailure};
 use super::values::{JETBRAINS_CLOUD_URL, TERMINAL_BASELINE, Values};
@@ -311,6 +313,8 @@ pub(crate) struct Runner<'r, 's> {
     bare: Cell<bool>,
     /// What the transport of an instruction waits past its deadline, [`INSTRUCTION_MARGIN`] outside a test.
     instruction_margin: Duration,
+    /// The recorded sessions in the context of the lane IDE, the runner value [`session_log::RUNNER_VALUE`].
+    session_logs: Vec<StagedLog>,
 }
 
 impl<'r, 's> Runner<'r, 's> {
@@ -334,7 +338,43 @@ impl<'r, 's> Runner<'r, 's> {
             attachments: RefCell::new(Vec::new()),
             bare: Cell::new(false),
             instruction_margin: INSTRUCTION_MARGIN,
+            session_logs: Vec::new(),
         }
+    }
+
+    /// The same runner with the recorded sessions `logs` of the run.
+    pub(crate) fn with_session_logs(mut self, logs: Vec<StagedLog>) -> Self {
+        self.session_logs = logs;
+        self
+    }
+
+    /// The values that the runner answers before the first instruction of a scenario of `suite`: the address of the
+    /// Cloud emulator and the recorded sessions, each when the vocabulary names it and the runner has it.
+    fn runner_values(&self, suite: &SuiteProgram) -> Vec<(String, Value)> {
+        let named = |name: &str| suite.vocabulary.runner_answers.iter().any(|answer| answer == name);
+        let mut values = Vec::new();
+        if named(JETBRAINS_CLOUD_URL)
+            && let Some(url) = self.lane.cloud_url()
+        {
+            values.push((JETBRAINS_CLOUD_URL.to_owned(), Value::String(url)));
+        }
+        if named(session_log::RUNNER_VALUE)
+            && let Some(logs) = session_logs::runner_value(&self.session_logs)
+        {
+            values.push((session_log::RUNNER_VALUE.to_owned(), logs));
+        }
+        values
+    }
+
+    /// Why `profile` cannot run: a runner value that it requires and that the runner has not. The preparation answers
+    /// [`TERMINAL_BASELINE`] in every story scenario, so that value is never missing.
+    fn missing_runner_value(&self, suite: &SuiteProgram, profile: &ScenarioProgram) -> Option<String> {
+        let values = self.runner_values(suite);
+        profile
+            .requires_runner_values
+            .iter()
+            .find(|name| *name != TERMINAL_BASELINE && !values.iter().any(|(answered, _)| answered == *name))
+            .map(|name| format!("the runner has no value '{name}'"))
     }
 
     /// The same runner with the transport margin `margin`, so a test sees a deadline pass in a second.
@@ -540,6 +580,10 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.skipped(&case, never_ran(&profile.name, &reason));
             return;
         }
+        if let Some(reason) = self.missing_runner_value(suite, profile) {
+            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+            return;
+        }
         let started = Instant::now();
         self.stream.started(&case);
         self.watch.execution_started(self.stream, case.execution());
@@ -633,6 +677,10 @@ impl<'r, 's> Runner<'r, 's> {
     /// opens. The files that the program answered then go to the scenario.
     fn bare_scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue) {
         let case = case_identity(suite, profile);
+        if let Some(reason) = self.missing_runner_value(suite, profile) {
+            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+            return;
+        }
         let started = Instant::now();
         self.stream.started(&case);
         self.watch.execution_started(self.stream, case.execution());
@@ -723,12 +771,7 @@ impl<'r, 's> Runner<'r, 's> {
 
     /// The body of a scenario: the preparation and the program of a story scenario, or the program of an authored one.
     fn body(&self, suite: &SuiteProgram, profile: &ScenarioProgram, fixture: &SuiteFixture) -> Result<(), Failure> {
-        let mut runner_values = Vec::new();
-        if suite.vocabulary.runner_answers.iter().any(|name| name == JETBRAINS_CLOUD_URL)
-            && let Some(url) = self.lane.cloud_url()
-        {
-            runner_values.push((JETBRAINS_CLOUD_URL.to_owned(), Value::String(url)));
-        }
+        let mut runner_values = self.runner_values(suite);
         if suite.authored {
             let mut values = Values::new(runner_values);
             let label = format!("{}/{}", suite.suite, profile.key.as_deref().unwrap_or(&profile.name));

@@ -40,6 +40,7 @@ mod leased;
 mod performance;
 mod results;
 pub(crate) mod run;
+mod session_logs;
 pub(crate) mod shard;
 pub(crate) mod slot;
 pub(crate) mod space;

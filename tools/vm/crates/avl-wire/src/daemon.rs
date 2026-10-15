@@ -263,6 +263,17 @@ pub struct RunRequest {
     /// lane daemon only. Empty plans the suite documents alone.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub lane_classes: Vec<LaneClass>,
+    /// The recorded sessions of the run, which the push stored as zips. The lane daemon unpacks them into the context
+    /// of the lane IDE, as [`crate::session_log`] states. The lane daemon only.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub session_logs: Vec<SessionLog>,
+}
+
+/// One recorded session of a run: its label and the digest that the push stored its zip under.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SessionLog {
+    pub label: String,
+    pub sha256: String,
 }
 
 /// One suite of a lane: its id and its test class, by its simple name.

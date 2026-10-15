@@ -1542,6 +1542,35 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_part_reports_the_metrics_of_its_performance_file`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_part_that_answered_reports_no_metric_of_its_performance_file`)
 
+- A run of the lane daemon takes the recorded sessions that `AIR_UI_REAL_SESSION_LOGS` names on the host. Each entry is
+  an `events.jsonl` or a thread directory that holds one, and the path separator divides the entries. The label of a
+  log follows the rule of the JVM host. A variable that names no events file, or two logs of one label, is refused.
+  [@test] ../crates/avl-wire/src/session_log/tests.rs (`the_variable_names_files_and_thread_directories`)
+  [@test] ../crates/avl-wire/src/session_log/tests.rs (`a_label_is_the_thread_directory_or_the_file_name_url_decoded_and_safe`)
+  [@test] ../crates/avl-vm/src/daemon/session_logs/tests.rs (`no_variable_packs_nothing_and_a_wrong_entry_is_refused`)
+
+- The controller packs each log as one zip of stored entries, with its `attachments` and `outputs` directories. It
+  pushes the zips by digest, and the run request names them in `sessionLogs`. The zips then leave the host. The JVM
+  runner gets no `sessionLogs`, and the controller notes that it stages no recorded session.
+  [@test] ../crates/avl-wire/src/session_log/tests.rs (`a_log_packs_its_events_and_siblings_and_unpacks_to_the_same_tree`)
+  [@test] ../crates/avl-vm/src/daemon/session_logs/tests.rs (`each_named_log_is_one_zip_of_the_push_and_leaves_the_host_after_it`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_recorded_sessions_and_the_jvm_daemon_none`)
+
+- The lane daemon unpacks each log into `<context>/air-real-session-logs/<label>/` before the first suite. The zip
+  then leaves the jar store, and the copies leave the context at the end of the run. `lane-run` reads the variable on
+  its own host and stages the logs the same way.
+  [@test] ../crates/avl-guest/src/lane/session_logs/tests.rs (`the_logs_go_into_the_context_and_leave_it_when_the_run_ends`)
+  [@test] ../crates/avl-guest/src/lane/session_logs/tests.rs (`no_log_no_context_or_a_bad_label_stages_nothing`)
+  [@test] ../crates/avl-wire/src/session_log/tests.rs (`an_unpack_refuses_an_entry_outside_and_a_zip_without_events`)
+
+- The runner answers `realSessionLogs` as a list of `{label, eventsPath}` when it has a log, and no value when it has
+  none. A scenario names the runner values that it needs in `requiresRunnerValues`. When the runner does not have one
+  of them, the scenario is `testSkipped` before its reset. The reason is
+  `scenario '<name>' never ran: the runner has no value '<value>'`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_recorded_sessions_are_the_runner_value_of_a_part_that_takes_them`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_scenario_that_requires_an_absent_runner_value_is_skipped_before_its_reset`)
+  [@test] ../crates/avl-wire/src/program/tests.rs (`a_required_runner_value_is_one_of_the_runner_answers`)
+
 - After each part of an authored program, and before its `restart-ide` or `reload-air`, the verb lists the trace
   attachments that the IDE queued. It fetches each listed id at once. Each still, capture or file goes to the span of the instruction as a
   named attachment. The run log notes a count of dropped stills and each fetch that fails, and neither fails the

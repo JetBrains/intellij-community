@@ -18,6 +18,7 @@ pub mod pull;
 pub mod report;
 pub mod runfiles;
 pub mod runtime;
+pub mod session_log;
 pub mod stage;
 pub mod supervisor;
 pub mod verb;

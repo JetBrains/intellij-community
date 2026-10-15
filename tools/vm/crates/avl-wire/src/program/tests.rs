@@ -188,6 +188,22 @@ fn a_part_takes_a_value_that_an_earlier_part_answers() {
     );
 }
 
+// A scenario may require only a value that the runner answers, as the runnerAnswers of its vocabulary list them.
+#[test]
+fn a_required_runner_value_is_one_of_the_runner_answers() {
+    let mut program = authored(&json!([part("seed", &[], &[])]));
+    program.profiles[0].requires_runner_values = vec!["realSessionLogs".to_owned()];
+    assert_eq!(
+        program.refusals(),
+        vec![
+            "scenario 'scenario' requires the runner value 'realSessionLogs', which the runnerAnswers of the vocabulary do not list"
+                .to_owned()
+        ]
+    );
+    program.vocabulary.runner_answers.push("realSessionLogs".to_owned());
+    assert_eq!(program.refusals(), Vec::<String>::new());
+}
+
 #[test]
 fn a_part_that_names_no_part_of_its_suite_is_refused() {
     let program = json!([part("other", &[], &[])]);
