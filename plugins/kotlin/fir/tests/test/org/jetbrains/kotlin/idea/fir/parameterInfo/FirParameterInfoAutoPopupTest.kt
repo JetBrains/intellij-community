@@ -188,6 +188,7 @@ class FirParameterInfoAutoPopupTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText("a.kt", text.trimIndent())
         myFixture.type(c)
         AutoPopupParameterInfoTestUtil.waitForAutoPopup(project)
+        AutoPopupParameterInfoTestUtil.waitForParameterInfoUpdate(editor)
         AbstractParameterInfoTestCase.waitForParameterInfo()
 
         val hintText = hintFixture.currentHintText
