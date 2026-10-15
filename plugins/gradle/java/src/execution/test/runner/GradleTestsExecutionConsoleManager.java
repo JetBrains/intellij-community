@@ -184,7 +184,14 @@ public final class GradleTestsExecutionConsoleManager
 
           // do not open Build tw for any error messages as it can be tests failure events
           defaultBuildDescriptor.setActivateToolWindowWhenFailed(false);
-          event = new StartBuildEventImpl(defaultBuildDescriptor, event.getMessage());
+          event = new StartBuildEventImpl(
+            null,
+            event.getMessage(),
+            null,
+            null,
+            defaultBuildDescriptor,
+            new GradleBuildViewSettingsProvider()
+          );
         }
         buildViewManager.onEvent(buildId, event);
 
