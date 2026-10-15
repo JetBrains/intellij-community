@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 public interface PsiSymbolService {
 
   static @NotNull PsiSymbolService getInstance() {
