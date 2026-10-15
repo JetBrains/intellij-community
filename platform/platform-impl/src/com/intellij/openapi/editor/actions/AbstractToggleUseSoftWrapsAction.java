@@ -42,6 +42,10 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (myGlobal) {
+      if (getGlobalSettings() == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
       Editor editor = getEditor(e);
       if (editor != null) {
         EditorSettings settings = editor.getSettings();
@@ -58,7 +62,8 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   public boolean isSelected(@NotNull AnActionEvent e) {
     Editor editor = getEditor(e);
     if (myGlobal) {
-      boolean selected = EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
+      EditorSettingsExternalizable settings = getGlobalSettings();
+      boolean selected = settings != null && settings.isUseSoftWraps(myAppliancePlace);
       selected |= (editor != null && Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)));
       return selected;
     }
@@ -96,6 +101,16 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
     editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollVertically(editor.logicalPositionToXY(anchorPosition).y + intraLineShift);
     editor.getScrollingModel().enableAnimation();
+  }
+
+  /**
+   * Returns the global editor settings of the current client.
+   *
+   * @return the settings, or {@code null} when the current {@code ClientId} has no session
+   * @see com.intellij.openapi.client.ClientAwareComponentManager#postGetService
+   */
+  private static @Nullable EditorSettingsExternalizable getGlobalSettings() {
+    return EditorSettingsExternalizable.getInstance();
   }
 
   protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
