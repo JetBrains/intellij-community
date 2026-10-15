@@ -10,6 +10,7 @@
     "plugins/llm-experimental//*",
     "plugins/llm-installer//*",
     "community/python//*",
+    "community/plugins/grazie//*",
     "language-server//*",
     "draft//*"
   ],
