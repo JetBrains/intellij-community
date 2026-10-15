@@ -317,7 +317,12 @@ fn ide(answers: &[&str], may_answer: &[&str], takes: &[&str]) -> Value {
 
 /// A story suite document of `profiles` over `vocabulary`, whose fixture `fixture` carries its bridge requests.
 fn story(vocabulary: &Value, profiles: &Value) -> Suite {
-    let document = json!({
+    suite_of(&story_document(vocabulary, profiles))
+}
+
+/// The document of [`story`].
+fn story_document(vocabulary: &Value, profiles: &Value) -> Value {
+    json!({
         "schemaVersion": 2, "suite": "rename-session", "lane": "UI", "testClassName": "AirRenameSessionGeneratedFlowUiTest",
         "labels": [
             {"name": "testClass", "value": "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest"},
@@ -334,7 +339,11 @@ fn story(vocabulary: &Value, profiles: &Value) -> Suite {
                 "refreshAvailability": true, "timeoutMs": 30_000},
         }}},
         "profiles": profiles,
-    });
+    })
+}
+
+/// The suite of `document`, which must fit its vocabulary.
+fn suite_of(document: &Value) -> Suite {
     let bytes = document.to_string().into_bytes();
     let program = parse_suite_program(&bytes).unwrap();
     assert_eq!(program.refusals(), Vec::<String>::new());
@@ -1113,6 +1122,71 @@ fn an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued() {
         notes[1].contains("cannot fetch the file 'facts.txt' (a3) of the IDE, which its body named: "),
         "{notes:?}"
     );
+}
+
+/// The type of the install request of the managed agents.
+const INSTALL: &str = "com.intellij.air.integration.bridge.InstallManagedAgents";
+
+/// A story suite whose fixture starts with Codex installed, with the install request `install` or none.
+fn installing_suite(install: Option<&Value>) -> Suite {
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
+    let mut document = story_document(
+        &vocabulary,
+        &json!([scenario("renames", &json!([{"action": "rename-session-select"}]))]),
+    );
+    document["fixtures"]["fixture"]["preinstalled"] = json!(["codex"]);
+    if let Some(install) = install {
+        document["managedAgentInstall"] = install.clone();
+    }
+    suite_of(&document)
+}
+
+// A suite whose fixture starts with installed agents sends its install request once, after the managed-agent
+// baseline and before the reset of its first scenario. The install answers null, and the scenario runs.
+#[test]
+fn a_suite_installs_its_managed_agents_once_after_the_baseline() {
+    let install = json!({"type": INSTALL, "agents": [{"displayName": "Codex", "fullAgentId": "acp.registry.codex-acp"}],
+        "timeoutMs": 300_000});
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[installing_suite(Some(&install))], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    let order: Vec<String> = fake.requests().into_iter().map(|(_, kind)| kind).take(3).collect();
+    assert_eq!(order, ["ResetManagedAgents", "InstallManagedAgents", "Reset"]);
+    assert_eq!(fake.bodies(INSTALL), [install]);
+}
+
+// An install that answers a text fails the suite as one reset failure that names the text. A fixture that starts with
+// installed agents, in a document without an install request, fails the suite as a document failure.
+#[test]
+fn a_failed_install_and_a_missing_install_request_fail_the_suite() {
+    let install = json!({"type": INSTALL, "agents": [], "timeoutMs": 300_000});
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(INSTALL.to_owned(), json!("Codex: the IDE served no package"))]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[installing_suite(Some(&install))], None);
+    let failed = ran.events("containerFailed");
+    assert_eq!(
+        (failed[0]["type"].as_str(), failed[0]["message"].as_str()),
+        (
+            Some("lane_reset"),
+            Some("Air managed-agent install failed: Codex: the IDE served no package")
+        )
+    );
+    assert!(ran.events("testStarted").is_empty());
+    let fake = Fake::new(Script::default());
+    let ran = run(&fake, &[installing_suite(None)], None);
+    let failed = ran.events("containerFailed");
+    assert_eq!(failed[0]["type"], "lane_document");
+    assert!(
+        failed[0]["message"].as_str().unwrap().contains("states no managedAgentInstall"),
+        "{}",
+        failed[0]["message"]
+    );
+    assert!(fake.requests().is_empty(), "{:?}", fake.requests());
 }
 
 // The transport of an instruction waits its deadline and a margin. An IDE that does not answer by then fails the

@@ -294,3 +294,29 @@ fn a_launch_key_that_is_no_plain_name_is_refused() {
         vec!["the launch key '../lane' is no name of lowercase letters, digits and dashes".to_owned()]
     );
 }
+
+// A suite states the bridge request that installs its managed agents once, and a runner reads it verbatim. A bare IDE
+// installs nothing, so a bare suite that states an install is refused.
+#[test]
+fn the_managed_agent_install_is_read_verbatim_and_a_bare_suite_states_none() {
+    let install = r#"{"type":"com.intellij.air.integration.bridge.InstallManagedAgents","agents":[{"displayName":"Codex","fullAgentId":"acp.registry.codex-acp"}],"timeoutMs":300000}"#;
+    let document = |extra: &str| {
+        format!(
+            r#"{{"schemaVersion": 2, "suite": "s", "lane": "UI", "testClassName": "AirSUiTest",
+                "labels": [{{"name": "testClass", "value": "com.example.AirSUiTest"}}],
+                "vocabulary": {{"runnerAnswers": [], "actions": {{}}, "assertions": {{}}}}, "profiles": [],
+                {extra}"managedAgentInstall": {install}}}"#
+        )
+    };
+    let program = parse_suite_program(document("").as_bytes()).unwrap();
+    assert_eq!(program.managed_agent_install.as_deref().map(RawValue::get), Some(install));
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    let bare = parse_suite_program(
+        document(r#""authored": true, "launch": {"profile": "bare", "key": "air-startup-class-loading"}, "#).as_bytes(),
+    )
+    .unwrap();
+    assert_eq!(
+        bare.refusals(),
+        vec!["the suite launches a bare IDE, which installs no managed agent, and it states managedAgentInstall".to_owned()]
+    );
+}

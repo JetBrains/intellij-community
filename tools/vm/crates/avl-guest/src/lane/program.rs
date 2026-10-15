@@ -3,7 +3,7 @@
 //!
 //! Per suite, the prologue: the document must fit its vocabulary, every story fixture must carry its bridge payloads,
 //! every declared CLI must have a runtime, and the managed-agent baseline puts the registry agents of the lane back to
-//! never seen. A prologue that fails is one container failure of the suite. Per scenario, under the recorder `scenario`
+//! never seen. A suite whose fixtures start with installed agents then sends its `managedAgentInstall`. A prologue that fails is one container failure of the suite. Per scenario, under the recorder `scenario`
 //! command:
 //! 1. `reset:before`: `Reset` in the IDE, then the registry fault, the feedback queue and the cloud record. A reset
 //!    that does not hold recycles the IDE, see [`super::recycle`].
@@ -415,16 +415,21 @@ impl<'r, 's> Runner<'r, 's> {
             .filter(|(_, fixture)| fixture.managed_agent_starts_installed || !fixture.preinstalled.is_empty())
             .map(|(profile, _)| profile.fixture.as_str())
             .collect();
-        if !preinstalled.is_empty() {
+        if !preinstalled.is_empty() && suite.managed_agent_install.is_none() {
             return Err(Failure::runner(
-                kind::UNSUPPORTED,
+                kind::DOCUMENT,
                 format!(
-                    "the suite '{}' installs the managed agents of the fixtures {preinstalled:?} through the Agents page before \
-                     its first scenario, and the lane daemon has no install of its own yet",
+                    "the fixtures {preinstalled:?} of the suite '{}' start with installed managed agents, and the suite \
+                     document states no managedAgentInstall, which the lane daemon sends before the first scenario",
                     suite.suite
                 ),
             ));
         }
+        let install = suite
+            .managed_agent_install
+            .as_deref()
+            .map(|install| install_request(&suite.suite, install))
+            .transpose()?;
         for profile in &suite.profiles {
             if let Some(cli) = profile
                 .required_executables
@@ -446,13 +451,22 @@ impl<'r, 's> Runner<'r, 's> {
                 .registry_clear()
                 .map_err(|error| Failure::runner(kind::RESET, format!("resetting the registry distribution fault failed: {error}")))?;
             let answer = self.lifecycle("ResetManagedAgents", json!({ "agentIds": self.managed_agent_ids() }), RESET_TIMEOUT)?;
-            match answer {
-                Value::Null => Ok(reset),
-                answer => Err(Failure::runner(
+            if !answer.is_null() {
+                return Err(Failure::runner(
                     kind::RESET,
                     format!("Air managed-agent baseline failed: {}", text_of(&answer)),
-                )),
+                ));
             }
+            if let Some((name, request, timeout)) = &install {
+                let answer = self.call(name, request, *timeout + self.instruction_margin)?;
+                if !answer.is_null() {
+                    return Err(Failure::runner(
+                        kind::RESET,
+                        format!("Air managed-agent install failed: {}", text_of(&answer)),
+                    ));
+                }
+            }
+            Ok(reset)
         })
     }
 
@@ -1253,6 +1267,24 @@ impl HostSide for RunnerHost<'_, '_, '_> {
             .ok_or_else(|| "the suite document states no reset section, and the proof of the recycle runs that reset".to_owned())?;
         self.runner.recycle_through_failed_reset(self.scenario, reset)
     }
+}
+
+/// The `managedAgentInstall` of the suite `suite`: the simple name of its request type, the request, and its deadline in
+/// the IDE. A body that is no object with a `type` and a `timeoutMs` fails the prologue of the suite.
+fn install_request(suite: &str, install: &RawValue) -> Result<(String, Value, Duration), Failure> {
+    let refused = |problem: &str| Failure::runner(kind::DOCUMENT, format!("the managedAgentInstall of the suite '{suite}' {problem}"));
+    let request: Value = serde_json::from_str(install.get()).map_err(|error| refused(&format!("is no JSON: {error}")))?;
+    let name = request
+        .get("type")
+        .and_then(Value::as_str)
+        .map(simple_name)
+        .ok_or_else(|| refused("names no request type"))?
+        .to_owned();
+    let timeout = request
+        .get("timeoutMs")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| refused("states no timeoutMs"))?;
+    Ok((name, request, Duration::from_millis(timeout)))
 }
 
 /// The extension of a file of the media type `media_type` in the bundle, as the JVM host names it.

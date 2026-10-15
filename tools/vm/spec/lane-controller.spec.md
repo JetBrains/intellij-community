@@ -1468,6 +1468,13 @@ after that move.
 - The prologue of a suite clears the registry fault and resets the managed agents of the lane, in sorted order.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
 
+- A suite whose fixtures start with installed managed agents states `managedAgentInstall`, one bridge request. The
+  prologue sends it once, after the managed-agent baseline. An answer other than null fails the suite as `lane_reset`.
+  A suite with such a fixture and no request fails as `lane_document`, and a bare suite states none.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_installs_its_managed_agents_once_after_the_baseline`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_install_and_a_missing_install_request_fail_the_suite`)
+  [@test] ../crates/avl-wire/src/program/tests.rs (`the_managed_agent_install_is_read_verbatim_and_a_bare_suite_states_none`)
+
 - A story scenario prepares the IDE in one chain of the bridge requests of its document. The terminal tabs after the
   chain are the value `terminalBaseline`.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)

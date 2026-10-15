@@ -115,6 +115,11 @@ pub struct SuiteProgram {
     /// The launch of an IDE of the suite alone. Absent for a suite on the shared IDE of its lane.
     #[serde(default, deserialize_with = "crate::json::non_null")]
     pub launch: Option<SuiteLaunch>,
+    /// The bridge request that installs the managed agents of the fixtures of the suite before its first scenario, as
+    /// the generator renders it: a whole request body, `type` first, with its `timeoutMs`. A runner sends it as it is.
+    /// Absent for a suite whose fixtures install no agent.
+    #[serde(default, deserialize_with = "crate::json::non_null")]
+    pub managed_agent_install: Option<Box<RawValue>>,
 }
 
 /// The launch of an IDE of one suite alone, `launch` of the suite document.
@@ -411,6 +416,12 @@ impl SuiteProgram {
             if !self.authored {
                 refusals.push(format!(
                     "the suite launches a {} IDE, which runs an authored program and no story scenario",
+                    launch.profile
+                ));
+            }
+            if self.managed_agent_install.is_some() {
+                refusals.push(format!(
+                    "the suite launches a {} IDE, which installs no managed agent, and it states managedAgentInstall",
                     launch.profile
                 ));
             }
