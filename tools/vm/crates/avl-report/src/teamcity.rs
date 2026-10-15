@@ -120,9 +120,7 @@ impl Messages {
         let mut out = Vec::new();
         let zip_name = trace.zip.rsplit(['/', '\\']).next().unwrap_or(&trace.zip).to_owned();
         let target = format!("{TRACES_ARTIFACT_DIR}/{flow}/{}", trace.iteration_id);
-        if self.published.insert(trace.zip.clone()) {
-            out.push(message("publishArtifacts", &[], Some(&format!("{} => {target}", trace.zip))));
-        }
+        out.extend(self.artifact(&trace.zip, &target));
         let flow = self.flow(flow);
         let name = flow.test_of(&trace.test_class, &trace.scenario);
         let bundle = format!("{target}/{zip_name}!/{}", trace.entry.trim_end_matches('/'));
@@ -147,6 +145,15 @@ impl Messages {
     }
 
     /// The messages that end the run: every open case fails as unfinished, and every open suite finishes.
+    /// Publishes the host file `file` into the artifact directory `target`, once for each file.
+    pub fn artifact(&mut self, file: &str, target: &str) -> Vec<String> {
+        if self.published.insert(file.to_owned()) {
+            vec![message("publishArtifacts", &[], Some(&format!("{file} => {target}")))]
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn finish(&mut self) -> Vec<String> {
         let mut out = Vec::new();
         for flow in &mut self.flows {

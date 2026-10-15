@@ -459,6 +459,11 @@ impl Host {
         }
         self.reporter.note(lane_inputs_note(&prep.lane_inputs), Some(&scope));
         self.reporter.note(plugin_directories_note(&prep.plugin_directories), Some(&scope));
+        if runner == Runner::Daemon
+            && let Some(lane) = &selection.lane
+        {
+            self.publish_performance_plan(prep, lane, &scope);
+        }
         if !secrets.is_empty() {
             // The names and never the files: a path a caller made with `mktemp` says nothing a reader needs.
             self.reporter
@@ -649,6 +654,24 @@ impl Host {
             DaemonAction::Reuse | DaemonAction::Start { .. } => IdeAction::Reuse,
         };
         Ok((state, ide_action))
+    }
+
+    /// Publishes the IJ Perf plan of an iteration of `lane`, which the results read. A plan that cannot be made is a note,
+    /// because a metric never decides a verdict.
+    fn publish_performance_plan(&self, prep: &PreparedBuild, lane: &str, scope: &Scope) {
+        match crate::daemon::performance::plan(prep, lane) {
+            Ok(Some(plan)) => self.reporter.publish(
+                Event::Structured {
+                    data: plan.record(),
+                    line: String::new(),
+                },
+                Some(scope),
+            ),
+            Ok(None) => {}
+            Err(reason) => self
+                .reporter
+                .note(format!("no IJ Perf file for this iteration: {reason}"), Some(scope)),
+        }
     }
 
     /// Persists the report of an iteration and announces it; answers the report and its path.

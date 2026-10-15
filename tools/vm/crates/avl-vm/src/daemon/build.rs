@@ -79,6 +79,9 @@ pub(crate) struct PreparedBuild {
     /// The host checkout when the build started, or why it could not be read. The run report carries it; nothing
     /// selects or skips a suite from it.
     pub tree: Result<Tree, Refusal>,
+    /// The build of the IDE without its product code, from the `build.txt` of the distribution, or why it cannot be
+    /// read. Only the IJ Perf files name it, so a distribution without the file still runs.
+    pub ide_build: Result<String, String>,
     /// Bazel's cost, and this controller's own hashing, timed apart so neither can hide inside the other.
     pub build: Duration,
     pub stamp: Duration,
@@ -317,6 +320,24 @@ pub(crate) fn jbr_input(
     Ok(PathDigest::new(logical_path, sha256))
 }
 
+/// The build of the IDE of `descriptor`: the `build.txt` of its distribution without the product code, or why it cannot
+/// be read.
+fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<String, String> {
+    let home = &descriptor.dev_dist.home.logical_path;
+    let path = runfiles
+        .host_path(home)
+        .ok_or_else(|| format!("the runfiles hold no distribution {home}"))?
+        .join(BUILD_TXT);
+    let text = fs::read_to_string(&path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    match avl_report::performance::build_without_product_code(&text) {
+        build if build.is_empty() => Err(format!("{} is empty", path.display())),
+        build => Ok(build),
+    }
+}
+
+/// The file of an IDE distribution that names its build, such as `IU-271.1234`.
+const BUILD_TXT: &str = "build.txt";
+
 /// The digests of one descriptor's inputs, which is all the stamp reads from disk.
 struct Stamped {
     guest_tree: GuestRunfilesTree,
@@ -485,6 +506,7 @@ impl Host {
         )
         .map_err(avl_base::descriptor_refusal)?;
         let runfiles = HostRunfiles::of(&descriptor_path)?;
+        let ide_build = ide_build(&runfiles, &descriptor);
         let tree_inputs = GuestTreeInputs::of(&self.settings)?;
         let stamped = {
             let _one_sweep = self.stamping.lock().await;
@@ -534,6 +556,7 @@ impl Host {
             mount_digest: stamped.mount_digest,
             daemon_environment,
             tree,
+            ide_build,
             build,
             stamp: stamp_started.elapsed(),
         })

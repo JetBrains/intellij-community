@@ -119,3 +119,14 @@ fn a_plan_of_simple_names_is_reached_by_records_of_fqns() {
     assert_eq!(failed.len(), 2, "the unfinished scenario and the dropped class only: {failed:?}");
     assert!(failed[1].contains("name='Dropped.Dropped'"), "{}", failed[1]);
 }
+
+#[test]
+fn a_file_is_published_once_into_its_directory() {
+    let mut messages = Messages::default();
+    let file = "/runs/it-boot1-1.performance/air-long-session/SMALL/metrics.performance.json";
+    assert_eq!(
+        messages.artifact(file, "air-long-session/SMALL"),
+        vec![format!("##teamcity[publishArtifacts '{file} => air-long-session/SMALL']")]
+    );
+    assert_eq!(messages.artifact(file, "air-long-session/SMALL"), Vec::<String>::new());
+}

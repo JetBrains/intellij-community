@@ -1,10 +1,14 @@
-//! The two readers of the run stream that write what a build reads: the JUnit XML and the TeamCity service messages.
+//! The readers of the run stream that write what a build reads: the JUnit XML, the IJ Perf files and the TeamCity
+//! service messages.
 //!
-//! Both are sinks of the reporter, beside the journal, so they read the records the journal holds. The XML of each
+//! They are sinks of the reporter, beside the journal, so they read the records the journal holds. The XML of each
 //! iteration goes beside its report as `<iterationId>.xml` when the report is published. The XML of the whole command
 //! goes to the file that `JB_XML_OUTPUT_FILE` or `XML_OUTPUT_FILE` names, after each iteration and at the end of the
-//! run. The TeamCity messages go to stdout as the records arrive, when the controller is the build step of a TeamCity
-//! build. A write that fails is noted when the run ends, and the run goes on.
+//! run. The IJ Perf files of an iteration go beside its report too, as
+//! `<iterationId>.performance/<artifactPath>/metrics.performance.json`, from the plan that the iteration published
+//! for its worker. The TeamCity messages go to stdout as the records arrive, when the controller is the build step of
+//! a TeamCity build, and the build step publishes each IJ Perf file under its artifact path. A write that fails is
+//! noted when the run ends, and the run goes on.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -13,6 +17,7 @@ use avl_base::report::{SharedWriter, SinkGuard};
 use avl_base::sync::lock;
 use avl_base::{Environment, Reporter};
 use avl_junit as junit;
+use avl_report::performance::{self, Plan};
 use avl_report::teamcity::{self, Messages};
 use avl_trace::bundle::VIDEO_FILE;
 use avl_wire::daemon::{RunEvent, RunEventKind, decode_run_event};
@@ -56,6 +61,7 @@ pub(crate) fn attach_to(reporter: &Reporter, environment: &Environment, messages
         junit: junit::destination(variable).map(PathBuf::from),
         teamcity: teamcity::is_build_step(variable).then(|| (Messages::default(), messages)),
         iterations: Vec::new(),
+        plans: Vec::new(),
         failure: Arc::clone(&failure),
     };
     ResultsGuard {
@@ -71,6 +77,8 @@ struct Results {
     teamcity: Option<(Messages, SharedWriter)>,
     /// The records of each iteration, by its worker, in the order the iterations started.
     iterations: Vec<Iteration>,
+    /// The IJ Perf plan that each worker published last.
+    plans: Vec<(Option<String>, Plan)>,
     failure: Arc<Mutex<Option<String>>>,
 }
 
@@ -87,6 +95,9 @@ impl avl_base::report::Sink for Results {
             Kind::Run => {
                 if let Some(event) = record.data.as_ref().and_then(|data| decode_run_event(data.get().as_bytes()).ok()) {
                     self.run_event(worker, event);
+                } else if let Some(plan) = data::<serde_json::Value>(record).and_then(|data| Plan::read(&data)) {
+                    self.plans.retain(|(known, _)| known.as_deref() != worker);
+                    self.plans.push((worker.map(str::to_owned), plan));
                 }
             }
             Kind::TraceReady => {
@@ -140,8 +151,9 @@ impl Results {
         }
     }
 
-    /// Writes the XML of the reported iteration beside its report, and the XML of the command so far.
-    fn iteration_reported(&self, worker: Option<&str>, reported: &IterationReported) {
+    /// Writes the XML and the IJ Perf files of the reported iteration beside its report, and the XML of the command so
+    /// far.
+    fn iteration_reported(&mut self, worker: Option<&str>, reported: &IterationReported) {
         let iteration = self
             .iterations
             .iter()
@@ -150,9 +162,38 @@ impl Results {
         if let Some(iteration) = iteration {
             let path = Path::new(&reported.report_path).with_extension("xml");
             let xml = junit::render([iteration.events.as_slice()]);
-            self.store(write_xml(&path, &xml));
+            self.store(write_file(&path, &xml).map(|failure| format!("cannot write the JUnit XML: {failure}")));
+            let plan = self
+                .plans
+                .iter()
+                .find(|(known, _)| known.as_deref() == worker)
+                .map(|(_, plan)| plan);
+            if let Some(plan) = plan {
+                let files = performance::files(plan, &iteration.events, &performance::rfc_1123(&jiff::Zoned::now()));
+                self.write_performance(Path::new(&reported.report_path), files);
+            }
         }
         self.write_command_xml();
+    }
+
+    /// Writes `files` below the directory of the report at `report`, and publishes each file that a build step wrote.
+    fn write_performance(&mut self, report: &Path, files: Vec<performance::File>) {
+        let directory = report.with_extension("performance");
+        for file in files {
+            let path = directory.join(&file.artifact_path).join(performance::FILE_NAME);
+            let written = avl_base::fs::create_private_dir(path.parent().unwrap_or(&directory))
+                .err()
+                .map(|refusal| refusal.message)
+                .or_else(|| write_file(&path, &file.text));
+            match written {
+                Some(failure) => self.store(Some(format!("cannot write {}: {failure}", performance::FILE_NAME))),
+                None => {
+                    if let Some((messages, out)) = self.teamcity.as_mut() {
+                        emit(out, &messages.artifact(&path.to_string_lossy(), &file.artifact_path));
+                    }
+                }
+            }
+        }
     }
 
     fn write_command_xml(&self) {
@@ -160,20 +201,20 @@ impl Results {
             return;
         };
         let xml = junit::render(self.iterations.iter().map(|iteration| iteration.events.as_slice()));
-        self.store(write_xml(path, &xml));
+        self.store(write_file(path, &xml).map(|failure| format!("cannot write the JUnit XML: {failure}")));
     }
 
     /// Keeps the first failure, which [`ResultsGuard`] notes.
     fn store(&self, failure: Option<String>) {
         if let Some(failure) = failure {
-            lock(&self.failure).get_or_insert(format!("cannot write the JUnit XML: {failure}"));
+            lock(&self.failure).get_or_insert(failure);
         }
     }
 }
 
-/// Writes `xml` to `path`, replacing what was there, so a reader never sees half a document. Answers why it could not.
-fn write_xml(path: &Path, xml: &str) -> Option<String> {
-    avl_base::fs::write_atomically(path, xml.as_bytes(), 0o644)
+/// Writes `text` to `path`, replacing what was there, so a reader never sees half a document. Answers why it could not.
+fn write_file(path: &Path, text: &str) -> Option<String> {
+    avl_base::fs::write_atomically(path, text.as_bytes(), 0o644)
         .err()
         .map(|refusal| refusal.message)
 }

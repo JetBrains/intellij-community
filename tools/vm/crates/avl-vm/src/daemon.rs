@@ -37,6 +37,7 @@ pub(crate) mod host;
 pub(crate) mod http;
 pub(crate) mod iterate;
 mod leased;
+mod performance;
 mod results;
 pub(crate) mod run;
 pub(crate) mod shard;

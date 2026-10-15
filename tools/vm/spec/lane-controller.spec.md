@@ -69,6 +69,8 @@ targets:
   - ../crates/avl-junit/src/lib.rs
   - ../crates/avl-junit/src/cases.rs
   - ../crates/avl-report/src/teamcity.rs
+  - ../crates/avl-report/src/performance.rs
+  - ../crates/avl-vm/src/daemon/performance.rs
   - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
   - ../crates/avl-vm/src/report/time.rs
@@ -299,6 +301,13 @@ The generator publishes the suite facts that the controller reads, as
 - A flow or a suite selector makes the selection that `run --changed` makes, one lane or several.
   [@test] ../../bt/crates/bt-core/src/suites/tests.rs
   [@test] ../crates/avl-vm/src/lane/affected/tests.rs
+
+- The lane table names the document lane of each explicit-only lane, `UI_PERF` for `ui-perf`. A changed path, a flow
+  and a suite id never reach a suite of such a lane. A suite id of one is refused as `explicit_only_lane`, and the
+  refusal names `--lane <lane>`. The table refuses a lane that states both a catalog lane and a document lane.
+  [@test] ../../bt/crates/bt-core/src/suites/tests.rs (`no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane`)
+  [@test] ../../bt/crates/bt-core/src/lanes/tests.rs (`the_parser_refuses_a_document_lane_that_contradicts_its_lane`)
+  [@test] ../crates/avl-affected/src/affected/tests.rs (`a_harness_path_reaches_no_suite_of_an_explicit_only_lane`)
 
 - An unknown flow id or suite id is refused as `usage`, and the refusal names the nearest known ids. A story
   flow which no generated suite tests is refused as `no_affected_suite`, with the reason "no e2e suite tests
@@ -760,6 +769,31 @@ The daemon's half and the IDE's half of supervision are in
   its video as a `video`.
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_zip_is_published_once_for_its_bundles`)
+
+- For a run on the lane daemon, the controller writes the IJ Perf file `metrics.performance.json` of each scenario
+  that reported metrics. The lane document names the series of each such scenario. A series holds the test class, the
+  scenario, the dashboard project and method, and an artifact path. The file goes to
+  `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its build is the `build.txt` of the
+  IDE distribution without the product code. A TeamCity build step publishes the file once under its artifact path.
+  [@test] ../crates/avl-report/src/performance/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-report/src/performance/tests.rs (`the_build_drops_the_product_code_and_keeps_every_other_form`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_file_is_published_once_into_its_directory`)
+  [@test] ../crates/avl-vm/src/daemon/performance/tests.rs (`a_lane_that_names_series_plans_them_with_the_build_and_another_lane_plans_nothing`)
+  [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario`)
+
+- A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is the counter
+  `<name>.x100` of its value times 100. Every other metric is a counter. The file keeps whole numbers, so each value
+  is rounded, and a half goes up.
+  [@test] ../crates/avl-report/src/performance/tests.rs (`a_duration_a_growth_and_a_counter_keep_whole_numbers`)
+  [@test] ../crates/avl-report/src/performance/tests.rs (`a_value_out_of_the_range_of_an_int_is_held_to_it`)
+
+- A scenario that reported metrics and has no series, such as a warm-up, gets no file and no note. Its metrics still
+  reach TeamCity as `testMetadata`. A plan that the controller cannot read is a note. A lane document whose series
+  collide or leave their directory is refused.
+  [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_scenario_with_metrics_and_no_series_gets_no_file_and_no_note`)
+  [@test] ../crates/avl-report/src/performance/tests.rs (`a_case_with_metrics_and_no_series_writes_no_file`)
+  [@test] ../crates/avl-vm/src/daemon/performance/tests.rs (`a_plan_that_cannot_be_made_says_why`)
+  [@test] ../crates/avl-wire/src/program/lane/tests.rs (`a_performance_series_that_would_collide_or_leave_its_directory_is_refused`)
 
 - The run report is of schema 3. It holds one case for each scenario, each failed container and each skipped
   container of the run stream, in the order of their start. A case that never finished is an active test instead.

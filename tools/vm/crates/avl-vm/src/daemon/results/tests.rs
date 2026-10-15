@@ -27,8 +27,13 @@ fn stream() -> Vec<RunEvent> {
 
 /// Publishes the iteration of `worker`, its report at `report_path`, and the end of the run.
 fn publish_run(reporter: &Reporter, worker: &str, report_path: &str) {
+    publish_iteration(reporter, worker, report_path, stream());
+}
+
+/// [`publish_run`] with the records `events`.
+fn publish_iteration(reporter: &Reporter, worker: &str, report_path: &str, events: Vec<RunEvent>) {
     let scope = Scope::worker(worker);
-    for event in stream() {
+    for event in events {
         reporter.publish(Event::Daemon(event), Some(&scope));
     }
     reporter.publish(
@@ -146,6 +151,10 @@ fn a_command_outside_bazel_and_teamcity_writes_only_the_xml_beside_each_report()
         publish_run(&reporter, "air-linux-1", &report.to_string_lossy());
     }
     assert!(directory.path().join("it-1.xml").exists());
+    assert!(
+        !directory.path().join("it-1.performance").exists(),
+        "a run with no plan writes no IJ Perf file"
+    );
     assert!(messages.is_empty());
     assert!(!stdout.text().contains("##teamcity"), "{}", stdout.text());
 }
@@ -162,4 +171,84 @@ fn a_write_that_fails_is_noted_when_the_readers_detach() {
         publish_run(&reporter, "air-linux-1", &directory.path().join("it-1.json").to_string_lossy());
     }
     assert!(stderr.text().contains("cannot write the JUnit XML"), "{}", stderr.text());
+}
+
+/// [`stream`] with the metrics of `send-prompt`.
+fn stream_with_metrics() -> Vec<RunEvent> {
+    let finished = r#""status":"SUCCESSFUL","durationMs":1000}"#;
+    let with_report = STREAM.replacen(
+        finished,
+        r#""status":"SUCCESSFUL","durationMs":1000,"report":{"metrics":{"replyMs":1840}}}"#,
+        1,
+    );
+    assert_ne!(with_report, STREAM);
+    with_report
+        .lines()
+        .map(|line| decode_run_event(line.as_bytes()).expect("a fixture record"))
+        .collect()
+}
+
+/// Publishes the IJ Perf plan of `worker` with one series for the scenario `scenario`.
+fn publish_plan(reporter: &Reporter, worker: &str, scenario: &str) {
+    let plan = Plan {
+        ide_build: "271.SNAPSHOT".to_owned(),
+        series: vec![avl_wire::program::lane::PerformanceSeries {
+            test_class_name: "AirComposerGeneratedFlowUiTest".to_owned(),
+            scenario: scenario.to_owned(),
+            project: "air/composer".to_owned(),
+            method: "com.intellij.air.integration.AirComposerGeneratedFlowUiTest#sendPrompt".to_owned(),
+            artifact_path: "air-composer/send".to_owned(),
+        }],
+    };
+    reporter.publish(
+        Event::Structured {
+            data: plan.record(),
+            line: String::new(),
+        },
+        Some(&Scope::worker(worker)),
+    );
+}
+
+#[test]
+fn a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario() {
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let report = directory.path().join("it-1.json");
+    let (reporter, _stdout, _stderr) = Reporter::in_memory("vm");
+    let environment = Environment::from_pairs([("TEAMCITY_VERSION", "2026.1")]);
+    let messages = Buffer::new();
+    {
+        let _results = attach_to(&reporter, &environment, SharedWriter::new(messages.clone()));
+        publish_plan(&reporter, "air-linux-1", "send-prompt");
+        publish_iteration(&reporter, "air-linux-1", &report.to_string_lossy(), stream_with_metrics());
+    }
+    let file = directory
+        .path()
+        .join("it-1.performance/air-composer/send")
+        .join(performance::FILE_NAME);
+    let document: serde_json::Value = serde_json::from_str(&fs::read_to_string(&file).expect("the IJ Perf file")).unwrap();
+    assert_eq!(document["project"], "air/composer");
+    assert_eq!(document["build"], "271.SNAPSHOT");
+    assert_eq!(document["metrics"], serde_json::json!([{"n": "replyMs", "d": 1840, "v": 1840}]));
+    let text = messages.text();
+    let published = format!("##teamcity[publishArtifacts '{} => air-composer/send']", file.display());
+    assert_eq!(text.lines().filter(|line| *line == published).count(), 1, "{text}");
+}
+
+#[test]
+fn a_scenario_with_metrics_and_no_series_gets_no_file_and_no_note() {
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let (reporter, _stdout, stderr) = Reporter::in_memory("vm");
+    reporter.set_mode(avl_base::report::Mode::Stream);
+    {
+        let _results = attach_to(
+            &reporter,
+            &Environment::from_pairs::<&str, &str>([]),
+            SharedWriter::new(Buffer::new()),
+        );
+        publish_plan(&reporter, "air-linux-1", "attach-file");
+        let report = directory.path().join("it-1.json");
+        publish_iteration(&reporter, "air-linux-1", &report.to_string_lossy(), stream_with_metrics());
+    }
+    assert!(!directory.path().join("it-1.performance").exists());
+    assert!(!stderr.text().contains(performance::FILE_NAME), "{}", stderr.text());
 }

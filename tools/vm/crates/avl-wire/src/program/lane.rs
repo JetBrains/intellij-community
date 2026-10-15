@@ -9,7 +9,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod tests;
@@ -90,6 +90,9 @@ pub struct LaneDocument {
     pub services: BTreeMap<String, String>,
     /// The journey suites that the JVM host still runs, with their agents and requirements.
     pub journey_suites: Vec<JourneySuite>,
+    /// The IJ Perf series of the scenarios of the lane that report metrics. A lane with none leaves the field out.
+    #[serde(default)]
+    pub performance_series: Vec<PerformanceSeries>,
 }
 
 /// One `-D` property.
@@ -168,6 +171,22 @@ pub struct JourneySuite {
     pub suite: String,
     pub agents: Vec<String>,
     pub requirements: Vec<Requirement>,
+}
+
+/// The series of the IJ Perf dashboard that one scenario reports its metrics to.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PerformanceSeries {
+    /// The `testClassName` of the suite document of the scenario.
+    pub test_class_name: String,
+    pub scenario: String,
+    /// The project of the series on the dashboard, such as `air/many-agents`.
+    pub project: String,
+    /// The method of the series on the dashboard, such as `<test class FQN>#manyAgents`.
+    pub method: String,
+    /// The directory of the TeamCity artifacts that holds the file of the series: a relative slash path, such as
+    /// `air-long-session/SMALL`.
+    pub artifact_path: String,
 }
 
 /// The facts of a machine that the conditions of the launch properties read.
@@ -281,8 +300,39 @@ impl LaneDocument {
                 }
             }
         }
+        let mut scenarios = BTreeSet::new();
+        let mut artifact_paths = BTreeSet::new();
+        for series in &self.performance_series {
+            let scenario = format!("{}#{}", series.test_class_name, series.scenario);
+            if !scenarios.insert(scenario.clone()) {
+                refusals.push(format!("the scenario {scenario} has two performance series"));
+            }
+            if !artifact_paths.insert(series.artifact_path.as_str()) {
+                refusals.push(format!(
+                    "the artifact path '{}' is the path of two performance series",
+                    series.artifact_path
+                ));
+            }
+            if !is_relative_slash_path(&series.artifact_path) {
+                refusals.push(format!(
+                    "the performance series of {scenario} has the artifact path '{}', which is not a relative slash path",
+                    series.artifact_path
+                ));
+            }
+            if series.project.is_empty() || series.method.is_empty() {
+                refusals.push(format!("the performance series of {scenario} names no project or no method"));
+            }
+        }
         refusals
     }
+}
+
+/// Whether `path` is a relative path of named segments split by `/`: no root, no `.` or `..`, and no backslash.
+fn is_relative_slash_path(path: &str) -> bool {
+    !path.contains('\\')
+        && path
+            .split('/')
+            .all(|segment| !segment.is_empty() && segment != "." && segment != "..")
 }
 
 impl LaneAgent {

@@ -129,3 +129,55 @@ fn a_document_that_does_not_fit_itself_names_each_mismatch() {
         ]
     );
 }
+
+/// One performance series in the shape the generator writes it.
+fn series(class: &str, scenario: &str, artifact_path: &str) -> Value {
+    json!({
+        "testClassName": class, "scenario": scenario, "project": format!("air/{artifact_path}"),
+        "method": format!("com.intellij.air.{class}#run"), "artifactPath": artifact_path,
+    })
+}
+
+#[test]
+fn a_lane_with_no_performance_series_leaves_them_out_and_a_series_is_read_with_every_field() {
+    assert_eq!(parse(&document()).unwrap().performance_series, Vec::new());
+    let mut perf = document();
+    perf["performanceSeries"] = json!([series("AirManyAgentsUiTest", "many agents", "air-many-agents")]);
+    assert_eq!(
+        parse(&perf).unwrap().performance_series,
+        vec![PerformanceSeries {
+            test_class_name: "AirManyAgentsUiTest".to_owned(),
+            scenario: "many agents".to_owned(),
+            project: "air/air-many-agents".to_owned(),
+            method: "com.intellij.air.AirManyAgentsUiTest#run".to_owned(),
+            artifact_path: "air-many-agents".to_owned(),
+        }]
+    );
+    perf["performanceSeries"][0]["owner"] = json!("someone");
+    assert!(parse(&perf).unwrap_err().contains("unknown field `owner`"));
+}
+
+#[test]
+fn a_performance_series_that_would_collide_or_leave_its_directory_is_refused() {
+    let mut broken = document();
+    let mut nameless = series("AirLongSessionUiTest", "nameless", "air-nameless");
+    nameless["project"] = json!("");
+    broken["performanceSeries"] = json!([
+        series("AirLongSessionUiTest", "small", "air-long-session/SMALL"),
+        series("AirLongSessionUiTest", "small", "air-long-session/LARGE"),
+        series("AirLongSessionUiTest", "large", "air-long-session/LARGE"),
+        series("AirLongSessionUiTest", "escape", "../outside"),
+        series("AirLongSessionUiTest", "rooted", "/rooted"),
+        nameless,
+    ]);
+    assert_eq!(
+        parse(&broken).unwrap_err().split("; ").collect::<Vec<_>>(),
+        vec![
+            "the scenario AirLongSessionUiTest#small has two performance series",
+            "the artifact path 'air-long-session/LARGE' is the path of two performance series",
+            "the performance series of AirLongSessionUiTest#escape has the artifact path '../outside', which is not a relative slash path",
+            "the performance series of AirLongSessionUiTest#rooted has the artifact path '/rooted', which is not a relative slash path",
+            "the performance series of AirLongSessionUiTest#nameless names no project or no method",
+        ]
+    );
+}
