@@ -107,3 +107,26 @@ fn only_a_summary_without_failures_is_green() {
     assert!(!is_green(format!("{note}\n").as_bytes()));
     assert!(!is_green(format!("{note}\nnot a record\n{}\n", summary(false)).as_bytes()));
 }
+
+// The JUnit XML goes into the run directory, and to the file of a Bazel test: $JB_XML_OUTPUT_FILE before
+// $XML_OUTPUT_FILE.
+#[test]
+fn the_junit_xml_goes_to_the_run_directory_and_to_the_file_of_the_bazel_test() {
+    let root = tempfile::TempDir::new().unwrap();
+    let bazel = root.path().join("bazel/test.xml");
+    let named = root.path().join("named/report.xml");
+    let xml = "<testsuites/>\n";
+    write_xml(root.path(), xml, &environment(&[("XML_OUTPUT_FILE", bazel.to_str().unwrap())])).unwrap();
+    assert_eq!(fs::read_to_string(root.path().join("test.xml")).unwrap(), xml);
+    assert_eq!(fs::read_to_string(&bazel).unwrap(), xml);
+    write_xml(
+        root.path(),
+        xml,
+        &environment(&[
+            ("XML_OUTPUT_FILE", bazel.to_str().unwrap()),
+            ("JB_XML_OUTPUT_FILE", named.to_str().unwrap()),
+        ]),
+    )
+    .unwrap();
+    assert_eq!(fs::read_to_string(&named).unwrap(), xml);
+}

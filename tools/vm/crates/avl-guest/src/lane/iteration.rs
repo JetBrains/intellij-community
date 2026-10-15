@@ -4,7 +4,8 @@
 //! documents of the lane, makes the IDE of the lane ready, and names the plan. The program runner of
 //! [`super::program`] then runs each scenario of each selected document, under the watchdog of [`super::watchdog`] and
 //! with the recorder of [`super::trace`]. The bundles of the recorder go to `<iterationDir>/air-traces`, which the
-//! trace pull of the controller packs.
+//! trace pull of the controller packs. The JUnit XML of the stream goes to `<iterationDir>/test.xml`, which `/results`
+//! serves.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -41,6 +42,9 @@ mod tests;
 
 /// The budget that the watchdog record names for the IDE part: a fresh launch, then readiness.
 const IDE_BUDGET: Duration = Duration::from_mins(5);
+
+/// The JUnit XML of an iteration in its directory.
+pub(crate) const TEST_XML_FILE: &str = "test.xml";
 
 /// The suite documents that an iteration runs, and the lane document of their lane.
 #[derive(Debug)]
@@ -229,7 +233,8 @@ pub(crate) fn apply_filters(
 }
 
 /// Runs one iteration of `request` and writes its records to `out`. A write that fails ends the stream, not the run.
-pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) {
+/// The JUnit XML of the records goes to [`TEST_XML_FILE`] of the iteration directory, and the run answers it.
+pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) -> String {
     let stream = Stream::new(out);
     let iteration_id = daemon.next_iteration_id();
     let started_at = now_stamp();
@@ -287,6 +292,12 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + 
         counts.container_failures,
         if failed { ", failed" } else { "" }
     ));
+    let xml = stream.junit_xml();
+    let file = iteration_dir.join(TEST_XML_FILE);
+    if let Err(error) = fs::write(&file, &xml) {
+        log(&format!("cannot write the JUnit XML {}: {error}", file.display()));
+    }
+    xml
 }
 
 /// The part of an iteration that can fail as a whole: the documents, the IDE, the plan and the scenarios. It answers

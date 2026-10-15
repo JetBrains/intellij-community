@@ -4,12 +4,13 @@
 //! `lane-run` is the second front door of the same library, for a host with the runfiles of the lane rule: a Bazel test,
 //! `bt --lane` and a TeamCity agent. It reads the runtime descriptor, stores the lane inputs and the context plugins of
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
-//! the run stream on standard output and into the run directory, quits the IDE, and exits 0 when the run is green.
+//! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
+//! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green.
 
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::net::{IpAddr, Ipv4Addr};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
@@ -30,6 +31,8 @@ const LAUNCH_DIGEST: &str = "lane-run";
 const NO_CHANNEL_PORT: u16 = 0;
 /// The file of the run stream in the run directory.
 pub(crate) const STREAM_FILE: &str = "run.ndjson";
+/// The file of the JUnit XML in the run directory.
+pub(crate) const XML_FILE: &str = "test.xml";
 /// The variable that names the run directory, before `$TEST_TMPDIR/air-lane`.
 pub(crate) const RUNTIME_ROOT_VARIABLE: &str = "AIR_LANE_RUNTIME_ROOT";
 /// The variable of a Bazel `--test_filter`.
@@ -106,7 +109,8 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
-    iteration::run(&daemon, &request, &mut Tee(stream, io::stdout()));
+    let xml = iteration::run(&daemon, &request, &mut Tee(stream, io::stdout()));
+    let written = write_xml(&root, &xml, variable);
     let finished = daemon.finish();
     if let Err(refusal) = &finished {
         log(&format!("the IDE did not quit: {}: {}", refusal.code, refusal.message));
@@ -114,7 +118,24 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let stream = fs::read(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", stream_path.display())))?;
     let green = is_green(&stream) && finished.is_ok();
+    written?;
     Ok(u8::from(!green))
+}
+
+/// Writes `xml` into the run directory `root`, and to the file that `$JB_XML_OUTPUT_FILE` or `$XML_OUTPUT_FILE` names.
+/// Bazel and `bt` count the cases of that file, so a write that fails fails the run.
+pub(crate) fn write_xml(root: &Path, xml: &str, variable: &dyn Fn(&str) -> Option<String>) -> Result<(), AgentRefusal> {
+    let mut files = vec![root.join(XML_FILE)];
+    files.extend(avl_junit::destination(variable).map(PathBuf::from));
+    for file in files {
+        if let Some(parent) = file.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", parent.display())))?;
+        }
+        fs::write(&file, xml)
+            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the JUnit XML {}: {error}", file.display())))?;
+    }
+    Ok(())
 }
 
 /// The run directory: `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then `$TEST_TMPDIR/air-lane`.

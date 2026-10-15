@@ -194,6 +194,7 @@ name = "avl-guest"
 version = "0.1.0"
 dependencies = [
  "avl-bridge",
+ "avl-junit",
  "avl-testkit",
  "avl-trace",
  "avl-trace-tools",

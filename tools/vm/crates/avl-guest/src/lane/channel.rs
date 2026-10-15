@@ -370,6 +370,7 @@ impl Channel {
             200,
             "application/x-ndjson",
             Box::new(move |chunks| {
+                // The XML is in the iteration directory, which `/results` serves.
                 iteration::run(&busy.0, &body, chunks);
                 drop(busy);
                 Ok(())
@@ -403,9 +404,9 @@ impl Channel {
     fn results(&self, path: &str) -> Response {
         let iteration = path
             .strip_prefix("/results/")
-            .and_then(|rest| rest.strip_suffix("/test.xml"))
+            .and_then(|rest| rest.strip_suffix(&format!("/{}", iteration::TEST_XML_FILE)))
             .unwrap_or_default();
-        let file = self.daemon.iteration_dir(iteration).join("test.xml");
+        let file = self.daemon.iteration_dir(iteration).join(iteration::TEST_XML_FILE);
         match fs::read(&file) {
             Ok(content) => Response::with_body(200, "application/xml", content),
             Err(_) => error(404, "no such result file"),

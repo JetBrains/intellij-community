@@ -1406,10 +1406,19 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`a_run_streams_its_records_and_a_stale_one_is_refused`)
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs (`a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one`)
 
+- An iteration writes the JUnit XML of its run stream to `test.xml` of its iteration directory, and `/results` serves
+  that file. The stream keeps its records for the XML, also after the reader of the stream went away.
+  [@test] ../crates/avl-guest/src/lane/stream/tests.rs (`the_cases_of_a_broken_stream_still_render_the_junit_xml`)
+
 - `lane-run` runs one iteration of a lane from a runfiles tree, with no control channel. It stores the lane inputs and
   the context plugins of the descriptor in the jar store by digest. It then runs the iteration that a `/run` runs. It
   quits the IDE at the end, and it exits 0 only for a summary with no failure. A stream without a summary is not green.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_summary_without_failures_is_green`)
+
+- `lane-run` writes the JUnit XML of the iteration into its run directory. It also writes the XML to the file that
+  `JB_XML_OUTPUT_FILE` names, else to the file that `XML_OUTPUT_FILE` names. Bazel and bt count the cases of that file,
+  so a write that fails fails the run.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_junit_xml_goes_to_the_run_directory_and_to_the_file_of_the_bazel_test`)
 
 - `lane-run` takes its run directory from `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then
   `$TEST_TMPDIR/air-lane`. A Bazel `--test_filter` adds selectors, and `$JB_TEST_JUNIT5_FILTERS` adds JUnit5 filters.

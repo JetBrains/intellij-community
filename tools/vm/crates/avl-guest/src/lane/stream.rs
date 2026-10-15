@@ -9,12 +9,17 @@
 //!
 //! The stream is shared: the run thread writes the records of the scenarios, and the watchdog thread writes its
 //! heartbeat and the slow-step records while the run thread waits for the IDE.
+//!
+//! The stream also keeps each record but `output`, so the iteration renders its JUnit XML from the same account, also
+//! after the reader of the stream went away.
 
 use std::io::Write;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::Duration;
 
-use avl_wire::daemon::{ContainerFailed, ExecutionIdentity, Output, RunEventKind, Skipped, TestFinished, TestStarted, TypedFailure};
+use avl_wire::daemon::{
+    ContainerFailed, ExecutionIdentity, Output, RunEvent, RunEventKind, Skipped, TestFinished, TestStarted, TypedFailure,
+};
 use avl_wire::report::ScenarioReport;
 
 use super::channel::log;
@@ -79,6 +84,8 @@ struct Inner<'a> {
     out: &'a mut (dyn Write + Send),
     broken: bool,
     counts: Counts,
+    /// Each record but `output`, in stream order: what the JUnit XML reads.
+    kept: Vec<RunEvent>,
 }
 
 /// The writer of the run stream. A write that fails ends the stream, and the iteration goes on, so the state of the
@@ -94,6 +101,7 @@ impl<'a> Stream<'a> {
                 out,
                 broken: false,
                 counts: Counts::default(),
+                kept: Vec::new(),
             }),
         }
     }
@@ -126,6 +134,12 @@ impl<'a> Stream<'a> {
             _ => {}
         }
         let mut inner = self.lock();
+        if !matches!(record, RunEventKind::Output(_)) {
+            inner.kept.push(RunEvent {
+                raw: None,
+                kind: record.clone(),
+            });
+        }
         if inner.broken {
             return;
         }
@@ -215,5 +229,10 @@ impl<'a> Stream<'a> {
     /// The counts so far.
     pub(crate) fn counts(&self) -> Counts {
         self.lock().counts
+    }
+
+    /// The JUnit XML of the records so far.
+    pub(crate) fn junit_xml(&self) -> String {
+        avl_junit::render([self.lock().kept.as_slice()])
     }
 }

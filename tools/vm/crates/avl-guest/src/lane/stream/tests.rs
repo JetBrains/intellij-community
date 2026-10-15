@@ -38,6 +38,55 @@ fn a_broken_stream_drops_the_later_records() {
     assert_eq!(String::from_utf8(kept).unwrap(), "{\"event\":\"output\",\"text\":\"line\"}\n");
 }
 
+// The stream keeps its cases for the JUnit XML, also after its reader went away. A prologue failure is a failed case
+// named after its suite, and a skip is a skipped case.
+#[test]
+fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
+    struct Broken;
+    impl Write for Broken {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::ErrorKind::BrokenPipe.into())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut out = Broken;
+    let stream = Stream::new(&mut out);
+    stream.note("the reader is gone after this record");
+    stream.started(&case("passes"));
+    stream.finished(
+        &case("passes"),
+        CaseStatus::Successful,
+        Duration::from_millis(1_500),
+        None,
+        ScenarioReport::default(),
+    );
+    stream.skipped(&case("never"), "scenario 'never' never ran: budget".to_owned());
+    stream.container_failed(
+        "chat-reply",
+        "AirChatReplyGeneratedFlowUiTest",
+        "com.example.AirChatReplyGeneratedFlowUiTest",
+        TypedFailure {
+            kind: Some("lane_document".to_owned()),
+            message: Some("no reset".to_owned()),
+            detail: None,
+        },
+    );
+    let xml = stream.junit_xml();
+    assert!(
+        xml.contains(r#"<testsuites tests="3" failures="1" errors="0" skipped="1""#),
+        "{xml}"
+    );
+    assert!(
+        xml.contains(
+            r#"<testcase classname="com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest" name="passes" time="1.500"/>"#
+        ),
+        "{xml}"
+    );
+    assert!(xml.contains(r#"<failure message="no reset" type="lane_document">"#), "{xml}");
+}
+
 // A scenario is one case with the class and the factory method of its JUnit node, and an id below the engine of the
 // lane daemon. The summary counts a failure, a skip and a prologue failure apart.
 #[test]

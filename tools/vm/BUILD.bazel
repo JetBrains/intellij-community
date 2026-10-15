@@ -15,7 +15,8 @@
 #   avl-base                     refusals, the envelope, the settings and the journal: what every host program
 #                                stands on
 #   avl-guest                    what runs inside a worker VM, and the one binary the controller installs; it stands
-#                                on avl-wire, avl-trace, avl-trace-tools and avl-bridge alone, never on avl-base
+#                                on avl-wire, avl-junit, avl-trace, avl-trace-tools and avl-bridge alone, never on
+#                                avl-base
 #   avl-host-sys, avl-report, avl-vm
 #                                the controller itself, which runs on the host; `avl-vm` is the `vm` binary, run
 #                                through `community/tools/vm.cmd`, with the console, the runs, the lanes and

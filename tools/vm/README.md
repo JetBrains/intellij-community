@@ -84,9 +84,9 @@ The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-junit` stands on `avl-wire` alone, so the guest agent can write the JUnit XML.
 `avl-record` links `avl-trace` and `avl-bridge` and no other sibling, so the recorder links no packer, no discovery and
 no URL code. `avl-base` stands on `avl-wire`, and on `avl-trace-tools` for the viewer links its renderer prints. Of the
-siblings, `avl-guest` depends on `avl-wire`, `avl-trace`, `avl-trace-tools` and `avl-bridge` alone and never on
-`avl-base`, so the agent links no controller code. The recorder and the agent link one client of the bridge, so they
-send one token header and follow one deadline rule.
+siblings, `avl-guest` depends on `avl-wire`, `avl-junit`, `avl-trace`, `avl-trace-tools` and `avl-bridge` alone and
+never on `avl-base`, so the agent links no controller code. The recorder and the agent link one client of the bridge,
+so they send one token header and follow one deadline rule.
 `bt-junit` of BT's workspace, the JUnit XML reader, is linked by `air-trace`, which reads a `test.xml`, and by `avl-vm`,
 which takes the class pattern of BT from it. The tests of `avl-junit` read back its XML with it. The agent links no
 crate of BT. `bt-core` is linked by `avl-affected` and by the
