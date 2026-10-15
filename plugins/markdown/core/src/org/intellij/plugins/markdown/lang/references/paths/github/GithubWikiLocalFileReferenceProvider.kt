@@ -1,6 +1,5 @@
-package com.intellij.markdown.backend.reference
+package org.intellij.plugins.markdown.lang.references.paths.github
 
-import com.intellij.markdown.backend.reference.headers.HeaderAnchorPathReferenceProvider
 import com.intellij.openapi.paths.PathReferenceProviderBase
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,8 +13,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ProcessingContext
 import com.intellij.util.io.URLUtil
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
+import org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
-import org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalFileReference
 import org.jetbrains.ide.parseHostAndPath
 import org.jetbrains.ide.readGitRemoteUrls
 import java.util.regex.Pattern

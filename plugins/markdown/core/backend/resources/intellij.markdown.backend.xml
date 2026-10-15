@@ -184,23 +184,16 @@
                        level="WEAK WARNING"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownLazyBlockQuoteContinuationInspection"/>
 
-      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
-      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
-      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.test.TestPsiReferenceContributor"/>
       <referencesSearch implementation="com.intellij.markdown.backend.lang.references.backtick.BacktickReferenceSearcher"/>
       <referencesSearch implementation="com.intellij.markdown.backend.lang.references.paths.UrlEncodedFileReferenceSearcher"/>
-      <gotoDeclarationHandler implementation="com.intellij.markdown.backend.reference.link.MarkdownLinkTextGotoDeclarationHandler"/>
 
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
 
       <qualifiedNameProvider implementation="com.intellij.markdown.backend.reference.headers.MarkdownHeaderQualifiedNameProvider"/>
 
-      <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
-      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
-      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.headers.HeaderAnchorPathReferenceProvider"/>
 
       <renameHandler implementation="com.intellij.markdown.backend.rename.MarkdownFileRenameHandler"/>
       <automaticRenamerFactory implementation="com.intellij.markdown.backend.rename.MarkdownRenamerFactory"/>

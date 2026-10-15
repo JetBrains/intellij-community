@@ -1,4 +1,4 @@
-package com.intellij.markdown.backend.reference.headers
+package org.intellij.plugins.markdown.lang.references.headers
 
 import com.intellij.openapi.paths.PathReference
 import com.intellij.openapi.paths.PathReferenceProviderBase
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
-import org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorReference
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 

@@ -1,4 +1,4 @@
-package com.intellij.markdown.backend.reference.link
+package org.intellij.plugins.markdown.lang.references.link
 
 import com.intellij.openapi.paths.WebReference
 import com.intellij.patterns.PlatformPatterns
@@ -15,6 +15,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
+@Suppress("SplitModeApiUsage") // the reference reads the VFS only, so a light process without a backend keeps it
 internal class AutoLinkWebReferenceContributor: PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(autoLinksPattern, WebReferenceContributor())

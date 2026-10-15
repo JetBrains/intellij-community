@@ -1,6 +1,5 @@
-package com.intellij.markdown.backend.reference.link
+package org.intellij.plugins.markdown.lang.references.link
 
-import com.intellij.markdown.backend.reference.GithubWikiLocalFileReferenceProvider
 import com.intellij.openapi.paths.PathReference
 import com.intellij.openapi.paths.PathReferenceManager
 import com.intellij.openapi.paths.PathReferenceProviderBase
@@ -17,7 +16,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ProcessingContext
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
+import org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalFileReferenceProvider
 
+@Suppress("SplitModeApiUsage") // the reference reads the VFS only, so a light process without a backend keeps it
 internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(ReferenceUtil.linkDestinationPattern, CommonLinkDestinationReferenceProvider())

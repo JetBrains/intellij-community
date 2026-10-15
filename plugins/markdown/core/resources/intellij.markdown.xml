@@ -62,6 +62,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.CommonLinkDestinationReferenceContributor"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.AutoLinkWebReferenceContributor"/>
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
+    <gotoDeclarationHandler implementation="org.intellij.plugins.markdown.lang.references.link.MarkdownLinkTextGotoDeclarationHandler"/>
+    <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider"/>
     <registryKey key="markdown.live.preview.enabled"
                  defaultValue="true"
                  description="Shows the Markdown live preview layout."/>
