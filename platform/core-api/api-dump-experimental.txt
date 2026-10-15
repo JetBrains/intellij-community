@@ -173,6 +173,11 @@ com.intellij.lexer.RestartableLexer
 - a:getReferences(com.intellij.psi.PsiElement,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
 - a:getReferences(com.intellij.psi.PsiElement,java.lang.Class):java.util.Collection
 - s:getService():com.intellij.model.psi.PsiSymbolReferenceService
+*:com.intellij.model.psi.PsiSymbolService
+- a:asSymbol(com.intellij.psi.PsiElement):com.intellij.model.Symbol
+- a:asSymbolReference(com.intellij.psi.PsiReference):com.intellij.model.psi.PsiSymbolReference
+- a:extractElementFromSymbol(com.intellij.model.Symbol):com.intellij.psi.PsiElement
+- s:getInstance():com.intellij.model.psi.PsiSymbolService
 *:com.intellij.model.psi.UrlReferenceHost
 - com.intellij.model.psi.PsiExternalReferenceHost
 *:com.intellij.navigation.DirectNavigationProvider
