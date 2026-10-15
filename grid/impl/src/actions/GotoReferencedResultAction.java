@@ -3,9 +3,9 @@ package com.intellij.database.actions;
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.run.ResultReference;
-import com.intellij.database.util.DataGridUIUtil;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,11 +15,6 @@ import java.util.function.Predicate;
 import static com.intellij.database.datagrid.GridUtil.IN_REFERENCE;
 
 public class GotoReferencedResultAction extends GotoResultAction {
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
 
   @Override
   protected boolean isEnabled(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
@@ -35,9 +30,10 @@ public class GotoReferencedResultAction extends GotoResultAction {
   }
 
   private static @Nullable ResultReference getOutResultReference(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
-    if (!DataGridUIUtil.inCell(grid, e)) return null;
-    Object value = DataGridUIUtil.getLeadSelectionCellValue(grid, e, true);
-    return value instanceof ResultReference ? (ResultReference) value : null;
+    var state = GridActionUiState.getForGrid(grid, e.getDataContext());
+    if (state == null || !state.isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))) return null;
+    Object value = state.getLeadSelectionCellValue(true);
+    return value instanceof ResultReference reference ? reference : null;
   }
 
   @Override

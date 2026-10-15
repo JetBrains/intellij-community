@@ -2,9 +2,11 @@ package com.intellij.database;
 
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.settings.DataGridSettings;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Gregory.Shrago
@@ -21,4 +23,6 @@ public final class DatabaseDataKeys {
 
   public static final DataKey<DataGrid> DATA_GRID_KEY = DataKey.create("DATA_GRID_KEY");
   public static final Key<DataGrid> GRID_KEY = Key.create("GRID_KEY");
+  @ApiStatus.Internal
+  public static final DataKey<GridActionUiState> DATA_GRID_ACTION_UI_STATE_KEY = DataKey.create("DATA_GRID_ACTION_UI_STATE_KEY");
 }
