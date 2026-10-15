@@ -5,11 +5,13 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.impl.ProjectViewPane
-import com.intellij.ide.util.EditorHelper
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType.INFORMATION
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
@@ -119,8 +121,11 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
     override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
       val file = StandardFileSystems.local().findFileByPath(e.description) ?: return
       ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
-      val psiFile = PsiManager.getInstance(project).findFile(file) ?: return
-      EditorHelper.openInEditor(psiFile)
+      if (PsiManager.getInstance(project).findFile(file) == null) return
+      // submit on the EDT, so a Shift+click on the link still opens the file in a new window
+      val descriptor = OpenFileDescriptor(project, file)
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor))
     }
   }
   GradleNotification.gradleNotificationGroup.createNotification(notificationTitle, notificationContent, INFORMATION)
