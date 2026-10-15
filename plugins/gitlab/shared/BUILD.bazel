@@ -34,6 +34,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/core-api:core",
         "//platform/util",
+        "//platform/statistics",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.shared` end

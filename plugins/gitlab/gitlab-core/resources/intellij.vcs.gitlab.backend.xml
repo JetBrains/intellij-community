@@ -142,7 +142,6 @@
 
   <extensions defaultExtensionNs="com.intellij.statistics">
     <applicationUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStateStatistics$GitLabAccountsStatisticsCollector"/>
-    <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
     <projectUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStateStatistics$GitLabProjectMetricsCollector"/>
     <notificationIdsHolder implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
     <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
