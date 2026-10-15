@@ -200,7 +200,7 @@
     </reference>
     <reference ref="RerunTests"/>
 
-    <group id="RunMenu" popup="true" searchable="false">
+    <group id="RunMenu" class="com.intellij.execution.actions.RunMenuGroup" popup="true" searchable="false">
       <group id="RunnerActions"/>
       <separator/>
       <reference ref="ChooseRunConfiguration"/>

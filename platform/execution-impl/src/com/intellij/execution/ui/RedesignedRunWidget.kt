@@ -12,6 +12,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
+import com.intellij.execution.actions.areExecutionActionsHiddenInLightMode
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
@@ -463,7 +464,7 @@ internal class MoreRunToolbarActions : TogglePopupAction(
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    if (e.place == ActionPlaces.ACTION_SEARCH) {
+    if (e.place == ActionPlaces.ACTION_SEARCH || areExecutionActionsHiddenInLightMode()) {
       e.presentation.isEnabledAndVisible = false
     }
   }
