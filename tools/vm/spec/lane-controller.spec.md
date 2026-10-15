@@ -1406,6 +1406,16 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`a_run_streams_its_records_and_a_stale_one_is_refused`)
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs (`a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one`)
 
+- `lane-run` runs one iteration of a lane from a runfiles tree, with no control channel. It stores the lane inputs and
+  the context plugins of the descriptor in the jar store by digest, and it runs the iteration that a `/run` runs. It
+  quits the IDE at the end, and it exits 0 only for a summary with no failure. A stream without a summary is not green.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_summary_without_failures_is_green`)
+
+- `lane-run` takes its run directory from `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then
+  `$TEST_TMPDIR/air-lane`. A Bazel `--test_filter` adds selectors, and `$JB_TEST_JUNIT5_FILTERS` adds JUnit5 filters.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_run_directory_comes_from_the_flag_the_variable_or_the_test_directory`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_selectors_and_the_filters_come_from_the_flags_and_the_environment`)
+
 - An iteration runs the suite documents of its lane. A selector narrows them by the test class, with or without a
   package. A `#<scenario>` part keeps that scenario only.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors`)

@@ -135,6 +135,32 @@ impl Daemon {
         }
     }
 
+    /// Stores the file `path` under its digest, as a push of it does, and answers the digest. A run with no channel
+    /// fills the jar store from its runfiles this way.
+    pub(crate) fn store_file(&self, path: &Path) -> Result<String, AgentRefusal> {
+        let bytes = fs::read(path).map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", path.display())))?;
+        let digest = sha256_hex(&bytes);
+        let target = stored_path(&self.jars(), &digest);
+        if !target.is_file() {
+            fs::write(&target, &bytes)
+                .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot store {}: {error}", target.display())))?;
+        }
+        Ok(digest)
+    }
+
+    /// Quits the lane IDE and stops the lane services. A run with no channel ends this way, so it leaves no process.
+    pub(crate) fn finish(&self) -> Result<(), AgentRefusal> {
+        let quit = self.with_ide(|owner| {
+            owner.quit(&mut Records(&mut |record| {
+                if let wire::RunEventKind::Output(output) = record {
+                    log(&output.text);
+                }
+            }))
+        });
+        self.lock_owner().close_services();
+        quit
+    }
+
     /// Runs `work` with the IDE owner, and then stores whether the IDE runs.
     pub(crate) fn with_ide<T>(&self, work: impl FnOnce(&mut IdeOwner) -> T) -> T {
         let mut owner = self.lock_owner();

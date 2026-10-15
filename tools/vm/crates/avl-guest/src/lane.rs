@@ -16,6 +16,7 @@ pub(crate) mod program;
 pub(crate) mod readiness;
 pub(crate) mod recycle;
 pub(crate) mod reload;
+pub(crate) mod run;
 pub(crate) mod services;
 pub(crate) mod stream;
 pub(crate) mod trace;

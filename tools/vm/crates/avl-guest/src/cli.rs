@@ -68,6 +68,9 @@ lane-daemon serves the control channel of the lane daemon on --bind:--port until
 inputs from the runtime descriptor, publishes STATE_DIR/daemon.json with its token, and owns the lane services and the \
 lane IDE. It writes its log on standard error.
 
+lane-run runs one iteration of --lane from the runfiles of --descriptor, with no control channel. It writes the run \
+stream on standard output and into RUNTIME_ROOT/run.ndjson, quits the IDE, and exits 0 when the run is green.
+
 cancel --thread-dump JCMD runs JCMD PID Thread.print before the TERM, and writes the dump into the log directory of an \
 IDE launch or into the run directory.
 
@@ -120,6 +123,8 @@ pub(crate) enum Verb {
     IdeGc(IdeGcArgs),
     /// Serve the control channel of the lane daemon until its shutdown.
     LaneDaemon(LaneDaemonArgs),
+    /// Run one iteration of a lane from a runfiles tree, with no control channel.
+    LaneRun(LaneRunArgs),
 }
 
 impl Verb {
@@ -148,6 +153,7 @@ impl Verb {
             Self::IdeLaunch => AgentVerb::IdeLaunch,
             Self::IdeGc(_) => AgentVerb::IdeGc,
             Self::LaneDaemon(_) => AgentVerb::LaneDaemon,
+            Self::LaneRun(_) => AgentVerb::LaneRun,
         }
     }
 }
@@ -291,6 +297,37 @@ pub(crate) struct LaneDaemonArgs {
     /// The empty home of the staged generation, which the IDE gets as idea.dev.project.root.
     #[arg(long, value_name = "DIR", value_parser = absolute_path)]
     pub home: PathBuf,
+}
+
+#[derive(Args, Debug, Clone)]
+pub(crate) struct LaneRunArgs {
+    /// The lane of the run, such as ui: the lane document lanes/<lane>.json.
+    #[arg(long, value_name = "LANE", value_parser = non_empty_string)]
+    pub lane: String,
+    /// The runtime descriptor in the runfiles tree.
+    #[arg(long, value_name = "FILE", value_parser = absolute_path)]
+    pub descriptor: PathBuf,
+    /// The root of the runfiles tree. The default is the root that holds the descriptor.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub runfiles_root: Option<PathBuf>,
+    /// The directory of the run: the jar store, the IDE contexts, the home and the run stream. The default is
+    /// $AIR_LANE_RUNTIME_ROOT, and then $TEST_TMPDIR/air-lane.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub runtime_root: Option<PathBuf>,
+    /// A test class, with or without a package, and an optional #<scenario>. Repeat it to name more. A Bazel
+    /// --test_filter, $TESTBRIDGE_TEST_ONLY, adds its comma-separated selectors.
+    #[arg(long = "selector", value_name = "CLASS[#SCENARIO]")]
+    pub selectors: Vec<String>,
+    /// A JUnit5 filter <option>=<value>. Repeat it to name more. $JB_TEST_JUNIT5_FILTERS adds its filters, separated by
+    /// ';'.
+    #[arg(long = "junit5-filter", value_name = "FILTER")]
+    pub junit5_filters: Vec<String>,
+    /// The budget of one scenario, in seconds.
+    #[arg(long, value_name = "SECONDS", default_value_t = 1_800)]
+    pub active_execution_timeout_sec: u64,
+    /// The budget between two records of the run, in seconds.
+    #[arg(long, value_name = "SECONDS", default_value_t = 300)]
+    pub progress_gap_timeout_sec: u64,
 }
 
 // --- the image and Linux worker verbs -----------------------------------------------------------------------
@@ -479,6 +516,10 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
         }
         Verb::IdeGc(args) => answer_bare(streams, name, ide::gc::collect(&system, &args)),
         Verb::LaneDaemon(args) => match lane::channel::serve(&args) {
+            Ok(exit) => exit,
+            Err(refusal) => reply::fail(streams, name.as_str(), refusal),
+        },
+        Verb::LaneRun(args) => match lane::run::run(&args, &|name| std::env::var(name).ok()) {
             Ok(exit) => exit,
             Err(refusal) => reply::fail(streams, name.as_str(), refusal),
         },

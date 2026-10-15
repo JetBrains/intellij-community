@@ -1,0 +1,109 @@
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+use std::ffi::OsString;
+
+use pretty_assertions::assert_eq;
+
+use super::*;
+use crate::cli::{Verb, parse};
+
+/// The arguments of `lane-run --lane ui --descriptor /r/d.json` and `extra`.
+fn args(extra: &[&str]) -> LaneRunArgs {
+    let argv: Vec<OsString> = ["vm-guest-agent", "lane-run", "--lane", "ui", "--descriptor", "/r/d.json"]
+        .into_iter()
+        .chain(extra.iter().copied())
+        .map(OsString::from)
+        .collect();
+    match parse(&argv).unwrap().verb {
+        Verb::LaneRun(args) => args,
+        other => panic!("lane-run parsed as {other:?}"),
+    }
+}
+
+fn environment(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
+    let pairs: BTreeMap<String, String> = pairs
+        .iter()
+        .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
+        .collect();
+    move |name| pairs.get(name).cloned()
+}
+
+// The run directory is --runtime-root, then $AIR_LANE_RUNTIME_ROOT, then $TEST_TMPDIR/air-lane. A run with none of them
+// is refused, and so is a relative one.
+#[test]
+fn the_run_directory_comes_from_the_flag_the_variable_or_the_test_directory() {
+    let none = environment(&[]);
+    assert_eq!(
+        runtime_root(
+            &args(&["--runtime-root", "/flag"]),
+            &environment(&[("AIR_LANE_RUNTIME_ROOT", "/variable")])
+        )
+        .unwrap(),
+        PathBuf::from("/flag")
+    );
+    assert_eq!(
+        runtime_root(
+            &args(&[]),
+            &environment(&[("AIR_LANE_RUNTIME_ROOT", "/variable"), ("TEST_TMPDIR", "/tmp/t")])
+        )
+        .unwrap(),
+        PathBuf::from("/variable")
+    );
+    assert_eq!(
+        runtime_root(&args(&[]), &environment(&[("TEST_TMPDIR", "/tmp/t")])).unwrap(),
+        PathBuf::from("/tmp/t/air-lane")
+    );
+    assert_eq!(runtime_root(&args(&[]), &none).unwrap_err().code, "lane_run_root_missing");
+    assert_eq!(
+        runtime_root(&args(&[]), &environment(&[("AIR_LANE_RUNTIME_ROOT", "relative")]))
+            .unwrap_err()
+            .code,
+        "lane_run_root_missing"
+    );
+}
+
+// A Bazel --test_filter adds its selectors after the flags, and $JB_TEST_JUNIT5_FILTERS adds its filters after the flags.
+#[test]
+fn the_selectors_and_the_filters_come_from_the_flags_and_the_environment() {
+    let parsed = args(&[
+        "--selector",
+        "AirRenameSessionGeneratedFlowUiTest",
+        "--junit5-filter",
+        "exclude-classname=.*Slow",
+    ]);
+    let variable = environment(&[
+        ("TESTBRIDGE_TEST_ONLY", "a.AirComposerGeneratedFlowUiTest#one, AirGenUiHostUiTest"),
+        ("JB_TEST_JUNIT5_FILTERS", "include-package=com.intellij.air;"),
+    ]);
+    assert_eq!(
+        selectors(&parsed, &variable),
+        [
+            "AirRenameSessionGeneratedFlowUiTest",
+            "a.AirComposerGeneratedFlowUiTest#one",
+            "AirGenUiHostUiTest"
+        ]
+    );
+    assert_eq!(
+        junit5_filters(&parsed, &variable),
+        ["exclude-classname=.*Slow", "include-package=com.intellij.air"]
+    );
+    assert!(selectors(&args(&[]), &environment(&[])).is_empty());
+}
+
+fn summary(has_failures: bool) -> String {
+    format!(
+        r#"{{"event":"summary","iterationId":"i","daemonBootStamp":"b","startedAt":"s","testsStarted":1,"testsFailed":0,"testsSkipped":0,"containersSkipped":0,"containerFailures":0,"hasFailures":{has_failures},"ideRunning":false}}"#
+    )
+}
+
+// A run is green only with a summary of no failure and no failed run. A stream that was cut off has no summary, and a
+// record that does not decode is no green record.
+#[test]
+fn only_a_summary_without_failures_is_green() {
+    let note = r#"{"event":"output","text":"lane ui: ide launch"}"#;
+    assert!(is_green(format!("{note}\n{}\n", summary(false)).as_bytes()));
+    assert!(!is_green(format!("{note}\n{}\n", summary(true)).as_bytes()));
+    assert!(!is_green(format!("{note}\n").as_bytes()));
+    assert!(!is_green(format!("{note}\nnot a record\n{}\n", summary(false)).as_bytes()));
+}

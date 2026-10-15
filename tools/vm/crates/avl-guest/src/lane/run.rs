@@ -1,0 +1,197 @@
+//! The verb `lane-run`: one iteration of a lane from a runfiles tree, with no control channel.
+//!
+//! `lane-daemon` serves the channel in the run slot of a worker, and the controller pushes the lane inputs to it.
+//! `lane-run` is the second front door of the same library, for a host with the runfiles of the lane rule: a Bazel test,
+//! `bt --lane` and a TeamCity agent. It reads the runtime descriptor, stores the lane inputs and the context plugins of
+//! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
+//! the run stream on standard output and into the run directory, quits the IDE, and exits 0 when the run is green.
+
+use std::fs::{self, File};
+use std::io::{self, Write};
+use std::net::{IpAddr, Ipv4Addr};
+use std::path::PathBuf;
+
+use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, decode_run_event};
+use avl_wire::runtime::{self, RuntimeFile};
+
+use super::channel::{self, BOOT_CODE, log};
+use super::inputs::{self, guest_platform};
+use super::iteration;
+use super::package::sha256_hex;
+use crate::cli::{LaneDaemonArgs, LaneRunArgs};
+use crate::reply::{AgentRefusal, AgentRefusalExt};
+
+#[cfg(test)]
+mod tests;
+
+/// The launch digest of a run with no channel. No controller prepared it, so no other digest can be stale.
+const LAUNCH_DIGEST: &str = "lane-run";
+/// The port of the absent channel. A derived port of a lane service is never 0.
+const NO_CHANNEL_PORT: u16 = 0;
+/// The file of the run stream in the run directory.
+pub(crate) const STREAM_FILE: &str = "run.ndjson";
+/// The variable that names the run directory, before `$TEST_TMPDIR/air-lane`.
+pub(crate) const RUNTIME_ROOT_VARIABLE: &str = "AIR_LANE_RUNTIME_ROOT";
+/// The variable of a Bazel `--test_filter`.
+const TEST_FILTER_VARIABLE: &str = "TESTBRIDGE_TEST_ONLY";
+/// The variable of the JUnit5 filters, `;`-separated, as the lane table spells them.
+const JUNIT5_FILTERS_VARIABLE: &str = "JB_TEST_JUNIT5_FILTERS";
+
+/// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
+/// environment.
+pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
+    let root = runtime_root(args, variable)?;
+    let runfiles_root = args
+        .runfiles_root
+        .clone()
+        .unwrap_or_else(|| runtime::runfiles_root(&args.descriptor));
+    let daemon_args = LaneDaemonArgs {
+        state_dir: root.join("state"),
+        port: NO_CHANNEL_PORT,
+        bind: IpAddr::V4(Ipv4Addr::LOCALHOST),
+        launch_digest: LAUNCH_DIGEST.to_owned(),
+        descriptor: args.descriptor.clone(),
+        runfiles_root: runfiles_root.clone(),
+        ide_root: root.join("ide"),
+        home: root.join("home"),
+    };
+    for directory in [&daemon_args.state_dir, &daemon_args.ide_root, &daemon_args.home] {
+        fs::create_dir_all(directory)
+            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", directory.display())))?;
+    }
+    let content = fs::read(&args.descriptor).map_err(|error| {
+        AgentRefusal::failure(
+            BOOT_CODE,
+            format!("cannot read the runtime descriptor {}: {error}", args.descriptor.display()),
+        )
+    })?;
+    let descriptor = runtime::parse_runtime_descriptor(&content, &args.descriptor, guest_platform())
+        .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
+    let daemon = channel::boot(&daemon_args, inputs::from_descriptor(&descriptor, &daemon_args)?)?;
+    let runfile = |file: &RuntimeFile| runtime::runtime_file_path(&runfiles_root, file);
+    let lane_inputs = LaneInputs {
+        fake_agent_jar: daemon.store_file(&runfile(&descriptor.ide.fake_agent_jar))?,
+        lane_documents: daemon.store_file(&runfile(&descriptor.ide.lane_documents))?,
+        suite_documents: daemon.store_file(&runfile(&descriptor.ide.suite_documents))?,
+    };
+    let ide_plugins = descriptor
+        .ide
+        .plugins
+        .iter()
+        .map(|plugin| {
+            Ok(IdePlugin {
+                destination: plugin.destination.clone(),
+                sha256: daemon.store_file(&runfile(&plugin.file))?,
+            })
+        })
+        .collect::<Result<Vec<_>, AgentRefusal>>()?;
+    let fingerprint = runfile(&descriptor.dev_dist.fingerprint);
+    let product_stamp = sha256_hex(
+        &fs::read(&fingerprint)
+            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", fingerprint.display())))?,
+    );
+    let request = RunRequest {
+        selectors: selectors(args, variable),
+        junit5_filters: junit5_filters(args, variable),
+        product_stamp,
+        launch_digest: LAUNCH_DIGEST.to_owned(),
+        hot_jars: Vec::new(),
+        active_execution_timeout_sec: args.active_execution_timeout_sec,
+        progress_gap_timeout_sec: args.progress_gap_timeout_sec,
+        ide_plugins,
+        lane: Some(args.lane.clone()),
+        lane_inputs: Some(lane_inputs),
+        lane_classes: Vec::new(),
+    };
+    let stream_path = root.join(STREAM_FILE);
+    let stream = File::create(&stream_path)
+        .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
+    iteration::run(&daemon, &request, &mut Tee(stream, io::stdout()));
+    let finished = daemon.finish();
+    if let Err(refusal) = &finished {
+        log(&format!("the IDE did not quit: {}: {}", refusal.code, refusal.message));
+    }
+    let stream = fs::read(&stream_path)
+        .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", stream_path.display())))?;
+    let green = is_green(&stream) && finished.is_ok();
+    Ok(u8::from(!green))
+}
+
+/// The run directory: `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then `$TEST_TMPDIR/air-lane`.
+pub(crate) fn runtime_root(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<PathBuf, AgentRefusal> {
+    if let Some(root) = &args.runtime_root {
+        return Ok(root.clone());
+    }
+    let named = |name: &str| variable(name).filter(|value| !value.is_empty()).map(PathBuf::from);
+    named(RUNTIME_ROOT_VARIABLE)
+        .or_else(|| named("TEST_TMPDIR").map(|temporary| temporary.join("air-lane")))
+        .filter(|root| root.is_absolute())
+        .ok_or_else(|| {
+            AgentRefusal::refused(
+                "lane_run_root_missing",
+                format!("lane-run needs an absolute --runtime-root, ${RUNTIME_ROOT_VARIABLE} or $TEST_TMPDIR"),
+            )
+        })
+}
+
+/// The selectors of `--selector`, and then those of a Bazel `--test_filter`.
+pub(crate) fn selectors(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Vec<String> {
+    let filter = variable(TEST_FILTER_VARIABLE).unwrap_or_default();
+    args.selectors
+        .iter()
+        .cloned()
+        .chain(
+            filter
+                .split(',')
+                .map(str::trim)
+                .filter(|selector| !selector.is_empty())
+                .map(str::to_owned),
+        )
+        .collect()
+}
+
+/// The filters of `--junit5-filter`, and then those of `$JB_TEST_JUNIT5_FILTERS`.
+pub(crate) fn junit5_filters(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Vec<String> {
+    let listed = variable(JUNIT5_FILTERS_VARIABLE).unwrap_or_default();
+    args.junit5_filters
+        .iter()
+        .cloned()
+        .chain(
+            listed
+                .split(';')
+                .map(str::trim)
+                .filter(|filter| !filter.is_empty())
+                .map(str::to_owned),
+        )
+        .collect()
+}
+
+/// Whether the run stream ends green: a summary with no failure, and no failed run. A stream without a summary is a run
+/// that was cut off, and it is not green.
+pub(crate) fn is_green(stream: &[u8]) -> bool {
+    let mut summary = None;
+    for line in stream.split(|byte| *byte == b'\n').filter(|line| !line.is_empty()) {
+        match decode_run_event(line).map(|event| event.kind) {
+            Ok(RunEventKind::Summary(found)) => summary = Some(found),
+            Ok(RunEventKind::RunFailed(_)) | Err(_) => return false,
+            Ok(_) => {}
+        }
+    }
+    summary.is_some_and(|summary| !summary.has_failures)
+}
+
+/// Writes each record to the run file and to standard output. A failed write to standard output is not a failed run.
+struct Tee<F, O>(F, O);
+
+impl<F: Write, O: Write> Write for Tee<F, O> {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.0.write_all(bytes)?;
+        let _ = self.1.write_all(bytes);
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        let _ = self.1.flush();
+        self.0.flush()
+    }
+}

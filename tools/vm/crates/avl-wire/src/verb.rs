@@ -61,5 +61,9 @@ vocabulary! {
         /// Serves the control channel of the lane daemon in the run slot: `lane-daemon --state-dir <dir> --port <port>
         /// ...`. It owns the lane services and the lane IDE until its `/shutdown`. See [`crate::daemon`].
         LaneDaemon = "lane-daemon",
+        /// Runs one iteration of a lane from a runfiles tree, with no control channel: `lane-run --lane <lane>
+        /// --descriptor <file> ...`. A Bazel test of the lane rule, `bt --lane` and a TeamCity agent run it on their own
+        /// host. It quits the IDE at the end and exits 0 or 1.
+        LaneRun = "lane-run",
     }
 }
