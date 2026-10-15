@@ -568,9 +568,19 @@ iteration's timing line reports the one it took.
 | --- | --- | --- |
 | test code, meaning the Air test-only modules | hot-jar digest diff | a push plus a fresh classloader. The IDE is reused, and there is **no remount** |
 | product inputs, meaning anything inside the prepared distribution | product stamp diff | stop every lane IDE, remount, then launch the IDE again. The daemon survives, and nothing is assembled |
-| the context plugins, meaning the in-IDE test bridge, which no lane distribution carries | plugins digest diff | a push of the changed plugin files and an IDE relaunch on the same context. The timing line reports `ide relaunch`, and there is **no remount** and no distribution compose |
+| the context plugins, meaning the in-IDE test bridge and its resident part, which no lane distribution carries | the digest of each plugin directory | a push of the changed plugin files, with **no remount** and no distribution compose. Under the lane daemon, an edit of the bridge directory alone reloads the bridge plugin in the running IDE, and the timing line reports `ide reload`. An edit of the resident part relaunches the IDE on the same context, and so does a reload that fails. The JVM daemon relaunches the IDE for each plugin edit, and the timing line reports `ide relaunch` |
 | the daemon's parent tier, meaning platform and framework jars | stable digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
 | the container's declaration, meaning the image tag, the share or the display | create-record diff | a recreate plus a cold daemon start; Docker only |
+
+The series of 2026-10-15 measured the plugin rows under the lane daemon. It ran on master `64c3e5270948e`, on
+the worker `air-docker-2`, under one held lease, with the suite `rename-session`. The other lanes held their builds.
+The first row of each kind includes a host build of 7 to 13 s.
+
+| row | edit | decision | total s |
+| --- | --- | --- | --- |
+| R0 | none | `ide reuse` | 22.9, 10.0, 10.4 |
+| R3 | a literal of the resident plugin | `ide relaunch` | 23.1, 19.6, 15.9 |
+| R4 | a literal of the bridge plugin | `ide reload` | 20.4, 8.7, 9.1. The reload took 3.6, 2.4 and 2.4 s |
 
 The three questions are asked independently, and one file may answer yes to more than one. An Air
 production jar is both hot and a product input. Treating "hot" as an answer to the product question
