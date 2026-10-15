@@ -35,8 +35,7 @@ internal class XRayModeTracker : EditorFactoryListener {
   fun attach(editor: Editor) {
     if (editor.getUserData(XRAY_TRACKER_DISPOSABLE) != null) return
 
-    val trackerDisposable = Disposer.newDisposable("XRayModeTracker")
-    Disposer.register(XRayEditorTrackingService.getInstance(), trackerDisposable)
+    val trackerDisposable = Disposer.newDisposable(XRayEditorTrackingService.getInstance(), "XRayModeTracker")
     editor.putUserData(XRAY_TRACKER_DISPOSABLE, trackerDisposable)
     editor.putUserData(XRAY_EDITOR_USE_MODE, XRayEditorUseMode.READING)
 
@@ -111,6 +110,7 @@ internal class XRayModeTracker : EditorFactoryListener {
     editor.document.addDocumentListener(documentListener, trackerDisposable)
 
     // Mouse wheel listener to allow scrolling when the combination is pressed
+    // The implementation reflects the solution from JetBrains Scala plugin (ScalaEditorFactoryListener#editorMouseWheelListener)
     val editorMouseWheelListener = object : MouseWheelListener {
       override fun mouseWheelMoved(e: MouseWheelEvent) {
         val service = editor.project?.let { XRayModeService.getInstanceOrNull(it) ?: return } ?: return
