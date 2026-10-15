@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractInlinePostProcessor
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.ARTIFICIAL_VARARG_ARRAY_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
@@ -93,14 +94,9 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val argumentsToExpand = ArrayList<Pair<KtValueArgument, KtCallExpression>>()
 
         result.forEachDescendantOfType<KtValueArgument>(canGoInside = { it.getCopyableUserData(USER_CODE_KEY) == null }) { argument ->
-            if (argument.getSpreadElement() != null && !argument.isNamed()) {
-                val argumentExpression = argument.getArgumentExpression() ?: return@forEachDescendantOfType
-                val callExpression =
-                  ((argumentExpression as? KtDotQualifiedExpression)?.selectorExpression ?: argumentExpression) as? KtCallExpression
-                        ?: return@forEachDescendantOfType
-                val resolved =
-                  callExpression.referenceExpression()?.mainReference?.resolve() as? KtNamedDeclaration ?: return@forEachDescendantOfType
-                if (ARRAY_CALL_FQ_NAMES.contains(resolved.fqName)) {
+            if (!argument.isNamed()) {
+                val callExpression = argument.arrayOfCallExpression() ?: return@forEachDescendantOfType
+                if (argument.getSpreadElement() != null || argument.isArtificialVarargArrayPassedToVararg()) {
                     argumentsToExpand.add(argument to callExpression)
                 }
             }
@@ -111,6 +107,29 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         }
     }
 
+
+    private fun KtValueArgument.arrayOfCallExpression(): KtCallExpression? {
+        val argumentExpression = getArgumentExpression() ?: return null
+        val callExpression =
+          ((argumentExpression as? KtDotQualifiedExpression)?.selectorExpression ?: argumentExpression) as? KtCallExpression
+                ?: return null
+        val resolved = callExpression.referenceExpression()?.mainReference?.resolve() as? KtNamedDeclaration ?: return null
+        return callExpression.takeIf { ARRAY_CALL_FQ_NAMES.contains(resolved.fqName) }
+    }
+
+    private fun KtValueArgument.isArtificialVarargArrayPassedToVararg(): Boolean {
+        val argumentExpression = getArgumentExpression() ?: return false
+        if (argumentExpression.getCopyableUserData(ARTIFICIAL_VARARG_ARRAY_VALUE_KEY) == null) return false
+
+        val callExpression = (parent as? KtValueArgumentList)?.parent as? KtCallExpression ?: return false
+        return analyze(callExpression) {
+            callExpression.resolveSuccessfulCall()
+                ?.valueArgumentMapping
+                ?.get(argumentExpression)
+                ?.symbol
+                ?.isVararg == true
+        }
+    }
 
     private fun KtValueArgument.replaceByMultiple(expr: KtCallExpression) {
         val list = parent as KtValueArgumentList

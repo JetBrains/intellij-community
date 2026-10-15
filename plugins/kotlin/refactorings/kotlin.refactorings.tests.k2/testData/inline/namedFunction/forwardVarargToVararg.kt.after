@@ -1,0 +1,10 @@
+fun varargFunction2(key: String, vararg params: Any) {
+}
+
+fun test() {
+    varargFunction2("1")
+    varargFunction2("2", 2)
+    varargFunction2("3", "test", listOf("string"))
+    val values = arrayOf("array", 4)
+    varargFunction2("4", *values)
+}

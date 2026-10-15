@@ -1,0 +1,8 @@
+fun acceptAnyVararg(valuesArePresent: Boolean, vararg values: Any) {
+}
+
+fun test() {
+    acceptAnyVararg(false)
+    acceptAnyVararg(true, 1)
+    acceptAnyVararg(true, 1, 2)
+}

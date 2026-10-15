@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUt
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.ARTIFICIAL_VARARG_ARRAY_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.PARAMETER_VALUE_KEY
@@ -310,6 +311,7 @@ internal class ValueParameterInliner(
                 appendFixedText(")")
             }
         }
+        expression.putCopyableUserData(ARTIFICIAL_VARARG_ARRAY_VALUE_KEY, Unit)
 
         return analyze(expression) {
             Argument(expression, isNullableType(expression.expressionType))

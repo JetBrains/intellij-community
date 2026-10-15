@@ -1,0 +1,6 @@
+fun newFun(values: IntArray) {
+}
+
+fun test() {
+    newFun(intArrayOf(1, 2))
+}
