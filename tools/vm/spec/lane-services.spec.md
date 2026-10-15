@@ -8,6 +8,8 @@ targets:
   - ../crates/avl-guest/src/lane/services.rs
   - ../crates/avl-guest/src/lane/services/*.rs
   - ../crates/avl-guest/testdata/lane-services/*
+  - ../../../../plugins/air/tests/integration/bridge/resident/tests/AirLaneService*.kt
+  - ../../../../plugins/air/tests/integration/flow/src/driver/AirLaneServiceControl.kt
 ---
 
 # The Lane Services
@@ -98,6 +100,21 @@ lane secret with the purpose `air-lane-services`, and the IDE reads it from `lan
 
 - A list without `since` starts at the first entry. A `since` that is no whole number gets 400 `bad_request`.
   [@test] ../crates/avl-guest/src/lane/services/codex/tests.rs
+
+- The IDE reads the token and the base URL of each service from `lane-services.json`. The reader refuses a file
+  with an unknown key, another schema version or an empty token. The writer of the test process writes the bytes of
+  the lane daemon.
+  [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServicesClientTest.kt
+
+- Each service answers the script of the golden `testdata/lane-services/control-exchanges.json` with the recorded
+  status and the recorded answer. The services of the test process answer the same script until the lane daemon
+  serves every lane.
+  [@test] ../crates/avl-guest/src/lane/services/tests.rs
+  [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServiceRoutesTest.kt
+
+- One client in the IDE reads and arms the four services. It decodes every recorded answer of the golden, and its
+  refusal names the service, the status and the code. A wait of the client fails at its deadline and names the wait.
+  [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServicesClientTest.kt
 
 ### The fake ACP registry
 
@@ -328,7 +345,8 @@ Each refusal has a code: `lane_service_bind` and `lane_package_input` at the sta
 
 ## Testing / Local Run
 
-Rewrite a golden with `UPDATE_EXPECT=1 cargo test -p avl-guest` in `community/tools/vm`.
+Rewrite a golden with `UPDATE_EXPECT=1 cargo test -p avl-guest` in `community/tools/vm`. Two contract tests of the
+test process read the golden of the control exchanges. Run them after a rewrite.
 
 ## Open Questions / Risks
 
