@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
@@ -15,8 +15,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.util.application
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
@@ -49,7 +49,7 @@ internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvide
     return application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
   }
 
-  override fun hasRepository(projectPath: String): Boolean {
+  override fun hasRepository(projectPath: String): Boolean? {
     return application.service<GitRecentProjectsBranchesService>().hasRepository(projectPath)
   }
 }
@@ -129,17 +129,21 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
     // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
     //	1.	it may trigger Ijent initialization for each recent project
     //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-    if (Path(projectPath).getEelDescriptor() != LocalEelDescriptor) {
+    if (Path(projectPath).getEelDescriptor().getResolvedEelMachine()?.isConnected != true) {
       return null
     }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
   }
 
-  fun hasRepository(projectPath: String): Boolean {
+  fun hasRepository(projectPath: String): Boolean? {
     // The same guard [getCurrentBranch] uses. See IJPL-194035
-    return Path(projectPath).getEelDescriptor() == LocalEelDescriptor && cache.get(projectPath)
-      .getNow(GitRecentProjectCachedBranch.Unknown).headFilePath != null
+    return if (Path(projectPath).getEelDescriptor().getResolvedEelMachine()?.isConnected != true) {
+      null
+    }
+    else {
+      cache.get(projectPath).getNow(GitRecentProjectCachedBranch.Unknown).headFilePath != null
+    }
   }
 
   fun refresh(projectPath: Path) {

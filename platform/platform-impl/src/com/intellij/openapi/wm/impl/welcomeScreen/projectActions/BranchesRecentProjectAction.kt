@@ -1,15 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectBrancher
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.projectNioPath
 import com.intellij.ui.awt.RelativePoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 /** Shows the branches of a recent version control project from the welcome screen, without opening the project. */
@@ -25,10 +29,24 @@ internal class BranchesRecentProjectAction : RecentProjectsWelcomeScreenActionBa
 
   override fun actionPerformed(event: AnActionEvent) {
     val projectPath = selectedProjectPath(event) ?: return
-    val brancher = RecentProjectBrancher.findBrancher(projectPath) ?: return
     val anchor = welcomeScreenAnchor(event)
+    val brancher = RecentProjectBrancher.findBrancher(projectPath)
     recentProjectsService.runOnRecentProject(projectPath) { project ->
-      brancher.showBranches(project, projectPath, anchor)
+      if (brancher != null) {
+        brancher.showBranches(project, projectPath, anchor)
+      }
+      else {
+        withContext(Dispatchers.UiWithModelAccess) {
+          val popup = JBPopupFactory.getInstance()
+            .createMessage(IdeBundle.message("welcome.screen.recent.projects.popup.content.no.vcs.repository.in.project"))
+          if (anchor != null) {
+            popup.show(anchor)
+          }
+          else {
+            popup.showInFocusCenter()
+          }
+        }
+      }
     }
   }
 

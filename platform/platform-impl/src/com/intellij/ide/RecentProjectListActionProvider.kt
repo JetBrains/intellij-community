@@ -511,7 +511,7 @@ private val EP_NAME: ExtensionPointName<RecentProjectsBranchesProvider> = Extens
 private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
 
 private fun vcsActionsEnabled(projectPath: String): Boolean =
-  Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED) && EP_NAME.findFirstSafe { it.hasRepository(projectPath) } != null
+  Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED) && EP_NAME.findFirstSafe { it.hasRepository(projectPath) != false } != null
 
 private fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
   for (provider in EP_NAME.extensionList) {
