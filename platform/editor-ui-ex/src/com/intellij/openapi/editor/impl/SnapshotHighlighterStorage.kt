@@ -218,7 +218,7 @@ internal class SnapshotHighlighterStorage(
   private fun nextSnapshotHighlighter(entries: Iterator<PMarkerRoot.MarkerEntry>): SnapshotRangeHighlighterImpl? {
     while (entries.hasNext()) {
       val marker = entries.next().markerReference?.get()
-      if (marker is SnapshotRangeHighlighterImpl) return marker
+      if (marker is SnapshotRangeHighlighterImpl && marker.isValid) return marker
     }
     return null
   }

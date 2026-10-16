@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
@@ -23,6 +24,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
+import com.intellij.util.ui.EmptyIcon
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongLists
 import org.assertj.core.api.Assertions
@@ -34,7 +36,9 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.LongConsumer
+import javax.swing.Icon
 
 @TestApplication
 @UsePMarkerImplementation
@@ -119,6 +123,189 @@ class SnapshotRangeHighlighterImplTest {
 
       Assertions.assertThat(removed).containsExactly(first, second)
       Assertions.assertThat(model.allHighlighters).isEmpty()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `disposal preserves callback order and offsets without holding the monitor`(@TestDisposable disposable: Disposable) {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val first = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val second = model.addRangeHighlighter(3, 4, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val events = ArrayList<String>()
+      model.addMarkupModelListener(disposable, object : MarkupModelListener {
+        override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+          Assertions.assertThat(Thread.holdsLock(highlighter)).isFalse()
+          Assertions.assertThat(highlighter.isValid).isTrue()
+          events.add("before ${highlighter.id}")
+        }
+
+        override fun afterRemoved(highlighter: RangeHighlighterEx) {
+          Assertions.assertThat(Thread.holdsLock(highlighter)).isFalse()
+          Assertions.assertThat(highlighter.isValid).isFalse()
+          Assertions.assertThat(model.allHighlighters).doesNotContain(highlighter)
+          val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+          Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
+          model.overlappingIterator(0, document.textLength).use { iterator ->
+            Assertions.assertThat(iterator.asSequence().toList()).doesNotContain(highlighter)
+          }
+          events.add("after ${highlighter.id}")
+        }
+      })
+
+      first.dispose()
+      second.dispose()
+
+      Assertions.assertThat(events).containsExactly("before ${first.id}", "after ${first.id}", "before ${second.id}", "after ${second.id}")
+      Assertions.assertThat(first.textRange).isEqualTo(TextRange(1, 2))
+      Assertions.assertThat(second.textRange).isEqualTo(TextRange(3, 4))
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `disposal retains offsets during renderer disposal without holding the monitor`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      var disposedRenderer = false
+      highlighter.gutterIconRenderer = object : GutterIconRenderer(), Disposable {
+        override fun getIcon(): Icon = EmptyIcon.ICON_16
+
+        override fun equals(other: Any?): Boolean = this === other
+
+        override fun hashCode(): Int = System.identityHashCode(this)
+
+        override fun dispose() {
+          Assertions.assertThat(Thread.holdsLock(highlighter)).isFalse()
+          document.insertString(0, "x")
+          Assertions.assertThat(highlighter.textRange).isEqualTo(TextRange(1, 2))
+          disposedRenderer = true
+        }
+      }
+
+      highlighter.dispose()
+
+      Assertions.assertThat(disposedRenderer).isTrue()
+      Assertions.assertThat(model.allHighlighters).isEmpty()
+      val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      val resolution = root.resolve(highlighter.id, TextRange.EMPTY_RANGE)
+      Assertions.assertThat(resolution.isAbsent).isTrue()
+      Assertions.assertThat(resolution).isEqualTo(TextRange(1, 2))
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `concurrent and nested disposal do not wait for removal listeners`(@TestDisposable disposable: Disposable) {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val entered = CountDownLatch(1)
+      val resume = CountDownLatch(1)
+      val beforeCalls = AtomicInteger()
+      val afterCalls = AtomicInteger()
+      model.addMarkupModelListener(disposable, object : MarkupModelListener {
+        override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+          Assertions.assertThat(Thread.holdsLock(highlighter)).isFalse()
+          beforeCalls.incrementAndGet()
+          highlighter.dispose()
+          entered.countDown()
+          check(resume.await(10, TimeUnit.SECONDS)) { "The removal listener did not resume" }
+        }
+
+        override fun afterRemoved(highlighter: RangeHighlighterEx) {
+          Assertions.assertThat(Thread.holdsLock(highlighter)).isFalse()
+          afterCalls.incrementAndGet()
+          highlighter.dispose()
+        }
+      })
+      val removal = FutureTask { highlighter.dispose() }
+      val competingRemoval = FutureTask { highlighter.dispose() }
+      val removalThread = Thread(removal, "Highlighter removal")
+      val competingThread = Thread(competingRemoval, "Concurrent highlighter removal")
+      removalThread.start()
+      try {
+        check(entered.await(10, TimeUnit.SECONDS)) { "The removal listener did not start" }
+        competingThread.start()
+        competingRemoval.get(10, TimeUnit.SECONDS)
+        Assertions.assertThat(beforeCalls.get()).isEqualTo(1)
+        Assertions.assertThat(afterCalls.get()).isZero()
+        Assertions.assertThat(highlighter.isValid).isTrue()
+      }
+      finally {
+        resume.countDown()
+        removalThread.join(TimeUnit.SECONDS.toMillis(10))
+        competingThread.join(TimeUnit.SECONDS.toMillis(10))
+        check(!removalThread.isAlive && !competingThread.isAlive) { "The removal threads did not stop" }
+      }
+      removal.get(10, TimeUnit.SECONDS)
+
+      Assertions.assertThat(beforeCalls.get()).isEqualTo(1)
+      Assertions.assertThat(afterCalls.get()).isEqualTo(1)
+      Assertions.assertThat(highlighter.isValid).isFalse()
+      Assertions.assertThat(model.allHighlighters).isEmpty()
+      val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `disposal retries only when a before listener fails`(beforeRemoval: Boolean, @TestDisposable disposable: Disposable) {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val failure = IllegalStateException("The removal callback failed")
+      var failCallbacks = true
+      var beforeCalls = 0
+      var afterCalls = 0
+      model.addMarkupModelListener(disposable, object : MarkupModelListener {
+        override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+          beforeCalls++
+          if (failCallbacks && beforeRemoval) throw failure
+        }
+
+        override fun afterRemoved(highlighter: RangeHighlighterEx) {
+          afterCalls++
+          if (failCallbacks) throw failure
+        }
+      })
+
+      Assertions.assertThatThrownBy { highlighter.dispose() }.isSameAs(failure)
+
+      val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isEqualTo(!beforeRemoval)
+      Assertions.assertThat(highlighter.isValid).isEqualTo(beforeRemoval)
+      Assertions.assertThat(beforeCalls).isEqualTo(1)
+      Assertions.assertThat(afterCalls).isEqualTo(if (beforeRemoval) 0 else 1)
+      if (beforeRemoval) Assertions.assertThat(model.allHighlighters).containsExactly(highlighter)
+      else Assertions.assertThat(model.allHighlighters).isEmpty()
+
+      failCallbacks = false
+      highlighter.dispose()
+      highlighter.dispose()
+
+      Assertions.assertThat(beforeCalls).isEqualTo(if (beforeRemoval) 2 else 1)
+      Assertions.assertThat(afterCalls).isEqualTo(1)
+      Assertions.assertThat(highlighter.isValid).isFalse()
+      Assertions.assertThat(model.allHighlighters).isEmpty()
+      val removedRoot = checkNotNull(model.rootStore().root(document.core.snapshot()))
+      Assertions.assertThat(removedRoot.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
     }
     finally {
       model.dispose()

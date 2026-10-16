@@ -36,6 +36,7 @@ class SnapshotMarkerStores {
     }
   }
 
+  @TestOnly
   fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch?): DocumentSnapshot {
     if (afterSnapshot === beforeSnapshot) return afterSnapshot
     while (true) {
