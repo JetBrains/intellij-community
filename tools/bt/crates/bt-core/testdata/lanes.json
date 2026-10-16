@@ -55,7 +55,7 @@
       "name": "air-integration-ui-perf",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The performance tests on the product heap, `ui-perf_test`. `BT --lane ui-perf` selects it."
+      "description": "The performance tests on the product heap, `ui-perf_lane_test`. `BT --lane ui-perf` selects it."
     },
     {
       "name": "air-integration-jcp",
@@ -76,7 +76,6 @@
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
     "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
-    "//plugins/air/tests/integration/ui-perf:ui-perf_test_lib",
     "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
@@ -164,12 +163,12 @@
     {
       "name": "ui-perf",
       "description": "the Air performance tests on the product heap, explicit-only (each takes up to 90 min; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-perf)",
-      "target": "//plugins/air/tests/integration/ui-perf:ui-perf_test",
+      "target": "//plugins/air/tests/integration/ui-perf:ui-perf_lane_test",
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-perf",
       "documentLane": "UI_PERF",
-      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test"
+      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_lane_test"
     },
     {
       "name": "jcp",

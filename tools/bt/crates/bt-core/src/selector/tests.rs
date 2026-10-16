@@ -500,7 +500,7 @@ fn a_class_that_a_suite_document_names_resolves_to_the_test_label_of_its_lane() 
     );
     assert_eq!(
         resolve_in(&fake, "AirLongSessionPerformanceUiTest").map(|resolution| resolution.labels),
-        Ok(vec!["//plugins/air/tests/integration/ui-perf:ui-perf_test".to_owned()])
+        Ok(vec!["//plugins/air/tests/integration/ui-perf:ui-perf_lane_test".to_owned()])
     );
 }
 
