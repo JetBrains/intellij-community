@@ -26,15 +26,23 @@ interface FrontendProjectRootManager {
 
 fun Driver.findFile(relativePath: String, project: Project? = null): VirtualFile? {
   return withReadAction {
+    val notNullProject = project ?: singleProject()
     if (isRemDevMode) {
-      service<FrontendProjectRootManager>(project ?: singleProject()).getContentRoots()
+      service<FrontendProjectRootManager>(notNullProject).getContentRoots()
         .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
     } else {
       // On Frontend the file will not be found unless it was opened previously
-      service<ProjectRootManager>(project ?: singleProject()).getContentRoots()
-        .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
+      val roots = service<ProjectRootManager>(notNullProject).getContentRoots().toList() +
+                         // project with no modules and no configurators run
+                         listOfNotNull(utility<ProjectUtil>().guessProjectDir(notNullProject))
+      roots.firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
     }
   }
+}
+
+@Remote("com.intellij.openapi.project.ProjectUtil")
+private interface ProjectUtil {
+  fun guessProjectDir(project: Project): VirtualFile?
 }
 
 @Remote("com.intellij.openapi.projectRoots.Sdk")
