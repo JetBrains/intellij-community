@@ -70,9 +70,7 @@ class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider
    * The descriptor file is in the production sources of the JPS module that owns the content module.
    */
   fun contentModuleAliases(contentModuleName: String): Set<String> {
-    contentModuleAliases.get(contentModuleName)?.let { return it }
-    val result = readContentModuleAliases(contentModuleName)
-    return contentModuleAliases.putIfAbsent(contentModuleName, result) ?: result
+    return contentModuleAliases.computeIfAbsent(contentModuleName, ::readContentModuleAliases)
   }
 
   private fun readContentModuleAliases(contentModuleName: String): Set<String> {
