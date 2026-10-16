@@ -10,6 +10,10 @@ interface TextMateString: AutoCloseable {
 
 class TextMateStringImpl private constructor(val bytes: ByteArray): TextMateString {
   override val id: Any = Any()
+
+  /** Lazily computed content hash; 0 stands for "not computed yet", as in `String.hashCode`. */
+  private var hash: Int = 0
+
   override val bytesLength: Int
     get() = bytes.size
 
@@ -51,13 +55,21 @@ class TextMateStringImpl private constructor(val bytes: ByteArray): TextMateStri
   }
 
   override fun hashCode(): Int {
-    return bytes.contentHashCode()
+    var h = hash
+    if (h == 0) {
+      h = bytes.contentHashCode()
+      if (h == 0) {
+        h = 31
+      }
+      hash = h
+    }
+    return h
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is TextMateStringImpl) return false
-    return bytes.contentEquals(other.bytes)
+    return hashCode() == other.hashCode() && bytes.contentEquals(other.bytes)
   }
 
   override fun close() {
