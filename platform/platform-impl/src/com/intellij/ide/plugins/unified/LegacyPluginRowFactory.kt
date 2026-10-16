@@ -148,7 +148,7 @@ internal class LegacyPluginRow(
     }
     component.updateErrors(input.errors)
     component.updateExpectedExplanations(input.expectedExplanations)
-    component.setUpdateDescriptor(input.updateDescriptor)
+    component.setUpdateDescriptor(input.updateDescriptor.takeIf { input.enabled })
     input.preparedUpdate?.let { prepared ->
       component.pluginInstalled(true, prepared.restartRequired, input.installedPlugin)
     }

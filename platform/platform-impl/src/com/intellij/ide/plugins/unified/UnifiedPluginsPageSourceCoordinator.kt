@@ -677,7 +677,7 @@ private fun filterPluginItems(
       (!parser.updatedBundled || model.isBundledUpdate) &&
       (!parser.userInstalled || !model.isBundled && !model.isBundledUpdate) &&
       (!parser.invalid || input?.errors?.isNotEmpty() == true) &&
-      (!parser.needUpdate || input?.updateDescriptor != null) &&
+      (!parser.needUpdate || input?.enabled == true && input.updateDescriptor != null) &&
       (parser.updateSources.isEmpty() ||
        (parser.updateSources.contains(item.updateSourceId.getPresentableName()) &&
         input?.installedPlugin?.isUpdateable == true))

@@ -66,6 +66,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
@@ -567,7 +568,8 @@ internal class UnifiedPluginsPageSessionTest {
             inventoryItem("disabled", "Disabled"),
           ),
           bundledPlugins = emptyList(),
-        )
+        ),
+        enabledStates = mapOf(disabled.pluginId to false),
       )
       val session = createSession(
         searchQuery = null,
@@ -594,6 +596,42 @@ internal class UnifiedPluginsPageSessionTest {
         executor.callbacks.single().prepared(first.pluginId, restartRequired = false)
         waitForButton(button, "Updating 1/2...", enabled = false)
         executor.callbacks.single().prepared(second.pluginId, restartRequired = false)
+        waitForButton(button, "Updated", enabled = false)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Update All follows session enablement with cached disabled updates`(): Unit =
+    uiTest {
+      val update = PluginDto("Plugin Update", PluginId.getId("disabled.update.plugin"))
+      val enabledStates = hashMapOf(update.pluginId to false)
+      val provider = FixedLocalDataProvider(
+        inventory = UnifiedPluginInventory(listOf(inventoryItem(update.pluginId.idString, "Installed Plugin")), emptyList()),
+        enabledStates = enabledStates,
+      )
+      val executor = RecordingUpdateAllExecutor()
+      val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+      updates.emit(PluginUpdatesEvent(emptyList(), listOf(update), emptyList()))
+      val session = createSession(null, provider, pluginUpdates = updates, updateAllExecutor = executor)
+      try {
+        val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+        waitForPluginIds(session.getComponent(), setOf(update.pluginId.idString))
+        assertThat(button.isVisible).isFalse()
+
+        for (enabled in listOf(true, false, true)) {
+          enabledStates[update.pluginId] = enabled
+          session.refresh()
+          waitUntilAssertSucceeds {
+            assertThat(button.isVisible).isEqualTo(enabled)
+          }
+        }
+        button.doClick()
+
+        assertThat(executor.requests.single().updates).containsExactly(update)
+        executor.callbacks.single().prepared(update.pluginId, restartRequired = false)
         waitForButton(button, "Updated", enabled = false)
       }
       finally {
@@ -1346,6 +1384,7 @@ internal class UnifiedPluginsPageSessionTest {
     private val enrichmentReadiness: suspend () -> Unit = {},
     private val onEnrichmentRequested: () -> Unit = {},
     private val errors: Map<PluginId, List<HtmlChunk>> = emptyMap(),
+    private val enabledStates: Map<PluginId, Boolean> = emptyMap(),
   ) : UnifiedPluginLocalDataProvider {
     override suspend fun loadInventory(): UnifiedPluginInventory {
       onInventoryLoaded()
@@ -1365,7 +1404,7 @@ internal class UnifiedPluginsPageSessionTest {
         inventory = inventory,
         updates = updates,
         contentRevision = contentRevision,
-        enabledStates = plugins.associate { it.model.pluginId to true },
+        enabledStates = plugins.associate { it.model.pluginId to (enabledStates[it.model.pluginId] ?: true) },
         errors = errors,
         installationStates = emptyMap(),
         restrictions = emptyMap(),

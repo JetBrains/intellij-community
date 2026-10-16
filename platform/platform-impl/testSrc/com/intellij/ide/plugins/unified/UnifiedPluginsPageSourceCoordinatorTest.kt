@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginInventoryChangeReason
 import com.intellij.ide.plugins.newui.PluginModelEvent
 import com.intellij.ide.plugins.newui.PluginOperationKind
 import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
@@ -678,6 +679,36 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     assertThat(state.sections.single { it.id == PluginSectionId.Installed }.items).containsExactly(installedTool)
     assertThat(state.sections.single { it.id == PluginSectionId.Internal }.items).containsExactly(internalTool)
     assertThat(state.sections.single { it.id is PluginSectionId.CustomRepository }.items).containsExactly(repositoryTool)
+  }
+
+  @Test
+  fun `update filter follows session enablement with cached disabled updates`() = runTest {
+    val installed = inventoryItem("disabled.update.plugin", "Disabled Update Plugin")
+    val update = plugin(installed.model.pluginId.idString, "Plugin Update")
+    val provider = FakeLocalDataProvider(UnifiedPluginInventory(listOf(installed), emptyList()))
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 1)
+    val coordinator = coordinator(
+      provider,
+      initialQuery = "/outdated",
+      updates = flowOf(PluginUpdatesEvent(emptyList(), listOf(update), emptyList())),
+      hostEvents = events,
+    )
+    coordinator.start()
+    runCurrent()
+
+    for (enabled in listOf(false, true, false, true)) {
+      events.emit(PluginModelEvent.InventoryInvalidated(
+        PluginInventoryChangeReason.ENABLE_DISABLE,
+        setOf(installed.model.pluginId),
+        mapOf(installed.model.pluginId to enabled),
+      ))
+      runCurrent()
+
+      assertThat(installedIds(coordinator.state.value))
+        .containsExactlyElementsOf(if (enabled) listOf(installed.model.pluginId.idString) else emptyList())
+    }
+    assertThat(provider.loadCount).isEqualTo(1)
+    coordinator.close()
   }
 
   @Test

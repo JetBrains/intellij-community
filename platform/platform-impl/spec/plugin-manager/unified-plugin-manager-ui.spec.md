@@ -259,6 +259,12 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `installed actions share an optional radio selection`
   )
 
+- Update available must include only plugins enabled in the current settings session.
+- Enabling or disabling a plugin must update this filter before Apply or restart.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `update filter follows session enablement with cached disabled updates`
+  )
+
 - An empty search field must show `Search all plugins` and the Filter control.
 - The Filter control must show a selected state while a represented filter is active.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
