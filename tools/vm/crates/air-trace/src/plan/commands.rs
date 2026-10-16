@@ -42,6 +42,11 @@ pub(crate) fn explicit_warning(lane: &str) -> &'static str {
     if lane == LIVE_LANE { BILLED_WARNING } else { EXPLICIT_WARNING }
 }
 
+/// The runner of the live lane's guest run. The lane daemon launches no live lane, so the run names the JVM daemon.
+fn guest_runner(lane: &str) -> Option<&'static str> {
+    (lane == LIVE_LANE).then_some("jvm")
+}
+
 /// The guest run's input of a lane that needs one, as the pipe that feeds it and the `--test-env` that names it.
 ///
 /// Only the live lane has one. Without it the guest run of that lane fails, naming the input.
@@ -143,12 +148,15 @@ impl Planner<'_> {
     }
 }
 
-/// One self-leased `vm.cmd run`, with the lane's guest when it is not the default one, and the lane's guest input
-/// piped in when it needs one.
+/// One self-leased `vm.cmd run`, with the lane's guest when it is not the default one, the runner of the live lane,
+/// and the lane's guest input piped in when it needs one.
 pub(crate) fn vm_run(lane: &str, arguments: &[&str]) -> String {
     let mut parts = vec![VM_WRAPPER];
     if let Some(backend) = guest_backend(lane) {
         parts.extend(["--backend", backend]);
+    }
+    if let Some(runner) = guest_runner(lane) {
+        parts.extend(["--runner", runner]);
     }
     parts.push("run");
     parts.extend(arguments);
