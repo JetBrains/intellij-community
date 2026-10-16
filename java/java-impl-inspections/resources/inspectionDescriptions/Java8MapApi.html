@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports common usage patterns of <code>java.util.Map</code> and suggests replacing them with:
-<code>getOrDefault()</code>, <code>computeIfAbsent()</code>, <code>putIfAbsent()</code>, <code>merge()</code>, or <code>replaceAll()</code>.
+<code>getOrDefault()</code>, <code>computeIfAbsent()</code>, <code>putIfAbsent()</code>, <code>merge()</code>, <code>replaceAll()</code>, or <code>remove()</code>.
 <p>Example:</p>
 <pre><code>
   map.containsKey(key) ? map.get(key) : "default";
@@ -41,6 +41,14 @@ Reports common usage patterns of <code>java.util.Map</code> and suggests replaci
 <p>After the quick-fix is applied:</p>
 <pre><code>
   map.replaceAll((localKey, localValue) -> transform(localValue));
+</code></pre>
+<p>Example:</p>
+<pre><code>
+  if (value.equals(map.get(key))) map.remove(key);
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  map.remove(key, value);
 </code></pre>
 
 <!-- tooltip end -->
