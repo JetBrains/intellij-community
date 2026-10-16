@@ -632,14 +632,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
   }
 
   private static boolean isResilientModelFetchEnabled(@NotNull DefaultProjectResolverContext context) {
-    // todo IDEA-390866: remove it when Gradle 9.7 available
-    if (Registry.is("gradle.use.resilient.model.fetch.unstable")) {
-      return GradleVersionUtil.isGradleAtLeast(context.getGradleVersion(), "9.3");
-    }
-    if (Registry.is("gradle.use.resilient.model.fetch")) {
-      return GradleVersionUtil.isGradleAtLeast(context.getGradleVersion(), "9.7");
-    }
-    return false;
+    return Registry.is("gradle.use.resilient.model.fetch") &&
+           GradleVersionUtil.isGradleAtLeast(context.getGradleVersion(), "9.7");
   }
 
   private static @NotNull Collection<IdeaModule> exposeCompositeBuild(
