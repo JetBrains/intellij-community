@@ -209,8 +209,7 @@ public final class ApplicationNamesInfo {
    * {@code fallbackProductName} is used for products whose prefix isn't known to the platform.
    */
   @ApiStatus.Internal
-  public static @NlsSafe String getDefaultProjectDirectoryName(@NotNull String platformPrefix,
-                                                                @NotNull String fallbackProductName) {
+  public static @NlsSafe String getDefaultProjectDirectoryName(@NotNull String platformPrefix, @NotNull String fallbackProductName) {
     String baseName;
     switch (platformPrefix) {
       case PlatformUtils.IDEA_PREFIX:
@@ -261,6 +260,9 @@ public final class ApplicationNamesInfo {
         break;
       case PlatformUtils.ANDROID_STUDIO_PREFIX:
         baseName = "AndroidStudio";
+        break;
+      case "Light":
+        baseName = "JetBrains";
         break;
       default:
         baseName = sentenceCase(fallbackProductName);

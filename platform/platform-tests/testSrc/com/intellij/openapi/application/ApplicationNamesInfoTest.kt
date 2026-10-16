@@ -36,6 +36,7 @@ class ApplicationNamesInfoTest {
       PlatformUtils.RUSTROVER_PREFIX to "RustProjects",
       PlatformUtils.MPS_PREFIX to "MPSProjects",
       PlatformUtils.ANDROID_STUDIO_PREFIX to "AndroidStudioProjects",
+      "Light" to "JetBrainsProjects",
     )
 
     expected.forEach { (prefix, directoryName) ->
