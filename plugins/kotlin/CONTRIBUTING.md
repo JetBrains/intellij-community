@@ -79,43 +79,44 @@ For debugging purposes consider using `PsiTreeUtilsKt.printTree` function.
 
 #### General information
 
-1. Intentions and inspections must be registered in [`idea/resources/META-INF/inspections.xml`](idea/resources/META-INF/inspections.xml).
-2. There must be a description in English.
-   Put descriptions for intentions to [`idea/resources-en/intentionDescriptions`](idea/resources-en/intentionDescriptions),
-   descriptions for inspections are in [`idea/resources-en/inspectionDescriptions`](idea/resources-en/inspectionDescriptions).
-3. All intentions, inspections and quick-fixes should have automatic tests.
-   Put test data for local inspections with quick fixes to [`idea/testData/inspectionsLocal`](idea/tests/testData/inspectionsLocal),
-   inspections without quick fixes to [`idea/testData/inspections`](idea/tests/testData/inspections).
-4. Prefer inspections with `ProblemHighlightType.INFORMATION` and attached quick-fixes over intentions.
-5. In inspection code, use only `ProblemHighlightType.GENERIC_ERROR_OR_WARNING` as it allows users to adjust 
-   the inspection level by themselves.
-6. Make the inspection highlighting range as narrow as possible. E.g. highlight only the class name instead of the whole class declaration,
-   and a called function name instead of the whole call.
-7. Never hard-code strings displayed to the user in code. Use language bundles instead.
-   See the [`KotlinBundle`](idea/resources-en/messages/KotlinBundle.properties) as an example.
-8. You can test the exception on the kotlin-ide project itself. To do it, clone kotlin-ide to some other directory 
-   (or create a Git worktree), run the "IDEA" run configuration, open the cloned project in it and run your inspection using
-   the "Run Inspection by Name" action.  
-   Here's a short check list:
-   - [ ] Check that you didn't introduce performance issues by monitoring execution time;
-   - [ ] Check if memory consumption is reasonable;
-   - [ ] Check false positives (or maybe false negatives);
-   - [ ] Try to apply quick fixes and check if code is correct.
+The full guideline for inspections is in [Code insight: Inspections](docs/fir-ide/architecture/code-insights.md#inspections).
+Read it before you write an inspection. The main rules are:
+
+1. Put a new inspection in [`code-insight/inspections-k2`](code-insight/inspections-k2).
+   Extend `KotlinApplicableInspectionBase.Simple` or `KotlinApplicableInspectionBase`, and use a `KotlinModCommandQuickFix`.
+2. Register inspections in [`intellij.kotlin.codeInsight.inspections.xml`](code-insight/inspections-k2/resources/intellij.kotlin.codeInsight.inspections.xml).
+   Register intentions in [`intellij.kotlin.codeInsight.intentions.xml`](code-insight/intentions-k2/resources/intellij.kotlin.codeInsight.intentions.xml).
+3. Write a description in English.
+   Put inspection descriptions in [`code-insight/descriptions/resources-en/inspectionDescriptions`](code-insight/descriptions/resources-en/inspectionDescriptions).
+   Put intention descriptions in [`code-insight/descriptions/resources-en/intentionDescriptions`](code-insight/descriptions/resources-en/intentionDescriptions).
+4. Add automatic tests for all intentions, inspections, and quick fixes.
+   Put test data for a new local inspection in [`code-insight/inspections-k2/tests/testData/inspectionsLocal`](code-insight/inspections-k2/tests/testData/inspectionsLocal).
+   Add negative tests for the cases in the quality checklist.
+5. Prefer an inspection with `ProblemHighlightType.INFORMATION` and a quick fix to an intention.
+6. In other cases, use only `ProblemHighlightType.GENERIC_ERROR_OR_WARNING`. The user can then change the inspection level.
+7. Start a new inspection with a conservative level: disabled by default, `WEAK WARNING`, or `INFORMATION`.
+8. Make the highlighting range as narrow as possible.
+   For example, highlight the class name, not the whole class declaration. Highlight the function name, not the whole call.
+9. Do not hard-code strings that the user sees. Put them in [`KotlinBundle.properties`](base/resources/resources-en/messages/KotlinBundle.properties).
+10. Run the inspection on a large project. Open the project in a development IDE and use the "Run Inspection by Name" action.
+    Use this checklist:
+    - [ ] The execution time is not worse.
+    - [ ] The memory consumption is reasonable.
+    - [ ] There are no false positives, and there are few false negatives.
+    - [ ] The quick fix gives correct code.
 
 #### Reference resolution
 
-1. Resolution operations (`analyze()`, `resolveToCall()`, `resolveToDescriptors()` etc.) are expensive. Perform checks that don't depend on
-   resolution first. For instance, if your inspection looks for top-level classes annotated with `@Foo`, check if the current declaration is
-   a top-level class before resolving the `Foo` reference.
-2. Avoid using `resolveToDescriptor()` if possible, because it throws an exception if the reference can't be resolved.
-   Use `resolveToDescriptorIfAny()` instead.
-3. If you need to resolve several references at once, call `analyze()` on a common `PsiElement` and then fetch results for individual
-   references from the received `BindingContext`. Calling `resolveToDescriptorIfAny()` or `resolveToCall()` several times may lead to
-   inconsistent results.
-4. Don't depend too much on applicability checks, because the code could have already changed since their execution. Instead, check the
-   required preconditions once
-   more before code modification.
-5. Use the `languageVersionSettings` extension property to get `LanguageVersionSettings` for a particular `PsiElement`.
+1. Resolution in the Analysis API (`analyze { }`, `resolveToCall()`, `resolveToSymbol()`, `expressionType`) is expensive.
+   Do the PSI-only checks first, in `isApplicableByPsi`.
+   For example, if the inspection looks for top-level classes with the `@Foo` annotation, check that the class is top-level before you resolve `Foo`.
+2. Do all the resolution for one element in one `prepareContext` call.
+3. A resolve call can return `null` or an ambiguous result. Handle these cases, and do not use `!!` on a resolve result.
+4. Do not store `KaSymbol`, `KaType`, or `KaSession` outside of the `analyze` block.
+   Use `KaSymbolPointer` or `SmartPsiElementPointer` instead.
+5. Do not call `analyze` in a quick fix. Compute the data in `prepareContext`.
+   The code can change after the applicability check, so check the PSI preconditions again in the fix.
+6. Use the `languageVersionSettings` extension property to get `LanguageVersionSettings` for a `PsiElement`.
 
 #### Performance and stability tips
 
