@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,9 +20,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
+import git4idea.GitStandardLocalBranch;
 import git4idea.GitWorkingTree;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -40,6 +43,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitPreservingProcess;
 import git4idea.workingTrees.GitWorkingTreesService;
+import git4idea.workingTrees.actions.GitChooseWorkingTreeDialog;
 import io.opentelemetry.api.trace.Tracer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -96,7 +100,13 @@ class GitCheckoutOperation extends GitBranchOperation {
    */
   private final @NotNull Collection<GitRepository> myOpenedInOtherWorktreeRepositories = new ArrayList<>();
 
-  private enum OtherWorktreeConflictOutcome { SUCCESS, OPENED_EXISTING_WORKTREE, FATAL_ERROR }
+  /**
+   * Repositories for which the user canceled the worktree-conflict dialog outright, declining both to check out
+   * here and to open the other worktree. A deliberate cancel is not a failure, so no notification follows it.
+   */
+  private final @NotNull Collection<GitRepository> myCancelledWorktreeConflictRepositories = new ArrayList<>();
+
+  private enum OtherWorktreeConflictOutcome { SUCCESS, OPENED_EXISTING_WORKTREE, CANCELLED, FATAL_ERROR }
 
   /**
    * Outcome of {@link #runCheckoutAndHandleCommonFailures}: {@code UNHANDLED} means none of the three detectors
@@ -203,6 +213,9 @@ class GitCheckoutOperation extends GitBranchOperation {
             else if (otherWorktreeOutcome == OtherWorktreeConflictOutcome.OPENED_EXISTING_WORKTREE) {
               handleOpenedInOtherWorktree(repository);
             }
+            else if (otherWorktreeOutcome == OtherWorktreeConflictOutcome.CANCELLED) {
+              handleCancelledWorktreeConflict(repository);
+            }
           }
           else {
             fatalError(getCommonErrorTitle(), result);
@@ -244,8 +257,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         notifyBranchHasChanged(myStartPointReference);
         updateRecentBranch();
       }
-      else if (!myOpenedInOtherWorktreeRepositories.isEmpty()) {
-        // the user chose to open an already existing worktree instead of checking out for some repositories;
+      else if (!myOpenedInOtherWorktreeRepositories.isEmpty() || !myCancelledWorktreeConflictRepositories.isEmpty()) {
+        // the user resolved a worktree conflict without checking out, by opening the other worktree or by canceling outright;
         // other repositories may still have been skipped for an unrelated reason (invalid ref) and that must still be reported.
         if (wereSkipped()) {
           notifyError(GitBundle.message("checkout.operation.could.not.checkout.error", getRefPresentation(myStartPointReference)),
@@ -311,6 +324,15 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   /**
+   * Marks the repository as handled by the user's outright cancel of the worktree-conflict dialog, so it is
+   * removed from further processing without being counted as either successful or skipped.
+   */
+  private void handleCancelledWorktreeConflict(@NotNull GitRepository repository) {
+    myCancelledWorktreeConflictRepositories.add(repository);
+    markHandledExternally(repository);
+  }
+
+  /**
    * Handles the "branch is already checked out in another worktree" conflict: asks the user for confirmation and, if confirmed,
    * retries the checkout with {@code --ignore-other-worktrees}. The retry keeps watching for local changes / unmerged / untracked
    * files, same as the original checkout attempt, so a conflict discovered only on retry still goes through the usual recovery
@@ -321,14 +343,19 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                                                       @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector detector,
                                                                                       @NotNull StructuredIdeActivity activity,
                                                                                       @Nullable Hash startHash) {
-    GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(detector, myStartPointReference);
+    GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(repository, detector, myStartPointReference);
     if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.OPEN_EXISTING_WORKTREE) {
-      openExistingWorktree(detector.getMatch() != null ? detector.getMatch().getWorktreePath() : null);
-      return OtherWorktreeConflictOutcome.OPENED_EXISTING_WORKTREE;
-    }
-    if (decision != GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY) {
+      if (openExistingWorktree(repository, detector.getMatch())) {
+        return OtherWorktreeConflictOutcome.OPENED_EXISTING_WORKTREE;
+      }
+      // The user picked "Open Existing Worktree" but then backed out of the worktree chooser: nothing opened,
+      // so this must not be reported as the success-adjacent OPENED_EXISTING_WORKTREE outcome either.
       fatalError(getCommonErrorTitle(), failedResult);
       return OtherWorktreeConflictOutcome.FATAL_ERROR;
+    }
+    if (decision != GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY) {
+      // The user canceled the dialog outright: a deliberate "do nothing" for this repository, not an error.
+      return OtherWorktreeConflictOutcome.CANCELLED;
     }
 
     VirtualFile root = repository.getRoot();
@@ -352,16 +379,59 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   private @NotNull GitBranchUiHandler.CheckoutInOtherWorktreeDecision showCheckoutInOtherWorktreeDialog(
-    @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector detector, @NotNull String reference) {
+    @NotNull GitRepository repository, @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector detector, @NotNull String reference) {
     GitBranchAlreadyCheckedOutInOtherWorktreeDetector.Match match = detector.getMatch();
     String branchName = match != null ? match.getBranchName() : getRefPresentation(reference);
-    return myUiHandler.showCheckoutBranchInOtherWorktreeDialog(branchName, match != null ? match.getWorktreePath() : null);
+    return myUiHandler.showCheckoutBranchInOtherWorktreeDialog(branchName, match != null ? worktreePathToMention(repository, match) : null);
   }
 
-  private void openExistingWorktree(@Nullable String worktreePath) {
-    if (worktreePath == null) return;
-    GitWorkingTree tree = new GitWorkingTree(worktreePath, null, false, false, false, false, null);
+  /**
+   * The worktree path to name in the conflict dialog, or {@code null} when the repository model already knows
+   * of more than one worktree with the branch checked out, so the message does not single out just one of them.
+   */
+  private static @Nullable String worktreePathToMention(@NotNull GitRepository repository,
+                                                  @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector.Match match) {
+    List<GitWorkingTree> checkedOutWorkingTrees = findCheckedOutWorkingTrees(repository, match);
+    return checkedOutWorkingTrees.size() > 1 ? null : match.getWorktreePath();
+  }
+
+  /**
+   * Opens every worktree known to have the branch checked out, and lets the user choose when there is more
+   * than one. Falls back to the single path git reported when the repository model knows none, for example
+   * when the working trees feature is off.
+   *
+   * @return {@code true} if a worktree was actually opened; {@code false} if there was nothing to open or the
+   * user backed out of the chooser, in which case the caller must not treat this as a handled conflict.
+   */
+  private boolean openExistingWorktree(@NotNull GitRepository repository,
+                                        @Nullable GitBranchAlreadyCheckedOutInOtherWorktreeDetector.Match match) {
+    if (match == null) return false;
+    List<GitWorkingTree> checkedOutWorkingTrees = findCheckedOutWorkingTrees(repository, match);
+    GitWorkingTree tree;
+    if (checkedOutWorkingTrees.isEmpty()) {
+      String worktreePath = match.getWorktreePath();
+      if (worktreePath == null) return false;
+      tree = GitWorkingTree.Companion.pathOnly(worktreePath);
+    }
+    else {
+      tree = chooseWorkingTreeToOpen(checkedOutWorkingTrees);
+      if (tree == null) return false;
+    }
     GitWorkingTreesService.Companion.getInstance(myProject).openWorkingTreeProject(tree, null);
+    return true;
+  }
+
+  private static @NotNull List<GitWorkingTree> findCheckedOutWorkingTrees(@NotNull GitRepository repository,
+                                                                    @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector.Match match) {
+    return GitWorkingTreesUtil.INSTANCE.findCheckedOutWorkingTrees(
+      new GitStandardLocalBranch(match.getBranchName()), repository.getWorkingTreeHolder().getWorkingTrees(), false);
+  }
+
+  /** {@code workingTrees}' only entry, or the one the user picks from a chooser dialog, or {@code null} if they cancel it. */
+  private @Nullable GitWorkingTree chooseWorkingTreeToOpen(@NotNull List<GitWorkingTree> workingTrees) {
+    Ref<GitWorkingTree> chosen = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> chosen.set(GitChooseWorkingTreeDialog.Companion.chooseAmong(myProject, workingTrees)));
+    return chosen.get();
   }
 
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository,
@@ -541,12 +611,12 @@ class GitCheckoutOperation extends GitBranchOperation {
       GitBranchAlreadyCheckedOutInOtherWorktreeDetector otherWorktreeDetector = new GitBranchAlreadyCheckedOutInOtherWorktreeDetector();
       GitCommandResult result = myGit.checkout(repository, reference, newBranch, force, myDetach, myReset, false, otherWorktreeDetector);
       if (!result.success() && otherWorktreeDetector.isDetected()) {
-        GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(otherWorktreeDetector, reference);
+        GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(repository, otherWorktreeDetector, reference);
         if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY) {
           result = myGit.checkout(repository, reference, newBranch, force, myDetach, myReset, true);
         }
-        else if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.OPEN_EXISTING_WORKTREE) {
-          openExistingWorktree(otherWorktreeDetector.getMatch() != null ? otherWorktreeDetector.getMatch().getWorktreePath() : null);
+        else if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.OPEN_EXISTING_WORKTREE &&
+                 openExistingWorktree(repository, otherWorktreeDetector.getMatch())) {
           openedInOtherWorktreeOut.add(repository);
           continue;
         }
