@@ -575,6 +575,38 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
+  fun `a failed module across plugin boundaries retains the first required module`() {
+    val pluginSet = buildPluginSet(
+      plugin("root") {
+        name = "Root"
+        depends("missing")
+      },
+      plugin("intermediate") {
+        name = "Intermediate"
+        content(namespace = "vendor") {
+          module("intermediate.bridge") {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies { plugin("root") }
+          }
+        }
+      },
+      plugin("affected") {
+        name = "Affected"
+        content(namespace = "jetbrains") {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("intermediate.bridge", namespace = "vendor") }
+          }
+        }
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("intermediate"))
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Intermediate")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("intermediate.bridge", "vendor")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("intermediate"))
+  }
+
+  @Test
   fun `an optional module with a missing dependency does not exclude its owner`() {
     val pluginSet = buildPluginSet(plugin("affected") {
       name = "Affected"

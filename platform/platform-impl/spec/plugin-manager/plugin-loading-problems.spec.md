@@ -126,7 +126,8 @@ Remote development extends these rules with side aggregation and action routing.
     `a failed core module reports its missing module`;
     `a missing module remains the explanation through intermediate plugins`;
     `a required module retains a missing module across a plugin boundary`;
-    `a missing plugin across a plugin boundary still names the failed dependency`
+    `a missing plugin across a plugin boundary still names the failed dependency`;
+    `a failed module across plugin boundaries retains the first required module`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
     `module dependency data retains its namespace`

@@ -179,49 +179,53 @@ internal object PluginLoadingProblemAnalyzer {
         is ChainedExclusion -> error("expected a root cause: $exclusionReason")
       }
 
-    return if (exclusionReason is ChainedExclusion) {
-      val exclusionChain = exclusionReason.descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason)
-      val boundaryExclusion = exclusionChain.windowed(2).firstOrNull { (pluginModule, other) -> other.pluginId != pluginModule.pluginId }
-      val rootCauseDescriptor = exclusionChain.last()
-      val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
-      if (boundaryExclusion != null) {
-        val excludedRequiredDescriptor = boundaryExclusion[1]
-        when (rootCause) {
-          is PluginIsMarkedDisabled -> {
-            val disabledDependencyId = rootCause.descriptor.pluginId
-            if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
-            else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser, rootCause.descriptor)
-          }
-          is ExcludedByEnvironmentConfiguration -> analyzeRootCause(rootCause)
-          is DependencyIsNotResolved -> when (rootCause.dependency) {
-            is DependencyRef.ContentModule -> analyzeRootCause(rootCause)
-            is DependencyRef.Plugin -> createFailedDependencyProblem(excludedRequiredDescriptor)
-          }
-          is DependencyIsNotVisible -> createFailedDependencyProblem(rootCause.descriptor.getMainDescriptor())
-          is ProductRulesImposedExclusion -> when (rootCause.productReason) {
-            is NonBundledPluginsLoadingIsDisabled,
-            is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
-            is PluginLoadingIsDisabledCompletelyExceptCore -> analyzeRootCause(rootCause)
-            else -> createFailedDependencyProblem(excludedRequiredDescriptor)
-          }
-          is IncompatibleWithAnotherModule,
-          is OnDemandContentModuleHasNoDependentsLeft,
-          is PackagePrefixConflictWithAnotherModule,
-          is PluginDeclaresConflictingId,
-          is PluginIsIncompatibleWithProduct,
-          is PluginVersionIsSuperseded,
-          is PartOfDependencyCycle,
-          is PartOfRuntimeModuleGroupDependencyCycle -> createFailedDependencyProblem(excludedRequiredDescriptor)
-          is ChainedExclusion -> error("expected a root cause: $rootCause")
-        }
+    val trace = traceExclusion(exclusionReason, resolvedPluginSet)
+    val firstRequiredDescriptor = trace.firstRequiredDescriptor ?: return analyzeRootCause(trace.rootCause)
+    return when (val rootCause = trace.rootCause) {
+      is PluginIsMarkedDisabled -> {
+        val disabledDependencyId = rootCause.descriptor.pluginId
+        if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
+        else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser, rootCause.descriptor)
       }
-      else {
-        analyzeRootCause(rootCause)
+      is ExcludedByEnvironmentConfiguration -> analyzeRootCause(rootCause)
+      is DependencyIsNotResolved -> when (rootCause.dependency) {
+        is DependencyRef.ContentModule -> analyzeRootCause(rootCause)
+        is DependencyRef.Plugin -> createFailedDependencyProblem(firstRequiredDescriptor)
       }
+      is DependencyIsNotVisible -> createFailedDependencyProblem(rootCause.descriptor.getMainDescriptor())
+      is ProductRulesImposedExclusion -> when (rootCause.productReason) {
+        is NonBundledPluginsLoadingIsDisabled,
+        is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+        is PluginLoadingIsDisabledCompletelyExceptCore -> analyzeRootCause(rootCause)
+        else -> createFailedDependencyProblem(firstRequiredDescriptor)
+      }
+      is IncompatibleWithAnotherModule,
+      is OnDemandContentModuleHasNoDependentsLeft,
+      is PackagePrefixConflictWithAnotherModule,
+      is PluginDeclaresConflictingId,
+      is PluginIsIncompatibleWithProduct,
+      is PluginVersionIsSuperseded,
+      is PartOfDependencyCycle,
+      is PartOfRuntimeModuleGroupDependencyCycle -> createFailedDependencyProblem(firstRequiredDescriptor)
+      is ChainedExclusion -> error("expected a root cause: $rootCause")
     }
-    else {
-      analyzeRootCause(exclusionReason)
+  }
+
+  private class ExclusionTrace(
+    val rootCause: DescriptorExclusionReason,
+    val firstRequiredDescriptor: IdeaPluginDescriptorImpl?,
+  )
+
+  private fun traceExclusion(exclusionReason: DescriptorExclusionReason, resolvedPluginSet: ResolvedPluginSet): ExclusionTrace {
+    if (exclusionReason !is ChainedExclusion) {
+      return ExclusionTrace(exclusionReason, firstRequiredDescriptor = null)
     }
+    val exclusionChain = exclusionReason.descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason)
+    val firstRequiredDescriptor = exclusionChain.zipWithNext().firstOrNull { (descriptor, dependency) ->
+      descriptor.pluginId != dependency.pluginId
+    }?.second
+    val rootCause = resolvedPluginSet.getExclusionReason(exclusionChain.last())!!
+    return ExclusionTrace(rootCause, firstRequiredDescriptor)
   }
 
 }
