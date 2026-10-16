@@ -1384,21 +1384,40 @@ open class MyPluginModel @JvmOverloads constructor(
 
     fun getExpectedExplanations(result: CheckErrorsResult): List<@Nls String> =
       presentedLoadingProblems(result).mapNotNull { (side, problem) ->
-        val message = when (problem.severity) {
-          PluginLoadingProblem.Severity.UNEXPECTED -> null
-          PluginLoadingProblem.Severity.EXPECTED -> when (problem.kind) {
-            PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
-            PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
-          }
-        }
+        val message = getSingleProblemExpectedExplanation(problem)
         message?.let { if (side == null) it else loadingProblemSidePrefix(side) + it }
       }
+
+    private fun getSingleProblemExpectedExplanation(problem: CheckErrorsResult): @Nls String? = when (problem.severity) {
+      PluginLoadingProblem.Severity.UNEXPECTED -> null
+      PluginLoadingProblem.Severity.EXPECTED -> when (problem.kind) {
+        PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
+        PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
+      }
+    }
+
+    private data class LoadingProblemPresentationKey(
+      val kind: PluginLoadingProblem.Kind,
+      val severity: PluginLoadingProblem.Severity,
+      val errors: List<String>,
+      val expectedExplanation: @Nls String?,
+    )
+
+    private fun loadingProblemPresentationKey(problem: CheckErrorsResult): LoadingProblemPresentationKey =
+      LoadingProblemPresentationKey(
+        kind = problem.kind,
+        severity = problem.severity,
+        errors = getSingleProblemErrors(problem).map { it.toString() },
+        expectedExplanation = getSingleProblemExpectedExplanation(problem),
+      )
 
     private fun presentedLoadingProblems(result: CheckErrorsResult): List<Pair<PluginSource?, CheckErrorsResult>> {
       if (result.problemsBySide.isEmpty()) return listOf(null to result)
       val local = result.problemsBySide[PluginSource.LOCAL]
       val remote = result.problemsBySide[PluginSource.REMOTE]
-      if (local != null && local == remote) return listOf(null to local)
+      if (local != null && remote != null && loadingProblemPresentationKey(local) == loadingProblemPresentationKey(remote)) {
+        return listOf(null to local)
+      }
       val bothPresent = local?.pluginPresent == true && remote?.pluginPresent == true
       return listOf(PluginSource.LOCAL, PluginSource.REMOTE).mapNotNull { side ->
         result.problemsBySide[side]?.let { (if (bothPresent) side else null) to it }
