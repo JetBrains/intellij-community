@@ -68,7 +68,7 @@ private fun handleFocusEvent(event: FocusEvent) {
       return
     }
 
-    val toolWindowManager = ToolWindowManager.getInstance(project) as ToolWindowManagerImpl
+    val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return
 
     toolWindowManager.revalidateStripeButtons()
 
@@ -86,7 +86,7 @@ private fun handleFocusEvent(event: FocusEvent) {
     for (project in getOpenedProjects()) {
       for (composite in (FileEditorManagerEx.getInstanceExIfCreated(project) ?: return).activeSplittersComposites) {
         if (composite.allEditors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
-          (ToolWindowManager.getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
+          (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.activeStack?.clear()
         }
       }
     }
@@ -139,7 +139,7 @@ private fun hideIfAutoHideToolWindowLostFocus(toolWindowManager: ToolWindowManag
 
 private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) {
   for (project in getOpenedProjects()) {
-    processor(ToolWindowManager.getInstance(project) as ToolWindowManagerImpl)
+    processor(ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: continue)
   }
 }
 
@@ -173,7 +173,7 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
         .debounce(50.milliseconds)
         .collectLatest {
           for (project in getOpenedProjects()) {
-            val toolWindowManager = project.serviceAsync<ToolWindowManager>() as ToolWindowManagerImpl
+            val toolWindowManager = project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl ?: continue
             withContext(Dispatchers.EDT) {
               toolWindowManager.updateToolWindowHeaders()
             }
@@ -186,14 +186,14 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
     val connection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosingBeforeSave(project: Project) {
-        val manager = (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?) ?: return
+        val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return
         for (entry in manager.idToEntry.values) {
           manager.saveFloatingOrWindowedState(entry, manager.layoutState.getInfo(entry.id) ?: continue)
         }
       }
 
       override fun projectClosed(project: Project) {
-        (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?)?.projectClosed()
+        (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)?.projectClosed()
       }
     })
 
@@ -229,13 +229,13 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
 
         if (ExperimentalUI.isNewUI()) {
           if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
-            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as ToolWindowManagerImpl
+            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as? ToolWindowManagerImpl ?: return
             val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
             toolWindowManager.activateToolWindow(toolWindowId, null, true)
           }
 
           if (ActionPlaces.isToolWindowPopupPlace(event.place)) {
-            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as ToolWindowManagerImpl
+            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as? ToolWindowManagerImpl ?: return
             val activeEntry = toolWindowManager.idToEntry.get(toolWindowManager.lastActiveToolWindowId ?: return) ?: return
             (activeEntry.toolWindow.decorator ?: return).headerToolbar.component.isVisible = true
           }
