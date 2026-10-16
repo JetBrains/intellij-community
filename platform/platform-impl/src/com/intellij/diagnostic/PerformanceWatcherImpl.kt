@@ -305,7 +305,12 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
 
   /** for dump files on disk and in EA reports (ms)  */
   override val dumpInterval: Int
-    get() = 5000.coerceIn(500, unresponsiveInterval)
+    get() {
+      val defaultDumpInterval = 5000
+      val unresponsive = unresponsiveInterval
+      if (unresponsive <= 0) return defaultDumpInterval
+      return min(defaultDumpInterval, unresponsive)
+    }
 
   /** to limit the number of dumps and the size of performance snapshot  */
   override val maxDumpDuration: Int
