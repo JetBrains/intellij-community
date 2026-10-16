@@ -49,6 +49,23 @@ pub const ARG_FILE: &str = "ide-jvm.args";
 pub const LAUNCH_RECORD_FILE: &str = "launch.json";
 /// The file of the plugin ids that the IDE does not load, a child of the config directory.
 pub const DISABLED_PLUGINS_FILE: &str = "disabled_plugins.txt";
+/// The advanced settings of an IDE, below the `options` directory of its config directory.
+pub const ADVANCED_SETTINGS_FILE: &str = "advancedSettings.xml";
+
+/// The advanced settings of an IDE whose project opens no editor at the start. On the first open of a project, the IDE
+/// opens its `README.md` (`ide.open.readme.md.on.startup`), and the next start restores that editor. The start-up bench
+/// and a bare lane IDE write these bytes as [`ADVANCED_SETTINGS_FILE`], so the editor area of their project starts
+/// empty.
+pub const NO_README_SETTINGS: &str = r#"<application>
+  <component name="AdvancedSettings">
+    <option name="settings">
+      <map>
+        <entry key="ide.open.readme.md.on.startup" value="false" />
+      </map>
+    </option>
+  </component>
+</application>
+"#;
 
 /// The system properties that the agent owns, because each one names a path of the context. A launch document or a
 /// flags file that states one of them is refused.

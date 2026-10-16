@@ -14,7 +14,8 @@
 //! | `bin/<runtime>` | one launcher for each declared CLI runtime |
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
 //!
-//! A bare IDE gets the option files and the token of the bridge only, see [`write_bare`].
+//! A bare IDE gets the option files, the token of the bridge, and `config/options/advancedSettings.xml` of
+//! [`NO_README_SETTINGS`] only, see [`write_bare`].
 //!
 //! The directory `config/air-ui-test` and its three files are private to the account. The runtime in the IDE owns
 //! [`NEXT_START_CONTROL_FILE`], so this writer never writes or deletes it.
@@ -25,7 +26,7 @@ use std::io::{self, Write};
 use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-use avl_wire::ide::IdePrepared;
+use avl_wire::ide::{ADVANCED_SETTINGS_FILE, IdePrepared, NO_README_SETTINGS};
 use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LaneAgent, LaneDocument, Requirement};
 use serde::Serialize;
 
@@ -375,11 +376,17 @@ impl LaneContext<'_> {
 
 /// Writes the option files into `options`, and creates `new_projects`, an absolute path. `ide.general.xml` is written only when it is
 /// missing. The trusted paths are the absolute project path and its real path.
-/// Writes the context files of a bare IDE into the prepared context `paths`: the option files and `bridge_token` as the
-/// token of the bridge. A bare IDE gets no file of the lane services, of the control server or of an agent, so its
-/// home holds nothing of the machine or of the lane.
+/// Writes the context files of a bare IDE into the prepared context `paths`: the option files, `bridge_token` as the
+/// token of the bridge, and [`NO_README_SETTINGS`] as [`ADVANCED_SETTINGS_FILE`]. A bare IDE gets no file of the lane
+/// services, of the control server or of an agent, so its home holds nothing of the machine or of the lane.
+///
+/// The project opens no README, so the editor area starts empty and the empty-state composer of Air shows. With the
+/// README open, the start-up loads other classes, and its count depends on which of the two wins the race. The IDE of a
+/// lane keeps the README.
 pub(crate) fn write_bare(paths: &IdePrepared, bridge_token: &str) -> Result<(), AgentRefusal> {
-    write_options_and_token(paths, bridge_token).map(|_| ())
+    write_options_and_token(paths, bridge_token)?;
+    let settings = Path::new(&paths.config_dir).join(OPTIONS_DIR).join(ADVANCED_SETTINGS_FILE);
+    write_file(&settings, NO_README_SETTINGS.as_bytes())
 }
 
 /// Writes the option files and the token of the bridge, which every lane IDE gets, and answers the private directory

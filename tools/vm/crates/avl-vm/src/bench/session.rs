@@ -20,6 +20,7 @@ use std::time::SystemTime;
 use anyhow::Context;
 use avl_base::{Exit, Refusal, RefusalExt};
 use avl_trace_tools::discover::VM_RUNS_DIR;
+use avl_wire::ide::{ADVANCED_SETTINGS_FILE, NO_README_SETTINGS};
 use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
@@ -81,22 +82,10 @@ fn xml_attribute(value: &str) -> String {
         .replace('"', "&quot;")
 }
 
-/// The advanced settings of a sandbox whose project opens no editor. On the first open of a project, the IDE opens its
-/// `README.md`, and the next start restores that editor. The generated Markdown project has one.
-pub(crate) const NO_README_SETTINGS: &str = r#"<application>
-  <component name="AdvancedSettings">
-    <option name="settings">
-      <map>
-        <entry key="ide.open.readme.md.on.startup" value="false" />
-      </map>
-    </option>
-  </component>
-</application>
-"#;
-
-/// Keeps the IDE from opening the README of a project in this sandbox. See [`NO_README_SETTINGS`].
+/// Keeps the IDE from opening the README of a project in this sandbox: the generated Markdown project has one. The
+/// bytes are those of a bare lane IDE. See [`NO_README_SETTINGS`].
 pub(crate) fn open_no_readme(sandbox: &Sandbox) -> anyhow::Result<()> {
-    files::write_text(&sandbox.config().join("options").join("advancedSettings.xml"), NO_README_SETTINGS)
+    files::write_text(&sandbox.config().join("options").join(ADVANCED_SETTINGS_FILE), NO_README_SETTINGS)
 }
 
 /// Points the welcome project of a sandbox at its own `projects` directory.

@@ -177,7 +177,7 @@ fn written(document: &LaneDocument) -> (Prepared, LaneIdentity, ServicePorts) {
 // A bare IDE gets the option files of every lane IDE and the token of the bridge, in its private directory. It gets no
 // file of the lane services, of the control server or of an agent, and its home stays empty.
 #[test]
-fn a_bare_context_holds_the_option_files_and_the_token_alone() {
+fn a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme_alone() {
     let prepared = prepared();
     write_bare(&prepared.paths, "bare-token").unwrap();
     let rendered = tree(&prepared.context);
@@ -192,6 +192,7 @@ fn a_bare_context_holds_the_option_files_and_the_token_alone() {
         .collect();
     let mut expected: Vec<String> = options;
     expected.push(format!("config/{BRIDGE_DIR}/{TOKEN_FILE} 600"));
+    expected.push(format!("config/{OPTIONS_DIR}/{ADVANCED_SETTINGS_FILE}"));
     expected.sort();
     let mut found: Vec<String> = files.iter().map(|file| (*file).to_owned()).collect();
     found.sort();
@@ -200,6 +201,25 @@ fn a_bare_context_holds_the_option_files_and_the_token_alone() {
     assert_eq!(
         fs::read_to_string(prepared.context.join("config").join(BRIDGE_DIR).join(TOKEN_FILE)).unwrap(),
         "bare-token"
+    );
+    // The project of a bare IDE opens no README, so the editor area starts empty: the bytes of the start-up bench.
+    assert_eq!(
+        fs::read_to_string(prepared.context.join("config").join(OPTIONS_DIR).join(ADVANCED_SETTINGS_FILE)).unwrap(),
+        NO_README_SETTINGS
+    );
+}
+
+// The IDE of a lane keeps the README of its project: its context has no advanced settings.
+#[test]
+fn a_lane_context_writes_no_advanced_settings() {
+    let (prepared, _, _) = written(&document());
+    assert!(
+        !prepared
+            .context
+            .join("config")
+            .join(OPTIONS_DIR)
+            .join(ADVANCED_SETTINGS_FILE)
+            .exists()
     );
 }
 
