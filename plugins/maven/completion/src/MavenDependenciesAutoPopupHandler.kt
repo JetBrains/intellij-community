@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 
+@Suppress("SplitModeApiUsage") // todo split plugin debt
 internal class MavenDependenciesAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (file !is XmlFile) return Result.CONTINUE

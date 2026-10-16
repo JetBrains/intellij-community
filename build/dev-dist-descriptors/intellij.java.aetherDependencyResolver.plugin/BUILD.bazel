@@ -27,6 +27,9 @@ dev_dist_plugin_descriptor(
     ],
     descriptor = "//aether-dependency-resolver/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.java.aetherDependencyResolver.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.repository.search.completion"],
+    },
     refused_content_modules = [
         "intellij.repository.search.ultimate",
     ],

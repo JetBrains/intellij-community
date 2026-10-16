@@ -46,6 +46,7 @@
     <registryKey key="maven.dependency.completion.contributor.local.modules" defaultValue="true"
                  description="Maven project modules dependency completion contributor enabled"/>
 
+    <!--suppress SplitModeXmlApiUsage -->
     <typedHandler implementation="com.intellij.maven.completion.MavenDependenciesAutoPopupHandler"
                   id="MavenDependenciesAutoPopupHandler"/>
 

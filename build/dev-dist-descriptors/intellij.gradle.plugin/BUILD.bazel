@@ -45,7 +45,9 @@ dev_dist_plugin_descriptor(
     main_module = "intellij.gradle.plugin",
     mode_refused_content_modules = {
         "frontend": [
+            "intellij.gradle.completion",
             "intellij.gradle.completion.kotlin",
+            "intellij.gradle.completion.toml",
             "intellij.gradle.properties",
             "intellij.gradle.backend",
             "intellij.gradle.codeInsight.backend",
