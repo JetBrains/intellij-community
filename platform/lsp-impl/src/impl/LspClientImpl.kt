@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
@@ -35,6 +34,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
+import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.ServerCapabilities
@@ -97,6 +97,17 @@ class LspClientImpl internal constructor(
   @get:ApiStatus.Internal
   val lsp4jServer: Lsp4jServer
     get() = lsp4jServerConnector.lsp4jServer
+
+  /**
+   * Holds the effective [ClientCapabilities] sent to the LSP server in [org.eclipse.lsp4j.InitializeParams].
+   *
+   * Unlike [LspClientDescriptor.clientCapabilities] or [LspClientDescriptor.createInitializeParams],
+   * this property guarantees the same instance across multiple reads.
+   *
+   * The value is `null` before the server initializes.
+   */
+  internal var clientCapabilities: ClientCapabilities? = null
+    private set
 
   internal val serverCapabilities: ServerCapabilities?
     get() = if (state == LspServerState.Running) initializeResult?.capabilities else null
@@ -235,8 +246,9 @@ class LspClientImpl internal constructor(
       try {
         synchronized(connectorLock) {
           lsp4jServerConnector = createLsp4jServerConnector()
-          lsp4jServerConnector.connect { initializeResult ->
+          lsp4jServerConnector.connect { initializeParams, initializeResult ->
             this.initializeResult = initializeResult
+            this.clientCapabilities = initializeParams.capabilities
 
             // While waiting for the server initialization, the `state` might have already become `ShutdownNormally`
             // or `ShutdownUnexpectedly`, which means that the server is going to shut down shortly, so it must not get the Running state

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -97,6 +97,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
@@ -883,6 +884,11 @@ abstract class PyLspToolDescriptor(
 
   // workaround for IJPL-196574
   open val commandDescriptions: Map<String, String?> = emptyMap()
+
+  override val clientCapabilities: ClientCapabilities
+    get() = super.clientCapabilities.apply {
+      workspace?.fileOperations?.willRename = false
+    }
 
   override val lspCustomization: PyLspToolCustomization = PyLspToolCustomization(toolConfig, pyTool, project)
 }
