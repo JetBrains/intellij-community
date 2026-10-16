@@ -20,20 +20,17 @@ def (a,b) =
 c
 -----
 Groovy script
-  Modifiers
-    PsiElement(def)('def')
-  PsiErrorElement:identifier expected
-    <empty list>
-  PsiElement(new line)('\n')
-  Tuple assignment
-    Tuple Assignment Expression
-      PsiElement(()('(')
-      Reference expression
-        PsiElement(identifier)('a')
-      PsiElement(,)(',')
-      Reference expression
-        PsiElement(identifier)('b')
-      PsiElement())(')')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiElement(new line)('\n')
+    PsiElement(()('(')
+    Variable
+      PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    Variable
+      PsiElement(identifier)('b')
+    PsiElement())(')')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')

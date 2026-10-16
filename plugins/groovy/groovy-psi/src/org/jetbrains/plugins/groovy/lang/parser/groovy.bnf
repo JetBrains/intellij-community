@@ -688,7 +688,7 @@ variable_declaration_tail ::= variable (',' mb_nl variable)*
 }
 variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
 
-tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple mb_nl tuple_initializer
+tuple_var_declaration ::= non_empty_modifier_list mb_nl tuple_var_declaration_tuple mb_nl tuple_initializer
 {
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
