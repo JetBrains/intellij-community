@@ -11,7 +11,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -71,6 +73,7 @@ val checkoutRoot: Path = root.resolve("..").resolve("..").resolve("..").normaliz
 val patchFile: Path = root.resolve("bundles.patch")
 require(patchFile.isRegularFile()) { "Run this script from community/plugins/textmate" }
 
+val bundlesIndexFileName = "index.txt"
 val tempDir: Path = Files.createTempDirectory("textmate-bundles")
 val targetBundlesDir: Path = root.resolve("lib").resolve("bundles")
 val bundlesDir: Path = tempDir.resolve("bundles")
@@ -276,6 +279,10 @@ run {
     logStage("Minifying JSON files")
     val jsonFileCount = minifyJsonFiles()
     logDetail("Minified $jsonFileCount JSON files")
+
+    logStage("Writing the bundles index")
+    val indexedBundleCount = writeBundlesIndex()
+    logDetail("Indexed $indexedBundleCount bundles in $bundlesIndexFileName")
 
     if (dryRun) {
       logStage("Dry run complete")
@@ -583,6 +590,45 @@ fun minifyJsonFiles(): Int {
     minifiedFilesCount += 1
   }
   return minifiedFilesCount
+}
+
+/**
+ * Writes the index that the TextMate plugin reads at startup instead of the bundle directories:
+ * the scope name and the file name matchers of every grammar, per bundle, one entry per line.
+ * `TextMateBundlesIndex` documents the format, and `TextMateBundlesIndexTest` checks the index against the bundles.
+ */
+fun writeBundlesIndex(): Int {
+  val lines = ArrayList<String>()
+  lines.add("# The index of the bundles in this directory. loadVSCBundles.sh writes this file, and TextMateBundlesIndexTest checks it.")
+  var bundleCount = 0
+  bundlesDir.useDirectoryEntries { bundleDirectories ->
+    for (bundleDirectory in bundleDirectories.filter { it.isDirectory() && !it.name.startsWith('.') }.sortedBy { it.name }) {
+      val packageJson = bundleDirectory.resolve("package.json")
+      if (!packageJson.isRegularFile()) {
+        continue
+      }
+      lines.add("bundle ${bundleDirectory.name}")
+      bundleCount++
+      val contributes = readJson(packageJson).jsonObject["contributes"]?.jsonObject ?: continue
+      val languages = contributes["languages"]?.jsonArray.orEmpty().associateBy { language -> language.jsonObject["id"]!!.jsonPrimitive.content }
+      for (grammar in contributes["grammars"]?.jsonArray.orEmpty()) {
+        val scopeName = grammar.jsonObject["scopeName"]?.jsonPrimitive?.content ?: continue
+        lines.add("scope $scopeName")
+        val language = grammar.jsonObject["language"]?.jsonPrimitive?.content?.let(languages::get)?.jsonObject ?: continue
+        val extensions = language["extensions"]?.jsonArray.orEmpty().map { it.jsonPrimitive.content.removePrefix(".") }
+        if (extensions.isNotEmpty()) {
+          lines.add("ext ${extensions.joinToString(";")}")
+        }
+        val fileNames = language["filenames"]?.jsonArray.orEmpty().map { it.jsonPrimitive.content }
+        if (fileNames.isNotEmpty()) {
+          lines.add("name ${fileNames.joinToString(";")}")
+        }
+        language["filenamePatterns"]?.jsonArray.orEmpty().mapTo(lines) { "pattern ${it.jsonPrimitive.content}" }
+      }
+    }
+  }
+  bundlesDir.resolve(bundlesIndexFileName).writeText(lines.joinToString(separator = "\n", postfix = "\n"))
+  return bundleCount
 }
 
 fun readJson(path: Path): JsonElement = path.bufferedReader().use { reader ->

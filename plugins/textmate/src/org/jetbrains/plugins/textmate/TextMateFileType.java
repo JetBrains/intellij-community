@@ -57,7 +57,7 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     CharSequence fileName = file.getNameSequence();
     FileType originalFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return isTypeShouldBeReplacedByTextMateType(originalFileType) &&
-           TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
+           TextMateService.getInstance().hasLanguageForFileName(fileName);
   }
 
   private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
@@ -89,7 +89,7 @@ public final class TextMateFileType extends LanguageFileType implements FileType
       }
       boolean textMateRecognizesMe = false;
       try {
-        textMateRecognizesMe = TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
+        textMateRecognizesMe = TextMateService.getInstance().hasLanguageForFileName(fileName);
       }
       catch (ProcessCanceledException ignored) {
       }

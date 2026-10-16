@@ -1,19 +1,23 @@
 package org.jetbrains.plugins.textmate
 
 import com.intellij.openapi.diagnostic.getOrHandleException
-import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.plugins.textmate.api.TextMateBundleProvider
 import kotlin.io.path.absolutePathString
 
-fun TextMateServiceImpl.getPluginBundles(): MutableList<TextMateBundleToLoad> {
-  val bundleProviders = TextMateBundleProvider.EP_NAME.extensionList
-  val pluginBundles = mutableListOf<TextMateBundleProvider.PluginBundle>()
-  for (provider in bundleProviders) {
+/**
+ * @param extensions the lower-case extensions that the provider declares, empty for a provider whose bundle is read at startup
+ */
+internal class PluginBundleToLoad(val bundle: TextMateBundleToLoad, val extensions: Set<String>)
+
+internal fun getPluginBundles(): List<PluginBundleToLoad> {
+  val pluginBundles = ArrayList<PluginBundleToLoad>()
+  for (provider in TextMateBundleProvider.EP_NAME.extensionList) {
     runCatching {
-      pluginBundles.addAll(provider.getBundles())
+      val extensions = provider.getExtensions().map { it.lowercase() }.toSet()
+      provider.getBundles().mapTo(pluginBundles) { PluginBundleToLoad(TextMateBundleToLoad(it.name, it.path.absolutePathString()), extensions) }
     }.getOrHandleException {
-      thisLogger().error("$$provider failed", it)
+      TextMateService.LOG.error("$provider failed", it)
     }
   }
-  return pluginBundles.distinctBy { it.path }.mapTo(mutableListOf()) { TextMateBundleToLoad(it.name, it.path.absolutePathString()) }
+  return pluginBundles.distinctBy { it.bundle.path }
 }

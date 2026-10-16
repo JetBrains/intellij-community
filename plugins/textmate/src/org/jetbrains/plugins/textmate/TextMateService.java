@@ -54,6 +54,14 @@ public abstract class TextMateService {
 
   public abstract @Nullable TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
+  /**
+   * Tells whether an enabled bundle has a grammar for the file name.
+   * The method reads the file name mapping only and loads no bundle.
+   */
+  public boolean hasLanguageForFileName(@NotNull CharSequence fileName) {
+    return getLanguageDescriptorByFileName(fileName) != null;
+  }
+
   public abstract @NotNull Map<TextMateFileNameMatcher, CharSequence> getFileNameMatcherToScopeNameMapping();
 
   /**

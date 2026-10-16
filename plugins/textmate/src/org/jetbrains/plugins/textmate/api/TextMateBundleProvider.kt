@@ -18,6 +18,16 @@ interface TextMateBundleProvider {
    */
   fun getBundles(): List<PluginBundle>
 
+  /**
+   * The file extensions of the files that the bundles of this provider support, without the leading dot.
+   * The extensions are case-insensitive.
+   *
+   * A provider that returns a non-empty set is lazy: the TextMate plugin registers the extensions at startup
+   * and reads the bundles on the first request of a file with such an extension.
+   * A provider that returns an empty set has its bundles read at startup.
+   */
+  fun getExtensions(): Set<String> = emptySet()
+
   companion object {
     val EP_NAME: ExtensionPointName<TextMateBundleProvider> = ExtensionPointName("com.intellij.textmate.bundleProvider")
   }
