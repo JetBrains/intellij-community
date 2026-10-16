@@ -20,4 +20,8 @@
     <module name="intellij.repository.search.completion"/>
     <module name="intellij.repository.search.ultimate"/>
   </content>
+
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
 </idea-plugin>

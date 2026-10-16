@@ -28,6 +28,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
 )
 
 jvm_library(
@@ -39,7 +40,11 @@ jvm_library(
     ),
     module_name = "intellij.java.aetherDependencyResolver.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//platform/backend:backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver.plugin` end
 
