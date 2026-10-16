@@ -21,6 +21,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.util.Function;
+import com.intellij.util.indexing.IndexUpToDateCheckIn;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -202,30 +203,32 @@ public abstract class StubTreeLoader {
     }
 
     private @NotNull RuntimeException doCreateCompleteException() {
-      StubTreeLoader instance = getInstance();
-      StubTree stubTreeFromIndex = (StubTree)instance.readFromVFile(project, file);
+      return IndexUpToDateCheckIn.disableUpToDateCheckIn(() -> {
+        StubTreeLoader instance = getInstance();
+        StubTree stubTreeFromIndex = (StubTree)instance.readFromVFile(project, file);
 
-      String msg = coarseMessage;
-      msg += "\nlatestIndexedStub=" + stubTreeFromIndex;
-      if (stubTreeFromIndex != null) {
-        if (stubTreePlainListSize != -1) {
-          msg += "\n   same size=" + (stubTreePlainListSize == stubTreeFromIndex.getPlainList().size());
+        String msg = coarseMessage;
+        msg += "\nlatestIndexedStub=" + stubTreeFromIndex;
+        if (stubTreeFromIndex != null) {
+          if (stubTreePlainListSize != -1) {
+            msg += "\n   same size=" + (stubTreePlainListSize == stubTreeFromIndex.getPlainList().size());
+          }
+          msg += "\n   debugInfo=" + stubTreeFromIndex.getDebugInfo();
         }
-        msg += "\n   debugInfo=" + stubTreeFromIndex.getDebugInfo();
-      }
 
-      List<@NotNull PsiFile> files = PsiManagerEx.getInstanceEx(project).getFileManagerEx().getCachedPsiFiles(file);
-      msg += "\n   number of cached psi files=" + files.size();
+        List<@NotNull PsiFile> files = PsiManagerEx.getInstanceEx(project).getFileManagerEx().getCachedPsiFiles(file);
+        msg += "\n   number of cached psi files=" + files.size();
 
-      if (stubTreeFromIndex != null) {
-        coarseAttachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl<?>)stubTreeFromIndex.getRoot()).printTree()));
-      }
-      Attachment[] attachments = coarseAttachments.toArray(Attachment.EMPTY_ARRAY);
+        if (stubTreeFromIndex != null) {
+          coarseAttachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl<?>)stubTreeFromIndex.getRoot()).printTree()));
+        }
+        Attachment[] attachments = coarseAttachments.toArray(Attachment.EMPTY_ARRAY);
 
-      // separate methods and separate exception classes for EA to treat these situations differently
-      return instance.hasPsiInManyProjects(file) ? handleManyProjectsMismatch(msg, attachments, cause) :
-             upToDate ? handleUpToDateMismatch(msg, attachments, cause) :
-             new RuntimeExceptionWithAttachments(msg, cause, attachments);
+        // separate methods and separate exception classes for EA to treat these situations differently
+        return instance.hasPsiInManyProjects(file) ? handleManyProjectsMismatch(msg, attachments, cause) :
+               upToDate ? handleUpToDateMismatch(msg, attachments, cause) :
+               new RuntimeExceptionWithAttachments(msg, cause, attachments);
+      });
     }
   }
 
