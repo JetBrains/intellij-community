@@ -436,6 +436,7 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - a:getIconPadding(com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.util.ui.JBInsets
 - *s:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 - a:getStripeIconUnscaledSize():I
+- a:isShowToolWindowsNumbersSupported():Z
 - a:isStripeResizable():Z
 - a:isToolWindowNameVisible():Z
 *f:com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension$Companion

@@ -22,6 +22,10 @@ internal class ToolWindowStripeExtensionImpl : ToolWindowStripeExtension {
     return true
   }
 
+  override fun isShowToolWindowsNumbersSupported(): Boolean {
+    return true
+  }
+
   override fun getStripeIconUnscaledSize(): Int {
     return ToolWindowStripeExtension.ICON_UNSCALED_SIZE
   }

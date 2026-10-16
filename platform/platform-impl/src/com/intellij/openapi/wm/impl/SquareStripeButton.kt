@@ -7,6 +7,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -79,7 +80,7 @@ internal abstract class AbstractSquareStripeButton(
 }
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null) {
+  AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null), UISettingsListener {
 
   companion object {
     fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()
@@ -91,6 +92,10 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
     setLook(createSquareStripeButtonLook())
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    (buttonLook as? UISettingsListener)?.uiSettingsChanged(uiSettings)
   }
 
   override fun paintButtonLook(g: Graphics) {

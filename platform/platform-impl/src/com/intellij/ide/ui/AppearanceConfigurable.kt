@@ -468,8 +468,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               if (ExperimentalUI.isNewUI()) {
                 row { checkBox(cdRememberSizeForEachToolWindowNewUI) }
               }
-              else {
+
+              if (!ExperimentalUI.isNewUI() || ToolWindowStripeExtension.getInstance()?.isShowToolWindowsNumbersSupported() == true) {
                 row { checkBox(cdShowToolWindowNumbers) }
+              }
+
+              if (!ExperimentalUI.isNewUI()) {
                 row { checkBox(cdRememberSizeForEachToolWindowOldUI) }
               }
             }

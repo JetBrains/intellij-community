@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.extendedToolWindowsUi
 
+import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLookExtension
@@ -25,10 +27,24 @@ import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.UIManager
 
-internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : SquareStripeButtonLookExtension(button) {
+internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
+  SquareStripeButtonLookExtension(button), UISettingsListener {
+
+  private val showToolWindowsNumbers: Boolean
+    get() = UISettings.getInstance().showToolWindowsNumbers
+  private var lastShowToolWindowsNumbers = showToolWindowsNumbers
 
   private fun getForegroundColor(): Color {
     return if (toolWindow.isActive) StripeButtonUi.SELECTED_FOREGROUND_COLOR else UIUtil.getLabelForeground()
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    val currentShowToolWindowsNumbers = uiSettings.showToolWindowsNumbers
+    if (currentShowToolWindowsNumbers != lastShowToolWindowsNumbers) {
+      lastShowToolWindowsNumbers = currentShowToolWindowsNumbers
+      button.revalidate()
+      button.repaint()
+    }
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
@@ -151,7 +167,10 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : 
 
   private fun getStripeText(): String {
     // Don't use short title the plugin
-    return toolWindow.stripeTitleProvider.get().trim()
+    val title = toolWindow.stripeTitleProvider.get().trim()
+    val mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(toolWindow.id)
+
+    return if (showToolWindowsNumbers && mnemonic != -1) "${mnemonic.toChar()}: $title" else title
   }
 
   private fun getButtonScaledInsets(): ButtonScaledInsets {
