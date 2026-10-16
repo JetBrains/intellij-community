@@ -40,6 +40,10 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.terminal",
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
     ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
