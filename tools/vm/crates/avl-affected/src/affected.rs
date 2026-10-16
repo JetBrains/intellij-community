@@ -55,10 +55,9 @@
 //!   module of their own under it, such as the lane `.bzl` rules.
 //! - `…flow` is the flow driver, `AirScenarioRunner`, the state reset, and the generated shared scaffolding.
 //! - `…uiDaemon` is the daemon, one JVM over the classpath of every lane.
-//! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test.
+//! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test. The bridge also
+//!   holds the authored bodies of the suites.
 //! - `…testSupport` is the fake agents and the fake registry the flow harness links for every lane.
-//! - `…ui`, `…uiReal` and `…guiChat` are the lane leaves. Each holds its lane's generated test classes, so it serves
-//!   that one lane. An authored test class in a leaf reaches its own suite first.
 //!
 //! Left out on purpose: `…contract` runs in the fast lane and in no UI lane, `…flowProfiles` holds suite documents
 //! that each reach their own suite, and the `…headless.*` modules run in no UI lane.
