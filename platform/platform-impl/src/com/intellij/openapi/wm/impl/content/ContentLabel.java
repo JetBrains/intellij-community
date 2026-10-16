@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseInfoUtil;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import java.awt.AWTEvent;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.event.MouseEvent;
@@ -141,7 +141,7 @@ public abstract class ContentLabel extends BaseLabel {
       point = e.getLocationOnScreen();
     }
     else {
-      PointerInfo info = MouseInfo.getPointerInfo();
+      PointerInfo info = MouseInfoUtil.getPointerInfoOrNull();
       if (info != null) {
         point = info.getLocation();
       }
