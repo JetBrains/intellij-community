@@ -10299,6 +10299,7 @@ f:com.intellij.ui.tabs.TabInfo
 - f:getSideComponent():javax.swing.JComponent
 - f:getTabActionPlace():java.lang.String
 - f:getTabColor():java.awt.Color
+- f:getTabLabel():com.intellij.ui.tabs.impl.TabLabel
 - f:getTabLabelActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getTabPaneActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getText():java.lang.String
