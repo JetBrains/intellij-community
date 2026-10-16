@@ -128,7 +128,7 @@ internal fun isColorIslandGradient(): Boolean = Registry.`is`("idea.islands.colo
 /**
  * Kill switch for the dithered gradient rendering; when disabled, the previous Java2D gradient painting is used.
  */
-private fun isGradientDitheringEnabled(): Boolean = Registry.`is`("ide.islands.gradient.dithering.enabled", false)
+private fun isGradientDitheringEnabled(): Boolean = Registry.`is`("ide.islands.gradient.dithering.enabled", true)
 
 internal fun isColorIslandGradientAvailable(): Boolean = IslandsState.isEnabled() && isColorIslandGradient()
 
