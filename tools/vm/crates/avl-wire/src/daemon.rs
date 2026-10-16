@@ -32,6 +32,10 @@ mod tests;
 /// the two halves move together.
 pub const PROTOCOL_VERSION: u32 = 6;
 
+/// The daemon environment variable that names the guest directory of the run inputs of `run --test-env NAME=@FILE`.
+/// The controller sets it to a path, never to a value. A file of that directory holds a secret of one run.
+pub const RUN_SECRETS_VARIABLE: &str = "AIR_VM_RUN_SECRETS";
+
 /// The protocol of the JVM daemon, `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. It has the two quiesce routes
 /// and the two status fields that protocol 6 dropped. The controller never calls the routes and ignores the fields.
 /// It goes with [`Runner::Jvm`].

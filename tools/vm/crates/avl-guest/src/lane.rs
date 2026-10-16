@@ -1,8 +1,9 @@
 //! The lane daemon: the verb `lane-daemon` and its parts. The control channel, the owner of the lane IDE, its readiness
 //! and the reload of its bridge plugin, the launch inputs, the identity of the lane IDE, the files of its context, the
-//! fake ACP agent package, and the lane services that the lane IDE talks to instead of production. The program runner
-//! runs the suite documents against the lane IDE, with its values, its host ids, the recycle of the IDE, the watchdog,
-//! the trace and the run stream.
+//! fake ACP agent package, the lane services that the lane IDE talks to instead of production, and the live context of
+//! the live lane, whose real agents spend a JetBrains Central account. The program runner runs the suite documents
+//! against the lane IDE, with its values, its host ids, the recycle of the IDE, the watchdog, the trace and the run
+//! stream.
 
 pub(crate) mod channel;
 pub(crate) mod context;
@@ -11,6 +12,14 @@ pub(crate) mod ide;
 pub(crate) mod identity;
 pub(crate) mod inputs;
 pub(crate) mod iteration;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the lane daemon provisions the live context once the iteration runs the live lane"
+    )
+)]
+pub(crate) mod live;
 pub(crate) mod package;
 pub(crate) mod program;
 pub(crate) mod readiness;

@@ -26,7 +26,7 @@ mod tests;
 
 /// The daemon environment variable that names the guest directory of the run secrets. Set to a path, never to a
 /// value, and the same path for every run, so it changes the launch digest once and never again.
-pub(crate) const RUN_SECRETS_VARIABLE: &str = "AIR_VM_RUN_SECRETS";
+pub(crate) use avl_wire::daemon::RUN_SECRETS_VARIABLE;
 
 /// The shortest value a run secret may have. The artifact scan looks for the value in text, and a value this short
 /// would match ordinary text and refuse every run. A credential is far longer.
