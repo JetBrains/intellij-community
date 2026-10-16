@@ -63,6 +63,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.TargetAwarePathMappingProvider;
@@ -74,6 +76,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyEelSdkKt;
@@ -92,8 +95,6 @@ import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -938,6 +939,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @PyInternalExecApi
   @ApiStatus.Internal
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
