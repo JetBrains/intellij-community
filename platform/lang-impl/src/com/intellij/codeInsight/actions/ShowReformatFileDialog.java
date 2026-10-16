@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -41,9 +43,8 @@ public class ShowReformatFileDialog extends AnAction implements DumbAware {
       return;
     }
 
-    if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-      presentation.setEnabled(true);
-    }
+    var service = FormattingServiceUtil.findService(file, true, true);
+    presentation.setEnabled(!(service instanceof CoreFormattingService) || LanguageFormatting.INSTANCE.forContext(file) != null);
   }
 
   @Override

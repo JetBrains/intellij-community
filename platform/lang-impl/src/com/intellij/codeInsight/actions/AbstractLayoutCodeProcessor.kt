@@ -275,6 +275,15 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     runUnderDefaultWriteCommandAction(myProject, commandName, groupId, processAllFilesAsSingleUndoStep, modifyTask)
   }
 
+  /**
+   * Called after [runTask] returns and the awaited [com.intellij.formatting.service.AsyncDocumentFormattingService] tasks finish.
+   * Override it to inspect the document state that an async formatting service produced.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected open fun afterTaskCompleted() {
+  }
+
   open fun run() {
     if (target is SingleFileTarget) {
       PsiUtilCore.ensureValid(target.psiFile)
@@ -501,6 +510,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
             AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, stageCommandName)
           }
         }
+        processor.afterTaskCompleted()
 
         if (!shouldContinue(writeTask, file)) {
           return false
@@ -612,16 +622,18 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return !(formattingService is CoreFormattingService && LanguageFormatting.INSTANCE.forContext(psiFile) == null)
     }
 
-    private fun withStructuredAsyncDocumentFormattingIfNotEdt(block: () -> Unit) {
+    @JvmStatic
+    @ApiStatus.Internal
+    protected fun withStructuredAsyncDocumentFormattingIfNotEdt(block: Runnable) {
       if (!application.isDispatchThread && isWaitForAsyncDocumentFormattingTasks()) {
         runBlockingMaybeCancellable {
           structuredAsyncDocumentFormattingScope {
-            coroutineToIndicator { block () }
+            coroutineToIndicator { block.run() }
           }
         }
       }
       else {
-        block()
+        block.run()
       }
     }
 

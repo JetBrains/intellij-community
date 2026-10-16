@@ -298,6 +298,7 @@ c:com.intellij.codeInsight.actions.ReformatCodeAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.codeInsight.actions.ReformatCodeProcessor
 - com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+- p:afterTaskCompleted():V
 - s:getCommandName():java.lang.String
 - setDoNotKeepLineBreaks(com.intellij.psi.PsiFile):V
 f:com.intellij.codeInsight.actions.ReformatCodeRunOptions

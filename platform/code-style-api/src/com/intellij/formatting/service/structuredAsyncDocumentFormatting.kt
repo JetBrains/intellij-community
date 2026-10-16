@@ -13,6 +13,8 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * This scope does not return until all [AsyncDocumentFormattingService]s invoked inside have finished formatting.
+ * If a formatting request of an [AsyncDocumentFormattingService] fails, the other formatting requests in this scope are cancelled.
+ * This function still returns the result of [action].
  *
  * Usage:
  * ```kotlin
