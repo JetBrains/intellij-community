@@ -2058,7 +2058,6 @@ uast/uast-common-ide
 uast/uast-java
 uast/uast-java-ide
 uast/uast-tests
-updater
 xml/dom-impl
 xml/dom-openapi
 xml/dom-tests

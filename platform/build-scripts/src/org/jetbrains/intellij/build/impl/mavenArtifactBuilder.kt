@@ -1,6 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "DestructuringForParameter", "ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.buildScripts.concurrency.Subtask
@@ -17,12 +15,11 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import kotlin.text.contains
 
 /**
  * @return module names which are required to run the necessary tools from build scripts
  */
-private fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")
+private fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter")
 
 internal fun TaskScope.createMavenArtifactJob(platformLayout: PlatformLayout, context: BuildContext): Subtask<Unit?>? {
   val mavenArtifacts = context.productProperties.mavenArtifacts
@@ -104,8 +101,8 @@ internal fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequ
   return sequence {
     for (content in pluginDescriptor.children("content")) {
       for (module in content.children("module")) {
-        val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
-        val loadingRuleString = module.attributes.get("loading")
+        val moduleName = module.attributes["name"]?.takeIf { !it.contains('/') } ?: continue
+        val loadingRuleString = module.attributes["loading"]
         yield(moduleName to loadingRuleString)
       }
     }
