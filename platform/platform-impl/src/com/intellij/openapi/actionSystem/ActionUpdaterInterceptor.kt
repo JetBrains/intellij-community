@@ -8,10 +8,25 @@ import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
+import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
 interface ActionUpdaterInterceptor {
+
+  /**
+   * Marks the fast pass of [runUpdateSessionForInputEvent].
+   *
+   * This is a marker for a Rider or CLion remote-dev host process.
+   * Such a process is itself a frontend of the ReSharper backend and registers `FrontendActionUpdateInterceptor`.
+   */
+  class FastPass : AbstractCoroutineContextElement(FastPass) {
+    companion object : CoroutineContext.Key<FastPass> {
+      suspend fun isActive(): Boolean = currentCoroutineContext()[FastPass] != null
+    }
+  }
 
   suspend fun updateAction(
     action: AnAction,
