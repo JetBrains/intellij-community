@@ -16,11 +16,12 @@ flowchart TD
   Hook -->|provides| Model["GridModel"]
   Hook -->|provides| Mutator["GridMutator"]
   Grid -->|uses| Factory["ResultViewFactory"]
-  Factory -->|table| Primary["PrimaryTableResultView"]
+  Factory -->|table| Table["TableResultView"]
   Factory -->|text| Text["TextResultView"]
   Factory -->|tree table| Tree["TreeTableResultView"]
-  Primary -->|owns| Frozen["FrozenColumnsController"]
-  Frozen -->|creates| Strip["FrozenStripTableResultView"]
+  Table -->|owns| Primary["GridTable"]
+  Table -->|owns| Frozen["FrozenColumnsController"]
+  Frozen -->|creates| Strip["FrozenStripTable"]
 ```
 
 | Interface or class                                               | Role                                                                                                |
@@ -63,11 +64,13 @@ Resolve the column again by its unique name with `GridUtil.findColumn(grid, name
 
 ## View and column ownership
 
-[TableResultView](src/run/ui/table/TableResultView.java) provides the common table behavior.
-[PrimaryTableResultView](src/run/ui/table/PrimaryTableResultView.kt) adds grid integration and owns the frozen region.
-[FrozenStripTableResultView](src/run/ui/table/FrozenStripTableResultView.kt) renders the pinned columns.
-[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) coordinates both tables (selection, dimensions, model updates)
-and forwards frozen header moves to the primary view.
+[TableResultView](src/run/ui/table/TableResultView.java) owns the complete view and its internal tables.
+[GridTable](src/run/ui/table/GridTable.java) provides the common table behavior.
+The owner uses a `GridTable` instance to render the scrollable columns.
+[FrozenStripTable](src/run/ui/table/FrozenStripTable.kt) renders the pinned columns.
+[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) coordinates selection, dimensions, and model updates.
+Both tables send requests to the owner through [GridTableHost](src/run/ui/table/GridTableHost.kt).
+[ColumnLayoutContext](src/run/ui/grid/ColumnLayoutContext.kt) gives layout extensions measurements and column widths.
 [TextResultView](src/run/ui/text/TextResultView.java) formats rows into an editor document.
 [TreeTableResultView](src/run/ui/treetable/TreeTableResultView.java) presents rows as trees of fields.
 
@@ -130,7 +133,9 @@ A disposable hook is disposed when its reference count reaches zero;
 
 ## Tests
 
-Grid integration tests live in `dbe/database/connectivity/tests/src/grid` (monorepo only) and cover selection, pinning, views, and hierarchy.
+Grid integration tests live in the monorepo only, in `dbe/database/connectivity/tests/src/grid` and `dbe/database/connectivity/tests/src/run/ui/table`.
+The `run/ui/table` tests cover the table view and pinning; the `grid` tests cover selection, views, and hierarchy.
+CI runs a test class only from a suite, so register each new class in `DatabaseTestSuite.GridTestSuite`.
 The connectivity test module supplies the database plugin and fixture dependencies.
 For example, run the column popup tests:
 

@@ -57,13 +57,15 @@ import kotlin.math.roundToInt
 
 /**
  * Owns the secondary table used to render frozen columns and coordinates interactions that cross the boundary
- * between it and the primary table. Rendering and ordinary table behavior remain in [TableResultView].
+ * between it and the primary table. Rendering and ordinary table behavior remain in [GridTable].
  */
 internal class FrozenColumnsController(
-  private val primaryView: TableResultView,
+  private val primaryView: GridTable,
   private val resultPanel: DataGrid,
   private val columnHeaderPopupActions: ActionGroup,
   private val rowHeaderPopupActions: ActionGroup,
+  private val hostFactory: (GridTable) -> GridTableHost,
+  private val floatingToolbar: TableFloatingToolbar,
 ) : Disposable {
   private var region: FrozenRegion? = null
   private var originalCorner: Component? = null
@@ -82,15 +84,12 @@ internal class FrozenColumnsController(
   private var frozenColumnResizeHandle: MouseInputAdapter? = null
   private var showRowNumbers = false
 
-  fun getPrimaryView(): TableResultView = primaryView
 
   /** The strip, or null while nothing is pinned. */
-  val frozenView: TableResultView? get() = region?.view
-
-  fun isEditingInFrozenView(): Boolean = frozenView?.isEditing == true
+  val frozenView: GridTable? get() = region?.view
 
   /** Installs navigation that treats the frozen strip and the primary table as one displayed column sequence. */
-  fun installColumnNavigationActions(view: TableResultView, actionMap: ActionMap) {
+  fun installColumnNavigationActions(view: GridTable, actionMap: ActionMap) {
     wrapColumnMoveAction(view, actionMap, "selectNextColumnCell", forward = true, extend = false, wrapsRows = true)
     wrapColumnMoveAction(view, actionMap, "selectPreviousColumnCell", forward = false, extend = false, wrapsRows = true)
     wrapColumnMoveAction(view, actionMap, "selectNextColumn", forward = true, extend = false)
@@ -103,7 +102,7 @@ internal class FrozenColumnsController(
     wrapColumnEdgeAction(view, actionMap, "selectLastColumnExtendSelection", first = false, extend = true)
   }
 
-  private fun wrapColumnMoveAction(view: TableResultView,
+  private fun wrapColumnMoveAction(view: GridTable,
                                    actionMap: ActionMap,
                                    name: String,
                                    forward: Boolean,
@@ -112,7 +111,7 @@ internal class FrozenColumnsController(
     wrapNavigationAction(actionMap, name) { handleColumnMove(view, forward, extend, wrapsRows) }
   }
 
-  private fun wrapColumnEdgeAction(view: TableResultView, actionMap: ActionMap, name: String, first: Boolean, extend: Boolean) {
+  private fun wrapColumnEdgeAction(view: GridTable, actionMap: ActionMap, name: String, first: Boolean, extend: Boolean) {
     wrapNavigationAction(actionMap, name) { handleColumnEdgeMove(view, first, extend) }
   }
 
@@ -203,7 +202,7 @@ internal class FrozenColumnsController(
   }
 
   /** A direct resize may shrink freely, but it may not introduce or increase avoidable pinned-strip overflow. */
-  fun constrainFrozenColumnResize(view: TableResultView,
+  fun constrainFrozenColumnResize(view: GridTable,
                                   column: TableResultViewColumn,
                                   requestedWidth: Int): Int =
     if (view === frozenView) constrainFrozenColumnResize(column, requestedWidth) else requestedWidth
@@ -229,7 +228,7 @@ internal class FrozenColumnsController(
   }
 
   /** Keeps the keyboard width action consistent with mouse resizing, including mixed and multi-column selections. */
-  fun constrainSelectedColumnWidthDelta(view: TableResultView, selectedColumns: IntArray, delta: Int): Int {
+  fun constrainSelectedColumnWidthDelta(view: GridTable, selectedColumns: IntArray, delta: Int): Int {
     if (delta <= 0 || selectedColumns.isEmpty()) return delta
     val frozen = frozenView ?: return delta
     var selectedPinned = 0
@@ -293,7 +292,6 @@ internal class FrozenColumnsController(
    */
   fun setFrozenColumns(pinnedColumns: Set<ModelIndex<GridColumn>>) {
     val parent = findScrollPane() ?: return
-    if ((primaryView.isEditing || isEditingInFrozenView()) && !primaryView.stopEditing()) primaryView.cancelEditing()
     restorePreviouslyFrozenColumns()
 
     // The column model speaks in raw model indices, so unwrap once here instead of per column below.
@@ -319,7 +317,7 @@ internal class FrozenColumnsController(
     primaryView.applyComponentOrientation(orientation)
     frozen.applyComponentOrientation(orientation)
 
-    (frozen.columnModel as TableResultView.MyTableColumnModel).removeAllColumns()
+    (frozen.columnModel as GridTable.MyTableColumnModel).removeAllColumns()
     for (mainColumn in visiblePinnedColumns) {
       val frozenColumn = frozen.columnCache.getOrCreateColumn(mainColumn.modelIndex)
       val width = mainColumn.frozenStripWidth
@@ -329,7 +327,7 @@ internal class FrozenColumnsController(
       hideMainColumn(mainColumn)
     }
 
-    primaryView.syncAppearanceToFrozenView(frozen)
+    frozen.applyAppearance(primaryView.captureAppearance())
     installFrozenRegion(parent)
     mirrorColumnSelection(primaryView.columnModel.selectionModel, frozen.columnModel.selectionModel, false)
     frozen.updateSortKeysFromColumnAttributes()
@@ -337,18 +335,19 @@ internal class FrozenColumnsController(
     parent.repaint()
   }
 
-  private fun createFrozenView(parent: TableScrollPane): TableResultView {
+  private fun createFrozenView(parent: TableScrollPane): GridTable {
     originalCorner = parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
     originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
-    val frozen = FrozenStripTableResultView(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions, this)
-    frozen.autoResizeMode = TableResultView.AUTO_RESIZE_OFF
+    val frozen = FrozenStripTable(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions)
+      .also { it.installHost(hostFactory(it)) }
+    frozen.autoResizeMode = GridTable.AUTO_RESIZE_OFF
     frozen.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
     frozen.cellSelectionEnabled = true
     // Rows share one model; columns use separate models mirrored below so selection paints correctly in both tables.
     frozen.selectionModel = primaryView.selectionModel
     TableSelectionModel.install(frozen, resultPanel)
     installRightButtonCellSelect(frozen)
-    primaryView.shareFloatingToolbarWith(frozen)
+    floatingToolbar.attach(frozen)
     componentMouseListeners.forEach(frozen::addMouseListener)
 
     val mainColumns = primaryView.columnModel.selectionModel
@@ -391,6 +390,7 @@ internal class FrozenColumnsController(
     val region = region ?: return
     uninstallFrozenScrolling()
     this.region = null
+    floatingToolbar.detach(region.view)
     region.dispose(primaryView, componentMouseListeners)
   }
 
@@ -421,7 +421,7 @@ internal class FrozenColumnsController(
     }
   }
 
-  private fun createFrozenColumnOrderMirror(frozen: TableResultView): TableColumnModelListener {
+  private fun createFrozenColumnOrderMirror(frozen: GridTable): TableColumnModelListener {
     val listener = object : TableColumnModelListener {
       override fun columnMoved(event: TableColumnModelEvent) {
         if (event.fromIndex == event.toIndex) return
@@ -441,7 +441,7 @@ internal class FrozenColumnsController(
   }
 
   /** Where the column moved to [stripIndex] goes in the main table: next to the strip neighbour it ended up with. */
-  private fun mainTargetForStripMove(frozen: TableResultView, stripIndex: Int): Int? {
+  private fun mainTargetForStripMove(frozen: GridTable, stripIndex: Int): Int? {
     if (stripIndex < 0 || stripIndex >= frozen.columnCount) return null
     val moved = primaryView.viewColumnOf(frozen.columnModel.getColumn(stripIndex).modelIndex)
     if (moved < 0) return null
@@ -452,7 +452,7 @@ internal class FrozenColumnsController(
     return if (moved > right) right else right - 1
   }
 
-  private fun createFrozenMoveColumnListener(frozen: TableResultView): MoveColumnListener {
+  private fun createFrozenMoveColumnListener(frozen: GridTable): MoveColumnListener {
     // Mutable document grids update their source from MoveColumnListener on mouse release. The frozen strip mirrors
     // the Swing order into the primary table first, then this listener applies that primary order to the source.
     val listener = MoveColumnListener(resultPanel, primaryView)
@@ -467,7 +467,7 @@ internal class FrozenColumnsController(
     renderFrozenRegion(parent, frozen, gutter)
   }
 
-  private fun renderFrozenRegion(parent: TableScrollPane, frozen: TableResultView, gutter: GridRowHeader?) {
+  private fun renderFrozenRegion(parent: TableScrollPane, frozen: GridTable, gutter: GridRowHeader?) {
     val orientation = parent.componentOrientation
     val scrolling = scrolling ?: return
     val viewport = scrolling.viewport
@@ -508,7 +508,7 @@ internal class FrozenColumnsController(
   /** The row-number gutter and the strip share the row header, and their headers share the corner. */
   private class GutterWrappers(
     val gutter: GridRowHeader,
-    val frozen: TableResultView,
+    val frozen: GridTable,
     val frozenViewport: HorizontalViewport,
     val gutterCorner: JPanel,
     val rowHeader: JPanel,
@@ -517,7 +517,7 @@ internal class FrozenColumnsController(
 
   /** Built once per gutter and strip, so a rebuild for another pinned column does not replace the whole row header. */
   private fun gutterWrappers(gutter: GridRowHeader,
-                             frozen: TableResultView,
+                             frozen: GridTable,
                              viewport: HorizontalViewport,
                              headerViewport: HorizontalViewport): GutterWrappers {
     val region = region ?: error("The gutter belongs to the strip, so the region must exist here")
@@ -531,7 +531,7 @@ internal class FrozenColumnsController(
   }
 
   private fun createGutterWrappers(gutter: GridRowHeader,
-                                   frozen: TableResultView,
+                                   frozen: GridTable,
                                    viewport: HorizontalViewport): GutterWrappers {
     val gutterCorner = object : JPanel(BorderLayout()) {
       override fun getPreferredSize(): Dimension =
@@ -635,7 +635,7 @@ internal class FrozenColumnsController(
     parent.repaint()
   }
 
-  private fun frozenColumnsWidth(frozen: TableResultView, except: TableResultViewColumn? = null): Int {
+  private fun frozenColumnsWidth(frozen: GridTable, except: TableResultViewColumn? = null): Int {
     var width = 0L
     for (index in 0 until frozen.columnCount) {
       val column = frozen.columnModel.getColumn(index) as TableResultViewColumn
@@ -707,7 +707,7 @@ internal class FrozenColumnsController(
   private fun leadingScrollPosition(maximum: Int): Int =
     if (primaryView.componentOrientation.isLeftToRight) 0 else maximum
 
-  private fun installFrozenScrolling(parent: TableScrollPane, frozen: TableResultView) {
+  private fun installFrozenScrolling(parent: TableScrollPane, frozen: GridTable) {
     val viewport = HorizontalViewport(frozen)
     val viewportWrapper = JPanel(BorderLayout()).apply { isOpaque = false }
     val headerViewport = HorizontalViewport(frozen.tableHeader)
@@ -825,7 +825,7 @@ internal class FrozenColumnsController(
    * so one field holds it. The three vars fill in lazily, and the two gutter ones only when row numbers show.
    */
   private class FrozenRegion(
-    val view: TableResultView,
+    val view: GridTable,
     val modelSync: TableModelListener,
     val mainColumnMirror: ListSelectionListener,
     val columnMirror: ListSelectionListener,
@@ -836,8 +836,7 @@ internal class FrozenColumnsController(
     var gutterWrappers: GutterWrappers? = null
     var lowerCorner: JComponent? = null
 
-    fun dispose(primary: TableResultView, sharedMouseListeners: List<MouseListener>) {
-      primary.stopSharingFloatingToolbarWith(view)
+    fun dispose(primary: GridTable, sharedMouseListeners: List<MouseListener>) {
       primary.model.removeTableModelListener(modelSync)
       primary.columnModel.selectionModel.removeListSelectionListener(mainColumnMirror)
       view.columnModel.selectionModel.removeListSelectionListener(columnMirror)
@@ -869,7 +868,7 @@ internal class FrozenColumnsController(
   ) {
     val latching = LatchingScroll()
 
-    fun uninstall(frozen: TableResultView?, gutter: GridRowHeader?) {
+    fun uninstall(frozen: GridTable?, gutter: GridRowHeader?) {
       parent.removeComponentListener(mainViewportListener)
       parent.viewport.removeComponentListener(mainViewportListener)
       viewport.removeChangeListener(viewportListener)
@@ -956,7 +955,7 @@ internal class FrozenColumnsController(
     }
   }
 
-  fun afterChangeSelection(view: TableResultView, columnIndex: Int, toggle: Boolean, extend: Boolean) {
+  fun afterChangeSelection(view: GridTable, columnIndex: Int, toggle: Boolean, extend: Boolean) {
     val frozen = frozenView
     if (view !== frozen || toggle || extend || columnIndex < 0 || columnIndex >= frozen.columnCount) return
     // The strip holds a subset of the columns, so its index means nothing in the main table: go through the model.
@@ -965,7 +964,7 @@ internal class FrozenColumnsController(
     primaryView.columnModel.selectionModel.setSelectionInterval(mainColumn, mainColumn)
   }
 
-  fun processMouseEvent(view: TableResultView, event: MouseEvent, defaultProcessor: Runnable) {
+  fun processMouseEvent(view: GridTable, event: MouseEvent, defaultProcessor: Runnable) {
     if (!stopEditingBeforeNonLeftPress(view, event)) return
     // Strip presses and releases must not scroll the main viewport through selection notifications.
     if (view !== primaryView) {
@@ -986,17 +985,17 @@ internal class FrozenColumnsController(
    *
    * @return false when the press has to be dropped, because an editor refused to commit.
    */
-  private fun stopEditingBeforeNonLeftPress(view: TableResultView, event: MouseEvent): Boolean =
+  private fun stopEditingBeforeNonLeftPress(view: GridTable, event: MouseEvent): Boolean =
     event.id != MouseEvent.MOUSE_PRESSED || SwingUtilities.isLeftMouseButton(event) || !isPairedView(view) ||
     stopEditingUnlessAt(modelCell(view, view.rowAtPoint(event.point), view.columnAtPoint(event.point)))
 
-  fun processMouseMotionEvent(view: TableResultView, event: MouseEvent) {
+  fun processMouseMotionEvent(view: GridTable, event: MouseEvent) {
     if (event.id == MouseEvent.MOUSE_DRAGGED && !event.isConsumed && SwingUtilities.isLeftMouseButton(event)) {
       extendDragAcrossFrozenRegion(view, event)
     }
   }
 
-  private fun extendDragAcrossFrozenRegion(view: TableResultView, event: MouseEvent) {
+  private fun extendDragAcrossFrozenRegion(view: GridTable, event: MouseEvent) {
     val frozen = frozenView ?: return
     if (dragAnchorColumn < 0 || dragAnchorRow < 0) return
     if (GridUtil.isIntervalModifierSet(event) || GridUtil.isExclusiveModifierSet(event)) return
@@ -1012,18 +1011,18 @@ internal class FrozenColumnsController(
     selectDisplayedColumnRange(displayedColumnOrder(frozen), targetColumn, add = false, anchorOverride = dragAnchorColumn)
   }
 
-  private fun isDragOverOtherRegion(view: TableResultView, event: MouseEvent): Boolean =
+  private fun isDragOverOtherRegion(view: GridTable, event: MouseEvent): Boolean =
     frozenView != null && (view !== primaryView) != isOverFrozenStrip(view, event)
 
   /** The strip is only as wide as its viewport shows, so the columns it hides do not belong to the region either. */
-  private fun isOverFrozenStrip(view: TableResultView, event: MouseEvent): Boolean {
+  private fun isOverFrozenStrip(view: GridTable, event: MouseEvent): Boolean {
     val frozen = frozenView ?: return false
     val viewport = scrolling?.viewport
                    ?: return SwingUtilities.convertPoint(view, event.point, frozen).x < frozen.width
     return SwingUtilities.convertPoint(view, event.point, viewport).x < viewport.width
   }
 
-  private fun unifiedMainColumn(view: TableResultView, event: MouseEvent): Int {
+  private fun unifiedMainColumn(view: GridTable, event: MouseEvent): Int {
     val frozen = frozenView ?: return -1
     if (isOverFrozenStrip(view, event)) {
       if (frozen.width <= 0 || frozen.columnCount == 0) return -1
@@ -1038,13 +1037,13 @@ internal class FrozenColumnsController(
     return primaryView.columnAtPoint(Point(inMain.x.coerceIn(0, primaryView.width - 1), 0))
   }
 
-  private fun clampedRowAt(view: TableResultView, event: MouseEvent): Int {
+  private fun clampedRowAt(view: GridTable, event: MouseEvent): Int {
     if (view.height <= 0) return -1
     return view.rowAtPoint(Point(0, event.y.coerceIn(0, view.height - 1)))
   }
 
   /** Handles horizontal moves while a strip exists, skipping hidden placeholders and retaining one unified anchor. */
-  fun handleColumnMove(view: TableResultView, forward: Boolean, extend: Boolean, wrapsRows: Boolean): Boolean {
+  fun handleColumnMove(view: GridTable, forward: Boolean, extend: Boolean, wrapsRows: Boolean): Boolean {
     val frozen = frozenView ?: return false
     if (view !== frozen && view !== primaryView) return false
     val lead = leadColumn(view)
@@ -1069,7 +1068,7 @@ internal class FrozenColumnsController(
   /**
    * Wraps Tab/Shift+Tab through both tables instead of wrapping within the focused table alone.
    */
-  private fun continueInAdjacentRow(frozen: TableResultView, order: DisplayedColumnOrder, row: Int, forward: Boolean): Boolean {
+  private fun continueInAdjacentRow(frozen: GridTable, order: DisplayedColumnOrder, row: Int, forward: Boolean): Boolean {
     val rows = primaryView.rowCount
     if (rows == 0) return false
     val target = order.edge(forward) ?: return false
@@ -1079,7 +1078,7 @@ internal class FrozenColumnsController(
   }
 
   /** Handles moves to the first or last displayed column, including their selection-extending variants. */
-  fun handleColumnEdgeMove(view: TableResultView, first: Boolean, extend: Boolean): Boolean {
+  fun handleColumnEdgeMove(view: GridTable, first: Boolean, extend: Boolean): Boolean {
     val frozen = frozenView ?: return false
     if (view !== frozen && view !== primaryView) return false
     val order = displayedColumnOrder(frozen)
@@ -1091,7 +1090,7 @@ internal class FrozenColumnsController(
   }
 
   /** Applies a Shift+click cell range in displayed order, even when its anchor is in the other table. */
-  fun handleCellRangeSelection(view: TableResultView, row: Int, column: Int, add: Boolean): Boolean {
+  fun handleCellRangeSelection(view: GridTable, row: Int, column: Int, add: Boolean): Boolean {
     val frozen = frozenView ?: return false
     if ((view !== frozen && view !== primaryView) || row !in 0 until view.rowCount) return false
     val order = displayedColumnOrder(frozen)
@@ -1106,7 +1105,7 @@ internal class FrozenColumnsController(
   }
 
   /** Applies a whole-column Shift range from the unified anchor to a column in either table. */
-  fun selectDisplayedColumnRange(view: TableResultView, column: Int, add: Boolean): Boolean {
+  fun selectDisplayedColumnRange(view: GridTable, column: Int, add: Boolean): Boolean {
     val frozen = frozenView ?: return false
     if (view !== frozen && view !== primaryView) return false
     val order = displayedColumnOrder(frozen)
@@ -1118,7 +1117,7 @@ internal class FrozenColumnsController(
                                     row: Int,
                                     target: Int,
                                     extend: Boolean,
-                                    focusTarget: TableResultView): Boolean {
+                                    focusTarget: GridTable): Boolean {
     // A rejected edit must prevent scrolling and focus transfer as well as the selection change.
     if (!stopEditingBeforeSelectionChange(primaryView, row, target)) return true
     if (extend) {
@@ -1141,10 +1140,10 @@ internal class FrozenColumnsController(
    *
    * @return false when an editor refused to commit, in which case the selection has to stay where it is.
    */
-  fun stopEditingBeforeSelectionChange(view: TableResultView, row: Int, column: Int): Boolean =
+  fun stopEditingBeforeSelectionChange(view: GridTable, row: Int, column: Int): Boolean =
     frozenView == null || !isPairedView(view) || stopEditingUnlessAt(modelCell(view, row, column))
 
-  private fun isPairedView(view: TableResultView): Boolean = view === primaryView || view === frozenView
+  private fun isPairedView(view: GridTable): Boolean = view === primaryView || view === frozenView
 
   /** Commits editors in either table unless they already edit the target cell. */
   private fun stopEditingUnlessAt(target: ModelCell?): Boolean {
@@ -1152,15 +1151,15 @@ internal class FrozenColumnsController(
     return stopEditingUnlessAt(primaryView, target) && (frozen == null || stopEditingUnlessAt(frozen, target))
   }
 
-  private fun stopEditingUnlessAt(view: TableResultView, target: ModelCell?): Boolean {
+  private fun stopEditingUnlessAt(view: GridTable, target: ModelCell?): Boolean {
     val editor = view.cellEditor ?: return true
     val editing = modelCell(view, view.editingRow, view.editingColumn)
-    // Match Swing's commit path without the prompt added by TableResultView.stopEditing().
+    // Match Swing's commit path without the prompt added by GridTable.stopEditing().
     return (editing != null && editing == target) || editor.stopCellEditing()
   }
 
   /** The two tables index rows and columns on their own, so only model indices identify a cell in both. */
-  private fun modelCell(view: TableResultView, row: Int, column: Int): ModelCell? =
+  private fun modelCell(view: GridTable, row: Int, column: Int): ModelCell? =
     if (row in 0 until view.rowCount && column in 0 until view.columnCount)
       ModelCell(view.convertRowIndexToModel(row), view.convertColumnIndexToModel(column))
     else null
@@ -1183,7 +1182,7 @@ internal class FrozenColumnsController(
     scrollBar.value = position
   }
 
-  private fun frozenViewColumnOf(frozen: TableResultView, modelColumn: Int): Int {
+  private fun frozenViewColumnOf(frozen: GridTable, modelColumn: Int): Int {
     for (index in 0 until frozen.columnModel.columnCount) {
       if (frozen.columnModel.getColumn(index).modelIndex == modelColumn) return index
     }
@@ -1224,7 +1223,7 @@ internal class FrozenColumnsController(
     return true
   }
 
-  private fun mainColumnOfView(order: DisplayedColumnOrder, view: TableResultView, viewColumn: Int): Int {
+  private fun mainColumnOfView(order: DisplayedColumnOrder, view: GridTable, viewColumn: Int): Int {
     if (viewColumn !in 0 until view.columnCount) return -1
     val frozen = frozenView ?: return -1
     return if (view === primaryView) viewColumn
@@ -1232,14 +1231,14 @@ internal class FrozenColumnsController(
     else -1
   }
 
-  private fun displayedColumnOrder(frozen: TableResultView): DisplayedColumnOrder = DisplayedColumnOrder(
+  private fun displayedColumnOrder(frozen: GridTable): DisplayedColumnOrder = DisplayedColumnOrder(
     primaryModelOrder = (0 until primaryView.columnCount).map { primaryView.columnModel.getColumn(it).modelIndex },
     frozenModelOrder = (0 until frozen.columnCount).map { frozen.columnModel.getColumn(it).modelIndex },
   )
 
-  private fun leadColumn(view: TableResultView): Int = view.columnModel.selectionModel.leadSelectionIndex
+  private fun leadColumn(view: GridTable): Int = view.columnModel.selectionModel.leadSelectionIndex
 
-  private fun leadRow(view: TableResultView): Int = view.selectionModel.leadSelectionIndex
+  private fun leadRow(view: GridTable): Int = view.selectionModel.leadSelectionIndex
 
   /** [JBAutoScroller.AutoscrollLocker] is not reentrant: an inner lock would otherwise release its outer caller. */
   private fun runWithAutoscrollLocked(action: () -> Unit) {
@@ -1248,14 +1247,14 @@ internal class FrozenColumnsController(
     else locker.runWithLock { action() }
   }
 
-  fun columnMarginChanged(view: TableResultView) {
+  fun columnMarginChanged(view: GridTable) {
     if (view !== frozenView && view !== primaryView) return
     // Follow a pinned column's resized edge; preserve the strip's scroll position when main columns resize.
     val anchorAtTrailingEdge = view === frozenView
     findScrollPane()?.let { updateFrozenViewport(it, anchorNewOverflowAtTrailingEdge = anchorAtTrailingEdge) }
   }
 
-  fun syncRowHeight(view: TableResultView, row: Int, rowHeight: Int) {
+  fun syncRowHeight(view: GridTable, row: Int, rowHeight: Int) {
     if (view !== primaryView && view !== frozenView) return
     val sibling = if (view === primaryView) frozenView else primaryView
     if (sibling != null && row < sibling.rowCount && sibling.getRowHeight(row) != rowHeight) {
@@ -1268,7 +1267,7 @@ internal class FrozenColumnsController(
     frozenView?.addMouseListener(listener)
   }
 
-  private fun installRightButtonCellSelect(view: TableResultView) {
+  private fun installRightButtonCellSelect(view: GridTable) {
     view.addMouseListener(object : MouseAdapter() {
       override fun mousePressed(event: MouseEvent) {
         if (!SwingUtilities.isRightMouseButton(event)) return

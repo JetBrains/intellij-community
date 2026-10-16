@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.util.function.Predicate
 
 /**
  * Stores the grid state captured on the EDT for background action updates.
@@ -17,10 +18,10 @@ import java.awt.Component
 class GridActionUiState private constructor(
   private val grid: DataGrid,
   private val leadCell: LeadCell?,
-  private val cellComponents: List<Component>,
+  private val cellComponentMatcher: Predicate<Component?>,
   val isValueTabSelected: Boolean,
 ) {
-  fun isCellComponent(component: Component?): Boolean = component != null && cellComponents.any { it === component }
+  fun isCellComponent(component: Component?): Boolean = cellComponentMatcher.test(component)
 
   fun getLeadSelectionCellValue(singleCellOnly: Boolean): Any? {
     val cell = leadCell ?: return null
@@ -42,7 +43,7 @@ class GridActionUiState private constructor(
       return GridActionUiState(
         grid,
         captureLeadCell(grid),
-        grid.resultView.cellComponents.toList(),
+        grid.resultView.captureCellComponentMatcher(),
         view != null && !view.isDisposed && view.isValueTabSelected(),
       )
     }

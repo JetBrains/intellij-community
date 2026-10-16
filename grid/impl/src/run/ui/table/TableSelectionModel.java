@@ -26,17 +26,17 @@ import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
 
 class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, SelectionModelWithViewRows, SelectionModelWithViewColumns {
-  private final TableResultView myTable;
+  private final GridTable myTable;
   private final DataGrid myGrid;
   private final GridSelectionTrackerImpl myTracker;
 
-  TableSelectionModel(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  TableSelectionModel(@NotNull GridTable table, @NotNull DataGrid grid) {
     myTable = table;
     myGrid = grid;
     myTracker = new GridSelectionTrackerImpl(myGrid, myTable);
   }
 
-  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
     TableSelectionModel tableSelectionModel = new TableSelectionModel(table, grid);
     table.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, tableSelectionModel);
   }

@@ -15,16 +15,16 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.database.datagrid.GridPositionWidget.POSITION_WIDGET_HELPER_KEY;
 
-public class TablePositionWidgetHelper implements GridWidget.GridWidgetHelper {
-  private final TableResultView myTable;
+class TablePositionWidgetHelper implements GridWidget.GridWidgetHelper {
+  private final GridTable myTable;
   private final DataGrid myGrid;
 
-  public TablePositionWidgetHelper(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  TablePositionWidgetHelper(@NotNull GridTable table, @NotNull DataGrid grid) {
     myTable = table;
     myGrid = grid;
   }
 
-  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
     TablePositionWidgetHelper tablePositionWidgetHelper = new TablePositionWidgetHelper(table, grid);
     table.putClientProperty(POSITION_WIDGET_HELPER_KEY, tablePositionWidgetHelper);
   }

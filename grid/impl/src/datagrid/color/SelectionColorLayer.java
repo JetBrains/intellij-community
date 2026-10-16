@@ -6,16 +6,15 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.editor.DataGridColors;
+import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTable;
 import java.awt.Color;
 
 import static com.intellij.database.util.DataGridUIUtil.softHighlightOf;
-import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 
 public class SelectionColorLayer implements ColorLayer {
   private final DataGrid myGrid;
@@ -59,8 +58,8 @@ public class SelectionColorLayer implements ColorLayer {
   }
 
   private static boolean isHoveredRow(@NotNull ViewIndex<?> viewRow, @NotNull DataGrid grid) {
-    return grid.getResultView().isHoveredRowBgHighlightingEnabled() && grid.getResultView() instanceof JTable &&
-           getHoveredRow((JTable)grid.getResultView()) == viewRow.asInteger();
+    return grid.getResultView().isHoveredRowBgHighlightingEnabled() && grid.getResultView() instanceof TableResultView table &&
+           table.getHoveredRow() == viewRow.asInteger();
   }
 
   private static boolean isStripedRow(@NotNull ViewIndex<?> viewRow, @NotNull DataGrid grid) {

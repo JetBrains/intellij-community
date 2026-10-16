@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 import javax.swing.SwingUtilities
 
-class TableFloatingToolbar(private val tableResultView: TableResultView, private val grid: DataGrid, private val cs: CoroutineScope) {
+class TableFloatingToolbar internal constructor(private val gridTable: GridTable, private val grid: DataGrid, private val cs: CoroutineScope) {
 
   data class ToolbarPosition(val rightBottomCorner: Point, val rowNum: Int, val columnNum: Int)
 
@@ -72,7 +72,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   }.apply {
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     component.border = JBUI.Borders.empty()
-    targetComponent = tableResultView
+    targetComponent = gridTable
     isReservePlaceAutoPopupIcon = false
     ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
   }
@@ -91,7 +91,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   private var position = ToolbarPosition(Point(0, 0), 0, 0)
 
   /** The table the hint is shown in and whose coordinates [position] is expressed in. */
-  private var anchorView: TableResultView = tableResultView
+  private var anchorView: GridTable = gridTable
   private var showingJob: AtomicReference<Job?> = AtomicReference(null)
 
   private fun hintUpdate() {
@@ -118,7 +118,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     }
 
     override fun mouseClicked(e: MouseEvent) {
-      val view = e.component as? TableResultView ?: return
+      val view = e.component as? GridTable ?: return
       if (e.button != MouseEvent.BUTTON1 || view.selectedRowCount != 1) {
         return
       }
@@ -170,14 +170,15 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   }
 
   init {
-    tableResultView.whenDisposed { hide() }
-    attach(tableResultView)
+    gridTable.whenDisposed { hide() }
+    attach(gridTable)
   }
 
   /**
    * Shares the main table's toolbar with [view], including cells rendered in the pinned strip.
    */
-  fun attach(view: TableResultView) {
+  @JvmName("attach")
+  internal fun attach(view: GridTable) {
     view.addMouseListener(mouseListener)
     view.addMouseMotionListener(mouseListener)
     view.addFocusListener(focusListener)
@@ -185,14 +186,15 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   }
 
   /** Stops offering the toolbar in [view], which is about to be discarded, and takes the hint down if it is anchored there. */
-  fun detach(view: TableResultView) {
+  @JvmName("detach")
+  internal fun detach(view: GridTable) {
     view.removeMouseListener(mouseListener)
     view.removeMouseMotionListener(mouseListener)
     view.removeFocusListener(focusListener)
     view.removeComponentListener(componentListener)
     if (anchorView !== view) return
     hide()
-    anchorView = tableResultView
+    anchorView = gridTable
   }
 
   private fun isHintVisible(): Boolean {
@@ -239,7 +241,8 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
 
   /** The table and the cell the toolbar was last offered for. */
   @TestOnly
-  fun getOfferedCell(): Pair<TableResultView, ToolbarPosition> = anchorView to position
+  @JvmName("getOfferedCell")
+  internal fun getOfferedCell(): Pair<GridTable, ToolbarPosition> = anchorView to position
 
   companion object {
     const val ACTION_PLACE = "TableFloatingToolbar"

@@ -38,7 +38,7 @@ public abstract class GridRowHeader extends JComponent {
 
   public abstract @NotNull RowHeaderCellRenderer getCellRenderer();
 
-  public abstract @NotNull JTable getTable();
+  protected abstract @NotNull JTable getTable();
 
   @Override
   public Dimension getPreferredSize() {

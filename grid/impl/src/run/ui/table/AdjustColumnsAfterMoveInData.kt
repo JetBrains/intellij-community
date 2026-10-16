@@ -9,14 +9,15 @@ import java.util.function.UnaryOperator
 import kotlin.math.max
 import kotlin.math.min
 
-class AdjustColumnsAfterMoveInData(
+internal class AdjustColumnsAfterMoveInData(
   private val grid: DataGrid,
-  private val tableView: TableResultView,
+  private val tableView: GridTable,
   private val from: Int,
-  private val to: Int
+  private val to: Int,
 ) : () -> Unit {
 
   private val originallyVisibleColumns = grid.visibleColumns.asIterable().toSet()
+
   // Read pinned widths from the strip, not their zero-width placeholders.
   private val columnWidths = originallyVisibleColumns
     .mapTo(mutableListOf()) { modelIndex ->

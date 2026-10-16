@@ -9,18 +9,14 @@ import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.ResultViewColumn;
 import com.intellij.database.datagrid.ViewIndex;
-import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
-import javax.swing.table.TableCellRenderer;
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,18 +38,18 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
   private static final int FIRST_ROWS_FOR_SIZE_CALCULATION_TRANSPOSED = 10;
   private static final int MAX_ROW_IDX_FOR_SIZE_CALCULATION_TRANSPOSED = 10;
 
-  private final TableResultView myResultView;
+  private final ColumnLayoutContext myContext;
   private final DataGrid myGrid;
   private boolean myInvalidateWidestCellValues;
 
-  public DefaultGridColumnLayout(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
-    myResultView = resultView;
+  public DefaultGridColumnLayout(@NotNull ColumnLayoutContext context, @NotNull DataGrid grid) {
+    myContext = context;
     myGrid = grid;
   }
 
   @Override
   public boolean resetLayout() {
-    return doLayout((myResultView.isTransposed() ? myGrid.getVisibleRows() : myGrid.getVisibleColumns()).asList());
+    return doLayout((myContext.isTransposed() ? myGrid.getVisibleRows() : myGrid.getVisibleColumns()).asList());
   }
 
   @Override
@@ -95,13 +91,13 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     int allColumnsFullWidth = 0;
     Map<ResultViewColumn, LayoutInfo> columnWidths = new HashMap<>();
     Set<? extends ModelIndex<?>> columnsToResize = new HashSet<>(columnDataIndices);
-    List<? extends ModelIndex<?>> visibleColumnDataIndices = (myResultView.isTransposed() ? myGrid.getVisibleRows() : myGrid.getVisibleColumns()).asList();
+    List<? extends ModelIndex<?>> visibleColumnDataIndices = (myContext.isTransposed() ? myGrid.getVisibleRows() : myGrid.getVisibleColumns()).asList();
 
     int availableWidth = getAvailableWidth();
     if (availableWidth == 0) return false;
 
     for (ModelIndex<?> columnDataIdx : visibleColumnDataIndices) {
-      ResultViewColumn column = myResultView.getLayoutColumn(columnDataIdx);
+      ResultViewColumn column = myContext.getLayoutColumn(columnDataIdx);
       if (column == null) continue; // will never happen
       if (columnsToResize.contains(columnDataIdx) && !column.isWidthLockedForLayout() && !column.isFrozenHidden()) {
         LayoutInfo layoutInfo = new LayoutInfo();
@@ -128,8 +124,8 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     // It makes sense to make it at least as wide as the 'average' column in the table.
     if (columnDataIndices.size() == 1 && visibleColumnDataIndices.size() > 1) {
       ModelIndex<?> insertedIdx = columnDataIndices.getFirst();
-      boolean insertedIdxIsValid = myResultView.isTransposed() && GridUtil.isInsertedRow(myGrid, cast(insertedIdx));
-      ResultViewColumn insertedColumn = insertedIdxIsValid ? myResultView.getLayoutColumn(insertedIdx) : null;
+      boolean insertedIdxIsValid = myContext.isTransposed() && GridUtil.isInsertedRow(myGrid, cast(insertedIdx));
+      ResultViewColumn insertedColumn = insertedIdxIsValid ? myContext.getLayoutColumn(insertedIdx) : null;
       if (insertedColumn != null) {
         LayoutInfo layoutInfo = columnWidths.get(insertedColumn);
         int averageColumnWidth = (allColumnsPreferredWidth - layoutInfo.preferred) / (visibleColumnDataIndices.size() - 1);
@@ -176,28 +172,11 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
   }
 
   private int computeHeaderWidth(ResultViewColumn column) {
-    var tableHeader = myResultView.getTableHeader();
-    TableCellRenderer cellRenderer = tableHeader.getDefaultRenderer();
-    TableResultView.MyCellRenderer renderer = ObjectUtils.tryCast(cellRenderer, TableResultView.MyCellRenderer.class);
-    Component headerComponent;
-    if (renderer != null) {
-      headerComponent = renderer.getHeaderCellRendererComponent(column.getModelIndex(), false);
-    }
-    else {
-      int viewIndex = myResultView.convertColumnIndexToView(column.getModelIndex());
-      headerComponent = cellRenderer.getTableCellRendererComponent(myResultView, column.getHeaderValue(), false, false, -1, viewIndex);
-    }
-    // Adding CellRendererPane to tableHeader triggers children removeNotify for every column
-    var cellRendererPane = new CellRendererPane();
-    cellRendererPane.add(headerComponent);
-    headerComponent.validate();
-    var res = headerComponent.getPreferredSize().width + column.getAdditionalWidth();
-    cellRendererPane.removeAll();
-    return res;
+    return myContext.getHeaderWidth(column);
   }
 
   private boolean layoutInitialTransposedColumns(@NotNull List<? extends ModelIndex<?>> columnDataIndices) {
-    if (!myResultView.isTransposed() || columnDataIndices.size() <= 100 || columnDataIndices.size() != myGrid.getVisibleRows().size()) {
+    if (!myContext.isTransposed() || columnDataIndices.size() <= 100 || columnDataIndices.size() != myGrid.getVisibleRows().size()) {
       return false;
     }
 
@@ -209,7 +188,7 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     int widestHeaderLength = -1;
     for (ModelIndex<?> columnDataIdx : columnDataIndices) {
       if (GridUtil.isInsertedRow(myGrid, cast(columnDataIdx))) return false;
-      ResultViewColumn column = myResultView.getLayoutColumn(columnDataIdx);
+      ResultViewColumn column = myContext.getLayoutColumn(columnDataIdx);
       if (column == null) continue;
 
       columns.add(column);
@@ -237,14 +216,15 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
   }
 
   private void updateWidestCellValueCaches(ModelIndexSet<GridRow> rowIndices, ModelIndexSet<GridColumn> columnIndices) {
-    JBIterable<? extends ViewIndex<?>> viewRowIndices = (myResultView.isTransposed() ? columnIndices : rowIndices).toView(myGrid).asIterable();
-    JBIterable<? extends ModelIndex<?>> columnDataIndices = (myResultView.isTransposed() ? rowIndices : columnIndices).asIterable();
+    JBIterable<? extends ViewIndex<?>> viewRowIndices = (myContext.isTransposed() ? columnIndices : rowIndices).toView(myGrid).asIterable();
+    JBIterable<? extends ModelIndex<?>> columnDataIndices = (myContext.isTransposed() ? rowIndices : columnIndices).asIterable();
     List<ModelIndex<?>> toLayOut = new ArrayList<>();
 
     int columnNum = 0;
     for (ModelIndex<?> columnDataIdx : columnDataIndices) {
       ViewIndex<?> viewColumnIdx = columnDataIdx.toView(myGrid);
-      ResultViewColumn layoutColumn = myResultView.getLayoutColumn(columnDataIdx, viewColumnIdx);
+      if (viewColumnIdx.value < 0) continue;
+      ResultViewColumn layoutColumn = myContext.getLayoutColumn(columnDataIdx);
       if (layoutColumn == null) continue;
 
       Integer cachedMaxCellWidth = myInvalidateWidestCellValues ? null : layoutColumn.getUserData(MAX_CELL_WIDTH_KEY);
@@ -273,10 +253,10 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
                                        int columnNum) {
     int widestCell = 0;
     int maxRowForSizeCalc = columnNum > 100 ? MAX_ROW_IDX_FOR_SIZE_CALCULATION_LOTS_OF_COLUMNS :
-                            myResultView.isTransposed() ? MAX_ROW_IDX_FOR_SIZE_CALCULATION_TRANSPOSED :
+                            myContext.isTransposed() ? MAX_ROW_IDX_FOR_SIZE_CALCULATION_TRANSPOSED :
                             MAX_ROW_IDX_FOR_SIZE_CALCULATION;
     int firstRowsForSizeCalc = columnNum > 100 ? FIRST_ROWS_FOR_SIZE_CALCULATION_LOTS_OF_COLUMNS :
-                               myResultView.isTransposed() ? FIRST_ROWS_FOR_SIZE_CALCULATION_TRANSPOSED :
+                               myContext.isTransposed() ? FIRST_ROWS_FOR_SIZE_CALCULATION_TRANSPOSED :
                                FIRST_ROWS_FOR_SIZE_CALCULATION;
     for (ViewIndex<?> viewRowIdx : viewRowIndices) {
 
@@ -286,12 +266,9 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
         continue;
       }
 
-      ViewIndex<GridRow> rowIdx = myResultView.isTransposed() ? cast(viewColumnIdx) : cast(viewRowIdx);
-      ViewIndex<GridColumn> columnIdx = myResultView.isTransposed() ? cast(viewRowIdx) : cast(viewColumnIdx);
-      JComponent component = myResultView.getCellRendererComponent(rowIdx, columnIdx, false);
-      if (component != null) {
-        widestCell = Math.max(widestCell, component.getPreferredSize().width);
-      }
+      ViewIndex<GridRow> rowIdx = myContext.isTransposed() ? cast(viewColumnIdx) : cast(viewRowIdx);
+      ViewIndex<GridColumn> columnIdx = myContext.isTransposed() ? cast(viewRowIdx) : cast(viewColumnIdx);
+      widestCell = Math.max(widestCell, myContext.getCellPreferredWidth(rowIdx, columnIdx));
     }
     return widestCell;
   }

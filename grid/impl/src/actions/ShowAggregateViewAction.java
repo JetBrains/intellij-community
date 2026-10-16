@@ -6,6 +6,7 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.run.ui.AggregatesTabInfoProvider;
 import com.intellij.database.run.ui.EditMaximizedView;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
-import java.awt.Component;
 
 import static com.intellij.database.run.ui.EditMaximizedViewKt.findEditMaximized;
 
@@ -44,8 +44,9 @@ public class ShowAggregateViewAction extends DumbAwareAction {
     else {
       e.getPresentation().setText(DataGridBundle.message("action.Console.TableResult.AggregateView.text"));
     }
-    Component contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    boolean forceShow = contextComponent == grid.getResultView().getComponent() || ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace());
+    var state = GridActionUiState.getForGrid(grid, e.getDataContext());
+    boolean inCell = state != null && state.isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    boolean forceShow = inCell || ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace());
     boolean visible = findEditMaximized(e.getDataContext()) != null;
     e.getPresentation().setEnabledAndVisible(forceShow || !visible);
   }

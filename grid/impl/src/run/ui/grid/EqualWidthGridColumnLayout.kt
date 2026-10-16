@@ -4,20 +4,19 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.run.ui.DataAccessType
-import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode
 
 /**
  * This class lets set the same width for all columns.
  * In case, it's an index column the DefaultGridColumnLayout will be called.
  */
-class EqualWidthGridColumnLayout(private val myResultView: TableResultView,
+class EqualWidthGridColumnLayout(private val context: ColumnLayoutContext,
                                  val myGrid: DataGrid,
-                                 val isEqualWidthColumn: (GridColumn) -> Boolean) : DefaultGridColumnLayout(myResultView, myGrid) {
+                                 val isEqualWidthColumn: (GridColumn) -> Boolean) : DefaultGridColumnLayout(context, myGrid) {
 
   override fun doLayout(columnDataIndices: List<ModelIndex<*>>): Boolean {
-    val curStatisticsPanelMode = myResultView.getStatisticsPanelMode()
-    if (curStatisticsPanelMode == null || curStatisticsPanelMode == StatisticsPanelMode.OFF || myResultView.isTransposed) {
+    val curStatisticsPanelMode = context.getStatisticsPanelMode()
+    if (curStatisticsPanelMode == null || curStatisticsPanelMode == StatisticsPanelMode.OFF || context.isTransposed) {
       return super.doLayout(columnDataIndices)
     }
 
@@ -26,7 +25,7 @@ class EqualWidthGridColumnLayout(private val myResultView: TableResultView,
       if (column != null && !isEqualWidthColumn(column)) {
         super.doLayout(listOf(ind))
       } else {
-        myResultView.getLayoutColumn(ind)?.columnWidth = MAX_COLUMN_WIDTH
+        context.getLayoutColumn(ind)?.columnWidth = MAX_COLUMN_WIDTH
       }
     }
 

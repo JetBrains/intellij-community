@@ -30,16 +30,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class TableScrollPane extends JBScrollPane {
-  protected final TableResultView myResultView;
+  final GridTable myResultView;
   private boolean myAddSpaceForHorizontalScrollbar;
   private boolean myFrozenHorizontalScrollBarVisible;
   private @Nullable JComponent myOverlaidFrozenCorner;
   private boolean myOverlaidFrozenCornerWasOpaque;
 
-  public TableScrollPane(@NotNull TableResultView table,
-                         @NotNull DataGrid grid,
-                         @NotNull JComponent topLeftCornerComponent,
-                         @Nullable JBAutoScroller.AutoscrollLocker locker) {
+  TableScrollPane(@NotNull GridTable table,
+                  @NotNull DataGrid grid,
+                  @NotNull JComponent topLeftCornerComponent,
+                  @Nullable JBAutoScroller.AutoscrollLocker locker) {
     myResultView = table;
     setBorder(BorderFactory.createEmptyBorder());
     setViewportView(myResultView);

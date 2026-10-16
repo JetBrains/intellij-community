@@ -60,11 +60,15 @@ import static javax.swing.SwingUtilities.isLeftMouseButton;
  */
 public class TableResultRowHeader extends GridRowHeader {
   private final DataGrid myResultPanel;
-  private final TableResultView myTable;
+  private final GridTable myTable;
   private final ActionGroup myPopupActions;
   private final RowHeaderCellRenderer myRenderer;
 
-  public TableResultRowHeader(@NotNull DataGrid resultPanel, @NotNull TableResultView view, @Nullable ActionGroup popupActions) {
+  public TableResultRowHeader(@NotNull DataGrid grid, @NotNull TableResultView view, @Nullable ActionGroup popupActions) {
+    this(grid, view.primaryTable(), popupActions);
+  }
+
+  TableResultRowHeader(@NotNull DataGrid resultPanel, @NotNull GridTable view, @Nullable ActionGroup popupActions) {
     super(view, () -> view.getShowHorizontalLines(), () -> view.getShowLastHorizontalLine());
     myResultPanel = resultPanel;
     myTable = view;
@@ -97,7 +101,7 @@ public class TableResultRowHeader extends GridRowHeader {
   }
 
   @Override
-  public @NotNull JTable getTable() {
+  protected @NotNull JTable getTable() {
     return myTable;
   }
 
@@ -478,8 +482,8 @@ public class TableResultRowHeader extends GridRowHeader {
   }
 
   protected class ColumnInfoRowHeaderCellComponent extends RowHeaderCellComponentBase {
-    private final JLabel myNameLabel = new TableResultView.LabelWithFallbackFont(myTable);
-    private final JLabel mySortLabel = new TableResultView.LabelWithFallbackFont(myTable);
+    private final JLabel myNameLabel = new GridTable.LabelWithFallbackFont(myTable);
+    private final JLabel mySortLabel = new GridTable.LabelWithFallbackFont(myTable);
 
     public ColumnInfoRowHeaderCellComponent() {
       setLayout(new BorderLayout());
@@ -518,15 +522,15 @@ public class TableResultRowHeader extends GridRowHeader {
       mySortLabel.setIcon(null);
       if (myResultPanel.isSortViaOrderBy() && myResultPanel.getComparator(modelColumnIdx) != null) {
         int sortOrder = myResultPanel.getSortOrder(column);
-        mySortLabel.setIcon(TableResultView.getSortOrderIcon(sortOrder));
-        mySortLabel.setText(myResultPanel.countSortedColumns() > 1 ? TableResultView.getSortOrderText(sortOrder) : "");
+        mySortLabel.setIcon(GridTable.getSortOrderIcon(sortOrder));
+        mySortLabel.setText(myResultPanel.countSortedColumns() > 1 ? GridTable.getSortOrderText(sortOrder) : "");
       }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      drawEffects(g, TableResultView.getLabelTextRect(myNameLabel));
+      drawEffects(g, GridTable.getLabelTextRect(myNameLabel));
     }
 
     protected void drawEffects(Graphics g, Rectangle r) {

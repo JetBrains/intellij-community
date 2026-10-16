@@ -8,8 +8,8 @@ import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.ui.DataAccessType
-import com.intellij.database.run.ui.table.LocalFilterState
 import com.intellij.database.run.ui.table.TableResultView
+import com.intellij.database.run.ui.table.LocalFilterState
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class ColumnLocalFilterWithCellAction : ColumnHeaderActionBase(true) {

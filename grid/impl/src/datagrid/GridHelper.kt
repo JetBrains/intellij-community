@@ -13,6 +13,7 @@ import com.intellij.database.extractors.ObjectFormatterMode
 import com.intellij.database.extractors.builder
 import com.intellij.database.run.actions.DumpSource
 import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.grid.ColumnLayoutContext
 import com.intellij.database.run.ui.grid.DefaultGridColumnLayout
 import com.intellij.database.run.ui.grid.GridRowComparator
 import com.intellij.database.run.ui.table.TableResultView
@@ -116,8 +117,8 @@ interface GridHelper : CoreGridHelper {
     return false
   }
 
-  fun createColumnLayout(resultView: TableResultView, grid: DataGrid): GridColumnLayout<GridRow, GridColumn> {
-    return DefaultGridColumnLayout(resultView, grid)
+  fun createColumnLayout(context: ColumnLayoutContext, grid: DataGrid): GridColumnLayout<GridRow, GridColumn> {
+    return DefaultGridColumnLayout(context, grid)
   }
 
   fun getColumnTooltipHtml(grid: CoreGrid<GridRow, GridColumn>, columnIdx: ModelIndex<GridColumn>): @NlsContexts.Tooltip String? {

@@ -15,5 +15,8 @@ class DataViewToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   val chartViewButton: ActionButtonUi = actionButton { byAccessibleName("Chart View") }
   val tableViewButton: ActionButtonUi = actionButton { byAccessibleName("Table View") }
   val moreActionsButton: ActionButtonUi = actionButton { byAccessibleName("More Actions") }
-  val tableView: JTableUiComponent = accessibleTable { byType("com.intellij.database.run.ui.table.TableResultView") }
+  // Older builds use TableResultView; byJavaClass matches the main GridTable and skips the pinned strip, a subclass.
+  val tableView: JTableUiComponent = accessibleTable {
+    or(byType("com.intellij.database.run.ui.table.TableResultView"), byJavaClass("com.intellij.database.run.ui.table.GridTable"))
+  }
 }

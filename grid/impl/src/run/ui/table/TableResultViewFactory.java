@@ -47,7 +47,10 @@ public class TableResultViewFactory implements ResultViewFactory {
 
   @Override
   public @NotNull ResultView createResultView(@NotNull DataGrid resultPanel, @NotNull ActionGroup columnHeaderActions, @NotNull ActionGroup rowHeaderActions) {
-    TableResultView table = new PrimaryTableResultView(resultPanel, columnHeaderActions, rowHeaderActions);
+    return new TableResultView(resultPanel, columnHeaderActions, rowHeaderActions);
+  }
+
+  static void configureTable(GridTable table, DataGrid resultPanel) {
     table.getEmptyText().setText(""); //DatabaseMessages.message("table.result.data.loading"));
     table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     table.setCellSelectionEnabled(true);
@@ -72,16 +75,18 @@ public class TableResultViewFactory implements ResultViewFactory {
       }
     });
 
-    return table;
   }
 
   @Override
   public @NotNull JComponent wrap(@NotNull DataGrid grid, @NotNull ResultView resultView) {
-    TableResultView table = (TableResultView)resultView;
+    return ((TableResultView)resultView).getScrollPane();
+  }
+
+  static TableScrollPane createScrollPane(DataGrid grid, GridTable table, TableResultView view) {
     Ref<Boolean> myTransparentHeaderBg = new Ref<>(false);
     MyCornerToolsComponent cornerComponent = new MyCornerToolsComponent(grid.getProject()) {
       @Override
-      TableResultView getTable() {
+      GridTable getTable() {
         return table;
       }
 
@@ -99,11 +104,21 @@ public class TableResultViewFactory implements ResultViewFactory {
 
     TableScrollPane scrollPane = new TableScrollPane(table, grid, cornerComponent, grid.getAutoscrollLocker()) {
       @Override
+      public boolean requestFocusInWindow() {
+        return table.requestFocusInWindow();
+      }
+
+      @Override
+      public void requestFocus() {
+        table.requestFocus();
+      }
+
+      @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {
         if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() &&
             !MouseGestureManager.getInstance().hasTrackpad() && EditorUtil.isChangeFontSize(e)) {
           int rotation = e.getWheelRotation();
-          if (rotation != 0) table.changeFontSize(-rotation, 1);
+          if (rotation != 0) view.changeFontSize(-rotation, 1);
           return;
         }
         super.processMouseWheelEvent(e);
@@ -111,12 +126,12 @@ public class TableResultViewFactory implements ResultViewFactory {
 
       @Override
       public void paint(Graphics g) {
-        table.startPaintingSession();
+        view.startPaintingSession();
         try {
           super.paint(g);
         }
         finally {
-          table.endPaintingSession();
+          view.endPaintingSession();
         }
       }
     };
@@ -145,7 +160,7 @@ public class TableResultViewFactory implements ResultViewFactory {
       view.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM | SideBorder.RIGHT));
     }
 
-    abstract TableResultView getTable();
+    abstract GridTable getTable();
 
     abstract DataGrid getGrid();
 

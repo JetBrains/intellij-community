@@ -8,15 +8,14 @@ import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.ColumnNam
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.NestedTable;
 import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.EditorTextFieldCellRenderer.AbbreviatingRendererComponent;
-import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import javax.swing.JTable;
 import java.util.List;
 
 public class NestedTableCellRendererFactory implements GridCellRendererFactory {
@@ -56,11 +55,11 @@ public class NestedTableCellRendererFactory implements GridCellRendererFactory {
       AbbreviatingRendererComponent component =
         (AbbreviatingRendererComponent) super.getComponent(rowIdx, columnIdx, value, modelColumn);
 
-      if (!(myGrid.getResultView() instanceof JTable tableView)) {
+      if (!(myGrid.getResultView() instanceof TableResultView tableView)) {
         return component;
       }
 
-      int hoveredRowIdx = TableHoverListener.getHoveredRow(tableView);
+      int hoveredRowIdx = tableView.getHoveredRow();
       boolean isHoveredRow = (hoveredRowIdx == rowIdx.asInteger());
       component.setText(getValueText(value, isHoveredRow));
 

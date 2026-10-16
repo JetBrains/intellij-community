@@ -17,16 +17,16 @@ import java.util.List;
 
 import static com.intellij.database.editor.GotoRowAction.GO_TO_ROW_EXECUTOR_KEY;
 
-public class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
-  private final TableResultView myTable;
+class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
+  private final GridTable myTable;
   private final DataGrid myDataGrid;
 
-  TableGoToRowHelper(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  TableGoToRowHelper(@NotNull GridTable table, @NotNull DataGrid grid) {
     myTable = table;
     myDataGrid = grid;
   }
 
-  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
     TableGoToRowHelper tableGoToRowHelper = new TableGoToRowHelper(table, grid);
     table.putClientProperty(GO_TO_ROW_EXECUTOR_KEY, tableGoToRowHelper);
   }
@@ -147,7 +147,7 @@ public class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
       return result == -1 ? -1 : result + 1;
     }
 
-    public static @NotNull Counter get(@NotNull TableResultView table) {
+    static @NotNull Counter get(@NotNull GridTable table) {
       return table.isTransposed() ? TRANSPOSED : REGULAR;
     }
   }

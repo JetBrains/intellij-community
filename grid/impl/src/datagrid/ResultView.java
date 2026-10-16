@@ -1,6 +1,7 @@
 package com.intellij.database.datagrid;
 
 import com.intellij.database.extractors.DisplayType;
+import com.intellij.database.run.ui.ResultViewFactory;
 import com.intellij.database.run.ui.grid.GridSearchSession;
 import com.intellij.database.run.ui.table.LocalFilterState;
 import com.intellij.find.FindModel;
@@ -20,9 +21,14 @@ import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, GridColumn>, GridSearchSession.Listener, Disposable,
                                     LocalFilterState.Listener, ColumnHierarchyListener {
+  /**
+   * The component that shows the cells of the view and receives its focus and input.
+   * {@link ResultViewFactory#wrap} returns the component that goes into the grid layout.
+   */
   @NotNull
   JComponent getComponent();
 
@@ -56,28 +62,22 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   boolean isEditing();
 
-  /**
-   * Whether the view has an active editor anywhere, including a region it renders as a separate component.
-   * {@link #isEditing()} answers for one component only, because Swing requires it to match that component's editor.
-   */
+  /** Whether the view has an active editor in any component that renders its cells. */
   default boolean isEditingAnywhere() {
     return isEditing();
   }
 
-  /** Returns the components this view renders cells in, such as a table and its pinned-column strip. */
+  /** Captures a component identity check for background action updates. */
   @RequiresEdt
-  default @NotNull List<Component> getCellComponents() {
-    return List.of(getComponent());
+  default @NotNull Predicate<Component> captureCellComponentMatcher() {
+    Component cellComponent = getComponent();
+    return component -> component != null && component == cellComponent;
   }
 
-  /** Whether {@code component} is one of the components this view renders cells in. */
+  /** Checks whether the view renders cells in this component. */
   @RequiresEdt
   default boolean isCellComponent(@Nullable Component component) {
-    if (component == null) return false;
-    for (var cellComponent : getCellComponents()) {
-      if (component == cellComponent) return true;
-    }
-    return false;
+    return captureCellComponentMatcher().test(component);
   }
 
   boolean isMultiEditingAllowed();

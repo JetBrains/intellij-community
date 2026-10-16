@@ -1,42 +1,62 @@
 package com.intellij.database.run.ui.table.statisticsPanel
 
+import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.AdditionalTableHeader
+import com.intellij.ui.table.ColumnHeaderController
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.ComponentOrientation
 import java.awt.Dimension
 import javax.swing.JPanel
-import javax.swing.JTable
 import javax.swing.table.TableColumn
+import javax.swing.table.TableColumnModel
+import javax.swing.table.TableModel
 import kotlin.math.max
 
-abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = StatisticsPanelMode.OFF) : AdditionalTableHeader() {
+abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = StatisticsPanelMode.OFF) : JPanel(BorderLayout()) {
   var statisticsPanelMode: StatisticsPanelMode = statisticsPanelMode
     set(value) {
       field = value
-      (columnsController as StatisticsColumnsControllerPanel).setMode(value)
+      (columnsController as? StatisticsColumnsControllerPanel)?.setMode(value)
 
-      table?.revalidate()
-      table?.repaint()
+      view?.revalidate()
+      view?.repaint()
     }
 
-  override var table: JTable? = null
+  var view: TableResultView? = null
+    private set
+
+  var position: AdditionalTableHeader.Position = DEFAULT_POSITION
+    set(value) {
+      field = value
+      view?.setStatisticsHeaderPosition(value)
+    }
+
+  protected var columnsController: ColumnsControllerPanel? = null
+
+  @JvmName("installView")
+  internal fun installView(view: TableResultView?) {
+    columnsController?.detach()
+    removeAll()
+    this.view = view
+    columnsController = if (view == null) null else createColumnsController().also { add(it, BorderLayout.WEST) }
+    (columnsController as? StatisticsColumnsControllerPanel)?.setMode(statisticsPanelMode)
+    revalidate()
+  }
 
   fun updateStatisticsTableHeader() {
-    val currentMode = statisticsPanelMode
-    statisticsPanelMode = currentMode
+    statisticsPanelMode = statisticsPanelMode
   }
 
-  override fun detachController() {
-    columnsController?.detach()
-  }
+  abstract fun createColumnsController(): ColumnsControllerPanel
 
-  abstract inner class StatisticsColumnsControllerPanel(table: JTable) : ColumnsControllerPanel(table) {
+  abstract inner class StatisticsColumnsControllerPanel(table: TableResultView) : ColumnsControllerPanel(table) {
     abstract fun setMode(statisticsPanelMode: StatisticsPanelMode)
 
     override fun computeMyPreferredSize(): Dimension {
@@ -58,14 +78,13 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
     }
 
     override fun updateColumns() {
-      // see the comment on columnAdded
       if (--autoRun == 0) {
         updateHeight()
       }
     }
 
     override fun getPreferredSize(): Dimension {
-      val table: JTable = table
+      val table: TableResultView = table
       myPreferredSize.width = table.width
       return myPreferredSize
     }
@@ -76,7 +95,9 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
       protected var compactStatisticsPanel: @Nls String? = null
       protected var detailedStatisticsPanel: @Nls String? = null
 
-      override fun detach() {}
+      override fun detach() {
+        tableColumn.removePropertyChangeListener(this)
+      }
 
       override fun updateHeight() {
         myHeight = getPreferredSize().height
@@ -133,6 +154,20 @@ abstract class StatisticsTableHeader(statisticsPanelMode: StatisticsPanelMode = 
   }
 
   companion object {
-    val DEFAULT_POSITION: Position = Position.INLINE
+    val DEFAULT_POSITION: AdditionalTableHeader.Position = AdditionalTableHeader.Position.INLINE
+  }
+
+  abstract class ColumnsControllerPanel(val table: TableResultView) : ColumnHeaderController<ColumnsControllerPanel.AdditionalPanel>(
+    object : Context {
+      override val columnModel: TableColumnModel get() = table.columnModel
+      override val model: TableModel get() = table.model
+      override val componentOrientation: ComponentOrientation get() = table.componentOrientation
+      override val draggedColumn: TableColumn? get() = table.draggedColumn
+      override val draggedDistance: Int get() = table.headerDraggedDistance
+    }
+  ) {
+    abstract override fun createColumn(columnView: Int): AdditionalPanel
+
+    abstract inner class AdditionalPanel(tableColumn: TableColumn) : ColumnPanel(tableColumn, ::placeComponents)
   }
 }

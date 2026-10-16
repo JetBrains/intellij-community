@@ -9,16 +9,16 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-public class TableScrollPositionManager implements GridScrollPositionManager {
-  private final TableResultView myResultView;
+class TableScrollPositionManager implements GridScrollPositionManager {
+  private final GridTable myResultView;
   private final DataGrid myGrid;
 
-  TableScrollPositionManager(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
+  TableScrollPositionManager(@NotNull GridTable resultView, @NotNull DataGrid grid) {
     myResultView = resultView;
     myGrid = grid;
   }
 
-  public static void install(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
+  public static void install(@NotNull GridTable resultView, @NotNull DataGrid grid) {
     TableScrollPositionManager tableScrollPositionManager = new TableScrollPositionManager(resultView, grid);
     resultView.putClientProperty(SCROLL_POSITION_MANAGER_KEY, tableScrollPositionManager);
   }

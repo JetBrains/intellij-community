@@ -13,7 +13,10 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.TableColumnModelEvent
 import javax.swing.event.TableColumnModelListener
 
-class MoveColumnListener(private val grid: DataGrid, private val tableResultView: TableResultView) : MouseListener, TableColumnModelListener {
+class MoveColumnListener internal constructor(
+  private val grid: DataGrid,
+  private val gridTable: GridTable,
+) : MouseListener, TableColumnModelListener {
 
   private var draggingState = DraggingState.NONE
   private var orderBeforeDrag: List<Int> = emptyList()
@@ -42,18 +45,18 @@ class MoveColumnListener(private val grid: DataGrid, private val tableResultView
         {
           object : AutoCloseable {
             init {
-              tableResultView.isEditingBlocked = true
+              gridTable.isEditingBlocked = true
               grid.getPanel().getComponent().setLoadingText(DataGridBundle.message("DataView.updatingFile"))
               grid.getPanel().getComponent().startLoading()
             }
 
             override fun close() {
               grid.getPanel().getComponent().stopLoading()
-              tableResultView.isEditingBlocked = false
+              gridTable.isEditingBlocked = false
             }
           }
         },
-        AdjustColumnsAfterMoveInData(grid, tableResultView, column, target),
+        AdjustColumnsAfterMoveInData(grid, gridTable, column, target),
       )),
       ModelIndex.forColumn(grid, column),
       ModelIndex.forColumn(grid, target)
@@ -63,14 +66,14 @@ class MoveColumnListener(private val grid: DataGrid, private val tableResultView
   /** Model indices in the primary table's column-model order, including zero-width pinned placeholders. */
   private fun primaryViewOrder(): List<Int> {
     val order = mutableListOf<Int>()
-    tableResultView.columnModel.columns.asIterator().forEach { order.add(it.modelIndex) }
+    gridTable.columnModel.columns.asIterator().forEach { order.add(it.modelIndex) }
     return order
   }
 
   /** Model indices of the pinned columns, which are shown in the frozen strip and kept at zero width here. */
   private fun pinnedColumns(): Set<Int> {
     val pinned = mutableSetOf<Int>()
-    tableResultView.columnModel.columns.asIterator().forEach { column ->
+    gridTable.columnModel.columns.asIterator().forEach { column ->
       if ((column as? TableResultViewColumn)?.isFrozenHidden == true) pinned.add(column.modelIndex)
     }
     return pinned
