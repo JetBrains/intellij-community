@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
@@ -22,14 +21,12 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.TargetFileSystemCache
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toEelFileSystem
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion
 import org.apache.tuweni.toml.Toml
@@ -76,25 +73,12 @@ internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<S
   val sdkHomePath = sdk.homePath
                     ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
 
-  return when (data) {
-    is PyTargetAwareAdditionalData -> {
-      val targetConfig = data.targetEnvironmentConfiguration
-                         ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
-      val targetFileSystemCache = service<TargetFileSystemCache>()
-      runPoetryWithSdk(
-        fileSystem = targetFileSystemCache.getOrCreate(targetConfig, PythonLanguageRuntimeConfiguration()),
-        projectPath = projectPath,
-        sdkHomePath = sdkHomePath,
-        args = args,
-      )
-    }
-    else -> runPoetryWithSdk(
-      fileSystem = projectPath.toEelFileSystem(),
-      projectPath = projectPath,
-      sdkHomePath = sdkHomePath,
-      args = args,
-    )
-  }
+  return runPoetryWithSdk(
+    fileSystem = sdk.toFileSystem(),
+    projectPath = projectPath,
+    sdkHomePath = sdkHomePath,
+    args = args,
+  )
 }
 
 private suspend fun <P : PathHolder> runPoetryWithSdk(

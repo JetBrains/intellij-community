@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 
-internal class EelFileSystemFactoryImpl : EelFileSystemFactory {
+internal class FileSystemFactoryImpl : FileSystemFactory {
   override fun create(eelApi: EelApi): FileSystemWithEel = EelFileSystem(eelApi)
 
   override fun create(target: TargetEnvironmentConfiguration): FileSystem<PathHolder.Target> =

@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,18 +19,18 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.TargetFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -45,64 +44,30 @@ import java.nio.file.Path
  *
  * Use [getUvExecutionContextAsync] to create an instance from an interpreter.
  */
-internal sealed interface UvExecutionContext<P : PathHolder> {
-  val workingDir: Path
-  val venvPath: P?
-  val fileSystem: FileSystem<P>
-  val uvPath: P?
-
-  data class Eel(
-    override val workingDir: Path,
-    override val venvPath: PathHolder.Eel?,
-    override val fileSystem: EelFileSystem,
-    override val uvPath: PathHolder.Eel?,
-  ) : UvExecutionContext<PathHolder.Eel> {
-    override fun toString(): String =
-      "Eel(workingDir=$workingDir, venvPath=${venvPath?.toStringForUI()}, fileSystem=$fileSystem, uvPath=${uvPath?.toStringForUI()})"
-  }
-
-  data class Target(
-    override val workingDir: Path,
-    override val venvPath: PathHolder.Target?,
-    override val fileSystem: TargetFileSystem,
-    override val uvPath: PathHolder.Target?,
-  ) : UvExecutionContext<PathHolder.Target> {
-    override fun toString(): String =
-      "Target(workingDir=$workingDir, venvPath=${venvPath?.toStringForUI()}, fileSystem=$fileSystem, uvPath=${uvPath?.toStringForUI()})"
-  }
+internal data class UvExecutionContext<P : PathHolder>(
+  val workingDir: Path,
+  val venvPath: P?,
+  val fileSystem: FileSystem<P>,
+  val uvPath: P?,
+) {
+  override fun toString(): String =
+    "UvExecutionContext(workingDir=$workingDir, venvPath=${venvPath?.toStringForUI()}, fileSystem=$fileSystem, uvPath=${uvPath?.toStringForUI()})"
 
   suspend fun createUvCli(): PyResult<UvLowLevel<P>> = validateAndCreateUvCli(uvPath, fileSystem).mapSuccess { uvCli ->
     createUvLowLevel(workingDir, uvCli, venvPath)
   }
 }
 
-private suspend fun createEelUvExecutionContext(
-  workingDir: Path,
-  pythonBinaryPath: String,
-  uvPathString: String?,
-): UvExecutionContext.Eel {
-  val eelApi = workingDir.getEelDescriptor().toEelApi()
-  val fileSystem = EelFileSystem(eelApi)
-  val uvPath = UvPyTool.getInstance().resolveExecutable(fileSystem, uvPathString)
-  return UvExecutionContext.Eel(
-    workingDir = workingDir,
-    venvPath = fileSystem.resolvePythonHome(PathHolder.Eel(Path.of(pythonBinaryPath))),
-    fileSystem = fileSystem,
-    uvPath = uvPath
-  )
-}
-
-private suspend fun createTargetUvExecutionContext(
+private suspend fun <P : PathHolder> createUvExecutionContext(
+  fileSystem: FileSystem<P>,
   workingDir: Path,
   pythonBinaryPath: FullPathOnTarget,
   uvPathString: FullPathOnTarget?,
-  targetConfig: TargetEnvironmentConfiguration,
-): UvExecutionContext.Target {
-  val fileSystem = TargetFileSystem(targetConfig, PythonLanguageRuntimeConfiguration())
+): UvExecutionContext<P> {
   val uvPath = UvPyTool.getInstance().resolveExecutable(fileSystem, uvPathString)
-  return UvExecutionContext.Target(
+  return UvExecutionContext(
     workingDir = workingDir,
-    venvPath = fileSystem.resolvePythonHome(PathHolder.Target(pythonBinaryPath)),
+    venvPath = fileSystem.parsePath(pythonBinaryPath).getOrNull()?.let(fileSystem::resolvePythonHome),
     fileSystem = fileSystem,
     uvPath = uvPath
   )
@@ -119,22 +84,14 @@ internal fun PythonInterpreter.getUvExecutionContextAsync(scope: CoroutineScope,
   val uvPathString = sdk.uvFlavorData?.uvPath
   val pythonBinaryPath = sdk.homePath ?: return null
 
-  return when (data) {
-    is UvSdkAdditionalData -> {
-      val defaultWorkingDir = project?.basePath?.let { Path.of(it) }
-      val cwd = uvWorkingDirectory ?: defaultWorkingDir ?: return null
-      scope.async(start = CoroutineStart.LAZY) {
-        createEelUvExecutionContext(cwd, pythonBinaryPath, uvPathString)
-      }
-    }
-    is PyTargetAwareAdditionalData -> {
-      val targetConfig = data.targetEnvironmentConfiguration ?: return null
-      val cwd = uvWorkingDirectory ?: return null
-      scope.async(start = CoroutineStart.LAZY) {
-        createTargetUvExecutionContext(cwd, pythonBinaryPath, uvPathString, targetConfig)
-      }
-    }
+  val cwd = when (data) {
+    is UvSdkAdditionalData -> uvWorkingDirectory ?: project?.basePath?.let { Path.of(it) }
+    is PyTargetAwareAdditionalData -> uvWorkingDirectory
     else -> null
+  } ?: return null
+
+  return scope.async(start = CoroutineStart.LAZY) {
+    createUvExecutionContext(sdk.toFileSystem(), cwd, pythonBinaryPath, uvPathString)
   }
 }
 

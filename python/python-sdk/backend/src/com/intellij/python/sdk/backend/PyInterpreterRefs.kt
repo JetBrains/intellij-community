@@ -1,29 +1,29 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
-import com.intellij.python.sdk.common.PyEnvRef
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.intellij.execution.Platform
-import kotlin.io.path.invariantSeparatorsPathString
-import java.nio.file.Path
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.add.v2.EelFileSystemFactory
-import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.openapi.project.Project
-import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentsManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.pytools.common.FusId
+import com.intellij.python.sdk.common.PyEnvRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /** The installed tool with this id, or `null` when its plugin is not loaded. */
 @ApiStatus.Internal
@@ -146,7 +146,7 @@ fun pathEnvRef(sdk: Sdk): String? {
 @ApiStatus.Internal
 suspend fun PyInterpreterRef.fileSystem(project: Project): FileSystem<*>? = when (val mode = mode) {
   PyInterpreterRef.Mode.Native -> project.getEelDescriptor().toEelApi().toFileSystem()
-  is PyInterpreterRef.Mode.Target -> findTarget(project, mode.targetId)?.let { EelFileSystemFactory.getInstance().create(it) }
+  is PyInterpreterRef.Mode.Target -> findTarget(project, mode.targetId)?.let { FileSystemFactory.getInstance().create(it) }
 }
 
 /** The target of [project] with the id [targetId], or `null` when [project] has none. See [registerTarget]. */

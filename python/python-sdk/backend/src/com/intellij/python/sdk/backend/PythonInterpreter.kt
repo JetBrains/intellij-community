@@ -3,9 +3,9 @@ package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.python.sdk.common.PyEnvId
 import com.intellij.python.sdk.common.PyInterpreterRef
-import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
@@ -13,11 +13,14 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import org.jetbrains.annotations.NonNls
-import java.nio.file.Path
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.nio.file.Path
 
 /**
  * A Python interpreter: an [Sdk], the [PyInterpreterRef] that names it, and the PyProject directory it belongs to.
@@ -182,6 +185,10 @@ private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonIn
 suspend fun Sdk.pythonInterpreterResultAsync(forceRefresh: Boolean = false): PyResult<PythonInterpreter> = withContext(Dispatchers.IO) {
   this@pythonInterpreterResultAsync.buildPythonInterpreter(forceRefresh)
 }
+
+
+@ApiStatus.Internal
+suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = sdk.toFileSystem()
 
 /**
  * [Sdk.pythonInterpreterResult] for a Java caller that reports a broken SDK as an [InvalidSdkException], with the message
