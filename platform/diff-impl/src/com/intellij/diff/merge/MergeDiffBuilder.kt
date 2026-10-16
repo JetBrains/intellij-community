@@ -42,8 +42,7 @@ internal class MergeDiffBuilder(
   suspend fun rediff(
     ignorePolicy: IgnorePolicy,
     isAutoResolveImportConflicts: Boolean,
-  ): MergeDiffData {
-
+  ): MergeDiffData = withContext(Dispatchers.Default) {
     checkCanceled()
 
     var sequences = emptyList<CharSequence>()
@@ -65,17 +64,17 @@ internal class MergeDiffBuilder(
     }
 
     // initialize resolver and patch conflict types if semantic resolution is available
-    withContext(Dispatchers.Default) {
+    coroutineToIndicator {
       conflictResolver.init(lineOffsets, fragmentsWithMetadata.fragments, psiFiles)
-      patchConflictTypes(conflictTypes, conflictResolver)
     }
+    patchConflictTypes(conflictTypes, conflictResolver)
 
-    return MergeDiffData(fragmentsWithMetadata = fragmentsWithMetadata,
-                         conflictTypes = conflictTypes,
-                         psiFiles = psiFiles,
-                         ignorePolicy = ignorePolicy,
-                         isAutoResolveImportConflicts = isAutoResolveImportConflicts,
-                         isImportResolutionPossible = resolveImportsPossible)
+    MergeDiffData(fragmentsWithMetadata = fragmentsWithMetadata,
+                  conflictTypes = conflictTypes,
+                  psiFiles = psiFiles,
+                  ignorePolicy = ignorePolicy,
+                  isAutoResolveImportConflicts = isAutoResolveImportConflicts,
+                  isImportResolutionPossible = resolveImportsPossible)
   }
 
   private suspend fun getLineFragments(

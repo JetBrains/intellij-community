@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -507,6 +508,7 @@ sealed class MergeEvent {
 
 private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
 
+  @RequiresBackgroundThread(generateAssertion = false /* Still used from EDT */)
   fun resolve(change: TextMergeChange): CharSequence? {
     assert(change.conflictType.resolutionStrategy === MergeConflictResolutionStrategy.TEXT)
 
