@@ -44,8 +44,8 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
 
-  @JvmField
-  internal var tabLabel: TabLabel? = null
+  var tabLabel: TabLabel? = null
+    internal set
 
   private var preferredFocusableComponent: JComponent? = component
 
