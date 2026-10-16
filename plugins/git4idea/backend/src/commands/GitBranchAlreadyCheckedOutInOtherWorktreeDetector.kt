@@ -10,6 +10,10 @@ import com.intellij.openapi.util.NlsSafe
  * ```
  * fatal: 'my-branch' is already used by worktree at '/path/to/other/worktree'
  * ```
+ * Git before 2.43 worded this message differently:
+ * ```
+ * fatal: 'my-branch' is already checked out at '/path/to/other/worktree'
+ * ```
  */
 internal class GitBranchAlreadyCheckedOutInOtherWorktreeDetector : GitLineEventDetector {
 
@@ -30,7 +34,7 @@ internal class GitBranchAlreadyCheckedOutInOtherWorktreeDetector : GitLineEventD
   internal data class Match(val branchName: String, val worktreePath: String?)
 
   companion object {
-    private val PATTERN = ".*fatal: '(.*)' is already used by worktree at '(.*)'.*".toRegex()
+    private val PATTERN = ".*fatal: '(.*)' is already (?:used by worktree|checked out) at '(.*)'.*".toRegex()
 
     @JvmStatic
     fun matchInOutput(lines: List<String>): Match? {
