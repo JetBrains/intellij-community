@@ -1888,6 +1888,36 @@ class FileEditorManagerTest {
     assertThat(exManager.windowSplitCount).isEqualTo(2)
   }
 
+  /**
+   * The Switcher and Search Everywhere open a file with [FileEditorManagerImpl.OpenMode.RIGHT_SPLIT] on Shift+Enter.
+   * A file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] stays in its window.
+   */
+  @Test
+  fun testRightSplitModeKeepsFileWithForbiddenSplitInItsWindow(): Unit = timeoutRunBlocking {
+    val file = getSourceFile("1.txt")
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    try {
+      withContext(Dispatchers.UiWithModelAccess) {
+        openSingleTextEditor(file)
+      }
+
+      val composite = manager.openFile(
+        file = file,
+        options = FileEditorOpenOptions(openMode = FileEditorManagerImpl.OpenMode.RIGHT_SPLIT, reuseOpen = true, requestFocus = true),
+      )
+
+      assertThat(composite.allEditors).isNotEmpty()
+      assertThat(manager.windows).hasSize(1)
+      withContext(Dispatchers.UiWithModelAccess) {
+        assertThat(manager.splitters.openInRightSplit(file, false)).isNull()
+      }
+      assertThat(manager.windows).hasSize(1)
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
   @ParameterizedTest
   @CsvSource("file,false", "file,true", "editor,false", "editor,true", "text,false", "text,true")
   fun testRequestCapturesOnlyManagedMode(api: String, explicitDefault: Boolean): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {

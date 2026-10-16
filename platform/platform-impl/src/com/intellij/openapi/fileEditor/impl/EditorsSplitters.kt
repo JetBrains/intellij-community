@@ -1333,6 +1333,7 @@ open class EditorsSplitters internal constructor(
     openInRightSplit(file, options, newWindowOptions = options)
 
   private fun openInRightSplit(file: VirtualFile, options: FileEditorOpenOptions, newWindowOptions: FileEditorOpenOptions?): EditorWindow? {
+    if (FileEditorManagerImpl.forbidSplitFor(file)) return null
     val window = currentWindow ?: return null
     findRightSplitWindow(window)?.let { rightSplitWindow ->
       manager.openFile(file = file, window = rightSplitWindow, options = options)
