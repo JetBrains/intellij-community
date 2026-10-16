@@ -170,7 +170,7 @@ fn one_lanes_suites_become_the_lanes_tag_and_one_class_filter_each() {
     );
     assert_eq!(resolved.lane, "ui");
     assert_eq!(resolved.selection.lane.as_deref(), Some("ui"));
-    assert_eq!(resolved.selection.label, "//plugins/air/tests/integration/ui:ui_test");
+    assert_eq!(resolved.selection.label, "//plugins/air/tests/integration/ui:ui_lane_test");
     assert_eq!(resolved.classes.len(), 2);
 }
 

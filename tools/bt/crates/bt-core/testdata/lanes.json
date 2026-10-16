@@ -31,19 +31,19 @@
       "name": "air-integration-ui-flow",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The generated UI-flow suites, `ui_test`. `BT --lane ui` selects it."
+      "description": "The generated UI-flow suites, `ui_lane_test`. `BT --lane ui` selects it."
     },
     {
       "name": "air-integration-gui-chat",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The ACP GUI-chat suites, `gui-chat_test`. `BT --lane gui-chat` selects it."
+      "description": "The ACP GUI-chat suites, `gui-chat_lane_test`. `BT --lane gui-chat` selects it."
     },
     {
       "name": "air-integration-ui-real",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The real-CLI flow suites, `ui-real_test`. `BT --lane ui-real` selects it."
+      "description": "The real-CLI flow suites, `ui-real_lane_test`. `BT --lane ui-real` selects it."
     },
     {
       "name": "air-integration-ui-live",
@@ -66,7 +66,6 @@
   ],
   "excludedTestLibs": [
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
-    "//plugins/air/tests/integration/gui-chat:gui-chat_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
     "//plugins/air/tests/integration/headless/acp/runtime-installation:runtime-installation_test_lib",
@@ -78,8 +77,6 @@
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
     "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
     "//plugins/air/tests/integration/ui-perf:ui-perf_test_lib",
-    "//plugins/air/tests/integration/ui-real:ui-real_test_lib",
-    "//plugins/air/tests/integration/ui:ui_test_lib",
     "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
@@ -127,25 +124,22 @@
     {
       "name": "ui",
       "description": "deterministic UI-flow scenarios (launches a real IDE through the guest agent)",
-      "target": "//plugins/air/tests/integration/ui/...",
-      "extra": [
-        "--build_tests_only",
-        "--test_tag_filters=air-integration-ui-flow"
-      ],
+      "target": "//plugins/air/tests/integration/ui:ui_lane_test",
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-flow",
       "catalogLane": "UI",
-      "testLabel": "//plugins/air/tests/integration/ui:ui_test"
+      "testLabel": "//plugins/air/tests/integration/ui:ui_lane_test"
     },
     {
       "name": "ui-real",
       "description": "only the real-CLI flow scenarios (a real pi can open an interactive auth callback, so no unattended lane run should ever trigger one)",
-      "target": "//plugins/air/tests/integration/ui-real:ui-real_test",
+      "target": "//plugins/air/tests/integration/ui-real:ui-real_lane_test",
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-real",
       "catalogLane": "UI_REAL",
-      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test"
+      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_lane_test"
     },
     {
       "name": "ui-live",
@@ -192,15 +186,12 @@
     {
       "name": "gui-chat",
       "description": "ACP chat-flow, local-agent, and debug-tool-window scenarios",
-      "target": "//plugins/air/tests/integration/gui-chat/...",
-      "extra": [
-        "--build_tests_only",
-        "--test_tag_filters=air-integration-gui-chat"
-      ],
+      "target": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test",
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-gui-chat",
       "catalogLane": "GUI_CHAT",
-      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_test"
+      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"
     },
     {
       "name": "headless",

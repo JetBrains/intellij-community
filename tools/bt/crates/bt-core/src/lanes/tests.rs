@@ -199,16 +199,15 @@ fn the_fast_lane_builds_what_it_excludes_from_the_run() {
     }
 }
 
-/// Every IDE-launching lane runs a target the fast lane excludes, so that target's library must be in the build
-/// spawn. `AirIntegrationTagTest` checks the whole list against the BUILD files.
+/// Every IDE-launching lane runs a target the fast lane excludes, so the library of a JUnit target must be in the
+/// build spawn. A lane test runs through the `lane-run` verb and has no library of its own. `AirIntegrationTagTest`
+/// checks the whole list against the BUILD files.
 #[test]
 fn every_ide_launching_lane_has_its_library_in_the_build_spawn() {
     for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {
-        let mut target = lane(name).targets[0].clone();
-        if let Some(directory) = target.strip_suffix("/...") {
-            // A lane rooted at a package runs the one target named after that package.
-            let package = directory.rsplit_once('/').map_or(directory, |(_, package)| package);
-            target = format!("{directory}:{package}_test");
+        let target = &lane(name).targets[0];
+        if target.ends_with("_lane_test") {
+            continue;
         }
         let library = format!("{target}_lib");
         assert!(
@@ -243,9 +242,15 @@ fn no_lane_selects_its_tests_by_a_junit_filter() {
 
 #[test]
 fn each_ide_launching_lane_selects_its_own_integration_tag() {
-    assert!(has(&lane("ui").extra, "--test_tag_filters=air-integration-ui-flow"));
-    assert!(has(&lane("gui-chat").extra, "--test_tag_filters=air-integration-gui-chat"));
-    assert_eq!(lane("ui-real").targets, ["//plugins/air/tests/integration/ui-real:ui-real_test"]);
+    // The lane test of a lane is its one target, so no tag filter narrows the run.
+    for (name, target) in [
+        ("ui", "//plugins/air/tests/integration/ui:ui_lane_test"),
+        ("gui-chat", "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"),
+        ("ui-real", "//plugins/air/tests/integration/ui-real:ui-real_lane_test"),
+    ] {
+        assert_eq!(lane(name).targets, [target], "lane {name}");
+        assert!(!lane(name).is_multi_target(), "lane {name}");
+    }
     for flag in &lane("ui").extra {
         assert!(
             !flag.ends_with("_BIN"),

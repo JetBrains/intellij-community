@@ -433,8 +433,7 @@ fn a_module_selector_resolves_without_the_tree_scan() {
 /// The FQN of a generated suite class of the ui lane.
 const RENAME: &str = "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest";
 
-/// The test label of the ui lane in the fixture lane table, and the one of its lane test.
-const UI_TEST: &str = "//plugins/air/tests/integration/ui:ui_test";
+/// The test label of the ui lane in the fixture lane table, which is the label of its lane test.
 const UI_LANE_TEST: &str = "//plugins/air/tests/integration/ui:ui_lane_test";
 
 /// A suite document of `lane` whose class is `fqn`, with the `testClass` label that the generator writes.
@@ -489,7 +488,7 @@ fn a_class_that_a_suite_document_names_resolves_to_the_test_label_of_its_lane() 
         ],
     );
     let ui = Resolution {
-        labels: vec![UI_TEST.to_owned()],
+        labels: vec![UI_LANE_TEST.to_owned()],
         filter: Some(RENAME.to_owned()),
         ..Resolution::default()
     };
@@ -505,17 +504,18 @@ fn a_class_that_a_suite_document_names_resolves_to_the_test_label_of_its_lane() 
     );
 }
 
-// The answer for a documented class depends on the lane row alone. When the row of the ui lane names its lane test,
-// the class resolves to that label, and every other field of the answer stays the same.
+// The answer for a documented class depends on the lane row alone. When the row of the ui lane names another test
+// label, the class resolves to that label, and every other field of the answer stays the same.
 #[test]
 fn a_documented_class_follows_the_test_label_of_its_lane_row() {
-    let before = format!("\"{UI_TEST}\"");
+    let row = format!("\"testLabel\": \"{UI_LANE_TEST}\"");
     assert_eq!(
-        LANES_TEXT.matches(&before).count(),
+        LANES_TEXT.matches(&row).count(),
         1,
         "the fixture table names the ui test label once"
     );
-    let flipped = LANES_TEXT.replace(&before, &format!("\"{UI_LANE_TEST}\""));
+    let other = "//plugins/air/tests/integration/ui:ui_other_test";
+    let flipped = LANES_TEXT.replace(&row, &format!("\"testLabel\": \"{other}\""));
     let flipped = Areas::new(vec![Area::new(
         AREA_DIR,
         LANES_FILE,
@@ -530,15 +530,15 @@ fn a_documented_class_follows_the_test_label_of_its_lane_row() {
         )
         .expect("resolves")
     };
-    let (jvm, lane) = (resolve(areas()), resolve(&flipped));
-    assert_eq!(jvm.labels, [UI_TEST]);
+    let (lane, moved) = (resolve(areas()), resolve(&flipped));
     assert_eq!(lane.labels, [UI_LANE_TEST]);
+    assert_eq!(moved.labels, [other]);
     assert_eq!(
         Resolution {
-            labels: jvm.labels.clone(),
-            ..lane
+            labels: lane.labels.clone(),
+            ..moved
         },
-        jvm
+        lane
     );
 }
 
@@ -555,7 +555,7 @@ fn a_class_in_a_module_and_in_a_document_is_one_class_of_the_lane() {
     assert_eq!(
         resolve_in(&both, "AirRenameSessionGeneratedFlowUiTest"),
         Ok(Resolution {
-            labels: vec![UI_TEST.to_owned()],
+            labels: vec![UI_LANE_TEST.to_owned()],
             filter: Some(RENAME.to_owned()),
             ..Resolution::default()
         })
@@ -570,12 +570,12 @@ fn a_documented_class_and_another_class_of_its_simple_name_are_refused_by_the_si
     let fake = with_documents(with_shell_module(other), &[("rename-session", "UI", RENAME)]);
     let failure = refusal(resolve_in(&fake, "AirRenameSessionGeneratedFlowUiTest"));
     assert_eq!(failure.exit, exit::USAGE);
-    for expected in ["2 classes named", RENAME, UI_TEST, other, "//plugins/air/shells:shells_test"] {
+    for expected in ["2 classes named", RENAME, UI_LANE_TEST, other, "//plugins/air/shells:shells_test"] {
         assert!(failure.message.contains(expected), "no {expected:?} in:\n{}", failure.message);
     }
     assert_eq!(
         resolve_in(&fake, RENAME).map(|resolution| resolution.labels),
-        Ok(vec![UI_TEST.to_owned()])
+        Ok(vec![UI_LANE_TEST.to_owned()])
     );
     assert_eq!(
         resolve_in(&fake, other).map(|resolution| resolution.labels),

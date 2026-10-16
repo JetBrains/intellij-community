@@ -53,7 +53,7 @@ fn a_lane_selects_itself_by_junit_tag() {
     assert_eq!(
         selection,
         Selection {
-            label: "//plugins/air/tests/integration/gui-chat:gui-chat_test".to_owned(),
+            label: "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test".to_owned(),
             lane: Some("gui-chat".to_owned()),
             test_env: BTreeMap::from([("JB_TEST_JUNIT5_FILTERS".to_owned(), "include-tag=air-gui-chat".to_owned())]),
         }
@@ -104,16 +104,16 @@ fn the_explicit_only_lane_selects_itself_by_junit_tag() {
 // --- selector resolution --------------------------------------------------------------------------------------
 
 /// A repository shaped the way resolution requires, and no more: one module with a test source root, its
-/// `jps_test`, and one test class.
+/// `jps_test`, and one test class. The module is the one of the ui-live lane, which still runs a JUnit target.
 fn fixture_repo(repo: &Path) {
-    let module = repo.join("plugins/air/tests/integration/ui");
+    let module = repo.join("plugins/air/tests/integration/ui-live");
     fs::create_dir_all(module.join("testSrc/flow")).unwrap();
     fs::write(
-        module.join("intellij.air.ui.iml"),
+        module.join("intellij.air.uiLive.iml"),
         r#"<module><component><content url="file://$MODULE_DIR$"><sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" /></content></component></module>"#,
     )
     .unwrap();
-    fs::write(module.join("BUILD.bazel"), "jps_test(\n  name = \"ui_test\",\n)\n").unwrap();
+    fs::write(module.join("BUILD.bazel"), "jps_test(\n  name = \"ui-live_test\",\n)\n").unwrap();
     fs::write(
         module.join("testSrc/flow/AirFlowSmokeTest.kt"),
         "package com.intellij.air.integration.flow\n\nclass AirFlowSmokeTest\n",
@@ -134,7 +134,7 @@ fn a_selector_inside_a_lane_resolves_to_its_filter() {
     assert_eq!(
         selection,
         Selection {
-            label: "//plugins/air/tests/integration/ui:ui_test".to_owned(),
+            label: "//plugins/air/tests/integration/ui-live:ui-live_test".to_owned(),
             lane: None,
             test_env: BTreeMap::from([(
                 "TESTBRIDGE_TEST_ONLY".to_owned(),
