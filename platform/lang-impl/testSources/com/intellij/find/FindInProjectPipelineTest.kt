@@ -432,7 +432,7 @@ class FindInProjectPipelineTest {
     }
     val directory = FakeTraversalItem(LightVirtualFile("dir"), children)
     val candidateFilter = CandidateFilter({ true }, { false }, { true }, { true }, { false }, false, { null })
-    val walker = ScopeWalker(projectModel("data"), project, candidateFilter, null, null, false, null)
+    val walker = ScopeWalker(projectModel("data"), project, candidateFilter, null, null, false, false, null)
 
     walker.expand(ScopeWalker.WalkPlan(emptyList(), false, emptyList(), true), WorkItem.Walk.Traversal(directory), sink)
 

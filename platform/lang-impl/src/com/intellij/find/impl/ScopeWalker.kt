@@ -46,6 +46,8 @@ internal class ScopeWalker(
   private val moduleToSearchIn: Module?,
   private val directoryToSearchIn: VirtualFile?,
   private val withSubdirectories: Boolean,
+  /** True when [directoryToSearchIn] stands for the whole project, as in JetBrains Light, where every file is non-indexable. */
+  private val directoryStandsForProject: Boolean,
   private val customScope: GlobalSearchScope?,
 ) {
   /**
@@ -76,7 +78,8 @@ internal class ScopeWalker(
     val engines: List<DirectorySearchEngine>,
     /**
      * False when a project search skips the walk of the non-indexable files: the registry key is off, or a reliable
-     * searcher reported [com.intellij.find.FindInProjectSearchEngine.Coverage.ALL_CANDIDATES]; true in every other branch.
+     * searcher reported [com.intellij.find.FindInProjectSearchEngine.Coverage.ALL_CANDIDATES], also for the directory
+     * that stands for the project; true in every other branch.
      * Only a walked plan earns [com.intellij.find.FindInProjectSearchEngine.ScanObserver.nonIndexedScanCompleted].
      */
     val nonIndexableWalked: Boolean,
@@ -116,7 +119,13 @@ internal class ScopeWalker(
       // so walking through its children won't trash VFS cache with new entries from some rarely used file-tree:
       val cacheAvoidingDirectory = NewVirtualFile.asCacheAvoiding(directoryToSearchIn)
       if (withSubdirectories) {
-        items.add(WorkItem.Walk.File(cacheAvoidingDirectory))
+        // the directory that stands for the project holds only non-indexable files, so a reliable searcher covers its walk too
+        if (directoryStandsForProject && skipNonIndexableRoots) {
+          nonIndexableWalked = false
+        }
+        else {
+          items.add(WorkItem.Walk.File(cacheAvoidingDirectory))
+        }
 
         // DirectorySearchEngine is not obliged to add unsaved documents to the search queue - do it now.
         getUnsavedDocumentsUnderDirectory(directoryToSearchIn).mapTo(items) { WorkItem.Walk.File(it) }
