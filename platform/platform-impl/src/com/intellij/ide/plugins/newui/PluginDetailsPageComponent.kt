@@ -1764,7 +1764,7 @@ class PluginDetailsPageComponent private constructor(
         myEnableDisableButton!!.isVisible = bundled
         /** FIXME duplicated with [ListPluginComponent] */
         myEnableDisableButton!!.isEnabled = plugin?.isDisableAllowed != false && showComponent?.isNotFreeInFreeMode() != true
-        updateButton!!.isVisible = !uninstalled && updateDescriptor != null && !installedWithoutRestart
+        updateButton!!.isVisible = !uninstalled && isUpdateAvailable() && !installedWithoutRestart
         updateEnableForNameAndIcon()
         updateErrors()
       }
@@ -1792,7 +1792,7 @@ class PluginDetailsPageComponent private constructor(
 
         updateEnabledForProject()
 
-        updateButton!!.isVisible = updateDescriptor != null && !installedWithoutRestart
+        updateButton!!.isVisible = isUpdateAvailable() && !installedWithoutRestart
       }
       enableDisableController?.apply {
         this.update()
@@ -2119,9 +2119,14 @@ class PluginDetailsPageComponent private constructor(
     updateErrors()
     updateEnabledForProject()
 
-    updateButton!!.isVisible = updateDescriptor != null
+    updateButton!!.isVisible = isUpdateAvailable()
 
     fullRepaint()
+  }
+
+  private fun isUpdateAvailable(): Boolean {
+    val descriptor = descriptorForActions ?: return false
+    return updateDescriptor != null && pluginModel.isEnabled(descriptor)
   }
 
   suspend fun updateAfterUninstall(showRestart: Boolean) {

@@ -329,8 +329,13 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
     updateAllUpdatesCollectionJob = pageScope.launch(start = CoroutineStart.UNDISPATCHED) {
       pluginUpdates.combine(localSource.state) { updates, localState ->
-        val installedPluginIds = localState.listModelData.installedModels.keys
-        updates.copy(enabledUpdates = updates.enabledUpdates.filter { it.pluginId in installedPluginIds })
+        val enabledPluginIds = localState.sections.asSequence()
+          .filter { it.id == PluginSectionId.Installed || it.id == PluginSectionId.Bundled }
+          .flatMap { it.items.asSequence() }
+          .filter { it.rowInput?.enabled == true }
+          .map { it.pluginId }
+          .toHashSet()
+        updates.copy(enabledUpdates = updates.all.filter { it.pluginId in enabledPluginIds })
       }.collect(updateAllController::acceptUpdates)
     }
     PluginManagerUsageCollector.logUnifiedSessionStarted(openSource)

@@ -59,7 +59,16 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
           coroutineScope.launch { update() }
           return
         }
-        coroutineScope.launch { dropFromLastPluginUpdates(pluginDescriptors.map { it.getPluginId() }.toSet()) }
+        coroutineScope.launch {
+          updateMutex.withLock {
+            val updates = lastPluginUpdates ?: return@withLock
+            val updated = updates.withDisabledPlugins(pluginDescriptors.map { it.pluginId }.toSet())
+            if (updated !== updates) {
+              lastPluginUpdates = updated
+              emitUpdates(updated)
+            }
+          }
+        }
       }
     })
     PluginUpdateSourceService.addPluginUpdateSourceFilteringRegistryListener(coroutineScope) {
@@ -125,4 +134,20 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
   private fun List<PluginDto>.markLocalIfUnset(): List<PluginDto> = onEach {
     if (it.source == null) it.source = PluginSource.LOCAL
   }
+}
+
+internal fun PluginUpdatesEvent.withDisabledPlugins(pluginIds: Set<PluginId>): PluginUpdatesEvent {
+  val (disabled, enabled) = enabledUpdates.partition { it.pluginId in pluginIds }
+  if (disabled.isEmpty()) return this
+  val disabledUpdatesById = LinkedHashMap<PluginId, PluginDto>()
+  for (update in disabledUpdates + disabled) {
+    val existing = disabledUpdatesById.putIfAbsent(update.pluginId, update)
+    if (existing != null) {
+      existing.source = existing.source.addSource(update.source)
+    }
+  }
+  return copy(
+    enabledUpdates = enabled,
+    disabledUpdates = disabledUpdatesById.values.toList(),
+  )
 }

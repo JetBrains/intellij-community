@@ -172,6 +172,20 @@ Untested: No focused test verifies state isolation across two page sessions.
     `reused update button resolves the refreshed descriptor`
   )
 
+- A disabled plugin must not offer Update in its row or details.
+- Enabling a plugin must restore its cached Update action before Apply or restart.
+- Disabling the plugin again must hide its Update action before Apply or restart.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `disabled plugin updates appear in rows and details after enabling`
+  )
+
+- Applying a disable change must retain the known update for later session enablement.
+- If cached updates share a plugin ID, disabling must retain all their sources.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
+    `disabling retains known updates for later session enablement`;
+    `disabling merges sources for cached updates with the same plugin id`
+  )
+
 - An install or update must show Downloading while its operation runs.
 - A successful install or update must retain its Prepared state until Apply or Reset.
 - A query change or source refresh must not clear the Prepared state.
@@ -236,6 +250,12 @@ Untested: No focused test covers every management edit and refresh path.
 
 - Update All must capture the current enabled update set when the user starts it.
 - Disabled updates must not enter an Update All request.
+- Update All must use pending enablement changes from the current settings session.
+- Enabling a plugin must admit its cached update even when the update check classified the plugin as disabled.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Update All follows session enablement with cached disabled updates`
+  )
+
 - The captured total must stay fixed while that request runs.
 - A successful prepared update must advance the prepared count.
 - A failed or cancelled update must not advance the prepared count.

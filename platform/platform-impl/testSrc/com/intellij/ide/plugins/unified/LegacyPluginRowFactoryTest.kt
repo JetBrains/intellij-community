@@ -1360,6 +1360,63 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
+  fun `disabled plugin updates appear in rows and details after enabling`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("disabled.update.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Disabled Update Plugin")
+          .setVersion("1.0")
+          .setIsConverted(true)
+          .build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Disabled Update Plugin")
+          .setVersion("2.0")
+          .setIsConverted(true)
+          .build()
+        val listModel = ListPluginModel().apply {
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+        }
+        val input = PluginRowInput(
+          installedPlugin = installed,
+          installationState = PluginInstallationState(true),
+          errors = emptyList(),
+          updateDescriptor = update,
+          enabled = false,
+          restrictedByProduct = false,
+        )
+        val item = PluginItemState(pluginId, installed.name, modelHandle = PluginItemModelHandle(installed), rowInput = input)
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, listModel, listener, onSelectionChanged = {})
+        val presenter = LegacyPluginDetailsPresenter(host, listener)
+        UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
+          val controller = UnifiedPluginsPageController()
+          for ((revision, enabled) in listOf(false, true, false, true).withIndex()) {
+            controller.updateSection(PluginSectionState(
+              PluginSectionId.Installed,
+              items = listOf(item.copy(contentRevision = revision.toLong(), rowInput = input.copy(enabled = enabled))),
+            ))
+            view.render(controller.state.value)
+            val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
+            assertThat(row.myUpdateButton?.isVisible == true).isEqualTo(enabled)
+            assertThat(row.getUpdateActionDescriptors() != null).isEqualTo(enabled)
+            waitUntilAssertSucceeds {
+              val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+              assertThat(componentsOfType(details, JLabel::class.java).map(JLabel::getText))
+                .anyMatch { it?.startsWith("1.0") == true }
+              val updateButton = componentsOfType(details, UpdateButton::class.java).single()
+              assertThat(updateButton.isVisible).isEqualTo(enabled)
+            }
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
   fun `selected details receive an update after repository refresh`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
