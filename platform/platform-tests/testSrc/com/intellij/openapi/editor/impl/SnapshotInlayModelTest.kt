@@ -10,18 +10,16 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.SnapshotMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.lang.ref.WeakReference
 
 @TestApplication
 @UsePMarkerImplementation
@@ -282,12 +280,11 @@ class SnapshotInlayModelTest {
 
   @Test
   fun `released editor storage is not retained by document marker stores`(): Unit = timeoutRunBlocking {
-    val releasedStorage = createReleasedEditorStorage()
+    val document = DocumentImpl("abc", true)
 
-    GCUtil.tryGcSoftlyReachableObjects { releasedStorage.rootStoreReference.get() == null }
+    createReleasedEditorStorage(document).ensureCollectedWithinTimeout(15_000)
 
-    assertThat(releasedStorage.rootStoreReference.get()).isNull()
-    assertThat(releasedStorage.document.text).isEqualTo("abc")
+    assertThat(document.text).isEqualTo("abc") // to keep document alive
   }
 
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
@@ -303,16 +300,12 @@ class SnapshotInlayModelTest {
     }
   }
 
-  private suspend fun createReleasedEditorStorage(): ReleasedEditorStorage {
+  private suspend fun createReleasedEditorStorage(document: DocumentImpl): GCWatcher {
     return withContext(Dispatchers.EDT) {
       val editorFactory = EditorFactory.getInstance()
-      val document = DocumentImpl("abc", true)
       val editor = editorFactory.createEditor(document) as EditorImpl
       try {
-        ReleasedEditorStorage(
-          document,
-          WeakReference(editor.inlayModel.rootStore()),
-        )
+        GCWatcher.tracking(editor.inlayModel.rootStore())
       }
       finally {
         editorFactory.releaseEditor(editor)
@@ -368,11 +361,6 @@ class SnapshotInlayModelTest {
     val inlayIsValid: Boolean,
     val childIsDisposed: Boolean,
     val hasBlockElements: Boolean,
-  )
-
-  private data class ReleasedEditorStorage(
-    val document: DocumentImpl,
-    val rootStoreReference: WeakReference<SnapshotMarkerRootStore>,
   )
 
   private val renderer: EditorCustomElementRenderer = EditorCustomElementRenderer { 1 }
