@@ -117,6 +117,8 @@ import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FIL
 public final class ConfigImportHelper {
   public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
+  // A Unified IDE flavor directory, `<selector>-<flavor>` (`UnifiedIdeFlavorPathCustomizer`), belongs to another flavor of the product
+  private static final Pattern FLAVOR_DIRECTORY_SUFFIX = Pattern.compile("\\d+(?:\\.\\d+)*-[a-z0-9-]+");
 
   private static final String UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY = "idea.config.import.update.incompatible.plugins.only"; // if true, only incompatible will be updated
 
@@ -675,7 +677,8 @@ public final class ConfigImportHelper {
     var strictPrefix = dotted ? '.' + prefix : prefix;
     return StringUtil.startsWithIgnoreCase(name, strictPrefix) &&
            name.length() > strictPrefix.length() &&
-           Character.isDigit(name.charAt(strictPrefix.length()));
+           Character.isDigit(name.charAt(strictPrefix.length())) &&
+           !FLAVOR_DIRECTORY_SUFFIX.matcher(name.substring(strictPrefix.length())).matches();
   }
 
   private static String getNameWithVersion(Path configDir) {
