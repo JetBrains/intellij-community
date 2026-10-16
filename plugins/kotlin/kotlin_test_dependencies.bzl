@@ -10,7 +10,7 @@ kotlincRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrain
 jpsPluginRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
 
 kotlinCompilerCliVersion = "2.5.20-dev-335"
-kotlincKotlinJpsPluginTestsVersion = "2.4.20"
+kotlincKotlinJpsPluginTestsVersion = "2.4.21"
 
 download_file(
     name = "kotlinx-serialization-core-1.7.1.jar",
@@ -213,7 +213,7 @@ download_file(
 download_file(
     name = "js-ir-runtime-for-ide.klib",
     url = "{0}/org/jetbrains/kotlin/js-ir-runtime-for-ide/{1}/js-ir-runtime-for-ide-{1}.klib".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "df10bae085ebfd7d976ead07963b3116c899bff68fd805b1c319bbae006071ea",
+    sha256 = "caf38846e5646857ef534a01642245842bbafd02affb3b0906a1e9293f9a94c2",
 )
 
 download_file(
@@ -249,13 +249,13 @@ download_file(
 download_file(
     name = "kotlin-dist-for-ide-increment-compilation.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-dist-for-ide/{1}/kotlin-dist-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "f0fca7b2335ffa60de9653054d364773b0ba5d06def62a056f73e3f91d58be6c",
+    sha256 = "dd88d026c0753472326178f01229cc6da5db5ca7ce533093e17f46ee12aed728",
 )
 
 download_file(
     name = "kotlin-dist-for-ide.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-dist-for-ide/{1}/kotlin-dist-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "f0fca7b2335ffa60de9653054d364773b0ba5d06def62a056f73e3f91d58be6c",
+    sha256 = "dd88d026c0753472326178f01229cc6da5db5ca7ce533093e17f46ee12aed728",
 )
 
 download_file(
@@ -267,7 +267,7 @@ download_file(
 download_file(
     name = "kotlin-jps-plugin-classpath.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/{1}/kotlin-jps-plugin-classpath-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "f88a1baac843c379be6046a2b0cbee01359e7fa33bd3f807d807657d95e36f4a",
+    sha256 = "fa692aeac4f53526a1f7e1f069de0263135249f0666615350d2bf74283741920",
 )
 
 download_file(

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-dist" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:2.4.20">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:2.4.21">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.20/kotlin-dist-for-ide-2.4.20.jar">
-          <sha256sum>f0fca7b2335ffa60de9653054d364773b0ba5d06def62a056f73e3f91d58be6c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.21/kotlin-dist-for-ide-2.4.21.jar">
+          <sha256sum>dd88d026c0753472326178f01229cc6da5db5ca7ce533093e17f46ee12aed728</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.20/kotlin-dist-for-ide-2.4.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.21/kotlin-dist-for-ide-2.4.21.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.20/kotlin-dist-for-ide-2.4.20-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.4.21/kotlin-dist-for-ide-2.4.21-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
