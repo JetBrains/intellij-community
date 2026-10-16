@@ -61,7 +61,6 @@ internal open class IconsClassGenerator(
     private val NAME_COMPARATOR: Comparator<String> = compareBy { it.lowercase(Locale.ENGLISH) + '.' }
 
     private val deprecatedIconFieldNameMap = CollectionFactory.createCharSequenceMap<String>(true).apply {
-      this["PhpIcon"] = "Php_icon"
       this["Emulator02"] = "Emulator2"
     }
 

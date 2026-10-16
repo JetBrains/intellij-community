@@ -494,7 +494,6 @@ f:com.intellij.icons.AllIcons$General
 - sf:Add:javax.swing.Icon
 - sf:AddJdk:javax.swing.Icon
 - sf:Add_20x20:javax.swing.Icon
-- sf:Alpha:javax.swing.Icon
 - sf:ArrowDown:javax.swing.Icon
 - sf:ArrowDownSmall:javax.swing.Icon
 - sf:ArrowLeft:javax.swing.Icon
@@ -642,7 +641,6 @@ f:com.intellij.icons.AllIcons$General
 - sf:Tree:javax.swing.Icon
 - sf:TreeHovered:javax.swing.Icon
 - sf:TreeSelected:javax.swing.Icon
-- sf:TrialBadge:javax.swing.Icon
 - sf:User:javax.swing.Icon
 - sf:Vcs:javax.swing.Icon
 - sf:Warning:javax.swing.Icon

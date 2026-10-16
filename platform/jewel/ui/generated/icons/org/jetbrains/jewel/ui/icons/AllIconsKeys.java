@@ -1935,14 +1935,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ZoomOut = new IntelliJIconKey("general/zoomOut.svg", "general/zoomOut.svg", AllIconsKeys.class);
 
-    /** @deprecated to be removed, use Badge.alpha instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 38x15 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Alpha = new IntelliJIconKey("general/alpha.svg", "general/alpha.svg", AllIconsKeys.class);
-
     /** @deprecated to be removed, use Badge.beta instead */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1958,14 +1950,6 @@ public final class AllIconsKeys {
     /** 38x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey New_badge = new IntelliJIconKey("general/new_badge.svg", "general/new_badge.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed, use Badge.trial instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 32x16 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey TrialBadge = new IntelliJIconKey("general/trialBadge.svg", "general/trialBadge.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources

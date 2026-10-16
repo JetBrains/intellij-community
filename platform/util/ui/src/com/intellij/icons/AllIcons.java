@@ -686,12 +686,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -997549918, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -2077385866, 2);
 
-    /** @deprecated to be removed, use Badge.alpha instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
-
     /** @deprecated to be removed, use Badge.beta instead */
     @SuppressWarnings("unused")
     @Deprecated
@@ -703,12 +697,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 2);
-
-    /** @deprecated to be removed, use Badge.trial instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -1779199569, 0);
   }
 
   public static final class Graph {

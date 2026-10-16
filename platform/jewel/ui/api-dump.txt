@@ -3157,7 +3157,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:Add:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddJdk:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Add_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Alpha:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDownSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3305,7 +3304,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:Tree:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TreeHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TreeSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:TrialBadge:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:User:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Vcs:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Warning:org.jetbrains.jewel.ui.icon.IntelliJIconKey

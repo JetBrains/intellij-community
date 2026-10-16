@@ -35,18 +35,8 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/expui/review/defaultAvatar.svg", "icons/review/defaultAvatar.svg", -5156320, 0);
     /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/expui/review/fileUnread.svg", "icons/review/fileUnread.svg", 776396787, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", 717316511, 0);
-
-    /** @deprecated use DvcsImplIcons.BranchLabel instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final @NotNull Icon Branch = load("icons/review/branch.svg", 0, 0);
   }
 
   /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", 1522034072, 0);
   /** 16x16 */ public static final @NotNull Icon SendHovered = load("icons/sendHovered.svg", -698602769, 0);
-
-  /** @deprecated use CollaborationToolsIcons.Review.FileUnread instead */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", 0, 0);
 }
