@@ -83,7 +83,7 @@ internal class PluginLoadingProblemTest {
            message("short.custom.plugin.loading.disabled"),
            message("long.custom.plugin.loading.disabled", "Affected"), false),
       case("broken version", pluginIsMarkedBroken(affected),
-           message("short.marked.as.broken"), message("long.marked.as.broken", "Affected", "1.0")),
+           "Version is known to be broken", "Version 1.0 of plugin 'Affected' is known to be broken"),
       case("IDEA only", pluginIsCompatibleOnlyWithIntelliJIDEA(affected),
            message("short.compatible.with.intellij.idea.only"), message("long.compatible.with.intellij.idea.only", "Affected")),
       case("host platform", pluginIsIncompatibleWithHostPlatform(affected, IdeaPluginOsRequirement.Windows, "Linux"),

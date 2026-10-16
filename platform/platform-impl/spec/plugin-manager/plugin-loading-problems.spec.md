@@ -131,6 +131,12 @@ Remote development extends these rules with side aggregation and action routing.
     `module dependency data retains its namespace`
   )
 - Supported compatibility and selection exclusions can also produce plugin explanations.
+- For a plugin version listed as broken, the short explanation says `Version is known to be broken`.
+- The detailed explanation identifies the plugin and version as known to be broken.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
+    `loading problem factories preserve their presentation`
+  )
+
 - A package-prefix conflict in an optional content module can produce an explanation while the main plugin remains loaded.
 
 Untested: Focused analysis tests do not cover all terminal mappings or optional module conflicts.
