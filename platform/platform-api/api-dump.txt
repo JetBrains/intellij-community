@@ -8264,6 +8264,18 @@ c:com.intellij.ui.components.ProgressBarLoadingDecorator
 - startLoading():V
 - startLoading(Z):V
 - stopLoading():V
+c:com.intellij.ui.components.ShimmerLabel
+- com.intellij.ui.components.JBLabel
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,javax.swing.Icon,I):V
+- b:<init>(java.lang.String,javax.swing.Icon,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addNotify():V
+- f:isShimmering():Z
+- p:paintComponent(java.awt.Graphics):V
+- removeNotify():V
+- f:setShimmering(Z):V
 c:com.intellij.ui.components.TextComponentEmptyText
 - com.intellij.util.ui.StatusText
 - sf:STATUS_VISIBLE_FUNCTION:java.lang.String
