@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -39,6 +40,7 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
+import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
@@ -511,7 +513,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       indicator.setIndeterminate(true);
       indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
       final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, moduleSdks));
-      PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
+      // The push reindexes every indexed Python file, and each reindex drops the PSI caches in a write action.
+      // The token merges these drops into one write action.
+      try (AccessToken ignored = GistManager.getInstance().mergeDependentCacheInvalidations()) {
+        PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
+      }
       //if (!ApplicationManager.getApplication().isUnitTestMode()) {
       //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
       //                                          " SDKs");
