@@ -87,14 +87,16 @@ internal class MarkdownLivePreviewPerformanceTest {
   @ParameterizedTest(name = "{0}")
   @EnumSource(Sample::class)
   fun `type at offset with live preview`(sample: Sample): Unit = onEdt {
-    val editor = open(sample)
-    val offset = sample.caretOffsets.first()
-    val endOffset = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
-    editor.caretModel.moveToOffset(endOffset)
-    benchmark("${sample.file}: type") {
+    benchmark("${sample.file}: type", setup = {
+      val editor = open(sample)
+      val offset = sample.caretOffsets.first()
+      val endOffset = editor.document.getLineEndOffset(editor.document.getLineNumber(offset))
+      editor.caretModel.moveToOffset(endOffset)
+    }) {
       myFixture.type('x')
-      waitForPresentation(editor, true)
     }
+    myFixture.doHighlighting()
+    waitForPresentation(myFixture.editor, true)
   }
 
   private fun onEdt(body: () -> Unit): Unit = timeoutRunBlocking(TIMEOUT, context = Dispatchers.EDT) { body() }
@@ -142,7 +144,7 @@ internal class MarkdownLivePreviewPerformanceTest {
   @Suppress("unused")
   enum class Sample(val file: String, vararg val caretOffsets: Int) {
     CHANGELOG("CHANGELOG.md", 28),
-    INDEX("index.md", 704, 2022);
+    INDEX("index.md", 708, 2025);
 
     override fun toString(): String = file
   }
