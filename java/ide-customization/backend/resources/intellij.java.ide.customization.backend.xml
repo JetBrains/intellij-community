@@ -15,7 +15,9 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.platform.ide">
-    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewFileFeatureBackend" />
+    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewMarkdownFileFeatureBackend"/>
+
+    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.OpenFileFeatureBackend"/>
 
     <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaPluginsWelcomeScreenFeature"/>
 

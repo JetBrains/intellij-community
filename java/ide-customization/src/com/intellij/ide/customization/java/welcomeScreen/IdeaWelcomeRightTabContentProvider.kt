@@ -39,10 +39,17 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
   override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
     return listOf(
       WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = IdeBundle.message("idea.non.modal.welcome.screen.new.file"),
-        icon = AllIcons.FileTypes.Text,
+        text = IdeBundle.message("idea.non.modal.welcome.screen.new.markdown.file"),
+        icon = AllIcons.FileTypes.Markdown,
         onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.NEW_FILE)
+          featureButtonOnClick(project, IdeaFeatureKeys.NEW_MARKDOWN_FILE)
+        }
+      ),
+      WelcomeRightTabContentProvider.FeatureButtonModel(
+        text = IdeBundle.message("idea.non.modal.welcome.screen.open.file"),
+        icon = AllIcons.Actions.MenuOpen,
+        onClick = { _, _ ->
+          featureButtonOnClick(project, IdeaFeatureKeys.OPEN_FILE)
         }
       ),
       WelcomeRightTabContentProvider.FeatureButtonModel(
