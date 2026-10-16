@@ -3,8 +3,8 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
@@ -13,12 +13,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -52,6 +54,7 @@ internal class CommitMultiverseFileTest {
 
   private val virtualFile by sourceRoot.virtualFileFixture("TestCommon.java", "class A {}")
   private val files by sourceRoot.fileFixtures(50)
+  private val disposable by disposableFixture()
 
   @Test
   fun `test commit document reparses both psi versions`() = timeoutRunBlocking {
@@ -85,6 +88,59 @@ internal class CommitMultiverseFileTest {
 
       assert(psiFile1.text == "class B {}")
       assert(psiFile2.text == "class B {}")
+    }
+  }
+
+  /**
+   * A PSI listener requests the PSI file of context 2 while the commit reparses the PSI file of context 1.
+   * The new view provider gets the text of the previous commit, but the commit does not reparse it.
+   */
+  @Test
+  fun `test requesting psi for another context during commit`() = timeoutRunBlocking {
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+    val context1 = readAction { context1 }
+    val context2 = readAction { context2 }
+
+    val psiFile1 = readAction {
+      val psiFile = psiManager.findFile(virtualFile, context1)!!
+      ensureParsed(psiFile)
+      psiFile
+    }
+
+    val document = readAction {
+      FileDocumentManager.getInstance().getDocument(virtualFile)!!
+    }
+
+    var psiFile2: PsiFile? = null
+    psiManager.addPsiTreeChangeListener(object : PsiTreeAnyChangeAbstractAdapter() {
+      override fun onChange(file: PsiFile?) {
+        if (psiFile2 == null && file == psiFile1) {
+          val psiFile = psiManager.findFile(virtualFile, context2)!!
+          psiFile.node // loads the tree
+          psiFile2 = psiFile
+        }
+      }
+    }, disposable)
+
+    edtWriteAction {
+      Assertions.assertEquals(
+        1,
+        psiManager.fileManagerEx.findCachedViewProviders(virtualFile).size,
+        "The test requires exactly one provider before the commit",
+      )
+
+      document.setText("class LongerName {}")
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+    }
+
+    readAction {
+      val psiFile2 = requireNotNull(psiFile2) { "The listener must request the PSI file of context 2 during the commit" }
+      PsiUtilCore.ensureValid(psiFile1)
+      PsiUtilCore.ensureValid(psiFile2)
+
+      Assertions.assertEquals(document.text, psiFile1.text)
+      Assertions.assertEquals(document.text, psiFile2.text)
     }
   }
 

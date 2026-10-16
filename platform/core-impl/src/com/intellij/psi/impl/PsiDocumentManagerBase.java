@@ -585,11 +585,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     assert !(document instanceof DocumentWindow);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+
+    // Capture the providers before fastenBelts(), because fastenBelts() can create a provider,
+    // and the commit does not reparse a provider that it did not see at the start.
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+
     if (virtualFile != null && !commitKind.isLightweight()) {
       SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(virtualFile);
     }
-
-    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
 
     AtomicBoolean success = new AtomicBoolean(true);
     executeInsideCommit(() -> {
@@ -601,7 +604,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
             }
             return true;
           }
-          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, commitKind, virtualFile);
+          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, commitKind, virtualFile, viewProviders);
         }));
       }
       catch (Throwable e) {
@@ -633,11 +636,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     return success.get();
   }
 
+  /**
+   * Runs the finish processors, publishes the commit, and synchronizes every cached view provider.
+   *
+   * @param committedViewProviders the view providers whose PSI the finish processors reparse
+   */
   private boolean commitToExistingPsi(@NotNull Document document,
                                       @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                                       @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                       @NotNull DocumentCommitKind commitKind,
-                                      @Nullable VirtualFile virtualFile) {
+                                      @Nullable VirtualFile virtualFile,
+                                      @NotNull @Unmodifiable List<? extends FileViewProvider> committedViewProviders) {
     boolean synchronously = !commitKind.isAsynchronous();
     for (BooleanRunnable finishRunnable : finishProcessors) {
       boolean success = finishRunnable.run();
@@ -662,9 +671,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
       }
     }
+    // The current providers can differ from committedViewProviders only by a provider that appeared during the commit.
+    // For example, findFile() in fastenBelts() or in a PSI listener can create one.
+    // Such a provider holds the PSI of the previous committed text, and no finish processor reparses it.
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     for (FileViewProvider viewProvider : viewProviders) {
-      viewProvider.contentsSynchronized();
+      if (committedViewProviders.contains(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
+        viewProvider.contentsSynchronized();
+      }
+      else {
+        // reload the provider from the committed text, in the same way as handleCommitWithoutPsi()
+        ExternalChangeActionUtil.externalChangeAction(((AbstractFileViewProvider)viewProvider)::onContentReload).run();
+      }
     }
     for (BooleanRunnable runnable : reparseInjectedProcessors) {
       if (!runnable.run()) return false;
