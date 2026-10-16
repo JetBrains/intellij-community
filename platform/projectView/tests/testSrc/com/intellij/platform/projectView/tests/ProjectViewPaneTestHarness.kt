@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.tests
 
+import com.intellij.ide.dnd.DnDAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
@@ -8,6 +9,7 @@ import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewPaneTr
 import com.intellij.platform.projectView.frontend.impl.Node
 import com.intellij.platform.projectView.frontend.impl.treePath
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
+import com.intellij.platform.projectView.pane.ProjectViewExternalFileDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.util.coroutines.childScope
@@ -197,6 +199,9 @@ internal class ProjectViewPaneTester internal constructor(
   fun requestPaste(vararg nodes: Node): Unit = model.requestPaste(nodes.map { it.projectViewNode.id })
 
   fun requestDelete(vararg nodes: Node): Unit = model.requestDelete(nodes.map { it.projectViewNode.id })
+
+  fun requestExternalDrop(files: List<ProjectViewExternalFileDTO>, target: Node, action: DnDAction): Unit =
+    model.requestExternalDrop(files, target.projectViewNode.id, action)
 
   private suspend fun childrenOf(node: Node): List<Node>? = model.awaitNodeChildren(node) { true }
 

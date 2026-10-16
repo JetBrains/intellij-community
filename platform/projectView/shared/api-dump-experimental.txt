@@ -141,6 +141,13 @@
 - a:getParentByChildId(J):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewDnDOptions
 - a:getAction():com.intellij.ide.dnd.DnDAction
+*:com.intellij.platform.projectView.pane.ProjectViewExternalFile
+*:com.intellij.platform.projectView.pane.ProjectViewExternalFile$FromClient
+- com.intellij.platform.projectView.pane.ProjectViewExternalFile
+- a:getFile():com.intellij.ide.projectView.impl.ProjectViewTransferableFile
+*:com.intellij.platform.projectView.pane.ProjectViewExternalFile$Local
+- com.intellij.platform.projectView.pane.ProjectViewExternalFile
+- a:getPath():java.nio.file.Path
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
 - com.intellij.openapi.ui.Queryable
@@ -187,6 +194,8 @@
 - *sf:projectViewPaneId(java.lang.String):com.intellij.platform.projectView.pane.ProjectViewPaneId
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
 - a:performInternalDnD(java.util.List,J,com.intellij.platform.projectView.pane.ProjectViewDnDOptions,kotlin.coroutines.Continuation):java.lang.Object
+- receiveExternalDrop(java.util.List,J,com.intellij.platform.projectView.pane.ProjectViewDnDOptions,kotlin.coroutines.Continuation):java.lang.Object
+- sendDropToClient(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.pane.ProjectViewPaneId
 - java.lang.Comparable
 - *sf:Companion:com.intellij.platform.projectView.pane.ProjectViewPaneId$Companion
