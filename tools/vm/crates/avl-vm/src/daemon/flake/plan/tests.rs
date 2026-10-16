@@ -342,7 +342,7 @@ async fn the_shared_guest_test_home_is_discarded_under_exactly_the_daemon_policy
     };
     // One fixed argv, anchored under the guest's own data root, that no shell can re-split.
     assert_eq!(argv, &["/bin/rm", "-rf", home.as_str()]);
-    assert!(home.ends_with("/out/ide-tests/tests/IU-LOCAL/air"), "{home}");
+    assert_eq!(home, crate::lane::ide::guest_ide_root(settings));
     for value in argv {
         assert!(!value.contains(['*', '?', ' ', '\t']), "{value:?}");
     }

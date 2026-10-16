@@ -76,7 +76,7 @@ pin the Kotlin and TypeScript ends to it.
 
 - A bundle holds `spans.jsonl`, `logs.jsonl`, and `video.mp4` with `video.index.json`. It holds a
   `snap/NNNN.tree.json` for each snapshot, and a `snap/NNNN.webp` for each snapshot whose screen changed. It
-  also holds `idea.log` and `bundle.json`. A file the recorder could not produce is absent, and the manifest
+  also holds an `attach/NNNN.<ext>` for each attachment, `idea.log` and `bundle.json`. A file the recorder could not produce is absent, and the manifest
   or a log record says why.
   [@test] ../crates/avl-trace/src/bundle/tests.rs
 
@@ -109,6 +109,43 @@ pin the Kotlin and TypeScript ends to it.
   `air.trace.error` of the failure names the file that is missing.
   [@test] ../crates/avl-record/src/stills/tests.rs
 
+- At the end of a scenario, the recorder writes one Allure result into `<root>/<runId>/allure-results/`. It writes
+  the result before `bundle.json`, so a finished bundle has its result.
+  [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_the_golden_allure_result`)
+
+- The result is `<uuid>-result.json`. Its `fullName` is `<testClass>.<scenario>`, and its `historyId` is the SHA-256
+  of the `fullName`. The uuid derives from the run id, the bundle's path and the start. So a retry has a uuid of its
+  own and the history of the first attempt.
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_retry_shares_the_history_and_a_replay_writes_the_same_result`)
+  [@test] ../crates/avl-trace/src/bundle/tests.rs (`derived_ids_are_stable`)
+
+- The status of the result is the status of the manifest, and an aborted or a truncated bundle is `broken`. The
+  `statusDetails` are the message and the trace of `done`. The result of a truncated bundle names the running span.
+  [@test] ../crates/avl-trace/src/bundle/tests.rs (`the_allure_status_of_each_bundle_status`)
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_truncated_scenario_is_broken_and_names_its_running_span`)
+
+- The labels are the labels of the scenario. The recorder adds `suite`, `testClass`, `package`, `host`, `lane` and
+  `flow` when the lane sent no label of that name. The suite is the scenario's suite, or the simple name of the test
+  class. The recorder always adds `traceBundle`, the path of the bundle under the run's directory.
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
+
+- Each lane span is a step under the step of its parent, with the span's title and status. The IDE's spans are not
+  steps. A step has a Before and an After picture as `image/webp`, and the files that the lane attached to its span.
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
+
+- Before is the first picture in the span. After is the next picture of the scenario, or the last picture of the
+  span when the scenario took no later one. The result names no other snapshot.
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
+
+- The result attaches the path of the bundle as `text/plain`, `video.mp4` as `video/mp4` and `idea.log` as
+  `text/plain`, when the bundle holds them. It also attaches the files that the lane attached to the root span.
+  [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_the_golden_allure_result`)
+
+- An attachment is a hard link `<uuid>-attachment.<ext>` in the results directory, and the result names it in
+  `source`. When the link fails, the recorder copies the file. A bundle file that two steps name is one attachment.
+  [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
+  [@test] ../crates/avl-record/src/allure/tests.rs (`an_attachment_is_copied_when_the_link_fails`)
+
 ### The spans and the log records
 
 - `spans.jsonl` holds one OTLP `TracesData` per line, one line per ended span. `logs.jsonl` holds one OTLP
@@ -135,12 +172,17 @@ pin the Kotlin and TypeScript ends to it.
   expectation sentence. Every span carries `air.span.status`, because OTLP has no word for aborted.
   [@test] ../crates/avl-trace/src/otlp/tests.rs
 
-- The span kinds are `reset`, `setup`, `step`, `operation`, `action`, `assertion`, `journey` and `restart`.
-  A span key is `<kind>:<id>` and holds no counter, time or path.
+- An action span and an assertion span carry `air.instruction.side` and `air.instruction.timeout_ms`, when
+  their `span` command states them.
+  [@test] ../crates/avl-trace/src/otlp/tests.rs (`the_example_spans_are_the_transcripts_spans`)
+
+- The span kinds are `reset`, `setup`, `step`, `operation`, `action`, `assertion`, `journey`, `restart` and
+  `relaunch`. A `relaunch` span is one part of the relaunch that a `restart` span holds. A span key is
+  `<kind>:<id>` and holds no counter, time or path.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
 
 - Every log record is an event correlated with a span. The events are `air.span.started`, `air.snapshot`,
-  `air.input`, `air.bridge.call`, `air.video` and `air.driver.step`. The other two are `exception` and
+  `air.input`, `air.bridge.call`, `air.video` and `air.attachment`. The other two are `exception` and
   `air.trace.error`.
   [@test] ../crates/avl-trace/src/otlp/tests.rs
 
@@ -151,10 +193,6 @@ pin the Kotlin and TypeScript ends to it.
 - A failed span has OTLP status ERROR and an `exception` record with the type, the message and the stack.
   The stack is the frames in the order the JVM prints them, then each cause's first message line and frames.
   The lane caps the message at 16,000 characters and the stack at 200 lines.
-  [@test] ../crates/avl-record/src/session/tests.rs
-
-- Each Driver step is flattened in pre-order and correlated with the innermost span that contains its start.
-  The recorder makes that choice once, at the end, when every span interval is known.
   [@test] ../crates/avl-record/src/session/tests.rs
 
 ### The IDE's own spans
@@ -195,7 +233,8 @@ pin the Kotlin and TypeScript ends to it.
 The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/flow-trace.spec.md#the-lanes-side).
 
 - The lane writes one JSON command per line to the recorder's standard input. The ops are `hello`,
-  `scenario`, `span`, `end`, `snap`, `call`, `restart`, `driverSteps` and `done`.
+  `scenario`, `span`, `end`, `snap`, `call`, `attach`, `restart` and `done`. The recorder refuses the old
+  `driverSteps` op like any other unknown op.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
 
 - The lane waits for an ack after `hello`, `scenario`, `snap` and `done` only. Every other op costs the
@@ -219,9 +258,43 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   which the `scenario` command opens.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
 
-- Only the lane knows three kinds of time: a call's start and duration, and a Driver step's start and stop.
-  The recorder stamps everything else when the line arrives. A transcript therefore holds no other timestamp.
+- `span` can carry `side`, `ide` or `host`, on an action or an assertion only. The recorder refuses a side on
+  a span of any other kind.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`only_an_instruction_span_states_a_side_and_a_deadline`)
+
+- `span` can carry `timeoutMs`, the deadline of the id in milliseconds, on an action or an assertion only.
+  The recorder refuses a deadline on a span of any other kind, and a deadline of 0.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`only_an_instruction_span_states_a_side_and_a_deadline`)
+
+- Only the lane knows two times: a call's start and its duration. The recorder stamps everything else when the
+  line arrives. A transcript therefore holds no other timestamp.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
+
+- `scenario` can carry `labels`, a list of `{name, value}` pairs in the order the lane read them. They are the
+  test method and class names and the labels that the test class and method declare. A name can occur more than
+  once. The recorder refuses a label without a name or a value.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
+
+- `attach` carries `name`, `mime`, `file` and `span`. The file is a path that the lane wrote under the hello's
+  root. The recorder moves the file into the bundle as `attach/NNNN.<ext>` and writes an `air.attachment` record
+  on the span. The record names the title, the media type and the bundle file. Ordinals count from 1 in each
+  scenario. The extension is the lane file's own in lowercase, or `bin`.
+  [@test] ../crates/avl-record/src/attach/tests.rs (`an_attachment_moves_into_the_bundle_and_is_recorded_on_its_span`)
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
+
+- The recorder refuses an `attach` whose file is outside the hello's root, and one whose span the scenario never
+  opened. The file then stays where it is. A file that the recorder cannot move is evidence loss. An
+  `air.trace.error` from `attach` says so, and the bundle has no record of the attachment.
+  [@test] ../crates/avl-record/src/attach/tests.rs (`an_attachment_outside_the_root_or_its_scenario_is_refused_and_a_lost_one_is_recorded`)
+
+- The recorder moves an attachment with a rename. When the rename fails, it copies the file under a partial name,
+  renames the copy into place and removes the lane file.
+  [@test] ../crates/avl-record/src/attach/tests.rs (`a_move_that_cannot_place_the_file_keeps_the_lane_file`)
+
+- `done` can carry the `message` and the `trace` of the failure that ended the scenario. The trace is the
+  failure's class on the first line, then the lines of its stack. The recorder refuses either field on a passed
+  `done`.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
 
 - Standard input reaching EOF, SIGINT or SIGTERM ends the open scenario as truncated. The recorder writes
   every open span as aborted, the root included, then the video and the manifest. It exits 0.
@@ -317,11 +390,20 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   server answers a byte range straight out of the zip.
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs
 
+- A pack keeps the `allure-results` directory of each run. A pack that selects bundles keeps the result of each
+  bundle it packs and the files that the result names. A result that it cannot read is skipped, and the report names it.
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`a_pack_keeps_the_allure_results_of_its_bundles`)
+
+- A pack lists each `allure-results` directory after it walks the tree. So a finished bundle leaves with its result,
+  also when the recorder writes the result while the pack walks the tree.
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`a_result_written_during_the_walk_leaves_with_its_bundle`)
+
 - The guest agent's `trace-pack-ready <sourceDir> <destinationZip> <ledger> [--all]` verb runs the code of
   `air-trace pack` on the guest. It packs only the bundles that the ledger does not name. Without `--all` it
-  packs only the finished bundles, the ones with a manifest. It adds each packed bundle to the ledger, and it
-  writes no zip when nothing is new.
-  [@test] ../crates/avl-guest/src/tracepack/tests.rs
+  packs only the finished bundles, the ones with a manifest. It packs the Allure result of each bundle with the
+  bundle. It adds each packed bundle to the ledger, and it writes no zip when nothing is new.
+  [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_each_finished_bundle_once`)
+  [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_the_allure_result_with_its_bundle`)
 
 - The controller pulls the finished traces while the iteration runs. After each test that ends, it asks the
   guest for the bundles that finished since the last pull. The last pull of an iteration uses `--all`, so a
@@ -533,8 +615,8 @@ The Runs page, the run page and the trace page are in
   (0,0). A host with a display left of or above the primary one shifts tree overlays.
 - The manifest's lane is the profile's spelling, such as `UI`. The planner speaks the lane names of `bt`,
   such as `ui`. A reader that joins them maps the names.
-- A real run writes more `call` records than the golden transcript. The in-IDE reset and the scenario
-  preparation call the bridge inside spans the golden leaves empty.
+- A real run writes more `call` records than the golden transcript. The in-IDE reset calls the bridge inside
+  the two reset spans, and the golden leaves them empty.
 - A posted click records its point in a separate `press` entry, because its mouse events arrive after the
   gesture returns. The gesture's own entry keeps the target rectangle only.
 - The stage marks no point on a macOS host's screen recording. That video is scaled down from the Retina size,

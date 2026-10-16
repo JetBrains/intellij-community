@@ -8,7 +8,7 @@
   "launcher": "daemon",
   "status": "passed",
   "startedAt": "2026-09-23T10:15:00.120Z",
-  "durationMs": 10850,
+  "durationMs": 10840,
   "capture": {
     "source": "x11"
   },

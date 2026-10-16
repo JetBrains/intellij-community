@@ -429,6 +429,7 @@ fn scenario_with_bridge(name: &str, token: Option<&str>) -> String {
         flow: None,
         fixture: None,
         flags: BTreeMap::default(),
+        labels: Vec::new(),
         bridge: token.map(|token| Bridge {
             port: 1,
             token: token.to_owned(),

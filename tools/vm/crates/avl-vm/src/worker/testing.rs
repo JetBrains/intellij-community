@@ -4,7 +4,10 @@
 //! [`HostPool`], and the guest is [`FakeGuests`]: every worker's channel answers one pool-wide answer and records
 //! into one log. What is left here is what only this crate can build: a [`Manager`] with the suite's poll bounds.
 //!
-//! A Windows host has the Docker pool only, so the Tart fixtures and the run-process helpers are Unix only.
+//! A container-linux pool keeps the production channel: the manager builds the control-port channel itself, and the
+//! pool's fake control port answers from the same [`FakeGuests`], so a suite seeds and reads them as on Docker.
+//!
+//! The fakes are shell scripts, so the Tart and container-linux fixtures and the run-process helpers are Unix only.
 //!
 //! On Unix the runner asks [`FakeProcesses`] about each pid of the fake table, and the host about every other pid. A
 //! stand-in run process is a process of the fake table, so a worker reads as running on a loaded host too. A `tart
@@ -12,8 +15,14 @@
 //! real exit and a real zombie.
 
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
+#[cfg(unix)]
+use avl_base::Reporter;
+#[cfg(unix)]
+use avl_base::config::MacosHost;
+#[cfg(unix)]
+use avl_base::report::SinkGuard;
 use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
@@ -21,20 +30,24 @@ use avl_host_sys::guest::BazelHost;
 use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
 #[cfg(unix)]
-use avl_host_sys::{Ctx, ProcessTable};
+use avl_host_sys::{Ctx, ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
 #[cfg(unix)]
 use avl_host_testkit::{FakeProcesses, PinnedBazel};
 #[cfg(unix)]
 use avl_testkit::tartfake::Answer;
 #[cfg(unix)]
+use avl_wire::progress::{Kind, Record};
+#[cfg(unix)]
 use nix::sys::signal::{Signal, killpg};
 #[cfg(unix)]
 use nix::unistd::Pid;
 
 #[cfg(unix)]
-use crate::worker::tart::{MINIMUM_VERSION, ProcessIdentity};
-use crate::worker::worker::{Dependencies, GuestBootBuilder, Lease, Manager, Timings, builds_nothing};
+use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
+#[cfg(unix)]
+use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
+use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
 
 /// The version the fake `tart` answers. A Windows host has no fake `tart`, and its fake `docker` reads no version.
 #[cfg(unix)]
@@ -50,6 +63,15 @@ pub(crate) struct Fixture {
     pool: HostPool,
     pub(crate) manager: Manager,
     pub(crate) guest: Arc<FakeGuests>,
+    /// Every detached idle stop process that the manager was asked to start. The manager of a fixture starts none.
+    #[cfg_attr(
+        windows,
+        expect(
+            dead_code,
+            reason = "the suites of the idle stop drive the fake Apple container, which is Unix only"
+        )
+    )]
+    pub(crate) idle_stops: Arc<Mutex<Vec<IdleStopRequest>>>,
     /// What the runner of [`Fixture::manager`] probes in place of the host, for the pids of the table.
     #[cfg(unix)]
     processes: Arc<FakeProcesses>,
@@ -89,12 +111,27 @@ impl Fixture {
         }
     }
 
-    /// A Docker pool of one slot on the Lima engine: the fake `limactl`, resolved as the pinned one, starts the
-    /// engine, and the fake `docker` of `DOCKER_BIN` answers the backend. The engine is pinned in the settings, so the
-    /// fixture runs on every Unix host.
+    /// A Docker pool of one slot on the Apple `container` engine, over the fake `container`. The settings load as a
+    /// Mac of macOS 26 loads them, so the fixture runs on every Unix host.
     #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::docker_builder().lima_engine().build()
+    pub(crate) fn docker_container() -> Self {
+        Self::docker_builder().container_engine().build()
+    }
+
+    /// The container-linux pool of one slot over the fake `container.cmd`, laid out as the fixture checkout's skill. Needs
+    /// a tokio runtime, because the pool's fake control port is a tokio server.
+    #[cfg(unix)]
+    pub(crate) fn container_linux() -> Self {
+        Self::container_linux_builder().build()
+    }
+
+    #[cfg(unix)]
+    pub(crate) fn container_linux_builder() -> FixtureBuilder {
+        FixtureBuilder {
+            pool: HostPool::builder(Backend::ContainerLinux, GuestOs::Linux, TART_VERSION),
+            build_boot: builds_nothing(),
+            pinned_bazel: false,
+        }
     }
 
     pub(crate) fn worker(&self, index: usize) -> &str {
@@ -152,12 +189,65 @@ impl Fixture {
     /// Makes a worker read as running: a live process of the fake table stands in for its `tart run` process. Nothing
     /// ends that process, and a `tart stop` does not end it either. Its command is no `tart run`, so no path takes it
     /// for an orphaned run process.
-    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> ProcessIdentity {
+    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> PidReceipt {
         let pid = self.processes.start(&format!("stand-in for the run process of {worker}"));
         self.manager
             .write_process_identity(&Ctx::background(), worker, pid)
             .await
             .expect("the fake process can be identified")
+    }
+
+    /// Declares a process of the fixture's process table whose every probe gives no answer, and answers its pid.
+    pub(crate) fn start_unanswered_process(&self) -> i32 {
+        self.processes.start_unanswered()
+    }
+
+    /// The identity of a live process of another controller: a new process of the fixture's process table.
+    pub(crate) async fn another_process(&self) -> ProcessIdentity {
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        self.manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity")
+    }
+
+    /// The identity of a process that is gone: the fixture's process table holds the pid, and declares no process
+    /// for it.
+    pub(crate) fn gone_process() -> ProcessIdentity {
+        ProcessIdentity {
+            pid: 0x7FFF_FFF0,
+            process_start: "Sun Aug 23 00:00:00 2026".to_owned(),
+            process_command: "vm run, a controller that died".to_owned(),
+        }
+    }
+
+    /// Writes a run marker of `process` for `lease` by hand, as another controller writes one, and answers it.
+    pub(crate) fn write_run_marker(&self, lease: &Lease, run_id: &str, process: ProcessIdentity) -> RunMarker {
+        write_marker_by_hand(&self.settings, lease, run_id, process)
+    }
+
+    /// A second controller over the same pool and the same guests, as another process sees the pool. Its lock manager
+    /// speaks for a live process of the fixture's process table. So a run marker of either manager is a live run of
+    /// another process to the other one. It starts no idle stop process.
+    pub(crate) fn another_controller(&self) -> Manager {
+        let runner = self.runner_with(&Interrupts::detached());
+        let pid = self.processes.start("vm, another controller of the suite");
+        let channel = (self.settings.backend != Backend::ContainerLinux).then(|| self.guest.factory());
+        Manager::with_timings(
+            Dependencies {
+                settings: Arc::clone(&self.settings),
+                locks: Arc::new(LockManager::for_process(runner.clone(), pid)),
+                runner,
+                reporter: quiet(),
+                channel,
+                bazel: self.bazel.clone().map(|bazel| bazel as Arc<dyn BazelHost>),
+                build_guest_boot: builds_nothing(),
+            },
+            Timings::fast(),
+        )
+        .with_idle_stop_spawner(Arc::new(|_: &Manager, _: &IdleStopRequest| Ok(())))
     }
 
     /// Makes a worker read as running on a `tart run` of its own whose VM Tart does not list: the fake's `run`,
@@ -261,6 +351,13 @@ impl FixtureBuilder {
         self
     }
 
+    /// Loads the settings on the macOS release `macos`; see [`HostPoolBuilder::on_macos`].
+    #[cfg(unix)]
+    pub(crate) fn on_macos(mut self, macos: MacosHost) -> Self {
+        self.pool = self.pool.on_macos(macos);
+        self
+    }
+
     pub(crate) fn env(mut self, name: &str, value: &str) -> Self {
         self.pool = self.pool.env(name, value);
         self
@@ -272,10 +369,19 @@ impl FixtureBuilder {
         self
     }
 
-    /// Runs the Docker pool on the Lima engine, with a Bazel that resolves the pinned `limactl`.
+    /// Runs the Docker pool on the Apple `container` engine, over the fake `container` that `CONTAINER_BIN` names.
     #[cfg(unix)]
-    pub(crate) fn lima_engine(mut self) -> Self {
-        self.pool = self.pool.with_lima_engine();
+    pub(crate) fn container_engine(mut self) -> Self {
+        self.pool = self.pool.with_container_engine();
+        self
+    }
+
+    /// Leaves `DOCKER_BIN` and `DOCKER_HOST` unset, with a Bazel that resolves the pinned Docker CLI to the fake. On a
+    /// release of [`FixtureBuilder::on_macos`] that runs no Apple `container`, the pool keeps the host engine and names
+    /// none.
+    #[cfg(unix)]
+    pub(crate) fn unnamed_engine(mut self) -> Self {
+        self.pool = self.pool.without_named_engine();
         self.pinned_bazel = true;
         self
     }
@@ -306,7 +412,16 @@ impl FixtureBuilder {
 
     pub(crate) fn build(self) -> Fixture {
         let pool = self.pool.build();
-        let guest = FakeGuests::new();
+        // A container-linux pool is reached through the production channel, which the manager builds when it is given
+        // none; the fake control port of the pool answers from the pool's guests.
+        #[cfg(unix)]
+        let (guest, channel) = if pool.settings.backend == Backend::ContainerLinux {
+            (Arc::clone(pool.control_port().guests()), None)
+        } else {
+            scripted_guests()
+        };
+        #[cfg(windows)]
+        let (guest, channel) = scripted_guests();
         #[cfg(unix)]
         let bazel = self.pinned_bazel.then(|| Arc::new(pool.pinned_bazel()));
         #[cfg(unix)]
@@ -319,18 +434,33 @@ impl FixtureBuilder {
         let runner = pool.runner().with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
         #[cfg(windows)]
         let runner = pool.runner();
-        let manager = manager_with_bazel(&pool.settings, runner, Some(guest.factory()), self.build_boot, host);
+        let idle_stops = Arc::new(Mutex::new(Vec::new()));
+        let recorder = Arc::clone(&idle_stops);
+        let manager = manager_with_bazel(&pool.settings, runner, channel, self.build_boot, host).with_idle_stop_spawner(Arc::new(
+            move |_: &Manager, request: &IdleStopRequest| {
+                avl_base::sync::lock(&recorder).push(request.clone());
+                Ok(())
+            },
+        ));
         manager.prepare_runtime_dirs().expect("the runtime directories are created");
         Fixture {
             pool,
             manager,
             guest,
+            idle_stops,
             #[cfg(unix)]
             processes,
             #[cfg(unix)]
             bazel,
         }
     }
+}
+
+/// Fresh scripted guests, and the channel dependency that hands them to a manager.
+fn scripted_guests() -> (Arc<FakeGuests>, Option<ChannelFactory>) {
+    let guests = FakeGuests::new();
+    let factory = guests.factory();
+    (guests, Some(factory))
 }
 
 /// A manager over settings with the suite's poll bounds, reaching the guest through `channel` when one is given.
@@ -372,13 +502,13 @@ fn manager_with_bazel(
 #[cfg(unix)]
 pub(crate) struct StaleRun {
     child: std::process::Child,
-    pub(crate) identity: ProcessIdentity,
+    pub(crate) identity: PidReceipt,
 }
 
 #[cfg(unix)]
 impl Drop for StaleRun {
     fn drop(&mut self) {
-        let _ = killpg(Pid::from_raw(self.identity.pid), Signal::SIGKILL);
+        let _ = killpg(Pid::from_raw(self.identity.process.pid), Signal::SIGKILL);
         let _ = self.child.wait();
     }
 }
@@ -397,16 +527,44 @@ impl Drop for RunProcessReaper {
                 continue;
             };
             // Never this test process, which a suite of the real `ps` probe can record.
-            if u32::try_from(identity.pid).ok() != Some(std::process::id()) {
-                let _ = killpg(Pid::from_raw(identity.pid), Signal::SIGKILL);
+            if u32::try_from(identity.process.pid).ok() != Some(std::process::id()) {
+                let _ = killpg(Pid::from_raw(identity.process.pid), Signal::SIGKILL);
             }
         }
     }
 }
 
 #[cfg(unix)]
-fn read_identity(path: &std::path::Path) -> Option<ProcessIdentity> {
+fn read_identity(path: &std::path::Path) -> Option<PidReceipt> {
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
+}
+
+/// Every note that a reporter publishes while this lives.
+#[cfg(unix)]
+pub(crate) struct Notes {
+    notes: Arc<Mutex<Vec<String>>>,
+    _sink: SinkGuard,
+}
+
+#[cfg(unix)]
+impl Notes {
+    pub(crate) fn start(reporter: &Reporter) -> Self {
+        let notes: Arc<Mutex<Vec<String>>> = Arc::default();
+        let sink = {
+            let notes = Arc::clone(&notes);
+            reporter.add_sink(move |record: &Record| {
+                if record.event == Kind::Note {
+                    avl_base::sync::lock(&notes).push(record.message.clone());
+                }
+            })
+        };
+        Self { notes, _sink: sink }
+    }
+
+    /// The notes so far, in order.
+    pub(crate) fn all(&self) -> Vec<String> {
+        avl_base::sync::lock(&self.notes).clone()
+    }
 }
 
 /// What `/usr/bin/who` answers in a macOS guest whose console is logged in.

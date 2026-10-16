@@ -25,6 +25,7 @@ use crate::video::Recording;
 use crate::{Diagnostics, Options, lock};
 
 pub(crate) const GOLDEN_ACKS: &str = "lane-transcript.acks.ndjson";
+pub(crate) const GOLDEN_ALLURE_RESULT: &str = "example.allure-result.json";
 pub(crate) const GOLDEN_TOKEN: &str = "golden-transcript-token";
 pub(crate) const GOLDEN_HOST: &str = "air-linux-1";
 pub(crate) const GOLDEN_VIDEO_REASON: &str = "fixture";
@@ -38,12 +39,14 @@ pub(crate) const T0_MS: i64 = 1_790_158_500_000;
 ///
 /// A transcript carries no receipt times, since the recorder stamps them, so the replay has to supply them. These
 /// are the ones the golden bundle was first authored with: a lane running `rename-closed-project-session` at a
-/// plausible pace, every call line two milliseconds after its call returned, and every span wide enough to hold the
-/// calls, snapshots and driver steps the lane timed inside it.
-const RECEIPT_MS: [i64; 66] = [
-    0, 120, 130, 2310, 2516, 2530, 2531, 2533, 2534, 2814, 3248, 4392, 4400, 4402, 4403, 4510, 4512, 4570, 4571, 4630, 4631, 4640, 4641,
-    4643, 4644, 4724, 5480, 5540, 5545, 5546, 5621, 5900, 5905, 5906, 6420, 6480, 6482, 6540, 6541, 6550, 6551, 6553, 6554, 7672, 7710,
-    7712, 7713, 8030, 8090, 8092, 8150, 8151, 8160, 8161, 8163, 8164, 8588, 8600, 8660, 8662, 8720, 8721, 8730, 10950, 10960, 10970,
+/// plausible pace, every call line two milliseconds after its call returned, each step line of a chain one
+/// millisecond after the line before it, and every span wide enough to hold the calls, snapshots and driver steps the
+/// lane timed inside it.
+const RECEIPT_MS: [i64; 69] = [
+    0, 120, 130, 2310, 2516, 2517, 2518, 2519, 2530, 2531, 2533, 2534, 4392, 4400, 4402, 4403, 4510, 4512, 4570, 4571, 4630, 4631, 4640,
+    4641, 4643, 4644, 4724, 5480, 5540, 5545, 5546, 5621, 5900, 5905, 5906, 6342, 6420, 6480, 6482, 6540, 6541, 6550, 6551, 6553, 6554,
+    7672, 7710, 7712, 7713, 7842, 8030, 8090, 8092, 8150, 8151, 8160, 8161, 8163, 8164, 8588, 8600, 8660, 8662, 8720, 8721, 8730, 10950,
+    10960, 10970,
 ];
 
 /// A file of the recorder's own testdata.
@@ -54,7 +57,7 @@ pub(crate) fn record_testdata(name: &str) -> PathBuf {
 // The screens of the fake IDE, one fixture picture and one fixture tree each.
 const SCREEN_EDITOR: &str = "editor";
 const SCREEN_SESSIONS: &str = "sessions";
-const SCREEN_DIALOG: &str = "dialog";
+pub(crate) const SCREEN_DIALOG: &str = "dialog";
 const SCREEN_RENAMED: &str = "renamed";
 
 /// What the fake IDE shows when the snapshot with this ordinal is taken: the editor before the setup, the sessions
@@ -174,7 +177,7 @@ impl FakeIde {
         self.server.url().to_owned()
     }
 
-    fn show(&self, screen: &'static str, inputs: Vec<Input>) {
+    pub(crate) fn show(&self, screen: &'static str, inputs: Vec<Input>) {
         let mut state = lock(&self.state);
         state.screen = screen;
         state.pending.extend(inputs);

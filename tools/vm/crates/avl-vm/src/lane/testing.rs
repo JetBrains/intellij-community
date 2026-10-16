@@ -29,8 +29,13 @@ pub(crate) fn unresolved(backend: Backend, guest_os: GuestOs, extra: &[(&str, &s
     for (name, value) in extra {
         environment.set(*name, *value);
     }
-    Config::load(Selection { backend, guest_os }, &environment, Path::new("/repo/community/tools/vm"))
-        .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
+    Config::load(
+        avl_base::HostFacts::without_memory(),
+        Selection { backend, guest_os },
+        &environment,
+        Path::new("/repo/community/tools/vm"),
+    )
+    .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
 }
 
 /// The backend of a pool for one guest: Docker for a Linux guest, and Tart for a macOS guest.

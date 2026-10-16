@@ -18,8 +18,13 @@ pub(crate) fn runner() -> Runner {
 /// Settings for one backend and guest over a fixed home, with `tart` and `prlctl` as the binaries.
 pub(crate) fn settings(backend: Backend, guest_os: GuestOs) -> Config {
     let environment = Environment::from_pairs([("HOME", "/Users/air"), ("TART_BIN", "tart"), ("AIR_VM_PARALLELS_BIN", "prlctl")]);
-    Config::load(Selection { backend, guest_os }, &environment, Path::new("/repo/scripts"))
-        .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
+    Config::load(
+        avl_base::HostFacts::without_memory(),
+        Selection { backend, guest_os },
+        &environment,
+        Path::new("/repo/scripts"),
+    )
+    .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
 }
 
 /// The backend of a test fixture for a guest OS. A macOS guest runs on Tart, and a Linux guest runs on Docker.

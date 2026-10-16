@@ -32,10 +32,10 @@ fn each_line_goes_to_the_label_of_its_repository() {
 // `air_docker_buildx_darwin_arm64`, and the older `~` separator counts.
 #[test]
 fn a_repository_matches_its_whole_last_segment() {
-    let stdout = "external/community~~http_archive~air_lima_darwin_arm64/bin/limactl\n";
+    let stdout = "external/community~~http_archive~air_tart/tart.app/Contents/MacOS/tart\n";
     assert_eq!(
-        files_by_label(&labels(&["@community//tools/vm:air_lima_darwin_arm64"]), stdout).unwrap(),
-        ["external/community~~http_archive~air_lima_darwin_arm64/bin/limactl"]
+        files_by_label(&labels(&["@community//tools/vm:air_tart"]), stdout).unwrap(),
+        ["external/community~~http_archive~air_tart/tart.app/Contents/MacOS/tart"]
     );
     let buildx = "external/community++http_file+air_docker_buildx_darwin_arm64/file/docker-buildx\n";
     let refusal = files_by_label(&labels(&["@community//tools/vm:air_docker_darwin_arm64"]), buildx).unwrap_err();

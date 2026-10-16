@@ -1,10 +1,10 @@
 //! The `flake` command: one trial chain per worker, under the leased-run driver, and the reply.
 //!
-//! The driver holds each worker's lifecycle lock for the whole length of that worker's chain, so nothing can take the
-//! worker mid-experiment - which is exactly why the chain calls the lock-free iteration and never a command wrapper.
-//! A second acquisition of the same lock by the same live process is *refused, not reclaimed*, so a wrapper called
-//! from inside a chain would fail `lease_busy` on the second trial. The suite pins that on this file's own text and
-//! on the driver's.
+//! The driver puts each worker's run marker on the worker for the whole length of that worker's chain. So no other
+//! process can take the worker mid-experiment, and the chain calls the lock-free iteration and never a command
+//! wrapper. `command_run` writes a run marker of its own. A second marker of the same process on one worker is
+//! *refused as an internal error*. The nested run would remove the marker of the chain at its end. `command_daemon`
+//! would change the daemon that the chain measures. The suite pins that on this file's own text and on the driver's.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -29,6 +29,7 @@ use crate::daemon::flake::{
 use crate::daemon::leased::Workers;
 use crate::daemon::shard::command::LeaseData;
 use crate::daemon::{Host, HostState, ParsedRun, PreparedBuild, RunAttempt, guest_free_bytes};
+use crate::lane::ide::{IdeRetention, gc_guest_ides};
 use crate::lane::secrets::RunSecrets;
 use avl_base::RefusalExt;
 
@@ -504,7 +505,16 @@ impl ResetIo for LiveReset {
 
     async fn daemon_stop(&self, ctx: &Ctx) -> Result<(), Refusal> {
         let state = HostState::read(self.host.settings(), &self.lease.worker);
-        self.host.stop_daemon(ctx, &self.lease.worker, state.as_ref()).await
+        self.host.stop_daemon(ctx, &self.lease.worker, state.as_ref()).await?;
+        // A lane IDE outlives its daemon, and its context is under the tree that the next step removes.
+        let channel = self.host.manager().channel(&self.lease.worker);
+        let guest = Guest {
+            ctx,
+            settings: self.host.settings(),
+            channel: channel.as_ref(),
+            reporter: self.host.reporter(),
+        };
+        gc_guest_ides(&guest, IdeRetention::StopAll).await.map(drop)
     }
 
     async fn guest_remove(&self, ctx: &Ctx, argv: &[String]) -> Result<(), Refusal> {

@@ -1,0 +1,113 @@
+/* Source viewer (#/source/<path>) and spec [@test] chips. Highlighting uses shiki dual themes
+   (shikiThemes.ts, IntelliJ new-UI light/dark): every token carries --shiki-light/--shiki-dark
+   inline vars, and the .dark overrides below pick a side following the theme class set by
+   theme.ts. The code block sits on the IDE editor canvas rather than the site surface, so token
+   contrast matches the IDE. */
+
+:root {
+  --code-canvas: #ffffff;
+  --code-fg: #080808;
+}
+
+.dark {
+  --code-canvas: #1e1f22;
+  --code-fg: #bcbec4;
+}
+
+/* injected by shiki as inline styles on every token span (dual-theme output) */
+@property --shiki-light {
+  syntax: '*';
+  inherits: true;
+}
+
+@property --shiki-dark {
+  syntax: '*';
+  inherits: true;
+}
+
+@property --shiki-light-font-style {
+  syntax: '*';
+  inherits: true;
+}
+
+@property --shiki-dark-font-style {
+  syntax: '*';
+  inherits: true;
+}
+
+/* the split is load-bearing beyond color: the IntelliJ light scheme italicizes comments, the
+   dark one doesn't. Shiki spans only exist after JS runs, so the theme class is always set by
+   then (no prefers-color-scheme fallback needed). */
+.source-view .shiki span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style, normal);
+}
+
+.dark .source-view .shiki span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style, normal);
+}
+
+/* ---- viewer page ----------------------------------------------------------------------------
+   The pre/code chrome lives as descendant-variant utilities on the .source-view wrapper in
+   SourcePage.tsx; only the per-line generated DOM stays here. */
+
+.source-view .line-no {
+  display: inline-block;
+  width: 3.2em;
+  margin-right: 1em;
+  text-align: right;
+  color: var(--muted-foreground);
+  user-select: none;
+}
+
+.source-view .line-no:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* routed selections need a paintable box wider than the code text */
+.source-view .line.line-selected,
+.source-view .line.anchor-highlight {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.source-view .line.line-selected {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.source-view .line.line-selected .line-no {
+  color: var(--primary);
+}
+
+/* ---- spec [@test] chips ----------------------------------------------------------------------- */
+
+a.test-chip {
+  display: inline-block;
+  margin: 1px 0;
+  padding: 0 8px;
+  border: 1px solid var(--input);
+  border-radius: 999px;
+  background: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-2xs);
+  color: var(--muted-foreground);
+}
+
+a.test-chip::before {
+  content: 'test';
+  margin-right: 6px;
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tag-durable);
+}
+
+a.test-chip:hover {
+  border-color: var(--primary);
+  color: var(--foreground);
+  text-decoration: none;
+}

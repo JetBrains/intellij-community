@@ -63,6 +63,21 @@ async fn ls_is_deliberately_allowed_while_a_run_is_active() {
     );
 }
 
+/// `ls` answers while a run of another process is in flight on the worker. Its gate starts nothing under that run,
+/// because the run keeps the worker ready. The container here does not even run, and the engine is asked nothing.
+#[tokio::test]
+async fn ls_answers_during_a_run_of_another_process_and_starts_nothing() {
+    let fixture = Fixture::docker();
+    let receipt = fixture.lease_receipt("air-docker-1");
+    fixture.run_of_another_process("air-docker-1").await;
+    let channel = fixture.channel("air-docker-1");
+    channel.answer(answer_guest(vec![("/usr/bin/find", said("/tmp\n/tmp/a\n"))]));
+    let outcome = outcome_of(command_ls(&Ctx::background(), &fixture.manager, args("/tmp", 1), Some(&receipt)).await);
+    assert_eq!(outcome.data["entries"], json!(["/tmp", "/tmp/a"]));
+    assert_eq!(fixture.fake.calls(), Vec::<String>::new());
+    assert_eq!(channel.lines().len(), 1, "{:?}", channel.lines());
+}
+
 /// A listing cut off at the cap is not the same fact as an empty directory, so truncation is named on both of its
 /// paths: more entries than the cap, and a stdout capture that was itself truncated.
 #[tokio::test]

@@ -2,7 +2,7 @@
 //!
 //! [`collect`] reads only files. The launch writes the run directory and `replay` reads it again with the same call.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -13,11 +13,11 @@ use super::files;
 use super::fus;
 use super::load::HostLoad;
 use super::pluginlog::{self, PluginLog};
-use super::profile::{self, EdtProfile, FrameSamples};
+use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
 use super::stats::{self, StartupStats};
 use super::timeline::QUIT_SPAN;
-use super::trace::{self, Trace, as_f64, micros_to_ms, tenth};
+use super::trace::{self, Trace, as_f64, micros_to_ms};
 
 /// The line of `idea.log` that tells that the IDE opened the welcome project.
 pub(crate) const WELCOME_PROJECT_LOG_LINE: &str = "Opened the welcome screen project";
@@ -27,8 +27,11 @@ pub(crate) const WELCOME_BECAME_VISIBLE: &str = "welcomeBecameVisible";
 pub(crate) const FRAME_BECAME_VISIBLE: &str = "frameBecameVisible";
 pub(crate) const FRAME_BECAME_INTERACTIVE: &str = "frameBecameInteractive";
 
-/// The metric keys of the report.
+/// The metric keys of the report. A start without a project has no end of its start-up, so its report, which the IDE
+/// writes at the exit, can lack [`TOTAL_DURATION`] or hold a negative one. The record keeps neither, with a note.
 pub(crate) const TOTAL_DURATION: &str = "totalDuration";
+/// The milliseconds from the JVM start to the start of the process clock, `jvm.loadingTime` of the report.
+pub(crate) const JVM_LOADING_TIME: &str = "jvm.loadingTime";
 /// The class requests of `ClassPath`, which the report writes as `classLoading.count`. A request is not a class: one
 /// class can need many requests.
 pub(crate) const CLASS_REQUESTS: &str = "classLoading.requests";
@@ -90,22 +93,61 @@ pub(crate) const PLATFORM_SPANS: [&str; 11] = [
 /// the offset of the paint.
 pub(crate) const WELCOME_SCREEN_PAINTED: &str = "welcome screen painted";
 
-/// The spans of the non-modal welcome screen, in the order of the digest. The metric key is the span name.
-/// [`CREATE_CONTENT_PREFIX`] adds one metric per feature key, which the digest shows after the feature ids.
-pub(crate) const WELCOME_SPANS: [&str; 9] = [
+/// The spans of the non-modal welcome screen, in the order of the digest. The metric key is the span name, and its
+/// value is the sum of the spans of the name, as the perf test of the welcome screen sums them
+/// (`WelcomeScreenSpanPostProcessor`). [`CREATE_CONTENT_PREFIX`] adds one metric per feature key, which the digest
+/// shows after the feature ids.
+pub(crate) const WELCOME_SPANS: [&str; 11] = [
     WELCOME_SCREEN_PAINTED,
     "welcome screen project opening",
     "welcome left panel creating",
     "welcome recent projects collecting",
     "welcome left toolbar first fill",
+    "welcome left panel painted",
     "welcome right tab creating",
     "welcome right tab body: feature ids",
     "welcome right tab body: EDT build",
+    "welcome right tab painted",
     "readme opening check",
 ];
 
-/// The prefix of the per-feature spans of the right tab.
+/// The prefix of the per-feature spans of the right tab. Each metric is the sum of the spans of its name, as for
+/// [`WELCOME_SPANS`].
 pub(crate) const CREATE_CONTENT_PREFIX: &str = "welcome right tab body: createContent ";
+
+/// The spans of the modal welcome screen, in the order of the digest. Each metric is the sum of the spans of its name,
+/// as for [`WELCOME_SPANS`].
+pub(crate) const MODAL_SPANS: [&str; 6] = [
+    "welcome frame EDT waiting",
+    "welcome frame creating",
+    "welcome menu bar creating",
+    "welcome tabs creating",
+    "welcome quick access panel creating",
+    "welcome frame showing",
+];
+
+/// The spans whose end is a metric, in the order of the digest. See [`span_end`].
+pub(crate) const END_SPANS: [&str; 13] = [
+    "app initialization",
+    "app initialized callback",
+    "app frame created callback",
+    "welcome screen project opening",
+    "project prepare",
+    "project add to opened",
+    "toolwindow init command creation",
+    "toolwindow creating",
+    "toolwindow default pane registered hook",
+    "welcome left panel creating",
+    "restoreEditors",
+    "frame allocator foreground",
+    "welcome frame creating",
+];
+
+/// The metric key of the end of the first span `name`, such as `toolwindow creating end`: the milliseconds from the
+/// process start to the end, on the clock of the anchors.
+pub(crate) fn span_end(name: &str) -> String {
+    format!("{name} end")
+}
 
 /// The metric keys of the second project of `open-project`.
 pub(crate) const OPEN_FRAME: &str = "open: project frame creating";
@@ -175,6 +217,10 @@ pub(crate) struct LaunchFacts {
     pub(crate) waited_ms: u64,
     /// The microseconds since the epoch of the open request of `open-project`.
     pub(crate) open_request_us: Option<i64>,
+    /// Why the run did not stop the profiler at its gate, so it keeps the whole-run profile. A run without a profile,
+    /// or one that stopped it, has none.
+    #[serde(default)]
+    pub(crate) profile_stop_failure: Option<String>,
 }
 
 /// One run.
@@ -207,6 +253,12 @@ pub(crate) struct RunRecord {
     /// needs the class-load log, the plugin log and the report.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) classes_by_plugin_at: BTreeMap<String, BTreeMap<String, u64>>,
+    /// The span of the run that its profile covers, when the run has a profile.
+    #[serde(default)]
+    pub(crate) profile_scope: Option<ProfileScope>,
+    /// The samples of the profiler's own symbol parsing, which the profile leaves out, when the run has a profile.
+    #[serde(default)]
+    pub(crate) excluded_samples: Option<ExcludedSamples>,
     /// The EDT samples, when the run has a profile.
     pub(crate) edt_samples: Option<u64>,
     pub(crate) edt_frames: Vec<FrameSamples>,
@@ -275,6 +327,8 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         classes_by_plugin: BTreeMap::new(),
         classes_by_module: BTreeMap::new(),
         classes_by_plugin_at: BTreeMap::new(),
+        profile_scope: None,
+        excluded_samples: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),
@@ -327,23 +381,41 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         record.notes.push(format!("{TRACE_FILE} is truncated; the reader closed it"));
     }
     if let Some(stats) = &stats {
-        metrics.insert(TOTAL_DURATION.to_owned(), as_f64(stats.total_duration));
+        match stats.total_duration {
+            Some(total_ms) if total_ms >= 0 => {
+                metrics.insert(TOTAL_DURATION.to_owned(), as_f64(total_ms));
+            }
+            Some(_) => record.notes.push(
+                "startup-stats.json has a negative totalDuration, as a start without a project writes it, so the run has none".to_owned(),
+            ),
+            None => record.notes.push("startup-stats.json has no totalDuration".to_owned()),
+        }
+        if let Some(loading_ms) = stats.jvm_loading_ms() {
+            metrics.insert(JVM_LOADING_TIME.to_owned(), as_f64(loading_ms));
+        }
         metrics.insert(CLASS_REQUESTS.to_owned(), as_f64(stats.class_loading.count));
         metrics.insert(CLASS_TIME.to_owned(), as_f64(stats.class_loading.time));
         metrics.insert(CLASS_EDT_TIME.to_owned(), as_f64(stats.edt_class_loading_ms()));
     }
-    for name in PLATFORM_SPANS.iter().chain(WELCOME_SPANS.iter()) {
+    for name in PLATFORM_SPANS {
         if let Some(duration) = span_ms(trace.as_ref(), stats.as_ref(), name) {
-            metrics.insert((*name).to_owned(), duration);
+            metrics.insert(name.to_owned(), duration);
+        }
+    }
+    for name in summed_names(trace.as_ref()) {
+        if let Some(sum) = span_sum(trace.as_ref(), stats.as_ref(), &name) {
+            if let Some(note) = sum.note(&name) {
+                record.notes.push(note);
+            }
+            metrics.insert(name, sum.ms);
+        }
+    }
+    for name in END_SPANS {
+        if let Some(end) = span_end_ms(trace.as_ref(), stats.as_ref(), name) {
+            metrics.insert(span_end(name), end);
         }
     }
     if let Some(trace) = &trace {
-        for span in &trace.spans {
-            let name = span.operation_name.as_str();
-            if name.starts_with(CREATE_CONTENT_PREFIX) && !span.is_helper() {
-                metrics.entry(name.to_owned()).or_insert_with(|| micros_to_ms(span.duration));
-            }
-        }
         empty_state_metrics(trace, metrics);
     }
     if let Gate::Span { name, missing } = gate {
@@ -381,24 +453,45 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         trace.first(QUIT_SPAN).map(|span| span.offset_ms(origin))
     });
     class_metrics(record, plugin_log.as_ref(), class_log.as_ref(), stats.as_ref(), quit_ms);
-    let profile_path = run_dir.join("cpu.collapsed");
-    if profile_path.exists() {
-        let parsed = files::read_text(&profile_path).and_then(|text| profile::parse(&text));
-        match parsed {
-            Ok(profile) => {
-                record.edt_samples = Some(profile.samples);
-                record.edt_frames = profile.top(TOP_LIMIT);
-                record.triggers = profile.triggers.top(TOP_LIMIT);
-                record.define_share = profile.define_share();
-                if profile.all_samples > 0 && profile.samples == 0 {
-                    record.notes.push("cpu.collapsed has no AWT-EventQueue stack".to_owned());
-                }
-                record.profile = Some(profile);
-            }
-            Err(error) => record.notes.push(format!("cpu.collapsed: {error:#}")),
-        }
-    }
+    profile_metrics(run_dir, record);
     Ok(())
+}
+
+/// Reads the profile of a run: [`GATE_PROFILE`], else [`WHOLE_PROFILE`] with a note that names why the run did not stop
+/// the profiler at its gate. A profile of another shape is a note.
+fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
+    let (name, scope) = if run_dir.join(GATE_PROFILE).exists() {
+        (GATE_PROFILE, ProfileScope::Gate)
+    } else if run_dir.join(WHOLE_PROFILE).exists() {
+        (WHOLE_PROFILE, ProfileScope::WholeRun)
+    } else {
+        return;
+    };
+    match files::read_text(&run_dir.join(name)).and_then(|text| profile::parse(&text)) {
+        Ok(profile) => {
+            record.profile_scope = Some(scope);
+            record.excluded_samples = Some(profile.excluded);
+            record.edt_samples = Some(profile.samples);
+            record.edt_frames = profile.top(TOP_LIMIT);
+            record.triggers = profile.triggers.top(TOP_LIMIT);
+            record.define_share = profile.define_share();
+            if scope == ProfileScope::WholeRun {
+                let why = record
+                    .launch
+                    .profile_stop_failure
+                    .clone()
+                    .unwrap_or_else(|| format!("the run has no {GATE_PROFILE}"));
+                record.notes.push(format!(
+                    "{WHOLE_PROFILE} is the whole-run profile, with the hold and the quit: {why}"
+                ));
+            }
+            if profile.all_samples > 0 && profile.samples == 0 {
+                record.notes.push(format!("{name} has no AWT-EventQueue stack"));
+            }
+            record.profile = Some(profile);
+        }
+        Err(error) => record.notes.push(format!("{name}: {error:#}")),
+    }
 }
 
 /// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses` and the maps. The
@@ -610,10 +703,7 @@ fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
         }
     }
     if let (Some(origin), Some(span)) = (trace.origin_us(), trace.first(EMPTY_STATE_SPAN)) {
-        metrics.insert(
-            EMPTY_STATE_BUILT.to_owned(),
-            tenth(span.offset_ms(origin) + micros_to_ms(span.duration)),
-        );
+        metrics.insert(EMPTY_STATE_BUILT.to_owned(), span.end_ms(origin));
     }
 }
 
@@ -623,6 +713,81 @@ fn span_ms(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> O
         .and_then(|trace| trace.first(name))
         .map(|span| micros_to_ms(span.duration))
         .or_else(|| stats.and_then(|stats| stats.item(name)).map(|item| as_f64(item.duration)))
+}
+
+/// The names whose metric is a sum, see [`span_sum`]: [`WELCOME_SPANS`], [`MODAL_SPANS`], and each name of the trace
+/// under [`CREATE_CONTENT_PREFIX`] that is not a helper twin, in name order.
+fn summed_names(trace: Option<&Trace>) -> Vec<String> {
+    let features: BTreeSet<&str> = trace
+        .into_iter()
+        .flat_map(|trace| &trace.spans)
+        .filter(|span| span.operation_name.starts_with(CREATE_CONTENT_PREFIX) && !span.is_helper())
+        .map(|span| span.operation_name.as_str())
+        .collect();
+    WELCOME_SPANS
+        .into_iter()
+        .chain(MODAL_SPANS)
+        .chain(features)
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The durations of the spans of one name, summed.
+struct SpanSum {
+    /// Milliseconds, to a tenth.
+    ms: f64,
+    /// The spans of the name.
+    count: usize,
+    /// The file that has them.
+    file: &'static str,
+}
+
+impl SpanSum {
+    /// The note of a name that occurs more than once, whose metric is thus a sum of several spans.
+    fn note(&self, name: &str) -> Option<String> {
+        (self.count > 1).then(|| format!("{} has {} \"{name}\" spans; the metric is their sum", self.file, self.count))
+    }
+}
+
+/// The sum of the durations of the spans `name`: the spans of the trace when it has the name, else the items of the
+/// report. A helper twin has a name of its own, so it never counts.
+fn span_sum(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> Option<SpanSum> {
+    let spans: Vec<i64> = trace
+        .into_iter()
+        .flat_map(|trace| &trace.spans)
+        .filter(|span| span.operation_name == name)
+        .map(|span| span.duration)
+        .collect();
+    if !spans.is_empty() {
+        return Some(SpanSum {
+            ms: micros_to_ms(spans.iter().sum()),
+            count: spans.len(),
+            file: TRACE_FILE,
+        });
+    }
+    let items: Vec<i64> = stats
+        .into_iter()
+        .flat_map(|stats| &stats.items)
+        .filter(|item| item.name == name)
+        .map(|item| item.duration)
+        .collect();
+    (!items.is_empty()).then(|| SpanSum {
+        ms: as_f64(items.iter().sum()),
+        count: items.len(),
+        file: "startup-stats.json",
+    })
+}
+
+/// The end of the first span `name` in milliseconds from the process start: the trace when it has the span, else the
+/// report item, whose times are on the same clock. [`EMPTY_STATE_BUILT`] is such an end too.
+fn span_end_ms(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> Option<f64> {
+    trace
+        .and_then(|trace| Some(trace.first(name)?.end_ms(trace.origin_us()?)))
+        .or_else(|| {
+            stats
+                .and_then(|stats| stats.item(name))
+                .map(|item| as_f64(item.start + item.duration))
+        })
 }
 
 /// Reads and parses an optional file of the run. A missing file is a note. A file of another shape is the reason

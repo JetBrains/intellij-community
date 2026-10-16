@@ -12,6 +12,10 @@
 //! was cut off when the JVM was killed looks exactly as authoritative as a real one, and the run it describes
 //! reads green. Every branch below that adds a diagnostic instead of a number exists because some run once
 //! reported the wrong thing that way.
+//!
+//! A note is the other kind of fact. It explains the run and never decides the verdict. A test jar that the host
+//! rebuilt while the iteration ran is a note. The guest ran the jars that the iteration pushed, so the execution and
+//! its counts stay true. Only the attribution to the checkout changes, and the note names the jars.
 
 use std::collections::HashSet;
 use std::fs;
@@ -27,7 +31,7 @@ use avl_wire::report::{
     ActiveTest, Case, CaseStatus, EvidenceArtifact, ExecutionCounts, Failure, FailureKind, FailureSource, Integrity,
     MAX_FAILURE_DETAIL_CHARS, MAX_FAILURE_MESSAGE_CHARS, MAX_RELEVANT_FRAMES, ORDERING, RUN_REPORT_SCHEMA_VERSION, RetrievedIntegrity,
     RetrievedXml, RunReport, SkippedContainer, Source, Status, Suite, TraceArchive, Tree, Watchdog, WatchdogExpiry, WatchdogState,
-    XmlCounts, safe_evidence_paths,
+    XmlCounts, expiry_evidence_paths,
 };
 
 #[cfg(test)]
@@ -52,14 +56,14 @@ pub struct Input {
     pub events: Vec<RunEvent>,
     pub source: RetrievedXml,
     /// The guest files the controller managed to fetch, or the reason it could not. Every entry names a path
-    /// [`safe_evidence_paths`] admitted.
+    /// [`avl_wire::report::safe_evidence_paths`] admitted.
     pub evidence: Vec<EvidenceArtifact>,
     /// An empty diagnostic and none are different facts on the document: the first says something wrote a reason
     /// and lost it.
     pub protocol_diagnostic: Option<String>,
-    /// A jar this iteration ran was rebuilt on the host before the iteration finished, so the verdict describes
-    /// bytes the checkout no longer produces. A diagnostic rather than a note, by the rule this module opens with.
-    pub hot_jar_drift: Option<String>,
+    /// The facts the report carries as [`RunReport::notes`], such as a test jar that the host rebuilt while the
+    /// iteration ran. A note never enters the verdict, and [`build`] drops an empty one.
+    pub notes: Vec<String>,
     /// The iteration's scenario traces as the controller pulled them, and why it could not. Carried verbatim and
     /// never read by anything that decides the verdict: a trace explains a run.
     pub traces: Vec<TraceArchive>,
@@ -134,6 +138,7 @@ pub fn build(input: Input) -> Result<RunReport, Refusal> {
         traces_error: input.traces_error,
         tree: input.tree,
         tree_error: input.tree_error,
+        notes: input.notes.into_iter().filter(|note| !note.is_empty()).collect(),
         // Carried verbatim rather than folded into the verdict diagnostic: a protocol complaint is about this
         // controller's channel to the daemon, a verdict diagnostic about the run, and a reader acting on them goes
         // to different machines.
@@ -481,7 +486,7 @@ fn watchdog_report(events: &[RunEvent]) -> Watchdog {
             deadline: Some(expired.deadline.clone()),
             expired_at: Some(expired.expired_at.clone()),
             active_execution: expired.active_execution.clone(),
-            evidence: safe_evidence_paths(events),
+            evidence: expiry_evidence_paths(events),
         }),
         _ => None,
     });
@@ -504,11 +509,6 @@ fn verdict_diagnostics(
     unreported: &[String],
 ) -> Vec<String> {
     let mut diagnostics = Vec::new();
-    // First, because it explains every other diagnostic: a jar that moved under the run is a reason the counts,
-    // the XML and the stream can all disagree.
-    if let Some(drift) = input.hot_jar_drift.as_ref().filter(|drift| !drift.is_empty()) {
-        diagnostics.push(drift.clone());
-    }
     if integrity != Integrity::Complete {
         let explained = input
             .source

@@ -98,7 +98,7 @@ async fn at_the_floor_retention_keeps_nothing_and_refuses_when_still_full() {
     assert_eq!(failure.code, "guest_disk_full");
     assert_eq!(failure.exit, Exit::UNAVAILABLE);
     assert!(
-        failure.message.contains("prlctl exec") && failure.message.contains("du -sh"),
+        failure.message.contains("vm.cmd exec") && failure.message.contains("du -sh"),
         "the refusal hands the reader a command, said {:?}",
         failure.message
     );

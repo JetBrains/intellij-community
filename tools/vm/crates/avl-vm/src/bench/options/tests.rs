@@ -7,6 +7,7 @@ use pretty_assertions::assert_eq;
 
 use super::{ArmChoice, BenchVerb, DEFAULT_TARGET, ProjectArmChoice, ReplayArgs, parse_hold, parse_load};
 use crate::bench::arm::Arm;
+use crate::bench::profile::ProfileEvent;
 use crate::cli::{Cmd, Parsed, parse};
 use crate::terminal::{Output, TerminalFacts};
 
@@ -37,8 +38,47 @@ fn welcome_takes_the_defaults_of_the_plan() {
     assert_eq!(args.launch.hold, Duration::from_secs(3));
     assert_eq!(args.launch.session, None);
     assert_eq!(args.launch.max_load, None);
+    assert_eq!(args.launch.generation, None);
     assert!(!args.cold && !args.profile);
+    assert_eq!(args.profile_event, ProfileEvent::Cpu);
     assert_eq!(args.arm.arms(), vec![Arm::Modal, Arm::NonModal]);
+}
+
+/// `--generation` takes the start of a digest on every session verb. It names the distribution, so it conflicts with
+/// `--target`.
+#[test]
+fn a_session_runs_over_a_generation_by_a_prefix_of_its_digest() {
+    let BenchVerb::Welcome(args) = verb(&["welcome", "--generation", "5f1c0d9e2b7a"]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!(args.launch.generation.as_deref(), Some("5f1c0d9e2b7a"));
+    let BenchVerb::Project(args) = verb(&["project", "markdown", "--generation", "5f1c"]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.launch.generation.as_deref(), Some("5f1c"));
+    for argv in [
+        &["welcome", "--generation", "5F1C"][..],
+        &["welcome", "--generation", ""],
+        &["welcome", "--generation", "5f1c", "--target", "//build:idea_dist"],
+    ] {
+        match parsed(argv) {
+            Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage", "{argv:?}"),
+            other => panic!("{argv:?} parsed: {other:?}"),
+        }
+    }
+}
+
+/// `--profile-event` picks the event of the profile, and it needs `--profile`.
+#[test]
+fn the_profile_samples_the_cpu_or_the_wall_clock() {
+    let BenchVerb::Welcome(args) = verb(&["welcome", "--profile", "--profile-event", "wall"]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!((args.profile, args.profile_event), (true, ProfileEvent::Wall));
+    match parsed(&["welcome", "--profile-event", "wall"]) {
+        Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
+        other => panic!("--profile-event without --profile parsed: {other:?}"),
+    }
 }
 
 #[test]
@@ -153,6 +193,7 @@ fn a_bad_option_is_a_usage_refusal() {
         &["welcome", "--target", "--json"],
         &["welcome", "--hold", "3"],
         &["welcome", "--max-load", "0"],
+        &["welcome", "--profile", "--profile-event", "alloc"],
         &["open-project", "p", "--max-load", "-1"],
         &["project"],
         &["project", "markdown", "--runs", "0"],

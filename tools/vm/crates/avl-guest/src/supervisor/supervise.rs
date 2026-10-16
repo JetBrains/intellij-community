@@ -7,11 +7,13 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::fs::{self, File};
+use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
-use avl_wire::supervisor::{CancellationRecord, Outcome, Phase, RunState, SCHEMA_VERSION, Spec};
+use avl_wire::ide::{BIN_DIR, HOME_DIR};
+use avl_wire::supervisor::{CancellationRecord, EnvironmentPolicy, Outcome, Phase, RunState, SCHEMA_VERSION, Spec};
 use nix::sys::signal::Signal;
 
 use super::identity::{ExitOutcome, ProcessIdentity, classify_exit, identity_matches};
@@ -29,12 +31,17 @@ use crate::reply::AgentRefusalExt;
 const IDENTITY_TIMEOUT: Duration = Duration::from_secs(2);
 /// The exit a rejected run records: the slot belongs to another run.
 const REJECTED_EXIT: i32 = 75;
+/// How long the members that outlived the child get to leave the process table after their KILL.
+const LEFTOVER_EXIT_TIMEOUT: Duration = Duration::from_secs(2);
+/// The most characters of a command line that the supervisor log gives for one leftover member.
+const LEFTOVER_COMMAND_CHARS: usize = 200;
 
 /// The PATH a supervised child starts with: the system directories of the guest OS, and Homebrew's only on macOS.
 ///
-/// It names no Node. The controller resolves the pinned Node of this guest and puts its directory first in the
-/// PATH that the start argv sets through `/usr/bin/env`, so a Node directory here would be a second answer.
-const fn child_path(host: LaunchHost) -> &'static str {
+/// It names no Node. For the UI daemon the controller resolves the pinned Node of this guest and puts its directory
+/// first in the PATH that the start argv sets through `/usr/bin/env`. For the lane IDE the caller puts its launchers into
+/// the `bin` directory of the context. So a Node directory here would be a second answer.
+pub(crate) const fn child_path(host: LaunchHost) -> &'static str {
     match host {
         LaunchHost::Macos => "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
         LaunchHost::Linux => "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
@@ -49,14 +56,53 @@ const fn home_parent(host: LaunchHost) -> &'static str {
     }
 }
 
-/// The environment a supervised child is launched with, out of the supervisor's own on the guest `host`.
+/// The variables that a child of the [`EnvironmentPolicy::Context`] policy copies from the environment of the
+/// supervisor, when the supervisor has them.
+///
+/// The list is closed: a variable that is not here does not reach the IDE or its children, so a credential in the
+/// environment of the guest account stays out of them. A name joins the list only when a child of the IDE needs it
+/// and no file of the context can carry it. Add it here and to the test of the context policy.
+pub(crate) const ENVIRONMENT_ALLOWLIST: [&str; 10] = [
+    "DISPLAY",
+    "XAUTHORITY",
+    "LANG",
+    "LC_ALL",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "LOGNAME",
+    "XDG_RUNTIME_DIR",
+    "DBUS_SESSION_BUS_ADDRESS",
+];
+
+/// The locale that a child of the [`EnvironmentPolicy::Context`] policy gets as `LC_ALL` when the supervisor has no UTF-8 one.
+///
+/// The JVM encodes a file name in the character set of the locale. Under the POSIX locale it cannot represent a
+/// non-ASCII name, so the IDE refuses such a file. Every guest OS of the lane has this locale.
+pub(crate) const CONTEXT_UTF8_LOCALE: &str = "C.UTF-8";
+
+/// The environment a supervised child is launched with, out of the supervisor's own on the guest `host`, by `policy`.
 ///
 /// No agent-CLI guesses here: the controller resolves them in this guest and passes the answer with the child's
-/// environment, so a second candidate table would be a second answer.
+/// argv, so a second candidate table would be a second answer. The variables of the exec channel never pass.
 pub(crate) fn child_environment(
     host: LaunchHost,
     inherited: impl IntoIterator<Item = (OsString, OsString)>,
+    policy: &EnvironmentPolicy,
 ) -> BTreeMap<OsString, OsString> {
+    let mut environment = match policy {
+        EnvironmentPolicy::Inherit => inherited_environment(host, inherited),
+        EnvironmentPolicy::Context { context_dir } => context_environment(host, inherited, Path::new(context_dir)),
+    };
+    environment.insert("IJ_PRIVATE_PACKAGES_AUTHORIZER_SKIP".into(), "true".into());
+    for name in CHANNEL_VARIABLES {
+        environment.remove(&OsString::from(name));
+    }
+    environment
+}
+
+/// The environment of the supervisor, with the PATH of the guest OS and a `HOME` when it has none.
+fn inherited_environment(host: LaunchHost, inherited: impl IntoIterator<Item = (OsString, OsString)>) -> BTreeMap<OsString, OsString> {
     let mut environment: BTreeMap<OsString, OsString> = inherited.into_iter().collect();
     if environment.get(&OsString::from("HOME")).is_none_or(|home| home.is_empty()) {
         let user = environment
@@ -69,11 +115,42 @@ pub(crate) fn child_environment(
         environment.insert("HOME".into(), home);
     }
     environment.insert("PATH".into(), child_path(host).into());
-    environment.insert("IJ_PRIVATE_PACKAGES_AUTHORIZER_SKIP".into(), "true".into());
-    for name in CHANNEL_VARIABLES {
-        environment.remove(&OsString::from(name));
+    environment
+}
+
+/// The closed environment of the IDE of `context`: the [`ENVIRONMENT_ALLOWLIST`] subset of the supervisor's own,
+/// `HOME` on the home of the context, and the `bin` directory of the context first in the PATH of the guest OS.
+///
+/// An inherited UTF-8 locale stays as it is. Any other locale, or none, gets `LC_ALL` set to [`CONTEXT_UTF8_LOCALE`].
+fn context_environment(
+    host: LaunchHost,
+    inherited: impl IntoIterator<Item = (OsString, OsString)>,
+    context: &Path,
+) -> BTreeMap<OsString, OsString> {
+    let mut environment: BTreeMap<OsString, OsString> = inherited
+        .into_iter()
+        .filter(|(name, _)| name.to_str().is_some_and(|name| ENVIRONMENT_ALLOWLIST.contains(&name)))
+        .collect();
+    environment.insert("HOME".into(), context.join(HOME_DIR).into_os_string());
+    let mut path = context.join(BIN_DIR).into_os_string();
+    path.push(":");
+    path.push(child_path(host));
+    environment.insert("PATH".into(), path);
+    if !has_utf8_locale(&environment) {
+        environment.insert("LC_ALL".into(), CONTEXT_UTF8_LOCALE.into());
     }
     environment
+}
+
+/// Whether the locale that `environment` gives to the character type is a UTF-8 one. `LC_ALL` decides when it is set
+/// and not empty, else `LANG`. The context policy passes no `LC_CTYPE`.
+pub(crate) fn has_utf8_locale(environment: &BTreeMap<OsString, OsString>) -> bool {
+    ["LC_ALL", "LANG"]
+        .into_iter()
+        .filter_map(|name| environment.get(&OsString::from(name)))
+        .find(|value| !value.is_empty())
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.to_ascii_lowercase().replace('-', "").contains("utf8"))
 }
 
 /// Adapts an argv the way an interactive shell would: repository `.cmd` launchers are shell/cmd polyglots without
@@ -198,6 +275,8 @@ pub(crate) fn supervise(system: &dyn System, root: &Path, run_id: &str) -> Resul
 
     let child_identity = identify_child(system, &mut watched, child_pid);
     if let Some(outcome) = watched.outcome.clone() {
+        // The spawn put the child into a session of its own, so its pid is the id of its group.
+        end_leftover_members(system, child_pid, &paths, run_id);
         current.phase = Phase::Running;
         current.started_at = Some(stamp(system.now()));
         finish_state(
@@ -231,6 +310,7 @@ pub(crate) fn supervise(system: &dyn System, root: &Path, run_id: &str) -> Resul
     publish_state(root, &current);
 
     let cancellation = watch_until_settled(system, root, &mut current, &child_identity, &paths, &mut watched);
+    end_leftover_members(system, child_identity.pgid, &paths, run_id);
     let outcome = watched.outcome.clone().unwrap_or_else(ExitOutcome::failed_to_start);
     let (result, code, signal) = finish_of(cancellation.as_ref(), outcome);
     finish_state(
@@ -280,7 +360,7 @@ fn spawn_child(spec: &Spec, log: File) -> std::io::Result<Child> {
         .args(&argv[1..])
         .current_dir(&spec.cwd)
         .env_clear()
-        .envs(child_environment(LaunchHost::current(), std::env::vars_os()))
+        .envs(child_environment(LaunchHost::current(), std::env::vars_os(), &spec.environment))
         .stdin(Stdio::null());
     let stdout = log.try_clone()?;
     command.stdout(stdout).stderr(log);
@@ -388,6 +468,49 @@ fn honour_cancellation(
         }
     }
     record
+}
+
+/// Kills the members of the group `pgid` that outlived the reaped child, waits up to [`LEFTOVER_EXIT_TIMEOUT`] for
+/// them to end, and names them in the supervisor log of the run.
+///
+/// Such a member is a process that the child started without a group of its own, as the IDE starts its JCEF helper
+/// and its agent processes. The kernel gives no new process the id of a group that still exists, so `pgid` names only
+/// this group, and the KILL reaches no other process. A group that outlives the wait stays for the reconcile, which
+/// records the run as orphaned.
+pub(crate) fn end_leftover_members(system: &dyn System, pgid: i32, paths: &RunPaths, run_id: &str) {
+    if !system.group_alive(pgid) {
+        return;
+    }
+    let members = system.group_members(pgid);
+    system.signal_group(pgid, Signal::SIGKILL);
+    let until = deadline(system, LEFTOVER_EXIT_TIMEOUT);
+    while system.group_alive(pgid) && system.now() < until {
+        system.sleep(POLL_INTERVAL);
+    }
+    let result = if system.group_alive(pgid) {
+        format!("the group still has members after {} ms", LEFTOVER_EXIT_TIMEOUT.as_millis())
+    } else {
+        "the group is gone".to_owned()
+    };
+    let named = members
+        .iter()
+        .map(|member| {
+            format!(
+                "{} {}",
+                member.pid,
+                member.command.chars().take(LEFTOVER_COMMAND_CHARS).collect::<String>()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    if let Ok(log) = open_append(&paths.supervisor_log) {
+        let _ = writeln!(
+            &log,
+            "{} finish {run_id}: KILL to group {pgid}, members that outlived the child: {} [{named}]; {result}",
+            stamp(system.now()),
+            members.len()
+        );
+    }
 }
 
 fn reject(system: &dyn System, root: &Path, run_id: &str, failure: String) -> Result<(), AgentRefusal> {

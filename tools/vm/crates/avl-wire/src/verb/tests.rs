@@ -31,6 +31,9 @@ fn every_verb_keeps_its_wire_spelling() {
             "relay",
             "runfiles-tree",
             "read-file",
+            "ide-prepare",
+            "ide-gc",
+            "ide-launch",
         ]
     );
     for verb in AgentVerb::ALL {

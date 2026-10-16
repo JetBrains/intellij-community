@@ -1,8 +1,11 @@
-//! `vnc`: the worker's host-side VNC endpoint, read out of the tart runtime log.
+//! `vnc`: the worker's host-side VNC endpoint, read out of the tart runtime log, or the noVNC page of the testing-ui
+//! container, read out of what its guest wrote.
 
 use std::path::Path;
 use std::sync::LazyLock;
 
+use crate::worker::container_linux::ContainerLinux;
+use crate::worker::hypervisor::Machine;
 use crate::worker::hypervisor::unsupported;
 use crate::worker::worker::Manager;
 use avl_base::{Backend, Exit, Outcome, Refusal};
@@ -10,7 +13,7 @@ use avl_host_sys::Ctx;
 use regex::Regex;
 use serde::Serialize;
 
-use super::{split_lines, with_leased_worker};
+use super::{observe_leased_worker, split_lines};
 
 /// How much of the tart runtime log a `vnc` answer carries: enough to hold the endpoint line a recent boot printed,
 /// and little enough that the envelope stays a message rather than a log dump.
@@ -47,13 +50,16 @@ pub(crate) async fn command_vnc(ctx: &Ctx, manager: &Manager, lease_file: Option
             "Parallels diagnostics use the Parallels Desktop console; the controller does not open GUI windows",
         ));
     }
+    if let Machine::ContainerLinux(container_linux) = manager.machine() {
+        return container_linux_vnc(ctx, manager, container_linux, lease_file).await;
+    }
     if settings.backend == Backend::Docker {
         return Err(unsupported(
             "a Docker worker has no VNC endpoint: its display is an Xvfb inside the container, which no host port \
              exposes; a run's traces carry its screenshots",
         ));
     }
-    let data = with_leased_worker(ctx, manager, lease_file, "vnc", async |current| {
+    let data = observe_leased_worker(ctx, manager, lease_file, "vnc", async |current| {
         let worker = current.worker;
         if !manager.machine().running(ctx, &worker).await? {
             return Err(Refusal::new("worker_stopped", Exit::FAILURE, format!("worker {worker} is stopped")));
@@ -88,6 +94,52 @@ pub(crate) async fn command_vnc(ctx: &Ctx, manager: &Manager, lease_file: Option
     text.push('\n');
     text.push_str(&data.tail);
     Outcome::new(data, text)
+}
+
+/// What `vnc` answers for the testing-ui container: the noVNC page of its display and the password that page asks
+/// for, both as the guest wrote them.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NoVncData {
+    worker: String,
+    novnc: String,
+    vnc_password: String,
+}
+
+/// The noVNC page of the testing-ui container. A container that does not run, or whose guest has not written its
+/// description yet, is `worker_stopped`. The pool has one worker, so the page is answered without a receipt, which a
+/// developer at a terminal has not got; a receipt, when given, is validated as for every other verb.
+async fn container_linux_vnc(
+    ctx: &Ctx,
+    manager: &Manager,
+    container_linux: &ContainerLinux,
+    lease_file: Option<&Path>,
+) -> Result<Outcome, Refusal> {
+    let worker = match lease_file {
+        Some(_) => observe_leased_worker(ctx, manager, lease_file, "vnc", async |current| Ok(current.worker)).await?,
+        None => manager
+            .settings()
+            .workers
+            .first()
+            .cloned()
+            .ok_or_else(|| Refusal::new("invalid_worker_pool", Exit::USAGE, "the container-linux pool has no worker"))?,
+    };
+    let stopped = || Refusal::new("worker_stopped", Exit::FAILURE, format!("worker {worker} is stopped"));
+    if !manager.machine().running(ctx, &worker).await? {
+        return Err(stopped());
+    }
+    let Some(novnc) = container_linux.novnc()? else {
+        return Err(stopped());
+    };
+    let text = format!("noVNC: {}  password: {}", novnc.url, novnc.password);
+    Outcome::new(
+        NoVncData {
+            worker,
+            novnc: novnc.url,
+            vnc_password: novnc.password,
+        },
+        text,
+    )
 }
 
 #[cfg(test)]

@@ -3,15 +3,14 @@
 //! - [`Timings`], the bounds of the poll loops;
 //! - [`StartState`] and [`StopState`], what a start or a stop found;
 //! - the lifecycle operations of [`Manager`]. Each is one `match` on the [`Machine`], and each arm calls the body in
-//!   the file of its backend: `worker/tart.rs`, `worker/parallels.rs` and `worker/docker.rs`;
-//! - [`Manager::require_unleased`], the lease guard of a lifecycle operation.
+//!   the file of its backend: `worker/tart.rs`, `worker/parallels.rs`, `worker/docker.rs` and `worker/container_linux.rs`;
+//! - [`Manager::require_unleased`], the lease guard of a lifecycle operation. The run guard beside it,
+//!   [`Manager::require_no_run`], lives with the run marker in `worker/run_marker.rs`.
 //!
 //! A backend that cannot do an operation answers [`unsupported`], which keeps the refusal code a caller branches on.
 
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use avl_base::sync::lock;
 use avl_base::{Exit, Outcome, Refusal};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Backoff, Ctx};
@@ -23,58 +22,12 @@ use super::{Lease, Manager, read_lease};
 use crate::worker::hypervisor::Machine;
 #[cfg(unix)]
 use crate::worker::hypervisor::unsupported;
+use crate::worker::lease::ACQUIRE_LOCK_TIMEOUT;
 
 /// Whether `authorized`, the lease a caller holds, is the lease `held` that the worker's lease file records: the same
 /// worker and the same token. The one test of "this lease is the caller's own" for every guard.
-pub(crate) fn lease_authorizes(authorized: Option<&Lease>, held: &Lease) -> bool {
+fn lease_authorizes(authorized: Option<&Lease>, held: &Lease) -> bool {
     authorized.is_some_and(|authorized| authorized.same_lease(held))
-}
-
-/// The leases this process holds while it runs one body per leased worker, such as the shards of `shard`.
-///
-/// One per invocation, as the manager is. An operation that reaches every worker of the pool, the recreate of the
-/// Lima engine, does not stop for a lease of this set: the sibling bodies of the same command wait for that operation
-/// under the same lock, and none of them has a container that another session uses. A lease of another process still
-/// stops it.
-///
-/// No `Debug`: the tokens are secrets.
-#[derive(Default)]
-pub(crate) struct HeldLeases {
-    leases: Mutex<Vec<Lease>>,
-}
-
-impl HeldLeases {
-    /// Records `leases` as held until the answer is dropped.
-    pub(crate) fn hold(self: &Arc<Self>, leases: &[Lease]) -> HeldLeasesGuard {
-        lock(&self.leases).extend(leases.iter().cloned());
-        HeldLeasesGuard {
-            owner: Arc::clone(self),
-            leases: leases.to_vec(),
-        }
-    }
-
-    /// Whether `held`, the lease a worker's lease file records, is one of this process's leases.
-    pub(crate) fn contains(&self, held: &Lease) -> bool {
-        lock(&self.leases).iter().any(|lease| lease_authorizes(Some(lease), held))
-    }
-}
-
-/// Keeps a set of leases in [`HeldLeases`], and takes them out again when dropped.
-#[must_use = "the leases count as held only while the guard lives"]
-pub(crate) struct HeldLeasesGuard {
-    owner: Arc<HeldLeases>,
-    leases: Vec<Lease>,
-}
-
-impl Drop for HeldLeasesGuard {
-    fn drop(&mut self) {
-        let mut held = lock(&self.owner.leases);
-        for lease in &self.leases {
-            if let Some(index) = held.iter().position(|candidate| candidate.same_lease(lease)) {
-                held.remove(index);
-            }
-        }
-    }
 }
 
 /// The budgets and the pauses of the poll loops, each of which runs through [`Poll`](avl_host_sys::Poll). The
@@ -121,13 +74,16 @@ pub(crate) struct Timings {
     /// thirty seconds.
     pub(crate) teardown_grace: Duration,
     /// What a Docker worker's share refresh waits: two seconds. A bind mount answered a replaced file's old size for
-    /// about a second on OrbStack (2026-09-29), and kept a dead node for under a second on the Lima engine
-    /// (2026-09-30). See [`Manager::refresh_shares`].
+    /// about a second on OrbStack (2026-09-29), and kept a dead node for under 60 ms on Apple `container`
+    /// (2026-10-09). See [`Manager::refresh_shares`].
     pub(crate) docker_share_settle: Duration,
     /// How long a Docker start waits for the pool-wide image lock that another start holds while it builds. Thirty
     /// minutes, because the first build installs the guest packages and takes minutes; the waiter then finds the
     /// image and builds nothing.
     pub(crate) docker_image_wait: Duration,
+    /// How long the end of a run waits for the lifecycle lock to remove its run marker:
+    /// [`ACQUIRE_LOCK_TIMEOUT`], because only short operations hold the lock.
+    pub(crate) run_marker_lock_wait: Duration,
 }
 
 impl Default for Timings {
@@ -145,6 +101,7 @@ impl Default for Timings {
             teardown_grace: Duration::from_secs(30),
             docker_share_settle: Duration::from_secs(2),
             docker_image_wait: Duration::from_mins(30),
+            run_marker_lock_wait: ACQUIRE_LOCK_TIMEOUT,
         }
     }
 }
@@ -167,6 +124,7 @@ impl Timings {
             teardown_grace: Duration::from_millis(200),
             docker_share_settle: Duration::from_millis(10),
             docker_image_wait: Duration::from_millis(100),
+            run_marker_lock_wait: Duration::from_millis(200),
         }
     }
 }
@@ -212,7 +170,8 @@ impl Manager {
     ///
     /// It takes the whole lease rather than its worker name because one of the repairs is a restart, and a restart of
     /// a leased worker has to be authorized: the lease that authorizes it is the caller's own. The caller holds the
-    /// worker's lifecycle lock, so every start and stop here is the lock-free one.
+    /// worker's lifecycle lock, or the worker's run marker, which excludes every other lifecycle operation. So every
+    /// start and stop here is the lock-free one.
     pub(crate) async fn require_ready(&self, ctx: &Ctx, lease: &Lease) -> Result<(), Refusal> {
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
         match self.machine.as_ref() {
@@ -221,6 +180,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(parallels) => self.require_parallels_ready(ctx, parallels, &lease.worker).await,
             Machine::Docker(docker) => self.require_docker_ready(ctx, docker, lease).await,
+            Machine::ContainerLinux(container_linux) => self.require_container_linux_ready(ctx, container_linux, lease).await,
         }
     }
 
@@ -242,6 +202,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(parallels) => self.require_parallels_release_ready(ctx, parallels, worker).await,
             Machine::Docker(docker) => self.require_docker_release_ready(ctx, docker, worker).await,
+            Machine::ContainerLinux(container_linux) => self.require_container_linux_release_ready(ctx, container_linux, worker).await,
         }
     }
 
@@ -260,6 +221,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(_) => Ok(false),
             Machine::Docker(docker) => docker.stopped(ctx, worker).await,
+            Machine::ContainerLinux(backend) => Ok(!backend.running(ctx, worker).await?),
         }
     }
 
@@ -271,27 +233,33 @@ impl Manager {
     /// daemon would go on serving the lanes from the container of the previous declaration. The container is current
     /// when its create record declares the argv a create would use now, and the engine gives the name the recorded id
     /// ([`crate::worker::docker::Docker::container_is_current`]). The caller passed the engine gate just before, so the
-    /// CLI is resolved. A Tart or a Parallels worker declares its shares at its start, and the readiness gate checks
-    /// them, so it answers true.
+    /// CLI is resolved. A container-linux worker is current when its start record names the argv a start would use
+    /// now. A Tart or a Parallels worker declares its shares at its start, and the readiness gate checks them, so it
+    /// answers true.
     pub(crate) async fn guest_declaration_current(&self, ctx: &Ctx, lease: &Lease) -> Result<bool, Refusal> {
         match self.machine.as_ref() {
             Machine::Docker(docker) => docker.container_is_current(ctx, &lease.worker).await,
             #[cfg(unix)]
             Machine::Tart(_) | Machine::Parallels(_) => Ok(true),
+            Machine::ContainerLinux(container_linux) => container_linux.start_record_is_current(&lease.worker),
         }
     }
 
     // --- start -----------------------------------------------------------------------------------------------
 
-    /// Brings one worker up, taking its lifecycle lock.
+    /// Brings one worker up, taking its lifecycle lock. A run of another live process on the worker refuses the
+    /// start as `lease_busy`.
     pub(crate) async fn start(&self, ctx: &Ctx, worker: &str) -> Result<StartState, Refusal> {
         self.settings.require_pool_worker(worker)?;
-        self.with_lifecycle_lock(ctx, worker, "pool-start", self.start_without_lifecycle_lock(ctx, worker))
-            .await
+        self.with_lifecycle_lock(ctx, worker, "pool-start", async {
+            self.require_no_run(ctx, worker, "pool-start").await?;
+            self.start_without_lifecycle_lock(ctx, worker).await
+        })
+        .await
     }
 
-    /// Brings one worker up for a caller that already holds its lifecycle lock. Every lease operation is such a
-    /// caller: the lock is shared between lease and lifecycle operations.
+    /// Brings one worker up for a caller that already holds its lifecycle lock or its run marker. Every lease
+    /// operation is such a caller: the lock is shared between lease and lifecycle operations.
     ///
     /// No caller authorizes a lease here. A Docker readiness gate starts the container itself with the caller's own
     /// lease, which may make a running container again ([`Manager::reconcile_docker_container`]).
@@ -303,6 +271,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(parallels) => self.start_parallels(ctx, parallels, worker).await,
             Machine::Docker(docker) => self.start_docker(ctx, docker, worker, None).await,
+            Machine::ContainerLinux(container_linux) => self.start_container_linux(ctx, container_linux, worker).await,
         }
     }
 
@@ -322,12 +291,17 @@ impl Manager {
             return Ok(());
         }
         // Deliberately no holder name: `status` and `lease show` hide it from an unauthorized caller too.
+        let holder_recycle = if operation == "recycle" {
+            format!(". The holder can also run `--lease-file FILE pool recycle {worker}`, which gives the lease back")
+        } else {
+            String::new()
+        };
         Err(Refusal::new(
             "worker_leased",
             Exit::TEMP_FAIL,
             format!(
                 "refusing to {operation} {worker}: it is leased by another holder. Wait for that lease to end, or \
-                 release it with `--lease-file FILE lease release`, then run `pool {operation} {worker}`"
+                 release it with `--lease-file FILE lease release`, then run `pool {operation} {worker}`{holder_recycle}"
             ),
         ))
     }
@@ -343,6 +317,9 @@ impl Manager {
     ///
     /// The guard exists so that `pool stop` cannot pull a worker out from under another holder; it was never meant to
     /// stop a holder from restarting the worker it leased, which is what a checkout switch needs.
+    ///
+    /// The run guard comes first, so a run of another live process refuses the stop as `lease_busy` and names the run.
+    /// An authorized stop from inside a run finds the run marker of its own process, and passes.
     pub(crate) async fn stop_without_lifecycle_lock(
         &self,
         ctx: &Ctx,
@@ -350,6 +327,7 @@ impl Manager {
         authorized: Option<&Lease>,
     ) -> Result<StopState, Refusal> {
         self.settings.require_pool_worker(worker)?;
+        self.require_no_run(ctx, worker, "stop").await?;
         self.require_unleased(worker, "stop", authorized)?;
         match self.machine.as_ref() {
             #[cfg(unix)]
@@ -357,21 +335,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(parallels) => self.stop_parallels(ctx, parallels, worker).await,
             Machine::Docker(docker) => self.stop_docker(ctx, docker, worker).await,
-        }
-    }
-
-    /// What `pool stop` does for the whole pool after it stopped its targets. Answers the word the outcome reports
-    /// for the pool's engine, or `None` when the backend has no engine of its own. Only the Docker backend on its
-    /// Lima engine has one, and the engine of the host environment is the operator's: no command of this controller
-    /// stops it.
-    pub(super) async fn stop_pool_engine(&self, ctx: &Ctx) -> Result<Option<String>, Refusal> {
-        match self.machine.as_ref() {
-            Machine::Docker(docker) => match docker.engine() {
-                Some(engine) => self.stop_docker_engine(ctx, docker, engine).await.map(Some),
-                None => Ok(None),
-            },
-            #[cfg(unix)]
-            Machine::Tart(_) | Machine::Parallels(_) => Ok(None),
+            Machine::ContainerLinux(container_linux) => self.stop_container_linux(ctx, container_linux, worker).await,
         }
     }
 
@@ -379,11 +343,10 @@ impl Manager {
 
     /// `pool init` for a caller that already holds the pool's locks.
     ///
-    /// Four different operations behind one verb. A Tart macOS pool clones a sealed golden and audits it; a Tart
-    /// Linux pool clones a public image by tag, where there is no seal because there is nothing baked in to audit; a
-    /// Parallels pool has nothing to create at all and re-provisions the VM the operator made; a Docker pool builds
-    /// its image and creates every slot's container. `golden` is the golden VM that the operator named, and only a
-    /// Tart macOS pool takes one.
+    /// Four different operations behind one verb. A Tart pool clones the sealed macOS golden and audits it. A
+    /// Parallels pool has nothing to create, and it provisions again the VM that the operator made. A Docker pool
+    /// builds its image and creates the container of each slot. A container-linux pool starts its one container.
+    /// `golden` is the golden VM that the operator named, and only a Tart pool takes one.
     pub(crate) async fn pool_init_without_lifecycle_lock(&self, ctx: &Ctx, golden: Option<&str>) -> Result<Outcome, Refusal> {
         match self.machine.as_ref() {
             #[cfg(unix)]
@@ -391,6 +354,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(parallels) => self.pool_init_parallels(ctx, parallels, golden).await,
             Machine::Docker(docker) => self.pool_init_docker(ctx, docker, golden).await,
+            Machine::ContainerLinux(container_linux) => self.pool_init_container_linux(ctx, container_linux, golden).await,
         }
     }
 
@@ -403,6 +367,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(_) => Err(unsupported(NO_GC)),
             Machine::Docker(docker) => self.pool_gc_docker(ctx, docker).await,
+            Machine::ContainerLinux(container_linux) => self.pool_gc_container_linux(ctx, container_linux).await,
         }
     }
 
@@ -420,21 +385,20 @@ impl Manager {
             Machine::Parallels(_) => Err(unsupported(NO_RECYCLE)),
             #[cfg(unix)]
             Machine::Tart(_) => Ok(()),
-            Machine::Docker(_) => Ok(()),
+            Machine::Docker(_) | Machine::ContainerLinux(_) => Ok(()),
         }
     }
 
-    /// What `pool recycle all` does for the whole pool before it unmakes the slots. Only the Docker backend on its
-    /// Lima engine does something: it deletes the engine, so the recycle makes the whole pool again, the engine VM
-    /// included.
-    pub(super) async fn delete_pool_engine(&self, ctx: &Ctx) -> Result<(), Refusal> {
+    /// What `pool recycle all` does for the whole pool before it unmakes the slots. Only the Docker backend on the
+    /// Apple `container` engine does something: it deletes the builder VM. The engine of the host environment is the
+    /// operator's, and no command of this controller changes it.
+    pub(super) async fn delete_pool_builder(&self, ctx: &Ctx) -> Result<(), Refusal> {
         match self.machine.as_ref() {
-            Machine::Docker(docker) => match docker.engine() {
-                Some(engine) => self.delete_docker_engine(ctx, engine).await,
-                None => Ok(()),
-            },
+            Machine::Docker(docker) if docker.apple().is_some() => self.delete_docker_builder(ctx, docker).await,
+            Machine::Docker(_) => Ok(()),
             #[cfg(unix)]
             Machine::Tart(_) | Machine::Parallels(_) => Ok(()),
+            Machine::ContainerLinux(_) => Ok(()),
         }
     }
 
@@ -447,6 +411,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Parallels(_) => Err(unsupported(NO_RECYCLE)),
             Machine::Docker(docker) => self.unmake_docker_worker(ctx, docker, worker).await,
+            Machine::ContainerLinux(container_linux) => self.unmake_container_linux_worker(ctx, container_linux, worker).await,
         }
     }
 }

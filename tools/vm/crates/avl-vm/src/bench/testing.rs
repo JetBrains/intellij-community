@@ -15,9 +15,6 @@ pub(crate) fn fixture_session() -> (tempfile::TempDir, PathBuf) {
     (dir, session)
 }
 
-/// The microseconds since the epoch of the process start of the fixture `project-run-01`: the start of `bootstrap`.
-const FIXTURE_ORIGIN_US: i64 = 1_790_860_689_816_000;
-
 /// The spans of the Air empty-state composer that [`empty_editor_run`] adds: the name, the start in milliseconds from
 /// the process start, and the duration in milliseconds. The composer ends at 2900 ms.
 pub(crate) const EMPTY_STATE_FIXTURE_SPANS: [(&str, i64, i64); 8] = [
@@ -32,26 +29,37 @@ pub(crate) const EMPTY_STATE_FIXTURE_SPANS: [(&str, i64, i64); 8] = [
 ];
 
 /// A run of the empty-editor arm in `session`: a copy of the fixture `project-run-01` whose trace also holds `spans`,
-/// each a name, a start and a duration in milliseconds. Answers the run directory.
+/// see [`append_spans`]. Answers the run directory.
 pub(crate) fn empty_editor_run(session: &Path, spans: &[(&str, i64, i64)]) -> PathBuf {
     let run = session.join("empty-editor-run-01");
     avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
+    append_spans(&run, spans);
+    run
+}
+
+/// Appends `spans` to the trace of the run directory `run`, each a name, a start in milliseconds from the origin of the
+/// trace, and a duration in milliseconds. The origin is the process start, see [`super::trace::Trace::origin_us`].
+pub(crate) fn append_spans(run: &Path, spans: &[(&str, i64, i64)]) {
     let path = run.join("opentelemetry.json");
     let text = std::fs::read_to_string(&path).expect("a trace");
+    let origin_us = super::trace::parse(&text)
+        .expect("a trace")
+        .origin_us()
+        .expect("a trace with a span");
     let mut trace: serde_json::Value = serde_json::from_str(&text).expect("a Jaeger trace");
     let list = trace["data"][0]["spans"].as_array_mut().expect("a span list");
-    for (index, (name, start_ms, duration_ms)) in spans.iter().enumerate() {
+    for (name, start_ms, duration_ms) in spans {
+        let id = format!("ee{:014x}", list.len());
         list.push(serde_json::json!({
             "traceID": "070d9092ee000000ee00000000000000",
-            "spanID": format!("ee{index:014x}"),
+            "spanID": id,
             "operationName": name,
             "processID": "p1",
-            "startTime": FIXTURE_ORIGIN_US + start_ms * 1000,
+            "startTime": origin_us + start_ms * 1000,
             "duration": duration_ms * 1000,
         }));
     }
     std::fs::write(&path, trace.to_string()).expect("a trace");
-    run
 }
 
 /// Holds `text` to the golden file `name` of `testdata/bench`. `UPDATE_EXPECT=1` rewrites it.

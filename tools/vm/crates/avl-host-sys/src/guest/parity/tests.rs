@@ -1,4 +1,3 @@
-use avl_base::format::words;
 use avl_base::{Environment, GuestOs, Selection};
 use pretty_assertions::assert_eq;
 
@@ -20,34 +19,22 @@ fn json_text(text: &str) -> String {
 }
 
 #[test]
-fn parity_script_builds_the_layout_and_guards_a_foreign_directory() {
+fn parity_script_links_the_bazel_root_and_names_no_checkout() {
     let host = Host::new(GuestOs::Linux);
     let settings = &host.settings;
-    let entries = words([".git", "community", "plugins"]);
-    let script = parity_script(
-        settings,
-        "air-docker-1",
-        "/mnt/AirVmShares/repo",
-        "/mnt/AirVmShares/bazel",
-        &entries,
-    )
-    .unwrap();
+    let script = parity_script(settings, "air-docker-1", "/mnt/AirVmShares/bazel").unwrap();
     let paths = guest_paths(&host);
     for required in [
-        // Bazel's output root is one symlink onto its read-only mount…
+        // Bazel's output root is one symlink onto its read-only mount.
         format!("/bin/ln -sfn '/mnt/AirVmShares/bazel' '{}'", paths.bazel_user_root()),
-        // …while the repository root is a real directory of per-entry links, so `out` alone can divert.
-        r#"/bin/ln -sfn '/mnt/AirVmShares/repo/community' "$PARITY"/'community'"#.to_owned(),
-        format!(r#"/bin/ln -sfn '{}' "$PARITY"/out"#, settings.vm_out),
-        format!("PARITY='{}'", paths.repo()),
-        r#"if [ -e "$PARITY" ] && [ ! -f "$MARKER" ] && [ -n "$(ls -A "$PARITY" 2>/dev/null || true)" ]; then"#.to_owned(),
-        "  exit 65".to_owned(),
-        // The link set is rebuilt from scratch, so an entry removed from the repository root cannot linger.
-        r#"for existing in "$PARITY"/* "$PARITY"/.[!.]* "$PARITY"/..?*; do"#.to_owned(),
-        r#"  [ -L "$existing" ] || continue"#.to_owned(),
+        format!("MARKER='{}/{PARITY_MARKER}'", settings.vm_data),
         format!("{} '{}' '{}'", settings.guest.chown, settings.vm_user, settings.vm_data),
     ] {
         assert!(script.contains(&required), "missing {required:?}:\n{script}");
+    }
+    // The guest gets no checkout: no path of it, no `.git`, and no directory of links.
+    for absent in [host.repo.to_string_lossy().as_ref(), ".git", "PARITY", "exit 65"] {
+        assert!(!script.contains(absent), "the script names {absent:?}:\n{script}");
     }
 }
 
@@ -57,6 +44,7 @@ fn the_parity_script_of_a_windows_host_names_only_guest_paths() {
     let root = tempfile::tempdir().unwrap();
     let home = root.path().to_string_lossy().into_owned();
     let settings = Config::load(
+        avl_base::HostFacts::without_memory(),
         Selection {
             backend: fixture_backend(GuestOs::Linux),
             guest_os: GuestOs::Linux,
@@ -66,15 +54,7 @@ fn the_parity_script_of_a_windows_host_names_only_guest_paths() {
     )
     .unwrap();
     settings.set_host_paths(r"C:\Users\air\idea", r"C:\ProgramData\_bazel").unwrap();
-    let entries = words([".git", "community"]);
-    let script = parity_script(
-        &settings,
-        "air-docker-1",
-        "/mnt/AirVmShares/repo",
-        "/mnt/AirVmShares/bazel",
-        &entries,
-    )
-    .unwrap();
+    let script = parity_script(&settings, "air-docker-1", "/mnt/AirVmShares/bazel").unwrap();
     let owned = "'/data' '/data/state/ui-runs' '/data/out' '/data/tmp' '/data/build-download'";
     let golden = [
         "#!/bin/sh",
@@ -82,24 +62,12 @@ fn the_parity_script_of_a_windows_host_names_only_guest_paths() {
         "umask 022",
         "/bin/mkdir -p '/c/ProgramData'",
         "/bin/ln -sfn '/mnt/AirVmShares/bazel' '/c/ProgramData/_bazel'",
-        "PARITY='/c/Users/air/idea'",
-        "MARKER='/c/Users/air/idea/.air-vm-parity.json'",
-        r#"if [ -e "$PARITY" ] && [ ! -f "$MARKER" ] && [ -n "$(ls -A "$PARITY" 2>/dev/null || true)" ]; then"#,
-        r#"  echo "refusing to manage $PARITY: it exists without a parity marker" >&2"#,
-        "  exit 65",
-        "fi",
-        &format!(r#"/bin/mkdir -p "$PARITY" {owned}"#),
+        "MARKER='/data/.air-vm-parity.json'",
+        &format!("/bin/mkdir -p {owned}"),
         &format!("/bin/chown 'admin' {owned}"),
-        r#"for existing in "$PARITY"/* "$PARITY"/.[!.]* "$PARITY"/..?*; do"#,
-        r#"  [ -L "$existing" ] || continue"#,
-        r#"  /bin/rm -f "$existing""#,
-        "done",
-        r#"/bin/ln -sfn '/mnt/AirVmShares/repo/.git' "$PARITY"/'.git'"#,
-        r#"/bin/ln -sfn '/mnt/AirVmShares/repo/community' "$PARITY"/'community'"#,
-        r#"/bin/ln -sfn '/data/out' "$PARITY"/out"#,
         &format!(
-            r#"printf '%s' '{{"schemaVersion":1,"backend":"{}","guestOs":"linux","worker":"air-docker-1","repoShare":"{}","bazelShare":"{}"}}"#,
-            settings.backend, settings.repo_share_name, settings.bazel_share_name
+            r#"printf '%s' '{{"schemaVersion":1,"backend":"{}","guestOs":"linux","worker":"air-docker-1","bazelShare":"{}"}}"#,
+            settings.backend, settings.bazel_share_name
         ),
         r#"' > "$MARKER""#,
         r#"/bin/chmod 644 "$MARKER""#,
@@ -109,18 +77,15 @@ fn the_parity_script_of_a_windows_host_names_only_guest_paths() {
     assert_eq!(script, golden);
 }
 
-// The script, run for real against a scratch tree, refuses an unmarked directory it would otherwise rewrite, and
-// builds the layout over one it owns: the guard is behaviour, not text.
-// The script runs through the host's `/bin/sh`.
+// The script, run for real against a scratch tree, builds the layout and makes nothing at the checkout path. A
+// second run over its own layout succeeds. The script runs through the host's `/bin/sh`.
 #[cfg(unix)]
 #[test]
-fn the_parity_script_refuses_a_foreign_tree_and_builds_its_own() {
+fn the_parity_script_builds_its_layout_and_leaves_the_checkout_path_alone() {
     let scratch = tempfile::tempdir().unwrap();
     let root = scratch.path();
     let (repo, bazel, mount) = (root.join("repo"), root.join("bazel"), root.join("mount"));
-    for directory in [mount.join("repo/community"), mount.join("bazel"), repo.clone()] {
-        std::fs::create_dir_all(directory).unwrap();
-    }
+    std::fs::create_dir_all(mount.join("bazel")).unwrap();
     let data = root.join("data");
     let data_text = data.to_string_lossy().into_owned();
     let home = root.to_string_lossy().into_owned();
@@ -132,6 +97,7 @@ fn the_parity_script_refuses_a_foreign_tree_and_builds_its_own() {
         (GuestOs::Linux, "air-docker-1")
     };
     let settings = Config::load(
+        avl_base::HostFacts::without_memory(),
         Selection {
             backend: avl_base::Backend::Tart,
             guest_os,
@@ -142,55 +108,53 @@ fn the_parity_script_refuses_a_foreign_tree_and_builds_its_own() {
     .unwrap();
     assert_eq!(settings.vm_out, format!("{data_text}/out"));
     settings.set_host_paths(&repo, &bazel).unwrap();
-    let entries = ["community".to_owned()];
-    let script = parity_script(
-        &settings,
-        worker,
-        &mount.join("repo").to_string_lossy(),
-        &mount.join("bazel").to_string_lossy(),
-        &entries,
-    )
-    .unwrap();
+    let script = parity_script(&settings, worker, &mount.join("bazel").to_string_lossy()).unwrap();
     // The chown needs root; what is under test is the layout, so it is a no-op here.
     let script = script.replace(settings.guest.chown, "/usr/bin/true");
     let run = || std::process::Command::new("/bin/sh").args(["-c", &script]).output().unwrap();
 
-    std::fs::write(repo.join("precious"), "a user's file").unwrap();
-    let refused = run();
-    assert_eq!(refused.status.code(), Some(65), "{refused:?}");
-    assert!(repo.join("precious").exists());
-
-    std::fs::remove_file(repo.join("precious")).unwrap();
     let built = run();
     assert!(built.status.success(), "{built:?}");
-    assert_eq!(std::fs::read_link(repo.join("community")).unwrap(), mount.join("repo/community"));
-    assert_eq!(std::fs::read_link(repo.join("out")).unwrap(), data.join("out"));
     assert_eq!(std::fs::read_link(&bazel).unwrap(), mount.join("bazel"));
+    assert!(data.join("out").is_dir() && data.join("tmp").is_dir());
     assert_eq!(
-        std::fs::read_to_string(repo.join(PARITY_MARKER)).unwrap(),
+        std::fs::read_to_string(data.join(PARITY_MARKER)).unwrap(),
         parity_marker_content(&settings, worker)
     );
-    // A second build over its own marked tree succeeds: the layout is rebuilt, not refused.
+    assert!(!repo.exists(), "the layout made {}", repo.display());
     assert!(run().status.success());
 }
 
-#[test]
-fn parity_script_refuses_an_unsafe_entry_name() {
-    let host = Host::new(GuestOs::Linux);
-    let refusal = parity_script(&host.settings, "air-docker-1", "/mnt/repo", "/mnt/bazel", &["a b".to_owned()]).unwrap_err();
-    assert_eq!(refusal.code, "unsafe_name");
-}
-
-// Fail-closed: the name is interpolated into a shell script written into the guest, so anything a shell would
-// reinterpret is refused rather than quoted more cleverly.
-#[test]
-fn validate_parity_entry_name_is_fail_closed() {
-    for accepted in [".git", "community", "build.gradle.kts", "a_b-c+d~e@f"] {
-        assert!(validate_parity_entry_name(accepted).is_ok(), "{accepted:?}");
-    }
-    for refused in ["", "a b", "a'b", "a$b", "a/b", "a\nb", "a;b", "a*b", "a\"b", "é"] {
-        assert!(validate_parity_entry_name(refused).is_err(), "{refused:?}");
-    }
+// The testing-ui container's account owns the layout it builds, so the script hands nothing over, and provisioning
+// sends no chown and no sudo. The share is probed where the skill mounts it, under `/mnt`.
+// A Windows host does not drive the testing-ui container.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_unprivileged_guest_owns_its_layout_without_a_chown() {
+    let host = Host::container_linux();
+    let settings = &host.settings;
+    let script = parity_script(settings, "air-linux-1", "/mnt/bazel").unwrap();
+    assert!(!script.contains(settings.guest.chown), "{script}");
+    assert!(script.contains(&format!("/bin/mkdir -p '{}'", settings.vm_data)), "{script}");
+    let channel = FakeChannel::new("air-linux-1");
+    host.guest(&channel).provision_parity(ShareMount::Bind).await.unwrap();
+    let lines = channel.lines();
+    assert!(channel.saw(settings.guest.chown).is_none(), "{lines:?}");
+    assert!(!lines.iter().any(|line| line.contains("sudo")), "{lines:?}");
+    let [bazel_share] = share::shares(settings).unwrap();
+    let probe = format!("/bin/test -e {}", share_mount_path(settings, &bazel_share.name));
+    assert!(lines.contains(&probe), "missing {probe:?} in {lines:?}");
+    // The privileged Linux guest keeps its chown line, after the `mkdir` and before the marker is written.
+    let privileged = Host::new(GuestOs::Linux);
+    let settings = &privileged.settings;
+    let script = parity_script(settings, "air-linux-1", "/mnt/bazel").unwrap();
+    let lines: Vec<&str> = script.lines().collect();
+    let chown = lines
+        .iter()
+        .position(|line| line.starts_with(settings.guest.chown))
+        .unwrap_or_else(|| panic!("no chown in {script}"));
+    assert!(lines[chown - 1].starts_with("/bin/mkdir -p"), "{script}");
+    assert!(lines[chown + 1].starts_with("printf"), "{script}");
 }
 
 #[test]
@@ -200,15 +164,15 @@ fn parity_marker_content_is_one_json_line() {
     assert_eq!(
         parity_marker_content(settings, "air-docker-1"),
         format!(
-            r#"{{"schemaVersion":1,"backend":"{}","guestOs":"linux","worker":"air-docker-1","repoShare":"{}","bazelShare":"{}"}}"#,
-            settings.backend, settings.repo_share_name, settings.bazel_share_name
+            r#"{{"schemaVersion":1,"backend":"{}","guestOs":"linux","worker":"air-docker-1","bazelShare":"{}"}}"#,
+            settings.backend, settings.bazel_share_name
         ) + "\n"
     );
 }
 
 /// The mount kind alone decides the remount: a VirtioFS device gets the sweep script written and run, and bind
 /// mounts get neither, because the sweep fails at `mount -t virtiofs` in a container with no such device. The share
-/// probes and the parity script run for both kinds.
+/// probe and the parity script run for both kinds.
 #[tokio::test]
 async fn provision_parity_remounts_a_virtiofs_device_and_leaves_bind_mounts_alone() {
     // The VirtioFS device is the macOS guest's, of Tart and Parallels. The bind mounts are a Docker worker's.
@@ -223,8 +187,8 @@ async fn provision_parity_remounts_a_virtiofs_device_and_leaves_bind_mounts_alon
     for (guest_os, mount, remounts) in cases {
         let host = Host::new(guest_os);
         let settings = &host.settings;
-        let [repo_share, _] = share::shares(settings).unwrap();
-        let probe = format!("/bin/test -e {}/.git", share_mount_path(settings, &repo_share.name));
+        let [bazel_share] = share::shares(settings).unwrap();
+        let probe = format!("/bin/test -e {}", share_mount_path(settings, &bazel_share.name));
         let sweep = format!("/bin/sh {}/state/remount-shares.sh", settings.vm_data);
         let channel = FakeChannel::new(&settings.workers[0]);
         host.guest(&channel).provision_parity(mount).await.unwrap();
@@ -243,13 +207,12 @@ async fn provision_parity_remounts_a_virtiofs_device_and_leaves_bind_mounts_alon
     }
 }
 
+/// Provisioning reads nothing of the checkout and writes a script that names none of it.
 #[tokio::test]
-async fn provision_parity_skips_out_and_the_marker_and_sorts_the_rest() {
+async fn provision_parity_writes_a_script_without_the_checkout() {
     let host = Host::new(GuestOs::Linux);
     let settings = &host.settings;
-    for entry in ["plugins", "out", "community", PARITY_MARKER] {
-        std::fs::write(host.repo.join(entry), "x").unwrap();
-    }
+    std::fs::write(host.repo.join("plugins"), "x").unwrap();
     let channel = FakeChannel::new("air-docker-1");
     host.guest(&channel).provision_parity(ShareMount::Bind).await.unwrap();
     let script_path = format!("{}/state/provision-parity.sh", settings.vm_data);
@@ -260,22 +223,9 @@ async fn provision_parity_skips_out_and_the_marker_and_sorts_the_rest() {
         .and_then(|call| call.options.stdin)
         .map(|stdin| String::from_utf8(stdin).unwrap())
         .expect("a parity script was written");
-    // `out` diverts to guest-local storage and the marker is the layout's own bookkeeping; neither is a link onto
-    // the read-only mount.
-    assert!(!script.contains(r#""$PARITY"/'out'"#), "{script}");
-    assert!(!script.contains(&format!(r#""$PARITY"/'{PARITY_MARKER}'"#)), "{script}");
-    // The rest are linked in sorted order: a directory listing has no order of its own.
-    let linked: Vec<&str> = script.lines().filter_map(|line| line.split(r#""$PARITY"/'"#).nth(1)).collect();
-    assert_eq!(linked, [".git'", "community'", "plugins'"]);
-    // The mounts probed are the ones the backend declared.
-    let [repo_share, bazel_share] = share::shares(settings).unwrap();
+    assert!(!script.contains("plugins") && !script.contains(".git"), "{script}");
     let lines = channel.lines();
-    for probe in [
-        format!("/bin/test -e {}/.git", share_mount_path(settings, &repo_share.name)),
-        format!("/bin/test -e {}", share_mount_path(settings, &bazel_share.name)),
-    ] {
-        assert!(lines.contains(&probe), "missing {probe:?} in {lines:?}");
-    }
+    assert!(!lines.iter().any(|line| line.contains(".git")), "{lines:?}");
     // Root makes the state directory, then hands it to the worker user - without which the very next step, a `tee`
     // running as that user, fails on a root-owned directory.
     assert!(channel.saw(settings.guest.chown).is_some(), "{lines:?}");
@@ -290,12 +240,10 @@ async fn ensure_parity_ready_probes_as_the_worker_user() {
     host.guest(&channel).ensure_parity_ready().await.unwrap();
     let as_user = format!("/usr/bin/sudo -H -u {} /bin/test", settings.vm_user);
     let paths = guest_paths(&host);
-    let repo = paths.repo();
     assert_eq!(
         channel.lines(),
         [
-            format!("{as_user} -f {repo}/{PARITY_MARKER}"),
-            format!("{as_user} -r {repo}/.git"),
+            format!("{as_user} -f {}/{PARITY_MARKER}", settings.vm_data),
             format!("{as_user} -w {}", settings.vm_out),
             format!("{as_user} -w {}", settings.vm_tmp),
             format!("{as_user} -w {}", settings.vm_download_cache),
@@ -304,18 +252,44 @@ async fn ensure_parity_ready_probes_as_the_worker_user() {
     );
 }
 
-// A receipt from another checkout is refused before the guest is touched: a run from a second working copy would
-// otherwise read its outputs through the first one's share.
+/// A guest whose share sits at its host path gets no layout: provisioning makes the writable roots and writes the
+/// receipt, and the readiness probes skip the marker. A Windows host does not drive the testing-ui container.
+#[cfg(unix)]
 #[tokio::test]
-async fn ensure_parity_ready_refuses_a_receipt_for_another_checkout() {
-    let host = Host::new(GuestOs::Linux);
-    // Complete and well-formed, but for another checkout: it reads, and is stale.
+async fn shares_at_their_host_paths_need_no_layout_and_no_marker() {
+    let host = Host::container_linux();
+    let settings = &host.settings;
+    let channel = FakeChannel::new("container-linux-1");
+    host.guest(&channel).provision_worker(ShareMount::Bind).await.unwrap();
+    assert_eq!(
+        channel.lines(),
+        [format!(
+            "/bin/mkdir -p {} {} {}",
+            settings.vm_out, settings.vm_tmp, settings.vm_download_cache
+        )]
+    );
+    assert!(init_receipt_path(settings, "container-linux-1").exists());
+    let probes = FakeChannel::new("container-linux-1");
+    host.guest(&probes).ensure_parity_ready().await.unwrap();
     let paths = guest_paths(&host);
+    assert_eq!(
+        probes.lines(),
+        [
+            format!("/bin/test -w {}", settings.vm_out),
+            format!("/bin/test -w {}", settings.vm_tmp),
+            format!("/bin/test -w {}", settings.vm_download_cache),
+            format!("/bin/test -d {}", paths.bazel_user_root()),
+        ]
+    );
+}
+
+// A receipt for another Bazel output root is refused before the guest is touched: a run would otherwise read its
+// outputs through the other root's share.
+#[tokio::test]
+async fn ensure_parity_ready_refuses_a_receipt_for_another_bazel_root() {
+    let host = Host::new(GuestOs::Linux);
     let receipt = format!(
-        r#"{{"schemaVersion":1,"worker":"air-docker-1","hostRepo":"/elsewhere","hostBazelUserRoot":{},"guestRepo":"/elsewhere","guestBazelUserRoot":{},"repoShare":"{}","bazelShare":"{}"}}"#,
-        json_text(&host.bazel_user_root().to_string_lossy()),
-        json_text(paths.bazel_user_root()),
-        host.settings.repo_share_name,
+        r#"{{"schemaVersion":1,"worker":"air-docker-1","hostBazelUserRoot":"/elsewhere","guestBazelUserRoot":"/elsewhere","bazelShare":"{}"}}"#,
         host.settings.bazel_share_name
     );
     std::fs::write(init_receipt_path(&host.settings, "air-docker-1"), receipt).unwrap();
@@ -324,6 +298,23 @@ async fn ensure_parity_ready_refuses_a_receipt_for_another_checkout() {
     assert_eq!(refusal.code, "guest_init_stale");
     assert!(refusal.message.contains("/elsewhere"), "{}", refusal.message);
     assert!(channel.calls().is_empty(), "{:?}", channel.lines());
+}
+
+// The receipt names no checkout, so a worker serves every checkout of the host. A receipt of an older controller
+// names another checkout, and it still reads; the probes then decide.
+#[tokio::test]
+async fn a_receipt_of_another_checkout_is_not_stale() {
+    let host = Host::new(GuestOs::Linux);
+    let paths = guest_paths(&host);
+    let receipt = format!(
+        r#"{{"schemaVersion":1,"worker":"air-docker-1","hostRepo":"/elsewhere","hostBazelUserRoot":{},"guestRepo":"/elsewhere","guestBazelUserRoot":{},"repoShare":"air-macos-repo","bazelShare":"{}"}}"#,
+        json_text(&host.bazel_user_root().to_string_lossy()),
+        json_text(paths.bazel_user_root()),
+        host.settings.bazel_share_name
+    );
+    std::fs::write(init_receipt_path(&host.settings, "air-docker-1"), receipt).unwrap();
+    let channel = FakeChannel::new("air-docker-1");
+    host.guest(&channel).ensure_parity_ready().await.unwrap();
 }
 
 #[tokio::test]
@@ -349,6 +340,7 @@ async fn parity_broken_separates_provisionable_from_real() {
 
     let home = host.dir().join("elsewhere").to_string_lossy().into_owned();
     let unresolved = Config::load(
+        avl_base::HostFacts::without_memory(),
         Selection {
             backend: fixture_backend(GuestOs::Linux),
             guest_os: GuestOs::Linux,
@@ -375,19 +367,16 @@ fn init_receipt_round_trips_and_refuses_another_worker() {
     assert_eq!(
         std::fs::read_to_string(&path).unwrap(),
         format!(
-            r#"{{"schemaVersion":1,"worker":"air-docker-1","hostRepo":{},"hostBazelUserRoot":{},"guestRepo":{},"guestBazelUserRoot":{},"repoShare":"{}","bazelShare":"{}"}}"#,
-            json_text(&host.repo.to_string_lossy()),
+            r#"{{"schemaVersion":1,"worker":"air-docker-1","hostBazelUserRoot":{},"guestBazelUserRoot":{},"bazelShare":"{}"}}"#,
             json_text(&host.bazel_user_root().to_string_lossy()),
-            json_text(paths.repo()),
             json_text(paths.bazel_user_root()),
-            settings.repo_share_name,
             settings.bazel_share_name
         ) + "\n"
     );
     let receipt = read_init_receipt(settings, "air-docker-1").unwrap();
     assert_eq!(
-        (receipt.host_repo.as_str(), receipt.repo_share.as_str(), receipt.schema_version),
-        (host.repo.to_str().unwrap(), settings.repo_share_name.as_str(), 1)
+        (receipt.bazel_share.as_str(), receipt.schema_version),
+        (settings.bazel_share_name.as_str(), 1)
     );
     assert_eq!(read_init_receipt(settings, "air-docker-2").unwrap_err().code, "guest_init_required");
     // Mode 0600: every receipt this controller keeps is read back fail-closed after a crash.

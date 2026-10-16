@@ -7,6 +7,7 @@ targets:
   - ../crates/avl-guest/src/supervisor/launch.rs
   - ../crates/avl-guest/src/supervisor/state.rs
   - ../crates/avl-guest/src/supervisor/identity.rs
+  - ../crates/avl-guest/src/supervisor/supervise.rs
   - ../crates/avl-guest/src/stage.rs
   - ../crates/avl-guest/src/image.rs
   - ../crates/avl-guest/src/image/provision.rs
@@ -15,6 +16,13 @@ targets:
   - ../crates/avl-guest/src/linux/validate.rs
   - ../crates/avl-guest/src/relay.rs
   - ../crates/avl-guest/src/read_file.rs
+  - ../crates/avl-guest/src/ide.rs
+  - ../crates/avl-guest/src/ide/prepare.rs
+  - ../crates/avl-guest/src/ide/launch.rs
+  - ../crates/avl-guest/src/ide/gc.rs
+  - ../crates/avl-guest/src/ide/reap.rs
+  - ../crates/avl-guest/src/supervisor/thread_dump.rs
+  - ../crates/avl-wire/src/ide.rs
   - ../crates/avl-wire/src/supervisor.rs
   - ../crates/avl-wire/src/verb.rs
   - ../crates/avl-wire/src/pull.rs
@@ -38,13 +46,22 @@ targets:
   - ../crates/avl-host-sys/src/fs.rs
   - ../crates/avl-base/src/lib.rs
   - ../crates/avl-host-sys/src/lock.rs
+  - ../crates/avl-host-sys/src/proc/identity.rs
   - ../crates/avl-report/src/report.rs
   - ../crates/avl-report/src/aggregate.rs
   - ../crates/avl-report/src/aggregate/persist.rs
+  - ../crates/avl-vm/src/report.rs
+  - ../crates/avl-vm/src/report/time.rs
   - ../crates/avl-vm/src/worker/hypervisor.rs
   - ../crates/avl-host-sys/src/share.rs
+  - ../crates/avl-host-sys/src/paths.rs
+  - ../crates/avl-host-sys/src/runfiles.rs
+  - ../crates/avl-host-sys/src/guest/runfiles.rs
+  - ../crates/avl-guest/src/runfiles.rs
+  - ../crates/avl-wire/src/runfiles.rs
   - ../crates/avl-vm/src/worker/tart.rs
   - ../crates/avl-vm/src/worker/docker.rs
+  - ../crates/avl-vm/src/worker/container.rs
   - ../crates/avl-testkit/src/tartfake.rs
   - ../crates/avl-vm/src/worker/parallels.rs
   - ../crates/avl-affected/src/affected.rs
@@ -83,6 +100,7 @@ targets:
   - ../crates/avl-host-sys/src/guest/storage.rs
   - ../crates/avl-vm/src/lane/lanes.rs
   - ../crates/avl-vm/src/lane/env.rs
+  - ../crates/avl-vm/src/lane/ide.rs
   - ../crates/avl-vm/src/lane/bazel.rs
   - ../crates/avl-vm/src/lane/affected.rs
   - ../crates/avl-vm/src/lane/affected/tests.rs
@@ -95,6 +113,7 @@ targets:
   - ../crates/avl-vm/src/worker/worker/tests.rs
   - ../crates/avl-vm/src/worker/lease.rs
   - ../crates/avl-vm/src/worker/lease/set.rs
+  - ../crates/avl-vm/src/worker/run_marker.rs
   - ../crates/avl-host-sys/src/interrupt.rs
   - ../crates/avl-vm/src/lane/observe.rs
   - ../crates/avl-vm/src/lane/observe/exec.rs
@@ -296,8 +315,34 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/worker/docker/tests.rs
   [@test] ../crates/avl-base/src/config/tests.rs
 
+- A macOS host that names no engine runs the Docker workers on Apple `container` from macOS 26 on Apple silicon.
+  Another Mac keeps the engine of its host environment. Its first engine command refuses `docker_missing` when that
+  engine does not answer. A host that names an engine in `DOCKER_BIN` or `DOCKER_HOST` keeps that engine. A set
+  `AIR_VM_DOCKER_ENGINE` is refused `invalid_environment`.
+  [@test] ../crates/avl-base/src/config/tests.rs (`the_macos_version_chooses_the_engine`)
+  [@test] ../crates/avl-base/src/config/tests.rs (`the_removed_engine_variable_is_refused`)
+  [@test] ../crates/avl-vm/src/worker/docker/tests.rs (`an_older_mac_that_names_no_engine_is_told_the_two_ways_out`)
+
+- On Apple `container`, the controller uses the server of the login session and never stops it. It starts a server
+  that is down. It refuses a server of another install with another major version.
+  [@test] ../crates/avl-vm/src/worker/container/tests.rs
+
+- On Apple `container`, each build and each container gets a nameserver, and each container gets the memory and the
+  CPUs of one worker. A container that stops while it starts is refused with its log and its boot log.
+  [@test] ../crates/avl-vm/src/worker/container/tests.rs (`a_start_speaks_the_apple_dialect`)
+  [@test] ../crates/avl-vm/src/worker/container/tests.rs (`a_container_that_stops_while_starting_quotes_both_logs`)
+
 - The daemon accepts declared directories as data inputs. A changed file, path, permission, or link changes their identity.
   [@test] ../crates/avl-report/src/digest/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs
+
+- The digest cache keeps only the files that its last sweep read. A sweep that read nothing keeps the whole cache.
+  [@test] ../crates/avl-report/src/digest/tests.rs (`a_save_keeps_only_the_entries_of_its_sweep`)
+
+- The runtime descriptor names each file of a context plugin with its place below the plugin directory of the IDE
+  context. A place that leaves that directory, or that two files claim, is refused. The files have an identity of
+  their own, apart from the product and the mount identities. A changed file changes only that identity.
+  [@test] ../crates/avl-wire/src/runtime/tests.rs
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
 - VM preparation installs and probes no agent CLI. An existing image can keep an unused installation.
@@ -306,6 +351,80 @@ The rest of the scenario matrix is in
 
 - The daemon environment is part of the launch identity. A changed value restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
+
+- The event file of the lane build names the runtime descriptor. So the controller asks Bazel nothing between the
+  build and the decision about the IDE. A build whose event file names no descriptor makes the controller ask Bazel,
+  and a note says so. The lane build builds no pinned tool.
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_lane_build_names_the_descriptor_and_no_query_follows`)
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_failed_build_forgets_the_files_of_the_build_before_it`)
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`the_lane_build_builds_this_guests_agent`)
+
+- The controller records the path of each pinned tool in its runtime root. The record is valid for the digest of the
+  file that pins the tool and for the Bazel user root. A later process reads the record and asks Bazel nothing. A
+  changed pin, or a recorded file that is gone, resolves the tool again with one query.
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_recorded_path_answers_the_next_process_without_a_query`)
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_changed_pin_resolves_again`)
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_recorded_file_that_is_gone_resolves_again`)
+
+- No Bazel command of the controller carries a build option of its own. The guest is a target: the controller builds the
+  daemon target of its guest OS. The lane builds no runfile links, and the controller reads the MANIFEST of the runtime
+  descriptor on every host. A tree beside the MANIFEST is ignored, because it can be one of an earlier build.
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`every_invocation_carries_no_build_option_of_its_own`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`each_guest_builds_its_own_daemon_target`)
+  [@test] ../crates/avl-host-sys/src/runfiles/tests.rs (`a_host_reads_the_manifest_even_beside_a_tree`)
+
+- The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. Its progress
+  names the time of the descriptor lookup, the cache open, the digests, the cache save and the runfiles tree. The
+  record `runStarted` names when the process started. So the journal shows the build of the `vm.cmd` wrapper before
+  it.
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`the_build_comes_before_the_lease`)
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`a_process_start_reads_as_rfc3339_in_utc`)
+
+- The controller tells the daemon how to launch the lane IDE. It names the installed guest agent and the directory of
+  the IDE contexts. It names no JVM, because the IDE runs on the JBR of its distribution.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- The daemon JVM runs on a copy of the JBR of the distribution in its staged generation, and never on the share. The
+  `jbr` section of the runtime descriptor names the directory of the JBR below the distribution home. The guest
+  agent's `stage` copies that directory with its modes and its links. A distribution without it is a refusal that
+  names the path, on the host and on the guest. The tree digest of the JBR is part of the runtime digest, so only a
+  change of the JBR restages it.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_jbr_of_the_distribution_changes_the_runtime_digest`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_distribution_without_its_jbr_refuses_with_the_path`)
+  [@test] ../crates/avl-vm/src/daemon/stage/tests.rs (`a_guest_that_cannot_answer_stage_check_falls_through_to_a_full_stage`)
+  [@test] ../crates/avl-guest/src/stage/tests.rs (`the_stage_copies_the_jbr_of_the_distribution_into_the_generation`)
+  [@test] ../crates/avl-guest/src/stage/tests.rs (`a_distribution_without_its_jbr_is_refused_with_the_path`)
+  [@test] ../crates/avl-wire/src/runtime/tests.rs (`the_jbr_section_keys_are_the_ones_the_reader_reads`)
+
+- The guest reads no checkout. A worker has one share, the Bazel output user root, read-only, on every backend. A
+  path of the checkout does not map to a guest path. A set `AIR_VM_REPO_SHARE_NAME` is refused.
+  [@test] ../crates/avl-host-sys/src/share/tests.rs
+  [@test] ../crates/avl-host-sys/src/paths/tests.rs
+  [@test] ../crates/avl-base/src/config/tests.rs
+  [@test] ../crates/avl-vm/src/worker/docker/tests.rs (`a_second_checkout_declares_the_same_container`)
+  [@test] ../crates/avl-vm/src/worker/container_linux/tests.rs
+
+- The parity layout links the Bazel output root and makes the writable roots of a run. It makes no checkout
+  directory and probes no `.git`. Its marker and its receipt name no checkout, so a worker serves every checkout of
+  the host.
+  [@test] ../crates/avl-host-sys/src/guest/parity/tests.rs
+
+- The guest builds its runfiles tree from the MANIFEST on every host. A runfile whose target is on the Bazel share is
+  a link. A runfile whose real path lies in the checkout is a staged runfile, and the tree holds a copy of it. The guest
+  checks each copy by its length and its sha256. A target under neither is refused. The first request carries no bytes, and
+  the guest asks for the bytes only when it has no tree of the digest.
+  [@test] ../crates/avl-host-sys/src/runfiles/tests.rs
+  [@test] ../crates/avl-host-sys/src/guest/runfiles/tests.rs
+  [@test] ../crates/avl-guest/src/runfiles/tests.rs
+  [@test] ../crates/avl-wire/src/runfiles/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_runfile_in_the_checkout_is_staged_with_its_digest`)
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- The home of the daemon JVM is an empty directory of its staged generation. Its config, system and log directories
+  and the output tree of IDE Starter are on the guest disk. Each one has its own flag, so no path derives from a
+  checkout. The daemon refuses a home outside its generation.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonStagedHomeTest.kt
 
 - A run that rules out each of its classes is not a run that matched no class. The controller gives the
   reason of each class, and does not tell the person to look at the selector.
@@ -424,6 +543,47 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-wire/src/progress/tests.rs
   [@test] ../crates/avl-vm/src/console/state/tests.rs
 
+- A test jar that the host rebuilt while the iteration ran is a note, not a verdict diagnostic. The terminal and the
+  run journal show the note, and the report carries it in `notes`. The note names the jars. The status follows the
+  counts.
+  [@test] ../crates/avl-report/src/report/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+
+- The run journal holds the life of the lane IDE. An `ideLaunched` record names the pid, the launch name, the
+  launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs
+
+- The run journal holds each line that the daemon writes to its error stream during a run. Each line is an `output`
+  record. An example is the line that names a recycle of the lane IDE. The text has no stamp of the daemon, and the
+  record has its own time. An `output` record is not progress. It moves no deadline of the daemon or of the
+  controller. No `output` record of a run follows its summary.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs
+  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonStampedOutputTest.kt
+  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocolTest.kt
+
+- The watchdog evidence may name a file of an IDE context. Examples are a heartbeat screenshot and the thread
+  dump before a kill.
+  [@test] ../crates/avl-wire/src/report/tests.rs
+
+- The dumps that each `slowStep` record names are evidence too. The controller fetches them beside the report,
+  after the files of the expiry, and at most eight. The journal keeps the record as a `runProgress` event.
+  [@test] ../crates/avl-wire/src/report/tests.rs
+  [@test] ../crates/avl-wire/src/daemon/tests.rs
+
+- `report time <run or iteration>` says where the time of a run went. It reads the journal of the run, the report of
+  each iteration and the spans of the trace bundles, and needs no worker. The answer is the total, and the time
+  inside the test cases and outside them. It adds the launches of the lane IDE and the time of the `restart` spans.
+  It shows the time of each `relaunch` part, such as the wait for the process. It also names the ten longest test
+  cases and the ten lane spans with the most self time. An iteration id names that iteration of the newest run that
+  reported it. A file that cannot be read is a note of the answer.
+  [@test] ../crates/avl-vm/src/report/time/tests.rs
+  [@test] ../crates/avl-vm/src/cli/tests.rs
+
+- With `--baseline <run or iteration>`, `report time` adds the ratio of each test class, this run over the
+  baseline. It also adds the median ratio over the classes that took more than 5 s in the baseline.
+  [@test] ../crates/avl-vm/src/report/time/tests.rs
+
 - On the daemon control channel, a field that is absent is absent, and is not null. The controller tells
   the two apart. The controller refuses an explicit null on that channel.
   [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocolTest.kt
@@ -506,7 +666,7 @@ The daemon's half and the IDE's half of supervision are in
   that arrived are not the bytes that the agent named, the controller refuses the pull with
   `pull_digest_mismatch` and publishes nothing. On a Parallels worker, the guest sends the file in base64.
   [@test] ../crates/avl-vm/src/lane/observe/pull/tests.rs (`pull_refuses_bytes_the_receipt_does_not_name`)
-  [@test] ../crates/avl-vm/src/lane/observe/pull/tests.rs (`a_pull_moves_raw_bytes_on_tart_and_docker_and_base64_on_parallels`)
+  [@test] ../crates/avl-vm/src/lane/observe/pull/tests.rs (`a_pull_moves_raw_bytes_on_tart_docker_and_container_linux_and_base64_on_parallels`)
   [@test] ../crates/avl-guest/src/read_file/tests.rs
 
 - The record of an installed guest agent names the checkout which installed it. A controller of a different
@@ -530,9 +690,9 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs
 
 - Each verdict which can carry a reason has an error field beside it on the same row. `parityReady` is such
-  a verdict, and `parityError` gives the refusal code. A worker which a different checkout provisioned
-  reports `parityReady` false with `guest_init_stale`. The next run of this checkout provisions that worker
-  again. The controller resolves the host paths of the pool one time. A host path which it cannot resolve
+  a verdict, and `parityError` gives the refusal code. A worker which the controller provisioned for a different
+  Bazel output root reports `parityReady` false with `guest_init_stale`. The next run provisions that worker
+  again. A worker which a different checkout provisioned is ready, because the layout names no checkout. The controller resolves the host paths of the pool one time. A host path which it cannot resolve
   is `hostPathsError` of the answer, and not a refusal on each row. Every `parityReady` of that pool is
   then null, and `parityError` gives only a code of the guest.
   [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs
@@ -611,6 +771,83 @@ The daemon's half and the IDE's half of supervision are in
   name against the spelling the installed agents already send.
   [@test] ../crates/avl-wire/src/verb/tests.rs
 
+- The guest agent reads the two documents of the lane IDE on standard input. `ide-prepare` reads the context
+  document, and `ide-launch` reads the launch document. Neither document holds a secret.
+  [@test] ../crates/avl-wire/src/ide/tests.rs
+
+- A preparation lays out the context: the data directories, the project, the disabled plugins, and the `home` and
+  `bin` directories. Each directory has mode 0700.
+  [@test] ../crates/avl-guest/src/ide/prepare/tests.rs
+
+- The lane IDE runs in a closed environment from its context. `HOME` is the `home` directory of the context, and
+  `PATH` starts with its `bin` directory.
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs
+
+- Beside those two, the environment of the lane IDE holds the fixed constants of the supervisor and an allowlist
+  of the agent's own environment. No other variable of the agent reaches the IDE.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs
+
+- The lane IDE always runs under a UTF-8 locale. A UTF-8 locale of the agent's own environment stays as it is. When
+  the agent has no locale, or one that is not UTF-8, the IDE gets `LC_ALL=C.UTF-8`.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs
+
+- The run spec of the IDE records the environment policy and its context directory. It holds no variable value.
+  A run spec without a policy inherits the environment of the agent, as the daemon run does.
+  [@test] ../crates/avl-wire/src/supervisor/tests.rs
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
+- The IDE argv is the JVM, the argument file of the context, and the project directory. The launch record of the
+  context holds no property value.
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
+- The agent owns the data directories of the IDE. A launch document or a flags file that sets one of their paths
+  is refused.
+  [@test] ../crates/avl-wire/src/ide/tests.rs
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
+- A launch on a Linux guest refuses `ide_display_missing` when the agent's own environment has no `DISPLAY`. A
+  preparation or a launch for a context whose IDE runs refuses `ide_running`.
+  [@test] ../crates/avl-guest/src/ide/prepare/tests.rs
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
+- A launch kills the JCEF helpers that name its context, and no other process.
+  [@test] ../crates/avl-guest/src/ide/reap/tests.rs
+
+- When the child of a run exits, the supervisor kills the processes that stay in the process group of the child. The
+  supervisor log of the run names each of them. The run then finishes with the exit of the child, and it is not
+  orphaned.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs
+
+- `cancel --thread-dump` writes a thread dump of the process before the signal. The dump of an IDE run goes into
+  the log directory of its launch. A failed dump keeps its file.
+  [@test] ../crates/avl-guest/src/supervisor/thread_dump/tests.rs
+
+- `ide-gc` keeps the newest log directories of each context. It always keeps the log directory of a live IDE.
+  [@test] ../crates/avl-guest/src/ide/gc/tests.rs
+
+- A cancel never refuses with `cancel_timeout` and never leaves the slot held. When the supervisor does not end the
+  cancel within its deadline, the agent kills the supervisor and the process group of the child. The run then
+  finishes as canceled, and `ide-gc` reports the IDE as killed.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_cancel_past_its_deadline_kills_the_supervisor_and_the_group_and_frees_the_slot`)
+  [@test] ../crates/avl-vm/src/lane/ide/tests.rs (`the_gc_note_names_what_the_gc_did`)
+
+- A process group that outlives the kill is abandoned. The run finishes as canceled with the survivors named, the
+  slot is free, and `abandoned.json` in the context records the run. Only a recycle of the worker discards these
+  processes.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_group_that_outlives_the_kill_is_abandoned_and_its_slot_freed`)
+
+- `ide-gc` names each abandoned run while its process group lives, and it removes the record of a group that is
+  gone. The `status` row of the worker gives these runs in `abandonedIdeRuns`, and its text asks for a recycle.
+  [@test] ../crates/avl-guest/src/ide/gc/tests.rs (`an_abandoned_run_is_named_while_its_group_lives`)
+  [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs (`a_guest_that_abandoned_an_ide_run_names_it_on_its_row`)
+
+- A fresh preparation deletes the data directories, the project, the `home` and `bin` directories, the argument
+  file and the launch record. It keeps the log directories and the run directories of earlier launches, and
+  `ide-gc` trims them.
+  [@test] ../crates/avl-guest/src/ide/prepare/tests.rs
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
 - The supervisor gives the schema version in each reply. The controller refuses a reply that has a version
   it does not know.
   [@test] ../crates/avl-host-sys/src/guest/supervisor/tests.rs
@@ -627,6 +864,51 @@ The daemon's half and the IDE's half of supervision are in
   worker that has a warm daemon.
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
 
+- On the Apple `container` engine, a release keeps the warm daemon until the idle deadline only. The release
+  writes the deadline record and starts a detached `pool idle-stop` process, and the reply names `idleStopAt`.
+  `AIR_VM_IDLE_STOP` sets the grace, 3600 s by default. `off` writes nothing, and `0` stops the worker inside the
+  release.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-base/src/config/tests.rs
+
+- At the deadline the idle stop stops a running worker that no lease holds. It keeps a leased worker, and a
+  worker whose record is gone or names another nonce. It never starts a server that is down.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
+- An acquisition ranks the free slots. The first choice is a running slot whose daemon serves the build that asks.
+  Then come a running slot, a stopped slot and an absent slot. Within one class the pool order stays, and a slot without a running
+  state keeps its place. The probes start nothing. The holder recovery comes first. The reply names the class in
+  `slotReason`.
+  [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+
+- An acquisition skips a busy worker and leases a free one. Another operation, such as a start, holds the lifecycle
+  lock of a busy worker. A busy worker that may hold a lease of the holder refuses the acquisition as `worker_busy`,
+  so the holder gets no second worker. A lease that the controller cannot read counts as such a lease. A busy worker
+  can stop the placement of the lease, or of the full set of `--exact`. Then the refusal is `worker_busy`. Without a
+  busy worker it is `pool_exhausted`. Both exit 75.
+  [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
+
+- A holder recovery refuses `worker_busy` while a live run of the holder is on the worker. A stale marker does not
+  stop the recovery.
+  [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
+
+- A lease acquisition and a start remove the deadline record, so the worker keeps running for its new holder.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
+- On the Apple `container` engine the default pool size follows the host memory. The workers get at most a
+  quarter of it, from 2 to 16 slots. `AIR_VM_MAX_WORKERS` and `AIR_VM_WORKERS` win, and every other engine and
+  backend keeps 2 slots. `status` names the size and its reason.
+  [@test] ../crates/avl-base/src/config/tests.rs
+  [@test] ../crates/avl-host-sys/src/host/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs
+
+- On the Apple `container` engine the builder VM stops after each image build. The Docker dialect has no builder
+  to stop.
+  [@test] ../crates/avl-vm/src/worker/container/tests.rs
+  [@test] ../crates/avl-vm/src/worker/docker/tests.rs
+
 - A release succeeds when the run slot is free. A release also succeeds when the slot holds the idle daemon of
   this controller.
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
@@ -635,6 +917,32 @@ The daemon's half and the IDE's half of supervision are in
 - A release is refused when an iteration is in flight. The refusal gives the name of that run. The lease stays
   in place, and the holder keeps the receipt for it.
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+
+- A run takes the lifecycle lock of its worker twice: when it writes its run marker and when it removes it. The
+  marker names the run, the lease and the process.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/run_marker/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs
+
+- A live run of another process blocks the commands that change its worker. `lease release`, `pool start`,
+  `pool stop`, `exec`, `peekaboo` and the `daemon` verbs `start`, `restart` and `stop` then refuse `lease_busy`.
+  The refusal names the run.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/exec/tests.rs
+
+- A marker of a dead process is stale. The next operation under the lock removes it, and a note says so. The guest
+  check of the release still decides about an iteration that the dead process left.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/run_marker/tests.rs
+
+- `lease show`, `daemon status`, `daemon log`, `ls` and `pull` answer during a run. `lease show` with the receipt
+  names the run.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/ls/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/pull/tests.rs
 
 - A daemon that does not answer is not a parked daemon. The controller refuses the release for such a daemon.
   The refusal gives the name of the daemon record that the controller compared, and the name of the command
@@ -665,6 +973,42 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
+- A lane IDE is a supervisor run in the slot of its own context. A cancel of the daemon run does not stop it.
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+
+- A daemon restart for a change of the stable tier keeps each live lane IDE of the same product. The decision and
+  the timing line say `keep`.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+  [@test] ../crates/avl-guest/src/ide/gc/tests.rs
+
+- A run on a healthy daemon that holds no running lane IDE launches the IDE again. A lease release causes this
+  state. The decision and the timing line say `relaunch`.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+
+- The push offers the context plugin files with the test jars, and uploads only the files that the guest does not
+  hold. When only the context plugins changed, the run relaunches the IDE and refreshes no share. The decision and
+  the timing line say `relaunch`, and the reason is `the bridge plugin changed`. No lane distribution carries the
+  bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a plugin
+  identity decides nothing on it.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs
+
+- Every other daemon start stops every lane IDE of the worker. A restart that remounts a VirtioFS share also stops
+  them, because each IDE runs from the share.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- `daemon stop` and a lease release stop every lane IDE of the worker. The next holder gets no IDE of the previous
+  runs. A pool recycle stops them too, before it unmakes the worker.
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+
+- A daemon start whose stop of the lane IDEs fails refuses. It remounts nothing and stages nothing.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- A remount fails closed while a lane IDE runs. After the quiesce, a run that is not finished refuses
+  `daemon_mount_quiesce_failed`.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+
 - A run without a receipt gives its lease back when its daemon start fails the health poll.
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs
 
@@ -682,18 +1026,44 @@ The daemon's half and the IDE's half of supervision are in
   Parallels backend refuses a recycle as `unsupported_backend_operation`.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
-- A recycle never touches a leased worker. `pool recycle <worker>` on a leased worker is refused as
-  `worker_leased`, and that refusal names the command which releases the lease. The worker keeps its lease,
-  its machine and its clone.
-  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+- A recycle never touches a worker that another holder leased. `pool recycle <worker>` on such a worker is refused
+  as `worker_leased`. That refusal names the command which releases the lease, and the recycle of the holder. The
+  worker keeps its lease, its machine and its clone.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs (`recycle_refuses_a_leased_worker_and_deletes_nothing`)
+
+- The holder recycles the worker of its lease with `--lease-file FILE pool recycle <worker>`, and the recycle gives
+  the lease back. A guest that refuses does not stop it, because the recycle discards that guest. This is the
+  repair for a lease that `lease release` cannot give back.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs (`a_holder_recycles_its_leased_worker_under_its_receipt_and_gives_the_lease_back`)
+
+- A receipt authorizes the recycle of its own worker only. A recycle of another worker or of `all` under that receipt
+  is refused as `usage`, and nothing is deleted.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs (`a_receipt_does_not_authorize_the_recycle_of_another_target`)
 
 - `pool recycle all` recycles the workers which it can, and reports each worker which it did not recycle.
   The answer names the recycled workers, and gives one refusal code for each other worker. A recycle which
   did not reach every target is refused as `recycle_incomplete`, and that answer is the refusal detail.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
+- `pool gc` keeps a busy worker and goes on with the other workers. Another operation holds the lifecycle lock of a
+  busy worker, such as a start. The answer names that worker in `kept` as `busy`.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
 - `recycle_incomplete` exits 75 when a lease or another lifecycle operation was the only thing in the way. It
   exits 1 when a worker was broken. A caller must not read a partial recycle as a fresh pool.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+
+- `pool start all` and `pool stop all` change the workers which they can, and report each worker which they did
+  not. The answer names the state of each changed worker, and gives one refusal code for each other worker. A
+  start or a stop which did not reach every target is refused as `start_incomplete` or `stop_incomplete`, and that
+  answer is the refusal detail. The refusal exits 75 when each refusal of a worker exits 75, as a lease or another
+  lifecycle operation does. In all other cases it exits 1. `pool start <worker>` and `pool stop <worker>` answer
+  the refusal of that worker.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
+- An interrupt ends `pool start all`, `pool stop all` and `pool recycle all` at once. The answer is the refusal of
+  the interrupted worker. The workers after it stay as they are.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
 ## User Experience
@@ -722,5 +1092,6 @@ The [controller to-do list](../docs/ui-lane-controller-todo.md) holds the open w
 - [ADR 0059](../docs/decisions/0059-the-ui-lane-tooling-is-rust.md)
 - [ADR 0106](../docs/decisions/0106-a-warm-daemon-survives-a-lease-release.md)
 - [ADR 0182](../docs/decisions/0182-the-daemon-is-reached-through-the-exec-channel.md)
+- [ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)
 - [Flow UI Scenarios](../../../../plugins/air/spec/docs/flow-ui-scenarios.spec.md)
 - [Scenario Traces](scenario-trace.spec.md)

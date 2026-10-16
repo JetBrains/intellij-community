@@ -13,7 +13,9 @@ fn reads_version_38() {
     assert_eq!(without_jvm.jvm_loading_ms(), None);
     assert_eq!(stats.item("bootstrap").map(|item| item.duration), Some(166));
     assert_eq!(stats.edt_class_loading_ms(), 6);
-    assert_eq!(stats.total_duration, 3930);
+    assert_eq!(stats.total_duration, Some(3930));
+    let without_total = parse(&REPORT.replace(r#","totalDuration":3930"#, "")).expect("a report of a start without a project");
+    assert_eq!(without_total.total_duration, None);
     assert_eq!(stats.trace_events[0].ts, 5);
 }
 

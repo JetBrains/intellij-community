@@ -259,3 +259,136 @@ fn the_report_keeps_its_wire_shape() {
     assert_eq!(decoded.destination.as_deref(), Some(Path::new("/d.zip")));
     assert_eq!(decoded.packed, vec!["a/b/c".to_owned()]);
 }
+
+/// Writes an Allure result for the bundle `bundle` of the run `run` under the root, with one attachment file, and
+/// answers the names of the two files in the pack.
+fn write_allure_result(root: &Path, run: &str, bundle: &str, uuid: &str) -> [String; 2] {
+    use avl_trace::bundle::{
+        ALLURE_BUNDLE_LABEL, AllureAttachment, AllureResult, AllureStage, AllureStatus, AllureStatusDetails, allure_attachment_file,
+        allure_result_file, encode_allure_result,
+    };
+    use avl_trace::protocol::Label;
+    let source = allure_attachment_file(uuid, "webp");
+    let result = AllureResult {
+        uuid: uuid.to_owned(),
+        history_id: "history".to_owned(),
+        full_name: format!("{bundle}.full"),
+        name: bundle.to_owned(),
+        status: AllureStatus::Passed,
+        status_details: AllureStatusDetails::default(),
+        stage: AllureStage::Finished,
+        start: 1,
+        stop: 2,
+        labels: vec![Label {
+            name: ALLURE_BUNDLE_LABEL.to_owned(),
+            value: bundle.to_owned(),
+        }],
+        steps: Vec::new(),
+        attachments: vec![AllureAttachment {
+            name: "Video".to_owned(),
+            source: source.clone(),
+            mime: "video/mp4".to_owned(),
+        }],
+    };
+    let dir = format!("{run}/{ALLURE_RESULTS_DIR}");
+    fs::create_dir_all(bundle_file(root, &dir)).unwrap();
+    let names = [format!("{dir}/{}", allure_result_file(uuid)), format!("{dir}/{source}")];
+    fs::write(bundle_file(root, &names[0]), encode_allure_result(&result).unwrap()).unwrap();
+    fs::write(bundle_file(root, &names[1]), "picture").unwrap();
+    names
+}
+
+/// The Allure results leave with their run. A whole pack keeps every result, and a selection keeps the results of
+/// the bundles it keeps, with the files those results name.
+#[test]
+fn a_pack_keeps_the_allure_results_of_its_bundles() {
+    let (root, bundle) = example_root();
+    let (run, under_run) = bundle.split_once('/').unwrap();
+    let kept = write_allure_result(root.path(), run, under_run, "11111111-1111-8111-8111-111111111111");
+    let unfinished = format!("{run}/AirOtherTest/running");
+    fs::create_dir_all(bundle_file(root.path(), &unfinished)).unwrap();
+    fs::write(bundle_file(root.path(), &unfinished).join(SPANS_FILE), "").unwrap();
+    let left = write_allure_result(root.path(), run, "AirOtherTest/running", "22222222-2222-8222-8222-222222222222");
+    let broken = format!("{run}/{ALLURE_RESULTS_DIR}/broken{ALLURE_RESULT_SUFFIX}");
+    fs::write(bundle_file(root.path(), &broken), "{}").unwrap();
+    let out = tempfile::tempdir().unwrap();
+    let names = |zip: &Path| -> Vec<String> {
+        ZipArchive::new(File::open(zip).unwrap())
+            .unwrap()
+            .file_names()
+            .map(str::to_owned)
+            .collect()
+    };
+
+    let whole = out.path().join("whole.zip");
+    pack_or_fail(root.path(), &whole, &PackOptions::default());
+    let packed = names(&whole);
+    for name in kept.iter().chain(&left).chain([&broken]) {
+        assert!(packed.contains(name), "the whole pack has no {name}");
+    }
+
+    let selected = out.path().join("selected.zip");
+    let finished_only = |_: &str, finished: bool| finished;
+    let report = pack_or_fail(
+        root.path(),
+        &selected,
+        &PackOptions {
+            select: Some(&finished_only),
+        },
+    );
+    let packed = names(&selected);
+    let results: Vec<&String> = packed.iter().filter(|name| !name.starts_with(&format!("{bundle}/"))).collect();
+    let mut want: Vec<&String> = kept.iter().collect();
+    want.sort();
+    assert_eq!(results, want);
+    let skipped: Vec<&str> = report.skipped.iter().map(|skipped| skipped.path.as_str()).collect();
+    assert_eq!(skipped, [broken.as_str()]);
+}
+
+/// The walk can pass a run's results directory before the recorder writes a result there, and then reach the
+/// result's finished bundle. The results directory is listed after the walk, so the pack still holds the result.
+/// A file that a kept result names is packed even when no listing held it.
+#[test]
+fn a_result_written_during_the_walk_leaves_with_its_bundle() {
+    let (root, bundle) = example_root();
+    let (run, under_run) = bundle.split_once('/').unwrap();
+    assert!(
+        bundle_file(root.path(), &bundle).join(MANIFEST_FILE).is_file(),
+        "the example bundle is not finished"
+    );
+    let finished_only = |_: &str, finished: bool| finished;
+    for results_dir_before_walk in [false, true] {
+        let results = bundle_file(root.path(), &format!("{run}/{ALLURE_RESULTS_DIR}"));
+        if results.exists() {
+            fs::remove_dir_all(&results).unwrap();
+        }
+        if results_dir_before_walk {
+            fs::create_dir_all(&results).unwrap();
+        }
+        let mut written = None;
+        let Collected { mut entries, bundles, .. } = collect(root.path(), &mut || {
+            written = Some(write_allure_result(
+                root.path(),
+                run,
+                under_run,
+                "33333333-3333-8333-8333-333333333333",
+            ));
+        })
+        .unwrap();
+        let [result, attachment] = written.unwrap();
+        let listed: Vec<&str> = entries.iter().map(|item| item.name.as_str()).collect();
+        assert!(listed.contains(&result.as_str()), "the result is not listed: {listed:?}");
+
+        entries.retain(|item| item.name != attachment);
+        let mut skipped = Vec::new();
+        let (selected, kept) = select_bundles(entries, bundles, &finished_only, &mut skipped);
+        assert_eq!(kept, std::slice::from_ref(&bundle));
+        let names: Vec<&str> = selected.iter().map(|item| item.name.as_str()).collect();
+        for name in [&result, &attachment] {
+            assert!(names.contains(&name.as_str()), "the selection has no {name}: {names:?}");
+        }
+        let attached = selected.iter().find(|item| item.name == attachment).unwrap();
+        assert_eq!(fs::read_to_string(&attached.source).unwrap(), "picture");
+        assert_eq!(skipped, []);
+    }
+}

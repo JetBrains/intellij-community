@@ -76,27 +76,15 @@ async fn remount_shares_refuses_a_guest_without_the_device() {
     assert!(channel.calls().is_empty(), "{:?}", channel.lines());
 }
 
-#[tokio::test]
-async fn require_share_mounted_probes_inside_the_repository_share() {
-    let host = Host::new(GuestOs::Linux);
-    let channel = FakeChannel::new("air-docker-1");
-    let name = &host.settings.repo_share_name;
-    let mount = host.guest(&channel).require_share_mounted(name, Some(".git")).await.unwrap();
-    assert_eq!(mount, format!("{}/{name}", host.settings.guest.share_mount));
-    assert_eq!(channel.lines(), [format!("/bin/test -e {mount}/.git")]);
-}
-
-// No probe path is "probe the mount point itself", which is all the Bazel share can be asked: it has no entry that
-// is guaranteed to be there.
+// The mount point itself is probed, which is all the Bazel share can be asked: it has no entry that is guaranteed to
+// be there.
 #[tokio::test]
 async fn require_share_mounted_probes_the_mount_point_itself() {
     let host = Host::new(GuestOs::Linux);
     let channel = FakeChannel::new("air-docker-1");
-    let mount = host
-        .guest(&channel)
-        .require_share_mounted(&host.settings.bazel_share_name, None)
-        .await
-        .unwrap();
+    let name = &host.settings.bazel_share_name;
+    let mount = host.guest(&channel).require_share_mounted(name).await.unwrap();
+    assert_eq!(mount, format!("{}/{name}", host.settings.guest.share_mount));
     assert_eq!(channel.lines(), [format!("/bin/test -e {mount}")]);
 }
 
@@ -106,7 +94,7 @@ async fn require_share_mounted_refuses_an_unmounted_share() {
     let channel = FakeChannel::answering("air-docker-1", |_| Ok(failed(1, "")));
     let refusal = host
         .guest(&channel)
-        .require_share_mounted(&host.settings.repo_share_name, None)
+        .require_share_mounted(&host.settings.bazel_share_name)
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "guest_share_unmounted");

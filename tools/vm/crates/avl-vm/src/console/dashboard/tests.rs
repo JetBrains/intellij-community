@@ -52,6 +52,7 @@ fn the_dashboard_keeps_the_order_and_ends_with_the_card() {
             command: "run".to_owned(),
             args: Vec::new(),
             checkout: None,
+            process_started_at: None,
         }),
         None,
     );

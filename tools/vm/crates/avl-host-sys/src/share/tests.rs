@@ -16,15 +16,8 @@ fn shares_refuse_to_be_built_before_the_host_paths_are_resolved() {
     assert_eq!(refusal.code, "host_paths_unresolved");
 
     resolved.set_host_paths("/Users/air/idea", "/Users/air/bazel").unwrap();
-    let [repo, bazel] = shares(&resolved).unwrap();
-    assert_eq!(
-        repo,
-        SharedFolder {
-            name: resolved.repo_share_name.clone(),
-            path: PathBuf::from("/Users/air/idea"),
-            mode: SHARE_MODE,
-        }
-    );
+    // One share, the Bazel output root: no share holds the checkout.
+    let [bazel] = shares(&resolved).unwrap();
     assert_eq!(
         bazel,
         SharedFolder {

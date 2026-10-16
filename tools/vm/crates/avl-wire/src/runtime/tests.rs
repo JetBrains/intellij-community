@@ -20,12 +20,22 @@ fn file(logical_path: &str, owner: &str) -> Value {
     })
 }
 
+fn plugin(destination: &str) -> Value {
+    json!({
+        "destination": destination,
+        "file": file(
+            &format!("_main/plugins/air/tests/integration/bridge_plugin_dir/{destination}"),
+            "//plugins/air/tests/integration:bridge_plugin_dir",
+        ),
+    })
+}
+
 /// The descriptor every refusal below is one mutation away from. A value rather than a literal, so a case can
 /// *delete* a field: a missing field and an empty one are different mistakes, and only the first is what an older
 /// Bazel rule actually emits.
 fn valid_descriptor() -> Value {
     json!({
-        "schemaVersion": 5,
+        "schemaVersion": 8,
         "kind": "air-ui-daemon-runtime",
         "mainClass": "com.intellij.air.uiDaemon.AirUiDaemonMain",
         "staticJvmFlags": ["-Xmx4g", "-Dsun.io.useCanonCaches=false", "-Dair.ui.runfiles=${RUNFILES_ROOT}/_main"],
@@ -39,11 +49,18 @@ fn valid_descriptor() -> Value {
             "home": file("_main/dist/home", "//build:dev_home"),
         },
         "jbr": {
-            "archive": file("_main/jbr/jbr-linux-x64.tar.gz", "//jbr:linux_x64"),
+            "directory": "jbr",
             "javaHomeSuffix": "",
-            "manifest": file("_main/jbr/manifest.json", "//jbr:manifest"),
             "platform": "linux-x64",
-            "preloadedOnly": false,
+        },
+        "ide": {
+            "flagsFile": file("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt", "//plugins/air/tests/integration/ui:ide_flags"),
+            "plugins": [
+                plugin("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
+                plugin("air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar"),
+            ],
+            "projectArchive": file("_main/external/air_integration_test_deps/simpleJavaProject.zip", "@air_integration_test_deps//:simpleJavaProject.zip"),
+            "projectRoot": "BookmarksTestProject",
         },
         "data": [file("_main/plugins/air/testData/project.zip", "//plugins/air:test_data")],
     })
@@ -77,7 +94,7 @@ fn parse(descriptor: &Value) -> RuntimeDescriptor {
 #[test]
 fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     let parsed = parse(&valid_descriptor());
-    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (5, DESCRIPTOR_KIND));
+    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (8, DESCRIPTOR_KIND));
     assert_eq!(parsed.main_class, "com.intellij.air.uiDaemon.AirUiDaemonMain");
     assert_eq!((parsed.classpath.hot.len(), parsed.classpath.stable.len()), (1, 2));
     // The stable tier keeps its order: a classpath is ordered.
@@ -90,13 +107,30 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
         }
     );
     assert_eq!(parsed.jbr.platform, GUEST_JBR_PLATFORM);
-    assert!(!parsed.jbr.preloaded_only);
+    assert_eq!(parsed.jbr.directory, "jbr");
     // An empty Java-home suffix is legal - it is what a Linux JBR declares - so the check on it is a type check
     // and not an emptiness one.
     assert_eq!(parsed.jbr.java_home_suffix, "");
     assert_eq!(parsed.data.len(), 1);
     assert_eq!(parsed.dev_dist.home.logical_path, "_main/dist/home");
-    assert_eq!(parsed.jbr.manifest.logical_path, "_main/jbr/manifest.json");
+    assert_eq!(parsed.ide.project_root, "BookmarksTestProject");
+    assert_eq!(
+        parsed.ide.flags_file.logical_path,
+        "_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt"
+    );
+    // The plugin files keep their order and their destination below the plugin directory of the context.
+    let destinations: Vec<&str> = parsed.ide.plugins.iter().map(|plugin| plugin.destination.as_str()).collect();
+    assert_eq!(
+        destinations,
+        [
+            "air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar",
+            "air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar",
+        ]
+    );
+    assert_eq!(
+        parsed.ide.plugins[0].file.owner,
+        "//plugins/air/tests/integration:bridge_plugin_dir"
+    );
 }
 
 /// The refusal corpus: every way the Bazel-owned contract can be wrong, the code a caller branches on, and a
@@ -116,7 +150,14 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             "a JSON array has no schema version",
             b"[]".to_vec(),
             code::SCHEMA_VERSION,
-            &["schemaVersion is absent, expected 5"],
+            &["schemaVersion is absent, expected 8"],
+        ),
+        // The version before the JBR of the distribution: it names a JBR archive, which this controller stages no more.
+        (
+            "a descriptor of the version that names a JBR archive",
+            bytes(set(valid(), "/schemaVersion", json!(7))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 7, expected 8"],
         ),
         (
             "an older rule emits no schema version",
@@ -126,9 +167,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "a schema version this controller predates",
-            bytes(set(valid(), "/schemaVersion", json!(6))),
+            bytes(set(valid(), "/schemaVersion", json!(9))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 6, expected 5"],
+            &["schemaVersion is 9, expected 8"],
         ),
         (
             "the schema version arrives as text",
@@ -282,21 +323,33 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             code::FIELD_INVALID,
             &["jbr", "platform"],
         ),
-        // The field whose absence would let a guest with no network try to download a runtime.
         (
-            "no preload policy",
-            bytes(drop_field(valid(), "/jbr/preloadedOnly")),
+            "no JBR directory",
+            bytes(drop_field(valid(), "/jbr/directory")),
             code::FIELD_INVALID,
-            &["jbr", "preloadedOnly"],
+            &["jbr", "directory"],
         ),
         (
-            "a preload policy spelled as text",
-            bytes(set(valid(), "/jbr/preloadedOnly", json!("false"))),
+            "an empty JBR directory",
+            bytes(set(valid(), "/jbr/directory", json!(""))),
             code::FIELD_INVALID,
-            &["jbr.preloadedOnly"],
+            &["jbr.directory", "is an empty string"],
         ),
-        // Keeps a darwin distribution off a Linux worker, where its `Contents/Home` suffix exists inside the
-        // tarball and staging therefore succeeds.
+        // The controller joins the directory onto the distribution home, so one that escapes names another JVM.
+        (
+            "a JBR directory that climbs out of the distribution",
+            bytes(set(valid(), "/jbr/directory", json!("../jbr"))),
+            code::JBR_DIRECTORY_INVALID,
+            &["jbr.directory ../jbr escapes the distribution home"],
+        ),
+        (
+            "an absolute JBR directory",
+            bytes(set(valid(), "/jbr/directory", json!("/usr/lib/jvm"))),
+            code::JBR_DIRECTORY_INVALID,
+            &["jbr.directory /usr/lib/jvm escapes the distribution home"],
+        ),
+        // Keeps a darwin distribution off a Linux worker, where its `Contents/Home` suffix exists inside the macOS
+        // JBR and staging therefore succeeds.
         (
             "a descriptor built for another guest",
             bytes(set(valid(), "/jbr/platform", json!("osx-aarch64"))),
@@ -315,17 +368,122 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             code::FIELD_INVALID,
             &["devDist", "config"],
         ),
+        ("no IDE section", bytes(drop_field(valid(), "/ide")), code::FIELD_INVALID, &["ide"]),
         (
-            "no JBR archive",
-            bytes(drop_field(valid(), "/jbr/archive")),
+            "an IDE section that is an array",
+            bytes(set(valid(), "/ide", json!([]))),
             code::FIELD_INVALID,
-            &["jbr", "archive"],
+            &["ide"],
         ),
         (
-            "a JBR manifest with an empty logical path",
-            bytes(set(valid(), "/jbr/manifest/logicalPath", json!(""))),
+            "no IDE flags file",
+            bytes(drop_field(valid(), "/ide/flagsFile")),
             code::FIELD_INVALID,
-            &["jbr.manifest.logicalPath"],
+            &["ide", "flagsFile"],
+        ),
+        (
+            "an IDE project archive with an empty exec path",
+            bytes(set(valid(), "/ide/projectArchive/execPath", json!(""))),
+            code::FIELD_INVALID,
+            &["ide.projectArchive.execPath"],
+        ),
+        (
+            "an empty IDE project root",
+            bytes(set(valid(), "/ide/projectRoot", json!(""))),
+            code::FIELD_INVALID,
+            &["ide.projectRoot", "empty"],
+        ),
+        (
+            "an IDE project root that climbs out of the archive",
+            bytes(set(valid(), "/ide/projectRoot", json!("../outside"))),
+            code::PROJECT_ROOT_INVALID,
+            &["ide.projectRoot ../outside escapes the project archive"],
+        ),
+        (
+            "an IDE flags file outside the runfiles tree",
+            bytes(set(valid(), "/ide/flagsFile/logicalPath", json!("/etc/flags"))),
+            code::PATH_ESCAPES,
+            &["ide.flagsFile.logicalPath escapes the runfiles root"],
+        ),
+        (
+            "no IDE plugins",
+            bytes(drop_field(valid(), "/ide/plugins")),
+            code::FIELD_INVALID,
+            &["ide", "plugins"],
+        ),
+        (
+            "an IDE plugin file that is an array",
+            bytes(set(valid(), "/ide/plugins/0", json!(["a", "b"]))),
+            code::FIELD_INVALID,
+            &["ide.plugins[0]"],
+        ),
+        (
+            "an IDE plugin file with an empty destination",
+            bytes(set(valid(), "/ide/plugins/0/destination", json!(""))),
+            code::FIELD_INVALID,
+            &["ide.plugins[0].destination", "empty"],
+        ),
+        (
+            "an IDE plugin file that climbs out of the plugin directory",
+            bytes(set(
+                valid(),
+                "/ide/plugins/0/destination",
+                json!("air-integrationTests-bridge-plugin/../../config/x.jar"),
+            )),
+            code::PLUGIN_DESTINATION_INVALID,
+            &["ide.plugins[0].destination air-integrationTests-bridge-plugin/../../config/x.jar is not a file inside a plugin directory"],
+        ),
+        (
+            "an IDE plugin file at the top of the plugin directory",
+            bytes(set(valid(), "/ide/plugins/0/destination", json!("loose.jar"))),
+            code::PLUGIN_DESTINATION_INVALID,
+            &["ide.plugins[0].destination loose.jar"],
+        ),
+        (
+            "an absolute IDE plugin destination",
+            bytes(set(valid(), "/ide/plugins/0/destination", json!("/plugins/x/lib/x.jar"))),
+            code::PLUGIN_DESTINATION_INVALID,
+            &["ide.plugins[0].destination /plugins/x/lib/x.jar"],
+        ),
+        (
+            "two IDE plugin files with one destination",
+            bytes(set(
+                valid(),
+                "/ide/plugins/1/destination",
+                json!("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
+            )),
+            code::PLUGIN_DESTINATION_INVALID,
+            &["ide.plugins[1].destination air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar is claimed twice"],
+        ),
+        (
+            "an IDE plugin file outside the runfiles tree",
+            bytes(set(valid(), "/ide/plugins/1/file/logicalPath", json!("/etc/x.jar"))),
+            code::PATH_ESCAPES,
+            &["ide.plugins[1].file.logicalPath escapes the runfiles root"],
+        ),
+        // The plugin files travel by the push, so the rule must take them out of the data list.
+        (
+            "an IDE plugin file that is also declared data",
+            bytes(set(
+                valid(),
+                "/data/0/logicalPath",
+                json!(
+                    "_main/plugins/air/tests/integration/bridge_plugin_dir/air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"
+                ),
+            )),
+            code::DUPLICATE_LOGICAL_PATH,
+            &["duplicate logical path _main/plugins/air/tests/integration/bridge_plugin_dir/"],
+        ),
+        // The project archive is a runfile of every lane, so the rule must take it out of the data list.
+        (
+            "an IDE project archive that is also declared data",
+            bytes(set(
+                valid(),
+                "/data/0/logicalPath",
+                json!("_main/external/air_integration_test_deps/simpleJavaProject.zip"),
+            )),
+            code::DUPLICATE_LOGICAL_PATH,
+            &["duplicate logical path _main/external/air_integration_test_deps/simpleJavaProject.zip"],
         ),
         // Two *different* files claiming one staged name: the stage materializes whichever it reaches last.
         (
@@ -366,9 +524,15 @@ fn every_way_the_descriptor_can_be_wrong_is_its_own_refusal() {
 #[test]
 fn the_validator_refuses_nothing_it_should_accept() {
     // A float that is the same number in JSON.
-    parse(&set(valid_descriptor(), "/schemaVersion", json!(5.0)));
+    parse(&set(valid_descriptor(), "/schemaVersion", json!(8.0)));
+    // The JBR of a macOS distribution, whose IDE home is `Contents`.
+    parse(&set(valid_descriptor(), "/jbr/directory", json!("Contents/jbr")));
+    // A build with no context plugin installs nothing.
+    assert!(parse(&set(valid_descriptor(), "/ide/plugins", json!([]))).ide.plugins.is_empty());
     // An empty data list is a build that mounts nothing.
     assert!(parse(&set(valid_descriptor(), "/data", json!([]))).data.is_empty());
+    // A project root of more than one segment.
+    parse(&set(valid_descriptor(), "/ide/projectRoot", json!("projects/BookmarksTestProject")));
     // A jar whose name contains dots but climbs nowhere.
     parse(&set(
         valid_descriptor(),
@@ -379,6 +543,22 @@ fn the_validator_refuses_nothing_it_should_accept() {
     let mut newer = valid_descriptor();
     newer["jbr"]["checksum"] = json!("sha256:0");
     parse(&newer);
+}
+
+#[test]
+fn the_ide_section_keys_are_the_ones_the_reader_reads() {
+    let section = serde_json::to_value(&parse(&valid_descriptor()).ide).unwrap();
+    let mut keys: Vec<&str> = section.as_object().unwrap().keys().map(String::as_str).collect();
+    keys.sort_unstable();
+    assert_eq!(keys, IDE_SECTION_FIELDS);
+}
+
+#[test]
+fn the_jbr_section_keys_are_the_ones_the_reader_reads() {
+    let section = serde_json::to_value(&parse(&valid_descriptor()).jbr).unwrap();
+    let mut keys: Vec<&str> = section.as_object().unwrap().keys().map(String::as_str).collect();
+    keys.sort_unstable();
+    assert_eq!(keys, JBR_SECTION_FIELDS);
 }
 
 #[test]

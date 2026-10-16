@@ -16,7 +16,7 @@ mod tests;
 
 /// What a manifest declares and what a staged generation's own marker records. One number for both, because a
 /// manifest change that the marker does not notice is a generation reused under rules it was not staged by.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Whether `text` has the shape of every digest on this wire: sha256, lowercase hex, as text.
 pub fn is_sha256_hex(text: &str) -> bool {
@@ -25,7 +25,7 @@ pub fn is_sha256_hex(text: &str) -> bool {
 
 // --- the daemon's runtime ---------------------------------------------------------------------------------
 
-/// A flat jar list plus an extracted JBR.
+/// A flat jar list plus a copy of the JBR of the distribution.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeManifest {
@@ -39,8 +39,10 @@ pub struct RuntimeManifest {
     /// legal "stage nothing". Reading the absent case as empty would stage an empty classpath and report
     /// success.
     pub stable_sources: Vec<String>,
+    /// The absolute guest path of the JBR directory of the distribution, which the guest copies into the
+    /// generation as `jbr`.
     #[serde(default)]
-    pub jbr_archive: String,
+    pub jbr_source: String,
     #[serde(default)]
     pub java_home_suffix: String,
 }
@@ -181,7 +183,7 @@ fn decode<T: DeserializeOwned>(raw: &[u8], invalid: StageError) -> Result<T, Sta
 /// compatibly, and the host adds them ahead of the guest that reads them.
 pub fn decode_runtime_manifest(raw: &[u8]) -> Result<RuntimeManifest, StageError> {
     let manifest: RuntimeManifest = decode(raw, StageError::InvalidRuntimeManifest)?;
-    if manifest.schema_version != SCHEMA_VERSION || manifest.jbr_archive.is_empty() {
+    if manifest.schema_version != SCHEMA_VERSION || manifest.jbr_source.is_empty() {
         return Err(StageError::InvalidRuntimeManifest);
     }
     Ok(manifest)

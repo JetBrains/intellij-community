@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::worker::lease::{receipt_for_path, required_receipt, with_lease_operation};
+use crate::worker::lease::{receipt_for_path, required_receipt, with_lease_operation, with_lease_read, with_run_marker};
 use crate::worker::worker::Lease;
 use avl_base::clock::millis;
 use avl_base::format::{seconds, words};
@@ -26,6 +26,7 @@ use crate::daemon::leased::Workers;
 use crate::daemon::run::{RunArgs, RunCommandArgs, RunPlan};
 use crate::daemon::state::HostState;
 use crate::daemon::verdict::{iteration_verdict, lanes_verdict};
+use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note};
 use crate::lane::secrets::{RunSecrets, clear_run_secrets};
 use avl_base::RefusalExt;
 
@@ -267,7 +268,10 @@ impl Host {
         secrets: &RunSecrets,
     ) -> Result<Outcome, Refusal> {
         let (_, receipt) = receipt_for_path(&self.settings, lease_file)?;
-        with_lease_operation(ctx, &self.manager, &receipt, "run", async |current: Lease| {
+        let run_id = ctx
+            .run_id()
+            .ok_or_else(|| Refusal::internal("a run under a receipt has no run id"))?;
+        with_run_marker(ctx, &self.manager, &receipt, run_id, "run", async |current: Lease| {
             let plan = self.plan_run(ctx, args).await?;
             self.publish_plan(&plan, argv);
             ensure_host_paths(ctx, &self.runner, &self.settings).await?;
@@ -633,6 +637,9 @@ pub(crate) fn render_phase_table(phases: &[Timing]) -> String {
 impl Host {
     /// Drives the daemon lifecycle deliberately: start/restart, status, stop, log, warm.
     ///
+    /// Start, restart and stop change the daemon, so they refuse while a run of another live process is in flight.
+    /// Status and log only read it, so they answer during a run.
+    ///
     /// `warm` is answered before the receipt is resolved, and that placement is the verb's whole point: warming
     /// touches no worker, so requiring a lease would make the cheapest useful command in this controller cost a
     /// worker some other shard could be running tests on.
@@ -649,7 +656,7 @@ impl Host {
                 .await
             }
             DaemonVerb::Status => {
-                with_lease_operation(ctx, &self.manager, &receipt, "status", async |current: Lease| {
+                with_lease_read(ctx, &self.manager, &receipt, "status", async |current: Lease| {
                     self.daemon_status_outcome(ctx, &current.worker).await
                 })
                 .await
@@ -663,9 +670,15 @@ impl Host {
                     // any other holder refuses `run_active`. No gate first: the backend resolves its executable
                     // when it builds a guest line, for this verb and `daemon log` alike.
                     let retired = self.retire_unrecorded_daemon(ctx, &current.worker, "stop the daemon").await?;
-                    // A run that died before its own removal leaves its secret files; no daemon is left to read them.
                     let channel = self.channel(&current.worker);
-                    clear_run_secrets(&self.guest(ctx, channel.as_ref())).await?;
+                    let guest = self.guest(ctx, channel.as_ref());
+                    // A lane IDE is a run of its own, so it outlives the daemon run, and no daemon is left to quit it.
+                    let ides = gc_guest_ides(&guest, IdeRetention::StopAll).await?;
+                    if let Some(note) = gc_note(&ides) {
+                        self.reporter.note(note, Some(&Scope::worker(&current.worker)));
+                    }
+                    // A run that died before its own removal leaves its secret files; no daemon is left to read them.
+                    clear_run_secrets(&guest).await?;
                     let stopped = retired.or(state.map(|state| state.run_id));
                     Ok(Outcome {
                         text: if stopped.is_some() { "stopped" } else { "no daemon to stop" }.to_owned(),
@@ -678,7 +691,7 @@ impl Host {
                 .await
             }
             DaemonVerb::Log => {
-                with_lease_operation(ctx, &self.manager, &receipt, "log", async |current: Lease| {
+                with_lease_read(ctx, &self.manager, &receipt, "log", async |current: Lease| {
                     self.daemon_log(ctx, &current.worker).await
                 })
                 .await

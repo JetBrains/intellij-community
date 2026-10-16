@@ -6,6 +6,7 @@ use std::io::{self, BufReader, Read, Write};
 use std::path::Path;
 use std::time::Duration;
 
+use crate::worker::lease::require_ready_for_read;
 use crate::worker::worker::Manager;
 use avl_base::format::words;
 use avl_base::fs::{PublishError, private_temporary, publish};
@@ -23,7 +24,7 @@ use serde::Serialize;
 use serde_json::json;
 use tempfile::{NamedTempFile, TempPath};
 
-use super::with_leased_worker;
+use super::observe_leased_worker;
 use avl_base::RefusalExt;
 
 /// The timeout of the guest read of one pulled file. A trace zip can hold hundreds of MiB, and it crosses the exec
@@ -37,7 +38,8 @@ const CHUNK: usize = 64 * 1024;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Transfer {
     /// The bytes unchanged, through the agent's `read-file`, which names them in a [`FileReceipt`] on stderr. The Tart
-    /// and Docker exec channels carry bytes unchanged, which ADR 0182 and ADR 0183 measured.
+    /// and Docker exec channels carry bytes unchanged, which ADR 0182 and ADR 0183 measured. The container-linux exec is the
+    /// runtime's exec through the skill's script.
     Raw,
     /// The guest's `/usr/bin/base64 -i`, decoded here. No measurement proved the `prlctl exec` channel byte-clean, so
     /// Parallels keeps the text encoding.
@@ -47,7 +49,7 @@ pub(crate) enum Transfer {
 impl Transfer {
     pub(crate) const fn of(backend: Backend) -> Self {
         match backend {
-            Backend::Tart | Backend::Docker => Self::Raw,
+            Backend::Tart | Backend::Docker | Backend::ContainerLinux => Self::Raw,
             Backend::Parallels => Self::Base64,
         }
     }
@@ -282,7 +284,8 @@ struct PullData {
 ///
 /// Deliberately allowed while a run is active, like `ls` and unlike `exec`: one fixed read-only argv over the
 /// non-GUI channel cannot take the pointer or the focus a UI run depends on, and pulling a failing lane's artifacts
-/// is needed exactly while the daemon holds its run slot.
+/// is needed exactly while the daemon holds its run slot. It answers during a run of the lease too, because it holds
+/// the lifecycle lock only for its gate.
 pub(crate) async fn command_pull(
     ctx: &Ctx,
     manager: &Manager,
@@ -291,10 +294,10 @@ pub(crate) async fn command_pull(
     lease_file: Option<&Path>,
 ) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
-    let data = with_leased_worker(ctx, manager, lease_file, "pull", async |current| {
+    let data = observe_leased_worker(ctx, manager, lease_file, "pull", async |current| {
         // Resolved before the readiness gate: a destination that would be refused must not cost a worker boot first.
         let resolved = resolve_pull_destination(&settings.runtime_root, &settings.worker_key(&current.worker), &destination)?;
-        manager.require_ready(ctx, &current).await?;
+        require_ready_for_read(ctx, manager, &current, "pull").await?;
         let bytes = pull_guest_file(ctx, manager, &current.worker, &source, &resolved).await?;
         Ok(PullData {
             worker: current.worker,

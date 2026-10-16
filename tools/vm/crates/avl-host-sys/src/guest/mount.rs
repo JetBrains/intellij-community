@@ -97,16 +97,12 @@ impl Guest<'_> {
             .map(drop)
     }
 
-    /// A share's guest mount point, refused unless something is actually there.
+    /// A share's guest mount point, refused unless something is there.
     ///
-    /// `probe` is optional because "probe the mount point itself" and "probe a path inside it" are different
-    /// questions: the repository share is probed at `.git`, because a mount point that exists and is empty is
-    /// exactly what a share declared at the wrong path looks like, while the Bazel share has no entry that is
-    /// guaranteed to be there and can only be probed for itself.
-    pub async fn require_share_mounted(&self, share_name: &str, probe: Option<&str>) -> Result<String, Refusal> {
+    /// The mount point itself is probed: the Bazel share has no entry that is guaranteed to be there.
+    pub async fn require_share_mounted(&self, share_name: &str) -> Result<String, Refusal> {
         let mount = share_mount_path(self.settings, share_name);
-        let target = probe.map_or_else(|| mount.clone(), |inside| guest_join(&mount, inside));
-        if !self.succeeds(&words(["/bin/test", "-e", &target]), GUEST_COMMAND_TIMEOUT).await {
+        if !self.succeeds(&words(["/bin/test", "-e", &mount]), GUEST_COMMAND_TIMEOUT).await {
             return Err(Refusal::new(
                 "guest_share_unmounted",
                 Exit::DATA_ERR,

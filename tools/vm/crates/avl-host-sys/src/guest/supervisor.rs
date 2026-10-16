@@ -330,7 +330,7 @@ impl Guest<'_> {
         invocation.extend_from_slice(args);
         let argv = match account {
             AgentAccount::Worker => user_argv(self.settings, &invocation),
-            AgentAccount::Root => root_argv(&invocation),
+            AgentAccount::Root => root_argv(self.settings, &invocation),
         };
         let captured = self.channel.exec(self.ctx, &argv, options).await?;
         if captured.exit_code == 0 {

@@ -152,6 +152,7 @@ windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Stora
 appinfo = { path = "crates/appinfo" }
 cli = { path = "crates/cli" }
 component = { path = "crates/component" }
+dev-launch = { path = "crates/dev-launch" }
 distpath = { path = "crates/distpath" }
 filemeta = { path = "crates/filemeta" }
 fscopy = { path = "crates/fscopy" }

@@ -168,8 +168,8 @@ impl Host {
                 Exit::UNAVAILABLE,
                 format!(
                     "{worker} has {} free under {vm_data}, below the {} a run needs, and the reclaimable artifact \
-                     trees are already gone. Find what is holding the space with `prlctl exec {worker} \"du -sh \
-                     {vm_data}/* | sort -rh | head\"`.",
+                     trees are already gone. Find what is holding the space with `du -sh {vm_data}/* | sort -rh | \
+                     head` in the worker, through `vm.cmd exec`.",
                     gibibytes(after),
                     gibibytes(GUEST_FREE_SPACE_FLOOR_BYTES)
                 ),

@@ -97,6 +97,42 @@ async fn a_silent_engine_and_a_missing_cli_are_docker_missing() {
     assert!(refusal.message.contains("DOCKER_BIN"), "{}", refusal.message);
 }
 
+/// A Mac older than macOS 26 that names no engine keeps the host engine with the pinned CLI, and the load refuses
+/// nothing. Its first engine command, `docker version`, refuses `docker_missing` when no engine answers. The remedy
+/// names two ways out: a Docker engine in `DOCKER_BIN` or `DOCKER_HOST`, or a Mac of macOS 26 or newer on Apple
+/// silicon. It does not name the container-linux backend. A named engine is told to start.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_older_mac_that_names_no_engine_is_told_the_two_ways_out() {
+    let macos_15 = avl_base::config::MacosHost {
+        major: 15,
+        apple_silicon: true,
+    };
+    let fixture = Fixture::docker_builder().unnamed_engine().on_macos(macos_15).build();
+    let settings = &fixture.settings;
+    assert_eq!(settings.docker_engine, avl_base::DockerEngine::Host);
+    assert_eq!((settings.docker.as_deref(), settings.docker_host.as_deref()), (None, None));
+    fixture.fake.answer(Answer::VersionExit, "1");
+    let refusal = docker(&fixture).require_available(&ctx(), "").await.unwrap_err();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("docker_missing", Exit::UNAVAILABLE));
+    assert!(fixture.fake.saw_call_containing("version --format {{.Server.Os}}/{{.Server.Arch}}"));
+    assert!(
+        refusal.message.ends_with(
+            "this Mac runs no Apple container; name a Docker engine with DOCKER_BIN or DOCKER_HOST, or run the lane on \
+             a Mac with macOS 26 or newer on Apple silicon"
+        ),
+        "{}",
+        refusal.message
+    );
+    assert!(!refusal.message.contains("container-linux"), "{}", refusal.message);
+
+    let named = Fixture::docker();
+    named.fake.answer(Answer::VersionExit, "1");
+    let refusal = docker(&named).require_available(&ctx(), "").await.unwrap_err();
+    assert_eq!(refusal.code, "docker_missing");
+    assert!(refusal.message.ends_with("start the Docker engine"), "{}", refusal.message);
+}
+
 // --- the plugin configuration of the pinned CLI -----------------------------------------------------------------
 
 /// The plugin directory is merged into the configuration, so the `auths` of a `docker login` for a publish survive.
@@ -296,9 +332,10 @@ async fn a_version_without_an_answer_is_refused_and_not_unsupported() {
 
 // --- the shares and the create argv --------------------------------------------------------------------------
 
-/// The shares land at the guest paths the parity script probes, read-only, one `--mount` pair each.
+/// The one share lands at the guest path the parity script probes, read-only, as one `--mount` pair. No share holds
+/// the checkout.
 #[test]
-fn the_shares_are_read_only_bind_mounts_at_the_parity_paths() {
+fn the_share_is_a_read_only_bind_mount_at_the_parity_path() {
     let fixture = Fixture::docker();
     let settings = &fixture.settings;
     let declared = shares(settings).unwrap();
@@ -307,11 +344,6 @@ fn the_shares_are_read_only_bind_mounts_at_the_parity_paths() {
     assert_eq!(
         arguments,
         [
-            "--mount".to_owned(),
-            format!(
-                "type=bind,source={root},target=/mnt/AirVmShares/{},readonly",
-                settings.repo_share_name
-            ),
             "--mount".to_owned(),
             format!(
                 "type=bind,source={root},target=/mnt/AirVmShares/{},readonly",
@@ -439,6 +471,23 @@ async fn a_create_records_its_argv_and_a_damaged_record_is_none() {
     backend.remove(&ctx(), worker).await.unwrap();
     assert!(!path.exists());
     assert!(!fixture.fake.saw_call_containing("volume rm"));
+}
+
+/// The create argv names no checkout, so a second checkout of the host declares the same container: the record of
+/// the first one is current for it, and its start recreates nothing.
+#[cfg(unix)]
+#[test]
+fn a_second_checkout_declares_the_same_container() {
+    let argv_from = |checkout: &str| {
+        let fixture = Fixture::docker_builder().unresolved_host_paths().build();
+        fixture.settings.set_host_paths(checkout, "/Users/air/_bazel").unwrap();
+        let argv = docker(&fixture).create_argv("air-docker-1").unwrap();
+        assert!(!argv.iter().any(|word| word.contains(checkout)), "{argv:?}");
+        argv
+    };
+    let first = argv_from("/Users/air/idea");
+    let second = argv_from("/Users/air/idea-2");
+    assert_eq!(first.get(1..), second.get(1..));
 }
 
 // --- the image -----------------------------------------------------------------------------------------------
@@ -626,6 +675,8 @@ async fn an_image_is_built_once_from_a_fresh_context() {
     );
     let builds = || fixture.fake.calls().into_iter().filter(|call| call.starts_with("build ")).count();
     assert_eq!(builds(), 1);
+    // Only the Apple `container` engine has a builder VM to stop.
+    assert!(!fixture.fake.saw_call_containing("builder stop"), "{:#?}", fixture.fake.calls());
     let digest = tag.rsplit(':').next().unwrap();
     let context = fixture.settings.runtime_root.join("docker-context").join(digest);
     assert_eq!(std::fs::read_to_string(context.join("Dockerfile")).unwrap(), DOCKERFILE);

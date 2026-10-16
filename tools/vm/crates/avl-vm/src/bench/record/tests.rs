@@ -4,10 +4,11 @@ use pretty_assertions::assert_eq;
 
 use super::{
     CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
-    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, LaunchFacts, RunId, RunKind, WELCOME_BECAME_VISIBLE, collect, named_at,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, JVM_LOADING_TIME, LaunchFacts, RunId, RunKind, RunRecord, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
+    collect, named_at,
 };
 use crate::bench::arm::Arm;
-use crate::bench::testing::{EMPTY_STATE_FIXTURE_SPANS, empty_editor_run, fixture_session};
+use crate::bench::testing::{EMPTY_STATE_FIXTURE_SPANS, append_spans, empty_editor_run, fixture_session};
 
 /// The plugin of the Markdown classes of the project fixture.
 const MARKDOWN: &str = "org.intellij.plugins.markdown";
@@ -22,6 +23,127 @@ fn id(arm: Arm) -> RunId {
         kind: RunKind::Measured,
         index: 1,
     }
+}
+
+/// The note of the non-modal fixture, whose profile is the one of the whole run.
+const WHOLE_RUN_NOTE: &str = "cpu.collapsed is the whole-run profile, with the hold and the quit: the run has no cpu-gate.collapsed";
+
+/// The span ends of a run, see [`super::span_end`], by metric.
+fn ends(record: &RunRecord) -> BTreeMap<&str, f64> {
+    record
+        .metrics
+        .iter()
+        .filter(|(metric, _)| metric.ends_with(" end"))
+        .map(|(metric, value)| (metric.as_str(), *value))
+        .collect()
+}
+
+/// A welcome span, a feature span of the right tab and a modal span are each the sum of the spans of their name, as
+/// the perf test of the welcome screen sums them. A name that repeats is a note. A helper twin never counts.
+#[test]
+fn a_welcome_span_metric_is_the_sum_of_its_spans_and_a_repeated_name_is_a_note() {
+    let (_dir, session) = fixture_session();
+    let run = session.join("non-modal-run-01");
+    append_spans(
+        &run,
+        &[
+            ("welcome right tab creating", 2400, 10),
+            ("welcome right tab creating: scheduled", 2399, 1),
+            ("welcome right tab body: createContent trial.started.banner", 2500, 2),
+            ("welcome right tab body: createContent whats.new", 2510, 5),
+            ("welcome right tab body: createContent whats.new: scheduled", 2509, 1),
+            ("welcome frame creating", 2600, 30),
+            ("welcome frame creating", 2700, 20),
+        ],
+    );
+    let record = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(
+        metric("welcome right tab creating"),
+        Some(33.7),
+        "23.7 ms of the fixture span and 10 ms"
+    );
+    assert_eq!(metric("welcome right tab body: createContent trial.started.banner"), Some(2.1));
+    assert_eq!(metric("welcome right tab body: createContent whats.new"), Some(5.0));
+    assert_eq!(metric("welcome frame creating"), Some(50.0));
+    assert_eq!(metric("welcome left panel creating"), Some(73.2), "a span of one occurrence");
+    assert!(
+        !record.metrics.keys().any(|metric| metric.ends_with(": scheduled")),
+        "{:?}",
+        record.metrics.keys()
+    );
+    assert_eq!(
+        record.notes,
+        [
+            r#"opentelemetry.json has 2 "welcome right tab creating" spans; the metric is their sum"#,
+            r#"opentelemetry.json has 2 "welcome frame creating" spans; the metric is their sum"#,
+            r#"opentelemetry.json has 2 "welcome right tab body: createContent trial.started.banner" spans; the metric is their sum"#,
+            WHOLE_RUN_NOTE,
+        ]
+    );
+}
+
+/// The end of the first span of each name of the end list is a metric in ms from the process start, the clock of the
+/// anchors. A span that the run lacks gives none, and a platform span keeps the duration of its first span. The
+/// report gives `jvm.loadingTime`.
+#[test]
+fn the_span_ends_are_metrics_on_the_clock_of_the_anchors() {
+    let (_dir, session) = fixture_session();
+    let run = session.join("non-modal-run-01");
+    append_spans(&run, &[("restoreEditors", 6000, 50), ("welcome frame creating", 2600, 30)]);
+    let record = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    assert_eq!(record.notes, [WHOLE_RUN_NOTE], "a platform span that repeats is no sum");
+    assert_eq!(
+        ends(&record),
+        BTreeMap::from([
+            ("app initialization end", 1225.7),
+            ("welcome screen project opening end", 2533.0),
+            ("toolwindow creating end", 2294.7),
+            ("welcome left panel creating end", 2713.8),
+            ("restoreEditors end", 2226.6),
+            ("welcome frame creating end", 2630.0),
+        ])
+    );
+    assert_eq!(record.metrics.get("restoreEditors"), Some(&210.7), "the first span");
+    assert_eq!(record.metrics.get(JVM_LOADING_TIME), Some(&358.0));
+}
+
+/// Without a trace, the report items give the sums and the ends. An item starts in ms from the process start, the
+/// clock of the anchors.
+#[test]
+fn a_run_without_a_trace_takes_the_sums_and_the_ends_from_the_report() {
+    let (_dir, session) = fixture_session();
+    let run = session.join("project-run-01");
+    std::fs::remove_file(run.join("opentelemetry.json")).expect("a removal");
+    let path = run.join("startup-stats.json");
+    let mut report: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a report")).expect("a report");
+    let items = report["items"].as_array_mut().expect("the items");
+    for (start, duration) in [(1300, 40), (1400, 2)] {
+        items.push(serde_json::json!({"n": "welcome frame creating", "s": start, "d": duration, "t": "edt"}));
+    }
+    std::fs::write(&path, report.to_string()).expect("a report");
+    let record = collect(&run, &id(Arm::Project), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    assert_eq!(
+        ends(&record),
+        BTreeMap::from([
+            ("app initialization end", 1225.0),
+            ("toolwindow creating end", 2294.0),
+            ("restoreEditors end", 2225.0),
+            ("welcome frame creating end", 1340.0),
+        ])
+    );
+    assert_eq!(record.metrics.get("welcome frame creating"), Some(&42.0));
+    assert_eq!(
+        record.notes,
+        [
+            "no fus.jsonl",
+            "no opentelemetry.json",
+            r#"startup-stats.json has 2 "welcome frame creating" spans; the metric is their sum"#,
+        ]
+    );
 }
 
 #[test]
@@ -54,15 +176,55 @@ fn a_non_modal_run_passes_the_gate_and_has_the_welcome_spans() {
     );
 }
 
+/// A modal run reads the start-up report that the IDE writes at the exit. A start without a project ends no start-up,
+/// so a negative or a missing totalDuration is a note and no metric, and the other report metrics stay. The trace starts
+/// with `bootstrap`, so the spans of the welcome frame and their ends are on the clock of the anchors.
 #[test]
-fn a_modal_run_without_the_report_is_valid_with_a_note() {
+fn a_modal_run_reads_the_report_of_its_exit() {
     let (_dir, session) = fixture_session();
-    let record = collect(&session.join("modal-run-01"), &id(Arm::Modal), LaunchFacts::default());
+    let run = session.join("modal-run-01");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
     assert!(record.valid, "{:?}", record.reason);
     assert_eq!(
         record.notes,
-        vec!["no startup-stats.json".to_owned(), "no class-load.log".to_owned()]
+        ["startup-stats.json has a negative totalDuration, as a start without a project writes it, so the run has none"]
     );
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(metric(TOTAL_DURATION), None);
+    for (name, value) in [
+        (JVM_LOADING_TIME, 352.0),
+        ("classLoading.time", 5240.0),
+        ("classLoading.edtTime", 26.0),
+        ("bootstrap", 44.1),
+        ("app initialization", 940.2),
+        ("welcome frame EDT waiting", 21.3),
+        ("welcome frame creating", 612.4),
+        ("welcome frame showing", 466.7),
+        ("app initialized callback end", 1254.4),
+        ("welcome frame creating end", 1863.0),
+        ("classes.named@welcomeBecameVisible", 25.0),
+        ("classes.named@quit", 27.0),
+    ] {
+        assert_eq!(metric(name), Some(value), "{name}");
+    }
+    assert!(
+        !record.metrics.contains_key("ProjectManager.openAsync"),
+        "a start without a project has no project span"
+    );
+
+    let path = run.join("startup-stats.json");
+    let mut report: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a report")).expect("a report");
+    report.as_object_mut().expect("an object").remove("totalDuration");
+    std::fs::write(&path, report.to_string()).expect("a report");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
+    assert_eq!(record.notes, ["startup-stats.json has no totalDuration"]);
+    assert_eq!(record.metrics.get(JVM_LOADING_TIME), Some(&352.0));
+
+    std::fs::remove_file(&path).expect("a removal");
+    std::fs::remove_file(run.join("class-load.log")).expect("a removal");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(record.notes, ["no startup-stats.json", "no class-load.log"]);
     assert_eq!(record.metrics.get("pluginClasses"), Some(&157.0));
     assert_eq!(
         record.classes_by_plugin.values().sum::<u64>(),
@@ -257,6 +419,7 @@ fn a_missing_or_bad_class_log_is_a_note_and_a_report_without_the_jvm_offset_has_
     assert_eq!(record.metrics.get(CLASSES_NAMED), Some(&26.0));
     assert!(!record.metrics.keys().any(|metric| metric.contains('@')), "{:?}", record.metrics);
     assert!(record.classes_by_plugin_at.is_empty());
+    assert_eq!(record.metrics.get(JVM_LOADING_TIME), None, "the report has no JVM part");
 
     std::fs::write(run.join("class-load.log"), "[0.1s][class,load] a.A\n").expect("a log");
     let record = collect(&run, &id(Arm::Project), LaunchFacts::default());
@@ -454,4 +617,40 @@ fn an_empty_editor_run_whose_composer_the_quit_cut_short_is_invalid() {
         Some("the air.emptyState.createComponent span did not end before the application.exit span started, so the quit cut it short")
     );
     assert!(record.metrics.is_empty(), "a failed run reports no number");
+}
+
+/// The record reads the profile to the gate when the run has one. Else it reads the whole-run profile with a note that
+/// names why the run did not stop the profiler at its gate.
+#[test]
+fn the_record_prefers_the_profile_to_the_gate() {
+    use crate::bench::profile::ProfileScope;
+    let (_dir, session) = fixture_session();
+    let run = session.join("non-modal-run-01");
+    let whole = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(whole.profile_scope, Some(ProfileScope::WholeRun));
+    assert_eq!(whole.notes, [WHOLE_RUN_NOTE]);
+    let failed = LaunchFacts {
+        profile_stop_failure: Some("the JBR of the generation has no bin/jcmd".to_owned()),
+        ..LaunchFacts::default()
+    };
+    let record = collect(&run, &id(Arm::NonModal), failed);
+    assert_eq!(
+        record.notes,
+        ["cpu.collapsed is the whole-run profile, with the hold and the quit: the JBR of the generation has no bin/jcmd"]
+    );
+
+    std::fs::write(
+        run.join("cpu-gate.collapsed"),
+        "[AWT-EventQueue-0 tid=1035];java/lang/Thread.run;com/example/Gate.paint 7\n[DefaultDispatcher-worker-1 tid=77];com/example/Work.run 3\n",
+    )
+    .expect("a profile to the gate");
+    let record = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(record.profile_scope, Some(ProfileScope::Gate));
+    assert_eq!(record.notes, Vec::<String>::new(), "the profile to the gate needs no note");
+    assert_eq!(
+        (record.edt_samples, record.edt_frames[0].frame.as_str()),
+        (Some(7), "com/example/Gate.paint"),
+        "the profile to the gate, not the {:?} EDT samples of the whole run",
+        whole.edt_samples
+    );
 }

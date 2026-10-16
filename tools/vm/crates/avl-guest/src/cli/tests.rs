@@ -250,3 +250,34 @@ fn the_linux_verb_checks_its_positional_shapes() {
         assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
     }
 }
+
+/// The IDE verbs: `ide-prepare` and `ide-launch` take no argument, `ide-gc` takes one of its two stop rules at most, and the jcmd of
+/// `cancel --thread-dump` is an absolute path.
+#[test]
+fn the_ide_verbs_check_their_flags() {
+    assert_eq!(parsed(&["ide-prepare"]).name(), AgentVerb::IdePrepare);
+    assert_eq!(parsed(&["ide-launch"]).name(), AgentVerb::IdeLaunch);
+    let Verb::IdeGc(gc) = parsed(&["ide-gc", "--root", "/data/ide", "--keep-product", "p1"]) else {
+        panic!("ide-gc parsed as another verb");
+    };
+    assert_eq!(
+        (gc.root, gc.stop_all, gc.keep_product.as_deref(), gc.keep_logs, gc.grace_ms),
+        (PathBuf::from("/data/ide"), false, Some("p1"), 5, 10_000)
+    );
+    let Verb::Cancel(cancel) = parsed(&["cancel", "--root", "/x", "--run", "run-ide-a", "--thread-dump", "/jbr/bin/jcmd"]) else {
+        panic!("cancel parsed as another verb");
+    };
+    assert_eq!(cancel.thread_dump, Some(PathBuf::from("/jbr/bin/jcmd")));
+    let refused: [&[&str]; 6] = [
+        &["ide-prepare", "/data/ide"],
+        &["ide-launch", "/data/ide"],
+        &["ide-gc", "--root", "/data/ide", "--stop-all", "--keep-product", "p1"],
+        &["ide-gc", "--root", "ide"],
+        &["ide-gc", "--root", "/data/ide", "--keep-logs", "0"],
+        &["cancel", "--root", "/x", "--run", "run-a", "--thread-dump", "jcmd"],
+    ];
+    for argv in refused {
+        let answered = run_agent(argv, b"");
+        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
+    }
+}

@@ -5,14 +5,42 @@ the modal arm agrees within the noise: A 2336 ms, B 2341 ms (noise 35 ms)
 modal arm (median ms, or a count)                                  A       B     B-A
 events and report:
   welcomeBecameVisible                                          2336    2341    +4.7
+  jvm.loadingTime                                                352     353    +0.7
+  classLoading.requests                                       191566  191949    +383
+  classLoading.time                                             5240    5250     +10
+  classLoading.edtTime                                            26      26    +0.1
 classes:
+  classes.named                                                   28      28      +0
+  classes.hidden                                                   3       3      +0
+  classes.jdk                                                      9       9      +0
+  classes.jar                                                      3       3      +0
+  classes.platform                                                 7       7      +0
+  classes.plugins                                                  9       9      +0
   pluginClasses                                                  157     157      +0
+  classes.named@welcomeBecameVisible                              25      25      +0
+  classes.named@quit                                              27      27      +0
+platform spans:
+  bootstrap                                                       44      44    +0.1
+  app initialization                                             940     942    +1.9
+modal spans:
+  welcome frame EDT waiting                                       21      21      +0
+  welcome frame creating                                         612     614    +1.2
+  welcome menu bar creating                                       47      47    +0.1
+  welcome tabs creating                                          419     420    +0.8
+  welcome quick access panel creating                             64      64    +0.1
+  welcome frame showing                                          467     468    +0.9
+span ends (ms from the process start):
+  app initialization end                                        1196    1198    +2.4
+  app initialized callback end                                  1254    1257    +2.5
+  app frame created callback end                                1228    1230    +2.5
+  welcome frame creating end                                    1863    1867    +3.7
 non-modal arm (median ms, or a count)                              A       B     B-A
 events and report:
   welcomeBecameVisible                                          2718    2446    -272
   frameBecameVisible                                            1714    1543    -171
   frameBecameInteractive                                        2528    2275    -253
   totalDuration                                                 3195    2876    -320
+  jvm.loadingTime                                                358     322     -36
   classLoading.requests                                       267427  240684  -26743
   classLoading.time                                             8317    7485    -832
   classLoading.edtTime                                            42      38    -4.2
@@ -48,3 +76,9 @@ welcome spans:
   welcome right tab body: createContent trial.started.banner     0.1     0.1      +0
   welcome right tab body: EDT build                               14      13    -1.4
   readme opening check                                           0.5     0.5      +0
+span ends (ms from the process start):
+  app initialization end                                        1226    1103    -123
+  welcome screen project opening end                            2533    2280    -253
+  toolwindow creating end                                       2295    2065    -230
+  welcome left panel creating end                               2714    2442    -271
+  restoreEditors end                                            2227    2004    -223

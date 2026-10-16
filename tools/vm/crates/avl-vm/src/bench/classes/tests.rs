@@ -21,6 +21,7 @@ fn args() -> ClassesArgs {
         top: DEFAULT_TOP,
         plugins: Vec::new(),
         at: None,
+        entries: None,
     }
 }
 
@@ -42,15 +43,18 @@ fn project_session(session: &Path) {
     files::write_json(&session.join(SUMMARY_FILE), &summary).expect("summary.json");
 }
 
-/// The report of the replayed fixture takes the non-modal arm and its last anchor, the quit, and its text equals
-/// `testdata/bench/classes.txt`.
+/// The report of the replayed fixture takes the non-modal arm and its main anchor, the welcome event, and its text
+/// equals `testdata/bench/classes.txt`.
 #[test]
 fn the_classes_of_the_fixture_match_the_golden() {
     let (_dir, session) = fixture_session();
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&session, &reporter).expect("a summary");
     let report = classes(&session, &args()).expect("a report");
-    assert_eq!((report.arm, report.at.as_deref(), report.runs), (Arm::NonModal, Some("quit"), 1));
+    assert_eq!(
+        (report.arm, report.at.as_deref(), report.runs),
+        (Arm::NonModal, Some("welcomeBecameVisible"), 1)
+    );
     let text = format!("{}\n", report.text().replace(&session.display().to_string(), "<session>"));
     assert_golden("classes.txt", &text);
 
@@ -58,7 +62,7 @@ fn the_classes_of_the_fixture_match_the_golden() {
     let keys: Vec<&str> = json.as_object().expect("an object").keys().map(String::as_str).collect();
     assert_eq!(keys, ["arm", "at", "byModule", "byPlugin", "missing", "runs", "session", "totals"]);
     assert_eq!(json["arm"], "nonModal");
-    assert_eq!(json["totals"]["classes.named@quit"]["median"], 32.0);
+    assert_eq!(json["totals"]["classes.named@welcomeBecameVisible"]["median"], 30.0);
     assert_eq!(json["byPlugin"][0], json!({"name": "com.intellij", "classes": 4.0}));
     assert_eq!(json["missing"], json!([]));
     assert!(
@@ -117,16 +121,108 @@ fn the_plugin_table_takes_the_anchor_and_the_named_plugins() {
         "{text}"
     );
 
-    let whole = classes(&session, &ClassesArgs { top: 2, ..args() }).expect("a report");
-    assert_eq!(whole.at.as_deref(), Some("quit"));
+    let default = classes(&session, &ClassesArgs { top: 2, ..args() }).expect("a report");
+    assert_eq!(
+        default.at.as_deref(),
+        Some(record::EDITOR_HIGHLIGHTED),
+        "the main anchor of the project arm"
+    );
+    assert_eq!(default.by_plugin, [row(markdown, 3.0), row("com.intellij", 2.0)]);
+    assert!(
+        default
+            .text()
+            .contains("\nby plugin at editor highlighting completed, 2 of 3 plugins:\n"),
+        "{}",
+        default.text()
+    );
+    let quit = ClassesArgs {
+        top: 2,
+        at: Some("quit".to_owned()),
+        ..args()
+    };
+    let whole = classes(&session, &quit).expect("a report");
     assert_eq!(whole.by_plugin, [row(markdown, 3.0), row("com.intellij", 2.0)]);
     assert!(whole.text().contains("\nby plugin at quit, 2 of 8 plugins:\n"), "{}", whole.text());
 }
 
-/// An anchor that the arm does not have, and an arm that the session does not have, are usage refusals.
+/// `--entries` lists the first classes of each plugin of the plugin table that the median run loaded before the
+/// anchor, in ms from the process start: the uptime of the JVM log minus `jvm.loadingTime`, 358 ms in the fixture. The
+/// text equals `testdata/bench/classes-entries.txt`.
+#[test]
+fn the_entries_are_the_first_classes_of_each_plugin_before_the_anchor() {
+    let (_dir, session) = fixture_session();
+    let (reporter, _, _) = Reporter::in_memory("vm");
+    replay(&session, &reporter).expect("a summary");
+    let report = classes(
+        &session,
+        &ClassesArgs {
+            entries: Some(2),
+            ..args()
+        },
+    )
+    .expect("a report");
+    let text = format!("{}\n", report.text().replace(&session.display().to_string(), "<session>"));
+    assert_golden("classes-entries.txt", &text);
+    let json = serde_json::to_value(&report).expect("JSON");
+    assert_eq!(json["entries"]["run"], "non-modal-run-01");
+    assert_eq!(
+        json["entries"]["plugins"][0],
+        json!({"plugin": "com.intellij", "classes": [
+            {"name": "com.intellij.platform.kernel.backend.BackendKernelService", "ms": 942.0},
+            {"name": "com.intellij.platform.kernel.backend.BackendKernelServiceKt", "ms": 952.0},
+        ]})
+    );
+
+    let named = classes(
+        &session,
+        &ClassesArgs {
+            entries: Some(1),
+            at: Some("quit".to_owned()),
+            plugins: vec!["com.intellij.dfa.analysis".to_owned(), "com.intellij.python".to_owned()],
+            ..args()
+        },
+    )
+    .expect("a report");
+    let text = named.text();
+    assert!(
+        text.contains(
+            "\nthe first class of each plugin at quit, in non-modal-run-01 (ms from the process start):\n  \
+             com.intellij.dfa.analysis:\n     2842  com.intellij.dfa.analysis.rml.utils.RmlServiceResolver\n  \
+             com.intellij.python: none\n"
+        ),
+        "the quit bound keeps the late classes: {text}"
+    );
+}
+
+/// `--entries` reads the class logs of the median run, so an arm whose run has no class-load log is a usage refusal.
+#[test]
+fn the_entries_of_a_run_without_its_class_log_are_refused() {
+    let (_dir, session) = fixture_session();
+    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
+    let (reporter, _, _) = Reporter::in_memory("vm");
+    replay(&session, &reporter).expect("a summary");
+    let refusal = classes(
+        &session,
+        &ClassesArgs {
+            arm: Some(Arm::Modal),
+            entries: Some(3),
+            ..args()
+        },
+    )
+    .expect_err("no class-load.log");
+    assert_eq!(refusal.code, "usage");
+    assert_eq!(
+        refusal.message,
+        "--entries reads class-load.log of the median run modal-run-01, and it has none"
+    );
+}
+
+/// An anchor that the arm does not have, and an arm that the session does not have, are usage refusals. A modal run
+/// without its class-load log has no anchor, and its plugin table covers the whole run.
 #[test]
 fn an_anchor_or_an_arm_that_the_session_lacks_is_a_usage_refusal() {
     let (_dir, session) = fixture_session();
+    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&session, &reporter).expect("a summary");
     let refusal = |args: ClassesArgs| classes(&session, &args).expect_err("a refusal");

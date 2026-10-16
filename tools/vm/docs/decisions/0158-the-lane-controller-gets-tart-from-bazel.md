@@ -25,7 +25,7 @@ A Bazel pin is the obvious home, but the usual wiring downloads too much. Bazel 
 when it analyzes a target that names it. The IDE sync (`.bazelproject`, `targets: //...`) and
 `bazel build //...` analyze every main-repository target. A Tart label in the `data` of the `vm` binary would
 download Tart on every Mac sync, also for a developer who never runs a lane.
-[build ADR 0009](../../../../../build/decisions/0009-bun-pins-in-the-ultimate-module.md) records the same problem for
+[build ADR 0009](../../../../../build/docs/decisions/0009-bun-pins-in-the-ultimate-module.md) records the same problem for
 bun: a sync is not a request.
 
 ## Decision

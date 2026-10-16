@@ -383,3 +383,82 @@ fn a_relay_exec_bridges_to_a_loopback_port_for_both_backends() {
         "shared"
     );
 }
+
+/// Runs the fake with `args` in an environment of `variables` over this process's, and answers its output.
+fn run_in(fake: &Fake, args: &[&str], variables: &[(&str, &str)]) -> Output {
+    Command::new(fake.executable())
+        .args(args)
+        .envs(variables.iter().copied())
+        .output()
+        .unwrap_or_else(|e| panic!("spawn {}: {e}", fake.executable().display()))
+}
+
+// The `container.cmd` verbs are a state machine over one container, as the Docker verbs are: `start` makes the
+// next `list` name the container and writes the files of its control port, and `stop` takes both back. `exec` is
+// the shared exec arms, and the bash twin beside the script answers the same.
+#[test]
+fn container_cmd_start_list_and_stop_move_the_one_container_through_its_states() {
+    // The fake sits where a checkout's skill would, so it finds the checkout and its out/testing-ui as the real script does.
+    let checkout = std::env::temp_dir().join(format!("avl-testkit-ui-{}", std::process::id()));
+    let fake = Fake::install_in(checkout.join(".agents/skills/testing-ui/scripts"), "2.33.0\n").install_beside(Binary::ContainerLinux);
+    let work = checkout.join("out").join("testing-ui");
+    let environment = [("APP_EXEC", "/bin/true")];
+    let none = "no containers of this tool are running\n";
+    let listed = run(&fake, &["list"]);
+    assert_eq!((stdout(&listed), code(&listed)), (none.to_owned(), 0));
+
+    // A start without a seeded control port is a defect of the suite, refused by name.
+    let unseeded = run_in(&fake, &["start", "/p"], &environment);
+    assert_eq!(code(&unseeded), 2);
+    assert!(String::from_utf8_lossy(&unseeded.stderr).contains("container-linux-port.txt"));
+    assert!(!work.join("container.ctl_port").exists());
+
+    fake.answer(Answer::ContainerLinuxPort, "6090");
+    fake.answer(Answer::ContainerLinuxRoot, "/Users/air/idea");
+    let started = run_in(&fake, &["start", "/p", "--ro", "/a:/b", "--publish", "1:2"], &environment);
+    assert_eq!(code(&started), 0, "{}", String::from_utf8_lossy(&started.stderr));
+    assert_eq!(fs::read_to_string(work.join("container.ctl_port")).unwrap(), "6090");
+    assert_eq!(
+        fs::read_to_string(work.join("container.ctl_bearer")).unwrap(),
+        format!("{CONTAINER_LINUX_BEARER}\n")
+    );
+    assert_eq!(
+        fs::read_to_string(work.join("container.json")).unwrap(),
+        format!(r#"{{"novnc":"{CONTAINER_LINUX_NOVNC_URL}","vncPassword":"{CONTAINER_LINUX_VNC_PASSWORD}"}}"#) + "\n"
+    );
+    assert_eq!(
+        fake.container_linux_start_environment(),
+        [("APP_EXEC", "/bin/true")].map(|(name, value)| (name.to_owned(), value.to_owned()))
+    );
+    assert_eq!(fake.argvs().last().unwrap(), &["start", "/p", "--ro", "/a:/b", "--publish", "1:2"]);
+    assert_eq!(
+        stdout(&run(&fake, &["list"])),
+        format!(
+            "{CONTAINER_LINUX_CONTAINER}  running  /Users/air/idea\n  run none\n  noVNC {CONTAINER_LINUX_NOVNC_URL}  password \
+             {CONTAINER_LINUX_VNC_PASSWORD}\n"
+        )
+    );
+
+    fake.answer(Answer::ExecStdout, "shared");
+    fake.answer_exec_verb("active", "A");
+    assert_eq!(stdout(&run(&fake, &["exec", "/usr/bin/true"])), "shared");
+    assert_eq!(stdout(&run(&fake, &["exec", "/x/vm-guest-agent", "active", "--root", "/r"])), "A");
+
+    let twin = Command::new(fake.directory().join("container.sh"))
+        .arg("list")
+        .output()
+        .expect("the bash twin runs");
+    assert_eq!(stdout(&twin), stdout(&run(&fake, &["list"])));
+
+    assert_eq!(code(&run_in(&fake, &["stop"], &environment)), 0);
+    for name in ["container.ctl_port", "container.ctl_bearer", "container.json"] {
+        assert!(!work.join(name).exists(), "{name} survived the stop");
+    }
+    assert_eq!(stdout(&run(&fake, &["list"])), none);
+
+    fake.answer(Answer::ContainerLinuxFailedVerb, "list");
+    let failed = run(&fake, &["list"]);
+    assert_eq!(code(&failed), 1);
+    assert_eq!(String::from_utf8_lossy(&failed.stderr), "fake container.cmd: list failed\n");
+    fs::remove_dir_all(&checkout).expect("the fixture checkout is removed");
+}

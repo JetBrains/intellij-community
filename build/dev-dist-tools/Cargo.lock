@@ -209,6 +209,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "dev-launch"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "indexmap",
+ "java-properties",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "dev-launcher"
 version = "0.1.0"
 dependencies = [

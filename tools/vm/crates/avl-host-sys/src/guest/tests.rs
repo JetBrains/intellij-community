@@ -35,6 +35,49 @@ async fn as_user_and_as_root_wrap_the_argv() {
     );
 }
 
+// The testing-ui container runs as its one unprivileged account: there is no sudo to prefix, no root to become and
+// nothing to chown, so every prefix passes the argv through, and a privileged guest keeps all three.
+// A Windows host does not drive the testing-ui container.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_unprivileged_guest_gets_no_sudo_and_no_chown() {
+    let host = Host::container_linux();
+    let settings = &host.settings;
+    assert!(!settings.guest.privileged);
+    let argv = words(["/bin/true", "x"]);
+    assert_eq!(user_argv(settings, &argv), argv);
+    assert_eq!(root_argv(settings, &argv), argv);
+    assert_eq!(chown_argv(settings, &["-R"], &[&settings.vm_data]), None);
+    let channel = FakeChannel::new("air-linux-1");
+    let guest = host.guest(&channel);
+    let within = SpawnOptions::within(Duration::from_mins(1));
+    guest.as_user(&argv, &within).await.unwrap();
+    guest.as_root(&argv, &within).await.unwrap();
+    guest.write_file("/tmp/x", b"hello", "700").await.unwrap();
+    assert_eq!(
+        channel.lines(),
+        ["/bin/true x", "/bin/true x", "/usr/bin/tee /tmp/x", "/bin/chmod 700 /tmp/x"]
+    );
+
+    let privileged = Host::new(GuestOs::Linux);
+    let settings = &privileged.settings;
+    assert!(settings.guest.privileged);
+    let user = settings.vm_user.as_str();
+    assert_eq!(
+        user_argv(settings, &argv),
+        words(["/usr/bin/sudo", "-H", "-u", user, "/bin/true", "x"])
+    );
+    assert_eq!(root_argv(settings, &argv), words(["/usr/bin/sudo", "-H", "/bin/true", "x"]));
+    assert_eq!(
+        chown_argv(settings, &["-R"], &["/data", "/data/state"]),
+        Some(words([settings.guest.chown, "-R", user, "/data", "/data/state"]))
+    );
+    assert_eq!(
+        chown_argv(settings, &[], &["/data"]),
+        Some(words([settings.guest.chown, user, "/data"]))
+    );
+}
+
 // A guest process can echo the UI-test bridge token, and a refusal ends up in an envelope an agent reads.
 #[tokio::test]
 async fn raw_withholds_what_the_guest_printed() {
@@ -85,7 +128,7 @@ fn the_effective_program_is_found_behind_every_wrapper_shape() {
             "tee",
             "/tmp/x".to_owned(),
         ),
-        ("as root", root_argv(&words(["/sbin/mount", "-a"])), "mount", "-a".to_owned()),
+        ("as root", root_argv(linux, &words(["/sbin/mount", "-a"])), "mount", "-a".to_owned()),
         (
             "aqua on macOS",
             words([
@@ -396,6 +439,7 @@ fn unresolved_settings(root: &Path, extra: &[(&str, &str)]) -> Config {
         environment.set(*name, *value);
     }
     Config::load(
+        avl_base::HostFacts::without_memory(),
         Selection {
             backend: avl_base::Backend::Docker,
             guest_os: GuestOs::Linux,

@@ -309,3 +309,110 @@ fn the_example_log_slice_is_the_idea_log_format() {
         );
     }
 }
+
+fn allure_result(sources: &[&str]) -> AllureResult {
+    let attachment = |source: &&str| AllureAttachment {
+        name: "Before".to_owned(),
+        source: (*source).to_owned(),
+        mime: "image/webp".to_owned(),
+    };
+    AllureResult {
+        uuid: derived_uuid(&["run-1", "AirExampleUiTest/example", "2026-09-23T10:15:00.000Z"]),
+        history_id: allure_history_id("AirExampleUiTest.example"),
+        full_name: "AirExampleUiTest.example".to_owned(),
+        name: "example".to_owned(),
+        status: AllureStatus::Broken,
+        status_details: AllureStatusDetails::default(),
+        stage: AllureStage::Finished,
+        start: 1_790_158_500_000,
+        stop: 1_790_158_501_000,
+        labels: vec![Label {
+            name: ALLURE_BUNDLE_LABEL.to_owned(),
+            value: "AirExampleUiTest/example".to_owned(),
+        }],
+        steps: vec![AllureStep {
+            name: "Open the chat".to_owned(),
+            status: AllureStatus::Passed,
+            status_details: AllureStatusDetails::default(),
+            stage: AllureStage::Finished,
+            start: 1_790_158_500_100,
+            stop: 1_790_158_500_900,
+            steps: Vec::new(),
+            attachments: sources.iter().map(attachment).collect(),
+        }],
+        attachments: Vec::new(),
+    }
+}
+
+/// A bundle status maps to the Allure status a report shows: an aborted or a truncated bundle is broken.
+#[test]
+fn the_allure_status_of_each_bundle_status() {
+    let mapped: Vec<(&str, &str)> = BundleStatus::ALL
+        .iter()
+        .map(|status| (status.as_str(), AllureStatus::from(*status).as_str()))
+        .collect();
+    assert_eq!(
+        mapped,
+        [
+            ("passed", "passed"),
+            ("failed", "failed"),
+            ("aborted", "broken"),
+            ("truncated", "broken")
+        ]
+    );
+    assert_eq!(AllureStatus::from(Status::Aborted), AllureStatus::Broken);
+}
+
+/// A derived uuid is a version 8 RFC 9562 UUID, the same for the same parts, and the history id hashes the full name.
+#[test]
+fn derived_ids_are_stable() {
+    let uuid = derived_uuid(&["run-1", "AirExampleUiTest/example"]);
+    assert_eq!(uuid, derived_uuid(&["run-1", "AirExampleUiTest/example"]));
+    assert_ne!(uuid, derived_uuid(&["run-1", "AirExampleUiTest/example.2"]));
+    // The separator keeps the parts apart, so a moved boundary is another uuid.
+    assert_ne!(derived_uuid(&["ab", "c"]), derived_uuid(&["a", "bc"]));
+    let groups: Vec<usize> = uuid.split('-').map(str::len).collect();
+    assert_eq!(groups, [8, 4, 4, 4, 12]);
+    assert_eq!(&uuid[14..15], "8", "{uuid} is not version 8");
+    assert!(matches!(&uuid[19..20], "8" | "9" | "a" | "b"), "{uuid} is not the RFC 9562 variant");
+    let history = allure_history_id("AirExampleUiTest.example");
+    assert_eq!(history, hex::encode(Sha256::digest("AirExampleUiTest.example")));
+    assert!(history.len() == 64 && history.bytes().all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f')));
+    assert_eq!(allure_result_file(&uuid), format!("{uuid}-result.json"));
+    assert_eq!(allure_attachment_file(&uuid, "webp"), format!("{uuid}-attachment.webp"));
+    assert_eq!(
+        allure_results_dir(Path::new("/root"), "run 1"),
+        Path::new("/root").join("run_1").join(ALLURE_RESULTS_DIR)
+    );
+}
+
+/// A result reads back as it was written, without the empty details, and a reader refuses a result the recorder
+/// would not write.
+#[test]
+fn an_allure_result_round_trips_and_refuses_what_the_recorder_never_writes() {
+    let result = allure_result(&["0c62081c-1bed-87ac-b44a-5c9a5ec24117-attachment.webp"]);
+    let document = encode_allure_result(&result).unwrap();
+    let text = String::from_utf8(document.clone()).unwrap();
+    assert!(!text.contains("statusDetails"), "empty details are written: {text}");
+    assert!(text.contains(r#""type": "image/webp""#), "{text}");
+    assert_eq!(decode_allure_result(&document).unwrap(), result);
+    assert_eq!(result.bundle(), Some("AirExampleUiTest/example"));
+    assert_eq!(result.sources(), ["0c62081c-1bed-87ac-b44a-5c9a5ec24117-attachment.webp"]);
+
+    let refused = |result: &AllureResult| encode_allure_result(result).unwrap_err().to_string();
+    assert!(refused(&allure_result(&["../video.mp4"])).contains("not a file of its directory"));
+    assert!(refused(&allure_result(&[".hidden"])).contains("not a file of its directory"));
+    let mut unbundled = allure_result(&[]);
+    unbundled.labels.clear();
+    assert!(refused(&unbundled).contains("no traceBundle label"));
+    let mut backwards = allure_result(&[]);
+    backwards.stop = backwards.start - 1;
+    assert!(refused(&backwards).contains("before its start"));
+    let unknown = text.replacen(r#""uuid""#, r#""links": [], "uuid""#, 1);
+    assert!(
+        decode_allure_result(unknown.as_bytes())
+            .unwrap_err()
+            .to_string()
+            .contains("unknown field `links`")
+    );
+}

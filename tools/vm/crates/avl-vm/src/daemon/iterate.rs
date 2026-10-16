@@ -24,9 +24,10 @@ use tokio_util::sync::CancellationToken;
 
 use crate::daemon::build::PreparedBuild;
 use crate::daemon::host::{Host, WatchdogPolicy};
-use crate::daemon::run::{RunExecution, RunSelection, push_hot_jars};
+use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::state::{HostState, guest_state_dir};
 use crate::daemon::traces::TraceSync;
+use crate::lane::ide::{IdeRetention, running_guest_ides};
 use crate::lane::secrets::{RunSecrets, remove_run_secrets, scan_artifacts, stage_run_secrets, withhold};
 use avl_base::RefusalExt;
 use avl_base::journal;
@@ -48,6 +49,9 @@ pub(crate) enum IdeAction {
     Reuse,
     #[serde(rename = "daemon restart")]
     DaemonRestart,
+    /// The daemon restarted, and the IDE of this product outlived it: the new daemon attaches to it.
+    #[serde(rename = "keep")]
+    Keep,
     /// The shares were refreshed around a quiesced daemon: a remount on Tart and Parallels, a settle on Docker. The
     /// label is `remount` on every backend.
     #[serde(rename = "remount")]
@@ -61,6 +65,7 @@ impl IdeAction {
         match self {
             Self::Reuse => "reuse",
             Self::DaemonRestart => "daemon restart",
+            Self::Keep => "keep",
             Self::Remount => "remount",
             Self::Relaunch => "relaunch",
         }
@@ -74,6 +79,8 @@ pub(crate) struct DaemonDigests<'a> {
     pub launch: &'a str,
     pub mount: &'a str,
     pub runtime: &'a str,
+    /// The context plugin identity. Empty in a record that predates it, which reads as unknown.
+    pub plugins: &'a str,
 }
 
 /// The daemon that a worker's record names, when it answers as healthy.
@@ -90,23 +97,35 @@ pub(crate) enum DaemonAction {
     Reuse,
     /// The healthy daemon serves it after a refresh of the shares.
     Remount,
-    /// `--fresh-ide`: the run launches the IDE again, after a stop of the running one when there is one.
+    /// `--fresh-ide`, or a healthy daemon whose IDE is not running: the run launches the IDE again, after a stop of the
+    /// running one when there is one.
     Relaunch { stop_ide: bool },
-    /// A daemon is started: `verb` is `restart` or `start`, and `reason` names the axis that moved.
-    Start { verb: &'static str, reason: &'static str },
+    /// Only the context plugins changed. The controller pushes their files with the hot tier, and the run relaunches
+    /// the IDE on the same context. No share is refreshed and no context is made again.
+    RelaunchForPlugins,
+    /// A daemon is started: `verb` is `restart` or `start`, and `reason` names the axis that moved. `keep_ide` is true
+    /// for a restart: the healthy daemon had an IDE that the new one can attach to.
+    Start {
+        verb: &'static str,
+        reason: &'static str,
+        keep_ide: bool,
+    },
 }
 
 /// The daemon decision of one iteration: values in, a decision out, no I/O.
 ///
 /// A healthy daemon of this launch serves the iteration: after a refresh of the shares when the mount digest moved,
-/// after an IDE stop for `--fresh-ide`, or as it is. Any other daemon is started, and the decision names which axis
-/// moved, because "restart the daemon" alone cannot say whether the next start will restage gigabytes or only
-/// re-exec a JVM.
+/// after an IDE stop for `--fresh-ide`, after a launch of the IDE when the daemon holds none, after a relaunch on the
+/// same context when only the context plugins moved, or as it is. Any other
+/// daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot say whether
+/// the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's product. A start
+/// without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
 pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: DaemonDigests<'_>, fresh_ide: bool) -> DaemonAction {
     let Some(HealthyDaemon { recorded, ide_running }) = healthy else {
         return DaemonAction::Start {
             verb: "start",
             reason: "no healthy daemon",
+            keep_ide: false,
         };
     };
     if recorded.launch == build.launch {
@@ -114,6 +133,10 @@ pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: Da
             DaemonAction::Remount
         } else if fresh_ide {
             DaemonAction::Relaunch { stop_ide: ide_running }
+        } else if !ide_running {
+            DaemonAction::Relaunch { stop_ide: false }
+        } else if !recorded.plugins.is_empty() && recorded.plugins != build.plugins {
+            DaemonAction::RelaunchForPlugins
         } else {
             DaemonAction::Reuse
         };
@@ -123,7 +146,11 @@ pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: Da
     } else {
         "the stable runtime or JBR changed"
     };
-    DaemonAction::Start { verb: "restart", reason }
+    DaemonAction::Start {
+        verb: "restart",
+        reason,
+        keep_ide: true,
+    }
 }
 
 /// The note of an iteration that reuses the IDE, which says whether a test jar changed.
@@ -199,6 +226,7 @@ impl HostState {
             launch: &self.launch_digest,
             mount: &self.last_mount_digest,
             runtime: &self.runtime_digest,
+            plugins: &self.last_plugins_digest,
         }
     }
 }
@@ -210,6 +238,7 @@ impl PreparedBuild {
             launch: &self.launch_digest,
             mount: &self.mount_digest,
             runtime: &self.runtime_digest,
+            plugins: &self.plugins_digest,
         }
     }
 }
@@ -244,11 +273,11 @@ impl Host {
     /// One iteration on one worker, as a value.
     ///
     /// Lock-free and non-throwing, deliberately, because both callers that need several of these need it that way.
-    /// The worker's lifecycle lock is the caller's: `lease` is the one [`crate::worker::lease::with_lease_operation`]
-    /// handed it, and a second acquisition of the same lock by the same live process is refused rather than
-    /// reclaimed, so an iteration that took its own lock could only ever run one deep. And an attempt that failed is
-    /// an answer: N attempts across N workers cannot be reported at all if the first failure unwinds the caller.
-    /// `run` is the degenerate case - one attempt, whose error it answers.
+    /// The worker's run marker is the caller's: `lease` is the one [`crate::worker::lease::with_run_marker`] handed
+    /// it. A second run marker of one process on one worker is refused. So an iteration that wrote its own marker
+    /// could only ever run one deep. And an attempt that failed is an answer: N attempts across N workers cannot be
+    /// reported at all if the first failure unwinds the caller. `run` is the degenerate case - one attempt, whose
+    /// error it answers.
     ///
     /// `secrets` are `run`'s `--test-env` files, and empty for `shard` and `flake`.
     #[expect(clippy::too_many_arguments, reason = "one iteration's inputs, each from a different owner")]
@@ -389,7 +418,7 @@ impl Host {
             .await?;
 
         let push_started = Instant::now();
-        let pushed = push_hot_jars(ctx, &self.daemon, &state, prep).await?;
+        let pushed = push_jars(ctx, &self.daemon, &state, prep).await?;
         let push_ms = push_started.elapsed().as_secs_f64() * 1000.0;
         if ide_action == IdeAction::Reuse {
             self.decide(Subject::Ide, "reuse", reuse_reason(pushed), &scope);
@@ -435,6 +464,7 @@ impl Host {
                 let execution = attempt.execution.insert(execution);
                 state.last_product_digest = prep.product_digest.clone();
                 state.last_mount_digest = prep.mount_digest.clone();
+                state.last_plugins_digest = prep.plugins_digest.clone();
                 state.write(&self.settings, worker)?;
                 let Some(iteration_id) = execution.iteration_id.clone() else {
                     return Err(unaddressed_iteration(execution, &attempt.timing));
@@ -456,6 +486,10 @@ impl Host {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
         let (archives, traces_error) = traces.finish(self, ctx, pulls).await;
+        let drift = prep.hot_jar_drift();
+        if let Some(drift) = &drift {
+            self.reporter.note(drift.clone(), Some(&scope));
+        }
         let document = run_report::build(Input {
             iteration_id,
             daemon_run_id: state.run_id.clone(),
@@ -472,7 +506,7 @@ impl Host {
             source,
             evidence,
             protocol_diagnostic: protocol_diagnostic(execution),
-            hot_jar_drift: prep.hot_jar_drift(),
+            notes: drift.into_iter().collect(),
             traces: archives,
             traces_error,
             tree: prep.tree.clone().ok(),
@@ -491,7 +525,7 @@ impl Host {
     /// record is forgotten: the start neither probes nor retires it, and the daemon starts as on a worker with no
     /// healthy daemon.
     async fn gate_iteration(&self, ctx: &Ctx, lease: &Lease, scope: &Scope) -> Result<bool, Refusal> {
-        self.manager.machine().require_available_for_lease(ctx, lease).await?;
+        self.manager.machine().require_available(ctx, &lease.worker).await?;
         if self.manager.guest_declaration_current(ctx, lease).await? {
             return Ok(false);
         }
@@ -528,12 +562,22 @@ impl Host {
         }
         let action = decide_daemon_action(healthy, prep.daemon_digests(), fresh_ide);
         let state = match (action, recorded) {
-            (DaemonAction::Start { verb, reason }, _) => {
+            (DaemonAction::Start { verb, reason, keep_ide }, _) => {
                 self.decide(Subject::Daemon, verb, reason, scope);
                 if status.is_some() {
                     self.manager.require_ready(ctx, lease).await?;
                 }
-                return Ok((self.start_daemon(ctx, worker, prep).await?, IdeAction::DaemonRestart));
+                let retention = if keep_ide {
+                    IdeRetention::KeepProduct(&prep.product_digest)
+                } else {
+                    IdeRetention::StopAll
+                };
+                let (state, ides) = self.start_daemon_keeping(ctx, worker, prep, retention).await?;
+                if ides.kept.is_empty() {
+                    return Ok((state, IdeAction::DaemonRestart));
+                }
+                self.decide(Subject::Ide, "keep", "the product did not change", scope);
+                return Ok((state, IdeAction::Keep));
             }
             (_, None) => return Err(Refusal::internal("a healthy daemon was decided without its record")),
             (_, Some(state)) => state,
@@ -554,7 +598,13 @@ impl Host {
                             format!("/ide/stop returned {}", stopped.as_u16()),
                         ));
                     }
+                } else {
+                    self.decide(Subject::Ide, "relaunch", "the daemon holds no running IDE", scope);
                 }
+                IdeAction::Relaunch
+            }
+            DaemonAction::RelaunchForPlugins => {
+                self.decide(Subject::Ide, "relaunch", "the bridge plugin changed", scope);
                 IdeAction::Relaunch
             }
             DaemonAction::Reuse | DaemonAction::Start { .. } => IdeAction::Reuse,
@@ -593,6 +643,9 @@ impl Host {
     /// the bind mounts on Docker. The decision and the timing line say `remount` on every backend, because both are
     /// a contract with the docs and the suites; the note of the refresh says what it did.
     ///
+    /// The quiesce quits the lane IDE through the daemon, and the guest agent owns its process. So the refresh starts
+    /// only when the supervisor reports every IDE run finished: an IDE that runs from a share makes its unmount busy.
+    ///
     /// [`Manager::refresh_shares`]: crate::worker::worker::Manager::refresh_shares
     async fn remount_around(&self, ctx: &Ctx, worker: &str, scope: &Scope, state: &HostState, prep: &PreparedBuild) -> Result<(), Refusal> {
         let reason = if state.last_product_digest == prep.product_digest {
@@ -609,6 +662,7 @@ impl Host {
                 format!("/mount/quiesce returned {}", quiesced.as_u16()),
             ));
         }
+        self.require_no_running_ide(ctx, worker).await?;
         self.manager.refresh_shares(ctx, worker).await?;
         let (resumed, _) = self.daemon.http(ctx, state, &wire::MOUNT_RESUME, None).await?;
         if !resumed.is_success() {
@@ -626,6 +680,40 @@ impl Host {
             ));
         }
         Ok(())
+    }
+
+    /// Refuses `daemon_mount_quiesce_failed` while a lane IDE run of the worker is not finished, and when the
+    /// supervisor cannot say. It fails closed, because a refresh under a live IDE unmounts the share that the IDE runs
+    /// from.
+    async fn require_no_running_ide(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
+        let channel = self.channel(worker);
+        let running = running_guest_ides(&self.guest(ctx, channel.as_ref())).await.map_err(|refusal| {
+            Refusal::new(
+                "daemon_mount_quiesce_failed",
+                Exit::SOFTWARE,
+                format!(
+                    "the daemon quiesced, but the lane IDE runs of {worker} cannot be read ({}: {})",
+                    refusal.code, refusal.message
+                ),
+            )
+        })?;
+        if running.is_empty() {
+            return Ok(());
+        }
+        let runs: Vec<String> = running
+            .iter()
+            .map(|(root, state)| format!("{} in {root} ({})", state.run_id, state.phase))
+            .collect();
+        Err(Refusal::new(
+            "daemon_mount_quiesce_failed",
+            Exit::SOFTWARE,
+            format!(
+                "the daemon quiesced, but a lane IDE still runs on {worker}: {}; the share refresh would unmount the \
+                 share it runs from",
+                runs.join(", ")
+            ),
+        )
+        .with_details(json!({ "runs": running.iter().map(|(_, state)| state.run_id.clone()).collect::<Vec<_>>() })))
     }
 
     /// Publishes a choice this iteration made about the daemon, the shares or the IDE, and why.

@@ -142,7 +142,6 @@ impl Manager {
                 "workers": [worker],
                 "hostRepo": repo,
                 "hostBazelUserRoot": bazel_user_root,
-                "repoShare": self.settings.repo_share_name,
                 "bazelShare": self.settings.bazel_share_name,
             }),
             text: format!(

@@ -2,21 +2,22 @@
 
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
 use avl_trace::bridge::{Facts, IdeSpan};
-use avl_trace::bundle::{BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Video, format_manifest_time};
+use avl_trace::bundle::{
+    AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Video, allure_results_dir, format_manifest_time,
+    sanitize_name,
+};
 use avl_trace::otlp::{
     IDE_SERVICE_NAME, IDE_SPAN_KIND, KeyValue, LogRecord, Resource, SERVICE_NAME, SeverityNumber, Span, SpanStatus, attr, event, span_id,
     status_code_of, trace_id,
 };
-use avl_trace::protocol::{
-    CallCommand, CaptureSource, DriverStep, DriverStepsCommand, EndCommand, Failure, Launcher, ScenarioCommand, SpanCommand, Status,
-    VideoCodec,
-};
+use avl_trace::protocol::{CallCommand, CaptureSource, EndCommand, Failure, Launcher, ScenarioCommand, SpanCommand, Status, VideoCodec};
 
+use crate::allure::{ResultInput, write_result};
 use crate::bridge::Client;
 use crate::bundle::{BundleWriter, nanos, unique_bundle_dir, write_manifest};
 use crate::capture::{Frame, Source};
@@ -62,18 +63,24 @@ pub(crate) struct Scenario {
     pub(crate) writer: Arc<BundleWriter>,
     pub(crate) clock: Clock,
     diagnostics: Diagnostics,
+    /// The hello's root, under which the run's Allure results go.
+    root: PathBuf,
     run_id: String,
     launcher: Launcher,
+    /// The machine's name, the `host` label of the Allure result.
+    host_name: String,
     pub(crate) started_ms: i64,
 
     pub(crate) open: HashMap<u32, OpenSpan>,
     pub(crate) stack: Vec<u32>,
-    /// Every span that has ended, which is what a driver step or an input is matched against.
+    /// Every span that has ended, which is what an input or an IDE span is matched against.
     ended: Vec<Interval>,
     /// Every lane id this scenario has used.
-    opened: HashSet<u32>,
+    pub(crate) opened: HashSet<u32>,
 
     pub(crate) ordinal: u32,
+    /// The ordinal of the last attachment, 0 before the first.
+    pub(crate) attachments: u32,
     pub(crate) stills: Option<stills::Writer>,
     /// Maps a queued still's bundle path to its snapshot's span, for a failure the still writer reports from its own
     /// thread.
@@ -109,7 +116,7 @@ impl<W: Write> Session<W> {
                 &format!("line {} opens the scenario {} before this one's done", self.line, command.name),
                 at_ms,
             );
-            self.finish_scenario(BundleStatus::Truncated, at);
+            self.finish_scenario(BundleStatus::Truncated, AllureStatusDetails::default(), at);
         }
         let Some(hello) = self.hello.clone() else {
             return;
@@ -150,14 +157,17 @@ impl<W: Write> Session<W> {
             writer,
             clock: self.options.clock.clone(),
             diagnostics: self.options.diagnostics.clone(),
+            root: PathBuf::from(&hello.root),
             run_id: hello.run_id.clone(),
             launcher: hello.launcher,
+            host_name: self.options.host_name.clone(),
             started_ms: at_ms,
             open: HashMap::new(),
             stack: Vec::new(),
             ended: Vec::new(),
             opened: HashSet::from([0]),
             ordinal: 0,
+            attachments: 0,
             stills: None,
             still_spans: Arc::default(),
             slicer: LogSlicer::default(),
@@ -378,6 +388,13 @@ impl Scenario {
         if let Some(expectation) = opened.command.expectation.as_deref().filter(|e| !e.is_empty()) {
             attributes.push(KeyValue::string(attr::EXPECTATION, expectation));
         }
+        if let Some(side) = opened.command.side {
+            attributes.push(KeyValue::string(attr::INSTRUCTION_SIDE, side.as_str()));
+        }
+        if let Some(timeout_ms) = opened.command.timeout_ms {
+            let timeout_ms = i64::try_from(timeout_ms).unwrap_or(i64::MAX);
+            attributes.push(KeyValue::int(attr::INSTRUCTION_TIMEOUT_MS, timeout_ms));
+        }
         let mut span_status = SpanStatus {
             code: status_code_of(status),
             ..SpanStatus::default()
@@ -494,31 +511,6 @@ impl Scenario {
         Ok(())
     }
 
-    /// Records the Driver's Allure steps, flattened in pre-order, each on the innermost span that contains its
-    /// start. They arrive at the scenario's end, when every span's interval is known.
-    pub(crate) fn driver_steps(&self, command: &DriverStepsCommand, at: SystemTime) {
-        let mut id = 0;
-        self.walk_steps(&command.steps, 0, &mut id, unix_ms(at));
-    }
-
-    fn walk_steps(&self, steps: &[DriverStep], parent: i64, id: &mut i64, at_ms: i64) {
-        for step in steps {
-            *id += 1;
-            let own = *id;
-            let mut attributes = vec![KeyValue::string(attr::DRIVER_STEP_NAME, &step.name)];
-            if let Some(status) = step.status {
-                attributes.push(KeyValue::string(attr::DRIVER_STEP_STATUS, status.as_str()));
-            }
-            if step.stop != 0 {
-                attributes.push(KeyValue::int(attr::DRIVER_STEP_DURATION_MS, step.stop - step.start));
-            }
-            attributes.push(KeyValue::int(attr::DRIVER_STEP_ID, own));
-            attributes.push(KeyValue::int(attr::DRIVER_STEP_PARENT, parent));
-            self.emit(event::DRIVER_STEP, self.innermost(step.start, at_ms), step.start, attributes);
-            self.walk_steps(&step.steps, own, id, at_ms);
-        }
-    }
-
     /// The still writer's failure report: a still that is not on disk. The error names the file as the snapshot
     /// records do, since a later snapshot of the same screen may name it too.
     fn still_failed(&self) -> stills::Failed {
@@ -564,7 +556,7 @@ impl Scenario {
     /// Writes the IDE spans that started in this scenario, oldest first, into the bundle's one trace.
     ///
     /// A span keeps its IDE parent when that parent is in the bundle too. Otherwise it is the child of the innermost
-    /// lane span that contains its start, the rule a Driver step follows, and [attr::IDE_SPAN_PARENT] keeps the lost
+    /// lane span that contains its start, the rule an input follows, and [attr::IDE_SPAN_PARENT] keeps the lost
     /// id. A span that started before the scenario belongs to the scenario before. It is left out, as an early input
     /// is.
     fn write_ide_spans(&mut self, at_ms: i64) {
@@ -628,10 +620,18 @@ impl Scenario {
 
     // --- the end -----------------------------------------------------------------------------------------------
 
-    /// Closes the bundle: open spans, the IDE's spans, the video, the stills, the log slice, the root span and, last,
-    /// the manifest. A truncated bundle names the innermost span that was still running. `latest` reads the facts at
-    /// the end, after the video and the stills are done, so a log that rotated meanwhile is still found.
-    pub(crate) fn finish(mut self, status: BundleStatus, at_ms: i64, client: Option<&Client>, latest: &dyn Fn() -> Option<Facts>) {
+    /// Closes the bundle: open spans, the IDE's spans, the video, the stills, the log slice, the root span, the Allure
+    /// result and, last, the manifest. A truncated bundle names the innermost span that was still running. `latest`
+    /// reads the facts at the end, after the video and the stills are done, so a log that rotated meanwhile is still
+    /// found. `details` are the `done` command's message and trace, which only the Allure result holds.
+    pub(crate) fn finish(
+        mut self,
+        status: BundleStatus,
+        details: AllureStatusDetails,
+        at_ms: i64,
+        client: Option<&Client>,
+        latest: &dyn Fn() -> Option<Facts>,
+    ) {
         let innermost = self.stack.last().copied();
         let running = (status == BundleStatus::Truncated).then(|| span_id(innermost.unwrap_or(0)));
         if status != BundleStatus::Truncated && innermost.is_some() {
@@ -707,8 +707,32 @@ impl Scenario {
             capture: Capture { source, reason },
             video: self.video.clone(),
         };
+        self.write_allure_result(&manifest, details);
         if let Err(error) = write_manifest(&self.dir, &manifest) {
             say!(self.diagnostics, "{}: {error:#}", self.dir.display());
+        }
+    }
+
+    /// Writes the bundle's Allure result into the run's results directory. A result that cannot be written, or a file
+    /// it has to leave out, is a diagnostics line: the bundle is closed, and the result changes no verdict.
+    fn write_allure_result(&self, manifest: &Manifest, details: AllureStatusDetails) {
+        let run_dir = self.root.join(&*sanitize_name(&self.run_id));
+        let bundle = slash_path(self.dir.strip_prefix(&run_dir).unwrap_or(&self.dir));
+        let input = ResultInput {
+            manifest,
+            bundle: &bundle,
+            labels: &self.command.labels,
+            suite: self.command.suite.as_deref(),
+            host: &self.host_name,
+            details,
+        };
+        match write_result(&self.dir, &allure_results_dir(&self.root, &self.run_id), &input) {
+            Ok(problems) => {
+                for problem in problems {
+                    say!(self.diagnostics, "{}: {problem}", self.command.name);
+                }
+            }
+            Err(error) => say!(self.diagnostics, "{}: no Allure result: {error:#}", self.command.name),
         }
     }
 
@@ -780,6 +804,14 @@ impl Scenario {
 /// Epoch nanoseconds cut to the milliseconds every time of the bundle is written in ([nanos]).
 const fn epoch_ms(epoch_nanos: i64) -> i64 {
     epoch_nanos / 1_000_000
+}
+
+/// A relative path with `/` between its segments, the form a label and a zip entry use.
+fn slash_path(path: &Path) -> String {
+    path.components()
+        .map(|component| component.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 /// The ids as a space-separated list, the way the lane's own messages print one.

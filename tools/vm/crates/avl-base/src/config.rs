@@ -7,9 +7,9 @@
 //! # What is a profile and what is a branch
 //!
 //! [`GuestOsProfile`] holds the guest-side differences that are only spelling - where the share is mounted, how
-//! `ln` spells "do not follow an existing link". Anything with behavioural weight is a branch on
-//! [`Config::guest_os`] instead: a login session to wait for, TCC, an APFS container to grow, a sealed golden to
-//! clone.
+//! `ln` spells "do not follow an existing link", and whether a `sudo` and a `chown` are part of a step at all
+//! ([`GuestOsProfile::privileged`]). Anything with behavioural weight is a branch on [`Config::guest_os`] instead: a
+//! login session to wait for, TCC, an APFS container to grow, a sealed golden to clone.
 //!
 //! # Empty means unset
 //!
@@ -61,18 +61,46 @@ pub fn docker_cli_label(arch: GuestArch) -> String {
     format!("@community//tools/vm:air_docker_darwin_{}", darwin_arch(arch))
 }
 
-/// The pinned `limactl` of a macOS host of `arch`, declared in `lima.MODULE.bazel` of this workspace. The Docker
-/// backend asks Bazel for it when it starts its Lima engine ([`DockerEngine::Lima`]).
-pub fn limactl_label(arch: GuestArch) -> String {
-    format!("@community//tools/vm:air_lima_darwin_{}", darwin_arch(arch))
-}
-
 /// The pinned `docker-buildx` CLI plugin of a macOS host of `arch`, declared in `docker.MODULE.bazel` of this
 /// workspace. The static macOS CLI has no plugin, and the image build needs BuildKit, so the Docker backend asks
-/// Bazel for it when it starts its Lima engine.
+/// Bazel for the plugin of the pinned CLI.
 pub fn docker_buildx_label(arch: GuestArch) -> String {
     format!("@community//tools/vm:air_docker_buildx_darwin_{}", darwin_arch(arch))
 }
+
+/// The pinned Apple `container` CLI, declared in `container.MODULE.bazel` of this workspace. Apple builds it for
+/// Apple silicon only, so there is one label. The Docker backend asks Bazel for it when it runs on the Apple
+/// `container` engine ([`DockerEngine::AppleContainer`]), unless `CONTAINER_BIN` names another executable.
+pub const CONTAINER_LABEL: &str = "@community//tools/vm:air_container_darwin_arm64";
+
+/// The first major version of macOS on which Apple `container` is the default engine. Apple `container` 1.5.0 needs
+/// macOS 26. An older macOS keeps the host engine ([`DockerEngine::decide`]).
+pub const CONTAINER_MACOS_MAJOR: u32 = 26;
+
+/// The file in which macOS keeps its release. [`MacosHost::read`] reads `ProductVersion` from it, so the load starts
+/// no `sw_vers`.
+const SYSTEM_VERSION_PLIST: &str = "/System/Library/CoreServices/SystemVersion.plist";
+
+/// The default memory of one worker on the Apple `container` engine, in MiB. Each container is a VM of its own, and
+/// the live lane's container peaked at 6.3 GiB on 2026-10-04 (ADR 0200). A running VM returns no memory to the host
+/// until it stops, so the limit is the price of a running worker.
+pub const CONTAINER_WORKER_MEMORY_MIB: u32 = 8_192;
+
+/// The slot count of a pool that no setting sizes, and the floor of the host memory rule ([`default_docker_slots`]).
+pub const DEFAULT_POOL_SLOTS: u32 = 2;
+
+/// The most slots a pool may have, through `AIR_VM_MAX_WORKERS` or through the host memory rule.
+pub const MAX_POOL_SLOTS: u32 = 16;
+
+/// The workers of an Apple `container` pool get at most one part in this many of the host memory
+/// ([`default_docker_slots`]).
+pub const HOST_MEMORY_SHARE_DIVISOR: u64 = 4;
+
+/// The grace period after a lease release before an idle Apple `container` worker stops ([`Config::idle_stop`]).
+pub const IDLE_STOP_DEFAULT: Duration = Duration::from_hours(1);
+
+/// The idle stop setting: seconds, or `off`.
+pub const IDLE_STOP_VARIABLE: &str = "AIR_VM_IDLE_STOP";
 
 /// The target name of a label: what follows the last `:`. A pin label names an alias, and the alias has the name of
 /// the repository that it forwards to.
@@ -80,25 +108,13 @@ pub fn label_target(label: &str) -> &str {
     label.rsplit_once(':').map_or(label, |(_, target)| target)
 }
 
-/// The architecture as the repository names of `docker.MODULE.bazel` and `lima.MODULE.bazel` spell it.
+/// The architecture as the repository names of `docker.MODULE.bazel` spell it.
 const fn darwin_arch(arch: GuestArch) -> &'static str {
     match arch {
         GuestArch::Arm64 => "arm64",
         GuestArch::X86_64 => "x86_64",
     }
 }
-
-/// The name of the Lima VM that is the Docker engine on a macOS host. One per machine, like the pool.
-pub const LIMA_ENGINE_INSTANCE: &str = "air-docker-engine";
-
-/// The default memory of the Lima engine VM, in MiB: 16 GiB for the two lanes of a two-slot Docker pool.
-///
-/// ADR 0183 measured about 2.5 GiB for one lane and gave a Linux worker 6 GiB. Two lanes share this one VM, with the
-/// engine and the page cache of the shares beside them. The live lane's container peaked at 6.3 GiB on 2026-10-04
-/// (the IDE, the daemon JVM with no `-Xmx`, two Junie JVMs and the Codex app-servers), and at 10 GiB the kernel ended
-/// the IDE in one iteration and the daemon in the next (ADR 0200). Two such containers need this. `AIR_VM_MEMORY_MB`
-/// overrides it.
-pub const LIMA_ENGINE_MEMORY_MIB: u32 = 16_384;
 
 /// The guest directory of the run secrets on a Linux guest: `/dev/shm` is a tmpfs, so a secret never reaches the
 /// persistent data volume.
@@ -115,10 +131,6 @@ pub fn run_secrets_dir(guest_os: GuestOs, vm_tmp: &str) -> String {
         GuestOs::Macos => format!("{vm_tmp}/run-secrets"),
     }
 }
-
-/// The longest path, in bytes, that the engine's forwarded Docker socket may have. A Unix socket path must stay
-/// under 104 bytes on macOS, and Lima documents the same limit.
-pub const DOCKER_SOCKET_PATH_LIMIT: usize = 103;
 
 /// Skips the Tart version floor entirely when true, for bisecting a Tart regression. One const for the reader and
 /// for the refusal that names it.
@@ -203,17 +215,6 @@ pub mod pins {
     pub fn docker_base_image() -> &'static str {
         pin("DOCKER_BASE_IMAGE")
     }
-
-    /// The Ubuntu cloud image the Lima engine of a macOS host boots, for one architecture: its URL and its sha256
-    /// (`LIMA_BASE_IMAGE_<ARCH>_URL`, `LIMA_BASE_IMAGE_<ARCH>_SHA256`). Lima downloads the image itself and checks
-    /// the digest. The pins are inputs of the engine template, so a
-    /// bump makes the engine VM again.
-    pub fn lima_base_image(arch: super::GuestArch) -> (&'static str, &'static str) {
-        match arch {
-            super::GuestArch::Arm64 => (pin("LIMA_BASE_IMAGE_ARM64_URL"), pin("LIMA_BASE_IMAGE_ARM64_SHA256")),
-            super::GuestArch::X86_64 => (pin("LIMA_BASE_IMAGE_X86_64_URL"), pin("LIMA_BASE_IMAGE_X86_64_SHA256")),
-        }
-    }
 }
 
 // --- the axes --------------------------------------------------------------------------------------------
@@ -228,6 +229,8 @@ pub enum Backend {
     Tart,
     Parallels,
     Docker,
+    #[serde(rename = "container-linux")]
+    ContainerLinux,
 }
 
 impl Backend {
@@ -236,6 +239,7 @@ impl Backend {
             Self::Tart => "tart",
             Self::Parallels => "parallels",
             Self::Docker => "docker",
+            Self::ContainerLinux => "container-linux",
         }
     }
 }
@@ -263,7 +267,9 @@ impl GuestOs {
         }
     }
 
-    /// The guest's spellings. Infallible: the set of guests is closed, so a guest with no profile cannot exist.
+    /// The guest's spellings on a backend whose guest the controller administers as root. Infallible: the set of
+    /// guests is closed, so a guest with no profile cannot exist. [`Selection::profile`] picks the profile of a
+    /// selection, which is another one for the testing-ui container.
     pub fn profile(self) -> &'static GuestOsProfile {
         match self {
             Self::Macos => &MACOS_PROFILE,
@@ -282,11 +288,12 @@ impl fmt::Display for GuestOs {
 ///
 /// Tart and Parallels run Apple-silicon guests. A Docker worker shares the kernel of the engine's Linux VM, so it
 /// runs the host's own architecture natively: x86_64 on any x86_64 host (a Windows x64 PC, a Linux CI agent, an
-/// Intel Mac), and arm64 on any arm64 host (an Apple-silicon Mac, a Windows arm64 PC). The Docker backend's engine
-/// gate checks that the engine runs this architecture, so a mismatch (an amd64 engine on an Apple-silicon Mac, a
-/// remote `DOCKER_HOST` of another architecture) is a named refusal and never a lane built for the wrong guest. The
-/// Starlark side of the same rule is two keys: `//build:air_lane_guest_linux_on_host_linux_x64` for a Linux x86_64
-/// host, whose own build is the guest's, and `//build:air_lane_guest_linux_x64_cross` for another x86_64 host.
+/// Intel Mac), and arm64 on any arm64 host (an Apple-silicon Mac, a Windows arm64 PC). The testing-ui container
+/// runs the host's architecture for the same reason. The Docker backend's engine gate checks that the engine runs
+/// this architecture, so a mismatch (an amd64 engine on an Apple-silicon Mac, a remote `DOCKER_HOST` of another
+/// architecture) is a named refusal and never a lane built for the wrong guest. The
+/// Starlark side of the same rule is two keys: `//plugins/air/tests/integration/ide:air_lane_guest_linux_on_host_linux_x64` for a Linux x86_64
+/// host, whose own build is the guest's, and `//plugins/air/tests/integration/ide:air_lane_guest_linux_x64_cross` for another x86_64 host.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum GuestArch {
     Arm64,
@@ -297,8 +304,8 @@ impl GuestArch {
     /// The architecture of the guests `backend` runs on this host.
     pub const fn of(backend: Backend) -> Self {
         match backend {
-            Backend::Docker if cfg!(target_arch = "x86_64") => Self::X86_64,
-            Backend::Docker | Backend::Tart | Backend::Parallels => Self::Arm64,
+            Backend::Docker | Backend::ContainerLinux if cfg!(target_arch = "x86_64") => Self::X86_64,
+            Backend::Docker | Backend::ContainerLinux | Backend::Tart | Backend::Parallels => Self::Arm64,
         }
     }
 
@@ -355,9 +362,9 @@ impl HostOs {
     }
 
     /// Whether the controller drives `backend` from this host. Tart and Parallels need a macOS or a Linux host. A
-    /// Windows host reaches only Docker, through `docker.exe`.
+    /// Windows host reaches Docker through `docker.exe`, and the testing-ui container through the skill's `wslc`.
     pub const fn drives(self, backend: Backend) -> bool {
-        matches!(backend, Backend::Docker) || !matches!(self, Self::Windows)
+        matches!(backend, Backend::Docker | Backend::ContainerLinux) || !matches!(self, Self::Windows)
     }
 
     /// Orders two environment variable names as this host compares them. Windows compares the names without case,
@@ -428,35 +435,155 @@ impl HostOs {
     }
 }
 
-/// The engine the containers of a Docker pool run on. Nothing selects it: it follows the environment and the host.
+/// A macOS host as the engine rule reads it ([`DockerEngine::decide`]).
+///
+/// [`Config::load`] reads it once from the host. A test pins it, as it pins the [`HostOs`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MacosHost {
+    /// The major version of the release: 26 for macOS 26.0.1.
+    pub major: u32,
+    /// Whether the processor is Apple silicon. Apple builds `container` for Apple silicon only.
+    pub apple_silicon: bool,
+}
+
+impl MacosHost {
+    /// This host, or `None` when it is not macOS or when its version file names no version.
+    pub fn read() -> Option<Self> {
+        if HostOs::CURRENT != HostOs::Macos {
+            return None;
+        }
+        let plist = std::fs::read_to_string(SYSTEM_VERSION_PLIST).ok()?;
+        Some(Self {
+            major: product_major(&plist)?,
+            apple_silicon: cfg!(target_arch = "aarch64"),
+        })
+    }
+
+    /// Whether Apple `container` is the default engine of this host: macOS [`CONTAINER_MACOS_MAJOR`] or newer, on
+    /// Apple silicon.
+    pub const fn runs_apple_container(self) -> bool {
+        self.apple_silicon && self.major >= CONTAINER_MACOS_MAJOR
+    }
+}
+
+/// The facts of the host that the settings read and that this crate does not probe itself.
+///
+/// The caller of [`Config::load`] hands them in. The memory probe needs `libc`, which this crate does not link, so
+/// `avl_host_sys::host::memory_mib` answers it. A test pins both facts, as it pins the [`HostOs`].
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct HostFacts {
+    /// The macOS release ([`MacosHost::read`]), or `None` on another host.
+    pub macos: Option<MacosHost>,
+    /// The physical memory of the host in MiB, or `None` when nothing probed it. The default pool size of the Apple
+    /// `container` engine follows it ([`default_docker_slots`]).
+    pub memory_mib: Option<u64>,
+}
+
+impl HostFacts {
+    /// The macOS release of this host and no memory: the facts of a caller that sizes no pool.
+    pub fn without_memory() -> Self {
+        Self {
+            macos: MacosHost::read(),
+            memory_mib: None,
+        }
+    }
+}
+
+/// The default slot count of a pool on the Apple `container` engine: one part in [`HOST_MEMORY_SHARE_DIVISOR`] of the
+/// host memory, divided by the memory of one worker, from [`DEFAULT_POOL_SLOTS`] to [`MAX_POOL_SLOTS`].
+///
+/// A host of 128 GiB with workers of 8 GiB gets 4 slots, a host of 64 GiB gets 2, and a host of 256 GiB gets 8. A host
+/// of unknown memory gets [`DEFAULT_POOL_SLOTS`].
+pub fn default_docker_slots(memory_mib: Option<u64>, worker_mib: u32) -> u32 {
+    let Some(host_mib) = memory_mib else {
+        return DEFAULT_POOL_SLOTS;
+    };
+    let slots = host_mib / (HOST_MEMORY_SHARE_DIVISOR * u64::from(worker_mib.max(1)));
+    u32::try_from(slots)
+        .unwrap_or(MAX_POOL_SLOTS)
+        .clamp(DEFAULT_POOL_SLOTS, MAX_POOL_SLOTS)
+}
+
+/// Why the pool has its slot count, as `status` prints it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PoolRule {
+    /// `AIR_VM_WORKERS` names the slots.
+    Named,
+    /// `AIR_VM_MAX_WORKERS` sets the count.
+    MaxWorkers,
+    /// The Apple `container` default follows the host memory ([`default_docker_slots`]).
+    HostMemory { host_mib: u64, worker_mib: u32 },
+    /// The Apple `container` default on a host of unknown memory: [`DEFAULT_POOL_SLOTS`].
+    UnknownHostMemory,
+    /// The default of every other engine and backend: [`DEFAULT_POOL_SLOTS`].
+    Default,
+    /// The one VM that `AIR_VM_PARALLELS_VM` names.
+    ParallelsVm,
+}
+
+impl fmt::Display for PoolRule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::Named => f.write_str("AIR_VM_WORKERS"),
+            Self::MaxWorkers => f.write_str("AIR_VM_MAX_WORKERS"),
+            Self::HostMemory { host_mib, worker_mib } => {
+                write!(f, "host {}, {} per worker", gib(host_mib), gib(u64::from(worker_mib)))
+            }
+            Self::UnknownHostMemory => f.write_str("host memory unknown"),
+            Self::Default => f.write_str("default"),
+            Self::ParallelsVm => f.write_str("AIR_VM_PARALLELS_VM"),
+        }
+    }
+}
+
+/// A size in MiB as GiB: `128 GiB`, or `7.5 GiB` when it is not a whole number.
+fn gib(mib: u64) -> String {
+    if mib.is_multiple_of(1024) {
+        format!("{} GiB", mib / 1024)
+    } else {
+        format!("{}.{} GiB", mib / 1024, mib % 1024 * 10 / 1024)
+    }
+}
+
+/// The major version of `ProductVersion` in the XML of `SystemVersion.plist`: the digits before the first dot of the
+/// string that follows the key.
+fn product_major(plist: &str) -> Option<u32> {
+    let (_, after_key) = plist.split_once("<key>ProductVersion</key>")?;
+    let (version, _) = after_key.trim_start().strip_prefix("<string>")?.split_once("</string>")?;
+    version.trim().split('.').next()?.parse().ok()
+}
+
+/// The engine the containers of a Docker pool run on. It follows the environment and the host.
 ///
 /// When the environment names an engine, through `DOCKER_BIN` or `DOCKER_HOST`, the backend runs that CLI against
-/// that engine. When it names none, a macOS host runs the pinned CLI against a Lima VM the controller owns, so a Mac
-/// needs no Docker installation. A Linux or a Windows host keeps the engine it has, because Lima needs QEMU on Linux
-/// and WSL2 on Windows, and both are installations too.
+/// that engine. When it names none, a Mac on macOS 26 or newer, on Apple silicon, runs Apple `container`, which needs
+/// no Docker installation. Every other host keeps the engine of its host environment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum DockerEngine {
     /// The engine of the host environment: `DOCKER_HOST`, or the default context of the CLI.
-    External,
-    /// The Lima VM [`LIMA_ENGINE_INSTANCE`] under [`Config::lima_home`].
-    Lima,
+    Host,
+    /// Apple `container`: one VM per container, driven through its own CLI, the pin at [`CONTAINER_LABEL`] or
+    /// `CONTAINER_BIN`. The server is the one of the login session, on the default data root of the tool.
+    AppleContainer,
 }
 
 impl DockerEngine {
-    /// The engine rule, as a pure function of the host and of the two variables that name an engine.
-    pub const fn decide(host: HostOs, docker_bin_set: bool, docker_host_set: bool) -> Self {
-        if docker_bin_set || docker_host_set || !matches!(host, HostOs::Macos) {
-            Self::External
+    /// The engine rule, as a pure function of the host, of its macOS release and of the two variables that name an
+    /// engine. A Mac of an older or an unknown release, and a Mac with an Intel processor, keep the host engine.
+    pub const fn decide(host: HostOs, macos: Option<MacosHost>, docker_bin_set: bool, docker_host_set: bool) -> Self {
+        let names_engine = docker_bin_set || docker_host_set;
+        if !names_engine && matches!(host, HostOs::Macos) && matches!(macos, Some(macos) if macos.runs_apple_container()) {
+            Self::AppleContainer
         } else {
-            Self::Lima
+            Self::Host
         }
     }
 
-    /// The word `status` prints: `host` for the engine of the host environment, `lima` for the controller's VM.
+    /// The word `status` prints: `host` for the engine of the host environment, `container` for Apple `container`.
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::External => "host",
-            Self::Lima => "lima",
+            Self::Host => "host",
+            Self::AppleContainer => "container",
         }
     }
 }
@@ -490,6 +617,10 @@ impl FromStr for GuestOs {
 #[serde(rename_all = "camelCase")]
 pub struct GuestOsProfile {
     pub os: GuestOs,
+    /// Whether the controller administers the guest as root: it then prefixes a guest command with `sudo` and
+    /// hands a directory that root made to the worker account with `chown`. An unprivileged guest runs every
+    /// command as the one account it has, which owns what it writes, so both steps are left out.
+    pub privileged: bool,
     /// Where the controller mounts the shared-folder device. Space-free, so a guest path is one shell word.
     pub share_mount: &'static str,
     pub chown: &'static str,
@@ -498,6 +629,9 @@ pub struct GuestOsProfile {
     /// The VirtioFS device and its remount sweep, or `None` for a guest whose shares are bind mounts. Only a macOS
     /// guest has one: Tart and Parallels run a macOS guest, and a Docker worker's shares are bind mounts.
     pub virtiofs: Option<&'static VirtiofsMount>,
+    /// Whether the shares are mounted at their host paths, so a host path is a guest path with no parity layout
+    /// between them: the testing-ui container's are.
+    pub shares_at_host_paths: bool,
 }
 
 /// How a guest's remount sweep reads and mounts the shared-folder device of Tart and Parallels.
@@ -524,20 +658,32 @@ static MACOS_VIRTIOFS: VirtiofsMount = VirtiofsMount {
 
 static MACOS_PROFILE: GuestOsProfile = GuestOsProfile {
     os: GuestOs::Macos,
+    privileged: true,
     share_mount: "/Volumes/AirVmShares",
     chown: "/usr/sbin/chown",
     link_flags: "-sfh",
     virtiofs: Some(&MACOS_VIRTIOFS),
+    shares_at_host_paths: false,
 };
 
 static LINUX_PROFILE: GuestOsProfile = GuestOsProfile {
     os: GuestOs::Linux,
+    privileged: true,
     // Not /Volumes: that is a macOS convention, and /mnt is where a Linux guest expects an operator mount.
     share_mount: "/mnt/AirVmShares",
     chown: "/bin/chown",
     link_flags: "-sfn",
     // A Docker worker's shares are bind mounts, with no device to sweep.
     virtiofs: None,
+    shares_at_host_paths: false,
+};
+
+/// The Linux guest of the testing-ui container. The skill's script mounts the Bazel share read-only at its host path,
+/// and the container runs as its `ubuntu` account with no `sudo`.
+static CONTAINER_LINUX_PROFILE: GuestOsProfile = GuestOsProfile {
+    privileged: false,
+    shares_at_host_paths: true,
+    ..LINUX_PROFILE
 };
 
 /// Which pool a message is about, in the spelling `--backend` accepts.
@@ -561,8 +707,8 @@ impl Selection {
     ///
     /// Docker and not Tart, on each host for its own reason:
     ///
-    /// - a macOS host runs the pinned CLI against the controller's Lima engine ([`DockerEngine::Lima`]), so it needs
-    ///   no installation, as Tart needs none;
+    /// - a macOS host on macOS 26 or newer, on Apple silicon, runs Apple `container` ([`DockerEngine::decide`]), so it
+    ///   needs no installation, as Tart needs none. Another Mac uses the engine of its host environment;
     /// - a Linux host has no Tart at all, because Tart runs only on macOS, so a Tart default there named a backend
     ///   that cannot exist;
     /// - a Windows host drives Docker only ([`HostOs::drives`]).
@@ -575,9 +721,18 @@ impl Selection {
     };
 
     /// The spelling `--backend` accepts for this selection. A Linux guest in a container is `docker`, the default
-    /// pool ([`Selection::DEFAULT`]).
+    /// pool ([`Selection::DEFAULT`]), or `container-linux` in the skill's container.
     pub const fn label(self) -> &'static str {
         self.backend.as_str()
+    }
+
+    /// The guest's spellings for this selection: the profile of its guest OS ([`GuestOs::profile`]), or the
+    /// profile of the testing-ui container, whose shares sit at their host paths and whose account has no root.
+    pub fn profile(self) -> &'static GuestOsProfile {
+        match self.backend {
+            Backend::ContainerLinux => &CONTAINER_LINUX_PROFILE,
+            Backend::Tart | Backend::Parallels | Backend::Docker => self.guest_os.profile(),
+        }
     }
 }
 
@@ -593,8 +748,9 @@ impl fmt::Display for Selection {
     }
 }
 
-/// The `--backend` flag: one flag, two axes. `tart` and `parallels` are a macOS guest, and `docker` is a Linux
-/// guest in a container. A wider flag names pairs that no worker serves.
+/// The `--backend` flag: one flag, two axes. `tart` and `parallels` are a macOS guest, `docker` is a Linux guest in
+/// a container, and `container-linux` is the Linux guest of the `testing-ui` skill's container. A wider flag names
+/// pairs that no worker serves.
 impl FromStr for Selection {
     type Err = Refusal;
 
@@ -603,8 +759,9 @@ impl FromStr for Selection {
             "tart" => (Backend::Tart, GuestOs::Macos),
             "parallels" => (Backend::Parallels, GuestOs::Macos),
             "docker" => (Backend::Docker, GuestOs::Linux),
+            "container-linux" => (Backend::ContainerLinux, GuestOs::Linux),
             _ => {
-                return Err(Refusal::usage("--backend must be tart, parallels or docker"));
+                return Err(Refusal::usage("--backend must be tart, parallels, docker or container-linux"));
             }
         };
         Ok(Self { backend, guest_os })
@@ -716,6 +873,26 @@ impl<'a> Reader<'a> {
         Duration::from_secs(u64::from(self.positive_int(name, fallback)))
     }
 
+    /// A count of seconds that may be zero, or `off`, which answers `None`.
+    fn seconds_or_off(&mut self, name: &str, fallback: Option<Duration>) -> Option<Duration> {
+        let Some(raw) = self.set(name) else {
+            return fallback;
+        };
+        let trimmed = raw.trim();
+        if trimmed.eq_ignore_ascii_case("off") {
+            return None;
+        }
+        match trimmed.parse::<u32>() {
+            Ok(value) if trimmed.bytes().all(|byte| byte.is_ascii_digit()) => Some(Duration::from_secs(u64::from(value))),
+            _ => {
+                self.refuse(Refusal::invalid_environment(format!(
+                    "{name} must be a count of seconds or `off`, not {raw:?}"
+                )));
+                fallback
+            }
+        }
+    }
+
     fn bounded_positive_int(&mut self, name: &str, fallback: u32, maximum: u32) -> u32 {
         let value = self.positive_int(name, fallback);
         if value > maximum {
@@ -780,21 +957,18 @@ fn is_root_disk_options(value: &str) -> bool {
     })
 }
 
-/// The size of a worker's root disk. The floor is the image plus room for the writable state (`out`, `tmp`,
+/// The size of a Tart worker's root disk. The floor is the image plus room for the writable state (`out`, `tmp`,
 /// `build-download`, the daemon's jar store). A Tart macOS worker grows its disk to this size, and its image is
-/// 50 GB. Only ever applied upwards: `tart set --disk-size` cannot shrink a disk. For a Linux guest, it is the disk
-/// of the Lima engine VM, which the containers of the Docker pool share.
-fn worker_root_disk_gb(reader: &mut Reader<'_>, guest_os: GuestOs) -> u32 {
-    let (floor, fallback) = match guest_os {
-        GuestOs::Macos => (80, 120),
-        GuestOs::Linux => (40, 80),
-    };
-    let value = reader.bounded_positive_int("AIR_VM_ROOT_DISK_GB", fallback, 4_000);
-    if value < floor {
+/// 50 GB. Only ever applied upwards: `tart set --disk-size` cannot shrink a disk.
+fn tart_root_disk_gb(reader: &mut Reader<'_>) -> u32 {
+    const FLOOR: u32 = 80;
+    const FALLBACK: u32 = 120;
+    let value = reader.bounded_positive_int("AIR_VM_ROOT_DISK_GB", FALLBACK, 4_000);
+    if value < FLOOR {
         reader.refuse(Refusal::invalid_environment(format!(
-            "AIR_VM_ROOT_DISK_GB must be at least {floor} to hold a {guest_os} worker's writable state"
+            "AIR_VM_ROOT_DISK_GB must be at least {FLOOR} to hold a macOS worker's writable state"
         )));
-        return fallback;
+        return FALLBACK;
     }
     value
 }
@@ -804,11 +978,20 @@ fn worker_root_disk_gb(reader: &mut Reader<'_>, guest_os: GuestOs) -> u32 {
 /// and fixes the pool at that size; otherwise slots are `<prefix>-1 … <prefix>-N`, with a prefix distinct per pool,
 /// because a name collision would hand a Linux lease a macOS worker.
 ///
-/// A Docker pool has two slots unless `AIR_VM_MAX_WORKERS` says otherwise, as a Tart pool has. It started with one
-/// container on 2026-09-29, the user's choice while nothing sized the engine. Since the Docker pool is the default
-/// (ADR 0190) it has two, so a `shard` and a second session each find a worker, and the Lima engine is sized for two
-/// lanes ([`LIMA_ENGINE_MEMORY_MIB`]).
-fn worker_slots(reader: &mut Reader<'_>, backend: Backend) -> Vec<String> {
+/// A pool has [`DEFAULT_POOL_SLOTS`] slots unless `AIR_VM_MAX_WORKERS` says otherwise. On the Apple `container` engine
+/// the default follows the host memory instead ([`default_docker_slots`]), because each worker is a VM of
+/// `worker_mib`. A container on the host engine has no cap, so that pool keeps the fixed default (the decision
+/// `2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops`).
+///
+/// A container-linux pool has one slot, `container-linux-1`: the skill's script runs one container, so an
+/// `AIR_VM_MAX_WORKERS` other than 1 is refused there.
+fn worker_slots(
+    reader: &mut Reader<'_>,
+    backend: Backend,
+    engine: DockerEngine,
+    worker_mib: u32,
+    memory_mib: Option<u64>,
+) -> (Vec<String>, PoolRule) {
     if let Some(explicit) = reader.set("AIR_VM_WORKERS") {
         let workers: Vec<String> = explicit
             .split(',')
@@ -822,7 +1005,7 @@ fn worker_slots(reader: &mut Reader<'_>, backend: Backend) -> Vec<String> {
                 Exit::USAGE,
                 "AIR_VM_WORKERS is set but names no workers",
             ));
-            return Vec::new();
+            return (Vec::new(), PoolRule::Named);
         }
         let mut seen = std::collections::HashSet::new();
         if !workers.iter().all(|worker| seen.insert(worker)) {
@@ -831,21 +1014,43 @@ fn worker_slots(reader: &mut Reader<'_>, backend: Backend) -> Vec<String> {
                 Exit::USAGE,
                 "AIR_VM_WORKERS must name distinct workers",
             ));
-            return Vec::new();
+            return (Vec::new(), PoolRule::Named);
         }
-        return workers;
+        return (workers, PoolRule::Named);
     }
-    let default_prefix = match backend {
-        Backend::Docker => "air-docker",
-        Backend::Tart | Backend::Parallels => "air-macos",
+    let (default_prefix, default_count) = match backend {
+        Backend::Docker => ("air-docker", 2),
+        Backend::ContainerLinux => ("container-linux", 1),
+        Backend::Tart | Backend::Parallels => ("air-macos", 2),
     };
     let prefix = reader.string("AIR_VM_WORKER_PREFIX", default_prefix);
     if let Err(refusal) = validate_name(&prefix, "worker name prefix") {
         reader.refuse(refusal);
-        return Vec::new();
+        return (Vec::new(), PoolRule::Default);
     }
-    let max_workers = reader.bounded_positive_int("AIR_VM_MAX_WORKERS", 2, 16);
-    (1..=max_workers).map(|index| format!("{prefix}-{index}")).collect()
+    let (fallback, default_rule) = match (backend, engine, memory_mib) {
+        (Backend::Docker, DockerEngine::AppleContainer, Some(host_mib)) => (
+            default_docker_slots(memory_mib, worker_mib),
+            PoolRule::HostMemory { host_mib, worker_mib },
+        ),
+        (Backend::Docker, DockerEngine::AppleContainer, None) => (DEFAULT_POOL_SLOTS, PoolRule::UnknownHostMemory),
+        _ => (default_count, PoolRule::Default),
+    };
+    let rule = if reader.set("AIR_VM_MAX_WORKERS").is_some() {
+        PoolRule::MaxWorkers
+    } else {
+        default_rule
+    };
+    let max_workers = reader.bounded_positive_int("AIR_VM_MAX_WORKERS", fallback, MAX_POOL_SLOTS);
+    if backend == Backend::ContainerLinux && max_workers != 1 {
+        reader.refuse(Refusal::new(
+            "invalid_worker_pool",
+            Exit::USAGE,
+            format!("AIR_VM_MAX_WORKERS must be 1 for the {backend} backend, whose skill runs one container"),
+        ));
+        return (Vec::new(), rule);
+    }
+    ((1..=max_workers).map(|index| format!("{prefix}-{index}")).collect(), rule)
 }
 
 // --- the resolved settings -------------------------------------------------------------------------------
@@ -878,22 +1083,22 @@ pub struct Config {
     /// nothing that is OrbStack's or Docker Desktop's own.
     pub docker: Option<PathBuf>,
     /// The engine address `DOCKER_HOST` names. The runner passes the variable to every child as it is. The
-    /// setting only takes part in the engine rule ([`DockerEngine::decide`]).
+    /// setting takes part in the engine rule ([`DockerEngine::decide`]) and in the remedy of an engine that does not
+    /// answer.
     pub docker_host: Option<String>,
     /// The engine the containers of a Docker pool run on ([`DockerEngine::decide`]); a test fixture may pin it.
     pub docker_engine: DockerEngine,
-    /// The home directory of the user, from `HOME`, or from `USERPROFILE` on Windows. The Lima engine mounts it
-    /// read-only, so the repository and the Bazel output user root must be under it.
-    pub home: PathBuf,
-    /// The `LIMA_HOME` of the engine VM on a macOS host (`AIR_VM_LIMA_HOME`).
-    ///
-    /// The default is `<home>/.local/state/JetBrains/air-vm-ui-tests/lima` on every host, and not under the macOS
-    /// runtime root. The engine forwards its Docker socket to `<lima_home>/air-docker-engine/sock/docker.sock`, and
-    /// a Unix socket path must stay under 104 bytes. Under `~/Library/Application Support` the path reaches that
-    /// limit for an ordinary user name, and Lima avoids that directory for the same reason. The engine start refuses
-    /// `lima_home_too_long` when the socket path is longer than [`DOCKER_SOCKET_PATH_LIMIT`]
-    /// ([`Config::require_short_lima_socket`]).
-    pub lima_home: PathBuf,
+    /// The macOS release that the load read ([`MacosHost::read`]), or `None` on another host and when the version file
+    /// names no version. The gate of the Apple `container` engine refuses a release older than
+    /// [`CONTAINER_MACOS_MAJOR`].
+    pub macos: Option<MacosHost>,
+    /// The Apple `container` executable `CONTAINER_BIN` names, or `None` for the pinned CLI at [`CONTAINER_LABEL`].
+    /// Only the Apple `container` engine reads it.
+    pub container: Option<PathBuf>,
+    /// The nameserver of a build and of a container on the Apple `container` engine (`AIR_VM_DNS`), or `None` for the
+    /// default the engine derives from the host. The engine's own DNS proxy does not answer on every host.
+    pub vm_dns: Option<String>,
+
     /// The repository a Docker worker's image is tagged in (`AIR_VM_DOCKER_IMAGE`). The tag itself is a digest of
     /// what the image is built from, so the repository is the only part an operator names.
     pub docker_image: String,
@@ -905,10 +1110,21 @@ pub struct Config {
     pub docker_registry: Option<String>,
     /// Whether the controller publishes the image it builds to [`Config::docker_registry`] (`AIR_VM_DOCKER_PUSH`),
     /// for every published platform. With it on, the controller always builds and never pulls. Off by default: a
-    /// developer's build stays local, and a CI job or an operator opts in.
+    /// developer's build stays local, and a CI job or an operator opts in. On the Apple `container` engine the
+    /// publish goes to [`Config::image_mirror`] instead, for the platform of the host only.
     pub docker_push: bool,
+    /// The file mirror the Apple `container` engine pulls the worker image from, as an OCI archive
+    /// (`AIR_VM_IMAGE_MIRROR`). The archive is `<mirror>/<docker_image>/<tag digest>-linux-<arch>.tar`. `None` when
+    /// the operator set `off`: that engine then builds and never pulls. The other engines pull from
+    /// [`Config::docker_registry`].
+    pub image_mirror: Option<String>,
+    /// The bearer token of an upload to [`Config::image_mirror`] (`AIR_VM_IMAGE_MIRROR_TOKEN`). Only a publish on the
+    /// Apple `container` engine reads it, and a publish without it is refused.
+    pub image_mirror_token: Option<Secret>,
+    /// The host `curl` that downloads and uploads the image archive (`AIR_VM_HOST_CURL`).
+    pub host_curl: String,
 
-    pub repo_share_name: String,
+    /// The name of the one share of a worker, the Bazel output user root (`AIR_VM_BAZEL_SHARE_NAME`).
     pub bazel_share_name: String,
 
     configured_bazel_user_root: PathBuf,
@@ -923,8 +1139,8 @@ pub struct Config {
     /// is part of the launch digest. A Linux guest keeps it on `/dev/shm`, a tmpfs, so a secret never reaches the
     /// persistent data volume. A macOS guest has no tmpfs and keeps it under [`Config::vm_tmp`].
     pub vm_run_secrets: String,
-    /// The build-dependencies download cache the test JVM is redirected to, since the checkout share is
-    /// read-only. Persistent across runs: a warm cache keeps the per-class inner loop at about a minute.
+    /// The build-dependencies download cache the test JVM is redirected to, since the guest has no checkout to keep
+    /// it in. Persistent across runs: a warm cache keeps the per-class inner loop at about a minute.
     pub vm_download_cache: String,
 
     pub git: String,
@@ -949,15 +1165,15 @@ pub struct Config {
     pub vm_cpu: u32,
     /// The memory of a worker VM in MiB (`AIR_VM_MEMORY_MB`): 32768 for a macOS guest.
     ///
-    /// On the Lima engine it is the memory of the engine VM, which every container of the Docker pool shares, and the
-    /// default is [`LIMA_ENGINE_MEMORY_MIB`]. A container on an external engine has no cap of its own, so nothing
-    /// reads the value there.
+    /// On the Apple `container` engine it is the memory of one worker, and the default is
+    /// [`CONTAINER_WORKER_MEMORY_MIB`]. A container on the host engine has no cap of its own, so nothing reads the
+    /// value there.
     pub vm_memory_mib: u32,
     /// The macOS guest's screen, `tart set --display` (`AIR_VM_RESOLUTION`). Not the Linux X display, which is
     /// [`Config::guest_display`].
     pub vm_display: String,
-    /// Zero for Parallels, which owns its own VM, and for Docker on an external engine, whose container has no disk
-    /// of its own to grow. On the Lima engine ([`DockerEngine::Lima`]) it is the disk of the engine VM.
+    /// The disk a Tart worker grows to (`AIR_VM_ROOT_DISK_GB`). Zero for every other backend: Parallels owns its own
+    /// VM, and a container has no disk that this controller sizes.
     pub vm_root_disk_gb: u32,
     /// The X screen geometry a Docker worker's entrypoint gives Xvfb (`AIR_VM_SCREEN`), or `None` for its default.
     pub vm_screen: Option<String>,
@@ -965,7 +1181,8 @@ pub struct Config {
     pub boot_timeout_seconds: u32,
     pub golden_vm: String,
     /// The X display a Linux worker's IDE opens on, so a display the guest already runs is picked up instead of
-    /// a fresh headless one per IDE.
+    /// a fresh headless one per IDE: `:88` on a Tart or a Docker worker, and `:1`, the Xvnc of the testing-ui
+    /// container.
     pub guest_display: String,
 
     pub tart_home: PathBuf,
@@ -982,7 +1199,29 @@ pub struct Config {
 
     pub runtime_root: PathBuf,
     pub workers: Vec<String>,
+    /// Why [`Config::workers`] has its length, for `status`.
+    pub pool_rule: PoolRule,
+    /// How long an unleased worker on the Apple `container` engine keeps running after a lease release
+    /// (`AIR_VM_IDLE_STOP`), or `None` when it keeps running until `pool stop`.
+    ///
+    /// The default is [`IDLE_STOP_DEFAULT`]. Zero stops the worker inside the release. A running worker VM returns no
+    /// memory to the host until it stops, so the stop is what gives the memory back. Every other engine and backend
+    /// reads `None`: the host engine belongs to the operator, and a Tart worker suspends with `pool stop`.
+    pub idle_stop: Option<Duration>,
+    /// The physical memory of the host in MiB that the load read ([`HostFacts::memory_mib`]).
+    pub host_memory_mib: Option<u64>,
     pub image_root: PathBuf,
+
+    /// The `container.cmd` of the `testing-ui` skill, which starts and drives the testing-ui container: the script of
+    /// the checkout that holds the workspace.
+    pub container_linux_script: PathBuf,
+    /// The output root of the `testing-ui` skill, where the controller reads the control port, its bearer and the
+    /// display description: `out/testing-ui` of the checkout that holds the workspace.
+    pub container_linux_root: PathBuf,
+    /// The host loopback port at which the container-linux `start` publishes the daemon's guest port
+    /// (`AIR_VM_DAEMON_HOST_PORT`). The default derives from the checkout path, so two checkouts never share it and it
+    /// stays the same across restarts.
+    pub daemon_host_port: u16,
 
     /// The guest daemon's port and the budgets of its boot, health poll and watchdog (`AIR_VM_DAEMON_*`).
     pub daemon: DaemonBudgets,
@@ -1070,23 +1309,41 @@ impl Presentation {
     }
 }
 
+/// The setting of the repository share, which the controller no longer has. A set value is refused.
+pub const REMOVED_REPO_SHARE_VARIABLE: &str = "AIR_VM_REPO_SHARE_NAME";
+
+/// The setting that chose the engine of the Docker backend, which the controller no longer has: the macOS version
+/// chooses it ([`DockerEngine::decide`]). A set value is refused.
+pub const REMOVED_DOCKER_ENGINE_VARIABLE: &str = "AIR_VM_DOCKER_ENGINE";
+
+/// The setting of the home of the Lima engine, which went with the engine. A set value is refused.
+pub const REMOVED_LIMA_HOME_VARIABLE: &str = "AIR_VM_LIMA_HOME";
+
 impl Config {
     /// Resolves one invocation's settings, or refuses the environment. `workspace_dir` is [`WORKSPACE_DIR`] of the
-    /// checkout, which the image pipeline is found relative to.
-    pub fn load(selection: Selection, environment: &Environment, workspace_dir: &Path) -> Result<Self, Refusal> {
-        Self::load_on(HostOs::CURRENT, selection, environment, workspace_dir)
+    /// checkout, which the image pipeline is found relative to. The caller reads the facts of this host once and
+    /// hands them in ([`HostFacts`]).
+    pub fn load(facts: HostFacts, selection: Selection, environment: &Environment, workspace_dir: &Path) -> Result<Self, Refusal> {
+        Self::load_on(HostOs::CURRENT, facts, selection, environment, workspace_dir)
     }
 
-    /// [`Config::load`] as a controller on `host` resolves it, so a test can resolve the settings of another host.
-    pub fn load_on(host: HostOs, selection: Selection, environment: &Environment, workspace_dir: &Path) -> Result<Self, Refusal> {
+    /// [`Config::load`] as a controller on `host` with the facts `facts` resolves it, so a test can resolve the
+    /// settings of another host. Only a macOS host reads the macOS release.
+    pub fn load_on(
+        host: HostOs,
+        facts: HostFacts,
+        selection: Selection,
+        environment: &Environment,
+        workspace_dir: &Path,
+    ) -> Result<Self, Refusal> {
         let Selection { backend, guest_os } = selection;
         if !host.drives(backend) {
             return Err(Refusal::new(
                 "unsupported_host_backend",
                 Exit::USAGE,
                 format!(
-                    "a {host} host drives only the Docker backend, and --backend {selection} needs a macOS or a Linux \
-                     host; pass --backend docker"
+                    "a {host} host drives the Docker and the container-linux backends, and --backend {selection} needs \
+                     a macOS or a Linux host; pass --backend docker or container-linux"
                 ),
             ));
         }
@@ -1101,11 +1358,18 @@ impl Config {
             ));
         }
         // A limit of the engine: a container shares the kernel of the engine's Linux VM, so it cannot be macOS.
-        if backend == Backend::Docker && guest_os != GuestOs::Linux {
+        let container = match backend {
+            Backend::Docker => Some("Docker"),
+            Backend::ContainerLinux => Some("container-linux"),
+            Backend::Tart | Backend::Parallels => None,
+        };
+        if let Some(container) = container
+            && guest_os != GuestOs::Linux
+        {
             return Err(Refusal::new(
                 "unsupported_backend_operation",
                 Exit::USAGE,
-                "a Docker worker is a Linux container; a macOS guest needs a VM, which --backend tart gives",
+                format!("a {container} worker is a Linux container; a macOS guest needs a VM, which --backend tart gives"),
             ));
         }
         // The Tart backend runs the sealed macOS golden only. The Linux guest is a Docker worker.
@@ -1116,9 +1380,12 @@ impl Config {
                 "a Tart worker is a macOS guest; a Linux guest is a Docker worker, which --backend docker gives",
             ));
         }
+        let HostFacts { macos, memory_mib } = facts;
         let mut reader = Reader::new(environment);
         let linux = guest_os == GuestOs::Linux;
         let tart = backend == Backend::Tart;
+        let container_linux = backend == Backend::ContainerLinux;
+        let checkout = checkout_root(workspace_dir);
 
         // The home comes from the environment handed in, never from the process's own, so a caller's environment
         // is the whole input. Without one the runtime root, the Tart home and the Bazel user root would be relative
@@ -1142,25 +1409,66 @@ impl Config {
         // The engine rule reads the two variables as they are set, before a default fills `docker`.
         let docker_bin = reader.optional("DOCKER_BIN").map(PathBuf::from);
         let docker_host = reader.optional("DOCKER_HOST");
-        let docker_engine = DockerEngine::decide(host, docker_bin.is_some(), docker_host.is_some());
+        // The macOS version chooses the engine, and the controller has no Lima engine. A set value of a removed setting
+        // is refused and not ignored.
+        if reader.set(REMOVED_DOCKER_ENGINE_VARIABLE).is_some() {
+            reader.refuse(Refusal::invalid_environment(format!(
+                "{REMOVED_DOCKER_ENGINE_VARIABLE} is removed: the macOS version chooses the engine of the Docker backend \
+                 (the decision 2026-10-13-the-lima-engine-is-retired of community/tools/vm/docs/decisions); unset it, or \
+                 name an engine in DOCKER_BIN or DOCKER_HOST"
+            )));
+        }
+        if reader.set(REMOVED_LIMA_HOME_VARIABLE).is_some() {
+            reader.refuse(Refusal::invalid_environment(format!(
+                "{REMOVED_LIMA_HOME_VARIABLE} is removed with the Lima engine (the decision \
+                 2026-10-13-the-lima-engine-is-retired of community/tools/vm/docs/decisions); unset it"
+            )));
+        }
+        let docker_engine = DockerEngine::decide(host, macos, docker_bin.is_some(), docker_host.is_some());
+        let vm_dns = reader.optional("AIR_VM_DNS");
+        if let Some(dns) = vm_dns.as_deref()
+            && dns.parse::<std::net::IpAddr>().is_err()
+        {
+            reader.refuse(Refusal::invalid_environment(format!(
+                "AIR_VM_DNS must be one IPv4 or IPv6 address of a nameserver, not {dns:?}"
+            )));
+        }
         let docker = docker_bin.or_else(|| (host != HostOs::Macos).then(|| PathBuf::from("docker")));
-        let lima_home = reader.path("AIR_VM_LIMA_HOME", || home.join(".local/state/JetBrains/air-vm-ui-tests/lima"));
 
-        let workers = match backend {
-            Backend::Tart | Backend::Docker => worker_slots(&mut reader, backend),
-            Backend::Parallels => vec![reader.string("AIR_VM_PARALLELS_VM", "macOS")],
+        // The daemon JVM sets no `-Xmx`, so its default maximum heap follows the cap. An Apple `container` worker is a
+        // VM of its own; see [`Config::vm_memory_mib`]. It resolves before the slots, because the Apple `container`
+        // pool size follows it.
+        let vm_memory_fallback = match (backend, docker_engine) {
+            (Backend::Docker, DockerEngine::AppleContainer) => CONTAINER_WORKER_MEMORY_MIB,
+            _ => 32_768,
+        };
+        let vm_memory_mib = reader.positive_int("AIR_VM_MEMORY_MB", vm_memory_fallback);
+
+        // Read on every pool, so a malformed value is refused everywhere; only the Apple `container` engine uses it.
+        let idle_stop = reader.seconds_or_off(IDLE_STOP_VARIABLE, Some(IDLE_STOP_DEFAULT));
+        let idle_stop = idle_stop.filter(|_| backend == Backend::Docker && docker_engine == DockerEngine::AppleContainer);
+
+        let (workers, pool_rule) = match backend {
+            Backend::Tart | Backend::Docker | Backend::ContainerLinux => {
+                worker_slots(&mut reader, backend, docker_engine, vm_memory_mib, memory_mib)
+            }
+            Backend::Parallels => (vec![reader.string("AIR_VM_PARALLELS_VM", "macOS")], PoolRule::ParallelsVm),
         };
         for worker in &workers {
             reader.name(worker, "worker name");
         }
 
-        // Only the default differs per backend: the Parallels VM was set up with another account. The Docker image
-        // makes the account `admin`, which the macOS golden has too, so the guest scripts see one layout.
-        let default_user = if backend == Backend::Parallels { "test" } else { "admin" };
+        // Only the default differs per backend: the Parallels VM was set up with another account, and the testing-ui
+        // container runs as the `ubuntu` account of the skill's image. The Docker image makes the account `admin`,
+        // which the macOS golden has too, so the guest scripts see one layout.
+        let default_user = match backend {
+            Backend::Parallels => "test",
+            Backend::ContainerLinux => "ubuntu",
+            Backend::Tart | Backend::Docker => "admin",
+        };
         let vm_user = reader.string("AIR_VM_USER", default_user);
         let home_root = if linux { "/home" } else { "/Users" };
         let vm_home = reader.string("AIR_VM_HOME", format!("{home_root}/{vm_user}"));
-        // Both backends keep their writable state on the guest's own boot volume, at the same path.
         let vm_data = reader.string("AIR_VM_DATA", format!("{vm_home}/WorkerData"));
 
         let network = reader.string("AIR_VM_NETWORK", "nat");
@@ -1187,18 +1495,16 @@ impl Config {
             )));
         }
 
-        let repo_share_name = reader.string("AIR_VM_REPO_SHARE_NAME", "air-macos-repo");
-        reader.name(&repo_share_name, "repository share name");
+        // A worker has no repository share, because the guest reads no checkout. A set value would name a share that
+        // nothing declares, so it is refused and not ignored.
+        if reader.set(REMOVED_REPO_SHARE_VARIABLE).is_some() {
+            reader.refuse(Refusal::invalid_environment(format!(
+                "{REMOVED_REPO_SHARE_VARIABLE} is removed: a worker has no repository share, because the guest reads no \
+                 checkout (the decision 2026-10-10-the-guest-reads-no-checkout of community/tools/vm/docs/decisions); unset it"
+            )));
+        }
         let bazel_share_name = reader.string("AIR_VM_BAZEL_SHARE_NAME", "air-macos-bazel");
         reader.name(&bazel_share_name, "Bazel share name");
-
-        // The daemon JVM sets no `-Xmx`, so its default maximum heap follows the cap. The Lima engine is one VM that
-        // the two containers of a Docker pool share, so it gets 16 GiB; see [`Config::vm_memory_mib`].
-        let vm_memory_fallback = if backend == Backend::Docker && docker_engine == DockerEngine::Lima {
-            LIMA_ENGINE_MEMORY_MIB
-        } else {
-            32_768
-        };
 
         let vm_node_fallback = if linux {
             // The Docker image installs the pinned Node into `/usr/local`.
@@ -1210,11 +1516,7 @@ impl Config {
             "/opt/homebrew/bin/node".to_owned()
         };
         let vm_uid_fallback = if linux { "1000" } else { "501" };
-        let vm_root_disk_gb = if tart || (backend == Backend::Docker && docker_engine == DockerEngine::Lima) {
-            worker_root_disk_gb(&mut reader, guest_os)
-        } else {
-            0
-        };
+        let vm_root_disk_gb = if tart { tart_root_disk_gb(&mut reader) } else { 0 };
 
         let daemon = DaemonBudgets::read(&mut reader);
 
@@ -1236,8 +1538,25 @@ impl Config {
                  path components) or `{DOCKER_REGISTRY_OFF}`, not {registry:?}"
             )));
         }
+        let image_mirror = Some(reader.string("AIR_VM_IMAGE_MIRROR", IMAGE_MIRROR_DEFAULT)).filter(|mirror| mirror != IMAGE_MIRROR_OFF);
+        if let Some(mirror) = image_mirror.as_deref()
+            && !is_mirror_url(mirror)
+        {
+            reader.refuse(Refusal::invalid_environment(format!(
+                "AIR_VM_IMAGE_MIRROR must be an http:// or https:// URL without a trailing '/' and without \
+                 whitespace, or `{IMAGE_MIRROR_OFF}`, not {mirror:?}"
+            )));
+        }
         let docker_push = reader.boolean("AIR_VM_DOCKER_PUSH", false);
-        if docker_push && docker_registry.is_none() {
+        // The Apple `container` engine publishes to the file mirror, and every other engine to the registry.
+        if docker_push && backend == Backend::Docker && docker_engine == DockerEngine::AppleContainer {
+            if image_mirror.is_none() {
+                reader.refuse(Refusal::invalid_environment(format!(
+                    "AIR_VM_DOCKER_PUSH asks for a push and AIR_VM_IMAGE_MIRROR={IMAGE_MIRROR_OFF} names no file \
+                     mirror to upload to; the Apple container engine publishes there"
+                )));
+            }
+        } else if docker_push && docker_registry.is_none() {
             reader.refuse(Refusal::invalid_environment(format!(
                 "AIR_VM_DOCKER_PUSH asks for a push and AIR_VM_DOCKER_REGISTRY={DOCKER_REGISTRY_OFF} names no \
                  registry to push to"
@@ -1270,7 +1589,7 @@ impl Config {
             backend,
             guest_os,
             guest_arch: GuestArch::of(backend),
-            guest: guest_os.profile(),
+            guest: selection.profile(),
             // `TART_BIN` and `TART_HOME` keep the Tart ecosystem's names: `TART_HOME` is Tart's own variable, which
             // the tart binary and the image scripts read too, and ADR 0158 records `TART_BIN` as its override.
             tart: reader.optional("TART_BIN").map(PathBuf::from),
@@ -1279,13 +1598,16 @@ impl Config {
             docker,
             docker_host,
             docker_engine,
-            home: home.clone(),
-            lima_home,
+            macos: macos.filter(|_| host == HostOs::Macos),
+            container: reader.optional("CONTAINER_BIN").map(PathBuf::from),
+            vm_dns,
             docker_image,
             docker_base_image: pins::docker_base_image().to_owned(),
             docker_registry,
             docker_push,
-            repo_share_name,
+            image_mirror,
+            image_mirror_token: reader.optional("AIR_VM_IMAGE_MIRROR_TOKEN").map(Secret),
+            host_curl: reader.string("AIR_VM_HOST_CURL", "curl"),
             bazel_share_name,
             configured_bazel_user_root: reader.path("AIR_VM_BAZEL_USER_ROOT", || host.bazel_user_root(&home)),
             host_paths: OnceLock::new(),
@@ -1308,13 +1630,13 @@ impl Config {
             vm_agent_source: reader.optional("AIR_VM_GUEST_AGENT_SOURCE").map(PathBuf::from),
             vm_data,
             vm_cpu: reader.positive_int("AIR_VM_CPU", 8),
-            vm_memory_mib: reader.positive_int("AIR_VM_MEMORY_MB", vm_memory_fallback),
+            vm_memory_mib,
             vm_display: reader.string("AIR_VM_RESOLUTION", "1920x1080px"),
             vm_root_disk_gb,
             vm_screen,
             boot_timeout_seconds: reader.positive_int("AIR_VM_BOOT_TIMEOUT", 180),
             golden_vm: reader.string("AIR_VM_GOLDEN_VM", pins::tart_golden_vm()),
-            guest_display: reader.string("AIR_VM_DISPLAY", ":88"),
+            guest_display: reader.string("AIR_VM_DISPLAY", if container_linux { ":1" } else { ":88" }),
             tart_home: reader.path("TART_HOME", || home.join(".tart")),
             tart_version_override: reader.boolean(TART_VERSION_OVERRIDE_VARIABLE, false),
             vm_root_disk_opts: root_disk_opts,
@@ -1323,7 +1645,17 @@ impl Config {
             vm_suspendable: reader.boolean("AIR_VM_SUSPENDABLE", true),
             runtime_root,
             workers,
+            pool_rule,
+            idle_stop,
+            host_memory_mib: memory_mib,
             image_root: reader.path("AIR_VM_IMAGE_ROOT", || workspace_dir.join("provision")),
+            container_linux_script: checkout.join(".agents/skills/testing-ui/scripts/container.cmd"),
+            container_linux_root: checkout.join("out/testing-ui"),
+            daemon_host_port: {
+                let fallback = derived_host_port(&checkout);
+                let port = reader.bounded_positive_int("AIR_VM_DAEMON_HOST_PORT", u32::from(fallback), u32::from(u16::MAX));
+                u16::try_from(port).unwrap_or(fallback)
+            },
             daemon,
         };
         reader.finish(config)
@@ -1432,11 +1764,12 @@ impl Config {
     /// The directory key one worker gets under the runtime root, for its state and its artifacts alike. A
     /// Parallels worker is `parallels-<name>`, because its name comes from the user's own VM and could collide
     /// with a Tart slot. A Docker worker is `docker-<name>` for the same reason: `AIR_VM_WORKER_PREFIX` can give a
-    /// container the name of a Tart slot.
+    /// container the name of a Tart slot. A container-linux worker is `container-linux-<name>`, for the same reason again.
     pub fn worker_key(&self, worker: &str) -> String {
         match self.backend {
             Backend::Parallels => format!("parallels-{worker}"),
             Backend::Docker => format!("docker-{worker}"),
+            Backend::ContainerLinux => format!("container-linux-{worker}"),
             Backend::Tart => worker.to_owned(),
         }
     }
@@ -1472,11 +1805,27 @@ impl Config {
         self.worker_dir(worker).join("lease.json")
     }
 
+    /// The run marker of a worker: it names the run in flight on the worker, its lease and its process.
+    pub fn run_marker_path(&self, worker: &str) -> PathBuf {
+        self.worker_dir(worker).join("run.json")
+    }
+
     /// The `docker create` arguments a Docker worker's container was made with. The Docker twin of
     /// [`Config::suspended_state_path`]: a record that differs from the current arguments means the container
     /// declares other shares or another image, and is made again.
     pub fn docker_create_record_path(&self, worker: &str) -> PathBuf {
         self.worker_dir(worker).join("docker-create.json")
+    }
+
+    /// The deadline of the idle stop of an unleased worker, which a lease release writes ([`Config::idle_stop`]). A
+    /// lease acquisition and a start remove it.
+    pub fn idle_stop_record_path(&self, worker: &str) -> PathBuf {
+        self.worker_dir(worker).join("idle-stop.json")
+    }
+
+    /// Where the detached process of the idle stop writes its output.
+    pub fn idle_stop_log_path(&self, worker: &str) -> PathBuf {
+        self.worker_dir(worker).join("idle-stop.log")
     }
 
     /// Where the image build writes its log: pool-wide, because every Docker worker runs the one image.
@@ -1504,59 +1853,14 @@ impl Config {
         self.runtime_root.join("docker-image.lock")
     }
 
-    /// Whether this pool is a Docker pool on the controller's Lima engine.
-    pub fn runs_lima_engine(&self) -> bool {
-        self.backend == Backend::Docker && self.docker_engine == DockerEngine::Lima
+    /// Whether this pool is a Docker pool on the Apple `container` engine.
+    pub fn runs_container_engine(&self) -> bool {
+        self.backend == Backend::Docker && self.docker_engine == DockerEngine::AppleContainer
     }
 
-    /// The host end of the Docker socket that the Lima engine forwards. `DOCKER_HOST` is `unix://` and this path.
-    pub fn lima_socket_path(&self) -> PathBuf {
-        lima_socket_path(&self.lima_home)
-    }
-
-    /// Refuses `lima_home_too_long` when the forwarded socket path is longer than [`DOCKER_SOCKET_PATH_LIMIT`]: the
-    /// host agent could not bind it, and the engine would never answer.
-    ///
-    /// Asked at the engine start and not by [`Config::load`]. The Docker pool is the default on a Mac, and a command
-    /// that never starts the engine, such as `status`, `suites` or the runtime-root lookup of the trace viewer, must
-    /// not be refused over a socket it does not open.
-    pub fn require_short_lima_socket(&self) -> Result<(), Refusal> {
-        let socket = self.lima_socket_path();
-        let length = socket.as_os_str().len();
-        if length <= DOCKER_SOCKET_PATH_LIMIT {
-            return Ok(());
-        }
-        Err(Refusal::new(
-            "lima_home_too_long",
-            Exit::USAGE,
-            format!(
-                "the Docker socket of the Lima engine would be {} ({length} bytes), and a Unix socket path must not \
-                 exceed {DOCKER_SOCKET_PATH_LIMIT} bytes; set AIR_VM_LIMA_HOME to a shorter directory",
-                socket.display()
-            ),
-        ))
-    }
-
-    /// The template the Lima engine was last created from, rendered: the file `limactl start` reads.
-    pub fn lima_template_path(&self) -> PathBuf {
-        self.runtime_root.join("lima-engine.yaml")
-    }
-
-    /// The record of the template digest the Lima engine was created from. The Lima twin of
-    /// [`Config::docker_create_record_path`]: another digest means other shares, sizes or images, and the engine is
-    /// made again.
-    pub fn lima_engine_record_path(&self) -> PathBuf {
-        self.runtime_root.join("lima-engine.json")
-    }
-
-    /// Where `limactl start` writes its log.
-    pub fn lima_engine_log_path(&self) -> PathBuf {
-        self.runtime_root.join("lima-engine.log")
-    }
-
-    /// The lock around every change of the Lima engine: pool-wide, because the engine serves every slot.
-    pub fn lima_engine_lock_path(&self) -> PathBuf {
-        self.runtime_root.join("lima-engine.lock")
+    /// Where `container system start` writes its log.
+    pub fn container_system_log_path(&self) -> PathBuf {
+        self.runtime_root.join("container-system.log")
     }
 
     /// The `DOCKER_CONFIG` of the pinned CLI, on every engine. Its `config.json` names the directory of the pinned
@@ -1599,6 +1903,44 @@ pub const DOCKER_REGISTRY_DEFAULT: &str = "registry.jetbrains.team/p/ij/containe
 /// The `AIR_VM_DOCKER_REGISTRY` value that turns the pull and the push off.
 pub const DOCKER_REGISTRY_OFF: &str = "off";
 
+/// The file mirror the Apple `container` engine pulls the worker image archive from unless `AIR_VM_IMAGE_MIRROR` says
+/// otherwise. Anonymous download works there, so a lane host needs no token; an upload needs one.
+pub const IMAGE_MIRROR_DEFAULT: &str = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies";
+
+/// The `AIR_VM_IMAGE_MIRROR` value that turns the mirror pull and the mirror publish off.
+pub const IMAGE_MIRROR_OFF: &str = "off";
+
+/// A mirror URL the controller appends `/<repository>/<archive>` to: an `http://` or `https://` URL with a host, no
+/// trailing `/`, and no whitespace or control character, because the value goes into an argv and a note.
+fn is_mirror_url(value: &str) -> bool {
+    let rest = value
+        .strip_prefix("https://")
+        .or_else(|| value.strip_prefix("http://"))
+        .unwrap_or_default();
+    !rest.is_empty()
+        && !rest.starts_with('/')
+        && !rest.ends_with('/')
+        && !rest.chars().any(|character| character.is_whitespace() || character.is_control())
+}
+
+/// A credential read from the environment. Its `Debug` hides the value, because a [`Config`] can be printed into a
+/// log or a refusal.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Secret(String);
+
+impl Secret {
+    /// The value, for the one place that hands it to the service it is for.
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Debug for Secret {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Secret(..)")
+    }
+}
+
 /// A registry path as the head of an image reference: a host, an optional `:port` on it, then repository path
 /// components in the grammar of [`is_image_repository`]. No trailing `/`, because the controller joins with one.
 fn is_image_registry(value: &str) -> bool {
@@ -1630,8 +1972,17 @@ fn is_screen_geometry(value: &str) -> bool {
             .all(|group| !group.is_empty() && group.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
-/// The forwarded Docker socket of the Lima engine under one `LIMA_HOME`: the `hostSocket` of the engine template,
-/// which Lima spells `{{.Dir}}/sock/docker.sock`.
-fn lima_socket_path(lima_home: &Path) -> PathBuf {
-    lima_home.join(LIMA_ENGINE_INSTANCE).join("sock").join("docker.sock")
+/// The checkout that holds the controller workspace `community/tools/vm`: its third ancestor. A shallower directory,
+/// which only a test fixture passes, is its own checkout.
+fn checkout_root(workspace_dir: &Path) -> PathBuf {
+    workspace_dir.ancestors().nth(3).unwrap_or(workspace_dir).to_path_buf()
+}
+
+/// A loopback port in 12000..20000 from the checkout path, FNV-1a over its bytes: stable across restarts, different
+/// between checkouts, and clear of the skill's own derived ports and of the ephemeral range.
+fn derived_host_port(checkout: &Path) -> u16 {
+    let hash = checkout.to_string_lossy().bytes().fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(0x0100_0000_01b3)
+    });
+    12_000 + u16::try_from(hash % 8_000).unwrap_or_default()
 }

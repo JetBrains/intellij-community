@@ -324,6 +324,22 @@ fn a_refusal_after_the_verdict_still_prints_and_a_green_verdict_replaces_the_tex
 }
 
 // A host build names what Bazel did, so a slow build says whether it rebuilt much.
+// A slow step is one line that names the open phases, the time, and the dump files to open.
+#[test]
+fn a_slow_step_is_a_line_with_its_dumps() {
+    let (reporter, stderr, _) = screen_recorder(Terminal::default());
+    reporter.publish(
+        daemon_event(
+            r#"{"event":"slowStep","timestamp":"t","step":"restart","path":"restart > quit > process exit","budgetMs":30000,"elapsedMs":125000,"threadDump":"/it/slow-steps/01-restart-daemon-threads.txt","ideDumpError":"refused"}"#,
+        ),
+        Some(&Scope::worker("air-docker-1")),
+    );
+    assert_eq!(
+        stderr.text(),
+        "vm: [air-docker-1] slow step: restart > quit > process exit took 2m05s of a 30s budget; dumps: /it/slow-steps/01-restart-daemon-threads.txt\n"
+    );
+}
+
 #[test]
 fn the_build_summary_is_a_line() {
     let (reporter, stderr, _) = screen_recorder(Terminal::default());
@@ -368,6 +384,7 @@ fn a_run_and_its_traces_are_named_by_their_viewer_links() {
             command: "run".to_owned(),
             args: Vec::new(),
             checkout: None,
+            process_started_at: None,
         }),
         None,
     );

@@ -30,8 +30,9 @@ vocabulary! {
         End = "end",
         Snap = "snap",
         Call = "call",
+        /// Hands the recorder a file the lane wrote under the trace root. The recorder moves it into the bundle.
+        Attach = "attach",
         Restart = "restart",
-        DriverSteps = "driverSteps",
         /// Closes the scenario, writes its manifest and answers only once the bundle is complete on disk.
         Done = "done",
     }
@@ -67,14 +68,34 @@ vocabulary! {
         Assertion = "assertion",
         /// One step of a hand-authored journey, which has no generated program.
         Journey = "journey",
-        /// An IDE restart a scenario asked for.
+        /// An IDE relaunch: a restart a scenario asked for, or a recycle of an IDE the lane cannot drive.
         Restart = "restart",
+        /// One part of an IDE relaunch: the quit, the launch, the readiness gate, or a part of one of them.
+        Relaunch = "relaunch",
+    }
+}
+
+impl SpanKind {
+    /// Whether a span of this kind runs one instruction of a generated program: an action or an assertion. Only such
+    /// a span states the [Side] of its id.
+    pub const fn is_instruction(self) -> bool {
+        matches!(self, Self::Action | Self::Assertion)
+    }
+}
+
+vocabulary! {
+    /// Where the id of an instruction runs, as the suite document of its scenario states it.
+    pub enum Side {
+        /// In the lane IDE, through the bridge.
+        Ide = "ide",
+        /// On the host of the lane, against a lane service or the IDE process.
+        Host = "host",
     }
 }
 
 /// The stable key of a span, the `air.span.key` attribute: `<kind>:<id>`, where the id is the flow step, operation
-/// or instruction id, `before` or `after` for a reset, `ide` for a restart, and the journey step's title for a
-/// journey.
+/// or instruction id, `before` or `after` for a reset, `ide` or `recycle` for a restart, the part for a relaunch,
+/// such as `quit/exit`, and the journey step's title for a journey.
 ///
 /// It is how two runs of one scenario are compared step by step, so it must not contain anything that differs
 /// between runs: no counter, no timestamp, no path. The kind prefix keeps a setup and the operation it runs apart,
@@ -148,17 +169,6 @@ vocabulary! {
     }
 }
 
-vocabulary! {
-    /// An Allure step's status, spelled the way Allure writes it. A step Allure never finished has none, and is
-    /// sent without one.
-    pub enum DriverStepStatus {
-        Passed = "passed",
-        Failed = "failed",
-        Broken = "broken",
-        Skipped = "skipped",
-    }
-}
-
 // --- the commands --------------------------------------------------------------------------------------------
 
 /// Where the recorder reaches the IDE's trace routes: the UI-test bridge's port and token.
@@ -203,6 +213,14 @@ pub struct HelloCommand {
     pub bridge: Option<Bridge>,
 }
 
+/// One report label of a scenario, such as the test method or a feature the test class declares.
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct Label {
+    pub name: String,
+    pub value: String,
+}
+
 /// Opens one scenario. The recorder names the root span after the scenario.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -219,6 +237,10 @@ pub struct ScenarioCommand {
     pub fixture: Option<String>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub flags: BTreeMap<String, String>,
+    /// The scenario's report labels, in the order the lane read them: the test method and class names, and the
+    /// labels the test class and method declare. A name can occur more than once.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub labels: Vec<Label>,
     /// The endpoint published when the scenario started, absent when there is none.
     ///
     /// The hello's endpoint is not enough, because one recorder serves a whole daemon iteration or Bazel target,
@@ -256,6 +278,13 @@ pub struct SpanCommand {
     /// The sentence an assertion proves, only on a [SpanKind::Assertion].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expectation: Option<String>,
+    /// Where the id of the instruction runs, only on a span whose kind [SpanKind::is_instruction].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub side: Option<Side>,
+    /// How long one use of the id of the instruction may take, in milliseconds, as the suite document states it. Only
+    /// on a span whose kind [SpanKind::is_instruction].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
 }
 
 /// Why a span failed: the throwable's class, its message, and its stack.
@@ -308,30 +337,22 @@ pub struct CallCommand {
     pub error: Option<String>,
 }
 
-/// One Allure step, with its nested steps. Start and stop are epoch milliseconds, as Allure records them.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
-#[serde(deny_unknown_fields)]
-pub struct DriverStep {
-    pub name: String,
-    pub start: i64,
-    /// 0 for a step Allure never finished, which is also the one kind of step without a status: the step a
-    /// failure or a kill interrupted.
-    pub stop: i64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub status: Option<DriverStepStatus>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub steps: Vec<Self>,
-}
-
-/// The Driver's own Allure steps of the scenario, dumped once at its end.
+/// Hands the recorder one attachment of the scenario: a file the lane wrote under the trace root.
 ///
-/// The steps the flow DSL itself opens are not in it, since each of them is already a span. The viewer nests
-/// every step under the innermost span that contains it in time. A scenario the Driver took no step in sends no
-/// such command, so the steps are never empty.
+/// The recorder moves the file into the bundle as [crate::bundle::attach_path] and records an
+/// [crate::otlp::event::ATTACHMENT] on the span. The file then belongs to the recorder, so the lane must not write it
+/// again. The recorder refuses a file outside the hello's root.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct DriverStepsCommand {
-    pub steps: Vec<DriverStep>,
+pub struct AttachCommand {
+    /// The attachment's title, as a report shows it.
+    pub name: String,
+    /// The media type of the file, such as `image/png` or `text/plain`.
+    pub mime: String,
+    /// The absolute path of the file. Its extension becomes the extension in the bundle.
+    pub file: String,
+    /// The span the attachment belongs to, or 0 for the scenario's root.
+    pub span: u32,
 }
 
 /// Closes the scenario.
@@ -339,13 +360,21 @@ pub struct DriverStepsCommand {
 #[serde(deny_unknown_fields)]
 pub struct DoneCommand {
     pub status: Status,
+    /// The message of the failure that ended the scenario. It is absent for a passed scenario and for a failure
+    /// without a message. The lane caps it as it caps [Failure::message].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// The stack trace of that failure: its class on the first line, then the lines of [Failure::stack]. Absent for
+    /// a passed scenario.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trace: Option<String>,
 }
 
 /// One line the lane writes to the recorder.
 ///
-/// Only three kinds of field carry a wall-clock time: a call's start and duration, and a driver step's start and
-/// stop. Only the lane knows those. The recorder stamps everything else when the line arrives, which is what keeps
-/// a transcript free of timestamps and therefore comparable byte for byte with the golden one.
+/// Only two fields carry a wall-clock time: a call's start and duration. Only the lane knows those. The recorder
+/// stamps everything else when the line arrives, which is what keeps a transcript free of timestamps and therefore
+/// comparable byte for byte with the golden one.
 ///
 /// Span ids are the lane's own: positive integers, numbered from 1 in each scenario in the order the spans open.
 /// Id 0 is the scenario's root span, which the scenario command opens, so a parent or a call span of 0 means
@@ -358,10 +387,10 @@ pub enum Command {
     End(EndCommand),
     Snap(SnapCommand),
     Call(CallCommand),
+    Attach(AttachCommand),
     /// The IDE is about to be restarted, so its bridge is about to go away and its log may be rotated. It is sent
     /// inside the [SpanKind::Restart] span, and has no field.
     Restart,
-    DriverSteps(DriverStepsCommand),
     Done(DoneCommand),
 }
 
@@ -375,8 +404,8 @@ impl Command {
             Self::End(_) => Op::End,
             Self::Snap(_) => Op::Snap,
             Self::Call(_) => Op::Call,
+            Self::Attach(_) => Op::Attach,
             Self::Restart => Op::Restart,
-            Self::DriverSteps(_) => Op::DriverSteps,
             Self::Done(_) => Op::Done,
         }
     }
@@ -396,6 +425,13 @@ impl Command {
             Self::Scenario(scenario) => {
                 if scenario.name.is_empty() || scenario.test_class.is_empty() || scenario.lane.is_empty() {
                     refuse!("scenario needs a name, a testClass and a lane");
+                }
+                if let Some(label) = scenario.labels.iter().find(|label| label.name.is_empty() || label.value.is_empty()) {
+                    refuse!(
+                        "scenario carries the label {:?} = {:?}, and a label needs a name and a value",
+                        label.name,
+                        label.value
+                    );
                 }
                 validate_bridge(scenario.bridge.as_ref(), Op::Scenario)?;
                 // A raw value is valid JSON already, so one that opens with a brace is an object.
@@ -427,6 +463,23 @@ impl Command {
                         span.kind
                     );
                 }
+                if span.side.is_some() && !span.kind.is_instruction() {
+                    refuse!(
+                        "span {} is a {} and carries a side, which only an action or an assertion has",
+                        span.id,
+                        span.kind
+                    );
+                }
+                if span.timeout_ms.is_some() && !span.kind.is_instruction() {
+                    refuse!(
+                        "span {} is a {} and carries a deadline, which only an action or an assertion has",
+                        span.id,
+                        span.kind
+                    );
+                }
+                if span.timeout_ms == Some(0) {
+                    refuse!("span {} carries a deadline of 0 ms, and a deadline is positive", span.id);
+                }
                 Ok(())
             }
             Self::End(end) => {
@@ -444,7 +497,19 @@ impl Command {
                     _ => Ok(()),
                 }
             }
-            Self::Snap(_) | Self::Restart | Self::Done(_) => Ok(()),
+            Self::Snap(_) | Self::Restart => Ok(()),
+            Self::Done(done) => {
+                if done.status == Status::Passed && (done.message.is_some() || done.trace.is_some()) {
+                    refuse!("done passed and carries a failure's message or trace");
+                }
+                Ok(())
+            }
+            Self::Attach(attach) => {
+                if attach.name.is_empty() || attach.mime.is_empty() || attach.file.is_empty() {
+                    refuse!("attach needs a name, a mime and a file");
+                }
+                Ok(())
+            }
             Self::Call(call) => {
                 if call.request.is_empty() {
                     refuse!("call needs a span and a request");
@@ -462,25 +527,8 @@ impl Command {
                 }
                 Ok(())
             }
-            Self::DriverSteps(driver) => {
-                if driver.steps.is_empty() {
-                    refuse!("driverSteps carries no step");
-                }
-                validate_driver_steps(&driver.steps)
-            }
         }
     }
-}
-
-fn validate_driver_steps(steps: &[DriverStep]) -> Result<(), Error> {
-    for step in steps {
-        let unfinished = step.stop == 0 && step.status.is_none();
-        if step.name.is_empty() || step.start <= 0 || (!unfinished && step.stop < step.start) {
-            refuse!("driver step {:?} runs from {} to {}", step.name, step.start, step.stop);
-        }
-        validate_driver_steps(&step.steps)?;
-    }
-    Ok(())
 }
 
 // --- the acks ------------------------------------------------------------------------------------------------
@@ -541,8 +589,8 @@ pub fn encode_command(command: &Command) -> Result<Vec<u8>, Error> {
         Command::End(end) => encode(end)?,
         Command::Snap(snap) => encode(snap)?,
         Command::Call(call) => encode(call)?,
+        Command::Attach(attach) => encode(attach)?,
         Command::Restart => b"{}".to_vec(),
-        Command::DriverSteps(steps) => encode(steps)?,
         Command::Done(done) => encode(done)?,
     };
     let mut line = format!(r#"{{"op":"{}""#, command.op()).into_bytes();
@@ -580,13 +628,13 @@ pub fn decode_command(line: &[u8]) -> Result<Command, Error> {
         Op::End => Command::End(decode_body(op, &fields)?),
         Op::Snap => Command::Snap(decode_body(op, &fields)?),
         Op::Call => Command::Call(decode_body(op, &fields)?),
+        Op::Attach => Command::Attach(decode_body(op, &fields)?),
         Op::Restart => {
             if let Some(field) = fields.keys().next() {
                 refuse!("a restart command does not fit the contract: unknown field `{field}`");
             }
             Command::Restart
         }
-        Op::DriverSteps => Command::DriverSteps(decode_body(op, &fields)?),
         Op::Done => Command::Done(decode_body(op, &fields)?),
     };
     command.validate()?;

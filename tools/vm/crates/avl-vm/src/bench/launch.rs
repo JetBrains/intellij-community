@@ -1,8 +1,8 @@
 //! The IDE processes of a session: the Starter-shaped command line over a generation, and the supervision of one run.
 //!
 //! The command line is the one the IDE Starter gives a locally built distribution (`IdeFromCodeInstaller`):
-//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (`bin/*.vmoptions`,
-//! `-Djb.vmOptionsFile` and the `additionalJvmArguments` of `product-info.json`), the test options of the Starter, the
+//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (the vmoptions file that
+//! `product-info.json` names, `-Djb.vmOptionsFile` and the `additionalJvmArguments`), the test options of the Starter, the
 //! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{Context, bail};
+use anyhow::{Context, anyhow, bail};
 use avl_base::{Exit, Refusal};
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
@@ -25,6 +25,7 @@ use serde::Deserialize;
 use super::arm::{Arm, Gate};
 use super::files;
 use super::fus;
+use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
 use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
@@ -45,13 +46,36 @@ const QUIT_TIMEOUT: Duration = Duration::from_secs(60);
 const TERM_TIMEOUT: Duration = Duration::from_secs(15);
 /// How long the headless scheme run can take.
 const SCHEME_TIMEOUT: Duration = Duration::from_secs(300);
+/// How long the stop of the profiler can take: a `jcmd` JVM and the dump of the profile.
+const PROFILE_STOP_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// The JVM option that lets `jcmd` load the profiler library into the running IDE, which stops the profiler at the
+/// gate. Without it, a JVM warns about the load or refuses it.
+pub(crate) const DYNAMIC_AGENT_OPTION: &str = "-XX:+EnableDynamicAgentLoading";
+
+/// The log of the `jcmd` that stops the profiler, in the run directory.
+const PROFILE_STOP_LOG: &str = "profile-stop.log";
+
+/// The profiler of a session: the async-profiler library and the event that it samples.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Profiler {
+    pub(crate) library: PathBuf,
+    pub(crate) event: ProfileEvent,
+}
 
 /// The option that comes after every JVM option of the distribution: `-da` wins over the `-ea` of the dev
 /// `idea.vmoptions`, so the run measures the code a release runs.
 pub(crate) const FIDELITY_FLAG: &str = "-da";
 
-/// The properties of every measured start.
-const MEASURE_PROPERTIES: [&str; 7] = [
+/// The property that makes a run an integration test, as the IDE Starter makes every run
+/// (`IDERunContext.calculateVmOptions`). The IDE skips what it offers a person in such a run. Air, for one, offers its
+/// welcome page in a project window unless the property is set. The page is an editor tab that takes the selected tab
+/// from the file, so the daemon never highlights the file, and the gate of the `project` arm never fires.
+pub(crate) const INTEGRATION_TEST_PROPERTY: &str = "idea.is.integration.test=true";
+
+/// The properties of every measured start, whatever its arm. With [`INTEGRATION_TEST_PROPERTY`], a welcome run starts
+/// the IDE that the perf test of the welcome screen starts.
+const MEASURE_PROPERTIES: [&str; 8] = [
     "idea.record.classpath.info=true",
     "idea.record.classloading.stats=true",
     "nosplash=true",
@@ -59,16 +83,15 @@ const MEASURE_PROPERTIES: [&str; 7] = [
     "ide.newUsersOnboarding=false",
     "idea.initially.ask.config=never",
     "fus.internal.test.mode=true",
+    INTEGRATION_TEST_PROPERTY,
 ];
 
 /// The property that forces the modal welcome screen.
 pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welcome.screen=true";
 
-/// The properties of the `project` arm: the project of the command line is trusted, so no trust dialog stops a run,
-/// and the run is an integration test, as every perf test of the IDE Starter is. Air offers its welcome page in a
-/// project window unless that property is set. The page is an editor tab that takes the selected tab from the file,
-/// so the daemon never highlights the file, and the gate never fires.
-pub(crate) const PROJECT_PROPERTIES: [&str; 2] = ["idea.trust.all.projects=true", "idea.is.integration.test=true"];
+/// The property of the `project` and `empty-editor` arms: the project of the command line is trusted, so no trust
+/// dialog stops a run.
+pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
 /// The file of the opened packages in a generation, a copy of
 /// `community/platform/platform-impl/resources/META-INF/OpenedPackages.txt`.
@@ -87,6 +110,13 @@ pub(crate) fn sandbox_options(sandbox: &Sandbox) -> Vec<String> {
     ]
 }
 
+/// The options that make the JVM write its log, the class-load log among it, from a thread of its own. A flush of each
+/// class line under the global log lock costs a start about half a second of CPU over all its threads, the EDT too. The
+/// default mode, `drop`, loses a line when the buffer is full. In the `stall` mode a full buffer makes the logging
+/// thread wait instead, so the class count stays exact. The buffer holds the class log of a whole start, so the wait
+/// stays rare.
+pub(crate) const ASYNC_LOG_OPTIONS: [&str; 2] = ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"];
+
 /// The option that makes the JVM write [`CLASS_LOAD_LOG`] with the uptime of each class. The `-Xlog` grammar ends the
 /// file name at a `:`, so a run directory with a `:` in its path is an error that names it. A space is no problem,
 /// because the argfile quotes it.
@@ -102,10 +132,11 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
     Ok(format!("-Xlog:class+load:file={path}:uptime,tags"))
 }
 
-/// The options of a measured start, in order: the sandbox, the files of the run, the class-load log, the properties,
-/// the arm and the profiler. A run directory that the class-load log cannot name is an error, see
-/// [`class_load_option`].
-pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Path>) -> Result<Vec<String>, String> {
+/// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm and the profiler. A run directory that the
+/// class-load log cannot name is an error, see [`class_load_option`]. The profiler starts with the JVM and writes
+/// [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
+pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
     options.extend([
         property("idea.log.path", &run_dir.join("log")),
@@ -113,22 +144,46 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
         property("idea.diagnostic.opentelemetry.file", &run_dir.join(TRACE_FILE)),
         property("idea.log.class.list.file", &run_dir.join("class-report.txt")),
         property("plugin.classloader.debug", &run_dir.join("plugin-classes.txt")),
-        class_load_option(run_dir)?,
     ]);
+    options.extend(ASYNC_LOG_OPTIONS.map(str::to_owned));
+    options.push(class_load_option(run_dir)?);
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm {
         Arm::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
-        Arm::Project | Arm::EmptyEditor => options.extend(PROJECT_PROPERTIES.iter().map(|property| format!("-D{property}"))),
+        Arm::Project | Arm::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
         Arm::NonModal | Arm::OpenProject => {}
     }
-    if let Some(library) = profiler {
+    if let Some(profiler) = profiler {
+        options.push(DYNAMIC_AGENT_OPTION.to_owned());
         options.push(format!(
-            "-agentpath:{}=start,event=cpu,interval=1ms,threads,collapsed,file={}",
-            library.display(),
-            run_dir.join("cpu.collapsed").display()
+            "-agentpath:{}=start,event={},interval=1ms,threads,collapsed,file={}",
+            profiler.library.display(),
+            profiler.event.option(),
+            run_dir.join(WHOLE_PROFILE).display()
         ));
     }
     Ok(options)
+}
+
+/// The argv that stops the profiler of the IDE `pid` and writes its profile to `file`:
+/// `jcmd <pid> JVMTI.agent_load <library> stop,file=<file>,collapsed`. The second load of the library reaches the
+/// agent that `-agentpath` started. `jcmd` joins its arguments into one command, which the JVM splits at the spaces
+/// outside quotes, so the path and the options are quoted.
+pub(crate) fn profile_stop_argv(jcmd: &Path, pid: u32, library: &Path, file: &Path) -> Vec<String> {
+    vec![
+        jcmd.display().to_string(),
+        pid.to_string(),
+        "JVMTI.agent_load".to_owned(),
+        format!("\"{}\"", library.display()),
+        format!("\"stop,file={},collapsed\"", file.display()),
+    ]
+}
+
+/// The PID of the IDE: the line `PID: <pid>` that `logEssentialInfoAboutIde` writes into `idea.log` at the start. A
+/// log without the line has none.
+pub(crate) fn idea_log_pid(log: &str) -> Option<u32> {
+    log.lines()
+        .find_map(|line| line.split_once(" - PID: ").and_then(|(_, pid)| pid.trim().parse().ok()))
 }
 
 /// What one IDE run starts: the arm, the kind of the run, and the project.
@@ -176,6 +231,53 @@ const fn home_macro() -> &'static str {
     }
 }
 
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `dist`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(dist: &Path) -> PathBuf {
+    let production = dist.join(PRODUCT_INFO_FILE);
+    if production.is_file() {
+        return production;
+    }
+    let dev_build = dist.join("bin").join("product-info.json");
+    if dev_build.is_file() { dev_build } else { production }
+}
+
+/// The main vmoptions file of the distribution at `dist`, as the launcher finds it.
+///
+/// It is `vm_options_file_path`, the `vmOptionsFilePath` of the first launch, relative to the directory of
+/// [`PRODUCT_INFO_FILE`]. The `bin/product-info.json` of an older dev distribution holds the text of the production place,
+/// so the same base applies to it. The path resolves by its text, and a path that leaves `dist` fails.
+fn vm_options_file(dist: &Path, vm_options_file_path: &str) -> anyhow::Result<PathBuf> {
+    let leaves = || anyhow!("the vmOptionsFilePath '{vm_options_file_path}' is not a file of {}", dist.display());
+    if vm_options_file_path.starts_with('/') || vm_options_file_path.contains('\\') {
+        return Err(leaves());
+    }
+    let mut parts: Vec<&str> = PRODUCT_INFO_FILE.split('/').collect();
+    parts.pop();
+    for part in vm_options_file_path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop().ok_or_else(leaves)?;
+            }
+            _ => parts.push(part),
+        }
+    }
+    if parts.is_empty() {
+        return Err(leaves());
+    }
+    Ok(parts.iter().fold(dist.to_path_buf(), |path, part| path.join(part)))
+}
+
 /// The JVM options of a distribution, as `readVmOptions` of the dev launch reads them, then the test options of the
 /// Starter and the platform prefix of the config.
 ///
@@ -184,24 +286,6 @@ const fn home_macro() -> &'static str {
 /// welcome events of the gate arrive as `validation.unmatched_rule`. The dev launcher of the BT version passed `true`
 /// too.
 pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -> anyhow::Result<Vec<String>> {
-    let bin = dist.join("bin");
-    let mut vm_options: Vec<PathBuf> = std::fs::read_dir(&bin)
-        .with_context(|| format!("cannot list {}", bin.display()))?
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().is_some_and(|extension| extension == "vmoptions"))
-        .collect();
-    let Some(vm_options_file) = vm_options.pop().filter(|_| vm_options.is_empty()) else {
-        bail!("{} has no single *.vmoptions file", bin.display());
-    };
-    let mut options: Vec<String> = files::read_text(&vm_options_file)?
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(str::to_owned)
-        .collect();
-    options.push(property("jb.vmOptionsFile", &vm_options_file));
-
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct ProductInfo {
@@ -210,21 +294,32 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct LaunchData {
+        vm_options_file_path: String,
         #[serde(default)]
         additional_jvm_arguments: Vec<String>,
     }
-    let product_info_path = bin.join("product-info.json");
+    let product_info_path = product_info_file(dist);
     let product_info: ProductInfo = serde_json::from_str(&files::read_text(&product_info_path)?)
-        .with_context(|| format!("{} has no `launch` list", product_info_path.display()))?;
+        .with_context(|| format!("{} has no `launch` list with a vmOptionsFilePath", product_info_path.display()))?;
+    let Some(launch) = product_info.launch.first() else {
+        bail!("{} states no launch", product_info_path.display());
+    };
+
+    let vm_options_file = vm_options_file(dist, &launch.vm_options_file_path)?;
+    let mut options: Vec<String> = files::read_text(&vm_options_file)?
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(str::to_owned)
+        .collect();
+    options.push(property("jb.vmOptionsFile", &vm_options_file));
     let home = dist.display().to_string();
-    if let Some(launch) = product_info.launch.first() {
-        options.extend(
-            launch
-                .additional_jvm_arguments
-                .iter()
-                .map(|argument| argument.replace(home_macro(), &home)),
-        );
-    }
+    options.extend(
+        launch
+            .additional_jvm_arguments
+            .iter()
+            .map(|argument| argument.replace(home_macro(), &home)),
+    );
 
     let dist_name = dist.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
     options.extend([
@@ -234,7 +329,7 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
         format!("-Ddev.build.dir={dist_name}"),
         property("idea.dev.project.root", repo_root),
         property("idea.home.path", dist),
-        property("idea.properties.file", &bin.join("idea.properties")),
+        property("idea.properties.file", &dist.join("bin").join("idea.properties")),
     ]);
     if let Some(prefix) = &config.platform_prefix {
         options.push(format!("-Didea.platform.prefix={prefix}"));
@@ -344,7 +439,7 @@ pub(crate) struct Launcher {
     pub(crate) dist_options: Vec<String>,
     /// The tail of every argfile: [`entry_options`].
     pub(crate) entry_options: Vec<String>,
-    pub(crate) profiler: Option<PathBuf>,
+    pub(crate) profiler: Option<Profiler>,
     pub(crate) hold: Duration,
 }
 
@@ -354,7 +449,7 @@ impl Launcher {
         generation: &Generation,
         runner: Runner,
         repo_root: &Path,
-        profiler: Option<PathBuf>,
+        profiler: Option<Profiler>,
         hold: Duration,
     ) -> Result<Self, Refusal> {
         let refuse = |error: anyhow::Error| {
@@ -364,10 +459,10 @@ impl Launcher {
                 format!("the generation {} cannot start: {error:#}", generation.root.display()),
             )
         };
-        let dist_options = dist_options(&generation.dist, &generation.config, repo_root).map_err(refuse)?;
+        let dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
-        let classpath = files::read_text(&generation.dist.join("core-classpath.txt")).map_err(refuse)?;
-        let entry_options = entry_options(&generation.dist, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
+        let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
+        let entry_options = entry_options(&generation.home, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
         Ok(Self {
             runner,
             java: generation.java.clone(),
@@ -434,7 +529,7 @@ impl Launcher {
     /// Runs the IDE once in `run_dir` and answers what the controller saw. The run waits for the gate of its arm.
     pub(crate) async fn run(&self, ctx: &Ctx, run_dir: &Path, sandbox: &Sandbox, plan: &RunPlan<'_>) -> LaunchFacts {
         let mut facts = LaunchFacts::default();
-        let options = match measure_options(run_dir, sandbox, plan.arm, self.profiler.as_deref()) {
+        let options = match measure_options(run_dir, sandbox, plan.arm, self.profiler.as_ref()) {
             Ok(options) => options,
             Err(failure) => {
                 facts.failure = Some(failure);
@@ -463,6 +558,12 @@ impl Launcher {
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none()
             && facts.failure.is_none()
+            && let Some(profiler) = &self.profiler
+        {
+            facts.profile_stop_failure = self.stop_profile(ctx, run_dir, profiler).await.err();
+        }
+        if exited.is_none()
+            && facts.failure.is_none()
             && let Some(project) = plan.open_project
         {
             exited = self.open(ctx, &mut ide, run_dir, sandbox, project, &mut facts).await;
@@ -481,6 +582,39 @@ impl Launcher {
             None => self.quit(ctx, &child, ide, run_dir, sandbox, &mut facts).await,
         };
         facts
+    }
+
+    /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
+    /// not the hold and the quit. Answers why it could not: no `jcmd` in the JBR of the generation, no PID in
+    /// `log/idea.log`, or a `jcmd` that wrote no profile. The run then keeps [`WHOLE_PROFILE`].
+    async fn stop_profile(&self, ctx: &Ctx, run_dir: &Path, profiler: &Profiler) -> Result<(), String> {
+        let jcmd = self.java.with_file_name(if cfg!(windows) { "jcmd.exe" } else { "jcmd" });
+        if !jcmd.is_file() {
+            return Err("the JBR of the generation has no bin/jcmd".to_owned());
+        }
+        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+            .ok()
+            .flatten()
+            .unwrap_or_default();
+        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
+        let file = run_dir.join(GATE_PROFILE);
+        let argv = profile_stop_argv(&jcmd, pid, &profiler.library, &file);
+        let result = self
+            .runner
+            .checked_to_file(
+                ctx,
+                &argv,
+                &run_dir.join(PROFILE_STOP_LOG),
+                &self.logged(PROFILE_STOP_TIMEOUT, "bench_profile_stop_timeout"),
+            )
+            .await;
+        if file.is_file() {
+            return Ok(());
+        }
+        Err(format!(
+            "jcmd wrote no {GATE_PROFILE} ({}); see {PROFILE_STOP_LOG}",
+            describe(&result)
+        ))
     }
 
     /// Asks the running IDE to open `project`, and polls the trace for the highlighted editor.

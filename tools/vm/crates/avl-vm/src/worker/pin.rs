@@ -1,22 +1,24 @@
 //! The pinned tools: the one resolver of their host paths, and one parser of their versions for the version gate of
-//! Tart and for the pin tests of every tool that `tart.MODULE.bazel`, `docker.MODULE.bazel` and `lima.MODULE.bazel`
-//! declare.
+//! Tart and for the pin tests of every tool that `tart.MODULE.bazel`, `docker.MODULE.bazel` and
+//! `container.MODULE.bazel` declare.
 
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
-#[cfg(any(unix, test))]
+#[cfg(unix)]
 use std::sync::LazyLock;
 
-use avl_base::config::{TART_LABEL, docker_buildx_label, docker_cli_label, limactl_label};
-use avl_base::{Backend, Config, Refusal, RefusalExt};
+use avl_base::config::{CONTAINER_LABEL, TART_LABEL, docker_buildx_label, docker_cli_label};
+use avl_base::{Backend, Config, Exit, OrRefuse, Refusal, RefusalExt};
 use avl_host_sys::guest::{BazelHost, ensure_host_paths, external_files};
 use avl_host_sys::{Ctx, Runner};
-#[cfg(any(unix, test))]
+#[cfg(unix)]
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use tokio::sync::OnceCell;
 
-// The suite drives Tart pools and the fake `limactl`, a shell script, and a Windows host has the Docker backend only.
+// The suite drives Tart pools and the pinned Bazel fake, which links its files with Unix symlinks, and a Windows host
+// has the Docker backend only.
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
@@ -31,32 +33,45 @@ pub(crate) enum PinnedTool {
     DockerCli,
     /// The `docker-buildx` plugin of `docker.MODULE.bazel`, which the pinned CLI gets.
     DockerBuildx,
-    /// The `limactl` of `lima.MODULE.bazel`, which a Docker pool on the Lima engine runs.
-    Limactl,
+    /// The Apple `container` CLI of `container.MODULE.bazel`, which a Docker pool on the Apple `container` engine runs
+    /// unless `CONTAINER_BIN` names another.
+    Container,
 }
 
 impl PinnedTool {
     /// The label of the tool for the host of `settings`.
+    /// The file below `tools/vm` of the community module that pins the tool.
+    const fn module_file(self) -> &'static str {
+        match self {
+            Self::Tart => "tart.MODULE.bazel",
+            Self::DockerCli | Self::DockerBuildx => "docker.MODULE.bazel",
+            Self::Container => "container.MODULE.bazel",
+        }
+    }
+
     pub(crate) fn label(self, settings: &Config) -> String {
         match self {
             Self::Tart => TART_LABEL.to_owned(),
             Self::DockerCli => docker_cli_label(settings.guest_arch),
             Self::DockerBuildx => docker_buildx_label(settings.guest_arch),
-            Self::Limactl => limactl_label(settings.guest_arch),
+            Self::Container => CONTAINER_LABEL.to_owned(),
         }
     }
 
-    /// The tools a pool of `settings` runs from their pins. A tool that `TART_BIN` or `DOCKER_BIN` names is the
-    /// operator's, and so is the plugin of a CLI that `DOCKER_BIN` names.
+    /// The tools a pool of `settings` runs from their pins. A tool that `TART_BIN`, `DOCKER_BIN` or `CONTAINER_BIN`
+    /// names is the operator's, and so is the plugin of a CLI that `DOCKER_BIN` names. A pool on the Apple `container`
+    /// engine runs no Docker CLI.
     pub(crate) fn of_pool(settings: &Config) -> Vec<Self> {
         let mut tools = Vec::new();
         match settings.backend {
             Backend::Tart if settings.tart.is_none() => tools.push(Self::Tart),
+            Backend::Docker if settings.runs_container_engine() => {
+                if settings.container.is_none() {
+                    tools.push(Self::Container);
+                }
+            }
             Backend::Docker if settings.docker.is_none() => tools.extend([Self::DockerCli, Self::DockerBuildx]),
-            Backend::Tart | Backend::Docker | Backend::Parallels => {}
-        }
-        if settings.runs_lima_engine() {
-            tools.push(Self::Limactl);
+            Backend::Tart | Backend::Docker | Backend::Parallels | Backend::ContainerLinux => {}
         }
         tools
     }
@@ -68,16 +83,20 @@ impl fmt::Display for PinnedTool {
             Self::Tart => "the pinned Tart",
             Self::DockerCli => "the pinned Docker CLI",
             Self::DockerBuildx => "the pinned docker-buildx plugin",
-            Self::Limactl => "the pinned limactl",
+            Self::Container => "the pinned Apple container CLI",
         })
     }
 }
 
-/// The host paths of the pinned tools of one pool: one resolver for the Tart, Docker and Lima backends.
+/// The host paths of the pinned tools of one pool: one resolver for Tart, Docker and Apple `container`.
 ///
-/// The first request resolves every tool of [`PinnedTool::of_pool`] and the one it asks for, with one `cquery` and one
-/// `info output_base` ([`external_files`]). A later request asks Bazel nothing. So the first command of a Docker pool
-/// on the Lima engine pays one analysis for its CLI, its plugin and its `limactl`, and not three.
+/// The first request resolves every tool of [`PinnedTool::of_pool`] and the one it asks for. A later request asks
+/// Bazel nothing. The record of an earlier process answers first ([`PINNED_TOOLS_RECORD`]). On a miss, one `cquery`
+/// and one `info output_base` resolve every tool at once ([`external_files`]), and the record is written again. So the
+/// first command of a Docker pool on the pinned CLI pays one analysis for its CLI and its plugin, and not two.
+///
+/// On 2026-10-10 each `cquery` of the pinned Apple CLI started with a deletion of about 510,000 Skyframe nodes, and the
+/// next lane build analyzed the whole graph again.
 pub(crate) struct PinnedTools {
     settings: Arc<Config>,
     runner: Runner,
@@ -113,8 +132,16 @@ impl PinnedTools {
                 }
                 // The query runs in the host checkout, and `status` passes the gate before it resolves that path.
                 ensure_host_paths(ctx, &self.runner, &self.settings).await?;
+                let keys: Option<Vec<PinnedToolKey>> = tools.iter().map(|tool| PinnedToolKey::of(&self.settings, *tool)).collect();
+                let record = self.settings.runtime_root.join(PINNED_TOOLS_RECORD);
+                if let Some(paths) = keys.as_deref().and_then(|keys| recorded_paths(&record, keys)) {
+                    return Ok(tools.into_iter().zip(paths).collect());
+                }
                 let labels: Vec<String> = tools.iter().map(|tool| tool.label(&self.settings)).collect();
                 let files = external_files(ctx, bazel.as_ref(), &labels).await?;
+                if let Some(keys) = keys {
+                    write_record(&record, keys, &files)?;
+                }
                 Ok::<_, Refusal>(tools.into_iter().zip(files).collect())
             })
             .await?;
@@ -127,14 +154,83 @@ impl PinnedTools {
     }
 }
 
+/// The file in the runtime root that records the resolved path of each pinned tool, for the next process.
+pub(crate) const PINNED_TOOLS_RECORD: &str = "pinned-tools.json";
+
+/// What a recorded path is valid for: the label, the digest of the `.MODULE.bazel` file that pins the tool, and the
+/// Bazel user root. A changed pin changes the digest, so a bump resolves the tool again.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PinnedToolKey {
+    label: String,
+    module_sha256: String,
+    bazel_user_root: String,
+}
+
+impl PinnedToolKey {
+    /// The key of `tool` in this checkout, or `None` when its `.MODULE.bazel` file is not there: then only a query
+    /// answers.
+    fn of(settings: &Config, tool: PinnedTool) -> Option<Self> {
+        let repo = settings.host_repo().ok()?;
+        let module = [repo.join("community/tools/vm"), repo.join("tools/vm")]
+            .into_iter()
+            .map(|directory| directory.join(tool.module_file()))
+            .find(|path| path.is_file())?;
+        Some(Self {
+            label: tool.label(settings),
+            module_sha256: avl_report::digest::sha256_file(&module).ok()?,
+            bazel_user_root: settings.host_bazel_user_root().ok()?.to_string_lossy().into_owned(),
+        })
+    }
+}
+
+/// One recorded tool: its key and the host path that Bazel answered for it.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecordedTool {
+    #[serde(flatten)]
+    key: PinnedToolKey,
+    path: PathBuf,
+}
+
+/// The paths that `record` holds for `keys`, in their order, or `None` unless every key has a recorded file that is
+/// still there. An unreadable record is a miss, never an error.
+fn recorded_paths(record: &Path, keys: &[PinnedToolKey]) -> Option<Vec<PathBuf>> {
+    let recorded: Vec<RecordedTool> = serde_json::from_slice(&std::fs::read(record).ok()?).ok()?;
+    keys.iter()
+        .map(|key| {
+            recorded
+                .iter()
+                .find(|tool| tool.key == *key && tool.path.is_file())
+                .map(|tool| tool.path.clone())
+        })
+        .collect()
+}
+
+/// Writes the record of `keys` and `paths`, atomically and private.
+fn write_record(record: &Path, keys: Vec<PinnedToolKey>, paths: &[PathBuf]) -> Result<(), Refusal> {
+    let tools: Vec<RecordedTool> = keys
+        .into_iter()
+        .zip(paths)
+        .map(|(key, path)| RecordedTool { key, path: path.clone() })
+        .collect();
+    let encoded = serde_json::to_vec_pretty(&tools).or_refuse("state_write_failed", Exit::FAILURE, || {
+        format!("cannot encode {}", record.display())
+    })?;
+    if let Some(parent) = record.parent() {
+        avl_base::fs::create_private_dir(parent)?;
+    }
+    avl_base::fs::write_atomically(record, &encoded, 0o600)
+}
+
 /// `major.minor.patch` from the first version-shaped token of a text, such as `tart --version` or a pin, or `None`.
 ///
 /// Anchored on a word boundary of its own (`^` or whitespace), because the output has carried a leading program name
 /// in some builds and a bare number in others, and a pattern with no left anchor would read `2.3` out of a build
 /// hash. A missing patch component reads as zero, so `v3.0` is `3.0.0`: Tart has shipped both spellings. Arrays
-/// compare lexicographically, which is the version order. The Tart gate and the pin tests read it, so a Windows build
-/// has it only for the tests.
-#[cfg(any(unix, test))]
+/// compare lexicographically, which is the version order. The Tart gate and the pin tests read it, and both are Unix
+/// only.
+#[cfg(unix)]
 pub(crate) fn parse_version(output: &str) -> Option<[u32; 3]> {
     static VERSION_SHAPE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"(?:^|\s)v?(\d+)\.(\d+)(?:\.(\d+))?(?:\s|$)").expect("a constant pattern compiles"));
@@ -147,7 +243,7 @@ pub(crate) fn parse_version(output: &str) -> Option<[u32; 3]> {
 ///
 /// # Panics
 /// When the file cannot be read, or declares no `variable = "<version>"` line with a version in it.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 pub(crate) fn module_pin(file: &str, variable: &str) -> [u32; 3] {
     let path = avl_testkit::repo_path(&format!("tools/vm/{file}"));
     let content = std::fs::read_to_string(&path)
@@ -163,7 +259,7 @@ pub(crate) fn module_pin(file: &str, variable: &str) -> [u32; 3] {
 ///
 /// # Panics
 /// When the constant is not a version.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 pub(crate) fn floor(version: &str) -> [u32; 3] {
     parse_version(version).unwrap_or_else(|| panic!("the floor {version} is not a version"))
 }

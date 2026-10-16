@@ -10,8 +10,9 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use avl_base::config::WORKSPACE_DIR;
 use avl_base::report::{Buffer, Mode, Terminal};
-use avl_base::{Config, Environment, GuestOs, Refusal, Reporter, Selection};
+use avl_base::{Backend, Config, Environment, GuestOs, Refusal, Reporter, Selection};
 use avl_wire::verb::AgentVerb;
 
 use super::{BazelHost, Guest, ParkedDaemonProbe, PeerChannels};
@@ -221,6 +222,18 @@ pub(crate) struct Host {
 
 impl Host {
     pub(super) fn new(guest_os: GuestOs) -> Self {
+        Self::on(fixture_backend(guest_os), guest_os)
+    }
+
+    /// The testing-ui container: a Linux guest the controller does not administer as root, whose skill output root
+    /// is the `work` directory under the fixture root. Its fake `container.cmd` is a POSIX shell script, so its tests
+    /// are Unix only.
+    #[cfg(unix)]
+    pub(super) fn container_linux() -> Self {
+        Self::on(Backend::ContainerLinux, GuestOs::Linux)
+    }
+
+    fn on(backend: Backend, guest_os: GuestOs) -> Self {
         let root = tempfile::tempdir().expect("a temporary directory");
         let repo = root.path().join("repo");
         let bazel = root.path().join("bazel");
@@ -236,16 +249,14 @@ impl Host {
             ("AIR_VM_WORKERS", "air-docker-1,air-docker-2"),
         ]);
         let settings = Config::load(
-            Selection {
-                backend: fixture_backend(guest_os),
-                guest_os,
-            },
+            avl_base::HostFacts::without_memory(),
+            Selection { backend, guest_os },
             &environment,
-            &root.path().join("scripts"),
+            &repo.join(WORKSPACE_DIR),
         )
         .unwrap_or_else(|refusal| panic!("the fixture environment was refused: {refusal:?}"));
         // The backend names the worker directory, `docker-air-docker-1` for a Docker worker.
-        for worker in ["air-docker-1", "air-docker-2", "air-macos-1"] {
+        for worker in ["air-docker-1", "air-docker-2", "air-macos-1", "container-linux-1"] {
             std::fs::create_dir_all(settings.worker_dir(worker)).expect("a fixture directory");
         }
         settings.set_host_paths(&repo, &bazel).expect("fresh host paths");

@@ -72,7 +72,7 @@ fn a_single_class_runs_unsharded_and_everything_else_is_forced() {
 /// Each shard is another test JVM and another IDE, and the flow lanes rely on one shared instance.
 #[test]
 fn an_ide_launching_lane_pins_one_shard() {
-    for name in ["ui", "ui-real", "ui-live", "gui-chat"] {
+    for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {
         let spec = lane(name);
         assert_eq!(spec.shards, Some(1), "lane {name}");
         let resolution = Resolution {
@@ -203,7 +203,7 @@ fn the_fast_lane_builds_what_it_excludes_from_the_run() {
 /// spawn. `AirIntegrationTagTest` checks the whole list against the BUILD files.
 #[test]
 fn every_ide_launching_lane_has_its_library_in_the_build_spawn() {
-    for name in ["ui", "ui-real", "ui-live", "gui-chat"] {
+    for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {
         let mut target = lane(name).targets[0].clone();
         if let Some(directory) = target.strip_suffix("/...") {
             // A lane rooted at a package runs the one target named after that package.
@@ -274,32 +274,39 @@ fn no_lane_overrides_a_declared_runtime() {
 }
 
 /// The property lane selects by tag without being an integration lane: rooted at the whole subtree so the tag, not
-/// a directory, finds the targets, and outside both integration axes so CI never excludes them.
+/// a directory, finds the targets, and a category of its own, excluded for its dedicated suite, so the CI filter of
+/// the integration categories never names it.
 #[test]
 fn the_property_lane_selects_its_tag_across_the_whole_subtree() {
     let property = lane("property");
-    let tag = lanes().property_tag().expect("the table names a property tag");
+    let tag = "air-property";
+    let spec = lanes().tag(tag).expect("the table describes air-property");
     assert_eq!(property.targets, ["//plugins/air/..."]);
     assert!(has(&property.extra, &format!("--test_tag_filters={tag}")), "{:?}", property.extra);
     // Nothing about a property target makes JVM bootstrap the wrong thing to amortise, so it keeps the throughput
     // default rather than the IDE lanes' one-shard pin.
     assert_eq!(property.shards, None);
-    assert!(!tag.starts_with("air-integration-"));
-    assert!(!lanes().integration_category_tags().iter().any(|category| category == tag));
+    assert_eq!(spec.axis, TagAxis::Category);
+    assert_eq!(spec.excluded_from_broad_runs, Some(BroadRunExclusion::DedicatedSuite));
     assert!(!lanes().iter().any(|spec| spec.integration_tag.as_deref() == Some(tag)));
     // `--lane fast` excludes these targets, so this lane is what covers them.
     assert!(lane("fast").extra.join(" ").contains(&format!("-{tag}")));
 }
 
-/// The category axis must stay excluded, because `testTagFilters` on the CI configurations is that same list and
-/// lives outside this repository. The dedicated-suite tags are excluded for the other reason: a suite of its own
-/// runs those targets.
+/// The `ci` categories must stay excluded, because `testTagFilters` on the CI configurations is that same list and
+/// lives outside this repository. The `dedicated-suite` categories are excluded for the other reason: a suite of its
+/// own runs those targets. A category without a reason is what the lane runs.
 #[test]
-fn the_fast_lane_excludes_the_ci_categories_and_the_dedicated_suite_tags() {
+fn the_fast_lane_excludes_the_ci_and_the_dedicated_suite_categories() {
     let fast = lane("fast");
     let joined = fast.extra.join(" ");
-    for tag in lanes().integration_category_tags().iter().chain(lanes().dedicated_suite_tags()) {
+    let excluded: Vec<&str> = lanes().broad_run_excluded_tags().map(String::as_str).collect();
+    assert_eq!(excluded, ["air-integration-ui", "air-integration-headless", "air-property"]);
+    for tag in excluded {
         assert!(joined.contains(&format!("-{tag}")), "the fast lane does not exclude {tag}");
+    }
+    for tag in lanes().category_tags().filter(|tag| tag.excluded_from_broad_runs.is_none()) {
+        assert!(!joined.contains(&tag.name), "the fast lane excludes {}, which it runs", tag.name);
     }
     for tag in lanes().iter().filter_map(|spec| spec.integration_tag.as_deref()) {
         assert!(!joined.contains(tag), "the fast lane names the lane tag {tag}");
@@ -309,11 +316,17 @@ fn the_fast_lane_excludes_the_ci_categories_and_the_dedicated_suite_tags() {
     assert_eq!(filters, 1);
 }
 
-/// The local half of what a dedicated-suite tag promises: excluding a tag from `fast` while no lane selects it would
-/// leave the suite unrunnable locally.
+/// The local half of what a `dedicated-suite` category promises: excluding a tag from `fast` while no lane selects it
+/// would leave the suite unrunnable locally.
 #[test]
 fn every_dedicated_suite_tag_is_still_covered_by_a_lane() {
-    for tag in lanes().dedicated_suite_tags() {
+    let dedicated: Vec<&str> = lanes()
+        .category_tags()
+        .filter(|tag| tag.excluded_from_broad_runs == Some(BroadRunExclusion::DedicatedSuite))
+        .map(|tag| tag.name.as_str())
+        .collect();
+    assert_eq!(dedicated, ["air-property"]);
+    for tag in dedicated {
         let covered = lanes().iter().filter(|spec| spec.name != "fast").any(|spec| {
             // `all` carries no filters at all, so it runs everything the subtree holds.
             (spec.extra.is_empty() && spec.is_multi_target()) || has(&spec.extra, &format!("--test_tag_filters={tag}"))
@@ -328,10 +341,10 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
         let Some(tag) = &spec.integration_tag else {
             continue;
         };
-        assert!(
-            !lanes().integration_category_tags().contains(tag),
-            "{tag} is both a lane tag and a category"
-        );
+        let described = lanes().tag(tag).unwrap_or_else(|| panic!("the table does not describe {tag}"));
+        assert_eq!(described.axis, TagAxis::Lane, "{tag} is a category, not a lane tag");
+        // Every lane is an IDE-launching one, so its target carries the one category CI excludes for a display.
+        assert_eq!(described.category.as_deref(), Some("air-integration-ui"), "lane tag {tag}");
         // The controller and the trace planner read these two instead of a table of their own, and a lane without
         // them is one a VM worker cannot run.
         let label = spec.test_label.as_deref().unwrap_or_default();
@@ -353,12 +366,16 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
             spec.name
         );
     }
-    assert_eq!(lanes().integration_lane_names(), ["ui", "ui-real", "ui-live", "gui-chat"]);
+    assert_eq!(
+        lanes().integration_lane_names(),
+        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"]
+    );
 }
 
 /// An integration lane without a catalog name is explicit-only: the suite join maps lanes through the catalog, so no
 /// flow, suite or changed path reaches it, and it runs only when a caller names it. Its one target is a label, never a
-/// pattern, so no wildcard a caller spells reaches it through the lane either.
+/// pattern, so no wildcard a caller spells reaches it through the lane either. `ui-live` spends billed turns,
+/// `ui-perf` takes hours, and `jcp` drives a real preprod account.
 #[test]
 fn an_integration_lane_without_a_catalog_name_is_explicit_only() {
     let explicit: Vec<&str> = lanes()
@@ -366,11 +383,69 @@ fn an_integration_lane_without_a_catalog_name_is_explicit_only() {
         .filter(|spec| spec.integration_tag.is_some() && spec.catalog_lane.is_none())
         .map(|spec| spec.name.as_str())
         .collect();
-    assert_eq!(explicit, ["ui-live"]);
-    let live = lane("ui-live");
-    assert!(!live.is_multi_target(), "{:?}", live.targets);
-    assert_eq!(live.test_label.as_deref(), Some(live.targets[0].as_str()));
-    assert_eq!(lanes().by_catalog_lane("UI_LIVE").map(|spec| spec.name.as_str()), None);
+    assert_eq!(explicit, ["ui-live", "ui-perf", "jcp"]);
+    for (name, catalog_lane) in [("ui-live", "UI_LIVE"), ("ui-perf", "UI_PERF"), ("jcp", "JCP")] {
+        let spec = lane(name);
+        assert!(!spec.is_multi_target(), "{:?}", spec.targets);
+        assert_eq!(spec.test_label.as_deref(), Some(spec.targets[0].as_str()));
+        assert_eq!(lanes().by_catalog_lane(catalog_lane).map(|spec| spec.name.as_str()), None);
+    }
+}
+
+/// The table is the one description of the tags, so the parser holds its two halves to each other. A table without
+/// tags still parses: a lane without an `integrationTag` needs none.
+#[test]
+fn the_parser_refuses_a_table_whose_lanes_and_tags_disagree() {
+    fn refused(tags: &str, lanes: &str) -> String {
+        let text = format!(r#"{{ "tags": [{tags}], "lanes": [{lanes}] }}"#);
+        Lanes::parse(&text).expect_err("the table parses, and it must not")
+    }
+    let ui = r#"{ "name": "ui", "target": "//ui:ui_test", "extra": [], "integrationTag": "air-integration-ui-flow" }"#;
+    let fast = r#"{ "name": "fast", "target": "//...", "extra": [] }"#;
+    let category = r#"{ "name": "air-integration-ui", "axis": "category", "excludedFromBroadRuns": "ci", "description": "x" }"#;
+    let unit = r#"{ "name": "air-unit", "axis": "category", "description": "x" }"#;
+    let flow = r#"{ "name": "air-integration-ui-flow", "axis": "lane", "category": "air-integration-ui", "description": "x" }"#;
+    assert_eq!(
+        refused(category, ui),
+        "the lane ui selects by air-integration-ui-flow, which the table describes as no lane tag"
+    );
+    assert_eq!(
+        refused(&format!("{category}, {flow}"), fast),
+        "the lane tag air-integration-ui-flow selects no lane"
+    );
+    assert_eq!(
+        refused(flow, ui),
+        "the lane tag air-integration-ui-flow names the category air-integration-ui, which the table does not describe"
+    );
+    assert_eq!(
+        refused(&format!("{category}, {unit}, {unit}"), fast),
+        "the tag air-unit is described twice"
+    );
+    let self_category = unit.replace(r#""description""#, r#""category": "air-unit", "description""#);
+    assert_eq!(refused(&self_category, fast), "the category air-unit names a category of its own");
+    let excluded_flow = flow.replace(r#""description""#, r#""excludedFromBroadRuns": "ci", "description""#);
+    assert_eq!(
+        refused(&format!("{category}, {excluded_flow}"), ui),
+        "the lane tag air-integration-ui-flow carries an exclusion; its category air-integration-ui carries it"
+    );
+    Lanes::parse(&format!(r#"{{ "lanes": [{fast}] }}"#)).expect("a table without tags parses");
+    // The Air table, as the fixture copies it: the categories first, in the order of the exclusion flag.
+    let described: Vec<&str> = lanes().tags().iter().map(|tag| tag.name.as_str()).collect();
+    assert_eq!(
+        described,
+        [
+            "air-unit",
+            "air-integration-ui",
+            "air-integration-headless",
+            "air-property",
+            "air-integration-ui-flow",
+            "air-integration-gui-chat",
+            "air-integration-ui-real",
+            "air-integration-ui-live",
+            "air-integration-ui-perf",
+            "air-integration-jcp",
+        ]
+    );
 }
 
 /// The declared order is what a caller sees in the "Known lanes" refusal, and each name must be one lane.
@@ -382,7 +457,8 @@ fn lane_names_cover_every_lane_exactly_once() {
     assert_eq!(
         names,
         [
-            "fast", "property", "ui", "ui-real", "ui-live", "gui-chat", "headless", "all", "claude", "codex", "pi", "junie", "acp"
+            "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "headless", "all", "claude", "codex", "pi",
+            "junie", "acp"
         ]
     );
 }

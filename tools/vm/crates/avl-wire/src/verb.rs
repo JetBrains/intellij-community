@@ -47,5 +47,16 @@ vocabulary! {
         /// it on a channel that carries bytes unchanged, and [`crate::pull::FileReceipt`] on standard error names what
         /// was sent.
         ReadFile = "read-file",
+        /// Lays out one context of the lane IDE from a [`crate::ide::IdeContext`] on standard input, and answers
+        /// [`crate::ide::IdePrepared`]: the paths that the caller seeds before the launch.
+        IdePrepare = "ide-prepare",
+        /// Cancels or keeps the live IDE runs under an IDE root, and removes the old log directories of each
+        /// context: `ide-gc --root <ideRoot> [--stop-all | --keep-product <digest>]`. It answers
+        /// [`crate::ide::IdeGcResult`].
+        IdeGc = "ide-gc",
+        /// Starts the lane IDE on a prepared context from a [`crate::ide::IdeLaunch`] on standard input: it composes
+        /// the argument file and starts the supervisor run `run-ide-<launchName>` in the closed environment of the
+        /// context. It answers [`crate::ide::IdeLaunched`].
+        IdeLaunch = "ide-launch",
     }
 }

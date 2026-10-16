@@ -468,13 +468,20 @@ pub(crate) fn upload_concurrency(bytes: u64) -> usize {
         .clamp(1, MAX_PARALLEL_UPLOADS)
 }
 
-/// Offers the hot tier by digest and uploads only what the guest does not already hold, answering how many jars
-/// travelled.
+/// Offers the hot tier and the context plugin files by digest, and uploads only what the guest does not already hold,
+/// answering how many files travelled. A digest that two files share is offered once.
 ///
 /// [`upload_concurrency`] of the bytes to push decides how many uploads run at once. The first upload that fails ends
 /// the push with its refusal, and the uploads still in flight end with it, because their futures are dropped.
-pub(crate) async fn push_hot_jars(ctx: &Ctx, daemon: &DaemonClient, state: &HostState, prep: &PreparedBuild) -> Result<usize, Refusal> {
-    let digests: Vec<&str> = prep.hot_jars.iter().map(|jar| jar.sha256.as_str()).collect();
+pub(crate) async fn push_jars(ctx: &Ctx, daemon: &DaemonClient, state: &HostState, prep: &PreparedBuild) -> Result<usize, Refusal> {
+    let mut offered = HashSet::new();
+    let jars: Vec<&PathDigest> = prep
+        .hot_jars
+        .iter()
+        .chain(prep.plugin_files.iter().map(|file| &file.host))
+        .filter(|jar| offered.insert(jar.sha256.as_str()))
+        .collect();
+    let digests: Vec<&str> = jars.iter().map(|jar| jar.sha256.as_str()).collect();
     let body = encode(&json!({ "jars": digests }))?;
     let (status, reply) = daemon.http(ctx, state, &wire::MISSING_JARS, Some(body.into())).await?;
     if !status.is_success() {
@@ -485,7 +492,7 @@ pub(crate) async fn push_hot_jars(ctx: &Ctx, daemon: &DaemonClient, state: &Host
         .missing
         .into_iter()
         .collect();
-    let travelling: Vec<&PathDigest> = prep.hot_jars.iter().filter(|jar| missing.contains(&jar.sha256)).collect();
+    let travelling: Vec<&PathDigest> = jars.into_iter().filter(|jar| missing.contains(&jar.sha256)).collect();
     let mut bytes = 0;
     for jar in &travelling {
         // A jar that cannot be read counts nothing here, and its upload refuses with the reason.
@@ -501,7 +508,7 @@ pub(crate) async fn push_hot_jars(ctx: &Ctx, daemon: &DaemonClient, state: &Host
     Ok(pushed)
 }
 
-/// Uploads one hot jar.
+/// Uploads one jar of the push.
 async fn upload_jar(ctx: &Ctx, daemon: &DaemonClient, state: &HostState, jar: &PathDigest) -> Result<(), Refusal> {
     let content = tokio::fs::read(&jar.path)
         .await
@@ -601,6 +608,16 @@ pub(crate) struct RunRequestBody<'a> {
     pub(crate) hot_jars: Vec<&'a str>,
     pub(crate) active_execution_timeout_sec: u64,
     pub(crate) progress_gap_timeout_sec: u64,
+    /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
+    pub(crate) ide_plugins: Vec<IdePlugin<'a>>,
+}
+
+/// One context plugin file of the `/run` request: its destination below the plugin directory of the IDE context, and
+/// the digest that the push stored it under.
+#[derive(Serialize)]
+pub(crate) struct IdePlugin<'a> {
+    pub(crate) destination: &'a str,
+    pub(crate) sha256: &'a str,
 }
 
 impl Host {
@@ -629,6 +646,14 @@ impl Host {
             hot_jars: prep.hot_jars.iter().map(|jar| jar.sha256.as_str()).collect(),
             active_execution_timeout_sec: policy.active_execution.as_secs(),
             progress_gap_timeout_sec: policy.progress_gap.as_secs(),
+            ide_plugins: prep
+                .plugin_files
+                .iter()
+                .map(|file| IdePlugin {
+                    destination: &file.destination,
+                    sha256: &file.host.sha256,
+                })
+                .collect(),
         })?;
         let mut watchdog = TransportWatchdog::armed(policy.progress_gap + TRANSPORT_MARGIN);
         let run_failed = |message: String| Refusal::new("daemon_run_failed", Exit::SOFTWARE, message);

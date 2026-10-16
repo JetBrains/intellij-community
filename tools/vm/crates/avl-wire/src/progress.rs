@@ -60,6 +60,9 @@ vocabulary! {
     pub enum Phase {
         /// The `bazel build` of the lane on the host.
         HostBuild = "host-build",
+        /// Reading what the host build produced and hashing it: the runtime descriptor, the identities of the daemon
+        /// and the hot tier. It touches no worker.
+        Prepare = "prepare",
         /// Taking a worker. A worker that is not warm is cloned, booted and provisioned here.
         Lease = "lease",
         /// Staging the guest runtime and starting the daemon and its IDE.
@@ -78,6 +81,7 @@ impl Phase {
     pub const fn label(self) -> &'static str {
         match self {
             Self::HostBuild => "building on the host",
+            Self::Prepare => "hashing the build",
             Self::Lease => "leasing a worker",
             Self::DaemonStart => "starting the daemon",
             Self::Iteration => "running the tests",
@@ -205,6 +209,10 @@ pub struct RunStarted {
     /// The repository the run builds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checkout: Option<String>,
+    /// When the process of the command started, in RFC 3339, to the second on Unix. The `vm.cmd` wrapper builds the
+    /// controller and then replaces itself with it, so the time from here to this record is the wrapper's build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub process_started_at: Option<String>,
 }
 
 /// One iteration a run will execute. `lane` is absent for a class, an FQN or a whole lane.

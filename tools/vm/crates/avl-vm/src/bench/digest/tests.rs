@@ -14,13 +14,13 @@ fn the_replay_digest_matches_the_golden() {
     assert_golden("replay-digest.txt", &digest);
     let profile = digest
         .lines()
-        .skip_while(|line| !line.ends_with("EDT samples):"))
+        .skip_while(|line| !line.contains(" EDT, top Java frames by samples ("))
         .take_while(|line| !line.contains("host load"))
         .count();
     assert_eq!(profile, 16, "the EDT block and the trigger block of the profile");
     assert!(
-        digest.lines().count() - profile <= 55,
-        "the digest of a welcome session without a profile is about 50 lines"
+        digest.lines().count() - profile <= 75,
+        "the digest of a welcome session without a profile is about 69 lines"
     );
 }
 
@@ -135,4 +135,100 @@ fn an_empty_editor_session_shows_the_composer() {
     );
     assert!(!lines.contains(&"editor:"), "the editor group needs the project arm: {text}");
     assert!(text.contains("  classes.named@emptyStateBuilt "), "{text}");
+}
+
+/// A session with the modal arm renders the modal spans in their order and the report metrics of the exit report.
+/// The span ends follow the span groups, with the ends of the application callbacks and of the welcome frame.
+#[test]
+fn a_modal_session_shows_the_modal_spans_and_their_ends() {
+    use crate::bench::arm::Arm;
+    use crate::bench::record::{self, LaunchFacts, MODAL_SPANS, RunId};
+    use crate::bench::session;
+    use crate::bench::summary::Summary;
+    let (_dir, session_dir) = fixture_session();
+    let mut info = session::read_info(&session_dir).expect("the session");
+    info.arms = vec![Arm::Modal];
+    let run_dir = session_dir.join("modal-run-01");
+    let id = RunId::parse("modal-run-01").expect("a run");
+    let run = record::collect(&run_dir, &id, LaunchFacts::default());
+    let summary = Summary::build(&info, "<session>", &[run]);
+    let text = super::render(&summary);
+    let lines: Vec<&str> = text.lines().collect();
+    let name = |line: &str| line.chars().take(super::NAME_WIDTH).collect::<String>().trim().to_owned();
+    let group = |title: &str| {
+        let start = lines
+            .iter()
+            .position(|line| *line == title)
+            .unwrap_or_else(|| panic!("{title}: {text}"));
+        let rows: Vec<String> = lines[start + 1..]
+            .iter()
+            .take_while(|line| line.starts_with("  "))
+            .map(|line| name(line))
+            .collect();
+        (start, rows)
+    };
+    let (modal, modal_rows) = group("modal spans:");
+    assert_eq!(modal_rows, MODAL_SPANS);
+    let (ends, end_rows) = group("span ends (ms from the process start):");
+    assert_eq!(
+        end_rows,
+        [
+            "app initialization end",
+            "app initialized callback end",
+            "app frame created callback end",
+            "welcome frame creating end"
+        ]
+    );
+    assert!(modal < ends, "{text}");
+    assert!(
+        lines[ends + 4].ends_with("   1863    1863    1863"),
+        "the end of the frame creating: {text}"
+    );
+    let (_, report_rows) = group("events and report:");
+    assert!(
+        report_rows.contains(&"jvm.loadingTime".to_owned()) && !report_rows.contains(&"totalDuration".to_owned()),
+        "the report of the exit, without its negative totalDuration: {text}"
+    );
+    assert!(!text.contains("welcome spans:"), "{text}");
+}
+
+/// A profile with stacks of the profiler's own symbol parsing names them in a note of its arm, and neither block of
+/// the profile holds them.
+#[test]
+fn the_digest_notes_the_samples_of_the_symbol_parsing_of_the_profiler() {
+    use crate::bench::arm::Arm;
+    use crate::bench::profile::ExcludedSamples;
+    use crate::bench::record::{self, LaunchFacts, RunId};
+    use crate::bench::session;
+    use crate::bench::summary::Summary;
+    let (_dir, session_dir) = fixture_session();
+    let mut info = session::read_info(&session_dir).expect("the session");
+    info.arms = vec![Arm::NonModal];
+    let run_dir = session_dir.join("non-modal-run-01");
+    std::fs::write(
+        run_dir.join("cpu-gate.collapsed"),
+        "[AWT-EventQueue-0 tid=1];a/A.run;Profiler::dlopen_hook(char const*, int);Symbols::parseLibraries 480\n\
+         [DefaultDispatcher-worker-1 tid=7];c/C.run;Profiler::dlopen_hook(char const*, int);CodeCache::sort 30\n\
+         [AWT-EventQueue-0 tid=1];a/A.run;b/B.paint 20\n",
+    )
+    .expect("a profile to the gate");
+    let id = RunId::parse("non-modal-run-01").expect("a run");
+    let run = record::collect(&run_dir, &id, LaunchFacts::default());
+    assert_eq!(
+        run.excluded_samples,
+        Some(ExcludedSamples {
+            samples: 510,
+            edt_samples: 480
+        })
+    );
+    let summary = Summary::build(&info, "<session>", &[run]);
+    let text = super::render(&summary);
+    assert!(
+        text.contains("\nnon-modal EDT, top Java frames by samples (20 EDT cpu samples, to the gate):\n  100.0%     20  b/B.paint\n"),
+        "{text}"
+    );
+    assert!(
+        text.contains("\nnon-modal note: profiler symbol parsing: 510 samples excluded, 480 of them on the EDT\n"),
+        "{text}"
+    );
 }

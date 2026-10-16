@@ -1,7 +1,6 @@
 use std::fs;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use avl_wire::stage::{ArgFileRequest, LaunchPrep, RuntimeManifest, RuntimeResult};
 use avl_wire::verb::AgentVerb;
@@ -17,15 +16,6 @@ fn digest_of(letter: char) -> String {
     letter.to_string().repeat(64)
 }
 
-/// Whether the host has the `tar` the stager runs; a test that needs it skips with a reason otherwise.
-fn tar_available() -> bool {
-    let present = Path::new(TAR_BINARY).is_file();
-    if !present {
-        eprintln!("skipped: {TAR_BINARY} is not on this host");
-    }
-    present
-}
-
 // --- the refusal a staging verb answers --------------------------------------------------------------------------
 
 fn write_runtime_manifest(directory: &Path, manifest: &RuntimeManifest) -> PathBuf {
@@ -34,59 +24,43 @@ fn write_runtime_manifest(directory: &Path, manifest: &RuntimeManifest) -> PathB
     path
 }
 
-fn runtime_manifest(digest: &str, sources: Vec<String>, archive: &str) -> RuntimeManifest {
+fn runtime_manifest(digest: &str, sources: Vec<String>, jbr_source: &str) -> RuntimeManifest {
     RuntimeManifest {
         schema_version: avl_wire::stage::SCHEMA_VERSION,
         runtime_digest: digest.to_owned(),
         stable_sources: sources,
-        jbr_archive: archive.to_owned(),
+        jbr_source: jbr_source.to_owned(),
         java_home_suffix: JAVA_HOME_SUFFIX.to_owned(),
     }
 }
 
-/// A staging refusal carries what this process composed and not what a subprocess printed: the message travels to
-/// the host inside the envelope, so a `tar` stream quoted into it would travel too. `tar`'s wording differs per
-/// platform, so the test runs the same failing extraction itself and asserts its output is absent.
+/// A distribution without its JBR is a loud refusal that names the path. A JBR directory without `bin/java` below
+/// the Java-home suffix is refused too, before the copy.
 #[test]
-fn a_staging_refusal_does_not_quote_a_subprocesses_output() {
-    if !tar_available() {
-        return;
-    }
+fn a_distribution_without_its_jbr_is_refused_with_the_path() {
     let root = tempfile::tempdir().unwrap();
-    let archive = root.path().join("jbr-archive.bin");
-    fs::write(&archive, "this is not a gzipped tar archive").unwrap();
-    let archive_text = archive.to_string_lossy().into_owned();
-    let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest_of('a'), vec![], &archive_text));
+    let runtime_root = root.path().join("daemon-runtime");
+    let absent = root.path().join("dist/jbr").to_string_lossy().into_owned();
+    let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest_of('a'), vec![], &absent));
+    let answered = run_agent(&[Path::new("stage"), &runtime_root, &manifest], b"");
+    assert_eq!((answered.exit, answered.code()), (70, "guest_stage_failed".to_owned()));
+    assert_eq!(
+        answered.failure()["error"]["message"],
+        format!("the distribution has no JBR: {absent} is not a directory; the dev distribution places the production JBR there")
+    );
 
-    let refusal = runtime::stage(&root.path().to_string_lossy(), Some(&manifest), &mut io::empty())
+    let empty = root.path().join("empty-dist/jbr");
+    fs::create_dir_all(&empty).unwrap();
+    let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest_of('b'), vec![], &empty.to_string_lossy()));
+    let refusal = runtime::stage(&runtime_root.to_string_lossy(), Some(&manifest), &mut io::empty())
         .unwrap_err()
         .message;
-    let prefix = format!("JBR extraction failed for {archive_text}: ");
-    assert!(refusal.starts_with(&prefix), "the refusal does not name the archive: {refusal}");
-    assert!(!refusal.contains('\n'), "a staging refusal must stay one line: {refusal:?}");
-
-    let elsewhere = root.path().join("elsewhere");
-    fs::create_dir_all(&elsewhere).unwrap();
-    let printed = Command::new(TAR_BINARY)
-        .arg("xzf")
-        .arg(&archive)
-        .arg("-C")
-        .arg(&elsewhere)
-        .arg("--strip-components=1")
-        .output()
-        .unwrap();
-    assert!(!printed.status.success(), "the fixture archive extracted; the test proves nothing");
-    let quoted = String::from_utf8_lossy(&printed.stderr).trim().to_owned();
-    assert!(!quoted.is_empty(), "tar printed nothing; the test proves nothing");
-    assert!(!refusal.contains(&quoted), "tar's own output travelled in the refusal: {refusal}");
-
-    // And it is absent from the document that actually crosses to the host.
-    let answered = run_agent(&[Path::new("stage"), root.path(), &manifest], b"");
-    assert_eq!(answered.exit, 70);
-    assert!(
-        !answered.stderr.contains(&quoted),
-        "tar's own output reached the envelope: {}",
-        answered.stderr
+    assert_eq!(
+        refusal,
+        format!(
+            "the JBR of the distribution has no {}",
+            empty.join(JAVA_HOME_SUFFIX).join("bin/java").display()
+        )
     );
 }
 
@@ -96,7 +70,7 @@ fn a_staging_refusal_does_not_quote_a_subprocesses_output() {
 fn a_staging_failure_answers_a_structured_refusal_its_message_can_travel_in() {
     let root = tempfile::tempdir().unwrap();
     let absent = root.path().join("absent.jar").to_string_lossy().into_owned();
-    let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest_of('a'), vec![absent.clone()], "/j.tgz"));
+    let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest_of('a'), vec![absent.clone()], "/dist/jbr"));
 
     let answered = run_agent(&[Path::new("stage"), root.path(), &manifest], b"");
     assert_eq!(answered.exit, 70);
@@ -126,7 +100,7 @@ fn a_staging_failure_answers_a_structured_refusal_its_message_can_travel_in() {
 
     // The controller sends the manifest on standard input. A manifest there and as the argument is refused, because
     // the stager cannot know which one was meant, and so is a stage with neither.
-    let piped = serde_json::to_vec(&runtime_manifest(&digest_of('a'), vec![absent.clone()], "/j.tgz")).unwrap();
+    let piped = serde_json::to_vec(&runtime_manifest(&digest_of('a'), vec![absent.clone()], "/dist/jbr")).unwrap();
     let from_stdin = run_agent(&[Path::new("stage"), root.path()], &piped);
     assert_eq!(
         from_stdin.failure()["error"]["message"],
@@ -238,23 +212,21 @@ fn a_failed_stage_removes_its_staging_tree() {
     fs::write(&jar, "util bytes").unwrap();
     let jar = jar.to_string_lossy().into_owned();
     let absent = root.path().join("absent.jar").to_string_lossy().into_owned();
-    let not_an_archive = root.path().join("not-an-archive.tgz");
-    fs::write(&not_an_archive, "this is not a gzipped tar archive").unwrap();
-    let not_an_archive = not_an_archive.to_string_lossy().into_owned();
-    let mut cases = vec![
-        ("a stable source is not a file", vec![jar.clone(), absent], "/j.tgz".to_owned()),
+    let jbr = seed_jbr(root.path());
+    let without_java = root.path().join("no-java-dist/jbr");
+    fs::create_dir_all(without_java.join("lib")).unwrap();
+    let cases = [
+        ("a stable source is not a file", vec![jar.clone(), absent], jbr),
         (
-            "the JBR archive is not a file",
+            "the JBR is not a directory",
             vec![jar.clone()],
-            root.path().join("absent.tgz").to_string_lossy().into_owned(),
+            root.path().join("absent-dist/jbr").to_string_lossy().into_owned(),
         ),
+        ("the JBR has no java", vec![jar], without_java.to_string_lossy().into_owned()),
     ];
-    if tar_available() {
-        cases.push(("the JBR extraction failed", vec![jar], not_an_archive));
-    }
-    for (index, (name, sources, archive)) in cases.into_iter().enumerate() {
+    for (index, (name, sources, jbr_source)) in cases.into_iter().enumerate() {
         let digest = digest_of(['a', 'b', 'c'][index]);
-        let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest, sources, &archive));
+        let manifest = write_runtime_manifest(root.path(), &runtime_manifest(&digest, sources, &jbr_source));
         runtime::stage(&runtime_root.to_string_lossy(), Some(&manifest), &mut io::empty()).expect_err(name);
         let left: Vec<_> = fs::read_dir(generations_dir(&runtime_root))
             .unwrap()
@@ -451,28 +423,29 @@ fn launch_prep_publishes_the_argfile_atomically() {
 
 const JAVA_HOME_SUFFIX: &str = "jdk";
 
-/// Builds the one tar.gz `stage` refuses to stage without, so a test drives the whole verb.
-fn seed_jbr_archive(directory: &Path) -> String {
-    let payload = directory.join("jbr-payload");
-    let bin = payload.join("top").join(JAVA_HOME_SUFFIX).join("bin");
-    fs::create_dir_all(&bin).unwrap();
-    fs::write(bin.join("java"), "#!/bin/sh\n").unwrap();
-    let archive = directory.join("jbr.tgz");
-    let built = Command::new(TAR_BINARY)
-        .arg("czf")
-        .arg(&archive)
-        .arg("-C")
-        .arg(&payload)
-        .arg("top")
-        .output()
-        .unwrap();
-    assert!(built.status.success(), "cannot build the fixture JBR archive: {built:?}");
-    archive.to_string_lossy().into_owned()
+/// Builds the `jbr` directory of a distribution, which `stage` refuses to stage without, so a test drives the whole
+/// verb. It holds an executable `java`, a library, and a relative link, as the JBR of a distribution does.
+fn seed_jbr(directory: &Path) -> String {
+    let jbr = directory.join("dist").join("jbr");
+    if !jbr.is_dir() {
+        let bin = jbr.join(JAVA_HOME_SUFFIX).join("bin");
+        fs::create_dir_all(&bin).unwrap();
+        fs::write(bin.join("java"), "#!/bin/sh\n").unwrap();
+        fs::set_permissions(bin.join("java"), fs::Permissions::from_mode(0o755)).unwrap();
+        let lib = jbr.join(JAVA_HOME_SUFFIX).join("lib");
+        fs::create_dir_all(&lib).unwrap();
+        fs::write(lib.join("libjvm.so"), "jvm bytes").unwrap();
+        fs::set_permissions(lib.join("libjvm.so"), fs::Permissions::from_mode(0o644)).unwrap();
+        let legal = jbr.join(JAVA_HOME_SUFFIX).join("legal");
+        fs::create_dir_all(&legal).unwrap();
+        std::os::unix::fs::symlink("../lib/libjvm.so", legal.join("libjvm.so")).unwrap();
+    }
+    jbr.to_string_lossy().into_owned()
 }
 
-fn stage_sources(runtime_root: &Path, work: &Path, digest: &str, archive: &str, sources: &[&Path]) -> RuntimeResult {
+fn stage_sources(runtime_root: &Path, work: &Path, digest: &str, jbr_source: &str, sources: &[&Path]) -> RuntimeResult {
     let sources = sources.iter().map(|source| source.to_string_lossy().into_owned()).collect();
-    let manifest = write_runtime_manifest(work, &runtime_manifest(digest, sources, archive));
+    let manifest = write_runtime_manifest(work, &runtime_manifest(digest, sources, jbr_source));
     runtime::stage(&runtime_root.to_string_lossy(), Some(&manifest), &mut io::empty())
         .unwrap_or_else(|refusal| panic!("staging {} was refused: {refusal}", &digest[..12]))
 }
@@ -487,25 +460,22 @@ fn same_file(left: &str, right: &str) -> bool {
 /// but the content hash tells the two files apart.
 #[test]
 fn an_unchanged_jar_is_linked_and_a_changed_jar_of_the_same_length_is_copied() {
-    if !tar_available() {
-        return;
-    }
     let root = tempfile::tempdir().unwrap();
     let runtime_root = root.path().join("daemon-runtime");
-    let archive = seed_jbr_archive(root.path());
+    let jbr = seed_jbr(root.path());
     let share = root.path().join("share");
     fs::create_dir_all(&share).unwrap();
     let (stable, moving) = (share.join("util.jar"), share.join("core.jar"));
     fs::write(&stable, "the platform, unchanged").unwrap();
     fs::write(&moving, "the core, first build ").unwrap();
 
-    let first = stage_sources(&runtime_root, root.path(), &digest_of('a'), &archive, &[&stable, &moving]);
+    let first = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&stable, &moving]);
     assert!(!first.reused && first.classpath.len() == 2, "{first:?}");
 
     let rewritten = "the core, second build";
     assert_eq!(rewritten.len(), "the core, first build ".len());
     fs::write(&moving, rewritten).unwrap();
-    let second = stage_sources(&runtime_root, root.path(), &digest_of('b'), &archive, &[&stable, &moving]);
+    let second = stage_sources(&runtime_root, root.path(), &digest_of('b'), &jbr, &[&stable, &moving]);
     assert!(!second.reused && second.root != first.root, "{second:?}");
 
     assert!(
@@ -532,20 +502,17 @@ fn an_unchanged_jar_is_linked_and_a_changed_jar_of_the_same_length_is_copied() {
 /// stable tier renames every jar without changing a byte of it.
 #[test]
 fn a_reordered_classpath_links_by_content_rather_than_by_staged_name() {
-    if !tar_available() {
-        return;
-    }
     let root = tempfile::tempdir().unwrap();
     let runtime_root = root.path().join("daemon-runtime");
-    let archive = seed_jbr_archive(root.path());
+    let jbr = seed_jbr(root.path());
     let share = root.path().join("share");
     fs::create_dir_all(&share).unwrap();
     let (util, core) = (share.join("util.jar"), share.join("core.jar"));
     fs::write(&util, "util bytes").unwrap();
     fs::write(&core, "core bytes").unwrap();
 
-    let before = stage_sources(&runtime_root, root.path(), &digest_of('a'), &archive, &[&util, &core]);
-    let after = stage_sources(&runtime_root, root.path(), &digest_of('b'), &archive, &[&core, &util]);
+    let before = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&util, &core]);
+    let after = stage_sources(&runtime_root, root.path(), &digest_of('b'), &jbr, &[&core, &util]);
 
     assert!(after.classpath[0].ends_with("/0000-core.jar"), "{}", after.classpath[0]);
     assert!(
@@ -565,15 +532,12 @@ fn a_reordered_classpath_links_by_content_rather_than_by_staged_name() {
 /// then on - and it is still reused, so a worker holding two such generations does not restage 852 MiB.
 #[test]
 fn a_generation_without_the_content_record_is_not_a_donor_and_is_still_reused() {
-    if !tar_available() {
-        return;
-    }
     let root = tempfile::tempdir().unwrap();
     let runtime_root = root.path().join("daemon-runtime");
-    let archive = seed_jbr_archive(root.path());
+    let jbr = seed_jbr(root.path());
     let jar = root.path().join("util.jar");
     fs::write(&jar, "util bytes").unwrap();
-    let first = stage_sources(&runtime_root, root.path(), &digest_of('a'), &archive, &[&jar]);
+    let first = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&jar]);
 
     // The marker an older stager wrote: everything the reuse checks read, and no `entries`.
     write_json_file(
@@ -594,13 +558,13 @@ fn a_generation_without_the_content_record_is_not_a_donor_and_is_still_reused() 
         find_donor(&runtime_root, &digest_of('b')).is_none(),
         "a generation without a record is a donor"
     );
-    let second = stage_sources(&runtime_root, root.path(), &digest_of('b'), &archive, &[&jar]);
+    let second = stage_sources(&runtime_root, root.path(), &digest_of('b'), &jbr, &[&jar]);
     assert!(
         !same_file(&first.classpath[0], &second.classpath[0]),
         "a jar was linked from unrecorded bytes"
     );
 
-    let again = stage_sources(&runtime_root, root.path(), &digest_of('a'), &archive, &[&jar]);
+    let again = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&jar]);
     assert!(
         again.reused && again.root == first.root,
         "a generation with no content record was restaged: {again:?}"
@@ -611,15 +575,12 @@ fn a_generation_without_the_content_record_is_not_a_donor_and_is_still_reused() 
 /// and never sends the list back.
 #[test]
 fn stage_check_reuses_only_the_classpath_the_caller_remembers() {
-    if !tar_available() {
-        return;
-    }
     let root = tempfile::tempdir().unwrap();
     let runtime_root = root.path().join("daemon-runtime");
-    let archive = seed_jbr_archive(root.path());
+    let jbr = seed_jbr(root.path());
     let jar = root.path().join("util.jar");
     fs::write(&jar, "util bytes").unwrap();
-    let staged = stage_sources(&runtime_root, root.path(), &digest_of('a'), &archive, &[&jar]);
+    let staged = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&jar]);
     let remembered = hex::encode(Sha256::digest(fs::read(&staged.classpath_file).unwrap()));
     let check = |count: &str, sha: &str| {
         runtime::check(&StageCheckArgs {
@@ -642,4 +603,34 @@ fn stage_check_reuses_only_the_classpath_the_caller_remembers() {
     assert!(!check("2", &remembered).unwrap().complete, "a different count was reused");
     assert!(check("many", &remembered).unwrap_err().message.contains("not a count"));
     assert!(check("1", "short").unwrap_err().message.contains("not a sha256"));
+}
+
+/// The generation holds a copy of the JBR of the distribution, not a link to the share: the files keep their bytes
+/// and their permission bits, a link inside the JBR stays a link, and a change of the source after the stage does not
+/// reach the generation.
+#[test]
+fn the_stage_copies_the_jbr_of_the_distribution_into_the_generation() {
+    let root = tempfile::tempdir().unwrap();
+    let runtime_root = root.path().join("daemon-runtime");
+    let jbr = seed_jbr(root.path());
+    let jar = root.path().join("util.jar");
+    fs::write(&jar, "util bytes").unwrap();
+    let staged = stage_sources(&runtime_root, root.path(), &digest_of('a'), &jbr, &[&jar]);
+
+    let home = Path::new(&staged.root).join("jbr").join(JAVA_HOME_SUFFIX);
+    assert_eq!(staged.java_binary, home.join("bin/java").to_string_lossy());
+    let java = fs::symlink_metadata(home.join("bin/java")).unwrap();
+    assert!(java.is_file(), "the staged java is not a regular file");
+    assert_eq!(java.permissions().mode() & 0o777, 0o755, "the staged java lost its executable bits");
+    let library = fs::symlink_metadata(home.join("lib/libjvm.so")).unwrap();
+    assert_eq!(library.permissions().mode() & 0o777, 0o644);
+    assert_eq!(fs::read_link(home.join("legal/libjvm.so")).unwrap(), Path::new("../lib/libjvm.so"));
+    assert_eq!(fs::read_to_string(home.join("legal/libjvm.so")).unwrap(), "jvm bytes");
+
+    fs::write(Path::new(&jbr).join(JAVA_HOME_SUFFIX).join("lib/libjvm.so"), "a rebuilt jvm").unwrap();
+    assert_eq!(
+        fs::read_to_string(home.join("lib/libjvm.so")).unwrap(),
+        "jvm bytes",
+        "the generation reads the share"
+    );
 }

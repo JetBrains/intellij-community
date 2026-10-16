@@ -1,0 +1,44 @@
+# Apple `container`, the engine of the UI-lane controller's Docker backend on a macOS host of macOS 26 or newer
+# (the decision `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`, and ADR 0224). The pin removes the manual install.
+#
+# No `BUILD` file may name `@air_container_darwin_arm64` in `data` or `deps`. The controller asks for the alias with
+# `bazel cquery` at its first command on this engine (`resolve_apple_executable` in
+# `crates/avl-vm/src/worker/docker.rs`), and that request is the only fetch. A label in `data` or `deps` puts the
+# archive into the analysis of `//...`. Then every IDE sync on a Mac downloads it.
+#
+# Apple builds the tool for Apple silicon only. There is no x86_64 build, so there is no x86_64 repository.
+#
+# The archive is the payload of the signed release package, re-packed as a tarball, on the Space file mirror. An
+# `http_archive` cannot read the `.pkg` itself, which is a xar archive with a cpio payload. The Mach-O signatures
+# survive the re-pack. The layout stays `bin/` and `libexec/`, because the CLI finds its plugins and its server from
+# its real path: the install root is the grandparent of `bin/container`. The cache redirector does not serve
+# `github.com/apple`, and `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the redirector.
+#
+# To bump the pin:
+#   1. Download `container-<version>-installer-signed.pkg` of the release at https://github.com/apple/container and
+#      check it: `pkgutil --check-signature <pkg>` must name the Developer ID of Apple and say notarized.
+#   2. Expand it: `pkgutil --expand-full <pkg> <dir>`. Then re-pack the payload:
+#      `cd <dir>/Payload && tar -czf ../container-<version>-darwin-arm64.tar.gz bin libexec`.
+#   3. Upload the tarball to `container/<version>/` in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
+#   4. Change `AIR_CONTAINER_VERSION` and the `sha256` below, and record the sha256 of the package in the commit message.
+# `the_pinned_container_has_the_major_version_the_controller_speaks` (`crates/avl-vm/src/worker/container/tests.rs`)
+# keeps the pin at the major version whose JSON the controller parses.
+AIR_CONTAINER_VERSION = "1.5.0"
+
+air_container_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Only the executable is a target. The archive layout stays, because the install root is derived from its real path.
+_AIR_CONTAINER_BUILD_FILE = """
+filegroup(
+    name = "container",
+    srcs = ["bin/container"],
+    visibility = ["//visibility:public"],
+)
+"""
+
+air_container_archive(
+    name = "air_container_darwin_arm64",
+    build_file_content = _AIR_CONTAINER_BUILD_FILE,
+    sha256 = "f7459d9f9fd5604259713d44da75f172828103ae3ec377ea2f1e78ccba84ef63",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/container/{v}/container-{v}-darwin-arm64.tar.gz".format(v = AIR_CONTAINER_VERSION),
+)

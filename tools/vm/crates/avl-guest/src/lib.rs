@@ -1,4 +1,5 @@
-//! The guest half: the run supervisor, the runtime stager, the image and guest verbs, and the agent binary.
+//! The guest half: the run supervisor, the runtime stager, the lane IDE contexts, the image and guest verbs, and
+//! the agent binary.
 //!
 //! One static binary. The controller pushes it into the guest and invokes it over the one exec channel each
 //! hypervisor offers. The reason it is a typed binary is that every silent defect the controller has had lived on
@@ -12,17 +13,21 @@
 //! which is how the controller reaches the UI daemon. `read-file` copies one file to its standard output unchanged,
 //! which is how the controller pulls a file. `runfiles-tree` builds the runfiles tree of a host MANIFEST, for a
 //! Windows host that writes no tree.
+//! `ide-prepare`, `ide-launch` and `ide-gc` own the contexts of the lane IDE, whose process is a supervisor run.
 //!
 //! The image pair takes three named flags (`--macos-version --node-major --junie-version`), because the Packer
 //! template `air-macos.pkr.hcl` passes them by name. `validate-guest` takes a positional argv: a `:88` and an
 //! absolute path are two shapes no transposition survives.
 //!
 //! This crate is dispatch plus the verbs. The documents that cross to the host, and every verb's name, are declared
-//! in `avl-wire`, where the host reads the same declaration; the pack report is `avl-trace-tools`'. It depends on
-//! `avl-wire` and `avl-trace-tools` alone, never on `avl-base`, so the agent links no controller code.
+//! in `avl-wire`, where the host reads the same declaration; the pack report is `avl-trace-tools`'. Of the crates of
+//! this workspace it depends on `avl-wire` and `avl-trace-tools` alone, never on `avl-base`, so the agent links no
+//! controller code. `dev-launch` of the dev-dist tools composes the argument file of the lane IDE, the same composer
+//! that writes the argument file of a dev launch row.
 
 mod cli;
 mod clock;
+mod ide;
 mod image;
 mod linux;
 mod read_file;
