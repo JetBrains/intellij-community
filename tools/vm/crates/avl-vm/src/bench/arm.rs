@@ -66,6 +66,17 @@ impl Arm {
         }
     }
 
+    /// The anchor of the arm in milliseconds from the process start: [`Self::main_metric`] when it is one, else
+    /// `welcomeBecameVisible`, which the open-project arm reaches before it opens its second project. The default window
+    /// of `bench trace` without the frame ends at it, and `bench classes` counts at it by default.
+    pub(crate) const fn main_anchor(self) -> &'static str {
+        match self {
+            Self::Modal | Self::NonModal | Self::OpenProject => record::WELCOME_BECAME_VISIBLE,
+            Self::Project => record::EDITOR_HIGHLIGHTED,
+            Self::EmptyEditor => record::EMPTY_STATE_BUILT,
+        }
+    }
+
     /// The gate of a run of the arm. The launch waits for it, and the record checks it.
     pub(crate) const fn gate(self) -> Gate {
         match self {

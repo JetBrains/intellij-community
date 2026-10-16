@@ -354,7 +354,28 @@ pub struct Spec {
     pub snapshot_id: Option<String>,
     pub cwd: String,
     pub argv: Vec<String>,
+    /// The environment of the child. A spec without the field is a spec of [`EnvironmentPolicy::Inherit`].
+    #[serde(default)]
+    pub environment: EnvironmentPolicy,
     pub created_at: String,
+}
+
+/// Where the supervisor takes the environment of the child from.
+///
+/// The spec records a policy and never a value. The spec is a file of the run, and `status` answers its argv to every
+/// caller. So a variable here would be readable outside the child, and a policy keeps the spec free of values.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "policy", rename_all = "camelCase", rename_all_fields = "camelCase")]
+pub enum EnvironmentPolicy {
+    /// The environment of the supervisor, with the PATH of the guest OS. The UI daemon runs with this policy.
+    #[default]
+    Inherit,
+    /// The closed environment of a lane IDE context: `HOME` and `PATH` from the layout of the context, and a fixed
+    /// list of variables from the environment of the supervisor. Nothing else.
+    Context {
+        /// The context directory, an absolute guest path.
+        context_dir: String,
+    },
 }
 
 /// The file a cancel client drops for the supervisor that owns the grace period.

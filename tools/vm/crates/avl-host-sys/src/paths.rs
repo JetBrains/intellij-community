@@ -1,10 +1,11 @@
 //! The guest path of a host file: the one mapping every host path goes through before it crosses into a guest.
 //!
-//! A worker sees two host directories through its shares: the checkout and the Bazel output root. The guest keeps
-//! each one at a guest root, and [`GuestPaths`] maps a host path under a share to the same file under its guest root.
+//! A worker sees one host directory through its share: the Bazel output root. The guest keeps it at a guest root, and
+//! [`GuestPaths`] maps a host path under the share to the same file under the guest root. No share holds the
+//! checkout, so a path in the checkout is refused.
 //!
-//! On a Unix host each guest root is the host path itself. The parity layout builds it in the guest, so a host path
-//! and its guest path are the same text, and the absolute links of the host runfiles tree resolve in the guest.
+//! On a Unix host the guest root is the host path itself. The parity layout builds it in the guest, so a host path
+//! and its guest path are the same text, and the absolute links of a Bazel output resolve in the guest.
 //!
 //! A Windows host path such as `C:\Users\air\idea` cannot be a guest path. Its guest root is `/c/Users/air/idea`:
 //! the drive letter in lower case, then the rest of the path joined with `/`. The comparison of a Windows host path
@@ -18,10 +19,9 @@ use avl_wire::path_map::{PathMap, PathPrefix};
 #[cfg(test)]
 mod tests;
 
-/// The guest roots of the two shares, and the table that maps a host path under one of them.
+/// The guest root of the share, and the table that maps a host path under it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GuestPaths {
-    repo: String,
     bazel_user_root: String,
     map: PathMap,
 }
@@ -29,24 +29,14 @@ pub struct GuestPaths {
 impl GuestPaths {
     /// The mapping for the host paths that `ensure_host_paths` resolved, and refused before they are resolved.
     pub fn of(settings: &Config) -> Result<Self, Refusal> {
-        Self::for_roots(&text(settings.host_repo()?), &text(settings.host_bazel_user_root()?))
+        Self::for_root(&text(settings.host_bazel_user_root()?))
     }
 
-    /// The mapping for two host roots, given as text.
-    pub fn for_roots(host_repo: &str, host_bazel_user_root: &str) -> Result<Self, Refusal> {
-        let repo = guest_root(host_repo)?;
+    /// The mapping for the host root of the share, given as text.
+    pub fn for_root(host_bazel_user_root: &str) -> Result<Self, Refusal> {
         let bazel_user_root = guest_root(host_bazel_user_root)?;
-        let map = PathMap::new(vec![prefix(host_repo, &repo), prefix(host_bazel_user_root, &bazel_user_root)]);
-        Ok(Self {
-            repo,
-            bazel_user_root,
-            map,
-        })
-    }
-
-    /// The guest root of the checkout.
-    pub fn repo(&self) -> &str {
-        &self.repo
+        let map = PathMap::new(vec![prefix(host_bazel_user_root, &bazel_user_root)]);
+        Ok(Self { bazel_user_root, map })
     }
 
     /// The guest root of the Bazel output root.
@@ -59,7 +49,7 @@ impl GuestPaths {
         &self.map
     }
 
-    /// The guest path of `host`, or `guest_path_unmapped` when no share holds it.
+    /// The guest path of `host`, or `guest_path_unmapped` when the share does not hold it.
     pub fn to_guest(&self, host: &Path) -> Result<String, Refusal> {
         self.to_guest_text(&text(host))
     }
@@ -67,13 +57,13 @@ impl GuestPaths {
     /// The guest path of the host path `host`, given as text.
     pub fn to_guest_text(&self, host: &str) -> Result<String, Refusal> {
         self.map.map(host).ok_or_else(|| {
-            let [repo, bazel] = [&self.map.prefixes[0].host, &self.map.prefixes[1].host];
+            let bazel = &self.map.prefixes[0].host;
             Refusal::new(
                 "guest_path_unmapped",
                 Exit::DATA_ERR,
                 format!(
-                    "{host} lies outside the checkout {repo} and the Bazel output root {bazel}, so no worker can \
-                     see it"
+                    "{host} lies outside the Bazel output root {bazel}, and a worker sees no other host directory: \
+                     no share holds the checkout"
                 ),
             )
         })

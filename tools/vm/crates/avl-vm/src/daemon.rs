@@ -46,8 +46,8 @@ pub(crate) mod traces;
 pub(crate) mod tree;
 pub(crate) mod verdict;
 
-// The fixture is a Tart pool over the fake `tart`, and a Windows host has the Docker backend only. So the suites that
-// drive it are Unix only, and each of their `tests` modules says so.
+// The fixture is a Tart pool over the fake `tart`, a shell script, so the suites that drive it are Unix only, and
+// each of their `tests` modules says so.
 #[cfg(test)]
 #[cfg(unix)]
 mod fixture;

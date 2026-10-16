@@ -226,6 +226,27 @@ async fn a_pool_verb_that_is_missing_unknown_or_overlong_is_a_usage_error() {
     }
 }
 
+// `pool idle-stop` is the detached process a release starts, so it parses but is not in the help of `pool`.
+#[test]
+fn the_idle_stop_verb_parses_and_stays_out_of_the_help() {
+    let parsed = invocation(
+        &["--backend", "docker", "pool", "idle-stop", "air-docker-1", "--nonce", "n-1"],
+        &terminal(),
+    );
+    let Some(Cmd::Pool { verb }) = parsed.command else {
+        panic!("not a pool command: {:?}", parsed.command);
+    };
+    assert_eq!(
+        PoolCommand::from(verb),
+        PoolCommand::IdleStop {
+            worker: "air-docker-1".to_owned(),
+            nonce: "n-1".to_owned(),
+        }
+    );
+    assert!(!long_help_of(&["pool"]).contains("idle-stop"));
+    assert!(long_help_of(&["lease", "release"]).contains("AIR_VM_IDLE_STOP"));
+}
+
 #[tokio::test]
 async fn naming_no_command_answers_the_usage_text_with_no_command_named() {
     let answer = Hermetic::new().invoke(&[]).await;
@@ -263,7 +284,7 @@ async fn a_parse_failure_is_still_reported_in_the_format_the_caller_asked_for() 
     let prose = hermetic.invoke(&["--backend", "bogus", "--text", "status"]).await;
     assert_eq!(prose.exit, Exit::USAGE);
     assert_eq!(prose.stdout, "");
-    assert_eq!(prose.stderr, "vm: --backend must be tart, parallels or docker\n");
+    assert_eq!(prose.stderr, "vm: --backend must be tart, parallels, docker or container-linux\n");
 
     // The same invocation without `--text` is the JSON control: the difference between the two is the form, not the
     // refusal.
@@ -490,7 +511,7 @@ async fn a_parse_failure_after_the_command_is_reported_in_the_requested_format()
     let hermetic = Hermetic::new();
     let prose = hermetic.invoke(&["status", "--backend", "bogus", "--text"]).await;
     assert_eq!(prose.stdout, "");
-    assert_eq!(prose.stderr, "vm: --backend must be tart, parallels or docker\n");
+    assert_eq!(prose.stderr, "vm: --backend must be tart, parallels, docker or container-linux\n");
     let structured = refusal(
         &hermetic
             .invoke(&["lease", "acquire", "--holder", "--text", "--backend", "bogus"])
@@ -709,8 +730,8 @@ fn the_help_names_the_wrapper_and_interpolates_the_lists_it_does_not_own() {
     // Each of these has exactly one owner; the help text reads it rather than restating it.
     let text = every_long_help().join("\n");
     for expected in [
-        "ui|ui-real|ui-live|gui-chat",
-        "explicit-only lane (ui-live)",
+        "ui|ui-real|ui-live|ui-perf|gui-chat",
+        "explicit-only lane (ui-live, ui-perf)",
         "none|fresh-ide|daemon",
         "capped at 5",
         "default --reset fresh-ide",
@@ -934,4 +955,24 @@ fn a_trial_count_or_reset_the_measurement_cannot_use_is_a_usage_refusal() {
         assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}");
         assert!(refusal.message.contains(fragment), "{argv:?}: {}", refusal.message);
     }
+}
+
+// `report time` reads the runtime root of the invocation and needs no worker, so a run that is not there is its own
+// refusal in the envelope of the command.
+#[tokio::test]
+async fn report_time_answers_from_the_runtime_root_and_refuses_a_run_that_is_not_there() {
+    let envelope = refusal(&Hermetic::new().invoke(&["report", "time", "run-none", "--json"]).await);
+    assert_eq!(envelope["command"], "report");
+    assert_eq!(code(&envelope), "report_run_unknown");
+    assert!(message(&envelope).contains("runtime"), "{envelope}");
+    let Parsed::Invocation(invocation) = parse_argv(&["report", "time", "run-a", "--baseline", "iter-b"], &TerminalFacts::default()) else {
+        panic!("report time did not parse");
+    };
+    let Some(Cmd::Report {
+        verb: ReportVerb::Time(args),
+    }) = invocation.command
+    else {
+        panic!("not report time");
+    };
+    assert_eq!((args.run.as_str(), args.baseline.as_deref()), ("run-a", Some("iter-b")));
 }

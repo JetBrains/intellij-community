@@ -14,6 +14,9 @@ use crate::lane::secrets::RUN_SECRETS_VARIABLE;
 ///
 /// A JVM cannot change its own environment, so this is fixed for a daemon's lifetime and part of its launch
 /// identity. It is the same answer for every worker of one pool, because nothing in it is a guest's own reply.
+/// The `LANG` of the daemon JVM. See [`daemon_environment`].
+pub(crate) const DAEMON_LOCALE: &str = "C.UTF-8";
+
 pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> {
     let mut environment = environment_union();
     // The guest's node, named by the controller: the Node of the Docker image or of the macOS golden, or the one
@@ -23,6 +26,11 @@ pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> 
     // A path and never a value: a run writes its `--test-env` files there, and the boot environment stays the same
     // for every run.
     environment.insert(RUN_SECRETS_VARIABLE.to_owned(), settings.vm_run_secrets.clone());
+    // The locale of the daemon JVM, and so the encoding of every path it names. The Linux worker image ships only the
+    // C locales; a locale that is not installed falls back to POSIX, and a JVM in it cannot name a file with a
+    // character outside ASCII. `C.UTF-8` is in every glibc since 2.35. It is here and not in the run environment,
+    // because a daemon keeps its environment for its lifetime: a change must restart the warm daemon.
+    environment.insert("LANG".to_owned(), DAEMON_LOCALE.to_owned());
     environment
 }
 
@@ -116,7 +124,6 @@ pub(crate) fn guest_run_environment(
         ("HOME", settings.vm_home.clone()),
         ("USER", settings.vm_user.clone()),
         ("LOGNAME", settings.vm_user.clone()),
-        ("LANG", "en_US.UTF-8".to_owned()),
         ("PATH", path_entries.join(":")),
     ]
     .into_iter()

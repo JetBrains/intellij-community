@@ -19,6 +19,7 @@ use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use avl_wire::progress::{BuildSummary, Event, Phase};
 use bt_core::{Platform, bazel_command};
 use regex::Regex;
+use serde::Deserialize;
 use tokio::sync::{Mutex, OnceCell};
 
 /// How much of a failed build's log travels in the refusal.
@@ -42,46 +43,28 @@ const BUILD_LOG_FOLLOW_EVERY: Duration = Duration::from_secs(2);
 /// shorter than this.
 const LOG_END_WINDOW: u64 = 4096;
 
-/// The guest's `.bazelrc` config.
-///
-/// A config, not the build options themselves: `community/tools/vm.cmd` and `trace.cmd` pass the same config,
-/// so their `bazel run` and a lane build share one analysis key. [`host_bazel_argv`] says why that key matters. The
-/// Linux config adds `--define=air_lane_guest_os=linux`; see `plugins/air/tests/integration/ui_lane_ide.bzl`.
-const fn guest_bazel_config(guest_os: GuestOs) -> &'static str {
-    match guest_os {
-        GuestOs::Macos => "--config=air-lane-macos",
-        GuestOs::Linux => "--config=air-lane-linux",
-    }
-}
-
 /// Every Bazel invocation the controller makes, so none of them can drift from the others.
 ///
-/// The guest's `.bazelrc` config (`air-lane-macos` or `air-lane-linux`) holds *build* options, which means Bazel
-/// keys its analysis cache on them and a `cquery` that omits what the preceding `build` passed discards the analysis
-/// of every configured target - on every daemon start, on both guests. `--build_runfile_links` is in both configs
-/// because `community/common.bazelrc` turns it off for `build`, and `cquery` and `info` inherit that line: the
-/// descriptor names its inputs by logical runfiles path, so the tree it names has to exist.
+/// No invocation carries a build option of its own. Bazel keys its analysis cache on the build options, so a lane build
+/// with options of its own discarded the analysis of every other command, and every other command discarded the
+/// lane's. On 2026-10-10 a test before a lane build made Bazel discard 1,049,066 nodes, and the lane build analyzed for
+/// 11.6 s again. The guest is therefore a target and not an option ([`crate::daemon::build::daemon_label`]), and no
+/// runfile links are built: the controller reads the MANIFEST ([`avl_host_sys::runfiles::HostRunfiles`]). So a lane
+/// build, a wrapper build and a test share one analysis.
 ///
-/// The same key reaches beyond this process. `community/tools/vm.cmd` and `trace.cmd` build their binaries with
-/// `bazel run --config=air-lane-linux`, the default guest's config. Without it, every wrapper call discarded the
-/// analysis the last lane build made, so a `trace.cmd` call between `daemon warm` and `run` threw the warm-up away.
-/// A macOS guest still differs from the wrappers, and a lane build for it pays one analysis.
-///
-/// The other option is not a build option, and is here for the opposite reason: it stops this controller's builds
-/// from touching the checkout's convenience symlinks at all. [`host_build_targets`] puts the guest agent - built for
-/// the guest's platform - beside the lane's own label, so one invocation's top-level targets span two
-/// configurations, and Bazel's answer to that is to *clear* `out/bazel-bin` and `out/bazel-testlogs`. Building the
-/// agent in an invocation of its own instead repoints `out/bazel-bin` at the guest's configuration, which is worse:
-/// a plausible-looking symlink into the wrong configuration, in a working copy several sessions share. A lane build
-/// is not this checkout's main build and has no business doing either. It is not part of the analysis key, so it
-/// is carried on every command at no cost.
+/// The one option here is not a build option: it stops this controller's builds from touching the checkout's
+/// convenience symlinks at all. [`host_build_targets`] puts the guest agent - built for the guest's platform - beside
+/// the lane's own label, so one invocation's top-level targets span two configurations, and Bazel's answer to that is
+/// to *clear* `out/bazel-bin` and `out/bazel-testlogs`. Building the agent in an invocation of its own instead repoints
+/// `out/bazel-bin` at the guest's configuration, which is worse: a plausible-looking symlink into the wrong
+/// configuration, in a working copy several sessions share. A lane build is not this checkout's main build and has no
+/// business doing either. It is not part of the analysis key, so it is carried on every command at no cost.
 pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String]) -> Result<Vec<String>, Refusal> {
     let repo = settings.host_repo()?;
     let line: Vec<String> = [
         command,
         "--color=no",
         "--curses=no",
-        guest_bazel_config(settings.guest_os),
         // A lane build must neither clear nor retarget this checkout's `out/bazel-bin`; see above.
         "--experimental_convenience_symlinks=ignore",
     ]
@@ -96,6 +79,10 @@ pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String])
 }
 
 /// Everything one lane build produces: the label the caller asked for, then [`guest_boot_targets`].
+///
+/// The pinned tools are not here. A lane build that configured the pinned Apple CLI started with a deletion of about
+/// 500,000 Skyframe nodes and analyzed the whole graph again, so the tools come from their record
+/// ([`crate::worker::pin::PINNED_TOOLS_RECORD`]).
 ///
 /// The agent is built here and nowhere else, and that is the whole answer to a stale agent driving a lane. The
 /// guest-agent resolution deliberately never builds - it runs under the worker's lease-operation lock, where a build
@@ -113,9 +100,9 @@ pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String])
 /// Lease-only operations - `lease acquire`, `lease release`, `status`, `exec`, `pull` - build nothing and still
 /// install, which is deliberate: they judge no test, and a build inside them would put minutes under a held lock on
 /// the path that *frees* a worker.
-pub(crate) fn host_build_targets(guest_os: GuestOs, guest_arch: GuestArch, label: &str) -> Vec<String> {
+pub(crate) fn host_build_targets(settings: &Config, label: &str) -> Vec<String> {
     std::iter::once(label.to_owned())
-        .chain(guest_boot_targets(guest_os, guest_arch))
+        .chain(guest_boot_targets(settings.guest_os, settings.guest_arch))
         .collect()
 }
 
@@ -142,12 +129,18 @@ pub(crate) fn guest_boot_targets(guest_os: GuestOs, guest_arch: GuestArch) -> Ve
 /// Both memos are held across their Bazel call rather than only around the write, and that is the point: `shard` and
 /// `flake` fan out over workers of one guest, and a memo published after the call would let N tasks each pay the
 /// 7.3 s the pair costs. Two Bazel invocations of one server serialize behind its own lock anyway.
+///
+/// After a build of this process, the descriptor memo asks Bazel nothing. The event file of the build names the
+/// descriptor ([`Bazel::built_files`]).
 pub(crate) struct Bazel {
     settings: Arc<Config>,
     runner: Runner,
     reporter: Reporter,
     execution_root: OnceCell<PathBuf>,
     descriptors: Mutex<HashMap<String, PathBuf>>,
+    /// The files that the event file of the last build of this process named. Empty before a build and after a failed
+    /// one.
+    built: std::sync::Mutex<Vec<PathBuf>>,
 }
 
 impl Bazel {
@@ -158,6 +151,7 @@ impl Bazel {
             reporter,
             execution_root: OnceCell::new(),
             descriptors: Mutex::new(HashMap::new()),
+            built: std::sync::Mutex::new(Vec::new()),
         })
     }
 
@@ -167,7 +161,7 @@ impl Bazel {
     /// Bazel outputs it produces are identical for every worker of a guest, and a fan-out that shares one build has
     /// to be able to say where its one log goes.
     pub(crate) async fn build(&self, ctx: &Ctx, log_path: &Path, label: &str) -> Result<(), Refusal> {
-        let targets = host_build_targets(self.settings.guest_os, self.settings.guest_arch, label);
+        let targets = host_build_targets(&self.settings, label);
         self.build_targets(ctx, log_path, label, &targets).await
     }
 
@@ -244,7 +238,16 @@ impl Bazel {
 
     async fn build_logged(&self, ctx: &Ctx, log_path: &Path, label: &str, targets: &[String]) -> Result<(), Refusal> {
         let repo = self.settings.host_repo()?;
-        let argv = host_bazel_argv(&self.settings, "build", targets)?;
+        let events = build_event_path(log_path);
+        let mut arguments = vec![
+            format!("--build_event_json_file={}", events.display()),
+            // Every URI then names the local file, and nothing is uploaded to name a remote one.
+            "--nobuild_event_json_file_path_conversion".to_owned(),
+        ];
+        arguments.extend_from_slice(targets);
+        let argv = host_bazel_argv(&self.settings, "build", &arguments)?;
+        self.record_built(Vec::new());
+        remove_stale(&events)?;
         // A previous run's log is this run's to replace, but two builders racing for the same log are not both to be
         // allowed to think they own it - so the removal is explicit and the create that follows is exclusive.
         match std::fs::remove_file(log_path) {
@@ -268,7 +271,19 @@ impl Bazel {
         };
         let exit_code = match self.runner.checked_to_file(ctx, &argv, log_path, &options).await {
             // The log holds stderr too, so the runner answers nothing.
-            Ok(_) => return Ok(()),
+            Ok(_) => {
+                match files_of_build_events(&events) {
+                    Ok(files) => self.record_built(files),
+                    Err(cause) => self.reporter.note(
+                        format!(
+                            "the build event file {} is unreadable ({cause}), so the lane asks Bazel for its paths",
+                            events.display()
+                        ),
+                        None,
+                    ),
+                }
+                return Ok(());
+            }
             Err(ProcError::Exited { exit_code, .. }) => exit_code,
             // The capture's own wording speaks about captures, and this destination is a log: "the build log is
             // unavailable" is actionable where "a capture destination exists" leaves a reader working out which.
@@ -302,6 +317,9 @@ impl Bazel {
     /// restart`. Where an output of a configured target lands is a function of the label and the configuration,
     /// not of the build's result, so a rerun in the same process cannot get a different answer.
     ///
+    /// A build of this process names the descriptor in its event file, and then no query runs. The query is for a
+    /// process that did not build, and for an event file that names no descriptor, which a note reports.
+    ///
     /// Still re-validated on every hit: a wiped output tree resolves again rather than answering a path that is no
     /// longer there. Both the descriptor and its runfiles tree are checked - a `bazel clean` between two iterations
     /// of one process is how a run stages a generation that is no longer on disk, and the two are removed
@@ -313,9 +331,24 @@ impl Bazel {
         {
             return Ok(known.clone());
         }
-        let stdout = self.query(ctx, "cquery", &["--output=files".to_owned(), label.to_owned()]).await?;
         let target_name = label.rsplit_once(':').map_or(label, |(_, name)| name);
         let suffix = format!("/{target_name}.runtime.json");
+        if let Some(built) = self
+            .built_files()
+            .into_iter()
+            .find(|path| path.to_string_lossy().ends_with(&suffix))
+        {
+            let descriptor = self.accept_descriptor(built)?;
+            descriptors.insert(label.to_owned(), descriptor.clone());
+            return Ok(descriptor);
+        }
+        if !self.built_files().is_empty() {
+            self.reporter.note(
+                format!("the last build named no {target_name}.runtime.json, so the lane asks Bazel where it is"),
+                None,
+            );
+        }
+        let stdout = self.query(ctx, "cquery", &["--output=files".to_owned(), label.to_owned()]).await?;
         let Some(candidate) = stdout.lines().map(str::trim).find(|line| line.ends_with(&suffix)) else {
             return Err(Refusal::new(
                 "daemon_runtime_descriptor_missing",
@@ -329,6 +362,13 @@ impl Bazel {
         } else {
             self.execution_root(ctx).await?.join(candidate)
         };
+        let descriptor = self.accept_descriptor(descriptor)?;
+        descriptors.insert(label.to_owned(), descriptor.clone());
+        Ok(descriptor)
+    }
+
+    /// Refuses a descriptor whose file or runfiles tree is missing, or that lies outside the share the guest reads.
+    fn accept_descriptor(&self, descriptor: PathBuf) -> Result<PathBuf, Refusal> {
         if !staged(&descriptor) {
             return Err(Refusal::new(
                 "daemon_runtime_descriptor_missing",
@@ -350,8 +390,17 @@ impl Bazel {
                 ),
             ));
         }
-        descriptors.insert(label.to_owned(), descriptor.clone());
         Ok(descriptor)
+    }
+
+    /// The host paths of the files that the event file of the last build of this process named as its top-level
+    /// outputs, or none when this process built nothing.
+    pub(crate) fn built_files(&self) -> Vec<PathBuf> {
+        avl_base::sync::lock(&self.built).clone()
+    }
+
+    fn record_built(&self, files: Vec<PathBuf>) {
+        *avl_base::sync::lock(&self.built) = files;
     }
 }
 
@@ -388,6 +437,90 @@ impl BazelHost for Bazel {
             .await
             .cloned()
     }
+}
+
+/// Where a build that logs to `log_path` writes its event file: beside the log, as `<log stem>.bep.json`.
+fn build_event_path(log_path: &Path) -> PathBuf {
+    log_path.with_extension("bep.json")
+}
+
+/// Removes the file a previous build left at `path`. A file that is not there is no error.
+fn remove_stale(path: &Path) -> Result<(), Refusal> {
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(Refusal::new(
+            "host_build_log_unavailable",
+            Exit::CANT_CREATE,
+            format!("cannot replace the build event file at {}: {error}", path.display()),
+        )),
+    }
+}
+
+/// One record of a build event file, as far as this controller reads it.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildEvent {
+    #[serde(default)]
+    named_set_of_files: Option<NamedSetOfFiles>,
+}
+
+#[derive(Deserialize)]
+struct NamedSetOfFiles {
+    #[serde(default)]
+    files: Vec<BuildEventFile>,
+}
+
+#[derive(Deserialize)]
+struct BuildEventFile {
+    #[serde(default)]
+    uri: String,
+}
+
+/// The local files that a build event file names, in the order of the file.
+///
+/// The file holds one JSON record per line. Only the named sets of files are read. A URI that is not `file://` names
+/// no local file and is skipped.
+fn files_of_build_events(path: &Path) -> Result<Vec<PathBuf>, String> {
+    let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
+    let mut files = Vec::new();
+    for (index, line) in content.lines().enumerate().filter(|(_, line)| !line.trim().is_empty()) {
+        let event: BuildEvent = serde_json::from_str(line).map_err(|error| format!("line {}: {error}", index + 1))?;
+        let Some(set) = event.named_set_of_files else {
+            continue;
+        };
+        files.extend(set.files.iter().filter_map(|file| local_path(&file.uri)));
+    }
+    Ok(files)
+}
+
+/// The host path of a `file://` URI, with its percent escapes decoded, or `None` for another scheme.
+///
+/// On Windows the URI is `file:///C:/...`, and the slash before the drive letter is not part of the path.
+fn local_path(uri: &str) -> Option<PathBuf> {
+    let path = percent_decoded(uri.strip_prefix("file://")?)?;
+    let bytes = path.as_bytes();
+    let drive = bytes.len() > 2 && bytes[0] == b'/' && bytes[1].is_ascii_alphabetic() && bytes[2] == b':';
+    Some(PathBuf::from(if drive { &path[1..] } else { path.as_str() }))
+}
+
+/// `%XX` escapes decoded, or `None` for a malformed escape or a result that is not UTF-8.
+///
+/// It is written by hand, because the controller decodes no other URI, and about ten lines replace a crate.
+fn percent_decoded(text: &str) -> Option<String> {
+    let mut bytes = Vec::with_capacity(text.len());
+    let mut rest = text.as_bytes();
+    while let Some((&first, tail)) = rest.split_first() {
+        if first == b'%' {
+            let hex = std::str::from_utf8(tail.get(..2)?).ok()?;
+            bytes.push(u8::from_str_radix(hex, 16).ok()?);
+            rest = &tail[2..];
+        } else {
+            bytes.push(first);
+            rest = tail;
+        }
+    }
+    String::from_utf8(bytes).ok()
 }
 
 /// Whether a descriptor and its runfiles are both still there: the tree, or the MANIFEST of a host that builds no

@@ -21,8 +21,10 @@ pub(crate) struct StartupStats {
     pub(crate) plugins: Vec<Plugin>,
     #[serde(default)]
     pub(crate) jvm: Option<Jvm>,
-    /// Milliseconds.
-    pub(crate) total_duration: i64,
+    /// Milliseconds from the process start to the end of the start-up. The report of a start without a project, which
+    /// the IDE writes at the exit, can lack it or hold a negative value.
+    #[serde(default)]
+    pub(crate) total_duration: Option<i64>,
 }
 
 /// The JVM part of the report.

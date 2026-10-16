@@ -20,7 +20,7 @@ pub mod sync;
 
 pub use self::refusal::{Exit, OrRefuse, Refusal, RefusalExt, descriptor_refusal};
 pub use clock::{Clock, FakeClock, SystemClock};
-pub use config::{Backend, Config, DockerEngine, Environment, GuestArch, GuestOs, Selection, validate_name};
+pub use config::{Backend, Config, DockerEngine, Environment, GuestArch, GuestOs, HostFacts, Selection, validate_name};
 pub use format::posix_shell_quote;
 pub use report::{Outcome, PhaseRun, Reporter, SCHEMA_VERSION, Scope};
 

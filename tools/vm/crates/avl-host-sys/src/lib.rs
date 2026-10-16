@@ -1,6 +1,6 @@
 //! Host system seams: subprocesses and the interrupt service, locks, private files, the guest setup with the Linux
-//! guest's packages, the read-only share set both backends render, and the start of the detached trace viewer
-//! ([`viewer`]).
+//! guest's packages, the read-only share set both backends render, the start of the detached trace viewer
+//! ([`viewer`]), and the memory of the host ([`host`]).
 //!
 //! Unix and Windows. [`proc`] says how each platform groups a spawn, [`lock`] how it holds a lock, and [`private`]
 //! what a private file is on it.
@@ -17,6 +17,7 @@
 pub mod ctx;
 pub mod fs;
 pub mod guest;
+pub mod host;
 pub mod interrupt;
 pub mod lock;
 pub mod paths;
@@ -34,6 +35,6 @@ pub use ctx::{Ctx, PollClock};
 pub use interrupt::{Interrupts, Signal};
 pub use poll::{Backoff, Poll};
 pub use proc::{
-    Captured, Channel, GuestStream, Interruptible, PipedChild, ProbeExit, ProbeOutput, ProcError, ProcessTable, PsField, Runner,
-    SpawnOptions, probe_unanswered,
+    Captured, Channel, GuestStream, Interruptible, PipedChild, ProbeExit, ProbeOutput, ProcError, ProcessIdentity, ProcessTable, PsField,
+    Runner, SpawnOptions, probe_unanswered,
 };

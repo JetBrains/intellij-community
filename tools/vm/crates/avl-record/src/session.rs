@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 
 use avl_trace::bridge::Facts;
-use avl_trace::bundle::{IDE_ROOT_RETAINED_RUNS, sanitize_name};
+use avl_trace::bundle::{AllureStatusDetails, BundleStatus, IDE_ROOT_RETAINED_RUNS, sanitize_name};
 use avl_trace::protocol::{Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, Launcher, VideoCodec, decode_command};
 
 use crate::bridge::Client;
@@ -90,7 +90,11 @@ impl<W: Write> Session<W> {
             if self.scenario.is_none() {
                 return self.refuse(at, "a done outside a scenario");
             }
-            self.finish_scenario(done.status.into(), at);
+            let details = AllureStatusDetails {
+                message: done.message,
+                trace: done.trace,
+            };
+            self.finish_scenario(done.status.into(), details, at);
             return self.ack(true, None);
         }
         let op = command.op();
@@ -122,9 +126,9 @@ impl<W: Write> Session<W> {
                 );
                 None
             }
-            Command::DriverSteps(steps) => {
-                scenario.driver_steps(&steps, at);
-                None
+            Command::Attach(attach) => {
+                let root = self.hello.as_ref().map_or("", |hello| hello.root.as_str());
+                scenario.attach(&attach, Path::new(root), at).err()
             }
             Command::Hello(_) | Command::Scenario(_) | Command::Done(_) => None,
         };
@@ -282,11 +286,11 @@ impl<W: Write> Session<W> {
     }
 
     /// Finishes the open scenario, reading the IDE's last spans and the facts at its end for the log slice.
-    pub(crate) fn finish_scenario(&mut self, status: avl_trace::bundle::BundleStatus, at: SystemTime) {
+    pub(crate) fn finish_scenario(&mut self, status: BundleStatus, details: AllureStatusDetails, at: SystemTime) {
         let Some(scenario) = self.scenario.take() else {
             return;
         };
-        scenario.finish(status, crate::unix_ms(at), self.client.as_ref(), &|| self.facts().ok());
+        scenario.finish(status, details, crate::unix_ms(at), self.client.as_ref(), &|| self.facts().ok());
     }
 
     /// Ends the session: an open scenario is finished as truncated, and the capture source is released.
@@ -298,7 +302,7 @@ impl<W: Write> Session<W> {
                 scenario.command.name
             );
             let now = (self.options.clock)();
-            self.finish_scenario(avl_trace::bundle::BundleStatus::Truncated, now);
+            self.finish_scenario(BundleStatus::Truncated, AllureStatusDetails::default(), now);
         }
         self.source = None;
     }

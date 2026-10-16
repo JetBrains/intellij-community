@@ -1,17 +1,16 @@
-//! Building the guest runfiles tree of a host MANIFEST: the host half of the `runfiles-tree` verb.
+//! Building the guest runfiles tree: the host half of the `runfiles-tree` verb.
 
 use std::time::Duration;
 
 use avl_base::{Exit, OrRefuse, Refusal};
-use avl_wire::runfiles::{RunfilesTreeRequest, RunfilesTreeResult, SCHEMA_VERSION};
+use avl_wire::runfiles::{RunfilesTreeResult, STAGED_BYTES_MISSING_CODE, request_stdin};
 use avl_wire::supervisor::ReceivedEnvelope;
 use avl_wire::verb::AgentVerb;
 
 use super::Guest;
 use super::supervisor::AgentAccount;
-use crate::paths::GuestPaths;
 use crate::proc::SpawnOptions;
-use crate::runfiles::{HostRunfiles, guest_runfiles_destination};
+use crate::runfiles::GuestRunfilesTree;
 
 #[cfg(test)]
 mod tests;
@@ -21,34 +20,18 @@ mod tests;
 const TREE_TIMEOUT: Duration = Duration::from_mins(5);
 
 impl Guest<'_> {
-    /// Makes the guest runfiles root that [`HostRunfiles::guest_root`] named, and refuses a guest that answers
-    /// another root.
+    /// Makes the guest runfiles root that [`GuestRunfilesTree::root`] names, and refuses a guest that answers another
+    /// root.
     ///
-    /// A tree needs nothing: the guest opens it through its share. A MANIFEST is sent to the `runfiles-tree` verb,
-    /// which builds the tree or reuses the tree of the same digest. The verb keeps that tree and the one used before
-    /// it, and removes every other entry of the destination.
-    pub async fn ensure_runfiles_tree(&self, runfiles: &HostRunfiles, expected_root: &str) -> Result<(), Refusal> {
-        let HostRunfiles::Manifest { path, .. } = runfiles else {
-            return Ok(());
+    /// The first request carries no bytes, so a tree of the same digest is reused at the cost of the MANIFEST text.
+    /// A guest without that tree refuses the request, and the second request carries the bytes of every staged
+    /// runfile. The verb keeps the tree it answers and the one used before it, and removes every other entry of the
+    /// destination.
+    pub async fn ensure_runfiles_tree(&self, tree: &GuestRunfilesTree) -> Result<(), Refusal> {
+        let data = match self.request_tree(tree, false).await {
+            Err(refusal) if refusal.code == STAGED_BYTES_MISSING_CODE => self.request_tree(tree, true).await?,
+            answered => answered?,
         };
-        let settings = self.settings;
-        let paths = GuestPaths::of(settings)?;
-        let request = RunfilesTreeRequest {
-            schema_version: SCHEMA_VERSION,
-            manifest: paths.to_guest(path)?,
-            path_map: paths.map().clone(),
-            destination: guest_runfiles_destination(settings),
-        };
-        let stdin = serde_json::to_vec(&request).or_refuse("internal_error", Exit::FAILURE, || {
-            "cannot encode the runfiles tree request".to_owned()
-        })?;
-        let options = SpawnOptions {
-            stdin: Some(stdin),
-            ..SpawnOptions::timeout(TREE_TIMEOUT, "guest_runfiles_timeout")
-        };
-        let stdout = self
-            .invoke_agent(AgentAccount::Worker, AgentVerb::RunfilesTree, &[], &options)
-            .await?;
         let invalid = |detail: String| {
             Refusal::new(
                 "guest_runfiles_protocol",
@@ -56,20 +39,17 @@ impl Guest<'_> {
                 format!("{} answered runfiles-tree with {detail}", self.worker()),
             )
         };
-        let data = ReceivedEnvelope::read(&stdout)
-            .map_err(|error| invalid(format!("invalid JSON: {error}")))?
-            .data
-            .ok_or_else(|| invalid("no data".to_owned()))?;
         let result: RunfilesTreeResult =
-            serde_json::from_str(data.get()).map_err(|error| invalid(format!("an unexpected document: {error}")))?;
-        if result.root != expected_root {
+            serde_json::from_str(&data).map_err(|error| invalid(format!("an unexpected document: {error}")))?;
+        if result.root != tree.root {
             return Err(Refusal::new(
                 "guest_runfiles_mismatch",
                 Exit::SOFTWARE,
                 format!(
-                    "{} built the runfiles tree at {}, and this controller expects {expected_root}",
+                    "{} built the runfiles tree at {}, and this controller expects {}",
                     self.worker(),
-                    result.root
+                    result.root,
+                    tree.root
                 ),
             ));
         }
@@ -91,5 +71,39 @@ impl Guest<'_> {
             Some(&self.scope()),
         );
         Ok(())
+    }
+
+    /// Sends one request of `tree`, with the bytes of its staged runfiles or without them, and answers the data of the
+    /// reply envelope as JSON text.
+    async fn request_tree(&self, tree: &GuestRunfilesTree, with_bytes: bool) -> Result<String, Refusal> {
+        let mut request = tree.request.clone();
+        request.with_bytes = with_bytes;
+        let mut bytes = Vec::new();
+        if with_bytes {
+            for file in &tree.staged_files {
+                bytes.push(std::fs::read(file).or_refuse("runfiles_staged_unreadable", Exit::SOFTWARE, || {
+                    format!("cannot read the staged runfile {}", file.display())
+                })?);
+            }
+        }
+        let options = SpawnOptions {
+            stdin: Some(request_stdin(&request, &bytes)),
+            ..SpawnOptions::timeout(TREE_TIMEOUT, "guest_runfiles_timeout")
+        };
+        let stdout = self
+            .invoke_agent(AgentAccount::Worker, AgentVerb::RunfilesTree, &[], &options)
+            .await?;
+        let invalid = |detail: String| {
+            Refusal::new(
+                "guest_runfiles_protocol",
+                Exit::SOFTWARE,
+                format!("{} answered runfiles-tree with {detail}", self.worker()),
+            )
+        };
+        let data = ReceivedEnvelope::read(&stdout)
+            .map_err(|error| invalid(format!("invalid JSON: {error}")))?
+            .data
+            .ok_or_else(|| invalid("no data".to_owned()))?;
+        Ok(data.get().to_owned())
     }
 }

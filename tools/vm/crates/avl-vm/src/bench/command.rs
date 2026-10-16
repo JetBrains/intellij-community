@@ -22,15 +22,16 @@ use super::compare::{self, Compared};
 use super::digest;
 use super::files;
 use super::gc;
-use super::launch::{Launcher, RunPlan};
+use super::launch::{Launcher, Profiler, RunPlan};
 use super::load;
 use super::ls;
 use super::options::{BenchVerb, LaunchArgs};
+use super::profile::ProfileEvent;
 use super::record::{self, RunId, RunKind, RunRecord};
 use super::resolve;
 use super::session::{
-    self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, Project, ProjectSource, RESULT_FILE, SESSION_FILE, SUMMARY_FILE, Sandbox,
-    SessionInfo, TEMPLATE_DIR,
+    self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, MeasureModel, Project, ProjectSource, RESULT_FILE, SESSION_FILE,
+    SUMMARY_FILE, Sandbox, SessionInfo, TEMPLATE_DIR,
 };
 use super::spans;
 use super::stage::{self, Generation};
@@ -60,6 +61,7 @@ struct Plan {
     runs: u32,
     cold: bool,
     profile: bool,
+    profile_event: ProfileEvent,
     project: Option<PlannedProject>,
 }
 
@@ -102,6 +104,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: args.cold,
                     profile: args.profile,
+                    profile_event: args.profile_event,
                     project: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -117,6 +120,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: false,
                     profile: false,
+                    profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Open(project)),
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -128,6 +132,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: args.cold,
                     profile: false,
+                    profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -179,7 +184,7 @@ impl Bench<'_> {
                 ),
             ));
         }
-        let launcher_label = resolve::launcher_label(&args.target)?;
+        resolve::check_dist_label(&args.target)?;
         ensure_host_paths(ctx, self.runner, self.settings).await?;
         let repo = self.settings.host_repo()?.to_path_buf();
         let binary_age = binary::age(self.environment, &repo);
@@ -227,9 +232,7 @@ impl Bench<'_> {
         let _journal = journal::attach(&bench_root, self.reporter, &actor);
         std::fs::create_dir_all(&session).map_err(|error| session_failed(format!("cannot create {}: {error}", session.display())))?;
         self.reporter.note(format!("session {}", session.display()), None);
-        let result = self
-            .measure(ctx, plan, args, max_load, &repo, &license, &session, &launcher_label, warnings)
-            .await;
+        let result = self.measure(ctx, plan, args, max_load, &repo, &license, &session, warnings).await;
         self.reporter
             .publish(Event::RunFinished(journal::run_finished(result.as_ref().err())), None);
         result
@@ -244,19 +247,30 @@ impl Bench<'_> {
         repo: &Path,
         license: &Path,
         session: &Path,
-        launcher_label: &str,
         mut warnings: Vec<String>,
     ) -> Result<Outcome, Refusal> {
-        let build_log = session.join("build.log");
-        let labels = [args.target.clone(), launcher_label.to_owned()];
-        self.bazel.build_labels(ctx, &build_log, &labels).await?;
-        let sources = resolve::sources(ctx, self.bazel, repo, &args.target, launcher_label).await?;
-        let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, self.reporter).await?;
+        let (generation, git, target) = if let Some(prefix) = &args.generation {
+            let staged = stage::open(&self.settings.runtime_root, prefix)?;
+            let (git, warning) = session::staged_commit(&staged.generation.digest, staged.git);
+            warnings.extend(warning);
+            (staged.generation, git, staged.target)
+        } else {
+            let build_log = session.join("build.log");
+            self.bazel.build_labels(ctx, &build_log, std::slice::from_ref(&args.target)).await?;
+            let sources = resolve::sources(ctx, self.bazel, repo, &args.target).await?;
+            let git = self.git_info(ctx, repo).await;
+            let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, &git, self.reporter).await?;
+            (generation, git, args.target.clone())
+        };
+        let how = match (&args.generation, generation.reused) {
+            (Some(_), _) => "opened by --generation, without a build",
+            (None, true) => "reused",
+            (None, false) => "staged",
+        };
         self.reporter.note(
             format!(
-                "generation {} ({}): {}",
+                "generation {} ({how}): {}",
                 &generation.digest[..12.min(generation.digest.len())],
-                if generation.reused { "reused" } else { "staged" },
                 generation.root.display()
             ),
             None,
@@ -265,11 +279,13 @@ impl Bench<'_> {
         let profiler = if plan.profile {
             self.reporter.note("resolving the async-profiler library", None);
             warnings.push("the profile adds the async-profiler agent; its runs are slower than a run without it".to_owned());
-            Some(resolve::profiler(ctx, self.bazel, self.runner, session).await?)
+            Some(Profiler {
+                library: resolve::profiler(ctx, self.bazel, self.runner, session).await?,
+                event: plan.profile_event,
+            })
         } else {
             None
         };
-        let git = self.git_info(ctx, repo).await;
         let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
@@ -288,17 +304,19 @@ impl Bench<'_> {
 
         let info = SessionInfo {
             command: plan.command.to_owned(),
-            target: args.target.clone(),
+            target,
             git,
             generation: GenerationRef {
                 path: generation.root.display().to_string(),
                 dist_digest: generation.digest.clone(),
             },
+            measure_model: Some(MeasureModel::current()),
             arms: plan.arms.clone(),
             runs: plan.runs,
             cold: plan.cold,
             hold_ms: u64::try_from(args.hold.as_millis()).unwrap_or(u64::MAX),
             profile: plan.profile,
+            profile_event: plan.profile_event,
             project: match (&plan.project, &project) {
                 (_, Some(project)) => Some(project.paths(&template).dir.display().to_string()),
                 (Some(PlannedProject::Open(dir)), None) => Some(dir.display().to_string()),

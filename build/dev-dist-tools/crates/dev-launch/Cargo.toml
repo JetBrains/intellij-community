@@ -1,0 +1,24 @@
+# Inline rather than `.workspace = true`: the guest agent of the Air UI-lane workspace links this crate through a path
+# dependency, and rules_rs reads the `[package]` and `[dependencies]` of such a crate without its workspace. Keep the
+# versions equal to `[workspace.package]` and `[workspace.dependencies]`. `serde_json` names no feature: the crate
+# reads only structs, and a feature here turns on in every workspace that links the crate.
+[package]
+name = "dev-launch"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1.0.104"
+indexmap = "2.14.2"
+java-properties = "2.0.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+
+[dev-dependencies]
+tempfile.workspace = true

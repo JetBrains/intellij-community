@@ -278,3 +278,37 @@ fn every_verb_parses_back() {
     }
     "contract".parse::<Command>().unwrap_err();
 }
+
+// The spec records the policy of the child environment as a tag, and a spec of an older writer reads `inherit`.
+#[test]
+fn the_environment_policy_round_trips_and_defaults_to_inherit() {
+    let spec = |environment: EnvironmentPolicy| Spec {
+        schema_version: SCHEMA_VERSION,
+        run_id: "run-ide-launch-1".to_owned(),
+        snapshot_id: None,
+        cwd: "/dist".to_owned(),
+        argv: vec!["/jbr/bin/java".to_owned()],
+        environment,
+        created_at: "2026-10-09T10:00:00Z".to_owned(),
+    };
+    let cases = [
+        (EnvironmentPolicy::Inherit, serde_json::json!({"policy": "inherit"})),
+        (
+            EnvironmentPolicy::Context {
+                context_dir: "/data/ide/k".to_owned(),
+            },
+            serde_json::json!({"policy": "context", "contextDir": "/data/ide/k"}),
+        ),
+    ];
+    for (policy, expected) in cases {
+        let written = serde_json::to_value(spec(policy.clone())).unwrap();
+        assert_eq!(written["environment"], expected);
+        assert_eq!(serde_json::from_value::<Spec>(written).unwrap(), spec(policy));
+    }
+    let mut without = serde_json::to_value(spec(EnvironmentPolicy::Inherit)).unwrap();
+    without.as_object_mut().unwrap().remove("environment");
+    assert_eq!(
+        serde_json::from_value::<Spec>(without).unwrap().environment,
+        EnvironmentPolicy::Inherit
+    );
+}

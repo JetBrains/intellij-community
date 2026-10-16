@@ -14,9 +14,10 @@
 //! - [`daemon`]: `run`, `shard`, `flake` and `daemon`, and the leased-run driver the first three share;
 //! - [`lane`]: lane and selector resolution, `suites`, the host Bazel build, the guest launch environment, and the
 //!   commands that observe a leased worker;
-//! - [`worker`]: the Tart, Parallels and Docker backends, the Lima engine of a Docker pool on a Mac, readiness gates,
-//!   the pool, and leases;
-//! - [`bench`]: the start-up measurement of the IDE on this host, from a staged copy of its dev distribution.
+//! - [`worker`]: the Tart, Parallels, Docker and container-linux backends, the Apple `container` engine of a Docker
+//!   pool on a Mac, readiness gates, the pool, and leases;
+//! - [`bench`]: the start-up measurement of the IDE on this host, from a staged copy of its dev distribution;
+//! - [`report`]: `report time`, read from the journal, the reports and the traces that a run left on this host.
 
 mod bench;
 mod cli;
@@ -25,6 +26,7 @@ mod controller;
 mod daemon;
 mod image;
 mod lane;
+mod report;
 mod terminal;
 mod viewer;
 mod worker;

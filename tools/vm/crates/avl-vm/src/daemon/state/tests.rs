@@ -14,6 +14,7 @@ fn state() -> HostState {
         launch_digest: "l".repeat(64),
         last_product_digest: "p".repeat(64),
         last_mount_digest: "m".repeat(64),
+        last_plugins_digest: "g".repeat(64),
     }
 }
 
@@ -29,19 +30,21 @@ async fn a_written_state_is_private_pretty_json_with_a_newline() {
     let l = "l".repeat(64);
     let p = "p".repeat(64);
     let m = "m".repeat(64);
+    let plugins = "g".repeat(64);
     assert_eq!(
         written,
         format!(
             "{{\n  \"runId\": \"run-ui-daemon-1\",\n  \"port\": 27100,\n  \"token\": \"token\",\n  \"worker\": \
              \"avl-linux-1\",\n  \"daemonBootStamp\": \"boot-1\",\n  \"runtimeDigest\": \"{r}\",\n  \
-             \"launchDigest\": \"{l}\",\n  \"lastProductDigest\": \"{p}\",\n  \"lastMountDigest\": \"{m}\"\n}}\n"
+             \"launchDigest\": \"{l}\",\n  \"lastProductDigest\": \"{p}\",\n  \"lastMountDigest\": \"{m}\",\n  \
+             \"lastPluginsDigest\": \"{plugins}\"\n}}\n"
         )
     );
     assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), Some(state()));
 }
 
-// An unknown field is ignored; a state missing any field, or unreadable, is no daemon at all.
+// An unknown field is ignored; a state missing any field but the plugin identity, or unreadable, is no daemon at all.
 #[tokio::test]
 async fn a_state_reads_only_with_every_field() {
     let fixture = Fixture::new().await;
@@ -72,6 +75,13 @@ async fn a_state_reads_only_with_every_field() {
     }
     std::fs::write(&path, "{").unwrap();
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
+
+    // A record of an older controller has no plugin identity, and reads with an empty one.
+    let mut document = serde_json::to_value(state()).unwrap();
+    document.as_object_mut().unwrap().remove("lastPluginsDigest");
+    std::fs::write(&path, document.to_string()).unwrap();
+    let older = HostState::read(&fixture.settings, &fixture.worker).expect("an older record still reads");
+    assert_eq!(older.last_plugins_digest, "");
     HostState::remove(&fixture.settings, &fixture.worker).unwrap();
     HostState::remove(&fixture.settings, &fixture.worker).unwrap();
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);

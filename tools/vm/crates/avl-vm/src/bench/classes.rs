@@ -3,6 +3,7 @@
 //! of the session, so it answers on any host.
 //!
 //! A count is the median over the valid runs. A plugin or a module that a run does not name has 0 classes in that run.
+//! The entries of `--entries` come from the class logs of the median run of the arm, which the record joins too.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -12,14 +13,20 @@ use avl_base::{Refusal, RefusalExt};
 use serde::Serialize;
 
 use super::arm::Arm;
+use super::classload;
 use super::digest::{number, table_line, write_group};
 use super::files;
 use super::options::ClassesArgs;
+use super::pluginlog;
 use super::record::{
-    CLASS_ANCHORS, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, RunRecord, named_at,
+    CLASS_ANCHORS, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, PLUGIN_CLASSES_FILE,
+    QUIT_ANCHOR, RunRecord, named_at,
 };
-use super::session::{self, RESULT_FILE};
-use super::summary::{ArmSummary, Stat, Summary};
+use super::session::{self, CLASS_LOAD_LOG, RESULT_FILE};
+use super::stats;
+use super::summary::{ArmSummary, Stat};
+use super::timeline::Timeline;
+use super::trace::{as_f64, tenth};
 
 /// The totals of the report before the row of the anchor, in order.
 const TOTALS: [&str; 6] = [
@@ -50,6 +57,9 @@ pub(crate) struct ClassReport {
     pub(crate) by_module: Vec<ClassRow>,
     /// The plugins that `--plugin` names and that have no class before `at`.
     pub(crate) missing: Vec<String>,
+    /// The first classes of each plugin of `by_plugin` before `at`, with `--entries`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) entries: Option<ClassEntries>,
     /// The anchors that the arm has, in the order of [`CLASS_ANCHORS`].
     #[serde(skip)]
     pub(crate) anchors: Vec<&'static str>,
@@ -70,10 +80,37 @@ pub(crate) struct ClassRow {
     pub(crate) classes: f64,
 }
 
+/// The first classes of each plugin of the plugin table, from the class logs of one run.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ClassEntries {
+    /// The run directory: the median run of the arm.
+    pub(crate) run: String,
+    /// The classes of each plugin at most: `--entries`.
+    pub(crate) limit: usize,
+    /// One per row of the plugin table, in its order.
+    pub(crate) plugins: Vec<PluginEntries>,
+}
+
+/// The first classes of one plugin before the anchor, in load order.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub(crate) struct PluginEntries {
+    pub(crate) plugin: String,
+    pub(crate) classes: Vec<ClassEntry>,
+}
+
+/// One class of a plugin and the time that the JVM loaded it.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub(crate) struct ClassEntry {
+    pub(crate) name: String,
+    /// Milliseconds from the process start, to a tenth: the uptime of the class-load log minus `jvm.loadingTime`.
+    pub(crate) ms: f64,
+}
+
 /// Reads the arm that `args` selects and its valid runs.
 pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, Refusal> {
     let summary = session::read_summary(session)?;
-    let arm = select_arm(session, &summary, args.arm)?;
+    let arm = session::select_arm(session, &summary, args.arm)?;
     let anchors: Vec<&'static str> = CLASS_ANCHORS
         .into_iter()
         .filter(|anchor| arm.summary.contains_key(&named_at(anchor)))
@@ -92,7 +129,7 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
                 session.display()
             )));
         }
-        None => anchors.last().map(|anchor| (*anchor).to_owned()),
+        None => default_anchor(arm.arm, &anchors),
     };
     let runs = arm
         .runs
@@ -125,6 +162,16 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
             totals.insert(metric, *stat);
         }
     }
+    let entries = match args.entries {
+        Some(limit) => Some(entries(
+            session,
+            arm,
+            at.as_deref(),
+            &by_plugin,
+            usize::try_from(limit).unwrap_or(usize::MAX),
+        )?),
+        None => None,
+    };
     Ok(ClassReport {
         session: session.display().to_string(),
         arm: arm.arm,
@@ -134,6 +181,7 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
         by_plugin,
         by_module: rows(&modules, top),
         missing,
+        entries,
         anchors,
         total_plugins: with_classes(&plugins),
         total_modules: with_classes(&modules),
@@ -141,35 +189,77 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
     })
 }
 
-/// The arm that `arm` names, else the first arm of [`Arm::ALL`] that is not modal and has a valid run, else the modal
-/// arm. An arm that the session does not have, or without a valid run, is a usage refusal.
-fn select_arm<'a>(session: &Path, summary: &'a Summary, arm: Option<Arm>) -> Result<&'a ArmSummary, Refusal> {
-    let arms: Vec<&str> = summary.arms.values().map(|arm| arm.arm.label()).collect();
-    let selected = match arm {
-        Some(arm) => summary.arms.get(arm.key()).ok_or_else(|| {
-            Refusal::usage(format!(
-                "{} has no {} arm; its arms are {}",
-                session.display(),
-                arm.label(),
-                arms.join(", ")
-            ))
-        })?,
-        None => Arm::ALL
-            .into_iter()
-            .filter(|arm| *arm != Arm::Modal)
-            .chain([Arm::Modal])
-            .filter_map(|arm| summary.arms.get(arm.key()))
-            .find(|arm| arm.valid_runs > 0)
-            .ok_or_else(|| Refusal::usage(format!("no arm of {} has a valid measured run", session.display())))?,
-    };
-    if selected.valid_runs == 0 {
-        return Err(Refusal::usage(format!(
-            "the {} arm of {} has no valid measured run",
-            selected.arm.label(),
+/// The anchor of the plugin table without `--at`: the main anchor of the arm, see [`Arm::main_anchor`], else the last
+/// anchor that the arm has. An arm without an anchor has none.
+fn default_anchor(arm: Arm, anchors: &[&'static str]) -> Option<String> {
+    let main = arm.main_anchor();
+    anchors
+        .iter()
+        .find(|anchor| **anchor == main)
+        .or_else(|| anchors.last())
+        .map(|anchor| (*anchor).to_owned())
+}
+
+/// The first `limit` classes of each plugin of `rows` that the median run of `arm` loaded before the anchor `at`, or
+/// over the whole run without one. The run needs its class-load log, its plugin log and the `jvm.loadingTime` of its
+/// report, which turns the JVM clock of the log into the process clock. A run without one is a usage refusal.
+fn entries(session: &Path, arm: &ArmSummary, at: Option<&str>, rows: &[ClassRow], limit: usize) -> Result<ClassEntries, Refusal> {
+    let run = arm.median_run().ok_or_else(|| {
+        Refusal::usage(format!(
+            "the {} arm of {} has no median run, so --entries has no run to read",
+            arm.arm.label(),
             session.display()
+        ))
+    })?;
+    let dir = session.join(&run.dir);
+    let read = |name: &str| -> Result<String, Refusal> {
+        files::read_optional(&dir.join(name))
+            .map_err(|error| Refusal::usage(format!("{error:#}")))?
+            .ok_or_else(|| Refusal::usage(format!("--entries reads {name} of the median run {}, and it has none", run.dir)))
+    };
+    let refuse = |name: &'static str| move |error: anyhow::Error| Refusal::usage(format!("{name} of {}: {error:#}", run.dir));
+    let log = classload::parse(&read(CLASS_LOAD_LOG)?).map_err(refuse(CLASS_LOAD_LOG))?;
+    let owners = pluginlog::parse(&read(PLUGIN_CLASSES_FILE)?).map_err(refuse(PLUGIN_CLASSES_FILE))?;
+    let offset_ms = stats::parse(&read("startup-stats.json")?)
+        .map_err(refuse("startup-stats.json"))?
+        .jvm_loading_ms()
+        .map(as_f64)
+        .ok_or_else(|| {
+            Refusal::usage(format!(
+                "--entries needs jvm.loadingTime of startup-stats.json of {}, and it has none",
+                run.dir
+            ))
+        })?;
+    let anchor_ms = match at {
+        None => None,
+        Some(QUIT_ANCHOR) => Timeline::read(&dir).map_err(refuse("the trace"))?.quit_ms(),
+        Some(anchor) => run.metrics.get(anchor).copied(),
+    };
+    if let (Some(at), None) = (at, anchor_ms) {
+        return Err(Refusal::usage(format!(
+            "the median run {} has no {at}, so --entries has no bound",
+            run.dir
         )));
     }
-    Ok(selected)
+    let bound = anchor_ms.map(|ms| ms + offset_ms);
+    let plugins = rows
+        .iter()
+        .map(|row| PluginEntries {
+            plugin: row.name.clone(),
+            classes: classload::of_plugin(&log, &owners, &row.name, bound)
+                .take(limit)
+                .map(|class| ClassEntry {
+                    name: class.name.clone(),
+                    ms: tenth(class.uptime_ms - offset_ms),
+                })
+                .collect(),
+        })
+        .collect();
+    Ok(ClassEntries {
+        run: run.dir.clone(),
+        limit,
+        plugins,
+    })
 }
 
 /// Reads `result.json` of a run directory. A file of another shape is a usage refusal that names it.
@@ -289,11 +379,40 @@ impl ClassReport {
         if self.by_plugin.is_empty() && self.by_module.is_empty() {
             let _ = writeln!(text, "no class map: the runs have no plugin-classes.txt");
         }
+        if let Some(entries) = &self.entries {
+            entries.write(&mut text, &where_);
+        }
         if !self.missing.is_empty() {
             let _ = writeln!(text, "no class {where_}: {}", self.missing.join(", "));
         }
         text.truncate(text.trim_end().len());
         text
+    }
+}
+
+impl ClassEntries {
+    /// The block of the text: one heading per plugin, then one line per class with its ms from the process start.
+    fn write(&self, text: &mut String, where_: &str) {
+        let first = if self.limit == 1 {
+            "the first class".to_owned()
+        } else {
+            format!("the first {} classes", self.limit)
+        };
+        let _ = writeln!(
+            text,
+            "{first} of each plugin {where_}, in {} (ms from the process start):",
+            self.run
+        );
+        for plugin in &self.plugins {
+            if plugin.classes.is_empty() {
+                let _ = writeln!(text, "  {}: none", plugin.plugin);
+                continue;
+            }
+            let _ = writeln!(text, "  {}:", plugin.plugin);
+            for class in &plugin.classes {
+                let _ = writeln!(text, "  {:>7}  {}", number(class.ms), class.name);
+            }
+        }
     }
 }
 

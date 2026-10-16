@@ -7,6 +7,7 @@ use clap::{Subcommand, ValueEnum};
 
 use super::arm::Arm;
 use super::gc::DEFAULT_KEEP;
+use super::profile::ProfileEvent;
 use super::record::CLASS_ANCHORS;
 
 /// The default distribution: the self-contained `.dist` of the `idea` row.
@@ -16,9 +17,9 @@ pub(crate) const DEFAULT_TARGET: &str = "//build:idea_dist";
 pub(crate) const LONG_ABOUT: &str = "Measures the start-up of the IDE on this macOS host, from a staged copy of its dev \
 distribution, and takes no worker and no lease.
 
-welcome, open-project and project build the self-contained distribution --target and its row launcher with the host Bazel build. \
-They stage both as an immutable generation under the runtime root, keyed by their digest. Every IDE run starts from \
-that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
+welcome, open-project and project build the self-contained distribution --target with the host Bazel build. They \
+stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
+from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
 
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
@@ -61,11 +62,14 @@ pub(crate) enum BenchVerb {
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
-    /// Prints the spans of one run that start in a window, with the anchors of the run. No IDE starts.
+    /// Prints the spans of one run that start in a window, with their start and end, and the anchors of the run. No
+    /// IDE starts.
     ///
-    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A missing anchor widens
-    /// the window to the start or the end of the run. A span over 4 s is marked `waits`. A span that runs into the
-    /// quit, `application.exit`, is marked `cut by the quit`.
+    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A run without
+    /// frameBecameVisible, such as a modal run, has the window from the process start to the main anchor of its arm:
+    /// welcomeBecameVisible, the highlighted editor or the built composer. A missing end widens the window to the end of
+    /// the run. --overlap also keeps the spans that start before the window and run into it. A span over 4 s is marked
+    /// `waits`. A span that runs into the quit, `application.exit`, is marked `cut by the quit`.
     Trace(TraceArgs),
     /// Prints the post-startup activities of one run by class and by plugin. No IDE starts.
     ///
@@ -79,7 +83,8 @@ pub(crate) enum BenchVerb {
     /// A count is the median over the valid runs of the arm. The totals hold the named classes of the run by their
     /// source, and the named classes before the anchor. The plugin table holds the classes of each plugin before the
     /// anchor. The module table holds the classes of each content module over the whole run. A run needs
-    /// class-load.log, plugin-classes.txt and startup-stats.json for an anchor.
+    /// class-load.log, plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of
+    /// each plugin of the plugin table before the anchor, from the median run of the arm.
     Classes(ClassesArgs),
     /// Prints the medians of several sessions per arm, with the delta of each session to the first one. No IDE starts.
     ///
@@ -87,7 +92,8 @@ pub(crate) enum BenchVerb {
     /// more than twice the noise of A. The noise arm needs 3 valid runs with its main metric per session. The noise of
     /// a session is 1.4826 times the median absolute deviation of the main metric of its noise arm. A session whose own
     /// noise is above 20 % of the median of its noise arm is too noisy to compare, and the table still follows. A delta needs 3 valid runs per session. A later session of the distribution of A
-    /// is an A/A run, and its move is the noise of this host.
+    /// is an A/A run, and its move is the noise of this host. A session of another measurement model than A, such as a
+    /// session from before the model, gets a line that names both models.
     Compare(CompareArgs),
     /// Lists the sessions of this host, newest first, with their inputs and their medians. No IDE starts.
     ///
@@ -102,10 +108,13 @@ pub(crate) enum BenchVerb {
 pub(crate) struct RunSelection {
     #[arg(value_name = "SESSION", help = format!("The session: {SESSION_FORMS}"))]
     pub(crate) session: String,
-    /// The run directory, such as `non-modal-run-03`. The default is the median run of the first arm that is not
-    /// modal, else of the modal arm.
+    /// The run directory, such as `non-modal-run-03`. The default is the median run of the arm that --arm names, else
+    /// of the first arm that is not modal, else of the modal arm.
     #[arg(long, value_name = "DIR")]
     pub(crate) run: Option<String>,
+    /// The arm whose median run the verb reads. A run that --run names must be a run of this arm.
+    #[arg(long, value_name = "ARM", value_enum)]
+    pub(crate) arm: Option<Arm>,
 }
 
 /// A window of a run, in milliseconds from the process start. A span is in the window when it starts in it.
@@ -131,6 +140,10 @@ pub(crate) struct TraceArgs {
     /// Keeps the coroutine helper twins, `<span>: scheduled` and `<span>: completing`.
     #[arg(long)]
     pub(crate) all: bool,
+    /// Keeps every span that runs in the window: a span that starts before its end and ends after its start, also one
+    /// that starts before the window.
+    #[arg(long)]
+    pub(crate) overlap: bool,
 }
 
 /// The shortest span that `bench trace` prints by default.
@@ -163,10 +176,16 @@ pub(crate) struct ClassesArgs {
     /// Keeps only this plugin id in the plugin table, with 0 when it has no class. Repeat it for more plugins.
     #[arg(long = "plugin", value_name = "ID")]
     pub(crate) plugins: Vec<String>,
-    /// The anchor of the plugin table and of the last total. The default is the last anchor that the arm has. `quit` is
-    /// the start of application.exit.
+    /// The anchor of the plugin table and of the last total. The default is the main anchor of the arm:
+    /// welcomeBecameVisible for a welcome arm, `editor highlighting completed` for the project arm and emptyStateBuilt
+    /// for the empty-editor arm. An arm without it takes its last anchor. `quit` is the start of application.exit.
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
     pub(crate) at: Option<String>,
+    /// Lists the first N classes of each plugin of the plugin table that the median run of the arm loaded before the
+    /// anchor, with their ms from the process start. The run needs class-load.log, plugin-classes.txt and
+    /// startup-stats.json.
+    #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
+    pub(crate) entries: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
@@ -208,7 +227,7 @@ pub(crate) const DEFAULT_OPEN_PROJECT_RUNS: u32 = 3;
 /// The options of a verb that starts the IDE.
 #[derive(Clone, Debug, PartialEq, clap::Args)]
 pub(crate) struct LaunchArgs {
-    /// The Bazel label of the self-contained distribution. Its row launcher, the label without `_dist`, gives the JBR.
+    /// The Bazel label of the self-contained distribution. The IDE starts with the JBR inside the distribution.
     #[arg(long, value_name = "LABEL", default_value = DEFAULT_TARGET, value_parser = flag_value)]
     pub(crate) target: String,
     /// The time to wait after the event of the gate, before the quit: `3s`, `500ms`, `1m` or `0`.
@@ -221,6 +240,11 @@ pub(crate) struct LaunchArgs {
     /// The default is the CPU count. A host without a load average passes.
     #[arg(long, value_name = "LOAD", value_parser = parse_load)]
     pub(crate) max_load: Option<f64>,
+    /// Runs the session over the staged generation whose digest starts with DIGEST, under
+    /// `<runtime root>/bench/generations`, and skips the build and the stage. The session names the commit that built
+    /// the generation, so an A/B/A run measures the base again from its own bytes.
+    #[arg(long, value_name = "DIGEST", value_parser = parse_digest_prefix, conflicts_with = "target")]
+    pub(crate) generation: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -234,9 +258,14 @@ pub(crate) struct WelcomeArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
     #[arg(long)]
     pub(crate) cold: bool,
-    /// Samples the CPU with async-profiler and reports the top frames of the EDT.
+    /// Samples with async-profiler from the JVM start to the gate of each run, and reports the top frames of the EDT. A
+    /// run whose JBR has no jcmd keeps the profile of the whole run.
     #[arg(long)]
     pub(crate) profile: bool,
+    /// The event of --profile: `cpu`, the CPU time of each thread, or `wall`, the wall clock, which samples a waiting
+    /// thread too.
+    #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
+    pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
     pub(crate) launch: LaunchArgs,
 }
@@ -354,6 +383,17 @@ pub(crate) fn parse_ms(value: &str) -> Result<f64, String> {
     match value.parse::<f64>() {
         Ok(ms) if ms.is_finite() && ms >= 0.0 => Ok(ms),
         _ => Err(format!("must be a number of milliseconds, 0 or more, got: {value}")),
+    }
+}
+
+/// Parses `--generation`: the start of a generation digest, one or more lowercase hex digits.
+pub(crate) fn parse_digest_prefix(value: &str) -> Result<String, String> {
+    if !value.is_empty() && value.chars().all(|character| matches!(character, '0'..='9' | 'a'..='f')) {
+        Ok(value.to_owned())
+    } else {
+        Err(format!(
+            "must be the start of a generation digest, lowercase hex digits, got: {value}"
+        ))
     }
 }
 

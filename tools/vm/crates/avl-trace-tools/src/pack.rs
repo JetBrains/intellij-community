@@ -10,12 +10,14 @@
 //! file times of a trace root say when a daemon iteration ran rather than anything about the evidence, and a zip
 //! that differed by them could not be compared, deduplicated or cached by content.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
 use std::io::{self, BufWriter, Write};
 use std::path::{Component, Path, PathBuf};
 
-use avl_trace::bundle::{MANIFEST_FILE, PARTIAL_SUFFIX, SPANS_FILE};
+use avl_trace::bundle::{
+    ALLURE_RESULT_SUFFIX, ALLURE_RESULTS_DIR, MANIFEST_FILE, PARTIAL_SUFFIX, SPANS_FILE, bundle_file, decode_allure_result,
+};
 use avl_trace::{Error, refuse};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use zip::write::SimpleFileOptions;
@@ -63,10 +65,10 @@ pub type Select<'a> = &'a dyn Fn(&str, bool) -> bool;
 /// Which bundles a pack keeps.
 #[derive(Default)]
 pub struct PackOptions<'a> {
-    /// When set, keeps only the bundles it answers true for, and the files under them. It is given a bundle's
-    /// directory relative to the source and whether the bundle is finished, which is whether it holds its
-    /// [MANIFEST_FILE]. A file under no bundle is left out. When it keeps no bundle, the pack writes no zip, and the
-    /// report has no destination.
+    /// When set, keeps only the bundles it answers true for, the files under them, and their Allure results with the
+    /// files the results name. It is given a bundle's directory relative to the source and whether the bundle is
+    /// finished, which is whether it holds its [MANIFEST_FILE]. Any other file is left out. When it keeps no bundle,
+    /// the pack writes no zip, and the report has no destination.
     pub select: Option<Select<'a>>,
 }
 
@@ -143,14 +145,14 @@ pub fn pack(source: &Path, destination: &Path, options: &PackOptions<'_>) -> Res
         mut entries,
         mut bundles,
         skipped,
-    } = collect(&source)?;
+    } = collect(&source, &mut || {})?;
     let mut report = Report {
         source,
         skipped,
         ..Report::default()
     };
     if let Some(select) = options.select {
-        (entries, bundles) = select_bundles(entries, bundles, select);
+        (entries, bundles) = select_bundles(entries, bundles, select, &mut report.skipped);
         if bundles.is_empty() {
             return Ok(report);
         }
@@ -218,68 +220,99 @@ struct Collected {
 /// holds the bytes, never the link. A link to a directory is skipped and reported, since following one can loop
 /// and a trace root never needs to. So is a recorder's temporary file, which is there only when a recorder is still
 /// finishing a bundle beside the pack, as it is after its lane was killed outright.
-fn collect(source: &Path) -> Result<Collected, Error> {
+///
+/// The walk visits the directories in no fixed order, so it can list a run's [ALLURE_RESULTS_DIR] before the
+/// recorder writes a result there and reach that result's bundle after the recorder writes its [MANIFEST_FILE]. So
+/// the walk leaves each results directory out, and the files of each one are listed after the walk ends. That
+/// listing holds the result of every bundle the walk found finished, because the recorder writes the result before
+/// the manifest. A results directory is the one the walk passed or the one beside a bundle or an ancestor of it.
+/// `after_walk` runs between the walk and that listing.
+fn collect(source: &Path, after_walk: &mut dyn FnMut()) -> Result<Collected, Error> {
     let mut collected = Collected {
         entries: Vec::new(),
         bundles: Vec::new(),
         skipped: Vec::new(),
     };
-    for item in walkdir::WalkDir::new(source).follow_links(false) {
-        let item = item.map_err(|error| Error::new(format!("cannot walk {}: {error}", source.display())))?;
-        if item.file_type().is_dir() {
+    let walk_error = |error: walkdir::Error| Error::new(format!("cannot walk {}: {error}", source.display()));
+    let mut results_dirs = BTreeSet::new();
+    let mut walk = walkdir::WalkDir::new(source).follow_links(false).into_iter();
+    while let Some(item) = walk.next() {
+        let item = item.map_err(walk_error)?;
+        if item.depth() > 0 && item.file_type().is_dir() && item.file_name() == ALLURE_RESULTS_DIR {
+            results_dirs.insert(item.into_path());
+            walk.skip_current_dir();
             continue;
+        }
+        collected.admit(source, item);
+    }
+    after_walk();
+    for bundle in &collected.bundles {
+        let bundle = bundle_file(source, bundle);
+        for ancestor in bundle.ancestors().take_while(|ancestor| ancestor.starts_with(source)) {
+            let dir = ancestor.join(ALLURE_RESULTS_DIR);
+            if fs::symlink_metadata(&dir).is_ok_and(|info| info.is_dir()) {
+                results_dirs.insert(dir);
+            }
+        }
+    }
+    for dir in results_dirs {
+        for item in walkdir::WalkDir::new(&dir).min_depth(1).max_depth(1).follow_links(false) {
+            collected.admit(source, item.map_err(walk_error)?);
+        }
+    }
+    collected.entries.sort_by(|left, right| left.name.cmp(&right.name));
+    collected.bundles.sort();
+    Ok(collected)
+}
+
+impl Collected {
+    /// Adds one item of a walk under source: a file as an entry, or the reason it is left out.
+    fn admit(&mut self, source: &Path, item: walkdir::DirEntry) {
+        if item.file_type().is_dir() {
+            return;
         }
         let relative = item.path().strip_prefix(source).unwrap_or(item.path());
         let Some(name) = slash_name(relative) else {
-            collected.skipped.push(Skipped {
+            self.skipped.push(Skipped {
                 path: relative.to_string_lossy().into_owned(),
                 reason: "a name that is not UTF-8".to_owned(),
             });
-            continue;
+            return;
         };
         let skip = |reason: String| Skipped {
             path: name.clone(),
             reason,
         };
         if name.ends_with(PARTIAL_SUFFIX) {
-            collected
-                .skipped
+            self.skipped
                 .push(skip("a temporary file the recorder was still writing".to_owned()));
-            continue;
+            return;
         }
         if item.path_is_symlink() {
             match fs::metadata(item.path()) {
                 Err(error) => {
-                    collected
-                        .skipped
-                        .push(skip(format!("a symbolic link that does not resolve: {error}")));
-                    continue;
+                    self.skipped.push(skip(format!("a symbolic link that does not resolve: {error}")));
+                    return;
                 }
                 Ok(target) if !target.is_file() => {
-                    collected
-                        .skipped
-                        .push(skip("a symbolic link to something other than a file".to_owned()));
-                    continue;
+                    self.skipped.push(skip("a symbolic link to something other than a file".to_owned()));
+                    return;
                 }
                 Ok(_) => {}
             }
         } else if !item.file_type().is_file() {
-            collected.skipped.push(skip("not a regular file".to_owned()));
-            continue;
+            self.skipped.push(skip("not a regular file".to_owned()));
+            return;
         }
         if item.file_name() == SPANS_FILE {
-            collected
-                .bundles
+            self.bundles
                 .push(name.rsplit_once('/').map_or(".", |(bundle, _)| bundle).to_owned());
         }
-        collected.entries.push(Entry {
+        self.entries.push(Entry {
             name,
             source: item.into_path(),
         });
     }
-    collected.entries.sort_by(|left, right| left.name.cmp(&right.name));
-    collected.bundles.sort();
-    Ok(collected)
 }
 
 /// A relative path as a zip name: its segments joined with `/`.
@@ -288,8 +321,14 @@ fn slash_name(relative: &Path) -> Option<String> {
     Some(segments?.join("/"))
 }
 
-/// Keeps the bundles that select keeps, and the entries under them.
-fn select_bundles(entries: Vec<Entry>, bundles: Vec<String>, select: &dyn Fn(&str, bool) -> bool) -> (Vec<Entry>, Vec<String>) {
+/// Keeps the bundles that select keeps, the entries under them, and the Allure results of those bundles with the files
+/// the results name.
+fn select_bundles(
+    entries: Vec<Entry>,
+    bundles: Vec<String>,
+    select: &dyn Fn(&str, bool) -> bool,
+    skipped: &mut Vec<Skipped>,
+) -> (Vec<Entry>, Vec<String>) {
     let names: BTreeSet<&str> = entries.iter().map(|item| item.name.as_str()).collect();
     let manifest_of = |bundle: &str| match bundle {
         "." => MANIFEST_FILE.to_owned(),
@@ -303,8 +342,67 @@ fn select_bundles(entries: Vec<Entry>, bundles: Vec<String>, select: &dyn Fn(&st
         kept.iter()
             .any(|bundle| bundle == "." || name.strip_prefix(bundle.as_str()).is_some_and(|rest| rest.starts_with('/')))
     };
-    let selected = entries.into_iter().filter(|item| under(&item.name)).collect();
+    let results = kept_results(&entries, &kept, skipped);
+    let mut selected: Vec<Entry> = entries.into_iter().filter(|item| under(&item.name)).collect();
+    selected.extend(results.into_values());
+    selected.sort_by(|left, right| left.name.cmp(&right.name));
     (selected, kept)
+}
+
+/// The Allure results whose bundles are kept, with the files they name, by their names in the pack.
+///
+/// A result names its bundle by its path under the run's directory, and the results directory sits in the run's
+/// directory, so the bundle's name in the pack is the results directory's parent joined with that path. A result
+/// that cannot be read belongs to no bundle, and the report names it. A file that a kept result names is kept by its
+/// path beside the result, even when the listing did not hold it: a file gone by the time it is packed is reported
+/// as removed.
+fn kept_results(entries: &[Entry], kept: &[String], skipped: &mut Vec<Skipped>) -> BTreeMap<String, Entry> {
+    let mut results = BTreeMap::new();
+    for item in entries {
+        let Some((dir, file)) = item.name.rsplit_once('/') else {
+            continue;
+        };
+        let run = if dir == ALLURE_RESULTS_DIR {
+            ""
+        } else if let Some(run) = dir.strip_suffix(ALLURE_RESULTS_DIR)
+            && run.ends_with('/')
+        {
+            run
+        } else {
+            continue;
+        };
+        if !file.ends_with(ALLURE_RESULT_SUFFIX) {
+            continue;
+        }
+        let result = match fs::read(&item.source) {
+            Ok(document) => decode_allure_result(&document).map_err(|error| error.to_string()),
+            Err(error) => Err(error.to_string()),
+        };
+        let result = match result {
+            Ok(result) => result,
+            Err(reason) => {
+                skipped.push(Skipped {
+                    path: item.name.clone(),
+                    reason: format!("an Allure result that names no bundle: {reason}"),
+                });
+                continue;
+            }
+        };
+        let bundle = format!("{run}{}", result.bundle().unwrap_or_default());
+        if !kept.contains(&bundle) {
+            continue;
+        }
+        let beside = item.source.parent().unwrap_or(Path::new(""));
+        for source in result.sources() {
+            let entry = Entry {
+                name: format!("{dir}/{source}"),
+                source: beside.join(source),
+            };
+            results.entry(entry.name.clone()).or_insert(entry);
+        }
+        results.insert(item.name.clone(), item.clone());
+    }
+    results
 }
 
 /// Adds one file, and answers false, writing nothing, for a file that is gone by the time it is opened: a recorder

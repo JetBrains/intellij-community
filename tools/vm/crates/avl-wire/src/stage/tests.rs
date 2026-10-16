@@ -10,17 +10,17 @@ fn digest(char: char) -> String {
 #[test]
 fn an_absent_source_list_is_not_an_empty_one() {
     let digest = digest('a');
-    let absent = decode_runtime_manifest(format!(r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","jbrArchive":"/j.tgz"}}"#).as_bytes());
+    let absent = decode_runtime_manifest(format!(r#"{{"schemaVersion":2,"runtimeDigest":"{digest}","jbrSource":"/dist/jbr"}}"#).as_bytes());
     assert!(matches!(absent, Err(StageError::InvalidRuntimeManifest)), "{absent:?}");
     assert_eq!(absent.unwrap_err().to_string(), "invalid runtime stage manifest");
 
     let null = decode_runtime_manifest(
-        format!(r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","stableSources":null,"jbrArchive":"/j.tgz"}}"#).as_bytes(),
+        format!(r#"{{"schemaVersion":2,"runtimeDigest":"{digest}","stableSources":null,"jbrSource":"/dist/jbr"}}"#).as_bytes(),
     );
     assert!(matches!(null, Err(StageError::InvalidRuntimeManifest)), "{null:?}");
 
     let empty = decode_runtime_manifest(
-        format!(r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","stableSources":[],"jbrArchive":"/j.tgz"}}"#).as_bytes(),
+        format!(r#"{{"schemaVersion":2,"runtimeDigest":"{digest}","stableSources":[],"jbrSource":"/dist/jbr"}}"#).as_bytes(),
     )
     .expect("an explicitly empty stableSources was refused");
     assert!(empty.stable_sources.is_empty());
@@ -30,16 +30,22 @@ fn an_absent_source_list_is_not_an_empty_one() {
 fn manifest_schema_is_refused() {
     let digest = digest('a');
     let other_schema = decode_runtime_manifest(
-        format!(r#"{{"schemaVersion":99,"runtimeDigest":"{digest}","stableSources":[],"jbrArchive":"/j.tgz"}}"#).as_bytes(),
+        format!(r#"{{"schemaVersion":99,"runtimeDigest":"{digest}","stableSources":[],"jbrSource":"/dist/jbr"}}"#).as_bytes(),
     );
     assert!(matches!(other_schema, Err(StageError::InvalidRuntimeManifest)), "{other_schema:?}");
     assert_eq!(other_schema.unwrap_err().to_string(), "invalid runtime stage manifest");
     assert!(matches!(decode_runtime_manifest(b"{not json"), Err(StageError::Json(_))));
 
-    let archiveless = decode_runtime_manifest(
-        format!(r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","stableSources":[],"jbrArchive":""}}"#).as_bytes(),
+    let sourceless = decode_runtime_manifest(
+        format!(r#"{{"schemaVersion":2,"runtimeDigest":"{digest}","stableSources":[],"jbrSource":""}}"#).as_bytes(),
     );
-    assert!(matches!(archiveless, Err(StageError::InvalidRuntimeManifest)), "{archiveless:?}");
+    assert!(matches!(sourceless, Err(StageError::InvalidRuntimeManifest)), "{sourceless:?}");
+
+    // A controller of version 1 named a JBR archive. This guest copies a directory, so it refuses that manifest.
+    let archive = decode_runtime_manifest(
+        format!(r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","stableSources":[],"jbrArchive":"/j.tgz"}}"#).as_bytes(),
+    );
+    assert!(matches!(archive, Err(StageError::InvalidRuntimeManifest)), "{archive:?}");
 }
 
 #[test]
@@ -47,7 +53,7 @@ fn unknown_manifest_fields_are_accepted() {
     let digest = digest('a');
     decode_runtime_manifest(
         format!(
-            r#"{{"schemaVersion":1,"runtimeDigest":"{digest}","stableSources":[],"jbrArchive":"/j.tgz","somethingTheGuestPredates":true}}"#
+            r#"{{"schemaVersion":2,"runtimeDigest":"{digest}","stableSources":[],"jbrSource":"/dist/jbr","somethingTheGuestPredates":true}}"#
         )
         .as_bytes(),
     )
@@ -80,7 +86,7 @@ fn digest_fields_are_strings() {
 #[test]
 fn a_launch_prep_is_refused_unless_every_part_is_there() {
     let valid = serde_json::json!({
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "runtimeDigest": digest('a'),
         "stableCount": 3,
         "directories": [],

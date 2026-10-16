@@ -1,0 +1,39 @@
+vm bench classes session non-modal arm, 1 valid run
+anchors: frameBecameVisible, welcomeBecameVisible, welcome screen painted, quit; the plugin table is at welcomeBecameVisible
+classes (median of the valid runs)                            median     min     max
+totals:
+  classes.named                                                   32      32      32
+  classes.hidden                                                   5       5       5
+  classes.jdk                                                     12      12      12
+  classes.jar                                                      4       4       4
+  classes.platform                                                 4       4       4
+  classes.plugins                                                 12      12      12
+  classes.named@welcomeBecameVisible                              30      30      30
+by plugin at welcomeBecameVisible, 6 of 6 plugins:
+  com.intellij                                                     4
+  com.jetbrains.performancePlugin                                  2
+  com.jetbrains.gateway                                            1
+  com.jetbrains.station                                            1
+  intellij.webp                                                    1
+  org.jetbrains.plugins.docker.gateway                             1
+by content module over the whole run, 5 of 5 modules:
+  intellij.platform.kernel.backend                                 2
+  intellij.platform.settings.local                                 2
+  intellij.clouds.docker.gateway.json                              1
+  intellij.gateway.daemon.bridge                                   1
+  intellij.station.core                                            1
+the first 2 classes of each plugin at welcomeBecameVisible, in non-modal-run-01 (ms from the process start):
+  com.intellij:
+      942  com.intellij.platform.kernel.backend.BackendKernelService
+      952  com.intellij.platform.kernel.backend.BackendKernelServiceKt
+  com.jetbrains.performancePlugin:
+     1642  com.jetbrains.performancePlugin.ProjectLoaded
+     1652  com.jetbrains.performancePlugin.ProjectLoaded$Companion
+  com.jetbrains.gateway:
+     2142  com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity
+  com.jetbrains.station:
+     1842  com.intellij.station.core.services.IdeStationServerService
+  intellij.webp:
+     1742  com.android.tools.adtui.webp.WebpImageReaderSpi
+  org.jetbrains.plugins.docker.gateway:
+     2542  com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener

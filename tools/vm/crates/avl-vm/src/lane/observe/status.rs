@@ -8,14 +8,15 @@
 #[cfg(unix)]
 use std::sync::LazyLock;
 
+use crate::lane::ide::guest_ide_root;
 use crate::worker::docker::{ContainerState, Docker, ImageSource};
 use crate::worker::hypervisor::Machine;
-use crate::worker::lima::EngineState;
-use crate::worker::worker::{Manager, read_lease};
+use crate::worker::worker::{Manager, read_idle_stop_record, read_lease};
 use avl_base::format::words;
 use avl_base::{Backend, Config, Outcome, Refusal};
 use avl_host_sys::guest::{GUEST_COMMAND_TIMEOUT, Guest, ensure_host_paths};
-use avl_host_sys::{Ctx, Runner};
+use avl_host_sys::{Ctx, Runner, SpawnOptions};
+use avl_wire::ide::{ABANDONED_FILE, AbandonedRun};
 #[cfg(unix)]
 use avl_wire::supervisor::RunState;
 use futures::future::join_all;
@@ -26,6 +27,7 @@ use serde::Serialize;
 #[cfg(unix)]
 use super::split_lines;
 
+mod container_linux;
 #[cfg(unix)]
 mod parallels;
 #[cfg(unix)]
@@ -109,6 +111,7 @@ pub(crate) async fn command_status(ctx: &Ctx, manager: &Manager) -> Result<Outco
         #[cfg(unix)]
         Machine::Parallels(parallels) => parallels::status(ctx, manager, parallels).await,
         Machine::Docker(docker) => docker_status(ctx, manager, docker).await,
+        Machine::ContainerLinux(container_linux) => container_linux::status(ctx, manager, container_linux).await,
     }
 }
 
@@ -139,12 +142,14 @@ impl Verdict {
     }
 }
 
-/// The two layout questions the Tart and the Docker rows ask of a running guest. The Parallels row asks parity
-/// behind two gates of its own and has no storage fact.
+/// The layout questions the Tart, the Docker and the container-linux rows ask of a running guest. The Parallels row
+/// asks parity behind two gates of its own and has no storage fact.
 #[derive(Debug, Default)]
 struct Layout {
     worker_storage_ready: bool,
     parity: Verdict,
+    /// The IDE runs that the guest agent abandoned, see [`abandoned_ide_runs`].
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 impl Layout {
@@ -163,7 +168,40 @@ impl Layout {
         Self {
             worker_storage_ready,
             parity,
+            abandoned_ide_runs: abandoned_ide_runs(guest).await,
         }
+    }
+}
+
+/// The run ids that the records [`ABANDONED_FILE`] of the IDE contexts name: runs whose processes outlived a kill.
+/// Their slots are free, and the processes stay until a recycle discards the guest. `None` when the guest did not
+/// answer, and an empty list when it records no such run.
+async fn abandoned_ide_runs(guest: &Guest<'_>) -> Option<Vec<String>> {
+    let root = guest_ide_root(guest.settings);
+    let pattern = format!("\"$1\"/*/{ABANDONED_FILE}");
+    let script = format!("for file in {pattern}; do test -f \"$file\" && /bin/cat \"$file\" && echo; done; exit 0");
+    let listed = guest
+        .as_user(
+            &words(["/bin/sh", "-c", &script, "sh", &root]),
+            &SpawnOptions::within(GUEST_COMMAND_TIMEOUT),
+        )
+        .await
+        .ok()
+        .filter(|listed| listed.exit_code == 0)?;
+    Some(
+        serde_json::Deserializer::from_str(&listed.stdout)
+            .into_iter::<AbandonedRun>()
+            .filter_map(Result::ok)
+            .map(|run| run.run_id)
+            .collect(),
+    )
+}
+
+/// The ` abandoned_ide=<run ids>` part of a text row, and nothing when the guest records no abandoned run.
+fn abandoned_fragment(runs: Option<&[String]>) -> String {
+    match runs {
+        Some(runs) if !runs.is_empty() => format!(" abandoned_ide={} (recycle the worker)", runs.join(",")),
+        _ => String::new(),
     }
 }
 
@@ -233,7 +271,6 @@ fn host_paths_fragment(refusal: Option<&str>) -> String {
 ///
 /// Above the workers, and only when there is one: it is what left every `parity=n/a` below it unasked. A row of its
 /// own because the fact is the pool's, and `pool` is not a worker name this controller accepts.
-#[cfg(unix)]
 fn pool_report(host_paths_error: Option<&str>, lines: impl Iterator<Item = String>) -> String {
     host_paths_error
         .map(|error| format!("pool:{}", host_paths_fragment(Some(error))))
@@ -259,8 +296,8 @@ const fn leased_word(lease: Option<&LeaseSummary>) -> &'static str {
 struct DockerWorkerStatus {
     worker: String,
     exists: bool,
-    /// The engine's word: `absent`, `created`, `running`, `exited`, or another word kept as the engine said it.
-    /// `unknown` when the Lima engine does not run, because `status` never starts it.
+    /// The engine's word: `absent`, `created`, `running`, `exited`, `stopped` (Apple `container`), or another word kept
+    /// as the engine said it. `unknown` when the Apple server does not run, because `status` never starts it.
     state: String,
     /// The exit code of the entrypoint on an exited container, and null in every other state.
     exit_code: Option<i32>,
@@ -281,17 +318,28 @@ struct DockerWorkerStatus {
     parity_ready: Option<bool>,
     parity_error: Option<String>,
     lease: Option<LeaseSummary>,
+    /// When the idle stop of the last release stops the worker, on the Apple `container` engine. Null when no
+    /// idle stop waits.
+    idle_stop_at: Option<String>,
+    /// The IDE runs whose processes outlived a kill, so the worker is unusable until a recycle. Null where the guest was
+    /// not asked.
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DockerStatusData {
     backend: Backend,
-    /// `lima` for the controller's Lima VM, `host` for the engine of the host environment.
+    /// `container` for Apple `container`, `host` for the engine of the host environment.
     engine: &'static str,
-    /// Lima's word for its VM (`Absent`, `Stopped`, `Running`, or another word kept as Lima said it). Null for the
-    /// engine of the host environment, which this controller does not own.
+    /// The word of the Apple `container` server, `running` or `stopped`. Null for the engine of the host environment,
+    /// which this controller does not own.
     engine_status: Option<String>,
+    /// The slot count of the pool.
+    pool_size: usize,
+    /// Why the pool has that count: `AIR_VM_WORKERS`, `AIR_VM_MAX_WORKERS`, `host 128 GiB, 8 GiB per worker`,
+    /// `host memory unknown`, or `default`.
+    pool_rule: String,
     workers: Vec<DockerWorkerStatus>,
     host_repo: String,
     host_bazel_user_root: String,
@@ -303,7 +351,7 @@ struct DockerStatusData {
 ///
 /// `pulled` when the pool's image record says this tag was pulled; `local` when the engine has the tag and the
 /// record says built, or says nothing about this tag; `missing` when the engine does not have the tag; `unknown` when
-/// the Lima engine does not run and nothing asked it.
+/// the Apple `container` server does not run and nothing asked it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum ImageSourceWord {
@@ -335,25 +383,16 @@ struct DockerImage {
 /// Read-only toward the engine: `docker version`, `docker image inspect`, one `docker inspect` per slot, and
 /// `docker exec` of read-only probes in a running container. It never creates, starts, stops, removes or builds.
 ///
-/// Read-only toward the Lima engine too: `limactl list` only, and none at all for an engine never created. An engine
-/// that does not run is reported with its word, and no `docker` command asks it, so every row says `unknown`. The
-/// gate of a running Lima engine is not run, because it would make an engine of another template again. The pinned
-/// CLI is resolved, and the engine answers the questions below.
+/// Read-only toward the Apple `container` server too: `system status` only. A server that is down is reported
+/// `stopped` and is not started, and every row then says `unknown`.
 async fn docker_status(ctx: &Ctx, manager: &Manager, docker: &Docker) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
-    let (engine_status, reachable) = match docker.engine() {
-        None => {
-            docker.require_available(ctx, "").await?;
-            (None, true)
-        }
-        Some(lima) => {
-            let state = lima.state(ctx).await?;
-            let running = state == EngineState::Running;
-            if running {
-                docker.resolved_program(ctx).await?;
-            }
-            (Some(state.as_str().to_owned()), running)
-        }
+    let (engine_status, reachable) = if docker.apple().is_some() {
+        let running = docker.reach_engine(ctx).await?;
+        (Some(if running { "running" } else { "stopped" }.to_owned()), running)
+    } else {
+        docker.require_available(ctx, "").await?;
+        (None, true)
     };
     // Before the fan-out, for the reason the Tart report gives: the parity and the declaration questions both need
     // these paths.
@@ -384,12 +423,14 @@ async fn docker_status(ctx: &Ctx, manager: &Manager, docker: &Docker) -> Result<
             .collect::<Result<Vec<_>, Refusal>>()?
     };
     let engine = settings.docker_engine.as_str();
+    let pool_rule = settings.pool_rule.to_string();
     let engine_line = format!(
-        "pool: engine={engine}{}{}",
+        "pool: engine={engine}{} pool={} ({pool_rule}){}",
         engine_status
             .as_deref()
             .map(|word| format!(" engine_status={word}"))
             .unwrap_or_default(),
+        settings.workers.len(),
         host_paths_fragment(host_paths.error.as_deref())
     );
     let text = std::iter::once(engine_line)
@@ -401,6 +442,8 @@ async fn docker_status(ctx: &Ctx, manager: &Manager, docker: &Docker) -> Result<
             backend: settings.backend,
             engine,
             engine_status,
+            pool_size: settings.workers.len(),
+            pool_rule,
             workers,
             host_repo: host_paths.repo,
             host_bazel_user_root: host_paths.bazel_user_root,
@@ -465,10 +508,18 @@ async fn docker_worker_status(
         parity_ready: layout.parity.ready,
         parity_error: layout.parity.error,
         lease,
+        idle_stop_at: idle_stop_at(settings, worker),
+        abandoned_ide_runs: layout.abandoned_ide_runs,
     })
 }
 
-/// The row of a worker whose Lima engine does not run: only the lease and the image tag are known without the engine.
+/// The deadline of the idle stop that waits for the worker, if one does.
+fn idle_stop_at(settings: &Config, worker: &str) -> Option<String> {
+    read_idle_stop_record(settings, worker).map(|record| record.deadline)
+}
+
+/// The row of a worker whose Apple `container` server does not run: only the lease and the image tag are known without
+/// the engine.
 fn unreachable_docker_worker_status(settings: &Config, worker: &str, image: &DockerImage) -> Result<DockerWorkerStatus, Refusal> {
     Ok(DockerWorkerStatus {
         worker: worker.to_owned(),
@@ -484,19 +535,27 @@ fn unreachable_docker_worker_status(settings: &Config, worker: &str, image: &Doc
         parity_ready: None,
         parity_error: None,
         lease: lease_summary(settings, worker)?,
+        idle_stop_at: idle_stop_at(settings, worker),
+        abandoned_ide_runs: None,
     })
 }
 
 fn render_docker_status_line(row: &DockerWorkerStatus) -> String {
     let exit_code = row.exit_code.map(|code| format!("({code})")).unwrap_or_default();
+    let idle_stop = row
+        .idle_stop_at
+        .as_deref()
+        .map(|deadline| format!(" idle_stop={deadline}"))
+        .unwrap_or_default();
     format!(
-        "{}: {}{exit_code} lease={} image={} declaration={} parity={}",
+        "{}: {}{exit_code} lease={} image={} declaration={} parity={}{idle_stop}{}",
         row.worker,
         row.state,
         leased_word(row.lease.as_ref()),
         row.image_source.as_str(),
         verdict_words(row.declaration_current, row.declaration_error.as_deref(), "current", "stale"),
         verdict_word(row.parity_ready, row.parity_error.as_deref()),
+        abandoned_fragment(row.abandoned_ide_runs.as_deref()),
     )
 }
 

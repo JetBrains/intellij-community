@@ -3,10 +3,12 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    FORCE_MODAL_PROPERTY, PROJECT_PROPERTIES, RunPlan, argfile_text, class_load_option, dist_options, entry_options, measure_options,
-    quote_argument, sandbox_options, scheme_arguments, span_ended,
+    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan, TRUST_PROPERTY,
+    argfile_text, class_load_option, dist_options, entry_options, idea_log_pid, measure_options, product_info_file, profile_stop_argv,
+    quote_argument, sandbox_options, scheme_arguments, span_ended, vm_options_file,
 };
 use crate::bench::arm::Arm;
+use crate::bench::profile::ProfileEvent;
 use crate::bench::record::RunKind;
 use crate::bench::session::{Project, Sandbox};
 use crate::bench::stage::DistConfig;
@@ -26,6 +28,7 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
         "-Xlog:class+load:file=/s/run/class-load.log:uptime,tags",
         "-Dfus.internal.test.mode=true",
         "-Dnosplash=true",
+        "-Didea.is.integration.test=true",
     ] {
         assert!(options.contains(&expected.to_owned()), "{expected}: {options:?}");
     }
@@ -35,16 +38,43 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
     );
 }
 
-/// Every arm writes the class-load log. A space in the run directory is no problem, and a `:` is an error that names
-/// the run directory.
+/// Every arm is an integration test, as every run of the IDE Starter is, and only a project start trusts its project.
+#[test]
+fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    let integration_test = format!("-D{INTEGRATION_TEST_PROPERTY}");
+    let trust = format!("-D{TRUST_PROPERTY}");
+    for arm in Arm::ALL {
+        let options = measure_options(Path::new("/s/run"), &sandbox, arm, None).expect("the options");
+        assert_eq!(
+            options.iter().filter(|option| **option == integration_test).count(),
+            1,
+            "{arm:?}: {options:?}"
+        );
+        assert_eq!(
+            options.contains(&trust),
+            matches!(arm, Arm::Project | Arm::EmptyEditor),
+            "{arm:?}: {options:?}"
+        );
+    }
+}
+
+/// Every arm writes the class-load log, from the thread of the asynchronous log, which stalls on a full buffer and
+/// drops no class line. A space in the run directory is no problem, and a `:` is an error that names the run
+/// directory.
 #[test]
 fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_failure() {
     let sandbox = Sandbox::new("/s/sandbox");
     for arm in Arm::ALL {
         let options = measure_options(Path::new("/s/Application Support/run"), &sandbox, arm, None).expect("the options");
-        assert!(
-            options.contains(&"-Xlog:class+load:file=/s/Application Support/run/class-load.log:uptime,tags".to_owned()),
-            "{arm:?}: {options:?}"
+        let class_log = options
+            .iter()
+            .position(|option| *option == "-Xlog:class+load:file=/s/Application Support/run/class-load.log:uptime,tags")
+            .unwrap_or_else(|| panic!("{arm:?}: {options:?}"));
+        assert_eq!(
+            options[class_log - 2..class_log],
+            ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"],
+            "{arm:?}: the asynchronous log comes first"
         );
     }
     assert_eq!(
@@ -60,20 +90,76 @@ fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_fai
     );
 }
 
+/// A profiled run starts the agent with the JVM and allows the dynamic load of the stop. The event of the profile is
+/// the one of `--profile-event`.
 #[test]
 fn the_modal_arm_forces_the_modal_screen_and_the_profile_adds_the_agent() {
-    let options = measure_options(
-        Path::new("/r"),
-        &Sandbox::new("/b"),
-        Arm::Modal,
-        Some(Path::new("/lib/libasyncProfiler.dylib")),
-    )
-    .expect("the options");
+    let profiler = |event| Profiler {
+        library: "/lib/libasyncProfiler.dylib".into(),
+        event,
+    };
+    let options =
+        measure_options(Path::new("/r"), &Sandbox::new("/b"), Arm::Modal, Some(&profiler(ProfileEvent::Cpu))).expect("the options");
     assert!(options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
     assert_eq!(
-        options.last().map(String::as_str),
-        Some("-agentpath:/lib/libasyncProfiler.dylib=start,event=cpu,interval=1ms,threads,collapsed,file=/r/cpu.collapsed")
+        options[options.len() - 2..],
+        [
+            DYNAMIC_AGENT_OPTION.to_owned(),
+            "-agentpath:/lib/libasyncProfiler.dylib=start,event=cpu,interval=1ms,threads,collapsed,file=/r/cpu.collapsed".to_owned()
+        ]
     );
+    let wall = measure_options(
+        Path::new("/r"),
+        &Sandbox::new("/b"),
+        Arm::NonModal,
+        Some(&profiler(ProfileEvent::Wall)),
+    )
+    .expect("the options");
+    assert_eq!(
+        wall.last().map(String::as_str),
+        Some("-agentpath:/lib/libasyncProfiler.dylib=start,event=wall,interval=1ms,threads,collapsed,file=/r/cpu.collapsed")
+    );
+    let plain = measure_options(Path::new("/r"), &Sandbox::new("/b"), Arm::NonModal, None).expect("the options");
+    assert!(
+        !plain.contains(&DYNAMIC_AGENT_OPTION.to_owned()),
+        "a run without a profile loads no agent"
+    );
+}
+
+/// The stop of the profile loads the library again into the IDE with `stop`, through `jcmd` of the generation. `jcmd`
+/// joins its arguments, so a path with a space is quoted.
+#[test]
+fn the_profile_stops_at_the_gate_through_jcmd() {
+    assert_eq!(
+        profile_stop_argv(
+            Path::new("/g/jbr/Contents/Home/bin/jcmd"),
+            48213,
+            Path::new("/s/Application Support/async-profiler/libasyncProfiler.dylib"),
+            Path::new("/s/Application Support/non-modal-run-01/cpu-gate.collapsed"),
+        ),
+        [
+            "/g/jbr/Contents/Home/bin/jcmd",
+            "48213",
+            "JVMTI.agent_load",
+            "\"/s/Application Support/async-profiler/libasyncProfiler.dylib\"",
+            "\"stop,file=/s/Application Support/non-modal-run-01/cpu-gate.collapsed,collapsed\"",
+        ]
+    );
+}
+
+/// The PID of the IDE is the line that its start writes into `idea.log`. A log without it, or with another value, has
+/// none.
+#[test]
+fn the_pid_of_the_ide_comes_from_its_log() {
+    let log = "2026-10-01 15:18:10,201 [    283]   INFO - #c.i.p.i.b.StartupUtil - JVM: 25.0.2+10-b432.48 (OpenJDK 64-Bit Server VM)\n\
+               2026-10-01 15:18:10,201 [    283]   INFO - #c.i.p.i.b.StartupUtil - PID: 48213\n\
+               2026-10-01 15:18:10,202 [    284]   INFO - #c.i.p.i.b.StartupUtil - Timezone: Europe/Berlin (+02:00)\n";
+    assert_eq!(idea_log_pid(log), Some(48213));
+    assert_eq!(
+        idea_log_pid("2026-10-01 15:18:10,201 [    283]   INFO - #c.i.p.i.b.StartupUtil - OS: macOS (26.7)\n"),
+        None
+    );
+    assert_eq!(idea_log_pid("2026-10-01 15:18:10,201 [    283]   INFO - #c - PID: none\n"), None);
 }
 
 #[test]
@@ -112,14 +198,10 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
     );
 
     let options = measure_options(Path::new("/r"), &sandbox, Arm::Project, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
     let welcome_options = measure_options(Path::new("/r"), &sandbox, Arm::NonModal, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(!welcome_options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(!welcome_options.contains(&format!("-D{TRUST_PROPERTY}")), "{welcome_options:?}");
 }
 
 /// Every run of the empty-editor arm opens the project directory alone, so the IDE neither saves nor restores an
@@ -145,9 +227,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
         );
     }
     let options = measure_options(Path::new("/r"), &sandbox, Arm::EmptyEditor, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
 }
 
@@ -205,20 +285,59 @@ fn an_argument_is_quoted_as_the_starter_quotes_it() {
     assert_eq!(argfile_text(&["a".to_owned(), "b c".to_owned()]), "a\nb\" \"c\n");
 }
 
+/// The `vmOptionsFilePath` of [`fake_dist`], relative to the directory of its `product-info.json`.
+const VM_OPTIONS_FILE_PATH: &str = if cfg!(target_os = "macos") {
+    "../bin/idea.vmoptions"
+} else {
+    "bin/idea.vmoptions"
+};
+
 /// A distribution with the files that the launch reads.
 fn fake_dist(root: &Path) -> std::path::PathBuf {
     let dist = root.join("idea_dist.dist");
     std::fs::create_dir_all(dist.join("bin")).expect("a bin directory");
     std::fs::write(dist.join("bin/idea.vmoptions"), "-Xmx2048m\n\n# a comment\n-ea\n").expect("the vmoptions");
+    let product_info = dist.join(PRODUCT_INFO_FILE);
+    std::fs::create_dir_all(product_info.parent().expect("a parent")).expect("the directory of the product info");
     std::fs::write(
-        dist.join("bin/product-info.json"),
+        product_info,
         format!(
-            r#"{{"launch":[{{"additionalJvmArguments":["-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader","-Xbootclasspath/a:{}/lib/nio-fs.jar"]}}]}}"#,
+            r#"{{"launch":[{{"vmOptionsFilePath":"{VM_OPTIONS_FILE_PATH}","additionalJvmArguments":["-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader","-Xbootclasspath/a:{}/lib/nio-fs.jar"]}}]}}"#,
             super::home_macro()
         ),
     )
     .expect("the product info");
     dist
+}
+
+/// The path resolves by its text against the directory of the production place, as the launcher resolves it.
+#[test]
+fn the_vm_options_file_resolves_in_the_distribution() {
+    let dist = Path::new("/g/idea_dist.dist");
+    assert_eq!(
+        vm_options_file(dist, VM_OPTIONS_FILE_PATH).expect("the file"),
+        dist.join("bin").join("idea.vmoptions")
+    );
+    for refused in ["../../idea.vmoptions", "/bin/idea.vmoptions", "bin\\idea.vmoptions"] {
+        let error = vm_options_file(dist, refused).expect_err(refused);
+        assert!(format!("{error:#}").ends_with("is not a file of /g/idea_dist.dist"), "{error:#}");
+    }
+}
+
+/// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
+#[test]
+fn the_product_info_is_at_the_production_place_or_in_bin() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let dist = dir.path();
+    let production = dist.join(PRODUCT_INFO_FILE);
+    let dev_build = dist.join("bin").join("product-info.json");
+    assert_eq!(product_info_file(dist), production, "no file names the production place");
+    std::fs::create_dir_all(dist.join("bin")).expect("a bin directory");
+    std::fs::write(&dev_build, "{}").expect("the product info in bin");
+    assert_eq!(product_info_file(dist), dev_build);
+    std::fs::create_dir_all(production.parent().expect("a parent")).expect("the directory of the product info");
+    std::fs::write(&production, "{}").expect("the product info");
+    assert_eq!(product_info_file(dist), production);
 }
 
 #[test]
@@ -251,9 +370,12 @@ fn the_dist_options_are_the_vmoptions_the_product_info_and_the_starter_options()
             "-Didea.platform.prefix=idea".to_owned(),
         ]
     );
-    std::fs::write(dist.join("bin/other.vmoptions"), "").expect("a second vmoptions");
-    let error = dist_options(&dist, &config, Path::new("/repo")).expect_err("two vmoptions");
-    assert!(format!("{error:#}").ends_with("has no single *.vmoptions file"), "{error:#}");
+    // `product-info.json` names the main vmoptions file, so a second file in `bin` does not count.
+    std::fs::write(dist.join("bin/jetbrains_client.vmoptions"), "-Dfrom.frontend=1\n").expect("a second vmoptions");
+    assert_eq!(dist_options(&dist, &config, Path::new("/repo")).expect("the options"), options);
+    std::fs::write(dist.join(PRODUCT_INFO_FILE), r#"{"launch":[]}"#).expect("a product info without a launch");
+    let error = dist_options(&dist, &config, Path::new("/repo")).expect_err("no launch");
+    assert!(format!("{error:#}").ends_with("states no launch"), "{error:#}");
 }
 
 #[test]

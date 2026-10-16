@@ -5,14 +5,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+use avl_base::GuestOs;
+use avl_base::format::seconds;
 use avl_base::fs::create_private_dir;
-use avl_base::{Config, Exit, OrRefuse, Refusal};
+use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
-use avl_host_sys::paths::GuestPaths;
-use avl_host_sys::runfiles::HostRunfiles;
-use avl_report::digest::{self, FileDigestCache, JbrPolicy, PathDigest, ProductIdentityInput};
-use avl_wire::daemon::LABEL;
-use avl_wire::progress::Event;
+use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
+use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
+use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL};
+use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
 use serde::Serialize;
@@ -33,23 +34,38 @@ pub(crate) fn lane_environment_digest(environment: &BTreeMap<String, String>) ->
     digest::path_sensitive_digest(&entries)
 }
 
+/// The daemon target of a guest: one target per guest OS, because the guest is a target and not a build option.
+pub(crate) const fn daemon_label(guest_os: GuestOs) -> &'static str {
+    match guest_os {
+        GuestOs::Macos => LABEL,
+        GuestOs::Linux => LINUX_GUEST_LABEL,
+    }
+}
+
 /// One host build, stamped: what to launch, and the four identities that decide what can be reused.
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedBuild {
-    /// Where each runfile is on the host: under the runfiles tree beside the descriptor, or at its MANIFEST target on a Windows host, where
-    /// Bazel builds no tree.
-    pub runfiles: HostRunfiles,
-    /// The runfiles tree as the guest opens it: [`guest_runfiles_root`] of `runfiles`. Every path the guest gets
-    /// under the tree is joined onto this one.
+    /// The daemon target this build built ([`daemon_label`]).
+    pub label: &'static str,
+    /// The runfiles tree the guest builds from the MANIFEST of `runfiles`, with the bytes of its staged runfiles.
+    pub guest_tree: GuestRunfilesTree,
+    /// The root of [`Self::guest_tree`], as the guest opens it. Every path the guest gets under the tree is joined onto
+    /// this one.
     pub guest_runfiles_root: String,
     pub descriptor: RuntimeDescriptor,
     /// The test tier by host path and content digest, in classpath order: what `/jars` is asked about and what a
     /// missing digest is uploaded from.
     pub hot_jars: Vec<PathDigest>,
+    /// The files of the context plugins, in descriptor order: pushed with the hot tier, and installed by the daemon into
+    /// the plugin directory of the IDE context.
+    pub plugin_files: Vec<PluginFile>,
     pub runtime_digest: String,
     pub launch_digest: String,
     pub product_digest: String,
     pub mount_digest: String,
+    /// The identity of [`Self::plugin_files`]: each destination with its content digest. Neither the product digest
+    /// nor the mount digest reads it, so a change of the context plugins alone refreshes no share.
+    pub plugins_digest: String,
     /// The immutable environment the daemon is exec'd with that no build produces: what every lane sets by value,
     /// plus the guest's Node. Its [`lane_environment_digest`] is part of the launch digest, so a change here
     /// re-execs the daemon.
@@ -60,6 +76,24 @@ pub(crate) struct PreparedBuild {
     /// Bazel's cost, and this controller's own hashing, timed apart so neither can hide inside the other.
     pub build: Duration,
     pub stamp: Duration,
+}
+
+/// One file of a context plugin: its destination below the plugin directory of the IDE context, and its bytes on the
+/// host by path and content digest, as `/jars` is asked about them.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct PluginFile {
+    pub destination: String,
+    pub host: PathDigest,
+}
+
+/// The identity of the context plugin files: each destination with its content digest, so a moved file and a changed
+/// file both change it.
+pub(crate) fn plugins_digest(files: &[PluginFile]) -> String {
+    let entries: Vec<PathDigest> = files
+        .iter()
+        .map(|file| PathDigest::new(&file.destination, &file.host.sha256))
+        .collect();
+    digest::path_sensitive_digest(&entries)
 }
 
 /// Where one host build writes its log and caches its file digests.
@@ -118,8 +152,8 @@ struct StaticLaunch<'a> {
 pub(crate) struct ControllerBoot<'a> {
     pub(crate) runfiles_root: &'a str,
     pub(crate) daemon_port: u16,
-    /// The checkout's guest root. The key keeps its name, so the digest on a Unix host does not change.
-    pub(crate) host_repo: &'a str,
+    /// The home of the daemon JVM, an empty directory of the staged generation.
+    pub(crate) guest_home: &'a str,
     pub(crate) vm_data: &'a str,
     pub(crate) vm_download_cache: &'a str,
     pub(crate) vm_home: &'a str,
@@ -134,32 +168,23 @@ fn literal_digest(literal: &impl Serialize) -> String {
     digest::sha256_text(&text)
 }
 
-/// Where the guest opens the runfiles tree of a descriptor.
+/// The `@controller-boot` digest for one guest runfiles root, port and runtime generation.
 ///
-/// The one seam for that question. A tree Bazel built is opened through its share, at its [`GuestPaths`] path. A
-/// MANIFEST, which is all a Windows host has, becomes the tree the guest agent builds, and
-/// `Guest::ensure_runfiles_tree` builds it before the daemon starts.
-pub(crate) fn guest_runfiles_root(settings: &Config, runfiles: &HostRunfiles) -> Result<String, Refusal> {
-    runfiles.guest_root(settings)
-}
-
-/// The `@controller-boot` digest for one guest runfiles root and port.
-///
-/// Over the values the guest gets, not over the host paths: the checkout is the guest root the JVM is told, and
-/// the runfiles root is the guest one. On a Unix host the two spellings are the same text.
-pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &str, daemon_port: u16) -> Result<String, Refusal> {
-    let paths = GuestPaths::of(settings)?;
-    Ok(literal_digest(&ControllerBoot {
+/// Over the values the guest gets, not over the host paths: the runfiles root is the tree the guest builds, and the
+/// home is the directory of the generation that the JVM is told.
+pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &str, daemon_port: u16, runtime_digest: &str) -> String {
+    let guest_home = crate::daemon::stage::guest_home(settings, runtime_digest);
+    literal_digest(&ControllerBoot {
         runfiles_root: guest_runfiles_root,
         daemon_port,
-        host_repo: paths.repo(),
+        guest_home: &guest_home,
         vm_data: &settings.vm_data,
         vm_download_cache: &settings.vm_download_cache,
         vm_home: &settings.vm_home,
         vm_node: &settings.vm_node,
         vm_tmp: &settings.vm_tmp,
         vm_user: &settings.vm_user,
-    }))
+    })
 }
 
 /// The launch digest over its three parts. A JVM cannot change its own environment, so a change to the daemon
@@ -214,18 +239,76 @@ pub(crate) fn declared_input(
     })
 }
 
+/// The JBR of the distribution, which the daemon JVM runs on a copy of: its host directory, digested as a tree.
+///
+/// The identity is named by the logical path of the directory, so the runtime digest moves when the JBR bytes
+/// or modes move, and not when another file of the distribution does. A distribution without the directory is a
+/// refusal that names the path.
+pub(crate) fn jbr_input(
+    cache: &mut FileDigestCache,
+    runfiles: &HostRunfiles,
+    descriptor: &RuntimeDescriptor,
+) -> Result<PathDigest, Refusal> {
+    let home = &descriptor.dev_dist.home;
+    let logical_path = format!("{}/{}", home.logical_path, descriptor.jbr.directory);
+    let missing = |path: &Path, cause: String| {
+        Refusal::new(
+            "daemon_runtime_input_missing",
+            Exit::SOFTWARE,
+            format!(
+                "the distribution {} ({}) has no JBR: {} is not a directory{cause}; the dev distribution places the \
+                 production JBR there",
+                home.logical_path,
+                home.owner,
+                path.display()
+            ),
+        )
+    };
+    let Some(home_path) = runfiles.host_path(&home.logical_path) else {
+        return Err(missing(&runfiles.location().join(&logical_path), String::new()));
+    };
+    let path = home_path.join(&descriptor.jbr.directory);
+    if !fs::metadata(&path).is_ok_and(|metadata| metadata.is_dir()) {
+        return Err(missing(&path, String::new()));
+    }
+    let sha256 = cache.digest(&path).map_err(|error| missing(&path, format!(": {error}")))?;
+    Ok(PathDigest::new(logical_path, sha256))
+}
+
 /// The digests of one descriptor's inputs, which is all the stamp reads from disk.
 struct Stamped {
+    guest_tree: GuestRunfilesTree,
     hot_jars: Vec<PathDigest>,
+    plugin_files: Vec<PluginFile>,
     runtime_digest: String,
     product_digest: String,
     mount_digest: String,
+    parts: StampParts,
+}
+
+/// How long each part of [`stamp`] took, so the journal names the part that grew.
+#[derive(Clone, Copy, Debug, Default)]
+struct StampParts {
+    open: Duration,
+    digests: Duration,
+    save: Duration,
+    tree: Duration,
 }
 
 /// Hashes every declared input of a descriptor through the digest cache and composes three of the four identities;
-/// the launch digest needs the settings and is composed by the caller. Blocking: the first sweep reads gigabytes.
-fn stamp(descriptor: &RuntimeDescriptor, runfiles: &HostRunfiles, cache_path: &Path) -> Result<Stamped, Refusal> {
+/// the launch digest needs the settings and is composed by the caller. The context plugin files are hashed here too,
+/// and their identity is composed apart from the other four. The guest runfiles tree is planned here too, because the
+/// plan reads each staged runfile. Blocking: the first sweep reads gigabytes.
+fn stamp(
+    descriptor: &RuntimeDescriptor,
+    runfiles: &HostRunfiles,
+    cache_path: &Path,
+    tree_inputs: &GuestTreeInputs,
+) -> Result<Stamped, Refusal> {
+    let started = Instant::now();
     let mut cache = FileDigestCache::open(cache_path);
+    let opened = Instant::now();
+    let jbr = jbr_input(&mut cache, runfiles, descriptor)?;
     let mut file = |file: &RuntimeFile| declared_input(&mut cache, runfiles, file, false);
 
     let mut hot_jars = Vec::with_capacity(descriptor.classpath.hot.len());
@@ -233,11 +316,18 @@ fn stamp(descriptor: &RuntimeDescriptor, runfiles: &HostRunfiles, cache_path: &P
         let declared = file(jar)?;
         hot_jars.push(PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256));
     }
+    let mut plugin_files = Vec::with_capacity(descriptor.ide.plugins.len());
+    for plugin in &descriptor.ide.plugins {
+        let declared = file(&plugin.file)?;
+        plugin_files.push(PluginFile {
+            destination: plugin.destination.clone(),
+            host: PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256),
+        });
+    }
     let mut runtime_entries = Vec::with_capacity(descriptor.classpath.stable.len() + 2);
     for jar in &descriptor.classpath.stable {
         runtime_entries.push(file(jar)?.identity);
     }
-    let jbr_archive = file(&descriptor.jbr.archive)?;
     runtime_entries.push(PathDigest::new(
         "@static-launch",
         literal_digest(&StaticLaunch {
@@ -248,34 +338,47 @@ fn stamp(descriptor: &RuntimeDescriptor, runfiles: &HostRunfiles, cache_path: &P
             java_home_suffix: &descriptor.jbr.java_home_suffix,
         }),
     ));
-    runtime_entries.push(jbr_archive.identity);
+    runtime_entries.push(jbr);
     let runtime_digest = digest::path_sensitive_digest(&runtime_entries);
 
-    let product_digest = digest::product_identity(&ProductIdentityInput {
+    let distribution = digest::product_identity(&ProductIdentityInput {
         fingerprint: file(&descriptor.dev_dist.fingerprint)?.identity,
         config: file(&descriptor.dev_dist.config)?.identity,
-        jbr_manifest: file(&descriptor.jbr.manifest)?.identity,
-        jbr_policy: JbrPolicy {
-            platform: descriptor.jbr.platform.clone(),
-            java_home_suffix: descriptor.jbr.java_home_suffix.clone(),
-            preloaded_only: descriptor.jbr.preloaded_only,
-        },
     });
+    let product_digest = digest::path_sensitive_digest(&[
+        PathDigest::new("@distribution", &distribution),
+        file(&descriptor.ide.flags_file)?.identity,
+    ]);
 
-    let mut mount_entries = vec![PathDigest::new("@product", &product_digest)];
+    let mut mount_entries = vec![
+        PathDigest::new("@product", &product_digest),
+        file(&descriptor.ide.project_archive)?.identity,
+        PathDigest::new("@project-root", digest::sha256_text(&descriptor.ide.project_root)),
+    ];
     for data in &descriptor.data {
         mount_entries.push(declared_input(&mut cache, runfiles, data, true)?.identity);
     }
     let mount_digest = digest::path_sensitive_digest(&mount_entries);
 
+    let digested = Instant::now();
     cache.save().or_refuse("state_write_failed", Exit::FAILURE, || {
         format!("cannot save the digest cache {}", cache_path.display())
     })?;
+    let saved = Instant::now();
+    let guest_tree = runfiles.guest_tree(tree_inputs)?;
     Ok(Stamped {
+        guest_tree,
         hot_jars,
+        plugin_files,
         runtime_digest,
         product_digest,
         mount_digest,
+        parts: StampParts {
+            open: opened - started,
+            digests: digested - opened,
+            save: saved - digested,
+            tree: saved.elapsed(),
+        },
     })
 }
 
@@ -285,15 +388,37 @@ impl Host {
     ///
     /// The build fixes the bytes that a run pushes, so the checkout tree is read when the build starts, beside it,
     /// and adds no time to it.
+    ///
+    /// The work after the build is the phase [`Phase::Prepare`]. The build names the descriptor in its event file, so
+    /// the phase is the digest sweep and asks Bazel nothing.
     pub(crate) async fn prepare_build(&self, ctx: &Ctx, scope: &BuildScope) -> Result<PreparedBuild, Refusal> {
         let build_started = Instant::now();
+        let label = daemon_label(self.settings.guest_os);
         let (built, tree) = tokio::join!(
-            self.bazel.build(ctx, &scope.log, LABEL),
+            self.bazel.build(ctx, &scope.log, label),
             read_checkout_tree(ctx, &self.runner, &self.settings)
         );
         built?;
         self.reporter.publish(Event::Checkout(checkout_event(&tree)), None);
-        let descriptor_path = self.bazel.runtime_descriptor(ctx, LABEL).await?;
+        let phase = self.reporter.start_phase(Phase::Prepare, "hash what the host build produced", None);
+        let prepared = self.prepare_built(ctx, scope, label, build_started, tree, &phase).await;
+        phase.finish(&prepared);
+        prepared
+    }
+
+    /// The descriptor and the digest sweep of [`Host::prepare_build`], after its build.
+    async fn prepare_built(
+        &self,
+        ctx: &Ctx,
+        scope: &BuildScope,
+        label: &'static str,
+        build_started: Instant,
+        tree: Result<Tree, Refusal>,
+        phase: &PhaseRun,
+    ) -> Result<PreparedBuild, Refusal> {
+        let lookup_started = Instant::now();
+        let descriptor_path = self.bazel.runtime_descriptor(ctx, label).await?;
+        let lookup = lookup_started.elapsed();
         let build = build_started.elapsed();
 
         let stamp_started = Instant::now();
@@ -307,23 +432,47 @@ impl Host {
         )
         .map_err(avl_base::descriptor_refusal)?;
         let runfiles = HostRunfiles::of(&descriptor_path)?;
+        let tree_inputs = GuestTreeInputs::of(&self.settings)?;
         let stamped = {
             let _one_sweep = self.stamping.lock().await;
             let (descriptor, runfiles, cache) = (descriptor.clone(), runfiles.clone(), scope.digest_cache.clone());
-            tokio::task::spawn_blocking(move || stamp(&descriptor, &runfiles, &cache))
+            tokio::task::spawn_blocking(move || stamp(&descriptor, &runfiles, &cache, &tree_inputs))
                 .await
                 .or_refuse("internal_error", Exit::FAILURE, || "the digest sweep failed".to_owned())??
         };
+        let StampParts {
+            open,
+            digests,
+            save,
+            tree: planned,
+        } = stamped.parts;
+        let text = |duration: Duration| seconds(duration.as_secs_f64() * 1000.0);
+        phase.progress(&format!(
+            "descriptor {}  cache open {}  digests {}  cache save {}  runfiles tree {}",
+            text(lookup),
+            text(open),
+            text(digests),
+            text(save),
+            text(planned)
+        ));
 
-        let guest_runfiles_root = guest_runfiles_root(&self.settings, &runfiles)?;
-        let boot = controller_boot_digest(&self.settings, &guest_runfiles_root, self.settings.daemon.port)?;
+        let guest_runfiles_root = stamped.guest_tree.root.clone();
+        let boot = controller_boot_digest(
+            &self.settings,
+            &guest_runfiles_root,
+            self.settings.daemon.port,
+            &stamped.runtime_digest,
+        );
         let daemon_environment = crate::lane::daemon_environment(&self.settings);
         let launch_digest = launch_digest(&stamped.runtime_digest, &boot, &daemon_environment);
         Ok(PreparedBuild {
-            runfiles,
+            label,
+            guest_tree: stamped.guest_tree,
             guest_runfiles_root,
             descriptor,
             hot_jars: stamped.hot_jars,
+            plugins_digest: plugins_digest(&stamped.plugin_files),
+            plugin_files: stamped.plugin_files,
             runtime_digest: stamped.runtime_digest,
             launch_digest,
             product_digest: stamped.product_digest,

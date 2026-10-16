@@ -10,8 +10,8 @@
 //! A Parallels worker is a VM the hypervisor keeps for you and `prlctl status` will tell you about; a Tart worker is
 //! a long-lived `tart run` process this controller spawned, and when that process is gone the machine is gone with
 //! it. So liveness is not a hypervisor query, it is process identification - and identifying a process by pid alone
-//! is how a recycled pid gets mistaken for a live worker. Hence the triple in [`ProcessIdentity`]: the pid, the
-//! process's start time, and its command line, all three of which have to still agree.
+//! is how a recycled pid gets mistaken for a live worker. Hence the triple of [`ProcessIdentity`] in the
+//! [`PidReceipt`]: the pid, the process's start time and its command line. All three have to still agree.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -21,7 +21,7 @@ use avl_base::config::{TART_LABEL, TART_VERSION_OVERRIDE_VARIABLE};
 use avl_base::{Config, Exit, OrRefuse, Refusal, Reporter, SCHEMA_VERSION, Scope};
 use avl_host_sys::fs::real_path;
 use avl_host_sys::share::SharedFolder;
-use avl_host_sys::{Ctx, ProbeExit, ProbeOutput, PsField, Runner, SpawnOptions, probe_unanswered};
+use avl_host_sys::{Ctx, ProbeExit, ProbeOutput, ProcessIdentity, Runner, SpawnOptions, probe_unanswered};
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ use tokio::sync::OnceCell;
 
 use crate::worker::hypervisor::unsupported;
 use crate::worker::pin::{PinnedTool, PinnedTools, parse_version};
-use crate::worker::secure::{Requirements, SecureReadError, read_private_file, write_json_line};
+use crate::worker::secure::{Requirements, SecureReadError, read_json_record, read_private_file, write_json_line};
 use avl_base::RefusalExt;
 
 /// The timeout of a Tart query: `tart list` and `tart --version` read the local VM directories and answer at once.
@@ -171,23 +171,22 @@ impl Tart {
 
     // --- liveness --------------------------------------------------------------------------------------------
 
-    /// The recorded identity of a worker's run process, or `None`.
+    /// The pid receipt of a worker's run process, or `None`.
     ///
     /// `None` for every kind of wrong - absent file, unparseable JSON, a receipt naming another worker, a schema this
     /// build does not speak - because the caller's next question is always "is this worker running", and there is
     /// no version of "the record is damaged" that should answer yes to it.
-    pub(crate) fn read_process_identity(&self, worker: &str) -> Option<ProcessIdentity> {
-        let content = std::fs::read(self.settings.pid_path(worker)).ok()?;
-        let identity: ProcessIdentity = serde_json::from_slice(&content).ok()?;
-        let valid = identity.schema_version == SCHEMA_VERSION
-            && identity.worker == worker
-            && identity.pid > 0
-            && !identity.process_start.is_empty()
-            && !identity.process_command.is_empty();
-        valid.then_some(identity)
+    pub(crate) fn read_process_identity(&self, worker: &str) -> Option<PidReceipt> {
+        let receipt: PidReceipt = read_json_record(&self.settings.pid_path(worker)).ok().flatten()?;
+        let valid = receipt.schema_version == SCHEMA_VERSION
+            && receipt.worker == worker
+            && receipt.process.pid > 0
+            && !receipt.process.process_start.is_empty()
+            && !receipt.process.process_command.is_empty();
+        valid.then_some(receipt)
     }
 
-    /// Whether the process this identity describes is still the one that is running.
+    /// Whether the process this receipt describes is still the one that is running ([`Runner::identity_alive`]).
     ///
     /// A defunct process is dead here even though `ps` still answers for it. The spawn releases the run process
     /// without reaping it, so while the spawning invocation lives, a run process that exits is a zombie with a stable
@@ -195,15 +194,11 @@ impl Tart {
     /// answers indefinitely, which read a worker that died at boot as running.
     ///
     /// A `ps` without an answer is the refusal `probe_unanswered`, and not a dead process.
-    pub(crate) async fn process_alive(&self, ctx: &Ctx, identity: Option<&ProcessIdentity>) -> Result<bool, Refusal> {
-        let Some(identity) = identity else {
+    pub(crate) async fn process_alive(&self, ctx: &Ctx, receipt: Option<&PidReceipt>) -> Result<bool, Refusal> {
+        let Some(receipt) = receipt else {
             return Ok(false);
         };
-        Ok(
-            host_process_start(ctx, &self.runner, identity.pid).await?.as_deref() == Some(identity.process_start.as_str())
-                && host_process_command(ctx, &self.runner, identity.pid).await?.as_deref() == Some(identity.process_command.as_str())
-                && !host_process_defunct(ctx, &self.runner, identity.pid).await?,
-        )
+        self.runner.identity_alive(ctx, &receipt.process).await
     }
 
     // --- what Tart knows about a VM --------------------------------------------------------------------------
@@ -619,38 +614,16 @@ impl Tart {
 
 /// How the controller recognises its own `tart run` process again: `<worker>/tart.pid`.
 ///
-/// Three fields and not one, because a pid on its own is not an identity. `process_start` is `ps -o lstart=` with
-/// whitespace collapsed and `process_command` is `ps -o command=` raw; together with the pid they are unique in
-/// practice, and all three must still agree for the worker to count as running.
+/// The identity of the run process ([`ProcessIdentity`]), with the schema and the worker of the receipt. The keys of
+/// the identity stay at the top level of the document. All three fields of the identity must still agree for the
+/// worker to count as running.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ProcessIdentity {
+pub(crate) struct PidReceipt {
     pub schema_version: u32,
     pub worker: String,
-    pub pid: i32,
-    pub process_start: String,
-    pub process_command: String,
-}
-
-/// `ps -o lstart=` for a pid, whitespace-collapsed, or `None` when there is no such process. Collapsed because the
-/// string is compared for equality: `lstart` pads the day of the month.
-pub(crate) async fn host_process_start(ctx: &Ctx, runner: &Runner, pid: i32) -> Result<Option<String>, Refusal> {
-    runner.probe_process(ctx, pid, PsField::StartTime).await
-}
-
-/// `ps -o command=` for a pid, or `None` when there is no such process. Not collapsed: the command line's own
-/// spacing is part of what makes it distinguishing.
-pub(crate) async fn host_process_command(ctx: &Ctx, runner: &Runner, pid: i32) -> Result<Option<String>, Refusal> {
-    runner.probe_process(ctx, pid, PsField::Command).await
-}
-
-/// Whether the pid names a zombie: exited, unreaped, and still in the process table. The zombie flag is the leading
-/// `Z` of `stat=` under both the BSD ps and procps.
-async fn host_process_defunct(ctx: &Ctx, runner: &Runner, pid: i32) -> Result<bool, Refusal> {
-    Ok(runner
-        .probe_process(ctx, pid, PsField::State)
-        .await?
-        .is_some_and(|state| state.starts_with('Z')))
+    #[serde(flatten)]
+    pub process: ProcessIdentity,
 }
 
 // --- what Tart knows about a VM --------------------------------------------------------------------------------

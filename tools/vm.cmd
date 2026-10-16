@@ -17,7 +17,9 @@ GOTO :CMDSCRIPT
 #    `vm/docs/decisions/0105-the-ui-lane-controller-is-go.md` (superseded by ADR 0059, the port to Rust)
 #    records the same trap already paid for once - an `lstat`-based freshness check on a `go_cross_binary`
 #    degraded to "always reinstall", passed its whole suite, and failed on hardware. So every invocation runs
-#    `bazel run --script_path`: the build *is* the freshness guarantee.
+#    `bazel build`, and the build's event file names the binary: the build *is* the freshness guarantee. The sh
+#    half runs no `bazel run`, because on 2026-10-10 each `bazel run` of this label ended with a deletion of
+#    about 487,000 Skyframe nodes, and the next lane build analyzed the whole graph again (7.5 to 23 s).
 #
 #    The cost is ~1.3 s of analysis, warm. A lane iteration is ~196 s, and even `status` reaches a
 #    hypervisor. Against that this is noise - and unlike bt, this tool cannot function without a working
@@ -39,10 +41,10 @@ GOTO :CMDSCRIPT
 #    use (it uses 1, 2, 6, 65, 66, 69, 70, 73, 75, 77). **The asymmetry is deliberate; do not harmonize
 #    the two wrappers on one number.**
 #
-# 5. **`--config=air-lane-linux` on the build.** The controller's own lane builds pass the same config
-#    (`host_bazel_argv` in `vm/crates/avl-vm/src/lane/bazel.rs`), and its options are part of Bazel's
-#    analysis key. Without it, each call of this wrapper discards the analysis of the last lane build. It is
-#    the config of the default guest, so a lane build for a macOS guest still pays one analysis.
+# 5. **No `--config` for the guest on the build.** The controller's lane builds pass no build option of their own
+#    (`host_bazel_argv` in `vm/crates/avl-vm/src/lane/bazel.rs`), because Bazel keys its analysis cache on build
+#    options. So this wrapper, the lane build and every other command share one analysis. The guest is a target of the
+#    lane, not an option (`plugins/air/tests/integration/ui_lane_ide.bzl` of the ultimate root).
 #
 # 6. **Where the build's output goes depends on who reads stderr.** For a pipe, it goes to a log file and
 #    reaches stderr only when the build fails. A refusal envelope goes to stderr, so a Bazel line there
@@ -67,21 +69,17 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-# Resolve the Community root in either layout, then use its parent only for an Ultimate checkout, as bt.cmd does. In a
-# Community checkout the controller refuses with `air_area_missing`, because no `bt.json` there names the Air area.
 case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
-root="$community_root"
-target="//tools/vm:vm"
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  target="@community//tools/vm:vm"
-fi
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
+. "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
+
+# In a Community checkout the controller refuses with `air_area_missing`, because no `bt.json` there names the Air area.
+polyglot_find_roots "$self_dir"
+target="${label_prefix}tools/vm:vm"
 
 # BUILD_WORKSPACE_DIRECTORY is how the controller finds `bt.json` and `community/tools/vm/provision` - a Bazel-built
 # binary's own path is inside a Bazel output tree and says nothing about the checkout. Any RUNFILES_* in
@@ -91,45 +89,13 @@ unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY T
 
 # The override is checked before Bazel is consulted at all: naming a binary that is not there is a
 # mistake worth reporting, not a reason to quietly build a different one.
-if [ -n "${AIR_VM_BIN:-}" ]; then
-  if [ ! -x "$AIR_VM_BIN" ]; then
-    echo "vm: AIR_VM_BIN is not an executable file: $AIR_VM_BIN" >&2
-    exit 78
-  fi
-  exec "$AIR_VM_BIN" "$@"
-fi
+polyglot_exec_override vm AIR_VM_BIN 78 "$@"
 
-mkdir -p "$root/out/air"
-launcher="$root/out/air/vm.launcher.$$"
-build_log="$root/out/air/vm.build.$$.log"
-# `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines short. For a pipe, the log file keeps
-# the rest out of both envelope streams; a terminal sees it (note 6 above). A failure here is infrastructure,
-# which this wrapper reports as 78 - the one code no controller command uses (note 4 above).
-if [ -t 2 ]; then
-  if ! (cd "$root" && ./bazel.cmd run --config=bt --config=air-lane-linux --script_path="$launcher" "$target" >&2); then
-    rm -f "$launcher"
-    echo "vm: could not build $target; see the bazel output above" >&2
-    exit 78
-  fi
-elif ! (cd "$root" && ./bazel.cmd run --config=bt --config=air-lane-linux --script_path="$launcher" "$target" >"$build_log" 2>&1); then
-  cat "$build_log" >&2
-  rm -f "$launcher" "$build_log"
-  echo "vm: could not build $target; see the bazel output above" >&2
-  exit 78
-fi
-rm -f "$build_log"
-
-# `bazel run --script_path` writes `<binary> <args> "$@"` as the last line; only its first token is
-# wanted. Reading it beats adding a second way to ask Bazel where its output went.
-resolved="$(awk 'END { print $1 }' "$launcher")"
-rm -f "$launcher"
-# The launcher points at a symlink under the output base; resolving through it reaches the real file.
-# Where readlink -f is unavailable the unresolved path still works.
-resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
-if [ ! -x "$resolved" ]; then
-  echo "vm: could not resolve the controller from $target (got '$resolved')" >&2
-  exit 78
-fi
+# `log`: for a pipe, the build output goes to a log file and reaches stderr only when the build fails; a terminal
+# sees it (note 6 above). A failure here is infrastructure, which this wrapper reports as 78 - the one code no
+# controller command uses (note 4 above). The controller reads the same kind of event file for its own lane build,
+# so this is the one way to ask Bazel where its output went.
+polyglot_build_binary vm "$target" 78 vm log
 
 exec "$resolved" "$@"
 
@@ -138,19 +104,11 @@ exec "$resolved" "$@"
 setlocal
 
 REM The same steps as the sh half, see note 7. The launcher is only read for its last line and never run.
+REM This half still runs `bazel run --script_path`: CMD has no JSON reader for the build event file without
+REM PowerShell, and no Windows host has measured the `bazel build` of the sh half.
 
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-set "ROOT=%COMMUNITY_ROOT%"
-set "TARGET=//tools/vm:vm"
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
-set "TARGET=@community//tools/vm:vm"
-:ROOTREADY
+call "%~dp0polyglot-wrapper.cmd"
+set "TARGET=%LABEL_PREFIX%tools/vm:vm"
 
 set "BUILD_WORKSPACE_DIRECTORY=%ROOT%"
 set "JAVA_RUNFILES="
@@ -184,7 +142,7 @@ set "LAUNCHER=%ROOT%\out\air\vm.launcher.%STAMP%"
 set "BUILD_LOG=%ROOT%\out\air\vm.build.%STAMP%.log"
 REM The pipe path of note 6: the build output reaches stderr only when the build fails.
 pushd "%ROOT%"
-call bazel.cmd run --config=bt --config=air-lane-linux --script_path="%LAUNCHER%" "%TARGET%" >"%BUILD_LOG%" 2>&1
+call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" >"%BUILD_LOG%" 2>&1
 set "STATUS=%ERRORLEVEL%"
 popd
 if not "%STATUS%"=="0" (

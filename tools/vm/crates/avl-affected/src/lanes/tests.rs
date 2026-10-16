@@ -50,12 +50,13 @@ fn a_ui_lanes_own_target_reads_as_that_lane() {
     );
 }
 
-/// A lane without a catalog lane runs only when a caller names it. `ui-live` is the one: each of its scenarios spends
-/// a billed turn on a real account, so no flow, suite or changed path may reach it (ADR 0200).
+/// A lane without a catalog lane runs only when a caller names it. `ui-live` is one: each of its scenarios spends a
+/// billed turn on a real account, so no flow, suite or changed path may reach it (ADR 0200). `ui-perf` is another:
+/// each of its scenarios takes up to ninety minutes. `jcp` is the third: it drives a real preprod account.
 #[test]
-fn only_the_live_lane_is_explicit_only() {
+fn only_the_live_perf_and_jcp_lanes_are_explicit_only() {
     crate::bridge::install_fixture();
-    assert_eq!(explicit_only_lane_names(), ["ui-live"]);
+    assert_eq!(explicit_only_lane_names(), ["ui-live", "ui-perf", "jcp"]);
     for lane in ui_lanes() {
         let spec = lanes().get(lane.name).expect("a UI lane is a lane");
         assert_eq!(lane.explicit_only, spec.catalog_lane.is_none(), "{}", lane.name);

@@ -17,7 +17,7 @@ use std::fmt::Debug;
 use std::path::Path;
 use std::sync::Arc;
 
-use avl_base::config::HostOs;
+use avl_base::config::{HostFacts, HostOs, MacosHost, WORKSPACE_DIR};
 use avl_base::report::{Buffer, Mode, Terminal};
 use avl_base::{Backend, Config, Environment, GuestOs, Outcome, Refusal, Reporter, Selection};
 use avl_host_sys::{Interrupts, Runner};
@@ -27,6 +27,8 @@ pub mod answer;
 #[cfg(unix)]
 pub mod bazel;
 pub mod channel;
+#[cfg(unix)]
+pub mod control_port;
 pub mod git;
 pub mod pool;
 pub mod probe;
@@ -36,6 +38,8 @@ pub use answer::{Answer, Verbs, answer_exit, answer_guest, answer_text, failed, 
 #[cfg(unix)]
 pub use bazel::PinnedBazel;
 pub use channel::{Call, ChannelFactory, ConnectHandler, FakeChannel, FakeGuests, serve_on_connect};
+#[cfg(unix)]
+pub use control_port::FakeControlPort;
 pub use git::FakeGit;
 pub use pool::{HostPool, HostPoolBuilder};
 pub use probe::FakeProbe;
@@ -74,11 +78,45 @@ pub fn load_config(backend: Backend, guest_os: GuestOs, environment: &[(String, 
     load_config_on(HostOs::CURRENT, backend, guest_os, environment, root)
 }
 
+/// The macOS release every fixture loads on: macOS 26 on Apple silicon, the first release that runs Apple `container`
+/// by default. Pinned and not read from the host, so a suite resolves the same engine on every macOS release. A suite
+/// that needs one engine still chooses it: [`crate::pool::HostPoolBuilder::with_container_engine`] runs Apple
+/// `container`, and `DOCKER_BIN` or `DOCKER_HOST` names the host engine.
+pub const FIXTURE_MACOS: MacosHost = MacosHost {
+    major: 26,
+    apple_silicon: true,
+};
+
+/// The host memory every fixture loads on: 64 GiB, so the Apple `container` pool keeps its floor of two slots
+/// (`avl_base::config::default_docker_slots`) and no suite depends on the memory of the test host.
+pub const FIXTURE_HOST_MEMORY_MIB: u64 = 64 * 1024;
+
 /// [`load_config`] as a controller on `host` resolves it, for a fixture of a macOS host on every host.
 pub fn load_config_on(host: HostOs, backend: Backend, guest_os: GuestOs, environment: &[(String, String)], root: &Path) -> Config {
+    load_config_on_release(host, FIXTURE_MACOS, backend, guest_os, environment, root)
+}
+
+/// [`load_config_on`] on the macOS release `macos` instead of [`FIXTURE_MACOS`], for a suite of an older macOS.
+pub fn load_config_on_release(
+    host: HostOs,
+    macos: MacosHost,
+    backend: Backend,
+    guest_os: GuestOs,
+    environment: &[(String, String)],
+    root: &Path,
+) -> Config {
     let environment = Environment::from_pairs(environment.iter().cloned());
-    Config::load_on(host, Selection { backend, guest_os }, &environment, &root.join("scripts"))
-        .unwrap_or_else(|refusal| panic!("the environment was refused on {host}: {refusal:?}"))
+    Config::load_on(
+        host,
+        HostFacts {
+            macos: Some(macos),
+            memory_mib: Some(FIXTURE_HOST_MEMORY_MIB),
+        },
+        Selection { backend, guest_os },
+        &environment,
+        &root.join(WORKSPACE_DIR),
+    )
+    .unwrap_or_else(|refusal| panic!("the environment was refused on {host}: {refusal:?}"))
 }
 
 /// The refusal a call was expected to answer.

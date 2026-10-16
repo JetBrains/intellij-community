@@ -17,7 +17,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use avl_testkit::traces::{self, EXAMPLE_BUNDLE, TRANSCRIPT, TRUNCATED_EXAMPLE_BUNDLE, TRUNCATED_TRANSCRIPT};
-use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SNAP_DIR, bundle_file};
+use avl_trace::bundle::{
+    ALLURE_RESULT_SUFFIX, BundleStatus, IDEA_LOG_FILE, SNAP_DIR, allure_result_file, allure_results_dir, bundle_file, decode_allure_result,
+    snap_image_path,
+};
 use avl_trace::otlp::{attr, event, lookup_str, span_id};
 use avl_trace::protocol::{CaptureSource, Status, VideoCodec, decode_command, decode_hello_ack};
 use expect_test::expect_file;
@@ -87,6 +90,39 @@ fn the_golden_transcript_replays_into_the_golden_bundle() {
     spans(&h.bundle());
     assert_golden_files(&produced, &traces::path(EXAMPLE_BUNDLE), EXAMPLE_BUNDLE);
     expect_file![absolute(&record_testdata(GOLDEN_ACKS))].assert_eq(&h.acks.text());
+}
+
+/// The golden transcript's Allure result is `example.allure-result.json` of the recorder's testdata, and every file
+/// it names is in the results directory, a picture with the bytes of the bundle's still.
+#[test]
+fn the_golden_transcript_writes_the_golden_allure_result() {
+    let h = Harness::new();
+    h.replay(&traces::file_lines(TRANSCRIPT));
+    let manifest = manifest_of(&h.bundle());
+    let results = allure_results_dir(&h.root, &manifest.run_id);
+    let names: Vec<String> = fs::read_dir(&results)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .filter(|name| name.ends_with(ALLURE_RESULT_SUFFIX))
+        .collect();
+    let [name] = names.as_slice() else {
+        panic!("the golden scenario writes one result: {names:?}");
+    };
+    let document = fs::read(results.join(name)).unwrap();
+    expect_file![absolute(&record_testdata(GOLDEN_ALLURE_RESULT))].assert_eq(std::str::from_utf8(&document).unwrap());
+    let result = decode_allure_result(&document).unwrap();
+    assert_eq!(name, &allure_result_file(&result.uuid));
+    for source in result.sources() {
+        assert!(results.join(source).is_file(), "the result names {source}, which is not there");
+    }
+    let still = |ordinal| fs::read(bundle_file(&h.bundle(), &snap_image_path(ordinal))).unwrap();
+    // The reset before the setup takes no snapshot, so the setup's Before is the first picture.
+    let setup = &result.steps[1];
+    assert_eq!(
+        (result.steps[0].attachments.len(), setup.attachments[0].name.as_str()),
+        (0, "Before")
+    );
+    assert_eq!(fs::read(results.join(&setup.attachments[0].source)).unwrap(), still(1));
 }
 
 /// Every acked line of the golden transcript is answered, positively and in order, with the line it answers.

@@ -3,7 +3,7 @@
 //! The lane table is data, in a JSON file an area names in `bt.json`, because it has readers outside Rust: a
 //! product's own tests can compare it with the BUILD files. See [`Lanes`] for the shape.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::path::Path;
 
@@ -20,15 +20,13 @@ use crate::selector::Resolution;
 /// - `lanes`: every lane in declared order, which is the order a caller sees in the "Known lanes" refusal. Each
 ///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name, its test label and its JUnit tag,
 ///   which the Air UI-lane controller and its trace planner read instead of a table of their own.
-/// - `integrationCategoryTags`: what an integration target of the area *is*, and what a broad run excludes. The
-///   CI exclusion of the area should be this list, so it stays correct when a lane is added.
+/// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
+///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
+///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
+///   exclusion of the area should be the `ci` ones, so it stays correct when a lane is added. Adding a
+///   `dedicated-suite` category before its build configuration exists would leave the suite running nowhere.
 /// - `integrationRoot`: the target pattern prefix of the integration tree. A multi-target run the caller spelled
 ///   out inside it is asking for exactly those tests, so [`wildcard_guards`] keeps their tags.
-/// - `propertyTag`: marks the property-test targets. Neither a category nor an integration lane: it selects a lane
-///   of its own and, through `dedicatedSuiteTags`, keeps those targets out of the broad runs.
-/// - `dedicatedSuiteTags`: what a broad run skips because a suite of its own owns those targets: its own lane
-///   here, its own build configuration on CI. Adding a tag before its build configuration exists would leave the
-///   suite running nowhere.
 /// - `excludedTestLibs`: the `*_test_lib` library behind each target a broad run excludes, which a lane with
 ///   `buildsExcludedTestLibs` compiles in a second spawn. The library and not the `*_test` rule: an IDE-launching
 ///   rule declares the assembled dev distribution as `data`, and building the rule recomposes it. A tag filter
@@ -54,11 +52,7 @@ pub struct Lanes {
     #[serde(default)]
     integration_root: Option<String>,
     #[serde(default)]
-    integration_category_tags: Vec<String>,
-    #[serde(default)]
-    property_tag: Option<String>,
-    #[serde(default)]
-    dedicated_suite_tags: Vec<String>,
+    tags: Vec<TagSpec>,
     #[serde(default)]
     excluded_test_libs: Vec<String>,
     #[serde(default)]
@@ -117,6 +111,44 @@ pub struct LaneSpec {
     builds_excluded_test_libs: bool,
 }
 
+/// One Bazel tag of the area's test targets, as the lane table describes it.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TagSpec {
+    pub name: String,
+    pub axis: TagAxis,
+    /// Why a broad run excludes the targets that carry the tag, or `None` when it runs them. A category only: the
+    /// category of a lane tag carries the exclusion.
+    #[serde(default)]
+    pub excluded_from_broad_runs: Option<BroadRunExclusion>,
+    /// The category that every target of a lane tag also carries. A lane tag only.
+    #[serde(default)]
+    pub category: Option<String>,
+    /// One or two sentences for a reader of the table.
+    pub description: String,
+}
+
+/// The two axes of the tags. A target carries exactly one category, and a lane tag when an IDE-launching lane owns it.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum TagAxis {
+    /// What the target is, and whether a broad run excludes it.
+    Category,
+    /// Which IDE-launching lane the target is. The only thing a lane selects by.
+    Lane,
+}
+
+/// Why a broad run excludes a category.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum BroadRunExclusion {
+    /// The `testTagFilters` of the CI configurations name the tag. That configuration lives outside the repository,
+    /// so a target of the category cannot run on a CI agent of the main configuration.
+    Ci,
+    /// A lane and a CI configuration of its own run the targets.
+    DedicatedSuite,
+}
+
 /// A string or an array of strings, as a list.
 fn one_or_many<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<String>, D::Error> {
     #[derive(Deserialize)]
@@ -143,7 +175,58 @@ impl Lanes {
         if catalog.iter().any(|path| path.is_some()) && catalog.iter().any(|path| path.is_none()) {
             return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
         }
+        lanes.check_tags()?;
         Ok(lanes)
+    }
+
+    /// The tags and the lanes agree: each tag is described once, a lane tag names a described category and a lane
+    /// that selects by it, and a lane selects by a described lane tag.
+    fn check_tags(&self) -> Result<(), String> {
+        let mut names = BTreeSet::new();
+        for tag in &self.tags {
+            if !names.insert(tag.name.as_str()) {
+                return Err(format!("the tag {} is described twice", tag.name));
+            }
+            match tag.axis {
+                TagAxis::Category => {
+                    if tag.category.is_some() {
+                        return Err(format!("the category {} names a category of its own", tag.name));
+                    }
+                }
+                TagAxis::Lane => {
+                    let category = tag
+                        .category
+                        .as_deref()
+                        .ok_or_else(|| format!("the lane tag {} names no category", tag.name))?;
+                    if !self.category_tags().any(|spec| spec.name == category) {
+                        return Err(format!(
+                            "the lane tag {} names the category {category}, which the table does not describe",
+                            tag.name
+                        ));
+                    }
+                    if tag.excluded_from_broad_runs.is_some() {
+                        return Err(format!(
+                            "the lane tag {} carries an exclusion; its category {category} carries it",
+                            tag.name
+                        ));
+                    }
+                    if !self.lanes.iter().any(|lane| lane.integration_tag.as_deref() == Some(&tag.name)) {
+                        return Err(format!("the lane tag {} selects no lane", tag.name));
+                    }
+                }
+            }
+        }
+        for lane in &self.lanes {
+            if let Some(tag) = &lane.integration_tag
+                && !self.lane_tags().any(|spec| &spec.name == tag)
+            {
+                return Err(format!(
+                    "the lane {} selects by {tag}, which the table describes as no lane tag",
+                    lane.name
+                ));
+            }
+        }
+        Ok(())
     }
 
     /// Reads the lane table at a repo-relative path.
@@ -206,16 +289,24 @@ impl Lanes {
         self.integration_root.as_deref()
     }
 
-    pub fn integration_category_tags(&self) -> &[String] {
-        &self.integration_category_tags
+    /// Every tag a test target of the area may carry, in table order.
+    pub fn tags(&self) -> &[TagSpec] {
+        &self.tags
     }
 
-    pub fn property_tag(&self) -> Option<&str> {
-        self.property_tag.as_deref()
+    /// The tag of this name, or `None` for one the table does not describe.
+    pub fn tag(&self, name: &str) -> Option<&TagSpec> {
+        self.tags.iter().find(|tag| tag.name == name)
     }
 
-    pub fn dedicated_suite_tags(&self) -> &[String] {
-        &self.dedicated_suite_tags
+    /// The category axis, in table order.
+    pub fn category_tags(&self) -> impl Iterator<Item = &TagSpec> {
+        self.tags.iter().filter(|tag| tag.axis == TagAxis::Category)
+    }
+
+    /// The lane axis, in table order.
+    pub fn lane_tags(&self) -> impl Iterator<Item = &TagSpec> {
+        self.tags.iter().filter(|tag| tag.axis == TagAxis::Lane)
     }
 
     pub fn excluded_test_libs(&self) -> &[String] {
@@ -253,9 +344,11 @@ impl Lanes {
             .map(|(directory, lanes)| (directory.as_str(), lanes.as_slice()))
     }
 
-    /// The tags a broad local run excludes: the categories, then the dedicated suites.
+    /// The tags a broad local run excludes: the categories with an exclusion reason, in table order.
     fn broad_run_excluded_tags(&self) -> impl Iterator<Item = &String> {
-        self.integration_category_tags.iter().chain(&self.dedicated_suite_tags)
+        self.category_tags()
+            .filter(|tag| tag.excluded_from_broad_runs.is_some())
+            .map(|tag| &tag.name)
     }
 
     /// The one `--test_tag_filters` value a broad local run carries.

@@ -25,10 +25,15 @@ use serde_json::{Map, Value};
 mod tests;
 
 /// Must match `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. Bump both together, or a boot fails by name.
-pub const PROTOCOL_VERSION: u32 = 3;
+pub const PROTOCOL_VERSION: u32 = 5;
 
-/// The Bazel target the runtime descriptor comes from.
+/// The Bazel target the runtime descriptor of a macOS guest comes from.
 pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
+
+/// The Bazel target the runtime descriptor of a Linux guest comes from. The guest is a target and not a build option,
+/// so the lane build shares one analysis with every other Bazel command
+/// (`plugins/air/tests/integration/ui_lane_ide.bzl`).
+pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest";
 
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.
@@ -235,8 +240,17 @@ vocabulary! {
         WatchdogExpired = "watchdogExpired",
         RunFailed = "runFailed",
         Summary = "summary",
-        /// A line of the daemon's stdout that is not JSON, kept so nothing is dropped.
+        /// A line of text from the daemon. The daemon sends each line that it writes to its error stream during a run
+        /// as this record. The decoder also keeps a line of the stream that is not JSON as this record, so nothing is
+        /// dropped. It is not progress, so it re-arms no deadline.
         Output = "output",
+        /// The guest agent started the lane IDE for the daemon. The run journal keeps the life of the IDE with it.
+        IdeLaunched = "ideLaunched",
+        /// The lane IDE process ended.
+        IdeExited = "ideExited",
+        /// A relaunch, a reset or a readiness gate of the lane was open past its budget, and the daemon wrote its
+        /// dumps.
+        SlowStep = "slowStep",
     }
 }
 
@@ -405,6 +419,53 @@ pub struct Output {
     pub text: String,
 }
 
+/// The lane IDE started: its process, its launch and the context that holds it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IdeLaunched {
+    pub pid: i64,
+    pub launch_name: String,
+    pub launch_key: String,
+    /// The guest directory of the IDE logs, `log/<launchName>` of the context.
+    pub log_dir: String,
+}
+
+/// The lane IDE process ended. `exit_code` is the supervisor's: the code of the process, else `128 + signal`.
+/// `signal` is absent when the process exited by itself.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IdeExited {
+    pub pid: i64,
+    pub exit_code: i32,
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub signal: Option<String>,
+}
+
+/// A step of the lane open past its budget, and the dumps the daemon wrote then. `path` names every open phase,
+/// outermost first. `thread_dump` is the daemon's own; `ide_dump` is the IDE's, or `ide_dump_error` says why there is
+/// none. Both are guest files, which the controller fetches beside the report.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SlowStep {
+    pub timestamp: String,
+    pub step: String,
+    pub path: String,
+    pub budget_ms: i64,
+    pub elapsed_ms: i64,
+    pub thread_dump: String,
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub ide_dump: Option<String>,
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub ide_dump_error: Option<String>,
+}
+
+impl SlowStep {
+    /// The guest files of the record, the daemon's dump first.
+    pub fn dumps(&self) -> impl Iterator<Item = &String> {
+        std::iter::once(&self.thread_dump).chain(self.ide_dump.as_ref())
+    }
+}
+
 /// The reading of one record, by kind. Serializes back to the record's own shape, `event` included.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "event", rename_all = "camelCase")]
@@ -421,6 +482,9 @@ pub enum RunEventKind {
     RunFailed(RunFailed),
     Summary(Summary),
     Output(Output),
+    IdeLaunched(IdeLaunched),
+    IdeExited(IdeExited),
+    SlowStep(SlowStep),
 }
 
 /// One decoded record: what the daemon sent, and the reading of it.
@@ -468,6 +532,9 @@ impl RunEvent {
             RunEventKind::RunFailed(_) => Event::RunFailed,
             RunEventKind::Summary(_) => Event::Summary,
             RunEventKind::Output(_) => Event::Output,
+            RunEventKind::IdeLaunched(_) => Event::IdeLaunched,
+            RunEventKind::IdeExited(_) => Event::IdeExited,
+            RunEventKind::SlowStep(_) => Event::SlowStep,
         }
     }
 
@@ -586,6 +653,9 @@ pub fn decode_run_event(line: &[u8]) -> Result<RunEvent, DecodeError> {
         Event::RunFailed => RunEventKind::RunFailed(record(event, body)?),
         Event::Summary => RunEventKind::Summary(record(event, body)?),
         Event::Output => RunEventKind::Output(record(event, body)?),
+        Event::IdeLaunched => RunEventKind::IdeLaunched(record(event, body)?),
+        Event::IdeExited => RunEventKind::IdeExited(record(event, body)?),
+        Event::SlowStep => RunEventKind::SlowStep(record(event, body)?),
     };
     Ok(RunEvent { raw: Some(raw), kind })
 }
@@ -631,9 +701,10 @@ pub fn decode_state_file(raw: &[u8]) -> Result<StateFile, ProtocolError> {
 
 /// The incremental decoder for the daemon's chunked `/run` response.
 ///
-/// A line that is not JSON becomes an `output` record rather than an error: the daemon's own stdout shares this
-/// stream, and dropping it would lose the only account of a JVM that died before it could say so. Chunks are
-/// bytes, and a chunk may end inside a line or inside a UTF-8 sequence; the partial line is carried.
+/// A line that is not JSON becomes an `output` record rather than an error, so the decoder drops no line. The
+/// daemon's own stdout and stderr do not share this stream: the supervisor sends both to the guest `run.log`. The
+/// daemon sends its error lines as explicit `output` records instead. Chunks are bytes, and a chunk may end inside
+/// a line or inside a UTF-8 sequence; the partial line is carried.
 #[derive(Debug, Default)]
 pub struct NdjsonDecoder {
     pending: Vec<u8>,
@@ -660,7 +731,7 @@ impl NdjsonDecoder {
                 continue;
             }
             // Whether a line is even a candidate record keeps a non-JSON line and a malformed *record* apart:
-            // the first is the daemon's stdout, the second a protocol break that must be reported.
+            // the first is kept as text, the second a protocol break that must be reported.
             if !line.starts_with(b"{") {
                 decoded.events.push(RunEvent::output(String::from_utf8_lossy(line)));
                 continue;

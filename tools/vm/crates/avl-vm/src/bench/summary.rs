@@ -6,9 +6,9 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
-use super::profile::{EdtProfile, FrameSamples};
+use super::profile::{EdtProfile, ExcludedSamples, FrameSamples, ProfileEvent};
 use super::record::{RunKind, RunRecord};
-use super::session::{GitInfo, SessionInfo};
+use super::session::{GitInfo, MeasureModel, SessionInfo};
 use super::trace::tenth;
 
 /// The valid runs that each arm needs for a delta.
@@ -29,9 +29,15 @@ pub(crate) struct Summary {
     pub(crate) dist_digest: String,
     /// The directory of that generation.
     pub(crate) generation: String,
+    /// See [`SessionInfo::measure_model`].
+    #[serde(default)]
+    pub(crate) measure_model: Option<MeasureModel>,
     pub(crate) cold: bool,
     pub(crate) hold_ms: u64,
     pub(crate) profile: bool,
+    /// See [`SessionInfo::profile_event`].
+    #[serde(default)]
+    pub(crate) profile_event: ProfileEvent,
     pub(crate) project: Option<String>,
     /// See [`SessionInfo::project_file`].
     #[serde(default)]
@@ -73,6 +79,9 @@ pub(crate) struct ArmSummary {
     /// The class-loading triggers with the most samples, over the valid runs. See [`super::profile::Triggers`].
     #[serde(default)]
     pub(crate) triggers: Vec<FrameSamples>,
+    /// The samples of the profiler's own symbol parsing that the profiles of the valid runs leave out.
+    #[serde(default)]
+    pub(crate) excluded_samples: Option<ExcludedSamples>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -159,9 +168,11 @@ impl Summary {
             git: info.git.clone(),
             dist_digest: info.generation.dist_digest.clone(),
             generation: info.generation.path.clone(),
+            measure_model: info.measure_model.clone(),
             cold: info.cold,
             hold_ms: info.hold_ms,
             profile: info.profile,
+            profile_event: info.profile_event,
             project: info.project.clone(),
             project_file: info.project_file.clone(),
             additional_modules: info.additional_modules.clone(),
@@ -203,6 +214,7 @@ fn arm_summary(arm: Arm, runs: Vec<RunRecord>) -> ArmSummary {
         edt_frames: profile.as_ref().map(|profile| profile.top(PROFILE_TOP)).unwrap_or_default(),
         define_samples: profile.as_ref().map(|profile| profile.triggers.define_samples),
         define_share: profile.as_ref().and_then(EdtProfile::define_share),
+        excluded_samples: profile.as_ref().map(|profile| profile.excluded),
         triggers: profile.map(|profile| profile.triggers.top(PROFILE_TOP)).unwrap_or_default(),
         runs,
     }

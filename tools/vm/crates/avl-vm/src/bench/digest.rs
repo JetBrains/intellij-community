@@ -8,12 +8,12 @@ use jiff::Timestamp;
 use jiff::tz::TimeZone;
 
 use super::arm::Arm;
-use super::profile::FrameSamples;
+use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
-    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX,
-    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES,
-    TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, named_at,
+    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX, END_SPANS,
+    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED,
+    PLATFORM_SPANS, PLUGIN_CLASSES, TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -30,11 +30,12 @@ const TRIGGER_FRAMES: usize = 5;
 const FRAME_WIDTH: usize = 100;
 
 /// The metrics of the first block, in order.
-const EVENT_METRICS: [&str; 7] = [
+const EVENT_METRICS: [&str; 8] = [
     WELCOME_BECAME_VISIBLE,
     FRAME_BECAME_VISIBLE,
     FRAME_BECAME_INTERACTIVE,
     TOTAL_DURATION,
+    JVM_LOADING_TIME,
     CLASS_REQUESTS,
     CLASS_TIME,
     CLASS_EDT_TIME,
@@ -102,7 +103,7 @@ pub(crate) fn render(summary: &Summary) -> String {
     }
     failures(&mut text, &arms);
     for arm in &arms {
-        profile(&mut text, arm);
+        profile(&mut text, arm, summary.profile_event);
     }
     load(&mut text, &arms);
     for warning in &summary.warnings {
@@ -129,9 +130,9 @@ fn header(text: &mut String, summary: &Summary, arms: &[&ArmSummary]) {
 }
 
 /// The metric groups of a table over `arms`, in order: a title and its rows. The editor needs the project arm, the
-/// welcome spans need an arm with the non-modal welcome screen, and the second project needs the open-project arm.
-/// The project arm finds its editor spans in the platform spans. The class group holds a row of [`named_at`] only for
-/// an anchor that an arm has.
+/// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, and the second
+/// project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
+/// holds a row of [`named_at`] only for an anchor that an arm has. The span ends are on the clock of the anchors.
 pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<String>)> {
     let mut classes = CLASS_METRICS.map(str::to_owned).to_vec();
     classes.extend(
@@ -154,6 +155,10 @@ pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<Stri
     if arms.iter().any(|arm| matches!(arm.arm, Arm::NonModal | Arm::OpenProject)) {
         groups.push(("welcome spans", welcome_rows(arms)));
     }
+    if arms.iter().any(|arm| arm.arm == Arm::Modal) {
+        groups.push(("modal spans", MODAL_SPANS.map(str::to_owned).to_vec()));
+    }
+    groups.push(("span ends (ms from the process start)", END_SPANS.map(span_end).to_vec()));
     if arms.iter().any(|arm| arm.arm == Arm::OpenProject) {
         groups.push(("second project", OPEN_METRICS.map(str::to_owned).to_vec()));
     }
@@ -261,13 +266,30 @@ fn failures(text: &mut String, arms: &[&ArmSummary]) {
     }
 }
 
-/// The top EDT frames of an arm, then its top class-loading triggers.
-fn profile(text: &mut String, arm: &ArmSummary) {
+/// The top EDT frames of an arm, then its top class-loading triggers. The heading names the event of the samples and
+/// the span of the runs that the profile covers, and a note names the samples of the profiler's own symbol parsing,
+/// which neither block holds.
+fn profile(text: &mut String, arm: &ArmSummary, event: ProfileEvent) {
     let Some(samples) = arm.edt_samples else {
         return;
     };
-    let _ = writeln!(text, "{} EDT, top Java frames by samples ({samples} EDT samples):", arm.arm.label());
+    let _ = writeln!(
+        text,
+        "{} EDT, top Java frames by samples ({samples} EDT {} samples, {}):",
+        arm.arm.label(),
+        event.option(),
+        profile_scope(arm)
+    );
     frames(text, &arm.edt_frames, PROFILE_FRAMES, samples);
+    if let Some(excluded) = arm.excluded_samples.filter(|excluded| excluded.samples > 0) {
+        let _ = writeln!(
+            text,
+            "{} note: profiler symbol parsing: {} samples excluded, {} of them on the EDT",
+            arm.arm.label(),
+            excluded.samples,
+            excluded.edt_samples
+        );
+    }
     let Some(define_samples) = arm.define_samples else {
         return;
     };
@@ -280,6 +302,22 @@ fn profile(text: &mut String, arm: &ArmSummary) {
         arm.arm.label()
     );
     frames(text, &arm.triggers, TRIGGER_FRAMES, define_samples);
+}
+
+/// The span of the valid runs of an arm that the profile covers: to the gate, the whole run, or a mix of both.
+pub(crate) fn profile_scope(arm: &ArmSummary) -> String {
+    let scopes: Vec<ProfileScope> = arm
+        .runs
+        .iter()
+        .filter(|run| run.valid)
+        .filter_map(|run| run.profile_scope)
+        .collect();
+    let gate = scopes.iter().filter(|scope| **scope == ProfileScope::Gate).count();
+    match (gate, scopes.len() - gate) {
+        (_, 0) => "to the gate".to_owned(),
+        (0, _) => "over the whole run".to_owned(),
+        (gate, whole) => format!("{gate} runs to the gate and {whole} over the whole run"),
+    }
 }
 
 /// One line per frame of a profile block, at most `limit`, with its share of `samples`.

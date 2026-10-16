@@ -349,11 +349,24 @@ impl State {
                 }
                 self.line(scope, &text);
             }
+            RunEventKind::SlowStep(slow) => {
+                let dumps: Vec<&str> = slow.dumps().map(String::as_str).collect();
+                let text = format!(
+                    "slow step: {} took {} of a {} budget; dumps: {}",
+                    slow.path,
+                    format_elapsed_ms(u64::try_from(slow.elapsed_ms).unwrap_or(0)),
+                    format_elapsed_ms(u64::try_from(slow.budget_ms).unwrap_or(0)),
+                    dumps.join(", ")
+                );
+                self.line(scope, &text);
+            }
             RunEventKind::PlanStarted(_)
             | RunEventKind::ContainerSkipped(_)
             | RunEventKind::RunFailed(_)
             | RunEventKind::Summary(_)
-            | RunEventKind::Output(_) => {}
+            | RunEventKind::Output(_)
+            | RunEventKind::IdeLaunched(_)
+            | RunEventKind::IdeExited(_) => {}
         }
     }
 

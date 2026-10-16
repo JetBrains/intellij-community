@@ -92,7 +92,7 @@ What it needs, and what was built (the differences from the first draft are name
    matching `clippy-linux-x86_64`. `node_archive_label` picks `linux-x64`. The validator reads the loaders of the
    architecture it was built for (`/lib64/ld-linux-x86-64.so.2`, `/lib/ld-musl-x86_64.so.1`). The agent installed
    in a guest is the guest's build, so it needs no argument. `guest_jbr_platform` answers `linux_x64`. There is no
-   new Bazel config and no new define. `//build:air_lane_guest_linux_on_host_linux_x64` mapped a Linux x86_64 host
+   new Bazel config and no new define. `//plugins/air/tests/integration/ide:air_lane_guest_linux_on_host_linux_x64` mapped a Linux x86_64 host
    to the arm64 guest, which no worker there can serve. It now maps to `_LINUX_X64_GUEST` in `ui_lane_ide.bzl`: host
    distribution, `linux_x64` JBR manifests, the static x86_64 recorder, `screen_owned = True`.
    `agent_cli_runtime.bzl` lets the runtimes follow the host there. `--config=air-lane-linux` stays the one analysis

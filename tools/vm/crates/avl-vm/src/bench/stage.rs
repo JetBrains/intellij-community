@@ -1,21 +1,21 @@
-//! The generation: an immutable copy of the dev distribution and its JBR, which every IDE run of a session starts
-//! from.
+//! The generation: an immutable copy of the dev distribution, which every IDE run of a session starts from.
 //!
 //! A generation is `<runtime root>/bench/generations/<digest>/`:
 //!
 //! - `<dist name>/`: the clone of the `.dist` directory that Bazel built, such as `idea_dist.dist`. The name stays,
-//!   because the launch passes it as `dev.build.dir`;
-//! - `jbr/`: the clone of the JBR home of the row launcher;
+//!   so `home.path` of the config names the home in the generation too. The home is the directory itself, or its
+//!   `Contents` for a macOS app. The home holds the JBR at `jbr/Contents/Home`, where a macOS production
+//!   distribution places it, so the clone of the distribution is the clone of its JBR too;
 //! - `ide.config`: the copy of the config of the distribution;
 //! - `OpenedPackages.txt`: the copy of the `--add-opens` list of the checkout, which the launch reads;
-//! - `generation.json`: the record, written last.
+//! - `generation.json`: the record, written last. It names the commit of the checkout that built the bytes, so a
+//!   session over the generation, see [`open`], names the commit of the bytes that it measures.
 //!
-//! The digest is the key: the content of the distribution tree, the config text, the opened packages and the JBR
-//! tree, through the
-//! [`FileDigestCache`] of `<runtime root>/bench/digest-cache.json`, so a second session over the same build reads
-//! only stats. The stage clones into `.stage-<digest>-<pid>` and publishes it with one `rename`, under the lock
-//! `generations.lock`, so a reader never sees half a generation and two sessions never stage one digest twice. A
-//! generation that exists is reused as it is.
+//! The digest is the key: the content of the distribution tree with its JBR, the config text and the opened packages,
+//! through the [`FileDigestCache`] of `<runtime root>/bench/digest-cache.json`, so a second session over the same
+//! build reads only stats. The stage clones into `.stage-<digest>-<pid>` and publishes it with one `rename`, under
+//! the lock `generations.lock`, so a reader never sees half a generation and two sessions never stage one digest
+//! twice. A generation that exists is reused as it is.
 //!
 //! The files of a generation are read-only. A relative link inside a tree stays a link. A link that leaves its tree
 //! is refused, because the generation would then read the bytes of Bazel again.
@@ -33,19 +33,19 @@ use avl_report::digest::{FileDigestCache, PathDigest, path_sensitive_digest, sha
 use serde::{Deserialize, Serialize};
 
 use super::launch::OPENED_PACKAGES_FILE;
-use super::session::BENCH_DIR;
+use super::session::{BENCH_DIR, GitInfo};
 
 /// The record of a generation, the last file the stage writes.
 pub(crate) const RECORD_FILE: &str = "generation.json";
 
-/// The directory of the JBR inside a generation.
-pub(crate) const JBR_DIR: &str = "jbr";
+/// The directory of the generations below the bench directory.
+pub(crate) const GENERATIONS_DIR: &str = "generations";
 
 /// The copy of the config inside a generation.
 const CONFIG_FILE: &str = "ide.config";
 
 /// The version of the generation layout. It is a part of the key, so a change of the layout stages anew.
-const LAYOUT: &str = "bench-generation-1";
+const LAYOUT: &str = "bench-generation-2";
 
 /// How long a stage waits for another stage that holds the lock.
 const LOCK_WAIT: Duration = Duration::from_secs(600);
@@ -59,8 +59,6 @@ pub(crate) struct Sources {
     pub(crate) dist: PathBuf,
     /// The `.ide.config` beside it.
     pub(crate) config: PathBuf,
-    /// The home of the JBR, the directory with `bin/java`.
-    pub(crate) jbr: PathBuf,
     /// `OpenedPackages.txt` of the checkout.
     pub(crate) opened_packages: PathBuf,
 }
@@ -68,7 +66,8 @@ pub(crate) struct Sources {
 /// The fields of a dist config that the launch reads.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct DistConfig {
-    /// `home.path`: the name of the `.dist` directory, relative to the config.
+    /// `home.path`: the home of the IDE, relative to the config. It is the name of the `.dist` directory, or
+    /// `<name>/<directory>` for a home below it, such as `idea_dist.dist/Contents` of a macOS app.
     pub(crate) home: String,
     /// `main.class.name`.
     pub(crate) main_class: String,
@@ -79,6 +78,13 @@ pub(crate) struct DistConfig {
     pub(crate) additional_modules: Vec<String>,
 }
 
+impl DistConfig {
+    /// The name of the `.dist` directory: the first name of [`Self::home`].
+    pub(crate) fn dist_name(&self) -> &str {
+        self.home.split('/').next().unwrap_or_default()
+    }
+}
+
 /// A staged generation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Generation {
@@ -86,7 +92,9 @@ pub(crate) struct Generation {
     pub(crate) root: PathBuf,
     /// The distribution inside the generation.
     pub(crate) dist: PathBuf,
-    /// `bin/java` of the JBR inside the generation.
+    /// The home of the IDE inside the generation: [`Self::dist`], or the directory below it that the config names.
+    pub(crate) home: PathBuf,
+    /// `bin/java` of the JBR inside the home, see [`java_in`].
     pub(crate) java: PathBuf,
     pub(crate) config: DistConfig,
     /// The generation existed before this stage.
@@ -102,16 +110,28 @@ struct Record {
     dist_name: String,
     /// Where the bytes came from, for a reader of the generation. The launch never reads these paths.
     sources: RecordSources,
+    /// The commit of the checkout that built the bytes. A generation from before this field has none.
+    #[serde(default)]
+    git: Option<GitInfo>,
     files: u64,
     bytes: u64,
     staged_at: String,
+}
+
+/// A generation that a session opens by its digest, with what its record names. See [`open`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Staged {
+    pub(crate) generation: Generation,
+    /// The label of the distribution that the stage copied.
+    pub(crate) target: String,
+    /// The commit of the checkout that built the bytes. A generation from before the record of the commit has none.
+    pub(crate) git: Option<GitInfo>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RecordSources {
     dist: String,
     config: String,
-    jbr: String,
     opened_packages: String,
 }
 
@@ -157,8 +177,11 @@ pub(crate) fn parse_config(text: &str) -> Result<DistConfig, String> {
         }
     }
     let home = home.ok_or("it has no home.path")?;
-    if home.contains(['/', '\\']) || home.is_empty() || home == "." || home == ".." {
-        return Err(format!("its home.path {home} is not the name of a sibling directory"));
+    let names: Vec<&str> = home.split('/').collect();
+    if names.len() > 2 || home.contains('\\') || names.iter().any(|name| name.is_empty() || *name == "." || *name == "..") {
+        return Err(format!(
+            "its home.path {home} is neither a sibling directory nor a directory in one"
+        ));
     }
     Ok(DistConfig {
         home,
@@ -168,31 +191,47 @@ pub(crate) fn parse_config(text: &str) -> Result<DistConfig, String> {
     })
 }
 
-/// The key of a generation: the layout version, the distribution tree, the config text, the opened packages and the
-/// JBR tree, in order.
+/// The key of a generation: the layout version, the distribution tree with its JBR, the config text and the opened
+/// packages, in order.
 pub(crate) fn key(cache: &mut FileDigestCache, sources: &Sources, config_text: &str, dist_name: &str) -> io::Result<String> {
     let dist = cache.digest(&sources.dist)?;
     let opened_packages = cache.digest(&sources.opened_packages)?;
-    let jbr = cache.digest(&sources.jbr)?;
     Ok(path_sensitive_digest(&[
         PathDigest::new("@layout", sha256_text(LAYOUT)),
         PathDigest::new(dist_name, dist),
         PathDigest::new(CONFIG_FILE, sha256_text(config_text)),
         PathDigest::new(OPENED_PACKAGES_FILE, opened_packages),
-        PathDigest::new(JBR_DIR, jbr),
     ]))
 }
 
-/// Stages the generation of `sources`, or reuses the one with the same key.
+/// The IDE home in the distribution `dist` that `config` describes: `dist`, or the directory below it that the config
+/// names.
+fn home_in(dist: &Path, config: &DistConfig) -> PathBuf {
+    config
+        .home
+        .split('/')
+        .skip(1)
+        .fold(dist.to_path_buf(), |path, name| path.join(name))
+}
+
+/// `bin/java` of the JBR in the IDE home `home`: `<home>/jbr/Contents/Home/bin/java`, where a macOS production
+/// distribution places it.
+pub(crate) fn java_in(home: &Path) -> PathBuf {
+    home.join("jbr").join("Contents").join("Home").join("bin").join(java_name())
+}
+
+/// Stages the generation of `sources`, which the checkout at `git` built, or reuses the one with the same key. A
+/// reused generation keeps the commit of its first stage, whose bytes are the same.
 pub(crate) async fn stage(
     ctx: &Ctx,
     locks: &LockManager,
     runtime_root: &Path,
     sources: &Sources,
+    git: &GitInfo,
     reporter: &Reporter,
 ) -> Result<Generation, Refusal> {
     let bench = runtime_root.join(BENCH_DIR);
-    let generations = bench.join("generations");
+    let generations = bench.join(GENERATIONS_DIR);
     create_private_dir(&generations)?;
     let config_text = fs::read_to_string(&sources.config)
         .map_err(|error| unsupported(format!("cannot read the dist config {}: {error}", sources.config.display())))?;
@@ -203,12 +242,27 @@ pub(crate) async fn stage(
         .file_name()
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_default();
-    if dist_name != config.home {
+    if dist_name != config.dist_name() {
         return Err(unsupported(format!(
             "the dist config {} names the home {}, and the distribution is {}",
             sources.config.display(),
             config.home,
             sources.dist.display()
+        )));
+    }
+    let source_home = home_in(&sources.dist, &config);
+    if !source_home.join("core-classpath.txt").is_file() {
+        return Err(unsupported(format!(
+            "{} has no core-classpath.txt, so the Starter-shaped launch cannot start it",
+            source_home.display()
+        )));
+    }
+    let source_java = java_in(&source_home);
+    if !source_java.is_file() {
+        return Err(unsupported(format!(
+            "{} has no JBR: {} is not a file, and the bench starts the IDE with the JBR of the distribution",
+            sources.dist.display(),
+            source_java.display()
         )));
     }
     let _lock = locks
@@ -222,7 +276,7 @@ pub(crate) async fn stage(
         )
         .await?;
 
-    reporter.note(format!("hashing {} and {}", sources.dist.display(), sources.jbr.display()), None);
+    reporter.note(format!("hashing {}", sources.dist.display()), None);
     let cache_path = bench.join("digest-cache.json");
     let (mut cache, digest) = {
         let sources = sources.clone();
@@ -237,10 +291,13 @@ pub(crate) async fn stage(
     };
     let digest = digest.map_err(|error| failed(format!("cannot hash the distribution: {error}")))?;
     let root = generations.join(&digest);
+    let dist = root.join(&dist_name);
+    let home = home_in(&dist, &config);
     let generation = Generation {
         digest: digest.clone(),
-        dist: root.join(&dist_name),
-        java: root.join(JBR_DIR).join("bin").join(java_name()),
+        java: java_in(&home),
+        dist,
+        home,
         root: root.clone(),
         config,
         reused: root.join(RECORD_FILE).is_file(),
@@ -256,18 +313,17 @@ pub(crate) async fn stage(
     let record_sources = RecordSources {
         dist: sources.dist.display().to_string(),
         config: sources.config.display().to_string(),
-        jbr: sources.jbr.display().to_string(),
         opened_packages: sources.opened_packages.display().to_string(),
     };
     let staged = {
         let sources = sources.clone();
         let temporary = temporary.clone();
         let dist_name = dist_name.clone();
+        let git = git.clone();
         blocking(move || -> Result<(FileDigestCache, Totals), Refusal> {
             let mut totals = Totals::default();
             fs::create_dir(&temporary).map_err(|error| failed(format!("cannot create {}: {error}", temporary.display())))?;
             clone_tree(&sources.dist, &temporary.join(&dist_name), &mut totals)?;
-            clone_tree(&sources.jbr, &temporary.join(JBR_DIR), &mut totals)?;
             fs::write(temporary.join(CONFIG_FILE), &config_text)
                 .map_err(|error| failed(format!("cannot write the config copy: {error}")))?;
             fscopy::clone_or_copy(&sources.opened_packages, &temporary.join(OPENED_PACKAGES_FILE))
@@ -291,6 +347,7 @@ pub(crate) async fn stage(
                 target: sources.target.clone(),
                 dist_name,
                 sources: record_sources,
+                git: Some(git),
                 files: totals.files,
                 bytes: totals.bytes,
                 staged_at: jiff::Timestamp::now().to_string(),
@@ -331,12 +388,102 @@ pub(crate) async fn stage(
 
 /// The digest that the record of a generation names.
 pub(crate) fn read_digest(root: &Path) -> Result<String, Refusal> {
+    read_record(root).map(|record| record.digest)
+}
+
+fn read_record(root: &Path) -> Result<Record, Refusal> {
     let path = root.join(RECORD_FILE);
-    let record: Record = fs::read_to_string(&path)
+    fs::read_to_string(&path)
         .map_err(anyhow::Error::from)
         .and_then(|text| serde_json::from_str(&text).map_err(anyhow::Error::from))
-        .map_err(|error| failed(format!("cannot read the generation record {}: {error:#}", path.display())))?;
-    Ok(record.digest)
+        .map_err(|error| failed(format!("cannot read the generation record {}: {error:#}", path.display())))
+}
+
+/// Opens the staged generation whose digest starts with `prefix`, under `<runtime root>/bench/generations`, for a
+/// session that measures it again without a build and a stage. A prefix that no generation has is the refusal
+/// `no_generation`, and a prefix of several generations is a usage refusal. Each refusal names the candidates. A
+/// generation of an earlier layout has no JBR in its distribution, and is refused.
+pub(crate) fn open(runtime_root: &Path, prefix: &str) -> Result<Staged, Refusal> {
+    let generations = runtime_root.join(BENCH_DIR).join(GENERATIONS_DIR);
+    let digests = staged_digests(&generations);
+    let mut matches: Vec<&String> = digests.iter().filter(|digest| digest.starts_with(prefix)).collect();
+    let digest = match matches.len() {
+        1 => matches.remove(0),
+        0 => {
+            let have = if digests.is_empty() {
+                "it has none".to_owned()
+            } else {
+                format!("its generations are {}", digests.join(", "))
+            };
+            return Err(Refusal::new(
+                "no_generation",
+                Exit::USAGE,
+                format!(
+                    "no generation under {} has a digest that starts with {prefix}; {have}",
+                    generations.display()
+                ),
+            ));
+        }
+        count => {
+            let names: Vec<&str> = matches.iter().map(|digest| digest.as_str()).collect();
+            return Err(Refusal::usage(format!(
+                "{count} generations have a digest that starts with {prefix}: {}; name a longer prefix",
+                names.join(", ")
+            )));
+        }
+    };
+    let root = generations.join(digest);
+    let record = read_record(&root)?;
+    if record.digest != *digest {
+        return Err(failed(format!(
+            "the record of the generation {} names the digest {}",
+            root.display(),
+            record.digest
+        )));
+    }
+    let config_path = root.join(CONFIG_FILE);
+    let config = fs::read_to_string(&config_path)
+        .map_err(|error| failed(format!("cannot read {}: {error}", config_path.display())))
+        .and_then(|text| parse_config(&text).map_err(|reason| unsupported(format!("{} is refused: {reason}", config_path.display()))))?;
+    let dist = root.join(&record.dist_name);
+    let home = home_in(&dist, &config);
+    let java = java_in(&home);
+    if !java.is_file() {
+        return Err(unsupported(format!(
+            "the generation {} has no JBR at {}, so it is of an earlier layout; run the session without --generation to stage the distribution again",
+            root.display(),
+            java.display()
+        )));
+    }
+    Ok(Staged {
+        generation: Generation {
+            digest: record.digest,
+            dist,
+            home,
+            java,
+            root,
+            config,
+            reused: true,
+        },
+        target: record.target,
+        git: record.git,
+    })
+}
+
+/// The digests of the published generations under `generations`, in name order: the directories with a record. An
+/// unfinished stage and a directory that cannot be listed have none.
+fn staged_digests(generations: &Path) -> Vec<String> {
+    let Ok(entries) = fs::read_dir(generations) else {
+        return Vec::new();
+    };
+    let mut digests: Vec<String> = entries
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().join(RECORD_FILE).is_file())
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .filter(|name| !name.starts_with('.'))
+        .collect();
+    digests.sort();
+    digests
 }
 
 /// Runs a file system pass on the blocking pool, so the hash of gigabytes does not stall the runtime.

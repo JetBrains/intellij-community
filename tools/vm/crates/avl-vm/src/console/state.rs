@@ -23,8 +23,9 @@ mod tests;
 
 /// The order a run goes through its phases. Before the first phase starts, the dashboard shows each of them as
 /// pending, so a person sees the whole plan.
-const CANONICAL_PHASES: [Phase; 6] = [
+const CANONICAL_PHASES: [Phase; 7] = [
     Phase::HostBuild,
+    Phase::Prepare,
     Phase::Lease,
     Phase::DaemonStart,
     Phase::Iteration,
@@ -628,7 +629,22 @@ impl State {
                 self.running.remove(worker);
                 self.per_worker.remove(worker);
             }
-            RunEventKind::WatchdogState(_) | RunEventKind::Output(_) => {}
+            RunEventKind::SlowStep(slow) => {
+                let prefix = self.worker_prefix(worker);
+                let elapsed = avl_base::format::format_elapsed_ms(u64::try_from(slow.elapsed_ms).unwrap_or(0));
+                let dumps: Vec<&str> = slow.dumps().map(String::as_str).collect();
+                let line = format!(
+                    "  {}",
+                    paint.muted(&format!(
+                        "⏱ {prefix}slow step {} after {elapsed}; dumps: {}",
+                        slow.path,
+                        dumps.join(", ")
+                    ))
+                );
+                self.push_line_entry(vec![line]);
+            }
+            // The lane IDE's life is the run journal's and the viewer's, not a line of the console.
+            RunEventKind::WatchdogState(_) | RunEventKind::Output(_) | RunEventKind::IdeLaunched(_) | RunEventKind::IdeExited(_) => {}
         }
     }
 
@@ -801,6 +817,7 @@ pub(crate) fn short_class(class_name: &str) -> &str {
 pub(crate) const fn phase_label(phase: Phase) -> &'static str {
     match phase {
         Phase::HostBuild => "host build",
+        Phase::Prepare => "prepare",
         Phase::Lease => "lease",
         Phase::DaemonStart => "daemon start",
         Phase::Iteration => "tests",

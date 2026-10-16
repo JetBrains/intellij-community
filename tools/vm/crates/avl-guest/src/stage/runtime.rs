@@ -1,11 +1,10 @@
-//! The daemon's runtime: `stage` (a flat jar list plus an extracted JBR) and `stage-check` (whether a staged
-//! generation can be handed back untouched without sending its classpath).
+//! The daemon's runtime: `stage` (a flat jar list plus a copy of the JBR of the distribution) and `stage-check`
+//! (whether a staged generation can be handed back untouched without sending its classpath).
 
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 use avl_wire::stage::{self, RuntimeManifest, RuntimeResult, RuntimeReuse, is_sha256_hex};
 use serde::{Deserialize, Serialize};
@@ -13,8 +12,8 @@ use sha2::{Digest, Sha256};
 
 use super::donor::{RuntimeDonor, newest_donor};
 use super::{
-    StagingTree, TAR_BINARY, copy_file_hashed, create_dirs, generation_root, generations_dir, is_file, remove_tree, require_runtime_root,
-    sha256_file, write_json_file, write_private,
+    StagingTree, copy_file_hashed, copy_tree, create_dirs, generation_root, generations_dir, is_directory, is_file, remove_tree,
+    require_runtime_root, sha256_file, write_json_file, write_private,
 };
 use crate::cli::StageCheckArgs;
 use crate::clock::now_stamp;
@@ -47,7 +46,12 @@ pub(crate) fn read_state(root: &Path) -> Option<RuntimeStageState> {
 }
 
 pub(crate) fn java_binary(root: &Path, suffix: &str) -> PathBuf {
-    root.join("jbr").join(suffix).join("bin").join("java")
+    java_binary_of(&root.join("jbr"), suffix)
+}
+
+/// The `java` of the JBR directory `jbr`, below its Java-home suffix.
+fn java_binary_of(jbr: &Path, suffix: &str) -> PathBuf {
+    jbr.join(suffix).join("bin").join("java")
 }
 
 /// The name one stable classpath entry is staged under. The index is part of the name because classpath order is
@@ -225,9 +229,7 @@ fn stage_manifest(runtime_root: &Path, manifest: &RuntimeManifest) -> Result<Run
     create_dirs(AgentVerb::Stage, &generations_dir(runtime_root))?;
     let staging = StagingTree::new(&generations_dir(runtime_root), digest);
     let temporary_root = staging.path();
-    for directory in ["lib", "jbr"] {
-        create_dirs(AgentVerb::Stage, &temporary_root.join(directory))?;
-    }
+    create_dirs(AgentVerb::Stage, &temporary_root.join("lib"))?;
 
     // A jar a retained generation already staged is linked rather than read again.
     let donor = find_donor(runtime_root, digest);
@@ -270,32 +272,26 @@ fn stage_manifest(runtime_root: &Path, manifest: &RuntimeManifest) -> Result<Run
         final_classpath.push(display(&final_root.join("lib").join(&name)));
     }
 
-    let archive = Path::new(&manifest.jbr_archive);
-    if !archive.is_absolute() || !is_file(archive) {
-        refuse!(AgentVerb::Stage, "JBR archive is not a file: {}", manifest.jbr_archive);
+    // The JBR of the distribution, copied from the share. The daemon outlives a remount and a rebuild of the
+    // distribution, so it must not run on files of the share.
+    let source = Path::new(&manifest.jbr_source);
+    if !source.is_absolute() || !is_directory(source) {
+        refuse!(
+            AgentVerb::Stage,
+            "the distribution has no JBR: {} is not a directory; the dev distribution places the production JBR there",
+            manifest.jbr_source
+        );
     }
-    // `tar`'s own output is dropped rather than quoted. A staging failure's message travels to the host inside
-    // the envelope, and a subprocess's output there is guest output reaching an agent the host never meant to
-    // show it. What names the fault is what this process composed: which archive, and how `tar` exited. The
-    // archive is a host-built artifact named by its digest, so a corrupt one reproduces on demand.
-    let extracted = Command::new(TAR_BINARY)
-        .arg("xzf")
-        .arg(archive)
-        .arg("-C")
-        .arg(temporary_root.join("jbr"))
-        .arg("--strip-components=1")
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status();
-    match extracted {
-        Ok(status) if status.success() => {}
-        Ok(status) => refuse!(AgentVerb::Stage, "JBR extraction failed for {}: {status}", manifest.jbr_archive),
-        Err(error) => refuse!(AgentVerb::Stage, "JBR extraction failed for {}: {error}", manifest.jbr_archive),
+    let source_java = java_binary_of(source, &manifest.java_home_suffix);
+    if !is_file(&source_java) {
+        refuse!(AgentVerb::Stage, "the JBR of the distribution has no {}", source_java.display());
+    }
+    if let Err(error) = copy_tree(source, &temporary_root.join("jbr")) {
+        refuse!(AgentVerb::Stage, "cannot copy the JBR {}: {error}", manifest.jbr_source);
     }
     let java = java_binary(temporary_root, &manifest.java_home_suffix);
-    if !java.exists() {
-        refuse!(AgentVerb::Stage, "JBR contains no {}", java.display());
+    if !is_file(&java) {
+        refuse!(AgentVerb::Stage, "the copied JBR contains no {}", java.display());
     }
 
     write_records(

@@ -33,10 +33,11 @@ pub(crate) const FLAKE_ORDER_PROBE_NOTE: &str = "orderSuspects is interpretable 
 
 /// The guest test home the `daemon` reset discards, relative to `Config::vm_data`.
 ///
-/// `$AIR_VM_DATA/out/ide-tests/tests/IU-LOCAL/air/` is the lane's IDE Starter context, shared across runs on a warm
-/// worker. That sharing has a cost: a class run standalone and then run again in a lane fails an install-state
-/// assertion, because the managed agent is already installed. That is a carrier the IDE relaunch does not touch.
-pub(crate) const GUEST_SHARED_TEST_HOME: &str = "out/ide-tests/tests/IU-LOCAL/air";
+/// `$AIR_VM_DATA/ide/` holds the lane IDE contexts, `<launchKey>/` each, shared across runs on a warm worker. That
+/// sharing has a cost: a class run standalone and then run again in a lane fails an install-state assertion, because
+/// the managed agent is already installed. That is a carrier the IDE relaunch does not touch. The launch key is the
+/// daemon's to compute, so the reset discards every context. It is [`crate::lane::ide::guest_ide_root`].
+pub(crate) const GUEST_SHARED_TEST_HOME: &str = "ide";
 
 /// How many consecutive unusable trials on one worker end its chain.
 ///
@@ -111,7 +112,8 @@ impl ResetStep {
 /// The order carries an obligation that is not obvious from either end of it: the warm IDE's config and system
 /// directories live *under* the tree the `daemon` reset deletes, so an `rm -rf` issued while that IDE runs deletes the
 /// live IDE's own state. The stop is therefore not an optimization, and a list is what lets a test assert the order
-/// directly.
+/// directly. The daemon stop also stops every lane IDE that the guest agent runs, because an IDE outlives its daemon
+/// and an unhealthy daemon cannot stop it.
 ///
 /// `warm` inherits everything, and `fresh_ide` is the iteration's own `--fresh-ide` path - the same `/ide/stop`,
 /// issued where the iteration already decides between a relaunch, a remount and a daemon restart. Re-issuing it here

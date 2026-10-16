@@ -41,9 +41,11 @@ fn the_daemon_environment_names_the_run_secrets_directory_only() {
         environment.get("AIR_VM_RUN_SECRETS").map(String::as_str),
         Some("/dev/shm/air-run-secrets")
     );
+    // The locale of the daemon JVM is here, so a change of it restarts the warm daemon.
+    assert_eq!(environment.get("LANG").map(String::as_str), Some(DAEMON_LOCALE));
     let union = environment_union();
     let added: Vec<&String> = environment.keys().filter(|name| !union.contains_key(*name)).collect();
-    assert_eq!(added, ["AIR_VM_RUN_SECRETS", "NODE_BIN"]);
+    assert_eq!(added, ["AIR_VM_RUN_SECRETS", "LANG", "NODE_BIN"]);
 }
 
 /// The guest, not the host and not the hypervisor, decides which distribution and JBR a lane is built for.
@@ -149,7 +151,8 @@ fn the_run_environment_names_the_runfiles_tree_and_the_runs_own_scratch() {
     assert_eq!(environment["TEST_WORKSPACE"], "_main");
     assert_eq!(environment["USER"], settings.vm_user);
     assert_eq!(environment["LOGNAME"], settings.vm_user);
-    assert_eq!(environment["LANG"], "en_US.UTF-8");
+    // The locale is part of the daemon environment, which is digested, and not of the run environment.
+    assert!(!environment.contains_key("LANG"));
     // In name order, because nothing downstream reads position and a reproducible rendering is a chosen one.
     let mut sorted = pairs.clone();
     sorted.sort();

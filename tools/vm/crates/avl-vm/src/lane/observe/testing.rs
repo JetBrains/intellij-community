@@ -5,6 +5,8 @@
 //! directory. A Tart test and a Parallels test therefore seed the same answer names, and both read one call log.
 //!
 //! The runner probes [`FakeProcesses`] and not the host. So a ready worker reads as running on a loaded host too.
+//! A container-linux pool keeps the production channel: the manager builds the control-port channel itself, and the
+//! pool's fake control port answers from the guests of this fixture.
 
 use std::ops::Deref;
 use std::path::PathBuf;
@@ -13,8 +15,9 @@ use std::sync::Arc;
 use crate::worker::docker::CreateRecord;
 use crate::worker::hypervisor::Machine;
 use crate::worker::lease::write_lease_receipt;
+use crate::worker::run_marker::write_marker_by_hand;
 use crate::worker::tart::MINIMUM_VERSION;
-use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing};
+use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing, read_lease};
 use avl_base::{Backend, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::guest::write_init_receipt;
 use avl_host_sys::lock::LockManager;
@@ -33,6 +36,17 @@ pub(crate) struct Fixture {
     processes: Arc<FakeProcesses>,
 }
 
+/// The engine of a Docker fixture: the one the pool's environment gives, or Apple `container`.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    windows,
+    expect(dead_code, reason = "the Apple container fixture runs shell fakes, so it is Unix only")
+)]
+enum Engine {
+    Default,
+    AppleContainer,
+}
+
 impl Deref for Fixture {
     type Target = HostPool;
 
@@ -46,18 +60,24 @@ impl Fixture {
     /// and the state all but three of these tests want. Declared rather than resolved: resolving runs a real
     /// `git rev-parse`, which a hermetic suite must not.
     pub(crate) fn new(backend: Backend, guest_os: GuestOs) -> Self {
-        Self::build(backend, guest_os, None, false)
+        Self::build(backend, guest_os, None, Engine::Default)
     }
 
-    /// A Docker pool on the Lima engine, whose Bazel resolves the pinned `limactl` to the fake.
+    /// A Docker pool on the Apple `container` engine, over the fake `container` that `CONTAINER_BIN` names.
     #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::build(Backend::Docker, GuestOs::Linux, None, true)
+    pub(crate) fn docker_container() -> Self {
+        Self::build(Backend::Docker, GuestOs::Linux, None, Engine::AppleContainer)
     }
 
-    /// The Linux pool: one Docker slot over the fake `docker`, on an external engine.
+    /// The Linux pool: one Docker slot over the fake `docker`, on the host engine.
     pub(crate) fn docker() -> Self {
         Self::new(Backend::Docker, GuestOs::Linux)
+    }
+
+    /// The one-worker container-linux pool over the fake `container.cmd`, whose container is stopped until
+    /// [`HostPool::start_container_linux_container`] runs.
+    pub(crate) fn container_linux() -> Self {
+        Self::new(Backend::ContainerLinux, GuestOs::Linux)
     }
 
     /// The pool the macOS-only half of `status` applies to: TCC admission, the Aqua session, and the SSH host key
@@ -70,18 +90,18 @@ impl Fixture {
     /// the configured checkout a working tree. The pool sets `AIR_VM_HOST_REPO`, so resolution takes the override
     /// path and asks only `--is-inside-work-tree`.
     pub(crate) fn before_host_paths(backend: Backend, guest_os: GuestOs, inside_work_tree: bool) -> Self {
-        Self::build(backend, guest_os, Some(inside_work_tree), false)
+        Self::build(backend, guest_os, Some(inside_work_tree), Engine::Default)
     }
 
-    fn build(backend: Backend, guest_os: GuestOs, host_git: Option<bool>, lima: bool) -> Self {
+    fn build(backend: Backend, guest_os: GuestOs, host_git: Option<bool>, engine: Engine) -> Self {
         // Both binaries, because a `status` over a Parallels pool reaches `prlctl` while every other test here
         // reaches `tart`, and the two names are what keep the two `exec` grammars apart.
         let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION).with_parallels();
         if host_git.is_some() {
             builder = builder.with_git().unresolved_host_paths();
         }
-        if lima {
-            builder = builder.with_lima_engine();
+        if engine == Engine::AppleContainer {
+            builder = builder.with_container_engine();
         }
         if backend == Backend::Tart {
             // The production names of the Tart pool, whose guest is macOS.
@@ -91,20 +111,21 @@ impl Fixture {
         if host_git == Some(false) {
             pool.git().outside_work_tree();
         }
-        let guests = FakeGuests::of(&pool.settings.workers);
+        let container_linux = backend == Backend::ContainerLinux;
+        let guests = if container_linux {
+            Arc::clone(pool.control_port().guests())
+        } else {
+            FakeGuests::of(&pool.settings.workers)
+        };
         let processes = Arc::new(FakeProcesses::default());
         let runner = pool.runner().with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
-        #[cfg(unix)]
-        let bazel = lima.then(|| Arc::new(pool.pinned_bazel()) as Arc<dyn avl_host_sys::guest::BazelHost>);
-        #[cfg(windows)]
-        let bazel = None;
         let manager = Manager::new(Dependencies {
             settings: Arc::clone(&pool.settings),
             locks: Arc::new(LockManager::new(runner.clone())),
             runner,
             reporter: quiet(),
-            channel: Some(guests.factory()),
-            bazel,
+            channel: (!container_linux).then(|| guests.factory()),
+            bazel: None,
             build_guest_boot: builds_nothing(),
         });
         manager.prepare_runtime_dirs().expect("the runtime directories are created");
@@ -172,6 +193,23 @@ impl Fixture {
         encoded.push(b'\n');
         std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
         write_lease_receipt(&self.settings, &lease).expect("the receipt is written")
+    }
+
+    /// Puts the run marker of a live process of another controller on `worker`, for the lease that the worker has, and
+    /// answers the run id. A run of another process is then in flight on the worker.
+    pub(crate) async fn run_of_another_process(&self, worker: &str) -> String {
+        let lease = read_lease(&self.settings.lease_path(worker))
+            .expect("the lease reads")
+            .expect("the worker is leased");
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        let process = self
+            .manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity");
+        write_marker_by_hand(&self.settings, &lease, "suite-user-run-1", process).run_id
     }
 }
 

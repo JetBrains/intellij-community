@@ -8,8 +8,8 @@ use avl_base::{Config, Refusal};
 #[cfg(test)]
 mod tests;
 
-/// The only mode this controller ever declares. A worker has no business writing to the host checkout: the whole
-/// point of the parity layout is that the guest reads outputs the host built.
+/// The only mode this controller ever declares. A worker has no business writing to the Bazel outputs of the host: the
+/// whole point of the parity layout is that the guest reads outputs the host built.
 pub const SHARE_MODE: &str = "ro";
 
 /// One read-only host directory a worker reads through.
@@ -30,25 +30,18 @@ pub struct SharedFolder {
     pub mode: &'static str,
 }
 
-/// The two shares a worker gets, the repository's and the Bazel output root's, in the order both backends declare
-/// them.
+/// The one share a worker gets: the Bazel output user root. No share holds the checkout, so the guest reads no
+/// working tree; the source runfiles it needs are copies in its runfiles tree.
 ///
-/// Refused before the host paths are resolved rather than answering empty paths, because an empty path is the one
-/// failure that is invisible on the host: `tart run` accepts `--dir=name::ro`, the VM boots, and every guest probe
-/// afterwards blames the guest for a share that was never pointed anywhere.
-pub fn shares(settings: &Config) -> Result<[SharedFolder; 2], Refusal> {
-    let repo = settings.host_repo()?;
+/// A list of one, because each backend renders a list. Refused before the host paths are resolved rather than
+/// answering an empty path, because an empty path is the one failure that is invisible on the host: `tart run`
+/// accepts `--dir=name::ro`, the VM boots, and every guest probe afterwards blames the guest for a share that was
+/// never pointed anywhere.
+pub fn shares(settings: &Config) -> Result<[SharedFolder; 1], Refusal> {
     let bazel = settings.host_bazel_user_root()?;
-    Ok([
-        SharedFolder {
-            name: settings.repo_share_name.clone(),
-            path: repo.to_owned(),
-            mode: SHARE_MODE,
-        },
-        SharedFolder {
-            name: settings.bazel_share_name.clone(),
-            path: bazel.to_owned(),
-            mode: SHARE_MODE,
-        },
-    ])
+    Ok([SharedFolder {
+        name: settings.bazel_share_name.clone(),
+        path: bazel.to_owned(),
+        mode: SHARE_MODE,
+    }])
 }

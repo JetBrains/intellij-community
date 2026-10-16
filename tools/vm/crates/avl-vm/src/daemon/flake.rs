@@ -73,7 +73,7 @@ impl Reset {
 /// follow it. An IDE launch is 10-12 s against a ~207 s lane, so the honest default is also the cheap one.
 ///
 /// `none` stays reachable for the deliberate experiment, and `daemon` (~188 s) is the fallback for the other confound
-/// this cannot reach: the guest test home under `IU-LOCAL/air`, shared across runs on a warm worker.
+/// this cannot reach: the lane IDE contexts under `$AIR_VM_DATA/ide`, shared across runs on a warm worker.
 pub(crate) const DEFAULT_FLAKE_RESET: Reset = Reset::FreshIde;
 
 /// Every `--reset` spelling, in the order the usage and the refusals list them.

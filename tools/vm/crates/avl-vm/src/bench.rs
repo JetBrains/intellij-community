@@ -1,12 +1,12 @@
 //! `bench`: the start-up measurement of an IDE on this host, from an immutable staged copy of its Bazel dev
 //! distribution.
 //!
-//! A session builds the self-contained `.dist` of a row and the row launcher with the host Bazel build, stages the
-//! distribution and the JBR of the launcher as a generation keyed by their digest, and starts every IDE run from that
-//! generation. A run has its own sandbox and the instrument options of the platform: the start-up report, the trace,
-//! the class logs and the FUS log, which the controller reads before the quit. A run counts only when it passed the
-//! gate of its arm: the FUS event of the welcome screen, or the highlighted editor of the `project` arm. The answer is
-//! the summary, which `summary.json` holds too, and a text digest. It takes no worker and no lease.
+//! A session builds the self-contained `.dist` of a row with the host Bazel build, stages the distribution with its
+//! JBR as a generation keyed by its digest, and starts every IDE run from that generation. A run has its own sandbox
+//! and the instrument options of the platform: the start-up report, the trace, the class logs and the FUS log, which
+//! the controller reads before the quit. A run counts only when it passed the gate of its arm: the FUS event of the
+//! welcome screen, or the highlighted editor of the `project` arm. The answer is the summary, which `summary.json`
+//! holds too, and a text digest. It takes no worker and no lease.
 //!
 //! - [`options`]: the verbs and their options;
 //! - [`command`]: a `welcome`, an `open-project` or a `project` session from the build to the summary, `replay`, `gc`,

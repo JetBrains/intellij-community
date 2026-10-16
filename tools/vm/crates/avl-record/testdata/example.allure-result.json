@@ -1,0 +1,416 @@
+{
+  "uuid": "40bb3bd4-2e72-8017-9f3f-80e59f2d73d8",
+  "historyId": "ae23dcb02e4dd0794f34339d72392b94ccfb149d0a58872114222d0304e3da0c",
+  "fullName": "AirRenameSessionGeneratedFlowUiTest.rename-closed-project-session",
+  "name": "rename-closed-project-session",
+  "status": "passed",
+  "stage": "finished",
+  "start": 1790158500120,
+  "stop": 1790158510960,
+  "labels": [
+    {
+      "name": "testClass",
+      "value": "com.intellij.air.integration.trace.AirTraceTranscriptTest"
+    },
+    {
+      "name": "testMethod",
+      "value": "the lane writes the golden transcript for rename-closed-project-session"
+    },
+    {
+      "name": "package",
+      "value": "com.intellij.air.integration.trace"
+    },
+    {
+      "name": "Component",
+      "value": "Terminal"
+    },
+    {
+      "name": "Feature",
+      "value": "Air Generated Flows"
+    },
+    {
+      "name": "Subsystem",
+      "value": "AI"
+    },
+    {
+      "name": "suite",
+      "value": "rename-session"
+    },
+    {
+      "name": "host",
+      "value": "air-linux-1"
+    },
+    {
+      "name": "lane",
+      "value": "UI"
+    },
+    {
+      "name": "flow",
+      "value": "flow-rename-session"
+    },
+    {
+      "name": "traceBundle",
+      "value": "AirRenameSessionGeneratedFlowUiTest/rename-closed-project-session"
+    }
+  ],
+  "steps": [
+    {
+      "name": "[reset] before rename-closed-project-session",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158500130,
+      "stop": 1790158502310,
+      "steps": [],
+      "attachments": []
+    },
+    {
+      "name": "[setup] prepare-closed-project-session",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158502530,
+      "stop": 1790158504631,
+      "steps": [
+        {
+          "name": "[operation] prepare-closed-project-session",
+          "status": "passed",
+          "stage": "finished",
+          "start": 1790158502531,
+          "stop": 1790158504630,
+          "steps": [
+            {
+              "name": "[action] prepare-closed-project-session",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158502533,
+              "stop": 1790158504400,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "0c62081c-1bed-87ac-b44a-5c9a5ec24117-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            },
+            {
+              "name": "[assertion] prepare-closed-project-session: One idle native session is listed under the row of a closed project in the all-projects scope.",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158504402,
+              "stop": 1790158504570,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            }
+          ],
+          "attachments": [
+            {
+              "name": "Before",
+              "source": "0c62081c-1bed-87ac-b44a-5c9a5ec24117-attachment.webp",
+              "type": "image/webp"
+            },
+            {
+              "name": "After",
+              "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+              "type": "image/webp"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "name": "Before",
+          "source": "0c62081c-1bed-87ac-b44a-5c9a5ec24117-attachment.webp",
+          "type": "image/webp"
+        },
+        {
+          "name": "After",
+          "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+          "type": "image/webp"
+        }
+      ]
+    },
+    {
+      "name": "[flow] rename-session-select",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158504640,
+      "stop": 1790158506541,
+      "steps": [
+        {
+          "name": "[operation] rename-session-select",
+          "status": "passed",
+          "stage": "finished",
+          "start": 1790158504641,
+          "stop": 1790158506540,
+          "steps": [
+            {
+              "name": "[assertion] rename-session-offered: Rename is enabled in the popup of the closed project session row.",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158504643,
+              "stop": 1790158505540,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            },
+            {
+              "name": "[action] rename-session-select",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158505545,
+              "stop": 1790158505900,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            },
+            {
+              "name": "[assertion] rename-session-dialog-shown: The Rename Session dialog shows.",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158505905,
+              "stop": 1790158506480,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            }
+          ],
+          "attachments": [
+            {
+              "name": "Before",
+              "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+              "type": "image/webp"
+            },
+            {
+              "name": "After",
+              "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+              "type": "image/webp"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "name": "Before",
+          "source": "35898ced-f69a-8a86-97f6-179853a95b81-attachment.webp",
+          "type": "image/webp"
+        },
+        {
+          "name": "After",
+          "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+          "type": "image/webp"
+        }
+      ]
+    },
+    {
+      "name": "[flow] rename-session-enter-name",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158506550,
+      "stop": 1790158508151,
+      "steps": [
+        {
+          "name": "[operation] rename-session-enter-name",
+          "status": "passed",
+          "stage": "finished",
+          "start": 1790158506551,
+          "stop": 1790158508150,
+          "steps": [
+            {
+              "name": "[action] rename-session-enter-name",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158506553,
+              "stop": 1790158507710,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            },
+            {
+              "name": "[assertion] rename-session-dialog-closed: The Rename Session dialog closes after OK.",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158507712,
+              "stop": 1790158508090,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            }
+          ],
+          "attachments": [
+            {
+              "name": "Before",
+              "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+              "type": "image/webp"
+            },
+            {
+              "name": "After",
+              "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+              "type": "image/webp"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "name": "Before",
+          "source": "9d1fd759-1196-86cb-9f92-c8b43dc8309f-attachment.webp",
+          "type": "image/webp"
+        },
+        {
+          "name": "After",
+          "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+          "type": "image/webp"
+        }
+      ]
+    },
+    {
+      "name": "[flow] rename-session-shown",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158508160,
+      "stop": 1790158508721,
+      "steps": [
+        {
+          "name": "[operation] rename-session-shown",
+          "status": "passed",
+          "stage": "finished",
+          "start": 1790158508161,
+          "stop": 1790158508720,
+          "steps": [
+            {
+              "name": "[assertion] rename-session-title: The session is listed under the new title.",
+              "status": "passed",
+              "stage": "finished",
+              "start": 1790158508163,
+              "stop": 1790158508660,
+              "steps": [],
+              "attachments": [
+                {
+                  "name": "Before",
+                  "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+                  "type": "image/webp"
+                },
+                {
+                  "name": "After",
+                  "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+                  "type": "image/webp"
+                }
+              ]
+            }
+          ],
+          "attachments": [
+            {
+              "name": "Before",
+              "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+              "type": "image/webp"
+            },
+            {
+              "name": "After",
+              "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+              "type": "image/webp"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "name": "Before",
+          "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+          "type": "image/webp"
+        },
+        {
+          "name": "After",
+          "source": "ffbcc97e-da55-8574-8db0-a86289b1832c-attachment.webp",
+          "type": "image/webp"
+        }
+      ]
+    },
+    {
+      "name": "[reset] after rename-closed-project-session",
+      "status": "passed",
+      "stage": "finished",
+      "start": 1790158508730,
+      "stop": 1790158510950,
+      "steps": [],
+      "attachments": []
+    }
+  ],
+  "attachments": [
+    {
+      "name": "Trace bundle",
+      "source": "bfd89b84-6507-8240-9e33-020c42bafc53-attachment.txt",
+      "type": "text/plain"
+    },
+    {
+      "name": "idea.log",
+      "source": "3c18fb7d-9db6-8a7a-a0e2-e56ad621f6a6-attachment.log",
+      "type": "text/plain"
+    }
+  ]
+}

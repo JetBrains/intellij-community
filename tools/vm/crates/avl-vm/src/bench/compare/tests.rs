@@ -7,7 +7,7 @@ use super::{Compared, MetricRow, cells, report};
 use crate::bench::arm::Arm;
 use crate::bench::command::replay;
 use crate::bench::files;
-use crate::bench::session::{SUMMARY_FILE, SessionInfo, read_info};
+use crate::bench::session::{MeasureModel, SUMMARY_FILE, SessionInfo, read_info};
 use crate::bench::summary::Summary;
 use crate::bench::testing::{assert_golden, testdata_dir};
 
@@ -65,6 +65,48 @@ fn session_b(root: &Path, modal: f64, non_modal: f64) -> Compared {
     session(root, "develar-bench-bbbb2222", other_dist, |arm| {
         if arm == Arm::Modal { modal } else { non_modal }
     })
+}
+
+/// A session of another measurement model than A gets a note that names both models, right after the session lines.
+/// A session from before the model has none. Two sessions of one model get no note.
+#[test]
+fn a_session_of_another_measurement_model_than_a_gets_a_note() {
+    let root = tempfile::tempdir().expect("a temporary root");
+    let current = |info: &mut SessionInfo| info.measure_model = Some(MeasureModel::current());
+    let other = |info: &mut SessionInfo| {
+        other_dist(info);
+        current(info);
+    };
+    let sessions = [
+        session_a(root.path()),
+        session(root.path(), "develar-bench-bbbb2222", other, |_| 1.0),
+    ];
+    let comparison = report(&sessions, false).expect("a comparison");
+    assert_eq!(
+        comparison.model_notes,
+        [
+            "B has another measurement model than A: A none (a session from before the model), B integration-test v1; a delta B-A \
+             mixes the change with the model, so measure both sessions with one model"
+        ]
+    );
+    let text = comparison.text();
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines[3], comparison.model_notes[0], "the note follows the session lines: {text}");
+    assert!(lines[4].starts_with("the modal arm agrees within the noise"), "{text}");
+    let json = serde_json::to_value(&comparison).expect("JSON");
+    assert_eq!(json["sessions"][0]["measureModel"], serde_json::Value::Null);
+    assert_eq!(
+        json["sessions"][1]["measureModel"],
+        serde_json::json!({"name": "integration-test", "version": 1})
+    );
+    assert_eq!(json["modelNotes"][0], comparison.model_notes[0]);
+
+    let one_model = [
+        session(root.path(), "develar-bench-cccc3333", current, |_| 1.0),
+        session(root.path(), "develar-bench-dddd4444", other, |_| 1.0),
+    ];
+    let comparison = report(&one_model, false).expect("a comparison");
+    assert_eq!(comparison.model_notes, Vec::<String>::new());
 }
 
 #[test]

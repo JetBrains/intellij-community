@@ -25,7 +25,6 @@ struct Fixture {
     settings: Arc<Config>,
     parallels: Parallels,
     fake: Fake,
-    host_repo: PathBuf,
     host_bazel: PathBuf,
     _root: tempfile::TempDir,
 }
@@ -52,7 +51,13 @@ impl Fixture {
             backend: Backend::Parallels,
             guest_os: GuestOs::Macos,
         };
-        let settings = Config::load(selection, &environment, &root.path().join("scripts")).unwrap();
+        let settings = Config::load(
+            avl_base::HostFacts::without_memory(),
+            selection,
+            &environment,
+            &root.path().join("scripts"),
+        )
+        .unwrap();
         let host_repo = root.path().join("idea");
         let host_bazel = root.path().join("bazel");
         for path in [&host_repo, &host_bazel] {
@@ -70,13 +75,12 @@ impl Fixture {
             settings,
             parallels,
             fake,
-            host_repo,
             host_bazel,
             _root: root,
         }
     }
 
-    fn shares(&self) -> [SharedFolder; 2] {
+    fn shares(&self) -> [SharedFolder; 1] {
         share::shares(&self.settings).unwrap()
     }
 
@@ -84,7 +88,6 @@ impl Fixture {
     fn matching_folders(&self) -> String {
         serde_json::json!({
             "enabled": true,
-            self.settings.repo_share_name.clone(): {"enabled": true, "path": self.host_repo, "mode": "ro"},
             self.settings.bazel_share_name.clone(): {"enabled": true, "path": self.host_bazel, "mode": "ro"},
         })
         .to_string()
@@ -281,7 +284,7 @@ async fn a_share_change_stops_the_vm_before_it_mutates_anything() {
     let fixture = Fixture::new();
     let drifted = serde_json::json!({
         "enabled": true,
-        fixture.settings.repo_share_name.clone(): {"enabled": true, "path": "/Users/x/somewhere-else", "mode": "ro"},
+        fixture.settings.bazel_share_name.clone(): {"enabled": true, "path": "/Users/x/somewhere-else", "mode": "ro"},
     })
     .to_string();
     fixture.fake.answer(Answer::ListJson, listing("running", &drifted));
@@ -301,10 +304,9 @@ async fn a_share_change_stops_the_vm_before_it_mutates_anything() {
     };
     let (stop, set, start) = (position("stop macOS"), position("--shf-host-set"), position("start macOS"));
     assert!(stop < set && set < start, "the VM was mutated outside the cycle: {calls:?}");
-    // `--shf-host-set` for the drifted share and `--shf-host-add` for the absent one; `prlctl` refuses the wrong
-    // one.
-    position(&format!("--shf-host-set {}", fixture.settings.repo_share_name));
-    position(&format!("--shf-host-add {}", fixture.settings.bazel_share_name));
+    // `--shf-host-set` for the drifted share, because it exists; `prlctl` refuses an add for a name it has.
+    position(&format!("--shf-host-set {}", fixture.settings.bazel_share_name));
+    assert!(!calls.iter().any(|call| call.contains("--shf-host-add")), "{calls:?}");
     // The master switch is applied unconditionally: a correct share set with sharing off looks right in a listing.
     position("--shf-host on --shf-host-automount on");
 }
@@ -555,6 +557,7 @@ async fn the_parallels_guest_line_is_one_quoted_shell_string() {
 fn settings_for(backend: Backend) -> Config {
     let environment = Environment::from_pairs([("HOME", "/Users/air"), ("TART_BIN", "tart"), ("AIR_VM_PARALLELS_BIN", "prlctl")]);
     Config::load(
+        avl_base::HostFacts::without_memory(),
         Selection {
             backend,
             guest_os: GuestOs::Macos,

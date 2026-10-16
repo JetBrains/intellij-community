@@ -69,13 +69,14 @@ pub(crate) async fn command_image(ctx: &Ctx, manager: &Manager, action: ImageAct
     }
     if settings.guest_os == GuestOs::Linux {
         // The digest-pinned Packer golden, its seal and its offline audit exist to make a *macOS* image
-        // trustworthy. The Docker pool has none: a Docker worker runs an image its first start builds from this
-        // checkout, tagged by a digest of what it is built from. The default pool is a Linux guest, so an unqualified
-        // `image` would otherwise run the macOS pipeline for someone who never asked for it.
+        // trustworthy. Neither Linux pool has one: a Docker worker runs an image its first start builds from this
+        // checkout, tagged by a digest of what it is built from, and a container-linux worker runs the image of the
+        // testing-ui skill. The default pool is a Linux guest, so an unqualified `image` would otherwise run the
+        // macOS pipeline for someone who never asked for it.
         return Err(unsupported(
-            "the docker pool has no golden image to validate or build: it builds its image from \
-             community/tools/vm/docker/Dockerfile on the first pool start or lease. Use \
-             --backend tart for the sealed macOS image pipeline",
+            "a Linux pool has no golden image to validate or build: the docker pool builds its image from \
+             community/tools/vm/docker/Dockerfile on the first pool start or lease, and the container-linux pool \
+             runs the image of the testing-ui skill. Use --backend tart for the sealed macOS image pipeline",
         ));
     }
     manager.machine().require_available(ctx, "").await?;

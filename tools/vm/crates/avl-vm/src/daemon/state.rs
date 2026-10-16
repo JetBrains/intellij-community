@@ -7,6 +7,8 @@ use avl_base::{Config, Exit, OrRefuse, Refusal};
 use avl_host_sys::guest::guest_join;
 use serde::{Deserialize, Serialize};
 
+use crate::worker::secure::read_json_record;
+
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
@@ -14,8 +16,9 @@ mod tests;
 /// The daemon one worker runs, as this controller started it: the worker and the guest port it listens on, how to
 /// authenticate, and the build identities it was launched and mounted for.
 ///
-/// Every field is required, because the next start compares every one: a file missing one is no daemon at all. The
-/// file is two-space JSON with a trailing newline, and only this controller reads it.
+/// Every field but [`Self::last_plugins_digest`] is required, because the next start compares every one: a file
+/// missing one is no daemon at all. The file is two-space JSON with a trailing newline, and only this controller reads
+/// it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct HostState {
@@ -29,6 +32,10 @@ pub(crate) struct HostState {
     pub launch_digest: String,
     pub last_product_digest: String,
     pub last_mount_digest: String,
+    /// The context plugin identity of the last iteration. A record of an older controller has none, and an empty value
+    /// is unknown: the next iteration decides nothing on it and records the value it ran with.
+    #[serde(default)]
+    pub last_plugins_digest: String,
 }
 
 impl HostState {
@@ -42,8 +49,7 @@ impl HostState {
     /// `None` covers every way of not having one - no file, unreadable JSON, a missing
     /// field - because they all mean the same thing: no compatible daemon, start a fresh one.
     pub(crate) fn read(settings: &Config, worker: &str) -> Option<Self> {
-        let content = std::fs::read(Self::path(settings, worker)).ok()?;
-        serde_json::from_slice(&content).ok()
+        read_json_record(&Self::path(settings, worker)).ok().flatten()
     }
 
     /// Records the daemon a worker now runs, privately and atomically.

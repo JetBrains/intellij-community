@@ -1,8 +1,8 @@
 //! `runfiles-tree`: the runfiles tree of a host MANIFEST, built on the guest's own disk.
 //!
-//! A Windows host writes the runfiles MANIFEST of a test and no runfiles tree, and a Unix tree would not help: its
-//! links carry absolute host targets such as `C:\…`, which a Linux guest cannot follow. So this verb reads the
-//! MANIFEST through a share and makes one entry per line under the worker data directory:
+//! The guest builds its runfiles tree on every host. The guest sees the Bazel outputs through the Bazel share and no
+//! checkout at all, and a Windows host builds no tree. So this verb gets the MANIFEST on stdin and makes one entry
+//! per line under the worker data directory:
 //!
 //! - an absolute host target becomes a symbolic link to its guest path, through the request's
 //!   [`avl_wire::path_map::PathMap`]. A target that no prefix of the table holds is the refusal
@@ -10,9 +10,14 @@
 //! - a relative target stays a symbolic link to the same text;
 //! - an empty target is an empty file, as in a tree that Bazel builds.
 //!
+//! A staged runfile, whose host file lies in the checkout, becomes a copy of the bytes that follow the request line.
+//! The verb checks the length and the sha256 of each copy against the request.
+//!
 //! The tree is built beside its final name and published by one rename, so a reader sees a whole tree or none. Its
-//! name is [`avl_wire::runfiles::tree_digest`] of the MANIFEST bytes and the path table, which the controller also
-//! computes to know the root before it asks. A tree of that digest that is already there is reused as it is.
+//! name is [`avl_wire::runfiles::tree_digest`] of the request, which the controller also computes to know the root
+//! before it asks. A tree of that digest that is already there is reused as it is. A request without the bytes of its
+//! staged runfiles only reuses: with no tree of its digest it is the refusal
+//! [`STAGED_BYTES_MISSING_CODE`], and the host asks again with the bytes.
 //!
 //! The verb owns the layout of its destination. After each build or reuse it keeps the tree it answers and the newest
 //! other tree, and it removes every other entry.
@@ -20,12 +25,15 @@
 //! The request and the reply are declared in `avl_wire::runfiles`.
 
 use std::fs::{self, File};
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use avl_wire::path_map::is_absolute_host_path;
-use avl_wire::runfiles::{RunfilesManifest, RunfilesTreeRequest, RunfilesTreeResult, SCHEMA_VERSION, tree_digest};
+use avl_wire::runfiles::{
+    RunfilesManifest, RunfilesTreeRequest, RunfilesTreeResult, SCHEMA_VERSION, STAGED_BYTES_MISSING_CODE, split_request_stdin, tree_digest,
+};
 use avl_wire::verb::AgentVerb;
+use sha2::{Digest as _, Sha256};
 
 use crate::reply::AgentRefusalExt;
 use crate::reply::{AgentRefusal, quoted};
@@ -36,19 +44,21 @@ mod tests;
 /// The refusal of a MANIFEST line whose absolute target is outside every prefix of the path table.
 pub(crate) const UNMAPPED_TARGET_CODE: &str = "runfiles_target_unmapped";
 
-/// Reads the request on `stdin` and builds its tree.
+/// Reads the request and the bytes after it on `stdin`, and builds its tree.
 pub(crate) fn build_from(stdin: &mut dyn Read) -> Result<RunfilesTreeResult, AgentRefusal> {
     let mut raw = Vec::new();
     stdin
         .read_to_end(&mut raw)
         .map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, format!("cannot read the runfiles tree request: {error}")))?;
-    let request: RunfilesTreeRequest = serde_json::from_slice(&raw)
+    let (line, bytes) = split_request_stdin(&raw);
+    let request: RunfilesTreeRequest = serde_json::from_slice(line)
         .map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, format!("invalid runfiles tree request: {error}")))?;
-    build(&request)
+    build(&request, bytes)
 }
 
-/// Builds the tree of `request`, or reuses the tree of the same digest.
-pub(crate) fn build(request: &RunfilesTreeRequest) -> Result<RunfilesTreeResult, AgentRefusal> {
+/// Builds the tree of `request` from the MANIFEST and `bytes`, the bytes of its staged runfiles, or reuses the tree of
+/// the same digest.
+pub(crate) fn build(request: &RunfilesTreeRequest, bytes: &[u8]) -> Result<RunfilesTreeResult, AgentRefusal> {
     if request.schema_version != SCHEMA_VERSION {
         return Err(AgentRefusal::for_verb(
             AgentVerb::RunfilesTree,
@@ -58,7 +68,6 @@ pub(crate) fn build(request: &RunfilesTreeRequest) -> Result<RunfilesTreeResult,
             ),
         ));
     }
-    let manifest_path = absolute(&request.manifest, "MANIFEST")?;
     let destination = absolute(&request.destination, "destination")?;
     if destination == Path::new("/") {
         return Err(AgentRefusal::for_verb(
@@ -76,28 +85,25 @@ pub(crate) fn build(request: &RunfilesTreeRequest) -> Result<RunfilesTreeResult,
             ),
         ));
     }
-    let bytes = fs::read(&manifest_path).map_err(|error| {
-        AgentRefusal::for_verb(
-            AgentVerb::RunfilesTree,
-            format!("cannot read the MANIFEST {}: {error}", manifest_path.display()),
-        )
-    })?;
-    let text = String::from_utf8(bytes).map_err(|error| {
-        AgentRefusal::for_verb(
-            AgentVerb::RunfilesTree,
-            format!("the MANIFEST {} is not UTF-8: {}", manifest_path.display(), error.utf8_error()),
-        )
-    })?;
-    let manifest = RunfilesManifest::parse(&text).map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, error.to_string()))?;
-    let digest = tree_digest(text.as_bytes(), &request.path_map);
-    let entries = u32::try_from(manifest.entries.len())
+    let text = &request.manifest_text;
+    let manifest = RunfilesManifest::parse(text).map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, error.to_string()))?;
+    let digest = tree_digest(request);
+    let entries = u32::try_from(manifest.entries.len() + request.staged.len())
         .map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, format!("the MANIFEST holds too many runfiles: {error}")))?;
     let root = destination.join(&digest);
     let reused = if root.is_dir() {
         touch(&root);
         true
+    } else if !request.with_bytes && !request.staged.is_empty() {
+        return Err(AgentRefusal::refused(
+            STAGED_BYTES_MISSING_CODE,
+            format!(
+                "no runfiles tree {digest} is here, and the request carries no bytes of its {} staged runfiles",
+                request.staged.len()
+            ),
+        ));
     } else {
-        publish(&destination, &digest, &manifest, request)?
+        publish(&destination, &digest, &manifest, request, bytes)?
     };
     Ok(RunfilesTreeResult {
         root: root.to_string_lossy().into_owned(),
@@ -110,7 +116,13 @@ pub(crate) fn build(request: &RunfilesTreeRequest) -> Result<RunfilesTreeResult,
 
 /// Builds the tree of `digest` beside its final name and publishes it by one rename. Answers whether a build of the
 /// same digest published first, so this one was not needed.
-fn publish(destination: &Path, digest: &str, manifest: &RunfilesManifest, request: &RunfilesTreeRequest) -> Result<bool, AgentRefusal> {
+fn publish(
+    destination: &Path,
+    digest: &str,
+    manifest: &RunfilesManifest,
+    request: &RunfilesTreeRequest,
+    bytes: &[u8],
+) -> Result<bool, AgentRefusal> {
     let root = destination.join(digest);
     fs::create_dir_all(destination)
         .map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, format!("cannot create {}: {error}", destination.display())))?;
@@ -118,7 +130,8 @@ fn publish(destination: &Path, digest: &str, manifest: &RunfilesManifest, reques
     let _ = fs::remove_dir_all(&staging);
     let built = fs::create_dir(&staging)
         .map_err(|error| AgentRefusal::for_verb(AgentVerb::RunfilesTree, format!("cannot create {}: {error}", staging.display())))
-        .and_then(|()| populate(&staging, manifest, request));
+        .and_then(|()| populate(&staging, manifest, request))
+        .and_then(|()| write_staged(&staging, request, bytes));
     if let Err(refusal) = built {
         let _ = fs::remove_dir_all(&staging);
         return Err(refusal);
@@ -216,7 +229,11 @@ fn populate(staging: &Path, manifest: &RunfilesManifest, request: &RunfilesTreeR
                     ),
                 ));
             };
-            std::os::unix::fs::symlink(guest, &entry_path)
+            if request.copy_package_stores && is_package_store_directory(&entry.path, Path::new(&guest)) {
+                crate::stage::copy_tree(Path::new(&guest), &entry_path)
+            } else {
+                std::os::unix::fs::symlink(guest, &entry_path)
+            }
         } else {
             std::os::unix::fs::symlink(&entry.target, &entry_path)
         };
@@ -228,6 +245,66 @@ fn populate(staging: &Path, manifest: &RunfilesManifest, request: &RunfilesTreeR
         })?;
     }
     Ok(())
+}
+
+/// Writes each staged runfile of `request` under `staging`, from its slice of `bytes`, and refuses a length or a
+/// digest that is not the one the request names. A staged path that a MANIFEST line already wrote is refused too.
+fn write_staged(staging: &Path, request: &RunfilesTreeRequest, bytes: &[u8]) -> Result<(), AgentRefusal> {
+    let mut rest = bytes;
+    for staged in &request.staged {
+        let size = usize::try_from(staged.size).unwrap_or(usize::MAX);
+        if rest.len() < size {
+            return Err(AgentRefusal::for_verb(
+                AgentVerb::RunfilesTree,
+                format!(
+                    "the staged runfile {} needs {} bytes, and only {} follow the request",
+                    quoted(&staged.path),
+                    staged.size,
+                    rest.len()
+                ),
+            ));
+        }
+        let (content, after) = rest.split_at(size);
+        rest = after;
+        let sha256 = hex::encode(Sha256::digest(content));
+        if sha256 != staged.sha256 {
+            return Err(AgentRefusal::for_verb(
+                AgentVerb::RunfilesTree,
+                format!(
+                    "the bytes of the staged runfile {} have the sha256 {sha256}, and the request names {}",
+                    quoted(&staged.path),
+                    staged.sha256
+                ),
+            ));
+        }
+        let path = runfile_path(staging, &staged.path)?;
+        let written = path
+            .parent()
+            .map_or(Ok(()), fs::create_dir_all)
+            .and_then(|()| File::create_new(&path))
+            .and_then(|mut file| file.write_all(content));
+        written.map_err(|error| {
+            AgentRefusal::for_verb(
+                AgentVerb::RunfilesTree,
+                format!("cannot write the staged runfile {}: {error}", quoted(&staged.path)),
+            )
+        })?;
+    }
+    if !rest.is_empty() {
+        return Err(AgentRefusal::for_verb(
+            AgentVerb::RunfilesTree,
+            format!("{} bytes follow the staged runfiles of the request", rest.len()),
+        ));
+    }
+    Ok(())
+}
+
+/// Whether a directory runfile is a package of a `node_modules` store, which a Windows host has copied into the tree
+/// rather than linked. Node resolves an import from the real path of the importing file, and in the pnpm layout of
+/// rules_js the dependency links beside a package are junctions on a Windows host, which the guest's mount cannot
+/// read. A copy puts the real path inside the tree, where those links are the tree's own.
+fn is_package_store_directory(logical: &str, guest: &Path) -> bool {
+    logical.split('/').any(|component| component == "node_modules") && guest.is_dir()
 }
 
 /// Where the runfile at `logical` goes under `root`. A path that is absolute, or that holds an empty, `.` or `..`

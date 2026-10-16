@@ -205,6 +205,7 @@ pub(crate) fn run_pack(args: &PackArgs, stdout: &mut dyn Write, stderr: &mut dyn
 /// controller's code, and a usage refusal of the controller is one of `air-trace` too.
 pub(crate) fn vm_runtime_root() -> Result<PathBuf, Refusal> {
     avl_base::Config::load(
+        avl_base::HostFacts::without_memory(),
         avl_base::Selection::DEFAULT,
         &avl_base::Environment::from_os(),
         std::path::Path::new(""),

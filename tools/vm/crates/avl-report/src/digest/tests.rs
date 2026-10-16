@@ -42,33 +42,19 @@ fn the_path_sensitive_digest_sees_both_order_and_path() {
     );
 }
 
-/// The guest policy is folded in as the text of a JSON object, so its key order is contract: reordering it
-/// changes `productDigest` for the whole fleet.
+/// The product identity is the fingerprint and the config of the distribution, in that order. The fingerprint covers
+/// the JBR of the distribution, so a JBR of its own is no input.
 #[test]
-fn the_product_identity_folds_the_guest_policy_in_with_its_keys_in_order() {
+fn the_product_identity_is_the_fingerprint_and_the_config() {
     let input = ProductIdentityInput {
         fingerprint: PathDigest::new("fp", "1"),
         config: PathDigest::new("cfg", "2"),
-        jbr_manifest: PathDigest::new("jbr", "5"),
-        jbr_policy: JbrPolicy {
-            platform: "linux-x64".to_owned(),
-            java_home_suffix: String::new(),
-            preloaded_only: true,
-        },
     };
-    let want = path_sensitive_digest(&[
-        PathDigest::new("fp", "1"),
-        PathDigest::new("cfg", "2"),
-        PathDigest::new("jbr", "5"),
-        PathDigest::new(
-            "@guest-policy",
-            sha256_text(r#"{"platform":"linux-x64","javaHomeSuffix":"","preloadedOnly":true}"#),
-        ),
-    ]);
+    let want = path_sensitive_digest(&[PathDigest::new("fp", "1"), PathDigest::new("cfg", "2")]);
     assert_eq!(product_identity(&input), want);
-    // The same files under a different Java-home suffix are a different distribution.
+    // A new fingerprint is a different distribution.
     let mut other = input;
-    other.jbr_policy.java_home_suffix = "Contents/Home".to_owned();
+    other.fingerprint = PathDigest::new("fp", "3");
     assert_ne!(product_identity(&other), want);
 }
 
@@ -278,4 +264,28 @@ fn the_cache_is_not_rewritten_when_nothing_was_hashed() {
         fs::symlink_metadata(&cache_path).is_err(),
         "a cache that hashed nothing still wrote a file"
     );
+}
+
+/// The file keeps only what the last sweep asked about. On 2026-10-10 the cache of `air-docker-1` held 233,283 entries
+/// in 118 MB, and about 65,000 of them belonged to the current checkout. The rest named other output bases.
+#[test]
+fn a_save_keeps_only_the_entries_of_its_sweep() {
+    let root = tempfile::tempdir().unwrap();
+    let kept = root.path().join("kept.jar");
+    let dropped = root.path().join("dropped.jar");
+    fs::write(&kept, "kept").unwrap();
+    fs::write(&dropped, "dropped").unwrap();
+    let cache_path = root.path().join("cache.json");
+    let mut first = FileDigestCache::open(&cache_path);
+    first.digest(&kept).unwrap();
+    first.digest(&dropped).unwrap();
+    first.save().unwrap();
+
+    // A sweep that hashed nothing new still writes, because it drops an entry.
+    let mut second = FileDigestCache::open(&cache_path);
+    second.digest(&kept).unwrap();
+    second.save().unwrap();
+
+    let entries: serde_json::Map<String, Value> = serde_json::from_slice(&fs::read(&cache_path).unwrap()).unwrap();
+    assert_eq!(entries.keys().collect::<Vec<_>>(), [kept.to_str().unwrap()]);
 }

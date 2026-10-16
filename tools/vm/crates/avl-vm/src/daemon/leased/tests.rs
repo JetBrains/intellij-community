@@ -6,12 +6,13 @@ use std::time::Duration;
 
 use avl_base::{Exit, GuestOs};
 use avl_host_sys::Signal;
-use avl_wire::progress::{Kind, PhaseChange};
+use avl_wire::progress::{Kind, PhaseChange, PhaseState};
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::Recorded;
+use crate::worker::run_marker::read_run_marker;
 use avl_base::RefusalExt;
 
 /// The run id every case but the journal one passes.
@@ -99,10 +100,29 @@ async fn the_build_comes_before_the_lease() {
     .await
     .unwrap_or_else(|refusal| panic!("the run leases two workers: {refusal:?}"));
     assert_eq!(fixture.bazel.build_calls() - builds, 1);
+    // The digest sweep of the build is its own phase, and it too comes before the lease. Its progress names the
+    // time of each of its parts.
     assert_eq!(
         phases(&recorded),
-        ["lease:started", "lease:finished", "release:started", "release:finished"]
+        [
+            "prepare:started",
+            "prepare:progress",
+            "prepare:finished",
+            "lease:started",
+            "lease:finished",
+            "release:started",
+            "release:finished"
+        ]
     );
+    let progress = recorded
+        .data_of::<PhaseChange>(Kind::Phase)
+        .into_iter()
+        .find(|change| change.phase == Phase::Prepare && change.state == PhaseState::Progress)
+        .and_then(|change| change.detail)
+        .unwrap_or_default();
+    for part in ["descriptor ", "cache open ", "digests ", "cache save ", "runfiles tree "] {
+        assert!(progress.contains(part), "the prepare phase does not time {part:?}: {progress:?}");
+    }
     assert_eq!(leased.settlement.disposition, LeaseDisposition::Released);
 }
 
@@ -213,11 +233,68 @@ async fn an_interrupt_keeps_every_acquired_lease_and_names_each_receipt() {
         assert!(fixture.leased(&worker), "{worker} must still be leased");
         assert!(!leased.released(&worker));
     }
+    // The body that took the interrupt was dropped after its start, so its run marker stays and goes stale with this
+    // process.
+    let marker = read_run_marker(&fixture.settings, &held_workers(&leased)[0]).unwrap();
+    assert_eq!(marker.map(|marker| marker.run_id).as_deref(), Some(RUN_ID));
     assert!(
         !phases(&recorded).iter().any(|phase| phase.starts_with("release:")),
         "{:?}",
         phases(&recorded)
     );
+}
+
+// Every body runs under the run marker of its worker, and the lifecycle lock is free while it runs. Each marker names
+// the run id of the journal, and the end of each body removes its marker.
+#[tokio::test]
+async fn every_body_runs_under_its_run_marker_with_the_lock_free() {
+    let fixture = Fixture::pool().await;
+    let host = &fixture.host;
+    let (run_id, seen) = bounded(
+        host.journaled(&Ctx::background(), "test", Vec::new(), async |ctx: &Ctx, run_id: &str| {
+            let leased = host
+                .leased_run(
+                    ctx,
+                    run_id,
+                    "test",
+                    two(None),
+                    |_| Ok(()),
+                    async |(): &(), _: usize, current: Lease, _: &Arc<PreparedBuild>| {
+                        let lock = fixture.manager.lifecycle_lock_path(&current.worker);
+                        let free = fixture
+                            .manager
+                            .locks()
+                            .try_acquire(&Ctx::background(), &lock, "suite")
+                            .await
+                            .unwrap()
+                            .is_some();
+                        let marker = read_run_marker(&fixture.settings, &current.worker).unwrap();
+                        (free, marker.map(|marker| (marker.run_id, marker.operation)))
+                    },
+                )
+                .await?;
+            let seen: Vec<_> = leased
+                .settled
+                .into_iter()
+                .map(|settled| settled.expect("every body settled").expect("every run marker was written"))
+                .collect();
+            Ok((run_id.to_owned(), seen))
+        }),
+    )
+    .await
+    .unwrap_or_else(|refusal| panic!("the run leases two workers: {refusal:?}"));
+    assert_eq!(seen.len(), 2);
+    for (free, marker) in seen {
+        assert!(free, "a body ran under the lifecycle lock");
+        assert_eq!(marker, Some((run_id.clone(), "test".to_owned())));
+    }
+    for worker in fixture.workers() {
+        assert_eq!(
+            read_run_marker(&fixture.settings, &worker).unwrap(),
+            None,
+            "{worker} keeps a marker"
+        );
+    }
 }
 
 // `biased`: a signal that arrived before the fan-out is seen before any body is polled.
@@ -349,4 +426,27 @@ async fn the_run_id_is_the_holder_unless_one_is_named() {
             "the journal is named by the run id"
         );
     }
+}
+
+/// `runStarted` carries the start of the process, so a journal shows how long the `vm.cmd` wrapper built before the
+/// controller ran. The Unix answer is local time, and the record is UTC.
+#[test]
+fn a_process_start_reads_as_rfc3339_in_utc() {
+    use super::rfc3339_of_process_start;
+    let local = |day| {
+        jiff::civil::date(2026, 10, day)
+            .at(15, 41, 37, 0)
+            .to_zoned(jiff::tz::TimeZone::system())
+            .unwrap()
+            .timestamp()
+            .to_string()
+    };
+    assert_eq!(rfc3339_of_process_start("Sat Oct 10 15:41:37 2026"), Some(local(10)));
+    // `ps` pads a day before the tenth, and the probe collapses the padding.
+    assert_eq!(rfc3339_of_process_start("Fri Oct 9 15:41:37 2026"), Some(local(9)));
+    assert_eq!(
+        rfc3339_of_process_start("2026-10-10T13:41:37.25Z").as_deref(),
+        Some("2026-10-10T13:41:37.25Z")
+    );
+    assert_eq!(rfc3339_of_process_start("yesterday"), None);
 }

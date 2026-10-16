@@ -1,5 +1,6 @@
 //! Helpers the verbs' tests share: running the agent in memory and reading what it answered.
 
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 
 use serde_json::Value;
@@ -70,4 +71,21 @@ impl Drop for RunningProcess {
         let _ = self.0.kill();
         let _ = self.0.wait();
     }
+}
+
+/// A launcher that runs this test binary as the agent, the way `start` runs the installed one. It runs the test
+/// `supervisor::tests::agent_process` with the argv of the agent in the environment.
+pub(crate) fn agent_launcher(directory: &Path) -> PathBuf {
+    let test_binary = std::env::current_exe().unwrap();
+    avl_testkit::fake_executable(
+        directory,
+        "vm-guest-agent",
+        &format!(
+            "i=0\nfor argument in \"$@\"; do export \"AVL_GUEST_AGENT_ARG_$i=$argument\"; i=$((i+1)); done\n\
+             export AVL_GUEST_AGENT_ARGC=$i\n\
+             exec '{}' --exact supervisor::tests::agent_process --nocapture --test-threads=1 -q\n",
+            test_binary.display()
+        ),
+    )
+    .unwrap()
 }

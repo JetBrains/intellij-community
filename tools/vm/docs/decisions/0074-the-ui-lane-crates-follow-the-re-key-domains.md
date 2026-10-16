@@ -10,7 +10,7 @@ Date: 2026-10-02
 
 Accepted. It records the rework of the cargo workspace `plugins/air/tests/integration/vm-lane` on 2026-10-01 and
 2026-10-02. The workspace now follows the crate rule of
-[ADR 0043 of the build](../../../../../build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) and the
+[ADR 0043 of the build](../../../../../build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) and the
 [Rust Code Style](../../../../.agents/skills/rust-code-style/SKILL.md) skill. The crate map is the vm-lane
 [`README.md`](../../README.md), and the operator view is [the VM guide](../vm-ui-tests.md).
 

@@ -51,6 +51,11 @@ impl Span {
         micros_to_ms(self.start_time - origin_us)
     }
 
+    /// The end of the span in milliseconds from `origin_us`, to a tenth. See [`Self::offset_ms`].
+    pub(crate) fn end_ms(&self, origin_us: i64) -> f64 {
+        micros_to_ms(self.start_time + self.duration - origin_us)
+    }
+
     /// Tells whether the span is a coroutine helper twin of a span: `<name>: scheduled` or `<name>: completing`.
     pub(crate) fn is_helper(&self) -> bool {
         HELPER_SUFFIXES.iter().any(|suffix| self.operation_name.ends_with(suffix))

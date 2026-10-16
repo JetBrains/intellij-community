@@ -78,7 +78,7 @@ async fn the_gate_resolves_the_pinned_docker_cli_once() {
     for label in [docker_cli_label(arch), docker_buildx_label(arch)] {
         assert!(labels[0].contains(&label), "{labels:?}");
     }
-    // The pinned CLI gets the pinned plugin on an external engine too.
+    // The pinned CLI gets the pinned plugin on the host engine too.
     let config = fixture.settings.docker_config_dir();
     let written: serde_json::Value = serde_json::from_slice(&std::fs::read(config.join("config.json")).unwrap()).unwrap();
     let directory = PathBuf::from(written["cliPluginsExtraDirs"][0].as_str().unwrap());
@@ -138,7 +138,6 @@ async fn a_pinned_cli_that_cannot_be_resolved_is_docker_missing() {
         quiet(),
         Arc::clone(&locks),
         pinned(None),
-        Arc::default(),
     );
     let refusal = without_bazel.require_available(&Ctx::background(), "").await.unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("docker_missing", Exit::UNAVAILABLE));
@@ -154,7 +153,6 @@ async fn a_pinned_cli_that_cannot_be_resolved_is_docker_missing() {
         quiet(),
         locks,
         pinned(Some(Arc::new(dangling))),
-        Arc::default(),
     );
     let refusal = backend.require_available(&Ctx::background(), "").await.unwrap_err();
     assert_eq!(refusal.code, "docker_missing");

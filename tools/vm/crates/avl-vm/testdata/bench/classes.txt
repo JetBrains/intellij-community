@@ -1,5 +1,5 @@
 vm bench classes session non-modal arm, 1 valid run
-anchors: frameBecameVisible, welcomeBecameVisible, welcome screen painted, quit; the plugin table is at quit
+anchors: frameBecameVisible, welcomeBecameVisible, welcome screen painted, quit; the plugin table is at welcomeBecameVisible
 classes (median of the valid runs)                            median     min     max
 totals:
   classes.named                                                   32      32      32
@@ -8,10 +8,9 @@ totals:
   classes.jar                                                      4       4       4
   classes.platform                                                 4       4       4
   classes.plugins                                                 12      12      12
-  classes.named@quit                                              32      32      32
-by plugin at quit, 7 of 7 plugins:
+  classes.named@welcomeBecameVisible                              30      30      30
+by plugin at welcomeBecameVisible, 6 of 6 plugins:
   com.intellij                                                     4
-  com.intellij.dfa.analysis                                        2
   com.jetbrains.performancePlugin                                  2
   com.jetbrains.gateway                                            1
   com.jetbrains.station                                            1

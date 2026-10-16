@@ -58,6 +58,7 @@ fn run_started(run_id: &str, args: &[&str]) -> Event {
         command: "run".to_owned(),
         args: args.iter().map(|arg| (*arg).to_owned()).collect(),
         checkout: None,
+        process_started_at: None,
     })
 }
 

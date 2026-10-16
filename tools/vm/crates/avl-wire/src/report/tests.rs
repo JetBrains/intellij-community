@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 use serde_json::{Map, Value, json};
 
 use super::*;
-use crate::daemon::{Skipped, WatchdogExpired};
+use crate::daemon::{Skipped, SlowStep, WatchdogExpired};
 
 /// A report that satisfies every requirement, the starting point of the refusal cases. Built as a value and
 /// serialized rather than written as a literal, so a field renamed on the struct cannot leave this fixture
@@ -45,6 +45,7 @@ pub(super) fn valid_report() -> RunReport {
         traces_error: None,
         tree: None,
         tree_error: None,
+        notes: Vec::new(),
         protocol_diagnostic: None,
         verdict_diagnostic: None,
     }
@@ -421,11 +422,60 @@ fn safe_evidence_paths_keeps_only_what_is_safe_to_fetch() {
     }
 }
 
+// The IDE writes its evidence into its context under `<vm_data>/ide/`: the heartbeat screenshots, and the thread
+// dump of a cancel before the kill.
+#[test]
+fn safe_evidence_paths_admits_the_files_of_an_ide_context() {
+    let log = "/home/admin/WorkerData/ide/a1b2c3/log/launch-1";
+    let screenshot = format!("{log}/screenshots/heartbeat-1.png");
+    let dump = format!("{log}/threadDump-before-kill-1791460800000.txt");
+    assert_eq!(safe_evidence_paths(&[expiry(&[&screenshot, &dump])]), [screenshot, dump]);
+}
+
 #[test]
 fn safe_evidence_paths_caps_the_count() {
     let paths = safe_evidence_paths(&[expiry(&["/a.png", "/b.png", "/c.png", "/d.png", "/e.png", "/f.png"])]);
     assert_eq!(paths, ["/a.png", "/b.png", "/c.png", "/d.png"]);
     assert_eq!(paths.len(), MAX_EVIDENCE_FILES);
+}
+
+fn slow_step(ordinal: u32, ide_dump: bool) -> RunEvent {
+    RunEvent::synthesized(RunEventKind::SlowStep(SlowStep {
+        timestamp: "t".to_owned(),
+        step: "restart".to_owned(),
+        path: "restart > quit".to_owned(),
+        budget_ms: 30_000,
+        elapsed_ms: 31_000,
+        thread_dump: format!("/it/slow-steps/{ordinal:02}-restart-daemon-threads.txt"),
+        ide_dump: ide_dump.then(|| format!("/it/slow-steps/{ordinal:02}-restart-ide-dump.txt")),
+        ide_dump_error: (!ide_dump).then(|| "refused".to_owned()),
+    }))
+}
+
+// The dumps of each slow step are evidence too. They follow the files of the expiry and have a cap of their own, so a
+// run with many slow steps keeps the evidence of its end.
+#[test]
+fn safe_evidence_paths_adds_the_dumps_of_the_slow_steps_after_the_expiry() {
+    let mut events = vec![slow_step(1, true), slow_step(2, false)];
+    events.push(expiry(&["/a.png", "/b.png", "/c.png", "/d.png"]));
+    events.extend((3..=6).map(|ordinal| slow_step(ordinal, true)));
+
+    let paths = safe_evidence_paths(&events);
+
+    assert_eq!(&paths[..4], ["/a.png", "/b.png", "/c.png", "/d.png"]);
+    assert_eq!(
+        &paths[4..7],
+        [
+            "/it/slow-steps/01-restart-daemon-threads.txt",
+            "/it/slow-steps/01-restart-ide-dump.txt",
+            "/it/slow-steps/02-restart-daemon-threads.txt",
+        ]
+    );
+    assert_eq!(paths.len(), MAX_EVIDENCE_FILES + MAX_SLOW_STEP_FILES);
+    assert_eq!(
+        safe_evidence_paths(&[slow_step(1, false)]),
+        ["/it/slow-steps/01-restart-daemon-threads.txt"]
+    );
 }
 
 // A run may publish several expiries, and the one that ended it describes the end.

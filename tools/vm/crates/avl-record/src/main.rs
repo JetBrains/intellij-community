@@ -33,6 +33,8 @@ macro_rules! say {
     };
 }
 
+mod allure;
+mod attach;
 mod bridge;
 mod bundle;
 mod capture;

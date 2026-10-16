@@ -2,7 +2,6 @@
 //! It holds the host's concurrent-VM limit, the boot sequence, and the orphaned run process. It also holds the clone of a slot,
 //! `pool init`, `pool gc`, and the unmaking of a slot that `pool recycle` runs.
 
-use std::collections::BTreeMap;
 use std::fs::OpenOptions;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
@@ -13,16 +12,15 @@ use avl_base::format::words;
 use avl_base::{Exit, OrRefuse, Outcome, Refusal, SCHEMA_VERSION, validate_name};
 use avl_host_sys::guest::{ensure_host_paths, read_init_receipt};
 use avl_host_sys::share::shares;
-use avl_host_sys::{Backoff, Ctx, Poll, PsField, SpawnOptions};
+use avl_host_sys::{Backoff, Ctx, Poll, SpawnOptions};
 use nix::sys::signal::{Signal, kill, killpg};
 use nix::unistd::Pid;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use super::pool::render_list;
 use super::{GUEST_PROBE_TIMEOUT, Lease, Manager, StartState, StopState, probe_timeout, read_lease};
 use crate::worker::secure::write_json_line;
-use crate::worker::tart::{ProcessIdentity, TART_CLONE_TIMEOUT, TART_DELETE_TIMEOUT, TART_SET_TIMEOUT, TART_STOP_TIMEOUT, Tart, VmState};
+use crate::worker::tart::{PidReceipt, TART_CLONE_TIMEOUT, TART_DELETE_TIMEOUT, TART_SET_TIMEOUT, TART_STOP_TIMEOUT, Tart, VmState};
 
 /// What `tart run` prints when Virtualization.framework refuses another machine. Matched as prose because it is the
 /// only signal: the run process exits with a status that says nothing else.
@@ -100,41 +98,32 @@ impl Manager {
         (state.schema_version == SCHEMA_VERSION && state.worker == worker).then_some(state)
     }
 
-    /// Records the identity the controller will recognise this worker's run process by.
+    /// Records the identity the controller will recognise this worker's run process by: the pid receipt.
     ///
     /// Written atomically. A half-written receipt reads as "no run process of mine is alive", which sends the next
     /// start into a cold boot over a *running* VM and straight into the host's concurrent-VM limit.
-    pub(crate) async fn write_process_identity(&self, ctx: &Ctx, worker: &str, pid: i32) -> Result<ProcessIdentity, Refusal> {
+    pub(crate) async fn write_process_identity(&self, ctx: &Ctx, worker: &str, pid: i32) -> Result<PidReceipt, Refusal> {
         let mut wait = Poll::start(&SystemClock, self.timings.identity_budget, self.timings.identity_backoff);
-        let answers = loop {
-            let answers = (
-                self.runner.probe_process(ctx, pid, PsField::StartTime).await?,
-                self.runner.probe_process(ctx, pid, PsField::Command).await?,
-            );
-            if (answers.0.is_some() && answers.1.is_some()) || !wait.pause(ctx).await {
-                break answers;
+        let identity = loop {
+            let identity = self.runner.identify(ctx, pid).await?;
+            if identity.is_some() || !wait.pause(ctx).await {
+                break identity;
             }
         };
-        let (Some(process_start), Some(process_command)) = answers else {
+        let Some(process) = identity else {
             return Err(Refusal::new(
                 "process_identity_unavailable",
                 Exit::FAILURE,
                 format!("cannot identify Tart process for {worker}"),
             ));
         };
-        let identity = ProcessIdentity {
+        let receipt = PidReceipt {
             schema_version: SCHEMA_VERSION,
             worker: worker.to_owned(),
-            pid,
-            process_start,
-            process_command,
+            process,
         };
-        write_json_line(
-            &self.settings.pid_path(worker),
-            &identity,
-            &format!("the Tart process for {worker}"),
-        )?;
-        Ok(identity)
+        write_json_line(&self.settings.pid_path(worker), &receipt, &format!("the Tart process for {worker}"))?;
+        Ok(receipt)
     }
 
     /// Starts the long-lived `tart run` process and records the identity the controller recognizes it by.
@@ -144,7 +133,7 @@ impl Manager {
     /// the terminal's SIGINT with it - and it is deliberately not registered with the interrupt service: the stop
     /// path brings it down with `tart stop` and identity polling instead. It is never reaped, so a run process that
     /// died at once is still there for the identity probe and the host-limit retry to read.
-    async fn spawn_run(&self, ctx: &Ctx, worker: &str, argv: &[String]) -> Result<ProcessIdentity, Refusal> {
+    async fn spawn_run(&self, ctx: &Ctx, worker: &str, argv: &[String]) -> Result<PidReceipt, Refusal> {
         let log_path = self.settings.tart_log_path(worker);
         let log = OpenOptions::new()
             .create(true)
@@ -194,13 +183,7 @@ impl Manager {
     /// down. Since the pool grows on demand and shares the host with whatever else uses that framework - the
     /// Parallels worker included - hitting the cap mid-teardown is ordinary, and short-lived. A cap that is genuinely
     /// full still fails, just after this window instead of instantly.
-    async fn spawn_retrying_the_host_limit(
-        &self,
-        ctx: &Ctx,
-        tart: &Tart,
-        worker: &str,
-        argv: &[String],
-    ) -> Result<ProcessIdentity, Refusal> {
+    async fn spawn_retrying_the_host_limit(&self, ctx: &Ctx, tart: &Tart, worker: &str, argv: &[String]) -> Result<PidReceipt, Refusal> {
         let mut window = Poll::start(
             &SystemClock,
             self.timings.host_limit_window,
@@ -242,10 +225,10 @@ impl Manager {
     /// Makes sure the next `tart run` either resumes a guest state that matches what it is about to declare, or
     /// resumes nothing at all.
     ///
-    /// Restoring against a changed declaration is not rejected by Tart: both shares ride one virtio-fs device, so
+    /// Restoring against a changed declaration is not rejected by Tart: every share rides one virtio-fs device, so
     /// dropping or repointing one changes the device's *contents* rather than the machine's topology and
-    /// `restoreMachineStateFrom` succeeds. Measured on 2026-08-12 - a resume declaring one of the two shares came up
-    /// without a word. The only safe move is to spend the saved state deliberately: resume with the argv that
+    /// `restoreMachineStateFrom` succeeds. Measured on 2026-08-12, with two shares - a resume declaring one of them
+    /// came up without a word. The only safe move is to spend the saved state deliberately: resume with the argv that
     /// produced it (or, when nothing was recorded, with the current one, where the restore either takes or fails
     /// loudly), shut the guest down cleanly, and let the caller cold-boot.
     pub(super) async fn discard_incompatible_suspended_state(
@@ -314,7 +297,7 @@ impl Manager {
     }
 
     /// Polls until the identified process is gone, the grace runs out, or the operation is cancelled.
-    async fn wait_for_exit(&self, ctx: &Ctx, tart: &Tart, identity: &ProcessIdentity, grace: Duration) -> Result<(), Refusal> {
+    async fn wait_for_exit(&self, ctx: &Ctx, tart: &Tart, identity: &PidReceipt, grace: Duration) -> Result<(), Refusal> {
         let mut wait = Poll::start(&SystemClock, grace, self.timings.process_backoff);
         while tart.process_alive(ctx, Some(identity)).await? && wait.pause(ctx).await {}
         Ok(())
@@ -515,7 +498,8 @@ impl Manager {
     ///
     /// Lazy: a pool slot is a name the controller may use, not a VM that must already exist. The first operation on
     /// a free slot clones it from the golden and boots it. The first operation on a suspended slot resumes it. The
-    /// caller holds the worker's lifecycle lock, so every start and stop here is the lock-free one.
+    /// caller holds the worker's lifecycle lock, or the worker's run marker, which excludes every other lifecycle
+    /// operation. So every start and stop here is the lock-free one.
     pub(super) async fn require_tart_ready(&self, ctx: &Ctx, tart: &Tart, lease: &Lease) -> Result<(), Refusal> {
         let worker = lease.worker.as_str();
         tart.require_available(ctx, worker).await?;
@@ -544,20 +528,17 @@ impl Manager {
         guest.ensure_ready(self).await
     }
 
-    /// Whether the running worker was launched with shares that no longer describe the host.
+    /// Whether the running worker was launched with a share that no longer describes the host.
     ///
     /// The init receipt is the record of what it was launched for. Every way of not having one - never provisioned,
     /// a receipt naming another worker, a schema this build does not speak - answers false, because the layout is
-    /// then built in place and no restart is needed.
+    /// then built in place and no restart is needed. The share names no checkout, so a second checkout of the host
+    /// restarts nothing.
     fn share_declaration_stale(&self, worker: &str) -> bool {
-        let (Ok(receipt), Ok(repo), Ok(bazel_user_root)) = (
-            read_init_receipt(&self.settings, worker),
-            self.settings.host_repo(),
-            self.settings.host_bazel_user_root(),
-        ) else {
+        let (Ok(receipt), Ok(bazel_user_root)) = (read_init_receipt(&self.settings, worker), self.settings.host_bazel_user_root()) else {
             return false;
         };
-        Path::new(&receipt.host_repo) != repo || Path::new(&receipt.host_bazel_user_root) != bazel_user_root
+        Path::new(&receipt.host_bazel_user_root) != bazel_user_root
     }
 
     /// [`Manager::require_release_ready`] for a Tart worker. A stopped worker is refused, and `lease release` never
@@ -648,7 +629,7 @@ impl Manager {
             return Err(Refusal::new(
                 "stop_timeout",
                 Exit::FAILURE,
-                format!("Tart process {} for {worker} remained alive after stop", identity.pid),
+                format!("Tart process {} for {worker} remained alive after stop", identity.process.pid),
             ));
         }
         let _ = std::fs::remove_file(self.settings.pid_path(worker));
@@ -672,7 +653,7 @@ impl Manager {
         ctx: &Ctx,
         tart: &Tart,
         worker: &str,
-        identity: &ProcessIdentity,
+        identity: &PidReceipt,
     ) -> Result<bool, Refusal> {
         if !is_tart_run_of(identity, worker) {
             return Ok(false);
@@ -696,21 +677,21 @@ impl Manager {
             return Ok(None);
         }
         tart.require_available(ctx, worker).await?;
-        Ok((!tart.exists(ctx, worker).await?).then_some(identity.pid))
+        Ok((!tart.exists(ctx, worker).await?).then_some(identity.process.pid))
     }
 
     /// Ends a run process whose VM Tart no longer lists, the way `tart stop` ends one it can find: an interrupt to
     /// its process group, then a kill once the stop grace is spent.
-    async fn end_orphaned_run_process(&self, ctx: &Ctx, tart: &Tart, worker: &str, identity: &ProcessIdentity) -> Result<(), Refusal> {
+    async fn end_orphaned_run_process(&self, ctx: &Ctx, tart: &Tart, worker: &str, identity: &PidReceipt) -> Result<(), Refusal> {
         self.note(
             worker,
             format!(
                 "Tart no longer lists {worker}, but its run process {} is alive; ending it",
-                identity.pid
+                identity.process.pid
             ),
         );
         let signal = |signal: Signal| {
-            let pid = Pid::from_raw(identity.pid);
+            let pid = Pid::from_raw(identity.process.pid);
             if killpg(pid, signal).is_err() {
                 let _ = kill(pid, signal);
             }
@@ -730,7 +711,7 @@ impl Manager {
                 Exit::FAILURE,
                 format!(
                     "Tart process {} for {worker} remained alive after SIGKILL; its VM is no longer listed",
-                    identity.pid
+                    identity.process.pid
                 ),
             ));
         }
@@ -863,25 +844,10 @@ impl Manager {
         // Spending a suspended worker's state re-declares its shares, so the host paths must be resolved.
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
         self.prepare_runtime_dirs()?;
-        let mut removed = Vec::new();
-        let mut kept = BTreeMap::new();
-        for worker in &self.settings.workers {
-            let outcome = self
-                .with_lifecycle_lock(ctx, worker, "pool-gc", self.gc_one_worker(ctx, tart, worker))
-                .await?;
-            if outcome == "removed" {
-                removed.push(worker.clone());
-            } else {
-                kept.insert(worker.clone(), outcome);
-            }
-        }
-        let text = format!("removed={}", render_list(&removed));
-        Ok(Outcome {
-            data: json!({
-                "backend": self.settings.backend, "action": "gc", "removed": removed, "kept": kept,
-            }),
-            text,
+        self.gc_each_worker(ctx, async |worker: &str| {
+            self.gc_one_worker(ctx, tart, worker).await.map(str::to_owned)
         })
+        .await
     }
 
     async fn gc_one_worker(&self, ctx: &Ctx, tart: &Tart, worker: &str) -> Result<&'static str, Refusal> {
@@ -930,8 +896,8 @@ impl Manager {
 
 /// Whether a recorded command is the shape [`Manager::tart_run_argv`] writes for `worker`: a `tart` executable, then
 /// `run`, and the worker last. A `/bin/sh` in front is allowed, which is how a script standing in for `tart` shows.
-fn is_tart_run_of(identity: &ProcessIdentity, worker: &str) -> bool {
-    let tokens: Vec<&str> = identity.process_command.split_whitespace().collect();
+fn is_tart_run_of(identity: &PidReceipt, worker: &str) -> bool {
+    let tokens: Vec<&str> = identity.process.process_command.split_whitespace().collect();
     tokens.last() == Some(&worker)
         && tokens
             .windows(2)

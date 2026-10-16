@@ -325,6 +325,7 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
     settings.site_dir = args.site.clone().or_else(|| Some(repo.as_ref()?.join("out").join("air-site")));
     if args.site.is_none() {
         settings.site_project = repo.as_ref().map(|repo| repo.join("plugins").join("air").join("docs"));
+        settings.site_kernel = repo.as_ref().map(|repo| repo.join("community").join("tools").join("docs-site"));
     }
     settings.repo_root = repo;
     if !args.no_default_roots

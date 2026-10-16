@@ -11,7 +11,7 @@ use serde_json::value::RawValue;
 use super::agent::BazelHost;
 use super::sshkeys::PeerChannels;
 use super::supervisor::AgentAccount;
-use super::{GUEST_COMMAND_TIMEOUT, Guest, guest_join};
+use super::{GUEST_COMMAND_TIMEOUT, Guest, chown_argv, guest_join};
 use crate::proc::SpawnOptions;
 
 /// The timeout of `validate-guest`. It checks the display, the packages and the accounts, seconds of work.
@@ -97,11 +97,9 @@ impl Guest<'_> {
         self.as_root(&words(["/bin/mkdir", "-p", &state]), &SpawnOptions::within(GUEST_COMMAND_TIMEOUT))
             .await?;
         // Root makes the directory; the worker user writes into it.
-        self.as_root(
-            &words([settings.guest.chown, "-R", &settings.vm_user, &settings.vm_data]),
-            &SpawnOptions::within(DATA_CHOWN_TIMEOUT),
-        )
-        .await?;
+        if let Some(chown) = chown_argv(settings, &["-R"], &[&settings.vm_data]) {
+            self.as_root(&chown, &SpawnOptions::within(DATA_CHOWN_TIMEOUT)).await?;
+        }
         self.install_agent(bazel).await?;
         self.invoke_boot_verb(AgentAccount::Root, AgentVerb::ValidateGuest, validate_argv, VALIDATE_TIMEOUT)
             .await
@@ -190,8 +188,9 @@ impl Guest<'_> {
         let mut mkdir = words(["/bin/mkdir", "-p"]);
         mkdir.extend(roots.iter().map(|root| (*root).to_owned()));
         self.as_root(&mkdir, &SpawnOptions::within(GUEST_COMMAND_TIMEOUT)).await?;
-        let mut chown = words([settings.guest.chown, &settings.vm_user]);
-        chown.extend(roots.iter().map(|root| (*root).to_owned()));
-        self.as_root(&chown, &SpawnOptions::within(GUEST_COMMAND_TIMEOUT)).await.map(drop)
+        if let Some(chown) = chown_argv(settings, &[], &roots) {
+            self.as_root(&chown, &SpawnOptions::within(GUEST_COMMAND_TIMEOUT)).await?;
+        }
+        Ok(())
     }
 }

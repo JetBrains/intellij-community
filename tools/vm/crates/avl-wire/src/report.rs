@@ -385,6 +385,12 @@ pub struct RunReport {
     pub tree: Option<Tree>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub tree_error: Option<String>,
+    /// The facts about the run that a reader must see and that do not change the verdict. An example is a test jar
+    /// that the host rebuilt while the iteration ran. Carried verbatim, and never read by anything that decides
+    /// `status` or `verdict_diagnostic`, as `traces_error` is. An optional field of v2, so an older report decodes
+    /// with no note.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub protocol_diagnostic: Option<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
@@ -455,27 +461,55 @@ pub struct RetrievedXml {
 /// How many guest files one expiry may cause the controller to fetch.
 pub const MAX_EVIDENCE_FILES: usize = 4;
 
+/// How many dump files the slow steps of one run may cause the controller to fetch: two for each of the four steps
+/// that the daemon dumps.
+pub const MAX_SLOW_STEP_FILES: usize = 8;
+
 /// Reduces the guest files a run's last expiry named to what is safe to fetch.
 ///
 /// The list arrives from inside the guest, so it is input rather than fact: absolute POSIX paths of printable
 /// ASCII at most 512 characters after the slash, no traversal, a capture extension, no duplicates, and a hard
 /// count cap. Anything else is dropped silently, because evidence is a convenience on top of a verdict that
 /// already stands on its own. The *last* expiry, because the one that ended the run describes the end.
+///
+/// The guard holds no directory list, so it admits the files of an IDE context under `<vm_data>/ide/` as it admits
+/// every other guest directory: the heartbeat screenshots of `log/<launchName>` and the thread dump that a
+/// `cancel --thread-dump` writes there before the kill.
+///
+/// The dumps that each `slowStep` record names follow the files of the expiry, in the order of the records, with a cap
+/// of their own, [`MAX_SLOW_STEP_FILES`], so a run with slow steps keeps the evidence of its end.
 pub fn safe_evidence_paths(events: &[RunEvent]) -> Vec<String> {
+    let mut safe = expiry_evidence_paths(events);
+    let dumps = events.iter().filter_map(|event| match &event.kind {
+        RunEventKind::SlowStep(slow) => Some(slow.dumps()),
+        _ => None,
+    });
+    let expiry_files = safe.len();
+    admit(&mut safe, dumps.flatten(), expiry_files + MAX_SLOW_STEP_FILES);
+    safe
+}
+
+/// The part of [`safe_evidence_paths`] that the last expiry named: what the report's expiry names as its evidence.
+pub fn expiry_evidence_paths(events: &[RunEvent]) -> Vec<String> {
     let named = events.iter().rev().find_map(|event| match &event.kind {
         RunEventKind::WatchdogExpired(expired) => Some(expired.evidence.as_slice()),
         _ => None,
     });
     let mut safe: Vec<String> = Vec::new();
-    for entry in named.unwrap_or_default() {
-        if safe.len() == MAX_EVIDENCE_FILES {
+    admit(&mut safe, named.unwrap_or_default().iter(), MAX_EVIDENCE_FILES);
+    safe
+}
+
+/// Adds each safe entry that `safe` does not hold yet, until `safe` holds `cap` entries.
+fn admit<'a>(safe: &mut Vec<String>, entries: impl Iterator<Item = &'a String>, cap: usize) {
+    for entry in entries {
+        if safe.len() >= cap {
             break;
         }
         if is_safe_evidence_path(entry) && !safe.contains(entry) {
             safe.push(entry.clone());
         }
     }
-    safe
 }
 
 fn is_safe_evidence_path(path: &str) -> bool {

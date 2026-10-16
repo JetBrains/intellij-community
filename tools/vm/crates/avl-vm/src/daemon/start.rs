@@ -5,12 +5,11 @@ use std::path::Path;
 use std::time::Duration;
 
 use avl_base::format::{clip, words};
-use avl_base::{Exit, OrRefuse, Refusal, Scope};
-use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, SupervisorOptions, guest_join, user_argv};
-use avl_host_sys::paths::GuestPaths;
+use avl_base::{Backend, Exit, OrRefuse, Refusal, Scope};
+use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
 use avl_host_sys::{Backoff, Channel, Ctx, Poll, SpawnOptions};
 use avl_report::digest;
-use avl_wire::daemon::{self as wire, LABEL, StateFile};
+use avl_wire::daemon::{self as wire, StateFile};
 use avl_wire::progress::Phase;
 use avl_wire::runtime::{self, LaunchOptions};
 use avl_wire::stage::{self as stage_wire, ArgFileRequest, LaunchPrep, LaunchPrepResult};
@@ -21,9 +20,11 @@ use serde_json::{Value, json};
 use crate::daemon::build::PreparedBuild;
 use crate::daemon::host::Host;
 use crate::daemon::http::{StatusProbe, protocol_refusal, require_supported_protocol};
-use crate::daemon::stage::{GuestRuntime, short};
+use crate::daemon::stage::{GuestRuntime, guest_daemon_directories, guest_home, short};
 use crate::daemon::state::{HostState, guest_state_dir};
+use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, guest_ide_root};
 use avl_base::RefusalExt;
+use avl_wire::ide::IdeGcResult;
 
 #[cfg(test)]
 #[cfg(unix)]
@@ -53,7 +54,7 @@ const LAUNCH_PREP_TIMEOUT: Duration = Duration::from_secs(120);
 /// The daemon's own runtime descriptor as the guest sees it: the label's package path and name under the guest
 /// runfiles root. The leading `//` and the first `:` are replaced once; a label cannot legally carry a second `:`.
 pub(crate) fn self_location(prep: &PreparedBuild) -> String {
-    let label = LABEL.strip_prefix("//").unwrap_or(LABEL).replacen(':', "/", 1);
+    let label = prep.label.strip_prefix("//").unwrap_or(prep.label).replacen(':', "/", 1);
     guest_join(&guest_join(&prep.guest_runfiles_root, "_main"), &format!("{label}.runtime.json"))
 }
 
@@ -80,6 +81,12 @@ enum Health {
         last: StatusProbe,
     },
     Interrupted,
+}
+
+/// Whether the shares of a worker are current for a build: its last daemon was mounted for exactly this launch and
+/// this mount. See [`Host::refresh_shares_if_host_bytes_moved`].
+fn shares_current(previous: Option<&HostState>, prep: &PreparedBuild) -> bool {
+    previous.is_some_and(|state| state.launch_digest == prep.launch_digest && state.last_mount_digest == prep.mount_digest)
 }
 
 impl Host {
@@ -116,7 +123,7 @@ impl Host {
         previous: Option<&HostState>,
         prep: &PreparedBuild,
     ) -> Result<(), Refusal> {
-        if previous.is_some_and(|state| state.launch_digest == prep.launch_digest && state.last_mount_digest == prep.mount_digest) {
+        if shares_current(previous, prep) {
             self.reporter.note(
                 format!("no host bytes moved under {worker}'s mount since its last daemon; not refreshing the shares"),
                 Some(&Scope::worker(worker)),
@@ -139,6 +146,10 @@ impl Host {
     /// the cancel's guest exec is signalled. The daemon run may then still hold the guest's run slot, and the record
     /// is the only thing that lets the next `run` recognise that run as its own parked daemon, so it stays and the
     /// stop is refused.
+    ///
+    /// It stops no lane IDE. Each IDE is a supervisor run of its own, so it survives the daemon run. The callers that
+    /// must not keep an IDE stop it through [`gc_guest_ides`]: `daemon stop`, a lease release, a pool recycle and a
+    /// daemon start.
     pub(crate) async fn stop_daemon(&self, ctx: &Ctx, worker: &str, state: Option<&HostState>) -> Result<(), Refusal> {
         let Some(state) = state else {
             return Ok(());
@@ -178,8 +189,8 @@ impl Host {
     }
 
     /// Cancels one daemon run through the guest supervisor, and answers `Ok` only when the supervisor reports it
-    /// finished. No `/shutdown` first: the IDE launches on the first `/run`, so a TERM loses nothing a polite stop
-    /// would have saved.
+    /// finished. No `/shutdown` first: the lane IDE is a run of its own that the cancel does not reach, so a TERM loses
+    /// nothing a polite stop would have saved.
     async fn cancel_daemon_run(&self, ctx: &Ctx, worker: &str, run_id: &str) -> Result<(), Refusal> {
         let channel = self.channel(worker);
         let reply = self
@@ -250,19 +261,43 @@ impl Host {
         Ok(Some(id))
     }
 
-    /// Builds nothing and boots everything, under the `daemon-start` progress phase.
+    /// Builds nothing and boots everything, under the `daemon-start` progress phase. It stops every lane IDE of the
+    /// worker: see [`Host::start_daemon_keeping`].
     pub(crate) async fn start_daemon(&self, ctx: &Ctx, worker: &str, prep: &PreparedBuild) -> Result<HostState, Refusal> {
+        self.start_daemon_keeping(ctx, worker, prep, IdeRetention::StopAll)
+            .await
+            .map(|(state, _)| state)
+    }
+
+    /// [`Host::start_daemon`], which keeps the lane IDEs that `retention` names. Answers what the `ide-gc` phase did.
+    ///
+    /// A kept IDE outlives the daemon, and the new daemon attaches to it. An IDE cannot be kept over a refresh of a
+    /// VirtioFS share, because the refresh unmounts the share that the IDE runs from. So the start stops every IDE when
+    /// its refresh is a remount.
+    pub(crate) async fn start_daemon_keeping(
+        &self,
+        ctx: &Ctx,
+        worker: &str,
+        prep: &PreparedBuild,
+        retention: IdeRetention<'_>,
+    ) -> Result<(HostState, IdeGcResult), Refusal> {
         let phase = self.reporter.start_phase(
             Phase::DaemonStart,
             "stage the guest runtime, then launch the daemon",
             Some(&Scope::worker(worker)),
         );
-        let started = self.boot_daemon(ctx, worker, prep).await;
+        let started = self.boot_daemon(ctx, worker, prep, retention).await;
         phase.finish(&started);
         started
     }
 
-    async fn boot_daemon(&self, ctx: &Ctx, worker: &str, prep: &PreparedBuild) -> Result<HostState, Refusal> {
+    async fn boot_daemon(
+        &self,
+        ctx: &Ctx,
+        worker: &str,
+        prep: &PreparedBuild,
+        retention: IdeRetention<'_>,
+    ) -> Result<(HostState, IdeGcResult), Refusal> {
         let boot_budget = self.settings.daemon.boot;
         let health_budget = self.settings.daemon.health;
         let channel = self.channel(worker);
@@ -279,6 +314,27 @@ impl Host {
             let (step, _phase) = ctx.begin("stop-daemon");
             self.stop_daemon(&step, worker, previous.as_ref()).await?;
         }
+        let ides = {
+            // After the stop of the old daemon, so no daemon launches an IDE while the gc runs, and before the
+            // remount, which an IDE that runs from a share would make busy.
+            let (step, _phase) = ctx.begin("ide-gc");
+            let remounts = !shares_current(previous.as_ref(), prep) && self.manager.share_mount() == ShareMount::VirtioFs;
+            let retention = match retention {
+                IdeRetention::KeepProduct(_) if remounts => {
+                    self.reporter.note(
+                        format!("stopping the lane IDEs of {worker}: the start remounts the shares they run from"),
+                        Some(&Scope::worker(worker)),
+                    );
+                    IdeRetention::StopAll
+                }
+                retention => retention,
+            };
+            let ides = gc_guest_ides(&self.guest(&step, channel), retention).await?;
+            if let Some(note) = gc_note(&ides) {
+                self.reporter.note(format!("{note} on {worker}"), Some(&Scope::worker(worker)));
+            }
+            ides
+        };
         {
             let (step, _phase) = ctx.begin("reject-active-run");
             self.retire_unrecorded_daemon(&step, worker, "start the daemon").await?;
@@ -295,9 +351,9 @@ impl Host {
         let visible = {
             let (step, _phase) = ctx.begin("parity-probe");
             let guest = self.guest(&step, channel);
-            // A MANIFEST becomes the guest's own tree first, so the probe below asks about the tree the daemon
-            // runs from. A tree Bazel built needs no call. Inside this phase, because the phase table is a contract.
-            guest.ensure_runfiles_tree(&prep.runfiles, &prep.guest_runfiles_root).await?;
+            // The guest builds its own tree first, so the probe below asks about the tree the daemon runs from.
+            // Inside this phase, because the phase table is a contract.
+            guest.ensure_runfiles_tree(&prep.guest_tree).await?;
             guest
                 .succeeds(&user_argv(settings, &words(["/bin/test", "-f", &location])), GUEST_COMMAND_TIMEOUT)
                 .await
@@ -389,7 +445,7 @@ impl Host {
             format!("daemon is up on {worker} port {} (run {run_id})", state.port),
             Some(&Scope::worker(worker)),
         );
-        Ok(state)
+        Ok((state, ides))
     }
 
     /// The part of a start between the supervisor's answer and a healthy `/status`: every step that can fail while
@@ -434,6 +490,7 @@ impl Host {
             launch_digest: prep.launch_digest.clone(),
             last_product_digest: prep.product_digest.clone(),
             last_mount_digest: prep.mount_digest.clone(),
+            last_plugins_digest: prep.plugins_digest.clone(),
         };
         // From here a failed poll leaves a record, so `daemon log` reads the boot, and `daemon stop` and the next
         // start retire it.
@@ -503,20 +560,40 @@ impl Host {
     /// refusal the @-file builder makes - a staged classpath of the wrong length, a static flag whose
     /// `${RUNFILES_ROOT}` nothing substituted - is therefore still made on the host, before a guest is asked for
     /// anything.
+    ///
+    /// The home of the daemon JVM is an empty directory of the generation, and its config, system, log and IDE
+    /// Starter output directories are on the guest disk, each named by its own flag. So no path of the JVM derives from
+    /// a home that holds the checkout. Two flags tell the daemon how to launch the lane IDE: the installed guest agent
+    /// and the directory of the IDE contexts. The IDE runs on the JBR of its distribution. The flags come after the
+    /// static flags of the descriptor, so they win over a runfiles agent that a lane flag names.
     fn launch_request(&self, prep: &PreparedBuild, staged: &GuestRuntime, state_dir: &str, run_tmp: &str) -> Result<LaunchPrep, Refusal> {
         let settings = &self.settings;
-        let guest_repo = GuestPaths::of(settings)?.repo().to_owned();
+        let home = guest_home(settings, &prep.runtime_digest);
+        let directories = guest_daemon_directories(settings);
+        let mut extra_flags = vec![format!("-Didea.home.path={home}")];
+        for (name, directory) in &directories {
+            extra_flags.push(format!("-Didea.{name}.path={directory}"));
+        }
+        extra_flags.extend([
+            // IDE Starter keeps its output tree on the guest disk instead of under the home.
+            format!("-Dide.starter.out.dir={}", settings.vm_out),
+            format!("-Dintellij.build.download.cache.dir={}", settings.vm_download_cache),
+            format!("-Dair.ui.daemon.state.dir={state_dir}"),
+            format!("-Dair.ui.daemon.port={}", self.settings.daemon.port),
+            format!("-Dair.ui.daemon.controller.launch.digest={}", prep.launch_digest),
+            format!("-Dair.ui.daemon.expected.classpath.file={}", staged.classpath_file),
+            format!("-Dair.ui.daemon.runtime.root={}", staged.root),
+            format!("-Dair.lane.agent={}", settings.vm_agent),
+            format!("-Dair.lane.ide.root={}", guest_ide_root(settings)),
+        ]);
+        if settings.backend == Backend::ContainerLinux {
+            // A published port forwards to the container's address, not to its loopback, so the daemon binds every
+            // interface of the container. Its network is its own, and the token guards each request.
+            extra_flags.push("-Dair.ui.daemon.bind=0.0.0.0".to_owned());
+        }
         let options = LaunchOptions {
             test_tmp_dir: run_tmp.to_owned(),
-            extra_flags: vec![
-                format!("-Didea.home.path={guest_repo}"),
-                format!("-Dintellij.build.download.cache.dir={}", settings.vm_download_cache),
-                format!("-Dair.ui.daemon.state.dir={state_dir}"),
-                format!("-Dair.ui.daemon.port={}", self.settings.daemon.port),
-                format!("-Dair.ui.daemon.controller.launch.digest={}", prep.launch_digest),
-                format!("-Dair.ui.daemon.expected.classpath.file={}", staged.classpath_file),
-                format!("-Dair.ui.daemon.runtime.root={}", staged.root),
-            ],
+            extra_flags,
         };
         // `${RUNFILES_ROOT}` names the tree the guest JVM opens, so it is the guest root.
         let runfiles_root = Path::new(&prep.guest_runfiles_root);
@@ -527,7 +604,10 @@ impl Host {
             schema_version: stage_wire::SCHEMA_VERSION,
             runtime_digest: prep.runtime_digest.clone(),
             stable_count: u32::try_from(prep.descriptor.classpath.stable.len()).unwrap_or(u32::MAX),
-            directories: vec![state_dir.to_owned(), guest_join(run_tmp, "outputs")],
+            directories: [state_dir.to_owned(), guest_join(run_tmp, "outputs"), home]
+                .into_iter()
+                .chain(directories.into_iter().map(|(_, directory)| directory))
+                .collect(),
             remove_files: vec![guest_join(state_dir, "daemon.json")],
             arg_file: ArgFileRequest {
                 destination: guest_join(state_dir, "daemon-jvm.args"),

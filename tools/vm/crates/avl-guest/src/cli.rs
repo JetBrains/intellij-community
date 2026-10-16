@@ -16,7 +16,7 @@ use clap::{Args, ColorChoice, Parser, Subcommand};
 use crate::reply::AgentRefusalExt;
 use crate::reply::{self, AgentRefusal, Streams, answer_bare, answer_enveloped};
 use crate::step::SystemRunner;
-use crate::{image, linux, read_file, relay, runfiles, shape, stage, supervisor, tracepack};
+use crate::{ide, image, linux, read_file, relay, runfiles, shape, stage, supervisor, tracepack};
 
 #[cfg(test)]
 mod tests;
@@ -49,8 +49,23 @@ stage reads its manifest on standard input, or from the file MANIFEST names. It 
 read-file copies PATH to standard output unchanged. Then it writes its envelope on standard error, which names the \
 size and the SHA-256 of what it wrote.
 
-runfiles-tree reads a JSON request on standard input: a MANIFEST path, the host-to-guest path table and a \
-destination directory. It builds one link per MANIFEST line under DESTINATION/DIGEST and answers that root.
+runfiles-tree reads a JSON request on standard input: the MANIFEST text, the host-to-guest path table and a \
+destination directory. It builds one link per MANIFEST line under DESTINATION/DIGEST, copies a package directory of a \
+node_modules store, and answers that root.
+
+ide-prepare reads the IDE context document on standard input and lays out the context IDE_ROOT/LAUNCH_KEY: the data \
+directories, the project, the home and the bin directory of the IDE. The caller then seeds the home, the bin directory \
+and the config files.
+
+ide-launch reads the IDE launch document on standard input. It composes the argument file of the IDE and starts the \
+run run-ide-LAUNCH_NAME on the context. The IDE gets HOME and PATH from the context and a fixed list of variables from \
+the agent, and nothing else.
+
+ide-gc cancels every live IDE under ROOT with --stop-all, or every one whose launch record names another product with \
+--keep-product. It keeps the newest --keep-logs log directories of each context.
+
+cancel --thread-dump JCMD runs JCMD PID Thread.print before the TERM, and writes the dump into the log directory of an \
+IDE launch or into the run directory.
 
 The internal supervise verb is not a public interface.";
 
@@ -93,6 +108,12 @@ pub(crate) enum Verb {
     RunfilesTree,
     /// Copy one file to standard output unchanged, and name it on standard error.
     ReadFile(ReadFileArgs),
+    /// Lay out one context of the lane IDE; the context document is read from standard input.
+    IdePrepare,
+    /// Start the lane IDE on a prepared context; the launch document is read from standard input.
+    IdeLaunch,
+    /// Cancel or keep the live IDEs under an IDE root, and remove their old log directories.
+    IdeGc(IdeGcArgs),
 }
 
 impl Verb {
@@ -117,6 +138,9 @@ impl Verb {
             Self::Relay(_) => AgentVerb::Relay,
             Self::RunfilesTree => AgentVerb::RunfilesTree,
             Self::ReadFile(_) => AgentVerb::ReadFile,
+            Self::IdePrepare => AgentVerb::IdePrepare,
+            Self::IdeLaunch => AgentVerb::IdeLaunch,
+            Self::IdeGc(_) => AgentVerb::IdeGc,
         }
     }
 }
@@ -170,6 +194,9 @@ pub(crate) struct CancelArgs {
     #[arg(long, value_name = "MILLIS", default_value_t = 10_000,
           value_parser = clap::value_parser!(u64).range(0..=60_000))]
     pub grace_ms: u64,
+    /// Run `JCMD <pid> Thread.print` before the TERM, when the child is still alive.
+    #[arg(long, value_name = "JCMD", value_parser = absolute_path)]
+    pub thread_dump: Option<PathBuf>,
 }
 
 // --- the stager ---------------------------------------------------------------------------------------------
@@ -204,6 +231,29 @@ pub(crate) struct GcArgs {
     pub root: String,
     /// Generations to keep whatever their age.
     pub keep: Vec<String>,
+}
+
+// --- the lane IDE -------------------------------------------------------------------------------------------
+
+#[derive(Args, Debug, Clone)]
+pub(crate) struct IdeGcArgs {
+    /// The IDE root: one context directory per launch key.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub root: PathBuf,
+    /// Cancel every live IDE.
+    #[arg(long, conflicts_with = "keep_product")]
+    pub stop_all: bool,
+    /// Cancel every live IDE whose launch record does not name DIGEST, and keep the others.
+    #[arg(long, value_name = "DIGEST", value_parser = non_empty_string)]
+    pub keep_product: Option<String>,
+    /// How many log directories of each context stay.
+    #[arg(long, value_name = "COUNT", default_value_t = 5,
+          value_parser = clap::value_parser!(u32).range(1..=1_000))]
+    pub keep_logs: u32,
+    /// How long the process group of a canceled IDE has between TERM and KILL.
+    #[arg(long, value_name = "MILLIS", default_value_t = 10_000,
+          value_parser = clap::value_parser!(u64).range(0..=60_000))]
+    pub grace_ms: u64,
 }
 
 // --- the image and Linux worker verbs -----------------------------------------------------------------------
@@ -379,5 +429,17 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
             answer_enveloped(streams, name, result)
         }
         Verb::ReadFile(args) => read_file::read_file(&args.path, streams),
+        Verb::IdePrepare => {
+            let result = ide::prepare::read_document(streams.stdin).and_then(|document| ide::prepare::prepare(&system, &document));
+            answer_bare(streams, name, result)
+        }
+        Verb::IdeLaunch => {
+            let launcher = supervisor::Launcher::current();
+            let guest = ide::launch::Guest::current();
+            let result =
+                ide::launch::read_document(streams.stdin).and_then(|document| ide::launch::launch(&system, &launcher, &guest, &document));
+            answer_bare(streams, name, result)
+        }
+        Verb::IdeGc(args) => answer_bare(streams, name, ide::gc::collect(&system, &args)),
     }
 }

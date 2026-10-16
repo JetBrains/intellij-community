@@ -48,7 +48,6 @@ struct ParallelsWorkerStatus {
     /// Beside `hostRepo` for the reason the Tart report carries it once: here the pool is one worker, so the row
     /// *is* the report.
     host_paths_error: Option<String>,
-    repo_share: String,
     bazel_share: String,
     active_run: Option<RunState>,
     run_error: Option<String>,
@@ -139,7 +138,6 @@ pub(super) async fn status(ctx: &Ctx, manager: &Manager, parallels: &Parallels) 
         host_repo: host_paths.repo(),
         host_bazel_user_root: host_paths.bazel_user_root,
         host_paths_error: host_paths.error,
-        repo_share: settings.repo_share_name.clone(),
         bazel_share: settings.bazel_share_name.clone(),
         active_run: run.active,
         run_error: run.error,

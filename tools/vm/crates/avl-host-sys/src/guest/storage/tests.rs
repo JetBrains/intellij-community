@@ -53,6 +53,34 @@ async fn provision_linux_ends_with_the_guest_proving_itself() {
     assert!(!has(&call.argv, "-u"), "validate-guest ran as the worker: {:?}", call.argv);
 }
 
+// The testing-ui container's account makes its own data directory and owns it: the boot sends no sudo and no chown,
+// and the agent install crosses the channel as that account, with no prefix in front of `tee`, `chmod` and `mv`.
+// A Windows host does not drive the testing-ui container.
+#[cfg(unix)]
+#[tokio::test]
+async fn provision_linux_on_an_unprivileged_guest_runs_no_sudo_and_no_chown() {
+    let mut host = Host::container_linux();
+    host.settings.vm_agent_source = Some(host.agent_source("agent bytes"));
+    let settings = &host.settings;
+    let channel = FakeChannel::new("container-linux-1");
+    host.guest(&channel)
+        .provision_linux(&ForbiddenBazel, &validate_argv())
+        .await
+        .unwrap();
+    let agent = &settings.vm_agent;
+    assert_eq!(
+        channel.lines(),
+        [
+            format!("/bin/mkdir -p {}/state", settings.vm_data),
+            format!("/usr/bin/tee {agent}.incoming"),
+            format!("/bin/chmod 700 {agent}.incoming"),
+            format!("/bin/mv -f {agent}.incoming {agent}"),
+            format!("{agent} validate-guest :88 /data/daemon-runtime"),
+        ]
+    );
+    assert_eq!(channel.calls()[1].options.stdin.as_deref(), Some(&b"agent bytes"[..]));
+}
+
 // A worker that was never asked to prove itself is refused rather than provisioned, before the guest is touched.
 #[tokio::test]
 async fn provision_linux_refuses_without_a_self_check() {
@@ -287,4 +315,29 @@ async fn ensure_ready_checks_the_layout_then_prepares_the_run_roots() {
         .unwrap_err();
     assert_eq!(refusal.code, "worker_storage_missing");
     assert_eq!(bare.calls().len(), 1, "{:?}", bare.lines());
+}
+
+// The run roots of the testing-ui container are made by the account that uses them, so nothing is handed over: the
+// `mkdir` is the last step, and no sudo and no chown reach the guest.
+// A Windows host does not drive the testing-ui container.
+#[cfg(unix)]
+#[tokio::test]
+async fn ensure_ready_on_an_unprivileged_guest_makes_the_roots_without_a_chown() {
+    let host = Host::container_linux();
+    crate::guest::write_init_receipt(&host.settings, "container-linux-1").unwrap();
+    let channel = FakeChannel::new("container-linux-1");
+    host.guest(&channel)
+        .ensure_ready(&crate::guest::testing::Peers::default())
+        .await
+        .unwrap();
+    let settings = &host.settings;
+    let roots = [settings.vm_data.as_str(), &settings.vm_runs_root].join(" ");
+    let lines = channel.lines();
+    assert_eq!(lines.last(), Some(&format!("/bin/mkdir -p {roots}")));
+    assert!(
+        !lines
+            .iter()
+            .any(|line| line.contains(settings.guest.chown) || line.contains("sudo")),
+        "{lines:?}"
+    );
 }

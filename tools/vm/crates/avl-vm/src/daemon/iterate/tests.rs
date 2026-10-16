@@ -3,7 +3,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use avl_host_testkit::agent::{agent_reply, answer_pull};
+use avl_host_testkit::agent::{active_reply, agent_reply, answer_pull, argv_value, run_state};
 use avl_host_testkit::git::FAKE_HEAD;
 use avl_host_testkit::{answer_exit, answer_text, handler};
 use avl_testkit::tartfake::Answer;
@@ -34,11 +34,27 @@ const BUILD: DaemonDigests<'static> = DaemonDigests {
     launch: "launch-1",
     mount: "mount-1",
     runtime: "runtime-1",
+    plugins: "plugins-1",
 };
 
 fn healthy(launch: &'static str, mount: &'static str, runtime: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
+    healthy_with_plugins(launch, mount, runtime, "plugins-1", ide_running)
+}
+
+fn healthy_with_plugins(
+    launch: &'static str,
+    mount: &'static str,
+    runtime: &'static str,
+    plugins: &'static str,
+    ide_running: bool,
+) -> HealthyDaemon<'static> {
     HealthyDaemon {
-        recorded: DaemonDigests { launch, mount, runtime },
+        recorded: DaemonDigests {
+            launch,
+            mount,
+            runtime,
+            plugins,
+        },
         ide_running,
     }
 }
@@ -47,10 +63,19 @@ fn healthy(launch: &'static str, mount: &'static str, runtime: &'static str, ide
 // daemon is started, and the decision names which axis moved.
 #[test]
 fn the_daemon_decision_names_the_axis_that_moved() {
-    let start = |verb, reason| DaemonAction::Start { verb, reason };
+    let start = |verb, reason| DaemonAction::Start {
+        verb,
+        reason,
+        keep_ide: verb == "restart",
+    };
     for (seen, fresh_ide, expected) in [
         (None, false, start("start", "no healthy daemon")),
         (Some(healthy("launch-1", "mount-1", "runtime-1", true)), false, DaemonAction::Reuse),
+        (
+            Some(healthy("launch-1", "mount-1", "runtime-1", false)),
+            false,
+            DaemonAction::Relaunch { stop_ide: false },
+        ),
         (Some(healthy("launch-1", "mount-0", "runtime-1", true)), true, DaemonAction::Remount),
         (
             Some(healthy("launch-1", "mount-1", "runtime-1", true)),
@@ -60,6 +85,30 @@ fn the_daemon_decision_names_the_axis_that_moved() {
         (
             Some(healthy("launch-1", "mount-1", "runtime-1", false)),
             true,
+            DaemonAction::Relaunch { stop_ide: false },
+        ),
+        // Only the context plugins moved: a relaunch on the same context, and no remount.
+        (
+            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true)),
+            false,
+            DaemonAction::RelaunchForPlugins,
+        ),
+        // A record of an older controller holds no plugin identity, so nothing is decided on it.
+        (
+            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "", true)),
+            false,
+            DaemonAction::Reuse,
+        ),
+        // A moved mount wins: the remount gives a fresh context, which installs the plugins anyway.
+        (
+            Some(healthy_with_plugins("launch-1", "mount-0", "runtime-1", "plugins-0", true)),
+            false,
+            DaemonAction::Remount,
+        ),
+        // An IDE that is not running is launched again, and the launch installs the plugins.
+        (
+            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", false)),
+            false,
             DaemonAction::Relaunch { stop_ide: false },
         ),
         (
@@ -181,6 +230,7 @@ fn error_of(attempt: &RunAttempt) -> &Refusal {
 #[tokio::test]
 async fn a_warm_iteration_reuses_the_daemon() {
     let (fixture, prep, _) = iteration_fixture("it-10").await;
+    fixture.daemon.script().ide_running = true;
     let attempt = run_warm_iteration(&fixture, false).await;
     let report = report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Reuse);
@@ -314,6 +364,7 @@ async fn a_warm_iteration_on_docker_recreates_a_container_of_another_declaration
 #[tokio::test]
 async fn a_warm_iteration_on_docker_keeps_a_current_container() {
     let (fixture, _prep, _state) = iteration_fixture_over(Fixture::docker().await, "it-13d").await;
+    fixture.daemon.script().ide_running = true;
     let before = fixture.tart.calls().len();
     let attempt = run_warm_iteration(&fixture, false).await;
     report_of(&attempt);
@@ -330,6 +381,58 @@ async fn a_warm_iteration_on_docker_keeps_a_current_container() {
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
         "a current container keeps its warm daemon"
     );
+}
+
+// A healthy daemon that holds no running IDE, as after a lease release, launches the IDE again: the timing line says
+// `relaunch`, the decision names the reason, and no stop is sent.
+#[tokio::test]
+async fn a_daemon_without_a_running_ide_relaunches_it() {
+    let (fixture, _, _) = iteration_fixture("it-12r").await;
+    let recorded = Recorded::start(&fixture.host.reporter);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    assert_eq!(attempt.ide_action, IdeAction::Relaunch);
+    assert!(attempt.timing.contains("  ide relaunch  "), "{:?}", attempt.timing);
+    assert!(!fixture.daemon.saw_request("POST /ide/stop"));
+    assert!(
+        fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
+        "a relaunch keeps the daemon"
+    );
+    let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
+    assert!(
+        decisions.contains(&json!({"subject": "ide", "action": "relaunch", "reason": "the daemon holds no running IDE"})),
+        "{decisions:?}"
+    );
+    assert!(!decisions.iter().any(|decision| decision["action"] == "reuse"), "{decisions:?}");
+}
+
+// A change of the context plugins alone relaunches the IDE on the same context: no remount, no stop and no daemon
+// start. The state records the plugin identity the iteration ran with.
+#[tokio::test]
+async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
+    let (fixture, prep, mut state) = iteration_fixture("it-12p").await;
+    fixture.daemon.script().ide_running = true;
+    state.last_plugins_digest = "plugins-before".to_owned();
+    state.write(&fixture.settings, &fixture.worker).unwrap();
+    let recorded = Recorded::start(&fixture.host.reporter);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    assert_eq!(attempt.ide_action, IdeAction::Relaunch);
+    assert!(attempt.timing.contains("  ide relaunch  "), "{:?}", attempt.timing);
+    assert!(!fixture.daemon.saw_request("POST /ide/stop"));
+    assert!(!fixture.daemon.saw_request("POST /mount/quiesce"));
+    assert!(
+        fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
+        "a relaunch for the plugins keeps the daemon"
+    );
+    let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
+    assert!(
+        decisions.contains(&json!({"subject": "ide", "action": "relaunch", "reason": "the bridge plugin changed"})),
+        "{decisions:?}"
+    );
+    assert!(!decisions.iter().any(|decision| decision["subject"] == "shares"), "{decisions:?}");
+    let written = HostState::read(&fixture.settings, &fixture.worker).expect("the state is kept");
+    assert_eq!(written.last_plugins_digest, prep.plugins_digest);
 }
 
 // `--fresh-ide` stops a running IDE and reports the relaunch.
@@ -369,6 +472,80 @@ async fn no_healthy_daemon_restarts_the_daemon() {
         decisions.contains(&json!({"subject": "daemon", "action": "start", "reason": "no healthy daemon"})),
         "the decision names why the daemon started: {decisions:?}"
     );
+}
+
+// A restart for a stable-tier change keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc
+// keeps the product, the timing line says `keep`, and the decision names the kept IDE.
+#[tokio::test]
+async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
+    let (fixture, prep, _) = iteration_fixture_over(Fixture::docker().await, "it-16d").await;
+    fixture.install_happy_guest(&prep);
+    // The recorded daemon answers for another launch of the same runtime and product, so the iteration restarts it.
+    let mut recorded_state = fixture.daemon.host_state("run-ui-daemon-stale", "launch-stale");
+    recorded_state.runtime_digest = prep.runtime_digest.clone();
+    recorded_state.last_product_digest = prep.product_digest.clone();
+    recorded_state.last_mount_digest = prep.mount_digest.clone();
+    recorded_state.write(&fixture.settings, &fixture.worker).unwrap();
+    // The new daemon answers for this launch from its supervisor start on.
+    let daemon = Arc::clone(&fixture.daemon);
+    let launch = prep.launch_digest.clone();
+    fixture.on(
+        "start",
+        handler(move |argv, _| {
+            daemon.script().launch_digest.clone_from(&launch);
+            Ok(agent_reply("start", &run_state(argv_value(argv, "--run"), "running")))
+        }),
+    );
+    fixture.on(
+        "ide-gc",
+        answer_text(r#"{"stopped":[],"kept":[{"launchKey":"launch-key-1","runId":"run-ide-launch-key-1"}],"removed":[]}"#),
+    );
+    let recorded = Recorded::start(&fixture.host.reporter);
+
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    assert_eq!(attempt.ide_action, IdeAction::Keep);
+    assert!(attempt.timing.contains("  ide keep  "), "{:?}", attempt.timing);
+    let gcs = fixture.channel().calls_containing("vm-guest-agent ide-gc");
+    assert_eq!(gcs.len(), 1, "{gcs:?}");
+    assert!(
+        gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide --keep-product {}", prep.product_digest)),
+        "{}",
+        gcs[0]
+    );
+    let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
+    assert!(
+        decisions.contains(&json!({"subject": "ide", "action": "keep", "reason": "the product did not change"})),
+        "{decisions:?}"
+    );
+}
+
+// The quiesce quits the IDE through the daemon, and the guest agent owns the process: the share refresh waits for the
+// supervisor to report every IDE run finished, and the iteration refuses while one still runs.
+#[tokio::test]
+async fn a_remount_refuses_while_a_lane_ide_still_runs() {
+    let (fixture, _prep, mut state) = iteration_fixture("it-17").await;
+    state.last_mount_digest = "something-else".to_owned();
+    state.write(&fixture.settings, &fixture.worker).unwrap();
+    fixture.on("sh", answer_text("/vm/data/ide/launch-key-1\n"));
+    fixture.on(
+        "active",
+        handler(|argv, _| {
+            let holder = (argv_value(argv, "--root") == "/vm/data/ide/launch-key-1").then_some("run-ide-lane");
+            Ok(active_reply(holder))
+        }),
+    );
+    let attempt = run_warm_iteration(&fixture, false).await;
+    let error = error_of(&attempt);
+    assert_eq!((error.code.as_ref(), error.exit), ("daemon_mount_quiesce_failed", Exit::SOFTWARE));
+    assert!(
+        error.message.contains("run-ide-lane in /vm/data/ide/launch-key-1"),
+        "{}",
+        error.message
+    );
+    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
+    assert!(!fixture.daemon.saw_request("POST /mount/resume"));
+    assert_eq!(remounts(&fixture), 0, "nothing is unmounted under a live IDE");
 }
 
 // A stream that ends before `runStarted` is a refusal carrying the report-unavailable detail: no iteration id means
@@ -771,6 +948,40 @@ async fn a_tree_failure_is_recorded_and_never_the_verdict() {
     );
     assert_eq!(report.status, Status::Passed);
     assert_eq!(report.verdict_diagnostic, None);
+}
+
+// A test jar that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
+// and the status still follows the counts.
+#[tokio::test]
+async fn a_rebuilt_hot_jar_is_a_note_and_never_the_verdict() {
+    let (fixture, _, _) = iteration_fixture("it-52").await;
+    let built = fixture.prepared().await;
+    let jar = Path::new(&built.hot_jars[0].path);
+    let name = jar.file_name().unwrap().to_string_lossy().into_owned();
+    std::fs::write(jar, b"rebuilt on the host").unwrap();
+    let attempt = fixture
+        .host
+        .run_one_iteration(
+            &Ctx::background().with_run_id("suite-run-1"),
+            &fixture.lease(),
+            &built,
+            &lane_ui(),
+            POLICY,
+            false,
+            &RunSecrets::default(),
+        )
+        .await;
+    let report = report_of(&attempt);
+    assert_eq!(report.status, Status::Passed, "{:?}", report.verdict_diagnostic);
+    assert_eq!(report.verdict_diagnostic, None);
+    assert_eq!(report.notes.len(), 1, "{:?}", report.notes);
+    assert!(
+        report.notes[0].contains("were rebuilt on the host") && report.notes[0].contains(&name),
+        "{:?}",
+        report.notes
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    assert!(said.contains(&report.notes[0]), "{said}");
 }
 
 // --- the run secrets ---------------------------------------------------------------------------------------------

@@ -86,15 +86,52 @@
 //!   `tart` ones too.
 //! - `volume`, `logs` and anything else exit from [`Answer::Exit`].
 //!
-//! The `limactl` verbs, which only the fake `limactl` answers. One fake holds one instance, the Docker engine, under
-//! the `LIMA_HOME` its caller sets; without one it exits 2:
+//! The `container` verbs, which only the fake Apple `container` answers. It holds one container in the state file of
+//! the fake `docker`, [`Answer::ContainerState`], and prints it as the Apple CLI does:
 //!
-//! - `list --format {{.Status}} <name>` prints [`Answer::LimaState`]. No such file is no instance: exit 1 with the
-//!   "No instance matching" warning, as `limactl` answers.
-//! - `start` copies a template argument (`*.yaml`) to [`LIMA_TEMPLATE_COPY`], then exits from
-//!   [`Answer::LimaStartExit`]. A start that succeeds writes `Running` over [`Answer::LimaState`] and creates the
-//!   forwarded socket `$LIMA_HOME/<name>/sock/docker.sock` as a plain file.
-//! - `stop` writes `Stopped` and removes the socket. `delete` removes the state and `$LIMA_HOME/<name>`.
+//! - `system status --format json` prints [`Answer::ContainerSystem`]. No such file is a server that is down: it
+//!   prints `{"status":"unregistered"}` and exits 1. `system start` exits from [`Answer::ContainerStartExit`], and a
+//!   start that succeeds copies [`Answer::ContainerSystemStarted`] over the status, or writes a running server of
+//!   version 1.5.0 whose install root is the parent of the fake's directory, the grandparent of the executable.
+//!   `system stop` exits 3: the controller must never stop the server of the login session.
+//! - `inspect <name>` prints `[{"configuration":{"id":…},"id":…,"status":{"state":…}}]`: `running` for `running/*`,
+//!   `stopped` for `created/*` and `exited/*`, and the word itself for any other state. No state file is
+//!   `container not found`, exit 1.
+//! - `create`, `start`, `stop` and `delete` are the state machine of the fake `docker`. `create` prints the name and
+//!   writes it over [`Answer::ContainerId`], because the Apple id is the name. `delete` without `-f` or `--force`
+//!   exits 1 for a running container.
+//! - `build … -t <ref> …` and `image tag <src> <ref>` add `<ref>` to the images, and `image delete <ref>` removes it.
+//!   `image load -i <file>` adds each line of the file, so an archive of the fake is the list of its references.
+//!   `image save … -o <file> <ref>` writes `<ref>` into the file. `image inspect <ref>` exits as the `docker` one and
+//!   prints a JSON array whose variant labels hold [`Answer::ImageRevision`]. `image pull` and `image push` exit 3:
+//!   the controller pulls and publishes the image archive over the file mirror.
+//! - `volume inspect` says `volume not found`, exit 1. `logs` prints [`Answer::ContainerLog`], and `logs --boot`
+//!   prints [`Answer::ContainerBootLog`]. `builder`, `volume delete` and anything else exit from [`Answer::Exit`].
+//! - The `exec` arms are the `tart` ones.
+//!
+//! The fake host `curl`, which `AIR_VM_HOST_CURL` points at. It answers the two transfers of the image archive:
+//!
+//! - `… --output <file> <url>` copies [`Answer::MirrorArchive`] to the file, exit 0. No such file is an archive the
+//!   mirror does not hold: `curl: (22) The requested URL returned error: 404` on stderr, exit 22.
+//! - `… --upload-file <file> --header @<header> <url>` copies the file to [`MIRROR_UPLOAD`], the header file to
+//!   [`MIRROR_HEADER`], and the permission column of `ls -ln` of the header file to [`MIRROR_HEADER_MODE`]. It exits
+//!   from [`Answer::PushExit`].
+//!
+//! The `container.cmd` verbs, which only the fake script of the `testing-ui` skill answers. One fake holds one
+//! container, as the skill's script does. The state file is [`Answer::ContainerLinuxState`], `running` or `exited`:
+//!
+//! - `start` writes `running`, records its environment in [`CONTAINER_LINUX_START_ENVIRONMENT`], and writes under
+//!   `<checkout>/out/testing-ui`, four levels above its own directory as for the real script, the three files the
+//!   real script and its guest write: `container.ctl_port` with the
+//!   port of [`Answer::ContainerLinuxPort`], `container.ctl_bearer` with [`CONTAINER_LINUX_BEARER`], and `container.json` with
+//!   [`CONTAINER_LINUX_NOVNC_URL`] and [`CONTAINER_LINUX_VNC_PASSWORD`]. A start without a seeded port exits 2.
+//! - `stop` writes `exited` and removes the three files.
+//! - `list` prints the container line `<name>  running  <checkout root>` with [`Answer::ContainerLinuxRoot`] as the root,
+//!   then the indented detail lines, while the state is `running`; else the one line the real script prints for
+//!   no container.
+//! - `exec` is the `tart` exec arms, as on `docker`: the per-verb answers and the shared exec answer.
+//! - [`Answer::ContainerLinuxFailedVerb`] names the one verb that exits 1 with a line on stderr, for a runtime that
+//!   does not answer or an image build that failed.
 //!
 //! The shared verbs, which both answer:
 //!
@@ -140,8 +177,14 @@ pub enum Binary {
     Parallels,
     /// The fake `docker`, which `DOCKER_BIN` points at.
     Docker,
-    /// The fake `limactl`, which a suite's Bazel resolves as the pinned one.
-    Limactl,
+    /// The fake Apple `container`, which `CONTAINER_BIN` points at.
+    Container,
+    /// The fake host `curl`, which `AIR_VM_HOST_CURL` points at.
+    Curl,
+    /// The fake `container.cmd` of the `testing-ui` skill, installed where the checkout's would be. Unix only: a
+    /// POSIX shell script. A Unix host runs the `.sh` beside the configured `.cmd`, so the fake is installed under
+    /// both names.
+    ContainerLinux,
 }
 
 impl Binary {
@@ -151,10 +194,28 @@ impl Binary {
             Self::Tart => "tart",
             Self::Parallels => "prlctl",
             Self::Docker => "docker",
-            Self::Limactl => "limactl",
+            Self::Container => "container",
+            Self::Curl => "curl",
+            Self::ContainerLinux => "container.cmd",
         }
     }
 }
+
+/// The bearer of the control port that the fake `container.cmd` writes, which a fake control port checks.
+pub const CONTAINER_LINUX_BEARER: &str = "0123456789abcdef0123456789abcdef";
+
+/// The noVNC page the fake `container.cmd` writes into `container.json`.
+pub const CONTAINER_LINUX_NOVNC_URL: &str = "http://127.0.0.1:1/vnc.html";
+
+/// The VNC password the fake `container.cmd` writes into `container.json`.
+pub const CONTAINER_LINUX_VNC_PASSWORD: &str = "pw";
+
+/// The name of the one container of the fake `container.cmd`, the first field of its `list` line.
+pub const CONTAINER_LINUX_CONTAINER: &str = "ui-fake";
+
+/// The environment the last `container.cmd start` ran with, beside the executable: one `NAME=value` line per
+/// variable the real script reads.
+pub const CONTAINER_LINUX_START_ENVIRONMENT: &str = "container-linux-start-env.txt";
 
 /// One answer file beside the executable. An exit-code file holds a decimal code; a flag file only has to exist.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -224,15 +285,33 @@ pub enum Answer {
     ContainerId,
     /// Exit code of `docker pull`, default 1. A `0` makes the pulled reference present.
     PullExit,
-    /// Exit code of `docker buildx build --push`, the publish, default 0.
+    /// Exit code of `docker buildx build --push`, the publish, default 0, and of the upload of the fake `curl`.
     PushExit,
     /// What `docker image inspect --format {{index .Config.Labels …}}` prints: the revision label of the image.
     /// Unseeded, it prints nothing, as an image without the label does.
     ImageRevision,
-    /// The instance of the fake `limactl`, as `limactl list --format {{.Status}}` prints it. Absent is no instance.
-    LimaState,
-    /// Exit code of `limactl start`, default 0. A nonzero exit starts nothing.
-    LimaStartExit,
+    /// What `container system status --format json` prints. Absent is a server that is down.
+    ContainerSystem,
+    /// What `container system start` copies over [`Answer::ContainerSystem`] when seeded.
+    ContainerSystemStarted,
+    /// Exit code of `container system start`, default 0. A nonzero exit starts nothing.
+    ContainerStartExit,
+    /// What `container logs` prints.
+    ContainerLog,
+    /// What `container logs --boot` prints.
+    ContainerBootLog,
+    /// The image archive that the file mirror holds, which a download of the fake `curl` copies: one image reference
+    /// per line, which `container image load` adds. Absent is an archive the mirror does not hold.
+    MirrorArchive,
+    /// The state of the one container of the fake `container.cmd`, `running` or `exited`. Absent is no container.
+    /// `start` and `stop` write it.
+    ContainerLinuxState,
+    /// The TCP port that `container.cmd start` writes into `container.ctl_port`: the fake control port of the suite.
+    ContainerLinuxPort,
+    /// The checkout root that `container.cmd list` names in its container line.
+    ContainerLinuxRoot,
+    /// The first argument of the calls of the fake `container.cmd` that exit 1 with a line on stderr.
+    ContainerLinuxFailedVerb,
     /// The first argument of the calls of any fake of this directory that exit 0 and print nothing, such as
     /// `inspect` or `--version`: a probe that gave no answer.
     SilentVerb,
@@ -278,8 +357,16 @@ impl Answer {
             Self::PullExit => "pull-exit.txt",
             Self::PushExit => "push-exit.txt",
             Self::ImageRevision => "image-revision.txt",
-            Self::LimaState => "lima-state.txt",
-            Self::LimaStartExit => "lima-start-exit.txt",
+            Self::ContainerSystem => "container-system.json",
+            Self::ContainerSystemStarted => "container-system-started.json",
+            Self::ContainerStartExit => "container-start-exit.txt",
+            Self::ContainerLog => "container-log.txt",
+            Self::ContainerBootLog => "container-boot-log.txt",
+            Self::MirrorArchive => "mirror-archive.txt",
+            Self::ContainerLinuxState => "container-linux-state.txt",
+            Self::ContainerLinuxPort => "container-linux-port.txt",
+            Self::ContainerLinuxRoot => "container-linux-root.txt",
+            Self::ContainerLinuxFailedVerb => "container-linux-failed-verb.txt",
             Self::SilentVerb => "silent-verb.txt",
             Self::KilledVerb => "killed-verb.txt",
         }
@@ -289,8 +376,14 @@ impl Answer {
 /// The call log beside the executable.
 pub(crate) const CALLS: &str = "calls.txt";
 
-/// The copy of the template the last `limactl start` of a template was given, beside the executable.
-pub const LIMA_TEMPLATE_COPY: &str = "lima-template.yaml";
+/// The copy of the file the last upload of the fake `curl` sent, beside the executable.
+pub const MIRROR_UPLOAD: &str = "mirror-upload.txt";
+
+/// The copy of the header file of the last upload of the fake `curl`, beside the executable.
+pub const MIRROR_HEADER: &str = "mirror-header.txt";
+
+/// The permission column of `ls -ln` of the header file of the last upload, such as `-rw-------`.
+pub const MIRROR_HEADER_MODE: &str = "mirror-header-mode.txt";
 
 /// Separates the arguments of one recorded call (ASCII unit separator), so an argument may hold spaces and
 /// newlines - a `prlctl exec` shell string often does - and still come back whole.
@@ -324,32 +417,63 @@ exit 0'
   cat "$dir/.call-$$" >> "$dir/calls.txt"; } || { echo "fake $self: cannot record the call in $dir/calls.txt" >&2; exit 125; }
 [ -f "$dir/killed-verb.txt" ] && [ "$1" = "$(cat "$dir/killed-verb.txt")" ] && kill -KILL $$
 [ -f "$dir/silent-verb.txt" ] && [ "$1" = "$(cat "$dir/silent-verb.txt")" ] && exit 0
-if [ "$self" = limactl ]; then
-  [ -n "$LIMA_HOME" ] || { echo "fake limactl: LIMA_HOME is not set" >&2; exit 2; }
-  lstate="$dir/lima-state.txt"
-  name=; prev=
+if [ "$self" = curl ]; then
+  out=; upload=; header=; prev=
   for word in "$@"; do
-    [ "$prev" = --name ] && name=$word
+    case "$prev" in
+      --output) out=$word ;;
+      --upload-file) upload=$word ;;
+      --header) header=${word#@} ;;
+    esac
     prev=$word
   done
-  [ -n "$name" ] || name=$prev
+  if [ -n "$upload" ]; then
+    cp "$upload" "$dir/mirror-upload.txt"
+    if [ -n "$header" ]; then
+      cat "$header" > "$dir/mirror-header.txt"
+      ls -ln "$header" | cut -c1-10 > "$dir/mirror-header-mode.txt"
+    fi
+    ucode=$(cat "$dir/push-exit.txt" 2>/dev/null || echo 0)
+    [ "$ucode" = 0 ] || { echo "curl: (22) The requested URL returned error: 403" >&2; exit "$ucode"; }
+    exit 0
+  fi
+  if [ -f "$dir/mirror-archive.txt" ]; then cp "$dir/mirror-archive.txt" "$out"; exit 0; fi
+  echo "curl: (22) The requested URL returned error: 404" >&2
+  exit 22
+fi
+if [ "$self" = container.cmd ] || [ "$self" = container.sh ]; then
+  [ -f "$dir/container-linux-failed-verb.txt" ] && [ "$1" = "$(cat "$dir/container-linux-failed-verb.txt")" ] && {
+    echo "fake container.cmd: $1 failed" >&2; exit 1; }
+  ustate="$dir/container-linux-state.txt"
+  # The real script writes under <checkout>/out/testing-ui, four levels above its own directory.
+  root="$(cd "$dir/../../../.." && pwd)/out/testing-ui"
   case "$1" in
-    list)
-      if [ -f "$lstate" ]; then cat "$lstate"; exit 0; fi
-      echo "level=warning msg=\"No instance matching $name found.\"" >&2
-      exit 1 ;;
     start)
-      case "$prev" in *.yaml) cp "$prev" "$dir/lima-template.yaml" ;; esac
-      echo "fake limactl: starting $name"
-      lcode=$(cat "$dir/lima-start-exit.txt" 2>/dev/null || echo 0)
-      [ "$lcode" = 0 ] || { echo "fake limactl: the start failed" >&2; exit "$lcode"; }
-      mkdir -p "$LIMA_HOME/$name/sock" && : > "$LIMA_HOME/$name/sock/docker.sock"
-      echo Running > "$lstate"
+      [ -f "$dir/container-linux-port.txt" ] || { echo "fake container.cmd: no control port is seeded in container-linux-port.txt" >&2; exit 2; }
+      mkdir -p "$root"
+      printf 'APP_EXEC=%s\n' "${APP_EXEC-}" \
+        > "$dir/container-linux-start-env.txt"
+      printf '%s' "$(cat "$dir/container-linux-port.txt")" > "$root/container.ctl_port"
+      echo 0123456789abcdef0123456789abcdef > "$root/container.ctl_bearer"
+      printf '{"novnc":"http://127.0.0.1:1/vnc.html","vncPassword":"pw"}\n' > "$root/container.json"
+      echo running > "$ustate"
+      echo "container 'ui-fake' started"
       exit 0 ;;
-    stop) rm -f "$LIMA_HOME/$name/sock/docker.sock"; echo Stopped > "$lstate"; exit 0 ;;
-    delete) rm -rf "${LIMA_HOME:?}/$name"; rm -f "$lstate"; exit 0 ;;
+    stop)
+      echo exited > "$ustate"
+      rm -f "$root/container.ctl_port" "$root/container.ctl_bearer" \
+        "$root/container.json"
+      exit 0 ;;
+    list)
+      if [ "$(cat "$ustate" 2>/dev/null)" = running ]; then
+        echo "ui-fake  running  $(cat "$dir/container-linux-root.txt" 2>/dev/null)"
+        echo "  run none"
+        echo "  noVNC http://127.0.0.1:1/vnc.html  password pw"
+      else
+        echo "no containers of this tool are running"
+      fi
+      exit 0 ;;
   esac
-  exit 0
 fi
 if [ "$self" = prlctl ]; then
   case "$1" in
@@ -379,6 +503,110 @@ if [ "$self" = prlctl ]; then
       esac ;;
   esac
 else
+  if [ "$self" = container ]; then
+    code=$(cat "$dir/exit.txt" 2>/dev/null || echo 0)
+    state="$dir/container-state.txt"
+    sys="$dir/container-system.json"
+    for ref in "$@"; do :; done
+    case "$1" in
+      system)
+        case "$2" in
+          status)
+            if [ -f "$sys" ]; then cat "$sys"; exit 0; fi
+            echo '{"status":"unregistered"}'
+            exit 1 ;;
+          start)
+            scode=$(cat "$dir/container-start-exit.txt" 2>/dev/null || echo 0)
+            echo "fake container: starting the server"
+            [ "$scode" = 0 ] || { echo "fake container: the start failed" >&2; exit "$scode"; }
+            if [ -f "$dir/container-system-started.json" ]; then
+              cp "$dir/container-system-started.json" "$sys"
+            else
+              printf '{"status":"running","paths":{"appRoot":"/fake/app-root/","installRoot":"%s/"},"client":{"version":"1.5.0"},"server":{"version":"1.5.0"},"host":{"architecture":"arm64"}}\n' "${dir%/*}" > "$sys"
+            fi
+            exit 0 ;;
+          stop) echo "fake container: the controller never stops the server" >&2; exit 3 ;;
+        esac
+        exit "$code" ;;
+      inspect)
+        [ -f "$state" ] || { echo "Error: container not found: $2" >&2; exit 1; }
+        id=$(cat "$dir/container-id.txt" 2>/dev/null)
+        current=$(cat "$state")
+        case "$current" in running/*) word=running ;; created/*|exited/*) word=stopped ;; *) word=${current%%/*} ;; esac
+        printf '[{"configuration":{"id":"%s"},"id":"%s","status":{"state":"%s"}}]\n' "$id" "$id" "$word"
+        exit 0 ;;
+      create)
+        name=; prev=
+        for word in "$@"; do [ "$prev" = --name ] && name=$word; prev=$word; done
+        if [ "$code" = 0 ]; then
+          echo "$name" > "$dir/container-id.txt"
+          echo created/0 > "$state"
+          echo "$name"
+        fi
+        exit "$code" ;;
+      start)
+        if [ "$code" = 0 ]; then
+          if [ -f "$dir/started-state.txt" ]; then cp "$dir/started-state.txt" "$state"; else echo running/0 > "$state"; fi
+          echo "$2"
+        fi
+        exit "$code" ;;
+      stop) [ "$code" = 0 ] && [ -f "$state" ] && echo exited/0 > "$state"; exit "$code" ;;
+      delete)
+        case "$2" in
+          -f|--force) ;;
+          *) if [ -f "$state" ]; then
+               case "$(cat "$state")" in
+                 running/*) echo "Error: container $2 is running and can not be deleted" >&2; exit 1 ;;
+               esac
+             fi ;;
+        esac
+        [ "$code" = 0 ] && rm -f "$state" "$dir/container-id.txt"
+        exit "$code" ;;
+      build)
+        tagged=; prev=
+        for word in "$@"; do [ "$prev" = -t ] && tagged=$word; prev=$word; done
+        [ "$code" = 0 ] && printf '%s\n' "$tagged" >> "$dir/images.txt"
+        exit "$code" ;;
+      image)
+        case "$2" in
+          inspect)
+            if [ -f "$dir/image-present.txt" ]; then :
+            elif [ -f "$dir/images.txt" ] && awk -v r="$ref" '$0 == r { found = 1 } END { exit !found }' "$dir/images.txt"; then :
+            else echo "Error: image not found: $ref" >&2; exit 1; fi
+            revision=$(cat "$dir/image-revision.txt" 2>/dev/null)
+            printf '[{"variants":[{"config":{"config":{"Labels":{"org.opencontainers.image.revision":"%s"}}}}]}]\n' "$revision"
+            exit 0 ;;
+          load)
+            loaded=; prev=
+            for word in "$@"; do [ "$prev" = -i ] && loaded=$word; prev=$word; done
+            [ "$code" = 0 ] || { echo "Error: cannot load $loaded" >&2; exit "$code"; }
+            cat "$loaded" >> "$dir/images.txt"
+            exit 0 ;;
+          save)
+            saved=; prev=
+            for word in "$@"; do [ "$prev" = -o ] && saved=$word; prev=$word; done
+            [ "$code" = 0 ] && printf '%s\n' "$ref" > "$saved"
+            exit "$code" ;;
+          pull|push) echo "fake container: the controller uses the file mirror, not image $2" >&2; exit 3 ;;
+          tag) [ "$code" = 0 ] && printf '%s\n' "$4" >> "$dir/images.txt"; exit "$code" ;;
+          delete)
+            if [ "$code" = 0 ] && [ -f "$dir/images.txt" ]; then
+              awk -v r="$ref" '$0 != r' "$dir/images.txt" > "$dir/images.txt.new" && mv "$dir/images.txt.new" "$dir/images.txt"
+            fi
+            exit "$code" ;;
+        esac
+        exit "$code" ;;
+      volume)
+        [ "$2" = inspect ] && { echo "Error: volume not found: $3" >&2; exit 1; }
+        exit "$code" ;;
+      logs)
+        case " $* " in
+          *" --boot "*) cat "$dir/container-boot-log.txt" 2>/dev/null ;;
+          *) cat "$dir/container-log.txt" 2>/dev/null ;;
+        esac
+        exit 0 ;;
+    esac
+  fi
   if [ "$self" = docker ]; then
     code=$(cat "$dir/exit.txt" 2>/dev/null || echo 0)
     state="$dir/container-state.txt"
@@ -519,6 +747,15 @@ impl Fake {
         fake
     }
 
+    /// A fake `tart` in `directory`, which this fake creates and owns. A container-linux fixture passes the `scripts`
+    /// directory of a testing-ui skill under its checkout, because the fake `container.cmd` beside it finds the
+    /// checkout four levels up, as the real script does.
+    pub fn install_in(directory: PathBuf, version: &str) -> Self {
+        let fake = Self::in_directory(Arc::new(OwnedDir::at(directory)), Binary::Tart);
+        fake.answer(Answer::Version, version);
+        fake
+    }
+
     /// Writes a second backend's fake into this fake's directory, and answers the fake for it.
     ///
     /// One directory, so the two share every answer file and one call log. That is what a suite which drives both
@@ -532,9 +769,15 @@ impl Fake {
         #[cfg(unix)]
         let executable = {
             let executable = directory.path.join(binary.file_name());
-            let placed = crate::shared::script(SCRIPT).and_then(|script| crate::shared::place(&script, &executable));
-            if let Err(error) = placed {
-                panic!("install the fake {}: {error}", executable.display());
+            let mut names = vec![executable.clone()];
+            if binary == Binary::ContainerLinux {
+                names.push(executable.with_extension("sh"));
+            }
+            for name in &names {
+                let placed = crate::shared::script(SCRIPT).and_then(|script| crate::shared::place(&script, name));
+                if let Err(error) = placed {
+                    panic!("install the fake {}: {error}", name.display());
+                }
             }
             executable
         };
@@ -603,6 +846,21 @@ impl Fake {
             .collect()
     }
 
+    /// The environment the last `container.cmd start` ran with, as `NAME=value` pairs in the order the real script
+    /// reads them. Empty before the first start.
+    pub fn container_linux_start_environment(&self) -> Vec<(String, String)> {
+        let path = self.directory().join(CONTAINER_LINUX_START_ENVIRONMENT);
+        let text = match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Vec::new(),
+            Err(error) => panic!("read {}: {error}", path.display()),
+        };
+        text.lines()
+            .filter_map(|line| line.split_once('='))
+            .map(|(name, value)| (name.to_owned(), value.to_owned()))
+            .collect()
+    }
+
     /// Every argv the fakes were spawned with, in order, each joined by spaces.
     pub fn calls(&self) -> Vec<String> {
         self.argvs().into_iter().map(|argv| argv.join(" ")).collect()
@@ -659,6 +917,11 @@ impl OwnedDir {
         Self {
             path: crate::shared::new_directory(),
         }
+    }
+
+    fn at(path: PathBuf) -> Self {
+        fs::create_dir_all(&path).unwrap_or_else(|error| panic!("create {}: {error}", path.display()));
+        Self { path }
     }
 }
 

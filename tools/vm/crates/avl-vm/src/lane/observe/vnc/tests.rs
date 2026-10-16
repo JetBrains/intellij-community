@@ -1,11 +1,40 @@
 use avl_base::{Backend, Exit, GuestOs};
 use avl_host_sys::Ctx;
 use avl_host_testkit::{outcome_of, refusal};
+use avl_testkit::tartfake::{CONTAINER_LINUX_NOVNC_URL, CONTAINER_LINUX_VNC_PASSWORD};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::{VNC_TAIL_LINES, command_vnc};
 use crate::lane::observe::testing::Fixture;
+
+/// The container-linux `vnc` is the noVNC page and the password the guest wrote. A container that does not run, or that
+/// has not written its description yet, is `worker_stopped`.
+#[tokio::test]
+async fn vnc_answers_the_novnc_page_and_the_password_of_the_container_linux_container() {
+    let fixture = Fixture::container_linux();
+    let receipt = fixture.lease_receipt("container-linux-1");
+    let stopped = refusal(command_vnc(&Ctx::background(), &fixture.manager, Some(&receipt)).await);
+    assert_eq!((stopped.code.as_ref(), stopped.exit), ("worker_stopped", Exit::FAILURE));
+
+    fixture.start_container_linux_container();
+    let outcome = outcome_of(command_vnc(&Ctx::background(), &fixture.manager, Some(&receipt)).await);
+    assert_eq!(
+        outcome.data,
+        json!({ "worker": "container-linux-1", "novnc": CONTAINER_LINUX_NOVNC_URL, "vncPassword": CONTAINER_LINUX_VNC_PASSWORD })
+    );
+    assert_eq!(
+        outcome.text,
+        format!("noVNC: {CONTAINER_LINUX_NOVNC_URL}  password: {CONTAINER_LINUX_VNC_PASSWORD}")
+    );
+    // One worker per checkout, so a terminal without a receipt gets the same page.
+    let unleased = outcome_of(command_vnc(&Ctx::background(), &fixture.manager, None).await);
+    assert_eq!(unleased.data, outcome.data);
+
+    std::fs::remove_file(fixture.settings.container_linux_root.join("container.json")).expect("the description is removed");
+    let unwritten = refusal(command_vnc(&Ctx::background(), &fixture.manager, Some(&receipt)).await);
+    assert_eq!((unwritten.code.as_ref(), unwritten.exit), ("worker_stopped", Exit::FAILURE));
+}
 
 /// A runtime log whose interesting lines sit at controlled distances from the end, CRLF throughout - which is how
 /// the endpoint pattern earns the line split it is applied over.

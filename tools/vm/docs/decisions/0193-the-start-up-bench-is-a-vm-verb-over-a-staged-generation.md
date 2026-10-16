@@ -14,6 +14,12 @@ the JVM class-load log, and the `project` arm starts the IDE on a project.
 The verb and its layout are in [the vm-lane README](../../README.md), section **The bench**.
 The exit codes are `./plugins/air/scripts/vm.cmd bench --help`, and the grammar of a verb is its own `--help`.
 
+Amended 2026-10-13: the dev distribution bundles the production JBR
+([build ADR 0064](../../../../../build/docs/decisions/0064-the-dev-distribution-bundles-the-production-jbr.md)), and the
+`<launcher>.launch.json` of a launch target names no `java`. Item 4 changes: the JBR is the one inside the
+distribution, at `<home>/jbr/Contents/Home`. The clone of the `.dist` directory carries it. Item 2 changes with it: the
+session builds no row launcher, and the key has no JBR tree of its own.
+
 ## Context
 
 `startup-bench` measured the start-up of the IDE to the welcome screen for the IJPL-257337 work. It started the IDE

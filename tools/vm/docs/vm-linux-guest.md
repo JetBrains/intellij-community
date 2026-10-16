@@ -1,7 +1,7 @@
 # A Linux guest for the Air UI lanes
 
 **Status.** The Tart Linux worker was retired on 2026-10-08
-([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
+([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
 guest keeps the Linux guest model of this note, and its image carries Node. The rest of this note is history. The
 current model is in the [VM guide](vm-ui-tests.md).
 
@@ -15,7 +15,7 @@ lives: that backend's separate open list was retired on 2026-08-23 once its gold
 lane was finally measured on it.
 
 For the host-side Bazel assembly and launch boundary, see
-[Dev-build architecture](../../../../build/dev-build-architecture.md).
+[Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md).
 
 ## Why ask
 
@@ -52,8 +52,9 @@ when `SystemInfoRt.isLinux`.
 **The lanes do need a real display.** `AirIdeLaunch.kt` removes `java.awt.headless` on purpose, and JCEF
 needs a real X server. Xvfb satisfies both.
 
-**A Linux distribution cross-builds here, and does so today.** `//build:idea_air_lane_dist_linux`
-assembles on this macOS arm64 host and is a genuine Linux build: `bin/product-info.json` reports
+**A Linux distribution cross-builds here, and does so today.**
+`//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
+assembles on this macOS arm64 host and is a genuine Linux build: its `product-info.json` reports
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
 has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
 `--define=air_lane_guest_os=linux` with its stub naming `idea_air_lane_dist_linux` and
@@ -90,7 +91,7 @@ Three pieces, in the order they have to happen.
 
 The dev-distribution fragment macros take one `target_platform` that selects both OS and architecture,
 `preloaded_downloads_for_platform` names that platform's archives without a host `select`, and
-`//build:idea_air_lane_dist_linux` puts the two together. `ui_lane_ide.bzl` selects the pair on
+`//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` puts the two together. `ui_lane_ide.bzl` selects the pair on
 `--define=air_lane_guest_os=linux` on a macOS host. On a Linux x86_64 host the same define selects the
 x86_64 Docker guest, whose distribution is the host build.
 
@@ -432,7 +433,7 @@ being fetched over the guest's NAT.
 
 **Codex is a declared Bazel test runtime now.** The runtime lives under `tests/tools/codex`. It pins the
 version, it carries the locked npm dependencies, and it selects the native package of the machine that
-executes the tests. The IDE reaches it through one launcher directory the launch prepends to PATH. Pi has
+executes the tests. The IDE reaches it through the `bin` directory of its context, which is first on the PATH of the IDE. Pi has
 the same shape, under `tests/tools/pi`.
 [ADR 0137](../../../../plugins/air/docs/decisions/0137-agent-clis-are-declared-bazel-test-runtimes.md) states the decision, and
 [ADR 0047](decisions/0047-agent-clis-are-provisioned-per-boot.md) holds the per-boot install it replaced.

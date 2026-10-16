@@ -33,8 +33,9 @@ pub trait ProcessTable: Send + Sync {
     /// Whether the table answers for `pid`. The host answers every pid that the table does not hold.
     fn holds(&self, pid: i32) -> bool;
 
-    /// One field of the process `pid` that the table holds, or `None` when there is no such process.
-    fn field(&self, pid: i32, field: PsField) -> Option<String>;
+    /// One field of the process `pid` that the table holds, or `None` when there is no such process. A refusal is a
+    /// probe without an answer. These are the three answers of the host probe.
+    fn field(&self, pid: i32, field: PsField) -> Result<Option<String>, Refusal>;
 }
 
 impl Runner {
@@ -58,7 +59,7 @@ impl Runner {
         if let Some(table) = &self.process_table
             && table.holds(pid)
         {
-            return Ok(table.field(pid, field));
+            return table.field(pid, field);
         }
         imp::probe(self, ctx, pid, field).await
     }

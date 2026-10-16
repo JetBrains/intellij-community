@@ -94,6 +94,25 @@ fn a_sandbox_can_open_no_readme() {
     );
 }
 
+/// A session over a staged generation names the commit that its stage recorded. A generation from before that record
+/// names none, and the session warns.
+#[test]
+fn a_session_over_a_generation_names_the_commit_of_its_bytes() {
+    use super::{GitInfo, staged_commit};
+    let built = GitInfo {
+        commit: "3f337093836d2000000000000000000000000000".to_owned(),
+        dirty: false,
+    };
+    assert_eq!(staged_commit("5f1c0d9e2b7a4c3e", Some(built.clone())), (built, None));
+    assert_eq!(
+        staged_commit("5f1c0d9e2b7a4c3e", None),
+        (
+            GitInfo::default(),
+            Some("the generation 5f1c0d9e2b7a was staged before its record named a commit, so the session names none".to_owned())
+        )
+    );
+}
+
 #[test]
 fn a_run_of_another_distribution_is_refused() {
     use super::{GenerationRef, GitInfo, SessionInfo, check_digest};
@@ -105,11 +124,13 @@ fn a_run_of_another_distribution_is_refused() {
             path: "/g/abc".to_owned(),
             dist_digest: "abc".to_owned(),
         },
+        measure_model: None,
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
         hold_ms: 0,
         profile: false,
+        profile_event: crate::bench::profile::ProfileEvent::Cpu,
         project: None,
         project_file: None,
         additional_modules: Vec::new(),
@@ -243,6 +264,8 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         classes_by_plugin: std::collections::BTreeMap::new(),
         classes_by_module: std::collections::BTreeMap::new(),
         classes_by_plugin_at: std::collections::BTreeMap::new(),
+        profile_scope: None,
+        excluded_samples: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),
@@ -254,11 +277,13 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: None,
         arms: vec![Arm::Modal, Arm::NonModal],
         runs: 3,
         cold: false,
         hold_ms: 0,
         profile: false,
+        profile_event: crate::bench::profile::ProfileEvent::Cpu,
         project: None,
         project_file: None,
         additional_modules: Vec::new(),
@@ -273,20 +298,29 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         run(Arm::NonModal, 2, Some(1500.0)),
         run(Arm::NonModal, 3, Some(1600.0)),
     ];
-    let selected = select_run(session, &Summary::build(&info, "s", &records), None).expect("a run");
+    let summary = Summary::build(&info, "s", &records);
+    let selected = select_run(session, &summary, None, None).expect("a run");
     assert_eq!(selected.dir, session.join("non-modal-run-03"));
     assert_eq!(selected.median_by, Some(WELCOME_BECAME_VISIBLE));
+    let modal = select_run(session, &summary, None, Some(Arm::Modal)).expect("a run");
+    assert_eq!(
+        (modal.dir, modal.median_by),
+        (session.join("modal-run-02"), Some(WELCOME_BECAME_VISIBLE)),
+        "the median run of the arm that --arm names"
+    );
+    let refusal = select_run(session, &summary, None, Some(Arm::Project)).expect_err("no project arm");
+    assert_eq!(refusal.message, "/s has no project arm; its arms are modal, non-modal");
 
     let records = [
         run(Arm::Modal, 1, Some(1200.0)),
         run(Arm::Modal, 2, Some(1100.0)),
         run(Arm::NonModal, 1, None),
     ];
-    let selected = select_run(session, &Summary::build(&info, "s", &records), None).expect("a run");
+    let selected = select_run(session, &Summary::build(&info, "s", &records), None, None).expect("a run");
     assert_eq!(selected.dir, session.join("modal-run-02"), "the lower middle of two");
 
     let records = [run(Arm::Modal, 1, None), run(Arm::NonModal, 1, None)];
-    let refusal = select_run(session, &Summary::build(&info, "s", &records), None).expect_err("no valid run");
+    let refusal = select_run(session, &Summary::build(&info, "s", &records), None, None).expect_err("no valid run");
     assert_eq!(
         refusal.message,
         "no arm of /s has a valid measured run, so it has no median run; name a run with --run"
@@ -303,27 +337,40 @@ fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: None,
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
         hold_ms: 0,
         profile: false,
+        profile_event: crate::bench::profile::ProfileEvent::Cpu,
         project: None,
         project_file: None,
         additional_modules: Vec::new(),
         max_load: None,
         warnings: Vec::new(),
     };
-    let refusal = select_run(dir.path(), &Summary::build(&info, "s", &[]), Some("modal-run-01")).expect_err("no run");
+    let summary = Summary::build(&info, "s", &[]);
+    let refusal = select_run(dir.path(), &summary, Some("modal-run-01"), None).expect_err("no run");
     assert_eq!(
         refusal.message,
         format!("{} has no run modal-run-01; it has no run directory", dir.path().display())
     );
+    std::fs::create_dir(dir.path().join("modal-run-01")).expect("a run directory");
+    let named = select_run(dir.path(), &summary, Some("modal-run-01"), Some(Arm::Modal)).expect("a run of the arm");
+    assert_eq!((named.dir, named.median_by), (dir.path().join("modal-run-01"), None));
+    let refusal = select_run(dir.path(), &summary, Some("modal-run-01"), Some(Arm::NonModal)).expect_err("another arm");
+    assert_eq!(
+        refusal.message,
+        "modal-run-01 is a run of the modal arm, and --arm names the non-modal arm; drop one of them"
+    );
 }
 
+/// The max load and the measurement model go through `session.json` into `summary.json`. A session of before them, such
+/// as the fixture, has neither.
 #[test]
-fn the_max_load_goes_through_session_json_and_summary_json() {
-    use super::{GenerationRef, GitInfo, SessionInfo, read_info};
+fn the_max_load_and_the_measure_model_go_through_session_json_and_summary_json() {
+    use super::{GenerationRef, GitInfo, MeasureModel, SessionInfo, read_info};
     use crate::bench::summary::Summary;
     use crate::bench::testing::testdata_dir;
     let info = SessionInfo {
@@ -331,11 +378,13 @@ fn the_max_load_goes_through_session_json_and_summary_json() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: Some(MeasureModel::current()),
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
         hold_ms: 0,
         profile: false,
+        profile_event: crate::bench::profile::ProfileEvent::Cpu,
         project: None,
         project_file: None,
         additional_modules: Vec::new(),
@@ -344,11 +393,18 @@ fn the_max_load_goes_through_session_json_and_summary_json() {
     };
     let text = serde_json::to_string(&info).expect("JSON");
     assert!(text.contains(r#""maxLoad":10.0"#), "{text}");
+    assert!(text.contains(r#""measureModel":{"name":"integration-test","version":1}"#), "{text}");
     assert_eq!(serde_json::from_str::<SessionInfo>(&text).expect("a session"), info);
     let summary = serde_json::to_value(Summary::build(&info, "s", &[])).expect("JSON");
     assert_eq!(summary["maxLoad"], 10.0);
+    assert_eq!(
+        summary["measureModel"],
+        serde_json::json!({"name": "integration-test", "version": 1})
+    );
+    assert_eq!(MeasureModel::current().to_string(), "integration-test v1");
     let fixture = read_info(&testdata_dir().join("session")).expect("the fixture session");
     assert_eq!(fixture.max_load, None, "a session of before the option has none");
+    assert_eq!(fixture.measure_model, None, "a session of before the model has none");
 }
 
 #[test]

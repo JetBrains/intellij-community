@@ -1,6 +1,6 @@
 [package]
 name = "avl-guest"
-description = "The guest half: the run supervisor, the runtime stager, provisioning verbs and the agent binary."
+description = "The guest half: the run supervisor, the runtime stager, the lane IDE contexts, provisioning verbs and the agent binary."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,6 +17,7 @@ workspace = true
 avl-trace-tools.workspace = true
 avl-wire.workspace = true
 clap.workspace = true
+dev-launch.workspace = true
 hex.workspace = true
 jiff.workspace = true
 refusal.workspace = true
@@ -25,6 +26,7 @@ serde_json.workspace = true
 sha2.workspace = true
 tempfile.workspace = true
 walkdir.workspace = true
+zip.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 nix.workspace = true

@@ -10,33 +10,35 @@
 //!    lease is a worker nobody else can use for minutes;
 //! 3. the workers are acquired, inside the lease phase;
 //! 4. the command divides its work over the held workers;
-//! 5. every worker's body runs at once, each under that worker's lifecycle lock, beside the signal watch;
+//! 5. every worker's body runs at once, each under the run marker of that worker, beside the signal watch. The
+//!    worker's lifecycle lock is taken when the marker is written and when it is removed, and is free in between;
 //! 6. what this run acquired is released, inside the release phase.
 //!
 //! The persist, the verdict and the reply are each command's fold over the [`Leased`] value this answers.
 //!
 //! **One release site.** Between the acquisition and the release the only fallible step is the division, and its
-//! refusal releases before it returns. A body cannot fail: it answers a value, and a lock refusal is stored as one.
-//! So no refusal after the acquisition leaves a worker held unnamed, and the release results always reach the fold.
-//! A borrowed receipt is the caller's, and it is never released.
+//! refusal releases before it returns. A body cannot fail: it answers a value, and a refusal of its run marker is
+//! stored as one. So no refusal after the acquisition leaves a worker held unnamed, and the release results always
+//! reach the fold. A borrowed receipt is the caller's, and it is never released.
 //!
 //! **One interrupt policy.** A signal ends the wait. The bodies still in flight are dropped, and every lease this run
 //! took is kept, because a release takes the worker's lifecycle lock and proves no run is active, and neither is true
-//! of an abandoned iteration. The command then publishes no verdict and refuses `<command>_interrupted`, naming each
-//! receipt. The watch is biased, so a signal that arrived before the fan-out starts no body at all.
+//! of an abandoned iteration. The run marker of each dropped body is kept too, and it goes stale with this process.
+//! The command then publishes no verdict and refuses `<command>_interrupted`, naming each receipt. The watch is
+//! biased, so a signal that arrived before the fan-out starts no body at all.
 
 use std::path::Path;
 use std::sync::Arc;
 
 use crate::worker::lease::{
-    AcquireRequest, HeldWorker, ReleaseResult, acquire_workers, disposition, receipt_for_path, release_workers, require_one_guest_os,
-    with_lease_operation,
+    AcquireRequest, HeldWorker, ReleaseResult, SlotReason, acquire_workers, disposition, receipt_for_path, release_workers,
+    require_one_guest_os, with_run_marker,
 };
 use crate::worker::worker::Lease;
 use avl_base::plain::release_command;
 use avl_base::{Refusal, Scope, journal};
-use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
+use avl_host_sys::{Ctx, PsField};
 use avl_wire::progress::{Event, LeaseDisposition, Phase, RunStarted, VerdictLease};
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
@@ -82,7 +84,7 @@ pub(crate) struct Leased<P, T> {
     pub(crate) borrowed: usize,
     /// What the division answered.
     pub(crate) plan: P,
-    /// Per held worker: `None` when the interrupt dropped its body, `Err` when its lifecycle lock refused.
+    /// Per held worker: `None` when the interrupt dropped its body, `Err` when the start of its run marker refused.
     pub(crate) settled: Vec<Option<Result<T, Refusal>>>,
     /// The signal that abandoned the run, if one did.
     pub(crate) interrupted: Option<&'static str>,
@@ -139,12 +141,14 @@ impl Host {
         let run_id = avl_base::actor_id(&self.environment, command);
         let ctx = ctx.clone().with_run_id(run_id.as_str());
         let _journal = journal::attach(&self.settings.runtime_root, &self.reporter, &run_id);
+        let process_started_at = self.process_started_at(&ctx).await;
         self.reporter.publish(
             Event::RunStarted(RunStarted {
                 run_id: run_id.clone(),
                 command: command.to_owned(),
                 args,
                 checkout: self.environment.get("BUILD_WORKSPACE_DIRECTORY").map(str::to_owned),
+                process_started_at,
             }),
             None,
         );
@@ -154,12 +158,22 @@ impl Host {
         result
     }
 
+    /// When this process started, in RFC 3339, or `None` when the process table does not say.
+    ///
+    /// The `vm.cmd` wrapper runs its `bazel run` in the process that it then replaces with the controller, so the start
+    /// of this process is the start of the wrapper. On Unix `ps` gives the local time to the second.
+    async fn process_started_at(&self, ctx: &Ctx) -> Option<String> {
+        let pid = i32::try_from(std::process::id()).ok()?;
+        let answer = self.runner.probe_process(ctx, pid, PsField::StartTime).await.ok()??;
+        rfc3339_of_process_start(&answer)
+    }
+
     /// The leased run: see this module's header for the order and the two policies.
     ///
-    /// `operation` is the lifecycle-lock description a body runs under. `divide` plans the work over the held
-    /// workers; `body` runs one worker's share, handed the plan, the worker's index in `held`, the lease as the lock
-    /// re-read it, and the build. The answer is a refusal only before the workers are acquired, or when the
-    /// division refused, and then only once they were released.
+    /// `operation` is the word that the lock record and the run marker of each body name. `divide` plans the work over
+    /// the held workers. `body` runs one worker's share. It is handed the plan, the worker's index in `held`, the lease
+    /// that the start of its run marker re-read, and the build. Each run marker names `run_id`. The answer is a refusal
+    /// only before the workers are acquired, or when the division refused, and then only once they were released.
     pub(crate) async fn leased_run<P, T>(
         &self,
         ctx: &Ctx,
@@ -178,6 +192,7 @@ impl Host {
                 lease,
                 receipt,
                 recovered: false,
+                slot_reason: SlotReason::Borrowed,
             });
             // The acquisition checks the guest of every lease it places or recovers; a receipt from the command line
             // says nothing about which guest this controller was invoked for.
@@ -203,7 +218,9 @@ impl Host {
                 count => format!("{count} workers, as {holder}"),
             };
             let leasing = self.reporter.start_phase(Phase::Lease, &label, None);
-            let acquired = acquire_workers(ctx, &self.manager, request).await;
+            // The build is done, so a slot whose daemon already serves it is the first choice.
+            let request = request.clone().for_build(built.launch_digest.clone());
+            let acquired = acquire_workers(ctx, &self.manager, &request).await;
             leasing.finish(&acquired);
             for item in acquired.iter().flatten() {
                 self.reporter.note(
@@ -222,7 +239,7 @@ impl Host {
             }
         };
 
-        let (settled, interrupted) = self.fan_out(ctx, operation, &held, &plan, &built, &body).await;
+        let (settled, interrupted) = self.fan_out(ctx, run_id, operation, &held, &plan, &built, &body).await;
 
         let settlement = if interrupted.is_some() {
             Settlement {
@@ -247,30 +264,29 @@ impl Host {
         })
     }
 
-    /// Every held worker's body at once, and the signal that abandoned the rest if one did.
+    /// Every held worker's body at once, and the signal that abandoned the rest if one did. Each body runs under the
+    /// run marker of `run_id` on its worker.
     ///
     /// No cancellation between the bodies: one worker's refusal must not take its siblings' answers with it. The
     /// bodies still in flight when a signal arrives are dropped; their children are the interrupt service's to stop.
+    #[expect(clippy::too_many_arguments, reason = "the leased run's inputs, each of which a body needs")]
     async fn fan_out<P, T>(
         &self,
         ctx: &Ctx,
+        run_id: &str,
         operation: &'static str,
         held: &[HeldWorker],
         plan: &P,
         built: &Arc<PreparedBuild>,
         body: &impl AsyncFn(&P, usize, Lease, &Arc<PreparedBuild>) -> T,
     ) -> (Vec<Option<Result<T, Refusal>>>, Option<&'static str>) {
-        // The whole set is this invocation's while the bodies run, so one body's recreate of the Lima engine does not
-        // stop for a sibling's lease.
-        let leases: Vec<Lease> = held.iter().map(|item| item.lease.clone()).collect();
-        let _held = self.manager.hold_leases(&leases);
         let interrupt = self.interrupts.token();
         let mut settled: Vec<Option<Result<T, Refusal>>> = held.iter().map(|_| None).collect();
         let mut pending: FuturesUnordered<_> = held
             .iter()
             .enumerate()
             .map(|(index, item)| async move {
-                let result = with_lease_operation(ctx, &self.manager, &item.lease, operation, async |current: Lease| {
+                let result = with_run_marker(ctx, &self.manager, &item.lease, run_id, operation, async |current: Lease| {
                     Ok(body(plan, index, current, built).await)
                 })
                 .await;
@@ -319,4 +335,17 @@ impl Host {
             still_held,
         }
     }
+}
+
+/// A start time that the process probe answered, as RFC 3339 in UTC, or `None` for an answer in no known form.
+///
+/// Windows answers RFC 3339 already. Unix answers the collapsed `lstart` of `ps`, such as `Sat Oct 10 15:41:37 2026`,
+/// in the local time zone of the host.
+pub(crate) fn rfc3339_of_process_start(answer: &str) -> Option<String> {
+    if let Ok(timestamp) = answer.parse::<jiff::Timestamp>() {
+        return Some(timestamp.to_string());
+    }
+    let local = jiff::civil::DateTime::strptime("%a %b %e %H:%M:%S %Y", answer).ok()?;
+    let zoned = local.to_zoned(jiff::tz::TimeZone::system()).ok()?;
+    Some(zoned.timestamp().to_string())
 }

@@ -9,7 +9,8 @@
 # The archives are the static CLI tarballs of `download.docker.com/mac/static/stable/<arch>/`, byte-identical,
 # on the Space file mirror. The cache redirector does not serve `download.docker.com`, and
 # `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the redirector. The tarball holds the
-# CLI only. The engine is the controller's Lima VM, see `lima.MODULE.bazel`.
+# CLI only. The pinned CLI drives the engine of the host environment, which `DOCKER_HOST` names. A Mac of macOS 26 or
+# newer runs Apple `container` instead, with its own CLI of `container.MODULE.bazel`.
 #
 # The static CLI has no plugin, and the image build needs BuildKit (`COPY --chmod`), so `docker-buildx` is pinned
 # too: the GitHub release binaries `buildx-v<version>.darwin-<arm64|amd64>` of `docker/buildx`, byte-identical, on

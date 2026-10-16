@@ -11,7 +11,7 @@ Date: 2026-08-25
 **Superseded on 2026-09-26 by [ADR 0059](0059-the-ui-lane-tooling-is-rust.md)** for the language: the verbs below
 and the closed set of exit statuses are now the Rust guest agent's, and the Go paths below are history.
 
-**Superseded in part on 2026-10-08 by [ADR 0210](0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)**: the guest agent has no Node staging
+**Superseded in part on 2026-10-08 by [the Docker image carries Node, and the Tart Linux worker is retired](2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)**: the guest agent has no Node staging
 and no `provision-guest` verb, and `validate-guest` has no Node check.
 
 Accepted. Amends [ADR 0105](0105-the-ui-lane-controller-is-go.md), which recorded `provision/` — the Packer

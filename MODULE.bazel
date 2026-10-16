@@ -296,7 +296,7 @@ register_toolchains(
 
 # The crates of //build/dev-dist-tools, resolved from its `Cargo.lock`. The name is short on purpose. It becomes part
 # of every dependency path, and a long name breaks the build on Windows. The tools run only on the host, so the
-# triples are the hosts that run Bazel here, plus the one triple below that a closure check needs. A host without a
+# triples are the hosts that run Bazel here, plus the two Linux musl triples of the guest agent. A host without a
 # triple fails to resolve the crates.
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 crate.from_cargo(
@@ -313,8 +313,10 @@ crate.from_cargo(
         "x86_64-pc-windows-msvc",
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu",
-        # No dev-dist tool runs here. The closure checks of `vm` and `air-trace` analyze bt-core for x86_64 Linux musl,
-        # and through bt-core `distpath` and its `anyhow`.
+        # No dev-dist tool runs on the two Linux musl triples. The guest agent links `dev-launch` and its crates, and
+        # `:vm-guest-agent-linux-*` builds them for both. The closure checks of `vm` and `air-trace` analyze bt-core for
+        # x86_64 Linux musl, and through bt-core `distpath` and its `anyhow`.
+        "aarch64-unknown-linux-musl",
         "x86_64-unknown-linux-musl",
     ],
 )
@@ -347,9 +349,9 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
-# The Air UI-lane controller, `tools/vm`: the pinned Docker CLI, Lima and Tart, and the crate hub `@avl`.
+# The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
+include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")
-include("//tools/vm:lima.MODULE.bazel")
 include("//tools/vm:tart.MODULE.bazel")
 include("//tools/vm:avl.MODULE.bazel")
 include("//:fleet/kmp.MODULE.bazel")

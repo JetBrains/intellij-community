@@ -2,8 +2,9 @@
 
 use std::sync::Mutex;
 
+use avl_base::Refusal;
 use avl_base::sync::lock;
-use avl_host_sys::{ProcessTable, PsField};
+use avl_host_sys::{Captured, ProbeOutput, ProcessTable, PsField, probe_unanswered};
 
 /// The pid of the first declared process. It is above the pid limit of every host, so a signal to a fake pid reaches no
 /// real process, and no host process has a pid of the table.
@@ -19,7 +20,8 @@ const START_TIME: &str = "Sun Aug 23 00:00:00 2026";
 /// table, and the host answers every other pid.
 #[derive(Default)]
 pub struct FakeProcesses {
-    commands: Mutex<Vec<String>>,
+    /// The command of each declared process, or `None` for a process whose probes give no answer.
+    commands: Mutex<Vec<Option<String>>>,
     /// Whether the host answers each pid below [`FIRST_PID`].
     beside_the_host: bool,
 }
@@ -35,8 +37,17 @@ impl FakeProcesses {
 
     /// Declares a live process that runs `command`, and answers its pid.
     pub fn start(&self, command: &str) -> i32 {
+        self.declare(Some(command.to_owned()))
+    }
+
+    /// Declares a process whose every probe gives no answer, as a `ps` that a signal ended, and answers its pid.
+    pub fn start_unanswered(&self) -> i32 {
+        self.declare(None)
+    }
+
+    fn declare(&self, command: Option<String>) -> i32 {
         let mut commands = lock(&self.commands);
-        commands.push(command.to_owned());
+        commands.push(command);
         FIRST_PID + i32::try_from(commands.len() - 1).expect("a suite declares fewer than 2^31 processes")
     }
 }
@@ -46,13 +57,26 @@ impl ProcessTable for FakeProcesses {
         !self.beside_the_host || pid >= FIRST_PID
     }
 
-    fn field(&self, pid: i32, field: PsField) -> Option<String> {
-        let index = usize::try_from(pid.checked_sub(FIRST_PID)?).ok()?;
-        let command = lock(&self.commands).get(index)?.clone();
-        Some(match field {
+    fn field(&self, pid: i32, field: PsField) -> Result<Option<String>, Refusal> {
+        let Some(declared) = pid
+            .checked_sub(FIRST_PID)
+            .and_then(|index| usize::try_from(index).ok())
+            .and_then(|index| lock(&self.commands).get(index).cloned())
+        else {
+            return Ok(None);
+        };
+        let Some(command) = declared else {
+            let argv = ["/bin/ps".to_owned(), "-p".to_owned(), pid.to_string()];
+            let killed = Captured {
+                exit_code: 137,
+                ..Captured::default()
+            };
+            return Err(probe_unanswered(&argv, &killed, ProbeOutput::Quoted));
+        };
+        Ok(Some(match field {
             PsField::StartTime => START_TIME.to_owned(),
             PsField::Command => command,
             PsField::State => "S".to_owned(),
-        })
+        }))
     }
 }

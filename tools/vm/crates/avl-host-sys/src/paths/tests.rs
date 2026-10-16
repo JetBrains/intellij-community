@@ -5,16 +5,15 @@ use pretty_assertions::assert_eq;
 use super::*;
 
 fn windows() -> GuestPaths {
-    GuestPaths::for_roots(r"C:\Users\air\idea", "C:/ProgramData/_bazel").unwrap()
+    GuestPaths::for_root("C:/ProgramData/_bazel").unwrap()
 }
 
 #[test]
 fn a_unix_root_is_its_own_guest_root_and_a_path_under_it_keeps_its_text() {
-    let paths = GuestPaths::for_roots("/Users/air/idea", "/Users/air/_bazel").unwrap();
-    assert_eq!((paths.repo(), paths.bazel_user_root()), ("/Users/air/idea", "/Users/air/_bazel"));
+    let paths = GuestPaths::for_root("/Users/air/_bazel").unwrap();
+    assert_eq!(paths.bazel_user_root(), "/Users/air/_bazel");
     for host in [
-        "/Users/air/idea",
-        "/Users/air/idea/.git",
+        "/Users/air/_bazel",
         "/Users/air/_bazel/execroot/_main/bazel-out/k8-fastbuild/bin/a.jar",
     ] {
         assert_eq!(paths.to_guest(Path::new(host)).unwrap(), host);
@@ -24,16 +23,8 @@ fn a_unix_root_is_its_own_guest_root_and_a_path_under_it_keeps_its_text() {
 #[test]
 fn a_windows_root_becomes_a_drive_directory_in_the_guest() {
     let paths = windows();
-    assert_eq!(
-        (paths.repo(), paths.bazel_user_root()),
-        ("/c/Users/air/idea", "/c/ProgramData/_bazel")
-    );
-    assert_eq!(
-        paths.to_guest_text(r"C:\Users\air\idea\community\x.txt").unwrap(),
-        "/c/Users/air/idea/community/x.txt"
-    );
-    // The form `real_path` answers, and the form of a Bazel MANIFEST, which writes its output root in lower case.
-    assert_eq!(paths.to_guest_text("C:/Users/air/idea/.git").unwrap(), "/c/Users/air/idea/.git");
+    assert_eq!(paths.bazel_user_root(), "/c/ProgramData/_bazel");
+    // The form of a Bazel MANIFEST, which writes its output root in lower case.
     assert_eq!(
         paths
             .to_guest_text("C:/programdata/_bazel/kxsaieyx/execroot/_main/Mixed.jar")
@@ -51,19 +42,24 @@ fn a_guest_root_is_refused_for_a_path_that_is_not_absolute() {
     }
 }
 
-/// A path outside both shares cannot reach a worker, so it is refused by name rather than sent.
+/// A path outside the share cannot reach a worker, so it is refused by name rather than sent. The checkout is such a
+/// path: no share holds it.
 #[test]
-fn a_path_outside_both_shares_is_refused() {
+fn a_path_outside_the_share_is_refused() {
     for host in [
-        r"C:\Users\air\ideas\x",
-        r"D:\Users\air\idea\x",
-        r"C:\Users\air\idea\..\secret",
+        r"C:\Users\air\idea\community\x.txt",
+        r"C:\ProgramData\_bazelx\y",
+        r"D:\ProgramData\_bazel\x",
+        r"C:\ProgramData\_bazel\..\secret",
         "/Users/air/idea/x",
     ] {
         let refusal = windows().to_guest_text(host).unwrap_err();
         assert_eq!(refusal.code, "guest_path_unmapped", "{host}");
         assert!(refusal.message.contains(host), "{}", refusal.message);
     }
+    let unix = GuestPaths::for_root("/Users/air/_bazel").unwrap();
+    let refusal = unix.to_guest(Path::new("/Users/air/idea/.git")).unwrap_err();
+    assert!(refusal.message.contains("no share holds the checkout"), "{}", refusal.message);
 }
 
 #[test]

@@ -80,6 +80,43 @@ pub(crate) fn signal_group(pgid: i32, signal: Signal) {
     }
 }
 
+/// One process of a group, as the supervisor log names it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct GroupMember {
+    pub pid: i32,
+    pub command: String,
+}
+
+/// The processes of `pgid`, read with the `/bin/ps` that [`read_identity`] uses. An unreadable table is an empty one:
+/// the caller only names the members, and the group check decides.
+pub(crate) fn group_members(pgid: i32) -> Vec<GroupMember> {
+    let Ok(output) = Command::new("/bin/ps")
+        .args(["-A", "-o", "pid=,pgid=,args="])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+    else {
+        return Vec::new();
+    };
+    members_in_table(&String::from_utf8_lossy(&output.stdout), pgid)
+}
+
+/// The members of `pgid` in `table`, the `pid pgid args` lines of `ps`. A line that does not parse is no member.
+pub(crate) fn members_in_table(table: &str, pgid: i32) -> Vec<GroupMember> {
+    table
+        .lines()
+        .filter_map(|line| {
+            let mut fields = line.split_whitespace();
+            let pid: i32 = fields.next()?.parse().ok()?;
+            let group: i32 = fields.next()?.parse().ok()?;
+            (pgid > 0 && group == pgid).then(|| GroupMember {
+                pid,
+                command: fields.collect::<Vec<_>>().join(" "),
+            })
+        })
+        .collect()
+}
+
 /// Whether `expected` still names the process it was recorded for.
 pub(crate) fn identity_matches(system: &dyn System, expected: &ProcessIdentity) -> bool {
     if expected.pid <= 0 || expected.pgid <= 0 || expected.process_start.is_empty() {

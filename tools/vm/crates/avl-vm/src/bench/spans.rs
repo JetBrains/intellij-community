@@ -1,5 +1,5 @@
-//! `bench trace`: the spans of one run that start in a window, with the anchors of the run. It reads only the files
-//! of the session, so it answers on any host.
+//! `bench trace`: the spans of one run that start in a window, or that run in it, with the anchors of the run. It
+//! reads only the files of the session, so it answers on any host.
 
 use std::fmt::Write as _;
 use std::path::Path;
@@ -7,6 +7,7 @@ use std::path::Path;
 use avl_base::Refusal;
 use serde::Serialize;
 
+use super::arm::Arm;
 use super::digest::{NAME_WIDTH, clip, number};
 use super::options::TraceArgs;
 use super::record::{FRAME_BECAME_VISIBLE, WELCOME_SCREEN_PAINTED};
@@ -25,6 +26,8 @@ pub(crate) struct SpanReport {
     pub(crate) origin_us: i64,
     pub(crate) anchors: Vec<Anchor>,
     pub(crate) window: WindowMs,
+    /// The report keeps every span that runs in the window, not only the spans that start in it.
+    pub(crate) overlap: bool,
     pub(crate) min_ms: f64,
     /// The report keeps the coroutine helper twins.
     pub(crate) all: bool,
@@ -69,16 +72,16 @@ impl SpanLine {
     }
 }
 
-/// Reads the run that `args` selects and keeps the spans of its window.
+/// Reads the run that `args` selects and keeps the spans of its window: the spans that start in it, or with
+/// `--overlap` the spans that run in it.
 pub(crate) fn report(session: &Path, args: &TraceArgs) -> Result<SpanReport, Refusal> {
-    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, args.selection.run.as_deref())?;
-    let default = WindowMs {
-        from_ms: timeline.anchor(FRAME_BECAME_VISIBLE).unwrap_or_else(|| timeline.start_ms()),
-        to_ms: timeline.anchor(WELCOME_SCREEN_PAINTED).unwrap_or_else(|| timeline.end_ms()),
-    };
-    let window = WindowMs::of(&args.window, default, &id)?;
+    let selection = &args.selection;
+    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, selection.run.as_deref(), selection.arm)?;
+    let window = WindowMs::of(&args.window, default_window(&timeline, id.arm), &id)?;
     let spans = timeline
-        .window(window.from_ms, window.to_ms)
+        .spans
+        .iter()
+        .filter(|span| if args.overlap { window.overlaps(span) } else { window.starts(span) })
         .filter(|span| (args.all || !span.helper) && span.duration_ms >= args.min)
         .map(|span| SpanLine::of(span, timeline.quit_ms()))
         .collect();
@@ -89,6 +92,7 @@ pub(crate) fn report(session: &Path, args: &TraceArgs) -> Result<SpanReport, Ref
         origin_us: timeline.origin_us,
         anchors: timeline.anchors.clone(),
         window,
+        overlap: args.overlap,
         min_ms: args.min,
         all: args.all,
         total_spans: timeline.spans.len(),
@@ -97,15 +101,34 @@ pub(crate) fn report(session: &Path, args: &TraceArgs) -> Result<SpanReport, Ref
     })
 }
 
+/// The window of a run without `--from` and `--to`: from `frameBecameVisible` to the welcome screen paint. A run
+/// without the frame, such as a modal run, starts at the process start and ends at the main anchor of its arm, see
+/// [`Arm::main_anchor`]. A missing end widens the window to the end of the run.
+pub(crate) fn default_window(timeline: &Timeline, arm: Arm) -> WindowMs {
+    let (from_ms, to_ms) = match timeline.anchor(FRAME_BECAME_VISIBLE) {
+        Some(frame) => (frame, timeline.anchor(WELCOME_SCREEN_PAINTED)),
+        None => (0.0, timeline.anchor(arm.main_anchor())),
+    };
+    WindowMs {
+        from_ms,
+        to_ms: to_ms.unwrap_or_else(|| timeline.end_ms()),
+    }
+}
+
 impl SpanReport {
     /// The text: the run, the anchors, the window, and one line per span.
     pub(crate) fn text(&self) -> String {
         let mut text = String::new();
         heading(&mut text, "trace", &self.session, &self.run, self.median_by, &self.anchors);
         let helpers = if self.all { " with the helper twins" } else { "" };
+        let (kept, none) = if self.overlap {
+            ("spans that run in it", "no span runs in the window")
+        } else {
+            ("spans that start in it", "no span starts in the window")
+        };
         let _ = writeln!(
             text,
-            "window {}..{} ms, spans >= {} ms{helpers}, {} of {} spans",
+            "window {}..{} ms, {kept}, >= {} ms{helpers}, {} of {} spans",
             number(self.window.from_ms),
             number(self.window.to_ms),
             number(self.min_ms),
@@ -116,15 +139,20 @@ impl SpanReport {
             let _ = writeln!(text, "note: {TRACE_FILE} is truncated; the reader closed it");
         }
         if self.spans.is_empty() {
-            let _ = write!(text, "no span starts in the window");
+            let _ = write!(text, "{none}");
             return text;
         }
-        let _ = write!(text, "  {:>7} {:>6}  {:<NAME_WIDTH$}  class / plugin", "start", "dur", "span");
+        let _ = write!(
+            text,
+            "  {:>7} {:>7} {:>6}  {:<NAME_WIDTH$}  class / plugin",
+            "start", "end", "dur", "span"
+        );
         for line in &self.spans {
             let span = &line.span;
             let mut row = format!(
-                "  {:>7} {:>6}  {:<NAME_WIDTH$}",
+                "  {:>7} {:>7} {:>6}  {:<NAME_WIDTH$}",
                 number(span.start_ms),
+                number(span.end_ms),
                 number(span.duration_ms),
                 clip(&span.name, NAME_WIDTH)
             );

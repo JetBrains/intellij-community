@@ -2,6 +2,7 @@ use avl_base::Reporter;
 use pretty_assertions::assert_eq;
 
 use super::report;
+use crate::bench::arm::Arm;
 use crate::bench::command::replay;
 use crate::bench::options::{ActivitiesArgs, DEFAULT_TOP, RunSelection, Window};
 use crate::bench::testing::{assert_golden, fixture_session};
@@ -11,6 +12,7 @@ fn args(run: Option<&str>, from: Option<f64>, to: Option<f64>, top: u32) -> Acti
         selection: RunSelection {
             session: "session".to_owned(),
             run: run.map(str::to_owned),
+            arm: None,
         },
         window: Window { from, to },
         top,
@@ -23,6 +25,20 @@ fn replayed() -> (tempfile::TempDir, std::path::PathBuf) {
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&session, &reporter).expect("a summary");
     (dir, session)
+}
+
+/// `--arm` picks the median run of an arm, here the modal run, which has no activity.
+#[test]
+fn an_arm_picks_its_median_run() {
+    let (_dir, session) = replayed();
+    let mut modal = args(None, None, None, DEFAULT_TOP);
+    modal.selection.arm = Some(Arm::Modal);
+    let report = report(&session, &modal).expect("a report");
+    assert_eq!(
+        (report.run.as_str(), report.median_by),
+        ("modal-run-01", Some("welcomeBecameVisible"))
+    );
+    assert_eq!(report.total_activities, 0);
 }
 
 /// The text of the default report of the fixture equals `testdata/bench/activities.txt`.

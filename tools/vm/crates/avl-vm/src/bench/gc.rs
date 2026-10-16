@@ -14,7 +14,7 @@ use avl_base::{Exit, Refusal};
 use serde::Serialize;
 
 use super::session::{BENCH_DIR, SUMMARY_FILE, runs_root};
-use super::stage::{self, RECORD_FILE};
+use super::stage::{self, GENERATIONS_DIR, RECORD_FILE};
 
 /// The generations that `bench gc` keeps by default.
 pub(crate) const DEFAULT_KEEP: u32 = 2;
@@ -83,7 +83,7 @@ fn failed(message: impl Into<String>) -> Refusal {
 /// time the 24 hours count back from.
 pub(crate) fn collect(runtime_root: &Path, keep: u32, now: SystemTime) -> Result<GcReport, Refusal> {
     let bench = runtime_root.join(BENCH_DIR);
-    let generations_dir = bench.join("generations");
+    let generations_dir = bench.join(GENERATIONS_DIR);
     let mut report = GcReport::default();
     let entries = match fs::read_dir(&generations_dir) {
         Ok(entries) => entries,
