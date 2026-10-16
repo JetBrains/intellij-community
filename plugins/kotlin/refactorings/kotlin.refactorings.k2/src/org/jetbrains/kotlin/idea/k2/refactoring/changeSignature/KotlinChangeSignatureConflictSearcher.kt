@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtElement
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 import org.jetbrains.kotlin.types.Variance
 import kotlin.math.max
 
@@ -119,6 +121,12 @@ class KotlinChangeSignatureConflictSearcher(
 
         val newReceiverInfo = originalInfo.receiverParameterInfo
         val originalReceiverInfo = originalInfo.methodDescriptor.receiver
+        if (function.isFromCompanionBlock && newReceiverInfo != null) {
+            result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.block.function.cannot.have.receiver"))
+        }
+        if (function.hasModifier(KtTokens.COMPANION_KEYWORD) && newReceiverInfo == null) {
+            result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
+        }
         if (newReceiverInfo != originalReceiverInfo) {
             if (function.receiverTypeReference == null && newReceiverInfo != null && newReceiverInfo.isNewParameter) {
                 val usages = mutableListOf<UsageInfo>()

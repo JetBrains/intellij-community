@@ -917,6 +917,20 @@ public @interface NotNull {
 
     fun testReceiverToParameterImplicitReceivers() = doTest { receiverParameterInfo = null }//suggested names for receiver is different
 
+    fun testCompanionUsagesParameterToReceiver() = doTest { receiverParameterInfo = newParameters[0] }
+
+    fun testCompanionUsagesReceiverToParameter() = doTest {
+        receiverParameterInfo = null
+        newParameters[0].name = "text"
+    }
+
+    fun testCompanionBlockParameterToReceiver() = doTestConflict { receiverParameterInfo = newParameters[0] }
+
+    fun testCompanionExtensionReceiverToParameter() = doTestConflict {
+        receiverParameterInfo = null
+        newParameters[0].name = "text"
+    }
+
     fun testParameterToReceiverExplicitReceiver() = doTest { receiverParameterInfo = newParameters[0] }
 
     fun testParameterToReceiverImplicitReceivers() = doTest { receiverParameterInfo = newParameters[0] }
@@ -1160,6 +1174,18 @@ public @interface NotNull {
     fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(KaSymbolVisibility.PRIVATE) }
 
     fun testMakePrimaryConstructorPublic() = doTest { setNewVisibility(KaSymbolVisibility.PUBLIC) }
+
+    fun testCompanionBlockChangeSignature() = doTest {
+        setNewVisibility(KaSymbolVisibility.PRIVATE)
+        newParameters[0].name = "count"
+        swapParameters(0, 1)
+    }
+
+    fun testCompanionExtensionChangeSignature() = doTest {
+        setNewVisibility(KaSymbolVisibility.PRIVATE)
+        newParameters[1].name = "count"
+        swapParameters(1, 2)
+    }
 
     fun testVisibilityFromJavaSuper() {
         withIgnoredConflicts<Throwable> {
