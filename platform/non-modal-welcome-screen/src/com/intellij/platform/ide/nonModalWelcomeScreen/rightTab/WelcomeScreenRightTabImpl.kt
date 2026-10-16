@@ -692,6 +692,8 @@ private class ComboBoxInfoPanelAction(
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val component = super.createCustomComponent(presentation, place)
+    component.isFocusable = true
+    component.isRequestFocusEnabled = false
     if (addBorder) {
       component.border = JBUI.Borders.emptyRight(16)
     }
