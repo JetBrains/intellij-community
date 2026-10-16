@@ -112,7 +112,7 @@ public final class AppMode {
       (knownCommand == null && !isHeadless && mayHappenToBeAFile(args))
     );
 
-    if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args)) {
+    if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args) || knownCommand != null && knownCommand.disablesNonBundledPlugins) {
       disableNonBundledPlugins = true;
     }
     if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
