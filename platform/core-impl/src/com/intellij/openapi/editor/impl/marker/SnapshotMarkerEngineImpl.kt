@@ -46,7 +46,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   ) : WeakSnapshotMarkerReference(marker, queue) {
     val markerId: Long = marker.markerId
     val documentReference: WeakReference<DocumentImpl>? = document?.let(::WeakReference)
-    val fileRootReference: WeakReference<FileMarkerRoot>? = marker.fileRoot?.let(::WeakReference)
+    val fileRootReference: WeakReference<VirtualFileMarkerRoot>? = marker.fileRoot?.let(::WeakReference)
   }
 
   /**
@@ -75,7 +75,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     endOffset: Int,
     spec: MarkerSpec,
     retainStrong: Boolean = false,
-    markerFactory: (FileMarkerRoot?, Long) -> T,
+    markerFactory: (VirtualFileMarkerRoot?, Long) -> T,
   ): T {
     processQueue()
     val documentImpl = document as DocumentImpl
@@ -84,7 +84,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
     require(endOffset <= snapshot.text().length()) { "Marker range exceeds snapshot length" }
 
-    val fileRoot = FileMarkerRoot.getOrCreate(documentImpl)
+    val fileRoot = VirtualFileMarkerRoot.getOrCreate(documentImpl)
 
     val markerId = nextMarkerId()
     val marker = markerFactory(fileRoot, markerId)
@@ -118,7 +118,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     require(startOffset >= 0) { "startOffset must be non-negative" }
 
     val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file) as? DocumentImpl
-    val fileRoot = FileMarkerRoot.getOrCreate(file)
+    val fileRoot = VirtualFileMarkerRoot.getOrCreate(file)
     val markerId = nextMarkerId()
     val spec = MarkerSpec(
       isGreedyToLeft = false,

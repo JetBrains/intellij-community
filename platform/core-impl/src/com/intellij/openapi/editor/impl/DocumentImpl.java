@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
-import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
+import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -394,7 +394,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    FileMarkerRoot.restoreRangeMarkersFromFile(this, f, tabSize);
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(this, f, tabSize);
     rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 

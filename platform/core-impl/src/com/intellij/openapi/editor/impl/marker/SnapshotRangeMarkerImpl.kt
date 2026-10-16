@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 open class SnapshotRangeMarkerImpl private constructor(
   private val documentOrFile: Any,
-  internal val fileRoot: FileMarkerRoot?,
+  internal val fileRoot: VirtualFileMarkerRoot?,
   private val rootStorage: MarkerRootUpdater,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
@@ -29,7 +29,7 @@ open class SnapshotRangeMarkerImpl private constructor(
    */
   internal constructor(
     document: DocumentImpl,
-    fileRoot: FileMarkerRoot?,
+    fileRoot: VirtualFileMarkerRoot?,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
@@ -37,7 +37,7 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   /** Creates a marker in [fileRoot] before the document is available. */
   internal constructor(
-    fileRoot: FileMarkerRoot,
+    fileRoot: VirtualFileMarkerRoot,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,

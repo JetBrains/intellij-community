@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 @UsePMarkerImplementation
-final class FileMarkerRootTest {
+final class VirtualFileMarkerRootTest {
   @Test
   void documentFullTraversalIncludesFileMarkersBeyondTheDocumentLength() {
     var file = new LightVirtualFile("test.txt", "abcdef");
     var fileMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 10, -1, -1, -1, -1, false);
     var document = new DocumentImpl("abcdef", true);
-    FileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
     var documentMarker = document.createRangeMarker(1, 2);
     var visited = new ArrayList<RangeMarker>();
 
@@ -47,7 +47,7 @@ final class FileMarkerRootTest {
     var middleMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 3, 0, 3, 0, 3, true);
     var lastMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 5, 0, 5, 0, 5, true);
     //noinspection KotlinInternalInJava
-    var fileRoot = FileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
+    var fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
     var document = new DocumentImpl("abcdef", true);
     var beforeText = document.getCore().snapshot().text();
     var patch = DocumentPatch.simple(0, 0, "xx", 1, false);
@@ -63,7 +63,7 @@ final class FileMarkerRootTest {
     );
 
     //noinspection KotlinInternalInJava
-    FileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
 
     assertEquals(1, firstMarker.getStartOffset());
     assertEquals(3, middleMarker.getStartOffset());
@@ -75,7 +75,7 @@ final class FileMarkerRootTest {
   void attachmentWaitsForAFileRootUpdate() throws Exception {
     LightVirtualFile file = new LightVirtualFile("test.txt", "abcdef");
     //noinspection KotlinInternalInJava
-    FileMarkerRoot fileRoot = FileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
+    VirtualFileMarkerRoot fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
     DocumentImpl document = new DocumentImpl("abcdef", true);
     CountDownLatch updateStarted = new CountDownLatch(1);
     CountDownLatch finishUpdate = new CountDownLatch(1);
@@ -94,7 +94,7 @@ final class FileMarkerRootTest {
 
     FutureTask<Void> attachmentTask = new FutureTask<>(() -> {
       //noinspection KotlinInternalInJava
-      FileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+      VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
       return null;
     });
     Thread attachmentThread = new Thread(attachmentTask, "file marker root attachment");

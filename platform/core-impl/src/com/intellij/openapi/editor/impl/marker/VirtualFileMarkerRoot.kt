@@ -13,10 +13,10 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * File-backed marker state shared by marker handles and a live document without retaining either the document or its
+ * Virtual file-backed marker state shared by marker handles and a live document without retaining either the document or its
  * text. A weak reference stored in the [VirtualFile] makes the state discoverable when a document is recreated.
  */
-class FileMarkerRoot private constructor(
+class VirtualFileMarkerRoot private constructor(
   internal val file: VirtualFile,
   initialRootReference: AtomicReference<PMarkerRoot>,
 ) : MarkerRootUpdater(), DocumentListener {
@@ -88,20 +88,20 @@ class FileMarkerRoot private constructor(
   }
 
   companion object {
-    private val FILE_MARKER_ROOT_REF_KEY: Key<Reference<FileMarkerRoot>> = Key.create("snapshot.range.marker.root")
+    private val FILE_MARKER_ROOT_REF_KEY: Key<Reference<VirtualFileMarkerRoot>> = Key.create("snapshot.range.marker.root")
 
-    internal fun getOrCreate(document: DocumentImpl): FileMarkerRoot? {
+    internal fun getOrCreate(document: DocumentImpl): VirtualFileMarkerRoot? {
       val fileDocumentManager = ApplicationManager.getApplication()?.getService(FileDocumentManager::class.java) ?: return null
       val file = fileDocumentManager.getFile(document) ?: return null
       return getOrCreate(file, document)
     }
 
-    internal fun getOrCreate(file: VirtualFile): FileMarkerRoot {
+    internal fun getOrCreate(file: VirtualFile): VirtualFileMarkerRoot {
       val document = FileDocumentManager.getInstance().getCachedDocument(file) as? DocumentImpl
       return getOrCreate(file, document)
     }
 
-    private fun getOrCreate(file: VirtualFile, document: DocumentImpl?): FileMarkerRoot {
+    private fun getOrCreate(file: VirtualFile, document: DocumentImpl?): VirtualFileMarkerRoot {
       val initialRootReference = document?.let(::markerRoot) ?: AtomicReference<PMarkerRoot>(PMarkerRootImpl.empty())
 
       while (true) {
@@ -111,7 +111,7 @@ class FileMarkerRoot private constructor(
           return fileRoot
         }
 
-        val fileRoot = FileMarkerRoot(file, initialRootReference)
+        val fileRoot = VirtualFileMarkerRoot(file, initialRootReference)
         val newReference = WeakReference(fileRoot)
         if (file.replace(FILE_MARKER_ROOT_REF_KEY, oldReference, newReference)) {
           if (document != null) fileRoot.attach(document)
@@ -133,7 +133,7 @@ class FileMarkerRoot private constructor(
       return find(file) != null
     }
 
-    private fun find(file: VirtualFile): FileMarkerRoot? {
+    private fun find(file: VirtualFile): VirtualFileMarkerRoot? {
       val reference = file.getUserData(FILE_MARKER_ROOT_REF_KEY) ?: return null
       val fileRoot = reference.get()
       if (fileRoot == null) {
