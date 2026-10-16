@@ -3,6 +3,7 @@ package com.intellij.platform.pluginSystem.parser.impl.elements
 
 class ContentModuleElement(
   val name: String,
+  /** The explicit namespace of the `<content>` block, or null for the implicit namespace of the plugin. */
   val namespace: String?,
   val loadingRule: ModuleLoadingRuleValue,
   /** `required-if-available` attribute value */

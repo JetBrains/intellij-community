@@ -17,3 +17,17 @@ val ModuleLoadingRuleValue.xmlValue: String
     ModuleLoadingRuleValue.OPTIONAL -> PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE
     ModuleLoadingRuleValue.ON_DEMAND -> PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE
   }
+
+/**
+ * Returns the rule for the given `loading` attribute value. A null input means an absent attribute, so the rule is
+ * [ModuleLoadingRuleValue.OPTIONAL]. Returns null for an unknown value, and the caller reports the error with its own location.
+ */
+fun moduleLoadingRuleValueFromXml(value: String?): ModuleLoadingRuleValue? {
+  return when (value) {
+    null, PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> ModuleLoadingRuleValue.OPTIONAL
+    PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> ModuleLoadingRuleValue.REQUIRED
+    PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> ModuleLoadingRuleValue.EMBEDDED
+    PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> ModuleLoadingRuleValue.ON_DEMAND
+    else -> null
+  }
+}
