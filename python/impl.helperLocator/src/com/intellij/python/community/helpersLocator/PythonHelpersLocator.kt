@@ -54,7 +54,7 @@ interface PythonHelpersLocator {
      * so a missing file is a bug.
      */
     @JvmStatic
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
     fun findPathInHelpers(resourceName: String): Path {
       for (helperRoot in getHelpersRoots()) {
         val path = Path.of(helperRoot.pathString, resourceName)
@@ -68,7 +68,7 @@ interface PythonHelpersLocator {
     @ApiStatus.Internal
     @TestOnly
     @JvmStatic
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
     fun getPythonCommunityPath(): Path {
       val pathFromUltimate = Path.of(PathManager.getHomePath(), "community/python")
       if (pathFromUltimate.exists()) {
@@ -86,7 +86,7 @@ interface PythonHelpersLocator {
      */
     @ApiStatus.Internal
     @JvmStatic
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpers(resourceName).absolutePathString()
   }
 
@@ -106,7 +106,7 @@ interface PythonHelpersLocator {
   }
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
   fun getHelpersRoot(moduleName: String, relativePath: String): Path {
     return findRootByJarPath(
       aClass = PythonHelpersLocator::class.java,
@@ -119,7 +119,7 @@ interface PythonHelpersLocator {
   fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path =
     findModuleRootByJarPath(aClass, moduleName, relativePath)
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
   private fun assertHelpersLayout(root: Path): Path {
     if (!root.exists()) {
       LOG.info("Helpers root does not exist: $root")
