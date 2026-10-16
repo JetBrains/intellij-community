@@ -71,7 +71,7 @@ internal class PluginLoadingProblemPresentationTest {
   @Test
   fun `an expected product mode problem stays outside the generic error area`() {
     val result = CheckErrorsResult(
-      loadingError = "This plugin does not support Light mode.",
+      loadingError = "This plugin does not support Light mode",
       isDisabledDependencyError = true,
       kind = PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH,
       severity = PluginLoadingProblem.Severity.EXPECTED,

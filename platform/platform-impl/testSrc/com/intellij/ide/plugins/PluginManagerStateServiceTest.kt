@@ -775,10 +775,10 @@ internal class PluginManagerStateServiceTest {
     assertThat(problem.productMode).isEqualTo(productMode)
     assertThat(problem.unavailableModuleId).isEqualTo(MODE_MODULE_ID)
     val expectedText = when (productMode) {
-      ProductMode.LIGHT_REMOTE, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LIGHT_MONOLITH -> "This plugin does not support Light mode."
-      ProductMode.FRONTEND -> "This plugin does not support frontend mode."
-      ProductMode.BACKEND -> "This plugin does not support backend mode."
-      ProductMode.MONOLITH, ProductMode.LANGUAGE_SERVER -> "This plugin does not support the current product mode."
+      ProductMode.LIGHT_REMOTE, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LIGHT_MONOLITH -> "This plugin does not support Light mode"
+      ProductMode.FRONTEND -> "This plugin does not support frontend mode"
+      ProductMode.BACKEND -> "This plugin does not support backend mode"
+      ProductMode.MONOLITH, ProductMode.LANGUAGE_SERVER -> "This plugin does not support the current product mode"
     }
     assertThat(problem.shortMessage).isEqualTo(expectedText)
     assertThat(problem.detailedMessage).isEqualTo(expectedText)

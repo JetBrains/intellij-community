@@ -268,6 +268,7 @@ Untested: No focused test covers action labels, callback aggregation, or action 
 - A plugin excluded through a required product mode module has kind `PRODUCT_MODE_MISMATCH`, severity `EXPECTED`, and notification eligibility false.
 - This classification retains the originating mode and terminal module through intermediate plugins and required content modules.
 - The explanation uses Light, frontend, or backend wording when applicable. Other modes use the generic product mode wording.
+- These explanations have no trailing period.
 - The Light wording takes priority for Light modes that also use the frontend.
 - These problems contribute no notification recovery targets and offer no generic dependency Enable suggestion.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
