@@ -14,6 +14,7 @@ import com.intellij.formatting.service.AsyncDocumentFormattingService.getTimeout
 import com.intellij.formatting.service.AsyncDocumentFormattingService.getTimeoutNotificationDisplayId
 import com.intellij.formatting.service.AsyncDocumentFormattingService.needToUpdate
 import com.intellij.formatting.service.AsyncDocumentFormattingService.prepareForFormatting
+import com.intellij.formatting.service.AsyncDocumentFormattingService.supportsSynchronousFormatting
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -43,6 +44,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -118,6 +120,7 @@ class AsyncDocumentFormattingSupportImpl(
   }
 
   private fun isSyncFormat(document: Document): Boolean {
+    if (!supportsSynchronousFormatting(service)) return false
     val forceSync = isForceSyncFormat(document)
     val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment
     val isIgnoreHeadless = SystemProperties.getBooleanProperty("intellij.async.formatting.ignoreHeadless", false)
@@ -222,7 +225,7 @@ class AsyncDocumentFormattingSupportImpl(
       // There is an existing contract that a task that was already created is also started.
       // taskJob is detached here to prevent cancellation before that can happen.
       @Suppress("RAW_SCOPE_CREATION")
-      val taskJob = CoroutineScope(coroutineContext.minusKey(Job) + taskDispatcher).launch {
+      val taskJob = CoroutineScope(coroutineContext.minusKey(Job) + taskDispatcher).async {
         try {
           coroutineToIndicatorIfNeeded(task.isRunUnderProgress) {
             taskStarted.complete(Unit)
@@ -232,6 +235,7 @@ class AsyncDocumentFormattingSupportImpl(
         catch (t: Throwable) {
           // unblock waiter if failure happened before `taskStarted.complete(Unit)` could run
           taskStarted.completeExceptionally(t)
+          taskResult.completeExceptionally(t)
           throw t
         }
       }
