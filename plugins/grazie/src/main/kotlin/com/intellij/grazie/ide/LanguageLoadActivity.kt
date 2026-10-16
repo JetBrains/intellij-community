@@ -12,13 +12,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.spellchecker.SpellCheckerManager
 
 internal abstract class LanguageLoadActivity : ProjectActivity {
   init {
     // Do not preload proofreading in test/headless mode, so it won't slow down unrelated tests and builds.
     // We may still load it, but only when it is actually necessary.
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || IdeProductMode.isLight) {
       throw ExtensionNotApplicableException.create()
     }
   }
