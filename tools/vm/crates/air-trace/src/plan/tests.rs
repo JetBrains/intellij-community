@@ -187,8 +187,8 @@ fn host_line(lane: &str, class: &str) -> String {
 
 /// A VM line is one self-leased run: `vm.cmd run` without a receipt warms the analysis, takes a lease and releases
 /// it, so the plan spells no lease script. A GUI-chat line names the Parallels guest, because that lane belongs on
-/// the guest the user chose, and every other lane runs on the default Linux pool. Only the live lane line names
-/// `--runner jvm`, because the lane daemon launches no live lane.
+/// the guest the user chose, and every other lane runs on the default Linux pool. No line names a runner, because the
+/// lane daemon runs every lane.
 #[test]
 #[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
 fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
@@ -206,7 +206,7 @@ fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
             "gui-chat" => format!("./community/tools/vm.cmd --backend parallels run {}", document.test_class_name),
             // The guest run of the live lane needs the developer's own Central session, piped in (ADR 0200).
             "ui-live" => format!(
-                "central login export | ./community/tools/vm.cmd --runner jvm run {} --test-env AIR_LIVE_CENTRAL_LOGIN=@-",
+                "central login export | ./community/tools/vm.cmd run {} --test-env AIR_LIVE_CENTRAL_LOGIN=@-",
                 document.test_class_name
             ),
             _ => format!("./community/tools/vm.cmd run {}", document.test_class_name),
@@ -259,8 +259,8 @@ fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
             kind: CommandKind::Vm,
             title: "the ui-live lane on a Linux VM worker, explicit-only (1 class(es))".to_owned(),
             lines: vec![
-                "central login export | ./community/tools/vm.cmd --runner jvm run AirLiveLaneEnvironmentUiTest \
-                 --test-env AIR_LIVE_CENTRAL_LOGIN=@-"
+                "central login export | ./community/tools/vm.cmd run AirLiveLaneEnvironmentUiTest --test-env \
+                 AIR_LIVE_CENTRAL_LOGIN=@-"
                     .to_owned()
             ],
             warning: Some(BILLED_WARNING.to_owned()),
@@ -287,8 +287,7 @@ fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
         text.contains(
             "vm: the ui-live lane on a Linux VM worker, explicit-only (1 class(es))\n  # explicit-only: every scenario \
              spends a billed turn on a real account, so no --changed, suites, shard or flake runs it\n  central login export \
-             | ./community/tools/vm.cmd --runner jvm run AirLiveLaneEnvironmentUiTest --test-env \
-             AIR_LIVE_CENTRAL_LOGIN=@-\n"
+             | ./community/tools/vm.cmd run AirLiveLaneEnvironmentUiTest --test-env AIR_LIVE_CENTRAL_LOGIN=@-\n"
         ),
         "{text}"
     );

@@ -437,10 +437,6 @@ impl Host {
     }
 }
 
-/// The lane of the live agents. The lane daemon launches no live lane, so the run that a refusal names for it names
-/// `--runner jvm`.
-const LIVE_LANE: &str = "ui-live";
-
 /// Refuses a repeated selection of an explicit-only lane: `shard` and `flake` would multiply its billed turns.
 ///
 /// A flow, a suite or a changed path never reaches such a lane, so only `--lane` and a selector that resolves to its
@@ -452,9 +448,8 @@ fn refuse_explicit_only(label: &str, program: &str) -> Result<(), Refusal> {
             Exit::USAGE,
             format!(
                 "{name} is an explicit-only lane: each scenario spends a billed turn, so it runs once through \
-                 `{program}{runner} run --lane {name}`, never through shard or flake",
+                 `{program} run --lane {name}`, never through shard or flake",
                 name = lane.name,
-                runner = if lane.name == LIVE_LANE { " --runner jvm" } else { "" },
             ),
         )),
         _ => Ok(()),

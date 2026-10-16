@@ -61,8 +61,8 @@ impl KeyInputs<'_> {
     /// The text that the key hashes, one line each, every line ended by a line feed: `lane=`, `laneDocument=`,
     /// `productStamp=` when there is a stamp, `runtime.<name>=` sorted by the name, and `optionFiles=`.
     ///
-    /// The live lane adds the lines of its credentials and its host CLIs. The lane daemon launches no live lane, so this
-    /// text has no such lines.
+    /// For the live lane, the runtimes also hold the Central runtime and the live runtimes of its live context. No line
+    /// names a credential, because each iteration seeds its own copies into the lane home.
     pub(crate) fn text(&self) -> String {
         let mut lines = vec![format!("lane={}", self.lane), format!("laneDocument={}", self.lane_document)];
         if let Some(stamp) = self.product_stamp.filter(|stamp| !stamp.trim().is_empty()) {

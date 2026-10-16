@@ -318,16 +318,15 @@ example does.
 The live lane `ui-live` runs on the Docker guest too, but only when a caller names it, because each of its scenarios
 spends a billed turn ([ADR 0200](../../../../plugins/air/docs/decisions/0200-the-live-lane-also-runs-in-a-linux-guest-with-a-per-run-central-login.md)).
 Its lane table entry has no catalog lane, so no flow, suite or `--changed` reaches it, and `shard` and `flake` refuse it
-with `explicit_only_lane`. The lane daemon launches no live lane, so the run names the JVM runner. It hands the guest
-a per-run Central login as a run secret file:
+with `explicit_only_lane`. The run hands the guest a per-run Central login as a run secret file:
 
 ```bash
-central login export | ./community/tools/vm.cmd --runner jvm run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-
+central login export | ./community/tools/vm.cmd run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-
 ```
 
-The test JVM imports that login into the guest account, starts the Central proxy and wires the agents with
-`central add`. It tears all of it down when the iteration's test plan ends, before the run reports its verdict. A
-macOS guest refuses the lane by name. The pinned Linux CLIs
+The lane daemon imports that login into the guest account, starts the Central proxy and wires the agents with
+`central add`. It tears all of it down at the end of the iteration, before the run reports its verdict. A run without
+the login input is refused with `lane_live_input` before any build or lease. A macOS guest refuses the lane by name. The pinned Linux CLIs
 reach only a build that opts in with `build --define=air_lane_live_runtimes=on` in
 `.bazelrc-user.bazelrc`, until the mirror holds them. Every session of this checkout shares that file, so all their
 builds carry the define, still share one analysis, and their Linux-guest builds fetch the archives too. The skill's live-lane reference has the procedure.
@@ -494,8 +493,8 @@ holds no checkout, no credentials and no cache, so a recycle loses nothing.
 A one-shot run would pay fixed costs on every iteration: a fresh test JVM, an IDE assembly inside
 it, and an IDE launch with a project open. `run` keeps those paid-for states warm in a persistent
 guest process. By default that process is the **lane daemon**, the `lane-daemon` verb of the guest agent.
-`--runner jvm` selects the JVM **UI-test daemon**, module `intellij.air.integrationTests.uiDaemon`, which the live
-lane needs. Both runners read the same runtime descriptor. Why a daemon is kept,
+`--runner jvm` selects the JVM **UI-test daemon**, module `intellij.air.integrationTests.uiDaemon`, until that runner
+goes. Both runners read the same runtime descriptor. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
 The classpath of the JVM daemon has two tiers. The **stable**

@@ -1251,7 +1251,7 @@ pub struct DaemonBudgets {
     /// The between-execution watchdog budget (`AIR_VM_DAEMON_PROGRESS_TIMEOUT`).
     pub progress_gap: Duration,
     /// Which process serves the run slot: the JVM daemon, or the `lane-daemon` verb of the guest agent. The global
-    /// option `--runner` sets it, and [`Runner::Daemon`] is the default. `--runner jvm` stays for the live lane until the
+    /// option `--runner` sets it, and [`Runner::Daemon`] is the default for every lane. `--runner jvm` stays until the
     /// JVM runner goes. The runner is a boot setting, so a change of it restarts the daemon.
     pub runner: Runner,
 }

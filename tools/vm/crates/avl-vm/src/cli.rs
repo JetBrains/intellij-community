@@ -68,7 +68,7 @@ infer it.
 Global options, accepted before or after the command and anywhere before a literal --: --json and --text choose the \
 output form, --stream adds NDJSON progress, --backend selects the pool, --lease-file passes the receipt, and --runner \
 names the process of the run slot: daemon (the default) is the lane-daemon verb of the guest agent, and jvm is the JVM \
-daemon, which the live lane needs. --runner is a transition option, and it goes when every lane runs through the verb. \
+daemon. --runner is a transition option, and it goes with the JVM daemon. \
 So \"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
 value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text - \
 as JSON data under --json, as prose under --text; after the command it prints that command's own help the same way.
@@ -115,9 +115,9 @@ With --lease-file it runs on that receipt's worker: the warm inner loop.
 --filter narrows what the iteration runs, on top of whatever the lane or selector already asks for; it is \
 repeatable, and OPTION is one of {filters}.
 
---test-env NAME=@- hands the guest test JVM a secret read from a pipe, as in \"central login export | vm.cmd \
---runner jvm run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-\", so no host file exists. The live lane names \
---runner jvm, because the lane daemon launches no live lane. --test-env NAME=@FILE reads a host file instead. The \
+--test-env NAME=@- hands the guest a secret read from a pipe, as in \"central login export | vm.cmd run --lane \
+ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-\", so no host file exists. A run of ui-live without that input is refused \
+with lane_live_input before any build or lease. --test-env NAME=@FILE reads a host file instead. The \
 guest gets a file, never a variable, because the daemon's environment is fixed at boot. The option is repeatable and \
 run's alone, and @- may appear once; stdin on a terminal is refused. Each source is read once before any lease, and \
 refused when it is missing, not a regular file, over 1 MiB, or holds fewer than 16 bytes. It travels on the exec \

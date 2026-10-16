@@ -712,16 +712,16 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
             failure.message
         );
         assert!(
-            failure.message.contains("--runner jvm run --lane ui-live"),
+            failure.message.contains(" run --lane ui-live`") && !failure.message.contains("--runner"),
             "{argv:?}: {:?}",
             failure.message
         );
     }
-    // The live lane alone names the JVM runner, because the lane daemon launches no live lane.
+    // The lane daemon runs every lane, so no refusal names a runner.
     let perf = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(&["--lane", "ui-perf"])).await);
     assert_eq!(perf.code, "explicit_only_lane", "{:?}", perf.message);
     assert!(
-        perf.message.contains("run --lane ui-perf") && !perf.message.contains("--runner"),
+        perf.message.contains(" run --lane ui-perf`") && !perf.message.contains("--runner"),
         "{:?}",
         perf.message
     );
