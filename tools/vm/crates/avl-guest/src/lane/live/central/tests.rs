@@ -6,6 +6,7 @@
 //! The secret is a multi-line export that no token-like run covers, so only the redaction of its own parts removes it.
 
 use std::fs;
+use std::io;
 use std::os::unix::fs::{PermissionsExt, symlink};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -51,6 +52,17 @@ esac
 exit 0
 "#;
 
+/// The process runner with the bound of [`Central`] for the steps that start with `step` only. Every other step gets the
+/// bound of a real run, so the time that a loaded machine takes to start the fake never counts against the short bound.
+struct BoundOnly(&'static str);
+
+impl CentralRunner for BoundOnly {
+    fn run(&mut self, argv: &[String], home: &Path, stdin: Option<&[u8]>, output: StepOutput, timeout: Duration) -> io::Result<Outcome> {
+        let bounded = argv.get(1..).is_some_and(|arguments| arguments.join(" ").starts_with(self.0));
+        ProcessRunner.run(argv, home, stdin, output, if bounded { timeout } else { STEP_TIMEOUT })
+    }
+}
+
 /// What the fake process sweep was asked to end. It answers one Junie gateway each time.
 #[derive(Default)]
 struct Sweeps(Vec<Vec<String>>);
@@ -91,6 +103,10 @@ impl Fixture {
     }
 
     fn central(&self, step_timeout: Duration) -> Central<'_, ProcessRunner, Sweeps> {
+        self.central_with(step_timeout, ProcessRunner)
+    }
+
+    fn central_with<R: CentralRunner>(&self, step_timeout: Duration, runner: R) -> Central<'_, R, Sweeps> {
         Central {
             account: &self.account,
             cli: &self.cli,
@@ -98,7 +114,7 @@ impl Fixture {
             port: 19516,
             agents: &self.agents,
             step_timeout,
-            runner: ProcessRunner,
+            runner,
             processes: Sweeps::default(),
         }
     }
@@ -240,7 +256,10 @@ fn a_step_that_outlives_its_bound_fails_by_its_name() {
     let login = fixture.login(SECRET.as_bytes());
     fixture.flag("hang-proxy", "");
 
-    let failure = fixture.central(Duration::from_secs(1)).provision(&login, &mut |_| {}).unwrap_err();
+    let failure = fixture
+        .central_with(Duration::from_secs(1), BoundOnly("proxy start"))
+        .provision(&login, &mut |_| {})
+        .unwrap_err();
 
     assert_eq!(
         failure.message,
@@ -452,7 +471,10 @@ fn an_import_whose_child_never_reads_its_stdin_fails_within_its_bound() {
     let login = fixture.login(&vec![b'x'; 4 << 20]);
     let started = Instant::now();
 
-    let failure = fixture.central(Duration::from_secs(1)).provision(&login, &mut |_| {}).unwrap_err();
+    let failure = fixture
+        .central_with(Duration::from_secs(1), BoundOnly("login import"))
+        .provision(&login, &mut |_| {})
+        .unwrap_err();
 
     assert_eq!(
         failure.message,

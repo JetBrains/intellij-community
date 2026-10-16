@@ -1,4 +1,3 @@
-use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
@@ -490,10 +489,8 @@ fn a_transient_failure_is_retried_within_the_deadline() {
         started.elapsed()
     );
 
-    let port = {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        listener.local_addr().unwrap().port()
-    };
+    // A free port below the ephemeral floor, which no parallel bind of port 0 takes, so the connect is refused.
+    let port = avl_testkit::free_port_below_ephemeral_floor();
     let error = Reader::new(Client::new(&url(port), TOKEN).unwrap(), None)
         .await_ready(Duration::from_secs(1), Duration::from_millis(600))
         .unwrap_err();

@@ -66,10 +66,8 @@ fn a_call_that_outlives_its_deadline_fails_and_may_be_retried() {
 
 #[test]
 fn a_refused_connect_may_be_retried() {
-    let port = {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        listener.local_addr().unwrap().port()
-    };
+    // A free port below the ephemeral floor, which no parallel bind of port 0 takes, so the connect is refused.
+    let port = avl_testkit::free_port_below_ephemeral_floor();
     let error = Client::new(&url(port), "t").unwrap().get(TREE_ROUTE, JSON, soon()).unwrap_err();
     assert!(
         matches!(error.kind(), ErrorKind::Connect { source, .. } if source.kind() == io::ErrorKind::ConnectionRefused),

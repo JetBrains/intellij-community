@@ -18,10 +18,20 @@ fn agent() -> PathBuf {
     std::path::absolute(path).unwrap()
 }
 
+/// The agent as a command whose environment holds no shard variable of the Bazel test that runs this file. Bazel may
+/// split this test into shards, and `lane-run` refuses a run that Bazel splits.
+fn agent_command() -> Command {
+    let mut command = Command::new(agent());
+    for name in ["TEST_TOTAL_SHARDS", "TEST_SHARD_INDEX", "TEST_SHARD_STATUS_FILE"] {
+        command.env_remove(name);
+    }
+    command
+}
+
 /// Runs the agent with `args` and no standard input, and answers the exit code, the standard output and the
 /// standard error.
 fn answer(args: &[&str]) -> (Option<i32>, String, String) {
-    let output = Command::new(agent()).args(args).stdin(Stdio::null()).output().unwrap();
+    let output = agent_command().args(args).stdin(Stdio::null()).output().unwrap();
     let text = |bytes: Vec<u8>| String::from_utf8(bytes).unwrap();
     (output.status.code(), text(output.stdout), text(output.stderr))
 }
@@ -232,12 +242,13 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     let root = tempfile::tempdir().unwrap();
     let (runfiles, descriptor_path) = lane_runfiles(root.path());
 
-    let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
+    // Below the ephemeral floor, so no parallel bind of port 0 takes it before the daemon binds it.
+    let port = avl_testkit::free_port_below_ephemeral_floor();
     let state_dir = root.path().join("state");
     let log = root.path().join("run.log");
     let path = |path: &std::path::Path| path.display().to_string();
     let mut daemon = Daemon(
-        Command::new(agent())
+        agent_command()
             .args(["lane-daemon", "--state-dir", &path(&state_dir), "--port", &port.to_string()])
             .args(["--launch-digest", "launch-1", "--descriptor", &path(&descriptor_path)])
             .args(["--runfiles-root", &path(&runfiles), "--ide-root", &path(&root.path().join("ide"))])
