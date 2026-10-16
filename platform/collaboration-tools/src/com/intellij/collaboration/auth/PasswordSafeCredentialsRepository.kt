@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.PasswordSafeSettings
 import com.intellij.credentialStore.PasswordSafeSettingsListener
 import com.intellij.credentialStore.ProviderType
 import com.intellij.credentialStore.generateServiceName
@@ -35,7 +34,7 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
     callbackFlow {
       trySend(!passwordSafe.isMemoryOnly)
       ApplicationManager.getApplication().messageBus.connect(this)
-        .subscribe(PasswordSafeSettings.TOPIC, object : PasswordSafeSettingsListener {
+        .subscribe(PasswordSafeSettingsListener.TOPIC, object : PasswordSafeSettingsListener {
           override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
             trySend(newValue != ProviderType.MEMORY_ONLY)
           }
@@ -45,13 +44,13 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
 
   override suspend fun persistCredentials(account: A, credentials: Cred?) {
     withContext(Dispatchers.IO) {
-      passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
+      passwordSafe[account.credentialAttributes()] = account.credentials(credentials)
     }
   }
 
   override suspend fun retrieveCredentials(account: A): Cred? =
     withContext(Dispatchers.IO) {
-      passwordSafe.get(account.credentialAttributes())
+      passwordSafe[account.credentialAttributes()]
         ?.getPasswordAsString()
         ?.let(mapper::deserialize)
     }

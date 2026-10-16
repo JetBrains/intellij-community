@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.getDefaultDbFile
@@ -9,8 +9,8 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.messages.Topic
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
@@ -19,20 +19,15 @@ private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
 @ApiStatus.Internal
-@State(name = "PasswordSafe",
-       category = SettingsCategory.SYSTEM,
-       exportable = true,
-       storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+@State(
+  name = "PasswordSafe",
+  category = SettingsCategory.SYSTEM,
+  exportable = true,
+  storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)],
+  reportStatistic = false
+)
+@OptIn(LowLevelLocalMachineAccess::class)
 class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
-  companion object {
-    /**
-     * API note: moved to [PasswordSafeSettingsListener.TOPIC]
-     */
-    @JvmField
-    @Topic.AppLevel
-    val TOPIC: Topic<PasswordSafeSettingsListener> = PasswordSafeSettingsListener.TOPIC
-  }
-
   private var state = PasswordSafeOptions()
 
   var keepassDb: String?
@@ -52,7 +47,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     }
 
   var providerType: ProviderType
-    get() = if (SystemInfo.isWindows && state.provider === ProviderType.KEYCHAIN) ProviderType.KEEPASS else state.provider
+    get() = if (OS.CURRENT == OS.Windows && state.provider === ProviderType.KEYCHAIN) ProviderType.KEEPASS else state.provider
     set(value) {
       var newValue = value
       @Suppress("DEPRECATION")
@@ -63,7 +58,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       val oldValue = state.provider
       if (newValue !== oldValue && CredentialStoreManager.getInstance().isSupported(newValue)) {
         state.provider = newValue
-        ApplicationManager.getApplication()?.messageBus?.syncPublisher(TOPIC)?.typeChanged(oldValue, newValue)
+        ApplicationManager.getApplication()?.messageBus?.syncPublisher(PasswordSafeSettingsListener.TOPIC)?.typeChanged(oldValue, newValue)
       }
     }
 
@@ -72,8 +67,10 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   override fun loadState(state: PasswordSafeOptions) {
     val credentialStoreManager = CredentialStoreManager.getInstance()
     @Suppress("DEPRECATION")
-    if (state.provider === ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(ProviderType.MEMORY_ONLY)
-        || state.provider !== ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(state.provider)) {
+    if (
+      state.provider === ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(ProviderType.MEMORY_ONLY) ||
+      state.provider !== ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(state.provider)
+    ) {
       LOG.error("Provider ${state.provider} from loaded credential store config is not supported in this environment")
     }
 
