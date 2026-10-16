@@ -51,8 +51,6 @@
       <separator/>
       <reference ref="WelcomeNewEmptyFile"/>
       <reference ref="WelcomeMarkdownNewFile"/>
-      <reference ref="NewJavaFile"/>
-      <reference ref="NewKotlinFile"/>
     </group>
   </actions>
 </idea-plugin>

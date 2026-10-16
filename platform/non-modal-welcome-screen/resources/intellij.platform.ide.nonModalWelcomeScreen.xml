@@ -83,7 +83,5 @@
             icon="AllIcons.FileTypes.Text"/>
 
     <action id="WelcomeMarkdownNewFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.MarkdownNewFileAction" icon="AllIcons.FileTypes.Markdown"/>
-    <action id="NewJavaFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewJavaFileAction" icon="AllIcons.FileTypes.Java"/>
-    <action id="NewKotlinFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewKotlinFileAction" icon="AllIcons.Language.Kotlin"/>
   </actions>
 </idea-plugin>

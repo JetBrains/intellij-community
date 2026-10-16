@@ -87,9 +87,3 @@ private fun getLanguage(languageId: String): Language? {
 
 internal class MarkdownNewFileAction :
   NewEmptyFileAction("Markdown", NonModalWelcomeScreenBundle.lazyMessage("action.WelcomeMarkdownNewFile.text"), AllIcons.FileTypes.Markdown)
-
-internal class NewJavaFileAction :
-  NewEmptyFileAction("JAVA", NonModalWelcomeScreenBundle.lazyMessage("action.NewJavaFile.text"), AllIcons.FileTypes.Java)
-
-internal class NewKotlinFileAction :
-  NewEmptyFileAction("Kotlin", NonModalWelcomeScreenBundle.lazyMessage("action.NewKotlinFile.text"), AllIcons.Language.Kotlin)
