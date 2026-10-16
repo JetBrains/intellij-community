@@ -177,7 +177,6 @@ internal class PluginLoadingProblemControllerTest {
         }
 
         assertThat(results[0].loadingError).isEqualTo(results[1].loadingError)
-        assertThat(results[0].detailedMessage).isEqualTo(results[1].detailedMessage)
         assertThat(results[0]).isNotEqualTo(results[1])
       }
     }

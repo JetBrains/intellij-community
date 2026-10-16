@@ -26,8 +26,6 @@ data class CheckErrorsResult(
   @Serializable(with = PluginModuleIdSerializer::class)
   val unavailableModuleId: PluginModuleId? = null,
   val dependencyPluginId: PluginId? = null,
-  val shouldNotifyUser: Boolean = false,
-  @NlsSafe val detailedMessage: String? = null,
   val pluginPresent: Boolean = true,
   val problemsBySide: Map<PluginSource, CheckErrorsResult> = emptyMap(),
 )

@@ -1086,8 +1086,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       productMode = problem.productMode,
       unavailableModuleId = problem.unavailableModuleId,
       dependencyPluginId = problem.dependencyPluginId,
-      shouldNotifyUser = problem.shouldNotifyUser,
-      detailedMessage = problem.detailedMessage,
     )
   }
 

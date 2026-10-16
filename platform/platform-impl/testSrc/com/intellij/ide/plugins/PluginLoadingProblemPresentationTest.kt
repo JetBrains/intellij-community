@@ -118,8 +118,6 @@ internal class PluginLoadingProblemPresentationTest {
   fun `the page result retains independent side data through serialization`() {
     val local = CheckErrorsResult(
       loadingError = "Missing dependency",
-      shouldNotifyUser = true,
-      detailedMessage = "A dependency is missing",
       dependencyPluginId = PluginId.getId("dependency"),
     )
     val remote = CheckErrorsResult(pluginPresent = false)
