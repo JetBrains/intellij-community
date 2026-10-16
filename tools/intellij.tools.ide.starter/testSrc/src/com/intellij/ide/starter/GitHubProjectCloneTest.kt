@@ -100,9 +100,14 @@ class GitHubProjectCloneTest {
   }
 }
 
-/** A [GlobalPaths] that keeps each project checkout under [root]. */
+/**
+ * A [GlobalPaths] that keeps each project checkout under [root].
+ *
+ * [com.intellij.ide.starter.project.GitProjectInfo] clones into [localCacheDirectory] and returns a path in [cacheDirForProjects].
+ * The second one derives from the first one, so this class overrides only the first one.
+ */
 private class CachedProjectPaths(private val root: Path) : GlobalPaths(root) {
-  override val cacheDirForProjects: Path get() = root.resolve("projects").createDirectories()
+  override val localCacheDirectory: Path get() = root.createDirectories()
 }
 
 /**
