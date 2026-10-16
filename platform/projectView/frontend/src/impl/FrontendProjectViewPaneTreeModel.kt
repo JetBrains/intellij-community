@@ -234,12 +234,10 @@ internal class FrontendProjectViewPaneTreeModel(
         val parent = getNodeById(event.parentId) ?: return
         val node = getNodeById(event.childModel.id) ?: return
         treeModel.updateNode(node, event.childModel) // refresh the presentation
-        // Reposition the same Node object (preserving its subtree and its nodeById entry) by
-        // detaching and re-attaching it. removeChild + insertChild keep the Swing model consistent.
+        // Reposition the same Node object (preserving its subtree and its nodeById entry).
         val from = parent.getIndex(node)
         if (from >= 0 && from != event.newIndex) {
-          treeModel.removeChild(parent, from)
-          treeModel.insertChild(parent, event.newIndex, node)
+          treeModel.moveChild(parent, from, event.newIndex)
         }
       }
       is ProjectViewChildRemoved -> {

@@ -4,6 +4,7 @@ package com.intellij.ui.tree
 import com.intellij.ide.util.treeView.CachedIconPresentation
 import com.intellij.ide.util.treeView.CachedPresentationData
 import com.intellij.ide.util.treeView.CachedTreePathElement
+import com.intellij.ide.util.treeView.CachedTreePresentation
 import com.intellij.ide.util.treeView.CachedTreePresentationData
 import com.intellij.ide.util.treeView.CachedTreePresentationNode
 import com.intellij.ide.util.treeView.CachedTreePresentationSupport
@@ -11,13 +12,17 @@ import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -28,6 +33,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   private lateinit var cps: CachedTreePresentationSupport
   private lateinit var mirrorModel: DefaultTreeModel
   private var eventCount: Int = 0
+  private var createNode: (String) -> DefaultMutableTreeNode = { DefaultMutableTreeNode(DefaultTreeModelUserObject(it)) }
 
   @BeforeEach
   fun setUp() {
@@ -660,7 +666,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       | child6
       | child7
       """.trimMargin(),
-    expectedEventCount = 5, // initial state + cached + removed + inserted + changed
+    expectedEventCount = 7, // initial state + cached (3 parents) + removed + inserted + changed
     expectedLoadedNodes = null, // because not all of them are loaded in this test
   )
 
@@ -773,6 +779,271 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     expectedEventCount = 8, // initial state + cached + removed 1-2 + inserted 1-2 + (2x) remove-insert 1&2 children
     expectedLoadedNodes = 4, // except root
   )
+
+  @Test
+  fun `batches - the first batch has fewer children than the presentation`() = restorePresentationTest(
+    initialState = "",
+    cachedPresentation = """
+      |root
+      | a
+      |  a1
+      | b
+      |  b1
+      """.trimMargin(),
+    loadRoot = "root",
+    loadChildren = listOf(
+      "root" to listOf("b"),
+    ),
+    expectedResult = """
+      |root
+      | b
+      |  *b1
+      """.trimMargin(),
+    expectedEventCount = 4, // root set with all children, root reload, children removed, children added
+    expectedLoadedNodes = null, // b1 is still cached
+  )
+
+  @Test
+  fun `batches - the presentation comes after the first batch`() = restorePresentationTest(
+    initialState = """
+      |root
+      | b
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | a
+      |  a1
+      | b
+      |  b1
+      """.trimMargin(),
+    expectedResult = """
+      |root
+      | b
+      |  *b1
+      """.trimMargin(),
+    expectedEventCount = 2, // root set, b changed
+    expectedLoadedNodes = null, // b1 is still cached
+  )
+
+  @Test
+  fun `batches - a presentation for a late node only`() = restorePresentationTest(
+    initialState = """
+      |root
+      | a
+      | b
+      |  b1
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | a
+      |  a1
+      """.trimMargin(),
+    expectedResult = """
+      |root
+      | a
+      |  *a1
+      | b
+      |  b1
+      """.trimMargin(),
+    expectedEventCount = 2, // root set, a changed
+    expectedLoadedNodes = null, // a1 is still cached
+  )
+
+  @Test
+  fun `batches - insert a late child while the presentation is pending`() {
+    sut.setRoot(parse("root"))
+    applyPresentation("""
+      |root
+      | a
+      |  a1
+      | b
+      |  b1
+      """.trimMargin())
+    val loadedNodes = trackLoadedNodes()
+    loadChildren("root", "b")
+    sut.insertChild(node("root"), 0, createNode("a"))
+    assertModel("""
+      |root
+      | a
+      |  *a1
+      | b
+      |  *b1
+      """.trimMargin())
+    loadChildren("root/b", "b1")
+    assertThat(loadedNodes()).`as`("loaded nodes while a1 is still cached").isNull()
+    loadChildren("root/a", "a1")
+    assertThat(loadedNodes()).`as`("loaded nodes").isEqualTo(4) // b, a, b1, a1
+  }
+
+  @Test
+  fun `batches - update children with a late child while the presentation is pending`() {
+    sut.setRoot(parse("root"))
+    applyPresentation("""
+      |root
+      | a
+      |  a1
+      | b
+      |  b1
+      """.trimMargin())
+    loadChildren("root", "b")
+    val b = node("root/b")
+    sut.updateChildren(node("root"), listOf(createNode("a"), createNode("b"))) { newChild ->
+      if (newChild.myUserObject?.text == "b") b else null
+    }
+    assertModel("""
+      |root
+      | a
+      |  *a1
+      | b
+      |  *b1
+      """.trimMargin())
+    assertThat(node("root/b")).isSameAs(b)
+  }
+
+  @Test
+  fun `batches - a moved child does not get the presentation again`() {
+    sut.setRoot(parse("""
+      |root
+      | a
+      | b
+      """.trimMargin()))
+    applyPresentation("""
+      |root
+      | a
+      |  a1
+      | b
+      |  b1
+      """.trimMargin())
+    loadChildren("root/a") // "a" turns out to be empty
+    sut.moveChild(node("root"), 0, 1)
+    assertModel("""
+      |root
+      | b
+      |  *b1
+      | a
+      """.trimMargin())
+  }
+
+  @Nested
+  inner class TreeLevel {
+    private lateinit var tree: Tree
+
+    @BeforeEach
+    fun setUpNodes() {
+      // Like the real Project View nodes, which keep their expanded state when their children are removed.
+      createNode = { NonLeafNode(it) }
+    }
+
+    @Test
+    fun `batches - a late top-level node while the presentation is pending`() = runInEdtAndWait(false) {
+      createTree("root")
+      tree.cachedPresentation = presentation("""
+        |root
+        | a
+        |  a1
+        |   a11
+        | b
+        |  b1
+        """.trimMargin())
+      loadChildren("root", "b")
+      sut.insertChild(node("root"), 0, createNode("a"))
+      assertModel("""
+        |root
+        | a
+        |  *a1
+        |   *a11
+        | b
+        |  *b1
+        """.trimMargin())
+      assertThat(expandedPaths()).containsExactly("root", "root/a", "root/a/a1", "root/b")
+    }
+
+    @Test
+    fun `batches - a presentation for a late top-level node after the previous one is done`() = runInEdtAndWait(false) {
+      createTree("""
+        |root
+        | b
+        |  b1
+        """.trimMargin())
+      tree.expandPath(path("root/b"))
+      sut.insertChild(node("root"), 0, createNode("a"))
+      tree.cachedPresentation = presentation("""
+        |root
+        | a
+        |  a1
+        |   a11
+        """.trimMargin())
+      assertModel("""
+        |root
+        | a
+        |  *a1
+        |   *a11
+        | b
+        |  b1
+        """.trimMargin())
+      assertThat(expandedPaths()).containsExactly("root", "root/a", "root/a/a1", "root/b")
+    }
+
+    private fun createTree(initialState: String) {
+      sut.setRoot(parse(initialState))
+      tree = Tree(sut)
+      tree.cellRenderer = DefaultTreeCellRenderer() // the default one needs the application
+    }
+
+    private fun expandedPaths(): List<String> {
+      val result = mutableListOf<String>()
+      val root = sut.root ?: return result
+      collectExpandedPaths(CachingTreePath(root), result)
+      return result
+    }
+
+    private fun collectExpandedPaths(path: TreePath, result: MutableList<String>) {
+      if (tree.isExpanded(path)) {
+        result += path.path.joinToString("/") { text(it as DefaultMutableTreeNode) }
+      }
+      val node = path.lastPathComponent as DefaultMutableTreeNode
+      for (i in 0 until node.childCount) {
+        collectExpandedPaths(path.pathByAddingChild(node.getChildAt(i)), result)
+      }
+    }
+  }
+
+  private fun presentation(input: String): CachedTreePresentation = checkNotNull(parse(input)).toCachedPresentation().createTree()
+
+  private fun applyPresentation(presentation: String) {
+    val cp = presentation(presentation)
+    cps.applyAlreadyLoadedNodesTo(cp)
+    cps.cachedPresentation = cp
+  }
+
+  private fun node(path: String): DefaultMutableTreeNode = path(path).lastPathComponent as DefaultMutableTreeNode
+
+  private fun loadChildren(parentPath: String, vararg children: String) {
+    sut.setChildren(node(parentPath), children.map { createNode(it) })
+  }
+
+  /**
+   * Returns the number of the loaded nodes when the cached presentation is gone, or `null` before that.
+   */
+  private fun trackLoadedNodes(): () -> Int? {
+    var loadedNodeCount: Int? = null
+    sut.promiseRealNodes().onProcessed { paths ->
+      loadedNodeCount = paths?.size
+    }
+    return { loadedNodeCount }
+  }
+
+  private fun assertModel(expected: String) {
+    assertThat(dump(sut)).`as`("result model").isEqualTo(expected)
+    // This checks that the listeners are working as expected:
+    assertThat(dump(mirrorModel)).`as`("result mirror").isEqualTo(expected)
+  }
+
+  private fun text(node: DefaultMutableTreeNode): String = when (val userObject = node.userObject) {
+    is DefaultTreeModelUserObject -> userObject.text
+    is CachedTreePresentationNode -> userObject.data.presentation.text
+    else -> throw IllegalArgumentException("Unknown user object type: $userObject")
+  }
 
   @Suppress("UnnecessaryVariable") // Variables are used to make the code self-documented!
   private fun restorePresentationTest(
@@ -975,7 +1246,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     }
   }
 
-  private fun parse(input: String): DefaultMutableTreeNode? = DefaultMutableTreeModelParser(input).parse()
+  private fun parse(input: String): DefaultMutableTreeNode? = DefaultMutableTreeModelParser(input, createNode).parse()
 
   private fun dump(treeModel: TreeModel): String {
     val result = StringBuilder()
@@ -1066,9 +1337,17 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       if (changedPath == null) {
         mirrorModel.setRoot(null)
       }
-      else {
-        if (changedPath.parentPath != null) throw IllegalStateException("We don't change structure of non-root nodes here, but got $e")
+      else if (changedPath.parentPath == null) {
         mirrorModel.setRoot(deepCopy(changedPath.lastPathComponent as DefaultMutableTreeNode))
+      }
+      else {
+        val changedNode = changedPath.lastPathComponent as DefaultMutableTreeNode
+        val mirrorNode = findMatchingNode(mirrorModel, changedPath)
+        mirrorNode.removeAllChildren()
+        for (i in 0 until changedNode.childCount) {
+          mirrorNode.insert(deepCopy(changedNode.getChildAt(i) as DefaultMutableTreeNode), i)
+        }
+        mirrorModel.nodeStructureChanged(mirrorNode)
       }
     }
   }
@@ -1109,6 +1388,10 @@ internal class DefaultTreeModelWithCachedPresentationTest {
 
 private val DefaultMutableTreeNode.myUserObject: DefaultTreeModelUserObject? get() = userObject as? DefaultTreeModelUserObject
 
+private class NonLeafNode(text: String) : DefaultMutableTreeNode(DefaultTreeModelUserObject(text)) {
+  override fun isLeaf(): Boolean = false
+}
+
 private data class DefaultTreeModelUserObject(val text: String, val isCached: Boolean) : PathElementIdProvider {
   constructor(text: String) : this(text.removePrefix("*"), isCached = text.startsWith("*"))
 
@@ -1135,7 +1418,10 @@ private data class DefaultCachedPresentationData(override val text: String) : Ca
     get() = false
 }
 
-private class DefaultMutableTreeModelParser(private val input: String) {
+private class DefaultMutableTreeModelParser(
+  private val input: String,
+  private val createNode: (String) -> DefaultMutableTreeNode,
+) {
   private val lines = input.split("\n")
   private var line = 0
   private var depth = 0
@@ -1154,8 +1440,7 @@ private class DefaultMutableTreeModelParser(private val input: String) {
       if (lineDepth > depth) {
         throw IllegalArgumentException("Depth should not increase this much: depth=$depth, lineDepth=$lineDepth, input=$input")
       }
-      val userObject = DefaultTreeModelUserObject(lineText)
-      val node = DefaultMutableTreeNode(userObject)
+      val node = createNode(lineText)
       ++line
 
       ++depth

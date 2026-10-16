@@ -195,9 +195,31 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     return updatedWithIndices
   }
 
+  /**
+   * Inserts a new child.
+   *
+   * If a cached presentation is pending, it applies to the new child.
+   * Use [moveChild] for a node that is already in the tree.
+   */
   fun insertChild(parent: DefaultMutableTreeNode, index: Int, newChild: DefaultMutableTreeNode) {
     LOG.debug { "Insert at $index into $parent: $newChild" }
+    cachedPresentationApplier?.childrenLoaded(CachingTreePath(parent.path), listOf(newChild))
     delegate.insertNodeInto(newChild, parent, index)
+    if (LOG.isTraceEnabled) {
+      dumpTree()
+    }
+  }
+
+  /**
+   * Moves a child to another index of the same parent.
+   *
+   * Unlike [insertChild], it doesn't apply a pending cached presentation, because the moved node keeps its subtree and its state.
+   */
+  fun moveChild(parent: DefaultMutableTreeNode, fromIndex: Int, toIndex: Int) {
+    LOG.debug { "Move from $fromIndex to $toIndex in $parent" }
+    val child = getChild(parent, fromIndex)
+    delegate.removeNodeFromParent(child)
+    delegate.insertNodeInto(child, parent, toIndex)
     if (LOG.isTraceEnabled) {
       dumpTree()
     }
@@ -260,9 +282,8 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     childrenWithIndices: Object2IntMap<DefaultMutableTreeNode>,
   ) {
     if (childrenWithIndices.isEmpty()) return
-    if (parent.childCount == 0) { // Not strictly necessary, as it's only needed for the first time, and the first time it's always true.
-      this.cachedPresentationApplier?.childrenLoaded(CachingTreePath(parent.path), childrenWithIndices.keys.toList())
-    }
+    // Also when the parent has children already, because the children can be loaded in batches.
+    this.cachedPresentationApplier?.childrenLoaded(CachingTreePath(parent.path), childrenWithIndices.keys.toList())
     for (entry in childrenWithIndices.object2IntEntrySet()) {
       parent.insert(entry.key, entry.intValue)
     }
@@ -314,15 +335,26 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
         ++cachedNodeCount // count the root
       }
       else {
-        applyCachedChildPresentations(realRoot)
-        // Notify that the tree has changed only if it in fact DID change (any cached presentations were applied).
-        if (cachedNodeCount > 0) {
-          delegate.reload(realRoot)
+        val changedParents = mutableListOf<DefaultMutableTreeNode>()
+        applyCachedChildPresentations(realRoot, changedParents)
+        // Notify only about the parents that in fact DID change, so that the tree keeps the state of everything else.
+        // They are disjoint subtrees, because each of them has only cached descendants.
+        for (parent in changedParents) {
+          delegate.nodeStructureChanged(parent)
         }
       }
     }
 
-    private fun applyCachedChildPresentations(parent: DefaultMutableTreeNode) {
+    /**
+     * Inserts the cached children into the [parent] if it has no children, or applies the presentation to its real children.
+     *
+     * Only goes into the real children that the cached presentation knows, so they can be loaded in batches.
+     * Adds each real parent that gets cached children to [changedParents].
+     */
+    private fun applyCachedChildPresentations(
+      parent: DefaultMutableTreeNode,
+      changedParents: MutableList<DefaultMutableTreeNode>? = null,
+    ) {
       val cachedChildren = cachedPresentation.getChildren(parent)?.nullize() ?: return
       val realChildCount = delegate.getChildCount(parent)
       if (realChildCount == 0) {
@@ -332,14 +364,14 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
           parent.insert(cachedChildNode, index)
           ++cachedNodeCount
         }
+        changedParents?.add(parent)
       }
-      else if (realChildCount == cachedChildren.size) {
+      else {
         val realChildren = (0 until realChildCount).map { delegate.getChild(parent, it) as DefaultMutableTreeNode }
         for (realChild in realChildren) {
-          applyCachedChildPresentations(realChild)
+          applyCachedChildPresentations(realChild, changedParents) // does nothing if the presentation doesn't know the child
         }
       }
-      // else mismatch, the cached info is outdated
     }
 
     fun rootLoaded(newRoot: DefaultMutableTreeNode?) {

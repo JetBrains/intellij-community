@@ -74,6 +74,7 @@ a:com.intellij.ide.ui.LafManager
 - getRoot():javax.swing.tree.DefaultMutableTreeNode
 - f:insertChild(javax.swing.tree.DefaultMutableTreeNode,I,javax.swing.tree.DefaultMutableTreeNode):V
 - isLeaf(java.lang.Object):Z
+- f:moveChild(javax.swing.tree.DefaultMutableTreeNode,I,I):V
 - f:promiseRealNodes():org.jetbrains.concurrency.Promise
 - f:removeChild(javax.swing.tree.DefaultMutableTreeNode,I):V
 - removeTreeModelListener(javax.swing.event.TreeModelListener):V
