@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance(OSProcessHandler.class);
-  private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
+  private static final long ALLOWED_TIMEOUT_THRESHOLD = 50;
 
   private static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 

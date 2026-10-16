@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 @ApiStatus.Experimental
 @LowLevelLocalMachineAccess
 public final class ShellEnvironmentReader {
-  private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
+  private static final long ALLOWED_TIMEOUT_THRESHOLD = 50;
 
   private static final Logger LOG = Logger.getInstance(ShellEnvironmentReader.class);
 
