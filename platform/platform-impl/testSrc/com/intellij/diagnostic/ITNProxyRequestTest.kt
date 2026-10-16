@@ -82,10 +82,18 @@ internal class ITNProxyRequestTest {
     assertThat(request.skippedNote).isNull()
   }
 
-  private fun request(attachments: List<Attachment>, maxSize: Long = Long.MAX_VALUE): Request {
+  @Test
+  fun `a text-only report keeps the text attachments and names the others`() {
+    val request = request(listOf(textAttachment("dump-1.txt", 1024), jfrAttachment(1024)), maxSize = MAX_SIZE, textOnly = true)
+
+    assertThat(request.kept).containsExactly("dump-1.txt")
+    assertThat(request.skippedNote).isEqualTo("snapshot.jfr: skipped, the server rejected the size of the full report\n")
+  }
+
+  private fun request(attachments: List<Attachment>, maxSize: Long = Long.MAX_VALUE, textOnly: Boolean = false): Request {
     val event = IdeaLoggingEvent("message", RuntimeException("boom"), attachments, null, null, UnhandledExceptionKind.HANDLED)
     val bean = ITNProxy.ErrorBean(event, null, null, null, null, null, false)
-    val body = ITNProxy.createRequest(event, bean, maxSize = maxSize)
+    val body = ITNProxy.createRequest(event, bean, maxSize = maxSize, textOnly = textOnly)
     val text = unpackReportForm(body)
     val request = Request(body.size(), text.length, parseReportForm(text))
     assertThat(request.form.count { it.first == "attachment.value" }).isEqualTo(request.form.count { it.first == "attachment.name" })

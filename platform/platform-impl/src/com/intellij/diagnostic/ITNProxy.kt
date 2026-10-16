@@ -223,9 +223,9 @@ object ITNProxy {
   }
 
   @Throws(Exception::class)
-  internal suspend fun sendError(errorBean: ErrorBean, postUrl: URI?): Long {
+  internal suspend fun sendError(errorBean: ErrorBean, postUrl: URI?, textOnly: Boolean = false): Long {
     val context = currentCoroutineContext()
-    val request = createRequest(errorBean.event, errorBean)
+    val request = createRequest(errorBean.event, errorBean, textOnly = textOnly)
     val response = post(resolveReportEndpoint(postUrl), request)
     context.ensureActive()
     val reportId = handleResponse(response)
@@ -331,6 +331,7 @@ object ITNProxy {
    * When the gzipped body is over [maxSize], the body is built again without the `.jfr` attachments.
    * The report listener applies its limit to the gzipped body.
    * A body with no `.jfr` attachment goes as is, and the caller handles the HTTP 413 of the server.
+   * With [textOnly], only the `.txt` attachments are sent.
    * The body names each skipped attachment in [SKIPPED_ATTACHMENTS_NAME].
    */
   @Throws(Exception::class)
@@ -339,8 +340,12 @@ object ITNProxy {
     event: IdeaLoggingEvent,
     errorBean: ErrorBean?,
     maxSize: Long = getMaxRequestSize(),
+    textOnly: Boolean = false,
   ): BufferExposingByteArrayOutputStream {
     val skipped = LinkedHashMap<Attachment, String>()
+    if (textOnly) {
+      event.attachments.filterNot { it.name.endsWith(".txt") }.associateWithTo(skipped) { "the server rejected the size of the full report" }
+    }
     val budget = maxSize - SKIPPED_ATTACHMENTS_RESERVE
     val request = try {
       writeRequest(event, errorBean, skipped, budget)
