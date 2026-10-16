@@ -2,6 +2,8 @@
 package com.intellij.compose.ide.plugin.shared
 
 const val COMMON_MAIN = "commonMain"
+const val DESKTOP_MAIN = "desktopMain"
+const val WASM_JS_MAIN = "wasmJsMain"
 const val ANDROID_MAIN = "androidMain"
 const val IOS_MAIN = "iosMain"
 
