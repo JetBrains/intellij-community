@@ -97,11 +97,12 @@ class DynamicPluginEnabler : PluginEnabler {
     progressTitle: @Nls String?,
     project: Project? = null,
   ): Boolean {
-    if (descriptors.any { !PluginManagerCore.isCompatible(it) }) {
+    val incompatibleDescriptor = descriptors.firstOrNull { !PluginManagerCore.isCompatible(it) }
+    if (incompatibleDescriptor != null) {
+      LOG.info("Cannot enable plugin ${incompatibleDescriptor.pluginId} (${incompatibleDescriptor.version}): the plugin is incompatible.")
       // mark plugins enabled and require restart
       PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
       PluginEnabler.HEADLESS.enable(descriptors)
-
       return false
     }
 
