@@ -88,7 +88,7 @@ internal object ChangeVisibilityFixFactories {
                 elementName,
                 visibilityModifier,
             )
-            return Presentation.of(actionName).withFixAllOption(this)
+            return Presentation.of(actionName)
         }
 
         override fun invoke(

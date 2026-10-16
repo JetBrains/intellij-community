@@ -50,7 +50,7 @@ open class RemoveModifierFixBase(
             else ->
                 KotlinBundle.message("remove.0.modifier", modifierText, modifier)
         }
-        return Presentation.of(actionName).withFixAllOption(this)
+        return Presentation.of(actionName)
     }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.modifier")

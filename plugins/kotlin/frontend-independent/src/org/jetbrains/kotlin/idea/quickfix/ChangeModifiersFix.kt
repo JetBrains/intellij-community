@@ -68,7 +68,7 @@ class ChangeModifiersFix(
             else -> return null
         }
 
-        return Presentation.of(actionName).withFixAllOption(this)
+        return Presentation.of(actionName)
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =

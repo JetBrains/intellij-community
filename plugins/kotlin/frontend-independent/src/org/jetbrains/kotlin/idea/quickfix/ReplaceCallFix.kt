@@ -87,11 +87,6 @@ class RemoveRedundantCallsOfConversionMethodsFix(
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
 
-    override fun getActionPresentation(
-        context: ActionContext,
-        element: KtQualifiedExpression,
-    ): Presentation = Presentation.of(familyName).withFixAllOption(this)
-
     override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
         element.replace(element.receiverExpression)
     }
