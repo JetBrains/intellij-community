@@ -1,12 +1,12 @@
 //! Selector classification and resolution: what a selector names, and the targets and filter it runs.
 
-use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
 use refusal::Refusal;
 
-use crate::areas::AREAS_FILE;
+use crate::areas::{AREAS_FILE, Areas};
+use crate::catalog::read_suite_documents;
 use crate::exit::fail_usage;
 use crate::modules::resolve_module;
 use crate::runtime::{Platform, Runtime};
@@ -280,27 +280,43 @@ pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &Res
 
     let index = inputs.index()?;
     let simple_name = wanted_simple_name(selector);
+    let documented = documented_classes(runtime, inputs.areas(), simple_name)?;
     let mut candidates = index.get(simple_name).cloned().unwrap_or_default();
-    if candidates.is_empty() {
+    if candidates.is_empty() && documented.is_empty() {
         // The @Nested / secondary-class fallback: the filename told us nothing, so read every indexed file.
         candidates = scan_for_type(runtime, index, simple_name)?;
     }
-    if selector.kind == SelectorKind::Fqn && candidates.len() > 1 {
-        let expected_package = selector.name.rsplit_once('.').map_or("", |(package, _)| package);
-        let mut narrowed = Vec::new();
-        for candidate in &candidates {
-            if derive_package(&read_text(runtime, &candidate.file)?) == expected_package {
-                narrowed.push(candidate.clone());
-            }
-        }
+
+    // Keyed by FQN and kept in candidate order, which is what the caller is asked to copy a name out of. A class that a
+    // suite document names runs in the lane of the document, so its label is the test label of that lane, also where
+    // the index found the class in a module.
+    let mut found: Vec<(String, String)> = Vec::new();
+    let mut keep = |fqn: String, label: String| match found.iter_mut().find(|(known, _)| *known == fqn) {
+        Some(entry) => entry.1 = label,
+        None => found.push((fqn, label)),
+    };
+    for candidate in candidates {
+        let package = derive_package(&read_text(runtime, &candidate.file)?);
+        let fqn = if package.is_empty() {
+            candidate.simple_name.clone()
+        } else {
+            format!("{package}.{}", candidate.simple_name)
+        };
+        keep(fqn, candidate.root.label.clone());
+    }
+    for (fqn, label) in documented {
+        keep(fqn, label);
+    }
+    if selector.kind == SelectorKind::Fqn && found.len() > 1 {
+        let narrowed: Vec<(String, String)> = found.iter().filter(|(fqn, _)| *fqn == selector.name).cloned().collect();
         // An FQN that narrows to nothing keeps the wide list, so the answer is the ambiguity refusal naming every
         // real candidate rather than "no such class" for a class that plainly exists.
         if !narrowed.is_empty() {
-            candidates = narrowed;
+            found = narrowed;
         }
     }
 
-    if candidates.is_empty() {
+    if found.is_empty() {
         let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
         let hint = if suggestions.is_empty() {
             "  (no similar name found; @Nested and secondary top-level classes need a full FQN)".to_owned()
@@ -317,43 +333,50 @@ pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &Res
         )));
     }
 
-    // Keyed by FQN and kept in candidate order, which is what the caller is asked to copy a name out of.
-    let mut order: Vec<String> = Vec::new();
-    let mut by_fqn: HashMap<String, Candidate> = HashMap::new();
-    for candidate in candidates {
-        let package = derive_package(&read_text(runtime, &candidate.file)?);
-        let fqn = if package.is_empty() {
-            candidate.simple_name.clone()
-        } else {
-            format!("{package}.{}", candidate.simple_name)
-        };
-        if !by_fqn.contains_key(&fqn) {
-            order.push(fqn.clone());
-        }
-        by_fqn.insert(fqn, candidate);
-    }
-    if order.len() > 1 {
-        let listed: Vec<String> = order
-            .iter()
-            .map(|fqn| format!("  {fqn}\n      {}", by_fqn[fqn].root.label))
-            .collect();
+    if found.len() > 1 {
+        let listed: Vec<String> = found.iter().map(|(fqn, label)| format!("  {fqn}\n      {label}")).collect();
         return Err(fail_usage(format!(
             "{} classes named {simple_name}; pass the fully-qualified name:\n{}",
-            order.len(),
+            found.len(),
             listed.join("\n")
         )));
     }
 
-    let fqn = &order[0];
+    let (fqn, label) = found.swap_remove(0);
     let filter = match &selector.method {
         Some(method) => format!("{fqn}#{method}"),
-        None => fqn.clone(),
+        None => fqn,
     };
     Ok(Resolution {
-        labels: vec![by_fqn[fqn].root.label.clone()],
+        labels: vec![label],
         filter: Some(filter),
         ..Resolution::default()
     })
+}
+
+/// The classes named `simple_name` that a committed suite document names, each as its FQN and the test label of the
+/// lane of its document. The class of a UI lane needs no test target of its module: the lane runs it.
+///
+/// An area set without a suite catalog, or a catalog directory that holds no document yet, names no class. A
+/// document that cannot be read is refused, as every reader of the catalog refuses it.
+fn documented_classes(runtime: &dyn Runtime, areas: &Areas, simple_name: &str) -> Result<Vec<(String, String)>, Refusal> {
+    let Some(catalog) = areas.iter().find_map(|area| area.lanes().catalog()) else {
+        return Ok(Vec::new());
+    };
+    let holds_documents = read_dir_or_none(runtime, catalog.flow_profile_dir)
+        .is_some_and(|entries| entries.iter().any(|entry| !entry.is_dir && entry.name.ends_with(".json")));
+    if !holds_documents {
+        return Ok(Vec::new());
+    }
+    let area = areas.with_catalog()?;
+    Ok(read_suite_documents(runtime, area)?
+        .iter()
+        .filter(|document| document.test_class_name == simple_name)
+        .filter_map(|document| {
+            let label = area.lanes().by_suite_lane(&document.lane)?.test_label.clone()?;
+            Some((document.test_class().to_owned(), label))
+        })
+        .collect())
 }
 
 /// The roots whose declared package prefix covers a package.

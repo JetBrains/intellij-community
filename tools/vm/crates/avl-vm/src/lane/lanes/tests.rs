@@ -144,6 +144,38 @@ fn a_selector_inside_a_lane_resolves_to_its_filter() {
     );
 }
 
+/// A class that a suite document names runs in the lane of the document, though no module of the checkout holds it and
+/// no test target runs it. The test label of the lane row is the label, so the lane test of the row runs the class.
+#[test]
+fn a_class_that_a_suite_document_names_resolves_to_its_lane_with_no_test_target() {
+    avl_affected::bridge::install_fixture();
+    let repo = tempfile::tempdir().unwrap();
+    let catalog = air_area().lanes().catalog().expect("the Air lane table names a catalog");
+    let documents = repo.path().join(catalog.flow_profile_dir);
+    fs::create_dir_all(&documents).unwrap();
+    fs::write(
+        documents.join("rename-session.json"),
+        r#"{"suite": "rename-session", "lane": "GUI_CHAT", "testClassName": "AirRenameSessionUiTest",
+  "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRenameSessionUiTest"}], "profiles": []}"#,
+    )
+    .unwrap();
+    let settings = settings(Backend::Docker, GuestOs::Linux, repo.path());
+
+    let selection = resolve_selector_selection(&settings, "AirRenameSessionUiTest", &quiet()).unwrap();
+
+    assert_eq!(
+        selection,
+        Selection {
+            label: ui_lane("gui-chat").unwrap().label.to_owned(),
+            lane: None,
+            test_env: BTreeMap::from([(
+                "TESTBRIDGE_TEST_ONLY".to_owned(),
+                "com.intellij.air.integration.acp.AirRenameSessionUiTest".to_owned()
+            )]),
+        }
+    );
+}
+
 /// Everything else in the repository is host-runnable, and an arbitrary Bazel invocation has no meaning in a guest
 /// with no checkout and no Bazel.
 #[test]

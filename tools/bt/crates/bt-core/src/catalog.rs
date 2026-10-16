@@ -34,11 +34,24 @@ pub struct SuiteDocument {
     pub implementation_flows: Vec<String>,
     /// The scenarios, in declared order.
     pub profiles: Vec<SuiteProfile>,
+    /// The labels of the suite for the JUnit report. `testClass` names the class with its package.
+    pub labels: Vec<SuiteLabel>,
     /// The repo-relative path of the document, how a named path finds its own document. Empty for a document read from
     /// bytes.
     #[serde(skip)]
     pub path: String,
 }
+
+/// One label of a suite document: a name and a value.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct SuiteLabel {
+    pub name: String,
+    pub value: String,
+}
+
+/// The label that names the class of a suite with its package.
+const TEST_CLASS_LABEL: &str = "testClass";
 
 /// One scenario of a suite document.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -81,6 +94,15 @@ impl SuiteDocument {
     /// lane it does not declare.
     pub fn lane_name<'l>(&self, lanes: &'l Lanes) -> Option<&'l str> {
         lanes.by_suite_lane(&self.lane).map(|lane| lane.name.as_str())
+    }
+
+    /// The fully qualified name of the suite's class: the value of its `testClass` label, or the simple name when the
+    /// document has no such label.
+    pub fn test_class(&self) -> &str {
+        self.labels
+            .iter()
+            .find(|label| label.name == TEST_CLASS_LABEL)
+            .map_or(self.test_class_name.as_str(), |label| label.value.as_str())
     }
 
     /// Whether the suite belongs to an explicit-only lane, whose suites no changed path, flow or suite id reaches
