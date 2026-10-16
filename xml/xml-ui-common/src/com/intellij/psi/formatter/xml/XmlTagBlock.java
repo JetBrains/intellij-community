@@ -51,7 +51,8 @@ public class XmlTagBlock extends AbstractXmlBlock {
   @Override
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
-    final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
+    final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()),
+                                          myXmlFormattingPolicy.shouldWrapFirstAttribute());
     final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap(getTag())), true);
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
     final Alignment attrAlignment = Alignment.createAlignment();

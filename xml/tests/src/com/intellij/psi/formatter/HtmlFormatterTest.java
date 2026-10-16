@@ -832,6 +832,63 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  @Test
+  public void testWeb59303() {
+    HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(40);
+    settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    doTextTest("""
+                 <h1 id="very-long-attribute-that-would-exceed-the-max-column-width">
+                     Heading
+                 </h1>
+                 <h1 id="short">
+                     Heading
+                 </h1>""",
+               """
+                 <h1
+                         id="very-long-attribute-that-would-exceed-the-max-column-width"
+                 >
+                     Heading
+                 </h1>
+                 <h1 id="short">
+                     Heading
+                 </h1>""");
+  }
+
+  @Test
+  public void testWeb59303FirstAttributeStaysWithoutNewLineBeforeIt() {
+    HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(40);
+    settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doTextTest("""
+                 <h1 id="very-long-attribute-that-would-exceed-the-max-column-width">
+                     Heading
+                 </h1>""",
+               """
+                 <h1 id="very-long-attribute-that-would-exceed-the-max-column-width">
+                     Heading
+                 </h1>""");
+  }
+
+  @Test
+  public void testWeb59303WrapAlwaysKeepsSingleAttribute() {
+    HtmlCodeStyleSettings settings = getHtmlSettings();
+    settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    doTextTest("""
+                 <div class="a"></div>
+                 <div class="a" id="b"></div>""",
+               """
+                 <div class="a"></div>
+                 <div
+                         class="a"
+                         id="b"
+                 ></div>""");
+  }
+
   @NotNull
   private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyle.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);

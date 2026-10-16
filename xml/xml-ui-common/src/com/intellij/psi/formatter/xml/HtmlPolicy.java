@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -196,6 +197,12 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Override
   public int getAttributesWrap() {
     return myHtmlCodeStyleSettings.HTML_ATTRIBUTE_WRAP;
+  }
+
+  @Override
+  public boolean shouldWrapFirstAttribute() {
+    return myHtmlCodeStyleSettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline &&
+           myHtmlCodeStyleSettings.HTML_ATTRIBUTE_WRAP != CommonCodeStyleSettings.WRAP_ALWAYS;
   }
 
   @Override

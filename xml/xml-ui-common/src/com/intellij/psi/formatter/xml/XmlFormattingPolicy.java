@@ -116,6 +116,15 @@ public abstract class XmlFormattingPolicy {
 
   public abstract int getAttributesWrap();
 
+  /**
+   * Tells if the attribute wrap can also wrap the first attribute of a tag.
+   *
+   * @return {@code false} by default. The first attribute then stays on the line of the tag name.
+   */
+  public boolean shouldWrapFirstAttribute() {
+    return false;
+  }
+
   public abstract boolean getShouldAlignAttributes();
 
   public abstract boolean getShouldAlignText();
