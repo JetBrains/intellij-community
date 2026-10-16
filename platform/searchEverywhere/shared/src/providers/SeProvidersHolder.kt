@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -20,6 +21,7 @@ import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -88,6 +90,8 @@ class SeProvidersHolder(
 
       val allTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
+      val initializationGuard = SeProviderInitializationGuard.getInstance()
+      val openingId = session.asRef()
 
       SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
         val provider: SeItemsProvider?
@@ -96,17 +100,24 @@ class SeProvidersHolder(
         val providerFactoryId = providerFactory.id.let {
           SeProviderId(if (it.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderIdUtils.TOP_HIT_ID else it)
         }
+        val pluginId = PluginManager.getPluginByClass(providerFactory.javaClass)?.pluginId?.idString
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
           provider = legacyContributors[providerFactoryId]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext)
+            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext)
+            }
           }
           separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext)
+            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext)
+            }
           }
         }
         else {
-          provider = providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
+          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
+          }
           separateTabProvider = null
 
           if (provider?.id != providerFactory.id) {
