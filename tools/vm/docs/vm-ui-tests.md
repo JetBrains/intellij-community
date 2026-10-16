@@ -318,10 +318,11 @@ example does.
 The live lane `ui-live` runs on the Docker guest too, but only when a caller names it, because each of its scenarios
 spends a billed turn ([ADR 0200](../../../../plugins/air/docs/decisions/0200-the-live-lane-also-runs-in-a-linux-guest-with-a-per-run-central-login.md)).
 Its lane table entry has no catalog lane, so no flow, suite or `--changed` reaches it, and `shard` and `flake` refuse it
-with `explicit_only_lane`. The run hands the guest a per-run Central login as a run secret file:
+with `explicit_only_lane`. The lane daemon launches no live lane, so the run names the JVM runner. It hands the guest
+a per-run Central login as a run secret file:
 
 ```bash
-central login export | ./community/tools/vm.cmd run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-
+central login export | ./community/tools/vm.cmd --runner jvm run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-
 ```
 
 The test JVM imports that login into the guest account, starts the Central proxy and wires the agents with
@@ -393,12 +394,12 @@ route exists. No lane time is measured for this route.
 
 ## How a run reaches the guest
 
-Two `jps_test` targets launch an IDE: `//plugins/air/tests/integration/ui:ui_test` and
-`//plugins/air/tests/integration/gui-chat:gui-chat_test`. Their runfiles carry everything a run
-needs. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
+The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
+lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
+`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
 the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. `-Dair.lane.ide.config` names
-that distribution's `_ide_config` companion target rather than the distribution itself. Beside it the targets
-carry the guest agent and the IDE flags file. The IDE runs on `jbr/` of the distribution, the production JBR, and
+that distribution's `_ide_config` companion target rather than the distribution itself. Beside it the descriptor
+carries the guest agent and the IDE flags file. The IDE runs on `jbr/` of the distribution, the production JBR, and
 gets JCEF from the JCEF plugin of the distribution.
 
 `run` resolves the selector with bt's resolution logic. It runs `bazel build` on the host against
@@ -492,11 +493,12 @@ holds no checkout, no credentials and no cache, so a recycle loses nothing.
 
 A one-shot run would pay fixed costs on every iteration: a fresh test JVM, an IDE assembly inside
 it, and an IDE launch with a project open. `run` keeps those paid-for states warm in a persistent
-guest process, the **UI-test daemon** (`//plugins/air/tests/integration/ui:ui_daemon`, module
-`intellij.air.integrationTests.uiDaemon`). Why it is kept, now that Bazel caches the distribution it
-launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
+guest process. By default that process is the **lane daemon**, the `lane-daemon` verb of the guest agent.
+`--runner jvm` selects the JVM **UI-test daemon**, module `intellij.air.integrationTests.uiDaemon`, which the live
+lane needs. Both runners read the same runtime descriptor. Why a daemon is kept,
+now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
-The daemon is the same JVM the `ui_test` target would start, on half its classpath. The **stable**
+The classpath of the JVM daemon has two tiers. The **stable**
 tier is the platform and framework jars and the daemon's own module, and it is the JVM's app
 classpath. The **hot** tier is everything built from `plugins/air` except the daemon's own
 module. It is withheld from the app classpath, and each iteration loads it in a child classloader,
@@ -513,8 +515,9 @@ the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` v
 `daemon_launch_arg_file` beside it emits the argfile, and `AirUiDaemonServer` re-checks the result against its
 own classpath at boot.
 
-Every UI lane runs through this one daemon, because its classpath is the union of both IDE-launching
-targets. A lane is only a JUnit filter. Air's own `AirLaneIde`, in the daemon's stable module, then
+Every UI lane runs over this one descriptor. Its classpath holds the suite documents of every lane and the JUnit
+classes of the `ui-perf` and `ui-live` lanes. The run request of the lane daemon names the lane, and to the JVM daemon
+a lane is only a JUnit filter. Air's own `AirLaneIde`, in the stable module of the JVM daemon, then
 carries the warm IDE across whole controller iterations
 ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
 
@@ -923,7 +926,7 @@ a place. The planner on the Runs page gives the same answer:
 
 ```bash
 ./community/tools/trace.cmd plan plugins/air/docs/flows/flow-rename-session.txt
-./community/tools/trace.cmd plan out/bazel-testlogs/plugins/air/tests/integration/ui/ui_test/test.xml
+./community/tools/trace.cmd plan out/bazel-testlogs/plugins/air/tests/integration/ui/ui_lane_test/test.xml
 ./community/tools/trace.cmd plan plugins/air/frontend/session/toolwindow/src/ui/AgentAttachedProjects.kt
 ```
 
