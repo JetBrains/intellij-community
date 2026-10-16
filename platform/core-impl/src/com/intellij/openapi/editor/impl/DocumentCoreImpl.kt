@@ -9,14 +9,13 @@ import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.concurrent.Volatile
 
 /**
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  @Volatile private var snapshot: DocumentSnapshot, //  mutable via [SNAPSHOT_UPDATER]
+  @Volatile private var snapshot: DocumentSnapshot,
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
 ) : DocumentCore {
@@ -99,7 +98,7 @@ internal class DocumentCoreImpl private constructor(
             after,
             patch,
             isCurrent = { this@DocumentCoreImpl.snapshot === expected },
-            publish = { SNAPSHOT_UPDATER.set(this@DocumentCoreImpl, after) },
+            publish = { this@DocumentCoreImpl.snapshot = after },
           )) {
           return after
         }
@@ -115,15 +114,5 @@ internal class DocumentCoreImpl private constructor(
       val snapshot = DocumentSnapshotImpl(DocumentText.createText(chars))
       return DocumentCoreImpl(snapshot, settings, dispatcher)
     }
-
-    /**
-     * [snapshot] is a performance-critical field, it cannot be replaced with AtomicReference
-     */
-    private val SNAPSHOT_UPDATER: AtomicReferenceFieldUpdater<DocumentCoreImpl, DocumentSnapshot> =
-      AtomicReferenceFieldUpdater.newUpdater(
-        DocumentCoreImpl::class.java,
-        DocumentSnapshot::class.java,
-        "snapshot",
-      )
   }
 }
