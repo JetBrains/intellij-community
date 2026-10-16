@@ -17,8 +17,8 @@ mod tests;
 /// The daemon one worker runs, as this controller started it: the worker and the guest port it listens on, how to
 /// authenticate, and the build identities it was launched and mounted for.
 ///
-/// Every field but [`Self::last_plugins_digest`] and [`Self::runner`] is required, because the next start compares every
-/// one: a file missing one is no daemon at all. The file is two-space JSON with a trailing newline, and only this controller reads
+/// Every field but [`Self::last_plugins_digest`], [`Self::agent_digest`] and [`Self::runner`] is required, because the
+/// next start compares every one: a file missing one is no daemon at all. The file is two-space JSON with a trailing newline, and only this controller reads
 /// it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,6 +37,11 @@ pub(crate) struct HostState {
     /// is unknown: the next iteration decides nothing on it and records the value it ran with.
     #[serde(default)]
     pub last_plugins_digest: String,
+    /// The digest of the guest agent that the start of the daemon installed or found. A lane daemon runs from the image
+    /// of that agent, so a run compares the digest with the agent that the guest holds then. A record of an older
+    /// controller has none, and an empty value is unknown: no run decides on it.
+    #[serde(default)]
+    pub agent_digest: String,
     /// The runner that started the daemon, or the one that last ran an iteration on it. A command that only asks about
     /// the daemon, such as `daemon status` or the release of its slot, asks it in the protocol of this runner and not in
     /// that of its own `--runner`. A record of an older controller has none. It is asked in the protocol of the

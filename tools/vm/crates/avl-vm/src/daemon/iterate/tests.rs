@@ -56,6 +56,7 @@ fn healthy_with_plugins(
             plugins,
         },
         ide_running,
+        agent: None,
     }
 }
 
@@ -151,6 +152,83 @@ fn the_lane_daemon_decides_a_change_of_the_context_plugins_itself() {
             "{seen:?} fresh_ide={fresh_ide}"
         );
     }
+}
+
+// A lane daemon is its guest agent. When the guest holds another agent than the one the daemon started from, the run
+// restarts the daemon, so the code of the daemon is the code of the install. The new daemon keeps the IDE. The JVM
+// daemon is no agent, and an agent that the run does not know decides nothing.
+#[test]
+fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
+    let with_agent = |started: &'static str, installed: &'static str, mount: &'static str| HealthyDaemon {
+        agent: Some(AgentDigests { started, installed }),
+        ..healthy("launch-1", mount, "runtime-1", true)
+    };
+    let restart = DaemonAction::Start {
+        verb: "restart",
+        reason: AGENT_REINSTALLED,
+        keep_ide: true,
+    };
+    let decide = |seen, runner| decide_daemon_action(Some(seen), BUILD, false, runner);
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-1"), Runner::Daemon), restart);
+    // The start refreshes the shares too, so a moved mount restarts the same way.
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-0"), Runner::Daemon), restart);
+    assert_eq!(
+        decide(with_agent("agent-a", "agent-a", "mount-1"), Runner::Daemon),
+        DaemonAction::Reuse
+    );
+    assert_eq!(
+        decide(with_agent("agent-a", "agent-b", "mount-1"), Runner::Jvm),
+        DaemonAction::Reuse
+    );
+    assert_eq!(
+        decide(healthy("launch-1", "mount-1", "runtime-1", true), Runner::Daemon),
+        DaemonAction::Reuse
+    );
+}
+
+// The run asks the guest which agent it holds only for a lane daemon whose record names the agent of its start. A digest
+// that moved is a note of the run stream with both digests. A guest that does not say keeps the daemon, and the note
+// says why.
+#[tokio::test]
+async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_recorded_agent() {
+    let fixture = Fixture::new().await;
+    let ctx = Ctx::background();
+    let scope = Scope::worker(&fixture.worker);
+    let started = avl_host_sys::guest::agent_digest(b"agent of the start");
+    let reinstalled = avl_host_sys::guest::agent_digest(b"agent of another checkout");
+    let contract = |digest: &str| answer_text(json!({ "selfDigest": digest }).to_string());
+    let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
+    fixture.on("contract", contract(&reinstalled));
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    state.agent_digest = started.clone();
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Jvm, &scope).await, None);
+    assert!(fixture.channel().calls_containing("vm-guest-agent contract").is_empty());
+
+    assert_eq!(
+        fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        Some(reinstalled.as_str())
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    let moved = format!(
+        "the lane daemon runs the guest agent {} of its start, and the guest holds {} now",
+        &started[..12],
+        &reinstalled[..12]
+    );
+    assert!(said.contains(&moved), "{said}");
+
+    fixture.on("contract", contract(&started));
+    assert_eq!(
+        fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        Some(started.as_str())
+    );
+    fixture.on("contract", answer_exit(70));
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    assert_eq!(said.matches(&moved).count(), 1, "{said}");
+    assert!(
+        said.contains("the lane daemon stays, because the guest agent did not say which build it is"),
+        "{said}"
+    );
 }
 
 // The IDE action of a lane daemon iteration is the word of its last decision about the IDE, and a fallback after a

@@ -512,6 +512,12 @@ async fn a_full_start_boots_polls_and_records_its_state() {
         Some(&state),
         "the state is recorded for the next iteration"
     );
+    // The start records the agent it installed, which a lane daemon runs from.
+    let source = fixture.settings.vm_agent_source.as_ref().expect("the pool names the agent source");
+    assert_eq!(
+        state.agent_digest,
+        avl_host_sys::guest::agent_digest(&std::fs::read(source).unwrap())
+    );
 
     let channel = fixture.channel();
     // One guest call prepares the launch, and the round-trips it replaced are gone rather than moved.

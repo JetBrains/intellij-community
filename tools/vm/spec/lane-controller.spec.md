@@ -1275,6 +1275,16 @@ The daemon's half and the IDE's half of supervision are in
   path, which a rename makes the new build.
   [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_supervisor_is_spawned_from_the_image_of_this_process_on_linux`)
 
+- A run restarts a healthy lane daemon before the run when the guest agent was reinstalled under it. An install by
+  another checkout does that, such as the release of a lease there. The start of a daemon records the digest of the
+  agent that it installed. A run of the lane daemon asks the guest which agent it holds now. Another digest restarts
+  the daemon, and the start installs the agent of the checkout of the run. The restart keeps the lane IDE. A note of
+  the run stream names both digests, and the decision says `restart`. A JVM daemon is no guest agent, so its run does
+  not ask. A record without the digest decides nothing.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_guest_agent_was_reinstalled_restarts`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_recorded_agent`)
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
+
 - A daemon restart for a change of the stable tier keeps each live lane IDE of the same product. The decision and
   the timing line say `keep`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs

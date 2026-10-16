@@ -23,6 +23,7 @@ use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_n
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::session_logs;
+use crate::daemon::stage::short;
 use crate::daemon::state::HostState;
 use crate::daemon::traces::TraceSync;
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
@@ -112,7 +113,22 @@ pub(crate) struct DaemonDigests<'a> {
 pub(crate) struct HealthyDaemon<'a> {
     pub recorded: DaemonDigests<'a>,
     pub ide_running: bool,
+    /// The guest agent of a lane daemon, or `None` when the run does not know it: the JVM daemon runs, the record of the
+    /// daemon names no agent, or the guest did not say which agent it holds.
+    pub agent: Option<AgentDigests<'a>>,
 }
+
+/// The guest agent of a healthy lane daemon: the digest that its record names from its start, and the digest of the
+/// agent that the guest holds now. They differ after an install of another build under the daemon, such as the release
+/// of a lease from another checkout.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct AgentDigests<'a> {
+    pub started: &'a str,
+    pub installed: &'a str,
+}
+
+/// The reason of the restart of a lane daemon whose guest agent was reinstalled under it.
+pub(crate) const AGENT_REINSTALLED: &str = "the guest agent was reinstalled under the lane daemon";
 
 /// What an iteration does with the daemon before it runs: the answer of [`decide_daemon_action`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -142,17 +158,23 @@ pub(crate) enum DaemonAction {
 ///
 /// A healthy daemon of this launch serves the iteration: after a refresh of the shares when the mount digest moved,
 /// after an IDE stop for `--fresh-ide`, after a launch of the IDE when the daemon holds none, after a relaunch on the
-/// same context when only the context plugins moved and `runner` is the JVM daemon, or as it is. Any other
-/// daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot say whether
-/// the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's product. A start
-/// without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
+/// same context when only the context plugins moved and `runner` is the JVM daemon, or as it is. A lane daemon whose
+/// guest agent was reinstalled under it is restarted instead, so the code of the daemon is the code of the install.
+/// Any other daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot
+/// say whether the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's
+/// product. A start without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
 pub(crate) fn decide_daemon_action(
     healthy: Option<HealthyDaemon<'_>>,
     build: DaemonDigests<'_>,
     fresh_ide: bool,
     runner: Runner,
 ) -> DaemonAction {
-    let Some(HealthyDaemon { recorded, ide_running }) = healthy else {
+    let Some(HealthyDaemon {
+        recorded,
+        ide_running,
+        agent,
+    }) = healthy
+    else {
         return DaemonAction::Start {
             verb: "start",
             reason: "no healthy daemon",
@@ -160,7 +182,13 @@ pub(crate) fn decide_daemon_action(
         };
     };
     if recorded.launch == build.launch {
-        return if recorded.mount != build.mount {
+        return if runner == Runner::Daemon && agent.is_some_and(|agent| agent.started != agent.installed) {
+            DaemonAction::Start {
+                verb: "restart",
+                reason: AGENT_REINSTALLED,
+                keep_ide: true,
+            }
+        } else if recorded.mount != build.mount {
             DaemonAction::Remount
         } else if fresh_ide {
             DaemonAction::Relaunch { stop_ide: ide_running }
@@ -620,9 +648,17 @@ impl Host {
             Some(state) => self.daemon.status(ctx, state).await?,
             None => None,
         };
+        let installed_agent = match (&recorded, &status) {
+            (Some(state), Some(_)) => self.installed_agent(ctx, state, self.daemon.runner(), scope).await,
+            _ => None,
+        };
         let healthy = recorded.as_ref().zip(status.as_ref()).map(|(state, status)| HealthyDaemon {
             recorded: state.daemon_digests(),
             ide_running: status.ide_running,
+            agent: installed_agent.as_deref().map(|installed| AgentDigests {
+                started: &state.agent_digest,
+                installed,
+            }),
         });
         if status.is_none() && !recreated {
             self.manager.require_ready(ctx, lease).await?;
@@ -677,6 +713,45 @@ impl Host {
             DaemonAction::Reuse | DaemonAction::Start { .. } => IdeAction::Reuse,
         };
         Ok((state, ide_action))
+    }
+
+    /// The digest of the guest agent that the guest of the healthy daemon `state` holds, when `runner` is the lane daemon
+    /// and the record names the agent of its start. Otherwise the run does not ask the guest. One `contract` exec of the
+    /// agent path answers, about 0.1 s. A digest that moved is a note of the run stream with both digests, and so is a
+    /// guest that does not say: then the daemon stays.
+    pub(crate) async fn installed_agent(&self, ctx: &Ctx, state: &HostState, runner: Runner, scope: &Scope) -> Option<String> {
+        if runner != Runner::Daemon || state.agent_digest.is_empty() {
+            return None;
+        }
+        let channel = self.channel(&state.worker);
+        let stays = |why: String| format!("the lane daemon stays, because {why}");
+        match self.guest(ctx, channel.as_ref()).installed_agent_digest().await {
+            Ok(Some(installed)) => {
+                if installed != state.agent_digest {
+                    self.reporter.note(
+                        format!(
+                            "the lane daemon runs the guest agent {} of its start, and the guest holds {} now",
+                            short(&state.agent_digest),
+                            short(&installed)
+                        ),
+                        Some(scope),
+                    );
+                }
+                Some(installed)
+            }
+            Ok(None) => {
+                self.reporter
+                    .note(stays("the guest agent names no digest of its own".to_owned()), Some(scope));
+                None
+            }
+            Err(refusal) => {
+                self.reporter.note(
+                    stays(format!("the guest agent did not say which build it is: {}", refusal.message)),
+                    Some(scope),
+                );
+                None
+            }
+        }
     }
 
     /// Publishes the IJ Perf plan of an iteration of `lane`, which the results read. A plan that cannot be made is a note,

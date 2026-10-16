@@ -305,10 +305,10 @@ impl Host {
         let settings = &self.settings;
         // Every step runs under a named phase of the context's timeline, so the `daemon start` table can attribute
         // its cost. Each block's guard closes its phase.
-        {
+        let agent_digest = {
             let (step, _phase) = ctx.begin("install-agent");
-            self.guest(&step, channel).install_agent(self.bazel.as_ref()).await?;
-        }
+            self.guest(&step, channel).install_agent(self.bazel.as_ref()).await?
+        };
         let previous = HostState::read(settings, worker);
         {
             let (step, _phase) = ctx.begin("stop-daemon");
@@ -425,7 +425,18 @@ impl Host {
         };
         // From here the guest may hold a run this start launched, so every refusal retires it.
         let state = match self
-            .await_healthy_daemon(ctx, worker, channel, &run_id, &state_dir, prep, started, boot_budget, health_budget)
+            .await_healthy_daemon(
+                ctx,
+                worker,
+                channel,
+                &run_id,
+                &state_dir,
+                prep,
+                &agent_digest,
+                started,
+                boot_budget,
+                health_budget,
+            )
             .await
         {
             Ok(state) => state,
@@ -449,7 +460,7 @@ impl Host {
     }
 
     /// The part of a start between the supervisor's answer and a healthy `/status`: every step that can fail while
-    /// the guest holds the run this start launched.
+    /// the guest holds the run this start launched. `agent_digest` is the guest agent that the start installed.
     async fn await_healthy_daemon(
         &self,
         ctx: &Ctx,
@@ -458,6 +469,7 @@ impl Host {
         run_id: &str,
         state_dir: &str,
         prep: &PreparedBuild,
+        agent_digest: &str,
         started: Result<RunState, Refusal>,
         boot_budget: Duration,
         health_budget: Duration,
@@ -491,6 +503,7 @@ impl Host {
             last_product_digest: prep.product_digest.clone(),
             last_mount_digest: prep.mount_digest.clone(),
             last_plugins_digest: prep.plugins_digest.clone(),
+            agent_digest: agent_digest.to_owned(),
             runner: Some(self.settings.daemon.runner),
         };
         // From here a failed poll leaves a record, so `daemon log` reads the boot, and `daemon stop` and the next
