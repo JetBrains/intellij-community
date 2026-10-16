@@ -27,9 +27,20 @@ internal class PluginLoadingProblemPresentationTest {
 
   @Test
   fun `an ordinary loading problem retains its error text`() {
-    val result = CheckErrorsResult(loadingError = "Missing dependency", isDisabledDependencyError = true)
+    val result = CheckErrorsResult(loadingError = "Missing dependency")
 
-    assertThat(MyPluginModel.getErrors(result).map { it.toString() }).containsExactly("<span>Missing dependency</span>")
+    val restored = Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))
+
+    assertThat(restored).isEqualTo(result)
+    assertThat(MyPluginModel.getErrors(restored).map { it.toString() }).containsExactly("<span>Missing dependency</span>")
+  }
+
+  @Test
+  fun `a result without problems has no presentation`() {
+    val result = CheckErrorsResult()
+
+    assertThat(MyPluginModel.getErrors(result)).isEmpty()
+    assertThat(MyPluginModel.getExpectedExplanations(result)).isEmpty()
   }
 
   @Test
@@ -55,7 +66,7 @@ internal class PluginLoadingProblemPresentationTest {
 
   @Test
   fun `a page result without Ultimate classification keeps its default`() {
-    val result = Json.decodeFromString<CheckErrorsResult>("""{"loadingError":"Missing dependency","isDisabledDependencyError":true}""")
+    val result = Json.decodeFromString<CheckErrorsResult>("""{"loadingError":"Missing dependency"}""")
 
     assertThat(MyPluginModel.getErrors(result)).hasSize(1)
     assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
@@ -79,7 +90,6 @@ internal class PluginLoadingProblemPresentationTest {
   fun `an expected product mode problem stays outside the generic error area`() {
     val result = CheckErrorsResult(
       loadingError = "This plugin does not support Light mode",
-      isDisabledDependencyError = true,
       kind = PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH,
       severity = PluginLoadingProblem.Severity.EXPECTED,
       productMode = ProductMode.LIGHT_REMOTE,
@@ -94,10 +104,9 @@ internal class PluginLoadingProblemPresentationTest {
   fun `an expected configuration explanation retains an unexpected error from the other side`() {
     val expected = CheckErrorsResult(
       loadingError = "Loading of custom plugins is disabled",
-      isDisabledDependencyError = true,
       severity = PluginLoadingProblem.Severity.EXPECTED,
     )
-    val unexpected = CheckErrorsResult(loadingError = "Missing dependency", isDisabledDependencyError = true)
+    val unexpected = CheckErrorsResult(loadingError = "Missing dependency")
     val result = CheckErrorsResult(problemsBySide = mapOf(PluginSource.LOCAL to expected, PluginSource.REMOTE to unexpected))
 
     assertThat(MyPluginModel.getExpectedExplanations(result)).containsExactly("Client: Loading of custom plugins is disabled")
@@ -109,7 +118,6 @@ internal class PluginLoadingProblemPresentationTest {
   fun `the page result retains independent side data through serialization`() {
     val local = CheckErrorsResult(
       loadingError = "Missing dependency",
-      isDisabledDependencyError = true,
       shouldNotifyUser = true,
       detailedMessage = "A dependency is missing",
       dependencyPluginId = PluginId.getId("dependency"),

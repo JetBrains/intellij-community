@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Internal
 data class CheckErrorsResult(
-  val isDisabledDependencyError: Boolean = false,
   @NlsSafe val loadingError: String? = null,
   val requiredPluginNames: Set<String> = emptySet(),
   val suggestToEnableRequiredPlugins: Boolean = false,

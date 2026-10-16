@@ -1420,9 +1420,9 @@ open class MyPluginModel @JvmOverloads constructor(
         PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> return emptyList()
         PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
       }
-      if (checkErrorsResult.isDisabledDependencyError) {
-        val loadingError = checkErrorsResult.loadingError
-        return if (loadingError != null) listOf<HtmlChunk>(createTextChunk(loadingError)) else emptyList()
+      val loadingError = checkErrorsResult.loadingError
+      if (loadingError != null) {
+        return listOf(createTextChunk(loadingError))
       }
 
       val errors = mutableListOf<HtmlChunk>()

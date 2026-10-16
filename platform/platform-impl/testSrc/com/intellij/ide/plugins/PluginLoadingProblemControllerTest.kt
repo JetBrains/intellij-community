@@ -275,7 +275,6 @@ internal class PluginLoadingProblemControllerTest {
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
     assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
-    assertThat(result.isDisabledDependencyError).isTrue()
     assertThat(result.loadingError).isNotNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
     assertThat(result.requiredPluginNames).isEmpty()

@@ -1046,7 +1046,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val loadingError = service<PluginManagerStateService>().getPluginNonLoadReason(pluginId)
     val disabledDependency = loadingError?.disabledDependencyId
     if (disabledDependency == null) {
-      return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true).withLoadingProblem(loadingError)
+      return CheckErrorsResult(loadingError = loadingError?.shortMessage).withLoadingProblem(loadingError)
     }
 
     val requiredPlugins = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
@@ -1066,7 +1066,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
 
     if (PluginManagerCore.ULTIMATE_PLUGIN_ID in requiredPlugins) {
-      return CheckErrorsResult(loadingError = loadingError.shortMessage, isDisabledDependencyError = true).withLoadingProblem(loadingError)
+      return CheckErrorsResult(loadingError = loadingError.shortMessage).withLoadingProblem(loadingError)
     }
 
     if (requiredPlugins.entries.none { it.value == null || PluginManagerCore.isIncompatible(it.value!!) }) {
