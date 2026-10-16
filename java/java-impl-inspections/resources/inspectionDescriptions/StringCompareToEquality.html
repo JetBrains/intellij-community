@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports <code>String.compareTo()</code> calls whose result is compared with <code>0</code> using
+<code>==</code> or <code>!=</code> to check string equality. A direct <code>equals()</code> call expresses
+the intent more clearly.
+<p><b>Example:</b></p>
+<pre><code>
+  boolean isSame(String name) {
+    return name.compareTo("value") == 0;
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  boolean isSame(String name) {
+    return name.equals("value");
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+  The inspection does not report when the argument may be <code>null</code>, because
+  <code>compareTo(null)</code> throws a <code>NullPointerException</code> while <code>equals(null)</code>
+  returns <code>false</code>, so the replacement would change behavior.
+</p>
+</body>
+</html>
