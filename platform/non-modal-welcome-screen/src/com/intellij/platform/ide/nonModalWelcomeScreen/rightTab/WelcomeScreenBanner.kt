@@ -26,9 +26,11 @@ open class WelcomeScreenBanner(
     drawImage(g, image, dst, src, null, null)
   }
 
+  var preferredWidth: (Int) -> Int = { it }
+
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width, preferredHeight(preferredSize.height))
+    return Dimension(preferredWidth(preferredSize.width), preferredHeight(preferredSize.height))
   }
 }
 
