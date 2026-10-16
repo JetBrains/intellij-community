@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.renderers.providers.painter
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
@@ -15,7 +16,7 @@ internal class CodeVisionZombie private constructor(
   limbs: List<CodeVisionLimb>
 ) : LimbedZombie<CodeVisionLimb>(limbs) {
 
-  internal object Necromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=4) {
+  internal object Necromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=5) {
 
     override fun formZombie(limbs: List<CodeVisionLimb>): CodeVisionZombie {
       return CodeVisionZombie(limbs)
@@ -26,6 +27,7 @@ internal class CodeVisionZombie private constructor(
       writeInt(limb.endOffset)
       writeString(limb.tooltip)
       writeString(limb.longPresentation)
+      writeString(limb.text)
       writeString(limb.providerId)
       writeIconOrNull(limb.icon)
       writeIntOrNull(limb.count)
@@ -37,6 +39,7 @@ internal class CodeVisionZombie private constructor(
       val endOffset:             Int = readInt()
       val tooltip:            String = readString()
       val presentation:       String = readString()
+      val text:               String = readString()
       val providerId:         String = readString()
       val icon:                Icon? = readIconOrNull()
       val count:                Int? = readIntOrNull()
@@ -46,6 +49,7 @@ internal class CodeVisionZombie private constructor(
         endOffset,
         providerId,
         presentation,
+        text,
         tooltip,
         icon,
         count,
@@ -60,6 +64,7 @@ internal data class CodeVisionLimb(
   val endOffset: Int,
   val providerId: String,
   val longPresentation: String,
+  val text: String,
   val tooltip: String,
   val icon: Icon?,
   val count: Int?,
@@ -70,6 +75,11 @@ internal data class CodeVisionLimb(
     pair.first.endOffset,
     pair.second.providerId,
     pair.second.longPresentation,
+    when (val entry = pair.second) {
+      is TextCodeVisionEntry -> entry.text
+      is CounterCodeVisionEntry -> entry.text
+      else -> entry.longPresentation
+    },
     pair.second.tooltip,
     pair.second.icon,
     (pair.second as? CounterCodeVisionEntry)?.count,
@@ -77,6 +87,6 @@ internal data class CodeVisionLimb(
   )
 
   fun asEntry(): ZombieCodeVisionEntry {
-    return ZombieCodeVisionEntry(providerId, longPresentation, tooltip, icon, count, shouldBeDelimited = shouldBeDelimited)
+    return ZombieCodeVisionEntry(providerId, longPresentation, tooltip, icon, count, text, shouldBeDelimited)
   }
 }
