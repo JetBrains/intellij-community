@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSession
@@ -16,6 +17,7 @@ import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.Json
@@ -160,7 +162,20 @@ internal class PluginLoadingProblemControllerTest {
             name = "Affected"
             dependencies { module(moduleId.name, namespace = namespace) }
           }.installAt(pluginsDir)
-          PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(pluginsDir).build(configureClassLoaders = false))
+          val pluginSetBuilder = PluginSetTestBuilder.fromPath(pluginsDir)
+          lateinit var pluginSet: PluginSet
+          if (inaccessible) {
+            val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+              pluginSet = pluginSetBuilder.build(configureClassLoaders = false)
+            }
+            assertThat(error).isInstanceOf(PluginException::class.java).hasMessageContaining(
+              "affected isn't loaded: it depends on module 'dependency.module' which has private visibility in 'dependency' plugin",
+            )
+          }
+          else {
+            pluginSet = pluginSetBuilder.build(configureClassLoaders = false)
+          }
+          PluginManagerCore.setPluginSet(pluginSet)
           session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.ENABLED
           DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
 
