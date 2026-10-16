@@ -16,6 +16,8 @@ final class CharWidthCache {
   private static final float SHIFT = 1f;
 
   private static final int[] FONT_STYLES = {Font.PLAIN, Font.BOLD, Font.ITALIC, Font.BOLD | Font.ITALIC};
+  private static final char FIRST_PRINTABLE_ASCII = ' ';
+  private static final char LAST_PRINTABLE_ASCII = '~';
 
   private final EditorView myView;
   private final Int2FloatOpenHashMap myCache = new Int2FloatOpenHashMap();
@@ -27,18 +29,26 @@ final class CharWidthCache {
 
   /**
    * Returns the width of the widest printable ASCII character over all font styles.
+   * {@link #isPrintableAscii} defines these characters.
    */
   float getMaxPrintableAsciiWidth() {
     if (myMaxPrintableAsciiWidth < 0) {
       float maxWidth = 0;
       for (@FontStyle int fontStyle : FONT_STYLES) {
-        for (int codePoint = ' '; codePoint <= '~'; codePoint++) {
+        for (int codePoint = FIRST_PRINTABLE_ASCII; codePoint <= LAST_PRINTABLE_ASCII; codePoint++) {
           maxWidth = Math.max(maxWidth, getCodePointWidth(codePoint, fontStyle));
         }
       }
       myMaxPrintableAsciiWidth = maxWidth;
     }
     return myMaxPrintableAsciiWidth;
+  }
+
+  /**
+   * Returns {@code true} for a printable ASCII character, from the space to {@code '~'}.
+   */
+  static boolean isPrintableAscii(int codePoint) {
+    return codePoint >= FIRST_PRINTABLE_ASCII && codePoint <= LAST_PRINTABLE_ASCII;
   }
 
   float getCodePointWidth(int codePoint, @FontStyle int fontStyle) {
