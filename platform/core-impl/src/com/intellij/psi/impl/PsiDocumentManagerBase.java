@@ -128,7 +128,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
    * version counter advances in each write action, while this state must span every write action until the document is
    * published. See {@link DocumentUncommittedStateManager}.
    */
-  private final DocumentUncommittedStateManager myUncommittedState = new DocumentUncommittedStateManager();
+  private final DocumentUncommittedStateManager myUncommittedState;
 
   private boolean myPerformBackgroundCommit = true;
 
@@ -143,6 +143,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
   protected PsiDocumentManagerBase(@NotNull Project project) {
     myProject = project;
+    myUncommittedState = new DocumentUncommittedStateManager(project);
     myPsiManager = PsiManager.getInstance(project);
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());

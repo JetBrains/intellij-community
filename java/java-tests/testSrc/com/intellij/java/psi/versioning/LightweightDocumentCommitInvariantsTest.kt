@@ -2,34 +2,46 @@
 package com.intellij.java.psi.versioning
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.impl.DocumentCommitProcessor
+import com.intellij.psi.impl.IsolatedTimelineWatcher
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
+import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.editorFixture
@@ -38,8 +50,11 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.LocalTimeCounter
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -47,6 +62,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class LightweightDocumentCommitInvariantsTest {
@@ -911,17 +928,144 @@ internal class LightweightDocumentCommitInvariantsTest {
   }
 
   /**
+   * The isolated timeline of a document must end when the document becomes weakly reachable.
+   *
+   * ```
+   * allowIsolatedCommits(lightDocument) { commitDocument(lightDocument) }
+   * assert one more forked version is frozen      // the timeline outlives the block
+   * run the version cleanup                       // the document is alive, so the timeline stays
+   * collect lightDocument
+   * wait until the frozen forked versions are back to the initial set
+   * ```
+   */
+  @Test
+  fun `the isolated timeline of a collected document releases its forked version`() = runVersionedTest(timeout = 90.seconds) {
+    val collector = ApplicationManager.getApplication().service<PsiVersioningGarbageCollector>()
+    val before = frozenForkedVersions()
+
+    val documentRef = withContext(Dispatchers.UiWithModelAccess) {
+      commitLightDocumentInIsolatedTimeline()
+    }
+    Assertions.assertEquals(before.size + 1, frozenForkedVersions().size,
+                            "The isolated timeline must outlive the block, so the next call reuses it")
+
+    collector.cleanupNow()
+    Assertions.assertEquals(before.size + 1, frozenForkedVersions().size,
+                            "The cleanup must keep the isolated timeline of a live document")
+
+    GCWatcher.fromClearedRef(documentRef).ensureCollected()
+
+    waitUntil({ "The isolated timeline of a collected document must release its forked version: ${frozenForkedVersions()} != $before" },
+              timeout = 60.seconds) {
+      frozenForkedVersions() == before
+    }
+  }
+
+  /**
+   * A publish ends the isolated timeline, so it must also stop the liveness check of the timeline.
+   *
+   * ```
+   * allowIsolatedCommits(document) { commitDocument(document) }
+   * assert one more watch is active
+   * writeAction { commitDocument(document) }       // the publish retires the timeline
+   * assert the watch count is back to the start value
+   * ```
+   */
+  @Test
+  fun `a publish stops the liveness check of the isolated timeline`() = runVersionedTest {
+    val watcher = IsolatedTimelineWatcher.getInstance(project) ?: error("The project must have the isolated timeline watcher")
+    val documentManager = PsiDocumentManager.getInstance(project)
+    val document = editor.document
+    resetToBaseText(document)
+    val before = watcher.activeWatchCount()
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        document.setText(UPDATED_TEXT)
+      }
+      documentManager.allowIsolatedCommits(document) {
+        documentManager.commitDocument(document)
+      }
+    }
+    Assertions.assertEquals(before + 1, watcher.activeWatchCount(), "A new isolated timeline must start a liveness check")
+
+    writeCommandAction(project, "") {
+      documentManager.commitDocument(document)
+    }
+    Assertions.assertEquals(before, watcher.activeWatchCount(), "A publish must stop the liveness check of the isolated timeline")
+  }
+
+  /**
+   * The cancellation of the project scope must end each watched timeline exactly once, also for a live document.
+   * A watch that starts after the cancellation must end at once.
+   * The test uses its own scope, so it does not close the shared project of the fixture.
+   */
+  @Test
+  fun `the cancellation of the watcher scope ends each watched timeline`() = timeoutRunBlocking(context = Dispatchers.Default) {
+    val scope = childScope("isolated timeline watcher")
+    val watcher = IsolatedTimelineWatcher(scope)
+    val firstDocument = DocumentImpl("first")
+    val secondDocument = DocumentImpl("second")
+    val firstEnds = AtomicInteger()
+    val secondEnds = AtomicInteger()
+    watcher.watch(firstDocument) { firstEnds.incrementAndGet() }
+    watcher.watch(secondDocument) { secondEnds.incrementAndGet() }
+    Assertions.assertEquals(2, watcher.activeWatchCount())
+
+    scope.cancel()
+    waitUntil({ "Each watch must end after the cancellation: ${firstEnds.get()}, ${secondEnds.get()}, ${watcher.activeWatchCount()}" }) {
+      firstEnds.get() == 1 && secondEnds.get() == 1 && watcher.activeWatchCount() == 0
+    }
+
+    val lateEnds = AtomicInteger()
+    watcher.watch(DocumentImpl("late")) { lateEnds.incrementAndGet() }
+    Assertions.assertEquals(1, lateEnds.get(), "A watch after the cancellation must end at once")
+    Assertions.assertEquals(0, watcher.activeWatchCount())
+
+    Assertions.assertEquals(1, firstEnds.get(), "A watch must end only once")
+    Assertions.assertEquals(1, secondEnds.get(), "A watch must end only once")
+    // The documents stay strongly reachable until here, so only the cancellation can end their watches.
+    Assertions.assertEquals("first", firstDocument.text)
+    Assertions.assertEquals("second", secondDocument.text)
+  }
+
+  /**
+   * Creates a document that only the returned reference holds, and leaves an isolated timeline with a forked commit for it.
+   *
+   * This function does not suspend, so no coroutine frame keeps the document after it returns.
+   */
+  private fun commitLightDocumentInIsolatedTimeline(): Ref<Document> {
+    val documentManager = PsiDocumentManager.getInstance(project)
+    val document = runReadActionBlocking {
+      val psiFile = PsiFileFactory.getInstance(project)
+        .createFileFromText("Light.java", JavaFileType.INSTANCE, BASE_TEXT, LocalTimeCounter.currentTime(), true)
+      documentManager.getDocument(psiFile) ?: error("A light PSI file with the event system enabled must have a document")
+    }
+    // The undo stack would hold the document strongly.
+    UndoUtil.disableUndoFor(document)
+    ApplicationManager.getApplication().runWriteAction {
+      document.setText(UPDATED_TEXT)
+    }
+    documentManager.allowIsolatedCommits(document) {
+      documentManager.commitDocument(document)
+      Assertions.assertEquals(UPDATED_TEXT, currentPsiFile(document).text)
+    }
+    Assertions.assertFalse(documentManager.isCommitted(document), "An isolated commit must not publish the document")
+    return Ref(document)
+  }
+
+  /**
    * Returns each frozen version that belongs to a forked timeline. A forked version is an odd one.
    */
   private fun frozenForkedVersions(): Set<Long> {
     return InternalPsiVersioning.PsiVersionRegistry.instance.getFrozenKeys().filterTo(mutableSetOf()) { it % 2 != 0L }
   }
 
-  private fun runVersionedTest(action: suspend () -> Unit) {
+  private fun runVersionedTest(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend () -> Unit) {
     val disposable = Disposer.newDisposable()
     (PsiDocumentManagerBase.getInstance(project) as PsiDocumentManagerBase).disableBackgroundCommit(disposable)
     try {
-      timeoutRunBlocking(context = Dispatchers.Default) {
+      timeoutRunBlocking(timeout = timeout, context = Dispatchers.Default) {
         action()
       }
     } finally {
