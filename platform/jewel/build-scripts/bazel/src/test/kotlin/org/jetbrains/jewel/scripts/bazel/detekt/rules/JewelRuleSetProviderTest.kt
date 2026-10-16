@@ -1,15 +1,15 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jewel.detekt
+package org.jetbrains.jewel.scripts.bazel.detekt.rules
 
 import dev.detekt.api.Config
 import dev.detekt.api.RuleSetProvider
 import java.util.ServiceLoader
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.jewel.detekt.JewelRuleSetProvider
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
 import org.junit.jupiter.api.Test
 
-class JewelRuleSetProviderSpec {
+class JewelRuleSetProviderTest {
     @Test
     fun `JewelRuleSetProvider is discovered via ServiceLoader`() {
         val providers =
