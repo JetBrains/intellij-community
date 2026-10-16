@@ -91,7 +91,7 @@ public final class PackageFileWorker {
     LOG.debug("Start packaging file: " + file.getPath());
     // Only resolve the containing artifacts under a read action; the file I/O below does not need the read lock.
     final Collection<ArtifactUtil.ArtifactInfo> items =
-      ReadAction.compute(() -> ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts));
+      ReadAction.computeBlocking(() -> ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts));
     File ioFile = VfsUtilCore.virtualToIoFile(file);
     for (ArtifactUtil.ArtifactInfo item : items) {
       final Artifact artifact = item.artifact();
