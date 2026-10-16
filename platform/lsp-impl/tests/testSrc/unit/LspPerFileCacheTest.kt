@@ -141,6 +141,32 @@ internal class LspPerFileCacheTest {
   }
 
   @Test
+  fun `getIfComputed returns only a completed matching value`() = timeoutRunBlocking {
+    val cache = LspPerFileCache<Int, String>(project)
+    val file = createFile("a.txt", "hello")
+    val computeEntered = CountDownLatch(1)
+    val releaseCompute = CountDownLatch(1)
+
+    assertNull(cache.getIfComputed(file, 0))
+
+    val owner = async(Dispatchers.IO) {
+      cache.getOrCompute(file, 0) {
+        computeEntered.countDown()
+        releaseCompute.await()
+        "value"
+      }
+    }
+    computeEntered.await()
+    assertNull(cache.getIfComputed(file, 0)) // does not wait for the in-flight compute
+
+    releaseCompute.countDown()
+    assertEquals("value", owner.await())
+
+    assertEquals("value", withContext(Dispatchers.EDT) { cache.getIfComputed(file, 0) })
+    assertNull(cache.getIfComputed(file, 1))
+  }
+
+  @Test
   fun `null result from compute is not cached`() = timeoutRunBlocking {
     val cache = LspPerFileCache<Int, String>(project)
     val file = createFile("a.txt", "A")

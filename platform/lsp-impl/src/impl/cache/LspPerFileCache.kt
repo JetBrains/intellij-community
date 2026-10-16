@@ -130,6 +130,22 @@ internal open class LspPerFileCache<K : Any, V : Any>(
     }
   }
 
+  /**
+   * Returns the cached value for [file] and [key] when a completed computation matches them, or `null` otherwise.
+   * This function never computes a value and never waits for a computation in flight, so it is safe on the EDT.
+   */
+  fun getIfComputed(file: VirtualFile, key: K): V? {
+    val stamp = currentStamp(file)
+    synchronized(this) {
+      val s = slot ?: return null
+      if (s.file != file || s.stamp != stamp || !s.future.isDone || s.future.isCompletedExceptionally) return null
+      val stored = s.future.getNow(null) ?: return null
+      if (!matches(s.key, stored, key)) return null
+      s.key = key
+      return stored
+    }
+  }
+
   private fun currentStamp(file: VirtualFile): Long {
     if (invalidateOnlyOnDocumentChange) {
       // Fall back to the global count when the document is not in memory:
