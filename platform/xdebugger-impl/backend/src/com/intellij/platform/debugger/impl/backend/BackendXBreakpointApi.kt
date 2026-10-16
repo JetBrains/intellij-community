@@ -22,12 +22,14 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
 import com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
 import com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
-import com.intellij.xdebugger.breakpoints.XDataBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointAccessType
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointHitCount
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointLifetime
 import com.intellij.xdebugger.impl.proxy.getEditorsProvider
 import com.intellij.xdebugger.impl.rpc.models.findValue
 
@@ -95,28 +97,17 @@ internal class BackendXBreakpointApi : XBreakpointApi {
 
   override suspend fun setDataBreakpointAccessType(breakpointId: XBreakpointId, requestId: Long, accessType: XDataBreakpointAccessType?) {
     val breakpoint = breakpointId.findValue() ?: return
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.dataAccessType != accessType
-    properties.dataAccessType = accessType
-    breakpoint.notifyExternalPropertyUpdateRequested(requestId, changed)
+    breakpoint.setDataBreakpointAccessType(accessType, requestId = requestId)
   }
 
   override suspend fun setDataBreakpointLifetime(breakpointId: XBreakpointId, requestId: Long, lifetime: XDataBreakpointLifetime?) {
     val breakpoint = breakpointId.findValue() ?: return
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.dataLifetime != lifetime
-    properties.dataLifetime = lifetime
-    breakpoint.notifyExternalPropertyUpdateRequested(requestId, changed)
+    breakpoint.setDataBreakpointLifetime(lifetime, requestId = requestId)
   }
 
   override suspend fun setDataBreakpointHitCount(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int) {
     val breakpoint = breakpointId.findValue() ?: return
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.hitCountEnabled != enabled || properties.dataHitCountMode != mode || properties.hitCountValue != value
-    properties.hitCountEnabled = enabled
-    properties.dataHitCountMode = mode
-    properties.hitCountValue = value
-    breakpoint.notifyExternalPropertyUpdateRequested(requestId, changed)
+    breakpoint.setDataBreakpointHitCount(enabled, mode, value, requestId = requestId)
   }
 
   override suspend fun setLogMessage(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {

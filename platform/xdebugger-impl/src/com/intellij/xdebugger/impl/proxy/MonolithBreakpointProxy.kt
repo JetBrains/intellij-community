@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDataBreakpointInfo
-import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
@@ -34,6 +33,9 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointAccessType
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointHitCount
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointLifetime
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -149,26 +151,15 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
   override fun getDataBreakpointInfo(): XDataBreakpointInfo? = (breakpoint.properties as? XDataBreakpointProperties)?.toDataBreakpointInfo()
 
   override fun setDataBreakpointAccessType(accessType: XDataBreakpointAccessType?) {
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.dataAccessType != accessType
-    properties.dataAccessType = accessType
-    breakpoint.notifyExternalPropertyUpdateRequested(REQUEST_IS_NOT_NEEDED, changed)
+    breakpoint.setDataBreakpointAccessType(accessType)
   }
 
   override fun setDataBreakpointLifetime(lifetime: XDataBreakpointLifetime?) {
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.dataLifetime != lifetime
-    properties.dataLifetime = lifetime
-    breakpoint.notifyExternalPropertyUpdateRequested(REQUEST_IS_NOT_NEEDED, changed)
+    breakpoint.setDataBreakpointLifetime(lifetime)
   }
 
   override fun setDataBreakpointHitCount(enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int) {
-    val properties = breakpoint.properties as? XDataBreakpointProperties ?: return
-    val changed = properties.hitCountEnabled != enabled || properties.dataHitCountMode != mode || properties.hitCountValue != value
-    properties.hitCountEnabled = enabled
-    properties.dataHitCountMode = mode
-    properties.hitCountValue = value
-    breakpoint.notifyExternalPropertyUpdateRequested(REQUEST_IS_NOT_NEEDED, changed)
+    breakpoint.setDataBreakpointHitCount(enabled, mode, value)
   }
 
   override fun subscribeOnDataBreakpointInfoChanges(disposable: Disposable, listener: (XDataBreakpointInfo) -> Unit) {
