@@ -17,7 +17,7 @@ use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
 const DAEMON_PORT: u16 = 27_100;
 
 /// The digest of the option file templates that `AirLaneDigestTest` pins on the Kotlin side.
-const KOTLIN_OPTION_FILES_DIGEST: &str = "7960b0efbb3ac177ba7c285404e033ed2b7bdc8b59f9aef8dcd61826bd57773f";
+const KOTLIN_OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c7083dbe88810fb110c4";
 
 /// The controlled agent of the fixture whose control channel the IDE serves in these tests. The committed document of
 /// the lane gives the host every controlled agent, so the tests move this one to the IDE.
@@ -177,7 +177,7 @@ fn written(document: &LaneDocument) -> (Prepared, LaneIdentity, ServicePorts) {
 // A bare IDE gets the option files of every lane IDE and the token of the bridge, in its private directory. It gets no
 // file of the lane services, of the control server or of an agent, and its home stays empty.
 #[test]
-fn a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme_alone() {
+fn a_bare_context_holds_the_option_files_and_the_token_alone() {
     let prepared = prepared();
     write_bare(&prepared.paths, "bare-token").unwrap();
     let rendered = tree(&prepared.context);
@@ -192,7 +192,6 @@ fn a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme
         .collect();
     let mut expected: Vec<String> = options;
     expected.push(format!("config/{BRIDGE_DIR}/{TOKEN_FILE} 600"));
-    expected.push(format!("config/{OPTIONS_DIR}/{ADVANCED_SETTINGS_FILE}"));
     expected.sort();
     let mut found: Vec<String> = files.iter().map(|file| (*file).to_owned()).collect();
     found.sort();
@@ -209,17 +208,13 @@ fn a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme
     );
 }
 
-// The IDE of a lane keeps the README of its project: its context has no advanced settings.
+// The IDE of a lane opens no README either: no lane tests the opening of one, and its editor area starts empty.
 #[test]
-fn a_lane_context_writes_no_advanced_settings() {
+fn a_lane_context_opens_no_readme() {
     let (prepared, _, _) = written(&document());
-    assert!(
-        !prepared
-            .context
-            .join("config")
-            .join(OPTIONS_DIR)
-            .join(ADVANCED_SETTINGS_FILE)
-            .exists()
+    assert_eq!(
+        fs::read_to_string(prepared.context.join("config").join(OPTIONS_DIR).join(ADVANCED_SETTINGS_FILE)).unwrap(),
+        NO_README_SETTINGS
     );
 }
 

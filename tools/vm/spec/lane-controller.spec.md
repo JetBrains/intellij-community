@@ -1589,17 +1589,18 @@ after that move.
   parse, so the verb never reads a field that it does not know as an absent field.
   [@test] ../crates/avl-wire/src/program/tests.rs (`a_document_of_another_schema_version_is_refused`)
 
-- A bare IDE gets the option files, the token of the bridge and the advanced settings of the next rule, and no other
-  context file. It gets the stated launch properties of the lane document without the internal mode, and no property
-  of a requirement or a lane service.
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme_alone`)
+- A bare IDE gets the option files and the token of the bridge, and no other context file. It gets the stated launch
+  properties of the lane document without the internal mode, and no property of a requirement or a lane service.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements`)
 
-- A bare IDE opens no README at the start, so the editor area starts empty and the empty-state composer shows. Its
-  context holds `config/options/advancedSettings.xml` with `ide.open.readme.md.on.startup` set to false, the bytes of
-  the start-up bench. The IDE of a lane keeps the README.
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_the_token_and_the_settings_of_no_readme_alone`)
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_context_writes_no_advanced_settings`)
+- Every IDE that the daemon launches opens no README at the start, so the editor area starts empty and the empty-state
+  composer shows. No lane tests the opening of a README. The option files of every context hold
+  `config/options/advancedSettings.xml` with `ide.open.readme.md.on.startup` set to false, the bytes of the start-up
+  bench. The JVM runner writes the same file from its own copy of the option templates.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_context_opens_no_readme`)
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_are_the_bytes_of_the_kotlin_templates`)
 
 - A bare IDE keeps the plugin set of the product, as the IDE of a user does. So it disables no plugin of the lane
   document, and AI Assistant stays on.

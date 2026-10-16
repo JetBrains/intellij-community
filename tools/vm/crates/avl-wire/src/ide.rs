@@ -54,8 +54,8 @@ pub const ADVANCED_SETTINGS_FILE: &str = "advancedSettings.xml";
 
 /// The advanced settings of an IDE whose project opens no editor at the start. On the first open of a project, the IDE
 /// opens its `README.md` (`ide.open.readme.md.on.startup`), and the next start restores that editor. The start-up bench
-/// and a bare lane IDE write these bytes as [`ADVANCED_SETTINGS_FILE`], so the editor area of their project starts
-/// empty.
+/// and every IDE that the lane daemon launches write these bytes as [`ADVANCED_SETTINGS_FILE`], so the editor area of
+/// their project starts empty. No lane tests the opening of a README.
 pub const NO_README_SETTINGS: &str = r#"<application>
   <component name="AdvancedSettings">
     <option name="settings">

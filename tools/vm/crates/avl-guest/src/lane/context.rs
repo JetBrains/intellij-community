@@ -14,8 +14,7 @@
 //! | `bin/<runtime>` | one launcher for each declared CLI runtime |
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
 //!
-//! A bare IDE gets the option files, the token of the bridge, and `config/options/advancedSettings.xml` of
-//! [`NO_README_SETTINGS`] only, see [`write_bare`].
+//! A bare IDE gets the option files and the token of the bridge only, see [`write_bare`].
 //!
 //! The directory `config/air-ui-test` and its three files are private to the account. The runtime in the IDE owns
 //! [`NEXT_START_CONTROL_FILE`], so this writer never writes or deletes it.
@@ -100,13 +99,15 @@ const DEFAULT_PROJECT_DIRECTORY: &str = "{{defaultProjectDirectory}}";
 const TRUSTED_PATH_ENTRIES: &str = "{{trustedPathEntries}}";
 
 /// Each option file of a new context by its name, in write order, as its template. These are the bytes of
-/// `AirIdeLaunchDefaults.OPTION_FILE_TEMPLATES`, and a test holds both digests to one value.
-pub(crate) const OPTION_FILE_TEMPLATES: [(&str, &str); 5] = [
+/// `AirIdeLaunchDefaults.OPTION_FILE_TEMPLATES`, and a test holds both digests to one value. The last one keeps the
+/// project from opening its README, so every IDE that the daemon launches starts with an empty editor area.
+pub(crate) const OPTION_FILE_TEMPLATES: [(&str, &str); 6] = [
     (GENERAL_SETTINGS_FILE, include_str!("context/options/ide.general.xml")),
     ("ide.general.local.xml", include_str!("context/options/ide.general.local.xml")),
     ("Minimap.xml", include_str!("context/options/Minimap.xml")),
     ("certificates.xml", include_str!("context/options/certificates.xml")),
     ("trusted-paths.xml", include_str!("context/options/trusted-paths.xml")),
+    (ADVANCED_SETTINGS_FILE, NO_README_SETTINGS),
 ];
 
 /// The hex SHA-256 of the templates: each one as `<name>\n<template>\n`, in write order. The config key reads it as
@@ -376,17 +377,11 @@ impl LaneContext<'_> {
 
 /// Writes the option files into `options`, and creates `new_projects`, an absolute path. `ide.general.xml` is written only when it is
 /// missing. The trusted paths are the absolute project path and its real path.
-/// Writes the context files of a bare IDE into the prepared context `paths`: the option files, `bridge_token` as the
-/// token of the bridge, and [`NO_README_SETTINGS`] as [`ADVANCED_SETTINGS_FILE`]. A bare IDE gets no file of the lane
-/// services, of the control server or of an agent, so its home holds nothing of the machine or of the lane.
-///
-/// The project opens no README, so the editor area starts empty and the empty-state composer of Air shows. With the
-/// README open, the start-up loads other classes, and its count depends on which of the two wins the race. The IDE of a
-/// lane keeps the README.
+/// Writes the context files of a bare IDE into the prepared context `paths`: the option files and `bridge_token` as the
+/// token of the bridge. A bare IDE gets no file of the lane services, of the control server or of an agent, so its
+/// home holds nothing of the machine or of the lane.
 pub(crate) fn write_bare(paths: &IdePrepared, bridge_token: &str) -> Result<(), AgentRefusal> {
-    write_options_and_token(paths, bridge_token)?;
-    let settings = Path::new(&paths.config_dir).join(OPTIONS_DIR).join(ADVANCED_SETTINGS_FILE);
-    write_file(&settings, NO_README_SETTINGS.as_bytes())
+    write_options_and_token(paths, bridge_token).map(|_| ())
 }
 
 /// Writes the option files and the token of the bridge, which every lane IDE gets, and answers the private directory
