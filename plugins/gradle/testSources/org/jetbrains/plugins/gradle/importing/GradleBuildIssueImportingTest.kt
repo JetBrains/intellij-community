@@ -11,7 +11,6 @@ import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertB
 import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.platform.testFramework.assertion.assertConsoleText
 import com.intellij.platform.testFramework.assertion.assertIsNodeSelected
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.asDisposable
@@ -47,7 +46,6 @@ import java.util.function.Consumer
 @TestApplication
 @ParameterizedClass
 @AllGradleVersionsSource
-@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
 class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
 
   private val testRootFixture = tempPathFixture()

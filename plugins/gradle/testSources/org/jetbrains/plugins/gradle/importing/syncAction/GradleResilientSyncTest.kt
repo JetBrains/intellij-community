@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertModuleDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.useProjectAsync
@@ -40,8 +39,7 @@ import org.junit.jupiter.params.support.ParameterDeclarations
 @TestApplication
 @ParameterizedClass
 @AllGradleVersionsSource
-@TargetVersions("9.3+")
-@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
+@TargetVersions("9.7+")
 class GradleResilientSyncTest(private val gradleVersion: GradleVersion) {
 
   private val testPath by tempPathFixture()
