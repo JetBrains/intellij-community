@@ -8,8 +8,9 @@ import com.intellij.openapi.editor.ex.experimental.Agent
  * `VersionSummary`, and builds it with `summarizeVersion`.
  *
  * One integer per agent is enough. The per-agent seqs of a graph ascend and leave no gap, which
- * [com.intellij.openapi.editor.ex.experimental.EventGraph.append] enforces. So a graph holds exactly
- * the seqs `[0, endSeq(agent))` of every agent it knows.
+ * [com.intellij.openapi.editor.ex.experimental.EventGraph.append] enforces. So a graph knows exactly
+ * the seqs `[0, endSeq(agent))` of every agent. A trimmed graph stores them only from the start seq
+ * of the agent, and its base stands for the rest.
  *
  * That is what makes a delta merge possible. A summary costs one entry per AGENT, so two
  * replicas work out what they do not share without either one walking its own history.

@@ -40,19 +40,19 @@ package com.intellij.openapi.editor.impl.experimental
  * The runs below the count line hold parents that the diagram dropped. A `┴` there joins the
  * count line and not a box, and the depth of such a run starts again at the count line.
  *
- * A graph with a base text that is not empty draws that text in a base box above the first run.
- * Every run with no parent follows the base box.
+ * A graph draws its base text and its base version in a base box above the first run. A new graph
+ * with an empty base text has no base box. Every run with no parent follows the base box.
  */
 internal object EventGraphDiagram {
 
   /**
    * The greatest number of runs that one diagram draws. A box costs six lines. The base box does
-   * not count here, and it costs three lines more.
+   * not count here, and it adds at most five lines.
    */
   private const val MAX_RUNS = 40
 
   /**
-   * The number of runs that a trimmed diagram keeps at the start of the history.
+   * The number of runs that a diagram keeps at the start of the history when it cuts the middle.
    */
   private const val HEAD_RUNS = 2
 

@@ -32,7 +32,8 @@ interface Version {
 
   companion object {
     /**
-     * The version before any event. Its document is the base text of the graph.
+     * The version before any event: the base version of a new graph. A graph that a trim moved past
+     * it throws [TrimmedHistoryException] for it.
      */
     fun root(): Version {
       return VersionImpl.ROOT

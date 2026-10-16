@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
 import com.intellij.openapi.editor.ex.experimental.Event
 import com.intellij.openapi.editor.ex.experimental.EventGraph
+import com.intellij.openapi.editor.ex.experimental.TrimmedHistoryException
 import com.intellij.openapi.editor.ex.experimental.Version
 import org.jetbrains.annotations.TestOnly
 import java.util.BitSet
@@ -12,8 +13,12 @@ import java.util.BitSet
 /**
  * See [EventGraph]. An immutable value: the closed runs in a persistent [RunTree], the same runs
  * by agent in an [AgentIndex], then the newest run, the [tail]. Together they cover the lvs
- * `[0, size)`. The [base] holds the base text and the lineage. Every value that grows from a graph
- * keeps its base.
+ * `[0, size)`. The [base] holds the base text, the base version and the lineage. Every value that
+ * grows from a graph by an append or a merge keeps its base.
+ *
+ * A trim keeps only the units above the base version, and the empty lv version names the base
+ * version. So the walks stop at the base as they stop at the root, and a replay starts from the
+ * base text. The [AgentIndex] knows where the seqs of each agent start.
  *
  * Every append returns a new value, and the new trees share every node they do not change with
  * the old ones. So two siblings of one value append each on their own, and neither copies the
@@ -88,6 +93,57 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
+   * The version where the history of this graph starts. The graph stores none of its heads.
+   */
+  fun baseVersion(): VersionImpl {
+    return base.version()
+  }
+
+  /**
+   * The first seq of [agent] that this graph stores: 0, or the next seq of [agent] at the base version.
+   */
+  fun startSeqOf(agent: Agent): Int {
+    return agents.startSeq(agent)
+  }
+
+  /**
+   * Whether a trim dropped the unit ([agent], [seq]). The seqs of an agent below its start are gone.
+   */
+  fun hasTrimmed(agent: Agent, seq: Int): Boolean {
+    return seq < startSeqOf(agent)
+  }
+
+  /**
+   * The parents of the unit [lv] by event id. A unit with no parent follows the base version.
+   */
+  fun parentVersionOf(lv: LV): VersionImpl {
+    return VersionImpl.fromLvVersion(this, LvVersion(parentsOf(lv)))
+  }
+
+  /**
+   * This graph with the base moved to [safepoint]. [text] must be the document at [safepoint]. The
+   * units at or below [safepoint] are gone. The graph keeps its lineage and its version.
+   *
+   * [safepoint] must be [LvVersion.ROOT], which changes nothing, or the version of this graph. A
+   * trim to the version keeps no unit, and it costs one entry per agent and per head.
+   */
+  fun trimmedTo(safepoint: LvVersion, text: DocumentText): EventGraphImpl {
+    if (safepoint == LvVersion.ROOT) {
+      return this
+    }
+    checkTrimToVersion(safepoint)
+    val baseVersion = VersionImpl.fromLvVersion(this, version)
+    return EventGraphImpl(
+      base = base.movedTo(text, baseVersion),
+      runs = RunTree.EMPTY,
+      agents = AgentIndex.startingAt(summarize()),
+      tail = null,
+      size = 0,
+      version = LvVersion.ROOT,
+    )
+  }
+
+  /**
    * The most units that this graph can hold. The replay counts the base text in the space of the
    * units, so the base text takes its share. Then no merge overflows the space of a replay.
    */
@@ -99,7 +155,7 @@ internal class EventGraphImpl private constructor(
    * The heads of [version] as lvs of this graph. Fails when this graph does not hold one of them.
    * An [LvNamedVersion] names lvs already, so only the size of this graph can reject it.
    */
-  private fun lvVersionOf(version: Version): LvVersion {
+  fun lvVersionOf(version: Version): LvVersion {
     if (version is LvNamedVersion) {
       val lvVersion = version.lvVersion()
       checkVersionFits(lvVersion)
@@ -158,8 +214,10 @@ internal class EventGraphImpl private constructor(
 
   /**
    * The [StoredRun.lvStart] of every run of THIS graph that [summary] does not cover, ascending.
+   * [summary] must cover the units that a trim dropped, because no run holds them.
    */
   fun newRunStarts(summary: VersionSummary): IntArray {
+    checkCoversStartSeqs(summary)
     val starts = agents.newRunStarts(summary)
     val tail = tail
     if (tail == null || tail.endSeq() <= summary.endSeq(tail.event.agent())) {
@@ -170,10 +228,9 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
-   * The union of the two graphs, joined by event ids, plus the version of [other]
-   * re-expressed in the result graph's lvs. A run of [other] that this graph knows
-   * in part contributes only its unknown suffix. That suffix goes through the same append as
-   * a local edit, so it extends the tail when it continues it.
+   * The union of the two graphs, joined by event ids, and whether the merge is a fast-forward. A
+   * run of [other] that this graph knows in part contributes only its unknown suffix. That suffix
+   * goes through the same append as a local edit, so it extends the tail when it continues it.
    *
    * The cost is the size of the CHANGE, not the size of either history. A [VersionSummary] holds
    * one integer per agent, so the two graphs compare their histories without a walk of the history
@@ -184,7 +241,14 @@ internal class EventGraphImpl private constructor(
    * fails before the first append, and by then no append can fail. The values are immutable, so
    * even a failed append would leave this graph as it was.
    *
-   * The result keeps the base of this graph. [other] must have the same lineage.
+   * The result keeps the base of this graph. [other] must have the same lineage. The base version of
+   * each graph must be a critical version of the other one. So the other graph holds it, and every
+   * unit that only the other graph holds descends from it. Otherwise the merge throws
+   * [TrimmedHistoryException].
+   *
+   * Each graph checks its own base, so the merge also runs the checks of the reverse merge. Then
+   * `a.mergeFromImpl(b)` throws exactly when `b.mergeFromImpl(a)` throws. The merge builds the
+   * reverse plan only when that plan can reject. See [canRejectReverseMerge].
    */
   fun mergeFromImpl(other: EventGraphImpl): MergeResult {
     base.assertSameLineage(other.base)
@@ -192,15 +256,27 @@ internal class EventGraphImpl private constructor(
     // it. Neither step walks the history the two graphs share, so a merge costs the CHANGE and
     // not the session. The reference does this with summarizeVersion and intersectWithSummary.
     val summary = summarize()
-    SharedIdCheck(this, other).check(summary)
+    val otherSummary = other.summarize()
+    checkHoldsTrimmedUnitsOf(other, summary)
+    other.checkHoldsTrimmedUnitsOf(this, otherSummary)
+    SharedIdCheck(this, other).check(summary, otherSummary)
     val plan = MergePlan(this, other, summary)
+    if (canRejectReverseMerge(other)) {
+      checkReverseMerge(other, otherSummary)
+    }
+    if (plan.size() == 0) {
+      return MergeResult(this, size, isFastForward = false)
+    }
+    // The remap of the other version can reject too, so it runs before the first append.
+    val remappedOtherVersion = plan.remappedOtherVersion()
     // Apply. Every check inside appendImpl already held against the plan, so each one now
     // re-asserts the plan and none of them can reject.
     var graph = this
     for (index in 0 until plan.size()) {
       graph = graph.appendImpl(plan.eventAt(index), plan.parentsAt(index))
     }
-    return MergeResult(graph, size, plan.remappedOtherVersion())
+    val isFastForward = graph.version == remappedOtherVersion
+    return MergeResult(graph, size, isFastForward)
   }
 
   /**
@@ -331,7 +407,7 @@ internal class EventGraphImpl private constructor(
    * each step of a random history. The invariants:
    * - the runs cover the lvs `[0, size)` in order, with no gap, and the tail is the last run;
    * - each run is keyed by its [StoredRun.lvStart], and the agent index holds exactly the closed runs;
-   * - the seqs of each agent start at 0, ascend with the lvs, and leave no gap;
+   * - the seqs of each agent start at its start seq, ascend with the lvs, and leave no gap;
    * - every parent of a run sits below the run, and the parents of a run are transitively reduced;
    * - the version is exactly the set of units that have no child.
    */
@@ -345,7 +421,7 @@ internal class EventGraphImpl private constructor(
     if (tail != null) {
       runList.add(tail)
     }
-    val closedStarts = agents.newRunStarts(VersionSummary(emptyMap()))
+    val closedStarts = agents.newRunStarts(agents.startSeqs())
     require(closedStarts.contentEquals(IntArray(runs.size()) { runs.get(it).lvStart })) {
       "The agent index does not hold exactly the closed runs"
     }
@@ -360,7 +436,7 @@ internal class EventGraphImpl private constructor(
         "The closed run $run is not keyed by its first lv"
       }
       val agent = run.event.agent()
-      val expectedSeq = nextSeqs[agent] ?: 0
+      val expectedSeq = nextSeqs[agent] ?: agents.startSeq(agent)
       require(run.event.seq() == expectedSeq) {
         "The run $run does not continue the seqs of $agent: expected $expectedSeq"
       }
@@ -420,6 +496,67 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
+   * Fails when [summary] lacks a unit below the start seq of an agent, in a closed run or in the
+   * tail. A merge rejects such a summary first, with [checkHoldsTrimmedUnitsOf].
+   */
+  private fun checkCoversStartSeqs(summary: VersionSummary) {
+    val startSeqs = agents.startSeqs()
+    for (agent in startSeqs.agents()) {
+      val known = summary.endSeq(agent)
+      val start = startSeqs.endSeq(agent)
+      require(known >= start) {
+        "The summary knows the seqs of $agent below $known, but this graph starts at $start"
+      }
+    }
+  }
+
+  /**
+   * Throws [TrimmedHistoryException] when [other] trimmed units that [summary] lacks. The merge cannot
+   * bring them in, because [other] no longer holds them.
+   */
+  private fun checkHoldsTrimmedUnitsOf(other: EventGraphImpl, summary: VersionSummary) {
+    val otherStartSeqs = other.agents.startSeqs()
+    for (agent in otherStartSeqs.agents()) {
+      val otherStart = otherStartSeqs.endSeq(agent)
+      val held = summary.endSeq(agent)
+      if (held < otherStart) {
+        val message = "The other graph trimmed the seqs of $agent below $otherStart, " +
+                      "and this graph holds only the seqs below $held"
+        throw TrimmedHistoryException(message)
+      }
+    }
+  }
+
+  /**
+   * Whether the plan of the merge of this graph into [other] can reject. It cannot when the base
+   * version of [other] is the root, or the base version of this graph. Every unit that this graph
+   * adds then descends from it.
+   */
+  private fun canRejectReverseMerge(other: EventGraphImpl): Boolean {
+    val otherBaseVersion = other.baseVersion()
+    return !otherBaseVersion.isRoot() && otherBaseVersion != baseVersion()
+  }
+
+  /**
+   * Throws [TrimmedHistoryException] when the merge of this graph into [other] would. The plan of
+   * that merge maps every unit that this graph adds to [other]. So it builds only when those units
+   * descend from the base version of [other]. The check appends nothing.
+   */
+  private fun checkReverseMerge(other: EventGraphImpl, otherSummary: VersionSummary) {
+    MergePlan(other, this, otherSummary)
+  }
+
+  /**
+   * Fails when [safepoint] is not the version of this graph. A trim to an older version needs the
+   * base text there, which this graph does not build yet.
+   */
+  private fun checkTrimToVersion(safepoint: LvVersion) {
+    require(safepoint == version) {
+      "A trim to $safepoint below the version $version of the graph is not supported yet"
+    }
+  }
+
+  /**
    * Fails when the tail does not fit the graph. Only a graph with no events has no tail. A tail is the
    * newest run, so it ends at [size], and the closed runs end where it starts. The queries for
    * the replay rely on all three.
@@ -468,9 +605,10 @@ internal class EventGraphImpl private constructor(
    * Fails when [event] does not continue the seqs of its agent.
    *
    * The seqs of one agent must ascend and leave no gap. That rejects a reused id, which is the rule
-   * one (agent, seq) pair names one unit forever. It also buys the delta merge. A graph then holds
-   * exactly the seqs `[0, nextSeq)` of each agent. So a [VersionSummary] is one integer per agent
-   * and not a set of ranges.
+   * one (agent, seq) pair names one unit forever. It also buys the delta merge. A graph then knows
+   * exactly the seqs `[0, nextSeq)` of each agent. It stores them from the start seq of the agent,
+   * and its base stands for the rest. So a [VersionSummary] is one integer per agent and not a set
+   * of ranges.
    *
    * Each agent owns its own seq space, so two agents interleave freely.
    */

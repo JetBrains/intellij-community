@@ -92,12 +92,16 @@ class DocBranchPerformanceTest {
     val plain = applied(DocumentText.createText(text), recorded)
     assertEquals(plain.string(), applied(freshBranch(text), recorded, 0, recorded.size).string())
     assertEquals(plain.string(), user.branch.string())
+    assertEquals(plain.string(), appliedWithTrims(freshBranch(text), recorded).string())
 
     benchmarkSubtest("apply-only, DocBranch") {
       applied(freshBranch(text), recorded, 0, recorded.size).length()
     }
     benchmarkSubtest("apply-only, plain DocumentText") {
       applied(DocumentText.createText(text), recorded).length()
+    }
+    benchmarkSubtest("apply-only, DocBranch trimmed after each op") {
+      appliedWithTrims(freshBranch(text), recorded).length()
     }
 
     val firstEnd = batchEnds[FLAT_COST_BATCHES - 1]
@@ -149,6 +153,19 @@ class DocBranchPerformanceTest {
     var result = branch
     for (i in from until until) {
       result = result.applyOp(ops[i])
+    }
+    return result
+  }
+
+  /**
+   * [branch] with every op of [ops] applied, and a trim to the version after each one. That is the
+   * history of a document when nothing holds an older version.
+   */
+  private fun appliedWithTrims(branch: DocBranch, ops: List<DocumentOp.Text>): DocBranch {
+    var result = branch
+    for (op in ops) {
+      val edited = result.applyOp(op)
+      result = edited.trimmedTo(edited.version())
     }
     return result
   }

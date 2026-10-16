@@ -31,12 +31,13 @@ private const val BASE_SLOT = 0
  * branches never share one.
  *
  * [runs] holds the run indexes to draw, ascending. Every array below indexes a SLOT and not a run
- * of the graph. So a diagram of a trimmed history stays as small as what it draws. A parent outside
- * [runs] counts for nothing, so a run whose parents are all outside starts at the depth 0.
+ * of the graph. So a diagram that cuts the middle of a history stays as small as what it draws. A
+ * parent outside [runs] counts for nothing, so a run whose parents are all outside starts at the
+ * depth 0.
  *
- * The BASE BOX holds the base text of the graph, and it takes the slot 0. Every run with no parent
- * follows it, so it sits alone in the first row. Only a layout that starts at the first run draws
- * it, and only a base text that is not empty gets one.
+ * The BASE BOX holds the base text and the base version of the graph, and it takes the slot 0.
+ * Every run with no parent follows it, so it sits alone in the first row. Only a layout that starts
+ * at the first run draws it. A new graph with an empty base text gets none.
  */
 internal class DiagramLayout(private val graph: EventGraphImpl, private val runs: List<Int>) {
   private val drawsBase = startsAtFirstRun() && hasBaseBox()
@@ -104,7 +105,7 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
    * Whether the graph has a base box, in this layout or in one above it.
    */
   private fun hasBaseBox(): Boolean {
-    return graph.baseText().length() > 0
+    return graph.baseText().length() > 0 || !graph.baseVersion().isRoot()
   }
 
   private fun isBase(slot: Int): Boolean {
@@ -150,7 +151,7 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
    */
   private fun contentOf(slot: Int): List<String> {
     return if (isBase(slot)) {
-      baseBody(graph.baseText())
+      baseBody(graph.baseText(), graph.baseVersion())
     } else {
       body(runOf(slot))
     }
@@ -302,19 +303,19 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
   /**
    * Whether a line reaches the top of the box of the [slot], which the `┴` there shows.
    *
-   * A line comes from a drawn parent. A run at the depth 0 with parents lost them to the trim of
-   * the history, and its `┴` joins the count line above the segment. Below the count line, a run
-   * with no parent follows the base box above it, and it joins the count line too. A parent that
-   * the row bound hid draws no line, so a run whose only parents it hid keeps a plain border.
+   * A line comes from a drawn parent. A run at the depth 0 with parents lost them to the cut of
+   * the diagram. Its `┴` joins the count line above the segment. Below the count line, a run with
+   * no parent follows the base box above it, and it joins the count line too. A parent that the row
+   * bound hid draws no line, so a run whose only parents it hid keeps a plain border.
    */
   private fun hasParent(slot: Int): Boolean {
-    return parents[slot].isNotEmpty() || lostParentToTrim(slot)
+    return parents[slot].isNotEmpty() || hasParentAboveCountLine(slot)
   }
 
   /**
    * Whether the parents of the [slot] sit above the count line of the diagram.
    */
-  private fun lostParentToTrim(slot: Int): Boolean {
+  private fun hasParentAboveCountLine(slot: Int): Boolean {
     if (isBase(slot) || depths[slot] > 0) {
       return false
     }
@@ -513,10 +514,14 @@ private fun body(run: StoredRun): List<String> {
 }
 
 /**
- * The lines of the base box, which holds [text].
+ * The lines of the base box: the base [text], and the base [version] when it is not the root.
  */
-private fun baseBody(text: DocumentText): List<String> {
-  return listOf("base ${text.chars().quotedForMessage()}")
+private fun baseBody(text: DocumentText, version: VersionImpl): List<String> {
+  val textLine = "base ${text.chars().quotedForMessage()}"
+  if (version.isRoot()) {
+    return listOf(textLine)
+  }
+  return listOf(textLine, "version ${version.quotedForMessage()}")
 }
 
 /**

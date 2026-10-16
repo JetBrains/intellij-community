@@ -10,13 +10,15 @@ import com.intellij.openapi.editor.impl.experimental.EventGraphImpl
  * The graph is an immutable value. [append] and [mergeFrom] return a new graph and leave
  * this one untouched. An append is cheap on any graph, the newest one or an older one.
  *
- * A graph starts from a BASE TEXT, and its first events edit that text. The base text of a graph
- * from [createGraph] is empty, and the base text of the graph of a new [DocBranch] is the text of
- * the branch. An append and a merge keep the base text.
+ * A graph starts from a BASE TEXT at a BASE VERSION, and its first events edit that text. A new
+ * graph starts at [Version.root]. A graph from [createGraph] has an empty base text. The graph of a
+ * new [DocBranch] has the text of the branch as its base text. [DocBranch.trimmedTo] moves the base
+ * to a later version and drops the events at or below it. An append and a merge keep the base.
  */
 interface EventGraph {
   /**
-   * The number of units in the graph, summed over all runs. See [Event] for a unit.
+   * The number of units in the graph, summed over all runs. See [Event] for a unit. The units at or
+   * below the base version do not count.
    */
   fun size(): Int
 
@@ -26,7 +28,8 @@ interface EventGraph {
   fun runCount(): Int
 
   /**
-   * The paper's `Version(G)`: the current frontier of the graph.
+   * The paper's `Version(G)`: the current frontier of the graph. A graph with no events has the base
+   * version.
    */
   fun version(): Version
 
@@ -34,7 +37,8 @@ interface EventGraph {
    * Returns a graph with the [event] run appended.
    *
    * This graph must hold every head of [parents], or the append fails. The heads must be
-   * transitively reduced, as they are in every version that a graph returns.
+   * transitively reduced, as they are in every version that a graph returns. [parents] can be the
+   * base version, and a version below it throws [TrimmedHistoryException].
    *
    * The seq of the run must be the next free seq of its agent in this graph. So the seqs of one
    * agent ascend with no gap, and one (agent, seq) pair names one unit forever. Each agent has its
@@ -53,15 +57,18 @@ interface EventGraph {
    * The cost is the size of the change, not the size of the history that the two graphs share.
    *
    * Throws [LineageMismatchException] when the two graphs do not grow from one [createGraph] or
-   * [DocBranch.createBranch] call. Throws [EventIdClashException] when the two graphs give one id
-   * to two operations.
+   * [DocBranch.createBranch] call. Throws [TrimmedHistoryException] when the base version of one
+   * graph is not a critical version of the other. See [DocBranch] for that rule. Throws
+   * [EventIdClashException] when the two graphs give one id to two operations. `a.mergeFrom(b)`
+   * throws exactly when `b.mergeFrom(a)` throws.
    */
   fun mergeFrom(other: EventGraph): EventGraph
 
   /**
    * The paper's `replay(G)`, generalized to the subgraph `Events(version)`:
    * builds the document at [version]. This graph must hold every head of [version],
-   * or the replay fails. The replay of [Version.root] returns the base text.
+   * or the replay fails. The replay of the base version returns the base text, and a version below
+   * it throws [TrimmedHistoryException].
    *
    * Concurrent inserts follow the Fugue order, so every replica builds the same text.
    */

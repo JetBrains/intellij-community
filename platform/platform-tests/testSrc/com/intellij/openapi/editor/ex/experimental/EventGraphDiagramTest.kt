@@ -212,6 +212,66 @@ class EventGraphDiagramTest {
   }
 
   @Test
+  fun `a trimmed graph draws its base version in the base box`() {
+    val start = DocBranch.createBranch("ab", agent("u")).applyOp(DocumentOp.insertOp(2, "c"))
+    val trimmed = start.trimmedTo(start.version()).applyOp(DocumentOp.insertOp(3, "d"))
+    assertEquals(
+      """
+      EventGraph(units=1, runs=1, version=v[0])
+      ┌─────────────────────┐
+      │ base "abc"          │
+      │ version v[("u", 0)] │
+      └──────────┬──────────┘
+                 │
+      ┌──────────┴──────────┐
+      │ insert "d"          │
+      │ offset 3            │
+      │ lv 0                │
+      │ agent "u"           │
+      └─────────────────────┘
+      """.trimIndent(),
+      trimmed.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `a trimmed graph with an empty base text still draws its base box`() {
+    val start = DocBranch.createBranch("", agent("u"))
+      .applyOp(DocumentOp.insertOp(0, "a"))
+      .applyOp(DocumentOp.deleteOp(0, 1))
+    val trimmed = start.trimmedTo(start.version())
+    assertEquals(
+      """
+      EventGraph(units=0, runs=0, version=v[])
+      ┌─────────────────────┐
+      │ base ""             │
+      │ version v[("u", 1)] │
+      └─────────────────────┘
+      """.trimIndent(),
+      trimmed.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `an agent name neither breaks the base box nor widens it past the bound`() {
+    val broken = DocBranch.createBranch("ab", agent("a\nb")).applyOp(DocumentOp.insertOp(2, "c"))
+    assertEquals(
+      """
+      EventGraph(units=0, runs=0, version=v[])
+      ┌────────────────────────┐
+      │ base "abc"             │
+      │ version v[("a\nb", 0)] │
+      └────────────────────────┘
+      """.trimIndent(),
+      broken.trimmedTo(broken.version()).graph().toString(),
+    )
+    val long = DocBranch.createBranch("ab", agent("n".repeat(300))).applyOp(DocumentOp.insertOp(2, "c"))
+    val diagram = long.trimmedTo(long.version()).graph().toString()
+    assertTrue(diagram.contains("(300 chars)")) { "the length is not reported: $diagram" }
+    assertTrue(diagram.lines().all { it.length < 80 }) { "a line is too wide: $diagram" }
+  }
+
+  @Test
   fun `the first run follows the base box`() {
     val branch = DocBranch.createBranch("abc", agent("u")).applyOp(DocumentOp.insertOp(3, "d"))
     assertEquals(

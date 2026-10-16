@@ -155,6 +155,29 @@ internal class RunTreeTest {
   }
 
   @Test
+  fun `an index after a trim continues the seqs where the trim left them`() {
+    // The trim left U at the seq 3 and W at the seq 5. W stores no run after it.
+    val startSeqs = VersionSummary(mapOf(U to 3, W to 5))
+    val empty = AgentIndex.startingAt(startSeqs)
+    assertEquals(3, empty.nextSeq(U))
+    assertEquals(5, empty.nextSeq(W))
+    assertEquals(0, empty.nextSeq(V))
+    assertThrows(IllegalArgumentException::class.java) {
+      empty.appended(StoredRun(EventImpl(U, 0, DocumentOp.insertOp(0, "x")), 0, IntArray(0)))
+    }
+    val run = StoredRun(EventImpl(U, 3, DocumentOp.insertOp(0, "ab")), 0, IntArray(0))
+    val index = empty.appended(run)
+    assertEquals(5, index.nextSeq(U))
+    assertEquals(-1, index.lvOfSeq(U, 2))
+    assertEquals(0, index.lvOfSeq(U, 3))
+    // The summary keeps an agent that only the trim knows.
+    val summary = index.summarize(null)
+    assertEquals(5, summary.endSeq(U))
+    assertEquals(5, summary.endSeq(W))
+    assertEquals(listOf(0), index.newRunStarts(startSeqs).toList())
+  }
+
+  @Test
   fun `siblings of one agent index answer each for itself`() {
     val base = AgentIndex.EMPTY.appended(StoredRun(EventImpl(U, 0, DocumentOp.insertOp(0, "ab")), 0, IntArray(0)))
     val left = base.appended(StoredRun(EventImpl(U, 2, DocumentOp.insertOp(0, "L")), 2, intArrayOf(1)))

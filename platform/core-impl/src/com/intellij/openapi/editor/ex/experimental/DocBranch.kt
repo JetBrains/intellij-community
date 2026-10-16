@@ -20,8 +20,13 @@ import com.intellij.openapi.editor.impl.experimental.DocBranchImpl
  *   Two concurrent edits under one agent can make a merge throw [EventIdClashException], or build
  *   a wrong text.
  * - [merge] takes only branches that descend from one [createBranch] value.
- * - `a.merge(b)` and `b.merge(a)` produce the same text. A merge with an ancestor changes
- *   nothing. A merge with a descendant fast-forwards. A repeated merge changes nothing.
+ * - `a.merge(b)` succeeds exactly when `b.merge(a)` succeeds, and then both give the same text and
+ *   the same version. A merge with an ancestor changes nothing. A merge with a descendant
+ *   fast-forwards. A repeated merge changes nothing.
+ * - After [trimmedTo], two branches merge only when the base version of each one is a critical
+ *   version of the other. The other branch must hold it, and it must hold no event that is
+ *   concurrent with it. Otherwise both directions throw [TrimmedHistoryException], even for a merge
+ *   with an ancestor.
  */
 interface DocBranch {
   /**
@@ -37,7 +42,7 @@ interface DocBranch {
 
   /**
    * The version of [text]. Under the agent contract, it stays valid in every branch that merges
-   * this one, and a replay of it there returns [text].
+   * this one, and a replay of it there returns [text]. A trim of that branch past it drops it.
    */
   fun version(): Version
 
@@ -72,7 +77,8 @@ interface DocBranch {
    * The result keeps this branch's [agent].
    *
    * Throws [LineageMismatchException] when [other] does not descend from the [createBranch] value of
-   * this branch. Throws [EventIdClashException] when the two branches broke the agent contract. It
+   * this branch. Throws [TrimmedHistoryException] when the merge needs events that [trimmedTo]
+   * dropped. Throws [EventIdClashException] when the two branches broke the agent contract. It
    * does not find every break. A merge that throws changes nothing.
    *
    * The result is the branch of [mergeWithOps] for the same two branches.
@@ -85,6 +91,20 @@ interface DocBranch {
    * and their cost.
    */
   fun mergeWithOps(other: DocBranch): DocMerge
+
+  /**
+   * A branch with the same text, mod state, agent and version, whose graph drops every event at or
+   * below [safepoint]. [safepoint] becomes the base version of the graph. A replay of a version below
+   * it, and a merge that needs a dropped event, then throw [TrimmedHistoryException].
+   *
+   * [safepoint] must be safe. Every live branch of this lineage must hold it, and no live branch may
+   * hold an event that is concurrent with it. A merge with a branch that breaks the rule throws
+   * [TrimmedHistoryException] in both directions, so it never builds a wrong text.
+   *
+   * Today [safepoint] must be [version] or the base version. A trim to the base version returns
+   * this branch. A trim costs one entry per agent and per head, not the size of the history.
+   */
+  fun trimmedTo(safepoint: Version): DocBranch
 
   /**
    * A branch with the same text, mod state, agent and history. It is never `===` to this branch.

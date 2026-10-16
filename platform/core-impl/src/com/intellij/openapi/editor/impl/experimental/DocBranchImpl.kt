@@ -113,6 +113,23 @@ internal class DocBranchImpl private constructor(
     return DocMerge.ready(branch, ops)
   }
 
+  /**
+   * The text of this branch is the document at its version, so a trim to that version takes it as
+   * the base text. A deferred mod state keeps the old graph alive until its first read.
+   */
+  override fun trimmedTo(safepoint: Version): DocBranch {
+    val trimmed = graph.trimmedTo(graph.lvVersionOf(safepoint), text)
+    if (trimmed === graph) {
+      return this
+    }
+    return DocBranchImpl(
+      text = text,
+      modState = modState,
+      agent = agent,
+      graph = trimmed,
+    )
+  }
+
   override fun newInstance(): DocBranch {
     return DocBranchImpl(text, modState, agent, graph)
   }
