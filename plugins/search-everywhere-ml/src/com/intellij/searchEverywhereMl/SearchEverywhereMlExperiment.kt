@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption
@@ -103,7 +104,9 @@ object SearchEverywhereMlExperiment {
             ?: noMlSortingAbPlatformExperimentDecision
 
   private val noMlSortingAbPlatformExperimentDecision: Boolean by lazy {
-    !ApplicationManager.getApplication().isUnitTestMode && ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING.isEnabled()
+    !ApplicationManager.getApplication().isUnitTestMode
+    && !ApplicationManagerEx.isInIntegrationTest()
+    && ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING.isEnabled()
   }
 
   internal class NoMlSortingPlatformAbExperimentInitializer : ProjectActivity {

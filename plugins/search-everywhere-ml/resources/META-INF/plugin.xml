@@ -17,6 +17,7 @@
     <module name="intellij.json.backend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.experiment"/>
     <module name="intellij.platform.ide"/>

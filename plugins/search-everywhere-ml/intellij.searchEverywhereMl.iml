@@ -86,5 +86,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

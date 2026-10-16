@@ -78,6 +78,7 @@ jvm_library(
         "@lib//:search_everywhere_ml-ai-grazie-emb",
         "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
         "//platform/projectModel-api:projectModel",
+        "//platform/core-impl",
     ],
 )
 
@@ -102,6 +103,7 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/experiment:experiment_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end
