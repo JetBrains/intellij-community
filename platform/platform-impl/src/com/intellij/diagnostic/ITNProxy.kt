@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledExceptionKind
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -333,6 +334,7 @@ object ITNProxy {
    * A body with no `.jfr` attachment goes as is, and the caller handles the HTTP 413 of the server.
    * With [textOnly], only the `.txt` attachments are sent.
    * The body names each skipped attachment in [SKIPPED_ATTACHMENTS_NAME].
+   * The build checks for cancellation after each chunk of an attachment, because the gzip of a large attachment takes seconds.
    */
   @Throws(Exception::class)
   @VisibleForTesting
@@ -408,6 +410,7 @@ object ITNProxy {
         if (attachment in skipped) continue
         attachment.openContentStream().use { input ->
           appendAttachment(builder, attachment.name, input) {
+            ProgressManager.checkCanceled()
             // the deflater holds back a part of the input, so this size lags; the check after the close is exact
             if (canSkipJfr && compressed.size() > budget) throw RequestTooLargeException()
           }

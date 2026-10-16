@@ -1,14 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledExceptionKind
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Job
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.nio.charset.StandardCharsets
 import java.util.Base64
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
 /**
@@ -90,7 +94,22 @@ internal class ITNProxyRequestTest {
     assertThat(request.skippedNote).isEqualTo("snapshot.jfr: skipped, the server rejected the size of the full report\n")
   }
 
-  private fun request(attachments: List<Attachment>, maxSize: Long = Long.MAX_VALUE, textOnly: Boolean = false): Request {
+  @Test
+  fun `a canceled report stops building its request`() {
+    val job = Job().apply { cancel() }
+    assertThrows<CancellationException> {
+      // a coroutine installs its job in the thread context in the same way
+      installThreadContext(job) {
+        request(listOf(jfrAttachment(100 * 1024)))
+      }
+    }
+  }
+
+  private fun request(
+    attachments: List<Attachment>,
+    maxSize: Long = Long.MAX_VALUE,
+    textOnly: Boolean = false,
+  ): Request {
     val event = IdeaLoggingEvent("message", RuntimeException("boom"), attachments, null, null, UnhandledExceptionKind.HANDLED)
     val bean = ITNProxy.ErrorBean(event, null, null, null, null, null, false)
     val body = ITNProxy.createRequest(event, bean, maxSize = maxSize, textOnly = textOnly)
