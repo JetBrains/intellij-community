@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.diagnostic.PluginException
 import com.intellij.idea.TestFor
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
@@ -16,6 +17,7 @@ import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -313,7 +315,8 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   fun `an invisible module reports an access restriction`() {
-    val pluginSet = buildPluginSet(
+    val pluginSet = buildPluginSetWithVisibilityError(
+      "affected isn't loaded: it depends on module 'dependency.private' which has private visibility in 'dependency' plugin",
       plugin("dependency") {
         name = "Dependency"
         content(namespace = "jetbrains") {
@@ -338,7 +341,9 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   fun `a required module reports an internal dependency from another namespace`() {
-    val pluginSet = buildPluginSet(
+    val pluginSet = buildPluginSetWithVisibilityError(
+      "affected.required isn't loaded: it is from namespace 'other' and depends on module 'dependency.internal' " +
+      "which is registered in 'dependency' plugin with internal visibility in namespace 'vendor'",
       plugin("dependency") {
         name = "Dependency"
         content(namespace = "vendor") {
@@ -394,7 +399,8 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   fun `a visibility failure in a direct dependency names that dependency`() {
-    val pluginSet = buildPluginSet(
+    val pluginSet = buildPluginSetWithVisibilityError(
+      "dependency isn't loaded: it depends on module 'owner.private' which has private visibility in 'owner' plugin",
       plugin("owner") {
         name = "Owner"
         content(namespace = "jetbrains") {
@@ -419,7 +425,8 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   fun `a visibility failure through several plugins names the plugin with the access problem`() {
-    val pluginSet = buildPluginSet(
+    val pluginSet = buildPluginSetWithVisibilityError(
+      "dependency isn't loaded: it depends on module 'owner.private' which has private visibility in 'owner' plugin",
       plugin("owner") {
         name = "Owner"
         content(namespace = "jetbrains") {
@@ -448,7 +455,9 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   fun `a visibility failure in a required module names its owning plugin`() {
-    val pluginSet = buildPluginSet(
+    val pluginSet = buildPluginSetWithVisibilityError(
+      "dependency.required isn't loaded: it is from namespace 'other' and depends on module 'owner.internal' " +
+      "which is registered in 'owner' plugin with internal visibility in namespace 'vendor'",
       plugin("owner") {
         name = "Owner"
         content(namespace = "vendor") {
@@ -678,6 +687,15 @@ internal class PluginLoadingDependencyProblemTest {
   private fun incompatibleDependency(): PluginSpec = plugin("dependency") {
     name = "Dependency"
     sinceBuild = "264"
+  }
+
+  private fun buildPluginSetWithVisibilityError(expectedMessage: String, vararg plugins: PluginSpec): PluginSet {
+    lateinit var pluginSet: PluginSet
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      pluginSet = buildPluginSet(*plugins)
+    }
+    assertThat(error).isInstanceOf(PluginException::class.java).hasMessageContaining(expectedMessage)
+    return pluginSet
   }
 
   private fun buildPluginSet(vararg plugins: PluginSpec, configure: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
