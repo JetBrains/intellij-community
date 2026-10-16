@@ -28,6 +28,7 @@ internal class SpinnerTabIconHolder(
   composite: EditorComposite,
   private val owner: TabInfo,
   startupIcon: Icon? = null,
+  waitForEditors: Boolean = true,
 ) : TabInfoIconHolder {
   private val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
   private val isStaticSpinner = Registry.`is`("editor.loading.spinner.static")
@@ -36,7 +37,7 @@ internal class SpinnerTabIconHolder(
 
   init {
     val template = AllIcons.FileTypes.Text
-    icon = EmptyIcon.create(template.iconWidth, template.iconHeight)
+    icon = startupIcon ?: EmptyIcon.create(template.iconWidth, template.iconHeight)
   }
 
   private val currentIcon = MutableStateFlow(icon)
@@ -44,6 +45,10 @@ internal class SpinnerTabIconHolder(
   init {
     composite.coroutineScope.launch(CoroutineName("EditorComposite(file=${composite.file.name}.iconLoading") + ModalityState.any()
       .asContextElement()) out@{
+      if (!waitForEditors) {
+        startIconProcessing()
+        return@out
+      }
       val loadingSpinnerWaiting = launch {
         if (startupIcon == null && !isStaticSpinner) {
           delay(delayFromRegistry)
