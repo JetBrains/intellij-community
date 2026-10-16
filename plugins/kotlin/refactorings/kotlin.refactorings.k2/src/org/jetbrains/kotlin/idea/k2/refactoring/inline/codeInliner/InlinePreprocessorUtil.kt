@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
+import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.forEachDescendan
 import org.jetbrains.kotlin.idea.refactoring.util.getExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.Name
@@ -303,7 +305,12 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                             return@analyze false
                         }
                         if (t is PsiClass) {
-                            return@analyze t.qualifiedName != null
+                            return@analyze t.qualifiedName != null && t.namedClassSymbol?.let {
+                                ClassImportFilter.allowClassImport(
+                                    it,
+                                    expression.containingKtFile,
+                                )
+                            } != false
                         }
                         t.callableSymbol
                     }
@@ -313,6 +320,10 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     return@analyze false
                 }
                 val containingSymbol = resolvedSymbol.containingDeclaration ?: return@analyze true
+                if (containingSymbol is KaClassSymbol &&
+                    !ClassImportFilter.allowClassImport(containingSymbol, expression.containingKtFile,)) {
+                    return@analyze false
+                }
                 if (containingSymbol is KaDeclarationContainerSymbol) {
                     val staticScope = containingSymbol.staticMemberScope
                     return@analyze resolvedSymbol in staticScope.declarations

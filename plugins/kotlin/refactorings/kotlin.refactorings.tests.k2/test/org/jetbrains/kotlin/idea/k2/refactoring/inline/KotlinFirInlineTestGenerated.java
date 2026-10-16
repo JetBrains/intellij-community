@@ -2224,6 +2224,21 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/extensionFunction2.kt");
             }
 
+            @TestMetadata("filteredNestedJavaField.kt")
+            public void testFilteredNestedJavaField() throws Exception {
+                runTest("testData/inline/namedFunction/filteredNestedJavaField.kt");
+            }
+
+            @TestMetadata("filteredNestedKotlinFunction.kt")
+            public void testFilteredNestedKotlinFunction() throws Exception {
+                runTest("testData/inline/namedFunction/filteredNestedKotlinFunction.kt");
+            }
+
+            @TestMetadata("filteredNestedKotlinProperty.kt")
+            public void testFilteredNestedKotlinProperty() throws Exception {
+                runTest("testData/inline/namedFunction/filteredNestedKotlinProperty.kt");
+            }
+
             @TestMetadata("forwardIntVarargToAnyVararg.kt")
             public void testForwardIntVarargToAnyVararg() throws Exception {
                 runTest("testData/inline/namedFunction/forwardIntVarargToAnyVararg.kt");

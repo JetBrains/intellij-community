@@ -1,0 +1,7 @@
+// CLASS_IMPORT_FILTER_VETO_REGEX: R.string
+
+package test
+
+fun myGreatFunction() {
+    val id = R.string.foo
+}

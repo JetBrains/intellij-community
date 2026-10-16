@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import java.io.File
 
 abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -42,7 +44,19 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
         val fileWithCaret = allFiles.values.singleOrNull { "<caret>" in it.readText() } ?: error("Must have one <caret>")
         val file = myFixture.configureByFile(fileWithCaret.name)
 
-        withCustomCompilerOptions(file.text, project, module) {
+        val fileText = file.text
+        withCustomCompilerOptions(fileText, project, module) {
+            var vetoedClassInfo: ClassImportFilter.ClassInfo? = null
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
+                val regex = Regex(".*${it.trim()}.*")
+                val filterExtension = ClassImportFilter { classInfo, _ ->
+                    val vetoed = classInfo.fqName.asString().matches(regex)
+                    if (vetoed) vetoedClassInfo = classInfo
+                    !vetoed
+                }
+                ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, this.testRootDisposable)
+            }
+
             val afterFileExists = afterFile.exists()
             val targetElement = TargetElementUtil.findTargetElement(
                 myFixture.editor,
@@ -82,6 +96,15 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
                 }
             } else {
                 assertFalse("No refactoring handler available", afterFileExists)
+            }
+            if (InTextDirectivesUtils.isDirectiveDefined(fileText, "CLASS_IMPORT_FILTER_ASSERT_VETO")) {
+                assertNotNull("The class import filter did not veto a class", vetoedClassInfo)
+            }
+            InTextDirectivesUtils.getPrefixedBoolean(fileText, "// CLASS_IMPORT_FILTER_EXPECTED_IS_NESTED: ")?.let {
+                assertEquals(it, vetoedClassInfo?.isNested)
+            }
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_EXPECTED_CLASS_KIND: ").singleOrNull()?.let {
+                assertEquals(ClassKind.valueOf(it.trim()), vetoedClassInfo?.classKind)
             }
         }
     }
