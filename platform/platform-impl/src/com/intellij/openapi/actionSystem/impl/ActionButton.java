@@ -461,7 +461,19 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    *         an empty icon.
    */
   public Icon getIcon() {
-    boolean enabled = isEnabled();
+    return getIcon(isEnabled());
+  }
+
+  /**
+   * The icon of the button as {@link #getIcon()} chooses it for a disabled button. A subclass that keeps the button enabled while its
+   * action is disabled uses it.
+   */
+  @ApiStatus.Internal
+  protected @NotNull Icon getDisabledIcon() {
+    return getIcon(false);
+  }
+
+  private @NotNull Icon getIcon(boolean enabled) {
     int popState = getPopState();
     Icon icon;
     if (ExperimentalIconRendering.isEnabled()) {

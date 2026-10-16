@@ -58,7 +58,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
   public void update(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     Presentation presentation = e.getPresentation();
-    SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
+    SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(COMPONENT_KEY), SplitButton.class);
 
     Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
     AnAction action = splitButton != null ? splitButton.selectedAction : getMainAction(e);
@@ -211,18 +211,20 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
         g.fillRect(x, baseRect.y, JBUIScale.scale(1), baseRect.height);
       }
 
-      Icon actionIcon = getIcon();
-      if (!selectedActionEnabled()) {
-        Icon disabledIcon = myPresentation.getDisabledIcon();
-        actionIcon = disabledIcon != null || actionIcon == null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
-        if (actionIcon == null) {
-          actionIcon = getFallbackIcon(false);
-        }
-      }
+      Icon actionIcon = chooseActionIcon();
 
       x = baseRect.x + (x - baseRect.x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
       look.paintIcon(g, this, actionIcon, x, y);
+    }
+
+    private @NotNull Icon chooseActionIcon() {
+      if (selectedActionEnabled()) return getIcon();
+      if (ExperimentalIconRendering.isEnabled()) return getDisabledIcon();
+      Icon actionIcon = getIcon();
+      Icon disabledIcon = myPresentation.getDisabledIcon();
+      actionIcon = disabledIcon != null || actionIcon == null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
+      return actionIcon != null ? actionIcon : getFallbackIcon(false);
     }
 
     private boolean isToggleActionPushed() {

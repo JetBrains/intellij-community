@@ -360,6 +360,9 @@ jvm_library(
         "//platform/statistics/testFramework",
         "@lib//:jimfs",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//platform/icons-impl/intellij",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//platform/platform-tests/testFramework",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.tests` end
