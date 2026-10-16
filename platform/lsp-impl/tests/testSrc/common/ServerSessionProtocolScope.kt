@@ -261,9 +261,9 @@ internal abstract class ServerSessionProtocolScope {
   val DID_CREATE_FILES = lspNotification<CreateFilesParams>("workspace/didCreateFiles")
   val DID_RENAME_FILES = lspNotification<RenameFilesParams>("workspace/didRenameFiles")
   val DID_DELETE_FILES = lspNotification<DeleteFilesParams>("workspace/didDeleteFiles")
-  val WILL_CREATE_FILES = lspRequest<CreateFilesParams, WorkspaceEdit>("workspace/willCreateFiles")
-  val WILL_RENAME_FILES = lspRequest<RenameFilesParams, WorkspaceEdit>("workspace/willRenameFiles")
-  val WILL_DELETE_FILES = lspRequest<DeleteFilesParams, WorkspaceEdit>("workspace/willDeleteFiles")
+  val WILL_CREATE_FILES = lspRequest<CreateFilesParams, WorkspaceEdit?>("workspace/willCreateFiles")
+  val WILL_RENAME_FILES = lspRequest<RenameFilesParams, WorkspaceEdit?>("workspace/willRenameFiles")
+  val WILL_DELETE_FILES = lspRequest<DeleteFilesParams, WorkspaceEdit?>("workspace/willDeleteFiles")
   // endregion
 
   // region Window

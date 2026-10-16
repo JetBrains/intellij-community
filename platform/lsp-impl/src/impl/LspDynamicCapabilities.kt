@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.DocumentOnTypeFormattingRegistrationOptions
 import org.eclipse.lsp4j.DocumentRangeFormattingRegistrationOptions
 import org.eclipse.lsp4j.DocumentSymbolRegistrationOptions
 import org.eclipse.lsp4j.ExecuteCommandRegistrationOptions
+import org.eclipse.lsp4j.FileOperationOptions
 import org.eclipse.lsp4j.FoldingRangeProviderOptions
 import org.eclipse.lsp4j.HoverRegistrationOptions
 import org.eclipse.lsp4j.ImplementationRegistrationOptions
@@ -98,6 +99,7 @@ internal class LspDynamicCapabilities {
     val typeDefinition = registration("textDocument/typeDefinition", TypeDefinitionRegistrationOptions::class.java)
     val prepareTypeHierarchy = registration("textDocument/prepareTypeHierarchy", TypeHierarchyRegistrationOptions::class.java)
     val symbol = registration("workspace/symbol", WorkspaceSymbolRegistrationOptions::class.java)
+    val willRenameFiles = registration("workspace/willRenameFiles", FileOperationOptions::class.java)
 
     private fun <T> registration(registrationCapability: String, registrationOptionsClass: Class<T>): Pair<String, Class<T>> {
       val result = registrationCapability to registrationOptionsClass
