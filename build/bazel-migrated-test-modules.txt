@@ -37,6 +37,7 @@ intellij.groovy.structuralSearch.tests
 intellij.groovy.tests
 intellij.groovy.uast.tests
 intellij.html.tools.tests
+intellij.ide.starter.extended.uiAgent.tests
 intellij.ide.startup.importSettings.tests
 intellij.idea.community.build.tasks.tests
 intellij.idea.community.main.tests
@@ -264,4 +265,3 @@ intellij.yaml.backend.tests
 intellij.yaml.tests
 kotlin.gradle.gradle-java.tests
 kotlin.gradle.gradle-java.tests.shared
-intellij.ide.starter.extended.uiAgent.tests

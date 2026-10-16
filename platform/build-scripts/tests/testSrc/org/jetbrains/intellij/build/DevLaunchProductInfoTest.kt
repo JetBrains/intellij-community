@@ -64,6 +64,17 @@ class DevLaunchProductInfoTest {
   }
 
   @Test
+  fun `a distribution of the other layout is read at its own production place`() {
+    val (otherFile, otherVmOptionsPath) = if (SystemInfoRt.isMac) "product-info.json" to "bin/idea64.vmoptions" else "Resources/product-info.json" to "../bin/idea.vmoptions"
+    writeProductInfo(otherFile, mainClass = "Cross", vmOptionsFilePath = otherVmOptionsPath)
+    val mainFile = home.resolve(if (SystemInfoRt.isMac) "bin/idea64.vmoptions" else "bin/idea.vmoptions").createParentDirectories()
+    mainFile.writeText("-Xmx1g\n")
+
+    assertThat(readCustomCommand(home, "run")?.mainClass).isEqualTo("Cross")
+    assertThat(readVmOptions(home)).containsExactly("-Xmx1g", "-Djb.vmOptionsFile=$mainFile")
+  }
+
+  @Test
   fun `a vmoptions file outside the home fails`() {
     writeProductInfo(productionFile, mainClass = "Production", vmOptionsFilePath = "../../../idea.vmoptions")
 
