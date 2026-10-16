@@ -166,10 +166,10 @@ fun checkDeclarationNewNameConflicts(
             }
 
             val locals = block?.descendantsOfType<KtVariableDeclaration>()
-                ?.filter { it.nameAsName == newName }
+                ?.filter { it.nameAsName == newName && (block !is KtBlockExpression || it.parent == block) }
                 ?.map { it.symbol } ?: emptySequence()
             val destructuringEntries = block?.descendantsOfType<KtDestructuringDeclarationEntry>()
-                ?.filter { it.nameAsName == newName }
+                ?.filter { it.nameAsName == newName && (block !is KtBlockExpression || it.parent?.parent == block) }
                 ?.map { it.symbol } ?: emptySequence()
             val parameters =
                 if (declaration is KtParameter || block?.parent == functionPsi) functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence()

@@ -428,6 +428,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("testData/rename/localVariableNoConflictInDifferentWhenBranches/localVariableNoConflictInDifferentWhenBranches.test");
     }
 
+    @TestMetadata("localVariableNoConflictWithForParameter/localVariableNoConflictWithForParameter.test")
+    public void testLocalVariableNoConflictWithForParameter_LocalVariableNoConflictWithForParameter() throws Exception {
+        runTest("testData/rename/localVariableNoConflictWithForParameter/localVariableNoConflictWithForParameter.test");
+    }
+
+    @TestMetadata("localVariableNoConflictWithWhenSubject/localVariableNoConflictWithWhenSubject.test")
+    public void testLocalVariableNoConflictWithWhenSubject_LocalVariableNoConflictWithWhenSubject() throws Exception {
+        runTest("testData/rename/localVariableNoConflictWithWhenSubject/localVariableNoConflictWithWhenSubject.test");
+    }
+
     @TestMetadata("memberFunctionRedeclaration/memberFunctionRedeclaration.test")
     public void testMemberFunctionRedeclaration_MemberFunctionRedeclaration() throws Exception {
         runTest("testData/rename/memberFunctionRedeclaration/memberFunctionRedeclaration.test");
