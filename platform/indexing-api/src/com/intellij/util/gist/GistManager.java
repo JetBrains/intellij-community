@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,4 +60,21 @@ public abstract class GistManager {
    * Force all gists for the given file to be recalculated on the next request.
    */
   public abstract void invalidateData(@NotNull VirtualFile file);
+
+  /**
+   * Coalesces the PSI cache drops that {@link #invalidateData} schedules, until the returned token is
+   * {@link AccessToken#finish() finished}.
+   * <p>
+   * Every {@code invalidateData} call has to drop the PSI caches, which needs a write action. Outside such a token each
+   * call schedules that write action immediately, so a bulk operation schedules one per file. A background thread that
+   * invalidates files from inside a read action therefore queues a write action that cannot start until that very read
+   * action releases the read lock - the EDT ends up blocked in {@code dropPsiCaches} for the whole operation.
+   * <p>
+   * Any bulk gist invalidation - a property push, a scan, an indexing pass - must therefore hold this token, which
+   * turns those per-file write actions into a single coalesced one.
+   */
+  @ApiStatus.Internal
+  public @NotNull AccessToken mergeDependentCacheInvalidations() {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
 }

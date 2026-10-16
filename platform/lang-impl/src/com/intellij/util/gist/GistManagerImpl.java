@@ -174,6 +174,7 @@ public final class GistManagerImpl extends GistManager {
 
   @Contract(" -> new")
   @ApiStatus.Internal
+  @Override
   public @NotNull AccessToken mergeDependentCacheInvalidations() {
     myMergingDropCachesRequestors.incrementAndGet();
     return new AccessToken() {
