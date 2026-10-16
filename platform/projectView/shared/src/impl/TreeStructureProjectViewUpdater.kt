@@ -13,6 +13,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.BaseProjectDirectories
+import com.intellij.openapi.project.BaseProjectDirectoriesDiff
+import com.intellij.openapi.project.BaseProjectDirectoriesListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -76,6 +79,12 @@ private class UpdateSession(
       val scope = this
       val connection = project.messageBus.connect(scope)
       val disposable = scope.asDisposable()
+
+      connection.subscribe(BaseProjectDirectories.TOPIC, object : BaseProjectDirectoriesListener {
+        override fun changed(project: Project, diff: BaseProjectDirectoriesDiff) {
+          emitFromRoot()
+        }
+      })
 
       connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
