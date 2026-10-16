@@ -34,6 +34,8 @@ use super::package::sha256_hex;
 use super::services::codex;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 
+pub(crate) mod editors;
+
 #[cfg(test)]
 mod tests;
 

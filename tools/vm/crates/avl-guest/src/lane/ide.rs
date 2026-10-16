@@ -21,8 +21,9 @@
 //! when the suite ends. The next run then relaunches the lane IDE on its context.
 //!
 //! A relaunch keeps the config, system and project directories of the context, which a restart scenario asserts
-//! across. A quit asks the IDE through its bridge and waits for the run to end. It kills the process after a grace,
-//! with a thread dump first, and no launch lands beside a process that survives both.
+//! across. A recycle removes the editor tabs that the start would reopen, see [`Relaunch::restores_editors`]. A quit
+//! asks the IDE through its bridge and waits for the run to end. It kills the process after a grace, with a thread dump
+//! first, and no launch lands beside a process that survives both.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -38,6 +39,7 @@ use avl_wire::program::lane::{Delivery, LaneDocument, LaunchHost};
 use avl_wire::progress::{Decision, Subject};
 use avl_wire::supervisor::{Phase, RunState};
 
+use super::context::editors::clear_restored_editors;
 use super::context::{LaneContext, ServicePorts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity};
 use super::inputs::LaunchInputs;
@@ -76,9 +78,8 @@ pub(crate) const MANIFEST_FILE: &str = ".air-context-plugins";
 /// measures the start-up that a user pays.
 const INTERNAL_MODE_PROPERTY: &str = "idea.is.internal";
 
-/// The launch name of the first run of a context, and of a relaunch before its count.
+/// The launch name of the first run of a context.
 const FIRST_LAUNCH: &str = "start";
-const RELAUNCH: &str = "recycle";
 
 /// How long a quit that the IDE scheduled gets to end the process, and how long a kill gets after it.
 const QUIT_EXIT_WAIT: Duration = Duration::from_mins(1);
@@ -442,7 +443,7 @@ impl IdeOwner {
         let decision = match decision.action {
             IdeAction::Reuse => decision,
             IdeAction::Relaunch => {
-                self.relaunch(launch, RELAUNCH, records)?;
+                self.relaunch(launch, Relaunch::Recycle, records)?;
                 decision
             }
             IdeAction::Fresh => {
@@ -457,7 +458,7 @@ impl IdeOwner {
                         reason,
                     };
                     records.decide(&fallback);
-                    self.relaunch(launch, RELAUNCH, records)?;
+                    self.relaunch(launch, Relaunch::Recycle, records)?;
                     fallback
                 }
             },
@@ -646,16 +647,17 @@ impl IdeOwner {
         Ok(())
     }
 
-    /// Quits the held IDE and launches it again on its context as `<base>-<n>-<millis>`. The count `n` counts every
-    /// relaunch of the context.
-    fn relaunch(&mut self, launch: &LaneLaunch<'_>, base: &str, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+    /// Quits the held IDE and launches it again on its context as `<cause>-<n>-<millis>`. The count `n` counts every
+    /// relaunch of the context. Between the two, [`before_relaunch`] removes the restored editor tabs of a recycle.
+    fn relaunch(&mut self, launch: &LaneLaunch<'_>, cause: Relaunch, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let Some(previous) = self.held.clone() else {
             return Err(AgentRefusal::internal("a relaunch was decided without an IDE"));
         };
         self.quit(records)?;
+        before_relaunch(cause, Path::new(&previous.paths.config_dir), records)?;
         let relaunches = previous.relaunches + 1;
         let held = HeldIde {
-            launch_name: launch_name(&format!("{base}-{relaunches}")),
+            launch_name: launch_name(&format!("{}-{relaunches}", cause.as_str())),
             pid: None,
             relaunches,
             exit_reported: false,
@@ -903,6 +905,25 @@ pub(crate) fn document_properties(document: &LaneDocument, host: LaunchHost, bar
         .into_iter()
         .filter(|(key, _)| *key != INTERNAL_MODE_PROPERTY)
         .collect()
+}
+
+/// What a relaunch of `cause` does to the context with the config directory `config` while no IDE runs on it. A cause
+/// that restores no editor removes the editor tabs that the start would reopen, and `records` gets one line for each
+/// changed file.
+fn before_relaunch(cause: Relaunch, config: &Path, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+    if cause.restores_editors() {
+        return Ok(());
+    }
+    let cleared = clear_restored_editors(config).map_err(|error| {
+        failed(format!(
+            "cannot remove the restored editor tabs below {}: {error}",
+            config.display()
+        ))
+    })?;
+    for file in cleared {
+        records.note(file.note());
+    }
+    Ok(())
 }
 
 /// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named.

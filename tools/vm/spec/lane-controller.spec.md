@@ -1602,6 +1602,17 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_context_opens_no_readme`)
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_are_the_bytes_of_the_kotlin_templates`)
 
+- A recycle of a lane IDE starts on its context with no editor tab of the run before it. A reset that did not hold
+  recycles the IDE. The decision of a run recycles it too. It does so for an IDE that exited or does not answer, and
+  for a change of the context plugins. It also does so for a failed reload and after a bare suite. While no IDE runs,
+  the daemon removes the components `FileEditorManager` and `DockManager` from each product workspace file of the
+  context, `config/workspace/*.xml`. The platform reopens the tabs of a project from these two components. Every other
+  component stays, and a file that does not parse goes as a whole. A `restart-ide` keeps the tabs, because its
+  scenario tests what a restart restores. A fresh context and a bare context hold no such file.
+  [@test] ../crates/avl-guest/src/lane/context/editors/tests.rs (`the_clear_removes_the_restored_tabs_and_keeps_every_other_component`)
+  [@test] ../crates/avl-guest/src/lane/context/editors/tests.rs (`a_file_with_a_component_that_does_not_close_goes_as_a_whole`)
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_recycle_removes_the_restored_tabs_and_a_restart_keeps_them`)
+
 - A bare IDE keeps the plugin set of the product, as the IDE of a user does. So it disables no plugin of the lane
   document, and AI Assistant stays on.
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_context_disables_no_plugin_and_a_lane_context_disables_those_of_the_document`)

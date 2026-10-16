@@ -181,3 +181,43 @@ fn a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirem
     );
     assert!(!bare.is_empty());
 }
+
+// A recycle removes the editor tabs that the start would reopen, and the run log names the file. A `restart-ide` keeps
+// them, because its scenario tests what a restart restores.
+#[test]
+fn a_recycle_removes_the_restored_tabs_and_a_restart_keeps_them() {
+    let config = TempDir::new().unwrap();
+    let workspace = config.path().join(super::super::context::editors::PRODUCT_WORKSPACE_DIR);
+    fs::create_dir_all(&workspace).unwrap();
+    let file = workspace.join("project.xml");
+    let tabs = "<project version=\"4\">\n  <component name=\"FileEditorManager\">\n    <leaf />\n  </component>\n</project>\n";
+    fs::write(&file, tabs).unwrap();
+    let relaunch = |cause: Relaunch| {
+        let mut lines = Vec::new();
+        before_relaunch(
+            cause,
+            config.path(),
+            &mut Records(&mut |record| {
+                if let RunEventKind::Output(output) = record {
+                    lines.push(output.text);
+                }
+            }),
+        )
+        .unwrap();
+        lines
+    };
+
+    assert!(Relaunch::Restart.restores_editors());
+    assert_eq!(relaunch(Relaunch::Restart), Vec::<String>::new());
+    assert_eq!(fs::read_to_string(&file).unwrap(), tabs);
+
+    assert!(!Relaunch::Recycle.restores_editors());
+    assert_eq!(
+        relaunch(Relaunch::Recycle),
+        [format!(
+            "removed the restored editor tabs (DockManager, FileEditorManager) from {}",
+            file.display()
+        )]
+    );
+    assert_eq!(fs::read_to_string(&file).unwrap(), "<project version=\"4\">\n</project>\n");
+}

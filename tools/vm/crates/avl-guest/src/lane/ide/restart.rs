@@ -14,12 +14,14 @@ use crate::lane::services::feedback::Feedback;
 use crate::lane::services::registry::Registry;
 use crate::reply::AgentRefusal;
 
-/// Why the program runner relaunches the IDE: the base of the launch name, and the line of the run log.
+/// Why the owner relaunches the IDE on its context: the base of the launch name, the line of the run log, and whether
+/// the start restores the editor tabs of the previous run.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Relaunch {
     /// A scenario runs `restart-ide`.
     Restart,
-    /// A reset did not hold.
+    /// A reset did not hold. The decision of an iteration relaunches as a recycle too: for an IDE that exited, a bridge
+    /// that does not answer, a change of the context plugins, a failed reload, and the lane IDE after a bare suite.
     Recycle,
 }
 
@@ -29,6 +31,16 @@ impl Relaunch {
         match self {
             Self::Restart => "restart",
             Self::Recycle => "recycle",
+        }
+    }
+
+    /// Whether the start keeps the editor tabs that the previous run left in the context. A `restart-ide` tests what a
+    /// restart of the IDE restores, so it keeps them. A recycle replaces an IDE whose state did not hold, or which a kill
+    /// ended, so its start opens no tab of that run.
+    pub(crate) const fn restores_editors(self) -> bool {
+        match self {
+            Self::Restart => true,
+            Self::Recycle => false,
         }
     }
 
@@ -68,7 +80,7 @@ impl IdeOwner {
         // The quit reported the end of this run already, so the relaunch below reports no second end.
         previous.exit_reported = true;
         self.held = Some(previous);
-        self.relaunch(launch, cause.as_str(), records)?;
+        self.relaunch(launch, cause, records)?;
         let key = launch.identity.key();
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         readiness::await_ready(&bridge, key, &launch.document.vocabulary_digest, keep_junie_offer, &mut |text| {

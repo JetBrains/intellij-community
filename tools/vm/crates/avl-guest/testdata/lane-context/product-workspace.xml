@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="DockManager">
+    <window id="1" x="120" y="80" width="1200" height="800">
+      <editor>
+        <leaf>
+          <file current-in-tab="true">
+            <entry file="agent-thread-view://session/acp-scenario-agent/thread-7">
+              <provider selected="true" editor-type-id="agent-thread-view" />
+            </entry>
+          </file>
+        </leaf>
+      </editor>
+    </window>
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="-1">
+      <file pinned="false" current-in-tab="true">
+        <entry file="agent-thread-view://session/acp-scenario-agent/thread-3">
+          <provider selected="true" editor-type-id="agent-thread-view">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file>
+        <entry file="file://$PROJECT_DIR$/src/Main.java">
+          <provider editor-type-id="text-editor">
+            <state relative-caret-position="18">
+              <caret line="1" column="4" selection-start-line="1" selection-start-column="4" selection-end-line="1" selection-end-column="4" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="ToolWindowManager">
+    <layoutV2>
+      <window_info active="true" content_ui="combo" id="air.threads" order="0" visible="true" weight="0.25" />
+      <window_info id="Project" order="1" weight="0.2" />
+    </layoutV2>
+  </component>
+</project>
