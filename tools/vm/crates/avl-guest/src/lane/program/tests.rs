@@ -720,6 +720,61 @@ fn a_failed_slow_instruction_is_typed_photographed_and_dumped() {
     );
 }
 
+// A story instruction that the IDE failed reads the trace attachments that the IDE queued, as a part does. The log of
+// each session that the IDE shows goes to the span of the failed instruction.
+#[test]
+fn a_failed_story_instruction_files_the_session_logs_that_the_ide_queued() {
+    let failure = json!({"type": "java.lang.IllegalStateException", "message": "the popup row does not name the session"});
+    let list = json!({"attachments": [
+        {"id": "a1", "kind": "file", "name": "events.jsonl of acp:s-1", "mime": "text/plain", "bytes": 10, "required": true,
+            "atMs": 1_790_000_000_000_i64},
+    ], "dropped": 0});
+    let fake = Fake::new(Script {
+        failures: BTreeMap::from([("assertion/rename-session-title".to_owned(), failure)]),
+        routes: BTreeMap::from([
+            (
+                ATTACHMENTS_ROUTE.to_owned(),
+                VecDeque::from([("application/json".to_owned(), list.to_string().into_bytes())]),
+            ),
+            (
+                "/api/air/ui-test-trace/attachments/a1".to_owned(),
+                VecDeque::from([("text/plain".to_owned(), b"{\"seq\":0}\n".to_vec())]),
+            ),
+        ]),
+        ..Script::default()
+    });
+    let vocabulary = json!({"runnerAnswers": [], "actions": {}, "assertions": {"rename-session-title": ide(&[], &[], &[])}});
+    let instructions = json!([{"assertion": "rename-session-title", "expectation": "The title shows."}]);
+    let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
+    let after_assertion: Vec<String> = fake
+        .requests()
+        .into_iter()
+        .map(|(_, kind)| kind)
+        .skip_while(|kind| kind != "assertion/rename-session-title")
+        .skip(1)
+        .take(2)
+        .collect();
+    assert_eq!(
+        after_assertion,
+        [
+            "GET /api/air/ui-test-trace/attachments",
+            "GET /api/air/ui-test-trace/attachments/a1"
+        ]
+    );
+    let attached: Vec<(String, String)> = ran
+        .trace
+        .iter()
+        .filter(|line| line.starts_with(r#"{"op":"attach""#))
+        .map(|line| {
+            let command: Value = serde_json::from_str(line).unwrap();
+            let extension = command["file"].as_str().unwrap().rsplit('.').next().unwrap().to_owned();
+            (command["name"].as_str().unwrap().to_owned(), extension)
+        })
+        .collect();
+    assert_eq!(attached, [("events.jsonl of acp:s-1".to_owned(), "txt".to_owned())]);
+}
+
 // A reset that does not hold recycles the IDE once, and the scenario runs and passes on the new pid.
 #[test]
 fn a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid() {

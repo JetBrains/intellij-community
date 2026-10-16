@@ -941,6 +941,11 @@ impl<'r, 's> Runner<'r, 's> {
             self.collect_trace_attachments(label);
             artifacts
         } else {
+            // A story instruction that the IDE failed queues the logs of the sessions that the IDE shows, so the runner reads
+            // them too. A request without an answer has no IDE to read them from.
+            if answer.as_ref().is_err_and(|failure| failure.kind != kind::BRIDGE) {
+                self.collect_trace_attachments(label);
+            }
             None
         };
         // The IDE names the id in a failure of its own. A request that got no answer is named here.
