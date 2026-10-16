@@ -544,6 +544,18 @@ async fn no_healthy_daemon_restarts_the_daemon() {
     );
 }
 
+// A run writes its runner into the record of the daemon it ran on, so the record of an older controller, which names
+// none, names it after the next run.
+#[tokio::test]
+async fn a_run_writes_its_runner_into_the_record_of_its_daemon() {
+    let (fixture, _, state) = iteration_fixture("it-34").await;
+    assert_eq!(state.runner, None);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    let recorded = HostState::read(&fixture.settings, &fixture.worker).expect("the record stays");
+    assert_eq!(recorded.runner, Some(fixture.host.daemon().runner()));
+}
+
 // A run with `--runner` switched finds the daemon of the other runner on the guest, whose record names that runner. It
 // retires that daemon and starts its own, and it does not refuse `daemon_protocol_unsupported`. Only a command that
 // asks about the daemon speaks the protocol of the record.
@@ -555,7 +567,7 @@ async fn a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_sta
     let mut state = fixture.seed_healthy_daemon(&prep);
     let runner = fixture.host.daemon().runner();
     let other = Runner::ALL.iter().copied().find(|other| *other != runner).expect("two runners");
-    state.runner = other;
+    state.runner = Some(other);
     state.write(&fixture.settings, &fixture.worker).unwrap();
     {
         let mut script = fixture.daemon.script();

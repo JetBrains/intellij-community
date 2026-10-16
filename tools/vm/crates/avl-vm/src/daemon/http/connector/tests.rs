@@ -42,7 +42,7 @@ fn state(worker: &str, port: u16) -> HostState {
         last_product_digest: String::new(),
         last_mount_digest: String::new(),
         last_plugins_digest: String::new(),
-        runner: wire::Runner::Jvm,
+        runner: None,
     }
 }
 

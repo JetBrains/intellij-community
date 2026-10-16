@@ -48,7 +48,7 @@ impl ParkedDaemonProbe for ParkedDaemon {
             return Ok(None);
         };
         // The daemon's own protocol: a lane daemon is parked for a controller of `--runner jvm` too.
-        match self.daemon.for_runner(state.runner).status(ctx, &state).await {
+        match self.daemon.for_record(&state).status(ctx, &state).await {
             Ok(Some(status)) if !status.busy => Ok(Some(state.run_id)),
             _ => Ok(None),
         }

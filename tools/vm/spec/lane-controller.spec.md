@@ -1365,13 +1365,17 @@ after that move.
   [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`only_the_protocol_of_the_other_runner_names_a_runner`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_started`)
 
-- The daemon record names the runner that started the daemon. A record without it is a daemon of the JVM runner.
-  `daemon status` and the release of a slot ask the daemon in the protocol of that runner, and `daemon status` names
-  it. So a lane daemon is parked and reachable for a command of `--runner jvm`. A run of the other runner still
-  retires it.
-  [@test] ../crates/avl-vm/src/daemon/state/tests.rs (`a_state_reads_only_with_every_field`)
+- The daemon record names the runner of the daemon, and each run writes its runner into it. `daemon status` and the
+  release of a slot ask the daemon in the protocol of that runner, and `daemon status` names it. So a lane daemon is
+  parked and reachable for a command of `--runner jvm`. A run of the other runner still retires it.
   [@test] ../crates/avl-vm/src/daemon/slot/tests.rs (`only_an_answering_idle_daemon_reads_as_parked`)
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`command_daemon_status_asks_a_lane_daemon_in_its_own_protocol`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_run_writes_its_runner_into_the_record_of_its_daemon`)
+
+- A record of an older controller names no runner. A command asks that daemon in the protocol of its own `--runner`,
+  and the next run writes the runner into the record.
+  [@test] ../crates/avl-vm/src/daemon/state/tests.rs (`a_state_reads_only_with_every_field`)
+  [@test] ../crates/avl-vm/src/daemon/slot/tests.rs (`a_record_without_a_runner_is_asked_in_the_protocol_of_the_caller`)
 
 - Protocol 6 has no route that quiesces the shares, and its status has no quiesce field and no metaspace field. The
   status of the JVM daemon still decodes.

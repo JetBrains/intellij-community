@@ -143,9 +143,14 @@ impl DaemonClient {
         self.runner
     }
 
-    /// The same client for a daemon of `runner`. A command that only asks about the daemon of a record asks it in the
-    /// protocol of the runner that started it ([`HostState::runner`]). A run keeps its own runner, so it retires a
-    /// daemon of the other one.
+    /// The same client for the daemon of `state`: in the protocol of the runner of its record ([`HostState::runner`]),
+    /// or of this client's own runner for a record that names none. A command that only asks about a daemon uses it. A
+    /// run keeps its own runner, so it retires a daemon of the other one.
+    pub(crate) fn for_record(&self, state: &HostState) -> Self {
+        self.for_runner(state.runner.unwrap_or(self.runner))
+    }
+
+    /// The same client for a daemon of `runner`.
     pub(crate) fn for_runner(&self, runner: Runner) -> Self {
         Self {
             client: self.client.clone(),

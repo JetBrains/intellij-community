@@ -306,7 +306,8 @@ pub struct LaneInputs {
 }
 
 /// Why a test or a container failed, as the lane daemon types it: the kind, the first account and the rest of it. The
-/// JVM daemon sends the `error` text of [`TestFinished`] and [`ContainerFailed`] instead.
+/// JVM daemon sends the `error` text of [`TestFinished`] and [`ContainerFailed`] instead. An aborted JVM test sends
+/// `message` too.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypedFailure {
     /// The kind of the failure, such as `not_implemented` or the class name of an exception in the IDE.

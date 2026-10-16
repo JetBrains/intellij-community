@@ -501,6 +501,8 @@ impl Host {
                 attempt.timing = timing_line(prep, pushed, push_ms, attempt.ide_action, run_ms);
                 // Kept on the attempt from here on: the events are its evidence whatever fails next.
                 let execution = attempt.execution.insert(execution);
+                // The daemon answered this run in the protocol of its runner, so the record names that runner from here on.
+                state.runner = Some(runner);
                 state.last_product_digest = prep.product_digest.clone();
                 state.last_mount_digest = prep.mount_digest.clone();
                 state.last_plugins_digest = prep.plugins_digest.clone();

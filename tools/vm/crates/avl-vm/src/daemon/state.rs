@@ -37,15 +37,12 @@ pub(crate) struct HostState {
     /// is unknown: the next iteration decides nothing on it and records the value it ran with.
     #[serde(default)]
     pub last_plugins_digest: String,
-    /// The runner that started the daemon. A command that only asks about the daemon, such as `daemon status` or the
-    /// release of its slot, asks it in the protocol of this runner and not in that of its own `--runner`. A record of an
-    /// older controller has none, and only the JVM runner wrote one then.
-    #[serde(default = "jvm_runner")]
-    pub runner: Runner,
-}
-
-const fn jvm_runner() -> Runner {
-    Runner::Jvm
+    /// The runner that started the daemon, or the one that last ran an iteration on it. A command that only asks about
+    /// the daemon, such as `daemon status` or the release of its slot, asks it in the protocol of this runner and not in
+    /// that of its own `--runner`. A record of an older controller has none. It is asked in the protocol of the
+    /// command's own `--runner` then, and the next run writes its runner into it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runner: Option<Runner>,
 }
 
 impl HostState {

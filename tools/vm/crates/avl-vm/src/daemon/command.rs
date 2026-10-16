@@ -147,7 +147,8 @@ pub(crate) struct DaemonName {
     pub run_id: String,
     /// The worker and the daemon's guest port, as `worker:port`.
     pub endpoint: String,
-    /// The runner that started the daemon, whose protocol the status probe spoke.
+    /// The runner whose protocol the status probe spoke: the one of the record, or the command's own for a record that
+    /// names none.
     pub runner: Runner,
 }
 
@@ -805,15 +806,17 @@ impl Host {
     async fn daemon_status_outcome(&self, ctx: &Ctx, worker: &str) -> Result<Outcome, Refusal> {
         let state = HostState::read(&self.settings, worker);
         // The protocol of the runner that started the daemon, so the answer does not depend on this command's `--runner`.
-        let status = match &state {
-            Some(state) => self.daemon.for_runner(state.runner).status(ctx, state).await?,
-            None => None,
+        let asked = state.as_ref().map(|state| self.daemon.for_record(state));
+        let status = match (&state, &asked) {
+            (Some(state), Some(asked)) => asked.status(ctx, state).await?,
+            _ => None,
         };
+        let runner = asked.as_ref().map_or(self.daemon.runner(), super::http::DaemonClient::runner);
         let text = match (&state, &status) {
             (Some(state), Some(status)) => format!(
                 "daemon={}\nrunner={}\nide={}\niterations={}",
                 state.run_id,
-                state.runner,
+                runner,
                 if status.ide_running { "running" } else { "stopped" },
                 status.iteration_count
             ),
@@ -824,7 +827,7 @@ impl Host {
             daemon: state.map(|state| DaemonName {
                 endpoint: format!("{}:{}", state.worker, state.port),
                 run_id: state.run_id,
-                runner: state.runner,
+                runner,
             }),
             reachable: status.is_some(),
             status,

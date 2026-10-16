@@ -159,7 +159,7 @@ async fn command_daemon_status_asks_a_lane_daemon_in_its_own_protocol() {
     let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
     let mut state = fixture.seed_healthy_daemon(&prep);
-    state.runner = Runner::Daemon;
+    state.runner = Some(Runner::Daemon);
     state.write(&fixture.settings, &fixture.worker).unwrap();
     fixture.daemon.script().protocol_version = avl_wire::daemon::PROTOCOL_VERSION;
     let outcome = fixture

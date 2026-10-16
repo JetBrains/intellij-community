@@ -12,7 +12,7 @@ fn record_daemon(fixture: &Fixture, run_id: &str) {
 /// [`record_daemon`] for a daemon that `runner` started.
 fn record_daemon_of(fixture: &Fixture, run_id: &str, runner: Runner) {
     let mut state = fixture.daemon.host_state(run_id, "launch-slot");
-    state.runner = runner;
+    state.runner = Some(runner);
     state.write(&fixture.settings, &fixture.worker).unwrap();
 }
 
@@ -83,6 +83,23 @@ async fn only_an_answering_idle_daemon_reads_as_parked() {
         let probe = parked_daemon_probe(Arc::clone(&fixture.settings), fixture.host.daemon().clone());
         let parked = probe.parked_daemon_run(&Ctx::background(), &fixture.worker).await.unwrap();
         assert_eq!(parked.as_deref(), want, "{name}");
+    }
+}
+
+// A record of an older controller names no runner. The probe asks it in the protocol of the caller's own `--runner`, as
+// it did before records named one. So the release of a lane daemon run passes, and a command of `--runner jvm` misreads
+// that daemon until the next run writes the runner into its record.
+#[tokio::test]
+async fn a_record_without_a_runner_is_asked_in_the_protocol_of_the_caller() {
+    for (caller, want) in [(Runner::Daemon, Some("run-old")), (Runner::Jvm, None)] {
+        let fixture = Fixture::new().await;
+        let state = fixture.daemon.host_state("run-old", "launch-slot");
+        assert_eq!(state.runner, None);
+        state.write(&fixture.settings, &fixture.worker).unwrap();
+        fixture.daemon.script().protocol_version = PROTOCOL_VERSION;
+        let probe = parked_daemon_probe(Arc::clone(&fixture.settings), fixture.host.daemon().for_runner(caller));
+        let parked = probe.parked_daemon_run(&Ctx::background(), &fixture.worker).await.unwrap();
+        assert_eq!(parked.as_deref(), want, "a caller of {caller}");
     }
 }
 
