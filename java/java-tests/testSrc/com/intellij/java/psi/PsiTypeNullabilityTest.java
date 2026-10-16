@@ -949,4 +949,54 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertNotNull(parameterType);
     return parameterType.getNullability().toString();
   }
+
+  public void testPlainUsageOfNotNullBoundedVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+      public final class Legacy {
+        public static Integer unspecified() { return 1; }
+      }
+      """);
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NotNull;
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class Sample {
+        interface Box<T extends @Nullable Object> {}
+
+        interface Box2<L extends @Nullable Object, R extends @Nullable Object> {}
+
+        static <A> Box<A> plain(A a) { return null; }
+
+        static <A> Box2<A, @NotNull A> plainFirst(A a) { return null; }
+
+        static <A> Box2<@NotNull A, A> plainSecond(A a) { return null; }
+
+        static <B extends @Nullable Object> Box<B> merge(Box<? extends B> p) { return null; }
+
+        static <B extends @Nullable Object> Box<B> merge2(Box2<? extends B, ? extends B> p) { return null; }
+
+        static void test(Integer x) {
+          merge(plain(x));
+          merge(plain(Legacy.unspecified()));
+          merge2(plainFirst(Legacy.unspecified()));
+          merge2(plainSecond(Legacy.unspecified()));
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>();
+    PsiTreeUtil.processElements(file, PsiMethodCallExpression.class, call -> {
+      String name = call.getMethodExpression().getReferenceName();
+      if ("merge".equals(name) || "merge2".equals(name)) calls.add(call);
+      return true;
+    });
+    assertEquals(4, calls.size());
+    assertEquals(Nullability.NOT_NULL, typeArgumentNullabilityOf(calls.get(0)));
+    assertEquals(Nullability.UNKNOWN, typeArgumentNullabilityOf(calls.get(1)));
+    assertEquals(Nullability.UNKNOWN, typeArgumentNullabilityOf(calls.get(2)));
+    assertEquals(Nullability.UNKNOWN, typeArgumentNullabilityOf(calls.get(3)));
+  }
 }
