@@ -35,7 +35,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
-import com.intellij.openapi.project.impl.doCreateFakeModuleForDirectoryProjectConfigurators
+import com.intellij.openapi.project.impl.createFakeModuleForDirectoryProjectConfigurators
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
@@ -364,13 +365,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
       val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectFile)!!
-      withContext(Dispatchers.EDT) {
-        virtualFile.refresh(false, false)
-      }
+      RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
 
       val moduleRef = Ref<Module>()
       if (createModule) {
-        moduleRef.set(doCreateFakeModuleForDirectoryProjectConfigurators(projectVirtualFile = virtualFile, moduleManager = project.serviceAsync(), projectFile = projectFile))
+        moduleRef.set(createFakeModuleForDirectoryProjectConfigurators(projectVirtualFile = virtualFile, moduleManager = project.serviceAsync(), projectFile = projectFile))
       }
 
       for (configurator in EP_NAME.lazySequence()) {
