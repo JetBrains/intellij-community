@@ -80,9 +80,10 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
   ),
   ExperimentAssignment(
     experiment = ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING,
-    experimentBuckets = (0 until 103).toSet(),
-    controlBuckets = (103 until 1024).toSet(),
-    majorVersion = "2026.3 EAP",
+    experimentBuckets = (0 until 512).toSet(),
+    controlBuckets = (512 until 1024).toSet(),
+    // We run this experiment only on the pre-release builds (EAP, Beta, RC). See [isAllowed]
+    majorVersion = "2026.3",
   ),
   // the rest belongs to the "unassigned" experiment
 )
@@ -90,7 +91,20 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
 /**
  * This method can be configured to allow options only in particular IDEs.
  */
-fun isAllowed(option: ABExperimentOption): Boolean = true
+fun isAllowed(option: ABExperimentOption): Boolean = when (option) {
+  ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING -> isMajorPreRelease()
+  else -> true
+}
+
+/**
+ * Returns `true` for the EAP, Beta and RC builds of a major release, for example `2026.3 RC`.
+ * These builds have a version suffix, so the full version is longer than the short version.
+ * Returns `false` for the release and for the builds of a minor update, for example `2026.3.1 RC` and `2026.3.1`.
+ */
+private fun isMajorPreRelease(): Boolean {
+  val appInfo = ApplicationInfo.getInstance()
+  return !appInfo.minorVersion.contains('.') && appInfo.fullVersion != appInfo.shortVersion
+}
 
 // ================= IMPLEMENTATION ====================
 
