@@ -17,19 +17,6 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 @ApiStatus.Internal
 object ProductModeCapabilities {
-  /** `true` when the process of this mode owns the indexes, the project model and the other backend work. */
-  internal val ProductMode.providesBackendModule: Boolean
-    get() = this == ProductMode.MONOLITH || this == ProductMode.BACKEND || this == ProductMode.LANGUAGE_SERVER
-
-  /**
-   * `true` when the process of this mode shows the UI.
-   *
-   * This is not [ProductMode.isFrontendProcess]. A monolith process shows the UI, so this property is
-   * `true` for it, but it is not a frontend process.
-   */
-  internal val ProductMode.providesFrontendModule: Boolean
-    get() = this == ProductMode.MONOLITH || this == ProductMode.FRONTEND || isLight
-
   /**
    * `true` when the mode needs the remote development plugin.
    * A monolith, a standalone light process and a language server run without it.
@@ -61,52 +48,51 @@ object ProductModeCapabilities {
       check(replaced == null) { "${moduleId.displayName} is already registered as environment-configured module" }
     }
 
-    setModuleAvailability(FRONTEND_MODULE_ID, productMode.providesFrontendModule)
-    setModuleAvailability(BACKEND_MODULE_ID, productMode.providesBackendModule)
-
-    // temporary marker, see community/platform/backend/baseline/README.md
-    val backendBaseline = PluginModuleId("intellij.platform.backend.baseline", PluginModuleId.JETBRAINS_NAMESPACE)
-    setModuleAvailability(backendBaseline, productMode.providesBackendModule || productMode == ProductMode.LIGHT_MONOLITH)
-
-    val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
-    val backendSplit = PluginModuleId("intellij.platform.backend.split", PluginModuleId.JETBRAINS_NAMESPACE)
-    setModuleAvailability(backendSplit, productMode == ProductMode.BACKEND)
-
-    val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.baseline", PluginModuleId.JETBRAINS_NAMESPACE)
-    setModuleAvailability(frontendSplitBase, productMode.isFrontendProcess)
-    val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
-    when {
-      productMode.isLight -> {
-        val rpc = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
-        val debugger = PluginModuleId("intellij.platform.debugger", PluginModuleId.JETBRAINS_NAMESPACE)
-        val execution = PluginModuleId("intellij.platform.execution", PluginModuleId.JETBRAINS_NAMESPACE)
-        val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
-        val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
-        val cwmPluginCommon = PluginModuleId("intellij.cwm.plugin.common", PluginModuleId.JETBRAINS_NAMESPACE)
-
-        for (moduleId in listOf(frontendSplit, platformSplit, rpc, rdClient, cwmPluginCommon)) {
-          setModuleAvailability(moduleId, false)
-        }
-        val enableDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", false)
-        setModuleAvailability(debugger, enableDebugger)
-
-        val enableExecution = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.execution", true)
-        //execution is enabled in LIGHT_WITH_RD_CONNECTION, because `intellij.platform.frontend.split.connection` depends on it via `intellij.remoteDev.frontendProcessLauncher`
-        setModuleAvailability(execution, enableExecution || productMode == ProductMode.LIGHT_WITH_RD_CONNECTION)
-
-        for (moduleId in listOf(platformSplitConnection)) {
-          setModuleAvailability(moduleId, productMode == ProductMode.LIGHT_WITH_RD_CONNECTION)
-        }
-      }
-      else -> {
-        setModuleAvailability(platformSplit, productMode == ProductMode.FRONTEND || productMode == ProductMode.BACKEND)
-        setModuleAvailability(frontendSplit, productMode == ProductMode.FRONTEND)
-      }
+    val availability = environmentModuleAvailability(
+      mode = productMode,
+      lightModeDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", false),
+      lightModeExecution = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.execution", true),
+    )
+    for ((moduleName, isAvailable) in availability) {
+      setModuleAvailability(PluginModuleId(moduleName, PluginModuleId.JETBRAINS_NAMESPACE), isAvailable)
     }
+  }
 
-    if (productMode != ProductMode.LANGUAGE_SERVER) { // this condition is a workaround for LSP-1549
-      val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
-      setModuleAvailability(backendJpsGraph, productMode.providesBackendModule)
+  /**
+   * Returns the availability of each environment-configured module in [mode], in registration order.
+   *
+   * [lightModeDebugger] and [lightModeExecution] apply only to a light mode.
+   */
+  private fun environmentModuleAvailability(mode: ProductMode, lightModeDebugger: Boolean, lightModeExecution: Boolean): Map<String, Boolean> {
+    val providesBackend = mode == ProductMode.MONOLITH || mode == ProductMode.BACKEND || mode == ProductMode.LANGUAGE_SERVER
+    // a monolith process shows the UI, so it provides the frontend module, but it is not a frontend process
+    val providesFrontend = mode == ProductMode.MONOLITH || mode == ProductMode.FRONTEND || mode.isLight
+
+    return buildMap {
+      this["intellij.platform.frontend"] = providesFrontend
+      this["intellij.platform.backend"] = providesBackend
+      // temporary marker, see community/platform/backend/baseline/README.md
+      this["intellij.platform.backend.baseline"] = providesBackend || mode == ProductMode.LIGHT_MONOLITH
+      this["intellij.platform.backend.split"] = mode == ProductMode.BACKEND
+      this["intellij.platform.frontend.split.baseline"] = mode.isFrontendProcess
+      if (mode.isLight) {
+        for (moduleName in listOf("intellij.platform.frontend.split", "intellij.platform.split", "intellij.platform.rpc",
+                                  "intellij.rd.client", "intellij.cwm.plugin.common")) {
+          this[moduleName] = false
+        }
+        this["intellij.platform.debugger"] = lightModeDebugger
+        // execution is enabled in LIGHT_WITH_RD_CONNECTION, because `intellij.platform.frontend.split.connection` depends on it via `intellij.remoteDev.frontendProcessLauncher`
+        this["intellij.platform.execution"] = lightModeExecution || mode == ProductMode.LIGHT_WITH_RD_CONNECTION
+        this["intellij.platform.split.connection"] = mode == ProductMode.LIGHT_WITH_RD_CONNECTION
+      }
+      else {
+        this["intellij.platform.split"] = mode == ProductMode.FRONTEND || mode == ProductMode.BACKEND
+        this["intellij.platform.frontend.split"] = mode == ProductMode.FRONTEND
+      }
+      // this condition is a workaround for LSP-1549
+      if (mode != ProductMode.LANGUAGE_SERVER) {
+        this["intellij.platform.jps.build.dependencyGraph"] = providesBackend
+      }
     }
   }
 
