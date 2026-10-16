@@ -20,6 +20,7 @@ import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewExternalFileDTO
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
@@ -33,11 +34,13 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneCutRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDeleteRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneDnDRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneExternalDropRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPanePasteRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
+import com.intellij.platform.projectView.pane.ProjectViewPaneSendDropToClientRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewSelectNodeEvent
 import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
@@ -217,6 +220,14 @@ internal class FrontendProjectViewPaneTreeModel(
   
   internal fun requestDnD(sourceIDs: List<Long>, targetID: Long, action: DnDAction) {
     sendRequest(ProjectViewPaneDnDRequest(sourceIDs, targetID, action))
+  }
+
+  internal fun requestExternalDrop(files: List<ProjectViewExternalFileDTO>, targetID: Long, action: DnDAction) {
+    sendRequest(ProjectViewPaneExternalDropRequest(files, targetID, action))
+  }
+
+  internal fun requestSendDropToClient(nodeIds: List<Long>) {
+    sendRequest(ProjectViewPaneSendDropToClientRequest(nodeIds))
   }
 
   internal fun getOptionSupport(): ProjectViewActionSupport = optionSupport

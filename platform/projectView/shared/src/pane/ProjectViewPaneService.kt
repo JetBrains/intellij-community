@@ -4,6 +4,8 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.projectView.impl.ProjectViewTransferableFileImpl
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -41,6 +43,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.atomics.AtomicReference
@@ -373,6 +376,8 @@ private class ProjectViewPaneManager(
           is ProjectViewPanePasteRequest -> pane.cutCopyPasteDeleteHandler.performPaste(request.nodeIds)
           is ProjectViewPaneDeleteRequest -> pane.cutCopyPasteDeleteHandler.performDelete(request.nodeIds)
           is ProjectViewPaneDnDRequest -> pane.dndHandler.performInternalDnD(request.sourceIDs, request.targetID, ProjectViewDnDOptionsImpl(request.action))
+          is ProjectViewPaneExternalDropRequest -> pane.dndHandler.receiveExternalDrop(request.files.toExternalFiles(), request.targetID, ProjectViewDnDOptionsImpl(request.action))
+          is ProjectViewPaneSendDropToClientRequest -> pane.dndHandler.sendDropToClient(request.nodeIds)
         }
       }
     }
@@ -384,3 +389,23 @@ private class ProjectViewPaneManager(
 }
 
 private val LOG = logger<ProjectViewPaneServiceBase>()
+
+private fun List<ProjectViewExternalFileDTO>.toExternalFiles(): List<ProjectViewExternalFile> {
+  val isLocalClient = ClientSessionsManager.getAppSession(ClientId.current)?.isLocal == true
+  return mapNotNull { file ->
+    when (file) {
+      is ProjectViewExternalFileDTO.LocalPath -> {
+        if (isLocalClient) {
+          ProjectViewLocalExternalFile(Path.of(file.path))
+        }
+        else {
+          LOG.warn("A client that is not local dropped a backend path onto the Project View. The path is ignored: ${file.path}")
+          null
+        }
+      }
+      is ProjectViewExternalFileDTO.Transferable -> {
+        ProjectViewClientExternalFile(ProjectViewTransferableFileImpl(file.name, file.transferId))
+      }
+    }
+  }
+}

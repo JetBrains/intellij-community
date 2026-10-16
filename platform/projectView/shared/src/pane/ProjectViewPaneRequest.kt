@@ -83,3 +83,27 @@ data class ProjectViewPaneDnDRequest(
   val targetID: Long,
   val action: DnDAction,
 ) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneExternalDropRequest(
+  val files: List<ProjectViewExternalFileDTO>,
+  val targetID: Long,
+  val action: DnDAction,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneSendDropToClientRequest(
+  val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+sealed interface ProjectViewExternalFileDTO {
+  @Serializable
+  data class LocalPath(val path: String) : ProjectViewExternalFileDTO
+
+  @Serializable
+  data class Transferable(val name: String, val transferId: String) : ProjectViewExternalFileDTO
+}
