@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -80,9 +81,7 @@ class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider
       relativePath = contentModuleNameToDescriptorFileName(contentModuleName),
       onlyProductionSources = true,
     ) ?: return emptySet()
-    val result = HashSet<String>()
-    addPluginAliases(JDOMUtil.load(moduleFile), result)
-    return java.util.Set.copyOf(result)
+    return java.util.Set.copyOf(parseContentAndXIncludes(Files.readAllBytes(moduleFile), moduleFile.toString()).pluginAliases)
   }
 }
 
