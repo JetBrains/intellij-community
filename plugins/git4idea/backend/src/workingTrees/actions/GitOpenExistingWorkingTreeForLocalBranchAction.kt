@@ -24,18 +24,8 @@ class GitOpenExistingWorkingTreeForLocalBranchAction :
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
-    val workingTrees = findCheckedOutWorkingTrees(reference, repositories, true)
-    when (workingTrees.size) {
-      0 -> return
-      1 -> GitWorkingTreesService.getInstance(project).openWorkingTreeProject(workingTrees.single())
-      else -> {
-        val chosen = GitChooseWorkingTreeDialog(project, workingTrees).let { dialog ->
-          if (dialog.showAndGet()) dialog.selectedWorkingTree else null
-        }
-        if (chosen != null) {
-          GitWorkingTreesService.getInstance(project).openWorkingTreeProject(chosen)
-        }
-      }
-    }
+    val workingTrees = findCheckedOutWorkingTrees(reference, repositories, skipCurrentWorkingTree = false)
+    val chosen = GitChooseWorkingTreeDialog.chooseAmong(project, workingTrees) ?: return
+    GitWorkingTreesService.getInstance(project).openWorkingTreeProject(chosen)
   }
 }

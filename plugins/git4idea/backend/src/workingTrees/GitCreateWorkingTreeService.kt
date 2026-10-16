@@ -53,6 +53,7 @@ import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.EelUtils.getEel
+import git4idea.workingTrees.actions.GitChooseWorkingTreeDialog
 import git4idea.workingTrees.dialog.GitWorkingTreeDialog
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.GitWorktreeDialogContext
@@ -116,13 +117,18 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
   ) {
     if (!GitWorkingTreesService.isWorktreeCreationSupported(repository)) return
 
-    val existingWorkingTree = GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(repository), skipCurrentWorkingTree = false)
+    val checkedOutWorkingTrees = GitSingleRefAction.findCheckedOutWorkingTrees(branch, listOf(repository), skipCurrentWorkingTree = false)
     var force = false
-    if (existingWorkingTree != null) {
+    if (checkedOutWorkingTrees.isNotEmpty()) {
       // If the branch is checked out in the current worktree there's nothing to open; the popup item is hidden in that case.
-      if (existingWorkingTree.isCurrent) return
-      if (!confirmCreateNewWorktreeInsteadOfOpening(repository.project, branch, existingWorkingTree.path.path)) {
-        GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(existingWorkingTree, onProjectOpened)
+      if (checkedOutWorkingTrees.any { it.isCurrent }) return
+      // Name the single location only when there is one; naming one of several would read as if it were the only one.
+      val worktreePathToMention = checkedOutWorkingTrees.singleOrNull()?.path?.path
+      if (!confirmCreateNewWorktreeInsteadOfOpening(repository.project, branch, worktreePathToMention)) {
+        val chosen = chooseWorkingTreeToOpen(repository.project, checkedOutWorkingTrees)
+        if (chosen != null) {
+          GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(chosen, onProjectOpened)
+        }
         return
       }
       force = true
@@ -150,6 +156,16 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
         GitCheckoutInOtherWorktreeDialogs.ButtonSet.PROCEED_OR_OPEN_EXISTING)
     }
     return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
+  }
+
+  /**
+   * [workingTrees]' only entry, or the one the user picks from a chooser when there is more than one.
+   * Skips the UI-thread hop entirely when [workingTrees] already has a single entry.
+   */
+  private suspend fun chooseWorkingTreeToOpen(project: Project, workingTrees: List<GitWorkingTree>): GitWorkingTree? {
+    val single = workingTrees.singleOrNull()
+    if (single != null) return single
+    return withContext(Dispatchers.UiWithModelAccess) { GitChooseWorkingTreeDialog.chooseAmong(project, workingTrees) }
   }
 
   private fun loadLastParentPath(project: Project): String? =
