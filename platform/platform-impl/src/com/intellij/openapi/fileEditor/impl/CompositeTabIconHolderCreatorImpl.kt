@@ -9,11 +9,16 @@ import com.intellij.ui.tabs.TabInfoIconHolder
 import javax.swing.Icon
 
 internal class CompositeTabIconHolderCreatorImpl : CompositeTabIconHolderCreator {
-  override fun createTabIconHolder(composite: EditorComposite, owner: TabInfo, startupIcon: Icon?): TabInfoIconHolder {
+  override fun createTabIconHolder(
+    composite: EditorComposite,
+    owner: TabInfo,
+    startupIcon: Icon?,
+    waitForEditors: Boolean,
+  ): TabInfoIconHolder {
     val isFeatureFlagEnabled = ExperimentalUI.isNewUI() && Registry.`is`("editor.loading.spinner.enabled", true)
     if (!isFeatureFlagEnabled) {
       return TabInfoIconHolder.default(owner)
     }
-    return SpinnerTabIconHolder(composite, owner, startupIcon)
+    return SpinnerTabIconHolder(composite = composite, owner = owner, startupIcon = startupIcon, waitForEditors = waitForEditors)
   }
 }

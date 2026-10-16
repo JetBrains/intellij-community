@@ -145,7 +145,12 @@ internal class EditorCompositeInitializationTest {
     ApplicationManager.getApplication().replaceService(
       CompositeTabIconHolderCreator::class.java,
       object : CompositeTabIconHolderCreator {
-        override fun createTabIconHolder(composite: EditorComposite, owner: TabInfo, startupIcon: Icon?): TabInfoIconHolder {
+        override fun createTabIconHolder(
+          composite: EditorComposite,
+          owner: TabInfo,
+          startupIcon: Icon?,
+          waitForEditors: Boolean,
+        ): TabInfoIconHolder {
           failedComposite = composite
           error("tab mount failed")
         }

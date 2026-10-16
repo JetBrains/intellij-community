@@ -2580,7 +2580,8 @@ open class FileEditorManagerImpl(
 
       createdComposites.add(composite)
       composite.preparationVisibleInStatusBar = false
-      if (fileEntry.currentInTab || !isLazyComposite) {
+      val isInitializedNow = fileEntry.currentInTab || !isLazyComposite
+      if (isInitializedNow) {
         composite.showPreparationProgress = false
         composite.initDeferred.complete(Unit)
       }
@@ -2599,7 +2600,12 @@ open class FileEditorManagerImpl(
         }
       }
       val customizer = { tab: TabInfo ->
-        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab, item.cachedTabIcon))
+        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(
+          composite = composite,
+          owner = tab,
+          startupIcon = item.cachedTabIcon,
+          waitForEditors = isInitializedNow,
+        ))
         item.customizer(tab)
       }
 
