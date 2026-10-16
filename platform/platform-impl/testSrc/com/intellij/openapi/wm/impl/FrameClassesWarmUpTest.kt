@@ -13,7 +13,7 @@ internal class FrameClassesWarmUpTest {
   @Test
   fun `every class of the warm-up exists`() {
     val missing = (COMMON_FRAME_CLASS_NAMES + MAC_FRAME_CLASS_NAMES + OTHER_OS_FRAME_CLASS_NAMES).filter { name ->
-      runCatching { Class.forName(name, false, classLoader) }.isFailure
+      classLoader.getResource(name.replace('.', '/') + ".class") == null
     }
     assertThat(missing).isEmpty()
   }
