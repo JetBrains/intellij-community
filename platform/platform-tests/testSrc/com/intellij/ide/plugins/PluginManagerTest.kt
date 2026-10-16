@@ -259,6 +259,49 @@ class PluginManagerTest {
   }
 
   @Test
+  fun `light mode properties set the debugger and the execution modules`() {
+    for (mode in ProductMode.entries.filter { it.isLight }) {
+      val enabled = productModeModules(mode, enableDebugger = true, enableExecution = true)
+      val disabled = productModeModules(mode, enableDebugger = false, enableExecution = false)
+      assertThat(enabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isTrue()
+      assertThat(disabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isFalse()
+      assertThat(enabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'").isTrue()
+      // the RD connection needs the execution module, so the property cannot disable it there
+      assertThat(disabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'")
+        .isEqualTo(mode == ProductMode.LIGHT_WITH_RD_CONNECTION)
+    }
+  }
+
+  @Test
+  fun `light mode properties do not affect a non-light mode`() {
+    for (mode in ProductMode.entries.filterNot { it.isLight }) {
+      val enabled = productModeModules(mode, enableDebugger = true, enableExecution = true)
+      val disabled = productModeModules(mode, enableDebugger = false, enableExecution = false)
+      assertThat(enabled).describedAs("modules of '${mode.id}'").isEqualTo(disabled)
+    }
+  }
+
+  private fun productModeModules(mode: ProductMode, enableDebugger: Boolean? = null, enableExecution: Boolean? = null): Map<String, Boolean> {
+    val properties = mapOf(
+      "intellij.platform.light.mode.enable.debugger" to enableDebugger,
+      "intellij.platform.light.mode.enable.execution" to enableExecution,
+    )
+    val oldValues = properties.keys.associateWith { System.getProperty(it) }
+    try {
+      for ((key, value) in properties) {
+        if (value == null) System.clearProperty(key) else System.setProperty(key, value.toString())
+      }
+      val modules = buildMap { configureProductModeModules(mode) }
+      return modules.entries.associate { it.key.name to it.value.isAvailable }
+    }
+    finally {
+      for ((key, value) in oldValues) {
+        if (value == null) System.clearProperty(key) else System.setProperty(key, value)
+      }
+    }
+  }
+
+  @Test
   fun `essential plugins are derived from the product mode`() {
     val remoteDev = PluginId.getId("com.jetbrains.remoteDevelopment")
     val declared = listOf(PluginId.getId("com.intellij.java"))
