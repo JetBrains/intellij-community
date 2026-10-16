@@ -57,7 +57,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.util.PsiVersioningService
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentWithMnemonics
@@ -106,10 +105,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
 import java.awt.AWTException
 import java.awt.Color
-import java.awt.Insets
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Image
+import java.awt.Insets
 import java.awt.Robot
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -181,15 +180,13 @@ class EditorTabbedContainer internal constructor(
       if (window.isDisposed) {
         return@setSelectionChangeHandler ActionCallback.DONE
       }
-      PsiVersioningService.freezePsiVersion {
-        val result = ActionCallback()
-        val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-        CommandProcessor.getInstance().executeCommand(project, {
-          ideDocumentHistory.onSelectionChanged()
-          result.notify(doChangeSelection.run())
-        }, "EditorChange", null)
-        result
-      }
+      val result = ActionCallback()
+      val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
+      CommandProcessor.getInstance().executeCommand(project, {
+        ideDocumentHistory.onSelectionChanged()
+        result.notify(doChangeSelection.run())
+      }, "EditorChange", null)
+      result
     }
     editorTabs.component.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
