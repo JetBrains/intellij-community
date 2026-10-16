@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.SystemProperties
@@ -36,6 +38,7 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
+import java.util.concurrent.ConcurrentHashMap
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
@@ -177,9 +180,30 @@ internal class BuiltInServerManagerImpl(private val coroutineScope: CoroutineSco
       return
     }
 
+    val subServers = ConcurrentHashMap<CustomPortServerManager, SubServer>()
     CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
-      SubServer(customPortServerManager, server).bind(customPortServerManager.port)
+      bindCustomPort(customPortServerManager, server, subServers)
     }
+    // a dynamic plugin adds its port after the server start, and its unload closes the port
+    CustomPortServerManager.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<CustomPortServerManager> {
+      override fun extensionAdded(extension: CustomPortServerManager, pluginDescriptor: PluginDescriptor) {
+        bindCustomPort(extension, server, subServers)
+      }
+
+      override fun extensionRemoved(extension: CustomPortServerManager, pluginDescriptor: PluginDescriptor) {
+        subServers.remove(extension)?.let(Disposer::dispose)
+      }
+    }, server)
+  }
+
+  private fun bindCustomPort(
+    customPortServerManager: CustomPortServerManager,
+    server: BuiltInServer,
+    subServers: MutableMap<CustomPortServerManager, SubServer>,
+  ) {
+    val subServer = SubServer(customPortServerManager, server)
+    subServers.put(customPortServerManager, subServer)?.let(Disposer::dispose)
+    subServer.bind(customPortServerManager.port)
   }
 }
 
