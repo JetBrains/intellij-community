@@ -140,6 +140,29 @@ class McpToolFilterIntegrationTest {
     }
   }
 
+  @Test
+  fun `DIRECT session that omits the unused router lists only the allowed tools`() = runBlocking(Dispatchers.Default) {
+    val allowedTools = setOf(tool1, tool2)
+    val options = McpServerService.McpSessionOptions(
+      commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+      toolFilter = McpToolFilter.AllowList(allowedTools),
+      invocationMode = McpSessionInvocationMode.DIRECT,
+    ).withUnusedRouterToolOmitted()
+
+    withAuthorizedSessionConnection(options) { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactlyInAnyOrderElementsOf(allowedTools)
+
+      val result = client.callTool(ROUTER_TOOL, kotlinx.serialization.json.buildJsonObject {
+        put("command", kotlinx.serialization.json.JsonPrimitive(tool3))
+      })
+
+      assertThat(result.isError).isTrue()
+      val textContent = result.content.firstOrNull() as? TextContent
+      assertThat(textContent).isNotNull()
+      assertThat(textContent!!.text).contains("not found")
+    }
+  }
+
   private suspend fun withConnection(
     filter: McpToolFilter = McpToolFilter.AllowAll,
     allowedToolsHeader: String? = null,
@@ -156,7 +179,12 @@ class McpToolFilterIntegrationTest {
       }
     } else {
       // Use authorized session with filter-based filtering
-      withAuthorizedSessionConnection(filter) { client ->
+      withAuthorizedSessionConnection(
+        McpServerService.McpSessionOptions(
+          commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+          toolFilter = filter
+        )
+      ) { client ->
         action(client, emptyList())
       }
     }
@@ -172,17 +200,12 @@ class McpToolFilterIntegrationTest {
   }
 
   private suspend fun withAuthorizedSessionConnection(
-    filter: McpToolFilter,
+    sessionOptions: McpServerService.McpSessionOptions,
     action: suspend (Client) -> Unit
   ) {
     val service = McpServerService.getInstance()
 
-    service.authorizedSession(
-      McpServerService.McpSessionOptions(
-        commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
-        toolFilter = filter
-      )
-    ) { port, tokenName, tokenValue ->
+    service.authorizedSession(sessionOptions) { port, tokenName, tokenValue ->
       connectToServer(
         port = port,
         extraHeaders = {
