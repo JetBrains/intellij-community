@@ -14,12 +14,15 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -30,6 +33,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.popup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -40,6 +44,8 @@ import androidx.compose.ui.util.fastMaxBy
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -49,13 +55,22 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
+import java.awt.Container
 import java.awt.Dimension
+import java.awt.GraphicsConfiguration
+import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.KeyEvent.KEY_LOCATION_STANDARD
 import java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.awt.event.KeyEvent.KEY_RELEASED
+import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import javax.swing.SwingUtilities
+import kotlin.coroutines.cancellation.CancellationException
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.LocalComponent
@@ -129,6 +144,7 @@ private fun JBPopup(
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
+    var isPopupShown by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf<Boolean?>(null) }
     var dismissedWith by remember { mutableStateOf(InputMode.Touch) }
     LaunchedEffect(isVisible) {
@@ -137,8 +153,18 @@ private fun JBPopup(
         }
     }
 
+    var useHostLayoutFallback by remember {
+        mutableStateOf(
+            GraphicsEnvironment.isHeadless() && !java.lang.Boolean.getBoolean("compose.swing.render.on.graphics")
+        )
+    }
+    val currentParentBounds = parentBoundsInRoot.value
     Layout(
-        content = {},
+        content = {
+            if (useHostLayoutFallback && currentParentBounds != null) {
+                ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() }
+            }
+        },
         modifier =
             Modifier.onGloballyPositioned { childCoordinates ->
                 childCoordinates.parentCoordinates?.let {
@@ -147,39 +173,54 @@ private fun JBPopup(
                     }
                 }
             },
-        measurePolicy = { _, _ -> layout(0, 0) {} },
+        measurePolicy =
+            remember(useHostLayoutFallback, currentPopupPositionProvider, currentParentBounds, owner) {
+                if (!useHostLayoutFallback || currentParentBounds == null) {
+                    MeasurePolicy { _, _ -> layout(0, 0) {} }
+                } else {
+                    JBPopupMeasurePolicy(
+                        popupPositionProvider = currentPopupPositionProvider,
+                        screenSize = IntSize.fromScreenSize(owner),
+                        parentBoundsInWindow = currentParentBounds,
+                        placeContent = false,
+                        onMeasure = { position, size ->
+                            popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                        },
+                    )
+                }
+            },
     )
 
+    val jewelComposePanelWrapper = remember {
+        compose(
+            config = {
+                // Initial placeholder dimensions before pre-measurement updates preferredSize.
+                preferredSize = Dimension(1, 1)
+            },
+            content = {
+                val parentBounds = parentBoundsInRoot.value ?: return@compose
+
+                Layout(
+                    modifier = Modifier.semantics { popup() },
+                    content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
+                    measurePolicy =
+                        remember(currentPopupPositionProvider, parentBounds) {
+                            JBPopupMeasurePolicy(
+                                popupPositionProvider = currentPopupPositionProvider,
+                                screenSize = IntSize.fromScreenSize(owner),
+                                parentBoundsInWindow = parentBounds,
+                                onMeasure = { position, size ->
+                                    popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                                },
+                            )
+                        },
+                )
+            },
+        )
+            as JewelComposePanelWrapper
+    }
+
     val popup: JBPopup = remember {
-        val jewelComposePanelWrapper =
-            compose(
-                config = {
-                    // Setting initial dimensions as 1x1 to calculate the size
-                    preferredSize = Dimension(1, 1)
-                },
-                content = {
-                    val parentBounds = parentBoundsInRoot.value ?: return@compose
-
-                    Layout(
-                        modifier = Modifier.semantics { popup() },
-                        content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
-                        measurePolicy =
-                            remember(currentPopupPositionProvider, parentBounds) {
-                                JBPopupMeasurePolicy(
-                                    popupPositionProvider = currentPopupPositionProvider,
-                                    screenSize = IntSize.fromScreenSize(owner),
-                                    parentBoundsInWindow = parentBounds,
-                                    onMeasure = { position, size ->
-                                        popupRectangle.value =
-                                            Rectangle(position.x, position.y, size.width, size.height)
-                                    },
-                                )
-                            },
-                    )
-                },
-            )
-                as JewelComposePanelWrapper
-
         JBPopupFactory.getInstance()
             .createComponentPopupBuilder(jewelComposePanelWrapper, jewelComposePanelWrapper.composePanel)
             .setFocusable(currentProperties.focusable)
@@ -215,6 +256,7 @@ private fun JBPopup(
             .addListener(
                 object : JBPopupListener {
                     override fun beforeShown(event: LightweightWindowEvent) {
+                        updateComposePanelWindowParent(jewelComposePanelWrapper.composePanel)
                         isVisible = true
                     }
 
@@ -236,15 +278,34 @@ private fun JBPopup(
     }
 
     val rectValue = popupRectangle.value
-    LaunchedEffect(rectValue) {
-        val rectangle = rectValue ?: return@LaunchedEffect
-        popup.setSize(rectangle.location.fromCurrentScreenToGlobal(owner), rectangle.size.withSystemDensity(owner))
+    LaunchedEffect(currentParentBounds, rectValue, useHostLayoutFallback) {
+        if (!useHostLayoutFallback && currentParentBounds != null && popupRectangle.value == null) {
+            val measured = preMeasureComposePanel(jewelComposePanelWrapper.composePanel, owner)
+            if (!measured || popupRectangle.value == null) {
+                useHostLayoutFallback = true
+                return@LaunchedEffect
+            }
+        }
+        val rectangle = popupRectangle.value ?: return@LaunchedEffect
+        if (popup.isDisposed || !owner.isShowing) return@LaunchedEffect
+        val globalLocation = rectangle.location.fromCurrentScreenToGlobal(owner)
+        val globalSize = rectangle.size.withSystemDensity(owner)
+        jewelComposePanelWrapper.preferredSize = globalSize
+        jewelComposePanelWrapper.composePanel.preferredSize = globalSize
+        popup.setSize(globalLocation, globalSize)
+        if (!isPopupShown) {
+            isPopupShown = true
+            popup.showInScreenCoordinates(owner, globalLocation)
+        }
     }
 
-    DisposableEffect(Unit) {
-        // Showing in the top-left corner of the owner component so we can measure and show it correctly
-        popup.showInScreenCoordinates(owner, Point(0, 0))
-        onDispose { popup.cancel() }
+    DisposableEffect(popup) {
+        onDispose {
+            popup.cancel()
+            if (!jewelComposePanelWrapper.composePanel.isDisplayable) {
+                jewelComposePanelWrapper.composePanel.dispose()
+            }
+        }
     }
 }
 
@@ -252,9 +313,14 @@ private class JBPopupMeasurePolicy(
     private val popupPositionProvider: PopupPositionProvider,
     private val screenSize: IntSize,
     private val parentBoundsInWindow: IntRect,
+    private val placeContent: Boolean = true,
     private val onMeasure: (IntOffset, IntSize) -> Unit,
 ) : MeasurePolicy {
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        if (!placeContent && measurables.isEmpty()) {
+            return layout(0, 0) {}
+        }
+
         val relaxedConstraints =
             constraints.copy(minWidth = 0, minHeight = 0, maxWidth = screenSize.width, maxHeight = screenSize.height)
 
@@ -275,8 +341,20 @@ private class JBPopupMeasurePolicy(
 
         onMeasure(position, contentSize)
 
-        return layout(constraints.maxWidth, constraints.maxHeight) { placeables.fastForEach { it.place(0, 0) } }
+        if (!placeContent) {
+            return layout(0, 0) {}
+        }
+
+        return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 /** Update the sizes of the popup to match the system scale factor. */
@@ -387,4 +465,140 @@ private fun java.awt.event.KeyEvent.toComposeKeyEvent(): KeyEvent =
 private fun ProvideValuesFromOtherContext(context: CompositionLocalContext, content: @Composable () -> Unit) {
     val existingContext = currentCompositionLocalContext
     CompositionLocalProvider(context) { CompositionLocalProvider(existingContext, content) }
+}
+
+// TODO(CMP-10981): Remove this reflection once ComposePanel supports pre-attachment content measurement.
+// ComposePanel creates its container in addNotify() and defers initial composition until the panel is displayable,
+// whereas JBPopup needs the measured content size and screen coordinates before it creates the popup window.
+private object ComposePanelReflection {
+    val composeContainerField: Field =
+        ComposePanel::class.java.getDeclaredField("_composeContainer").apply { isAccessible = true }
+    val composeContentField: Field =
+        ComposePanel::class.java.getDeclaredField("_composeContent").apply { isAccessible = true }
+    val savedStateField: Field = ComposePanel::class.java.getDeclaredField("savedState").apply { isAccessible = true }
+    val createComposeContainerMethod: Method =
+        ComposePanel::class.java.getDeclaredMethod("createComposeContainer").apply { isAccessible = true }
+    val setWindowParentMethod: Method =
+        ComposePanel::class.java.getDeclaredMethod("setWindowParent", Window::class.java).apply { isAccessible = true }
+
+    private val composeContainerClass: Class<*> = Class.forName("androidx.compose.ui.scene.ComposeContainer")
+    val updateLifecycleStateMethod: Method =
+        composeContainerClass.getDeclaredMethod("updateLifecycleState").apply { isAccessible = true }
+    val setRedispatchUnconsumedMouseWheelEventsMethod: Method =
+        composeContainerClass
+            .getDeclaredMethod("setRedispatchUnconsumedMouseWheelEvents", Boolean::class.javaPrimitiveType)
+            .apply { isAccessible = true }
+    val setShowLayoutBoundsMethod: Method =
+        composeContainerClass.getDeclaredMethod("setShowLayoutBounds", Boolean::class.javaPrimitiveType).apply {
+            isAccessible = true
+        }
+    val containerSetContentMethod: Method =
+        composeContainerClass.getDeclaredMethod("setContent", Function2::class.java).apply { isAccessible = true }
+    val mediatorField: Field = composeContainerClass.getDeclaredField("mediator").apply { isAccessible = true }
+
+    private val mediatorClass: Class<*> = Class.forName("androidx.compose.ui.scene.ComposeSceneMediator")
+    val getSceneMethod: Method = mediatorClass.getDeclaredMethod("getScene").apply { isAccessible = true }
+    val onComponentAttachedField: Field =
+        mediatorClass.getDeclaredField("_onComponentAttached").apply { isAccessible = true }
+    val measureContentMethod: Method =
+        mediatorClass.declaredMethods.first { it.name.startsWith("measureContent-") }.apply { isAccessible = true }
+
+    private val composeSceneClass: Class<*> = Class.forName("androidx.compose.ui.scene.ComposeScene")
+    val setDensityMethod: Method =
+        composeSceneClass.getDeclaredMethod("setDensity", Density::class.java).apply { isAccessible = true }
+
+    val unconstrainedConstraintsValue: Long =
+        Constraints::class.java.getDeclaredMethod("unbox-impl").invoke(Constraints()) as Long
+}
+
+/**
+ * Initializes the popup [ComposePanel] container and measures its content before [AbstractPopup] creates the window.
+ *
+ * When [AbstractPopup] later attaches [composePanel], `ComposePanel.addNotify` reuses `_composeContainer` and keeps the
+ * existing composition.
+ */
+@OptIn(InternalComposeUiApi::class)
+internal fun preMeasureComposePanel(composePanel: ComposePanel, owner: Component): Boolean {
+    if (GraphicsEnvironment.isHeadless()) return false
+    var createdContainer = false
+    val rootComponent = generateSequence<Component>(composePanel) { it.parent }.last()
+    val graphicsConfigurationDonor =
+        if (composePanel.graphicsConfiguration == null && rootComponent !is Window) {
+            owner.graphicsConfiguration?.let { configuration ->
+                object : Container() {
+                        override fun getGraphicsConfiguration(): GraphicsConfiguration = configuration
+                    }
+                    .apply { add(rootComponent) }
+            }
+        } else {
+            null
+        }
+    return try {
+        runCatching {
+                var container = ComposePanelReflection.composeContainerField.get(composePanel)
+                if (container == null) {
+                    container = ComposePanelReflection.createComposeContainerMethod.invoke(composePanel)
+                    createdContainer = true
+                    ComposePanelReflection.composeContainerField.set(composePanel, container)
+                    ComposePanelReflection.updateLifecycleStateMethod.invoke(container)
+                    ComposePanelReflection.setRedispatchUnconsumedMouseWheelEventsMethod.invoke(
+                        container,
+                        composePanel.redispatchUnconsumedMouseWheelEvents,
+                    )
+                    ComposePanelReflection.setShowLayoutBoundsMethod.invoke(container, composePanel.showLayoutBounds)
+                    val content = ComposePanelReflection.composeContentField.get(composePanel)
+                    if (content != null) {
+                        ComposePanelReflection.containerSetContentMethod.invoke(container, content)
+                    }
+                    ComposePanelReflection.savedStateField.set(composePanel, null)
+                }
+
+                val mediator = ComposePanelReflection.mediatorField.get(container)
+                val scene = ComposePanelReflection.getSceneMethod.invoke(mediator)
+                ComposePanelReflection.setDensityMethod.invoke(scene, Density(JBUIScale.sysScale(owner)))
+
+                val onAttached = ComposePanelReflection.onComponentAttachedField.get(mediator) as? Function0<*>
+                if (onAttached != null) {
+                    onAttached.invoke()
+                    ComposePanelReflection.onComponentAttachedField.set(mediator, null)
+                }
+
+                ComposePanelReflection.measureContentMethod.invoke(
+                    mediator,
+                    ComposePanelReflection.unconstrainedConstraintsValue,
+                )
+            }
+            .onFailure { exception ->
+                val cause = (exception as? InvocationTargetException)?.targetException ?: exception
+                if (cause is CancellationException || cause is ControlFlowException) {
+                    throw cause
+                }
+                if (createdContainer && !composePanel.isDisplayable) {
+                    runCatching { composePanel.dispose() }
+                    runCatching { ComposePanelReflection.composeContainerField.set(composePanel, null) }
+                }
+                Logger.getInstance(JBPopupRenderer::class.java)
+                    .warn("Failed to pre-measure ComposePanel for JBPopup", cause)
+            }
+            .isSuccess
+    } finally {
+        graphicsConfigurationDonor?.remove(rootComponent)
+    }
+}
+
+internal fun updateComposePanelWindowParent(composePanel: ComposePanel) {
+    runCatching {
+            val popupWindow = SwingUtilities.getWindowAncestor(composePanel)
+            if (popupWindow != null) {
+                ComposePanelReflection.setWindowParentMethod.invoke(composePanel, popupWindow)
+            }
+        }
+        .onFailure { exception ->
+            val cause = (exception as? InvocationTargetException)?.targetException ?: exception
+            if (cause is CancellationException || cause is ControlFlowException) {
+                throw cause
+            }
+            Logger.getInstance(JBPopupRenderer::class.java)
+                .warn("Failed to update ComposePanel window parent for JBPopup", cause)
+        }
 }

@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,17 +21,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.application
 import dev.sebastiano.spectre.core.AutomatorNode
 import dev.sebastiano.spectre.core.ComposeAutomator
 import dev.sebastiano.spectre.core.RobotDriver
 import dev.sebastiano.spectre.testing.runSpectreTest
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
 import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JDialog
+import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +60,7 @@ import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableComboBox
+import org.jetbrains.jewel.ui.component.Popup
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
@@ -47,6 +68,8 @@ import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
 
 // Headful, and deliberately not a jps_test: the app under test must keep a standalone-only runtime closure,
 // with no IntelliJ Platform classes on the classpath. Runs in CI on any agent with a display:
@@ -215,6 +238,178 @@ class CustomPopupRendererSpectreTest {
             app.stop()
         }
     }
+
+    @DisabledOnOs(
+        OS.LINUX,
+        disabledReason =
+            "JDialogRenderer falls back to ComposePopup on Linux when rounded corners and interop blending are unavailable.",
+    )
+    @Test
+    fun `popup window is never shown at screen origin or 1x1 size`(): Unit = runSpectreTestWithCustomPopupRenderer {
+        val app = SpectreTestApplication()
+        app.start()
+        val observedVisibleBounds = CopyOnWriteArrayList<Rectangle>()
+        var listener: AWTEventListener? = null
+        try {
+            val hostWindow = app.awaitWindow()
+            SwingUtilities.invokeAndWait { hostWindow.setLocation(300, 200) }
+            val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(hostWindow))
+            automator.waitForIdle()
+
+            listener = AWTEventListener { event ->
+                val sourceComponent = event.source as? Component ?: return@AWTEventListener
+                val dialog =
+                    sourceComponent as? JDialog ?: SwingUtilities.getWindowAncestor(sourceComponent) as? JDialog
+                if (dialog != null && dialog.owner == hostWindow && dialog.isShowing) {
+                    observedVisibleBounds.add(dialog.bounds)
+                }
+            }
+            Toolkit.getDefaultToolkit()
+                .addAWTEventListener(
+                    listener,
+                    AWTEvent.HIERARCHY_EVENT_MASK or AWTEvent.COMPONENT_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK,
+                )
+
+            val menuButton = automator.waitForNode(tag = MENU_BUTTON_TAG)
+            automator.click(menuButton)
+            automator.waitForNode(tag = MENU_POPUP_TAG)
+            automator.waitForIdle()
+
+            assertTrue(observedVisibleBounds.isNotEmpty(), "Expected to observe visible popup dialog bounds")
+            assertTrue(
+                observedVisibleBounds.none { it.x < hostWindow.x || it.y < hostWindow.y },
+                "Popup window was shown at top-left of screen before repositioning: $observedVisibleBounds",
+            )
+            assertTrue(
+                observedVisibleBounds.none { it.width <= 1 || it.height <= 1 },
+                "Popup window was shown with placeholder size: $observedVisibleBounds",
+            )
+        } finally {
+            if (listener != null) {
+                Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+            }
+            app.stop()
+        }
+    }
+
+    @DisabledOnOs(
+        OS.LINUX,
+        disabledReason =
+            "JDialogRenderer falls back to ComposePopup on Linux when rounded corners and interop blending are unavailable.",
+    )
+    @Test
+    fun `popup window applies window shape before becoming visible`(): Unit = runSpectreTestWithCustomPopupRenderer {
+        val firstShapeCallDialogVisible = AtomicReference<Boolean?>(null)
+        val firstShapeCallSize = AtomicReference<Dimension?>(null)
+        val hostWindowRef = AtomicReference<ComposeWindow?>(null)
+        val disposableEffectRuns = AtomicInteger(0)
+        val disposableEffectDisposals = AtomicInteger(0)
+        val launchedEffectRuns = AtomicInteger(0)
+        var shapedPopupVisible by mutableStateOf(false)
+
+        val app = SpectreTestApplication {
+            Box(modifier = Modifier.padding(24.dp)) {
+                DefaultButton(
+                    onClick = { shapedPopupVisible = true },
+                    modifier = Modifier.testTag(SHAPED_POPUP_BUTTON_TAG),
+                ) {
+                    Text("Show shaped popup")
+                }
+
+                if (shapedPopupVisible) {
+                    Popup(
+                        popupPositionProvider = AnchorBottomLeftPopupPositionProvider,
+                        cornerSize = CornerSize(8.dp),
+                        onDismissRequest = { _ -> shapedPopupVisible = false },
+                        windowShape = { logicalSize ->
+                            val currentHostWindow = hostWindowRef.get()
+                            val isDialogVisible =
+                                currentHostWindow?.ownedWindows?.filterIsInstance<JDialog>()?.any { it.isVisible }
+                                    ?: false
+                            firstShapeCallDialogVisible.compareAndSet(null, isDialogVisible)
+                            firstShapeCallSize.compareAndSet(null, Dimension(logicalSize.width, logicalSize.height))
+                            Rectangle(0, 0, logicalSize.width, logicalSize.height)
+                        },
+                    ) {
+                        DisposableEffect(Unit) {
+                            disposableEffectRuns.incrementAndGet()
+                            onDispose { disposableEffectDisposals.incrementAndGet() }
+                        }
+                        LaunchedEffect(Unit) { launchedEffectRuns.incrementAndGet() }
+
+                        Box(modifier = Modifier.size(200.dp, 120.dp).testTag(SHAPED_POPUP_TAG)) {
+                            Text("Shaped popup content")
+                        }
+                    }
+                }
+            }
+        }
+        app.start()
+
+        val observedShowingShapes = CopyOnWriteArrayList<Pair<Rectangle, Rectangle?>>()
+        var listener: AWTEventListener? = null
+        try {
+            val hostWindow = app.awaitWindow()
+            hostWindowRef.set(hostWindow)
+            val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(hostWindow))
+            automator.waitForIdle()
+
+            listener = AWTEventListener { event ->
+                val sourceComponent = event.source as? Component ?: return@AWTEventListener
+                val dialog =
+                    sourceComponent as? JDialog ?: SwingUtilities.getWindowAncestor(sourceComponent) as? JDialog
+                if (dialog != null && dialog.owner == hostWindow && dialog.isShowing) {
+                    observedShowingShapes.add(dialog.bounds to dialog.shape?.bounds)
+                }
+            }
+            Toolkit.getDefaultToolkit()
+                .addAWTEventListener(
+                    listener,
+                    AWTEvent.HIERARCHY_EVENT_MASK or AWTEvent.COMPONENT_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK,
+                )
+
+            automator.click(automator.waitForNode(tag = SHAPED_POPUP_BUTTON_TAG))
+            automator.waitForNode(tag = SHAPED_POPUP_TAG)
+            automator.waitForIdle()
+
+            assertEquals(
+                false,
+                firstShapeCallDialogVisible.get(),
+                "windowShape must be applied before the popup JDialog becomes visible",
+            )
+            val measuredShapeSize = assertNotNull(firstShapeCallSize.get(), "Expected windowShape to be invoked")
+            assertEquals(Dimension(200, 120), measuredShapeSize)
+            assertEquals(1, disposableEffectRuns.get(), "DisposableEffect in popup content must run only once")
+            assertEquals(1, launchedEffectRuns.get(), "LaunchedEffect in popup content must run only once")
+            assertEquals(0, disposableEffectDisposals.get(), "DisposableEffect must not dispose while popup is open")
+
+            assertTrue(observedShowingShapes.isNotEmpty(), "Expected to observe showing popup dialog events")
+            assertTrue(
+                observedShowingShapes.all { (dialogBounds, shapeBounds) ->
+                    shapeBounds == Rectangle(0, 0, dialogBounds.width, dialogBounds.height)
+                },
+                "Popup JDialog was shown before its windowShape matched its bounds: $observedShowingShapes",
+            )
+
+            shapedPopupVisible = false
+            automator.waitUntilGone(tag = SHAPED_POPUP_TAG, timeout = 10.seconds)
+            assertEquals(1, disposableEffectDisposals.get(), "DisposableEffect must dispose once when popup closes")
+        } finally {
+            if (listener != null) {
+                Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+            }
+            app.stop()
+        }
+    }
+}
+
+private object AnchorBottomLeftPopupPositionProvider : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset(anchorBounds.left, anchorBounds.bottom)
 }
 
 private fun ComposeAutomator.isPresent(find: ComposeAutomator.() -> List<AutomatorNode>): Boolean {
@@ -313,6 +508,8 @@ private const val MENU_BUTTON_TAG = "spectre.menuButton"
 private const val MENU_POPUP_TAG = "spectre.menuPopup"
 private const val MENU_ITEM_TEXT = "Menu item"
 private const val SPEED_SEARCH_COMBO_TAG = "spectre.speedSearchCombo"
+private const val SHAPED_POPUP_BUTTON_TAG = "spectre.shapedPopupButton"
+private const val SHAPED_POPUP_TAG = "spectre.shapedPopup"
 
 /** Distance from the ComboBox's trailing edge that reliably lands on the chevron rather than the label. */
 private const val CHEVRON_INSET = 8
