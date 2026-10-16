@@ -141,3 +141,96 @@ fn a_run_of_more_than_one_shard_is_refused() {
     refuse_shards(&environment(&[("TEST_TOTAL_SHARDS", "1")])).unwrap();
     refuse_shards(&environment(&[])).unwrap();
 }
+
+/// The `--jvm_flag` arguments of the UI job of TeamCity build 1097187017, for the runner with index `index`.
+fn teamcity_flags(index: u32) -> Vec<String> {
+    [
+        "-Djava.awt.headless=false".to_owned(),
+        format!("-Didea.test.runner.index={index}"),
+        "-Didea.test.runners.count=2".to_owned(),
+        "-Didea.bucketing.season=AirPluginGuiChatTests".to_owned(),
+        "-Didea.tests.duration.bucketing.enabled=true".to_owned(),
+    ]
+    .to_vec()
+}
+
+// The UI job of TeamCity passes the flags of the JUnit runner with --test_arg=--jvm_flag=<flag>. lane-run takes the
+// joined form and the two-token form, repeated, in their order.
+#[test]
+fn lane_run_takes_the_jvm_flags_of_the_teamcity_ui_job_in_both_forms() {
+    let joined: Vec<String> = teamcity_flags(0).iter().map(|flag| format!("--jvm_flag={flag}")).collect();
+    let joined: Vec<&str> = joined.iter().map(String::as_str).collect();
+    assert_eq!(args(&joined).jvm_flags, teamcity_flags(0));
+
+    let split = args(&[
+        "--jvm_flag",
+        "-Didea.test.runner.index=1",
+        "--jvm_flag",
+        "-Didea.test.runners.count=2",
+    ]);
+    assert_eq!(split.jvm_flags, ["-Didea.test.runner.index=1", "-Didea.test.runners.count=2"]);
+    assert_eq!(args(&[]).jvm_flags, Vec::<String>::new());
+}
+
+// The runner index and count of the job split the lane, and each ignored flag gives one note in the order of the
+// flags. A run without flags is the whole lane, with no note.
+#[test]
+fn the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note() {
+    let flags = jvm_flags(&teamcity_flags(1)).unwrap();
+
+    assert_eq!(flags.split, RunnerSplit { index: 1, count: 2 });
+    assert_eq!(
+        flags.notes,
+        [
+            "lane-run ignores the JVM flag -Djava.awt.headless=false: the lane IDE runs headed on the display of the run",
+            "lane-run ignores the JVM flag -Didea.bucketing.season=AirPluginGuiChatTests: lane-run splits the lane by the \
+             order of its suites, not by duration buckets",
+            "lane-run ignores the JVM flag -Didea.tests.duration.bucketing.enabled=true: lane-run splits the lane by the \
+             order of its suites, not by duration buckets",
+        ]
+    );
+    assert_eq!(jvm_flags(&teamcity_flags(0)).unwrap().split, RunnerSplit { index: 0, count: 2 });
+    let one = ["-Didea.test.runner.index=0".to_owned(), "-Didea.test.runners.count=1".to_owned()];
+    assert_eq!(jvm_flags(&one).unwrap().split, RunnerSplit::WHOLE);
+    assert_eq!(
+        jvm_flags(&[]).unwrap(),
+        JvmFlags {
+            split: RunnerSplit::WHOLE,
+            notes: Vec::new()
+        }
+    );
+}
+
+// Another flag is refused by name, so the next flag of a job is loud. The refusal of an unknown property names it and
+// never its value. A split that is not one is refused too.
+#[test]
+fn an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name() {
+    let refusal = |flags: &[&str]| {
+        let flags: Vec<String> = flags.iter().map(|flag| (*flag).to_owned()).collect();
+        let refusal = jvm_flags(&flags).unwrap_err();
+        assert_eq!(refusal.code, JVM_FLAG_CODE, "{flags:?}");
+        refusal.message
+    };
+
+    let unknown = refusal(&["-Didea.some.token=s3cr3t-value"]);
+    assert!(
+        unknown.contains("idea.some.token") && !unknown.contains("s3cr3t-value"),
+        "{unknown}"
+    );
+    assert!(unknown.contains("idea.test.runner.index and idea.test.runners.count"), "{unknown}");
+    assert!(refusal(&["-Xmx2g"]).contains("the flag -Xmx2g is none"));
+    assert!(refusal(&["-D"]).contains("takes only a -D<name>=<value> property"));
+    assert!(refusal(&["-Didea.test.runner.index=0"]).contains("needs both"));
+    assert!(refusal(&["-Didea.test.runners.count=2"]).contains("needs both"));
+    assert!(refusal(&["-Didea.test.runner.index=2", "-Didea.test.runners.count=2"]).contains("is not below the runner count 2"));
+    assert!(refusal(&["-Didea.test.runner.index=0", "-Didea.test.runners.count=0"]).contains("is not below"));
+    assert!(refusal(&["-Didea.test.runner.index=one", "-Didea.test.runners.count=2"]).contains("no whole number"));
+    assert!(
+        refusal(&[
+            "-Didea.test.runner.index=0",
+            "-Didea.test.runner.index=1",
+            "-Didea.test.runners.count=2"
+        ])
+        .contains("has two values")
+    );
+}

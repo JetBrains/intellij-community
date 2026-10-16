@@ -60,6 +60,36 @@ pub(crate) struct Selection {
     /// The suites of the lane that the controller names and that have no suite document. The plan names each one, and
     /// each ends as a failed container [`kind::UNSUPPORTED`].
     pub undocumented: Vec<LaneClass>,
+    /// The count of the selected suites before the runner split, documented and undocumented.
+    pub selected: usize,
+}
+
+/// The share of one runner when a TeamCity job splits a lane across its runners. Of the selected suites in the order
+/// of the lane, runner `index` takes each suite whose position is `index` modulo `count`. So the runners of one job
+/// together run each selected suite once. The whole lane is runner 0 of 1.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RunnerSplit {
+    pub index: u32,
+    pub count: u32,
+}
+
+impl RunnerSplit {
+    /// The whole lane: the split of the lane daemon and of a run that names no runner.
+    pub(crate) const WHOLE: Self = Self { index: 0, count: 1 };
+
+    /// Whether this runner takes the selected suite at `position`.
+    fn takes(self, position: usize) -> bool {
+        u32::try_from(position).is_ok_and(|position| position % self.count == self.index)
+    }
+
+    /// The items at the positions that this runner takes, in their order.
+    fn share<T>(self, items: Vec<T>) -> Vec<T> {
+        items
+            .into_iter()
+            .enumerate()
+            .filter_map(|(position, item)| self.takes(position).then_some(item))
+            .collect()
+    }
 }
 
 impl Selection {
@@ -85,6 +115,8 @@ pub(crate) struct SelectionInputs<'a> {
     pub junit5_filters: &'a [String],
     /// The suites of the lane that the catalog names, `laneClasses` of the request.
     pub lane_classes: &'a [LaneClass],
+    /// The share of this runner of the selected suites.
+    pub split: RunnerSplit,
 }
 
 /// Reads the lane document `<lane>.json`, the digest of the flow vocabulary beside it, and the suite documents of its
@@ -153,12 +185,14 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
     }
     apply_filters(&mut suites, &mut undocumented, inputs.junit5_filters, &lane.lane)?;
     suites.sort_by(|left, right| left.program.test_class_name.cmp(&right.program.test_class_name));
+    let selected = suites.len() + undocumented.len();
     Ok(Selection {
         lane_bytes,
         lane,
         vocabulary_digest,
-        suites,
-        undocumented,
+        suites: inputs.split.share(suites),
+        undocumented: inputs.split.share(undocumented),
+        selected,
     })
 }
 
@@ -237,6 +271,17 @@ pub(crate) fn apply_filters(
 /// Runs one iteration of `request` and writes its records to `out`. A write that fails ends the stream, not the run.
 /// The JUnit XML of the records goes to [`TEST_XML_FILE`] of the iteration directory, and the run answers it.
 pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) -> String {
+    run_split(daemon, request, RunnerSplit::WHOLE, &[], out)
+}
+
+/// [`run`] of the share `split` of the selected suites. The stream carries `notes` right after the start of the run.
+pub(crate) fn run_split(
+    daemon: &Daemon,
+    request: &RunRequest,
+    split: RunnerSplit,
+    notes: &[String],
+    out: &mut (dyn Write + Send),
+) -> String {
     let stream = Stream::new(out);
     let iteration_id = daemon.next_iteration_id();
     let started_at = now_stamp();
@@ -249,13 +294,16 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + 
         daemon_boot_stamp: daemon.boot_stamp().to_owned(),
         started_at: started_at.clone(),
     }));
+    for note in notes {
+        stream.note(note.clone());
+    }
     log(&format!(
         "iteration {iteration_id} started: lane {}",
         request.lane.as_deref().unwrap_or("<none>")
     ));
     // A panic of the run is a failed iteration with a summary, so the stream never ends without one.
     let executed = panic::catch_unwind(AssertUnwindSafe(|| {
-        execute(daemon, request, &stream, &iteration_dir, &iteration_id)
+        execute(daemon, request, split, &stream, &iteration_dir, &iteration_id)
     }))
     .unwrap_or_else(|panic| {
         let message = panic
@@ -304,7 +352,13 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + 
 
 /// The selection of `request` from the documents that the push stored: the documents of `lane`, narrowed by the
 /// selectors and the filters of the request.
-pub(crate) fn selection_of(daemon: &Daemon, lane: &str, lane_inputs: &LaneInputs, request: &RunRequest) -> Result<Selection, String> {
+pub(crate) fn selection_of(
+    daemon: &Daemon,
+    lane: &str,
+    lane_inputs: &LaneInputs,
+    request: &RunRequest,
+    split: RunnerSplit,
+) -> Result<Selection, String> {
     let lane_documents = daemon.stored(&lane_inputs.lane_documents)?;
     let suite_documents = daemon.stored(&lane_inputs.suite_documents)?;
     select(&SelectionInputs {
@@ -314,6 +368,7 @@ pub(crate) fn selection_of(daemon: &Daemon, lane: &str, lane_inputs: &LaneInputs
         selectors: &request.selectors,
         junit5_filters: &request.junit5_filters,
         lane_classes: &request.lane_classes,
+        split,
     })
 }
 
@@ -351,12 +406,29 @@ pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &s
 ///
 /// A live lane provisions its account before the IDE, and its run ends after the scenarios, also after a failure,
 /// before the summary of the iteration.
-fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration_dir: &Path, iteration_id: &str) -> Result<bool, String> {
+fn execute(
+    daemon: &Daemon,
+    request: &RunRequest,
+    split: RunnerSplit,
+    stream: &Stream<'_>,
+    iteration_dir: &Path,
+    iteration_id: &str,
+) -> Result<bool, String> {
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
     };
     let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
-    let selection = selection_of(daemon, lane, lane_inputs, request)?;
+    let selection = selection_of(daemon, lane, lane_inputs, request, split)?;
+    if split != RunnerSplit::WHOLE {
+        stream.note(format!(
+            "lane {lane}: the runner with index {index} of {count} runners takes {} of the {} selected suite(s), each one \
+             whose position in the lane order is {index} modulo {count}",
+            selection.suites.len() + selection.undocumented.len(),
+            selection.selected,
+            index = split.index,
+            count = split.count,
+        ));
+    }
     let live = start_live(daemon, &selection, stream)?;
     let outcome = execute_selection(
         daemon,

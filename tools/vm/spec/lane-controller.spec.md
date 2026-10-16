@@ -1582,6 +1582,18 @@ the lanes to the verb, and it goes with the JVM daemon.
   The lane test touches no shard status file, so Bazel refuses such a run too where its check is on.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_of_more_than_one_shard_is_refused`)
 
+- `lane-run` takes the `--jvm_flag` arguments of a TeamCity UI job, in the joined and in the two-token form. The runner
+  index and count of the job split the selected suites of the lane. In the order of the lane, a runner takes each suite
+  whose position is its index modulo the count. So the runners of one job run each selected suite once. `lane-run`
+  ignores `java.awt.headless` and the two bucketing properties, with one note each in the run stream. It refuses
+  another flag with `lane_run_jvm_flag`, and the refusal names the property and never its value.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`lane_run_takes_the_jvm_flags_of_the_teamcity_ui_job_in_both_forms`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane`)
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_notes_of_a_lane_run_follow_the_start_of_the_run`)
+  [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
+
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
   and a plan of suites of a bare IDE alone names no lane key.

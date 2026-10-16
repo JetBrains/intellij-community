@@ -69,6 +69,7 @@ fn planned(root: &Path, lane: &str, selectors: &[&str], filters: &[&str], lane_c
         selectors: &owned(selectors),
         junit5_filters: &owned(filters),
         lane_classes,
+        split: RunnerSplit::WHOLE,
     })
 }
 
@@ -241,4 +242,48 @@ fn a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors() {
     assert!(other_lane.contains("no suite document of the lane UI"), "{other_lane}");
     let unknown = selected(root.path(), "ui-perf", &[]).unwrap_err();
     assert!(unknown.contains("hold no ui-perf.json"), "{unknown}");
+}
+
+// A TeamCity job splits a lane across its runners. Of the selected suites in the order of the lane, each runner takes
+// each suite whose position is its index modulo the count. So the runners of one job run each selected suite once, and
+// one runner runs the whole lane.
+#[test]
+fn the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane() {
+    let root = documents();
+    let share = |index: u32, count: u32| {
+        select(&SelectionInputs {
+            lane: "ui",
+            lane_documents: root.path(),
+            suite_documents: root.path(),
+            selectors: &[],
+            junit5_filters: &[],
+            lane_classes: &[],
+            split: RunnerSplit { index, count },
+        })
+        .unwrap()
+    };
+
+    let whole = share(0, 1);
+    assert_eq!(
+        whole.class_names(),
+        ["AirAddToAgentContextGeneratedFlowUiTest", "AirRenameSessionGeneratedFlowUiTest"]
+    );
+    assert_eq!(whole.class_names(), selected(root.path(), "ui", &[]).unwrap().class_names());
+    for count in 1..=3 {
+        let mut runs = Vec::new();
+        for index in 0..count {
+            let part = share(index, count);
+            assert_eq!(part.selected, 2, "runner {index} of {count}");
+            runs.extend(part.class_names());
+        }
+        runs.sort();
+        assert_eq!(runs, whole.class_names(), "the {count} runner(s) run each suite once");
+    }
+    assert_eq!(share(0, 2).class_names(), ["AirAddToAgentContextGeneratedFlowUiTest"]);
+    assert_eq!(share(1, 2).class_names(), ["AirRenameSessionGeneratedFlowUiTest"]);
+    assert_eq!(
+        share(2, 3).class_names(),
+        Vec::<String>::new(),
+        "a runner past the suites runs none"
+    );
 }

@@ -223,3 +223,45 @@ fn a_shutdown_wakes_the_verb_and_refuses_later_runs() {
     let refused = booted.call("POST", "/run", &run_request(LAUNCH_DIGEST));
     assert_eq!((refused.status, refused.json()), (409, json!({ "reason": "shutting-down" })));
 }
+
+// lane-run notes each JVM flag that it ignores. The notes follow the start of the run, before the run fails or a suite
+// starts, and a split changes nothing of that order.
+#[test]
+fn the_notes_of_a_lane_run_follow_the_start_of_the_run() {
+    let booted = booted();
+    let request: RunRequest = serde_json::from_slice(&run_request(LAUNCH_DIGEST)).unwrap();
+    let notes = ["lane-run ignores the JVM flag -Djava.awt.headless=false: the lane IDE runs headed".to_owned()];
+    let mut out = Vec::new();
+    iteration::run_split(
+        &booted.daemon,
+        &request,
+        iteration::RunnerSplit { index: 1, count: 2 },
+        &notes,
+        &mut out,
+    );
+
+    let decoded = NdjsonDecoder::default().push(&out);
+    assert_eq!(decoded.failure, None);
+    let kinds: Vec<String> = decoded
+        .events
+        .iter()
+        .map(|event| match &event.kind {
+            RunEventKind::RunStarted(_) => "runStarted".to_owned(),
+            RunEventKind::Output(output) => format!("output: {}", output.text),
+            RunEventKind::RunFailed(_) => "runFailed".to_owned(),
+            RunEventKind::WatchdogState(_) => "watchdogState".to_owned(),
+            RunEventKind::Summary(_) => "summary".to_owned(),
+            other => panic!("an unexpected record {other:?}"),
+        })
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "runStarted",
+            "output: lane-run ignores the JVM flag -Djava.awt.headless=false: the lane IDE runs headed",
+            "runFailed",
+            "watchdogState",
+            "summary"
+        ]
+    );
+}

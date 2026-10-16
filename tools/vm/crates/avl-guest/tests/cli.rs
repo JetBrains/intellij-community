@@ -326,7 +326,8 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
 /// `lane-run --plan-only` proves a lane rule and its runfiles with no lane IDE. It stages the inputs of the runfiles,
 /// selects the documents, and writes the plan: the key of the lane IDE and the suites in run order, the suite of a bare
 /// IDE last. It launches no IDE, so no context of a launch key appears under the run directory. A selection of bare
-/// suites alone needs no lane IDE, so its plan names no lane key.
+/// suites alone needs no lane IDE, so its plan names no lane key. The JVM flags of a TeamCity UI job split the lane
+/// between its runners, and an unknown flag is refused.
 #[test]
 fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     let root = tempfile::tempdir().unwrap();
@@ -384,4 +385,34 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     let bare_only = plan(&["--selector", "AirStartupClassLoadingBudgetUiTest"]);
     assert_eq!(bare_only["laneKey"], serde_json::Value::Null, "{bare_only}");
     assert_eq!(bare_only["suites"].as_array().unwrap().len(), 1);
+
+    // The argv of the UI job of TeamCity build 1097187017: each of its two runners plans its own share of the lane.
+    let runner = |index: &str| {
+        let index = format!("--jvm_flag=-Didea.test.runner.index={index}");
+        let shared = plan(&[
+            "--jvm_flag=-Djava.awt.headless=false",
+            &index,
+            "--jvm_flag=-Didea.test.runners.count=2",
+            "--jvm_flag=-Didea.bucketing.season=AirPluginGuiChatTests",
+            "--jvm_flag=-Didea.tests.duration.bucketing.enabled=true",
+        ]);
+        let classes: Vec<String> = shared["suites"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|suite| suite["testClassName"].as_str().unwrap().to_owned())
+            .collect();
+        classes
+    };
+    assert_eq!(runner("0"), ["AirRenameSessionGeneratedFlowUiTest"]);
+    assert_eq!(runner("1"), ["AirStartupClassLoadingBudgetUiTest"]);
+    let mut args = vec!["lane-run", "--lane", "ui", "--plan-only", "--jvm_flag", "-Dunknown.property=1"];
+    let descriptor = path(&descriptor);
+    args.extend(["--descriptor", &descriptor]);
+    let (code, stdout, stderr) = answer(&args);
+    assert_ne!(code, Some(0), "{stdout}{stderr}");
+    assert!(
+        stderr.contains("lane_run_jvm_flag") && stderr.contains("unknown.property"),
+        "{stdout}{stderr}"
+    );
 }

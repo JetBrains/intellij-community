@@ -10,6 +10,7 @@
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
 
+use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::net::{IpAddr, Ipv4Addr};
@@ -22,7 +23,7 @@ use serde::Serialize;
 
 use super::channel::{self, BOOT_CODE, log};
 use super::inputs::{self, guest_platform};
-use super::iteration;
+use super::iteration::{self, RunnerSplit};
 use super::package::sha256_hex;
 use crate::cli::{LaneDaemonArgs, LaneRunArgs};
 use crate::reply::{AgentRefusal, AgentRefusalExt};
@@ -50,6 +51,88 @@ const TOTAL_SHARDS_VARIABLE: &str = "TEST_TOTAL_SHARDS";
 pub(crate) const SHARDED_CODE: &str = "lane_run_sharded";
 /// The refusal code of a recorded session that the variable names and that cannot be packed.
 pub(crate) const SESSION_LOG_CODE: &str = "lane_session_log";
+/// The refusal code of a `--jvm_flag` that lane-run does not take.
+pub(crate) const JVM_FLAG_CODE: &str = "lane_run_jvm_flag";
+/// The JVM property of the index of a runner of a TeamCity UI job, from 0.
+const RUNNER_INDEX_PROPERTY: &str = "idea.test.runner.index";
+/// The JVM property of the count of the runners of a TeamCity UI job.
+const RUNNERS_COUNT_PROPERTY: &str = "idea.test.runners.count";
+/// Why lane-run ignores a bucketing property of the JUnit runner.
+const BUCKETING_IGNORED: &str = "lane-run splits the lane by the order of its suites, not by duration buckets";
+/// The JVM properties that lane-run ignores, each with the reason that its note gives.
+const IGNORED_PROPERTIES: [(&str, &str); 3] = [
+    ("java.awt.headless", "the lane IDE runs headed on the display of the run"),
+    ("idea.bucketing.season", BUCKETING_IGNORED),
+    ("idea.tests.duration.bucketing.enabled", BUCKETING_IGNORED),
+];
+
+/// What the `--jvm_flag` arguments of a run ask for: the share of this runner of the lane, and one note for each flag
+/// that lane-run ignores.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct JvmFlags {
+    pub split: RunnerSplit,
+    pub notes: Vec<String>,
+}
+
+/// Reads the `--jvm_flag` arguments that the UI job of TeamCity passes to the JUnit runner. The runner index and count
+/// give the split. Each ignored property gives a note. A flag that is no `-D` property, another property, a property
+/// with two values, and an index and a count that do not make a split are refused. The refusal of another flag names
+/// it and never its value.
+pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
+    let refused = |message: String| AgentRefusal::refused(JVM_FLAG_CODE, message);
+    let mut properties: BTreeMap<&str, &str> = BTreeMap::new();
+    let mut notes = Vec::new();
+    for flag in flags {
+        let Some(property) = flag.strip_prefix("-D").filter(|property| !property.is_empty()) else {
+            let name = flag.split('=').next().unwrap_or_default();
+            return Err(refused(format!(
+                "lane-run takes only a -D<name>=<value> property as --jvm_flag, and the flag {name} is none"
+            )));
+        };
+        let (name, value) = property.split_once('=').unwrap_or((property, ""));
+        if let Some((_, reason)) = IGNORED_PROPERTIES.iter().find(|(ignored, _)| *ignored == name) {
+            notes.push(format!("lane-run ignores the JVM flag {flag}: {reason}"));
+            continue;
+        }
+        if name != RUNNER_INDEX_PROPERTY && name != RUNNERS_COUNT_PROPERTY {
+            return Err(refused(format!(
+                "lane-run does not take the JVM property {name}: it takes {RUNNER_INDEX_PROPERTY} and \
+                 {RUNNERS_COUNT_PROPERTY}, and it ignores {}",
+                IGNORED_PROPERTIES.map(|(ignored, _)| ignored).join(", ")
+            )));
+        }
+        if properties.insert(name, value).is_some_and(|earlier| earlier != value) {
+            return Err(refused(format!("the JVM property {name} has two values")));
+        }
+    }
+    let number = |name: &str| -> Result<Option<u32>, AgentRefusal> {
+        properties
+            .get(name)
+            .map(|value| {
+                value
+                    .parse::<u32>()
+                    .map_err(|error| refused(format!("the JVM property {name} is no whole number: {value} ({error})")))
+            })
+            .transpose()
+    };
+    let split = match (number(RUNNER_INDEX_PROPERTY)?, number(RUNNERS_COUNT_PROPERTY)?) {
+        (None, None) => RunnerSplit::WHOLE,
+        (Some(index), Some(count)) if index < count => RunnerSplit { index, count },
+        (Some(index), Some(count)) => {
+            return Err(refused(format!(
+                "the runner index {index} of {RUNNER_INDEX_PROPERTY} is not below the runner count {count} of \
+                 {RUNNERS_COUNT_PROPERTY}"
+            )));
+        }
+        (Some(_), None) | (None, Some(_)) => {
+            return Err(refused(format!(
+                "a split of the lane needs both {RUNNER_INDEX_PROPERTY} and {RUNNERS_COUNT_PROPERTY}, and the run names \
+                 one of them"
+            )));
+        }
+    };
+    Ok(JvmFlags { split, notes })
+}
 
 /// Packs each recorded session that [`session_log::VARIABLE`] names into the jar store, as the controller pushes them
 /// to a guest. The zip leaves the run directory once the store holds it.
@@ -82,6 +165,7 @@ pub(crate) fn session_logs(
 /// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
 /// environment.
 pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
+    let flags = jvm_flags(&args.jvm_flags)?;
     refuse_shards(variable)?;
     let root = runtime_root(args, variable)?;
     let runfiles_root = args
@@ -148,7 +232,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         session_logs: session_logs(&daemon, &root, variable)?,
     };
     if args.plan_only {
-        let plan = plan(&daemon, &request)?;
+        let plan = plan(&daemon, &request, flags.split)?;
         let mut out = io::stdout().lock();
         serde_json::to_writer_pretty(&mut out, &plan)
             .map_err(io::Error::from)
@@ -159,7 +243,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
-    let xml = iteration::run(&daemon, &request, &mut Tee(stream, io::stdout()));
+    let xml = iteration::run_split(&daemon, &request, flags.split, &flags.notes, &mut Tee(stream, io::stdout()));
     let written = write_xml(&root, &xml, variable);
     let finished = daemon.finish();
     if let Err(refusal) = &finished {
@@ -202,13 +286,14 @@ pub(crate) struct PlannedSuite {
     pub bare_launch_key: Option<String>,
 }
 
-/// The plan of `request`: the selection of a run, and the key of the IDE that the run would launch.
-pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest) -> Result<RunPlan, AgentRefusal> {
+/// The plan of `request` for the share `split`: the selection of a run, and the key of the IDE that the run would
+/// launch.
+pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: RunnerSplit) -> Result<RunPlan, AgentRefusal> {
     let refused = |message: String| AgentRefusal::refused(PLAN_CODE, message);
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err(refused("the run request names no lane and no lane inputs".to_owned()));
     };
-    let selection = iteration::selection_of(daemon, lane, lane_inputs, request).map_err(refused)?;
+    let selection = iteration::selection_of(daemon, lane, lane_inputs, request, split).map_err(refused)?;
     let shared = selection.suites.iter().any(|suite| suite.program.launch.is_none());
     let lane_key = if shared {
         Some(iteration::lane_key(daemon, &selection, &request.product_stamp).map_err(refused)?)
