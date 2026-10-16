@@ -19,6 +19,7 @@ import com.intellij.python.junit5Tests.assertFail
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.randomBinary
+import com.intellij.python.test.env.common.PredefinedPyEnvironments
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestDisposable
@@ -38,7 +39,8 @@ import org.junit.jupiter.api.Test
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
-@PyEnvTestCase
+// A system python is a plain python, never a venv.
+@PyEnvTestCase(env = PredefinedPyEnvironments.VANILLA_3_12)
 class SystemPythonServiceShowCaseTest {
 
   @ThrowsChecked(ExecuteProcessException::class)
