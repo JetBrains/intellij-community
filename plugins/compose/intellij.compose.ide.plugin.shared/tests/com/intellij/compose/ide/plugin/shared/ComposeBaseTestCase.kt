@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -64,6 +65,12 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
    */
   protected open val additionalSyntaxAndPatterns: Array<String>
     get() = arrayOf()
+
+  /**
+   * An optional step that configures the copy of the test data project.
+   * Override it to apply a step that only some projects need, such as [withAndroidSdk].
+   */
+  protected open fun FileTestFixture.Builder.configureProject() {}
 
   override fun tearDown() {
     runAll(
@@ -138,6 +145,7 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     GradleTestFixtureBuilder.create(projectName) {
       excludeFilePatterns(*excludedFilePatterns, *additionalSyntaxAndPatterns)
       withFile(".gradle/testDataFingerprint", testDataFingerprint(testDataRootPath))
+      configureProject()
       withFiles { projectRoot ->
         val testDataRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testDataRootPath)
                            ?: error("Cannot find $projectName test data")
@@ -149,7 +157,6 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
             isStableTestDataPath(relativePath.split('/'))
           }
         }
-        AndroidStudioTestUtils.specifyAndroidSdk(projectRoot.toNioPath())
       }
     }
   }
