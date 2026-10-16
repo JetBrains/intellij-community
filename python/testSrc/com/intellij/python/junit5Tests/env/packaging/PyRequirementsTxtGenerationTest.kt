@@ -3,12 +3,15 @@ package com.intellij.python.junit5Tests.env.packaging
 
 import com.intellij.python.junit5Tests.framework.rootSourceRootFixture
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -20,13 +23,18 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
 import com.jetbrains.python.packaging.PyRequirementsVersionSpecifierType
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.RequirementsProviderType
+import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
+import kotlinx.coroutines.Job
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -54,7 +62,6 @@ internal class PyRequirementsTxtGenerationTest {
   private val pyProjectFixture = projectFixture.pyProjectFixture()
   private val sourceRoot = pyProjectFixture.rootSourceRootFixture()
 
-  @Suppress("unused")
   private val venvFixture = pyEnvironmentFixture().pyVenvFixture(
     where = tempPathFixture,
     pyProjectFixture = pyProjectFixture,
@@ -128,6 +135,9 @@ internal class PyRequirementsTxtGenerationTest {
     packages: List<PythonPackage> = DEFAULT_PACKAGES,
   ) {
     TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(project, packages)
+    // The test package manager finds the existing requirements file only through this key.
+    @Suppress("DEPRECATION") // The key is user data of the SDK.
+    venvFixture.get().getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, RequirementsProviderType.REQUIREMENTS_TXT)
 
     val settings = PyPackageRequirementsSettings.getInstance(module)
     settings.versionSpecifier = versionSpecifier
@@ -148,12 +158,18 @@ internal class PyRequirementsTxtGenerationTest {
   }
 
   private fun runSyncAction() {
+    lateinit var job: Job
     ApplicationManager.getApplication().invokeAndWait {
       val action = ActionManager.getInstance().getAction("PySyncPythonRequirements")
       val context = SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.MODULE, module)
-      val event = AnActionEvent.createFromAnAction(action, null, "", context)
-      action.actionPerformed(event)
+      val event = AnActionEvent.createEvent(action, context, null, "", ActionUiKind.NONE, null)
+      job = withCurrentThreadCoroutineScopeBlocking {
+        event.installCoroutineScope(currentThreadCoroutineScope())
+        action.actionPerformed(event)
+      }.second
     }
+    // The sync returns to the EDT to write the files, so the test waits for it off the EDT.
+    timeoutRunBlocking { job.join() }
   }
 
   private fun readModuleFileContent(fileName: String): String? {
