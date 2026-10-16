@@ -217,7 +217,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
                     updateUsagesData,
                     updateOverridesData,
                     declaration,
-                    declaration.valueParameters.take(oldSignature.parameters.size)
+                    (declaration.contextParameters + declaration.valueParameters).take(oldSignature.parameters.size)
                 )
 
                 return when (refactoringData) {
@@ -246,6 +246,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         declaration: PsiNamedElement,
         parameters: List<KtParameter>
     ): SuggestedRefactoringData? {
+        if (parameters.size != newSignature.parameters.size) return null
         if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
         // for non-virtual function we can add or remove receiver for usages but not change its type
