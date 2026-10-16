@@ -141,20 +141,48 @@ class McpToolFilterIntegrationTest {
   }
 
   @Test
+  fun `DIRECT session that omits the unused router lists only the allowed tools`() = runBlocking(Dispatchers.Default) {
+    val allowedTools = setOf(tool1, tool2)
+    val options = McpServerService.McpSessionOptions(
+      commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+      toolFilter = McpToolFilter.AllowList(allowedTools),
+      invocationMode = McpSessionInvocationMode.DIRECT,
+    ).withUnusedRouterToolOmitted()
+
+    withAuthorizedSessionConnection(options) { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactlyInAnyOrderElementsOf(allowedTools)
+
+      val result = client.callTool(ROUTER_TOOL, kotlinx.serialization.json.buildJsonObject {
+        put("command", kotlinx.serialization.json.JsonPrimitive(tool3))
+      })
+
+      assertThat(result.isError).isTrue()
+      val textContent = result.content.firstOrNull() as? TextContent
+      assertThat(textContent).isNotNull()
+      assertThat(textContent!!.text).contains("not found")
+    }
+  }
+
+  @Test
   fun `header does not change an authorized session with a fixed filter`() = runBlocking(Dispatchers.Default) {
-    // 263 only: the session helper of this branch takes a filter, and `McpSessionOptions` has no `withUnusedRouterToolOmitted`,
-    // so the router tool stays in the list.
-    val filter = McpToolFilter.AllowList(setOf(tool1))
-    withAuthorizedSessionConnection(filter, allowedToolsHeader = "$tool1,$tool2,$tool3") { client ->
-      assertThat(client.listTools().tools.map { it.name }).containsExactlyInAnyOrder(tool1, ROUTER_TOOL)
+    val options = McpServerService.McpSessionOptions(
+      commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+      toolFilter = McpToolFilter.AllowList(setOf(tool1)),
+      invocationMode = McpSessionInvocationMode.DIRECT,
+    ).withUnusedRouterToolOmitted()
+
+    withAuthorizedSessionConnection(options, allowedToolsHeader = "$tool1,$tool2,$tool3") { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactly(tool1)
+
       val result = client.callTool(tool3, kotlinx.serialization.json.buildJsonObject {
         put("pathInProject", kotlinx.serialization.json.JsonPrimitive("test.txt"))
       })
+
       assertThat(result.isError).isTrue()
       assertThat((result.content.firstOrNull() as? TextContent)?.text).contains("not found")
     }
-    withAuthorizedSessionConnection(filter, allowedToolsHeader = tool2) { client ->
-      assertThat(client.listTools().tools.map { it.name }).containsExactlyInAnyOrder(tool1, ROUTER_TOOL)
+    withAuthorizedSessionConnection(options, allowedToolsHeader = tool2) { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactly(tool1)
     }
   }
 
@@ -174,7 +202,12 @@ class McpToolFilterIntegrationTest {
       }
     } else {
       // Use authorized session with filter-based filtering
-      withAuthorizedSessionConnection(filter) { client ->
+      withAuthorizedSessionConnection(
+        McpServerService.McpSessionOptions(
+          commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+          toolFilter = filter
+        )
+      ) { client ->
         action(client, emptyList())
       }
     }
@@ -190,18 +223,13 @@ class McpToolFilterIntegrationTest {
   }
 
   private suspend fun withAuthorizedSessionConnection(
-    filter: McpToolFilter,
+    sessionOptions: McpServerService.McpSessionOptions,
     allowedToolsHeader: String? = null,
     action: suspend (Client) -> Unit
   ) {
     val service = McpServerService.getInstance()
 
-    service.authorizedSession(
-      McpServerService.McpSessionOptions(
-        commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
-        toolFilter = filter
-      )
-    ) { port, tokenName, tokenValue ->
+    service.authorizedSession(sessionOptions) { port, tokenName, tokenValue ->
       connectToServer(
         port = port,
         extraHeaders = {
