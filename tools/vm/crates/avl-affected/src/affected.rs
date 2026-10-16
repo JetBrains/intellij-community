@@ -19,7 +19,6 @@
 //! - The suite documents under the flow profile directory. Each carries `suite`, `lane`, `testClassName` and the
 //!   flow of every profile and step, and what its routes reach: the `module:` endpoints of every step they walk,
 //!   and the implementation flows the story flows of those routes declare. The generator publishes both facts.
-//! - The authored suites file, the copy of `AirJourneySuites` that a fast-lane test keeps equal to the Kotlin.
 //! - The `targets` and the `[@test]` links of the specs.
 //! - The `.iml` files above a path, for its JPS module, and the lane-wide modules and lane-wide paths of the Air
 //!   lane table, for the harness.

@@ -282,9 +282,6 @@ pub struct SessionLog {
 pub struct LaneClass {
     pub suite: String,
     pub test_class_name: String,
-    /// A suite of the authored suites file, which has no suite document yet.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub authored: bool,
 }
 
 /// One context plugin file of a run: its destination below the plugin directory of the IDE context, and the digest

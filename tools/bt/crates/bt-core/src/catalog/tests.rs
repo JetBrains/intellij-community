@@ -47,7 +47,7 @@ fn a_profile_answers_every_id_of_its_program_setups_included() {
     assert_eq!(profile.scenario_flows().flows(), ["flow-rename-session", "flow-sidebar"]);
     assert_eq!(document.modules, ["intellij.air.frontend"]);
     assert_eq!(document.implementation_flows, ["flow-impl-rename"]);
-    assert!(document.path.is_empty() && !document.authored);
+    assert_eq!(document.path, "");
 }
 
 /// A document's lane is the catalog's word, and the lane name comes from the lane table.

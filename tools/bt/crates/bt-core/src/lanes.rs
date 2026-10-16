@@ -31,9 +31,9 @@ use crate::selector::Resolution;
 ///   `buildsExcludedTestLibs` compiles in a second spawn. The library and not the `*_test` rule: an IDE-launching
 ///   rule declares the assembled dev distribution as `data`, and building the rule recomposes it. A tag filter
 ///   cannot select a library, so the area's own test keeps this list equal to the tagged targets.
-/// - The suite catalog, all three or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
+/// - The suite catalog, both or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
-///   per story flow; `authoredSuitesFile`, the committed copy of the authored suites.
+///   per story flow.
 /// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
 ///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
 ///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness directory that no
@@ -45,8 +45,6 @@ pub struct Lanes {
     flow_profile_dir: Option<String>,
     #[serde(default)]
     flow_text_dir: Option<String>,
-    #[serde(default)]
-    authored_suites_file: Option<String>,
     #[serde(default)]
     spec_dir: Option<String>,
     #[serde(default)]
@@ -62,12 +60,11 @@ pub struct Lanes {
     lanes: Vec<LaneSpec>,
 }
 
-/// The suite catalog of a lane table: the three paths the suite join reads, all repo-relative.
+/// The suite catalog of a lane table: the two paths the suite join reads, both repo-relative.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Catalog<'a> {
     pub flow_profile_dir: &'a str,
     pub flow_text_dir: &'a str,
-    pub authored_suites_file: &'a str,
 }
 
 /// One lane: the targets it runs and the flags that are its definition.
@@ -172,9 +169,8 @@ impl Lanes {
     /// Parses a lane table, and answers why it is not one otherwise.
     pub fn parse(text: &str) -> Result<Self, String> {
         let lanes: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
-        let catalog = [&lanes.flow_profile_dir, &lanes.flow_text_dir, &lanes.authored_suites_file];
-        if catalog.iter().any(|path| path.is_some()) && catalog.iter().any(|path| path.is_none()) {
-            return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
+        if lanes.flow_profile_dir.is_some() != lanes.flow_text_dir.is_some() {
+            return Err("a suite catalog names flowProfileDir and flowTextDir together".to_owned());
         }
         lanes.check_tags()?;
         lanes.check_document_lanes()?;
@@ -315,7 +311,6 @@ impl Lanes {
         Some(Catalog {
             flow_profile_dir: self.flow_profile_dir.as_deref()?,
             flow_text_dir: self.flow_text_dir.as_deref()?,
-            authored_suites_file: self.authored_suites_file.as_deref()?,
         })
     }
 

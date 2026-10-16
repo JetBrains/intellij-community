@@ -19,8 +19,7 @@ const DAEMON_PORT: u16 = 27_100;
 /// The digest of the option file templates that `AirLaneDigestTest` pins on the Kotlin side.
 const KOTLIN_OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c7083dbe88810fb110c4";
 
-/// The controlled agent of the fixture whose control channel the IDE serves in these tests. The committed document of
-/// the lane gives the host every controlled agent, so the tests move this one to the IDE.
+/// A controlled agent of the fixture. The IDE serves the control channel of every controlled agent.
 const IDE_OWNED_AGENT: &str = "genui-agent";
 
 fn testdata(name: &str) -> PathBuf {
@@ -37,20 +36,17 @@ fn document() -> LaneDocument {
     parse_lane_document(&document_bytes()).expect("the fixture lane document reads")
 }
 
-/// The fixture document with [`IDE_OWNED_AGENT`] served by the IDE.
-fn document_with_ide_agent() -> LaneDocument {
+/// The fixture document with no controlled agent, so the IDE serves no control channel.
+fn document_without_controlled_agents() -> LaneDocument {
     let mut document = document();
-    let agent = document
+    let controlled: Vec<String> = document
         .agents
-        .iter_mut()
-        .find(|agent| agent.key == IDE_OWNED_AGENT)
-        .expect("the fixture has the agent");
-    assert_eq!(
-        agent.control_owner,
-        Some(ControlOwner::Host),
-        "the committed document gives the agent to the host"
-    );
-    agent.control_owner = Some(ControlOwner::Ide);
+        .iter()
+        .filter(|agent| agent.controlled)
+        .map(|agent| agent.key.clone())
+        .collect();
+    document.agents.retain(|agent| !agent.controlled);
+    document.registry_agents.retain(|key| !controlled.contains(key));
     document
 }
 
@@ -225,7 +221,7 @@ fn the_option_templates_are_the_bytes_of_the_kotlin_templates() {
 
 #[test]
 fn the_context_of_the_ui_lane_is_the_golden() {
-    let (prepared, _, _) = written(&document_with_ide_agent());
+    let (prepared, _, _) = written(&document());
     expect_test::expect_file![testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
 }
 
@@ -273,7 +269,7 @@ fn entry_names(text: &str) -> Vec<String> {
 
 #[test]
 fn the_private_files_and_the_launchers_get_their_modes() {
-    let (prepared, _, _) = written(&document_with_ide_agent());
+    let (prepared, _, _) = written(&document());
     let bridge = Path::new(&prepared.paths.config_dir).join(BRIDGE_DIR);
     let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
     assert_eq!(mode(&bridge), 0o700);
@@ -287,7 +283,7 @@ fn the_private_files_and_the_launchers_get_their_modes() {
 
 #[test]
 fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file() {
-    let (owned, none, runtimes) = (document_with_ide_agent(), document(), runtimes());
+    let (owned, none, runtimes) = (document(), document_without_controlled_agents(), runtimes());
     let identity = identity(&none, &runtimes);
     let prepared = prepared();
     let jar = fixture_jar();
@@ -317,7 +313,7 @@ fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a
 
 #[test]
 fn the_files_carry_the_values_of_the_identity() {
-    let (prepared, identity, ports) = written(&document_with_ide_agent());
+    let (prepared, identity, ports) = written(&document());
     let bridge = Path::new(&prepared.paths.config_dir).join(BRIDGE_DIR);
     let read = |name: &str| serde_json::from_str::<Value>(&fs::read_to_string(bridge.join(name)).unwrap()).unwrap();
     assert_eq!(
@@ -336,24 +332,29 @@ fn the_files_carry_the_values_of_the_identity() {
         Value::from(format!("http://127.0.0.1:{}", identity.registry_port()))
     );
     let control = read(CONTROL_FILE);
-    assert_eq!(control["port"], Value::from(identity.control_port(ControlOwner::Ide)));
-    let login = terminal_login_key(IDE_OWNED_AGENT);
-    assert_eq!(
-        control["credentials"],
-        serde_json::json!([
-            { "agentKey": IDE_OWNED_AGENT, "token": identity.secret(IDE_OWNED_AGENT), "terminalLogin": false },
-            { "agentKey": login, "token": identity.secret(&login), "terminalLogin": true },
-        ])
-    );
+    assert_eq!(control["port"], Value::from(identity.control_port()));
+    let expected: Vec<Value> = document()
+        .agents
+        .iter()
+        .filter(|agent| agent.controlled)
+        .flat_map(|agent| {
+            let login = terminal_login_key(&agent.key);
+            [
+                serde_json::json!({ "agentKey": agent.key, "token": identity.secret(&agent.key), "terminalLogin": false }),
+                serde_json::json!({ "agentKey": login, "token": identity.secret(&login), "terminalLogin": true }),
+            ]
+        })
+        .collect();
+    assert_eq!(control["credentials"], Value::from(expected));
     let acp: Value = serde_json::from_str(&fs::read_to_string(Path::new(&prepared.paths.home_dir).join(ACP_JSON)).unwrap()).unwrap();
     let servers = &acp["agent_servers"];
     assert_eq!(
         servers["air-scenario-genui-agent"]["env"][CONTROL_URL_ENV_NAME],
-        Value::from(identity.control_url(ControlOwner::Ide, IDE_OWNED_AGENT))
+        Value::from(identity.control_url(IDE_OWNED_AGENT))
     );
     assert_eq!(
         servers["air-scenario-workflow-source"]["env"][CONTROL_URL_ENV_NAME],
-        Value::from(identity.control_url(ControlOwner::Host, "workflow-source"))
+        Value::from(identity.control_url("workflow-source"))
     );
 }
 

@@ -587,7 +587,6 @@ fn the_lane_table_parses_with_the_paths_the_join_reads() {
         Some(Catalog {
             flow_profile_dir: "plugins/air/tests/integration/flow-profiles/resources/flow-profiles",
             flow_text_dir: "plugins/air/docs/flows",
-            authored_suites_file: "plugins/air/tests/integration/flow-profiles/resources/authored-suites.json",
         })
     );
     assert_eq!(lanes().catalog_lane_names(), ["GUI_CHAT", "UI", "UI_REAL"]);

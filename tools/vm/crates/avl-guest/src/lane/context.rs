@@ -29,7 +29,7 @@ use avl_wire::ide::{ADVANCED_SETTINGS_FILE, IdePrepared, NO_README_SETTINGS};
 use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LaneAgent, LaneDocument, Requirement};
 use serde::Serialize;
 
-use super::identity::{BRIDGE_TOKEN_PURPOSE, ControlOwner, LANE_SERVICES_PURPOSE, LaneIdentity, terminal_login_key};
+use super::identity::{BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity, terminal_login_key};
 use super::package::sha256_hex;
 use super::services::codex;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
@@ -251,18 +251,6 @@ impl LaneContext<'_> {
         })
     }
 
-    /// The process that serves the control channel of the controlled agent `agent_key`: the control owner that the lane
-    /// document states for it. The reader of the document refuses a controlled agent without one, so the host is only
-    /// the answer for a key that the document does not hold.
-    pub(crate) fn owner(&self, agent_key: &str) -> ControlOwner {
-        self.document
-            .agents
-            .iter()
-            .find(|agent| agent.key == agent_key)
-            .and_then(|agent| agent.control_owner)
-            .unwrap_or(ControlOwner::Host)
-    }
-
     /// Writes the context files into the prepared context `paths`, and answers the ports of the lane services.
     pub(crate) fn write(&self, paths: &IdePrepared) -> Result<ServicePorts, AgentRefusal> {
         let ports = self.check()?;
@@ -315,7 +303,7 @@ impl LaneContext<'_> {
             .document
             .agents
             .iter()
-            .filter(|agent| agent.controlled && self.owner(&agent.key) == ControlOwner::Ide)
+            .filter(|agent| agent.controlled)
             .flat_map(|agent| {
                 [(agent.key.clone(), false), (terminal_login_key(&agent.key), true)].map(|(key, terminal_login)| Credential {
                     token: self.identity.secret(&key),
@@ -326,7 +314,7 @@ impl LaneContext<'_> {
             .collect();
         (!credentials.is_empty()).then(|| ControlFile {
             schema_version: SCHEMA_VERSION,
-            port: self.identity.control_port(ControlOwner::Ide),
+            port: self.identity.control_port(),
             agent_java: self.java.display().to_string(),
             agent_jar: home.join(AGENT_JAR).display().to_string(),
             credentials,
@@ -370,7 +358,7 @@ impl LaneContext<'_> {
 
     fn control_environment(&self, agent: &LaneAgent) -> Vec<(&'static str, String)> {
         if agent.controlled {
-            self.identity.control_environment(self.owner(&agent.key), &agent.key).into()
+            self.identity.control_environment(&agent.key).into()
         } else {
             Vec::new()
         }

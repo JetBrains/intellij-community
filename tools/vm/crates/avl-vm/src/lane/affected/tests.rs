@@ -123,26 +123,20 @@ impl Checkout {
     }
 }
 
-// The lane daemon plans every suite of its lane that the catalog names: each suite document and each authored suite of
-// the lane, by test class. A suite of another lane is none of them.
+// The lane daemon plans every suite of its lane that the catalog names: each suite document of the lane, by test class.
+// A suite of another lane is none of them.
 #[test]
-fn the_lane_classes_are_the_suite_documents_and_the_authored_suites_of_the_lane() {
+fn the_lane_classes_are_the_suite_documents_of_the_lane() {
     let checkout = Checkout::new();
-    checkout.write(
-        catalog().authored_suites_file,
-        r#"{"suites": [{"suite": "genui-host", "lane": "UI", "testClassName": "AirGenUiHostUiTest"}, {"suite": "chat-authored", "lane": "GUI_CHAT", "testClassName": "AirChatAuthoredUiTest"}]}"#,
-    );
-    let class = |suite: &str, test_class_name: &str, authored: bool| LaneClass {
+    let class = |suite: &str, test_class_name: &str| LaneClass {
         suite: suite.to_owned(),
         test_class_name: test_class_name.to_owned(),
-        authored,
     };
     assert_eq!(
         lane_classes(&checkout.settings(), "ui", &quiet()).unwrap(),
         [
-            class("genui-host", "AirGenUiHostUiTest", true),
-            class("quick-start", "AirQuickStartGeneratedFlowUiTest", false),
-            class("second-ui", "AirSecondGeneratedFlowUiTest", false),
+            class("quick-start", "AirQuickStartGeneratedFlowUiTest"),
+            class("second-ui", "AirSecondGeneratedFlowUiTest"),
         ]
     );
 }

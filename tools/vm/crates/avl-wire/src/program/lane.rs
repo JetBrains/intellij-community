@@ -46,10 +46,9 @@ vocabulary! {
 }
 
 vocabulary! {
-    /// Which process serves the control channel of a controlled agent, `AirAcpControlOwner` of the Kotlin fixture.
+    /// Which process serves the control channel of a controlled agent, `AirAcpControlOwner` of the Kotlin fixture. The
+    /// lane IDE serves every controlled agent.
     pub enum ControlOwner {
-        /// The control server of the JVM host.
-        Host = "HOST",
         /// The control server in the lane IDE, which the launch file `control.json` binds.
         Ide = "IDE",
     }
@@ -58,7 +57,6 @@ vocabulary! {
 vocabulary! {
     /// A lane fixture that no agent implies, as `AirLaneRequirement` names it.
     pub enum Requirement {
-        AcpDebugServer = "ACP_DEBUG_SERVER",
         AcpTransportCapture = "ACP_TRANSPORT_CAPTURE",
         FeedbackCapture = "FEEDBACK_CAPTURE",
         JunieStartupPromo = "JUNIE_STARTUP_PROMO",
@@ -88,8 +86,6 @@ pub struct LaneDocument {
     pub cli_runtimes: Vec<String>,
     /// The identity line of each lane service, by the name of the service.
     pub services: BTreeMap<String, String>,
-    /// The journey suites that the JVM host still runs, with their agents and requirements.
-    pub journey_suites: Vec<JourneySuite>,
     /// The IJ Perf series of the scenarios of the lane that report metrics. A lane with none leaves the field out.
     #[serde(default)]
     pub performance_series: Vec<PerformanceSeries>,
@@ -162,15 +158,6 @@ pub struct AcpJsonEntry {
     pub command: String,
     pub args: Vec<String>,
     pub env: BTreeMap<String, String>,
-}
-
-/// One journey suite: the agents that it drives and the requirements that it needs.
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct JourneySuite {
-    pub suite: String,
-    pub agents: Vec<String>,
-    pub requirements: Vec<Requirement>,
 }
 
 /// The series of the IJ Perf dashboard that one scenario reports its metrics to.
@@ -280,24 +267,6 @@ impl LaneDocument {
         }) {
             if !properties.insert(key) {
                 refusals.push(format!("the launch property '{key}' is stated twice"));
-            }
-        }
-        for suite in &self.journey_suites {
-            for key in &suite.agents {
-                if !keys.contains(key.as_str()) {
-                    refusals.push(format!(
-                        "the journey suite '{}' names the agent '{key}', which the lane does not state",
-                        suite.suite
-                    ));
-                }
-            }
-            for requirement in &suite.requirements {
-                if !self.requirements.iter().any(|stated| stated.name == *requirement) {
-                    refusals.push(format!(
-                        "the journey suite '{}' needs {requirement}, which the lane does not state",
-                        suite.suite
-                    ));
-                }
             }
         }
         let mut scenarios = BTreeSet::new();

@@ -270,18 +270,16 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         LaneClass {
             suite: "composer".to_owned(),
             test_class_name: "AirComposerGeneratedFlowUiTest".to_owned(),
-            authored: false,
         },
         LaneClass {
             suite: "genui-host".to_owned(),
             test_class_name: "AirGenUiHostUiTest".to_owned(),
-            authored: true,
         },
     ];
     let encoded = serde_json::to_string(&request).unwrap();
     assert!(
         encoded.ends_with(
-            r#""laneClasses":[{"suite":"composer","testClassName":"AirComposerGeneratedFlowUiTest"},{"suite":"genui-host","testClassName":"AirGenUiHostUiTest","authored":true}]}"#
+            r#""laneClasses":[{"suite":"composer","testClassName":"AirComposerGeneratedFlowUiTest"},{"suite":"genui-host","testClassName":"AirGenUiHostUiTest"}]}"#
         ),
         "{encoded}"
     );

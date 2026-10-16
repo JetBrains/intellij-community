@@ -854,33 +854,6 @@ fn git_lists_files_by_their_literal_name() {
     assert_eq!(git_list_files(repo.path(), "W*nted.kt"), Ok(vec!["c/W*nted.kt".to_owned()]));
 }
 
-/// An authored suite has no scenario document. A path that reaches one plans it as a class with its own run, and a
-/// note says why, rather than failing the whole join or dropping the suite.
-#[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
-fn a_path_that_reaches_an_authored_suite_plans_its_class() {
-    let documents = documents_or_skip!();
-    let repo = fixture_repo(&documents);
-    repo.write(
-        air_area().catalog().expect("a catalog").authored_suites_file,
-        r#"{ "suites": [ { "suite": "authored-probe", "lane": "GUI_CHAT", "testClassName": "AirAuthoredProbeUiTest" } ] }"#,
-    );
-    let path = "plugins/air/tests/integration/gui-chat/test/AirAuthoredProbeUiTest.kt";
-    repo.write(path, "package air\n\nclass AirAuthoredProbeUiTest\n");
-
-    let result = plan(&repo.root, vec![text(path)]);
-    assert!(result.scenarios.is_empty(), "{:?}", scenario_keys(&result));
-    assert_eq!(result.classes, vec!["AirAuthoredProbeUiTest".to_owned()]);
-    assert_eq!(result.lanes, vec!["gui-chat".to_owned()]);
-    assert!(
-        notes_of(&result).contains("AirAuthoredProbeUiTest, which have no generated profile"),
-        "{:?}",
-        result.notes
-    );
-    let vm = command_of(&result, CommandKind::Vm, "gui-chat");
-    assert_eq!(vm.lines, vec![vm_run("gui-chat", &["AirAuthoredProbeUiTest"])]);
-}
-
 // --- the CLI -------------------------------------------------------------------------------------------------
 
 #[derive(Parser)]

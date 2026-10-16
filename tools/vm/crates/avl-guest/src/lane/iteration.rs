@@ -157,20 +157,14 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
 
 /// The failure of a planned suite that has no suite document, [`kind::UNSUPPORTED`].
 pub(crate) fn undocumented_failure(class: &LaneClass, lane: &str) -> Failure {
-    let message = if class.authored {
-        format!(
-            "the suite '{}' ({}) is an authored suite of the JVM host, and the lane daemon runs it only when a suite \
-             document states it",
-            class.suite, class.test_class_name
-        )
-    } else {
+    Failure::runner(
+        kind::UNSUPPORTED,
         format!(
             "the catalog names the suite '{}' ({}) for the lane {lane}, and the suite documents of the run hold no \
              document of it",
             class.suite, class.test_class_name
-        )
-    };
-    Failure::runner(kind::UNSUPPORTED, message)
+        ),
+    )
 }
 
 /// Keeps the documents that the JUnit5 `filters` select, as JUnit applies them to the class of each document: the

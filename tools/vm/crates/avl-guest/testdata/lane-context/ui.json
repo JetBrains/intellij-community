@@ -177,12 +177,6 @@
   ],
   "requirements": [
     {
-      "name": "ACP_DEBUG_SERVER",
-      "properties": {
-        "air.acp.debug.server.enabled": "true"
-      }
-    },
-    {
       "name": "ACP_TRANSPORT_CAPTURE",
       "properties": {
         "air.acp.debug.enabled": "true"
@@ -552,7 +546,7 @@
       "configName": "air-scenario-workflow-source",
       "displayName": "air-scenario-workflow-source",
       "controlled": true,
-      "controlOwner": "HOST",
+      "controlOwner": "IDE",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -591,7 +585,7 @@
       "configName": "air-scenario-session-window-first",
       "displayName": "air-scenario-session-window-first",
       "controlled": true,
-      "controlOwner": "HOST",
+      "controlOwner": "IDE",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -607,7 +601,7 @@
       "configName": "air-scenario-session-window-second",
       "displayName": "air-scenario-session-window-second",
       "controlled": true,
-      "controlOwner": "HOST",
+      "controlOwner": "IDE",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -646,7 +640,7 @@
       "configName": "air-scenario-genui-agent",
       "displayName": "air-scenario-genui-agent",
       "controlled": true,
-      "controlOwner": "HOST",
+      "controlOwner": "IDE",
       "acpJson": {
         "command": "${java}",
         "args": [
@@ -673,68 +667,5 @@
   "services": {
     "codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply",
     "jetBrainsCloud": "jba-jcp-emulator-1"
-  },
-  "journeySuites": [
-    {
-      "suite": "workflow-missed-runs",
-      "agents": [
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "workflow-references",
-      "agents": [
-        "workflow-source",
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "ACP_TRANSPORT_CAPTURE",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "project-workflows",
-      "agents": [
-        "workflow-source",
-        "workflow-run"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER",
-        "WORKFLOWS"
-      ]
-    },
-    {
-      "suite": "session-tool-window-composer",
-      "agents": [
-        "session-window-seed",
-        "session-window-first",
-        "session-window-second"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER"
-      ]
-    },
-    {
-      "suite": "genui-host",
-      "agents": [
-        "genui-seed",
-        "genui-agent"
-      ],
-      "requirements": [
-        "ACP_DEBUG_SERVER"
-      ]
-    },
-    {
-      "suite": "agent-sessions-stripe-migration",
-      "agents": [],
-      "requirements": [
-        "ACP_DEBUG_SERVER"
-      ]
-    }
-  ]
+  }
 }

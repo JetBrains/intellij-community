@@ -38,8 +38,8 @@ fn the_identity_of_the_fixed_key_is_the_golden() {
     let _ = writeln!(rendered, "key={}", identity.key());
     for (name, port) in [
         ("registry", identity.registry_port()),
-        ("control.host", identity.control_port(ControlOwner::Host)),
-        ("control.ide", identity.control_port(ControlOwner::Ide)),
+        ("control.reserved-host", identity.reserved_host_port()),
+        ("control.ide", identity.control_port()),
         ("feedback", identity.feedback_port()),
         ("cloud", identity.cloud_port()),
     ] {
@@ -53,7 +53,7 @@ fn the_identity_of_the_fixed_key_is_the_golden() {
     ] {
         let _ = writeln!(rendered, "secret.{purpose}={}", identity.secret(purpose));
     }
-    let _ = writeln!(rendered, "url.ide={}", identity.control_url(ControlOwner::Ide, "workflow-source"));
+    let _ = writeln!(rendered, "url.ide={}", identity.control_url("workflow-source"));
     expect![[r"
         lane=UI
         laneDocument=fe73e1e46a51cb59dd961377c6f528abdc73e11a1ed059622b50eee7416449a2
@@ -63,7 +63,7 @@ fn the_identity_of_the_fixed_key_is_the_golden() {
         optionFiles=f52d3ce8c0615ab02d1c50a0ed983216fb369276666e9a9b2eabe6efacb326ba
         key=air-ui-a432e9c21a7cff01
         port.registry=27287
-        port.control.host=30287
+        port.control.reserved-host=30287
         port.control.ide=30425
         port.feedback=30787
         port.cloud=32287
@@ -145,7 +145,7 @@ fn a_derived_port_steps_over_the_daemon_port_and_wraps_at_the_end_of_its_window(
 }
 
 #[test]
-fn the_ide_control_port_steps_clear_of_the_host_control_port() {
+fn the_ide_control_port_steps_clear_of_the_reserved_host_port() {
     // A key whose two seeds pick the same control port.
     let free = LaneIdentity::new("air-ui-test", DAEMON_PORT);
     let key = (0..100_000)
@@ -153,9 +153,9 @@ fn the_ide_control_port_steps_clear_of_the_host_control_port() {
         .find(|key| free.derived_port(key, &CONTROL_PORTS, &[]) == free.derived_port(&format!("{key}|ide-control"), &CONTROL_PORTS, &[]))
         .expect("a key whose two control seeds collide");
     let identity = LaneIdentity::new(key, DAEMON_PORT);
-    let host = identity.control_port(ControlOwner::Host);
+    let host = identity.reserved_host_port();
     assert_eq!(
-        identity.control_port(ControlOwner::Ide),
+        identity.control_port(),
         CONTROL_PORTS.start + (host - CONTROL_PORTS.start + 1) % 500
     );
 }
@@ -184,9 +184,12 @@ fn a_secret_tells_two_purposes_apart() {
     assert!(secrets.iter().all(|secret| secret.len() == 32));
     assert_eq!(secrets.iter().collect::<std::collections::BTreeSet<_>>().len(), 3);
     assert_eq!(
-        identity.control_environment(ControlOwner::Host, "genui-agent"),
+        identity.control_environment("genui-agent"),
         [
-            (CONTROL_URL_ENV, format!("ws://127.0.0.1:30287/control?token={}", secrets[2])),
+            (
+                CONTROL_URL_ENV,
+                format!("ws://127.0.0.1:{}/control?token={}", identity.control_port(), secrets[2])
+            ),
             (CONTROL_AGENT_KEY_ENV, "genui-agent".to_owned()),
         ]
     );

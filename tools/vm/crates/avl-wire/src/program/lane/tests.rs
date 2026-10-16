@@ -24,7 +24,6 @@ fn document() -> Value {
         "disabledPluginIds": ["com.intellij.ml.llm"],
         "cliRuntimes": ["codex", "pi"],
         "services": {"jetBrainsCloud": "jba-jcp-emulator-1"},
-        "journeySuites": [{"suite": "journey", "agents": ["run", "steer"], "requirements": ["WORKFLOWS"]}],
     })
 }
 
@@ -43,7 +42,6 @@ fn a_document_that_fits_itself_is_read_with_every_field() {
     assert_eq!(document.agents[1].delivery, Delivery::Registry);
     assert_eq!(document.agents[1].control_owner, Some(ControlOwner::Ide));
     assert_eq!(document.agents[0].control_owner, None);
-    assert_eq!(document.journey_suites[0].requirements, vec![Requirement::Workflows]);
 }
 
 #[test]
@@ -101,7 +99,7 @@ fn a_control_owner_is_stated_exactly_for_a_controlled_agent() {
         "the agent 'steer' must state a control owner exactly when it is controlled"
     );
     let mut deterministic = document();
-    deterministic["agents"][0]["controlOwner"] = json!("HOST");
+    deterministic["agents"][0]["controlOwner"] = json!("IDE");
     assert_eq!(
         parse(&deterministic).unwrap_err(),
         "the agent 'run' must state a control owner exactly when it is controlled"
@@ -118,14 +116,12 @@ fn a_document_that_does_not_fit_itself_names_each_mismatch() {
     broken["agents"][1]["deterministic"] =
         json!({"responsePrefix": "x", "responseDelayMs": 0, "asksPermission": false, "loadsSessions": false});
     broken["agents"][0]["acpJson"]["args"] = json!(["-cp", "classes"]);
-    broken["journeySuites"][0]["agents"] = json!(["gone"]);
     assert_eq!(
         parse(&broken).unwrap_err().split("; ").collect::<Vec<_>>(),
         vec![
             "the acp.json entry of 'run' runs ${java} [\"-cp\", \"classes\"], not ${java} -jar ${fakeAgentJar}",
             "the agent 'steer' must state an answer exactly when it is not controlled",
             "the registry agents [] are not the registry agents [\"steer\"] of the agents",
-            "the journey suite 'journey' names the agent 'gone', which the lane does not state",
         ]
     );
 }

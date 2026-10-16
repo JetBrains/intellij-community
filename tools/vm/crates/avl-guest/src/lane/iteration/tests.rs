@@ -67,11 +67,10 @@ fn planned(root: &Path, lane: &str, selectors: &[&str], filters: &[&str], lane_c
     })
 }
 
-fn lane_class(suite: &str, test_class_name: &str, authored: bool) -> LaneClass {
+fn lane_class(suite: &str, test_class_name: &str) -> LaneClass {
     LaneClass {
         suite: suite.to_owned(),
         test_class_name: test_class_name.to_owned(),
-        authored,
     }
 }
 
@@ -81,8 +80,8 @@ fn lane_class(suite: &str, test_class_name: &str, authored: bool) -> LaneClass {
 fn a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document() {
     let root = documents();
     let lane_classes = [
-        lane_class("add-to-agent-context", "AirAddToAgentContextGeneratedFlowUiTest", false),
-        lane_class("genui-host", "AirGenUiHostUiTest", true),
+        lane_class("add-to-agent-context", "AirAddToAgentContextGeneratedFlowUiTest"),
+        lane_class("genui-host", "AirGenUiHostUiTest"),
     ];
     let undocumented =
         |selection: &Selection| -> Vec<String> { selection.undocumented.iter().map(|class| class.test_class_name.clone()).collect() };
@@ -131,21 +130,11 @@ fn a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document
 // A suite with no suite document fails as unsupported, and the reason says why the lane daemon cannot run it.
 #[test]
 fn an_undocumented_suite_fails_as_unsupported_with_its_reason() {
-    let authored = undocumented_failure(&lane_class("genui-host", "AirGenUiHostUiTest", true), "ui").typed();
-    assert_eq!(authored.kind.as_deref(), Some("lane_unsupported"));
+    let undocumented = undocumented_failure(&lane_class("composer", "AirComposerGeneratedFlowUiTest"), "ui").typed();
+    assert_eq!(undocumented.kind.as_deref(), Some("lane_unsupported"));
     assert!(
-        authored
-            .message
-            .as_deref()
-            .unwrap()
-            .starts_with("the suite 'genui-host' (AirGenUiHostUiTest) is an authored suite"),
-        "{authored:?}"
-    );
-    let generated = undocumented_failure(&lane_class("composer", "AirComposerGeneratedFlowUiTest", false), "ui").typed();
-    assert_eq!(generated.kind.as_deref(), Some("lane_unsupported"));
-    assert!(
-        generated.message.as_deref().unwrap().contains("hold no document of it"),
-        "{generated:?}"
+        undocumented.message.as_deref().unwrap().contains("hold no document of it"),
+        "{undocumented:?}"
     );
 }
 

@@ -153,7 +153,6 @@ pub(crate) fn lane_classes(settings: &Config, lane: &str, reporter: &Reporter) -
         .map(|document| LaneClass {
             suite: document.suite,
             test_class_name: document.test_class_name,
-            authored: document.authored,
         })
         .collect();
     classes.sort_by(|left, right| left.test_class_name.cmp(&right.test_class_name));

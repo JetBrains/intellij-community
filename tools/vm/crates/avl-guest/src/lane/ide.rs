@@ -266,7 +266,7 @@ fn registry_agents(context: &LaneContext<'_>) -> Vec<RegistryAgent> {
                 environment.extend(
                     context
                         .identity
-                        .control_environment(context.owner(&agent.key), &agent.key)
+                        .control_environment(&agent.key)
                         .map(|(name, value)| (name.to_owned(), value)),
                 );
             }

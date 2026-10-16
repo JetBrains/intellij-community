@@ -11,7 +11,7 @@ use super::*;
 fn lane_document(series: Option<Value>) -> Value {
     let mut document = json!({
         "schemaVersion": 1, "lane": "UI_PERF", "vocabularyDigest": "digest", "launchProperties": [], "requirements": [],
-        "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": [], "services": {}, "journeySuites": [],
+        "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": [], "services": {},
     });
     if let Some(series) = series {
         document["performanceSeries"] = series;

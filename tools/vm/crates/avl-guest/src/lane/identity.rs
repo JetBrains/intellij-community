@@ -79,11 +79,6 @@ impl KeyInputs<'_> {
     }
 }
 
-/// Which process serves the control channel of a controlled agent: the `controlOwner` of the agent in the lane
-/// document. The JVM host serves the agents of a journey that still runs there. The IDE serves the agents of a body in
-/// the IDE, on a port of its own, so the two servers of one lane never share a port.
-pub(crate) use avl_wire::program::lane::ControlOwner;
-
 /// The identity of one lane IDE: its config key and every value that derives from it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LaneIdentity {
@@ -110,14 +105,21 @@ impl LaneIdentity {
         self.derived_port(&self.key, &REGISTRY_PORTS, &[])
     }
 
-    /// The port of the control server of `owner`. The port of the IDE server derives from `<key>|ide-control` and steps
-    /// clear of the port of the host server.
-    pub(crate) fn control_port(&self, owner: ControlOwner) -> u16 {
-        let host = self.derived_port(&self.key, &CONTROL_PORTS, &[]);
-        match owner {
-            ControlOwner::Host => host,
-            ControlOwner::Ide => self.derived_port(&format!("{}|{IDE_CONTROL_SEED}", self.key), &CONTROL_PORTS, &[host]),
-        }
+    /// The port of the control server in the IDE. It derives from `<key>|ide-control` and steps clear of
+    /// [`Self::reserved_host_port`].
+    pub(crate) fn control_port(&self) -> u16 {
+        self.derived_port(
+            &format!("{}|{IDE_CONTROL_SEED}", self.key),
+            &CONTROL_PORTS,
+            &[self.reserved_host_port()],
+        )
+    }
+
+    /// The port that the control server of the JVM host had. No server binds it any more. The IDE port still steps clear
+    /// of it, because `AirAcpControlChannel.ideControlPort` of the Kotlin lane derives the IDE port the same way, and
+    /// `AirLaneDigestTest` pins the values of both. So no derived port moves.
+    fn reserved_host_port(&self) -> u16 {
+        self.derived_port(&self.key, &CONTROL_PORTS, &[])
     }
 
     /// The port of the feedback capture.
@@ -135,19 +137,19 @@ impl LaneIdentity {
         sha256_hex(format!("{}|{purpose}", self.key).as_bytes())[..32].to_owned()
     }
 
-    /// The URL of the control server of `owner` for the credential `credential_key`, with the token of that credential.
-    pub(crate) fn control_url(&self, owner: ControlOwner, credential_key: &str) -> String {
+    /// The URL of the control server in the IDE for the credential `credential_key`, with the token of that credential.
+    pub(crate) fn control_url(&self, credential_key: &str) -> String {
         format!(
             "ws://127.0.0.1:{}/control?token={}",
-            self.control_port(owner),
+            self.control_port(),
             self.secret(credential_key)
         )
     }
 
-    /// The environment of an agent process that reaches the control server of `owner` as `credential_key`.
-    pub(crate) fn control_environment(&self, owner: ControlOwner, credential_key: &str) -> [(&'static str, String); 2] {
+    /// The environment of an agent process that reaches the control server in the IDE as `credential_key`.
+    pub(crate) fn control_environment(&self, credential_key: &str) -> [(&'static str, String); 2] {
         [
-            (CONTROL_URL_ENV, self.control_url(owner, credential_key)),
+            (CONTROL_URL_ENV, self.control_url(credential_key)),
             (CONTROL_AGENT_KEY_ENV, credential_key.to_owned()),
         ]
     }

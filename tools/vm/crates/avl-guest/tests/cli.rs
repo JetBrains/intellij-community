@@ -203,7 +203,6 @@ fn documents_jar(suites: &[(&str, serde_json::Value)]) -> Vec<u8> {
         "schemaVersion": 1, "lane": "UI", "vocabularyDigest": "v", "launchProperties": [], "requirements": [],
         "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": ["codex", "pi"],
         "services": {"codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply", "jetBrainsCloud": "jba-jcp-emulator-1"},
-        "journeySuites": [],
     });
     let mut writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
     let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);

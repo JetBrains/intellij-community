@@ -1,7 +1,6 @@
 {
   "flowProfileDir": "plugins/air/tests/integration/flow-profiles/resources/flow-profiles",
   "flowTextDir": "plugins/air/docs/flows",
-  "authoredSuitesFile": "plugins/air/tests/integration/flow-profiles/resources/authored-suites.json",
   "specDir": "plugins/air/spec",
   "integrationRoot": "//plugins/air/tests/integration",
   "tags": [

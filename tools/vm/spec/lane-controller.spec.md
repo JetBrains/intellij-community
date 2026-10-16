@@ -238,8 +238,7 @@ The generator publishes the suite facts that the controller reads, as
   relation answer together.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
-- An authored suite is mapped the same way as a generated suite, through its suite document. The controller
-  also reads the suites of the JVM host from `authored-suites.json`. The JVM host runs no suite, so that list is empty.
+- An authored suite is mapped the same way as a generated suite, through its suite document.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
 - A named directory stands for the files that git tracks or would track under it. A directory with no such
@@ -495,7 +494,7 @@ The port of each lane service derives from the key, inside the window of the ser
 | service | window |
 | --- | --- |
 | the fake ACP registry | 26000 to 29999 |
-| the control server of the test process | 30000 to 30499 |
+| the reserved host port | 30000 to 30499 |
 | the control server in the IDE | 30000 to 30499 |
 | the feedback capture | 30500 to 30999 |
 | the JetBrains Cloud emulator | 32000 to 32499 |
@@ -505,8 +504,9 @@ The UI-test bridge has the fixed port 31347, and the Codex mock model has the fi
 - A derived port that is the port of the lane daemon moves to the next port of its window.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_derived_port_steps_over_the_daemon_port_and_wraps_at_the_end_of_its_window`)
 
-- The control server in the IDE never takes the port of the control server of the test process.
-  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_ide_control_port_steps_clear_of_the_host_control_port`)
+- The control server in the IDE never takes the reserved host port, the port that the control server of the test
+  process had.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_ide_control_port_steps_clear_of_the_reserved_host_port`)
 
 - The windows do not overlap, and they hold no fixed port.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`every_window_stays_clear_of_the_fixed_ports_and_of_the_ephemeral_floor`)
@@ -1496,9 +1496,9 @@ after that move.
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane`)
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
 
-- The controller sends the lane daemon every suite of the lane that the catalog names: the suite documents and the
-  authored suites, by test class. The JVM runner runs each of them, because each carries the JUnit tag of the lane.
-  [@test] ../crates/avl-vm/src/lane/affected/tests.rs (`the_lane_classes_are_the_suite_documents_and_the_authored_suites_of_the_lane`)
+- The controller sends the lane daemon every suite of the lane that the catalog names: each suite document, by test
+  class. The JVM runner runs each of them, because each carries the JUnit tag of the lane.
+  [@test] ../crates/avl-vm/src/lane/affected/tests.rs (`the_lane_classes_are_the_suite_documents_of_the_lane`)
 
 - The plan names each of these suites, also a suite with no suite document. The selectors and the class filters
   narrow such a suite by its test class, and a package filter drops it. `planStarted` names every planned class, and
