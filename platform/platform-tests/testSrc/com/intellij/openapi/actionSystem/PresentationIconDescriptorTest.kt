@@ -80,4 +80,75 @@ class PresentationIconDescriptorTest {
     presentation.iconDescriptor = KeyDescriptor("b")
     assertEquals(listOf(Presentation.PROP_ICON_DESCRIPTOR), events)
   }
+
+  @Test
+  fun `flag off hides the hovered and selected descriptors`() {
+    val presentation = Presentation()
+    presentation.hoveredIconDescriptor = TestDescriptor()
+    presentation.selectedIconDescriptor = TestDescriptor()
+
+    assertNull(presentation.hoveredIconDescriptor)
+    assertNull(presentation.selectedIconDescriptor)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIcons.REGISTRY_KEY, "true")
+  fun `flag on returns the hovered and selected descriptors without firing an event`() {
+    val hovered = TestDescriptor()
+    val selected = TestDescriptor()
+    val presentation = Presentation()
+    val events = mutableListOf<String>()
+    presentation.addPropertyChangeListener { events += it.propertyName }
+
+    presentation.hoveredIconDescriptor = hovered
+    presentation.selectedIconDescriptor = selected
+
+    assertSame(hovered, presentation.hoveredIconDescriptor)
+    assertSame(selected, presentation.selectedIconDescriptor)
+    assertEquals(emptyList(), events)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIcons.REGISTRY_KEY, "true")
+  fun `copyFrom copies the hovered and selected descriptors`() {
+    val hovered = TestDescriptor()
+    val selected = TestDescriptor()
+    val template = Presentation.newTemplatePresentation()
+    template.hoveredIconDescriptor = hovered
+    template.selectedIconDescriptor = selected
+
+    val presentation = Presentation()
+    presentation.copyFrom(template)
+
+    assertSame(hovered, presentation.hoveredIconDescriptor)
+    assertSame(selected, presentation.selectedIconDescriptor)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIcons.REGISTRY_KEY, "true")
+  fun `copyFrom clears variants the source does not have`() {
+    val presentation = Presentation()
+    presentation.hoveredIconDescriptor = TestDescriptor()
+    presentation.selectedIconDescriptor = TestDescriptor()
+
+    presentation.copyFrom(Presentation.newTemplatePresentation())
+
+    assertNull(presentation.hoveredIconDescriptor)
+    assertNull(presentation.selectedIconDescriptor)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIcons.REGISTRY_KEY, "true")
+  fun `clone keeps the hovered and selected descriptors`() {
+    val hovered = TestDescriptor()
+    val selected = TestDescriptor()
+    val template = Presentation.newTemplatePresentation()
+    template.hoveredIconDescriptor = hovered
+    template.selectedIconDescriptor = selected
+
+    val clone = template.clone()
+
+    assertSame(hovered, clone.hoveredIconDescriptor)
+    assertSame(selected, clone.selectedIconDescriptor)
+  }
 }

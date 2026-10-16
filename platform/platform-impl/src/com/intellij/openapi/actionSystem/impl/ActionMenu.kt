@@ -242,7 +242,8 @@ class ActionMenu constructor(
       setToggledIcon()
       return
     }
-    var icon = presentation.icon ?: return
+    val icons = menuIcons(presentation)
+    var icon = icons.icon ?: return
     if (!UISettings.getInstance().showIconsInMenus) {
       return
     }
@@ -261,8 +262,7 @@ class ActionMenu constructor(
     }
     else {
       setIcon(icon)
-      val presentationDisabledIcon = presentation.disabledIcon
-      setDisabledIcon(presentationDisabledIcon ?: getDisabledIcon(icon))
+      setDisabledIcon(icons.disabled ?: getDisabledIcon(icon))
     }
   }
 
