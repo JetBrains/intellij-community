@@ -69,7 +69,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
+    <colorSettings implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"
+                   bundle="messages.XDebuggerBundle" key="xdebugger.colors.page.name" priority="COMMON_SETTINGS"
+                   id="debuggerColors"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
 
