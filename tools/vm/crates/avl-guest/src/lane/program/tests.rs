@@ -345,7 +345,8 @@ fn story_document(vocabulary: &Value, profiles: &Value) -> Value {
         ],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": vocabulary,
-        "reset": {"flagKeys": ["air.inline.empty.state.prompt"], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": ["air.inline.empty.state.prompt"], "offerJuniePromo": false, "laneFlags": {},
+            "agentLoginAcpAgentIds": ["acp.air-scenario-rename"]},
         "agents": {},
         "fixtures": {"fixture": {"managedAgentStartsInstalled": false, "keepsJunieStartupOffer": true, "bridge": {
             "setScenarioFixture": {"type": format!("{BRIDGE}SetScenarioFixture"), "facts": {"preset": {"id": "preset-1"}}},
@@ -625,6 +626,13 @@ fn a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript() {
         [json!(false), json!(true)]
     );
     assert_eq!(resets[0]["flagKeys"], json!(["air.inline.empty.state.prompt"]));
+    assert_eq!(
+        resets
+            .iter()
+            .map(|reset| reset["agentLoginAcpAgentIds"].clone())
+            .collect::<Vec<_>>(),
+        [json!(["acp.air-scenario-rename"]), json!(["acp.air-scenario-rename"])]
+    );
     let chain = &fake.bodies(&format!("{BRIDGE}StepSequence"))[0];
     assert_eq!(
         chain["steps"]
@@ -919,7 +927,7 @@ fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.live.AirLiveLaunchUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "the composer launches a live session", "key": "generation", "fixture": "authored", "flags": {},
             "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
@@ -977,7 +985,7 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.workflows.AgentWorkflowGitUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "a commit starts the workflow", "key": "commit", "method": "gitScenarios", "fixture": "authored",
             "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
@@ -1029,7 +1037,7 @@ fn recycle_smoke() -> Suite {
         "restartsIde": true, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
             "recycle-through-failed-reset": host(1), "restart-ide": host(1)}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored-lane-recycle-smoke": {}},
         "profiles": [{"name": "failed reset recycles one warm IDE and retries on the replacement", "key": "recycle",
             "method": "recycleSmokeScenarios", "fixture": "authored-lane-recycle-smoke", "flags": {}, "flagKeys": [],
@@ -1248,7 +1256,7 @@ fn one_part_suite() -> Suite {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.genui.AirGenUiHostUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "the theme follows the IDE", "key": "theme", "fixture": "authored", "flags": {}, "flagKeys": [],
             "requiredExecutables": [], "setups": [], "steps": [],
@@ -1325,7 +1333,7 @@ fn session_suite() -> Suite {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRealSessionColdOpenUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": ["realSessionLogs"], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "every recorded session opens", "key": "cold-open", "fixture": "authored", "flags": {},
             "flagKeys": [], "requiredExecutables": [], "requiresRunnerValues": ["realSessionLogs"], "setups": [], "steps": [],
@@ -1549,7 +1557,7 @@ fn plugin_reload() -> Suite {
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
             "reload-air": {"side": "host", "timeoutMs": 420_000, "restarts": 0, "answers": [], "mayAnswer": [],
                 "takes": [], "mayTake": [], "params": {}}}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "Air reloads and leaves no class loader", "key": "reload", "fixture": "authored",
             "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],

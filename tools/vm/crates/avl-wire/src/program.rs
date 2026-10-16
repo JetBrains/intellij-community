@@ -183,6 +183,9 @@ pub struct SuiteReset {
     pub offer_junie_promo: bool,
     /// The lane value of each registry flag that has one.
     pub lane_flags: BTreeMap<String, String>,
+    /// The full id of each fake agent of the suite except the Cloud agent, sorted. The reset saves Agent login as the AI
+    /// source of each one, because a native session takes no input before an AI source choice.
+    pub agent_login_acp_agent_ids: Vec<String>,
 }
 
 /// One Allure label of the generated class of a suite.

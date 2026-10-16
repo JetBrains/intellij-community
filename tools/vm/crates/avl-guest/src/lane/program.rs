@@ -733,6 +733,7 @@ impl<'r, 's> Runner<'r, 's> {
             "afterScenario": phase == ResetPhase::After,
             "offerJuniePromo": reset.offer_junie_promo,
             "laneFlags": reset.lane_flags,
+            "agentLoginAcpAgentIds": reset.agent_login_acp_agent_ids,
         });
         match self.lifecycle("Reset", fields, RESET_TIMEOUT) {
             Ok(Value::Null) => {}
