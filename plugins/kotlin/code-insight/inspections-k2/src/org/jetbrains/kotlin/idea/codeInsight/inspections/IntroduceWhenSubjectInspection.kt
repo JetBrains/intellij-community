@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -15,11 +17,21 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.introduceSubjectIfPossible
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class IntroduceWhenSubjectInspection :
     KotlinApplicableInspectionBase.Simple<KtWhenExpression, String>() {
+
+    @JvmField
+    var ignoreWhenGuards: Boolean = true
+
+    override fun getOptionsPane() = pane(
+        checkbox("ignoreWhenGuards", KotlinBundle.message("introduce.when.subject.ignore.when.guards"))
+    )
 
     override fun getProblemDescription(
         element: KtWhenExpression,
@@ -75,6 +87,20 @@ internal class IntroduceWhenSubjectInspection :
     // the resulting code with a 'when' subject will arguably be less clear than the original
     override fun getProblemHighlightType(element: KtWhenExpression, context: String): ProblemHighlightType {
         val regularEntries = element.entries.filter { !it.isElse }
-        return if (regularEntries.size < 2) ProblemHighlightType.INFORMATION else super.getProblemHighlightType(element, context)
+
+        return if (regularEntries.size < 2) {
+            ProblemHighlightType.INFORMATION
+        } else {
+            if (ignoreWhenGuards && regularEntries.any { entry ->
+                    entry.conditions.any { condition ->
+                        val expression = (condition as? KtWhenConditionWithExpression)?.expression
+                        expression is KtBinaryExpression && expression.operationToken == KtTokens.ANDAND
+                    }
+                }) {
+                ProblemHighlightType.INFORMATION
+            } else {
+                super.getProblemHighlightType(element, context)
+            }
+        }
     }
 }

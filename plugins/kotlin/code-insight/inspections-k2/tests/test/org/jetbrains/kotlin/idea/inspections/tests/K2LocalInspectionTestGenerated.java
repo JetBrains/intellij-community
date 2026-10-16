@@ -10421,6 +10421,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("whenWithConjunctionInsideConditionWithIgnoreOption.kt")
+            public void testWhenWithConjunctionInsideConditionWithIgnoreOption() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithConjunctionInsideConditionWithIgnoreOption.kt");
+            }
+
             @TestMetadata("whenWithGuards.kt")
             public void testWhenWithGuards() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuards.kt");
@@ -10446,6 +10451,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditionsParenthesesRight.kt");
             }
 
+            @TestMetadata("whenWithGuardsExplicitlyHighlighted.kt")
+            public void testWhenWithGuardsExplicitlyHighlighted() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsExplicitlyHighlighted.kt");
+            }
+
+            @TestMetadata("whenWithGuardsIgnored.kt")
+            public void testWhenWithGuardsIgnored() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsIgnored.kt");
+            }
+
             @TestMetadata("whenWithGuardsInapplicableComplexLhs.kt")
             public void testWhenWithGuardsInapplicableComplexLhs() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsInapplicableComplexLhs.kt");
@@ -10464,6 +10479,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("whenWithGuardsWithGuardOrCondition.kt")
             public void testWhenWithGuardsWithGuardOrCondition() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsWithGuardOrCondition.kt");
+            }
+
+            @TestMetadata("whenWithoutGuardsWithIgnoreOption.kt")
+            public void testWhenWithoutGuardsWithIgnoreOption() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithoutGuardsWithIgnoreOption.kt");
             }
         }
     }
