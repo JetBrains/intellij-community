@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
+import com.google.errorprone.annotations.concurrent.GuardedBy
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -18,22 +20,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ThreeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<RecentProjectsService>()
+
+// Marks a project the service loaded without a frame. The load puts it on the project before the project initializes.
+private val FRAMELESS_RECENT_PROJECT: Key<Boolean> = Key.create("welcome.screen.frameless.recent.project")
 
 /**
  * Runs recent-project operations for the welcome screen on projects loaded without a frame.
@@ -42,7 +47,7 @@ private val LOG = logger<RecentProjectsService>()
  * load or dispose it from under each other. It relays the loaded project's notifications to the welcome screen, because a frameless project
  * shows none of its own.
  *
- * The service scope loads the project. Each held project then gets its own child scope that runs the project's operations. On disposal that
+ * A request scope loads the project. Each held project then gets its own child scope that runs the project's operations. On disposal that
  * scope is canceled and joined before the project is closed, so no operation runs on a disposed project.
  *
  * It disposes every held project before the welcome screen opens a recent project, so a held instance does not collide with the project being
@@ -55,8 +60,11 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   private val taskTracker = RecentProjectTaskTracker.getInstance()
   private val loadMutex = Mutex()
 
-  // Concurrent because [isFramelessRecentProject] reads it from the project that is initializing, while the load still holds [loadMutex].
-  private val heldProjects: MutableMap<Path, HeldProject> = ConcurrentHashMap()
+  @GuardedBy("loadMutex")
+  private val heldProjects = HashMap<Path, HeldProject>()
+
+  // Runs each request until its project is held. [disposeHeldProjects] cancels the requests, so it does not wait for a load in progress.
+  private val requestScope = coroutineScope.childScope("WelcomeScreenRecentProjectRequests")
 
   /**
    * A held project and the scope that runs its operations. The scope is a child of the service scope. [owned] is true when the service loaded
@@ -66,10 +74,10 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
 
   /**
    * Loads and holds the recent project at [projectPath], then runs [operation] on the project scope. Confirms trust first, and does nothing
-   * when the user declines. The load runs on the service scope, so the caller does not manage a coroutine.
+   * when the user declines. The load runs on the request scope, so the caller does not manage a coroutine.
    */
   fun runOnRecentProject(projectPath: Path, operation: suspend (Project) -> Unit) {
-    coroutineScope.launch {
+    requestScope.launch {
       val held = getOrLoad(projectPath) ?: return@launch
       held.scope.launch {
         if (held.project.isDisposed) {
@@ -97,9 +105,9 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       cachedHeldProject(projectPath)?.let { return it }
       findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
       LOG.info("Recent project $projectPath: loading it without a frame")
-      val project = projectManager.loadProject(projectPath)
-      // Held before the project is initialized, because the init activities ask whether it is one of these and the answer is cached from the
-      // first time it is asked.
+      // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
+      // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
+      val project = projectManager.loadProject(projectPath, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
       val held = hold(projectPath, project, owned = true)
       try {
         initLoadedProject(project)
@@ -141,31 +149,23 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   // Holds [project] with its own operation scope. Relays only a project the service loaded, because an already-open project shows its own
   // notifications on its frame. Must run under [loadMutex].
   private fun hold(projectPath: Path, project: Project, owned: Boolean): HeldProject {
-    val held = HeldProject(project, coroutineScope.childScope("WelcomeScreenRecentProject"), owned)
     if (owned) {
       relayNotificationsToWelcomeScreen(project)
       taskTracker.follow(projectPath, project)
     }
-    heldProjects[projectPath] = held
-    return held
+    return HeldProject(project, coroutineScope.childScope("WelcomeScreenRecentProject"), owned).also {
+      heldProjects[projectPath] = it
+    }
   }
 
   /** Whether [project] is one the service loaded without a frame, which has no use for the activities a frame's project runs. */
-  internal fun isFramelessRecentProject(project: Project): Boolean =
-    heldProjects.values.any { it.owned && it.project === project }
+  internal fun isFramelessRecentProject(project: Project): Boolean = project.getUserData(FRAMELESS_RECENT_PROJECT) == true
 
   // An already-open project for the same location. IntelliJ does not support two live projects for one location: loading a second instance
-  // collides on the project storages (for example the VCS user storage), so the open one is reused instead.
-  private fun findOpenProject(projectPath: Path): Project? {
-    val target = projectPath.toString()
-    return projectManager.openProjects.firstOrNull { project ->
-      if (project.isDisposed) {
-        return@firstOrNull false
-      }
-      val basePath = project.basePath
-      basePath != null && FileUtil.pathsEqual(basePath, target)
-    }
-  }
+  // collides on the project storages (for example the VCS user storage), so the open one is reused instead. The recent-project path is not
+  // always the base path: for an `.ipr` project it is the `.ipr` file. [ProjectUtil.isSameProject] matches it in each layout.
+  private fun findOpenProject(projectPath: Path): Project? =
+    projectManager.openProjects.firstOrNull { !it.isDisposed && ProjectUtil.isSameProject(projectPath, it) }
 
   /**
    * Cancels the operations of [held] and closes its project, so an in-flight operation never runs on a disposed project. Closes only a project
@@ -183,8 +183,12 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
    * opens a recent project. Each project's operation scope is canceled and joined before the project is closed, so an in-flight operation never runs on a
    * disposed project. [ProjectManagerEx.forceCloseProjectAsync] switches to the EDT under a write-intent lock and skips an already-disposed
    * project.
+   *
+   * It cancels the requests in progress first. A load can take seconds, and the open would wait for it on [loadMutex]. A canceled load
+   * closes its own project, and a waiting request does not start its load.
    */
   suspend fun disposeHeldProjects() {
+    requestScope.coroutineContext.job.cancelChildren()
     val held = loadMutex.withLock {
       val copy = heldProjects.toMap()
       heldProjects.clear()
