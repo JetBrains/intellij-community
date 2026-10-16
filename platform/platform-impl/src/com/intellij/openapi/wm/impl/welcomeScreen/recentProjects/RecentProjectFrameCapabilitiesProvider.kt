@@ -18,7 +18,7 @@ internal class RecentProjectFrameCapabilitiesProvider : ProjectFrameCapabilities
     if (!RecentProjectsService.getInstance().isFramelessRecentProject(project)) {
       return emptySet()
     }
-    return setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES, ProjectFrameCapability.NO_FRAME_OF_ITS_OWN)
+    return setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES, ProjectFrameCapability.NO_FRAME_OF_ITS_OWN)
   }
 
   override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
