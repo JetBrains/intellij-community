@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.compose.ide.plugin.shared.TARGET_GRADLE_VERSION
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Properties
