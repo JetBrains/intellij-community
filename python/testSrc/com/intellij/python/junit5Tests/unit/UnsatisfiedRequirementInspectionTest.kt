@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 @PyEnvTestCase
-@TestDataPath("\$CONTENT_ROOT/../junit5Tests-framework/testResources/UnsatisfiedRequirementInspectionTest")
+@TestDataPath($$"$CONTENT_ROOT/../testData/inspections/UnsatisfiedRequirementInspectionTest")
 class UnsatisfiedRequirementInspectionTest {
 
   private val testDisposable by disposableFixture()
@@ -123,7 +123,7 @@ private fun pyCodeInsightFixture(
   }
 
   val codeInsightFixture = CodeInsightTestFixtureImpl(ideaProjectFixture, ideaTempDirFixture)
-  codeInsightFixture.testDataPath = PythonHelpersLocator.getPythonCommunityPath().resolve("junit5Tests-framework/testResources/UnsatisfiedRequirementInspectionTest").toString()
+  codeInsightFixture.testDataPath = PythonHelpersLocator.getPythonCommunityPath().resolve("testData/inspections/UnsatisfiedRequirementInspectionTest").toString()
   codeInsightFixture.setUp()
   initialized(codeInsightFixture) {
     codeInsightFixture.tearDown()
