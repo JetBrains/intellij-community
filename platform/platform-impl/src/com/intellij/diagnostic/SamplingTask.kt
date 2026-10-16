@@ -47,11 +47,15 @@ internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, p
       dumpThreads()
       firstThreadDumpCompleted.countDown()
       if (totalTime + dumpInterval > maxDurationMs) {
+        samplingFinished()
         break
       }
       delay(delayDuration)
     }
   }
+
+  /** Runs once on the sampling coroutine when the loop reaches `maxDurationMs`. It does not run when [stop] cancels the loop first. */
+  protected open fun samplingFinished() {}
 
   private suspend fun dumpThreads() {
     currentTime = System.nanoTime()
