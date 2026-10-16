@@ -1,6 +1,7 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use avl_testkit::http::{FakeHttp, Response};
 use avl_wire::daemon::ExecutionIdentity;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -131,23 +132,26 @@ impl Probes for Counting {
     }
 }
 
-/// Runs one step of `step` past the slow-step budget under the watchdog thread, and answers what the IDE was asked.
+/// Runs one step of `step` past the slow-step budget under the watchdog thread, and answers what the IDE was asked. A
+/// `quiet` hold starts before the watchdog thread and ends after it, so the first tick cannot come before the hold.
 fn watched_step(quiet: bool) -> (u32, u32) {
     let directory = TempDir::new().unwrap();
     let probes = Counting::default();
     let watch = Watch::new(POLICY).with_slow_step(Duration::from_millis(100));
     let mut out = Vec::new();
     let stream = Stream::new(&mut out);
-    std::thread::scope(|scope| {
-        scope.spawn(|| super::watch(&watch, &stream, &probes, directory.path()));
-        let measure = || watch.step("measure", || std::thread::sleep(TICK + Duration::from_millis(500)));
-        if quiet {
-            watch.quiet(measure);
-        } else {
-            measure();
-        }
-        watch.completed(&stream);
-    });
+    let run = || {
+        std::thread::scope(|scope| {
+            scope.spawn(|| super::watch(&watch, &stream, &probes, directory.path()));
+            watch.step("measure", || std::thread::sleep(TICK + Duration::from_millis(500)));
+            watch.completed(&stream);
+        });
+    };
+    if quiet {
+        watch.quiet(run);
+    } else {
+        run();
+    }
     (*probes.probes.lock().unwrap(), *probes.dumps.lock().unwrap())
 }
 
@@ -170,4 +174,36 @@ fn a_slug_is_lowercase_words_joined_by_dashes() {
     );
     assert_eq!(slug("!!!"), "step");
     assert_eq!(slug(&"a".repeat(60)).len(), 40);
+}
+
+// The dump of a slow step comes from the route of the resident plugin, with the token of the launch. The request endpoint
+// of the bridge answers 503 while a reload unloads the bridge plugin, and the dump still arrives.
+#[test]
+fn the_ide_dump_comes_from_the_resident_route_while_the_bridge_unloads() {
+    const DUMP: &str = "\"main\" RUNNABLE\n\nCoroutine dump:\n";
+    let asked = Arc::new(Mutex::new(Vec::new()));
+    let seen = Arc::clone(&asked);
+    let server = FakeHttp::start(move |request| {
+        seen.lock().unwrap().push(format!("{} {}", request.method, request.path));
+        if request.header("X-Air-Ui-Test-Token") != Some("lane-token") {
+            return Response::error(401, "unsigned Air UI-test dump request");
+        }
+        match (request.method.as_str(), request.path.as_str()) {
+            ("GET", DUMP_ROUTE) => Response::ok("text/plain; charset=utf-8", DUMP),
+            _ => Response::json(
+                503,
+                r#"{"failure":{"type":"java.lang.IllegalStateException","message":"the Air UI test bridge unloads"}}"#,
+            ),
+        }
+    });
+
+    let dump = ide_dump(&Bridge::at(server.url(), "lane-token").unwrap()).unwrap();
+    assert_eq!(dump, DUMP);
+    assert_eq!(*asked.lock().unwrap(), [format!("GET {DUMP_ROUTE}")]);
+
+    let refused = ide_dump(&Bridge::at(server.url(), "another-launch").unwrap()).unwrap_err();
+    assert_eq!(
+        refused,
+        format!("GET {DUMP_ROUTE}: the bridge answered HTTP 401: unsigned Air UI-test dump request")
+    );
 }

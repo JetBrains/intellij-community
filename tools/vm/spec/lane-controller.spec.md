@@ -738,6 +738,11 @@ The daemon's half and the IDE's half of supervision are in
   is a file under `slow-steps`, a `slowStep` record, and an attachment of the trace.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)
 
+- The dump of the IDE comes from the dump route of the resident plugin, not from the request endpoint of the bridge.
+  The resident plugin never unloads, so a step that hangs in a reload of the bridge plugin or of Air gets the dump too.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_ide_dump_comes_from_the_resident_route_while_the_bridge_unloads`)
+  [@test] ../../../../plugins/air/tests/integration/bridge/tests/AirUiTestDumpRouteTest.kt
+
 - The controller writes the JUnit XML of a run from its run stream. The XML holds one `testsuite` for each test
   class. Each scenario is one `testcase`: its class is the `testClassName` of the document, and its name is the
   scenario. A failure holds its type, the first line of its message, and the message and the detail as CDATA. A skip

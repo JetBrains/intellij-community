@@ -9,8 +9,9 @@
 //!   opened. The first intrusion of a run gets one `DismissIntruder` with a [`DISMISS_TIMEOUT`]; the next one that a
 //!   tick sees expires the run as `ide_intrusion`. A relaunch holds the probe off, because no IDE answers then.
 //! - **Slow steps.** A step of the run, such as a reset, a relaunch or an instruction, that is open past
-//!   [`SLOW_STEP_BUDGET`] gets the dumps of the IDE once: `DiagnosticDump` into
-//!   `<iterationDir>/slow-steps/NN-<slug>-ide-dump.txt`, at most [`MAX_DUMPS`] per run, and a `slowStep` record.
+//!   [`SLOW_STEP_BUDGET`] gets the dumps of the IDE once: the answer of [`DUMP_ROUTE`] into
+//!   `<iterationDir>/slow-steps/NN-<slug>-ide-dump.txt`, at most [`MAX_DUMPS`] per run, and a `slowStep` record. The
+//!   resident plugin serves that route, so a step that hangs in a reload of the bridge plugin or of Air gets its dump.
 //! - **Heartbeat.** A `watchdogState` record each [`HEARTBEAT`], so the controller sees a live run during a long scenario.
 //! - **Quiet.** A suite of a bare IDE measures the start-up of its IDE, and a request of the watchdog would load classes
 //!   into the count. While [`Watch::quiet`] runs, the watchdog sends the IDE no probe and no dump. The deadlines and the
@@ -26,6 +27,7 @@ use std::time::{Duration, Instant};
 use avl_wire::daemon::{ExecutionIdentity, RunEventKind, SlowStep, WatchdogExpired, WatchdogState};
 use jiff::Timestamp;
 
+use super::readiness::Bridge;
 use super::stream::Stream;
 use crate::clock::{now_stamp, stamp};
 
@@ -46,6 +48,11 @@ pub(crate) const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 pub(crate) const DISMISS_TIMEOUT: Duration = Duration::from_secs(15);
 /// The deadline of the dumps of the IDE, `AIR_UI_TEST_DIAGNOSTIC_DUMP_TIMEOUT_MS`.
 pub(crate) const DUMP_TIMEOUT: Duration = Duration::from_secs(10);
+/// The dump route of the resident plugin, `AIR_UI_TEST_RESIDENT_DUMP_PREFIX` with its leading slash. The resident plugin
+/// never unloads, so the route answers while a reload unloads the bridge plugin or Air.
+pub(crate) const DUMP_ROUTE: &str = "/api/air/ui-test-resident/dump";
+/// The media type of the answer of [`DUMP_ROUTE`].
+const DUMP_MEDIA_TYPE: &str = "text/plain";
 /// How long a modal window may be unclaimed before it counts as an intruder.
 pub(crate) const INTRUDER_GRACE_MS: u64 = 3_000;
 /// What the emergency deadline adds for the kill.
@@ -469,6 +476,15 @@ pub(crate) fn watch(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, ite
         }
         let _ = watch.changed.wait_timeout(state, TICK).unwrap_or_else(PoisonError::into_inner);
     }
+}
+
+/// The thread dump and the coroutine dump of the IDE behind `bridge`, as one text: the answer of [`DUMP_ROUTE`] within
+/// [`DUMP_TIMEOUT`]. A byte that is not UTF-8 becomes U+FFFD, because a dump is evidence for a person.
+pub(crate) fn ide_dump(bridge: &Bridge) -> Result<String, String> {
+    bridge
+        .get(DUMP_ROUTE, DUMP_MEDIA_TYPE, DUMP_TIMEOUT)
+        .map(|body| String::from_utf8_lossy(&body).into_owned())
+        .map_err(|error| error.to_string())
 }
 
 /// Writes `watchdogExpired`, marks the run expired, and kills the IDE so the run thread unwinds.

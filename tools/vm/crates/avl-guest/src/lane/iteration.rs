@@ -33,7 +33,7 @@ use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::session_logs;
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
-use super::watchdog::{self, DISMISS_TIMEOUT, DUMP_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
+use super::watchdog::{self, DISMISS_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
 use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
 use crate::supervisor::{self, LiveSystem};
@@ -647,11 +647,7 @@ impl Probes for DaemonLane<'_, '_> {
     }
 
     fn diagnostic_dump(&self) -> Result<String, String> {
-        match self.bridge.post(&request("DiagnosticDump", json!({})), DUMP_TIMEOUT) {
-            Ok(Value::String(text)) => Ok(text),
-            Ok(other) => Err(format!("the IDE answered the dump {other}, which is no text")),
-            Err(error) => Err(error.to_string()),
-        }
+        watchdog::ide_dump(&self.bridge)
     }
 
     fn kill(&self) -> Result<(), String> {
