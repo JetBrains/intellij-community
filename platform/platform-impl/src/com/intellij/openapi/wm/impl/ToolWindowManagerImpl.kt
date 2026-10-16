@@ -1274,28 +1274,32 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     ActivateToolWindowAction.Manager.unregister(id)
 
     val entry = idToEntry.remove(id) ?: return
-    val toolWindow = entry.toolWindow
+    try {
+      val toolWindow = entry.toolWindow
 
-    val info = layoutState.getInfo(id)
-    if (info != null) {
-      // remove decorator and tool button from the screen - removing will also save current bounds
-      decorators.updateStateAndRemoveDecorator(info, entry, false)
-      // save recent appearance of a tool window
-      activeStack.remove(entry, true)
-      if (isStackEnabled) {
-        sideStack.remove(id)
+      val info = layoutState.getInfo(id)
+      if (info != null) {
+        // remove decorator and tool button from the screen - removing will also save current bounds
+        decorators.updateStateAndRemoveDecorator(info, entry, false)
+        // save recent appearance of a tool window
+        activeStack.remove(entry, true)
+        if (isStackEnabled) {
+          sideStack.remove(id)
+        }
+        entry.removeStripeButton()
+        val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
+        toolWindowPane.validate()
+        toolWindowPane.repaint()
       }
-      entry.removeStripeButton()
-      val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
-      toolWindowPane.validate()
-      toolWindowPane.repaint()
-    }
 
-    if (!project.isDisposed) {
-      project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowUnregistered(id, (toolWindow))
+      if (!project.isDisposed) {
+        project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowUnregistered(id, (toolWindow))
+      }
     }
-
-    Disposer.dispose(entry.disposable)
+    finally {
+      // the entry is no longer in idToEntry, so nothing else disposes it
+      Disposer.dispose(entry.disposable)
+    }
   }
 
   internal fun saveFloatingOrWindowedState(entry: ToolWindowEntry, info: WindowInfoImpl) {
