@@ -23,7 +23,6 @@ class PluginLoadingProblem internal constructor(
   val kind: Kind = Kind.OTHER,
   val severity: Severity = Severity.UNEXPECTED,
   val productMode: ProductMode? = null,
-  val unavailableModuleId: PluginModuleId? = null,
   val dependencyPluginId: PluginId? = null,
   val dependency: DependencyRef? = null,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
@@ -31,6 +30,11 @@ class PluginLoadingProblem internal constructor(
 ) {
   val detailedMessage: @NlsContexts.DetailedDescription String get() = detailedMessageSupplier()
   val shortMessage: @NlsContexts.Label String get() = shortMessageSupplier()
+  val unavailableModuleId: PluginModuleId?
+    get() = when (val dependency = dependency) {
+      is DependencyRef.ContentModule -> dependency.moduleId
+      is DependencyRef.Plugin, null -> null
+    }
 
   @ApiStatus.Internal
   enum class Kind {
@@ -137,7 +141,7 @@ internal fun pluginRequiresUnavailableProductModeModule(
     severity = PluginLoadingProblem.Severity.EXPECTED,
     shouldNotifyUser = false,
     productMode = productMode,
-    unavailableModuleId = moduleId,
+    dependency = DependencyRef.ContentModule(moduleId),
     detailedMessageSupplier = { CoreBundle.message(messageKey) },
     shortMessageSupplier = { CoreBundle.message(messageKey) },
   )

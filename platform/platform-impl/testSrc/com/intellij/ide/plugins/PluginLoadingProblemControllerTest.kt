@@ -1,20 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSession
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -134,6 +138,51 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.isUltimateDisabledProblem).isFalse()
     assertThat(result.loadingError).isNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
+  }
+
+  @TestFactory
+  fun `module problems retain their IDs in page results`() = listOf(false, true).map { inaccessible ->
+    dynamicTest("inaccessible=$inaccessible") {
+      timeoutRunBlocking {
+        val results = listOf("first", "second").map { namespace ->
+          val moduleId = PluginModuleId("dependency.module", namespace)
+          val pluginsDir = tempDir.resolve("$inaccessible-$namespace")
+          if (inaccessible) {
+            plugin("dependency") {
+              name = "Dependency"
+              content(namespace = namespace) {
+                module(moduleId.name, loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+                  moduleVisibility = ModuleVisibilityValue.PRIVATE
+                }
+              }
+            }.installAt(pluginsDir)
+            session.pluginStates[PluginId.getId("dependency")] = PluginEnabledState.ENABLED
+          }
+          plugin("affected") {
+            name = "Affected"
+            dependencies { module(moduleId.name, namespace = namespace) }
+          }.installAt(pluginsDir)
+          PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(pluginsDir).build(configureClassLoaders = false))
+          session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.ENABLED
+          DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
+
+          val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+          assertThat(result.unavailableModuleId).isEqualTo(moduleId)
+          assertThat(result.loadingError).isNotBlank()
+          assertThat(result.suggestToEnableRequiredPlugins).isFalse()
+          assertThat(result.requiredPluginNames).isEmpty()
+          assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+          assertThat(DefaultUiPluginManagerController.loadErrors(session.sessionId, listOf(PluginId.getId("affected"))))
+            .containsEntry(PluginId.getId("affected"), result)
+          result
+        }
+
+        assertThat(results[0].loadingError).isEqualTo(results[1].loadingError)
+        assertThat(results[0].detailedMessage).isEqualTo(results[1].detailedMessage)
+        assertThat(results[0]).isNotEqualTo(results[1])
+      }
+    }
   }
 
   @TestFactory

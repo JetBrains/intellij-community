@@ -131,6 +131,16 @@ Remote development extends these rules with side aggregation and action routing.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
     `module dependency data retains its namespace`
   )
+
+- Page results retain the complete module ID for module dependency problems and product mode restrictions.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `module problems retain their IDs in page results`;
+    `product mode exclusions retain their page classification`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
+    `the page result retains module IDs through serialization`
+  )
+
 - Supported compatibility and selection exclusions can also produce plugin explanations.
 - For a plugin version listed as broken, the short explanation says `Version is known to be broken`.
 - The detailed explanation identifies the plugin and version as known to be broken.

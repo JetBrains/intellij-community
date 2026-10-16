@@ -167,6 +167,7 @@ internal class PluginLoadingProblemTest {
       val problem = pluginRequiresUnavailableModule(descriptor, dependency.moduleId, true)
 
       assertThat(problem.dependency).isEqualTo(dependency)
+      assertThat(problem.unavailableModuleId).isEqualTo(dependency.moduleId)
       assertThat(problem.shortMessage)
         .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.unavailable.module", "module.name"))
     }
