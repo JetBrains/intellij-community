@@ -4,12 +4,15 @@ package com.intellij.testFramework.common
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.addIfNotNull
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Field
 import java.util.IdentityHashMap
+import java.util.concurrent.CancellationException
 import java.util.function.Predicate
 
 /**
@@ -138,30 +142,46 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null) {
 
   val shouldExamineField = Predicate<Field?> { field -> field == null || field.declaringClass.name + "." + field.name !in IGNORED_FIELDS }
 
-  runInEdtAndWait {
-    val projects: Set<Project> = collectAllNonDisposedProjects(unitTestProject)
-
-    val expectedStorages: Set<EntityStorage> = run {
-      val realStorages = mutableListOf<EntityStorage>()
-
-      for (project in projects) {
-        realStorages += project.workspaceModel.currentSnapshot
-        realStorages.addIfNotNull((project.workspaceModel as? WorkspaceModelInternal)?.currentSnapshotOfUnloadedEntities)
-        realStorages += project.service<EntitiesOrphanage>().currentSnapshot
-      }
-      realStorages += GlobalWorkspaceModel.getInstancesBlocking().map { it.currentSnapshot }
-
-      IdentityHashMap(realStorages.associateWith { Unit }).keys
-    }
-
+  while (true) {
+    var projects: Set<Project> = emptySet()
     try {
-      LeakHunter.checkLeak(LeakHunter.allRoots(), EntityStorage::class.java, shouldExamineField) {
-        it !in expectedStorages
+      runInEdtAndWait {
+        projects = collectAllNonDisposedProjects(unitTestProject)
+
+        val expectedStorages: Set<EntityStorage> = run {
+          val realStorages = mutableListOf<EntityStorage>()
+
+          for (project in projects) {
+            realStorages += project.workspaceModel.currentSnapshot
+            realStorages.addIfNotNull((project.workspaceModel as? WorkspaceModelInternal)?.currentSnapshotOfUnloadedEntities)
+            realStorages += project.service<EntitiesOrphanage>().currentSnapshot
+          }
+          realStorages += GlobalWorkspaceModel.getInstancesBlocking().map { it.currentSnapshot }
+
+          IdentityHashMap(realStorages.associateWith { Unit }).keys
+        }
+
+        LeakHunter.checkLeak(LeakHunter.allRoots(), EntityStorage::class.java, shouldExamineField) {
+          it !in expectedStorages
+        }
       }
+      break
     }
     catch (e: AssertionError) {
       publishHeapDump(LEAKED_WSM)
       throw AssertionError(e)
+    }
+    catch (e: ProcessCanceledException) {
+      val cause = e.cause
+      val projectWasDisposed = projects.any { project ->
+        project.isDisposed && (project as? ProjectImpl)?.isTemporarilyDisposed != true
+      }
+      if (e !is AlreadyDisposedException && cause !is AlreadyDisposedException &&
+          !(cause is CancellationException && projectWasDisposed)) {
+        publishHeapDump(LEAKED_WSM)
+        throw e
+      }
+      ProgressManager.checkCanceled()
     }
     catch (e: Exception) {
       publishHeapDump(LEAKED_WSM)
