@@ -400,7 +400,7 @@ private fun libraryPackageLabel(
         dir.startsWith(communityRoot) ->
           "${if (isCommunityDependent) "//" else "@community//"}${dir.relativeTo(communityRoot).invariantSeparatorsPathString}"
         ultimateRoot != null && dir.startsWith(ultimateRoot) -> "//${dir.relativeTo(ultimateRoot).invariantSeparatorsPathString}"
-        else -> error("Unknown library root location: $dir (community=$communityRoot, ultimate=$ultimateRoot)")
+        else -> error("Unknown library root location: $dir (community=$communityRoot, ultimate=$ultimateRoot), $container")
       }
     }
   }
