@@ -160,11 +160,7 @@ sealed interface SearchEverywhereTab {
     override val localModelPathRegistryKey: String = "search.everywhere.ml.all.model.path"
     override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.all.ml"
 
-    override val experiments: Map<Int, ExperimentType> = mapOf(
-      1 to ExperimentType.EssentialContributorPrediction,
-      2 to ExperimentType.CombinedExperiment,
-    )
-
+    override val experiments: Map<Int, ExperimentType> = emptyMap()
 
     override val currentExperimentType: ExperimentType
       get() {

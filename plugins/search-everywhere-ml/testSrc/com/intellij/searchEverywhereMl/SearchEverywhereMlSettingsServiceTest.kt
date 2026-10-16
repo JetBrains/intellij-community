@@ -212,7 +212,7 @@ internal class SearchEverywhereMlSettingsServiceTest {
       Assertions.assertTrue(getMlRankingVisible(testCase.tab))
 
       // 4. Re-enable the experiments
-      SearchEverywhereMlExperiment.experimentGroupOverride = testCase.mlEnabledExperimentGroup
+      SearchEverywhereMlExperiment.experimentGroupOverride = testCase.requireMlEnabledExperimentGroup()
       Registry.get(testCase.tab.disableExperimentRegistryKey).setValue(false)
 
       Assertions.assertFalse(getMlRankingEnabled(testCase.tab))
@@ -261,14 +261,22 @@ internal class SearchEverywhereMlSettingsServiceTest {
   // Data classes for test cases
   data class TabTestCase(val tab: SearchEverywhereTab.TabWithMlRanking) {
     val noExperimentGroup: Int = (0 until SearchEverywhereMlExperiment.NUMBER_OF_GROUPS).first { it !in tab.experiments.keys }
-    val mlEnabledExperimentGroup: Int =
+    val mlEnabledExperimentGroup: Int? =
       tab.experiments.entries.firstNotNullOfOrNull { (group, experimentType) ->
         (experimentType as? ActiveExperiment)?.takeIf { it.shouldSortByMl }?.let { group }
-      } ?: error("No experiment with ML enabled found for ${tab.tabId}")
+      }
     val mlDisabledExperimentGroup: Int? =
       tab.experiments.entries.firstNotNullOfOrNull { (group, experimentType) ->
         (experimentType as? ActiveExperiment)?.takeIf { !it.shouldSortByMl }?.let { group }
       }
+
+    /**
+     * Skips the test when no experiment of the tab enables ML ranking.
+     */
+    fun requireMlEnabledExperimentGroup(): Int {
+      Assumptions.assumeTrue(mlEnabledExperimentGroup != null, "No experiment with ML enabled found for ${tab.tabId}")
+      return mlEnabledExperimentGroup!!
+    }
 
     /**
      * Skips the test when no experiment of the tab disables ML ranking.
@@ -326,7 +334,7 @@ internal class SearchEverywhereMlSettingsServiceTest {
     SearchEverywhereMlExperiment.noMlSortingAbPlatformExperimentGroupOverride = false
     when (experimentScenario) {
       ExperimentScenario.NoExperiment -> SearchEverywhereMlExperiment.experimentGroupOverride = testCase.noExperimentGroup
-      ExperimentScenario.EnabledByExperiment -> SearchEverywhereMlExperiment.experimentGroupOverride = testCase.mlEnabledExperimentGroup
+      ExperimentScenario.EnabledByExperiment -> SearchEverywhereMlExperiment.experimentGroupOverride = testCase.requireMlEnabledExperimentGroup()
       ExperimentScenario.DisabledByExperiment -> SearchEverywhereMlExperiment.experimentGroupOverride = testCase.requireMlDisabledExperimentGroup()
     }
     resetAllRegistryOverrides()
