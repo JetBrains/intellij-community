@@ -102,34 +102,22 @@ impl LaneIdentity {
 
     /// The port of the fake ACP registry.
     pub(crate) fn registry_port(&self) -> u16 {
-        self.derived_port(&self.key, &REGISTRY_PORTS, &[])
+        self.derived_port(&self.key, &REGISTRY_PORTS)
     }
 
-    /// The port of the control server in the IDE. It derives from `<key>|ide-control` and steps clear of
-    /// [`Self::reserved_host_port`].
+    /// The port of the control server in the IDE. It derives from `<key>|ide-control`.
     pub(crate) fn control_port(&self) -> u16 {
-        self.derived_port(
-            &format!("{}|{IDE_CONTROL_SEED}", self.key),
-            &CONTROL_PORTS,
-            &[self.reserved_host_port()],
-        )
-    }
-
-    /// The port that the control server of the JVM host had. No server binds it any more. The IDE port still steps clear
-    /// of it, because `AirAcpControlChannel.ideControlPort` of the Kotlin lane derives the IDE port the same way, and
-    /// `AirLaneDigestTest` pins the values of both. So no derived port moves.
-    fn reserved_host_port(&self) -> u16 {
-        self.derived_port(&self.key, &CONTROL_PORTS, &[])
+        self.derived_port(&format!("{}|{IDE_CONTROL_SEED}", self.key), &CONTROL_PORTS)
     }
 
     /// The port of the feedback capture.
     pub(crate) fn feedback_port(&self) -> u16 {
-        self.derived_port(&self.key, &FEEDBACK_PORTS, &[])
+        self.derived_port(&self.key, &FEEDBACK_PORTS)
     }
 
     /// The port of the JetBrains Cloud emulator.
     pub(crate) fn cloud_port(&self) -> u16 {
-        self.derived_port(&self.key, &CLOUD_PORTS, &[])
+        self.derived_port(&self.key, &CLOUD_PORTS)
     }
 
     /// The lane secret for `purpose`: the first 32 hex digits of the SHA-256 of `<key>|<purpose>`.
@@ -154,13 +142,13 @@ impl LaneIdentity {
         ]
     }
 
-    /// The port that `seed` picks in `range`, stepped up past the daemon port and each port of `taken`, wrapping at the end.
-    fn derived_port(&self, seed: &str, range: &Range<u16>, taken: &[u16]) -> u16 {
+    /// The port that `seed` picks in `range`, stepped up past the daemon port, wrapping at the end.
+    fn derived_port(&self, seed: &str, range: &Range<u16>) -> u16 {
         let span = u64::from(range.end - range.start);
         let value = u64::from_str_radix(&sha256_hex(seed.as_bytes())[..8], 16).unwrap_or_default();
         (0..span)
             .map(|step| range.start + u16::try_from((value + step) % span).unwrap_or_default())
-            .find(|port| *port != self.daemon_port && !taken.contains(port))
+            .find(|port| *port != self.daemon_port)
             .unwrap_or(range.start)
     }
 }

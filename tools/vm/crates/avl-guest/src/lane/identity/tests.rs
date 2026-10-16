@@ -18,7 +18,7 @@ fn sha(text: &str) -> String {
     sha256_hex(text.as_bytes())
 }
 
-/// The vector of `AirLaneDigestTest`, which the Kotlin side of the lane holds too.
+/// The inputs of the golden key.
 fn golden_inputs<'a>(document: &'a str, runtimes: &'a BTreeMap<String, String>, option_files: &'a str) -> KeyInputs<'a> {
     KeyInputs {
         lane: "UI",
@@ -38,7 +38,6 @@ fn the_identity_of_the_fixed_key_is_the_golden() {
     let _ = writeln!(rendered, "key={}", identity.key());
     for (name, port) in [
         ("registry", identity.registry_port()),
-        ("control.reserved-host", identity.reserved_host_port()),
         ("control.ide", identity.control_port()),
         ("feedback", identity.feedback_port()),
         ("cloud", identity.cloud_port()),
@@ -63,7 +62,6 @@ fn the_identity_of_the_fixed_key_is_the_golden() {
         optionFiles=f52d3ce8c0615ab02d1c50a0ed983216fb369276666e9a9b2eabe6efacb326ba
         key=air-ui-a432e9c21a7cff01
         port.registry=27287
-        port.control.reserved-host=30287
         port.control.ide=30425
         port.feedback=30787
         port.cloud=32287
@@ -86,7 +84,7 @@ fn a_lane_without_a_stamp_states_no_stamp_line_and_its_prefix_is_the_lowercase_l
             ..golden_inputs(&document, &runtimes, &option_files)
         };
         assert!(!inputs.text().contains("productStamp="), "{stamp:?}");
-        // The second vector of `AirLaneDigestTest`.
+        // The second golden key.
         assert_eq!(inputs.config_key(), "air-gui_chat-d929fc5fa3bfa2f8");
     }
 }
@@ -129,7 +127,7 @@ fn seed_of(port: u16, window: &Range<u16>) -> String {
     let free = LaneIdentity::new("air-ui-test", 0);
     (0..100_000)
         .map(|index| format!("seed-{index}"))
-        .find(|seed| free.derived_port(seed, window, &[]) == port)
+        .find(|seed| free.derived_port(seed, window) == port)
         .expect("a seed of the port")
 }
 
@@ -140,23 +138,20 @@ fn a_derived_port_steps_over_the_daemon_port_and_wraps_at_the_end_of_its_window(
     assert_eq!(LaneIdentity::new(key, registry).registry_port(), registry + 1);
     let window = 26_000..26_010;
     let last = seed_of(26_009, &window);
-    assert_eq!(LaneIdentity::new(key, 26_009).derived_port(&last, &window, &[]), 26_000);
-    assert_eq!(LaneIdentity::new(key, 26_009).derived_port(&last, &window, &[26_000]), 26_001);
+    assert_eq!(LaneIdentity::new(key, 26_009).derived_port(&last, &window), 26_000);
 }
 
 #[test]
-fn the_ide_control_port_steps_clear_of_the_reserved_host_port() {
-    // A key whose two seeds pick the same control port.
+fn the_ide_control_port_is_the_port_that_its_seed_picks() {
+    // A key whose plain seed picks the same control port as its IDE seed. No server reserves the port of the plain seed.
     let free = LaneIdentity::new("air-ui-test", DAEMON_PORT);
     let key = (0..100_000)
         .map(|index| format!("air-ui-{index:016x}"))
-        .find(|key| free.derived_port(key, &CONTROL_PORTS, &[]) == free.derived_port(&format!("{key}|ide-control"), &CONTROL_PORTS, &[]))
+        .find(|key| free.derived_port(key, &CONTROL_PORTS) == free.derived_port(&format!("{key}|{IDE_CONTROL_SEED}"), &CONTROL_PORTS))
         .expect("a key whose two control seeds collide");
-    let identity = LaneIdentity::new(key, DAEMON_PORT);
-    let host = identity.reserved_host_port();
     assert_eq!(
-        identity.control_port(),
-        CONTROL_PORTS.start + (host - CONTROL_PORTS.start + 1) % 500
+        LaneIdentity::new(&key, DAEMON_PORT).control_port(),
+        free.derived_port(&key, &CONTROL_PORTS)
     );
 }
 

@@ -503,7 +503,6 @@ The port of each lane service derives from the key, inside the window of the ser
 | service | window |
 | --- | --- |
 | the fake ACP registry | 26000 to 29999 |
-| the reserved host port | 30000 to 30499 |
 | the control server in the IDE | 30000 to 30499 |
 | the feedback capture | 30500 to 30999 |
 | the JetBrains Cloud emulator | 32000 to 32499 |
@@ -513,9 +512,9 @@ The UI-test bridge has the fixed port 31347, and the Codex mock model has the fi
 - A derived port that is the port of the lane daemon moves to the next port of its window.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_derived_port_steps_over_the_daemon_port_and_wraps_at_the_end_of_its_window`)
 
-- The control server in the IDE never takes the reserved host port, the port that the control server of the test
-  process had.
-  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_ide_control_port_steps_clear_of_the_reserved_host_port`)
+- The control server in the IDE takes the port that `<key>|ide-control` picks in its window. No other server reserves a
+  port of that window.
+  [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_ide_control_port_is_the_port_that_its_seed_picks`)
 
 - The windows do not overlap, and they hold no fixed port.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`every_window_stays_clear_of_the_fixed_ports_and_of_the_ephemeral_floor`)
