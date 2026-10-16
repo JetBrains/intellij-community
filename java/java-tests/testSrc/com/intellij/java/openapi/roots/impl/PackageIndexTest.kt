@@ -21,7 +21,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -300,14 +299,14 @@ class PackageIndexTest {
     assertDirectoriesByPackageName("", true, classesRootDir)
 
     libraries.add(JavaSyntheticLibrary("lib2", emptyList(), listOf(addedClassesRootDir), emptySet()))
-    runWriteActionAndWait { WorkspaceFileIndexEx.getInstance(projectModel.project).indexData.resetCustomContributors() }
+    resetCustomContributors()
 
     assertDirectoriesByPackageName("", true, classesRootDir, addedClassesRootDir)
   }
 
   private fun unregisterLibrary(disposable: Disposable) {
     Disposer.dispose(disposable)
-    UIUtil.dispatchAllInvocationEvents()
+    resetCustomContributors()
   }
 
   private fun registerSyntheticLibrary(library: SyntheticLibrary): Disposable = registerSyntheticLibraries(listOf(library))
@@ -319,8 +318,13 @@ class PackageIndexTest {
     ExtensionTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME, listOf(object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> = libraries
     }), disposable)
-    UIUtil.dispatchAllInvocationEvents()
+    resetCustomContributors()
     return disposable
+  }
+
+  /** Resets the index synchronously after a change of the providers. */
+  private fun resetCustomContributors() {
+    runWriteActionAndWait { WorkspaceFileIndexEx.getInstance(projectModel.project).indexData.resetCustomContributors() }
   }
 
   private fun assertPackage(packageName: String?, vararg directories: VirtualFile) {
