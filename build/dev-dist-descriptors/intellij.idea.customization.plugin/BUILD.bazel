@@ -26,6 +26,7 @@ dev_dist_plugin_descriptor(
     refused_content_modules = [
         "intellij.idea.customization.ultimate",
         "intellij.idea.ultimate.customizationTrial",
+        "intellij.platform.trialPromotion.idesWithFreeTier.welcomeScreen",
     ],
 )
 

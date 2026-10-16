@@ -12,5 +12,6 @@
     <!-- ultimate-homed modules, skipped in community-based dists -->
     <module name="intellij.idea.customization.ultimate"/>
     <module name="intellij.idea.ultimate.customizationTrial"/>
+    <module name="intellij.platform.trialPromotion.idesWithFreeTier.welcomeScreen"/>
   </content>
 </idea-plugin>
