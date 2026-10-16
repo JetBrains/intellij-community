@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.gradleTooling.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />

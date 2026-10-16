@@ -52,7 +52,7 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
   protected open val testDataProjectRoot: Path = Path.of(PathManagerEx.getCommunityHomePath())
 
   /** The Gradle version that imports the project. */
-  protected abstract val targetGradleVersion: String
+  protected open val targetGradleVersion: String = TARGET_GRADLE_VERSION
 
   /** The glob patterns of the test data project files that the test can change without an error. */
   protected open val excludedFilePatterns: Array<String>

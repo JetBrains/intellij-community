@@ -238,6 +238,8 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared_test_lib",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
         "//xml/xml-parser:parser",
         "//xml/xml-parser:parser_test_lib",
         "//platform/core-ui",

@@ -4,6 +4,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.resources.psi.ComposeResourcesPsiChangesListener
+import com.intellij.compose.ide.plugin.shared.COMMON_MAIN
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.service
