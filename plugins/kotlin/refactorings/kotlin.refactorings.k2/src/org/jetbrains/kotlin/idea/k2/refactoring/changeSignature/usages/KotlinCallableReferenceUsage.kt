@@ -114,7 +114,7 @@ private enum class ParamConversion {
 private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConversion> {
     val receiverInfo = changeInfo.receiverParameterInfo
     val oldReceiverInfo = changeInfo.oldReceiverInfo
-    val receiverAppeared = oldReceiverInfo == null && receiverInfo != null
+    val receiverAppeared = receiverInfo != null && oldReceiverInfo != receiverInfo
     // A moved receiver keeps the same parameter-info instance.
     val oldReceiverAsParam = oldReceiverInfo?.let { old -> changeInfo.newParameters.firstOrNull { it == old && it != receiverInfo } }
 
@@ -124,8 +124,8 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
     val receiverAdded = receiverAppeared && receiverInfo.isNewParameter
     val receiverToContext = oldReceiverAsParam?.isContextParameter == true
     val receiverToValue = oldReceiverAsParam?.isContextParameter == false
-    val receiverRemoved = oldReceiverInfo != null && receiverInfo == null && oldReceiverAsParam == null
-    val receiverRetyped = oldReceiverInfo != null && receiverInfo != null && changeInfo.isReceiverTypeChanged()
+    val receiverRemoved = oldReceiverInfo != null && oldReceiverInfo != receiverInfo && oldReceiverAsParam == null
+    val receiverRetyped = oldReceiverInfo != null && receiverInfo == oldReceiverInfo && changeInfo.isReceiverTypeChanged()
 
     val valueToContext = changeInfo.newParameters.any {
         !it.isNewParameter && !it.wasContextParameter && it.isContextParameter && it != oldReceiverInfo
