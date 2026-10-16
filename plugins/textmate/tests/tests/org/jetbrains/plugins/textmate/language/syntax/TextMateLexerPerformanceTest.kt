@@ -85,6 +85,26 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     }
   }
 
+  /**
+   * The minified-file shape: a few long lines, each of thousands of short statements.
+   * The case is sensitive to the per-step costs that grow with the line length.
+   * The match-rule cache key hashes the whole line on every step.
+   * Every token converts a byte range to char offsets with a scan from the line start.
+   *
+   * The matcher is wired as `TextMateSyntaxHighlighterFactory` wires it, like [testPerformancePowerShell].
+   */
+  fun testPerformanceLongLines() {
+    val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+    TextMateSelectorWeigherImpl().caching().use { weigher ->
+      TextMateSyntaxMatcherImpl(regexProvider, weigher).caching().use { syntaxMatcher ->
+        doPerformanceTest(syntaxMatcher = syntaxMatcher,
+                          bundleName = TestUtil.POWERSHELL,
+                          fileName = "demo.ps1",
+                          text = powerShellLongLines())
+      }
+    }
+  }
+
   private fun doPerformanceTest(syntaxMatcher: TextMateSyntaxMatcher) {
     val file = File(PlatformTestUtil.getCommunityPath() + "/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java")
     doPerformanceTest(syntaxMatcher = syntaxMatcher,
@@ -128,8 +148,26 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     }
   }
 
+  /**
+   * Builds [LONG_LINES] distinct lines of [STATEMENTS_PER_LINE] short statements each.
+   * The lines are distinct, so the match-rule cache gives no cross-line hit,
+   * as in a real minified file.
+   */
+  private fun powerShellLongLines(): String {
+    return buildString {
+      for (line in 1..LONG_LINES) {
+        for (i in 1..STATEMENTS_PER_LINE) {
+          append($$"""$v_$${line}_$$i = "item-$$line-$$i"; """)
+        }
+        append('\n')
+      }
+    }
+  }
+
   companion object {
     private const val BLOCKS = 1200
+    private const val LONG_LINES = 4
+    private const val STATEMENTS_PER_LINE = 1000
 
     /** Stands for the index of the block. No PowerShell syntax in the template uses a tilde. */
     private const val INDEX_MARKER = "~i~"
