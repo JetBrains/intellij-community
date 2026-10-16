@@ -9,6 +9,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.junit5.TestApplication;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +70,29 @@ final class VirtualFileMarkerRootTest {
     assertEquals(1, firstMarker.getStartOffset());
     assertEquals(3, middleMarker.getStartOffset());
     assertEquals(5, lastMarker.getStartOffset());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {3, 5})
+  void restorationResolvesUnchangedMarkersBeforeLaterRestores(int initialOffset) {
+    var file = new LightVirtualFile("test.txt", "abcdef");
+    var unchangedMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
+    var restoredMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, initialOffset, 0, 3, 0, 3, true);
+    var offsetMarker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 5, -1, -1, -1, -1, false);
+    var document = new DocumentImpl("abcdef", true);
+
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+
+    assertEquals(1, unchangedMarker.getStartOffset());
+    assertEquals(3, restoredMarker.getStartOffset());
+    assertEquals(5, offsetMarker.getStartOffset());
+
+    document.insertString(0, "x");
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
+
+    assertEquals(2, unchangedMarker.getStartOffset());
+    assertEquals(4, restoredMarker.getStartOffset());
+    assertEquals(6, offsetMarker.getStartOffset());
   }
 
   @Test

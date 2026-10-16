@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
@@ -56,26 +57,24 @@ class VirtualFileMarkerRoot private constructor(
   @Synchronized
   private fun restoreAndAttach(document: DocumentImpl, tabSize: Int) {
     val sourceRoot = rootReference.get()
-    var restoredRoot = sourceRoot
+    var restoredEntries: ArrayList<PMarkerRoot.MarkerEntry>? = null
     val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
     sourceRoot.processAllRangeMarkers { entry, ancestorDelta ->
       val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processAllRangeMarkers true
       val range = marker.initialRange(document, tabSize) ?: return@processAllRangeMarkers true
       resolvedMarkers.add(marker)
       if (range.startOffset != entry.nodeStart + ancestorDelta || range.endOffset != entry.nodeEnd + ancestorDelta) {
-        restoredRoot = restoredRoot.remove(entry.markerId).insert(
-          entry.markerId,
-          range.startOffset,
-          range.endOffset,
-          entry.spec,
-          entry.flavorFlags,
-          entry.markerReference,
-          entry.measure,
-        )
+        val entries = restoredEntries ?: ArrayList<PMarkerRoot.MarkerEntry>().also { restoredEntries = it }
+        entries.add(entry.copy(nodeStart = range.startOffset, nodeEnd = range.endOffset))
       }
       true
     }
 
+    val restoredRoot = restoredEntries?.let { entries ->
+      val markerIds = LongArrayList(entries.size)
+      for (entry in entries) markerIds.add(entry.markerId)
+      sourceRoot.removeMany(markerIds).insertMany(entries)
+    } ?: sourceRoot
     markerRoot(document).set(restoredRoot)
     attach(document)
     resolvedMarkers.forEach(SnapshotLazyRangeMarker::markInitialRangeResolved)
