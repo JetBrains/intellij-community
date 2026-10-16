@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
 import org.jetbrains.plugins.gradle.importing.syncAction.GradleProjectResolverTestCase.TestProjectResolverExtension
 import org.jetbrains.plugins.gradle.importing.syncAction.registerProjectResolverExtension
 import org.jetbrains.plugins.gradle.tooling.builder.FailingTestModelBuilder
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -174,8 +175,7 @@ class GradleSyncOutputFailureTest(
     assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
-        assertNode("Could Not Resolve abc:abc:123 for project:main")
-        assertNode("Could Not Resolve abc:abc:123 for project:test")
+        assertNode(GradleBundle.message("gradle.build.issue.unresolved.dependencies.title"))
       }
     }
   }
