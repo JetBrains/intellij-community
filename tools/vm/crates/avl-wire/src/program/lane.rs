@@ -24,6 +24,9 @@ pub const JAVA_TOKEN: &str = "${java}";
 /// The token for the fake agent jar in the home of a context, in an `acp.json` entry.
 pub const FAKE_AGENT_JAR_TOKEN: &str = "${fakeAgentJar}";
 
+/// The lane of the live agents, the one lane that states a [`LiveContext`].
+pub const LIVE_LANE: &str = "UI_LIVE";
+
 vocabulary! {
     /// When a launch property applies. The IDE runs on the machine that launches it.
     pub enum LaunchCondition {
@@ -84,9 +87,45 @@ pub struct LaneDocument {
     pub cli_runtimes: Vec<String>,
     /// The identity line of each lane service, by the name of the service.
     pub services: BTreeMap<String, String>,
+    /// The live context of [`LIVE_LANE`]. Every other lane leaves the field out.
+    #[serde(default)]
+    pub live: Option<LiveContext>,
     /// The IJ Perf series of the scenarios of the lane that report metrics. A lane with none leaves the field out.
     #[serde(default)]
     pub performance_series: Vec<PerformanceSeries>,
+}
+
+/// The JetBrains Central account that the lane daemon of a Linux guest gives the agent CLIs of the lane IDE.
+///
+/// The run hands the guest the Central login as the run input [`LiveContext::login_input`]. The guest agent imports it
+/// with the declared Central runtime, pins the proxy to [`LiveContext::central_port`] and wires each agent of
+/// [`LiveContext::central_agents`]. No field holds a credential.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LiveContext {
+    /// The name of the run input that holds the Central login: a file of the run secrets directory of the guest.
+    pub login_input: String,
+    /// The host command whose output a caller pipes into the run as the login input.
+    pub login_source: String,
+    /// The declared CLI runtime of the Central CLI. Its launcher in the context is the Central guard, never the CLI.
+    pub central_runtime: String,
+    /// The port that the configuration of the Central proxy pins.
+    pub central_port: u16,
+    /// The agents that `central add` wires, in its own spelling and in this order.
+    pub central_agents: Vec<String>,
+    /// The declared CLI runtimes of the live agents, each with the environment that its launcher exports.
+    pub runtimes: Vec<LiveRuntime>,
+    /// The unpack root of the project: an absolute guest path outside the context.
+    pub project_unpack_root: String,
+}
+
+/// One declared CLI runtime of a live agent.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveRuntime {
+    pub name: String,
+    /// The variables that the launcher exports, because the lane IDE inherits no variable.
+    pub environment: BTreeMap<String, String>,
 }
 
 /// One `-D` property.
@@ -289,6 +328,43 @@ impl LaneDocument {
             if series.project.is_empty() || series.method.is_empty() {
                 refusals.push(format!("the performance series of {scenario} names no project or no method"));
             }
+        }
+        match &self.live {
+            Some(live) if self.lane == LIVE_LANE => refusals.extend(live.refusals(&self.cli_runtimes)),
+            Some(_) => refusals.push(format!("the lane {} states a live context, which only {LIVE_LANE} has", self.lane)),
+            None if self.lane == LIVE_LANE => refusals.push(format!("the lane {LIVE_LANE} states no live context")),
+            None => {}
+        }
+        refusals
+    }
+}
+
+impl LiveContext {
+    /// Every way in which this live context does not fit a lane that declares the CLI runtimes `cli_runtimes`.
+    fn refusals(&self, cli_runtimes: &[String]) -> Vec<String> {
+        let mut refusals = Vec::new();
+        if self.login_input.is_empty() || self.login_input.contains('/') {
+            refusals.push(format!("the live login input '{}' is not a file name", self.login_input));
+        }
+        if self.login_source.is_empty() || self.central_agents.is_empty() {
+            refusals.push("the live context names no login source or no Central agent".to_owned());
+        }
+        let mut names = BTreeSet::new();
+        for name in std::iter::once(&self.central_runtime).chain(self.runtimes.iter().map(|runtime| &runtime.name)) {
+            if !names.insert(name.as_str()) {
+                refusals.push(format!("the live context names the runtime '{name}' twice"));
+            }
+            if cli_runtimes.contains(name) {
+                refusals.push(format!(
+                    "the live runtime '{name}' is a declared CLI runtime too, so the lane would get two launchers of it"
+                ));
+            }
+        }
+        if !self.project_unpack_root.starts_with('/') || !is_relative_slash_path(&self.project_unpack_root[1..]) {
+            refusals.push(format!(
+                "the live project unpack root '{}' is not an absolute slash path",
+                self.project_unpack_root
+            ));
         }
         refusals
     }

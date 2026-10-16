@@ -31,6 +31,65 @@ fn parse(value: &Value) -> Result<LaneDocument, String> {
     parse_lane_document(value.to_string().as_bytes())
 }
 
+/// The fixture document as the lane `UI_LIVE`, with its live context.
+fn live_document() -> Value {
+    let mut document = document();
+    document["lane"] = json!(LIVE_LANE);
+    document["live"] = json!({
+        "loginInput": "AIR_LIVE_CENTRAL_LOGIN", "loginSource": "central login export", "centralRuntime": "central",
+        "centralPort": 19516, "centralAgents": ["codex", "claude-code", "junie"],
+        "runtimes": [{"name": "claude", "environment": {"DISABLE_AUTOUPDATER": "1"}}, {"name": "junie", "environment": {}}],
+        "projectUnpackRoot": "/tmp/air-ui-live/project",
+    });
+    document
+}
+
+// The live lane states its live context, and the context names its inputs by name: no field holds a credential.
+#[test]
+fn the_live_lane_reads_its_live_context() {
+    let live = parse(&live_document()).unwrap().live.expect("a live context");
+    assert_eq!(live.login_input, "AIR_LIVE_CENTRAL_LOGIN");
+    assert_eq!(live.central_port, 19516);
+    assert_eq!(live.central_agents, ["codex", "claude-code", "junie"]);
+    assert_eq!(live.runtimes[0].environment["DISABLE_AUTOUPDATER"], "1");
+    assert_eq!(parse(&document()).unwrap().live, None);
+}
+
+// A live context belongs to the live lane alone, and the live lane cannot launch without one.
+#[test]
+fn a_live_context_fits_the_live_lane_only() {
+    let mut other = live_document();
+    other["lane"] = json!("UI");
+    assert_eq!(
+        parse(&other).unwrap_err(),
+        "the lane UI states a live context, which only UI_LIVE has"
+    );
+    let mut missing = live_document();
+    missing.as_object_mut().unwrap().remove("live");
+    assert_eq!(parse(&missing).unwrap_err(), "the lane UI_LIVE states no live context");
+}
+
+// The launcher of the Central runtime is the guard, so a live runtime that is a declared CLI runtime too would give the
+// lane IDE a second launcher of the real CLI. A login input is a file name in the run secrets directory.
+#[test]
+fn a_live_context_that_does_not_fit_its_lane_is_refused() {
+    let mut document = live_document();
+    document["live"]["centralRuntime"] = json!("codex");
+    document["live"]["runtimes"][1]["name"] = json!("claude");
+    document["live"]["loginInput"] = json!("../login");
+    document["live"]["projectUnpackRoot"] = json!("relative/project");
+    assert_eq!(
+        parse(&document).unwrap_err(),
+        [
+            "the live login input '../login' is not a file name",
+            "the live runtime 'codex' is a declared CLI runtime too, so the lane would get two launchers of it",
+            "the live context names the runtime 'claude' twice",
+            "the live project unpack root 'relative/project' is not an absolute slash path",
+        ]
+        .join("; ")
+    );
+}
+
 #[test]
 fn a_document_that_fits_itself_is_read_with_every_field() {
     let document = parse(&document()).unwrap();
