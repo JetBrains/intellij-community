@@ -4,7 +4,9 @@ package com.intellij.ide.plugins
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
@@ -30,6 +32,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
@@ -40,6 +43,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.components.OnOffButton
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -47,12 +51,15 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.awt.Color
 import java.awt.Component
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JEditorPane
 import javax.swing.JLabel
+import javax.swing.text.LabelView
+import javax.swing.text.Position
 
 @TestApplication
 internal class PluginLoadingProblemUiTest {
@@ -82,7 +89,7 @@ internal class PluginLoadingProblemUiTest {
   }
 
   @Test
-  fun `product mode hints stay in rows and clear after a mode change`(): Unit = timeoutRunBlocking {
+  fun `product mode exclusions gray rows and show details explanations until the mode changes`(): Unit = timeoutRunBlocking {
     val moduleId = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
     val id = PluginId.getId("mode.ui.plugin")
     plugin(id.idString) {
@@ -117,19 +124,25 @@ internal class PluginLoadingProblemUiTest {
       }
       waitUntilAssertSucceeds {
         withContext(Dispatchers.EDT) {
-          assertThat(hints(row.component).filter { it.isVisible }).hasSize(1)
+          assertThat(hints(row.component)).isEmpty()
           assertThat(hints(details)).isEmpty()
-          val rowHint = hints(row.component).single { it.isVisible }
-          assertThat(rowHint.toolTipText).contains(explanations.single())
-          assertThat(UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single().isSelected).isTrue()
+          val title = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.text == model.name }
+          val icon = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.icon != null }
+          val toggle = UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single()
+          assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(model.getDescriptor(), false, false, true))
+          assertThat(toggle.isSelected).isTrue()
+          assertThat(toggle.isEnabled).isTrue()
           assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).map { it.text }.toList())
             .anyMatch { it.contains(checkNotNull(model.name)) }
-          assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).toList())
-            .noneMatch { it.text.contains(explanations.single()) }
+          val problem = problemPanes(details).single { it.text.contains(explanations.single()) }
+          assertThat(textForeground(problem, explanations.single())).isEqualTo(UIUtil.getContextHelpForeground())
+          assertThat(problem.document.getText(0, problem.document.length)).contains(explanations.single())
           assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
             .noneMatch { it.accessibleContext.accessibleDescription?.contains(explanations.single()) == true }
         }
       }
+      assertThat(host.getPluginEnabledStates(listOf(model))[id]).isTrue()
 
       PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(tempDir)
                                        .withProductMode(ProductMode.MONOLITH)
@@ -141,12 +154,19 @@ internal class PluginLoadingProblemUiTest {
       }
       waitUntilAssertSucceeds {
         withContext(Dispatchers.EDT) {
-          assertThat(hints(row.component)).noneMatch { it.isVisible }
+          assertThat(hints(row.component)).isEmpty()
           assertThat(hints(details)).isEmpty()
-          assertThat(hints(row.component).single().toolTipText).isNull()
-          assertThat(UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single().isSelected).isTrue()
+          val title = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.text == model.name }
+          val icon = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.icon != null }
+          val toggle = UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single()
+          assertThat(title.foreground).isNotEqualTo(ListPluginComponent.DisabledColor)
+          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(model.getDescriptor(), false, false, false))
+          assertThat(toggle.isSelected).isTrue()
+          assertThat(toggle.isEnabled).isTrue()
+          assertThat(problemPanes(details)).noneMatch { it.text.contains(explanations.single()) }
         }
       }
+      assertThat(host.getPluginEnabledStates(listOf(model))[id]).isTrue()
     }
     finally {
       withContext(Dispatchers.EDT) { host.dispose(closeSession = false) }
@@ -155,46 +175,80 @@ internal class PluginLoadingProblemUiTest {
   }
 
   @Test
-  fun `selected details omit hints from reused rows`(): Unit = timeoutRunBlocking {
+  fun `selected details refresh expected explanations without hiding errors`(): Unit = timeoutRunBlocking {
+    val id = PluginId.getId("mode.details.refresh")
+    val healthyId = PluginId.getId("mode.details.healthy")
+    plugin(id.idString) { depends("missing.for.ui") }.installAt(tempDir)
+    plugin(healthyId.idString) {}.installAt(tempDir)
+    PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(tempDir).build(configureClassLoaders = false))
     val scope = this
     val host = withContext(Dispatchers.EDT) { LegacyPluginUiHost(parentScope = scope, operationScope = scope) }
     try {
-      val id = PluginId.getId("mode.details.refresh")
+      host.awaitSessionInitialization()
+      val result = DefaultUiPluginManagerController.getErrors(host.sessionId, id)
       val model = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mode Details Refresh").setIsConverted(true).build()
-      val input = PluginRowInput(model, PluginInstallationState(true), emptyList(), null, true, false)
+      val input = PluginRowInput(model, PluginInstallationState(true), MyPluginModel.getErrors(result), null, true, false)
       val item = PluginItemState(id, model.name, modelHandle = PluginItemModelHandle(model), rowInput = input)
       val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
-      val (row, presenter) = withContext(Dispatchers.EDT) {
+      val (row, healthyRow, presenter) = withContext(Dispatchers.EDT) {
         val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
         val specification = factory.specification(section, item)
         val row = factory.createRow(specification.occurrenceId, item, specification.renderKey) as LegacyPluginRow
         row.renderInput(input)
+        val healthyModel = PluginNodeModelBuilderFactory.createBuilder(healthyId).setName("Healthy Plugin").setIsConverted(true).build()
+        val healthyItem = PluginItemState(healthyId, healthyModel.name, modelHandle = PluginItemModelHandle(healthyModel))
+        val healthySpecification = factory.specification(section.copy(items = listOf(healthyItem)), healthyItem)
+        val healthyRow = factory.createRow(healthySpecification.occurrenceId, healthyItem, healthySpecification.renderKey) as LegacyPluginRow
         val presenter = LegacyPluginDetailsPresenter(host) { _, _ -> }
         presenter.render(PluginDetailsMode.LOCAL, listOf(PluginDetailsSelection(specification.occurrenceId, row)))
-        row to presenter
+        Triple(row, healthyRow, presenter)
       }
       try {
         waitUntilAssertSucceeds {
           withContext(Dispatchers.EDT) {
             val details =
               UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
-            assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).map { it.text }.toList())
-              .anyMatch { it?.contains(checkNotNull(model.name)) == true }
+            assertThat(problemPanes(details)).anyMatch { it.text.contains("missing.for.ui") }
           }
         }
         withContext(Dispatchers.EDT) {
           val details =
             UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
-          val explanations = listOf("Client: Light mode is not supported.", "Host: Backend mode is not supported.")
+          val explanations = listOf("Client: Light mode is not supported <here>.", "Host: Backend mode is not supported.")
+          val originalProblem = problemPanes(details).single { it.text.contains("missing.for.ui") }
           for (next in listOf(explanations, emptyList(), explanations)) {
             row.renderInput(input.copy(expectedExplanations = next))
             presenter.render(PluginDetailsMode.LOCAL, listOf(PluginDetailsSelection(section.occurrenceId(id), row)))
 
-            assertThat(hints(row.component).single().isVisible).isEqualTo(next.isNotEmpty())
+            assertThat(hints(row.component)).isEmpty()
             assertThat(hints(details)).isEmpty()
+            val problem = problemPanes(details).single { it.text.contains("missing.for.ui") }
+            assertThat(problem).isSameAs(originalProblem)
+            assertThat(textForeground(problem, "missing.for.ui")).isEqualTo(NamedColorUtil.getErrorForeground())
+            val text = problem.document.getText(0, problem.document.length)
+            if (next.isEmpty()) {
+              assertThat(text).doesNotContain("mode is not supported")
+            }
+            else {
+              assertThat(text).contains(explanations[0], explanations[1])
+              assertThat(problem.text).contains("&lt;here&gt;")
+              assertThat(textForeground(problem, explanations[0])).isEqualTo(UIUtil.getContextHelpForeground())
+              assertThat(textForeground(problem, explanations[1])).isEqualTo(UIUtil.getContextHelpForeground())
+            }
             assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
               .noneMatch { it.accessibleContext.accessibleDescription?.contains("mode is not supported") == true }
           }
+          presenter.render(PluginDetailsMode.LOCAL, listOf(PluginDetailsSelection(section.occurrenceId(healthyId), healthyRow)))
+        }
+        waitUntilAssertSucceeds {
+          withContext(Dispatchers.EDT) {
+            val details =
+              UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
+            assertThat(details.descriptorForActions?.pluginId).isEqualTo(healthyId)
+            assertThat(problemPanes(details)).noneMatch { it.text.contains("mode is not supported") || it.text.contains("missing.for.ui") }
+          }
+        }
+        withContext(Dispatchers.EDT) {
           presenter.render(PluginDetailsMode.LOCAL, emptyList())
         }
         waitUntilAssertSucceeds {
@@ -202,6 +256,7 @@ internal class PluginLoadingProblemUiTest {
             val details =
               UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
             assertThat(hints(details)).isEmpty()
+            assertThat(problemPanes(details)).noneMatch { it.text.contains("mode is not supported") || it.text.contains("missing.for.ui") }
           }
         }
       }
@@ -209,6 +264,7 @@ internal class PluginLoadingProblemUiTest {
         withContext(Dispatchers.EDT) {
           presenter.close()
           row.close()
+          healthyRow.close()
         }
       }
     }
@@ -220,4 +276,18 @@ internal class PluginLoadingProblemUiTest {
 
   private fun hints(component: Component): List<JLabel> =
     UIUtil.uiTraverser(component).filter(JLabel::class.java).filter { it.icon == AllIcons.General.Note }.toList()
+
+  private fun problemPanes(component: Component): List<JEditorPane> =
+    UIUtil.uiTraverser(component).filter(JEditorPane::class.java).filter { it.isVisible }.toList()
+
+  private fun textForeground(pane: JEditorPane, text: String): Color {
+    val offset = pane.document.getText(0, pane.document.length).indexOf(text)
+    assertThat(offset).isGreaterThanOrEqualTo(0)
+    var view = pane.ui.getRootView(pane)
+    view.setSize(600f, 1000f)
+    while (view.viewCount > 0) {
+      view = view.getView(view.getViewIndex(offset, Position.Bias.Forward))
+    }
+    return (view as LabelView).foreground
+  }
 }

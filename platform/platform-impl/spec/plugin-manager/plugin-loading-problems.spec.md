@@ -37,7 +37,7 @@ targets:
 # Plugin Loading Problems
 
 Status: Active
-Date: 2026-10-14
+Date: 2026-10-16
 
 ## Purpose
 
@@ -176,18 +176,19 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
     `an expected product mode problem stays outside the generic error area`
   )
-- Product mode problems show a neutral info icon immediately left of the row's enable/disable control.
-- The details pane does not show product mode hints.
-- The row tooltip retains each side's explanation. The row and its control expose the explanation to screen readers without hover.
+- Product mode problems gray the plugin icon and title in the list, as for a disabled plugin. They add no info icon.
+- The enable/disable control remains active and retains the user's enabled setting.
+- The details pane shows the explanation in gray text in the loading error area.
+- The row and its control expose the explanation to screen readers. The details text remains accessible without hover.
 - These problems do not change the user's enabled setting or enter error sorting.
 - An expected explanation must not hide an unexpected error from the other side.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
-    `product mode hints sit before the toggle and refresh on reused rows`;
-    `a product mode hint keeps an ordinary side error visible`
+    `product mode exclusions gray the plugin and keep the toggle active on reused rows`;
+    `a product mode exclusion keeps an ordinary side error visible`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
-    `product mode hints stay in rows and clear after a mode change`;
-    `selected details omit hints from reused rows`
+    `product mode exclusions gray rows and show details explanations until the mode changes`;
+    `selected details refresh expected explanations without hiding errors`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
     `local hints stay separate from errors and clear with replacement data`;
@@ -371,14 +372,16 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   )
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.
-- Reused rows must update or remove obsolete product mode hints and their accessible descriptions.
-- Rows must remove the hints after a mode change makes the required module available.
+- Reused rows and selected details must update or remove obsolete product mode explanations.
+- A mode change that makes the required module available must restore the normal row appearance and remove the details explanation.
+- Clearing or changing the selection must remove the previous plugin's explanation from details.
+- Expected explanations must retain both side prefixes and escape HTML characters as text.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
-    `product mode hints sit before the toggle and refresh on reused rows`
+    `product mode exclusions gray the plugin and keep the toggle active on reused rows`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
-    `product mode hints stay in rows and clear after a mode change`;
-    `selected details omit hints from reused rows`
+    `product mode exclusions gray rows and show details explanations until the mode changes`;
+    `selected details refresh expected explanations without hiding errors`
   )
 
 - The local notification handler retains the state captured on its first access for notification data and recovery targets.

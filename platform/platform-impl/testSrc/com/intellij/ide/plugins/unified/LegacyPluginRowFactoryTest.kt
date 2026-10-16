@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginDetailsPageLayout
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
@@ -167,7 +168,8 @@ internal class LegacyPluginRowFactoryTest {
             val errors = componentsOfType(row.component, JEditorPane::class.java).filter { it.text.contains("Loading problem") }
             assertThat(errors).hasSize(if (restricted) 0 else 1)
             val hints = componentsOfType(row.component, JLabel::class.java).filter { it.icon == AllIcons.General.Note && it.isVisible }
-            assertThat(hints).hasSize(if (restricted) 0 else 1)
+            assertThat(hints).isEmpty()
+            assertThat(row.component.getExpectedExplanations()).hasSize(if (restricted) 0 else 1)
           }
         }
       }
@@ -323,7 +325,7 @@ internal class LegacyPluginRowFactoryTest {
   }
 
   @Test
-  fun `product mode hints sit before the toggle and refresh on reused rows`(): Unit = timeoutRunBlocking {
+  fun `product mode exclusions gray the plugin and keep the toggle active on reused rows`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
       try {
@@ -341,20 +343,19 @@ internal class LegacyPluginRowFactoryTest {
             factory.rowsRendered(listOf(binding))
             val row = (binding.row as LegacyPluginRow).component
             val toggle = componentsOfType(row, OnOffButton::class.java).single()
-            val hint = componentsOfType(row, JLabel::class.java).single { it.icon == AllIcons.General.Note }
+            val title = componentsOfType(row, JLabel::class.java).single { it.text == plugin.name }
+            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null }
             assertThat(toggle.isSelected).isTrue()
             assertThat(toggle.isEnabled).isTrue()
-            assertThat(hint.isVisible).isTrue()
-            assertThat(hint.isFocusable).isFalse()
-            assertThat(hint.toolTipText).contains(explanations[0], explanations[1])
+            assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+            assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, false, true))
             assertThat(toggle.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
             assertThat(row.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
             assertThat(componentsOfType(row, JEditorPane::class.java)).isEmpty()
             for (width in listOf(360, 900)) {
               row.setSize(JBUI.scale(width), row.preferredSize.height)
               row.doLayout()
-              assertThat(hint.width).isPositive()
-              assertThat(hint.x + hint.width).isLessThanOrEqualTo(toggle.x)
+              assertThat(title.x + title.width).isLessThanOrEqualTo(toggle.x)
               assertThat(toggle.x + toggle.width).isLessThanOrEqualTo(row.width)
             }
 
@@ -365,14 +366,17 @@ internal class LegacyPluginRowFactoryTest {
               factory.rowsRendered(listOf(refreshedBinding))
               assertThat(refreshedBinding.row).isSameAs(binding.row)
               assertThat(componentsOfType(row, OnOffButton::class.java).single()).isSameAs(toggle)
-              assertThat(hint.isVisible).isEqualTo(next.isNotEmpty())
+              assertThat(toggle.isSelected).isTrue()
+              assertThat(toggle.isEnabled).isTrue()
+              assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, false, next.isNotEmpty()))
               if (next.isEmpty()) {
-                assertThat(hint.toolTipText).isNull()
+                assertThat(title.foreground).isNotEqualTo(ListPluginComponent.DisabledColor)
                 assertThat(toggle.accessibleContext.accessibleDescription).isNull()
                 assertThat(row.accessibleContext.accessibleDescription).doesNotContain("mode is not supported")
               }
               else {
-                assertThat(hint.toolTipText).contains(next.singleOrNull()?.replace("<here>", "&lt;here&gt;") ?: next.first())
+                assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+                assertThat(toggle.accessibleContext.accessibleDescription).contains(next.first())
               }
             }
           }
@@ -385,7 +389,7 @@ internal class LegacyPluginRowFactoryTest {
   }
 
   @Test
-  fun `a product mode hint keeps an ordinary side error visible`(): Unit = timeoutRunBlocking {
+  fun `a product mode exclusion keeps an ordinary side error visible`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
       try {
@@ -399,9 +403,11 @@ internal class LegacyPluginRowFactoryTest {
         val specification = factory.specification(section, item)
         (factory.createRow(specification.occurrenceId, item, specification.renderKey) as LegacyPluginRow).use { row ->
           row.renderInput(input)
-          val hint = componentsOfType(row.component, JLabel::class.java).single { it.icon == AllIcons.General.Note }
-          assertThat(hint.isVisible).isTrue()
-          assertThat(hint.toolTipText).contains("Client: Light mode is not supported.")
+          val title = componentsOfType(row.component, JLabel::class.java).single { it.text == plugin.name }
+          val icon = componentsOfType(row.component, JLabel::class.java).single { it.icon != null }
+          assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, true, true))
+          assertThat(row.component.accessibleContext.accessibleDescription).contains("Client: Light mode is not supported.")
           val error = componentsOfType(row.component, JEditorPane::class.java).single()
           assertThat(error.text).contains("Host: Missing dependency").doesNotContain("Light mode")
         }
@@ -567,7 +573,7 @@ internal class LegacyPluginRowFactoryTest {
             val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
             factory.rowsRendered(listOf(binding))
             val row = (binding.row as LegacyPluginRow).component
-            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null && it.icon != AllIcons.General.Note }
+            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null }
             val normalWidth = icon.icon.iconWidth
 
             row.updateErrors(listOf(HtmlChunk.text("Broken plugin")))
@@ -614,7 +620,7 @@ internal class LegacyPluginRowFactoryTest {
           component.doLayout()
           val button = checkNotNull(component.myInstallButton)
           val title = componentsOfType(component, JBLabel::class.java).single { it.text == model.name }
-          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null && it.icon != AllIcons.General.Note }
+          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null }
           val vendor = componentsOfType(component, JLabel::class.java).single { it.text == "JetBrains" }
           val metadataPanel = vendor.parent
 

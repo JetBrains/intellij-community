@@ -14,7 +14,6 @@ import com.intellij.ide.plugins.getUiInspectorContextFor
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
-import com.intellij.ide.setToolTipText
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
@@ -282,10 +281,7 @@ class ListPluginComponent private constructor(
   @JvmField
   var myUpdateButton: JButton? = null
   private var myEnableDisableButton: JToggleButton? = null
-  private val myLoadingProblemHint = JBLabel(AllIcons.General.Note).apply {
-    isVisible = false
-    isFocusable = false
-  }
+  private var myHasErrors = false
   private var myExpectedExplanations: List<@Nls String> = emptyList()
   private var myChooseUpdateButton: JCheckBox? = null
   private var myAlignButton: JComponent? = null
@@ -593,7 +589,6 @@ class ListPluginComponent private constructor(
       myModelFacade.setEnabledState(Collections.singletonList(pluginToSwitch), action)
     }, myUseToggleForEnablement)
 
-    myLayout.addButtonComponent(myLoadingProblemHint)
     myLayout.addButtonComponent(myEnableDisableButton!!)
     myEventHandler?.add(myEnableDisableButton!!)
     myEnableDisableButton!!.isOpaque = false
@@ -886,7 +881,8 @@ class ListPluginComponent private constructor(
     if (calcColor && (!myMarketplace || myInstalledDescriptorForMarketplace != null)) {
       val plugin = getDescriptorForActions()
       val disabled =
-        myModelFacade.isUninstalled(plugin.pluginId) || !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState()
+        myModelFacade.isUninstalled(plugin.pluginId) || myExpectedExplanations.isNotEmpty() ||
+        !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState()
       if (disabled) {
         nameForeground = DisabledColor
         otherForeground = DisabledColor
@@ -913,6 +909,7 @@ class ListPluginComponent private constructor(
   fun updateErrors(errors: List<out HtmlChunk>) {
     val plugin = getDescriptorForActions()
     val hasErrors = errors.isNotEmpty() && !myIsNotFreeInFreeMode
+    myHasErrors = hasErrors
     updateIcon(hasErrors, myModelFacade.isUninstalled(plugin.pluginId) || !isEnabledState() || !myIsAvailable)
 
     if (myAlignButton != null) {
@@ -955,15 +952,12 @@ class ListPluginComponent private constructor(
 
   internal fun updateExpectedExplanations(explanations: List<@Nls String>) {
     myExpectedExplanations = if (myIsNotFreeInFreeMode) emptyList() else explanations.toList()
-    myLoadingProblemHint.isVisible = myEnableDisableButton?.isVisible == true && myExpectedExplanations.isNotEmpty()
-    val description = myExpectedExplanations.takeIf { myLoadingProblemHint.isVisible }?.let {
+    val description = myExpectedExplanations.takeIf { it.isNotEmpty() }?.let {
       AccessibleContextUtil.joinAccessibleStrings(" ", *it.toTypedArray())
     }
-    myLoadingProblemHint.setToolTipText(description?.let {
-      HtmlChunk.html().children(myExpectedExplanations.map { HtmlChunk.div().addText(it) })
-    })
-    myLoadingProblemHint.accessibleContext.accessibleName = description
     myEnableDisableButton?.accessibleContext?.accessibleDescription = description
+    updateIcon(myHasErrors, myModelFacade.isUninstalled(getDescriptorForActions().pluginId) || !isEnabledState() || !myIsAvailable)
+    updateColors(mySelection)
     revalidate()
     repaint()
   }
@@ -1038,7 +1032,7 @@ class ListPluginComponent private constructor(
   }
 
   private fun updateIcon(errors: Boolean, disabled: Boolean) {
-    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled))
+    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled || myExpectedExplanations.isNotEmpty()))
   }
 
   private fun scalePluginIcon(icon: Icon): Icon {
@@ -1140,7 +1134,6 @@ class ListPluginComponent private constructor(
         if (myEnableDisableButton != null) {
           myLayout.removeButtonComponent(myEnableDisableButton!!)
           myEnableDisableButton = null
-          myLayout.removeButtonComponent(myLoadingProblemHint)
           updateExpectedExplanations(emptyList())
 
           if (myAlignButton != null) {
@@ -1173,8 +1166,6 @@ class ListPluginComponent private constructor(
   }
 
   private fun removeButtons(showRestart: Boolean) {
-    myLayout.removeButtonComponent(myLoadingProblemHint)
-    myLoadingProblemHint.isVisible = false
     if (myInstallButton != null) {
       myLayout.removeButtonComponent(myInstallButton!!)
       myInstallButton = null
@@ -2152,9 +2143,7 @@ class ListPluginComponent private constructor(
         description.add(IdeBundle.message(key))
       }
 
-      if (myLoadingProblemHint.isVisible) {
-        myExpectedExplanations.forEach(description::add)
-      }
+      myExpectedExplanations.forEach(description::add)
 
       if (isNotNullAndVisible(myInstallButton)) {
         val isDefaultText = IdeBundle.message("action.AnActionButton.text.install") == myInstallButton!!.text
