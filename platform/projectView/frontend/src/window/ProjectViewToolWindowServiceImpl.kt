@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -268,7 +269,7 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override suspend fun show(requestFocus: Boolean) {
-    withContext(Dispatchers.UI) {
+    withContext(Dispatchers.UiWithModelAccess) {
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
       if (toolWindow == null) {
         LOG.error("Can't show the Project View tool window because it doesn't exist")
