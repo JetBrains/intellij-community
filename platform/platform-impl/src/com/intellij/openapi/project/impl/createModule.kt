@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -28,6 +29,7 @@ private val LOG: Logger = Logger.getInstance("FakeModule")
  * @see com.intellij.platform.PlatformProjectOpenProcessor.runDirectoryProjectConfigurators
  */
 @ApiStatus.Internal
+@RequiresBackgroundThread(generateAssertion = false)
 fun Ref<Module>.getOrInitializeModule(project: Project, baseDir: VirtualFile): Module {
   get()?.let {
     return it
