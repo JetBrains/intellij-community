@@ -869,31 +869,31 @@ http_file(
 )
 
 http_file(
-    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http",
-    downloaded_file_path = "dbus-java-transport-native-unixsocket-4.2.1.jar",
-    sha256 = "bb67de9bd08148123b918458efc78055146bd5ae1538487cf4a018dd0f644837",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.2.1/dbus-java-transport-native-unixsocket-4.2.1.jar",
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-5_2_2_http",
+    downloaded_file_path = "dbus-java-transport-native-unixsocket-5.2.2.jar",
+    sha256 = "6174f8256fbae335548be75e57167042cbfae7bafb442295c56ea7f38466da6a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2.jar",
 )
 
 http_file(
-    name = "com_github_hypfvieh-dbus-java-core-4_2_1_http",
-    downloaded_file_path = "dbus-java-core-4.2.1.jar",
-    sha256 = "3a7b9fd543a1be94de99009c36ac1803f08d6d12357706c8f5040855315469d1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/4.2.1/dbus-java-core-4.2.1.jar",
+    name = "com_github_hypfvieh-dbus-java-core-5_2_2_http",
+    downloaded_file_path = "dbus-java-core-5.2.2.jar",
+    sha256 = "dd625ba59a632b7d05d712f29ee04551736d584d0f6c40d1d8a09eabaedc9cf0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2.jar",
 )
 
 http_file(
-    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1-sources_http",
-    downloaded_file_path = "dbus-java-transport-native-unixsocket-4.2.1-sources.jar",
-    sha256 = "60493901d36a24d5aed5d7bf27bf9dc960e1edafbf87104a3df32f7ae91bae44",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.2.1/dbus-java-transport-native-unixsocket-4.2.1-sources.jar",
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-5_2_2-sources_http",
+    downloaded_file_path = "dbus-java-transport-native-unixsocket-5.2.2-sources.jar",
+    sha256 = "4bf884dc5f0bc68a14dd67a20a76fc60def36d54bcea4583fabf664cff9649ec",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2-sources.jar",
 )
 
 http_file(
-    name = "com_github_hypfvieh-dbus-java-core-4_2_1-sources_http",
-    downloaded_file_path = "dbus-java-core-4.2.1-sources.jar",
-    sha256 = "654fb4e59ec51e51f31c7d4f3c7521909d02120337b723762b4487461f67f411",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/4.2.1/dbus-java-core-4.2.1-sources.jar",
+    name = "com_github_hypfvieh-dbus-java-core-5_2_2-sources_http",
+    downloaded_file_path = "dbus-java-core-5.2.2-sources.jar",
+    sha256 = "7c769c852ec7dac4b801c78d9c07183a4ee86a73643415857f5fed644ac4a567",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2-sources.jar",
 )
 
 http_file(

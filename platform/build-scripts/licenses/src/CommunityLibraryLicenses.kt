@@ -341,7 +341,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByOrganizations("SmartBear Software"),
 
   LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
-    .mit("https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-4.2.1/LICENSE")
+    .mit("https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-5.2.2/LICENSE")
     .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
   LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
