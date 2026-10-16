@@ -310,6 +310,34 @@ class JpsGlobalEntitiesSyncTest {
     }
   }
 
+  @Test
+  fun `test a stale global library in a project requires synchronization`() {
+    copyAndLoadGlobalEntities(testDir = temporaryFolder.newFolder(), parentDisposable = disposableRule.disposable) { libraryEntitySource, _ ->
+      val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
+      val project = loadProject()
+      val projectWorkspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+      // a silent update sends no event, so the library stays in the project only, as after a load from the project cache
+      projectWorkspaceModel.updateProjectModelSilent("Add a stale global library") { builder ->
+        val tableId = LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)
+        builder.addEntity(LibraryEntity("stale", tableId, emptyList(), libraryEntitySource))
+      }
+      assertThat(globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()).isEmpty()
+      assertThat(globalWorkspaceModel.hasStateToApplyToProject(projectWorkspaceModel)).isTrue()
+
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          globalWorkspaceModel.applyStateToProject(project)
+        }
+      }
+      assertThat(projectWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).map { it.name }.toList()).doesNotContain("stale")
+      assertThat(globalWorkspaceModel.hasStateToApplyToProject(projectWorkspaceModel)).isFalse()
+
+      ApplicationManager.getApplication().invokeAndWait {
+        (ProjectManager.getInstance() as ProjectManagerEx).closeAndDisposeAllProjects(false)
+      }
+    }
+  }
+
   private fun loadProject(): Project {
     val tmpFolder = temporaryFolder.newFolder()
     val projectDir = File(PathManagerEx.getCommunityHomePath(),

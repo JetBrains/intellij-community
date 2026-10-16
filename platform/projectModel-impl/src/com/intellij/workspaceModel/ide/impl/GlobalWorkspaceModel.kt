@@ -310,8 +310,9 @@ class GlobalWorkspaceModel internal constructor(
   }
 
   /**
-   * Whether [applyStateToProject] would change [targetWorkspaceModel]:
+   * Whether [targetWorkspaceModel] may require synchronization by [applyStateToProject]:
    * this model has global entities to copy, or [targetWorkspaceModel] has global entities to replace.
+   * Identical global entities on both sides also give `true`.
    * A later change of this model reaches the project through [registerInitializingProjectForUpdatesFromGlobalModel].
    */
   fun hasStateToApplyToProject(targetWorkspaceModel: WorkspaceModel): Boolean {
