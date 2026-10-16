@@ -68,9 +68,9 @@ interface LspClient {
    *
    * This function will return `null` if the LSP server:
    *  - is not yet initialized or is already shut down
-   *  - doesn't send any response within 10 seconds
    *  - returns a `null` response
-   *  - responds with an error (the error will appear in the IDE logs)
+   *
+   * This function has no timeout. To limit the wait, call it inside [kotlinx.coroutines.withTimeoutOrNull].
    *
    * Example:
    *
@@ -80,6 +80,8 @@ interface LspClient {
    *
    *    val result = lspClient.sendRequest { (it as FooLsp4jServer).customRequest(...) }
    *
+   * @throws org.eclipse.lsp4j.jsonrpc.ResponseErrorException if the LSP server responds with an error.
+   *         The error does not appear in the IDE logs.
    * @see LspClientDescriptor.lsp4jServerClass
    */
   suspend fun <Lsp4jResponse> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>): Lsp4jResponse?
