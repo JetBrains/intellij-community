@@ -133,6 +133,7 @@ Remote development extends these rules with side aggregation and action routing.
 - Supported compatibility and selection exclusions can also produce plugin explanations.
 - For a plugin version listed as broken, the short explanation says `Version is known to be broken`.
 - The detailed explanation identifies the plugin and version as known to be broken.
+- Declared incompatibility messages call the conflicting owner a plugin, not a module. They retain its plugin ID.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
     `loading problem factories preserve their presentation`
   )
