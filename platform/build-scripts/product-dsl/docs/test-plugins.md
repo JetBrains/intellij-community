@@ -163,29 +163,11 @@ Created via `testPlugin {}` in `getProductContentDescriptor()`:
 
 ### Discovered Test Plugins
 
-Manually created plugins with handwritten plugin.xml:
-- Configured via `testPluginsByProduct` in `ModuleSetGenerationConfig`
+A hand-written test plugin, with its own plugin.xml, is for what neither a synthetic test plugin
+(`<module>._test_plugin`, see [above](#synthetic-test-plugins-dev-build-mode)) nor a `testPlugin {}` block covers:
+- Configured via `testPluginsByProduct` in `ModuleSetGenerationConfig`; the map in `ultimateGenerator.kt` is empty
 - `isDslDefined = false` in `PluginContentInfo`
 - Auto-fixes can be applied to plugin.xml
-
-```kotlin
-// In ultimateGenerator.kt
-testPluginsByProduct = mapOf(
-  "idea" to setOf(
-    "intellij.idea.ultimate.tests.devBuildTests.plugin",
-  ),
-  "CLion" to setOf(
-    "intellij.clion.dev.build.tests.plugin",
-  ),
-  "Rider" to setOf(
-    "intellij.rider.plugins.oss.test.plugin",
-    "intellij.rider.test.cases.rdct.plugin",
-  ),
-)
-```
-
-A hand-written test plugin is for what neither a synthetic test plugin (`<module>._test_plugin`, see
-[above](#synthetic-test-plugins-dev-build-mode)) nor a `testPlugin {}` block covers.
 
 ## Automatic Dependency Addition
 
