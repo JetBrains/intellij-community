@@ -10,7 +10,7 @@ const val WASM_JS_MAIN = "wasmJsMain"
 const val ANDROID_MAIN = "androidMain"
 const val IOS_MAIN = "iosMain"
 
-const val TARGET_GRADLE_VERSION = "8.13"
+const val TARGET_GRADLE_VERSION = "8.14.4"
 
 /**
  * Writes the Android SDK path into `local.properties` of the test data project.
