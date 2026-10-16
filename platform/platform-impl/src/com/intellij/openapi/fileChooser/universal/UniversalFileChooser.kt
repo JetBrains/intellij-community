@@ -29,8 +29,10 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.toVirtualFile
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -52,6 +54,8 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.ProgressState
@@ -75,7 +79,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -86,6 +89,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -179,7 +184,7 @@ object UniversalFileChooser {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
       mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (this.showAndGet()) {
-        return toVirtualFiles(descriptor, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
+        return toVirtualFiles(descriptor, this.project, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
       }
       return emptyArray()
     }
@@ -189,7 +194,7 @@ object UniversalFileChooser {
       mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
-        mutableList.addAll(toVirtualFiles(descriptor, mainPanel.getSelectedFiles()))
+        mutableList.addAll(toVirtualFiles(descriptor, project, mainPanel.getSelectedFiles()))
         callback.consume(mutableList)
       }
     }
@@ -220,16 +225,32 @@ object UniversalFileChooser {
   }
 
   /**
-   * Converts [paths] to VirtualFiles. The VFS lookup can do disk or EEL I/O, so call it only on a background thread.
+   * Converts [paths] to VirtualFiles through [toVirtualFile]. The VFS lookup does disk or EEL I/O,
+   * so it runs on [Dispatchers.IO]. Callable from the EDT: there it shows a modal progress when the
+   * lookup takes long, and no progress otherwise.
    */
-  private fun toVirtualFiles(descriptor: FileChooserDescriptor, paths: List<Path>): List<VirtualFile> {
-    ThreadingAssertions.assertBackgroundThread()
-    // Mirror FileChooserDialogImpl.doOKAction: after resolving NIO paths to VirtualFiles, run each
-    // result through `descriptor.getFileToSelect(...)` (via FileChooserUtil.getChosenFiles) so that,
-    // e.g., an archive file is returned as its `jar://…!/` JarFileSystem VirtualFile when the
-    // descriptor has `isChooseJarContents = true` (see IJPL-250874).
-    val resolved = paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  private fun toVirtualFiles(descriptor: FileChooserDescriptor, project: Project, paths: List<Path>): List<VirtualFile> {
+    val title = IdeBundle.message("universal.file.chooser.progress.resolving.files")
+    val resolved: List<VirtualFile> = if (ApplicationManager.getApplication().isDispatchThread) {
+      val owner = if (project.isDefault) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
+      runWithModalProgressBlocking(owner, title) { resolveVirtualFiles(paths) }
+    }
+    else {
+      runBlockingMaybeCancellable { resolveVirtualFiles(paths) }
+    }
     return FileChooserUtil.getChosenFiles(descriptor, resolved)
+  }
+
+  /** Resolves every path in [paths] to a VirtualFile. The lookups run in parallel. */
+  private suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = coroutineScope {
+    paths.map { path -> async { toVirtualFile(path) } }.awaitAll().filterNotNull()
+  }
+
+  /** Resolves one [path] to a VirtualFile. The lookup runs on [Dispatchers.IO]. */
+  private suspend fun toVirtualFile(path: Path): VirtualFile? {
+    return withContext(Dispatchers.IO) {
+      VfsUtil.findFile(path, true)
+    }
   }
 
   class Panel @JvmOverloads constructor(
