@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.executeOnDMT
-import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.RunnerLayoutUi
@@ -52,9 +51,6 @@ class CoroutineDumpAction : AnAction() {
         }
     }
 
-    /**
-     * Analog of [DebuggerUtilsEx.addThreadDump].
-     */
     fun addCoroutineDump(project: Project, coroutines: List<CoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
         val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
         consoleBuilder.filters(ExceptionFilters.getFilters(searchScope))

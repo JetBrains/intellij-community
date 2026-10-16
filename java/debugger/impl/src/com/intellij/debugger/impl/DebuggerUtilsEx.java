@@ -41,11 +41,8 @@ import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
-import com.intellij.execution.filters.ExceptionFilters;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -80,13 +77,9 @@ import com.intellij.psi.PsiParameterListOwner;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
-import com.intellij.unscramble.DumpItem;
-import com.intellij.unscramble.DumpItemKt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -327,12 +320,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return Collections.emptyList();
-  }
-
-  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    List<DumpItem> javaThreadDump = new ArrayList<>(DumpItemKt.toDumpItems(threads));
-    List<Filter> filters = ExceptionFilters.getFilters(searchScope);
-    SharedDebuggerUtils.createThreadDumpPanel(project, javaThreadDump, ui, filters);
   }
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
