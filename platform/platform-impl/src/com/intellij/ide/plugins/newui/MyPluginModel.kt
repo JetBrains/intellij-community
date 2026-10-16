@@ -1387,8 +1387,8 @@ open class MyPluginModel @JvmOverloads constructor(
         val message = when (problem.severity) {
           PluginLoadingProblem.Severity.UNEXPECTED -> null
           PluginLoadingProblem.Severity.EXPECTED -> when (problem.kind) {
-            PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
-            PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
+            PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
+            PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
           }
         }
         message?.let { if (side == null) it else loadingProblemSidePrefix(side) + it }

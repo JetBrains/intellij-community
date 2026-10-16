@@ -56,6 +56,7 @@ internal class PluginLoadingProblemTest {
       shouldNotifyUser: Boolean = true,
       disabledDependencyId: PluginId? = null,
       dependency: DependencyRef? = null,
+      severity: PluginLoadingProblem.Severity = PluginLoadingProblem.Severity.UNEXPECTED,
     ): DynamicTest = DynamicTest.dynamicTest(name) {
       assertThat(problem.plugin).isSameAs(affected)
       assertThat(problem.shortMessage).isEqualTo(shortMessage)
@@ -64,7 +65,7 @@ internal class PluginLoadingProblemTest {
       assertThat(problem.disabledDependencyId).isEqualTo(disabledDependencyId)
       assertThat(problem.dependency).isEqualTo(dependency)
       assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
-      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+      assertThat(problem.severity).isEqualTo(severity)
     }
 
     return listOf(
@@ -81,7 +82,7 @@ internal class PluginLoadingProblemTest {
            dependency = DependencyRef.Plugin(dependencyId)),
       case("custom loading disabled", nonBundledPluginsAreExplicitlyDisabled(affected),
            message("short.custom.plugin.loading.disabled"),
-           message("long.custom.plugin.loading.disabled", "Affected"), false),
+           message("long.custom.plugin.loading.disabled", "Affected"), false, severity = PluginLoadingProblem.Severity.EXPECTED),
       case("broken version", pluginIsMarkedBroken(affected),
            "Version is known to be broken", "Version 1.0 of plugin 'Affected' is known to be broken"),
       case("IDEA only", pluginIsCompatibleOnlyWithIntelliJIDEA(affected),
@@ -102,7 +103,8 @@ internal class PluginLoadingProblemTest {
            message("short.failed.to.load.requirements.for.ide.version"),
            message("long.failed.to.load.requirements.for.ide.version", "Affected")),
       case("loading disabled", pluginLoadingIsDisabledCompletely(affected),
-           message("short.plugin.loading.disabled"), message("long.plugin.loading.disabled", "Affected")),
+           message("short.plugin.loading.disabled"), message("long.plugin.loading.disabled", "Affected"), false,
+           severity = PluginLoadingProblem.Severity.EXPECTED),
       case("package prefix conflict", pluginPackagePrefixConflict(affected, affected, dependency),
            message("short.package.prefix.conflict", "Affected", "Dependency"),
            message("long.package.prefix.conflict", "Affected", "Dependency", "affected", "<none>",
@@ -128,7 +130,8 @@ internal class PluginLoadingProblemTest {
            dependency = DependencyRef.ContentModule(PluginModuleId("dependency.private", "vendor"))),
       case("explicit subset", pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(affected),
            message("short.not.required.for.explicitly.configured.subset"),
-           message("long.not.required.for.explicitly.configured.subset", "Affected"), false),
+           message("long.not.required.for.explicitly.configured.subset", "Affected"), false,
+           severity = PluginLoadingProblem.Severity.EXPECTED),
       case("conflicting ID", checkNotNull(PluginDeclaresConflictingId(
         descriptor = affected,
         declarationOrigin = affected,

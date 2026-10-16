@@ -145,6 +145,7 @@ internal fun pluginRequiresUnavailableProductModeModule(
 
 internal fun nonBundledPluginsAreExplicitlyDisabled(plugin: IdeaPluginDescriptor): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,
+  severity = PluginLoadingProblem.Severity.EXPECTED,
   shouldNotifyUser = false,
   detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", plugin.name) },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
@@ -255,7 +256,8 @@ internal fun pluginMalformedSinceUntilConstraints(plugin: IdeaPluginDescriptor):
 
 internal fun pluginLoadingIsDisabledCompletely(plugin: IdeaPluginDescriptor): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,
-  shouldNotifyUser = true,
+  severity = PluginLoadingProblem.Severity.EXPECTED,
+  shouldNotifyUser = false,
   detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.plugin.loading.disabled", plugin.name) },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.plugin.loading.disabled") },
 )
@@ -394,6 +396,7 @@ internal fun pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins
   plugin: IdeaPluginDescriptor,
 ): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,
+  severity = PluginLoadingProblem.Severity.EXPECTED,
   shouldNotifyUser = false,
   detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name) },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.not.required.for.explicitly.configured.subset") },

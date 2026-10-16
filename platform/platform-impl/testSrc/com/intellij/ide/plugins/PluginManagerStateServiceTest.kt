@@ -17,6 +17,7 @@ import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.lang.UrlClassLoader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -325,6 +326,71 @@ internal class PluginManagerStateServiceTest {
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(state.pluginsToEnable).isEmpty()
     assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @TestFactory
+  fun `configuration exclusions stay expected through required plugins and modules`() = listOf(
+    NonBundledPluginsLoadingIsDisabled,
+    PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+    PluginLoadingIsDisabledCompletelyExceptCore,
+  ).map { reason ->
+    dynamicTest(reason.getLogMessage()) {
+      install(
+        plugin("root") { name = "Root" },
+        plugin("intermediate") { depends("root") },
+        plugin("affected") {
+          content {
+            module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+              dependencies { plugin("intermediate") }
+            }
+          }
+        },
+        plugin("optional") {
+          content {
+            module("optional.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+              dependencies { plugin("root") }
+            }
+          }
+        },
+        plugin("unrelated") { depends("missing") },
+      )
+      val builder = PluginSetTestBuilder.fromPath(tempDir)
+      val initContext = object : PluginInitializationContext by builder.buildInitContext() {
+        override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet) =
+          sequenceOf(checkNotNull(pluginSet.resolvePluginId(PluginId.getId("root"))) to reason)
+      }
+      val pluginSet = PluginManagerCore.initializePlugins(
+        initContext = initContext,
+        discoveredPlugins = builder.discoverPlugins().second,
+        coreLoader = UrlClassLoader.build().get(),
+        parentActivity = null,
+        configureClassLoaders = false,
+      )
+      val state = publishAndGetState(pluginSet)
+      val unrelatedId = PluginId.getId("unrelated")
+
+      assertThat(state.pluginNonLoadReasons.keys.map { it.idString })
+        .containsExactlyInAnyOrder("root", "intermediate", "affected", "unrelated")
+      for (id in listOf("root", "intermediate", "affected")) {
+        val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId(id)])
+        assertThat(problem.plugin.pluginId.idString).isEqualTo(id)
+        assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+        assertThat(problem.shouldNotifyUser).isFalse()
+        assertThat(problem.disabledDependencyId).isNull()
+        assertThat(problem.shortMessage).isEqualTo(state.pluginNonLoadReasons[PluginId.getId("root")]!!.shortMessage)
+      }
+      assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactly("optional")
+      val unrelated = checkNotNull(state.pluginNonLoadReasons[unrelatedId])
+      assertThat(unrelated.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
+      assertThat(state.pluginLoadingProblemsForNotification).containsExactly(unrelated.detailedMessage)
+      assertThat(state.pluginsToDisable).containsOnlyKeys(unrelatedId)
+      assertThat(state.pluginsToEnable).isEmpty()
+
+      val loadedState = publishAndGetState(buildPluginSet())
+
+      assertThat(loadedState.pluginNonLoadReasons).containsOnlyKeys(unrelatedId)
+      assertThat(loadedState.pluginLoadingProblemsForNotification).containsExactly(unrelated.detailedMessage)
+    }
   }
 
   @TestFactory

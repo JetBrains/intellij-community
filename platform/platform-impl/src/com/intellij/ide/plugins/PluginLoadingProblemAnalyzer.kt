@@ -224,11 +224,11 @@ internal object PluginLoadingProblemAnalyzer {
             is AiIsDisabled -> {} // an expected exclusion, not a loading error
             is PluginHasExpiredLicense -> {} // not handled in old init, FIXME later
             is ThirdPartyPrivacyNoticeIsNotAccepted -> {}
-            is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA,
-            is NonBundledPluginsLoadingIsDisabled,
-            is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
-            is PluginLoadingIsDisabledCompletelyExceptCore ->
-              exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
+            is NonBundledPluginsLoadingIsDisabled -> registerLoadingError(nonBundledPluginsAreExplicitlyDisabled(plugin))
+            is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading ->
+              registerLoadingError(pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(plugin))
+            is PluginLoadingIsDisabledCompletelyExceptCore -> registerLoadingError(pluginLoadingIsDisabledCompletely(plugin))
+            is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA -> exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
             null -> {} // logged during initialization
           }
         }
@@ -263,10 +263,15 @@ internal object PluginLoadingProblemAnalyzer {
             is DependencyRef.Plugin -> registerFailedDependency(excludedRequiredDescriptor)
           }
           is DependencyIsNotVisible -> registerFailedDependency(rootCause.descriptor.getMainDescriptor())
+          is ProductRulesImposedExclusion -> when (rootCause.productReason) {
+            is NonBundledPluginsLoadingIsDisabled,
+            is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+            is PluginLoadingIsDisabledCompletelyExceptCore -> processRootCause(rootCause)
+            else -> registerFailedDependency(excludedRequiredDescriptor)
+          }
           is IncompatibleWithAnotherModule,
           is OnDemandContentModuleHasNoDependentsLeft,
           is PackagePrefixConflictWithAnotherModule,
-          is ProductRulesImposedExclusion,
           is PluginDeclaresConflictingId,
           is PluginIsIncompatibleWithProduct,
           is PluginVersionIsSuperseded,

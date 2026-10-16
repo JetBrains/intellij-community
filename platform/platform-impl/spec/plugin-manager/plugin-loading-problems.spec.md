@@ -87,7 +87,8 @@ Remote development extends these rules with side aggregation and action routing.
   )
 
 - Missing modules retain their terminal explanation through required plugins and modules, including core modules.
-- Other chains without disabled roots, product mode exclusions, missing modules, or visibility failures refer to the first required plugin outside the affected plugin.
+- Other chains refer to the first required plugin outside the affected plugin.
+- This fallback excludes disabled roots, product mode restrictions, configuration restrictions, missing modules, and visibility failures.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - Without a cross-plugin boundary, an unresolved plugin dependency uses the installation message only when no known provider exists.
@@ -184,9 +185,10 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
 - An ordinary loading problem without a disabled dependency supplies its short explanation to the page.
 - Expected problems remain outside the generic red error area.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemPresentationTest.kt (
-    `an expected product mode problem stays outside the generic error area`
+    `an expected product mode problem stays outside the generic error area`;
+    `an expected configuration explanation retains an unexpected error from the other side`
   )
-- Product mode problems gray the plugin icon and title in the list, as for a disabled plugin. They add no info icon.
+- Expected product mode and configuration exclusions gray the plugin icon and title, as for a disabled plugin. They add no info icon.
 - The enable/disable control remains active and retains the user's enabled setting.
 - The details pane shows the explanation in gray text in the loading error area.
 - The row and its control expose the explanation to screen readers. The details text remains accessible without hover.
@@ -198,6 +200,9 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
     `product mode exclusions gray rows and show details explanations until the mode changes`;
+    `custom plugin restrictions use expected presentation until the restriction clears`;
+    `subset restrictions use expected presentation until the restriction clears`;
+    `core-only restrictions use expected presentation until the restriction clears`;
     `selected details refresh expected explanations without hiding errors`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
@@ -288,10 +293,20 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `disabling a product mode dependent suppresses its page problem`
   )
 
-- Explicit restrictions on non-bundled plugins and the configured plugin subset produce explanations without notification eligibility.
-- Complete loading disablement produces an explanation with notification eligibility.
+- Restrictions on custom plugins, the configured plugin subset, and all plugins except core produce expected explanations without notification eligibility.
+- These problems retain kind `OTHER`. They contribute no notification recovery targets or generic dependency Enable suggestion.
+- A recorded configuration restriction remains expected through intermediate plugins and required content modules.
+- An optional content module alone must not exclude its owner. An unrelated failure retains its unexpected severity and notification data.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
     `loading problem factories preserve their presentation`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `configuration exclusions stay expected through required plugins and modules`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
+    `custom plugin restrictions use expected presentation until the restriction clears`;
+    `subset restrictions use expected presentation until the restriction clears`;
+    `core-only restrictions use expected presentation until the restriction clears`
   )
 
 - An exclusion rooted in disabled Ultimate has kind `ULTIMATE_DISABLED`, severity `EXPECTED`, and notification eligibility false.
@@ -305,7 +320,7 @@ Untested: No focused test covers action labels, callback aggregation, or action 
     `disabled Ultimate has an expected non-notifying problem`
   )
 
-- Factories outside disabled Ultimate and product mode exclusions retain `OTHER` kind and `UNEXPECTED` severity.
+- Other factories retain kind `OTHER` and severity `UNEXPECTED`.
 - An unrelated failure retains its recorded cause, severity, and notification eligibility flag when the plugin also requires disabled Ultimate.
 - This restriction suppresses that plugin's notification text and recovery targets, including for selection failures.
 - The restriction follows required plugins, aliases, and content modules. Optional dependencies and optional content modules do not impose it.
@@ -397,8 +412,8 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   )
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.
-- Reused rows and selected details must update or remove obsolete product mode explanations.
-- A mode change that makes the required module available must restore the normal row appearance and remove the details explanation.
+- Reused rows and selected details must update or remove obsolete expected explanations.
+- Removing a product mode or configuration restriction must restore the normal row appearance and remove the details explanation.
 - Clearing or changing the selection must remove the previous plugin's explanation from details.
 - Expected explanations must retain both side prefixes and escape HTML characters as text.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
@@ -406,6 +421,9 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
     `product mode exclusions gray rows and show details explanations until the mode changes`;
+    `custom plugin restrictions use expected presentation until the restriction clears`;
+    `subset restrictions use expected presentation until the restriction clears`;
+    `core-only restrictions use expected presentation until the restriction clears`;
     `selected details refresh expected explanations without hiding errors`
   )
 

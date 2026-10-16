@@ -15,9 +15,15 @@ import org.junit.jupiter.api.Test
 internal class PluginLoadingProblemPresentationTest {
   @Test
   fun `a disabled Ultimate problem stays outside the generic error area`() {
-    val result = CheckErrorsResult(loadingError = "Ultimate is disabled", isUltimateDisabledProblem = true)
+    val result = CheckErrorsResult(
+      loadingError = "Ultimate is disabled",
+      isUltimateDisabledProblem = true,
+      kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
+      severity = PluginLoadingProblem.Severity.EXPECTED,
+    )
 
     assertThat(MyPluginModel.getErrors(result)).isEmpty()
+    assertThat(MyPluginModel.getExpectedExplanations(result)).isEmpty()
   }
 
   @Test
@@ -81,6 +87,21 @@ internal class PluginLoadingProblemPresentationTest {
     )
 
     assertThat(MyPluginModel.getErrors(result)).isEmpty()
+    assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+  }
+
+  @Test
+  fun `an expected configuration explanation retains an unexpected error from the other side`() {
+    val expected = CheckErrorsResult(
+      loadingError = "Loading of custom plugins is disabled",
+      isDisabledDependencyError = true,
+      severity = PluginLoadingProblem.Severity.EXPECTED,
+    )
+    val unexpected = CheckErrorsResult(loadingError = "Missing dependency", isDisabledDependencyError = true)
+    val result = CheckErrorsResult(problemsBySide = mapOf(PluginSource.LOCAL to expected, PluginSource.REMOTE to unexpected))
+
+    assertThat(MyPluginModel.getExpectedExplanations(result)).containsExactly("Client: Loading of custom plugins is disabled")
+    assertThat(MyPluginModel.getErrors(result).map { it.toString() }).containsExactly("<span>Host: <span>Missing dependency</span></span>")
     assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
   }
 

@@ -42,6 +42,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.components.OnOffButton
+import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.Dispatchers
@@ -53,13 +55,16 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.awt.Color
 import java.awt.Component
+import java.awt.image.BufferedImage
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.text.LabelView
 import javax.swing.text.Position
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class PluginLoadingProblemUiTest {
@@ -89,25 +94,79 @@ internal class PluginLoadingProblemUiTest {
   }
 
   @Test
-  fun `product mode exclusions gray rows and show details explanations until the mode changes`(): Unit = timeoutRunBlocking {
+  fun `product mode exclusions gray rows and show details explanations until the mode changes`(): Unit = checkExpectedExclusion("product mode")
+
+  @Test
+  fun `custom plugin restrictions use expected presentation until the restriction clears`(): Unit = checkExpectedExclusion("custom plugins")
+
+  @Test
+  fun `subset restrictions use expected presentation until the restriction clears`(): Unit = checkExpectedExclusion("configured subset")
+
+  @Test
+  fun `core-only restrictions use expected presentation until the restriction clears`(): Unit = checkExpectedExclusion("only core")
+
+  private fun checkExpectedExclusion(exclusion: String): Unit = timeoutRunBlocking {
     val moduleId = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
     val id = PluginId.getId("mode.ui.plugin")
     plugin(id.idString) {
       content(namespace = "jetbrains") { module(moduleId.name, loadingRule = ModuleLoadingRuleValue.REQUIRED) {} }
     }.installAt(tempDir)
-    PluginManagerCore.setPluginSet(PluginSetTestBuilder.fromPath(tempDir)
-                                     .withProductMode(ProductMode.LIGHT_MONOLITH)
-                                     .withEnvironmentConfiguredModules(mapOf(moduleId to PluginInitializationContext.EnvironmentConfiguredModuleData(
-                                       UnsuitableProductModeModuleUnavailabilityReason(moduleId, ProductMode.LIGHT_MONOLITH.id),
-                                     )))
-                                     .build(configureClassLoaders = false))
+    val builder = PluginSetTestBuilder.fromPath(tempDir)
+    val baseContext = builder.withProductMode(ProductMode.LIGHT_MONOLITH)
+      .withEnvironmentConfiguredModules(mapOf(moduleId to PluginInitializationContext.EnvironmentConfiguredModuleData(
+        if (exclusion == "product mode") UnsuitableProductModeModuleUnavailabilityReason(moduleId, ProductMode.LIGHT_MONOLITH.id) else null,
+      )))
+      .buildInitContext()
+    val initContext = when (exclusion) {
+      "product mode" -> baseContext
+      "configured subset" -> object : PluginInitializationContext by baseContext {
+        override val explicitPluginSubsetToLoad: Set<PluginId> = emptySet()
+      }
+      "only core" -> object : PluginInitializationContext by baseContext {
+        override val disablePluginLoadingCompletely: Boolean = true
+      }
+      "custom plugins" -> object : PluginInitializationContext by baseContext {
+        override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet) =
+          pluginSet.plugins.asSequence()
+            .filter { it.pluginId != PluginManagerCore.CORE_ID }
+            .map { it to NonBundledPluginsLoadingIsDisabled }
+      }
+      else -> error("Unknown exclusion: $exclusion")
+    }
+    PluginManagerCore.setPluginSet(PluginManagerCore.initializePlugins(
+      initContext = initContext,
+      discoveredPlugins = builder.discoverPlugins().second,
+      coreLoader = UrlClassLoader.build().get(),
+      parentActivity = null,
+      configureClassLoaders = false,
+    ))
+    val state = checkNotNull(PluginManagerStateService().getCurrentState(
+      PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
+    ))
+    val problem = checkNotNull(state.pluginNonLoadReasons[id])
+    val expectedMessage = when (exclusion) {
+      "product mode" -> "This plugin does not support Light mode"
+      "custom plugins" -> "Loading of custom plugins is disabled"
+      "configured subset" -> "Not required"
+      "only core" -> "Loading of plugins is disabled"
+      else -> error("Unknown exclusion: $exclusion")
+    }
+    assertThat(problem.shortMessage).isEqualTo(expectedMessage)
+    assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
+    assertThat(problem.shouldNotifyUser).isFalse()
+    assertThat(PluginManagerCore.getPluginSet().enabledPlugins.map { it.pluginId }).doesNotContain(id)
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
     val scope = this
     val host = withContext(Dispatchers.EDT) { LegacyPluginUiHost(parentScope = scope, operationScope = scope) }
     try {
       host.awaitSessionInitialization()
       val result = DefaultUiPluginManagerController.getErrors(host.sessionId, id)
       val explanations = MyPluginModel.getExpectedExplanations(result)
-      assertThat(explanations).hasSize(1)
+      assertThat(explanations).containsExactly(expectedMessage)
+      assertThat(MyPluginModel.getErrors(result)).isEmpty()
+      assertThat(result.suggestToEnableRequiredPlugins).isFalse()
       val model = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mode UI Plugin").setIsConverted(true).build()
       val input = PluginRowInput(model, PluginInstallationState(true), MyPluginModel.getErrors(result),
                                  null, true, false, expectedExplanations = explanations)
@@ -122,7 +181,7 @@ internal class PluginLoadingProblemUiTest {
         details.showPlugin(row.component)
         row to details
       }
-      waitUntilAssertSucceeds {
+      waitUntilAssertSucceeds(timeout = 3.seconds) {
         withContext(Dispatchers.EDT) {
           assertThat(hints(row.component)).isEmpty()
           assertThat(hints(details)).isEmpty()
@@ -130,7 +189,7 @@ internal class PluginLoadingProblemUiTest {
           val icon = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.icon != null }
           val toggle = UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single()
           assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
-          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(model.getDescriptor(), false, false, true))
+          assertThat(iconPixels(icon.icon)).isEqualTo(iconPixels(PluginLogo.getIcon(model.getDescriptor(), false, false, true)))
           assertThat(toggle.isSelected).isTrue()
           assertThat(toggle.isEnabled).isTrue()
           assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).map { it.text }.toList())
@@ -152,7 +211,7 @@ internal class PluginLoadingProblemUiTest {
         row.component.updateEnabledState()
         details.updateEnabledState()
       }
-      waitUntilAssertSucceeds {
+      waitUntilAssertSucceeds(timeout = 3.seconds) {
         withContext(Dispatchers.EDT) {
           assertThat(hints(row.component)).isEmpty()
           assertThat(hints(details)).isEmpty()
@@ -160,7 +219,7 @@ internal class PluginLoadingProblemUiTest {
           val icon = UIUtil.uiTraverser(row.component).filter(JLabel::class.java).toList().single { it.icon != null }
           val toggle = UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single()
           assertThat(title.foreground).isNotEqualTo(ListPluginComponent.DisabledColor)
-          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(model.getDescriptor(), false, false, false))
+          assertThat(iconPixels(icon.icon)).isEqualTo(iconPixels(PluginLogo.getIcon(model.getDescriptor(), false, false, false)))
           assertThat(toggle.isSelected).isTrue()
           assertThat(toggle.isEnabled).isTrue()
           assertThat(problemPanes(details)).noneMatch { it.text.contains(explanations.single()) }
@@ -272,6 +331,18 @@ internal class PluginLoadingProblemUiTest {
       withContext(Dispatchers.EDT) { host.dispose(closeSession = false) }
       PluginManagerSessionService.getInstance().removeSession(host.sessionId)
     }
+  }
+
+  private fun iconPixels(icon: Icon): IntArray {
+    val image = ImageUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+      icon.paintIcon(JLabel(), graphics, 0, 0)
+    }
+    finally {
+      graphics.dispose()
+    }
+    return image.getRGB(0, 0, image.width, image.height, null, 0, image.width)
   }
 
   private fun hints(component: Component): List<JLabel> =
