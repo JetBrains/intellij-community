@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
+import kotlin.concurrent.Volatile
+
 
 interface TextMateString: AutoCloseable {
   val id: Any
@@ -27,10 +29,47 @@ class TextMateStringImpl private constructor(val bytes: ByteArray): TextMateStri
     return bytes.decodeToString(byteRange.start.offset, byteRange.end.offset)
   }
 
+  /** 1 = every byte is ASCII, 0 = some byte is not, -1 = not checked yet. */
+  private var allAscii: Byte = -1
+
+  /**
+   * The start of the last query and the char offset of that start, packed into one field:
+   * the byte offset in the high 32 bits, the char offset in the low 32 bits.
+   * One field keeps the two offsets consistent. A concurrent query makes the anchor stale,
+   * which costs a count from zero, but it cannot mix the halves of two queries.
+   */
+  @Volatile
+  private var anchor: Long = 0
+
   override fun charRangeByByteRange(byteRange: TextMateByteRange): TextMateCharRange {
-    val startOffset = charOffsetByByteOffset(0.byteOffset(), byteRange.start)
-    val endOffset = startOffset + charOffsetByByteOffset(byteRange.start, byteRange.end)
-    return TextMateCharRange(startOffset, endOffset)
+    if (isAllAscii()) {
+      return TextMateCharRange(byteRange.start.offset.charOffset(), byteRange.end.offset.charOffset())
+    }
+    val startByteOffset = byteRange.start.offset
+    val packedAnchor = anchor
+    val anchorByteOffset = (packedAnchor ushr 32).toInt()
+    val startCharOffset = if (startByteOffset >= anchorByteOffset) {
+      packedAnchor.toInt() + countUtf16Units(anchorByteOffset, startByteOffset)
+    }
+    else {
+      countUtf16Units(0, startByteOffset)
+    }
+    // a group that did not take part in the match has the start -1, see MatchData.byteRange.
+    // Such a start must not become the anchor: the next query would count from a negative index.
+    if (startByteOffset >= 0) {
+      anchor = (startByteOffset.toLong() shl 32) or startCharOffset.toLong()
+    }
+    val endCharOffset = startCharOffset + countUtf16Units(startByteOffset, byteRange.end.offset)
+    return TextMateCharRange(startCharOffset.charOffset(), endCharOffset.charOffset())
+  }
+
+  private fun isAllAscii(): Boolean {
+    var a = allAscii
+    if (a < 0) {
+      a = if (bytes.all { it >= 0 }) 1 else 0
+      allAscii = a
+    }
+    return a == 1.toByte()
   }
 
   /**
@@ -38,20 +77,17 @@ class TextMateStringImpl private constructor(val bytes: ByteArray): TextMateStri
    * A byte that is not a UTF-8 continuation byte starts one character, and a four-byte sequence
    * holds a surrogate pair, so it counts as two units.
    */
-  private fun charOffsetByByteOffset(startByteOffset: TextMateByteOffset, targetByteOffset: TextMateByteOffset): TextMateCharOffset {
-    if (targetByteOffset.offset <= 0) {
-      return 0.charOffset()
-    }
+  private fun countUtf16Units(startByteOffset: Int, endByteOffset: Int): Int {
     var units = 0
-    var i = startByteOffset.offset
-    while (i < targetByteOffset.offset) {
+    var i = startByteOffset
+    while (i < endByteOffset) {
       val b = bytes[i].toInt() and 0xFF
       if (b and 0xC0 != 0x80) {
         units += if (b and 0xF8 == 0xF0) 2 else 1
       }
       i++
     }
-    return units.charOffset()
+    return units
   }
 
   override fun hashCode(): Int {

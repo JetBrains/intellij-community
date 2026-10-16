@@ -65,3 +65,35 @@ strings never reach a cache key.
 
 The gain shows only on the long-line case, as the quadratic model predicts. The average line of
 `EditorImpl.java` is short, so the other cases stay inside the noise.
+
+### A byte offset converts to a char offset without a scan from zero (October 2026)
+
+**What the code did.** `TextMateStringImpl.charRangeByByteRange` counted the UTF-16 units from
+byte 0 up to the start of the range on every call. The lexer converts a range for every token,
+for every capture group, and for every end or while match.
+
+**Why it was slow.** Each conversion cost O(start offset). A line with M tokens paid O(line × M),
+so the cost is quadratic in the line length, like the hash in the previous section.
+
+**The change.** Two parts:
+
+- An ASCII fast path. The string checks once whether every byte is ASCII. When it is, a char
+  offset equals the byte offset and no scan runs. Most code lines are pure ASCII.
+- An anchor for the non-ASCII case. The string remembers the last converted start offset as a
+  `(byte offset, char offset)` pair. A later query counts only from the anchor. The lexer walks
+  a line left to right, so the count covers the short span since the previous token. A query
+  left of the anchor falls back to a count from zero. The anchor is unsynchronized; only the
+  thread that lexes the line converts offsets, and a comment in the class states that contract.
+
+**Measured effect** (best attempt.min of 3 runs / median of the 3 run medians):
+
+| Case | Before | After |
+|---|---|---|
+| `testPerformanceLongLines` | 486 / 515 ms | 275 / 277 ms (−43 %) |
+| `testPerformancePowerShell` | 1206 / 1402 ms | 1123 / 1144 ms (−7 %) |
+| `testPerformance` | 289 / 317 ms | 291 / 423 ms (noise) |
+| `testPerformanceNoCache` (control) | 6273 / 12061 ms | 6939 / 16121 ms (noise) |
+
+The long-line case drops by almost half, and even `testPerformancePowerShell` gains a little,
+because the fast path removes the scans on every line. The control case swings by more than
+30 % between runs in every measurement set, so its movement here carries no signal.
