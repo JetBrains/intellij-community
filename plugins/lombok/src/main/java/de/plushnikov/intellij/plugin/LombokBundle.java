@@ -16,7 +16,7 @@ public final class LombokBundle {
   public static final @NonNls String PATH_TO_BUNDLE = "messages.LombokBundle";
   private static final DynamicBundle ourInstance = new DynamicBundle(LombokBundle.class, PATH_TO_BUNDLE);
 
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
