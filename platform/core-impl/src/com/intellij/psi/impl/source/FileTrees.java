@@ -70,10 +70,18 @@ final class FileTrees {
    */
   private static final int firstNonFilePsiIndex = 1;
 
+  private static final long NO_STUB_STAMP = -1;
+
   private final @NotNull PsiFileImpl myFile;
 
   /** Soft reference to the stub tree; {@code null} when no stubs are attached. */
   private final @Nullable Reference<StubTree> myStub;
+
+  /**
+   * The value of {@link FileViewProvider#getModificationStamp()} at the moment {@link #myStub} was attached.
+   * The stub describes the content of that moment. {@link #NO_STUB_STAMP} when no stubs are attached.
+   */
+  private final long myStubContentStamp;
 
   /**
    * Reference to the AST root. The supplier is a {@link SoftReference} or {@link WeakReference}
@@ -94,10 +102,12 @@ final class FileTrees {
 
   private FileTrees(@NotNull PsiFileImpl file,
                     @Nullable Reference<StubTree> stub,
+                    long stubContentStamp,
                     @NotNull ConcreteAstPointer ast,
                     @Nullable Reference<StubBasedPsiElementBase<?>> @Nullable [] refToPsi) {
     myFile = file;
     myStub = stub;
+    myStubContentStamp = stubContentStamp;
     myTreeElementPointer = ast;
     myRefToPsi = refToPsi;
   }
@@ -131,7 +141,16 @@ final class FileTrees {
       psi.setSubstrateRef(SubstrateRef.createAstRef(node));
     });
 
-    return new FileTrees(myFile, myStub, myTreeElementPointer, null);
+    return new FileTrees(myFile, myStub, myStubContentStamp, myTreeElementPointer, null);
+  }
+
+  /**
+   * Returns whether the attached stub was attached under another modification stamp than {@code currentContentStamp}.
+   * Such a stub can be a stale cache, because the content may have changed while no reparse cleared the stub.
+   * A commit with no text change also moves the stamp, so a mismatch alone does not prove staleness.
+   */
+  boolean isStubStale(long currentContentStamp) {
+    return myStub != null && myStubContentStamp != currentContentStamp;
   }
 
   void assertConsistency(PsiFile other) {
@@ -191,7 +210,7 @@ final class FileTrees {
           refToPsi[i] = new WeakReference<>(psi);
         }
       }
-      return new FileTrees(myFile, myStub, myTreeElementPointer, refToPsi);
+      return new FileTrees(myFile, myStub, myStubContentStamp, myTreeElementPointer, refToPsi);
     }
     catch (Throwable e) {
       throw new RuntimeException("Exceptions aren't allowed here", e);
@@ -221,7 +240,7 @@ final class FileTrees {
       }));
     }
 
-    return new FileTrees(myFile, null, myTreeElementPointer, null);
+    return new FileTrees(myFile, null, NO_STUB_STAMP, myTreeElementPointer, null);
   }
 
   /**
@@ -233,7 +252,7 @@ final class FileTrees {
    */
   @NotNull FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     ConcreteAstPointer newPointer = myTreeElementPointer.updateWith(ast);
-    return new FileTrees(myFile, myStub, newPointer, myRefToPsi).syncPsiWithStub(derefStub(), ast.get(), true);
+    return new FileTrees(myFile, myStub, myStubContentStamp, newPointer, myRefToPsi).syncPsiWithStub(derefStub(), ast.get(), true);
   }
 
   /**
@@ -247,7 +266,8 @@ final class FileTrees {
   @NotNull FileTrees withStub(@NotNull StubTree stub,
                               @Nullable FileElement ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     assert derefTreeElement() == ast;
-    return new FileTrees(myFile, new SoftReference<>(stub), myTreeElementPointer, myRefToPsi)
+    long contentStamp = myFile.getViewProvider().getModificationStamp();
+    return new FileTrees(myFile, new SoftReference<>(stub), contentStamp, myTreeElementPointer, myRefToPsi)
       .syncPsiWithStub(stub, ast, false);
   }
 
@@ -260,7 +280,7 @@ final class FileTrees {
     boolean canBeVersioned = PsiFileImpl.shouldNodeBeVersioned(viewProvider);
     Supplier<? extends FileElement> treeSupplier = ast == null ? null : () -> ast;
     ConcreteAstPointer pointer = ConcreteAstPointer.createPointer(canBeVersioned, treeSupplier);
-    return new FileTrees(file, null, pointer, null);
+    return new FileTrees(file, null, NO_STUB_STAMP, pointer, null);
   }
 
   /**
@@ -269,7 +289,7 @@ final class FileTrees {
    */
   @NotNull FileTrees dropStubAndFileElement() {
     ConcreteAstPointer pointer = myTreeElementPointer.updateWith(null);
-    return new FileTrees(myFile, null, pointer, null);
+    return new FileTrees(myFile, null, NO_STUB_STAMP, pointer, null);
   }
 
   /**
@@ -285,7 +305,7 @@ final class FileTrees {
 
     if ((stubTree == null || astRoot == null) && !hasCachedPsi()) {
       // there's only one source of PSI, nothing to reconcile
-      return new FileTrees(myFile, myStub, myTreeElementPointer, null);
+      return new FileTrees(myFile, myStub, myStubContentStamp, myTreeElementPointer, null);
     }
 
     List<StubElement<?>> stubList = stubTree == null ? null : stubTree.getPlainList();
