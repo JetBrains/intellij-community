@@ -25,6 +25,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -220,25 +222,13 @@ private fun JPopupImpl(
     val currentOnKeyEvent by rememberUpdatedState(onKeyEvent)
     val currentOnPreviewKeyEvent by rememberUpdatedState(onPreviewKeyEvent)
     val currentProperties by rememberUpdatedState(properties)
-    val windowShapeState = rememberUpdatedState(windowShape)
+    val currentCornerSize by rememberUpdatedState(cornerSize)
+    val currentWindowShape by rememberUpdatedState(windowShape)
 
     val compositionLocalContext by rememberUpdatedState(currentCompositionLocalContext)
 
     var parentBoundsInRoot by remember { mutableStateOf<IntRect?>(null) }
     var popupRectangle by remember { mutableStateOf<Rectangle?>(null) }
-
-    Layout(
-        content = {},
-        modifier =
-            Modifier.onGloballyPositioned { childCoordinates ->
-                if (component.isShowing) {
-                    childCoordinates.parentCoordinates?.let {
-                        parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
-                    }
-                }
-            },
-        measurePolicy = { _, _ -> layout(0, 0) {} },
-    )
 
     val dialog = remember {
         JDialog(window).apply {
@@ -250,6 +240,46 @@ private fun JPopupImpl(
                 rootPane.putClientProperty("Window.shadow", true)
             }
         }
+    }
+
+    fun updateWindowShape(size: IntSize) {
+        val shapeProvider = currentWindowShape
+        if (shapeProvider != null) {
+            if (blendingEnabled) {
+                // When blending is active, the window is already in
+                // java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT mode
+                // (per-pixel alpha). Calling Window.setShape() would switch it to
+                // PERPIXEL_TRANSPARENT (hard pixel clip), breaking antialiasing at the edges.
+                // Compose's own drawing + transparent background is sufficient.
+                return
+            }
+            // Without blending, fall back to Window.setShape() to at least
+            // clip the rectangular window boundary to the custom shape outline.
+            // Note: this uses PERPIXEL_TRANSPARENT mode, which has known
+            // antialiasing limitations at concave corners (e.g. arrow junction).
+            val logicalSize =
+                IntSize(floor(size.width / dialog.density()).toInt(), floor(size.height / dialog.density()).toInt())
+            try {
+                dialog.shape = shapeProvider(logicalSize)
+            } catch (_: UnsupportedOperationException) {
+                applyRoundedCorners(dialog, currentCornerSize, size)
+            }
+            return
+        }
+
+        dialog.shape = null
+        if (blendingEnabled) {
+            // If any of the blending logic is enabled, we don't need to use JBR APIs
+            // to set the rounded corners and fix the background.
+            return
+        }
+
+        applyRoundedCorners(dialog, currentCornerSize, size)
+    }
+
+    fun onPopupMeasured(position: IntOffset, size: IntSize) {
+        popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
+        updateWindowShape(size)
     }
 
     val composePanel = remember {
@@ -286,57 +316,31 @@ private fun JPopupImpl(
                     modifier = Modifier.semantics { popup() },
                     measurePolicy =
                         remember(currentPopupPositionProvider, parentBounds) {
-                            JPopupMeasurePolicy(dialog, currentPopupPositionProvider, parentBounds) { position, size ->
-                                popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
-
-                                val currentWindowShape = windowShapeState.value
-                                if (currentWindowShape != null) {
-                                    if (blendingEnabled) {
-                                        // When blending is active, the window is already in
-                                        // java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT mode
-                                        // (per-pixel alpha). Calling Window.setShape() would switch it to
-                                        // PERPIXEL_TRANSPARENT (hard pixel clip), breaking antialiasing at the edges.
-                                        // Compose's own drawing + transparent background is sufficient.
-                                        return@JPopupMeasurePolicy
-                                    }
-                                    // Without blending, fall back to Window.setShape() to at least
-                                    // clip the rectangular window boundary to the custom shape outline.
-                                    // Note: this uses PERPIXEL_TRANSPARENT mode, which has known
-                                    // antialiasing limitations at concave corners (e.g. arrow junction).
-                                    val logicalSize =
-                                        IntSize(
-                                            floor(size.width / dialog.density()).toInt(),
-                                            floor(size.height / dialog.density()).toInt(),
-                                        )
-                                    try {
-                                        dialog.shape = currentWindowShape(logicalSize)
-                                    } catch (_: UnsupportedOperationException) {
-                                        applyRoundedCorners(dialog, cornerSize, size)
-                                    }
-                                    return@JPopupMeasurePolicy
-                                }
-
-                                dialog.shape = null
-                                if (blendingEnabled) {
-                                    // If any of the blending logic is enabled, we don't need to use JBR APIs
-                                    // to set the rounded corners and fix the background.
-                                    return@JPopupMeasurePolicy
-                                }
-
-                                if (cornerSize != ZeroCornerSize) {
-                                    JBR.getRoundedCornersManager()
-                                        .setRoundedCorners(
-                                            dialog,
-                                            cornerSize.toPx(size.toSize(), Density(dialog.density())) / dialog.density(),
-                                        )
-                                }
-                                applyRoundedCorners(dialog, cornerSize, size)
-                            }
+                            JPopupMeasurePolicy(
+                                window = dialog,
+                                popupPositionProvider = currentPopupPositionProvider,
+                                parentBoundsInRoot = parentBounds,
+                                onMeasure = ::onPopupMeasured,
+                            )
                         },
                 )
             }
         }
     }
+
+    val currentParentBounds = parentBoundsInRoot
+    Layout(
+        content = {},
+        modifier =
+            Modifier.onGloballyPositioned { childCoordinates ->
+                if (component.isShowing) {
+                    childCoordinates.parentCoordinates?.let {
+                        parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
+                    }
+                }
+            },
+        measurePolicy = { _, _ -> layout(0, 0) {} },
+    )
 
     LaunchedEffect(properties) {
         dialog.isFocusable = properties.focusable
@@ -344,11 +348,34 @@ private fun JPopupImpl(
         dialog.isAlwaysOnTop = properties.dismissOnClickOutside
     }
 
+    LaunchedEffect(windowShape, cornerSize) {
+        val currentRect = popupRectangle ?: return@LaunchedEffect
+        updateWindowShape(IntSize(currentRect.width, currentRect.height))
+    }
+
     val rectValue = popupRectangle
-    LaunchedEffect(rectValue) {
-        val rectangle = rectValue?.withDensity(dialog.density()) ?: return@LaunchedEffect
-        dialog.size = rectangle.size
-        dialog.location = rectangle.location.fromCurrentScreenToGlobal(window)
+    LaunchedEffect(currentParentBounds, rectValue) {
+        if (currentParentBounds != null && popupRectangle == null) {
+            if (!dialog.isDisplayable) {
+                dialog.addNotify()
+            }
+            composePanel.preferredSize = null
+            composePanel.preferredSize
+        }
+        val rectangle = popupRectangle?.withDensity(dialog.density()) ?: return@LaunchedEffect
+        val location = rectangle.location.fromCurrentScreenToGlobal(window)
+        composePanel.preferredSize = rectangle.size
+        dialog.bounds = Rectangle(location, rectangle.size)
+        if (!dialog.isVisible) {
+            // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
+            // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
+            // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
+            // start them as non-focusable, and then make them focusable a short while later.
+            dialog.focusableWindowState = false
+            dialog.isAutoRequestFocus = false
+            dialog.isVisible = true
+            SwingUtilities.invokeLater { dialog.focusableWindowState = currentProperties.focusable }
+        }
     }
 
     LaunchedEffect(blendingEnabled, windowShape) {
@@ -537,16 +564,6 @@ private fun JPopupImpl(
     DisposableEffect(dialog) {
         dialog.contentPane = composePanel
 
-        // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
-        // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
-        // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
-        // start them as non-focusable, and then make them focusable a short while later.
-        dialog.focusableWindowState = false
-        dialog.isAutoRequestFocus = false
-        dialog.isVisible = true
-        dialog.size = composePanel.preferredSize
-        SwingUtilities.invokeLater { dialog.focusableWindowState = true }
-
         onDispose {
             dialog.isVisible = false
             dialog.dispose()
@@ -587,6 +604,14 @@ private class JPopupMeasurePolicy(
 
         return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 private fun applyRoundedCorners(dialog: Window, cornerSize: CornerSize, size: IntSize) {
