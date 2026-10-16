@@ -768,7 +768,11 @@ impl DaemonFixture {
 
     async fn build(backend: Backend, guest_os: GuestOs, extra: &[(&str, &str)], over_hypervisor: bool) -> Self {
         avl_affected::bridge::install_fixture();
-        let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION).with_git();
+        // The daemon double speaks the protocol of the JVM daemon, so the fixture runs the JVM runner. A test of the lane
+        // daemon sets the runner on a copy of the settings, or speaks the lane protocol on the double.
+        let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION)
+            .with_git()
+            .with_daemon_runner(wire::Runner::Jvm);
         if over_hypervisor {
             builder = builder.without_tart_bin();
         }

@@ -67,12 +67,11 @@ infer it.
 
 Global options, accepted before or after the command and anywhere before a literal --: --json and --text choose the \
 output form, --stream adds NDJSON progress, --backend selects the pool, --lease-file passes the receipt, and --runner \
-names the process of the run slot: jvm (the default) is the JVM daemon, and daemon is the lane-daemon verb of the \
-guest agent. --runner is a transition option, and it goes when every lane runs through the verb. So \
-\"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
-value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text \
-- as JSON data under --json, as prose under --text; after the command it prints that command's own help the same \
-way.
+names the process of the run slot: daemon (the default) is the lane-daemon verb of the guest agent, and jvm is the JVM \
+daemon, which the live lane needs. --runner is a transition option, and it goes when every lane runs through the verb. \
+So \"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
+value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text - \
+as JSON data under --json, as prose under --text; after the command it prints that command's own help the same way.
 
 The form follows the reader: text when stdout is a terminal, JSON when it is not. --json and --text choose it. In \
 JSON, success writes one envelope to stdout and failure writes one to stderr; --stream additionally emits NDJSON \

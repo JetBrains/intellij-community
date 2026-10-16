@@ -72,6 +72,7 @@ pub struct HostPoolBuilder {
     names_engine: bool,
     container_engine: bool,
     host_paths: bool,
+    daemon_runner: Option<avl_wire::daemon::Runner>,
     overrides: Vec<(String, String)>,
 }
 
@@ -91,6 +92,7 @@ impl HostPool {
             names_engine: true,
             container_engine: false,
             host_paths: true,
+            daemon_runner: None,
             overrides: Vec::new(),
         }
     }
@@ -228,6 +230,14 @@ impl HostPoolBuilder {
         self
     }
 
+    /// Pins the process of the run slot, which `--runner` sets in production. A pool whose daemon double speaks the
+    /// protocol of one runner pins that runner.
+    #[must_use]
+    pub const fn with_daemon_runner(mut self, runner: avl_wire::daemon::Runner) -> Self {
+        self.daemon_runner = Some(runner);
+        self
+    }
+
     /// Sets one variable, replacing the pool's own value of it.
     #[must_use]
     pub fn env(mut self, name: &str, value: &str) -> Self {
@@ -323,6 +333,9 @@ impl HostPoolBuilder {
         };
         let mut settings = crate::load_config_on_release(host, self.macos, self.backend, self.guest_os, &environment, root.path());
         settings.guest_arch = self.guest_arch;
+        if let Some(runner) = self.daemon_runner {
+            settings.daemon.runner = runner;
+        }
         let settings = Arc::new(settings);
         if self.host_paths {
             settings

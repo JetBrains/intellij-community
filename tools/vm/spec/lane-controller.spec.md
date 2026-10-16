@@ -1417,9 +1417,12 @@ The daemon's half and the IDE's half of supervision are in
 
 #### The lane-daemon verb
 
-The global option `--runner` names the process of the run slot. `jvm` is the JVM daemon and the default. `daemon` is
-the `lane-daemon` verb of the installed guest agent. The option is for the move of the lanes to the verb, and it goes
-after that move.
+The global option `--runner` names the process of the run slot. `daemon` is the `lane-daemon` verb of the installed
+guest agent and the default. `jvm` is the JVM daemon, which the live lane needs. The option is for the move of the
+lanes to the verb, and it goes after that move.
+
+- A run without `--runner` runs the lane daemon.
+  [@test] ../crates/avl-base/src/config/tests.rs (`the_linux_defaults_are_the_documented_ones`)
 
 - `--runner` takes `jvm` or `daemon` on either side of the command. Another word is a usage refusal.
   [@test] ../crates/avl-vm/src/cli/tests.rs (`the_runner_is_a_global_option_with_two_words`)
