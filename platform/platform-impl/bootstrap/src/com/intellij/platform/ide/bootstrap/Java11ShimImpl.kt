@@ -74,4 +74,13 @@ class Java11ShimImpl : Java11Shim() {
       stream.skip(stackFrameIndex.toLong()).map { it.declaringClass }.findFirst().orElse(null)
     }
   }
+
+  override fun getCallerFrame(calleeClassName: String): StackTraceElement? {
+    return StackWalker.getInstance().walk { frames ->
+      frames.filter { it.className != calleeClassName && it.className != Java11ShimImpl::class.java.name }
+        .findFirst()
+        .orElse(null)
+        ?.toStackTraceElement()
+    }
+  }
 }

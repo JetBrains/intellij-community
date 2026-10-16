@@ -48,6 +48,12 @@ abstract class Java11Shim {
 
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 
+  /**
+   * The frame that called into the class [calleeClassName]: the first frame of the current stack outside this shim and outside that class.
+   * A [StackTraceElement] holds no class, so a caller can keep it and keep no class loader.
+   */
+  abstract fun getCallerFrame(calleeClassName: String): StackTraceElement?
+
   @Contract(value = "_, -> new", pure = true)
   abstract fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any> = HashingStrategy.canonical()): ConcurrentMap<K & Any, V & Any>
 }
