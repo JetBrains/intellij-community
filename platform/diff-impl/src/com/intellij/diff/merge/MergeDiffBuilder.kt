@@ -64,9 +64,7 @@ internal class MergeDiffBuilder(
     }
 
     // initialize resolver and patch conflict types if semantic resolution is available
-    coroutineToIndicator {
-      conflictResolver.init(lineOffsets, fragmentsWithMetadata.fragments, psiFiles)
-    }
+    conflictResolver.init(lineOffsets, fragmentsWithMetadata.fragments, psiFiles)
     patchConflictTypes(conflictTypes, conflictResolver)
 
     MergeDiffData(fragmentsWithMetadata = fragmentsWithMetadata,

@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.LineTokenizer
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import it.unimi.dsi.fastutil.ints.IntList
 
@@ -289,7 +290,9 @@ class PropertiesMergeConflictResolverTest : BasePlatformTestCase() {
     val resolver = LangSpecificMergeConflictResolverWrapper(project, diffContentList)
     val lineOffsets: List<LineOffsets> = fileList.map { file -> LineOffsetsUtil.create(file.fileDocument) }
 
-    resolver.init(lineOffsets, fragmentWithMetaDataList.map { it.fragment }, fileList)
+    runWithModalProgressBlocking(project, "") {
+      resolver.init(lineOffsets, fragmentWithMetaDataList.map { it.fragment }, fileList)
+    }
 
     fragmentWithMetaDataList.forEachIndexed { index, fragmentMetaData ->
       assertEquals(fragmentMetaData.canResolve, resolver.canResolveConflictSemantically(index))

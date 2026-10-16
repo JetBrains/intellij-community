@@ -49,6 +49,7 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/lang-api:lang",
         "//platform/platform-api:ide",
+        "//platform/progress/shared:ide-progress",
         "//platform/lang-core",
         "//platform/lang-impl",
         "//platform/indexing-impl/backend",

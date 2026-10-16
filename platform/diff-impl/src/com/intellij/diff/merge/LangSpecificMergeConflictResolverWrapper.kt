@@ -7,19 +7,15 @@ import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper.Coroutin
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.MergeConflictResolutionStrategy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,20 +39,10 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
   private val resolvedChanges: MutableList<CharSequence?> = mutableListOf()
   private var hasChunksInitiallyResolved: Boolean = false
 
-  @RequiresBlockingContext
-  fun init(lineOffsetsList: List<LineOffsets>, fragmentList: List<MergeLineFragment>, fileList: List<PsiFile>) {
+  suspend fun init(lineOffsetsList: List<LineOffsets>, fragmentList: List<MergeLineFragment>, fileList: List<PsiFile>) {
     if (!isAvailable()) return
-    val action: suspend CoroutineScope.() -> Unit = {
-      calculateConflicts(lineOffsetsList, fragmentList, fileList)
-      if (resolvedChanges.any { it != null }) hasChunksInitiallyResolved = true
-    }
-    val application = ApplicationManager.getApplication()
-    if (application.isDispatchThread) {
-      check(application.isUnitTestMode && project != null) { "From EDT this method can only be called in unit tests."}
-      runWithModalProgressBlocking(project, "", action)
-    } else {
-      runBlockingCancellable(action)
-    }
+    calculateConflicts(lineOffsetsList, fragmentList, fileList)
+    if (resolvedChanges.any { it != null }) hasChunksInitiallyResolved = true
   }
 
   private suspend fun calculateConflicts(
