@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "skill": "compose-ui-audit",
+  "attribution": "Adapted from Ivan Morgillo's public Jetpack Compose audit skill and authored guidance for Compose Desktop/Jewel audits. Additional API-hygiene guidance distils Detekt rule documentation and Nacho L\u00f3pez\u2019 Compose Rules.",
+  "sources": [
+    {
+      "fetchedAt": "2026-06-12",
+      "label": "Ivan Morgillo jetpack-compose-audit",
+      "role": "upstream-source",
+      "type": "upstream-skill",
+      "url": "https://github.com/hamen/compose_skill/tree/main/skills/jetpack-compose-audit",
+      "version": "4.0.0",
+      "versionSource": "frontmatter",
+      "license": "MIT",
+      "check": {
+        "type": "github",
+        "repository": "hamen/compose_skill",
+        "path": "skills/jetpack-compose-audit",
+        "trackingRef": "main",
+        "frontmatterPath": "skills/jetpack-compose-audit/SKILL.md"
+      }
+    },
+    {
+      "fetchedAt": "2026-06-12",
+      "label": "Android Developers shared element transitions in Compose",
+      "role": "supporting-reference",
+      "type": "upstream-reference",
+      "url": "https://developer.android.com/develop/ui/compose/animation/shared-elements",
+      "version": "2026-06-11",
+      "versionSource": "fetchDate",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "fetchedAt": "2026-06-14",
+      "label": "Detekt rule documentation",
+      "role": "supporting-reference",
+      "type": "upstream-reference",
+      "url": "https://detekt.dev/docs/rules/comments",
+      "version": "2026-06-14",
+      "versionSource": "fetchDate",
+      "license": "unknown",
+      "notes": "Distilled comments plus sibling naming, complexity, coroutines, performance, potential-bugs, exceptions, and style rule pages into Compose Desktop/Jewel audit heuristics."
+    },
+    {
+      "fetchedAt": "2026-06-14",
+      "label": "Nacho L\u00f3pez Compose Rules",
+      "role": "supporting-reference",
+      "type": "upstream-reference",
+      "url": "https://mrmans0n.github.io/compose-rules/latest/rules/",
+      "version": "2026-06-14",
+      "versionSource": "fetchDate",
+      "license": "unknown",
+      "notes": "Distilled State, Composables, Modifiers, ComponentDefaults, and opt-in rules into Desktop/Jewel-safe audit heuristics."
+    },
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "Author-maintained Compose performance and audit adaptation for IntelliJ/Jewel",
+      "role": "original-content",
+      "type": "local-original-content",
+      "version": "2026-06-11",
+      "versionSource": "fetchDate",
+      "license": "project"
+    }
+  ]
+}
