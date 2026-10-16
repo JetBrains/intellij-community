@@ -356,6 +356,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
                 runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionCall.kt");
             }
 
+            @TestMetadata("functionCalledWithTooManyArguments.kt")
+            public void testFunctionCalledWithTooManyArguments() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionCalledWithTooManyArguments.kt");
+            }
+
             @TestMetadata("functionLiteralParameters.kt")
             public void testFunctionLiteralParameters() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionLiteralParameters.kt");
