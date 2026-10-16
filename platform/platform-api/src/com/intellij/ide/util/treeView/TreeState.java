@@ -646,6 +646,11 @@ public final class TreeState implements JDOMExternalizable {
     return myExpandedPaths.isEmpty() && mySelectedPaths.isEmpty();
   }
 
+  @ApiStatus.Internal
+  public @Nullable CachedTreePresentationData getCachedPresentationData() {
+    return myPresentationData;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, EXPAND_TAG);
