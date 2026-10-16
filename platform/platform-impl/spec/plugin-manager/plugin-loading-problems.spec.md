@@ -257,6 +257,9 @@ Untested: No focused loading problem test verifies these installation transition
 - Plugin messages must also pass their notification eligibility flag, the applied disabled state check, and the Ultimate restriction check.
 - Descriptor failures and dependency cycles can supply global notification messages independently of plugin row problems.
 - Repeated identical cycle messages appear once in the local calculation.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `global messages precede plugin problems and follow the reporting policy`
+  )
 - The startup reporter concatenates messages and action names from all registered notification handlers.
 - With no messages, the reporter shows no notification.
 - With messages, it shows one error notification with a separate paragraph for each message.

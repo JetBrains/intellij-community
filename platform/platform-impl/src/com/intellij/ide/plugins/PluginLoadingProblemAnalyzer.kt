@@ -8,12 +8,15 @@ import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 
+internal class PluginLoadingProblemAnalysis(
+  val selectionProblems: Map<PluginId, PluginLoadingProblem>,
+  val resolvedSetProblems: List<PluginLoadingProblem>,
+  val cycleErrors: List<@Nls String>,
+)
+
 // @spec platform/platform-impl/spec/plugin-manager/plugin-loading-problems.spec.md
 internal object PluginLoadingProblemAnalyzer {
-  internal fun calculateState(
-    pluginSet: PluginSet,
-    reportingPolicy: PluginLoadingErrorReportingPolicy,
-  ): PluginManagerStateSnapshot {
+  internal fun analyze(pluginSet: PluginSet): PluginLoadingProblemAnalysis {
     val initContext = pluginSet.input.initContext
     val discoveredPlugins = pluginSet.input.discoveryResult
     val resolvedPluginSet = pluginSet.resolvedPluginSet
@@ -33,17 +36,11 @@ internal object PluginLoadingProblemAnalyzer {
         }
       }
     }
-    val pluginNonLoadReasons = incompletePlugins.values.mapNotNull { plugin ->
+    val selectionProblems = incompletePlugins.values.mapNotNull { plugin ->
       excludedFromCandidateSubset[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
-    }.toMap(mutableMapOf())
+    }.toMap()
 
-    val problemReporting = ProblemReporting(pluginSet)
-
-    fun recordResolvedProblem(problem: PluginLoadingProblem) {
-      pluginNonLoadReasons[problem.plugin.pluginId] = problem
-      problemReporting.collectRecoveryTargets(problem)
-    }
-
+    val resolvedSetProblems = ArrayList<PluginLoadingProblem>()
     val cycleErrors = ArrayList<@Nls String>()
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
@@ -59,14 +56,14 @@ internal object PluginLoadingProblemAnalyzer {
           resolvedPluginSet = resolvedPluginSet,
           excludedPluginSet = excludedPluginSet,
           productMode = initContext.productMode,
-        )?.let(::recordResolvedProblem)
+        )?.let(resolvedSetProblems::add)
       }
       else {
         // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
         for (contentModule in plugin.contentModules) {
           val contentModuleExclusionReason = resolvedPluginSet.getExclusionReason(contentModule)
           if (contentModuleExclusionReason is PackagePrefixConflictWithAnotherModule) {
-            recordResolvedProblem(pluginPackagePrefixConflict(
+            resolvedSetProblems.add(pluginPackagePrefixConflict(
               plugin,
               contentModuleExclusionReason.descriptor,
               contentModuleExclusionReason.preferredConflictingModule,
@@ -76,75 +73,7 @@ internal object PluginLoadingProblemAnalyzer {
       }
     }
 
-    val loadingErrors = preparePluginErrors(
-      pluginNonLoadReasons,
-      discoveredPlugins.descriptorLoadingErrors,
-      cycleErrors,
-      problemReporting::shouldReportProblem,
-      reportingPolicy,
-    )
-
-    return PluginManagerStateSnapshot(
-      pluginNonLoadReasons = pluginNonLoadReasons.toMap(),
-      pluginsToDisable = problemReporting.pluginsToDisable.toMap(),
-      pluginsToEnable = problemReporting.pluginsToEnable.toMap(),
-      pluginLoadingProblemsForNotification = loadingErrors,
-    )
-  }
-
-  private class ProblemReporting(private val pluginSet: PluginSet) {
-    private val initContext = pluginSet.input.initContext
-    private val candidateSubset = pluginSet.resolvedPluginSet.candidateSet
-    private val pluginIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildPluginIdMap() }
-    private val contentModuleIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildContentModuleIdMap() }
-
-    val pluginsToDisable = HashMap<PluginId, String>()
-    val pluginsToEnable = HashMap<PluginId, String>()
-
-    fun shouldReportProblem(problem: PluginLoadingProblem): Boolean =
-      problem.shouldNotifyUser && !initContext.isPluginDisabled(problem.plugin.pluginId) &&
-      (!initContext.isPluginDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID) ||
-       !pluginRequiresUltimatePlugin(problem.plugin.pluginId, pluginIdMap, contentModuleIdMap))
-
-    fun collectRecoveryTargets(problem: PluginLoadingProblem) {
-      if (!shouldReportProblem(problem)) {
-        return
-      }
-      pluginsToDisable[problem.plugin.pluginId] = problem.plugin.name
-      val disabledDependencyId = problem.disabledDependencyId
-      if (disabledDependencyId != null && disabledDependencyId != PluginManagerCore.ULTIMATE_PLUGIN_ID) {
-        if (initContext.isPluginDisabled(disabledDependencyId)) {
-          val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
-          if (disabledPlugin != null) {
-            pluginsToEnable[disabledDependencyId] = disabledPlugin.name
-          }
-        }
-      }
-    }
-  }
-
-  private fun preparePluginErrors(
-    pluginNonLoadReasons: Map<PluginId, PluginLoadingProblem>,
-    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
-    cycleErrors: List<@Nls String>,
-    shouldReportProblem: (PluginLoadingProblem) -> Boolean,
-    reportingPolicy: PluginLoadingErrorReportingPolicy,
-  ): List<@Nls String> {
-    // name shadowing is intended
-    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues(shouldReportProblem)
-    val globalErrors = ArrayList<@Nls String>().apply {
-      for (descriptorLoadingError in descriptorLoadingErrors) {
-        add(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
-                               PluginUtils.pluginPathToUserString(descriptorLoadingError.path)))
-      }
-      addAll(cycleErrors)
-    }
-    if (pluginNonLoadReasons.isEmpty() && globalErrors.isEmpty()) {
-      return emptyList()
-    }
-
-    val loadingErrors = pluginNonLoadReasons.values
-    return if (reportingPolicy.reportToUser) globalErrors + loadingErrors.map { it.detailedMessage } else emptyList()
+    return PluginLoadingProblemAnalysis(selectionProblems, resolvedSetProblems, cycleErrors)
   }
 
   private fun adaptExclusionReasonAsCycleError(

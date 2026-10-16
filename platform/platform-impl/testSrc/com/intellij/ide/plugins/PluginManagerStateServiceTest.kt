@@ -278,6 +278,52 @@ internal class PluginManagerStateServiceTest {
   }
 
   @Test
+  fun `global messages precede plugin problems and follow the reporting policy`() {
+    install(
+      plugin("broken-descriptor") {
+        content {
+          module("duplicate.module") { isSeparateJar = true }
+          module("duplicate.module") { packagePrefix = "duplicate.module" }
+        }
+      },
+      plugin("cycle.a") {
+        name = "Cycle A"
+        depends("cycle.b")
+      },
+      plugin("cycle.b") {
+        name = "Cycle B"
+        depends("cycle.a")
+      },
+      plugin("dependency") { name = "Dependency" },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency")
+      },
+    )
+    val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("dependency"))
+
+    val visibleState = service.calculateState(pluginSet, USER_REPORTING_POLICY)
+    val hiddenState = service.calculateState(pluginSet, SILENT_REPORTING_POLICY)
+
+    val descriptorError = pluginSet.input.discoveryResult.descriptorLoadingErrors.single()
+    val descriptorMessage = CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+                                               PluginUtils.pluginPathToUserString(descriptorError.path))
+    val messages = visibleState.pluginLoadingProblemsForNotification
+    assertThat(messages).hasSize(3)
+    val cycleMessage = messages[1]
+    assertThat(cycleMessage).contains("Cycle A", "Cycle B")
+    val problem = checkNotNull(visibleState.pluginNonLoadReasons[PluginId.getId("affected")])
+    assertThat(messages).containsExactly(descriptorMessage, cycleMessage, problem.detailedMessage)
+    assertThat(visibleState.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("affected"))
+    assertThat(visibleState.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("dependency") to "Dependency"))
+    assertThat(visibleState.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+    assertThat(hiddenState.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(reasonMessages(hiddenState)).isEqualTo(reasonMessages(visibleState))
+    assertThat(hiddenState.pluginsToEnable).isEqualTo(visibleState.pluginsToEnable)
+    assertThat(hiddenState.pluginsToDisable).isEqualTo(visibleState.pluginsToDisable)
+  }
+
+  @Test
   fun `selection problems notify without adding recovery targets`() {
     install(
       plugin("selected-out") {
