@@ -89,6 +89,8 @@ import java.awt.dnd.DropTargetAdapter
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
@@ -96,6 +98,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
 import javax.swing.border.Border
@@ -334,6 +337,10 @@ internal class WelcomeScreenRightTabImpl(
         button.icon = model.icon
 
         button.addActionListener { model.onClick(project, contentProvider.coroutineScope) }
+        button.getInputMap(JComponent.WHEN_FOCUSED).apply {
+          put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
+          put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
+        }
 
         gridBuilder.cell(button, gaps = UnscaledGaps(right = 10))
       }
@@ -774,6 +781,11 @@ private class ButtonInfoPanelAction(
     }.apply {
       isFocusable = true
       isRequestFocusEnabled = false
+      addKeyListener(object : KeyAdapter() {
+        override fun keyReleased(e: KeyEvent) {
+          if (e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) click()
+        }
+      })
     }
   }
 
