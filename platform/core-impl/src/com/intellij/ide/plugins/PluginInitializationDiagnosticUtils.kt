@@ -367,7 +367,12 @@ object PluginInitializationDiagnosticUtils {
       is PartOfDependencyCycle, is PartOfRuntimeModuleGroupDependencyCycle ->
         "${plugin.shortLogDescription} requires ${rootCause.descriptor.shortLogDescription} which is a part of a dependency cycle"
       else ->
-        "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription}: ${rootCause.logMessage()}"
+        if (rootCause.descriptor.getMainDescriptor() === plugin) {
+          "${plugin.shortLogDescription} cannot be loaded: ${rootCause.logMessage()}"
+        }
+        else {
+          "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription}: ${rootCause.logMessage()}"
+        }
     }
   }
 

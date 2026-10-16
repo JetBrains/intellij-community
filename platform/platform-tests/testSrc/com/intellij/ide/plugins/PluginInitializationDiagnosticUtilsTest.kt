@@ -86,6 +86,74 @@ class PluginInitializationDiagnosticUtilsTest {
     }
 
     @Test
+    fun `a failed required module does not make its plugin require itself`() {
+      plugin("makefile") {
+        name = "Makefile"
+        version = "1.0"
+        content(namespace = PluginModuleId.JETBRAINS_NAMESPACE) {
+          module("makefile.core", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("missing.runner") }
+          }
+        }
+      }.installAt(pluginsDirPath)
+
+      val messages = collectProblems(buildPluginSet())
+
+      assertThat(messages).containsExactly(
+        "plugin 'Makefile' (makefile, 1.0) cannot be loaded: " +
+        "module makefile.core depends on module missing.runner which is absent"
+      )
+    }
+
+    @Test
+    fun `an internal module chain reports its terminal failure without a self dependency`() {
+      plugin("broken") {
+        version = "1.0"
+        content(namespace = PluginModuleId.JETBRAINS_NAMESPACE) {
+          module("broken.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("broken.bridge") }
+          }
+          module("broken.bridge") {
+            dependencies { module("missing.module") }
+          }
+        }
+      }.installAt(pluginsDirPath)
+
+      val messages = collectProblems(buildPluginSet())
+
+      assertThat(messages).containsExactly(
+        "plugin 'broken' (broken, 1.0) cannot be loaded: " +
+        "module broken.bridge depends on module missing.module which is absent"
+      )
+    }
+
+    @Test
+    fun `a failed module in another plugin retains its owner even when plugin names match`() {
+      plugin("provider") {
+        name = "Same Name"
+        version = "1.0"
+        content(namespace = PluginModuleId.JETBRAINS_NAMESPACE) {
+          module("provider.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("missing.module") }
+          }
+        }
+      }.installAt(pluginsDirPath)
+      plugin("dependent") {
+        name = "Same Name"
+        version = "2.0"
+        depends("provider")
+      }.installAt(pluginsDirPath)
+
+      val messages = collectProblems(buildPluginSet())
+
+      assertThat(messages).hasSize(2)
+      assertThat(messages).contains(
+        "plugin 'Same Name' (dependent, 2.0) requires plugin 'Same Name' (provider, 1.0): " +
+        "module provider.required depends on module missing.module which is absent"
+      )
+    }
+
+    @Test
     fun `disabled plugin is omitted but its dependent is reported`() {
       plugin("dependency") {}.installAt(pluginsDirPath)
       plugin("dependent") { depends("dependency") }.installAt(pluginsDirPath)
