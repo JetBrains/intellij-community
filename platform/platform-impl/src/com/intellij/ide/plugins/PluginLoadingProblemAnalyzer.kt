@@ -73,14 +73,13 @@ internal object PluginLoadingProblemAnalyzer {
       }
       val exclusionReason = resolvedPluginSet.getExclusionReason(plugin)
       if (exclusionReason != null) {
-        adaptExclusionReasonAsNonLoadReason(
+        analyzePluginExclusion(
           exclusionReason,
           plugin,
           resolvedPluginSet = resolvedPluginSet,
           excludedPluginSet = excludedPluginSet,
           productMode = initContext.productMode,
-          registerLoadingError = ::registerLoadingError,
-        )
+        )?.let(::registerLoadingError)
       }
       else {
         // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
@@ -169,80 +168,78 @@ internal object PluginLoadingProblemAnalyzer {
     }
   }
 
-  private fun adaptExclusionReasonAsNonLoadReason(
+  private fun analyzePluginExclusion(
     exclusionReason: DescriptorExclusionReason,
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
     excludedPluginSet: AmbiguousPluginSet,
     productMode: ProductMode,
-    registerLoadingError: (PluginLoadingProblem) -> Unit,
-  ) {
+  ): PluginLoadingProblem? {
     val shouldNotifyUser = !plugin.isImplementationDetail
 
-    fun registerFailedDependency(descriptor: IdeaPluginDescriptorImpl) {
+    fun createFailedDependencyProblem(descriptor: IdeaPluginDescriptorImpl): PluginLoadingProblem {
       val dependency = if (descriptor is ContentModuleDescriptor) {
         DependencyRef.ContentModule(descriptor.moduleId)
       }
       else {
         DependencyRef.Plugin(descriptor.pluginId)
       }
-      registerLoadingError(pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptor))
+      return pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptor)
     }
 
-    fun processRootCause(exclusionReason: DescriptorExclusionReason) {
+    fun analyzeRootCause(exclusionReason: DescriptorExclusionReason): PluginLoadingProblem? =
       when (exclusionReason) {
         is DependencyIsNotResolved -> when (val dependency = exclusionReason.dependency) {
           is DependencyRef.Plugin -> {
             val descriptor = resolvedPluginSet.candidateSet.resolvePluginId(dependency.pluginId)
                              ?: excludedPluginSet.resolvePluginId(dependency.pluginId).firstOrNull()
-            registerLoadingError(if (descriptor == null) {
+            if (descriptor == null) {
               pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser)
             }
             else {
               pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptor.getMainDescriptor())
-            })
+            }
           }
           is DependencyRef.ContentModule ->
-            registerLoadingError(pluginRequiresUnavailableModule(plugin, dependency.moduleId, shouldNotifyUser))
+            pluginRequiresUnavailableModule(plugin, dependency.moduleId, shouldNotifyUser)
         }
         is DependencyIsNotVisible ->
-          registerLoadingError(pluginDependencyIsNotVisible(plugin, exclusionReason.dependencyModule, shouldNotifyUser))
+          pluginDependencyIsNotVisible(plugin, exclusionReason.dependencyModule, shouldNotifyUser)
         is ExcludedByEnvironmentConfiguration -> when (val reason = exclusionReason.reason) {
           is UnsuitableProductModeModuleUnavailabilityReason ->
-            registerLoadingError(pluginRequiresUnavailableProductModeModule(plugin, reason.moduleId, productMode))
+            pluginRequiresUnavailableProductModeModule(plugin, reason.moduleId, productMode)
         }
         is IncompatibleWithAnotherModule -> {
-          registerLoadingError(pluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
+          pluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser)
         }
-        is OnDemandContentModuleHasNoDependentsLeft -> {} // expected exclusion, not a loading error
+        is OnDemandContentModuleHasNoDependentsLeft -> null // expected exclusion, not a loading error
         is PackagePrefixConflictWithAnotherModule -> {
-          registerLoadingError(pluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
+          pluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule)
         }
         is ProductRulesImposedExclusion -> {
           val productReason = exclusionReason.productReason as? IntelliJImposedModuleExclusionReason
           when (productReason) {
-            is AiIsDisabled -> {} // an expected exclusion, not a loading error
-            is PluginHasExpiredLicense -> {} // not handled in old init, FIXME later
-            is ThirdPartyPrivacyNoticeIsNotAccepted -> {}
-            is NonBundledPluginsLoadingIsDisabled -> registerLoadingError(nonBundledPluginsAreExplicitlyDisabled(plugin))
+            is AiIsDisabled -> null // an expected exclusion, not a loading error
+            is PluginHasExpiredLicense -> null // not handled in old init, FIXME later
+            is ThirdPartyPrivacyNoticeIsNotAccepted -> null
+            is NonBundledPluginsLoadingIsDisabled -> nonBundledPluginsAreExplicitlyDisabled(plugin)
             is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading ->
-              registerLoadingError(pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(plugin))
-            is PluginLoadingIsDisabledCompletelyExceptCore -> registerLoadingError(pluginLoadingIsDisabledCompletely(plugin))
-            is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA -> exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
-            null -> {} // logged during initialization
+              pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(plugin)
+            is PluginLoadingIsDisabledCompletelyExceptCore -> pluginLoadingIsDisabledCompletely(plugin)
+            is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA -> exclusionReason.toSelectionPluginNonLoadReason()
+            null -> null // logged during initialization
           }
         }
         is PluginDeclaresConflictingId,
-        is PluginIsIncompatibleWithProduct -> exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
+        is PluginIsIncompatibleWithProduct -> exclusionReason.toSelectionPluginNonLoadReason()
         is PluginIsMarkedDisabled,
-        is PluginVersionIsSuperseded -> {}
-        is PartOfDependencyCycle -> {} // logged elsewhere
-        is PartOfRuntimeModuleGroupDependencyCycle -> {} // logged elsewhere
+        is PluginVersionIsSuperseded -> null
+        is PartOfDependencyCycle -> null // logged elsewhere
+        is PartOfRuntimeModuleGroupDependencyCycle -> null // logged elsewhere
         is ChainedExclusion -> error("expected a root cause: $exclusionReason")
       }
-    }
 
-    if (exclusionReason is ChainedExclusion) {
+    return if (exclusionReason is ChainedExclusion) {
       val exclusionChain = exclusionReason.descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason)
       val boundaryExclusion = exclusionChain.windowed(2).firstOrNull { (pluginModule, other) -> other.pluginId != pluginModule.pluginId }
       val rootCauseDescriptor = exclusionChain.last()
@@ -252,22 +249,20 @@ internal object PluginLoadingProblemAnalyzer {
         when (rootCause) {
           is PluginIsMarkedDisabled -> {
             val disabledDependencyId = rootCause.descriptor.pluginId
-            registerLoadingError(
-              if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
-              else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser, rootCause.descriptor)
-            )
+            if (disabledDependencyId == PluginManagerCore.ULTIMATE_PLUGIN_ID) pluginRequiresDisabledUltimate(plugin)
+            else pluginDependencyIsDisabled(plugin, disabledDependencyId, shouldNotifyUser, rootCause.descriptor)
           }
-          is ExcludedByEnvironmentConfiguration -> processRootCause(rootCause)
+          is ExcludedByEnvironmentConfiguration -> analyzeRootCause(rootCause)
           is DependencyIsNotResolved -> when (rootCause.dependency) {
-            is DependencyRef.ContentModule -> processRootCause(rootCause)
-            is DependencyRef.Plugin -> registerFailedDependency(excludedRequiredDescriptor)
+            is DependencyRef.ContentModule -> analyzeRootCause(rootCause)
+            is DependencyRef.Plugin -> createFailedDependencyProblem(excludedRequiredDescriptor)
           }
-          is DependencyIsNotVisible -> registerFailedDependency(rootCause.descriptor.getMainDescriptor())
+          is DependencyIsNotVisible -> createFailedDependencyProblem(rootCause.descriptor.getMainDescriptor())
           is ProductRulesImposedExclusion -> when (rootCause.productReason) {
             is NonBundledPluginsLoadingIsDisabled,
             is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
-            is PluginLoadingIsDisabledCompletelyExceptCore -> processRootCause(rootCause)
-            else -> registerFailedDependency(excludedRequiredDescriptor)
+            is PluginLoadingIsDisabledCompletelyExceptCore -> analyzeRootCause(rootCause)
+            else -> createFailedDependencyProblem(excludedRequiredDescriptor)
           }
           is IncompatibleWithAnotherModule,
           is OnDemandContentModuleHasNoDependentsLeft,
@@ -276,16 +271,16 @@ internal object PluginLoadingProblemAnalyzer {
           is PluginIsIncompatibleWithProduct,
           is PluginVersionIsSuperseded,
           is PartOfDependencyCycle,
-          is PartOfRuntimeModuleGroupDependencyCycle -> registerFailedDependency(excludedRequiredDescriptor)
+          is PartOfRuntimeModuleGroupDependencyCycle -> createFailedDependencyProblem(excludedRequiredDescriptor)
           is ChainedExclusion -> error("expected a root cause: $rootCause")
         }
       }
       else {
-        processRootCause(rootCause)
+        analyzeRootCause(rootCause)
       }
     }
     else {
-      processRootCause(exclusionReason)
+      analyzeRootCause(exclusionReason)
     }
   }
 
