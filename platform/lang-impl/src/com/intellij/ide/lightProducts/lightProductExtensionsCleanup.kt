@@ -19,10 +19,7 @@ import com.intellij.openapi.extensions.impl.unregisterExtensionsById
 import com.intellij.openapi.extensions.impl.unregisterExtensionsMatching
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.application
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.IndexableSetContributor
 import org.jetbrains.annotations.ApiStatus
 
 private val logger = Logger.getInstance("#com.intellij.ide.lightProducts.LightProductExtensionsCleanup")
@@ -49,8 +46,6 @@ fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
       GutterIntentionMenuContributor::class,
       checkNotInstantiated = checkNotInstantiated,
     )
-
-  unregisterIndexExtensions(checkNotInstantiated)
 
   UsageCollectors.PROJECT_EP_NAME.appPoint
     .unregisterExtensionsMatching(checkNotInstantiated) { _, adapter ->
@@ -95,19 +90,6 @@ fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
     )
 
   GeneralSettings.getInstance().isShowTipsOnStartup = false
-}
-
-/** The application-level index extension points that [unregisterExtensionsForLightProduct] clears. */
-private val LIGHT_PRODUCT_INDEX_EXTENSION_POINTS: List<String> = listOf(
-  FileBasedIndexExtension.EXTENSION_POINT_NAME.name,
-  StubIndexExtension.EP_NAME.name,
-  IndexableSetContributor.EP_NAME.name,
-)
-
-private fun unregisterIndexExtensions(checkNotInstantiated: Boolean) {
-  for (pointName in LIGHT_PRODUCT_INDEX_EXTENSION_POINTS) {
-    application.extensionArea.getExtensionPoint<Any>(pointName).unregisterEverything(checkNotInstantiated)
-  }
 }
 
 private val <T : Any> ExtensionPointName<T>.appPoint: ExtensionPoint<T> get() = application.extensionArea.getExtensionPoint(this)
