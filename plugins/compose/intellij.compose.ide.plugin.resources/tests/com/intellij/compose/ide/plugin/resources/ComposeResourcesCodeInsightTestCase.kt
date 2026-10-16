@@ -5,6 +5,8 @@ import com.intellij.compose.ide.plugin.shared.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.shared.COMMON_MAIN
 import com.intellij.compose.ide.plugin.shared.ComposeBaseTestCase
 import com.intellij.compose.ide.plugin.shared.IOS_MAIN
+import com.intellij.compose.ide.plugin.shared.withAndroidSdk
+import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
@@ -25,6 +27,10 @@ abstract class ComposeResourcesCodeInsightTestCase : ComposeBaseTestCase() {
 
   override val excludedFilePatterns: Array<String>
     get() = arrayOf("glob:**/composeApp/src/commonMain/composeResources/drawable/*.png")
+
+  override fun FileTestFixture.Builder.configureProject() {
+    withAndroidSdk()
+  }
 
   protected fun testComposeResourcesProject(test: () -> Unit) = testComposeProject(test)
 }
