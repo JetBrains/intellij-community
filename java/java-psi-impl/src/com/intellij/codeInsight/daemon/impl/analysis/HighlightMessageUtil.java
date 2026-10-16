@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -13,6 +12,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.JavaOptionalServices;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -57,7 +57,7 @@ public final class HighlightMessageUtil {
     }
     else if (symbol instanceof PsiFile) {
       PsiDirectory directory = ((PsiFile)symbol).getContainingDirectory();
-      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+      PsiPackage aPackage = directory == null ? null : JavaOptionalServices.getJavaDirectoryService().getPackage(directory);
       symbolName = aPackage == null ? null : aPackage.getQualifiedName();
     }
     else if (symbol instanceof PsiDirectory) {

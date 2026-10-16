@@ -3,10 +3,12 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
+import com.intellij.core.CoreJavaDirectoryService
 import com.intellij.core.CoreJavaFileManager
 import com.intellij.core.CoreJavaPsiImplementationHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -37,6 +39,11 @@ object JavaOptionalServices {
   @JvmStatic
   fun getJavaPsiImplementationHelper(project: Project): JavaPsiImplementationHelper {
     return JavaPsiImplementationHelper.getInstance(project) ?: CoreJavaPsiImplementationHelper(project)
+  }
+
+  @JvmStatic
+  fun getJavaDirectoryService(): JavaDirectoryService {
+    return JavaDirectoryService.getInstance() ?: CoreJavaDirectoryService()
   }
 
   /** Returns the registered [ExternalAnnotationsManager], or a manager without external annotations. */

@@ -34,6 +34,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.impl.JavaOptionalServices;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocFragmentRef;
@@ -222,7 +223,7 @@ public final class JavaDocUtil {
       // find short-named class in the same package (maybe in the different module)
       PsiFile file = context.getContainingFile();
       PsiDirectory directory = file == null ? null : file.getContainingDirectory();
-      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+      PsiPackage aPackage = directory == null ? null : JavaOptionalServices.getJavaDirectoryService().getPackage(directory);
       aClass = aPackage == null ? null : ArrayUtil.getFirstElement(aPackage.findClassByShortName(refText, projectScope));
     }
     return aClass;

@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayType;
@@ -369,7 +368,7 @@ public final class PsiClassImplUtil {
       if (aPackage == null) {
         PsiDirectory dir = file.getContainingDirectory();
         if (dir != null) {
-          aPackage = JavaDirectoryService.getInstance().getPackage(dir);
+          aPackage = JavaOptionalServices.getJavaDirectoryService().getPackage(dir);
         }
       }
 
