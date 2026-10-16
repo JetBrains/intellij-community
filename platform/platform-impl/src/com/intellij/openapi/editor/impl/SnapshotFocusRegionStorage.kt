@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 
@@ -60,15 +61,22 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     processQueue()
     val snapshot = currentSnapshot()
     val root = rootStore.root(snapshot) ?: return true
-    return root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
-      val region = entry.markerReference?.get() as? SnapshotFocusRegion
-      if (region == null) {
-        rootStore.purge(snapshot, entry.markerId)
-        true
+    var collectedMarkerIds: LongArrayList? = null
+    try {
+      return root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
+        val region = entry.markerReference?.get() as? SnapshotFocusRegion
+        if (region == null) {
+          val markerIds = collectedMarkerIds ?: LongArrayList().also { collectedMarkerIds = it }
+          markerIds.add(entry.markerId)
+          true
+        }
+        else {
+          processor.process(region)
+        }
       }
-      else {
-        processor.process(region)
-      }
+    }
+    finally {
+      collectedMarkerIds?.let { rootStore.purgeMany(snapshot, it) }
     }
   }
 
@@ -81,12 +89,15 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   }
 
   private fun processQueue() {
+    var collectedMarkerIds: LongArrayList? = null
     while (true) {
-      val reference = regionQueue.poll() as? RegionReference ?: return
+      val reference = regionQueue.poll() as? RegionReference ?: break
       if (regionsById.remove(reference.markerId, reference)) {
-        rootStore.purge(currentSnapshot(), reference.markerId)
+        val markerIds = collectedMarkerIds ?: LongArrayList().also { collectedMarkerIds = it }
+        markerIds.add(reference.markerId)
       }
     }
+    collectedMarkerIds?.let { rootStore.purgeMany(currentSnapshot(), it) }
   }
 
   private class RegionReference(
