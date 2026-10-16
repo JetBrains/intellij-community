@@ -1232,6 +1232,62 @@ internal class PluginDependenciesTest {
     }
 
     @Test
+    fun `external descriptor that depends on a java basic module gets soft dependency on java plugin`() {
+      `java basic plugin`()
+      `java plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.java.psi") }
+        content {
+          module("external.consumer.module", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "external.consumer.module"
+            dependencies { module("intellij.java.syntax") }
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("jetbrains.consumer") {
+        vendor = "JetBrains"
+        dependencies { module("intellij.java.psi") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+      val java = pluginSet.getEnabledPlugin(PluginManagerCore.JAVA_PLUGIN_ID.idString)
+      val javaPsi = pluginSet.getEnabledModule("intellij.java.psi")
+
+      assertThat(pluginSet.getEnabledPlugin("external.consumer")).hasExactDirectParentClassloaders(javaPsi, java)
+      assertThat(pluginSet.getEnabledModule("external.consumer.module"))
+        .hasExactDirectParentClassloaders(pluginSet.getEnabledModule("intellij.java.syntax"), java)
+      assertThat(pluginSet.getEnabledPlugin("jetbrains.consumer")).hasExactDirectParentClassloaders(javaPsi)
+    }
+
+    @Test
+    fun `external descriptor that depends on a java basic module loads without java plugin`() {
+      `java basic plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.java.psi") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java.basic", "external.consumer")
+      assertThat(pluginSet.getEnabledPlugin("external.consumer"))
+        .hasExactDirectParentClassloaders(pluginSet.getEnabledModule("intellij.java.psi"))
+    }
+
+    private fun `java basic plugin`() = plugin("com.intellij.java.basic") {
+      vendor = "JetBrains"
+      content(namespace = "jetbrains") {
+        for (moduleName in listOf("intellij.java.syntax", "intellij.java.psi")) {
+          module(moduleName, ModuleLoadingRuleValue.REQUIRED) { packagePrefix = moduleName; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+        }
+      }
+    }.installAt(pluginDirPath)
+
+    private fun `java plugin`() = plugin(PluginManagerCore.JAVA_PLUGIN_ID.idString) {
+      vendor = "JetBrains"
+      dependencies { plugin("com.intellij.java.basic") }
+    }.installAt(pluginDirPath)
+
+    @Test
     @SystemProperty(propertyKey = "enable.implicit.json.dependency", propertyValue = "true")
     fun `non strict content module gets implicit json backend and collaboration tools`() {
       plugin("json.provider") {

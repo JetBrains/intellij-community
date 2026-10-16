@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfigure
 import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
 import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
+import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ID
 import com.intellij.ide.plugins.PluginManagerCore.getPluginNameAndVendor
 import com.intellij.ide.plugins.PluginManagerCore.logger
 import com.intellij.ide.plugins.ProductModeCapabilities.computeEssentialPlugins
@@ -322,6 +323,9 @@ class ProductPluginInitContext(
             yieldIfResolves(DependencyRef.of(vcsModule))
           }
           yieldIfResolves(DependencyRef.of(COLLABORATION_TOOLS_MODULE_ID))
+          if (javaBasicModulesExtractedFromJavaPlugin.any { doesDependOnModule(descriptor, it) }) {
+            yieldIfResolves(DependencyRef.of(JAVA_PLUGIN_ID))
+          }
         }
         for (depends in descriptor.pluginDependencies) {
           if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
@@ -435,6 +439,20 @@ private val vcsApiContentModules = arrayOf(
   "intellij.platform.vcs.log",
   "intellij.platform.vcs.log.graph",
   "intellij.platform.vcs.log.impl",
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+/**
+ * Content modules that moved from the Java plugin `com.intellij.java` to the plugin `com.intellij.java.basic`.
+ * The Java plugin embedded them, so a dependency on one of them gave the class loader of the Java main module.
+ * To keep compatibility, an external plugin that depends on one of them gets a soft dependency on the Java plugin.
+ */
+private val javaBasicModulesExtractedFromJavaPlugin = arrayOf(
+  "intellij.java.syntax",
+  "intellij.java.frontback.psi",
+  "intellij.java.frontback.psi.impl",
+  "intellij.java.psi",
+  "intellij.java.psi.impl",
+  "intellij.java.frontback.impl",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
