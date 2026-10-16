@@ -238,10 +238,9 @@ The generator publishes the suite facts that the controller reads, as
   relation answer together.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
-- An authored suite is mapped the same way as a generated suite. The controller reads the authored suites
-  from `authored-suites.json`, and a contract test keeps that document equal to `AirJourneySuites`.
+- An authored suite is mapped the same way as a generated suite, through its suite document. The controller
+  also reads the suites of the JVM host from `authored-suites.json`. The JVM host runs no suite, so that list is empty.
   [@test] ../crates/avl-affected/src/affected/tests.rs
-  [@test] ../../../../plugins/air/tests/integration/contract/test/flow/AirAuthoredSuitesDocumentTest.kt
 
 - A named directory stands for the files that git tracks or would track under it. A directory with no such
   file reaches no suite, and gives its own reason.
