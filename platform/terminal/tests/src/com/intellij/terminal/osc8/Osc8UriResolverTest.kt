@@ -99,6 +99,21 @@ internal class Osc8UriResolverTest {
     assertThat(resolve("not a url")).isNull()
   }
 
+  @Test
+  fun `jetbrains protocol uri is a link`(): Unit = timeoutRunBlocking {
+    assertThat(resolve("jetbrains://idea/navigate/reference?project=p&path=a.txt")).isNotNull()
+  }
+
+  @Test
+  fun `jetbrains protocol uri without a command is not a link`(): Unit = timeoutRunBlocking {
+    assertThat(resolve("jetbrains://")).isNull()
+  }
+
+  @Test
+  fun `jetbrains protocol uri inside other text is not a link`(): Unit = timeoutRunBlocking {
+    assertThat(resolve("see jetbrains://idea/navigate/reference")).isNull()
+  }
+
   private fun CoroutineScope.createWrapper(): CompositeOsc8UriResolverWrapper {
     return CompositeOsc8UriResolverWrapper(ProjectManager.getInstance().defaultProject, this)
   }

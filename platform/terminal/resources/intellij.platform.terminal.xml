@@ -37,6 +37,7 @@
     <colorSettings implementation="com.intellij.terminal.ANSIColoredConsoleColorsPage"
                    bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
     <terminal.osc8UriResolverProvider implementation="com.intellij.terminal.osc8.UrlFilterOsc8UriResolverProvider"/>
+    <terminal.osc8UriResolverProvider implementation="com.intellij.terminal.osc8.JbProtocolOsc8UriResolverProvider"/>
   </extensions>
   <actions>
     <action id="TerminalIncreaseFontSize" class="com.intellij.terminal.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
