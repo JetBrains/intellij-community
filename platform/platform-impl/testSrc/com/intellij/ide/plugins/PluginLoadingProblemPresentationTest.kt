@@ -82,8 +82,7 @@ internal class PluginLoadingProblemPresentationTest {
       kind = PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH,
       severity = PluginLoadingProblem.Severity.EXPECTED,
       productMode = ProductMode.LIGHT_REMOTE,
-      unavailableModuleName = "mode.module",
-      unavailableModuleNamespace = "jetbrains",
+      unavailableModuleId = PluginModuleId("mode.module", "jetbrains"),
     )
 
     assertThat(MyPluginModel.getErrors(result)).isEmpty()
@@ -118,5 +117,22 @@ internal class PluginLoadingProblemPresentationTest {
     val result = CheckErrorsResult(problemsBySide = mapOf(PluginSource.LOCAL to local, PluginSource.REMOTE to remote))
 
     assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+  }
+
+  @Test
+  fun `the page result retains module IDs through serialization`() {
+    val moduleIds = listOf(
+      null,
+      PluginModuleId("module.name", "jetbrains"),
+      PluginModuleId("module.name", "vendor"),
+      PluginModuleId("module.name:extra", "vendor/\"namespace"),
+    )
+    for (moduleId in moduleIds) {
+      val result = CheckErrorsResult(unavailableModuleId = moduleId)
+
+      assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+    }
+    assertThat(Json.decodeFromString<CheckErrorsResult>("{}").unavailableModuleId).isNull()
+    assertThat(Json.decodeFromString<CheckErrorsResult>("""{"unavailableModuleId":null}""").unavailableModuleId).isNull()
   }
 }
