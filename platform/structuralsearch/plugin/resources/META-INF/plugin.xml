@@ -15,4 +15,8 @@
   <content namespace="jetbrains">
     <module name="intellij.platform.structuralSearch"/>
   </content>
+
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
 </idea-plugin>
