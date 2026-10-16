@@ -33,7 +33,7 @@ class UvPackageManagerTest {
       [project]
       name = "repro"
       version = "0.1.0"
-      requires-python = ">=3.13"
+      requires-python = ">=3.12"
       dependencies = [
           "httpx[http2,brotli]~=0.24.0"
       ]
