@@ -132,15 +132,11 @@ interface PMarkerRoot {
   fun removeMany(markerIds: LongList): PMarkerRoot
 
   /**
-   * Removes every trace of [markerId], including its stored resolution.
+   * Removes every trace of [markerIds], including their stored resolutions.
    *
-   * This operation is intended for garbage-collected marker handles. Unlike [remove], it does not retain an absent
+   * This operation is intended for garbage-collected marker handles. Unlike [removeMany], it does not retain an absent
    * tombstone because no handle remains that could resolve against it.
-   */
-  fun purge(markerId: Long): PMarkerRoot
-
-  /**
-   * Erases the state of [markerIds], as [purge] does.
+   *
    * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
    */
   fun purgeMany(markerIds: LongList): PMarkerRoot

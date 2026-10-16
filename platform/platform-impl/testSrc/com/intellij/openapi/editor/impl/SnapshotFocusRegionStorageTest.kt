@@ -70,8 +70,6 @@ internal class SnapshotFocusRegionStorageTest {
         .toList()
       references.forEach { it.clear() }
       reference.set(object : PMarkerRoot by root {
-        override fun purge(markerId: Long): PMarkerRoot = error("Cleanup must use purgeMany")
-
         override fun purgeMany(markerIds: LongList): PMarkerRoot {
           batches.add(markerIds.toLongArray().toList())
           return root.purgeMany(markerIds)

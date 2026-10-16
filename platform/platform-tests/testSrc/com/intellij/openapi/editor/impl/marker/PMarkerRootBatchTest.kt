@@ -43,9 +43,10 @@ class PMarkerRootBatchTest {
     val removed = root.removeMany(ids)
     val purged = root.purgeMany(ids)
 
-    assertEquivalent(ids.fold(root) { current, id -> current.remove(id) }, removed, (1L..48L).toList())
-    assertEquivalent(ids.fold(root) { current, id -> current.purge(id) }, purged, (1L..48L).toList())
-    assertEquivalent(ids.fold(removed) { current, id -> current.purge(id) }, removed.purgeMany(ids), (1L..48L).toList())
+    val individuallyRemoved = ids.fold(root) { current, id -> current.remove(id) }
+    assertEquivalent(individuallyRemoved, removed, (1L..48L).toList())
+    assertEquivalent(individuallyRemoved, purged, (1L..48L).toList(), ids.toSet())
+    assertEquivalent(individuallyRemoved, removed.purgeMany(ids), (1L..48L).toList(), ids.toSet())
     assertTrue((removed as PMarkerRootImpl).containsMarkerId(24))
     assertFalse((purged as PMarkerRootImpl).containsMarkerId(24))
     assertEquals(root.resolve(24, TextRange.EMPTY_RANGE), removed.resolve(24, TextRange.EMPTY_RANGE))
@@ -114,6 +115,7 @@ class PMarkerRootBatchTest {
     val random = Random(0x5EED)
     var expected: PMarkerRoot = PMarkerRootImpl.empty()
     var actual: PMarkerRoot = PMarkerRootImpl.empty()
+    val purgedIds = HashSet<Long>()
     var nextId = 1L
     var text = TEXT
     repeat(300) {
@@ -126,6 +128,7 @@ class PMarkerRootBatchTest {
           }
           expected = insertIndividually(expected, additions)
           actual = actual.insertMany(additions)
+          additions.forEach { purgedIds.remove(it.markerId) }
         }
         1 -> {
           val ids = LongArrayList(LongArray(random.nextInt(9)) { random.nextLong(1, nextId + 5) })
@@ -134,8 +137,9 @@ class PMarkerRootBatchTest {
         }
         2 -> {
           val ids = LongArrayList(LongArray(random.nextInt(9)) { random.nextLong(1, nextId + 5) })
-          expected = ids.fold(expected) { root, id -> root.purge(id) }
+          expected = ids.fold(expected) { root, id -> root.remove(id) }
           actual = actual.purgeMany(ids)
+          purgedIds.addAll(ids)
         }
         3 -> {
           val start = random.nextInt(text.length + 1)
@@ -146,7 +150,7 @@ class PMarkerRootBatchTest {
           text = text.replaceRange(start, end, replacement)
         }
       }
-      assertEquivalent(expected, actual, (1L until nextId).toList())
+      assertEquivalent(expected, actual, (1L until nextId).toList(), purgedIds)
     }
   }
 
@@ -179,15 +183,16 @@ class PMarkerRootBatchTest {
     return entries
   }
 
-  private fun assertEquivalent(expected: PMarkerRoot, actual: PMarkerRoot, ids: List<Long>) {
+  private fun assertEquivalent(expected: PMarkerRoot, actual: PMarkerRoot, ids: List<Long>, purgedIds: Set<Long> = emptySet()) {
     assertEquals(resolvedEntries(expected), resolvedEntries(actual))
     assertEquals(expected.isEmpty(), actual.isEmpty())
     for (id in ids) {
-      val expectedResolution = expected.resolve(id, TextRange.EMPTY_RANGE)
+      val expectedResolution = if (id in purgedIds) PMarkerResolution.Absent(0, 0) else expected.resolve(id, TextRange.EMPTY_RANGE)
       val actualResolution = actual.resolve(id, TextRange.EMPTY_RANGE)
       assertEquals(expectedResolution::class, actualResolution::class, "Marker $id")
       assertEquals(expectedResolution, actualResolution, "Marker $id")
-      assertEquals((expected as PMarkerRootImpl).containsMarkerId(id), (actual as PMarkerRootImpl).containsMarkerId(id), "Marker $id")
+      val expectedContains = id !in purgedIds && (expected as PMarkerRootImpl).containsMarkerId(id)
+      assertEquals(expectedContains, (actual as PMarkerRootImpl).containsMarkerId(id), "Marker $id")
     }
     for (offset in -1..32) {
       assertEquals(expected.getPrefixAggregate(offset), actual.getPrefixAggregate(offset), "Offset $offset")

@@ -118,10 +118,6 @@ open class CompoundPMarkerRoot private constructor(
     return withRoots(exactRangeRoot.removeMany(markerIds), linesInRangeRoot.removeMany(markerIds))
   }
 
-  override fun purge(markerId: Long): PMarkerRoot {
-    return updateMarker { it.purge(markerId) }
-  }
-
   override fun purgeMany(markerIds: LongList): PMarkerRoot {
     return withRoots(exactRangeRoot.purgeMany(markerIds), linesInRangeRoot.purgeMany(markerIds))
   }

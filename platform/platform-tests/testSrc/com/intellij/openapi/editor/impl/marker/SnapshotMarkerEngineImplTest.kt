@@ -11,7 +11,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.ref.GCUtil
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongList
+import it.unimi.dsi.fastutil.longs.LongLists
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -731,7 +733,7 @@ class SnapshotMarkerEngineImplTest {
     val allRemoved = oneRemoved.remove(2)
     assertTrue(allRemoved.isEmpty())
     assertTrue(allRemoved.resolve(1, TextRange.EMPTY_RANGE) is PMarkerResolution.Absent)
-    assertTrue(allRemoved.purge(1).purge(2).isEmpty())
+    assertTrue(allRemoved.purgeMany(LongArrayList(longArrayOf(1, 2))).isEmpty())
     assertFalse(populated.isEmpty())
   }
 
@@ -746,7 +748,7 @@ class SnapshotMarkerEngineImplTest {
 
     val noValidMarkers = invalidated.remove(2)
     assertTrue(noValidMarkers.isEmpty())
-    assertTrue(noValidMarkers.purge(1).purge(2).isEmpty())
+    assertTrue(noValidMarkers.purgeMany(LongArrayList(longArrayOf(1, 2))).isEmpty())
     assertFalse(populated.isEmpty())
   }
 
@@ -818,7 +820,7 @@ class SnapshotMarkerEngineImplTest {
       .overlappingIterator(0, document.textLength, 0)
       .asSequence()
       .associate { it.markerId to (it.markerReference as Reference<*>) }
-    assertTrue(rootStore.purge(snapshot, secondMarker.id))
+    assertTrue(rootStore.purgeMany(snapshot, LongLists.singleton(secondMarker.id)))
 
     // Manual enqueue uses reverse order. The successful purge runs first.
     assertTrue(markerReferences.getValue(secondMarker.id).enqueue())
@@ -838,8 +840,6 @@ class SnapshotMarkerEngineImplTest {
       val reference = document.rangeMarkers.rootStore().rootReference(document.core.snapshot())
       val root = reference.get()
       reference.set(object : PMarkerRoot by root {
-        override fun purge(markerId: Long): PMarkerRoot = error("Queue cleanup must use purgeMany")
-
         override fun purgeMany(markerIds: LongList): PMarkerRoot {
           batches.add(markerIds.toLongArray().toList())
           return root.purgeMany(markerIds)
@@ -884,8 +884,6 @@ class SnapshotMarkerEngineImplTest {
       }
       val batches = ArrayList<List<Long>>()
       reference.set(object : PMarkerRoot by root {
-        override fun purge(markerId: Long): PMarkerRoot = error("Traversal cleanup must use purgeMany")
-
         override fun purgeMany(markerIds: LongList): PMarkerRoot {
           batches.add(markerIds.toLongArray().toList())
           return root.purgeMany(markerIds)
@@ -1023,7 +1021,7 @@ class SnapshotMarkerEngineImplTest {
     val root = PMarkerRootImpl.empty().insert(1, 2, 4, nonGreedySpec(), flavorFlags = 0, markerReference = null)
 
     val removed = root.remove(1) as PMarkerRootImpl
-    val purged = root.purge(1) as PMarkerRootImpl
+    val purged = root.purgeMany(LongLists.singleton(1)) as PMarkerRootImpl
 
     assertTrue(removed.containsMarkerId(1))
     assertFalse(purged.containsMarkerId(1))

@@ -158,25 +158,6 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
-  override fun purge(markerId: Long): PMarkerRoot {
-    return when (val state = states.getUnchecked(markerId)) {
-      null -> this
-      is AbsentNode, is InvalidNode -> PMarkerRootImpl(rootId, states.remove(markerId), persistentMarkerCount)
-      is ValidNode -> {
-        val startOffset = state.entry.nodeStart + ancestorDelta(state, markerId)
-        val editor = MapBatchEditor(states, persistentMarkerCount)
-        val newRoot = removeByKey(editor, rootId, PositionKey(startOffset, markerId))
-        editor.remove(markerId)
-        editor.setParent(newRoot, NULL_NODE)
-        PMarkerRootImpl(
-          newRoot,
-          editor.build(),
-          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
-        )
-      }
-    }
-  }
-
   override fun removeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = true)
 
   override fun purgeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = false)

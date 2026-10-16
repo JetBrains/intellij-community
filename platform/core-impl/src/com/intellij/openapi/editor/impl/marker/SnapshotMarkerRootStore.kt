@@ -160,10 +160,6 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     return updateRootAtomically(rootReference, update) != null
   }
 
-  fun purge(snapshot: DocumentSnapshot, markerId: Long): Boolean {
-    return updateRootIfPresent(snapshot) { it.purge(markerId) }
-  }
-
   fun purgeMany(snapshot: DocumentSnapshot, markerIds: LongList): Boolean {
     if (markerIds.isEmpty()) return false
     return updateRootIfPresent(snapshot) { it.purgeMany(markerIds) }
