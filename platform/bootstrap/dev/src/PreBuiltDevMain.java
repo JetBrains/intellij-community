@@ -136,13 +136,14 @@ public final class PreBuiltDevMain {
 
   /**
    * Properties a launcher passes on the command line win over the distribution's own, for the same keys
-   * {@code DevMainImpl.buildDevMain} protects: the product selector and the toolkit name are decisions of whoever starts the
-   * IDE, and the toolkit name in particular is rewritten by the JBR on startup and must not be set again afterwards.
+   * {@code DevMainImpl.buildDevMain} protects: the product selector, the product mode and the toolkit name are decisions of
+   * whoever starts the IDE, and the toolkit name in particular is rewritten by the JBR on startup and must not be set again afterwards.
    */
   private static boolean isCallerOwnedProperty(String name) {
     return name.regionMatches(true, 0, "rider.", 0, "rider.".length()) ||
            name.regionMatches(true, 0, "resharper.", 0, "resharper.".length()) ||
            name.equals("idea.platform.prefix") ||
+           name.equals("intellij.platform.product.mode") ||
            name.equals("idea.suppressed.plugins.set.selector") ||
            name.equals("awt.toolkit.name");
   }
