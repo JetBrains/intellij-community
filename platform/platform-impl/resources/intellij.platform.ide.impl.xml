@@ -543,6 +543,11 @@
       description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
     />
     <registryKey
+      key="ea.diagnostic.max.request.size.mb"
+      defaultValue="50"
+      description="The size limit, in MiB, of the gzipped body of an error report. A report over the limit skips its JFR snapshot. The report listener rejects a body over 100 MiB"
+    />
+    <registryKey
       key="ea.auto.report.allowed"
       defaultValue="true"
       description="Makes the automatic error reporting feature visible in UI and available to enable/disable"

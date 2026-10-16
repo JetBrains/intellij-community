@@ -12,17 +12,21 @@ import java.util.Base64
 import kotlin.random.Random
 
 /**
- * The attachments in the body of a report.
+ * The attachments in the body of a report. A report over the size limit skips its JFR snapshot. See IJPL-258231.
  */
 @TestApplication
 internal class ITNProxyRequestTest {
-  private class Request(val form: List<Pair<String, String>>) {
+  private class Request(val sentSize: Int, val unpackedSize: Int, val form: List<Pair<String, String>>) {
     /** The attachment names and contents, in the order of the body. */
     val attachments: List<Pair<String, ByteArray>> =
       form.filter { it.first == "attachment.name" }.map { it.second }
         .zip(form.filter { it.first == "attachment.value" }.map { Base64.getDecoder().decode(it.second) })
 
-    val kept: List<String> = attachments.map { it.first }
+    val kept: List<String> = attachments.map { it.first } - ITNProxy.SKIPPED_ATTACHMENTS_NAME
+
+    val skippedNote: String? = attachments.firstOrNull { it.first == ITNProxy.SKIPPED_ATTACHMENTS_NAME }?.second?.toString(StandardCharsets.UTF_8)
+
+    val skipped: List<String> = skippedNote?.lines()?.filter(String::isNotEmpty)?.map { it.substringBefore(':') }.orEmpty()
   }
 
   @Test
@@ -40,13 +44,62 @@ internal class ITNProxyRequestTest {
     assertThat(request.attachments[0].second.toString(StandardCharsets.UTF_8)).isEqualTo("text")
     assertThat(request.attachments[1].second).isEqualTo(binary)
     assertThat(request.attachments[2].second).isEmpty()
+    assertThat(request.skippedNote).isNull()
   }
 
-  private fun request(attachments: List<Attachment>): Request {
+  @Test
+  fun `a report over the limit skips its JFR snapshot and keeps the rest`() {
+    val request = request(listOf(jfrAttachment(200 * 1024), textAttachment("dump-1.txt", 1024)), maxSize = MAX_SIZE)
+
+    assertThat(request.kept).containsExactly("dump-1.txt")
+    assertThat(request.skipped).containsExactly("snapshot.jfr")
+    assertThat(request.sentSize).isLessThanOrEqualTo(MAX_SIZE.toInt())
+  }
+
+  @Test
+  fun `a report over the limit without a JFR snapshot goes as is`() {
+    val request = request(listOf(textAttachment("dump-1.txt", 1024), randomAttachment("dump-2.txt", 200 * 1024)), maxSize = MAX_SIZE)
+
+    assertThat(request.kept).containsExactly("dump-1.txt", "dump-2.txt")
+    assertThat(request.skippedNote).isNull()
+    assertThat(request.sentSize).isGreaterThan(MAX_SIZE.toInt())
+  }
+
+  @Test
+  fun `a report keeps a JFR snapshot that fits the limit`() {
+    val request = request(listOf(textAttachment("dump-1.txt", 1024), jfrAttachment(10 * 1024)), maxSize = MAX_SIZE)
+
+    assertThat(request.kept).containsExactly("dump-1.txt", "snapshot.jfr")
+    assertThat(request.skippedNote).isNull()
+  }
+
+  @Test
+  fun `a report keeps an attachment that fits the limit after gzip`() {
+    val request = request(listOf(textAttachment("report.txt", 120 * 1024)), maxSize = MAX_SIZE)
+
+    assertThat(request.unpackedSize).isGreaterThan(MAX_SIZE.toInt())
+    assertThat(request.kept).containsExactly("report.txt")
+    assertThat(request.skippedNote).isNull()
+  }
+
+  private fun request(attachments: List<Attachment>, maxSize: Long = Long.MAX_VALUE): Request {
     val event = IdeaLoggingEvent("message", RuntimeException("boom"), attachments, null, null, UnhandledExceptionKind.HANDLED)
     val bean = ITNProxy.ErrorBean(event, null, null, null, null, null, false)
-    val request = Request(parseReportForm(unpackReportForm(ITNProxy.createRequest(event, bean))))
+    val body = ITNProxy.createRequest(event, bean, maxSize = maxSize)
+    val text = unpackReportForm(body)
+    val request = Request(body.size(), text.length, parseReportForm(text))
     assertThat(request.form.count { it.first == "attachment.value" }).isEqualTo(request.form.count { it.first == "attachment.name" })
     return request
+  }
+
+  private fun textAttachment(name: String, size: Int): Attachment = Attachment(name, "a".repeat(size))
+
+  private fun jfrAttachment(size: Int): Attachment = randomAttachment("snapshot.jfr", size)
+
+  /** Random bytes do not compress, so the gzipped share of the attachment is close to its size. */
+  private fun randomAttachment(name: String, size: Int): Attachment = Attachment(name, Random(42).nextBytes(size), name)
+
+  private companion object {
+    const val MAX_SIZE = 128L * 1024
   }
 }
