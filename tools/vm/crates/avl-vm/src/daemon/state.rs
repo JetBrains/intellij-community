@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use avl_base::fs::write_atomically;
 use avl_base::{Config, Exit, OrRefuse, Refusal};
 use avl_host_sys::guest::guest_join;
+use avl_wire::daemon::Runner;
 use serde::{Deserialize, Serialize};
 
 use crate::worker::secure::read_json_record;
@@ -16,8 +17,8 @@ mod tests;
 /// The daemon one worker runs, as this controller started it: the worker and the guest port it listens on, how to
 /// authenticate, and the build identities it was launched and mounted for.
 ///
-/// Every field but [`Self::last_plugins_digest`] is required, because the next start compares every one: a file
-/// missing one is no daemon at all. The file is two-space JSON with a trailing newline, and only this controller reads
+/// Every field but [`Self::last_plugins_digest`] and [`Self::runner`] is required, because the next start compares every
+/// one: a file missing one is no daemon at all. The file is two-space JSON with a trailing newline, and only this controller reads
 /// it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,6 +37,15 @@ pub(crate) struct HostState {
     /// is unknown: the next iteration decides nothing on it and records the value it ran with.
     #[serde(default)]
     pub last_plugins_digest: String,
+    /// The runner that started the daemon. A command that only asks about the daemon, such as `daemon status` or the
+    /// release of its slot, asks it in the protocol of this runner and not in that of its own `--runner`. A record of an
+    /// older controller has none, and only the JVM runner wrote one then.
+    #[serde(default = "jvm_runner")]
+    pub runner: Runner,
+}
+
+const fn jvm_runner() -> Runner {
+    Runner::Jvm
 }
 
 impl HostState {

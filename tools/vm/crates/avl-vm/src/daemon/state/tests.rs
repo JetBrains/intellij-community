@@ -15,6 +15,7 @@ fn state() -> HostState {
         last_product_digest: "p".repeat(64),
         last_mount_digest: "m".repeat(64),
         last_plugins_digest: "g".repeat(64),
+        runner: Runner::Daemon,
     }
 }
 
@@ -37,7 +38,7 @@ async fn a_written_state_is_private_pretty_json_with_a_newline() {
             "{{\n  \"runId\": \"run-ui-daemon-1\",\n  \"port\": 27100,\n  \"token\": \"token\",\n  \"worker\": \
              \"avl-linux-1\",\n  \"daemonBootStamp\": \"boot-1\",\n  \"runtimeDigest\": \"{r}\",\n  \
              \"launchDigest\": \"{l}\",\n  \"lastProductDigest\": \"{p}\",\n  \"lastMountDigest\": \"{m}\",\n  \
-             \"lastPluginsDigest\": \"{plugins}\"\n}}\n"
+             \"lastPluginsDigest\": \"{plugins}\",\n  \"runner\": \"daemon\"\n}}\n"
         )
     );
     assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
@@ -76,12 +77,15 @@ async fn a_state_reads_only_with_every_field() {
     std::fs::write(&path, "{").unwrap();
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
 
-    // A record of an older controller has no plugin identity, and reads with an empty one.
+    // A record of an older controller has no plugin identity and no runner. It reads with an empty identity, and as a
+    // daemon of the JVM runner, which wrote every record then.
     let mut document = serde_json::to_value(state()).unwrap();
     document.as_object_mut().unwrap().remove("lastPluginsDigest");
+    document.as_object_mut().unwrap().remove("runner");
     std::fs::write(&path, document.to_string()).unwrap();
     let older = HostState::read(&fixture.settings, &fixture.worker).expect("an older record still reads");
     assert_eq!(older.last_plugins_digest, "");
+    assert_eq!(older.runner, Runner::Jvm);
     HostState::remove(&fixture.settings, &fixture.worker).unwrap();
     HostState::remove(&fixture.settings, &fixture.worker).unwrap();
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);

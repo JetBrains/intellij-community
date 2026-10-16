@@ -143,6 +143,16 @@ impl DaemonClient {
         self.runner
     }
 
+    /// The same client for a daemon of `runner`. A command that only asks about the daemon of a record asks it in the
+    /// protocol of the runner that started it ([`HostState::runner`]). A run keeps its own runner, so it retires a
+    /// daemon of the other one.
+    pub(crate) fn for_runner(&self, runner: Runner) -> Self {
+        Self {
+            client: self.client.clone(),
+            runner,
+        }
+    }
+
     /// Sends the request for one endpoint, authenticated, and answers the response head. `/run` reads its body as a
     /// stream; every other route reads it whole through [`DaemonClient::http`].
     pub(crate) async fn send(&self, state: &HostState, endpoint: &Endpoint, body: Bytes) -> Result<Response<Incoming>, Transport> {

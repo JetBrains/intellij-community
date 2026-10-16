@@ -47,7 +47,8 @@ impl ParkedDaemonProbe for ParkedDaemon {
         let Some(state) = HostState::read(&self.settings, worker) else {
             return Ok(None);
         };
-        match self.daemon.status(ctx, &state).await {
+        // The daemon's own protocol: a lane daemon is parked for a controller of `--runner jvm` too.
+        match self.daemon.for_runner(state.runner).status(ctx, &state).await {
             Ok(Some(status)) if !status.busy => Ok(Some(state.run_id)),
             _ => Ok(None),
         }
