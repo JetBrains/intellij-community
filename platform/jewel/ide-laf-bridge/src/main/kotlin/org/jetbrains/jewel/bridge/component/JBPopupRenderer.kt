@@ -20,6 +20,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -129,6 +131,7 @@ private fun JBPopup(
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
+    var isPopupShown by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf<Boolean?>(null) }
     var dismissedWith by remember { mutableStateOf(InputMode.Touch) }
     LaunchedEffect(isVisible) {
@@ -137,8 +140,14 @@ private fun JBPopup(
         }
     }
 
+    val currentParentBounds = parentBoundsInRoot.value
+    val isPreMeasured = popupRectangle.value != null
     Layout(
-        content = {},
+        content = {
+            if (currentParentBounds != null && !isPreMeasured) {
+                ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() }
+            }
+        },
         modifier =
             Modifier.onGloballyPositioned { childCoordinates ->
                 childCoordinates.parentCoordinates?.let {
@@ -147,39 +156,54 @@ private fun JBPopup(
                     }
                 }
             },
-        measurePolicy = { _, _ -> layout(0, 0) {} },
+        measurePolicy =
+            remember(currentPopupPositionProvider, currentParentBounds, owner) {
+                if (currentParentBounds == null) {
+                    MeasurePolicy { _, _ -> layout(0, 0) {} }
+                } else {
+                    JBPopupMeasurePolicy(
+                        popupPositionProvider = currentPopupPositionProvider,
+                        screenSize = IntSize.fromScreenSize(owner),
+                        parentBoundsInWindow = currentParentBounds,
+                        placeContent = false,
+                        onMeasure = { position, size ->
+                            popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                        },
+                    )
+                }
+            },
     )
 
+    val jewelComposePanelWrapper = remember {
+        compose(
+            config = {
+                // Initial placeholder dimensions before pre-measurement updates preferredSize.
+                preferredSize = Dimension(1, 1)
+            },
+            content = {
+                val parentBounds = parentBoundsInRoot.value ?: return@compose
+
+                Layout(
+                    modifier = Modifier.semantics { popup() },
+                    content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
+                    measurePolicy =
+                        remember(currentPopupPositionProvider, parentBounds) {
+                            JBPopupMeasurePolicy(
+                                popupPositionProvider = currentPopupPositionProvider,
+                                screenSize = IntSize.fromScreenSize(owner),
+                                parentBoundsInWindow = parentBounds,
+                                onMeasure = { position, size ->
+                                    popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                                },
+                            )
+                        },
+                )
+            },
+        )
+            as JewelComposePanelWrapper
+    }
+
     val popup: JBPopup = remember {
-        val jewelComposePanelWrapper =
-            compose(
-                config = {
-                    // Setting initial dimensions as 1x1 to calculate the size
-                    preferredSize = Dimension(1, 1)
-                },
-                content = {
-                    val parentBounds = parentBoundsInRoot.value ?: return@compose
-
-                    Layout(
-                        modifier = Modifier.semantics { popup() },
-                        content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
-                        measurePolicy =
-                            remember(currentPopupPositionProvider, parentBounds) {
-                                JBPopupMeasurePolicy(
-                                    popupPositionProvider = currentPopupPositionProvider,
-                                    screenSize = IntSize.fromScreenSize(owner),
-                                    parentBoundsInWindow = parentBounds,
-                                    onMeasure = { position, size ->
-                                        popupRectangle.value =
-                                            Rectangle(position.x, position.y, size.width, size.height)
-                                    },
-                                )
-                            },
-                    )
-                },
-            )
-                as JewelComposePanelWrapper
-
         JBPopupFactory.getInstance()
             .createComponentPopupBuilder(jewelComposePanelWrapper, jewelComposePanelWrapper.composePanel)
             .setFocusable(currentProperties.focusable)
@@ -238,23 +262,31 @@ private fun JBPopup(
     val rectValue = popupRectangle.value
     LaunchedEffect(rectValue) {
         val rectangle = rectValue ?: return@LaunchedEffect
-        popup.setSize(rectangle.location.fromCurrentScreenToGlobal(owner), rectangle.size.withSystemDensity(owner))
+        val globalLocation = rectangle.location.fromCurrentScreenToGlobal(owner)
+        val globalSize = rectangle.size.withSystemDensity(owner)
+        jewelComposePanelWrapper.preferredSize = globalSize
+        popup.setSize(globalLocation, globalSize)
+        if (!isPopupShown) {
+            isPopupShown = true
+            popup.showInScreenCoordinates(owner, globalLocation)
+        }
     }
 
-    DisposableEffect(Unit) {
-        // Showing in the top-left corner of the owner component so we can measure and show it correctly
-        popup.showInScreenCoordinates(owner, Point(0, 0))
-        onDispose { popup.cancel() }
-    }
+    DisposableEffect(popup) { onDispose { popup.cancel() } }
 }
 
 private class JBPopupMeasurePolicy(
     private val popupPositionProvider: PopupPositionProvider,
     private val screenSize: IntSize,
     private val parentBoundsInWindow: IntRect,
+    private val placeContent: Boolean = true,
     private val onMeasure: (IntOffset, IntSize) -> Unit,
 ) : MeasurePolicy {
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        if (!placeContent && measurables.isEmpty()) {
+            return layout(0, 0) {}
+        }
+
         val relaxedConstraints =
             constraints.copy(minWidth = 0, minHeight = 0, maxWidth = screenSize.width, maxHeight = screenSize.height)
 
@@ -275,8 +307,20 @@ private class JBPopupMeasurePolicy(
 
         onMeasure(position, contentSize)
 
-        return layout(constraints.maxWidth, constraints.maxHeight) { placeables.fastForEach { it.place(0, 0) } }
+        if (!placeContent) {
+            return layout(0, 0) {}
+        }
+
+        return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 /** Update the sizes of the popup to match the system scale factor. */
