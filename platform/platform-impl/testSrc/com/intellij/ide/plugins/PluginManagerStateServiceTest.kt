@@ -278,6 +278,74 @@ internal class PluginManagerStateServiceTest {
   }
 
   @Test
+  fun `selection problems notify without adding recovery targets`() {
+    install(
+      plugin("selected-out") {
+        name = "Selected out"
+        sinceBuild = "264"
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("preferred") {
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("resolved") {
+        name = "Resolved"
+        depends("missing")
+      },
+    )
+    val pluginSet = PluginSetTestBuilder.fromPath(tempDir)
+      .withProductBuildNumber(checkNotNull(BuildNumber.fromString("IU-263.1")))
+      .build(configureClassLoaders = false)
+
+    val state = publishAndGetState(pluginSet)
+    val selectedOutId = PluginId.getId("selected-out")
+    val resolvedId = PluginId.getId("resolved")
+    val selectionProblem = checkNotNull(state.pluginNonLoadReasons[selectedOutId])
+    val resolvedProblem = checkNotNull(state.pluginNonLoadReasons[resolvedId])
+
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(selectedOutId)).isNull()
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(resolvedId)).isNotNull()
+    assertThat(state.pluginLoadingProblemsForNotification)
+      .containsExactlyInAnyOrder(selectionProblem.detailedMessage, resolvedProblem.detailedMessage)
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(resolvedId to "Resolved"))
+  }
+
+  @Test
+  fun `optional module conflicts retain the last problem and a Disable target`() {
+    install(plugin("affected") {
+      name = "Affected"
+      content {
+        for (index in 0..2) {
+          module("affected.module$index", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+            packagePrefix = "shared.prefix"
+          }
+        }
+      }
+    })
+    val pluginSet = buildPluginSet()
+    val affectedId = PluginId.getId("affected")
+    val affected = checkNotNull(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(affectedId)).getMainDescriptor()
+    val conflicts = affected.contentModules.mapNotNull {
+      pluginSet.resolvedPluginSet.getExclusionReason(it) as? PackagePrefixConflictWithAnotherModule
+    }
+
+    val state = publishAndGetState(pluginSet)
+    val problem = checkNotNull(state.pluginNonLoadReasons[affectedId])
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(affectedId)
+    assertThat(conflicts).hasSize(2)
+    val lastConflict = conflicts.last()
+    val expectedProblem = pluginPackagePrefixConflict(affected, lastConflict.descriptor, lastConflict.preferredConflictingModule)
+    assertThat(state.pluginNonLoadReasons).containsOnlyKeys(affectedId)
+    assertThat(problem.shortMessage).isEqualTo(expectedProblem.shortMessage)
+    assertThat(problem.detailedMessage).isEqualTo(expectedProblem.detailedMessage)
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(affectedId to "Affected"))
+  }
+
+  @Test
   fun `missing dependency is exposed as a reason and disable suggestion`() {
     install(plugin("foo") {
       name = "Foo"

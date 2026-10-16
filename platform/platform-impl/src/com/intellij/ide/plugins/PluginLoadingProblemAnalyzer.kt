@@ -37,31 +37,11 @@ internal object PluginLoadingProblemAnalyzer {
       excludedFromCandidateSubset[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
     }.toMap(mutableMapOf())
 
-    val pluginsToDisable = HashMap<PluginId, String>()
-    val pluginsToEnable = HashMap<PluginId, String>()
-    val pluginIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildPluginIdMap() }
-    val contentModuleIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildContentModuleIdMap() }
+    val problemReporting = ProblemReporting(pluginSet)
 
-    fun shouldReportProblem(problem: PluginLoadingProblem): Boolean =
-      problem.shouldNotifyUser && !initContext.isPluginDisabled(problem.plugin.pluginId) &&
-      (!initContext.isPluginDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID) ||
-       !pluginRequiresUltimatePlugin(problem.plugin.pluginId, pluginIdMap, contentModuleIdMap))
-
-    fun registerLoadingError(loadingError: PluginLoadingProblem) {
-      pluginNonLoadReasons[loadingError.plugin.pluginId] = loadingError
-      if (!shouldReportProblem(loadingError)) {
-        return
-      }
-      pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
-      val disabledDependencyId = loadingError.disabledDependencyId
-      if (disabledDependencyId != null && disabledDependencyId != PluginManagerCore.ULTIMATE_PLUGIN_ID) {
-        if (initContext.isPluginDisabled(disabledDependencyId)) {
-          val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
-          if (disabledPlugin != null) {
-            pluginsToEnable[disabledDependencyId] = disabledPlugin.name
-          }
-        }
-      }
+    fun recordResolvedProblem(problem: PluginLoadingProblem) {
+      pluginNonLoadReasons[problem.plugin.pluginId] = problem
+      problemReporting.collectRecoveryTargets(problem)
     }
 
     val cycleErrors = ArrayList<@Nls String>()
@@ -79,14 +59,14 @@ internal object PluginLoadingProblemAnalyzer {
           resolvedPluginSet = resolvedPluginSet,
           excludedPluginSet = excludedPluginSet,
           productMode = initContext.productMode,
-        )?.let(::registerLoadingError)
+        )?.let(::recordResolvedProblem)
       }
       else {
         // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
         for (contentModule in plugin.contentModules) {
           val contentModuleExclusionReason = resolvedPluginSet.getExclusionReason(contentModule)
           if (contentModuleExclusionReason is PackagePrefixConflictWithAnotherModule) {
-            registerLoadingError(pluginPackagePrefixConflict(
+            recordResolvedProblem(pluginPackagePrefixConflict(
               plugin,
               contentModuleExclusionReason.descriptor,
               contentModuleExclusionReason.preferredConflictingModule,
@@ -100,16 +80,47 @@ internal object PluginLoadingProblemAnalyzer {
       pluginNonLoadReasons,
       discoveredPlugins.descriptorLoadingErrors,
       cycleErrors,
-      ::shouldReportProblem,
+      problemReporting::shouldReportProblem,
       reportingPolicy,
     )
 
     return PluginManagerStateSnapshot(
       pluginNonLoadReasons = pluginNonLoadReasons.toMap(),
-      pluginsToDisable = pluginsToDisable.toMap(),
-      pluginsToEnable = pluginsToEnable.toMap(),
+      pluginsToDisable = problemReporting.pluginsToDisable.toMap(),
+      pluginsToEnable = problemReporting.pluginsToEnable.toMap(),
       pluginLoadingProblemsForNotification = loadingErrors,
     )
+  }
+
+  private class ProblemReporting(private val pluginSet: PluginSet) {
+    private val initContext = pluginSet.input.initContext
+    private val candidateSubset = pluginSet.resolvedPluginSet.candidateSet
+    private val pluginIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildPluginIdMap() }
+    private val contentModuleIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildContentModuleIdMap() }
+
+    val pluginsToDisable = HashMap<PluginId, String>()
+    val pluginsToEnable = HashMap<PluginId, String>()
+
+    fun shouldReportProblem(problem: PluginLoadingProblem): Boolean =
+      problem.shouldNotifyUser && !initContext.isPluginDisabled(problem.plugin.pluginId) &&
+      (!initContext.isPluginDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID) ||
+       !pluginRequiresUltimatePlugin(problem.plugin.pluginId, pluginIdMap, contentModuleIdMap))
+
+    fun collectRecoveryTargets(problem: PluginLoadingProblem) {
+      if (!shouldReportProblem(problem)) {
+        return
+      }
+      pluginsToDisable[problem.plugin.pluginId] = problem.plugin.name
+      val disabledDependencyId = problem.disabledDependencyId
+      if (disabledDependencyId != null && disabledDependencyId != PluginManagerCore.ULTIMATE_PLUGIN_ID) {
+        if (initContext.isPluginDisabled(disabledDependencyId)) {
+          val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
+          if (disabledPlugin != null) {
+            pluginsToEnable[disabledDependencyId] = disabledPlugin.name
+          }
+        }
+      }
+    }
   }
 
   private fun preparePluginErrors(

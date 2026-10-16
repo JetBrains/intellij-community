@@ -150,8 +150,11 @@ Remote development extends these rules with side aggregation and action routing.
   )
 
 - A package-prefix conflict in an optional content module can produce an explanation while the main plugin remains loaded.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `optional module conflicts retain the last problem and a Disable target`
+  )
 
-Untested: Focused analysis tests do not cover all terminal mappings or optional module conflicts.
+Untested: Focused analysis tests do not cover all terminal mappings.
 
 ## Visibility
 
@@ -275,7 +278,9 @@ Untested: No focused reporter test covers global messages, handler aggregation, 
     `missing dependency is exposed as a reason and disable suggestion`;
     `implementation detail errors are retained but not reported to the user`;
     `mixed disabled roots offer only ordinary recovery targets`;
-    `a hidden problem does not add targets beside a visible problem with the same root`
+    `a hidden problem does not add targets beside a visible problem with the same root`;
+    `selection problems notify without adding recovery targets`;
+    `optional module conflicts retain the last problem and a Disable target`
   )
 
 - A nonempty Enable or Disable name collection adds its corresponding notification action.
