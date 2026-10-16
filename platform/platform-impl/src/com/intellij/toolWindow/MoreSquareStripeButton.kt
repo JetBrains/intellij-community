@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -21,6 +23,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonIconSize
+import com.intellij.platform.icons.AllIconDescriptors
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonSize
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
@@ -29,6 +32,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
@@ -85,8 +89,15 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
 private fun createPresentation(): Presentation {
   val presentation = Presentation()
   presentation.setIconSupplier(SynchronizedClearableLazy(::scaleIcon))
+  setMoreIconDescriptor(presentation)
   presentation.isEnabledAndVisible = true
   return presentation
+}
+
+private fun setMoreIconDescriptor(presentation: Presentation) {
+  if (ExperimentalIconRendering.isEnabled) {
+    presentation.iconDescriptor = AllIconDescriptors.Actions.MoreHorizontal
+  }
 }
 
 private fun scaleIcon(): Icon {
@@ -159,4 +170,10 @@ internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimum
     super.updateUI()
     myPresentation.icon = scaleIcon()
   }
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun createMoreSquareStripeButtonForTest(): ActionButton {
+  return StripeActionGroup.MyMoreAction().createCustomComponent(Presentation(), "TestPlace") as ActionButton
 }
