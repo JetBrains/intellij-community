@@ -140,7 +140,6 @@
     <troubleInfoCollector implementation="com.jetbrains.performancePlugin.utils.HardwareCollector"/>
 
     <initProjectActivity implementation="com.jetbrains.performancePlugin.PerformancePluginInitProjectActivity"/>
-    <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
 
     <notificationGroup id="PerformancePlugin" displayType="STICKY_BALLOON"
