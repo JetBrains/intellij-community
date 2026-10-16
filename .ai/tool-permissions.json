@@ -82,6 +82,7 @@
     ["git", "hash-object"],
     ["git", "update-index"],
     ["git", "commit-tree"],
+    ["git", "update-ref"],
 
     ["awk"],
     ["basename"],
