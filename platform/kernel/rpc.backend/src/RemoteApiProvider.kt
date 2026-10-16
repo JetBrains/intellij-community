@@ -30,6 +30,7 @@ interface RemoteApiProvider {
   companion object {
 
     @Internal
-    val EP_NAME: ExtensionPointName<RemoteApiProvider> = ExtensionPointName.create("com.intellij.platform.rpc.backend.remoteApiProvider")
+    val EP_NAME: ExtensionPointName<RemoteApiProviderBean> =
+      ExtensionPointName.create("com.intellij.platform.rpc.backend.remoteApiProvider")
   }
 }

@@ -3,14 +3,12 @@ package com.intellij.platform.rpc.backend.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.extensions.LazyExtension
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.platform.rpc.backend.RemoteApiProviderBean
 import com.intellij.platform.rpc.backend.RemoteApiRegistration
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
@@ -36,8 +34,8 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
   @Volatile
   private var index = buildIndex()
 
-  /** The providers that ran `remoteApis()`. Guarded by [lock]. */
-  private val materializedProviders = ArrayList<MaterializedProvider>()
+  /** The providers that ran `remoteApis()`, to the APIs each one registers. Guarded by [lock]. */
+  private val materializedProviders = HashMap<RemoteApiProviderBean, Set<String>>()
 
   /** The bean registrations that created their implementation. Guarded by [lock]. */
   private val materializedRegistrations = ArrayList<RemoteApiRegistration>()
@@ -49,13 +47,13 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private class Index(
     /** The API FQN to the provider that declares it in `apiInterfaces`. */
-    @JvmField val providers: Map<String, LazyExtension<RemoteApiProvider>>,
+    @JvmField val providers: Map<String, RemoteApiProviderBean>,
     /** The API FQN to the bean registration that declares it in `apiInterface`. */
     @JvmField val registrations: Map<String, RemoteApiRegistration>,
     /** The providers without the `apiInterfaces` attribute. Only an instance knows their APIs. */
-    @JvmField val unattributedProviders: List<LazyExtension<RemoteApiProvider>>,
-    /** Every provider the index was built from. */
-    @JvmField val knownProviders: Set<ExtensionKey>,
+    @JvmField val unattributedProviders: List<RemoteApiProviderBean>,
+    /** Every provider the index was built from. A bean does not override `equals`, so the set compares by identity. */
+    @JvmField val knownProviders: Set<RemoteApiProviderBean>,
     /** Every bean registration the index was built from. */
     @JvmField val knownRegistrations: List<RemoteApiRegistration>,
   ) {
@@ -63,48 +61,26 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
      * @return true when an extension point holds an extension that was added after the index was built.
      */
     fun hasUnknownExtension(): Boolean {
-      return RemoteApiProvider.EP_NAME.filterableLazySequence().any { ExtensionKey(it) !in knownProviders }
+      return RemoteApiProvider.EP_NAME.extensionList.any { it !in knownProviders }
              || RemoteApiRegistration.EP_NAME.extensionList.any { registration -> knownRegistrations.none { it === registration } }
     }
   }
 
-  /** Identifies a provider extension. A [LazyExtension] is a new wrapper on each read, so it cannot serve as the key. */
-  private class ExtensionKey(extension: LazyExtension<*>) {
-    private val pluginDescriptor = extension.pluginDescriptor
-    private val implementationClassName = extension.implementationClassName
-
-    override fun equals(other: Any?): Boolean {
-      return other is ExtensionKey && pluginDescriptor === other.pluginDescriptor && implementationClassName == other.implementationClassName
-    }
-
-    override fun hashCode(): Int = System.identityHashCode(pluginDescriptor) * 31 + implementationClassName.hashCode()
-  }
-
-  private class MaterializedProvider(
-    @JvmField val pluginDescriptor: PluginDescriptor,
-    @JvmField val implementationClassName: String,
-    @JvmField val registeredApis: Set<String>,
-  ) {
-    fun matches(extension: LazyExtension<RemoteApiProvider>): Boolean {
-      return pluginDescriptor === extension.pluginDescriptor && implementationClassName == extension.implementationClassName
-    }
-  }
-
   private fun buildIndex(): Index {
-    val providers = HashMap<String, LazyExtension<RemoteApiProvider>>()
-    val unattributedProviders = ArrayList<LazyExtension<RemoteApiProvider>>()
-    val knownProviders = HashSet<ExtensionKey>()
-    for (extension in RemoteApiProvider.EP_NAME.filterableLazySequence()) {
-      knownProviders.add(ExtensionKey(extension))
-      val declaredApis = extension.getCustomAttribute(API_INTERFACES_ATTRIBUTE)
+    val providers = HashMap<String, RemoteApiProviderBean>()
+    val unattributedProviders = ArrayList<RemoteApiProviderBean>()
+    val knownProviders = HashSet<RemoteApiProviderBean>()
+    for (provider in RemoteApiProvider.EP_NAME.extensionList) {
+      knownProviders.add(provider)
+      val declaredApis = provider.apiInterfaces
       if (declaredApis == null) {
-        unattributedProviders.add(extension)
+        unattributedProviders.add(provider)
         continue
       }
       for (apiFqn in parseApiInterfaces(declaredApis)) {
-        val previous = providers.putIfAbsent(apiFqn, extension)
+        val previous = providers.putIfAbsent(apiFqn, provider)
         if (previous != null) {
-          warnDuplicateDeclaration(apiFqn, previous.implementationClassName, extension.implementationClassName)
+          warnDuplicateDeclaration(apiFqn, previous.implementation, provider.implementation)
         }
       }
     }
@@ -113,7 +89,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     val knownRegistrations = RemoteApiRegistration.EP_NAME.extensionList
     for (registration in knownRegistrations) {
       val apiFqn = registration.apiFqn
-      val previous = providers.get(apiFqn)?.implementationClassName ?: registrations.putIfAbsent(apiFqn, registration)?.implementationClass
+      val previous = providers.get(apiFqn)?.implementation ?: registrations.putIfAbsent(apiFqn, registration)?.implementationClass
       if (previous != null) {
         warnDuplicateDeclaration(apiFqn, previous, registration.implementationClass)
       }
@@ -137,13 +113,13 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private fun onExtensionsChanged() {
     synchronized(lock) {
-      val currentProviders = RemoteApiProvider.EP_NAME.filterableLazySequence().toList()
-      val providerIterator = materializedProviders.iterator()
+      val currentProviders = RemoteApiProvider.EP_NAME.extensionList.toHashSet()
+      val providerIterator = materializedProviders.entries.iterator()
       while (providerIterator.hasNext()) {
-        val materialized = providerIterator.next()
-        if (currentProviders.none { materialized.matches(it) }) {
+        val (provider, registeredApis) = providerIterator.next()
+        if (provider !in currentProviders) {
           providerIterator.remove()
-          for (apiFqn in materialized.registeredApis) {
+          for (apiFqn in registeredApis) {
             unregisterRemoteApi(apiFqn)
           }
         }
@@ -207,7 +183,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
   private fun resolveFromIndex(index: Index, apiFqn: String): ServiceImplementation? {
     val provider = index.providers.get(apiFqn)
     if (provider != null) {
-      materialize(provider, declaredApis = parseApiInterfaces(provider.getCustomAttribute(API_INTERFACES_ATTRIBUTE)!!))
+      materialize(provider, declaredApis = parseApiInterfaces(provider.apiInterfaces!!))
       return remoteApis[apiFqn]
     }
     val registration = index.registrations.get(apiFqn)
@@ -215,31 +191,30 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
       materialize(registration)
       return remoteApis[apiFqn]
     }
-    for (extension in index.unattributedProviders) {
-      materialize(extension, declaredApis = null)
+    for (provider in index.unattributedProviders) {
+      materialize(provider, declaredApis = null)
     }
     return remoteApis[apiFqn]
   }
 
   /** Runs `remoteApis()` of the provider once. Guarded by [lock]. */
-  private fun materialize(extension: LazyExtension<RemoteApiProvider>, declaredApis: Set<String>?) {
-    if (materializedProviders.any { it.matches(extension) }) {
+  private fun materialize(provider: RemoteApiProviderBean, declaredApis: Set<String>?) {
+    if (provider in materializedProviders) {
       return
     }
 
     val registeredApis = LinkedHashSet<String>()
     // recorded before the provider runs, so a failing provider is not constructed again on every call
-    val materialized = MaterializedProvider(extension.pluginDescriptor, extension.implementationClassName, registeredApis)
-    materializedProviders.add(materialized)
-    LOG.debug("Processing remote api provider extension - ${extension.implementationClassName}")
+    materializedProviders[provider] = registeredApis
+    LOG.debug("Processing remote api provider extension - ${provider.implementation}")
     val createdApis = ArrayList<String>()
     try {
-      runProvider(extension, declaredApis, registeredApis, createdApis)
+      runProvider(provider, declaredApis, registeredApis, createdApis)
     }
     catch (e: Throwable) {
       // a cancellation is not a failure of the provider: the next call runs the provider again
       if (e.isControlFlowException) {
-        materializedProviders.remove(materialized)
+        materializedProviders.remove(provider)
         createdApis.forEach(::unregisterRemoteApi)
       }
       throw e
@@ -251,12 +226,19 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
    * Adds the APIs that the provider registers to [registeredApis], and the APIs that got an implementation to [createdApis].
    */
   private fun runProvider(
-    extension: LazyExtension<RemoteApiProvider>,
+    bean: RemoteApiProviderBean,
     declaredApis: Set<String>?,
     registeredApis: MutableSet<String>,
     createdApis: MutableList<String>,
   ) {
-    val provider = extension.instance ?: return
+    val provider = try {
+      bean.instance
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error(PluginException("Cannot create remote api provider ${bean.implementation}", e, bean.pluginDescriptor.pluginId))
+      return
+    }
     val sink = object : RemoteApiProvider.Sink {
       override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
         val apiFqn = descriptor.getApiFqn()
@@ -273,15 +255,15 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
-      LOG.error(PluginException("Remote api provider ${extension.implementationClassName} failed", e, extension.pluginDescriptor.pluginId))
+      LOG.error(PluginException.createByClass("Remote api provider ${bean.implementation} failed", e, provider.javaClass))
       return
     }
 
     if (declaredApis != null && declaredApis != registeredApis) {
       LOG.error(PluginException(
-        "Remote api provider ${extension.implementationClassName} declares $API_INTERFACES_ATTRIBUTE=${declaredApis.sorted()} " +
+        "Remote api provider ${bean.implementation} declares $API_INTERFACES_ATTRIBUTE=${declaredApis.sorted()} " +
         "but registers ${registeredApis.sorted()}. Fix the attribute in the plugin descriptor.",
-        extension.pluginDescriptor.pluginId,
+        bean.pluginDescriptor.pluginId,
       ))
     }
   }

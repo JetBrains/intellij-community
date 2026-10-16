@@ -12,11 +12,11 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <!-- `hasAttributes` exposes the `apiInterfaces` attribute to the registry, so a provider is constructed on the first call to one of its APIs -->
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
-                    interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
-                    hasAttributes="true"
-                    dynamic="true"/>
+                    beanClass="com.intellij.platform.rpc.backend.RemoteApiProviderBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.platform.rpc.backend.RemoteApiProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApi"
                     beanClass="com.intellij.platform.rpc.backend.RemoteApiRegistration"
                     dynamic="true">

@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.platform.rpc.backend.RemoteApiProviderBean
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
@@ -101,13 +102,16 @@ class RemoteApiRegistryLazyTest {
    * the change listeners are notified later. Runs [block] in that window, then notifies and unregisters.
    */
   private fun withDeferredProviderRegistration(apiInterfaces: String?, block: () -> Unit) {
-    val point = RemoteApiProvider.EP_NAME.point as ExtensionPointImpl<RemoteApiProvider>
+    val point = RemoteApiProvider.EP_NAME.point as ExtensionPointImpl<RemoteApiProviderBean>
+    val attributes = LinkedHashMap<String, String>()
+    attributes["implementation"] = LazyTestApiProvider::class.java.name
+    apiInterfaces?.let { attributes["apiInterfaces"] = it }
     val descriptor = ExtensionDescriptor(
       implementation = LazyTestApiProvider::class.java.name,
       os = null,
       orderId = null,
       order = LoadingOrder.ANY,
-      element = apiInterfaces?.let { XmlElement("remoteApiProvider", mapOf("apiInterfaces" to it)) },
+      element = XmlElement("remoteApiProvider", attributes),
       hasExtraAttributes = apiInterfaces != null,
     )
     val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("RemoteApiRegistryLazyTest"), LazyTestApiProvider::class.java.classLoader)
@@ -118,7 +122,7 @@ class RemoteApiRegistryLazyTest {
     }
     finally {
       deferred.forEach { it.notify.run() }
-      point.unregisterExtensions({ className, _ -> className != LazyTestApiProvider::class.java.name }, false)
+      point.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor !== pluginDescriptor }, false)
     }
   }
 

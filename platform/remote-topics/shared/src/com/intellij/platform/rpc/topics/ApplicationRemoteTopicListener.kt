@@ -2,6 +2,7 @@
 package com.intellij.platform.rpc.topics
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicListenerBean
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -42,6 +43,7 @@ interface ApplicationRemoteTopicListener<E : Any> {
 
   companion object {
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<ApplicationRemoteTopicListener<*>> = ExtensionPointName<ApplicationRemoteTopicListener<*>>("com.intellij.platform.rpc.applicationRemoteTopicListener")
+    val EP_NAME: ExtensionPointName<ApplicationRemoteTopicListenerBean> =
+      ExtensionPointName("com.intellij.platform.rpc.applicationRemoteTopicListener")
   }
 }
