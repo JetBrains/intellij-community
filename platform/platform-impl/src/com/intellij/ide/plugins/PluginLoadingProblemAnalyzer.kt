@@ -263,7 +263,7 @@ internal object PluginLoadingProblemAnalyzer {
             is DependencyRef.ContentModule -> processRootCause(rootCause)
             is DependencyRef.Plugin -> registerFailedDependency(excludedRequiredDescriptor)
           }
-          is DependencyIsNotVisible,
+          is DependencyIsNotVisible -> registerFailedDependency(rootCause.descriptor.getMainDescriptor())
           is IncompatibleWithAnotherModule,
           is OnDemandContentModuleHasNoDependentsLeft,
           is PackagePrefixConflictWithAnotherModule,

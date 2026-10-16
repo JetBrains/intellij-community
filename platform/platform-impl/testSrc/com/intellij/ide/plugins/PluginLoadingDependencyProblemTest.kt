@@ -393,7 +393,7 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
-  fun `a transitive visibility failure keeps the failed intermediate plugin`() {
+  fun `a visibility failure in a direct dependency names that dependency`() {
     val pluginSet = buildPluginSet(
       plugin("owner") {
         name = "Owner"
@@ -412,6 +412,77 @@ internal class PluginLoadingDependencyProblemTest {
     )
 
     assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("owner"))
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `a visibility failure through several plugins names the plugin with the access problem`() {
+    val pluginSet = buildPluginSet(
+      plugin("owner") {
+        name = "Owner"
+        content(namespace = "jetbrains") {
+          module("owner.private") {}
+        }
+      },
+      plugin("dependency") {
+        name = "Dependency"
+        dependencies { module("owner.private") }
+      },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("dependency")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("intermediate")
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("owner"))
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `a visibility failure in a required module names its owning plugin`() {
+    val pluginSet = buildPluginSet(
+      plugin("owner") {
+        name = "Owner"
+        content(namespace = "vendor") {
+          module("owner.internal", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            moduleVisibility = ModuleVisibilityValue.INTERNAL
+          }
+        }
+      },
+      plugin("dependency") {
+        name = "Dependency"
+        content(namespace = "other") {
+          module("dependency.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("owner.internal", namespace = "vendor") }
+          }
+        }
+      },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("dependency")
+      },
+      plugin("affected") {
+        name = "Affected"
+        content(namespace = "jetbrains") {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { plugin("intermediate") }
+          }
+        }
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("owner"))
+    val dependency = pluginSet.allPlugins.single { it.pluginId.idString == "dependency" }
+    assertThat(pluginSet.resolvedPluginSet.getExclusionReason(dependency.contentModules.single()))
+      .isInstanceOf(DependencyIsNotVisible::class.java)
     val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
     assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
     assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))

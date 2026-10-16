@@ -87,7 +87,7 @@ Remote development extends these rules with side aggregation and action routing.
   )
 
 - Missing modules retain their terminal explanation through required plugins and modules, including core modules.
-- Other chains without disabled roots or product mode exclusions refer to the first required plugin outside the affected plugin.
+- Other chains without disabled roots, product mode exclusions, missing modules, or visibility failures refer to the first required plugin outside the affected plugin.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - Without a cross-plugin boundary, an unresolved plugin dependency uses the installation message only when no known provider exists.
@@ -100,7 +100,8 @@ Remote development extends these rules with side aggregation and action routing.
 - The explanation retains the module ID and namespace. It offers no Enable target.
 - An invisible dependency without a cross-plugin boundary reports the inaccessible module and its owner's name.
 - The problem retains the module ID, namespace, and owner ID. It offers no Enable target or installation message.
-- Visibility failures across a plugin boundary retain the failed intermediate plugin explanation.
+- Visibility failures across plugin boundaries name the plugin whose descriptor or required module has the access problem.
+- They must not name an earlier intermediate plugin or the provider solely because it owns the inaccessible module.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
     `an absent plugin uses the installation message`;
     `an absent modern plugin dependency uses the installation message`;
@@ -118,7 +119,9 @@ Remote development extends these rules with side aggregation and action routing.
     `an invisible module reports an access restriction`;
     `a required module reports an internal dependency from another namespace`;
     `an internal dependency from the same namespace does not produce a problem`;
-    `a transitive visibility failure keeps the failed intermediate plugin`;
+    `a visibility failure in a direct dependency names that dependency`;
+    `a visibility failure through several plugins names the plugin with the access problem`;
+    `a visibility failure in a required module names its owning plugin`;
     `a failed core module reports its missing module`;
     `a missing module remains the explanation through intermediate plugins`;
     `a required module retains a missing module across a plugin boundary`;
