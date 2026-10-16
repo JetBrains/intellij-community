@@ -1060,7 +1060,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
     when (loadingError.kind) {
       PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> {
-        return CheckErrorsResult(loadingError = loadingError.shortMessage, isUltimateDisabledProblem = true).withLoadingProblem(loadingError)
+        return CheckErrorsResult(loadingError = loadingError.shortMessage).withLoadingProblem(loadingError)
       }
       PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
     }

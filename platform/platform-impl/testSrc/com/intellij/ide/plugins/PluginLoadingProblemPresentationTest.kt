@@ -17,7 +17,6 @@ internal class PluginLoadingProblemPresentationTest {
   fun `a disabled Ultimate problem stays outside the generic error area`() {
     val result = CheckErrorsResult(
       loadingError = "Ultimate is disabled",
-      isUltimateDisabledProblem = true,
       kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
       severity = PluginLoadingProblem.Severity.EXPECTED,
     )
@@ -45,16 +44,19 @@ internal class PluginLoadingProblemPresentationTest {
 
   @Test
   fun `the page result retains Ultimate classification through serialization`() {
-    val result = CheckErrorsResult(loadingError = "Ultimate is disabled", isUltimateDisabledProblem = true)
+    val result = CheckErrorsResult(loadingError = "Ultimate is disabled", kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
 
-    assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+    val restored = Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))
+
+    assertThat(restored).isEqualTo(result)
+    assertThat(MyPluginModel.getErrors(restored)).isEmpty()
+    assertThat(MyPluginModel.getExpectedExplanations(restored)).isEmpty()
   }
 
   @Test
   fun `a page result without Ultimate classification keeps its default`() {
     val result = Json.decodeFromString<CheckErrorsResult>("""{"loadingError":"Missing dependency","isDisabledDependencyError":true}""")
 
-    assertThat(result.isUltimateDisabledProblem).isFalse()
     assertThat(MyPluginModel.getErrors(result)).hasSize(1)
     assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
@@ -65,7 +67,6 @@ internal class PluginLoadingProblemPresentationTest {
   fun `the page result retains structured classification through serialization`() {
     val result = CheckErrorsResult(
       loadingError = "Ultimate is disabled",
-      isUltimateDisabledProblem = true,
       kind = PluginLoadingProblem.Kind.ULTIMATE_DISABLED,
       severity = PluginLoadingProblem.Severity.EXPECTED,
       disabledDependencyId = PluginId.getId("com.intellij.ultimate"),

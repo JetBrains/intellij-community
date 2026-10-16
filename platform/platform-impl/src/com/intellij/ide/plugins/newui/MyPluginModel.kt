@@ -1416,8 +1416,9 @@ open class MyPluginModel @JvmOverloads constructor(
         PluginLoadingProblem.Severity.EXPECTED -> return emptyList()
         PluginLoadingProblem.Severity.UNEXPECTED -> {}
       }
-      if (checkErrorsResult.isUltimateDisabledProblem) {
-        return emptyList()
+      when (checkErrorsResult.kind) {
+        PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> return emptyList()
+        PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
       }
       if (checkErrorsResult.isDisabledDependencyError) {
         val loadingError = checkErrorsResult.loadingError

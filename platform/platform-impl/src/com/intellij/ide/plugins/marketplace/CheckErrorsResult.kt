@@ -20,7 +20,6 @@ data class CheckErrorsResult(
   @NlsSafe val loadingError: String? = null,
   val requiredPluginNames: Set<String> = emptySet(),
   val suggestToEnableRequiredPlugins: Boolean = false,
-  val isUltimateDisabledProblem: Boolean = false,
   val kind: PluginLoadingProblem.Kind = PluginLoadingProblem.Kind.OTHER,
   val severity: PluginLoadingProblem.Severity = PluginLoadingProblem.Severity.UNEXPECTED,
   val disabledDependencyId: PluginId? = null,

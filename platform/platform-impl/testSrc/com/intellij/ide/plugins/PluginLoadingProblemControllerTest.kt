@@ -58,7 +58,6 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.suggestToEnableRequiredPlugins).isTrue()
     assertThat(result.requiredPluginNames).containsExactly("Root")
     assertThat(result.loadingError).isNull()
-    assertThat(result.isUltimateDisabledProblem).isFalse()
     assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(result.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(result.disabledDependencyId).isEqualTo(PluginId.getId("root"))
@@ -73,7 +72,7 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.suggestToEnableRequiredPlugins).isTrue()
     assertThat(result.requiredPluginNames).containsExactly("Root")
     assertThat(result.loadingError).isNull()
-    assertThat(result.isUltimateDisabledProblem).isFalse()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
   }
 
   @Test
@@ -94,7 +93,6 @@ internal class PluginLoadingProblemControllerTest {
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
-    assertThat(result.isUltimateDisabledProblem).isTrue()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
     assertThat(result.requiredPluginNames).isEmpty()
     assertThat(result.loadingError).isNotNull()
@@ -109,7 +107,7 @@ internal class PluginLoadingProblemControllerTest {
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
-    assertThat(result.isUltimateDisabledProblem).isTrue()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.ULTIMATE_DISABLED)
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
     assertThat(result.requiredPluginNames).isEmpty()
     assertThat(result.loadingError).isNotNull()
@@ -122,7 +120,7 @@ internal class PluginLoadingProblemControllerTest {
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
-    assertThat(result.isUltimateDisabledProblem).isFalse()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(result.loadingError).isNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
   }
@@ -135,7 +133,7 @@ internal class PluginLoadingProblemControllerTest {
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
-    assertThat(result.isUltimateDisabledProblem).isFalse()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(result.loadingError).isNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
   }
@@ -200,7 +198,6 @@ internal class PluginLoadingProblemControllerTest {
           assertThat(result.unavailableModuleId).isEqualTo(PluginModuleId("mode.module", "jetbrains"))
           assertThat(result.suggestToEnableRequiredPlugins).isFalse()
           assertThat(result.requiredPluginNames).isEmpty()
-          assertThat(result.isUltimateDisabledProblem).isFalse()
           assertThat(result.loadingError).isNotBlank()
           assertThat(DefaultUiPluginManagerController.loadErrors(session.sessionId, listOf(PluginId.getId("affected"))))
             .containsEntry(PluginId.getId("affected"), result)
@@ -277,7 +274,7 @@ internal class PluginLoadingProblemControllerTest {
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
 
-    assertThat(result.isUltimateDisabledProblem).isFalse()
+    assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(result.isDisabledDependencyError).isTrue()
     assertThat(result.loadingError).isNotNull()
     assertThat(result.suggestToEnableRequiredPlugins).isFalse()
