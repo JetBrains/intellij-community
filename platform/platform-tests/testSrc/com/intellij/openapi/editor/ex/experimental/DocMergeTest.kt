@@ -127,9 +127,10 @@ class DocMergeTest {
   }
 
   @Test
-  fun `branches with no common history fold into their merged text`() {
-    val a = DocBranch.createBranch("xy", agent("a"))
-    val b = DocBranch.createBranch("pq", agent("b"))
+  fun `branches with no common event fold into their merged text`() {
+    val base = DocBranch.createBranch("", agent("base"))
+    val a = base.fork(agent("a")).applyOp(insertOp(0, "xy"))
+    val b = base.fork(agent("b")).applyOp(insertOp(0, "pq"))
     for ((receiver, other) in listOf(a to b, b to a)) {
       val merge = receiver.mergeWithOps(other)
       assertEquals(merge.branch().string(), receiver.text().afterOps(merge.ops()).string())

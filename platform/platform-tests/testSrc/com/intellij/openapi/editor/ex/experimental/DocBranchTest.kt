@@ -270,11 +270,11 @@ class DocBranchTest {
   @Test
   fun `a fragment op makes one run`() {
     val base = DocBranch.createBranch("abc", agent("a"))
-    assertEquals(3, base.graph().size())
-    assertEquals(1, base.graph().runCount())
-    val edited = base.applyOp(insertOp(1, "xyz")).applyOp(deleteOp(0, 2))
-    assertEquals(8, edited.graph().size())
-    assertEquals(3, edited.graph().runCount())
+    val edited = base
+      .applyOp(insertOp(1, "xyz"))
+      .applyOp(deleteOp(0, 2))
+    assertEquals(5, edited.graph().size())
+    assertEquals(2, edited.graph().runCount())
   }
 
   @Test
@@ -294,19 +294,34 @@ class DocBranchTest {
   }
 
   @Test
-  fun `a large document costs one run and fast-forwards without a replay`() {
+  fun `a large document costs no event and fast-forwards without a replay`() {
     val size = 100_000
     val text = buildString {
       repeat(size) { append('x') }
     }
     val base = DocBranch.createBranch(text, agent("a"))
-    assertEquals(size, base.graph().size())
-    assertEquals(1, base.graph().runCount())
+    assertEquals(0, base.graph().size())
+    assertEquals(0, base.graph().runCount())
     val edited = base.fork(agent("b")).applyOp(insertOp(size, "end"))
     // A fast-forward adopts the text of the descendant as it is, so no replay ran.
     val merged = base.merge(edited)
     assertSame(edited.text(), merged.text())
-    assertEquals(2, merged.graph().runCount())
+    assertEquals(1, merged.graph().runCount())
+  }
+
+  @Test
+  fun `the base text of a new branch is the text of the branch`() {
+    val base = DocBranch.createBranch("abc", agent("a"))
+    assertTrue(base.version().isRoot())
+    assertEquals("abc", base.graph().replay().string())
+    val edited = base.applyOp(insertOp(1, "x"))
+    assertEquals("axbc", edited.graph().replay().string())
+    assertEquals("abc", edited.graph().replay(Version.root()).string())
+    // A fork shares the base text, so the merge replays its edit over the same text.
+    val forked = base.fork(agent("b")).applyOp(deleteOp(2, 1))
+    val merged = edited.merge(forked)
+    assertEquals("axb", merged.string())
+    assertEquals("axb", merged.graph().replay().string())
   }
 
   @Test
@@ -439,12 +454,20 @@ class DocBranchTest {
   }
 
   @Test
-  fun `branches with no common history merge deterministically`() {
-    val first = DocBranch.createBranch("ab", agent("a"))
-    val second = DocBranch.createBranch("cd", agent("b"))
-    // This is correct CRDT behavior, not the intended use: both texts survive as runs.
-    assertEquals("abcd", first.merge(second).string())
-    assertEquals("abcd", second.merge(first).string())
+  fun `branches from two createBranch calls do not merge`() {
+    val first = DocBranch.createBranch("ab", agent("a")).applyOp(insertOp(2, "x"))
+    val second = DocBranch.createBranch("ab", agent("b")).applyOp(insertOp(2, "x"))
+    for ((receiver, other) in listOf(first to second, second to first)) {
+      assertThrows(LineageMismatchException::class.java) {
+        receiver.merge(other)
+      }
+      assertThrows(LineageMismatchException::class.java) {
+        receiver.mergeWithOps(other)
+      }
+    }
+    // The failed merges changed nothing.
+    assertEquals("abx", first.string())
+    assertEquals("abxy", first.applyOp(insertOp(3, "y")).string())
   }
 
   @Test
@@ -467,7 +490,7 @@ class DocBranchTest {
     assertThrows(IndexOutOfBoundsException::class.java) { base.applyOp(insertOp(-1, "X")) }
     assertThrows(IndexOutOfBoundsException::class.java) { base.applyOp(deleteOp(2, 5)) }
     // The failed ops left no events behind.
-    assertEquals(3, base.graph().size())
+    assertEquals(0, base.graph().size())
     assertEquals("abcX", base.applyOp(insertOp(3, "X")).string())
   }
 
@@ -481,9 +504,9 @@ class DocBranchTest {
     assertEquals("ab", base.string())
     assertEquals("Xab", first.string())
     assertEquals("abY", second.string())
-    assertEquals(2, base.graph().size())
-    assertEquals(3, first.graph().size())
-    assertEquals(3, second.graph().size())
+    assertEquals(0, base.graph().size())
+    assertEquals(1, first.graph().size())
+    assertEquals(1, second.graph().size())
   }
 
   @Test
@@ -510,12 +533,13 @@ class DocBranchTest {
   }
 
   @Test
-  fun `a second round over unrelated histories converges`() {
-    // Two branches with no common history join into a concatenation. The joined graph
-    // holds two parentless runs, so its version has two heads. The next round merges
-    // above that two-head version.
-    val first = DocBranch.createBranch("aaa\n", agent("a"))
-    val second = DocBranch.createBranch("bbb\n", agent("b"))
+  fun `a second round over two parentless runs converges`() {
+    // Two forks of an empty branch each type at the root. The joined graph holds two
+    // parentless runs, so its version has two heads. The next round merges above that
+    // two-head version.
+    val base = DocBranch.createBranch("", agent("base"))
+    val first = base.fork(agent("a")).applyOp(insertOp(0, "aaa\n"))
+    val second = base.fork(agent("b")).applyOp(insertOp(0, "bbb\n"))
     val joined = first.merge(second)
     assertEquals("aaa\nbbb\n", joined.string())
     val left = joined.applyOp(insertOp(0, "L"))

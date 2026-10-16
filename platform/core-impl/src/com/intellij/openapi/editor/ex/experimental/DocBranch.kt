@@ -19,8 +19,7 @@ import com.intellij.openapi.editor.impl.experimental.DocBranchImpl
  * - Branches that edit concurrently must edit under different [Agent]s. [fork] sets the agent.
  *   Two concurrent edits under one agent can make a merge throw [EventIdClashException], or build
  *   a wrong text.
- * - [merge] expects branches that descend from one [createBranch] value. Branches with no
- *   common history merge into a concatenated document.
+ * - [merge] takes only branches that descend from one [createBranch] value.
  * - `a.merge(b)` and `b.merge(a)` produce the same text. A merge with an ancestor changes
  *   nothing. A merge with a descendant fast-forwards. A repeated merge changes nothing.
  */
@@ -72,8 +71,9 @@ interface DocBranch {
    * Concurrent edits are resolved deterministically; no edit is dropped.
    * The result keeps this branch's [agent].
    *
-   * Throws [EventIdClashException] when the two branches broke the agent contract. It does not find
-   * every break. A merge that throws changes nothing.
+   * Throws [LineageMismatchException] when [other] does not descend from the [createBranch] value of
+   * this branch. Throws [EventIdClashException] when the two branches broke the agent contract. It
+   * does not find every break. A merge that throws changes nothing.
    *
    * The result is the branch of [mergeWithOps] for the same two branches.
    */
@@ -99,7 +99,8 @@ interface DocBranch {
 
   companion object {
     /**
-     * A new branch with the text [chars] that edits under [agent].
+     * A new branch with the text [chars] that edits under [agent]. It has no events yet: its
+     * [version] is [Version.root], and the replay of that version returns [chars].
      */
     @JvmStatic
     fun createBranch(chars: CharSequence, agent: Agent): DocBranch {

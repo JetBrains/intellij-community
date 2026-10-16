@@ -28,8 +28,10 @@ class EventGraphFuzzTest {
     repeat(ROUNDS) { round ->
       fuzzRound(20260827L, round) { random ->
         val u = agent("u")
-        var whole = EventGraph.createGraph()
-        var pieces = EventGraph.createGraph()
+        // Both encodings grow from one new graph, so they merge.
+        val origin = EventGraph.createGraph()
+        var whole = origin
+        var pieces = origin
         var partial: EventGraph? = null
         val stopAfterPieces = random.nextInt(12)
         var pieceCount = 0

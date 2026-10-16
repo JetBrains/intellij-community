@@ -174,10 +174,11 @@ class ReplayPerformanceTest {
     println("=== a merge that brings nothing, by history size ===")
     println("  %-14s %10s".format("history", "runs"))
     for (runs in HISTORY_RUNS) {
-      val branch = historyOfRuns(runs)
+      val start = DocBranch.createBranch("", agent("u"))
+      val branch = historyOfRuns(runs, start)
       // The same history in another graph value. A fork would share the graph itself, and then a
       // fast path for one instance would leave the row nothing to measure.
-      val same = DocBranch.createBranch("", agent("aaa")).merge(branch)
+      val same = start.fork(agent("aaa")).merge(branch)
       assertEquals(branch.text().length(), branch.merge(same).text().length())
       println("  %-14s %10d".format("$runs runs", branch.graph().runCount()))
       benchmarkSubtest("merge of nothing over $runs runs", EMPTY_MERGE_PASSES) {
@@ -276,11 +277,14 @@ class ReplayPerformanceTest {
   }
 
   /**
-   * A history of [runs] runs of one character. Every op inserts at the front, so no op extends
-   * the run before it.
+   * A history of [runs] runs of one character over [start]. Every op inserts at the front, so no
+   * op extends the run before it.
    */
-  private fun historyOfRuns(runs: Int): DocBranch {
-    var branch = DocBranch.createBranch("", agent("u"))
+  private fun historyOfRuns(
+    runs: Int,
+    start: DocBranch = DocBranch.createBranch("", agent("u")),
+  ): DocBranch {
+    var branch = start
     repeat(runs) {
       branch = branch.applyOp(DocumentOp.insertOp(0, "x"))
     }

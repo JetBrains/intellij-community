@@ -292,17 +292,17 @@ internal class DocBranchImpl private constructor(
   }
 
   companion object {
+    /**
+     * A branch at the root of a new graph. The base text of the graph has the characters of the
+     * branch text, and the two share them.
+     */
     fun create(chars: CharSequence, agent: Agent): DocBranchImpl {
-      var graph = EventGraphImpl.empty()
-      if (chars.isNotEmpty()) {
-        graph = graph.appendAtVersion(EventImpl(agent, 0, DocumentOp.insertOp(0, chars)))
-      }
       val text = DocumentText.createText(chars)
       return DocBranchImpl(
         text = text,
         modState = BranchModState.ready(RangeModState.create(text)),
         agent = agent,
-        graph = graph,
+        graph = EventGraphImpl.startingFrom(text),
       )
     }
 

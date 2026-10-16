@@ -59,7 +59,10 @@ internal class EventGraphInvariantFuzzTest {
     repeat(ROUNDS) { round ->
       fuzzRound(20261001L, round) { random ->
         val agents = (0 until 2 + random.nextInt(2)).map { Agent.createAgent("agent$it") }
-        val graphs = agents.mapTo(ArrayList()) { EventGraph.createGraph() }
+        // Every replica grows from one graph with a base text, so any two of them merge, and each
+        // replay starts from that text.
+        val origin = DocBranch.createBranch(randomText(random, 8), Agent.createAgent("base")).graph()
+        val graphs = agents.mapTo(ArrayList()) { origin }
         // Every version each replica passed through. A replica only appends, so each one stays valid.
         val versions = agents.mapTo(ArrayList()) { arrayListOf(Version.root()) }
         val carets = IntArray(agents.size)
@@ -82,8 +85,8 @@ internal class EventGraphInvariantFuzzTest {
           checkGraph(graphs[i]) { "round $round, step $step, replica $i" }
         }
         // A full sync in two orders gives one text.
-        val forward = graphs.fold(EventGraph.createGraph()) { all, graph -> all.mergeFrom(graph) }
-        val backward = graphs.foldRight(EventGraph.createGraph()) { graph, all -> all.mergeFrom(graph) }
+        val forward = graphs.fold(origin) { all, graph -> all.mergeFrom(graph) }
+        val backward = graphs.foldRight(origin) { graph, all -> all.mergeFrom(graph) }
         checkGraph(forward) { "round $round, the forward sync" }
         checkGraph(backward) { "round $round, the backward sync" }
         assertEquals(forward.replay().string(), backward.replay().string()) { "round $round" }

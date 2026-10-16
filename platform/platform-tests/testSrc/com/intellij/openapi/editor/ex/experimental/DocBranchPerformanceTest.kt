@@ -271,11 +271,12 @@ class DocBranchPerformanceTest {
     private val SIZES = intArrayOf(25_000, 100_000, 0)
 
     /**
-     * The exact results of the collaborative scenario, one per entry of [SIZES].
+     * The exact results of the collaborative scenario, one per entry of [SIZES]. The base text
+     * is no event, so the history is the same for every size.
      */
     private val FINAL_LENGTHS = intArrayOf(30_801, 105_801, 244_567)
-    private val HISTORY_UNITS = intArrayOf(32_733, 107_733, 246_499)
-    private val HISTORY_RUNS = intArrayOf(99, 99, 99)
+    private val HISTORY_UNITS = intArrayOf(7_733, 7_733, 7_733)
+    private val HISTORY_RUNS = intArrayOf(98, 98, 98)
 
     /**
      * The number of users that edit at once, session by session.

@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Test
 internal class EgWalkerReplayTest {
 
   /**
-   * The graph of "a" holds its own delete at the lv 6 and the delete of "b" at the lv 7. A merge
-   * into the version of "b" would walk the lv 7 first and the new lv 6 after it, which the delete
+   * The graph of "a" holds its own delete at the lv 0 and the delete of "b" at the lv 1. A merge
+   * into the version of "b" would walk the lv 1 first and the new lv 0 after it, which the delete
    * targets cannot take. The merge must say so, and not fail inside them.
    */
   @Test
@@ -26,12 +26,24 @@ internal class EgWalkerReplayTest {
     val b = base.fork(Agent.createAgent("b")).applyOp(DocumentOp.deleteOp(5, 1))
     val merged = EventGraphImpl.implOf(a.graph()).mergeFromImpl(EventGraphImpl.implOf(b.graph())).graph()
     val failure = assertThrows(IllegalArgumentException::class.java) {
-      EgWalkerReplay.mergeInto(merged, LvVersion(intArrayOf(7)), BatchingSink(b.text()))
+      EgWalkerReplay.mergeInto(merged, LvVersion(intArrayOf(1)), BatchingSink(b.text()))
     }
     assertTrue(failure.message.orEmpty().contains("do not all sit above"), failure.message)
     // The direction that a merge uses works on the same graph.
     val sink = BatchingSink(a.text())
     EgWalkerReplay.mergeInto(merged, EventGraphImpl.implOf(a.graph()).lvVersion(), sink)
     assertEquals("bcde", sink.result().string())
+  }
+
+  /**
+   * No graph is large enough to reach the bound, so the test calls the count directly.
+   */
+  @Test
+  fun `a placeholder that overflows the unit space is rejected`() {
+    val lastUnit = LvVersion(intArrayOf(Int.MAX_VALUE - 1))
+    assertEquals(Int.MAX_VALUE, EgWalkerReplay.placeholderCount(0, lastUnit))
+    assertThrows(IllegalArgumentException::class.java) {
+      EgWalkerReplay.placeholderCount(1, lastUnit)
+    }
   }
 }

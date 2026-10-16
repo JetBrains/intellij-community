@@ -143,11 +143,11 @@ internal class MergePlan(
   }
 
   /**
-   * Fails when the planned runs would take the unit space past [Int.MAX_VALUE].
+   * Fails when the planned runs would take the unit space past [EventGraphImpl.unitCapacity].
    */
   private fun checkUnitSpace(length: Int) {
-    require(length <= Int.MAX_VALUE - lvEnd) {
-      "The merged unit space overflows: the plan reaches $lvEnd and adds $length"
+    require(length <= dest.unitCapacity() - lvEnd) {
+      "The merged unit space overflows: the plan reaches $lvEnd of ${dest.unitCapacity()} and adds $length"
     }
   }
 

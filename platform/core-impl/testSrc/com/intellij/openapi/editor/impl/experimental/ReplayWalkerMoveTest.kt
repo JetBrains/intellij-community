@@ -79,9 +79,9 @@ internal class ReplayWalkerMoveTest {
     val moved = DocBranch.createBranch("0123", A).move(0, 2, 4)
     val graph = EventGraphImpl.implOf(moved.graph())
     // The version ends at the first unit of the move insert.
-    val firstUnitOfMove = LvVersion(intArrayOf(4))
-    assertEquals(listOf("ins(0, 0123)", "ins(4, 0)"), reportsOfReplay(graph, firstUnitOfMove))
-    val whole = listOf("ins(0, 0123)", "ins(4, 01, from 0)", "del(0, 2, copy at 4)")
+    val firstUnitOfMove = LvVersion(intArrayOf(0))
+    assertEquals(listOf("ins(4, 0)"), reportsOfReplay(graph, firstUnitOfMove))
+    val whole = listOf("ins(4, 01, from 0)", "del(0, 2, copy at 4)")
     assertEquals(whole, reportsOfReplay(graph, graph.lvVersion()))
   }
 
@@ -134,11 +134,12 @@ internal class ReplayWalkerMoveTest {
   }
 
   /**
-   * The reports of a full replay of [graph] at [version].
+   * The reports of a full replay of [graph] at [version]. The base text of [graph] reports nothing.
    */
   private fun reportsOfReplay(graph: EventGraphImpl, version: LvVersion): List<String> {
     val sink = ReportSink()
-    ReplayWalker(graph, placeholderCount = 0).replayAt(version, sink)
+    val walker = ReplayWalker(graph, placeholderCount = graph.baseText().length())
+    walker.replayAt(version, sink)
     return sink.reports()
   }
 

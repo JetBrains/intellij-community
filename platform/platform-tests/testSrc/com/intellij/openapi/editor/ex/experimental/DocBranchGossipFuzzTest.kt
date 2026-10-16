@@ -12,8 +12,8 @@ import java.util.Random
  * A gossip fuzz: replicas edit and pull from each other in a random order, so the merge
  * base moves in every direction. [DocBranchFuzzTest] keeps a fork-then-sync shape with
  * small ops. This test adds the shapes that shape misses. They are many pulls in any direction,
- * whole-document deletes, pastes of up to 12 characters, text moves, and a replica with no common
- * history. Long runs and many agents are the job of [EgWalkerConformanceTest].
+ * whole-document deletes, pastes of up to 12 characters, and text moves. Long runs and many agents
+ * are the job of [EgWalkerConformanceTest].
  *
  * Each replica also has a caret, and most edits type or delete at it. Those edits extend the
  * newest run. So a pull often lands in the middle of a run, and two replicas often cut the
@@ -34,14 +34,10 @@ class DocBranchGossipFuzzTest {
     repeat(ROUNDS) { round ->
       fuzzRound(20260828L, round) { random ->
         val replicaCount = 2 + random.nextInt(4)
-        val base = DocBranch.createBranch(randomText(random, 10), agent("base"))
+        val base = DocBranch.createBranch(randomText(random), agent("base"))
         val replicas = ArrayList<DocBranch>()
         for (i in 0 until replicaCount) {
           replicas.add(base.fork(agent("agent$i")))
-        }
-        // One replica has no common history at all; it joins by a merge.
-        if (random.nextInt(4) == 0) {
-          replicas.add(DocBranch.createBranch(randomText(random, 6), agent("alien")))
         }
 
         // Per replica: the versions it passed through, with the text it held there. A version
@@ -107,9 +103,9 @@ class DocBranchGossipFuzzTest {
     }
   }
 
-  private fun randomText(random: Random, bound: Int): String {
+  private fun randomText(random: Random): String {
     val text = StringBuilder()
-    repeat(random.nextInt(bound)) {
+    repeat(random.nextInt(BASE_LENGTH_BOUND)) {
       text.append(ALPHABET[random.nextInt(ALPHABET.length)])
     }
     return text.toString()
@@ -173,5 +169,10 @@ class DocBranchGossipFuzzTest {
     private const val ROUNDS = 4000
     private const val STEPS = 30
     private const val ALPHABET = "abcde \n\r"
+
+    /**
+     * The base text is shorter than this.
+     */
+    private const val BASE_LENGTH_BOUND = 10
   }
 }

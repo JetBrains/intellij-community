@@ -12,7 +12,8 @@ import java.util.BitSet
 /**
  * See [EventGraph]. An immutable value: the closed runs in a persistent [RunTree], the same runs
  * by agent in an [AgentIndex], then the newest run, the [tail]. Together they cover the lvs
- * `[0, size)`.
+ * `[0, size)`. The [base] holds the base text and the lineage. Every value that grows from a graph
+ * keeps its base.
  *
  * Every append returns a new value, and the new trees share every node they do not change with
  * the old ones. So two siblings of one value append each on their own, and neither copies the
@@ -27,10 +28,11 @@ import java.util.BitSet
  * value, even through a data race, sees the whole value as it was built. The holder of "the
  * current value" is the only place that needs a publication, and it is outside this class.
  *
- * Only the empty graph has no tail. [checkTail] enforces that when a graph is built, and
+ * Only a graph with no events has no tail. [checkTail] enforces that when a graph is built, and
  * [requireTail] relies on it.
  */
 internal class EventGraphImpl private constructor(
+  private val base: GraphBase,
   private val runs: RunTree,
   private val agents: AgentIndex,
   private val tail: StoredRun?,
@@ -79,6 +81,21 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
+   * The base text: the text before the first run. The replay of [LvVersion.ROOT] returns it.
+   */
+  fun baseText(): DocumentText {
+    return base.text()
+  }
+
+  /**
+   * The most units that this graph can hold. The replay counts the base text in the space of the
+   * units, so the base text takes its share. Then no merge overflows the space of a replay.
+   */
+  fun unitCapacity(): Int {
+    return Int.MAX_VALUE - base.text().length()
+  }
+
+  /**
    * The heads of [version] as lvs of this graph. Fails when this graph does not hold one of them.
    * An [LvNamedVersion] names lvs already, so only the size of this graph can reject it.
    */
@@ -92,7 +109,7 @@ internal class EventGraphImpl private constructor(
   }
 
   private fun replayAt(lvVersion: LvVersion): DocumentText {
-    val text = StringBuilder()
+    val text = StringBuilder(base.text().chars())
     EgWalkerReplay.replay(this, lvVersion, StringBuilderSink(text))
     return DocumentText.createText(text)
   }
@@ -166,8 +183,11 @@ internal class EventGraphImpl private constructor(
    * The merge is ATOMIC. It plans every new run first, and only then appends. So a rejected merge
    * fails before the first append, and by then no append can fail. The values are immutable, so
    * even a failed append would leave this graph as it was.
+   *
+   * The result keeps the base of this graph. [other] must have the same lineage.
    */
   fun mergeFromImpl(other: EventGraphImpl): MergeResult {
+    base.assertSameLineage(other.base)
     // The delta: what this graph knows, then only the runs of the other graph that go past
     // it. Neither step walks the history the two graphs share, so a merge costs the CHANGE and
     // not the session. The reference does this with summarizeVersion and intersectWithSummary.
@@ -198,6 +218,7 @@ internal class EventGraphImpl private constructor(
     val extended = tail?.tryAppend(event, parents)
     if (extended != null) {
       return EventGraphImpl(
+        base = base,
         runs = runs,
         agents = agents,
         tail = extended,
@@ -208,6 +229,7 @@ internal class EventGraphImpl private constructor(
     val newTail = StoredRun(event, size, parents.lvs)
     if (tail == null) {
       return EventGraphImpl(
+        base = base,
         runs = runs,
         agents = agents,
         tail = newTail,
@@ -216,6 +238,7 @@ internal class EventGraphImpl private constructor(
       )
     }
     return EventGraphImpl(
+      base = base,
       runs = runs.appended(tail.lvStart, tail),
       agents = agents.appended(tail),
       tail = newTail,
@@ -272,7 +295,7 @@ internal class EventGraphImpl private constructor(
   private fun requireTail(): StoredRun {
     val tail = tail
     require(tail != null) {
-      "A graph of size $size has no tail, but only the empty graph may have none"
+      "A graph of size $size has no tail, but only a graph with no events may have none"
     }
     return tail
   }
@@ -397,7 +420,7 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
-   * Fails when the tail does not fit the graph. Only the empty graph has no tail. A tail is the
+   * Fails when the tail does not fit the graph. Only a graph with no events has no tail. A tail is the
    * newest run, so it ends at [size], and the closed runs end where it starts. The queries for
    * the replay rely on all three.
    */
@@ -405,7 +428,8 @@ internal class EventGraphImpl private constructor(
     val tail = tail
     if (tail == null) {
       require(size == 0 && runs.size() == 0) {
-        "A graph of size $size and ${runs.size()} closed runs has no tail, but only the empty graph may have none"
+        "A graph of size $size and ${runs.size()} closed runs has no tail, " +
+        "but only a graph with no events may have none"
       }
       return
     }
@@ -420,8 +444,8 @@ internal class EventGraphImpl private constructor(
 
   /**
    * Fails when the frontier does not end at the newest unit. Every append makes its last unit a
-   * head, and no later lv exists, so the greatest head is always `size - 1`. The empty graph has
-   * the root version.
+   * head, and no later lv exists, so the greatest head is always `size - 1`. A graph with no events
+   * has the root version.
    */
   private fun checkVersionEnd() {
     require(version.unitSpan() == size) {
@@ -458,11 +482,12 @@ internal class EventGraphImpl private constructor(
   }
 
   /**
-   * Fails when a run of [length] units cannot fit after the units of this graph.
+   * Fails when a run of [length] units cannot fit after the units of this graph, within
+   * [unitCapacity].
    */
   private fun checkLvSpace(length: Int) {
-    require(length <= Int.MAX_VALUE - size) {
-      "The graph unit space overflows: size $size + run length $length"
+    require(length <= unitCapacity() - size) {
+      "The graph unit space overflows: capacity ${unitCapacity()}, size $size + run length $length"
     }
   }
 
@@ -506,8 +531,19 @@ internal class EventGraphImpl private constructor(
   }
 
   companion object {
+    /**
+     * A graph with no events and an empty base text, in a new lineage.
+     */
     fun empty(): EventGraphImpl {
+      return startingFrom(DocumentText.createText(""))
+    }
+
+    /**
+     * A graph with no events and the base text [text], in a new lineage.
+     */
+    fun startingFrom(text: DocumentText): EventGraphImpl {
       return EventGraphImpl(
+        base = GraphBase.create(text),
         runs = RunTree.EMPTY,
         agents = AgentIndex.EMPTY,
         tail = null,

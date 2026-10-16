@@ -9,6 +9,10 @@ import com.intellij.openapi.editor.impl.experimental.EventGraphImpl
  *
  * The graph is an immutable value. [append] and [mergeFrom] return a new graph and leave
  * this one untouched. An append is cheap on any graph, the newest one or an older one.
+ *
+ * A graph starts from a BASE TEXT, and its first events edit that text. The base text of a graph
+ * from [createGraph] is empty, and the base text of the graph of a new [DocBranch] is the text of
+ * the branch. An append and a merge keep the base text.
  */
 interface EventGraph {
   /**
@@ -48,14 +52,16 @@ interface EventGraph {
    *
    * The cost is the size of the change, not the size of the history that the two graphs share.
    *
-   * Throws [EventIdClashException] when the two graphs give one id to two operations.
+   * Throws [LineageMismatchException] when the two graphs do not grow from one [createGraph] or
+   * [DocBranch.createBranch] call. Throws [EventIdClashException] when the two graphs give one id
+   * to two operations.
    */
   fun mergeFrom(other: EventGraph): EventGraph
 
   /**
    * The paper's `replay(G)`, generalized to the subgraph `Events(version)`:
-   * builds the document at [version] from scratch. This graph must hold every head of [version],
-   * or the replay fails.
+   * builds the document at [version]. This graph must hold every head of [version],
+   * or the replay fails. The replay of [Version.root] returns the base text.
    *
    * Concurrent inserts follow the Fugue order, so every replica builds the same text.
    */
@@ -73,6 +79,10 @@ interface EventGraph {
      */
     const val MAX_COALESCED_INSERT: Int = 256
 
+    /**
+     * A new graph with no events and an empty base text. A graph merges only with the graphs that
+     * grow from the same call.
+     */
     @JvmStatic
     fun createGraph(): EventGraph {
       return EventGraphImpl.empty()

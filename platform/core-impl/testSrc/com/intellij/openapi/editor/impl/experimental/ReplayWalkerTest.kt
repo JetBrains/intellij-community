@@ -126,8 +126,9 @@ internal class ReplayWalkerTest {
    */
   private fun replayInFull(branch: DocBranch): ReplayWalker {
     val graph = EventGraphImpl.implOf(branch.graph())
-    val walker = ReplayWalker(graph, placeholderCount = 0)
-    val text = StringBuilder()
+    val baseText = graph.baseText()
+    val walker = ReplayWalker(graph, placeholderCount = baseText.length())
+    val text = StringBuilder(baseText.chars())
     walker.replayAt(graph.lvVersion(), TextSink(text))
     assertEquals(branch.text().string(), text.toString())
     walker.checkItems()
