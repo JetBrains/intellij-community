@@ -293,7 +293,7 @@ impl LaneContext<'_> {
             write_file(&home.join(ACP_JSON), acp_json.as_bytes())?;
         }
         for runtime in self.runtimes {
-            write_launcher(&Path::new(&paths.bin_dir).join(&runtime.name), &runtime.command)?;
+            write_launcher(&Path::new(&paths.bin_dir).join(&runtime.name), &runtime.command, &BTreeMap::new())?;
         }
         if let Some(port) = ports.codex {
             let real_project = real_path(project)?;
@@ -515,13 +515,15 @@ fn git(directory: &Path, arguments: &[&str]) -> Result<(), AgentRefusal> {
     )))
 }
 
-/// A launcher that runs `command` with the arguments of the launcher, executable by the owner.
-fn write_launcher(file: &Path, command: &[String]) -> Result<(), AgentRefusal> {
-    let quoted: Vec<String> = command
+/// A launcher that exports `environment` and runs `command` with the arguments of the launcher, executable by the owner.
+/// The lane IDE inherits no variable, so a variable that a CLI needs is an export of its launcher.
+pub(super) fn write_launcher(file: &Path, command: &[String], environment: &BTreeMap<String, String>) -> Result<(), AgentRefusal> {
+    let quoted: Vec<String> = command.iter().map(|argument| shell_quote(argument)).collect();
+    let exports: String = environment
         .iter()
-        .map(|argument| format!("'{}'", argument.replace('\'', "'\"'\"'")))
+        .map(|(name, value)| format!("export {name}={}\n", shell_quote(value)))
         .collect();
-    write_file(file, format!("#!/bin/sh\nexec {} \"$@\"\n", quoted.join(" ")).as_bytes())?;
+    write_file(file, format!("#!/bin/sh\n{exports}exec {} \"$@\"\n", quoted.join(" ")).as_bytes())?;
     let mode = fs::metadata(file)
         .map_err(|error| write_failure(format!("cannot read {}: {error}", file.display())))?
         .permissions()
@@ -530,12 +532,17 @@ fn write_launcher(file: &Path, command: &[String]) -> Result<(), AgentRefusal> {
         .map_err(|error| write_failure(format!("cannot make {} executable: {error}", file.display())))
 }
 
+/// `text` as one word of a POSIX shell: in single quotes, with each single quote of it closed, quoted and reopened.
+pub(super) fn shell_quote(text: &str) -> String {
+    format!("'{}'", text.replace('\'', "'\"'\"'"))
+}
+
 /// The real path of `path`, as the IDE resolves it.
 #[expect(
     clippy::disallowed_methods,
     reason = "the guest agent runs on Linux and macOS only, and the trusted paths name the real path that the IDE resolves"
 )]
-fn real_path(path: &Path) -> Result<PathBuf, AgentRefusal> {
+pub(super) fn real_path(path: &Path) -> Result<PathBuf, AgentRefusal> {
     fs::canonicalize(path).map_err(|error| write_failure(format!("cannot resolve {}: {error}", path.display())))
 }
 
@@ -560,7 +567,7 @@ fn xml_attribute(text: &str) -> String {
         .replace('"', "&quot;")
 }
 
-fn create_dirs(directory: &Path) -> Result<(), AgentRefusal> {
+pub(super) fn create_dirs(directory: &Path) -> Result<(), AgentRefusal> {
     fs::create_dir_all(directory).map_err(|error| write_failure(format!("cannot create {}: {error}", directory.display())))
 }
 
@@ -582,7 +589,7 @@ fn write_file(file: &Path, bytes: &[u8]) -> Result<(), AgentRefusal> {
 }
 
 /// Replaces `file` with a new file that only this account can read, so no earlier mode survives.
-fn write_private(file: &Path, bytes: &[u8]) -> Result<(), AgentRefusal> {
+pub(super) fn write_private(file: &Path, bytes: &[u8]) -> Result<(), AgentRefusal> {
     remove_file_if_present(file)?;
     OpenOptions::new()
         .write(true)

@@ -40,7 +40,7 @@ pub(crate) const CENTRAL_CODE: &str = "lane_live_central";
 pub(crate) const STEP_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// The Central CLI's state directory under a home: its login, its proxy and its agents.
-const CENTRAL_STATE: &str = ".jetbrains-central";
+pub(crate) const CENTRAL_STATE: &str = ".jetbrains-central";
 
 /// What the teardown deletes under the account home, each whole. `central add` writes beyond the wiring files: the
 /// plugins of Claude, the plugin cache of Codex, the extensions of Junie and the cache of Central.
