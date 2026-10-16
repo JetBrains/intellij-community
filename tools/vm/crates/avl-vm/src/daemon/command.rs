@@ -235,6 +235,20 @@ impl Host {
         .await
     }
 
+    /// [`Host::plan_run`], refused for a live lane whose run lacks the run input of its Central login. The check reads
+    /// the committed lane documents, so the refusal costs no build and no lease. A plan of `--lane` alone reads no
+    /// checkout, so the host paths resolve here first.
+    async fn plan_run_with(&self, ctx: &Ctx, args: &RunArgs, secrets: &RunSecrets) -> Result<RunPlan, Refusal> {
+        let plan = self.plan_run(ctx, args).await?;
+        ensure_host_paths(ctx, &self.runner, &self.settings).await?;
+        if let Some(documents) = crate::lane::lane_document_root(&self.settings)? {
+            for lane in plan.iterations.iter().filter_map(|iteration| iteration.selection.lane.as_deref()) {
+                secrets.require_live_login(&documents, lane)?;
+            }
+        }
+        Ok(plan)
+    }
+
     /// Says what the run will execute, once its selection resolved, and how long that work took in the earlier
     /// runs whose journals are on this machine.
     fn publish_plan(&self, plan: &RunPlan, argv: &[String]) {
@@ -275,7 +289,7 @@ impl Host {
             .run_id()
             .ok_or_else(|| Refusal::internal("a run under a receipt has no run id"))?;
         with_run_marker(ctx, &self.manager, &receipt, run_id, "run", async |current: Lease| {
-            let plan = self.plan_run(ctx, args).await?;
+            let plan = self.plan_run_with(ctx, args, secrets).await?;
             self.publish_plan(&plan, argv);
             ensure_host_paths(ctx, &self.runner, &self.settings).await?;
             let scope = BuildScope::worker(&self.settings, &current.worker)?;
@@ -343,7 +357,7 @@ impl Host {
         run_id: &str,
         secrets: &RunSecrets,
     ) -> Result<Outcome, Refusal> {
-        let plan = self.plan_run(ctx, args).await?;
+        let plan = self.plan_run_with(ctx, args, secrets).await?;
         self.publish_plan(&plan, argv);
         let workers = Workers {
             borrowed: None,

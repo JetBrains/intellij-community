@@ -37,7 +37,7 @@ use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
-use avl_wire::program::lane::{Delivery, LaneAgent, LaneDocument};
+use avl_wire::program::lane::{Delivery, LIVE_LANE, LaneAgent, LaneDocument};
 use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
 };
@@ -108,8 +108,12 @@ const AUTHORED_STEP: &str = "authored-step";
 /// reload of Air.
 const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset, HostAction::ReloadAir];
 
-/// The host ids of the live lane, which the lane daemon runs from slice L-live on.
+/// The host ids of the live lane. A program of the live lane may run them, an authored program between its parts too.
 const LIVE_HOST_IDS: [HostAction; 2] = [HostAction::RefreshLiveWiring, HostAction::AdoptLeftoverJunieSessions];
+/// The agent id of Junie, which the session inventory of the IDE names a Junie session by.
+const JUNIE_AGENT_ID: &str = "junie";
+/// How long the IDE may take to hand one session to the reset.
+const ADOPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
 
@@ -162,6 +166,17 @@ pub(crate) trait Lane: Probes {
     /// Reloads Air in place within `within`, waits until the lifecycle names the same bridge plugin again, and pings the
     /// new copy. The IDE keeps its process.
     fn reload_air(&self, within: Duration) -> Result<(), String>;
+
+    /// Copies the Central wiring of the guest account into the lane home again when the account re-wired. Only the lane
+    /// of a live run has one.
+    fn refresh_live_wiring(&self) -> Result<(), String> {
+        Err("the lane has no live run, so it has no Central wiring to refresh".to_owned())
+    }
+
+    /// The Junie sessions of the live project that the session index of the guest account names.
+    fn leftover_junie_sessions(&self) -> Result<Vec<String>, String> {
+        Err("the lane has no live run, so it has no Junie session to hand over".to_owned())
+    }
 }
 
 /// One file that an instruction answered for the evidence of its scenario, an element of `attachments` of its answer.
@@ -485,7 +500,9 @@ impl<'r, 's> Runner<'r, 's> {
     /// Cloud emulator. It answers what the reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<&'p SuiteReset, Failure> {
         document_fits(suite)?;
-        refuse_live_host_ids(suite)?;
+        if self.document.lane != LIVE_LANE {
+            refuse_live_host_ids(suite)?;
+        }
         self.attach_cloud_spawner(suite)?;
         let reset = suite.reset.as_ref().ok_or_else(|| {
             Failure::runner(
@@ -536,21 +553,47 @@ impl<'r, 's> Runner<'r, 's> {
             .as_deref()
             .map(|install| install_request(&suite.suite, install))
             .transpose()?;
+        // A live lane declares the runtimes of its agents in its live context.
+        let declared: Vec<&String> = self
+            .document
+            .cli_runtimes
+            .iter()
+            .chain(
+                self.document
+                    .live
+                    .iter()
+                    .flat_map(|live| live.runtimes.iter().map(|runtime| &runtime.name)),
+            )
+            .collect();
         for profile in &suite.profiles {
-            if let Some(cli) = profile
-                .required_executables
-                .iter()
-                .find(|cli| !self.document.cli_runtimes.contains(cli))
-            {
+            if let Some(cli) = profile.required_executables.iter().find(|cli| !declared.contains(cli)) {
                 return Err(Failure::runner(
                     kind::DOCUMENT,
                     format!(
-                        "the scenario '{}' drives the CLI '{cli}', and the lane declares no runtime for it; it declares {:?}",
-                        profile.name, self.document.cli_runtimes
+                        "the scenario '{}' drives the CLI '{cli}', and the lane declares no runtime for it; it declares {declared:?}",
+                        profile.name
                     ),
                 ));
             }
         }
+        let prologue: Vec<HostAction> = suite
+            .prologue_host_ids
+            .iter()
+            .map(|id| {
+                id.parse::<HostAction>()
+                    .ok()
+                    .filter(|action| LIVE_HOST_IDS.contains(action))
+                    .ok_or_else(|| {
+                        Failure::runner(
+                            kind::DOCUMENT,
+                            format!(
+                                "the suite '{}' states the prologue host id '{id}', which no prologue runs",
+                                suite.suite
+                            ),
+                        )
+                    })
+            })
+            .collect::<Result<_, _>>()?;
         self.watch.step(&format!("{} managed-agent baseline", suite.suite), || {
             self.lane
                 .services()
@@ -572,8 +615,38 @@ impl<'r, 's> Runner<'r, 's> {
                     ));
                 }
             }
+            for action in &prologue {
+                self.live_host_id(*action).map_err(|message| Failure::runner(kind::HOST, message))?;
+            }
             Ok(reset)
         })
+    }
+
+    /// Runs the live host id `action`: the refresh of the Central wiring, or the hand-over of the Junie sessions that
+    /// an earlier run left to the reset, one `AdoptProviderSession` each.
+    fn live_host_id(&self, action: HostAction) -> Result<(), String> {
+        match action {
+            HostAction::RefreshLiveWiring => self.lane.refresh_live_wiring(),
+            HostAction::AdoptLeftoverJunieSessions => {
+                let ids = self.lane.leftover_junie_sessions()?;
+                for id in &ids {
+                    self.lifecycle(
+                        "AdoptProviderSession",
+                        json!({"agentId": JUNIE_AGENT_ID, "agentSessionId": id}),
+                        ADOPT_TIMEOUT,
+                    )
+                    .map_err(|failure| failure.message)?;
+                }
+                if !ids.is_empty() {
+                    self.stream.note(format!(
+                        "handed {} Junie session(s) of the live project to the reset: {ids:?}",
+                        ids.len()
+                    ));
+                }
+                Ok(())
+            }
+            other => Err(format!("the host id '{other}' is no live host id")),
+        }
     }
 
     /// The full ids of the registry agents of the lane, sorted.
@@ -998,7 +1071,9 @@ impl<'r, 's> Runner<'r, 's> {
     ) -> Result<(), Failure> {
         let host = HostId::of(id_kind == IdKind::Assertion, id)
             .ok_or_else(|| Failure::runner(kind::DOCUMENT, format!("the host id '{label}' has no word of the host vocabulary")))?;
-        if suite.authored && !matches!(host, HostId::Action(action) if AUTHORED_HOST_IDS.contains(&action)) {
+        if suite.authored
+            && !matches!(host, HostId::Action(action) if AUTHORED_HOST_IDS.contains(&action) || LIVE_HOST_IDS.contains(&action))
+        {
             return Err(Failure::runner(
                 kind::DOCUMENT,
                 format!("the authored program runs '{label}', which no authored program may run"),
@@ -1451,6 +1526,14 @@ impl HostSide for RunnerHost<'_, '_, '_> {
     fn reload_air(&mut self) -> Result<(), String> {
         self.runner.reload_air_span(self.deadline)
     }
+
+    fn refresh_live_wiring(&mut self) -> Result<(), String> {
+        self.runner.live_host_id(HostAction::RefreshLiveWiring)
+    }
+
+    fn adopt_leftover_junie_sessions(&mut self) -> Result<(), String> {
+        self.runner.live_host_id(HostAction::AdoptLeftoverJunieSessions)
+    }
 }
 
 /// The `managedAgentInstall` of the suite `suite`: the simple name of its request type, the request, and its deadline in
@@ -1497,8 +1580,8 @@ fn document_fits(suite: &SuiteProgram) -> Result<(), Failure> {
     ))
 }
 
-/// Refuses a suite whose program runs a host id of [`LIVE_HOST_IDS`], before any request reaches the IDE. The lane
-/// daemon runs them from slice L-live on, so each scenario would fail at that id.
+/// Refuses a suite outside the live lane whose program or prologue runs a host id of [`LIVE_HOST_IDS`], before any
+/// request reaches the IDE. Only a live run has the account that those ids read.
 fn refuse_live_host_ids(suite: &SuiteProgram) -> Result<(), Failure> {
     let instructions = suite.profiles.iter().flat_map(|profile| {
         profile
@@ -1512,12 +1595,13 @@ fn refuse_live_host_ids(suite: &SuiteProgram) -> Result<(), Failure> {
         .filter_map(Instruction::id)
         .filter(|(kind, _)| *kind == IdKind::Action)
         .filter_map(|(_, id)| id.parse::<HostAction>().ok())
+        .chain(suite.prologue_host_ids.iter().filter_map(|id| id.parse::<HostAction>().ok()))
         .find(|action| LIVE_HOST_IDS.contains(action));
     match live {
         None => Ok(()),
         Some(action) => Err(Failure::runner(
-            kind::UNSUPPORTED,
-            format!("the suite '{}' uses {}", suite.suite, host_ids::live_host_id_refusal(action)),
+            kind::DOCUMENT,
+            format!("the suite '{}' runs the live host id '{action}' outside the live lane", suite.suite),
         )),
     }
 }

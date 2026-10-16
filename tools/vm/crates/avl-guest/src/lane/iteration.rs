@@ -27,6 +27,7 @@ use super::context::option_files_digest;
 use super::ide::{ContextPlugin, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
+use super::live::LiveRun;
 use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
@@ -317,14 +318,24 @@ pub(crate) fn selection_of(daemon: &Daemon, lane: &str, lane_inputs: &LaneInputs
 }
 
 /// The config key of the IDE of the lane of `selection` for the product `product_stamp`: the lane, its document, the
-/// identity of each declared CLI runtime, and the option files.
+/// identity of each declared CLI runtime and of each declared runtime of its live context, and the option files.
 pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &str) -> Result<String, String> {
-    let runtimes: BTreeMap<String, String> = daemon
+    let mut runtimes: BTreeMap<String, String> = daemon
         .with_ide(|owner| owner.runtimes_named(&selection.lane.cli_runtimes))
         .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?
         .into_iter()
         .map(|runtime| (runtime.name, runtime.identity))
         .collect();
+    if let Some(live) = &selection.lane.live {
+        let names: Vec<&String> = std::iter::once(&live.central_runtime)
+            .chain(live.runtimes.iter().map(|runtime| &runtime.name))
+            .collect();
+        daemon.with_ide(|owner| {
+            for runtime in owner.runtimes().iter().filter(|runtime| names.contains(&&runtime.name)) {
+                runtimes.insert(runtime.name.clone(), runtime.identity.clone());
+            }
+        });
+    }
     Ok(KeyInputs {
         lane: &selection.lane.lane,
         lane_document: &sha256_hex(&selection.lane_bytes),
@@ -335,14 +346,94 @@ pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &s
     .config_key())
 }
 
-/// The part of an iteration that can fail as a whole: the documents, the IDE, the plan and the scenarios. It answers
-/// whether the watchdog ended the run.
+/// The part of an iteration that can fail as a whole: the documents, the live run, the IDE, the plan and the scenarios.
+/// It answers whether the watchdog ended the run.
+///
+/// A live lane provisions its account before the IDE, and its run ends after the scenarios, also after a failure,
+/// before the summary of the iteration.
 fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration_dir: &Path, iteration_id: &str) -> Result<bool, String> {
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
     };
     let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
     let selection = selection_of(daemon, lane, lane_inputs, request)?;
+    let live = start_live(daemon, &selection, stream)?;
+    let outcome = execute_selection(
+        daemon,
+        request,
+        stream,
+        iteration_dir,
+        iteration_id,
+        &fake_agent_jar,
+        &selection,
+        live.as_ref(),
+    );
+    let Some(live) = live else {
+        return outcome;
+    };
+    let ended = live.end();
+    take_notes(stream, &live);
+    match (outcome, ended) {
+        (outcome, Ok(())) => outcome,
+        (Ok(_), Err(refusal)) => Err(refusal_text(&refusal)),
+        (Err(error), Err(refusal)) => Err(format!("{error}; and the end of the live run failed: {}", refusal_text(&refusal))),
+    }
+}
+
+/// The live run of `selection` with its account provisioned, when the lane document states a live context. A run whose
+/// provisioning fails ends before the refusal, so the account is torn down.
+fn start_live(daemon: &Daemon, selection: &Selection, stream: &Stream<'_>) -> Result<Option<LiveRun>, String> {
+    let Some(context) = &selection.lane.live else {
+        return Ok(None);
+    };
+    let declared = daemon.with_ide(|owner| owner.runtimes().to_vec());
+    let live = LiveRun::start(context, &declared, &|name| std::env::var(name).ok(), cfg!(target_os = "linux"))
+        .map_err(|refusal| refusal_text(&refusal))?;
+    stream.note(format!(
+        "lane {}: provisioning the JetBrains Central account of the guest",
+        selection.lane.lane
+    ));
+    let provisioned = live.provision();
+    take_notes(stream, &live);
+    if let Err(refusal) = provisioned {
+        let ended = live.end();
+        take_notes(stream, &live);
+        return Err(match ended {
+            Ok(()) => refusal_text(&refusal),
+            Err(teardown) => format!(
+                "{}; and the end of the live run failed: {}",
+                refusal_text(&refusal),
+                refusal_text(&teardown)
+            ),
+        });
+    }
+    Ok(Some(live))
+}
+
+/// The notes of `live` since the last call, on the stream.
+fn take_notes(stream: &Stream<'_>, live: &LiveRun) {
+    for line in live.take_notes() {
+        stream.note(line);
+    }
+}
+
+fn refusal_text(refusal: &crate::reply::AgentRefusal) -> String {
+    format!("{}: {}", refusal.code, refusal.message)
+}
+
+/// The iteration after the documents and the live run: the IDE, the plan and the scenarios.
+#[expect(clippy::too_many_arguments, reason = "the parts of one iteration that the caller resolved once")]
+fn execute_selection(
+    daemon: &Daemon,
+    request: &RunRequest,
+    stream: &Stream<'_>,
+    iteration_dir: &Path,
+    iteration_id: &str,
+    fake_agent_jar: &Path,
+    selection: &Selection,
+    live: Option<&LiveRun>,
+) -> Result<bool, String> {
+    let lane = request.lane.as_deref().unwrap_or_default();
     let plugins: Vec<ContextPlugin> = request
         .ide_plugins
         .iter()
@@ -362,15 +453,16 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         plugins.len()
     ));
     stream.emit(&watchdog_record("ide", request, Some(IDE_BUDGET + READY_TIMEOUT)));
-    let key = lane_key(daemon, &selection, &request.product_stamp)?;
+    let key = lane_key(daemon, selection, &request.product_stamp)?;
     let identity = LaneIdentity::new(key, daemon.port());
     let launch = LaneLaunch {
         document: &selection.lane,
         vocabulary_digest: &selection.vocabulary_digest,
         identity: &identity,
         product_stamp: &request.product_stamp,
-        fake_agent_jar: &fake_agent_jar,
+        fake_agent_jar,
         plugins: &plugins,
+        live,
     };
     // Each suite of a bare IDE launches its own, so a run of such suites alone needs no IDE of the lane.
     if selection.suites.iter().any(|suite| suite.program.launch.is_none()) {
@@ -378,6 +470,15 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
             .with_ide(|owner| owner.ensure(&launch, &mut Records(&mut |record| stream.emit(&record))))
             .map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))?;
         stream.note(format!("lane {lane}: ide {}", decision.action.as_str()));
+        // A fresh context got its seed from the context writer. A reused one lost its copies at the end of the last
+        // iteration, and the proxy of this iteration has a new secret, so it gets its seed here.
+        if let Some(live) = live {
+            let seeded = daemon
+                .with_ide(|owner| owner.held_paths())
+                .map_or(Ok(()), |paths| live.seed(&paths));
+            take_notes(stream, live);
+            seeded.map_err(|refusal| refusal_text(&refusal))?;
+        }
     } else {
         stream.note(format!(
             "lane {lane}: every selected suite launches a bare IDE, so the IDE of the lane does not start"
@@ -407,6 +508,7 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
         bridge: Bridge::new(BRIDGE_PORT, &token).map_err(|refusal| refusal.message)?,
         token,
         held: Mutex::new(None),
+        live,
     };
     daemon_lane.refresh_held();
     // Dropped at the end of the run, which removes the copies from the context.
@@ -466,6 +568,8 @@ struct DaemonLane<'a, 's> {
     /// The context directory, the run id and the `jcmd` of the held IDE run, read after each launch, so the watchdog
     /// kills the run without the lock of the owner.
     held: Mutex<Option<(PathBuf, String, Option<PathBuf>)>>,
+    /// The live run of the iteration, for the live lane alone.
+    live: Option<&'a LiveRun>,
 }
 
 impl DaemonLane<'_, '_> {
@@ -560,6 +664,21 @@ impl Lane for DaemonLane<'_, '_> {
             .with_ide(|owner| owner.end_bare(&mut Records(&mut |record| self.stream.emit(&record))));
         self.refresh_held();
         ended.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
+    }
+
+    fn refresh_live_wiring(&self) -> Result<(), String> {
+        let live = self
+            .live
+            .ok_or_else(|| "the lane has no live run, so it has no Central wiring to refresh".to_owned())?;
+        let refreshed = live.refresh();
+        take_notes(self.stream, live);
+        refreshed
+    }
+
+    fn leftover_junie_sessions(&self) -> Result<Vec<String>, String> {
+        self.live
+            .map(LiveRun::leftover_junie_sessions)
+            .ok_or_else(|| "the lane has no live run, so it has no Junie session to hand over".to_owned())
     }
 }
 

@@ -170,6 +170,18 @@ pub(crate) trait AgentProcesses {
     fn stop(&mut self, names: &[&str], timeout: Duration) -> Vec<String>;
 }
 
+impl<T: AgentProcesses + ?Sized> AgentProcesses for &mut T {
+    fn stop(&mut self, names: &[&str], timeout: Duration) -> Vec<String> {
+        (**self).stop(names, timeout)
+    }
+}
+
+impl<T: AgentProcesses + ?Sized> AgentProcesses for Box<T> {
+    fn stop(&mut self, names: &[&str], timeout: Duration) -> Vec<String> {
+        (**self).stop(names, timeout)
+    }
+}
+
 /// The Central CLI and the account that a live run provisions.
 pub(crate) struct Central<'a, R: CentralRunner, P: AgentProcesses> {
     pub account: &'a GuestAccount,

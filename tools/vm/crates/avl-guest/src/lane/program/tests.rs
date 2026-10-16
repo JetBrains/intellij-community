@@ -116,6 +116,9 @@ struct Fake {
     air_reloads: Mutex<Vec<Duration>>,
     /// A reload of Air fails, as one that the resident plugin refuses does.
     air_reload_fails: AtomicBool,
+    /// The Junie sessions that the live run finds, and the count of the refreshes of the live wiring.
+    leftovers: Mutex<Vec<String>>,
+    live_refreshes: AtomicU32,
 }
 
 impl Fake {
@@ -168,6 +171,8 @@ impl Fake {
             bare_launch_fails: AtomicBool::new(false),
             air_reloads: Mutex::new(Vec::new()),
             air_reload_fails: AtomicBool::new(false),
+            leftovers: Mutex::new(Vec::new()),
+            live_refreshes: AtomicU32::new(0),
         }
     }
 
@@ -326,6 +331,15 @@ impl Lane for Fake {
             return Err("the resident plugin refused the reload of Air: a reload runs".to_owned());
         }
         Ok(())
+    }
+
+    fn refresh_live_wiring(&self) -> Result<(), String> {
+        self.live_refreshes.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn leftover_junie_sessions(&self) -> Result<Vec<String>, String> {
+        Ok(self.leftovers.lock().unwrap().clone())
     }
 }
 
@@ -1026,11 +1040,10 @@ fn a_suite_with_two_cloud_agents_or_an_uncontrolled_one_is_refused_before_any_re
     }
 }
 
-// The host ids of the live lane are words of the vocabulary, and the lane daemon runs them from slice L-live on. So a
-// suite whose program runs one fails at once as one `lane_unsupported` container that names the word and the slice: no
-// scenario starts, and no request reaches the IDE.
-#[test]
-fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
+/// An authored suite `live-launch` of the lane `lane` whose program refreshes the live wiring before its part and hands
+/// the Junie leftovers to the reset after it, as the Junie scenario of the live suite does. Its prologue hands them over
+/// once before the first scenario.
+fn live_suite(lane: &str) -> Suite {
     let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
         "mayTake": [], "params": {"part": {"type": "enum", "values": ["open"], "optional": false},
             "scenario": {"type": "enum", "values": ["generation"], "optional": false},
@@ -1038,30 +1051,100 @@ fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
             "timeoutMs": {"type": "int", "optional": false}}});
     let host = json!({"side": "host", "timeoutMs": 480_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
         "mayTake": [], "params": {}});
-    let suite = suite_of(&json!({
-        "schemaVersion": 2, "suite": "live-launch", "lane": "UI", "testClassName": "AirLiveLaunchUiTest", "authored": true,
+    suite_of(&json!({
+        "schemaVersion": 2, "suite": "live-launch", "lane": lane, "testClassName": "AirLiveLaunchUiTest", "authored": true,
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.live.AirLiveLaunchUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host}, "assertions": {}},
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host,
+            "adopt-leftover-junie-sessions": host}, "assertions": {}},
         "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
+        "prologueHostIds": ["adopt-leftover-junie-sessions"],
         "profiles": [{"name": "the composer launches a live session", "key": "generation", "fixture": "authored", "flags": {},
-            "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+            "flagKeys": [], "requiredExecutables": ["claude"], "setups": [], "steps": [],
             "program": [{"action": "refresh-live-wiring"},
                 {"action": "authored-step", "args": {"part": "open", "scenario": "generation", "suite": "live-launch",
-                    "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}}]}],
-    }));
+                    "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}},
+                {"action": "adopt-leftover-junie-sessions"}]}],
+    }))
+}
+
+/// The fixture lane document as the lane `UI_LIVE`, whose live context declares the runtimes `claude` and `junie`.
+fn live_document() -> LaneDocument {
+    let mut document = lane_document();
+    document.lane = LIVE_LANE.to_owned();
+    document.live = Some(avl_wire::program::lane::LiveContext {
+        login_input: "AIR_LIVE_CENTRAL_LOGIN".to_owned(),
+        login_source: "central login export".to_owned(),
+        central_runtime: "central".to_owned(),
+        central_port: 19516,
+        central_agents: vec!["codex".to_owned()],
+        runtimes: ["claude", "junie"]
+            .map(|name| avl_wire::program::lane::LiveRuntime {
+                name: name.to_owned(),
+                environment: BTreeMap::new(),
+            })
+            .to_vec(),
+        project_unpack_root: "/tmp/air-ui-live/project".to_owned(),
+    });
+    document
+}
+
+// Only a live run has the account that the live host ids read. So outside the live lane a suite whose program or
+// prologue runs one fails at once as one `lane_document` container that names the word: no scenario starts, and no
+// request reaches the IDE.
+#[test]
+fn a_suite_that_runs_a_live_host_id_outside_the_live_lane_is_refused_before_any_request() {
     let fake = Fake::new(Script::default());
-    let ran = run(&fake, &[suite], None);
+    let ran = run(&fake, &[live_suite("UI")], None);
     let failed = ran.events("containerFailed");
     assert_eq!(failed.len(), 1, "{failed:#?}");
-    assert_eq!(failed[0]["type"], kind::UNSUPPORTED);
+    assert_eq!(failed[0]["type"], kind::DOCUMENT);
     assert_eq!(
         failed[0]["message"],
-        "the suite 'live-launch' uses the host id 'refresh-live-wiring', which the lane daemon runs from slice L-live on"
+        "the suite 'live-launch' runs the live host id 'refresh-live-wiring' outside the live lane"
     );
     assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
     assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+}
+
+// In the live lane the prologue hands each Junie session that an earlier run left to the reset, one
+// `AdoptProviderSession` each, before the first reset. The program refreshes the live wiring before its part and hands
+// the leftovers over again after it. A scenario may drive a CLI that the live context declares.
+#[test]
+fn the_live_host_ids_refresh_the_wiring_and_hand_the_junie_leftovers_to_the_reset() {
+    let fake = Fake::new(Script::default());
+    *fake.leftovers.lock().unwrap() = vec!["left-1".to_owned(), "left-2".to_owned()];
+    let ran = run_set(
+        &fake,
+        &[live_suite("UI_LIVE")],
+        &Setup {
+            document: live_document(),
+            ..Setup::default()
+        },
+    );
+
+    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
+    assert_eq!(ran.events("testFinished").len(), 1);
+    let adopted: Vec<Value> = fake
+        .script
+        .lock()
+        .unwrap()
+        .requests
+        .iter()
+        .filter(|(_, request)| request["type"].as_str().is_some_and(|kind| kind.ends_with("AdoptProviderSession")))
+        .map(|(_, request)| json!([request["agentId"], request["agentSessionId"]]))
+        .collect();
+    let left = [json!(["junie", "left-1"]), json!(["junie", "left-2"])];
+    assert_eq!(adopted, [left.clone(), left].concat());
+    assert_eq!(fake.live_refreshes.load(Ordering::SeqCst), 1);
+    let kinds: Vec<String> = fake.requests().into_iter().map(|(_, kind)| kind).collect();
+    let first_adopt = kinds.iter().position(|kind| kind.ends_with("AdoptProviderSession")).unwrap();
+    let first_reset = kinds.iter().position(|kind| kind.ends_with("Reset")).unwrap();
+    assert!(
+        first_adopt < first_reset,
+        "the prologue hands the leftovers over before the first reset: {kinds:?}"
+    );
 }
 
 // An authored part is one `authored-step` with the values it takes. It answers exactly the values it declares, and its

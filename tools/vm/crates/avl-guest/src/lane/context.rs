@@ -28,10 +28,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use avl_wire::ide::{ADVANCED_SETTINGS_FILE, IdePrepared, NO_README_SETTINGS};
-use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LaneAgent, LaneDocument, Requirement};
+use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LIVE_LANE, LaneAgent, LaneDocument, Requirement};
 use serde::Serialize;
 
 use super::identity::{BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity, terminal_login_key};
+use super::live::LiveRun;
 use super::package::sha256_hex;
 use super::services::codex;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
@@ -83,9 +84,6 @@ pub(crate) const CODEX_CONFIG: &str = ".codex/config.toml";
 
 /// The identity of the JetBrains Cloud emulator that the lane document states, `AirJetBrainsCloudEmulator.IDENTITY`.
 pub(crate) const CLOUD_IDENTITY: &str = "jba-jcp-emulator-1";
-
-/// The lane of the live agents, which runs with credentials of the host. The lane daemon launches no live lane.
-const LIVE_LANE: &str = "UI_LIVE";
 
 /// The branch of the repository that the project of a Cloud lane becomes, `AirCloudGitRemote.BRANCH`.
 pub(crate) const CLOUD_BRANCH: &str = "main";
@@ -142,13 +140,16 @@ pub(crate) fn codex_identity() -> String {
     format!("mock-responses port={} reply={}", codex::PORT, codex::REPLY)
 }
 
-/// One declared CLI runtime: the launcher name, the command that runs it, and the identity of its declared inputs.
+/// One declared CLI runtime: the launcher name, the command that runs it, the identity of its declared inputs, and the
+/// version that its manifest states.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct CliRuntime {
     pub name: String,
     /// The interpreter, when the runtime has one, then the entry point. Each one is an absolute guest path.
     pub command: Vec<String>,
     pub identity: String,
+    /// The `version` of the manifest, which the live lane pins the release track of the Central CLI to.
+    pub version: Option<String>,
 }
 
 /// The ports of the lane services of one lane. A service that the lane does not run has none.
@@ -208,6 +209,8 @@ pub(crate) struct LaneContext<'a> {
     pub fake_agent_jar: &'a Path,
     /// The declared CLI runtimes. Their names are the `cliRuntimes` of the document.
     pub runtimes: &'a [CliRuntime],
+    /// The live run of the iteration, for the live lane alone.
+    pub live: Option<&'a LiveRun>,
 }
 
 impl LaneContext<'_> {
@@ -215,10 +218,17 @@ impl LaneContext<'_> {
     /// services of the lane.
     pub(crate) fn check(&self) -> Result<ServicePorts, AgentRefusal> {
         let document = self.document;
-        if document.lane == LIVE_LANE {
+        let live = document.lane == LIVE_LANE;
+        if live && self.live.is_none() {
             return Err(refused(
-                "the lane daemon launches no live lane: the lane UI_LIVE needs the credentials of the host",
+                "the lane UI_LIVE launches only in a live run, which the lane daemon of a Linux guest starts with its Central login",
             ));
+        }
+        if !live && self.live.is_some() {
+            return Err(AgentRefusal::internal(format!(
+                "a live run reached the context of the lane {}",
+                document.lane
+            )));
         }
         let declared: BTreeSet<&str> = document.cli_runtimes.iter().map(String::as_str).collect();
         let given: BTreeSet<&str> = self.runtimes.iter().map(|runtime| runtime.name.as_str()).collect();
@@ -232,10 +242,11 @@ impl LaneContext<'_> {
         if let Some(runtime) = self.runtimes.iter().find(|runtime| runtime.command.is_empty()) {
             return Err(refused(format!("the CLI runtime '{}' has no command", runtime.name)));
         }
-        let served = BTreeMap::from([
-            ("codexModel".to_owned(), codex_identity()),
-            ("jetBrainsCloud".to_owned(), CLOUD_IDENTITY.to_owned()),
-        ]);
+        // A live lane runs the real Codex on the Central proxy, so it gets no Codex mock model.
+        let mut served = BTreeMap::from([("jetBrainsCloud".to_owned(), CLOUD_IDENTITY.to_owned())]);
+        if !live {
+            served.insert("codexModel".to_owned(), codex_identity());
+        }
         if document.services != served {
             return Err(refused(format!(
                 "the lane document of {} states the services {:?}, and the lane daemon serves {served:?}",
@@ -262,7 +273,7 @@ impl LaneContext<'_> {
             registry: (!document.registry_agents.is_empty()).then(|| self.identity.registry_port()),
             cloud: self.identity.cloud_port(),
             feedback: requires_feedback.then(|| self.identity.feedback_port()),
-            codex: Some(codex::PORT),
+            codex: (!live).then_some(codex::PORT),
         })
     }
 
@@ -298,6 +309,9 @@ impl LaneContext<'_> {
         if let Some(port) = ports.codex {
             let real_project = real_path(project)?;
             write_file(&home.join(CODEX_CONFIG), codex_config(&real_project, port).as_bytes())?;
+        }
+        if let Some(live) = self.live {
+            live.seed(paths)?;
         }
         Ok(ports)
     }

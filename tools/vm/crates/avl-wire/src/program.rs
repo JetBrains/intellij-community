@@ -132,6 +132,10 @@ pub struct SuiteProgram {
     /// Absent for a suite whose fixtures install no agent.
     #[serde(default, deserialize_with = "crate::json::non_null")]
     pub managed_agent_install: Option<Box<RawValue>>,
+    /// The host ids that the prologue of the suite runs before the first scenario, such as
+    /// `adopt-leftover-junie-sessions` of the live lane. Absent for a suite whose prologue runs none.
+    #[serde(default)]
+    pub prologue_host_ids: Vec<String>,
 }
 
 /// The launch of an IDE of one suite alone, `launch` of the suite document.

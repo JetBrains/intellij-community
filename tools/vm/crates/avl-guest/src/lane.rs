@@ -12,13 +12,6 @@ pub(crate) mod ide;
 pub(crate) mod identity;
 pub(crate) mod inputs;
 pub(crate) mod iteration;
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the lane daemon provisions the live context once the iteration runs the live lane"
-    )
-)]
 pub(crate) mod live;
 pub(crate) mod package;
 pub(crate) mod program;

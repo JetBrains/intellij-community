@@ -19,6 +19,7 @@
 //! the host, so every lane runs on every backend.
 
 use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 
 use avl_affected::{affected_suites, air_area};
 use avl_base::{Config, Outcome, Refusal, Reporter};
@@ -138,6 +139,15 @@ pub(crate) fn resolve_changed_suites(settings: &Config, paths: &[String], report
         affected: resolve_affected(settings, paths, reporter)?,
         subject: CHANGED_PATHS_SUBJECT.to_owned(),
     })
+}
+
+/// The resource root of the lane documents of the checkout: the directory above the suite documents that the catalog
+/// names, `None` for an area without a catalog.
+pub(crate) fn lane_document_root(settings: &Config) -> Result<Option<PathBuf>, Refusal> {
+    let Some(catalog) = air_area().lanes().catalog() else {
+        return Ok(None);
+    };
+    Ok(settings.host_repo()?.join(catalog.flow_profile_dir).parent().map(Path::to_path_buf))
 }
 
 /// Every suite of the lane `lane` that the catalog names, by test class: the generated suite documents and the authored

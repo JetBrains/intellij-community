@@ -285,6 +285,7 @@ fn declared_runtime(name: &str, manifest: &Path, runfiles_root: &Path) -> Result
         name: name.to_owned(),
         command,
         identity: sha256_hex(&digested),
+        version: value("version"),
     })
 }
 

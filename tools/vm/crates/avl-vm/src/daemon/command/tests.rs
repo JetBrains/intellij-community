@@ -1236,6 +1236,73 @@ async fn a_self_leased_run_refuses_its_selection_before_it_leases() {
     assert!(!fixture.daemon.saw_request("/run"), "a refused selection reached the daemon");
 }
 
+/// The committed lane document of the live lane `ui-live`, where the catalog of the fixture checkout puts the lane
+/// documents.
+fn commit_live_lane_document(fixture: &Fixture) {
+    let document = json!({
+        "schemaVersion": 2, "lane": "UI_LIVE", "launchProperties": [], "requirements": [], "agents": [],
+        "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": [],
+        "services": {"jetBrainsCloud": "jba-jcp-emulator-1"},
+        "live": {"loginInput": "AIR_LIVE_CENTRAL_LOGIN", "loginSource": "central login export", "centralRuntime": "central",
+            "centralPort": 19516, "centralAgents": ["codex", "claude-code", "junie"],
+            "runtimes": [{"name": "claude", "environment": {"DISABLE_AUTOUPDATER": "1"}}, {"name": "junie", "environment": {}}],
+            "projectUnpackRoot": "/tmp/air-ui-live/project"},
+    });
+    let root = crate::lane::lane_document_root(&fixture.settings)
+        .unwrap()
+        .expect("the Air lane table names a catalog");
+    let directory = root.join(avl_wire::program::LANE_DOCUMENT_DIRECTORY);
+    std::fs::create_dir_all(&directory).unwrap();
+    std::fs::write(directory.join("ui-live.json"), document.to_string()).unwrap();
+}
+
+/// The refusal of a run of `ui-live` without the run input of its Central login, as the window of the live lane
+/// compares it.
+const LIVE_LOGIN_REFUSAL: &str = "the lane ui-live runs real agents on the JetBrains Central login, and the run has no run \
+                                  input AIR_LIVE_CENTRAL_LOGIN; pipe the login into the run: `central login export | vm.cmd \
+                                  run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-`";
+
+// The live lane runs on the Central login that the run hands its guest. A run of it without that run input is refused
+// before the build, the lease and any guest command, under a receipt and self-leased, and the refusal names the
+// command that pipes the login. Another secret is no login. With the login the same run reaches the daemon.
+#[tokio::test]
+async fn a_live_run_without_its_login_input_is_refused_before_any_build() {
+    let (fixture, receipt) = run_outcome_fixture(passing_run_lines("it-31")).await;
+    commit_live_lane_document(&fixture);
+    let builds = fixture.bazel.build_calls();
+    fixture.forget_calls();
+    let other = fixture.settings.runtime_root.join("other");
+    std::fs::write(&other, "another-secret-of-the-run-0123456789").unwrap();
+    let other = format!("AIR_OTHER_SECRET=@{}", other.display());
+    for argv in [vec!["--lane", "ui-live"], vec!["--lane", "ui-live", "--test-env", &other]] {
+        let (result, verdict) = run_for_verdict(&fixture, &argv, Some(&receipt)).await;
+        let failure = refusal(result);
+        assert_eq!((failure.code.as_ref(), failure.exit), ("lane_live_input", Exit::USAGE), "{argv:?}");
+        assert_eq!(failure.message, LIVE_LOGIN_REFUSAL);
+        assert!(verdict.is_none());
+    }
+    assert_eq!(fixture.bazel.build_calls(), builds, "the refusal costs no build");
+    assert_eq!(fixture.channel().lines(), Vec::<String>::new());
+    assert!(!fixture.daemon.saw_request("POST /run"));
+
+    fixture.stdin.feed(b"central-login-export-from-a-pipe-0123456789\n");
+    let (result, _) = run_for_verdict(
+        &fixture,
+        &["--lane", "ui-live", "--test-env", "AIR_LIVE_CENTRAL_LOGIN=@-"],
+        Some(&receipt),
+    )
+    .await;
+    result.unwrap();
+    assert!(fixture.daemon.saw_request("POST /run"), "a run with its login reaches the daemon");
+
+    let fixture = self_leased_fixture(Vec::new()).await;
+    commit_live_lane_document(&fixture);
+    let (result, _) = run_for_verdict(&fixture, &["--lane", "ui-live"], None).await;
+    assert_eq!(refusal(result).message, LIVE_LOGIN_REFUSAL);
+    require_unleased(&fixture);
+    assert!(!fixture.daemon.saw_request("/run"), "a refused live run reached the daemon");
+}
+
 // An interrupt while the iteration is in flight keeps the lease, as `shard` does: a release proves no run is active,
 // which is not true here. The refusal names the receipt that frees the worker.
 #[tokio::test]

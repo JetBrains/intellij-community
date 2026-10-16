@@ -312,6 +312,8 @@ pub(crate) struct LaneLaunch<'a> {
     pub product_stamp: &'a str,
     pub fake_agent_jar: &'a Path,
     pub plugins: &'a [ContextPlugin],
+    /// The live run of the iteration, for the live lane alone. The context writer seeds the lane home with it.
+    pub live: Option<&'a super::live::LiveRun>,
 }
 
 /// The IDE that the owner holds.
@@ -393,6 +395,16 @@ impl IdeOwner {
         self.inputs.runtimes_named(names)
     }
 
+    /// Every declared CLI runtime of the runtime descriptor.
+    pub(crate) fn runtimes(&self) -> &[super::context::CliRuntime] {
+        &self.inputs.runtimes
+    }
+
+    /// The paths of the context of the held IDE, or `None` when the owner holds none.
+    pub(crate) fn held_paths(&self) -> Option<IdePrepared> {
+        self.held.as_ref().map(|held| held.paths.clone())
+    }
+
     /// Whether the held IDE run is live now.
     pub(crate) fn is_running(&self) -> bool {
         self.held.as_ref().is_some_and(|held| live_state(held).is_some())
@@ -410,6 +422,7 @@ impl IdeOwner {
             java: &java,
             fake_agent_jar: launch.fake_agent_jar,
             runtimes: &runtimes,
+            live: launch.live,
         };
         let ports = context.check()?;
         if let Some(other) = self.held.as_ref().map(|held| held.key.clone()).filter(|held| *held != key) {
@@ -886,10 +899,15 @@ pub(crate) fn fresh_context(inputs: &LaunchInputs, key: &str, document: &LaneDoc
         ide_root: inputs.ide_root.display().to_string(),
         launch_key: key.to_owned(),
         fresh: true,
+        // The project of a live lane unpacks outside the context, below no agent instruction or configuration.
         project: ProjectSource {
             archive: inputs.project_archive.display().to_string(),
             archive_root: inputs.project_root.clone(),
-            relocate_to: None,
+            relocate_to: if bare {
+                None
+            } else {
+                document.live.as_ref().map(|live| live.project_unpack_root.clone())
+            },
         },
         disabled_plugin_ids: if bare { Vec::new() } else { document.disabled_plugin_ids.clone() },
     }

@@ -31,6 +31,9 @@ targets:
   - ../crates/avl-guest/src/lane/program.rs
   - ../crates/avl-guest/src/lane/values.rs
   - ../crates/avl-guest/src/lane/host_ids.rs
+  - ../crates/avl-guest/src/lane/live.rs
+  - ../crates/avl-guest/src/lane/live/central.rs
+  - ../crates/avl-guest/src/lane/live/home.rs
   - ../crates/avl-guest/src/lane/recycle.rs
   - ../crates/avl-guest/src/lane/watchdog.rs
   - ../crates/avl-guest/src/lane/stream.rs
@@ -566,8 +569,8 @@ Before a launch, the lane daemon writes these files into the context:
 - The daemon never writes or deletes `control-next-start.json`. An existing `ide.general.xml` stays.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file`)
 
-- The daemon refuses with `lane_context_input` a live lane, other CLI runtimes and other services. The reader of the
-  lane document refuses a controlled agent without a control owner.
+- The daemon refuses with `lane_context_input` other CLI runtimes and other services, and a live lane outside a live
+  run. The reader of the lane document refuses a controlled agent without a control owner.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_document_that_the_daemon_cannot_launch_as_it_states_is_refused`)
 
 The lane daemon reads the other launch inputs from the runtime descriptor at its boot:
@@ -582,6 +585,75 @@ The lane daemon reads the other launch inputs from the runtime descriptor at its
 
 - A runtime whose entry point is missing, or cannot run, is refused by name.
   [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`a_runtime_whose_entry_cannot_run_is_refused`)
+
+#### The live lane
+
+The lane `UI_LIVE` drives real agents on the JetBrains Central account of the developer. Its lane document states a
+live context. The live context names the run input of the Central login and the host command that fills it. It also
+names the declared Central runtime, the pinned proxy port and the agents that Central wires. Last, it names the live
+runtimes and the unpack root of the project. No field of the lane document holds a credential.
+
+- Only the lane `UI_LIVE` states a live context, and it cannot launch without one.
+  [@test] ../crates/avl-wire/src/program/lane/tests.rs (`a_live_context_fits_the_live_lane_only`)
+  [@test] ../crates/avl-wire/src/program/lane/tests.rs (`a_live_context_that_does_not_fit_its_lane_is_refused`)
+
+- A live run is the lane daemon of a Linux guest whose environment names the run secrets directory. A host, a
+  `lane-run` and a macOS guest refuse the live lane by name with `lane_live_input`.
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`only_the_lane_daemon_of_a_linux_guest_has_a_guest_account`)
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_live_lane_outside_a_live_run_is_refused_by_name`)
+
+- `vm.cmd run` refuses a live run without the run input of its Central login before any build or lease. The refusal
+  names the command that pipes the login.
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`a_live_run_without_its_login_input_is_refused_before_any_build`)
+
+- A runtime descriptor without the Central runtime or a live runtime is refused with `lane_live_input` before any
+  Central step. The refusal names the missing runtimes and the define that builds them.
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_descriptor_without_the_live_runtimes_is_refused_with_the_define`)
+
+- Before the lane IDE launches, the lane daemon provisions the guest account with the declared Central CLI. It pins
+  the release track, the analytics and the port, and imports the login on stdin. Then it starts the proxy, wires each
+  agent and requires the proxy on the pinned port. The login file is deleted after the import, whatever its outcome.
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`the_provisioning_pins_the_configuration_imports_on_stdin_starts_the_proxy_and_wires_every_agent`)
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`a_proxy_on_another_port_fails_the_provisioning`)
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`an_empty_login_input_fails_before_the_import_runs`)
+
+- A failed Central step fails the iteration with `lane_live_central`. The refusal names the step and its exit, and
+  quotes the last line of its standard error with every part of the login redacted.
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`a_failed_import_names_the_step_and_its_exit_code_redacts_the_secret_and_still_deletes_the_input`)
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`a_step_that_outlives_its_bound_fails_by_its_name`)
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_rejected_login_fails_at_the_import_with_the_literal_prefix_and_the_end_still_clears_the_account`)
+
+- The lane home gets only the Central wiring of the guest account. That is the proxy variables and the key helper of
+  Claude Code, and the model provider of Codex. The files that carry a token are readable by their owner only.
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`a_central_launch_copies_only_the_wiring_keeps_the_trust_seed_and_writes_no_vendor_key`)
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`a_copied_wiring_that_names_no_local_proxy_fails_the_seed`)
+
+- The bin directory gets the launchers of the live runtimes, the Node executables of the guest, and the Central
+  guard. The guard passes only the subcommands that read on to the Central CLI, with the account home.
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`the_central_guard_passes_reads_to_the_central_cli_with_the_account_home_and_refuses_the_rest`)
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`the_launchers_export_their_environment_and_the_node_executables_are_linked`)
+
+- The lane IDE of a live lane gets no fake ACP registry and no Codex mock model. Its project unpacks outside the
+  context, below no agent instruction or configuration.
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_live_context_names_no_fake_registry_and_no_codex_mock`)
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`a_project_below_agent_instructions_is_refused`)
+
+- The host id `refresh-live-wiring` copies the wiring again when the account re-wired. The host id
+  `adopt-leftover-junie-sessions` hands each Junie session of the live project to the reset.
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`a_refresh_copies_the_wiring_again_only_after_the_account_re_wired`)
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`only_the_junie_sessions_of_the_lane_project_are_leftovers`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`the_live_host_ids_refresh_the_wiring_and_hand_the_junie_leftovers_to_the_reset`)
+
+- At the end of each iteration, the lane daemon deletes the credential copies of the lane home. This also occurs after
+  a failed launch, and always before the verdict. Then it stops the proxy, ends the agent processes of the account, and deletes
+  the Central state and the agent homes of the account. It never runs `central logout`.
+  [@test] ../crates/avl-guest/src/lane/live/home/tests.rs (`the_end_of_a_run_deletes_the_copied_wiring_and_the_account_keeps_its_own`)
+  [@test] ../crates/avl-guest/src/lane/live/central/tests.rs (`the_teardown_stops_the_proxy_and_deletes_the_accounts_central_and_agent_homes_whole_never_logging_out`)
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`one_live_iteration_provisions_seeds_and_tears_down_with_fake_clis`)
+
+- No note, refusal, report or log line of a live run holds a value of the login or of the copied wiring.
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`one_live_iteration_provisions_seeds_and_tears_down_with_fake_clis`)
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_rejected_login_fails_at_the_import_with_the_literal_prefix_and_the_end_still_clears_the_account`)
 
 ### Supervision and evidence
 
@@ -1547,11 +1619,10 @@ lanes to the verb, and it goes after that move.
 - A suite with two Cloud agents, or with one that is not controlled, fails as one container `lane_document`.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_two_cloud_agents_or_an_uncontrolled_one_is_refused_before_any_request`)
 
-- The host ids `refresh-live-wiring` and `adopt-leftover-junie-sessions` of the lane `ui-live` are words of the host
-  vocabulary, so every suite document fits it. The lane daemon runs them from slice L-live on. Until then a suite that
-  runs one fails as one container `lane_unsupported` before its first request, and the refusal names the word and the
-  slice.
-  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_that_runs_a_live_host_id_is_refused_before_any_request`)
+- The host ids `refresh-live-wiring` and `adopt-leftover-junie-sessions` run in a live lane only. A suite of another
+  lane that runs one in its program or its prologue fails as one container `lane_document`. It fails before its first
+  request, and the refusal names the word.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_that_runs_a_live_host_id_outside_the_live_lane_is_refused_before_any_request`)
 
 - The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)

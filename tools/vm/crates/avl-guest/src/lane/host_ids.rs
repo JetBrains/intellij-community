@@ -86,6 +86,16 @@ pub(crate) trait HostSide {
 
     /// Reloads Air in place, waits until the lifecycle names the same bridge plugin again, and pings the new copy.
     fn reload_air(&mut self) -> Result<(), String>;
+
+    /// Copies the Central wiring of the guest account into the lane home again when the account re-wired.
+    fn refresh_live_wiring(&mut self) -> Result<(), String> {
+        Err("the lane has no live run, so it has no Central wiring to refresh".to_owned())
+    }
+
+    /// Hands each Junie session of the live project that the guest account holds to the reset.
+    fn adopt_leftover_junie_sessions(&mut self) -> Result<(), String> {
+        Err("the lane has no live run, so it has no Junie session to hand over".to_owned())
+    }
 }
 
 /// One host id of an instruction.
@@ -104,11 +114,6 @@ impl HostId {
             id.parse().ok().map(Self::Action)
         }
     }
-}
-
-/// Why the lane daemon does not run the live host id `action` yet: the sentence that names the word and the slice.
-pub(crate) fn live_host_id_refusal(action: HostAction) -> String {
-    format!("the host id '{action}', which the lane daemon runs from slice L-live on")
 }
 
 /// Performs `id` with the arguments `args` of the instruction `label`, and keeps the values that it answers.
@@ -140,10 +145,8 @@ pub(crate) fn perform(
         HostId::Action(HostAction::ReleaseDownload) => side.services().registry_clear(),
         HostId::Action(HostAction::ReloadAir) => side.reload_air(),
         HostId::Action(HostAction::RestartIde) => restart_ide(values, side),
-        // The runner refuses a suite with either one before its first request, so neither reaches this point.
-        HostId::Action(action @ (HostAction::AdoptLeftoverJunieSessions | HostAction::RefreshLiveWiring)) => {
-            Err(live_host_id_refusal(action))
-        }
+        HostId::Action(HostAction::RefreshLiveWiring) => side.refresh_live_wiring(),
+        HostId::Action(HostAction::AdoptLeftoverJunieSessions) => side.adopt_leftover_junie_sessions(),
         HostId::Assertion(HostAssertion::ConsentDownloadFaultArmed) => {
             let fault = side.services().registry_fault()?;
             if fault == PACKAGE_HTTP_ERROR {

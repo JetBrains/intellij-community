@@ -68,11 +68,13 @@ fn a_runtime_flag_names_the_manifest_of_one_cli_runtime() {
                 name: "pi".to_owned(),
                 command: vec![path("_main/tools/node"), path("_main/tools/pi/package/cli.js")],
                 identity: sha256_hex(format!("{pi_manifest}nodelock-pi").as_bytes()),
+                version: Some("1.0".to_owned()),
             },
             CliRuntime {
                 name: "codex".to_owned(),
                 command: vec![path("_main/tools/codex/bin/codex")],
                 identity: sha256_hex(format!("{codex_manifest}lock-codex").as_bytes()),
+                version: Some("0.9".to_owned()),
             },
         ]
     );
