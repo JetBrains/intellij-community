@@ -659,10 +659,20 @@ impl Scenario {
                 );
             }
         }
+        let log_dir = self.slicer.log_dir().map(Path::to_path_buf);
+        let latest_facts = if self.sliced { latest() } else { None };
         if self.sliced
-            && let Err(error) = self.slicer.cut(&self.dir.join(IDEA_LOG_FILE), latest().as_ref())
+            && let Err(error) = self.slicer.cut(&self.dir.join(IDEA_LOG_FILE), latest_facts.as_ref())
         {
             self.trace_error(ERROR_SOURCE_LOG, &format!("{error:#}"), at_ms);
+        }
+        if status == BundleStatus::Failed {
+            let latest_dir = latest_facts
+                .as_ref()
+                .and_then(|facts| Path::new(&facts.log_path).parent())
+                .filter(|dir| log_dir.as_deref() != Some(*dir))
+                .map(Path::to_path_buf);
+            self.attach_thread_dumps(log_dir.into_iter().chain(latest_dir), at_ms);
         }
 
         let root_status = match status {

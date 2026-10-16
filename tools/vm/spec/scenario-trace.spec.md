@@ -304,6 +304,13 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   renames the copy into place and removes the lane file.
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_move_that_cannot_place_the_file_keeps_the_lane_file`)
 
+- A failed scenario keeps the thread dumps that the IDE wrote while the scenario ran. A dump is a file of the IDE log
+  directory with `thread-dump` in its name. The recorder copies each dump into the bundle as `attach/NNNN.log`. An
+  `air.attachment` record on the root span names it, and the IDE keeps its file. A bundle keeps at most 4 dumps. A
+  passed scenario keeps none.
+  [@test] ../crates/avl-record/src/dumps/tests.rs (`a_failed_scenario_keeps_the_thread_dumps_that_the_ide_wrote_while_it_ran`)
+  [@test] ../crates/avl-record/src/dumps/tests.rs (`a_passed_scenario_keeps_no_thread_dump`)
+
 - `done` can carry the `message` and the `trace` of the failure that ended the scenario. The trace is the
   failure's class on the first line, then the lines of its stack. The recorder refuses either field on a passed
   `done`.

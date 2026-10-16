@@ -53,6 +53,11 @@ impl LogSlicer {
         Ok(())
     }
 
+    /// The directory of the log that the slice started in, or `None` before [LogSlicer::begin] and after [LogSlicer::cut].
+    pub(crate) fn log_dir(&self) -> Option<&Path> {
+        self.begun.as_ref().and_then(|begun| begun.path.parent())
+    }
+
     /// Writes the slice to `output`. `latest` is the facts read at the end, `None` when the bridge did not answer, in
     /// which case only the file the scenario started in is read.
     pub(crate) fn cut(&mut self, output: &Path, latest: Option<&Facts>) -> anyhow::Result<()> {

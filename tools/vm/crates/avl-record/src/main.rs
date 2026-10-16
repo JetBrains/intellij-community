@@ -37,6 +37,7 @@ mod allure;
 mod attach;
 mod bundle;
 mod capture;
+mod dumps;
 mod frames;
 mod idealog;
 mod ladder;
