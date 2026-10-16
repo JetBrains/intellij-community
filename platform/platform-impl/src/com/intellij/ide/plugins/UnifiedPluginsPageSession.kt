@@ -720,8 +720,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
           host.requestRestart(customizer, headerComponent)
         }
         else {
-          host.closeSession()
-          PluginManagerConfigurable.shutdownOrRestartApp()
+          host.runRestartButton(headerComponent)
         }
       }
     }

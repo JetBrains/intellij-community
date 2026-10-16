@@ -39,7 +39,7 @@ targets:
 # Plugin Operations
 
 Status: Active
-Date: 2026-09-18
+Date: 2026-10-16
 
 ## Purpose
 
@@ -222,6 +222,13 @@ Untested: No focused test covers every management edit and refresh path.
   )
 
 ## Update All
+
+- The local header Restart action must commit prepared changes before it restarts the IDE.
+- If the user declines restart, the page must keep the plugin session and its prepared changes.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `header Restart applies the session before restart`;
+    `declining header Restart keeps the session`
+  )
 
 - Update All must remain unavailable until the local inventory resolves each update to an installed plugin.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
