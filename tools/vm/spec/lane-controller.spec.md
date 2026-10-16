@@ -1666,7 +1666,7 @@ after that move.
 - The readiness of a bare IDE is the lifecycle and the vocabulary digest only. Its scenarios run no reset, and the
   watchdog sends it no probe and no dump. So the first request of the bridge that a bare IDE gets is the first
   instruction of its suite. The trace of its scenario opens after the program, because the recorder asks the IDE for
-  its facts.
+  its facts. Its log slice starts at the first byte of the fresh log, so it holds the records of the start-up.
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`the_readiness_of_a_bare_ide_sends_no_request_of_the_bridge`)
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`a_quiet_hold_sends_the_ide_no_probe_and_no_dump`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)

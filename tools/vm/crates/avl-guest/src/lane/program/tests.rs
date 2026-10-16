@@ -1161,6 +1161,14 @@ fn a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction(
         .skip_while(|line| !line.contains(r#""name":"Air loads no more classes than its budget while a project opens""#))
         .collect();
     assert!(bare_trace[0].starts_with(r#"{"op":"scenario""#), "{bare_trace:?}");
+    // The slice of a bare IDE starts at the first byte of its fresh log, so it holds the start-up records.
+    assert!(bare_trace[0].ends_with(r#","logFrom":0}"#), "{bare_trace:?}");
+    let shared = ran
+        .trace
+        .iter()
+        .find(|line| line.starts_with(r#"{"op":"scenario""#) && line.contains(r#""name":"renames""#))
+        .unwrap();
+    assert!(!shared.contains("logFrom"), "{shared}");
     assert!(
         bare_trace[1].starts_with(r#"{"op":"attach""#) && bare_trace[1].contains(r#""name":"Air start-up class loading""#),
         "{bare_trace:?}"

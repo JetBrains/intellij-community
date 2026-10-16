@@ -674,7 +674,8 @@ impl<'r, 's> Runner<'r, 's> {
 
     /// One scenario of a bare IDE: its program with no reset, because the IDE is fresh and serves this suite alone. The
     /// trace of the scenario opens after the program, because the recorder asks the IDE for its facts as a scenario
-    /// opens. The files that the program answered then go to the scenario.
+    /// opens. Its log slice starts at the first byte of the log. The files that the program answered then go to the
+    /// scenario.
     fn bare_scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue) {
         let case = case_identity(suite, profile);
         if let Some(reason) = self.missing_runner_value(suite, profile) {
@@ -685,8 +686,11 @@ impl<'r, 's> Runner<'r, 's> {
         self.stream.started(&case);
         self.watch.execution_started(self.stream, case.execution());
         let verdict = self.body(suite, profile, &SuiteFixture::default());
-        self.trace()
-            .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
+        // A bare IDE runs on a fresh context, so its log holds its launch alone. The slice starts at its first byte and
+        // holds what the IDE wrote during the program, the start-up included.
+        let mut command = scenario_command(suite, profile, raw, self.lane.recorder_bridge());
+        command.log_from = Some(0);
+        self.trace().open_scenario(command);
         self.attach_answers();
         if verdict.is_err() {
             self.trace().snap_failure();
@@ -1525,6 +1529,7 @@ fn scenario_command(suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawVa
         labels,
         bridge,
         program: Some(raw.to_owned()),
+        log_from: None,
     }
 }
 

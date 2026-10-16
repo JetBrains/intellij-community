@@ -37,15 +37,17 @@ struct Begun {
 }
 
 impl LogSlicer {
-    /// Starts the slice at the facts' log size, or answers why no slice can be taken.
-    pub(crate) fn begin(&mut self, facts: &Facts) -> anyhow::Result<()> {
+    /// Starts the slice at the facts' log size, or at `from` when the lane names an earlier byte, or answers why no
+    /// slice can be taken.
+    pub(crate) fn begin(&mut self, facts: &Facts, from: Option<u64>) -> anyhow::Result<()> {
         let path = PathBuf::from(&facts.log_path);
         let file = File::open(&path).context("cannot read the IDE's log")?;
         let identity = Identity::of(&file.metadata()?, &path);
         self.begun = Some(Begun {
             held: (!cfg!(windows)).then_some(file),
             path,
-            start: facts.log_size,
+            // A start past the end of the log would slice nothing that the log holds.
+            start: from.map_or(facts.log_size, |from| from.min(facts.log_size)),
             identity,
         });
         Ok(())

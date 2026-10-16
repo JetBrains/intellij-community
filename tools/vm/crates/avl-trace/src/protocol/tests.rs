@@ -470,6 +470,7 @@ fn a_program_from_a_pretty_printed_document_is_written_on_one_line() {
         labels: Vec::new(),
         bridge: None,
         program: Some(RawValue::from_string(pretty).unwrap()),
+        log_from: None,
     });
     let line = String::from_utf8(encode_command(&scenario).unwrap()).unwrap();
     assert_eq!(
@@ -481,6 +482,31 @@ fn a_program_from_a_pretty_printed_document_is_written_on_one_line() {
     };
     let program: serde_json::Value = serde_json::from_str(decoded.program.unwrap().get()).unwrap();
     assert_eq!(program, profile);
+}
+
+// A lane may name the byte of the IDE's log where the slice begins. It is the last field of the canonical line, and it
+// reads back.
+#[test]
+fn a_scenario_names_the_byte_where_its_log_slice_begins() {
+    let scenario = ScenarioCommand {
+        name: "a".to_owned(),
+        test_class: "C".to_owned(),
+        suite: None,
+        lane: "UI".to_owned(),
+        flow: None,
+        fixture: None,
+        flags: BTreeMap::new(),
+        labels: Vec::new(),
+        bridge: None,
+        program: None,
+        log_from: Some(0),
+    };
+    let line = String::from_utf8(encode_command(&Command::Scenario(scenario)).unwrap()).unwrap();
+    assert_eq!(line, r#"{"op":"scenario","name":"a","testClass":"C","lane":"UI","logFrom":0}"#);
+    let Command::Scenario(decoded) = decode_command(line.as_bytes()).unwrap() else {
+        panic!("{line} is no scenario");
+    };
+    assert_eq!(decoded.log_from, Some(0));
 }
 
 #[test]

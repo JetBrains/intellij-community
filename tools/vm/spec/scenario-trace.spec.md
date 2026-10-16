@@ -282,6 +282,12 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   once. The recorder refuses a label without a name or a value.
   [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
 
+- `scenario` can carry `logFrom`, the byte of the IDE's `idea.log` where the slice of the scenario begins. Absent,
+  the slice begins at the size that the IDE reports as the scenario opens. A byte past the end of the log starts the
+  slice at the end.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`a_scenario_names_the_byte_where_its_log_slice_begins`)
+  [@test] ../crates/avl-record/src/idealog/tests.rs (`a_slice_starts_at_the_byte_that_the_lane_names`)
+
 - `attach` carries `name`, `mime`, `file` and `span`. The file is a path that the lane wrote under the hello's
   root. The recorder moves the file into the bundle as `attach/NNNN.<ext>` and writes an `air.attachment` record
   on the span. The record names the title, the media type and the bundle file. Ordinals count from 1 in each

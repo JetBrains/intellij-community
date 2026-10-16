@@ -215,7 +215,7 @@ impl<W: Write> Session<W> {
                     scenario.trace_error(ERROR_SOURCE_FACTS, &format!("no idea.log slice: {error:#}"), at_ms);
                 }
             }
-            Ok(facts) => match scenario.slicer.begin(facts) {
+            Ok(facts) => match scenario.slicer.begin(facts, scenario.command.log_from) {
                 Ok(()) => scenario.sliced = true,
                 Err(error) => scenario.trace_error(ERROR_SOURCE_LOG, &format!("{error:#}"), at_ms),
             },

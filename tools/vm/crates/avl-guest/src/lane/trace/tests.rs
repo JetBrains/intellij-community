@@ -52,6 +52,7 @@ fn scenario(name: &str) -> ScenarioCommand {
         labels: Vec::new(),
         bridge: None,
         program: None,
+        log_from: None,
     }
 }
 

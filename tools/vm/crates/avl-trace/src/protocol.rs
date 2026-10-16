@@ -255,6 +255,12 @@ pub struct ScenarioCommand {
     /// the instructions a failure never reached. A journey has none.
     #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "present_raw")]
     pub program: Option<Box<RawValue>>,
+    /// The byte of the IDE's `idea.log` where the slice of the scenario begins. Absent, the slice begins at the size that
+    /// the IDE reports as the scenario opens. A lane that opens the scenario after the IDE wrote its records of the
+    /// scenario sends an earlier byte. The lane daemon sends 0 for an IDE on a fresh context, whose log holds its launch
+    /// alone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub log_from: Option<u64>,
 }
 
 /// A present `program` is kept even when it is `null`, so that validation refuses it rather than the decoder
