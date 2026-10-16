@@ -39,10 +39,17 @@ internal object PluginLoadingProblemAnalyzer {
 
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
+    val pluginIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildPluginIdMap() }
+    val contentModuleIdMap by lazy(LazyThreadSafetyMode.NONE) { pluginSet.buildContentModuleIdMap() }
+
+    fun shouldReportProblem(problem: PluginLoadingProblem): Boolean =
+      problem.shouldNotifyUser && !initContext.isPluginDisabled(problem.plugin.pluginId) &&
+      (!initContext.isPluginDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID) ||
+       !pluginRequiresUltimatePlugin(problem.plugin.pluginId, pluginIdMap, contentModuleIdMap))
 
     fun registerLoadingError(loadingError: PluginLoadingProblem) {
       pluginNonLoadReasons[loadingError.plugin.pluginId] = loadingError
-      if (!loadingError.shouldNotifyUser || initContext.isPluginDisabled(loadingError.plugin.pluginId)) {
+      if (!shouldReportProblem(loadingError)) {
         return
       }
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
@@ -94,7 +101,7 @@ internal object PluginLoadingProblemAnalyzer {
       pluginNonLoadReasons,
       discoveredPlugins.descriptorLoadingErrors,
       cycleErrors,
-      initContext,
+      ::shouldReportProblem,
       reportingPolicy,
     )
 
@@ -110,13 +117,11 @@ internal object PluginLoadingProblemAnalyzer {
     pluginNonLoadReasons: Map<PluginId, PluginLoadingProblem>,
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     cycleErrors: List<@Nls String>,
-    initContext: PluginInitializationContext,
+    shouldReportProblem: (PluginLoadingProblem) -> Boolean,
     reportingPolicy: PluginLoadingErrorReportingPolicy,
   ): List<@Nls String> {
     // name shadowing is intended
-    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues {
-      !initContext.isPluginDisabled(it.plugin.pluginId)
-    }
+    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues(shouldReportProblem)
     val globalErrors = ArrayList<@Nls String>().apply {
       for (descriptorLoadingError in descriptorLoadingErrors) {
         add(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
@@ -129,14 +134,8 @@ internal object PluginLoadingProblemAnalyzer {
     }
 
     val loadingErrors = pluginNonLoadReasons.values
-    return if (reportingPolicy.reportToUser) globalErrors + mapForUserNotification(loadingErrors) else emptyList()
+    return if (reportingPolicy.reportToUser) globalErrors + loadingErrors.map { it.detailedMessage } else emptyList()
   }
-
-  private fun mapForUserNotification(loadingErrors: Collection<PluginLoadingProblem>): List<@Nls String> =
-    loadingErrors.asSequence()
-      .filter { it.shouldNotifyUser }
-      .map { it.detailedMessage }
-      .toList()
 
   private fun adaptExclusionReasonAsCycleError(
     resolvedPluginSet: ResolvedPluginSet,

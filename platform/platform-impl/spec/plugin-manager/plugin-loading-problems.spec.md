@@ -229,7 +229,7 @@ Untested: No focused loading problem test verifies these installation transition
 ## Notifications
 
 - Notification reporting collects detailed messages only when the product reporting policy permits reporting.
-- Plugin messages must also pass their notification eligibility flag and the applied disabled state check.
+- Plugin messages must also pass their notification eligibility flag, the applied disabled state check, and the Ultimate restriction check.
 - Descriptor failures and dependency cycles can supply global notification messages independently of plugin row problems.
 - Repeated identical cycle messages appear once in the local calculation.
 - The startup reporter concatenates messages and action names from all registered notification handlers.
@@ -242,7 +242,7 @@ Untested: No focused reporter test covers global messages, handler aggregation, 
 
 ## Recovery Actions
 
-- Notification recovery targets require problem notification eligibility and an affected plugin that initialization does not mark disabled.
+- Notification recovery targets require problem notification eligibility and an affected plugin that initialization does not mark disabled or restrict through disabled Ultimate.
 - An eligible problem registered during resolved-set analysis adds its affected plugin to the Disable targets.
 - An eligible disabled dependency adds an Enable target when initialization marks it disabled and the candidate set contains its descriptor.
 - Ultimate must not enter the generic Enable targets.
@@ -299,11 +299,21 @@ Untested: No focused test covers action labels, callback aggregation, or action 
   )
 
 - Factories outside disabled Ultimate and product mode exclusions retain `OTHER` kind and `UNEXPECTED` severity.
-- Requiring disabled Ultimate must not suppress an unrelated recorded failure.
+- An unrelated failure retains its recorded cause, severity, and notification eligibility flag when the plugin also requires disabled Ultimate.
+- This restriction suppresses that plugin's notification text and recovery targets, including for selection failures.
+- The restriction follows required plugins, aliases, and content modules. Optional dependencies and optional content modules do not impose it.
+- An unrestricted plugin retains its notification text and recovery targets, including when a restricted plugin shares its disabled root.
 - Absent or failed Ultimate must not receive disabled Ultimate classification.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `disabled Ultimate does not suppress an unrelated missing dependency`;
-    `an ordinary disabled root stays unexpected when Ultimate is also disabled`;
+    `disabled Ultimate suppresses notification of an unrelated missing dependency`;
+    `disabled Ultimate suppresses notification but retains an ordinary disabled root`;
+    `a transitive Ultimate requirement suppresses an unrelated notification`;
+    `an Ultimate alias suppresses an unrelated notification`;
+    `an Ultimate module requirement suppresses an unrelated notification`;
+    `only required content modules impose the Ultimate notification restriction`;
+    `an optional Ultimate dependency does not suppress an unrelated notification`;
+    `disabled Ultimate suppresses a selection failure notification`;
+    `an unrestricted plugin retains recovery beside a restricted plugin with the same root`;
     `absent Ultimate is reported as a missing dependency`;
     `failed Ultimate is not a disabled Ultimate problem`
   )
@@ -365,8 +375,12 @@ Untested: No focused test covers the complete Ultimate restriction in details or
   )
 
 - When Ultimate and its affected plugins load, their obsolete problems and recovery targets must disappear from the new state.
+- Enabling Ultimate restores notification text and recovery targets for an unrelated failure that remains in the replacement set.
+- The restriction check uses the supplied plugin set, not the global plugin set or disabled state.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
-    `an Ultimate problem disappears when its dependency becomes available`
+    `an Ultimate problem disappears when its dependency becomes available`;
+    `enabling Ultimate restores notification of a remaining failure`;
+    `Ultimate notification suppression uses the supplied plugin set`
   )
 
 - The page must clear Ultimate classification when the session dependencies resolve or the user disables the affected plugin.

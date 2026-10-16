@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.idea.TestFor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
@@ -602,7 +603,7 @@ internal class PluginManagerStateServiceTest {
   }
 
   @Test
-  fun `disabled Ultimate does not suppress an unrelated missing dependency`() {
+  fun `disabled Ultimate suppresses notification of an unrelated missing dependency`() {
     install(
       plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
       plugin("affected") {
@@ -620,7 +621,223 @@ internal class PluginManagerStateServiceTest {
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
     assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `a transitive Ultimate requirement suppresses an unrelated notification`() {
+    install(
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends(ULTIMATE_ID.idString)
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        depends("intermediate")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
+    assertThat(state.pluginNonLoadReasons).hasSize(2)
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `an Ultimate alias suppresses an unrelated notification`() {
+    install(
+      plugin(ULTIMATE_ID.idString) {
+        name = "Ultimate"
+        pluginAliases = listOf("ultimate.alias")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        depends("ultimate.alias")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `an Ultimate module requirement suppresses an unrelated notification`() {
+    install(
+      plugin(ULTIMATE_ID.idString) {
+        name = "Ultimate"
+        content(namespace = "jetbrains") {
+          module("ultimate.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+          }
+        }
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        dependencies { module("ultimate.module") }
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @TestFactory
+  fun `only required content modules impose the Ultimate notification restriction`() =
+    listOf(ModuleLoadingRuleValue.REQUIRED to true, ModuleLoadingRuleValue.OPTIONAL to false).map { (loadingRule, suppressNotification) ->
+      dynamicTest(loadingRule.name) {
+        val pluginDir = tempDir.resolve(loadingRule.name)
+        listOf(
+          plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+          plugin("affected") {
+            name = "Affected"
+            depends("missing")
+            content {
+              module("affected.module", loadingRule = loadingRule) {
+                dependencies { plugin(ULTIMATE_ID.idString) }
+              }
+            }
+          },
+        ).forEach { it.installAt(pluginDir) }
+
+        val pluginSet = PluginSetTestBuilder.fromPath(pluginDir)
+          .withDisabledPlugins(ULTIMATE_ID.idString)
+          .build(configureClassLoaders = false)
+        val state = publishAndGetState(pluginSet)
+        val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+        assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+        if (suppressNotification) {
+          assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+          assertThat(state.pluginsToDisable).isEmpty()
+        }
+        else {
+          assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+          assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+        }
+        assertThat(state.pluginsToEnable).isEmpty()
+      }
+    }
+
+  @Test
+  fun `an optional Ultimate dependency does not suppress an unrelated notification`() {
+    install(
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        depends(ULTIMATE_ID.idString, optional = true)
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
     assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+  }
+
+  @Test
+  fun `disabled Ultimate suppresses a selection failure notification`() {
+    install(
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("affected") {
+        name = "Affected"
+        sinceBuild = "264"
+        pluginAliases = listOf("shared.alias")
+        depends(ULTIMATE_ID.idString)
+      },
+      plugin("preferred") {
+        name = "Preferred"
+        pluginAliases = listOf("shared.alias")
+      },
+    )
+    val pluginSet = PluginSetTestBuilder.fromPath(tempDir)
+      .withDisabledPlugins(ULTIMATE_ID.idString)
+      .withProductBuildNumber(checkNotNull(BuildNumber.fromString("IU-263.1")))
+      .build(configureClassLoaders = false)
+
+    val state = publishAndGetState(pluginSet)
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(PluginId.getId("affected"))).isNull()
+    assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+    assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `enabling Ultimate restores notification of a remaining failure`() {
+    install(
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        depends(ULTIMATE_ID.idString)
+      },
+    )
+    val initialState = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString)))
+    assertThat(initialState.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(initialState.pluginsToDisable).isEmpty()
+
+    val state = publishAndGetState(buildPluginSet())
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
+  }
+
+  @Test
+  fun `Ultimate notification suppression uses the supplied plugin set`() {
+    install(
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("affected") {
+        name = "Affected"
+        depends("missing")
+        depends(ULTIMATE_ID.idString)
+      },
+    )
+    val restrictedPluginSet = buildPluginSet(disabledPluginIds = arrayOf(ULTIMATE_ID.idString))
+    val unrestrictedPluginSet = buildPluginSet()
+    PluginManagerCore.setPluginSet(unrestrictedPluginSet)
+
+    val restrictedState = service.calculateState(restrictedPluginSet, USER_REPORTING_POLICY)
+
+    assertThat(restrictedState.pluginNonLoadReasons).containsOnlyKeys(PluginId.getId("affected"))
+    assertThat(restrictedState.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(restrictedState.pluginsToDisable).isEmpty()
+
+    PluginManagerCore.setPluginSet(restrictedPluginSet)
+    val unrestrictedState = service.calculateState(unrestrictedPluginSet, USER_REPORTING_POLICY)
+    val problem = checkNotNull(unrestrictedState.pluginNonLoadReasons[PluginId.getId("affected")])
+
+    assertThat(unrestrictedState.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
+    assertThat(unrestrictedState.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("affected") to "Affected"))
   }
 
   @Test
@@ -695,7 +912,7 @@ internal class PluginManagerStateServiceTest {
   }
 
   @Test
-  fun `an ordinary disabled root stays unexpected when Ultimate is also disabled`() {
+  fun `disabled Ultimate suppresses notification but retains an ordinary disabled root`() {
     install(
       plugin("root") { name = "Root" },
       plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
@@ -713,8 +930,34 @@ internal class PluginManagerStateServiceTest {
     assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shouldNotifyUser).isTrue()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `an unrestricted plugin retains recovery beside a restricted plugin with the same root`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin(ULTIMATE_ID.idString) { name = "Ultimate" },
+      plugin("restricted") {
+        name = "Restricted"
+        depends("root")
+        depends(ULTIMATE_ID.idString)
+      },
+      plugin("unrestricted") {
+        name = "Unrestricted"
+        depends("root")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root", ULTIMATE_ID.idString)))
+    val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("unrestricted")])
+
+    assertThat(state.pluginNonLoadReasons).hasSize(2)
     assertThat(state.pluginLoadingProblemsForNotification).containsExactly(problem.detailedMessage)
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(PluginId.getId("root") to "Root"))
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(PluginId.getId("unrestricted") to "Unrestricted"))
   }
 
   @Test
