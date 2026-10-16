@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
@@ -97,7 +98,8 @@ internal class FrontendProjectViewPaneAggregator(
         // The backend wins on ID collisions: that's how a light frontend pane is replaced by the real one.
         backend != null -> (frontend.orEmpty() + backend).values
         // In the monolith mode, the backend is immediately available, no point showing light panes.
-        frontend != null && !AppMode.isMonolith() -> frontend.values
+        // LIGHT_MONOLITH has no backend modules until it moves to MONOLITH, so it shows the light panes.
+        frontend != null && IdeProductMode.isLight -> frontend.values
         else -> emptyList()
       }
       val result = mutableListOf<ProjectViewPaneDescriptorImpl>()
