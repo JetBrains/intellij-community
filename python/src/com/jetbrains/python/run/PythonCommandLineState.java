@@ -74,6 +74,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -941,6 +942,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @PyInternalExecApi
   @ApiStatus.Internal
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
