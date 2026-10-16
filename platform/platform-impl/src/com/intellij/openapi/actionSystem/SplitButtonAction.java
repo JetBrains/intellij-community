@@ -6,8 +6,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.SwingIconCache;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
@@ -17,6 +19,8 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.icons.AllIconDescriptors;
+import com.intellij.platform.icons.IconDescriptor;
 import com.intellij.ui.components.SplitButtonHalf;
 import com.intellij.ui.components.SplitButtonZones;
 import com.intellij.ui.scale.JBUIScale;
@@ -58,7 +62,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
   public void update(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     Presentation presentation = e.getPresentation();
-    SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
+    SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(COMPONENT_KEY), SplitButton.class);
 
     Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
     AnAction action = splitButton != null ? splitButton.selectedAction : getMainAction(e);
@@ -131,6 +135,8 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     private MousePressType mousePressType = MousePressType.None;
     private SimpleMessageBusConnection myConnection;
     private final boolean myUpdateSelectedActionAfterExecution;
+
+    private final SwingIconCache myIconCache = new SwingIconCache();
 
     private SplitButton(@NotNull SplitButtonAction action,
                         @NotNull Presentation presentation,
@@ -211,18 +217,33 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
         g.fillRect(x, baseRect.y, JBUIScale.scale(1), baseRect.height);
       }
 
-      Icon actionIcon = getIcon();
-      if (!selectedActionEnabled()) {
-        Icon disabledIcon = myPresentation.getDisabledIcon();
-        actionIcon = disabledIcon != null || actionIcon == null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
-        if (actionIcon == null) {
-          actionIcon = getFallbackIcon(false);
-        }
-      }
+      Icon actionIcon = chooseActionIcon();
 
       x = baseRect.x + (x - baseRect.x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
       look.paintIcon(g, this, actionIcon, x, y);
+    }
+
+    private @NotNull Icon chooseActionIcon() {
+      Icon actionIcon = getIcon();
+      if (!selectedActionEnabled()) {
+        if (ExperimentalIconRendering.isEnabled()) {
+          IconDescriptor effective = Objects.requireNonNullElse(
+            ActionIconDescriptors.effective(myPresentation),
+            AllIconDescriptors.Toolbar.getUnknown()
+          );
+          myIconCache.update(effective);
+          actionIcon = Objects.requireNonNull(myIconCache.getDisabled());
+        }
+        else {
+          Icon disabledIcon = myPresentation.getDisabledIcon();
+          actionIcon = disabledIcon != null || actionIcon == null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
+          if (actionIcon == null) {
+            actionIcon = getFallbackIcon(false);
+          }
+        }
+      }
+      return actionIcon;
     }
 
     private boolean isToggleActionPushed() {

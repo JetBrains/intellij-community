@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.icons.HoledIcon
-import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -136,7 +135,7 @@ internal open class SquareStripeButtonLook(private val button: AbstractSquareStr
       return
     }
 
-    super.paintIcon(g, actionButton, toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
+    super.paintIcon(g, actionButton, actionButton.computeActiveIcon(icon, color))
   }
 
   override fun getButtonArc(): JBValue = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)
@@ -163,3 +162,4 @@ private fun centerIcon(rect: Rectangle, icon: Icon): Point {
   val y = rect.y + (rect.height - icon.iconHeight) / 2
   return Point(x, y)
 }
+
