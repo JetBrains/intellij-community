@@ -1735,7 +1735,6 @@ plugins/mcp-server/mcpserver.testFramework
 plugins/mcp-server/mcpserver.toolsets
 plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
-plugins/mcp-server/tests/plugin
 plugins/mermaid
 plugins/mermaid/frontend
 plugins/mermaid/json

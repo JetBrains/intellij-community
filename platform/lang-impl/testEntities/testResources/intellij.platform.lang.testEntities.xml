@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

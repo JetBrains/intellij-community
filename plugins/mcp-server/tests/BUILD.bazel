@@ -95,8 +95,6 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//plugins/mcp-server/mcpserver.testFramework",
         "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
-        "//plugins/mcp-server/tests/plugin",
-        "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//plugins/mcp-server/mcpserver.vcs",
         "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_test_lib",
         "//plugins/mcp-server/mcpserver.terminal",
