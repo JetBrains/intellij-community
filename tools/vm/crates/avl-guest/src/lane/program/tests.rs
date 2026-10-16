@@ -902,6 +902,44 @@ fn a_suite_with_a_cloud_agent_is_refused_before_any_request() {
     assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
 }
 
+// The host ids of the live lane are words of the vocabulary, and the lane daemon runs them from slice L-live on. So a
+// suite whose program runs one fails at once as one `lane_unsupported` container that names the word and the slice: no
+// scenario starts, and no request reaches the IDE.
+#[test]
+fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
+    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open"], "optional": false},
+            "scenario": {"type": "enum", "values": ["generation"], "optional": false},
+            "suite": {"type": "enum", "values": ["live-launch"], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}});
+    let host = json!({"side": "host", "timeoutMs": 480_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
+        "mayTake": [], "params": {}});
+    let suite = suite_of(&json!({
+        "schemaVersion": 2, "suite": "live-launch", "lane": "UI", "testClassName": "AirLiveLaunchUiTest", "authored": true,
+        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.live.AirLiveLaunchUiTest"}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host}, "assertions": {}},
+        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}},
+        "fixtures": {"authored": {}},
+        "profiles": [{"name": "the composer launches a live session", "key": "generation", "fixture": "authored", "flags": {},
+            "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+            "program": [{"action": "refresh-live-wiring"},
+                {"action": "authored-step", "args": {"part": "open", "scenario": "generation", "suite": "live-launch",
+                    "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}}]}],
+    }));
+    let fake = Fake::new(Script::default());
+    let ran = run(&fake, &[suite], None);
+    let failed = ran.events("containerFailed");
+    assert_eq!(failed.len(), 1, "{failed:#?}");
+    assert_eq!(failed[0]["type"], kind::UNSUPPORTED);
+    assert_eq!(
+        failed[0]["message"],
+        "the suite 'live-launch' uses the host id 'refresh-live-wiring', which the lane daemon runs from slice L-live on"
+    );
+    assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
+    assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+}
+
 // A fixture with a local agent of the lane is no Cloud suite, and runs.
 #[test]
 fn a_suite_with_a_local_agent_runs() {

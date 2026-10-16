@@ -153,11 +153,7 @@ fn every_committed_class_plans_its_suites_scenarios() {
         let vm = command_of(&result, CommandKind::Vm, lane);
         assert_eq!(vm.lines, vec![vm_run(lane, &[&document.test_class_name])], "{suite}");
         let host = command_of(&result, CommandKind::Host, lane);
-        assert_eq!(
-            host.lines,
-            vec![format!("./community/tools/bt.cmd {}", document.test_class_name)],
-            "{suite}"
-        );
+        assert_eq!(host.lines, vec![host_line(lane, &document.test_class_name)], "{suite}");
         // A suite of an explicit-only lane is planned when its own class names it, with the warning of its lane.
         let warning = if explicit_only(lane) {
             format!("{HOST_WARNING}; {}", explicit_warning(lane))
@@ -172,6 +168,20 @@ fn every_committed_class_plans_its_suites_scenarios() {
             vec![text(&format!("com.intellij.air.tests.{}", document.test_class_name))],
         );
         assert_eq!(scenario_keys(&qualified), want, "{suite}: the FQN planned the wrong scenarios");
+    }
+}
+
+/// The host line of one class of `lane`. A class of the live lane names the passthroughs of its lane, because only
+/// `--lane` applies them.
+fn host_line(lane: &str, class: &str) -> String {
+    if lane == "ui-live" {
+        format!(
+            "./community/tools/bt.cmd {class} --test-env AIR_LIVE_CREDENTIALS --test-env AIR_LIVE_REUSE_HOST_HOMES --test-env \
+             ANTHROPIC_API_KEY --test-env CLAUDE_BIN --test-env JUNIE_API_KEY --test-env JUNIE_BIN --test-env NODE_BIN \
+             --test-env NPM_BIN --test-env OPENAI_API_KEY"
+        )
+    } else {
+        format!("./community/tools/bt.cmd {class}")
     }
 }
 
@@ -191,10 +201,14 @@ fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
         }
         let result = plan(&repo.root, vec![text(&document.test_class_name)]);
         let vm = command_of(&result, CommandKind::Vm, lane);
-        let want = if lane == "gui-chat" {
-            format!("./community/tools/vm.cmd --backend parallels run {}", document.test_class_name)
-        } else {
-            format!("./community/tools/vm.cmd run {}", document.test_class_name)
+        let want = match lane {
+            "gui-chat" => format!("./community/tools/vm.cmd --backend parallels run {}", document.test_class_name),
+            // The guest run of the live lane needs the developer's own Central session, piped in (ADR 0200).
+            "ui-live" => format!(
+                "central login export | ./community/tools/vm.cmd run {} --test-env AIR_LIVE_CENTRAL_LOGIN=@-",
+                document.test_class_name
+            ),
+            _ => format!("./community/tools/vm.cmd run {}", document.test_class_name),
         };
         assert_eq!(vm.lines, vec![want], "the {lane} lane's VM line");
         for line in &vm.lines {
@@ -849,22 +863,22 @@ fn a_path_that_reaches_an_authored_suite_plans_its_class() {
     let repo = fixture_repo(&documents);
     repo.write(
         air_area().catalog().expect("a catalog").authored_suites_file,
-        r#"{ "suites": [ { "suite": "real-session-memory", "lane": "GUI_CHAT", "testClassName": "AirRealSessionMemoryUiTest" } ] }"#,
+        r#"{ "suites": [ { "suite": "authored-probe", "lane": "GUI_CHAT", "testClassName": "AirAuthoredProbeUiTest" } ] }"#,
     );
-    let path = "plugins/air/tests/integration/gui-chat/test/AirRealSessionMemoryUiTest.kt";
-    repo.write(path, "package air\n\nclass AirRealSessionMemoryUiTest\n");
+    let path = "plugins/air/tests/integration/gui-chat/test/AirAuthoredProbeUiTest.kt";
+    repo.write(path, "package air\n\nclass AirAuthoredProbeUiTest\n");
 
     let result = plan(&repo.root, vec![text(path)]);
     assert!(result.scenarios.is_empty(), "{:?}", scenario_keys(&result));
-    assert_eq!(result.classes, vec!["AirRealSessionMemoryUiTest".to_owned()]);
+    assert_eq!(result.classes, vec!["AirAuthoredProbeUiTest".to_owned()]);
     assert_eq!(result.lanes, vec!["gui-chat".to_owned()]);
     assert!(
-        notes_of(&result).contains("AirRealSessionMemoryUiTest, which have no generated profile"),
+        notes_of(&result).contains("AirAuthoredProbeUiTest, which have no generated profile"),
         "{:?}",
         result.notes
     );
     let vm = command_of(&result, CommandKind::Vm, "gui-chat");
-    assert_eq!(vm.lines, vec![vm_run("gui-chat", &["AirRealSessionMemoryUiTest"])]);
+    assert_eq!(vm.lines, vec![vm_run("gui-chat", &["AirAuthoredProbeUiTest"])]);
 }
 
 // --- the CLI -------------------------------------------------------------------------------------------------

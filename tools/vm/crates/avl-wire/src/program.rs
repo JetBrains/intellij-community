@@ -38,6 +38,9 @@ vocabulary! {
     pub enum HostAction {
         /// Approves the JetBrains Account login of the value `signInUrl` in the JetBrains Cloud emulator.
         AccountApproveSignIn = "account-approve-sign-in",
+        /// Asks the IDE to adopt each Junie session of the account that a run left under the live project, so the reset
+        /// removes it. The lane `ui-live` runs it once, before the first scenario of its suite.
+        AdoptLeftoverJunieSessions = "adopt-leftover-junie-sessions",
         /// Pauses the next package download of the fake registry.
         ConsentHoldDownload = "consent-hold-download",
         /// Makes the fake registry fail the next package download.
@@ -48,6 +51,9 @@ vocabulary! {
         /// does after any reset that does not hold, and resets the replacement. The action fails unless that reset
         /// passed on a new IDE process, and unless the bridge answers from that process.
         RecycleThroughFailedReset = "recycle-through-failed-reset",
+        /// Prepares the lane home of the live lane again when the Central wiring of the host changed: the vendor key
+        /// files or the wiring copies, before each scenario of the lane `ui-live`.
+        RefreshLiveWiring = "refresh-live-wiring",
         /// Lets the paused package download of the fake registry finish.
         ReleaseDownload = "release-download",
         /// Reloads Air in place in the lane IDE, which reloads the bridge plugin that depends on it, and waits until the

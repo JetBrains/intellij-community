@@ -103,6 +103,11 @@ impl HostId {
     }
 }
 
+/// Why the lane daemon does not run the live host id `action` yet: the sentence that names the word and the slice.
+pub(crate) fn live_host_id_refusal(action: HostAction) -> String {
+    format!("the host id '{action}', which the lane daemon runs from slice L-live on")
+}
+
 /// Performs `id` with the arguments `args` of the instruction `label`, and keeps the values that it answers.
 pub(crate) fn perform(
     id: HostId,
@@ -132,6 +137,10 @@ pub(crate) fn perform(
         HostId::Action(HostAction::ReleaseDownload) => side.services().registry_clear(),
         HostId::Action(HostAction::ReloadAir) => side.reload_air(),
         HostId::Action(HostAction::RestartIde) => restart_ide(values, side),
+        // The runner refuses a suite with either one before its first request, so neither reaches this point.
+        HostId::Action(action @ (HostAction::AdoptLeftoverJunieSessions | HostAction::RefreshLiveWiring)) => {
+            Err(live_host_id_refusal(action))
+        }
         HostId::Assertion(HostAssertion::ConsentDownloadFaultArmed) => {
             let fault = side.services().registry_fault()?;
             if fault == PACKAGE_HTTP_ERROR {

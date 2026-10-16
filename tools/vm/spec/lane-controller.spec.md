@@ -1503,6 +1503,12 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_cloud_agent_is_refused_before_any_request`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_local_agent_runs`)
 
+- The host ids `refresh-live-wiring` and `adopt-leftover-junie-sessions` of the lane `ui-live` are words of the host
+  vocabulary, so every suite document fits it. The lane daemon runs them from slice L-live on. Until then a suite that
+  runs one fails as one container `lane_unsupported` before its first request, and the refusal names the word and the
+  slice.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_that_runs_a_live_host_id_is_refused_before_any_request`)
+
 - The program runner runs each scenario of each selected document. A reset runs before the scenario and after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
 

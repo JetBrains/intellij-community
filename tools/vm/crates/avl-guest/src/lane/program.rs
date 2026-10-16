@@ -107,6 +107,9 @@ const AUTHORED_STEP: &str = "authored-step";
 /// The host ids that an authored program may run between its parts: the restart, the proof of the recycle, and the
 /// reload of Air.
 const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::RecycleThroughFailedReset, HostAction::ReloadAir];
+
+/// The host ids of the live lane, which the lane daemon runs from slice L-live on.
+const LIVE_HOST_IDS: [HostAction; 2] = [HostAction::RefreshLiveWiring, HostAction::AdoptLeftoverJunieSessions];
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
 
@@ -469,6 +472,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<&'p SuiteReset, Failure> {
         document_fits(suite)?;
+        refuse_live_host_ids(suite)?;
         self.refuse_cloud_agents(suite)?;
         let reset = suite.reset.as_ref().ok_or_else(|| {
             Failure::runner(
@@ -1475,6 +1479,31 @@ fn document_fits(suite: &SuiteProgram) -> Result<(), Failure> {
             refusals.join("; ")
         ),
     ))
+}
+
+/// Refuses a suite whose program runs a host id of [`LIVE_HOST_IDS`], before any request reaches the IDE. The lane
+/// daemon runs them from slice L-live on, so each scenario would fail at that id.
+fn refuse_live_host_ids(suite: &SuiteProgram) -> Result<(), Failure> {
+    let instructions = suite.profiles.iter().flat_map(|profile| {
+        profile
+            .setups
+            .iter()
+            .chain(profile.steps.iter().flat_map(|step| &step.operations))
+            .flat_map(|operation| &operation.instructions)
+            .chain(&profile.program)
+    });
+    let live = instructions
+        .filter_map(Instruction::id)
+        .filter(|(kind, _)| *kind == IdKind::Action)
+        .filter_map(|(_, id)| id.parse::<HostAction>().ok())
+        .find(|action| LIVE_HOST_IDS.contains(action));
+    match live {
+        None => Ok(()),
+        Some(action) => Err(Failure::runner(
+            kind::UNSUPPORTED,
+            format!("the suite '{}' uses {}", suite.suite, host_ids::live_host_id_refusal(action)),
+        )),
+    }
 }
 
 /// The `testClass` label of a suite, or its `testClassName` when it has none.
