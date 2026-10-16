@@ -130,10 +130,26 @@ pub(crate) struct Launcher {
 impl Launcher {
     pub(crate) fn current() -> Self {
         Self {
-            // An unreadable executable path surfaces as a spawn failure naming the empty path.
-            self_exe: std::env::current_exe().unwrap_or_default(),
+            self_exe: own_image(cfg!(target_os = "linux"), std::env::current_exe()),
             host: LaunchHost::current(),
         }
+    }
+}
+
+/// The path of the image of this process on Linux, which a spawn executes also after its file is gone.
+pub(crate) const LINUX_OWN_IMAGE: &str = "/proc/self/exe";
+
+/// The binary that this process spawns as a supervisor.
+///
+/// On Linux it is [`LINUX_OWN_IMAGE`]. A lane daemon is a process of the installed agent, and an install renames a new
+/// binary onto the agent path while the daemon runs. `current` reads the link of [`LINUX_OWN_IMAGE`], which then names
+/// `<path> (deleted)`, and a spawn of that finds no file. Elsewhere it is `current`, the path of the binary: a rename
+/// there gives the new build, which still starts. An unreadable path surfaces as a spawn failure naming the empty path.
+pub(crate) fn own_image(linux: bool, current: io::Result<PathBuf>) -> PathBuf {
+    if linux {
+        PathBuf::from(LINUX_OWN_IMAGE)
+    } else {
+        current.unwrap_or_default()
     }
 }
 

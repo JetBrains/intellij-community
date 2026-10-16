@@ -1063,3 +1063,29 @@ fn a_real_run_whose_child_leaves_a_member_finishes() {
     );
     assert_eq!(active(&LiveSystem, &run.root).unwrap().active, None);
 }
+
+// A lane daemon spawns its supervisors from its own image on Linux. An install renames a new agent onto the path of the
+// running daemon, and `current_exe` then names `<path> (deleted)`, which no spawn finds. Elsewhere the path stays, and
+// a rename there gives the new build.
+#[test]
+fn a_supervisor_is_spawned_from_the_image_of_this_process_on_linux() {
+    let current = || Ok(PathBuf::from("/home/admin/WorkerData/state/vm-guest-agent (deleted)"));
+    assert_eq!(own_image(true, current()), PathBuf::from(LINUX_OWN_IMAGE));
+    assert_eq!(
+        own_image(false, Ok(PathBuf::from("/Users/admin/WorkerData/state/vm-guest-agent"))),
+        PathBuf::from("/Users/admin/WorkerData/state/vm-guest-agent")
+    );
+    assert_eq!(own_image(false, Err(io::Error::other("unreadable"))), PathBuf::new());
+}
+
+// A spawn of the link of the image runs this binary: the test binary starts itself through it and lists its tests.
+#[cfg(target_os = "linux")]
+#[test]
+fn the_image_of_this_process_starts_through_its_link() {
+    let status = Command::new(LINUX_OWN_IMAGE)
+        .args(["--list", "--format", "terse"])
+        .stdout(std::process::Stdio::null())
+        .status()
+        .unwrap();
+    assert!(status.success(), "{status}");
+}

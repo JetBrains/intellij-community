@@ -1269,6 +1269,12 @@ The daemon's half and the IDE's half of supervision are in
 - A lane IDE is a supervisor run in the slot of its own context. A cancel of the daemon run does not stop it.
   [@test] ../crates/avl-guest/src/ide/launch/tests.rs
 
+- The lane daemon spawns the supervisor of a lane IDE from its own image, `/proc/self/exe` on Linux. An install of the
+  guest agent renames a new binary onto the agent path while a lane daemon runs. The path of the running binary then
+  names no file, and the image still starts. A macOS guest has no `/proc`. There the daemon spawns the binary at the
+  path, which a rename makes the new build.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_supervisor_is_spawned_from_the_image_of_this_process_on_linux`)
+
 - A daemon restart for a change of the stable tier keeps each live lane IDE of the same product. The decision and
   the timing line say `keep`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
