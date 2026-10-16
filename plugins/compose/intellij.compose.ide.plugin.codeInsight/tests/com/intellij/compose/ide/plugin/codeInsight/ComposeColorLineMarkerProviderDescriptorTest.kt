@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.codeInsight
 
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass
@@ -6,46 +6,33 @@ import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMark
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ColorIconRenderer
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ComposeColorLineMarkerProviderDescriptor
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.compose.ide.plugin.shared.withAndroidSdk
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.vfs.writeText
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.utils.vfs.createFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Test
-import org.junit.runners.Parameterized.Parameter
-import org.junit.runners.Parameterized.Parameters
+import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
+import org.junit.jupiter.api.Test
 import java.awt.Color
-import kotlin.test.assertEquals as kAssertEquals
-import kotlin.test.assertNotNull as kAssertNotNull
+import java.nio.file.Path
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-private const val TARGET_GRADLE_VERSION = "8.9"
+private const val COLOR_LINE_MARKER_PROJECT_NAME: String = "ComposeColorLineMarker"
 
-@TestRoot("../compose/intellij.compose.ide.plugin.codeInsight/testData")
-@TestMetadata("")
-internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImportingTestCase() {
+@ComposeCodeInsightAllSourceSets
+internal class ComposeColorLineMarkerProviderDescriptorTest : ComposeCodeInsightTestCase() {
 
-  private var _codeInsightTestFixture: CodeInsightTestFixture? = null
+  override val testDataProjectRoot: Path
+    get() = super.testDataProjectRoot.resolve(COLOR_LINE_MARKER_PROJECT_NAME)
 
-  private val codeInsightTestFixture: CodeInsightTestFixture
-    get() = kAssertNotNull(_codeInsightTestFixture, "_codeInsightTestFixture was not initialized")
+  override fun FileTestFixture.Builder.configureProject() {
+    withAndroidSdk()
+  }
 
-  @Parameter(1)
-  lateinit var sourceSetName: String
-
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorLong() = doTest(
     code = """
       package org.example.project
@@ -86,9 +73,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorWithLeadingZero() = doTest(
     code = """
       package org.example.project
@@ -112,9 +97,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorInt() = doTest(
     code = """
       package org.example.project
@@ -155,9 +138,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorInt_X3() = doTest(
     code = """
       package org.example.project
@@ -200,9 +181,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorInt_X4() = doTest(
     code = """
       package org.example.project
@@ -243,9 +222,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorFloat_X3() = doTest(
     code = """
       package org.example.project
@@ -286,9 +263,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorFloat_X4() = doTest(
     code = """
       package org.example.project
@@ -329,9 +304,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     """
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeColorLineMarker")
   fun testColorFloat_X4_ColorSpace() {
     // Note: We don't offer neither color preview nor picker for Color(Float, Float, Float, Float,
     // ColorSpace) function.
@@ -359,56 +332,56 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     expectedColorIcons: List<Color>,
     setColors: List<Pair<String, Color>> = emptyList(),
     @Language("kotlin") expectedSetColorCode: String? = null,
-  ) {
-    importProjectFromTestData()
+  ) = testComposeProject {
+    try {
+      val colorFilePath = "composeApp/src/$sourceSetName/kotlin/org/example/project/A.kt"
+      writeText(colorFilePath, code.trimIndent())
+      val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, project).count {
+        it is ComposeColorLineMarkerProviderDescriptor
+      }
+      assertEquals(1, countExpectedProviders, "Expected single ${ComposeColorLineMarkerProviderDescriptor::class.java.name} provider")
 
-    val colorFile = runWriteActionAndWait {
-      myProjectRoot.createFile("composeApp/src/$sourceSetName/kotlin/org/example/project/A.kt").apply {
-        writeText(code.trimIndent())
+      codeInsightFixture.configureFromExistingVirtualFile(canonicalProjectFile(colorFilePath))
+
+      checkGutterIconInfos(expectedColorIcons)
+
+      setColors.forEach { (window, newColor) ->
+        setNewColor(window, newColor)
+      }
+
+      expectedSetColorCode?.let {
+        assertEquals(it.trimIndent(), codeInsightFixture.editor.document.text)
       }
     }
-    val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, myProject).count {
-      it is ComposeColorLineMarkerProviderDescriptor
-    }
-    kAssertEquals(1, countExpectedProviders, "Expected single ${ComposeColorLineMarkerProviderDescriptor::class.java.name} provider")
-
-    codeInsightTestFixture.configureFromExistingVirtualFile(colorFile)
-
-    checkGutterIconInfos(expectedColorIcons)
-
-    setColors.forEach { (window, newColor) ->
-      setNewColor(window, newColor)
-    }
-
-    expectedSetColorCode?.let {
-      kAssertEquals(it.trimIndent(), codeInsightTestFixture.editor.document.text)
+    finally {
+      revertUnsavedDocuments()
     }
   }
 
   private fun checkGutterIconInfos(expectedColorIcons: List<Color>) {
-    codeInsightTestFixture.doHighlighting()
+    codeInsightFixture.doHighlighting()
 
-    val highlightInfos = runReadAction {
-      getDisplayedLineMarkers(codeInsightTestFixture.editor.document, myProject)
+    val highlightInfos = runReadActionBlocking {
+      getDisplayedLineMarkers(codeInsightFixture.editor.document, project)
         .filter { lineMarkerInfo -> lineMarkerInfo.navigationHandler is ColorIconRenderer }
         .sortedBy { it.startOffset }
     }
 
     assertEquals(expectedColorIcons.size, highlightInfos.size)
     highlightInfos.forEach {
-      kAssertNotNull(it.icon)
-      kAssertNotNull(it.navigationHandler)
+      assertNotNull(it.icon)
+      assertNotNull(it.navigationHandler)
     }
 
     assertEquals(expectedColorIcons, highlightInfos.map { (it.navigationHandler as ColorIconRenderer).color })
   }
 
   private fun setNewColor(window: String, newColor: Color) {
-    val element = runInEdtAndGet { codeInsightTestFixture.moveCaret(window) }
+    val element = runInEdtAndGet { codeInsightFixture.moveCaret(window) }
 
-    codeInsightTestFixture.doHighlighting()
-    val highlightInfo = runReadAction {
-      getDisplayedLineMarkers(codeInsightTestFixture.editor.document, myProject)
+    codeInsightFixture.doHighlighting()
+    val highlightInfo = runReadActionBlocking {
+      getDisplayedLineMarkers(codeInsightFixture.editor.document, project)
         .single { lineMarkerInfo ->
           lineMarkerInfo.navigationHandler is ColorIconRenderer && lineMarkerInfo.element == element
         }
@@ -419,37 +392,11 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
         (highlightInfo.navigationHandler as ColorIconRenderer).getSetColorTask()
         ?: return@runInEdtAndWait
       WriteCommandAction.runWriteCommandAction(
-        myProject,
+        project,
         ComposeIdeBundle.message("compose.color.picker.action.name"),
         null,
         { setColorTask.invoke(newColor) },
       )
     }
-  }
-
-  override fun setUpFixtures() {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
-    _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
-    codeInsightTestFixture.setUp()
-  }
-
-  override fun tearDownFixtures() {
-    runAll(
-      { _codeInsightTestFixture?.tearDown() },
-      { _codeInsightTestFixture = null },
-      { resetTestFixture() },
-    )
-  }
-
-  companion object {
-
-    @JvmStatic
-    @Suppress("ACCIDENTAL_OVERRIDE")
-    @Parameters(name = "source set {1} with Gradle {0}")
-    fun data() = listOf(
-      "commonMain",
-      "desktopMain",
-      "wasmJsMain",
-    ).map { arrayOf(TARGET_GRADLE_VERSION, it) }
   }
 }
