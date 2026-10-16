@@ -86,6 +86,7 @@
     <extensionPoint qualifiedName="com.intellij.statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
   </extensionPoints>
   <applicationListeners>
+    <listener class="com.intellij.internal.statistic.eventLog.StatisticsStartupHold$Listener" topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
