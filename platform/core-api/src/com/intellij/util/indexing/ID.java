@@ -114,9 +114,19 @@ public class ID<K, V> extends IndexId<K,V> {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       idToPluginId = with(idToPluginId, this, pluginId == null ? CORE_PLUGIN_ID : pluginId);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, StackTraceSnapshot.capture());
+      idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, captureRegistrationTrace(getClass()));
     }
   }
+
+  /**
+   * The top {@code REGISTRATION_TRACE_FRAMES} frames of the code that registers an ID of {@code idClass}, below the constructors and the
+   * factories of {@code idClass} and of its superclasses up to {@link ID}. The application keeps a few hundred IDs for its whole life.
+   */
+  private static @NotNull StackTraceSnapshot captureRegistrationTrace(@NotNull Class<?> idClass) {
+    return StackTraceSnapshot.captureCallerOf(REGISTRATION_TRACE_FRAMES, StackTraceSnapshot.classChainNames(idClass, ID.class));
+  }
+
+  private static final int REGISTRATION_TRACE_FRAMES = 32;
 
   private static int stringToId(@NotNull String name) {
     int id = nameToIdRegistry.enumerate(name);
@@ -178,7 +188,7 @@ public class ID<K, V> extends IndexId<K,V> {
            "' requested for plugin " + requiredPluginIdStr +
            " but registered for " + actualPluginIdStr + " plugin. " +
            "Please use an instance field to access corresponding ID." +
-           (registrationStackTrace == null ? " Registration stack trace: " : "");
+           (registrationStackTrace != null ? " Registration stack trace: " : "");
   }
 
   @ApiStatus.Internal

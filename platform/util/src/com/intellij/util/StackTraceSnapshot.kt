@@ -49,8 +49,27 @@ class StackTraceSnapshot private constructor(
 
     /** The top [limit] frames of the stack below the frames of [callee]: the stack of the code that called into [callee]. */
     @JvmStatic
-    fun captureCallerOf(callee: Class<*>, limit: Int): StackTraceSnapshot {
-      return resolved(Java11Shim.INSTANCE.getStackTrace(limit, OWN_CLASS_NAME, callee.name))
+    fun captureCallerOf(callee: Class<*>, limit: Int): StackTraceSnapshot = captureCallerOf(limit, callee.name)
+
+    /** The top [limit] frames of the stack below the frames of [calleeClassNames]: the stack of the code that called into them. */
+    @JvmStatic
+    fun captureCallerOf(limit: Int, vararg calleeClassNames: String): StackTraceSnapshot {
+      return resolved(Java11Shim.INSTANCE.getStackTrace(limit, OWN_CLASS_NAME, *calleeClassNames))
+    }
+
+    /**
+     * The names of [objectClass] and of its superclasses up to [rootClass]. Their constructors and factories run while an object of
+     * [objectClass] is created, so a trace of the creation skips their frames.
+     */
+    @JvmStatic
+    fun classChainNames(objectClass: Class<*>, rootClass: Class<*>): Array<String> {
+      val names = ArrayList<String>(4)
+      var aClass: Class<*>? = objectClass
+      while (aClass != null && rootClass.isAssignableFrom(aClass)) {
+        names.add(aClass.name)
+        aClass = aClass.superclass
+      }
+      return names.toTypedArray()
     }
 
     /**
