@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -15,9 +16,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 
-private class ReopenedFile(val span: Span, val file: VirtualFile)
-private val reopenedFile = MutableStateFlow<ReopenedFile?>(null)
+/**
+ * The first file that opens after the IDE start, as its [url].
+ * The value stays until [WaitForReOpenedFileCommand] takes it.
+ * In an IDE that never runs the command, the value stays for the whole process.
+ * Thus the value must not keep a [VirtualFile], because a file of a dynamic plugin keeps the plugin class loader alive after an unload.
+ */
+@VisibleForTesting
+internal class ReopenedFile(val span: Span, val url: String)
+
+@VisibleForTesting
+internal val reopenedFile: MutableStateFlow<ReopenedFile?> = MutableStateFlow(null)
 
 open class WaitForReOpenedFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
@@ -32,7 +43,9 @@ open class WaitForReOpenedFileCommand(text: String, line: Int) : PerformanceComm
                        ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val reopened = reopenedFile.filterNotNull().first()
     reopenedFile.compareAndSet(reopened, null)
-    check(reopened.file == expectedFile) { "Expected reopened file ${expectedFile.path}, but ${reopened.file.path} was reopened" }
+    check(reopened.url == expectedFile.url) {
+      "Expected reopened file ${expectedFile.path}, but ${VfsUtilCore.urlToPath(reopened.url)} was reopened"
+    }
     HighlightingTestUtil.waitForAnalysisWithNewApproach(context.project, reopened.span, myOptions.timeout, myOptions.suppressErrors)
   }
 
@@ -48,7 +61,7 @@ internal class BeforeFileOpenLoggerListener : FileEditorManagerListener.Before {
       .spanBuilder("reopenFileAfterIdeRestart")
       .setNoParent()
       .startSpan()
-    reopenedFile.compareAndSet(null, ReopenedFile(span, file))
+    reopenedFile.compareAndSet(null, ReopenedFile(span, file.url))
   }
 }
 
