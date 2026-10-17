@@ -14,7 +14,7 @@ import { guideSlug } from '../siteData.ts'
 import { useResolvedTheme } from '../theme'
 import { layoutDiagram, stepClasses } from './diagramLayout'
 import { createDiagramNode, kindStyles } from './DiagramNode'
-import { DiagramStepBar } from './DiagramStepBar'
+import { DiagramStepBar, type StepBarWalk } from './DiagramStepBar'
 import { archEdgeTypes } from './edges'
 import { GroupNode } from './GroupNode'
 
@@ -160,20 +160,21 @@ export function HandLaidFigure({ diagram, initialStep, height, title }: {
   )
 }
 
-/** The full canvas of an explainer chapter. The route owns the step and the selection. */
-export function HandLaidCanvas({ diagram, step, selected, onStep, onSelect }: {
+/** The full canvas of an explainer chapter. The route owns the step and the selection, and `walk` goes on past the steps. */
+export function HandLaidCanvas({ diagram, step, selected, onStep, onSelect, walk }: {
   diagram: HarvestedDiagram
   step: number | null
   selected: string | null
   onStep: (step: number | null) => void
   onSelect: (id: string | null) => void
+  walk?: StepBarWalk
 }) {
   const resolvedTheme = useResolvedTheme()
   return (
     <div className="hand-laid-diagram-full relative size-full bg-canvas">
       <Canvas diagram={diagram} step={step} selected={selected} onSelect={onSelect} full resolvedTheme={resolvedTheme}>
         <Panel position="bottom-center" className="w-[min(640px,calc(100%-24px))]">
-          <DiagramStepBar steps={diagram.steps} active={step} onGo={onStep} baseDir={site().config.docs.diagrams} stepRef={site().stepRef} />
+          <DiagramStepBar {...walk} steps={diagram.steps} active={step} onGo={onStep} baseDir={site().config.docs.diagrams} stepRef={site().stepRef} />
         </Panel>
       </Canvas>
     </div>
