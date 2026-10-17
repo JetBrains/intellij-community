@@ -220,6 +220,13 @@ internal class StructureChangeCollectorTest {
     assertEquals(FileStatus.NOT_CHANGED, modified.status)
     assertEquals(FileStatus.MODIFIED, modified.children.single().status)
     assertEquals(after.indexOf("value()"), modified.children.single().offset)
+
+    val changedHeader = "final $before"
+    val header = collect(before, changedHeader, "Other.java").single()
+    assertEquals("Sample", header.text)
+    assertEquals(FileStatus.MODIFIED, header.status)
+    assertTrue(header.children.isEmpty())
+    assertEquals(changedHeader.indexOf("Sample"), header.offset)
   }
 
   @Test
@@ -250,23 +257,15 @@ internal class StructureChangeCollectorTest {
   }
 
   @Test
-  fun `header changes keep the type and preserve member identities`(): Unit = timeoutRunBlocking {
+  fun `header changes hide the file container and preserve member identities`(): Unit = timeoutRunBlocking {
     val before = "class Sample { int value() { return 1; } }"
     val changedBody = "class Sample { int value() { return 2; } }"
     val changedHeader = "final class Sample { int value() { return 1; } }"
     val changedBoth = "final class Sample { int value() { return 2; } }"
 
-    val header = collect(before, changedHeader).single()
-    assertEquals("Sample", header.text)
-    assertEquals(FileStatus.MODIFIED, header.status)
-    assertTrue(header.children.isEmpty())
-    assertEquals(changedHeader.indexOf("Sample"), header.offset)
+    assertTrue(collect(before, changedHeader).isEmpty())
 
-    val owner = collect(before, changedBoth).single()
-    assertEquals("Sample", owner.text)
-    assertEquals(FileStatus.MODIFIED, owner.status)
-    assertEquals(header.id, owner.id)
-    val member = owner.children.single()
+    val member = collect(before, changedBoth).single()
     assertEquals("value", member.memberName)
     assertEquals(FileStatus.MODIFIED, member.status)
     assertEquals(collect(before, changedBody).single().id, member.id)
@@ -274,23 +273,41 @@ internal class StructureChangeCollectorTest {
   }
 
   @Test
-  fun `empty added types remain visible and navigable`(): Unit = timeoutRunBlocking {
-    val text = "class Sample {}"
-    val owner = collect(null, text).single()
-    assertEquals("Sample", owner.text)
-    assertEquals(FileStatus.ADDED, owner.status)
-    assertTrue(owner.children.isEmpty())
-    assertEquals(text.indexOf("Sample"), owner.offset)
+  fun `empty matching types do not duplicate file nodes`(): Unit = timeoutRunBlocking {
+    for (text in listOf("class Sample {}", "interface Sample {}", "enum Sample {}")) {
+      assertTrue(collect(null, text).isEmpty(), text)
+      assertTrue(collect("", text).isEmpty(), text)
+    }
   }
 
   @Test
-  fun `types added to existing files remain visible`(): Unit = timeoutRunBlocking {
+  fun `matching types added to existing files expose their members`(): Unit = timeoutRunBlocking {
     val text = "class Sample { void method() {} }"
-    val owner = collect("", text).single()
-    assertEquals("Sample", owner.text)
-    assertEquals(FileStatus.ADDED, owner.status)
-    assertEquals(FileStatus.ADDED, owner.children.single().status)
-    assertEquals(text.indexOf("Sample"), owner.offset)
+    val member = collect("", text).single()
+    assertEquals("method", member.memberName)
+    assertEquals(FileStatus.ADDED, member.status)
+    assertEquals(collect(null, text).single().id, member.id)
+    assertEquals(text.indexOf("method()"), member.offset)
+  }
+
+  @Test
+  fun `header changes in an empty matching class do not duplicate the file node`(): Unit = timeoutRunBlocking {
+    val before = "class HeaderChange {}"
+    val after = "final class HeaderChange {}"
+
+    assertTrue(collect(before, after, "HeaderChange.java").isEmpty())
+  }
+
+  @Test
+  fun `nested header changes keep the nested class node`(): Unit = timeoutRunBlocking {
+    val before = "class Sample { class Nested {} }"
+    val after = "class Sample { final class Nested {} }"
+
+    val nested = collect(before, after).single()
+    assertEquals("Nested", nested.text)
+    assertEquals(FileStatus.MODIFIED, nested.status)
+    assertTrue(nested.children.isEmpty())
+    assertEquals(after.indexOf("Nested"), nested.offset)
   }
 
   @Test
