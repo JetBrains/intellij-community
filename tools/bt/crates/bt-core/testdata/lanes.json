@@ -74,6 +74,7 @@
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
+    "//plugins/air/tests/integration/headless/acp-perf:acp-perf_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
     "//plugins/air/tests/integration/headless/acp/runtime-installation:runtime-installation_test_lib",
@@ -279,6 +280,17 @@
         "--test_env=NODE_BIN",
         "--test_env=NPM_BIN",
         "--test_env=OPENAI_API_KEY"
+      ]
+    },
+    {
+      "name": "acp-perf",
+      "description": "the performance of the latest ACP adapters claude-acp, codex-acp and junie, explicit-only (the target is manual; no --changed, suites, shard or flake picks it; it installs the adapters from the ACP registry and needs no API key)",
+      "target": "//plugins/air/tests/integration/headless/acp-perf:acp-perf_test",
+      "shards": 1,
+      "extra": [
+        "--test_env=NODE_BIN",
+        "--test_env=NPM_BIN",
+        "--test_arg=--jvm_flag=-Didea.performance.tests=true"
       ]
     }
   ]
