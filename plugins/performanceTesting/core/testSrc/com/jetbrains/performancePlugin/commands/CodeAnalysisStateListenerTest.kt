@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.callUnderOwnClassLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -35,6 +36,15 @@ internal class CodeAnalysisStateListenerTest {
   fun `a disposed editor ends the wait for its file`(): Unit = timeoutRunBlocking {
     val listener = projectFixture.get().service<CodeAnalysisStateListener>()
     trackAndDispose { listener.registerOpenedEditors(listOf(it)) }
+    listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
+  }
+
+  @Test
+  fun `a highlighting session keeps no class loader of the code that started the daemon`(): Unit = timeoutRunBlocking {
+    val listener = projectFixture.get().service<CodeAnalysisStateListener>()
+    trackAndDispose { editor ->
+      callUnderOwnClassLoader { listener.registerDaemonStarted(listOf(editor)) }.loader.ensureCollected()
+    }
     listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
   }
 
