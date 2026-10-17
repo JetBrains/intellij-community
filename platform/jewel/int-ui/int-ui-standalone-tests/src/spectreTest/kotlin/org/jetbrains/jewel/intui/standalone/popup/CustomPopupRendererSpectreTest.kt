@@ -23,8 +23,16 @@ import dev.sebastiano.spectre.core.AutomatorNode
 import dev.sebastiano.spectre.core.ComposeAutomator
 import dev.sebastiano.spectre.core.RobotDriver
 import dev.sebastiano.spectre.testing.runSpectreTest
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Rectangle
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
 import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JDialog
+import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -46,6 +54,8 @@ import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
 
 // Headful, and deliberately not a jps_test: the app under test must keep a standalone-only runtime closure,
 // with no IntelliJ Platform classes on the classpath. Runs in CI on any agent with a display:
@@ -211,6 +221,59 @@ class CustomPopupRendererSpectreTest {
             automator.pressKey(KeyEvent.VK_ESCAPE)
             automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 10.seconds)
         } finally {
+            app.stop()
+        }
+    }
+
+    @DisabledOnOs(
+        OS.LINUX,
+        disabledReason =
+            "JDialogRenderer falls back to ComposePopup on Linux when rounded corners and interop blending are unavailable.",
+    )
+    @Test
+    fun `popup window is never shown at screen origin or 1x1 size`(): Unit = runSpectreTestWithCustomPopupRenderer {
+        val app = SpectreTestApplication()
+        app.start()
+        val observedVisibleBounds = CopyOnWriteArrayList<Rectangle>()
+        var listener: AWTEventListener? = null
+        try {
+            val hostWindow = app.awaitWindow()
+            SwingUtilities.invokeAndWait { hostWindow.setLocation(300, 200) }
+            val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(hostWindow))
+            automator.waitForIdle()
+
+            listener = AWTEventListener { event ->
+                val sourceComponent = event.source as? Component ?: return@AWTEventListener
+                val dialog =
+                    sourceComponent as? JDialog ?: SwingUtilities.getWindowAncestor(sourceComponent) as? JDialog
+                if (dialog != null && dialog.owner == hostWindow && dialog.isShowing) {
+                    observedVisibleBounds.add(dialog.bounds)
+                }
+            }
+            Toolkit.getDefaultToolkit()
+                .addAWTEventListener(
+                    listener,
+                    AWTEvent.HIERARCHY_EVENT_MASK or AWTEvent.COMPONENT_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK,
+                )
+
+            val menuButton = automator.waitForNode(tag = MENU_BUTTON_TAG)
+            automator.click(menuButton)
+            automator.waitForNode(tag = MENU_POPUP_TAG)
+            automator.waitForIdle()
+
+            assertTrue(observedVisibleBounds.isNotEmpty(), "Expected to observe visible popup dialog bounds")
+            assertTrue(
+                observedVisibleBounds.none { it.x < hostWindow.x || it.y < hostWindow.y },
+                "Popup window was shown at top-left of screen before repositioning: $observedVisibleBounds",
+            )
+            assertTrue(
+                observedVisibleBounds.none { it.width <= 1 || it.height <= 1 },
+                "Popup window was shown with placeholder size: $observedVisibleBounds",
+            )
+        } finally {
+            if (listener != null) {
+                Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+            }
             app.stop()
         }
     }

@@ -24,6 +24,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -208,19 +210,6 @@ private fun JPopupImpl(
     var parentBoundsInRoot by remember { mutableStateOf<IntRect?>(null) }
     var popupRectangle by remember { mutableStateOf<Rectangle?>(null) }
 
-    Layout(
-        content = {},
-        modifier =
-            Modifier.onGloballyPositioned { childCoordinates ->
-                if (component.isShowing) {
-                    childCoordinates.parentCoordinates?.let {
-                        parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
-                    }
-                }
-            },
-        measurePolicy = { _, _ -> layout(0, 0) {} },
-    )
-
     val dialog = remember {
         JDialog(window).apply {
             isUndecorated = true
@@ -319,6 +308,41 @@ private fun JPopupImpl(
         }
     }
 
+    val currentParentBounds = parentBoundsInRoot
+    val isPreMeasured = popupRectangle != null
+    Layout(
+        content = {
+            if (currentParentBounds != null && !isPreMeasured) {
+                CompositionLocalProvider(compositionLocalContext) {
+                    CompositionLocalProvider(LocalComponent provides composePanel) { currentContent() }
+                }
+            }
+        },
+        modifier =
+            Modifier.onGloballyPositioned { childCoordinates ->
+                if (component.isShowing) {
+                    childCoordinates.parentCoordinates?.let {
+                        parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
+                    }
+                }
+            },
+        measurePolicy =
+            remember(currentPopupPositionProvider, currentParentBounds, dialog) {
+                if (currentParentBounds == null) {
+                    MeasurePolicy { _, _ -> layout(0, 0) {} }
+                } else {
+                    JPopupMeasurePolicy(
+                        window = dialog,
+                        popupPositionProvider = currentPopupPositionProvider,
+                        parentBoundsInRoot = currentParentBounds,
+                        placeContent = false,
+                    ) { position, size ->
+                        popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
+                    }
+                }
+            },
+    )
+
     LaunchedEffect(properties) {
         dialog.isFocusable = properties.focusable
         dialog.focusableWindowState = properties.focusable
@@ -328,8 +352,19 @@ private fun JPopupImpl(
     val rectValue = popupRectangle
     LaunchedEffect(rectValue) {
         val rectangle = rectValue?.withDensity(dialog.density()) ?: return@LaunchedEffect
-        dialog.size = rectangle.size
-        dialog.location = rectangle.location.fromCurrentScreenToGlobal(window)
+        val location = rectangle.location.fromCurrentScreenToGlobal(window)
+        composePanel.preferredSize = rectangle.size
+        dialog.bounds = Rectangle(location, rectangle.size)
+        if (!dialog.isVisible) {
+            // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
+            // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
+            // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
+            // start them as non-focusable, and then make them focusable a short while later.
+            dialog.focusableWindowState = false
+            dialog.isAutoRequestFocus = false
+            dialog.isVisible = true
+            SwingUtilities.invokeLater { dialog.focusableWindowState = currentProperties.focusable }
+        }
     }
 
     LaunchedEffect(blendingEnabled, windowShape) {
@@ -463,16 +498,6 @@ private fun JPopupImpl(
     DisposableEffect(dialog) {
         dialog.contentPane = composePanel
 
-        // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
-        // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
-        // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
-        // start them as non-focusable, and then make them focusable a short while later.
-        dialog.focusableWindowState = false
-        dialog.isAutoRequestFocus = false
-        dialog.isVisible = true
-        dialog.size = composePanel.preferredSize
-        SwingUtilities.invokeLater { dialog.focusableWindowState = true }
-
         onDispose {
             dialog.isVisible = false
             dialog.dispose()
@@ -485,9 +510,14 @@ private class JPopupMeasurePolicy(
     private val window: Window,
     private val popupPositionProvider: PopupPositionProvider,
     private val parentBoundsInRoot: IntRect,
+    private val placeContent: Boolean = true,
     private val onMeasure: (IntOffset, IntSize) -> Unit,
 ) : MeasurePolicy {
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        if (!placeContent && measurables.isEmpty()) {
+            return layout(0, 0) {}
+        }
+
         val screenSize: IntSize = IntSize.screenSize(window)
 
         val relaxedConstraints =
@@ -511,8 +541,20 @@ private class JPopupMeasurePolicy(
 
         onMeasure(position, contentSize)
 
+        if (!placeContent) {
+            return layout(0, 0) {}
+        }
+
         return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 private fun applyRoundedCorners(dialog: Window, cornerSize: CornerSize, size: IntSize) {
