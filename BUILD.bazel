@@ -1051,6 +1051,8 @@ jvm_library(
         "//platform/markdown-utils:markdown-utils-tests_test_lib",
         "//platform/ml-impl:ml-impl-tests",
         "//platform/ml-impl:ml-impl-tests_test_lib",
+        "//platform/navbar/frontend:frontend-tests",
+        "//platform/navbar/frontend:frontend-tests_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph:pluginGraph-tests",
         "//platform/build-scripts/product-dsl/plugin-graph:pluginGraph-tests_test_lib",
         "//platform/pluginSystem/parser/impl:pluginSystem-parser-impl-tests",
