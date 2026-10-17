@@ -509,6 +509,86 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
   }
 
   /**
+   * An open file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] is the first of the batch.
+   * It stays in its window, and the other files of the batch share one split.
+   */
+  fun testBatchKeepsTheFirstOpenFileWithForbiddenSplitOutOfTheRightSplit() {
+    doTestBatchWithFileWithForbiddenSplit(forbiddenFirst = true, forbiddenIsOpen = true)
+  }
+
+  /**
+   * An open file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] is the last of the batch.
+   * The split of the other files does not pull it in, and it stays open in its window.
+   * The split window stays the current one.
+   */
+  fun testBatchKeepsTheLastOpenFileWithForbiddenSplitOutOfTheRightSplit() {
+    doTestBatchWithFileWithForbiddenSplit(forbiddenFirst = false, forbiddenIsOpen = true)
+  }
+
+  /**
+   * A closed file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] is the first of the batch.
+   * It has no window to stay in, so it opens the split and the other files follow it there.
+   */
+  fun testBatchOpensTheFirstClosedFileWithForbiddenSplitInTheRightSplit() {
+    doTestBatchWithFileWithForbiddenSplit(forbiddenFirst = true, forbiddenIsOpen = false)
+  }
+
+  /**
+   * A closed file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] is the last of the batch.
+   * It opens in the split which the other files created.
+   */
+  fun testBatchOpensTheLastClosedFileWithForbiddenSplitInTheRightSplit() {
+    doTestBatchWithFileWithForbiddenSplit(forbiddenFirst = false, forbiddenIsOpen = false)
+  }
+
+  private fun doTestBatchWithFileWithForbiddenSplit(forbiddenFirst: Boolean, forbiddenIsOpen: Boolean) {
+    withNavigationRequests(isAsync = true) {
+      val forbidden = myFixture.addFileToProject("forbidden.txt", "forbidden").virtualFile
+      forbidden.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+      val target1 = myFixture.addFileToProject("target1.txt", "target1").virtualFile
+      val target2 = myFixture.addFileToProject("target2.txt", "target2").virtualFile
+      if (forbiddenIsOpen) {
+        myFixture.openFileInEditor(forbidden)
+      }
+      myFixture.openFileInEditor(target1)
+      myFixture.openFileInEditor(target2)
+      val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+      val initialWindow = fileEditorManager.currentWindow!!
+      val result = AtomicReference<Boolean>()
+      val targetRequests = listOf(
+        createNavigationRequest(target1, 0),
+        createNavigationRequest(target2, 0),
+      )
+      val forbiddenRequest = createNavigationRequest(forbidden, 0)
+      val requests = if (forbiddenFirst) listOf(forbiddenRequest) + targetRequests else targetRequests + forbiddenRequest
+
+      coroutineScope.launch {
+        result.set(
+          project.serviceAsync<NavigationService>().navigate(
+            requests,
+            NavigationOptions.defaultOptions().openInRightSplit(true),
+          )
+        )
+      }
+
+      waitUntil("Navigation result was not produced") { result.get() != null }
+      assertThat(result.get()).isTrue()
+      assertThat(fileEditorManager.windowSplitCount).isEqualTo(2)
+      val splitWindow = fileEditorManager.windows.single { it !== initialWindow }
+      assertThat(fileEditorManager.currentWindow).isSameAs(splitWindow)
+      if (forbiddenIsOpen) {
+        assertThat(splitWindow.fileList).containsExactlyInAnyOrder(target1, target2)
+        assertThat(initialWindow.fileList).contains(forbidden)
+      }
+      else {
+        assertThat(splitWindow.fileList).containsExactlyInAnyOrder(forbidden, target1, target2)
+        assertThat(initialWindow.fileList).doesNotContain(forbidden)
+      }
+      assertThat(forbidden.isValid).isTrue()
+    }
+  }
+
+  /**
    * A navigatable which navigates by itself cannot be told which editor to use, so [RequestedEditor.None] reaches it
    * as the suppression of the ambient one; this is what keeps such a navigation out of the editor a diff viewer publishes.
    */
