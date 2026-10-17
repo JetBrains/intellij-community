@@ -932,8 +932,6 @@ f:com.intellij.execution.target.local.LocalTargetPtyOptions
 - f:getLocalPtyOptions():com.intellij.execution.process.LocalPtyOptions
 f:com.intellij.execution.target.local.LocalTargetType
 - sf:LOCAL_TARGET_NAME:java.lang.String
-f:com.intellij.execution.target.local.LocalTargets
-- sf:toLocalPtyOptions(com.intellij.execution.target.PtyOptions):com.intellij.execution.process.LocalPtyOptions
 c:com.intellij.execution.target.value.DeferredLocalTargetValue
 - getLocalValue():org.jetbrains.concurrency.Promise
 - getTargetValue():org.jetbrains.concurrency.Promise

@@ -16,7 +16,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-fun PtyOptions.toLocalPtyOptions(): LocalPtyOptions =
+internal fun PtyOptions.toLocalPtyOptions(): LocalPtyOptions =
   when (this) {
     is LocalTargetPtyOptions -> localPtyOptions
     else -> {
