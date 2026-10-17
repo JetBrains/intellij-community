@@ -3,6 +3,7 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
@@ -33,6 +34,7 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
@@ -82,6 +84,7 @@ internal object SystemHealthMonitor {
       checkTempDirSanity()
       checkTempDirEnvVars()
       checkAncientOs()
+      checkWslg()
     }
 
     checkEelVmOptions()
@@ -317,6 +320,24 @@ internal object SystemHealthMonitor {
         showNotification("unsupported.windows", suppressable = true, action = null)
       }
     }
+  }
+
+  private fun checkWslg() {
+    val osInfo = OS.CURRENT.osInfo
+    if (osInfo !is OS.LinuxInfo || !osInfo.isUnderWsl || !Files.isDirectory(Path.of("/mnt/wslg")) || AppMode.isRemoteDevHost()) {
+      return
+    }
+
+    // The native WSL support may not work properly in Rider and CLion yet.
+    if (PlatformUtils.isRider() || PlatformUtils.isCLion()) {
+      return
+    }
+
+    val wslgPageUrl = HelpManagerImpl.getHelpUrl("WSL")?.let { "$it#wslg" }
+    val action = wslgPageUrl?.let { url ->
+      NotificationAction.createSimpleExpiring(IdeBundle.message("unsupported.wslg.read.more")) { BrowserUtil.browse(url) }
+    }
+    showNotification("unsupported.wslg", suppressable = true, action)
   }
 
   private fun checkEelVmOptions() {
