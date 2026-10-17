@@ -17,10 +17,29 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.callUnderOwnClassLoader
 import java.awt.Color
 import kotlin.test.assertFailsWith
 
 class CaretModelImplTest : AbstractEditorTest() {
+  fun `test a removed caret keeps no class loader of the code that removed it`() {
+    initText("ab\ncd")
+    val caret = caretModel.addCaret(VisualPosition(1, 0))!!
+
+    // the debug mode of the Disposer keeps its own disposal trace, and production runs without it
+    val debugMode = Disposer.setDebugMode(false)
+    try {
+      callUnderOwnClassLoader { caretModel.removeCaret(caret) }.loader.ensureCollected()
+    }
+    finally {
+      Disposer.setDebugMode(debugMode)
+    }
+
+    val failure = assertFailsWith<IllegalStateException> { caret.moveToLogicalPosition(LogicalPosition(0, 0)) }
+    assertEquals("Caret is invalid", failure.message)
+    assertTrue(failure.cause!!.stackTrace.any { it.methodName == "removeCaret" })
+  }
+
   fun `test primary caret exposes editor model position and selection contracts`() {
     initText("ab\ncd")
 

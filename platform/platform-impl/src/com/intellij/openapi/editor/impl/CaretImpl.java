@@ -50,6 +50,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.StackTraceSnapshot;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
@@ -67,13 +68,19 @@ import java.awt.Rectangle;
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final RegistryValue VIM_LIKE_CARET_SELECTION_ENABLED = Registry.get("editor.block.caret.selection.vim-like");
+  /** Removing many carets disposes many of them, so the disposal trace keeps a bounded number of frames. */
+  private static final int DISPOSAL_TRACE_FRAMES = 16;
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   private final CaretModelImpl myCaretModel;
 
   private boolean isValid = true;
-  private Throwable myDisposalTrace;
+  /**
+   * The place that disposed this caret, the cause of "Caret is invalid". It keeps frames as data,
+   * so a disposed caret that an editor still holds keeps no class loader of the code that disposed it.
+   */
+  private StackTraceSnapshot myDisposalTrace;
 
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myVerticalInfo;
@@ -656,7 +663,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       selectionMarker.dispose();
     }
     isValid = false;
-    myDisposalTrace = new Throwable();
+    myDisposalTrace = StackTraceSnapshot.capture(DISPOSAL_TRACE_FRAMES);
   }
 
   @Override
@@ -1370,7 +1377,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       myEditor.throwDisposalError("Editor is already disposed");
     }
     if (!isValid) {
-      throw new IllegalStateException("Caret is invalid", myDisposalTrace);
+      StackTraceSnapshot disposalTrace = myDisposalTrace;
+      throw new IllegalStateException("Caret is invalid", disposalTrace == null ? null : disposalTrace.toThrowable());
     }
   }
 
