@@ -564,9 +564,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     try {
       communicationServer.serve();
     }
-    catch (Exception e) {
+    catch (RuntimeException e) {
       communicationServer.close();
-      throw new ExecutionException(e.getMessage(), e);
+      throw e;
     }
     Process process = targetEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
     communicationServer.setPythonConsoleProcess(process);
