@@ -15,9 +15,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -33,6 +36,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
@@ -115,6 +119,14 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   private val sessions = ConcurrentHashMap<TextEditor, ExceptionWithTime>()
   private val waitingJobs: MutableList<CompletableFuture<Unit>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Unit>>())
   private var locked: Boolean = false
+
+  init {
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        forgetReleasedEditor(event.editor)
+      }
+    }, cs.asDisposable())
+  }
 
   private fun ensureLockedIfNeeded() {
     synchronized(stateLock) {
@@ -387,6 +399,37 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
 
       unlockIfNeeded()
+    }
+  }
+
+  /**
+   * A released editor gets no more daemon events, so its release ends what this service tracks for it.
+   * The release ends the highlighting session of the editor.
+   * It also ends the wait for the file of the editor when no other shown main editor has the file.
+   */
+  private fun forgetReleasedEditor(released: Editor) {
+    @Suppress("UsePropertyAccessSyntax")  // inhibit weak warning, for property access is a warning
+    if (sessions.isEmpty() && filesYetToStartHighlighting.isEmpty()) {
+      return
+    }
+
+    synchronized(stateLock) {
+      val isSessionEnded = sessions.keys.removeIf { it.editor === released }
+      val file = FileDocumentManager.getInstance().getFile(released.document)
+      val isFileEnded = file != null && filesYetToStartHighlighting.containsKey(file) && !hasOtherShownMainEditor(released)
+      if (isFileEnded) {
+        filesYetToStartHighlighting.remove(file)
+      }
+      if (isSessionEnded || isFileEnded) {
+        LOG.info("Released editor of ${file?.name} ends its highlighting session: $isSessionEnded, its file: $isFileEnded")
+        unlockIfNeeded()
+      }
+    }
+  }
+
+  private fun hasOtherShownMainEditor(released: Editor): Boolean {
+    return EditorFactory.getInstance().editors(released.document, project).anyMatch {
+      it !== released && it.editorKind == EditorKind.MAIN_EDITOR && UIUtil.isShowing(it.component)
     }
   }
 
