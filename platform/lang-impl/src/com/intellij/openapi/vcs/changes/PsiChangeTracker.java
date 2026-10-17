@@ -23,6 +23,12 @@ public final class PsiChangeTracker {
   private PsiChangeTracker() {
   }
 
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(List<? extends T> elements,
+                                                                           List<? extends T> oldElements,
+                                                                           PsiFilter<? super T> filter) {
+    return calculateStatuses(elements, new ArrayList<>(oldElements), new HashMap<>(), filter);
+  }
+
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiElement file,
                                                                              PsiElement oldFile,
                                                                              final PsiFilter<T> filter) {
