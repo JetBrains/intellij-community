@@ -12,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.statistics.testFramework",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -47,6 +51,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.statistics.testFramework.iml",
+        "resources/intellij.platform.statistics.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -240,21 +240,14 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   }
 
   private static Method filterMethodFromStackTrace(Function<Method, Boolean> methodFilter) {
-    StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-
-    for (StackTraceElement element : stackTraceElements) {
-      try {
-        Method foundMethod = ContainerUtil.find(
-          Class.forName(element.getClassName()).getDeclaredMethods(),
-          method -> method.getName().equals(element.getMethodName()) && methodFilter.apply(method)
-        );
-        if (foundMethod != null) return foundMethod;
-      }
-      catch (ClassNotFoundException e) {
-        // do nothing, continue
-      }
-    }
-    return null;
+    return StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk(frames -> frames
+      .map(frame -> ContainerUtil.find(
+        frame.getDeclaringClass().getDeclaredMethods(),
+        method -> method.getName().equals(frame.getMethodName()) && methodFilter.apply(method)
+      ))
+      .filter(method -> method != null)
+      .findFirst()
+      .orElse(null));
   }
 
   private static Method tryToFindCallingTestMethodByJUnitAnnotation() {
