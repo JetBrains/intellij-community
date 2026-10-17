@@ -2,12 +2,16 @@
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal;
 import com.intellij.ui.scroll.LatchingScroll;
 import com.intellij.ui.scroll.MouseWheelSmoothScroll;
 import com.intellij.ui.scroll.TouchScroll;
@@ -25,6 +29,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -57,6 +62,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class JBScrollPane extends JScrollPane {
@@ -566,6 +573,86 @@ public class JBScrollPane extends JScrollPane {
       }
     }
 
+    /**
+     * Returns the preferred size of the view.
+     * When the view fails with an NPE, attaches an usefull info to the exception.
+     */
+    private static @NotNull Dimension getViewPreferredSize(@NotNull JScrollPane pane, @NotNull Component view) {
+      try {
+        return view.getPreferredSize();
+      }
+      catch (NullPointerException e) {
+        var hierarchy = new StringBuilder("Parents of the scroll pane, from the window down:\n");
+        for (Component parent : UIUtil.uiParents(pane, false).toList().reversed()) {
+          appendComponent(hierarchy, parent, 1);
+        }
+        var attachments = new ArrayList<Attachment>();
+        Throwable stacktrace = getCreationStacktrace(pane);
+        if (stacktrace != null) {
+          attachments.add(new Attachment("scroll-pane-creation", stacktrace));
+        }
+        hierarchy.append("\nView of the scroll pane:\n");
+        appendHierarchy(hierarchy, attachments, view, 1);
+
+        var hierarchyAttachment = new Attachment("view-hierarchy.txt", hierarchy.toString());
+        hierarchyAttachment.setIncluded(true);
+        attachments.addFirst(hierarchyAttachment);
+        throw new RuntimeExceptionWithAttachments(e, attachments.toArray(Attachment[]::new));
+      }
+    }
+
+    private static final int HIERARCHY_DUMP_DEPTH = 10;
+
+    /**
+     * Appends one line per component. A container with {@link BoxLayout} gets more details,
+     * and its creation stack trace goes to {@code attachments} when it is saved.
+     */
+    private static void appendHierarchy(@NotNull StringBuilder sb, @NotNull List<Attachment> attachments, @NotNull Component component, int depth) {
+      appendComponent(sb, component, depth);
+      if (component instanceof JComponent c && c.getLayout() instanceof BoxLayout) {
+        sb.repeat("  ", depth + 1)
+          .append("size=").append(c.getWidth()).append('x').append(c.getHeight())
+          .append(" children=").append(c.getComponentCount())
+          .append(" showing=").append(c.isShowing());
+        Throwable stacktrace = getCreationStacktrace(c);
+        if (stacktrace != null) {
+          var attachment = new Attachment("box-" + attachments.size() + "-" + c.getClass().getSimpleName(), stacktrace);
+          attachments.add(attachment);
+          sb.append(" creation=").append(attachment.getName());
+        }
+        sb.append('\n');
+      }
+      if (depth < HIERARCHY_DUMP_DEPTH) {
+        for (Component child : UIUtil.uiChildren(component)) {
+          appendHierarchy(sb, attachments, child, depth + 1);
+        }
+      }
+    }
+
+    private static void appendComponent(@NotNull StringBuilder sb, @NotNull Component component, int depth) {
+      sb.repeat("  ", depth).append(component.getClass().getName());
+      String name = component.getName();
+      if (name != null && !name.isEmpty()) {
+        sb.append(" name=\"").append(name).append('"');
+      }
+      if (component instanceof Container container && container.getLayout() != null) {
+        sb.append(" layout=").append(container.getLayout().getClass().getName());
+      }
+      if (!component.isVisible()) sb.append(" invisible");
+      if (!component.isValid()) sb.append(" invalid");
+      sb.append('\n');
+    }
+
+    /**
+     * Returns the creation stack trace that the UI DSL or the UI inspector saved in the internal mode.
+     */
+    private static @Nullable Throwable getCreationStacktrace(@NotNull JComponent component) {
+      if (component.getClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE) instanceof Throwable stacktrace) {
+        return stacktrace;
+      }
+      return ClientProperty.get(component, UiInspectorUtil.ADDED_AT_STACKTRACE);
+    }
+
     @Override
     public void layoutContainer(Container parent) {
       ThreadingAssertions.softAssertAwtOperationsThread();
@@ -627,7 +714,7 @@ public class JBScrollPane extends JScrollPane {
       boolean isEmpty = viewportBounds.width < 0 || viewportBounds.height < 0;
 
       Component view = viewport == null ? null : viewport.getView();
-      Dimension viewPreferredSize = view == null ? new Dimension() : view.getPreferredSize();
+      Dimension viewPreferredSize = view == null ? new Dimension() : getViewPreferredSize(pane, view);
       if (view instanceof JComponent && !view.isPreferredSizeSet()) {
         JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
       }
