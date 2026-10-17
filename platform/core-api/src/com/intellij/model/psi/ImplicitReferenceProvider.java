@@ -4,7 +4,6 @@ package com.intellij.model.psi;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,6 @@ import java.util.Collections;
  * @see com.intellij.navigation.DirectNavigationProvider
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
-@ApiStatus.Experimental
 public interface ImplicitReferenceProvider {
 
   @Internal

@@ -2,11 +2,9 @@
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public interface PsiSymbolReferenceHints {
 
   /**

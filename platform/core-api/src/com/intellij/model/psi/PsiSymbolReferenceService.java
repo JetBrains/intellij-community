@@ -3,7 +3,6 @@ package com.intellij.model.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -12,7 +11,6 @@ import java.util.Collection;
 /**
  * Entry point for obtaining {@link PsiSymbolReference}s from {@link PsiElement}.
  */
-@ApiStatus.Experimental
 public interface PsiSymbolReferenceService {
 
   static @NotNull PsiSymbolReferenceService getService() {

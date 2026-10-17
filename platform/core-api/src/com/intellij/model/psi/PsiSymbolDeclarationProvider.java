@@ -2,7 +2,6 @@
 package com.intellij.model.psi;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -16,7 +15,6 @@ import java.util.Collection;
  *
  * @see PsiSymbolDeclaration
  */
-@ApiStatus.Experimental
 public interface PsiSymbolDeclarationProvider {
 
   /**

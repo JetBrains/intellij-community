@@ -2,7 +2,6 @@
 package com.intellij.model.psi;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -11,7 +10,6 @@ import java.util.Collection;
 /**
  * Implement this interface to support reference-based completion.
  */
-@ApiStatus.Experimental
 public interface PsiCompletableReference extends PsiSymbolReference {
 
   /**

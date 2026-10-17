@@ -4,7 +4,6 @@ package com.intellij.model.psi;
 import com.intellij.model.Symbol;
 import com.intellij.model.search.SearchRequest;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -22,7 +21,6 @@ import java.util.Collection;
  * @see PsiSymbolReferenceService
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
-@ApiStatus.Experimental
 public interface PsiSymbolReferenceProvider {
 
   @NotNull @Unmodifiable

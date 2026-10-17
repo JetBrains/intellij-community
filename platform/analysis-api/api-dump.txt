@@ -1594,6 +1594,9 @@ a:com.intellij.modcommand.PsiUpdateModCommandAction
 a:com.intellij.modcommand.PsiUpdateModCommandQuickFix
 - com.intellij.modcommand.ModCommandQuickFix
 - <init>():V
+com.intellij.model.psi.PsiCompletableReference
+- com.intellij.model.psi.PsiSymbolReference
+- a:getCompletionVariants():java.util.Collection
 com.intellij.openapi.actionSystem.ShortcutProvider
 - a:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.openapi.application.WriteActionAware

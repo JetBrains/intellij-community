@@ -2,7 +2,6 @@
 package com.intellij.model.psi;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A marker interface for elements that support external references.
@@ -21,6 +20,5 @@ import org.jetbrains.annotations.ApiStatus;
  * @see PsiElement#getOwnReferences
  * @see UrlReferenceHost
  */
-@ApiStatus.Experimental
 public interface PsiExternalReferenceHost extends PsiElement {
 }

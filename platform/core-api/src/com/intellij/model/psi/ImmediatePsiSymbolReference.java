@@ -4,13 +4,11 @@ package com.intellij.model.psi;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
-@ApiStatus.Experimental
 final class ImmediatePsiSymbolReference implements PsiSymbolReference {
 
   private final @NotNull PsiElement myElement;

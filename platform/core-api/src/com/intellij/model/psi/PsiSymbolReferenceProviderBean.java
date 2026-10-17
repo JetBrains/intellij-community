@@ -8,11 +8,9 @@ import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public final class PsiSymbolReferenceProviderBean extends CustomLoadingExtensionPointBean<PsiSymbolReferenceProvider> {
   /**
    * {@link Language#getID() id} of the language for which references are provided.<br/>

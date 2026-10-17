@@ -606,6 +606,61 @@ com.intellij.model.Symbol
 - a:createPointer():com.intellij.model.Pointer
 - a:equals(java.lang.Object):Z
 - a:hashCode():I
+com.intellij.model.psi.ImplicitReferenceProvider
+- getImplicitReference(com.intellij.psi.PsiElement,I):com.intellij.model.psi.PsiSymbolReference
+- resolveAsReference(com.intellij.psi.PsiElement):java.util.Collection
+com.intellij.model.psi.PsiExternalReferenceHost
+- com.intellij.psi.PsiElement
+com.intellij.model.psi.PsiSymbolDeclaration
+- getAbsoluteRange():com.intellij.openapi.util.TextRange
+- a:getDeclaringElement():com.intellij.psi.PsiElement
+- a:getRangeInDeclaringElement():com.intellij.openapi.util.TextRange
+- a:getSymbol():com.intellij.model.Symbol
+com.intellij.model.psi.PsiSymbolDeclarationProvider
+- a:getDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
+com.intellij.model.psi.PsiSymbolReference
+- getAbsoluteRange():com.intellij.openapi.util.TextRange
+- a:getElement():com.intellij.psi.PsiElement
+- a:getRangeInElement():com.intellij.openapi.util.TextRange
+- s:getReferenceText(com.intellij.model.psi.PsiSymbolReference):java.lang.String
+- a:resolveReference():java.util.Collection
+- resolvesTo(com.intellij.model.Symbol):Z
+com.intellij.model.psi.PsiSymbolReferenceHints
+- getOffsetInElement():I
+- getReferenceClass():java.lang.Class
+- getTarget():com.intellij.model.Symbol
+- getTargetClass():java.lang.Class
+- s:offsetHint(I):com.intellij.model.psi.PsiSymbolReferenceHints
+- s:referenceClassHint(java.lang.Class):com.intellij.model.psi.PsiSymbolReferenceHints
+com.intellij.model.psi.PsiSymbolReferenceProvider
+- a:getReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
+- a:getSearchRequests(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.Collection
+f:com.intellij.model.psi.PsiSymbolReferenceProviderBean
+- com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
+- anyReferenceClass:Z
+- hostElementClass:java.lang.String
+- hostLanguage:java.lang.String
+- implementationClass:java.lang.String
+- referenceClass:java.lang.String
+- targetClass:java.lang.String
+- <init>():V
+- getHostElementClass():java.lang.Class
+- getHostLanguage():com.intellij.lang.Language
+- getReferenceClass():java.lang.Class
+- getResolveTargetClass():java.lang.Class
+com.intellij.model.psi.PsiSymbolReferenceService
+- a:getExternalReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
+- a:getReferences(com.intellij.psi.PsiElement):java.util.Collection
+- a:getReferences(com.intellij.psi.PsiElement,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
+- a:getReferences(com.intellij.psi.PsiElement,java.lang.Class):java.util.Collection
+- s:getService():com.intellij.model.psi.PsiSymbolReferenceService
+com.intellij.model.psi.PsiSymbolService
+- a:asSymbol(com.intellij.psi.PsiElement):com.intellij.model.Symbol
+- a:asSymbolReference(com.intellij.psi.PsiReference):com.intellij.model.psi.PsiSymbolReference
+- a:extractElementFromSymbol(com.intellij.model.Symbol):com.intellij.psi.PsiElement
+- s:getInstance():com.intellij.model.psi.PsiSymbolService
+com.intellij.model.psi.UrlReferenceHost
+- com.intellij.model.psi.PsiExternalReferenceHost
 com.intellij.model.search.SearchRequest
 - s:of(java.lang.String):com.intellij.model.search.SearchRequest
 - s:of(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchRequest
