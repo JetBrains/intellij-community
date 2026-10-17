@@ -109,6 +109,9 @@ internal class TerminalRelativePathLinkFinder(
               char == ':' -> {
                 val position = parsePosition(line, ind)
                 addLink(ind, position, true)
+                if (position != null) {
+                  ind = position.linkEndExclusiveIndex - 1
+                }
                 state = ParsingState.CANCELED_PATH
               }
               isNonPathChar(char) -> {
