@@ -406,7 +406,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   /**
    * A released editor gets no more daemon events, so its release ends what this service tracks for it.
    * The release ends the highlighting session of the editor.
-   * It also ends the wait for the file of the editor when no other shown main editor has the file.
+   * The release of a main editor also ends the wait for its file when the project has no other main editor of the file,
+   * shown or not: a main editor that is not shown yet still gets highlighted.
    */
   private fun forgetReleasedEditor(released: Editor) {
     @Suppress("UsePropertyAccessSyntax")  // inhibit weak warning, for property access is a warning
@@ -417,7 +418,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     synchronized(stateLock) {
       val isSessionEnded = sessions.keys.removeIf { it.editor === released }
       val file = FileDocumentManager.getInstance().getFile(released.document)
-      val isFileEnded = file != null && filesYetToStartHighlighting.containsKey(file) && !hasOtherShownMainEditor(released)
+      val isFileEnded = file != null && released.editorKind == EditorKind.MAIN_EDITOR &&
+                        filesYetToStartHighlighting.containsKey(file) && !hasOtherMainEditor(released)
       if (isFileEnded) {
         filesYetToStartHighlighting.remove(file)
       }
@@ -428,9 +430,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  private fun hasOtherShownMainEditor(released: Editor): Boolean {
+  private fun hasOtherMainEditor(released: Editor): Boolean {
     return EditorFactory.getInstance().editors(released.document, project).anyMatch {
-      it !== released && it.editorKind == EditorKind.MAIN_EDITOR && UIUtil.isShowing(it.component)
+      it !== released && it.editorKind == EditorKind.MAIN_EDITOR
     }
   }
 
