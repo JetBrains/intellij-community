@@ -24,7 +24,6 @@ import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,17 +191,14 @@ public class ResolveCache implements Disposable {
   }
 
   @FunctionalInterface
-  @ApiStatus.Experimental
   public interface PsiSymbolReferenceResolver<R extends @NotNull PsiSymbolReference> {
     @NotNull Collection<? extends @NotNull Symbol> resolve(@NotNull R reference);
   }
 
-  @ApiStatus.Experimental
   public <R extends @NotNull PsiSymbolReference> @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
     return resolveWithCaching(ref, true, resolver);
   }
 
-  @ApiStatus.Experimental
   public <R extends @NotNull PsiSymbolReference>
   @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, boolean preventRecursion, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
     ProgressIndicatorProvider.checkCanceled();

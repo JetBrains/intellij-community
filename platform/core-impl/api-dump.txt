@@ -1080,6 +1080,8 @@ c:com.intellij.psi.impl.source.resolve.ResolveCache
 - <init>(com.intellij.openapi.project.Project):V
 - clearCache(Z):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.source.resolve.ResolveCache
+- resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
+- resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 com.intellij.psi.impl.source.resolve.ResolveCache$AbstractResolver
 - a:resolve(com.intellij.psi.PsiReference,Z):java.lang.Object
 com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantContextResolver
@@ -1087,6 +1089,8 @@ com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantContextResolver
 com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantResolver
 - com.intellij.psi.impl.source.resolve.ResolveCache$AbstractResolver
 - a:resolve(com.intellij.psi.PsiPolyVariantReference,Z):com.intellij.psi.ResolveResult[]
+com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
+- a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
 com.intellij.psi.impl.source.resolve.ResolveCache$Resolver
 - com.intellij.psi.impl.source.resolve.ResolveCache$AbstractResolver
 f:com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl

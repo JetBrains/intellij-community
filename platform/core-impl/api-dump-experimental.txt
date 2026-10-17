@@ -129,12 +129,6 @@ com.intellij.psi.impl.file.impl.FileManager
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 - *a:getCachedPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:getCachedPsiFiles(com.intellij.openapi.vfs.VirtualFile):java.util.List
-c:com.intellij.psi.impl.source.resolve.ResolveCache
-- com.intellij.openapi.Disposable
-- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
-- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
-*:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
-- a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
 c:com.intellij.psi.impl.source.tree.AstBufferUtil$BufferVisitor
 - com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 - *:<init>(com.intellij.lang.ASTNode,Z,Z,I,C[]):V
