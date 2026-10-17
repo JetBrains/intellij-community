@@ -342,6 +342,13 @@ impl Guest<'_> {
         })
     }
 
+    /// The digest of the guest agent that the host build of this checkout made: the bytes that [`Self::install_agent`]
+    /// pushes. It reads the binary on the host and asks the guest nothing.
+    pub async fn built_agent_digest(&self, bazel: &dyn BazelHost) -> Result<String, Refusal> {
+        let source = resolve_agent_binary(self.ctx, self.settings, bazel).await?;
+        read_agent_source(&source).map(|content| agent_digest(&content))
+    }
+
     /// Puts the guest agent in the guest, unless the guest already runs exactly these bytes. Answers the digest of
     /// the agent that the guest holds after the call. A daemon start records it, because a lane daemon is that agent.
     ///
@@ -374,9 +381,7 @@ impl Guest<'_> {
         // recorded with the new file's identity and the old file's digest, and every later start would skip an
         // install it needed. An unstable source simply gets no receipt, so the next start installs again.
         let before = host_file_signature(&source);
-        let content = std::fs::read(&source).or_refuse("guest_agent_missing", Exit::SOFTWARE, || {
-            format!("cannot read the guest agent {}", source.display())
-        })?;
+        let content = read_agent_source(&source)?;
         let digest = agent_digest(&content);
         let incoming = format!("{}.incoming", settings.vm_agent);
         self.write_file(&incoming, &content, "700").await?;
@@ -416,6 +421,13 @@ impl Guest<'_> {
             _ => Ok(digest),
         }
     }
+}
+
+/// The bytes of the guest agent binary `source` on the host.
+fn read_agent_source(source: &Path) -> Result<Vec<u8>, Refusal> {
+    std::fs::read(source).or_refuse("guest_agent_missing", Exit::SOFTWARE, || {
+        format!("cannot read the guest agent {}", source.display())
+    })
 }
 
 /// Where on the host the guest agent for this guest's platform is, or a refusal naming the build to run.

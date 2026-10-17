@@ -160,7 +160,11 @@ fn the_lane_daemon_decides_a_change_of_the_context_plugins_itself() {
 #[test]
 fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
     let with_agent = |started: &'static str, installed: &'static str, mount: &'static str| HealthyDaemon {
-        agent: Some(AgentDigests { started, installed }),
+        agent: Some(AgentDigests {
+            started,
+            installed: Some(installed),
+            built: Some(started),
+        }),
         ..healthy("launch-1", mount, "runtime-1", true)
     };
     let restart = DaemonAction::Start {
@@ -184,6 +188,104 @@ fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
         decide(healthy("launch-1", "mount-1", "runtime-1", true), Runner::Daemon),
         DaemonAction::Reuse
     );
+}
+
+/// A healthy lane daemon of `launch` that started from the agent `started`, whose build made the agent `built`. The guest
+/// holds the agent of the start.
+fn with_built(launch: &'static str, started: &'static str, built: Option<&'static str>) -> HealthyDaemon<'static> {
+    HealthyDaemon {
+        agent: Some(AgentDigests {
+            started,
+            installed: Some(started),
+            built,
+        }),
+        ..healthy(launch, "mount-1", "runtime-1", true)
+    }
+}
+
+// The context writer is part of the guest agent. So a lane daemon whose build made another guest agent restarts, and the
+// restart keeps no IDE: the new daemon makes a fresh context and writes its files. A restart for the stable tier keeps
+// its reason and also keeps no IDE then. The JVM daemon is no agent, so its run decides nothing on the agent.
+#[test]
+fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide() {
+    let fresh = DaemonAction::Start {
+        verb: "restart",
+        reason: AGENT_BUILT,
+        keep_ide: false,
+    };
+    let decide = |seen, runner| decide_daemon_action(Some(seen), BUILD, false, runner);
+    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-b")), Runner::Daemon), fresh);
+    let mut reinstalled = with_built("launch-1", "agent-a", Some("agent-b"));
+    reinstalled.agent = reinstalled.agent.map(|agent| AgentDigests {
+        installed: Some("agent-c"),
+        ..agent
+    });
+    assert_eq!(
+        decide(reinstalled, Runner::Daemon),
+        fresh,
+        "the built agent wins over a reinstalled one"
+    );
+    assert_eq!(
+        decide(with_built("launch-0", "agent-a", Some("agent-b")), Runner::Daemon),
+        DaemonAction::Start {
+            verb: "restart",
+            reason: "the controller boot settings changed",
+            keep_ide: false,
+        }
+    );
+    assert_eq!(
+        decide(with_built("launch-1", "agent-a", Some("agent-b")), Runner::Jvm),
+        DaemonAction::Reuse
+    );
+}
+
+// A lane daemon whose build made the agent of its start serves the run as it is, and so does one whose built agent the
+// run does not know. A restart for the stable tier then keeps the IDE of the product.
+#[test]
+fn a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused() {
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false, Runner::Daemon);
+    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-a"))), DaemonAction::Reuse);
+    assert_eq!(decide(with_built("launch-1", "agent-a", None)), DaemonAction::Reuse);
+    assert_eq!(
+        decide(with_built("launch-0", "agent-a", Some("agent-a"))),
+        DaemonAction::Start {
+            verb: "restart",
+            reason: "the controller boot settings changed",
+            keep_ide: true,
+        }
+    );
+}
+
+// The run reads the agent of the build only for a lane daemon whose record names the agent of its start. The digest is
+// the digest of the bytes that a start installs. A digest that moved is a note with both digests.
+#[tokio::test]
+async fn the_run_reads_the_agent_of_the_build_only_for_a_lane_daemon_with_a_recorded_agent() {
+    let fixture = Fixture::new().await;
+    let ctx = Ctx::background();
+    let scope = Scope::worker(&fixture.worker);
+    let source = fixture.settings.vm_agent_source.as_ref().expect("the pool names the agent source");
+    let built = avl_host_sys::guest::agent_digest(&std::fs::read(source).unwrap());
+    let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
+    assert_eq!(fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    state.agent_digest = built.clone();
+    assert_eq!(fixture.host.built_agent(&ctx, &state, Runner::Jvm, &scope).await, None);
+    assert_eq!(
+        fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        Some(built.as_str())
+    );
+    let started = avl_host_sys::guest::agent_digest(b"agent of an earlier build");
+    state.agent_digest = started.clone();
+    assert_eq!(
+        fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        Some(built.as_str())
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    let moved = format!(
+        "the lane daemon runs the guest agent {} of its start, and the build made {}",
+        &started[..12],
+        &built[..12]
+    );
+    assert_eq!(said.matches(&moved).count(), 1, "{said}");
 }
 
 // The run asks the guest which agent it holds only for a lane daemon whose record names the agent of its start. A digest

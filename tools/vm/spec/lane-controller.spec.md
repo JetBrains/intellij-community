@@ -1303,6 +1303,17 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_recorded_agent`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
 
+- A run restarts a healthy lane daemon when the build made another guest agent than its start. The restart
+  stops the lane IDE, so the new daemon makes a fresh context and writes its files. The reason is
+  `the guest agent of the build changed`, and a note of the run stream names both digests. A restart for the stable
+  tier also stops the lane IDE then.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_run_reads_the_agent_of_the_build_only_for_a_lane_daemon_with_a_recorded_agent`)
+
+- A lane daemon whose build made the agent of its start serves the run as it is. So does one whose built agent the
+  run cannot read.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused`)
+
 - A daemon restart for a change of the stable tier keeps each live lane IDE of the same product. The decision and
   the timing line say `keep`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs

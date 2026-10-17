@@ -113,22 +113,34 @@ pub(crate) struct DaemonDigests<'a> {
 pub(crate) struct HealthyDaemon<'a> {
     pub recorded: DaemonDigests<'a>,
     pub ide_running: bool,
-    /// The guest agent of a lane daemon, or `None` when the run does not know it: the JVM daemon runs, the record of the
-    /// daemon names no agent, or the guest did not say which agent it holds.
+    /// The guest agent of a lane daemon, or `None` when the run does not know it: the JVM daemon runs, or the record of
+    /// the daemon names no agent.
     pub agent: Option<AgentDigests<'a>>,
 }
 
-/// The guest agent of a healthy lane daemon: the digest that its record names from its start, and the digest of the
-/// agent that the guest holds now. They differ after an install of another build under the daemon, such as the release
-/// of a lease from another checkout.
+/// The guest agent of a healthy lane daemon: the digest that its record names from its start, the digest of the agent
+/// that the guest holds now, and the digest of the agent that the build of this checkout made. The installed agent
+/// differs after an install of another build under the daemon, such as the release of a lease from another checkout.
+/// The built agent differs after a change of the guest agent code in this checkout. `None` is a digest that the run does
+/// not know.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct AgentDigests<'a> {
     pub started: &'a str,
-    pub installed: &'a str,
+    pub installed: Option<&'a str>,
+    pub built: Option<&'a str>,
+}
+
+impl AgentDigests<'_> {
+    fn moved(&self, digest: Option<&str>) -> bool {
+        digest.is_some_and(|digest| digest != self.started)
+    }
 }
 
 /// The reason of the restart of a lane daemon whose guest agent was reinstalled under it.
 pub(crate) const AGENT_REINSTALLED: &str = "the guest agent was reinstalled under the lane daemon";
+
+/// The reason of the restart of a lane daemon whose start agent is not the guest agent that the build made.
+pub(crate) const AGENT_BUILT: &str = "the guest agent of the build changed";
 
 /// What an iteration does with the daemon before it runs: the answer of [`decide_daemon_action`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -163,6 +175,9 @@ pub(crate) enum DaemonAction {
 /// Any other daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot
 /// say whether the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's
 /// product. A start without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
+///
+/// A lane daemon whose start agent is not the agent of the build is restarted, and that restart keeps no IDE. The
+/// context writer is part of the guest agent, so the new daemon makes a fresh context and writes its files.
 pub(crate) fn decide_daemon_action(
     healthy: Option<HealthyDaemon<'_>>,
     build: DaemonDigests<'_>,
@@ -181,8 +196,16 @@ pub(crate) fn decide_daemon_action(
             keep_ide: false,
         };
     };
+    let agent = agent.filter(|_| runner == Runner::Daemon);
+    let built_moved = agent.is_some_and(|agent| agent.moved(agent.built));
     if recorded.launch == build.launch {
-        return if runner == Runner::Daemon && agent.is_some_and(|agent| agent.started != agent.installed) {
+        return if built_moved {
+            DaemonAction::Start {
+                verb: "restart",
+                reason: AGENT_BUILT,
+                keep_ide: false,
+            }
+        } else if agent.is_some_and(|agent| agent.moved(agent.installed)) {
             DaemonAction::Start {
                 verb: "restart",
                 reason: AGENT_REINSTALLED,
@@ -208,7 +231,7 @@ pub(crate) fn decide_daemon_action(
     DaemonAction::Start {
         verb: "restart",
         reason,
-        keep_ide: true,
+        keep_ide: !built_moved,
     }
 }
 
@@ -648,22 +671,27 @@ impl Host {
             Some(state) => self.daemon.status(ctx, state).await?,
             None => None,
         };
-        let installed_agent = match (&recorded, &status) {
-            (Some(state), Some(_)) => self.installed_agent(ctx, state, self.daemon.runner(), scope).await,
-            _ => None,
+        let runner = self.daemon.runner();
+        let (installed_agent, built_agent) = match (&recorded, &status) {
+            (Some(state), Some(_)) => (
+                self.installed_agent(ctx, state, runner, scope).await,
+                self.built_agent(ctx, state, runner, scope).await,
+            ),
+            _ => (None, None),
         };
         let healthy = recorded.as_ref().zip(status.as_ref()).map(|(state, status)| HealthyDaemon {
             recorded: state.daemon_digests(),
             ide_running: status.ide_running,
-            agent: installed_agent.as_deref().map(|installed| AgentDigests {
+            agent: (runner == Runner::Daemon && !state.agent_digest.is_empty()).then(|| AgentDigests {
                 started: &state.agent_digest,
-                installed,
+                installed: installed_agent.as_deref(),
+                built: built_agent.as_deref(),
             }),
         });
         if status.is_none() && !recreated {
             self.manager.require_ready(ctx, lease).await?;
         }
-        let action = decide_daemon_action(healthy, prep.daemon_digests(), fresh_ide, self.daemon.runner());
+        let action = decide_daemon_action(healthy, prep.daemon_digests(), fresh_ide, runner);
         let state = match (action, recorded) {
             (DaemonAction::Start { verb, reason, keep_ide }, _) => {
                 self.decide(Subject::Daemon, verb, reason, scope);
@@ -747,6 +775,41 @@ impl Host {
             Err(refusal) => {
                 self.reporter.note(
                     stays(format!("the guest agent did not say which build it is: {}", refusal.message)),
+                    Some(scope),
+                );
+                None
+            }
+        }
+    }
+
+    /// The digest of the guest agent that the build of this checkout made, when `runner` is the lane daemon and the
+    /// record of the healthy daemon `state` names the agent of its start. Otherwise the run reads nothing. A digest that
+    /// moved is a note of the run stream with both digests, and so is an agent that cannot be read: then the daemon stays.
+    pub(crate) async fn built_agent(&self, ctx: &Ctx, state: &HostState, runner: Runner, scope: &Scope) -> Option<String> {
+        if runner != Runner::Daemon || state.agent_digest.is_empty() {
+            return None;
+        }
+        let channel = self.channel(&state.worker);
+        match self.guest(ctx, channel.as_ref()).built_agent_digest(self.bazel.as_ref()).await {
+            Ok(built) => {
+                if built != state.agent_digest {
+                    self.reporter.note(
+                        format!(
+                            "the lane daemon runs the guest agent {} of its start, and the build made {}",
+                            short(&state.agent_digest),
+                            short(&built)
+                        ),
+                        Some(scope),
+                    );
+                }
+                Some(built)
+            }
+            Err(refusal) => {
+                self.reporter.note(
+                    format!(
+                        "the lane daemon stays, because the guest agent of the build cannot be read: {}",
+                        refusal.message
+                    ),
                     Some(scope),
                 );
                 None
