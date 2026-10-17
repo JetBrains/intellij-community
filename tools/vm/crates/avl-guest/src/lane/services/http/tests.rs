@@ -84,7 +84,10 @@ fn a_malformed_request_line_and_a_large_body_are_refused_and_a_closed_one_ends()
 
 fn written(response: Response, head_only: bool) -> String {
     let mut bytes = Vec::new();
-    write_response(&mut bytes, response, head_only).unwrap();
+    assert!(
+        write_response(&mut bytes, response, head_only).unwrap().is_none(),
+        "an answer without an upgrade"
+    );
     String::from_utf8(bytes).unwrap()
 }
 

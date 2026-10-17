@@ -3,17 +3,21 @@
 //! The emulated account is one user. The login approves at once: the authorization answers a redirect to the IDE's
 //! callback with a fixed code. The id token is unsigned and names this server as its issuer, so a login survives an
 //! IDE restart. The JCP routes answer the AI access discovery and the provisioning that Air reads before it offers a
-//! cloud run. A request to any other path answers 501, and the emulator records it.
+//! cloud run, and [spawner] serves the Agent Spawner below them. A request to any other path answers 501, and the
+//! emulator records it.
 
 use std::sync::{Mutex, MutexGuard};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
+use self::spawner::Spawner;
 use super::control;
+use super::encoding::Base64;
 use super::http::{self, Request, Response};
 use super::{Handler, Service};
 use crate::reply::AgentRefusal;
 
+pub(crate) mod spawner;
 #[cfg(test)]
 mod tests;
 
@@ -43,6 +47,9 @@ const TOOLS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/tools"
 const GATEWAYS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/gateways";
 const AGENTS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/agents";
 const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
+
+/// The largest `count` of the control route `spawner/fail`.
+const MAX_FAILED_DIALS: usize = 100;
 
 const NO_AI_ACCESS_OPTIONS_BODY: &str = r#"{"aiAccessOptions":[]}"#;
 const CLOUD_WORKSPACE_BODY: &str = concat!(
@@ -80,6 +87,16 @@ pub(crate) struct Cloud {
     token: String,
     organization: Organization,
     record: Mutex<Record>,
+    spawner: Spawner,
+}
+
+/// The body of the control route `spawner/fail`: the next `count` dials answer `status`, 401 by default.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FailDials {
+    count: usize,
+    #[serde(default)]
+    status: Option<u16>,
 }
 
 /// Starts the emulator on `127.0.0.1:<port>`. The AI access discovery answers `organization`.
@@ -89,6 +106,7 @@ pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Resul
         token: token.to_owned(),
         organization,
         record: Mutex::new(Record::default()),
+        spawner: Spawner::default(),
     })
 }
 
@@ -123,6 +141,10 @@ impl Handler for Cloud {
             Response::with_body(501, TEXT, format!("the Air lane emulates no {target}"))
         })
     }
+
+    fn stop(&self) {
+        self.spawner.stop();
+    }
 }
 
 impl Cloud {
@@ -135,8 +157,20 @@ impl Cloud {
         &self.base_url
     }
 
-    /// Empties the record, and answers what it held.
-    pub(crate) fn clear(&self) -> Record {
+    /// The Agent Spawner below the JCP base URL.
+    pub(crate) const fn spawner(&self) -> &Spawner {
+        &self.spawner
+    }
+
+    /// Empties the record and the record of the spawner, as the state reset of a scenario does. The attach of the
+    /// spawner stays.
+    pub(crate) fn clear(&self) {
+        self.clear_record();
+        self.spawner.clear();
+    }
+
+    /// Empties the record, and answers what it held. The spawner keeps its record.
+    pub(crate) fn clear_record(&self) -> Record {
         std::mem::take(&mut *self.lock())
     }
 
@@ -209,11 +243,14 @@ impl Cloud {
             r#"{{"user_id":"{USER_ID}","email":"air-lane@example.com","jba_login":"air-lane","full_name":"Air Lane","iss":"{}","sub":"{USER_ID}"}}"#,
             self.base_url
         );
-        format!("{}.{}.signature", base64_url(b"{}"), base64_url(payload.as_bytes()))
+        format!("{}.{}.signature", Base64::Url.encode(b"{}"), Base64::Url.encode(payload.as_bytes()))
     }
 
     /// Answers a request below the JCP base URL, or `None` when no JCP route owns `path`.
     fn jcp(&self, request: &Request, path: &str) -> Option<Response> {
+        if let Some(answer) = self.spawner.handle(request, path) {
+            return Some(answer);
+        }
         let body = match path {
             AI_ACCESS_OPTIONS_PATH => Some(match self.organization {
                 Organization::None => NO_AI_ACCESS_OPTIONS_BODY,
@@ -238,27 +275,30 @@ impl Cloud {
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("record", "GET") => control::answer(&*self.lock()),
-            ("record", "DELETE") => control::answer(&self.clear()),
-            ("record", _) => control::method_not_allowed(request, "GET or DELETE"),
+            ("record", "DELETE") => control::answer(&self.clear_record()),
+            ("spawner", "GET") => control::answer(&self.spawner.record()),
+            ("spawner", "DELETE") => control::answer(&self.spawner.clear()),
+            ("record" | "spawner", _) => control::method_not_allowed(request, "GET or DELETE"),
+            ("spawner/fail", "POST") => self.fail_dials(request),
+            ("spawner/fail", _) => control::method_not_allowed(request, "POST"),
             _ => control::unknown_route(request),
         }
     }
-}
 
-/// The unpadded base64url text of `bytes`. It is written by hand, because no base64 crate is in the closure of the
-/// guest agent.
-fn base64_url(bytes: &[u8]) -> String {
-    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    let mut text = String::with_capacity(bytes.len().div_ceil(3) * 4);
-    for chunk in bytes.chunks(3) {
-        let triple = chunk
-            .iter()
-            .enumerate()
-            .fold(0_u32, |triple, (index, &byte)| triple | u32::from(byte) << (16 - 8 * index));
-        for index in 0..=chunk.len() {
-            let sextet = (triple >> (18 - 6 * index)) & 0x3f;
-            text.push(char::from(ALPHABET[usize::try_from(sextet).unwrap_or_default()]));
+    /// The route `spawner/fail`: the next dials answer a status instead of the upgrade.
+    fn fail_dials(&self, request: &Request) -> Response {
+        let body: FailDials = match control::body(request) {
+            Ok(body) => body,
+            Err(refusal) => return refusal,
+        };
+        let status = body.status.unwrap_or(spawner::UNAUTHORIZED);
+        if !(1..=MAX_FAILED_DIALS).contains(&body.count) || !(400..600).contains(&status) {
+            return control::bad_request(&format!(
+                "spawner/fail takes a count of 1 to {MAX_FAILED_DIALS} and an error status of 400 to 599, not {} and {status}",
+                body.count
+            ));
         }
+        self.spawner.fail_next_dials(body.count, status);
+        control::answer(&self.spawner.record())
     }
-    text
 }

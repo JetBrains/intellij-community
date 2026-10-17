@@ -91,7 +91,7 @@ fn the_token_route_answers_an_unsigned_id_token_whose_issuer_is_this_emulator() 
     let parts: Vec<&str> = token["id_token"].as_str().unwrap().split('.').collect();
     assert_eq!(parts[0], "e30");
     assert_eq!(parts[2], "signature");
-    let payload = base64_url_decode(parts[1]);
+    let payload = String::from_utf8(Base64::Url.decode(parts[1]).unwrap()).unwrap();
     assert_eq!(
         payload,
         format!(
@@ -107,34 +107,6 @@ fn the_token_route_answers_an_unsigned_id_token_whose_issuer_is_this_emulator() 
     assert_eq!(answer.text(), r#"{"access_token":"air-lane-token","expires_in":3600}"#);
     let info = testing::get(service.address(), "/oauth2/orgs-user-info");
     assert_eq!(info.text(), r#"{"jwt":"air-lane-orgs-user-info","expires_in":3600}"#);
-}
-
-fn base64_url_decode(text: &str) -> String {
-    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    let sextets: Vec<u32> = text
-        .bytes()
-        .map(|byte| u32::try_from(ALPHABET.iter().position(|&known| known == byte).unwrap()).unwrap())
-        .collect();
-    let mut bytes = Vec::new();
-    for chunk in sextets.chunks(4) {
-        let joined = chunk
-            .iter()
-            .enumerate()
-            .fold(0, |joined, (index, sextet)| joined | sextet << (18 - 6 * index));
-        for index in 0..chunk.len() - 1 {
-            bytes.push(joined.to_be_bytes()[1 + index]);
-        }
-    }
-    String::from_utf8(bytes).unwrap()
-}
-
-#[test]
-fn base64_url_has_no_padding() {
-    assert_eq!(base64_url(b""), "");
-    assert_eq!(base64_url(b"f"), "Zg");
-    assert_eq!(base64_url(b"fo"), "Zm8");
-    assert_eq!(base64_url(b"foo"), "Zm9v");
-    assert_eq!(base64_url(&[0xfb, 0xff]), "-_8");
 }
 
 #[test]

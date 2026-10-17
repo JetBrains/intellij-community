@@ -3,9 +3,10 @@
 //! `/_lane/<service>/` of each one.
 //!
 //! A [Service] owns one listener, on loopback for a lane service. One thread accepts, and each connection gets a thread
-//! of its own, so an answer that waits holds only its own request. Each service keeps its state behind one mutex. There
-//! is no async runtime, because the guest agent pins its crate closure. The control channel of the lane daemon is a
-//! [Service] too, on the address that the controller names.
+//! of its own, so an answer that waits holds only its own request. A WebSocket upgrade keeps that thread for its
+//! connection. Each service keeps its state behind one mutex. There is no async runtime, because the guest agent pins
+//! its crate closure. The control channel of the lane daemon is a [Service] too, on the address that the controller
+//! names.
 
 use std::io::Write;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
@@ -21,6 +22,7 @@ use crate::reply::{AgentRefusal, AgentRefusalExt};
 pub(crate) mod cloud;
 pub(crate) mod codex;
 pub(crate) mod control;
+pub(crate) mod encoding;
 pub(crate) mod feedback;
 pub(crate) mod http;
 pub(crate) mod registry;
@@ -28,6 +30,7 @@ pub(crate) mod registry;
 pub(crate) mod testing;
 #[cfg(test)]
 mod tests;
+pub(crate) mod websocket;
 
 /// The refusal code of a listener that cannot bind its port.
 pub(crate) const BIND_CODE: &str = "lane_service_bind";
@@ -149,7 +152,10 @@ fn serve<H: Handler>(mut stream: TcpStream, handler: &H) {
             false,
         ),
     };
-    let _ = http::write_response(&mut stream, response, head_only);
+    if let Ok(Some(upgraded)) = http::write_response(&mut stream, response, head_only) {
+        upgraded(stream);
+        return;
+    }
     let _ = stream.flush();
     let _ = stream.shutdown(std::net::Shutdown::Both);
 }

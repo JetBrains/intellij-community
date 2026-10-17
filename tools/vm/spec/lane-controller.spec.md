@@ -1519,10 +1519,12 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document`)
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`an_undocumented_suite_fails_as_unsupported_with_its_reason`)
 
-- The lane daemon has no Cloud spawner yet (IJAI-4053). So a suite whose fixture uses a Cloud agent of the lane fails
-  as one container `lane_unsupported` before its first request. No scenario of it starts.
-  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_cloud_agent_is_refused_before_any_request`)
-  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_local_agent_runs`)
+- The prologue of a suite attaches the Agent Spawner to the Cloud agent of its fixtures. A suite without one detaches it.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_cloud_agent_attaches_the_spawner_to_its_key_and_runs`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_a_local_agent_detaches_the_spawner_and_runs`)
+
+- A suite with two Cloud agents, or with one that is not controlled, fails as one container `lane_document`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_with_two_cloud_agents_or_an_uncontrolled_one_is_refused_before_any_request`)
 
 - The host ids `refresh-live-wiring` and `adopt-leftover-junie-sessions` of the lane `ui-live` are words of the host
   vocabulary, so every suite document fits it. The lane daemon runs them from slice L-live on. Until then a suite that

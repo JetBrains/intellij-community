@@ -30,6 +30,7 @@ use super::inputs::TraceInputs;
 use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
+use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
@@ -608,6 +609,17 @@ impl super::host_ids::ServiceControl for DaemonLane<'_, '_> {
     fn cloud_clear(&self) -> Result<(), String> {
         self.with_services(|services| {
             services.cloud().clear();
+            Ok(())
+        })
+    }
+
+    fn cloud_attach_spawner(&self, agent_key: Option<&str>) -> Result<(), String> {
+        let control = agent_key.map(|key| ControlEndpoint {
+            url: self.launch.identity.control_url(key),
+            agent_key: key.to_owned(),
+        });
+        self.with_services(|services| {
+            services.cloud().spawner().attach(control);
             Ok(())
         })
     }

@@ -28,7 +28,7 @@
 //! The run thread owns every call of the loop. The watchdog thread of [`super::watchdog`] watches it.
 
 use std::cell::{Cell, RefCell, RefMut};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -37,7 +37,7 @@ use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
-use avl_wire::program::lane::{Delivery, LaneDocument};
+use avl_wire::program::lane::{Delivery, LaneAgent, LaneDocument};
 use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
 };
@@ -78,7 +78,7 @@ pub(crate) mod kind {
     pub(crate) const UNSUPPORTED: &str = "lane_unsupported";
     /// The watchdog ended the run.
     pub(crate) const EXPIRED: &str = "lane_watchdog_expired";
-    /// The IDE of a suite of its own did not launch or did not get ready.
+    /// The IDE of a suite of its own did not launch or did not get ready, or the lane services of the IDE do not run.
     pub(crate) const LAUNCH: &str = "lane_launch";
 }
 
@@ -400,32 +400,46 @@ impl<'r, 's> Runner<'r, 's> {
         }
     }
 
-    /// Refuses a suite whose scenarios use a Cloud agent of the lane document, before any request reaches the IDE. The
-    /// lane daemon has no Cloud spawner yet (IJAI-4053), so each of its scenarios would wait out the agent start.
-    fn refuse_cloud_agents(&self, suite: &SuiteProgram) -> Result<(), Failure> {
-        let cloud: BTreeSet<&str> = suite
+    /// Points the Agent Spawner of the Cloud emulator at the Cloud agent that the fixtures of `suite` use, or at no agent
+    /// when they use none. A dial then reaches the control server in the IDE under the key of that agent. The spawner
+    /// steers one key, and only a controlled agent has a credential, so the prologue refuses any other suite.
+    fn attach_cloud_spawner(&self, suite: &SuiteProgram) -> Result<(), Failure> {
+        let cloud: BTreeMap<&str, &LaneAgent> = suite
             .profiles
             .iter()
             .filter_map(|profile| suite.fixtures.get(&profile.fixture))
             .flat_map(|fixture| &fixture.agents)
-            .filter(|key| {
+            .filter_map(|key| {
                 self.document
                     .agents
                     .iter()
-                    .any(|agent| agent.key == **key && agent.delivery == Delivery::Cloud)
+                    .find(|agent| agent.key == *key && agent.delivery == Delivery::Cloud)
             })
-            .map(String::as_str)
+            .map(|agent| (agent.key.as_str(), agent))
             .collect();
-        if cloud.is_empty() {
-            return Ok(());
-        }
-        Err(Failure::runner(
-            kind::UNSUPPORTED,
-            format!(
-                "the suite '{}' uses the Cloud agents {cloud:?}, and there is no Cloud spawner in the lane daemon (IJAI-4053)",
-                suite.suite
-            ),
-        ))
+        let refused = |reason: String| Err(Failure::runner(kind::DOCUMENT, format!("the suite '{}' {reason}", suite.suite)));
+        let agent = match cloud.values().collect::<Vec<_>>().as_slice() {
+            [] => None,
+            [agent] if agent.controlled => Some(agent.key.as_str()),
+            [agent] => {
+                return refused(format!(
+                    "uses the Cloud agent '{}', which is not controlled, so the Agent Spawner has no credential for it",
+                    agent.key
+                ));
+            }
+            _ => {
+                return refused(format!(
+                    "uses the Cloud agents {:?}, and the Agent Spawner of the lane steers one",
+                    cloud.keys().collect::<Vec<_>>()
+                ));
+            }
+        };
+        self.lane.services().cloud_attach_spawner(agent).map_err(|error| {
+            Failure::runner(
+                kind::LAUNCH,
+                format!("the Agent Spawner of the suite '{}' cannot attach: {error}", suite.suite),
+            )
+        })
     }
 
     /// Runs every scenario of `suites`, in order, and closes the trace. A run that the watchdog ended starts no further
@@ -468,12 +482,12 @@ impl<'r, 's> Runner<'r, 's> {
         }
     }
 
-    /// The prologue of a suite: the document, the declared CLIs, and the managed-agent baseline. It answers what the
-    /// reset of each scenario sends.
+    /// The prologue of a suite: the document, the declared CLIs, the managed-agent baseline, and the Agent Spawner of the
+    /// Cloud emulator. It answers what the reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<&'p SuiteReset, Failure> {
         document_fits(suite)?;
         refuse_live_host_ids(suite)?;
-        self.refuse_cloud_agents(suite)?;
+        self.attach_cloud_spawner(suite)?;
         let reset = suite.reset.as_ref().ok_or_else(|| {
             Failure::runner(
                 kind::DOCUMENT,

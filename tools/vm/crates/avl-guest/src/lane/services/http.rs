@@ -2,12 +2,15 @@
 //! and one answer.
 //!
 //! A request body comes with a `Content-Length` or in the chunked encoding, because the IDE's clients send both. An
-//! `Expect: 100-continue` gets the interim answer before the body. Every answer closes the connection. An answer body
-//! has a `Content-Length`, except a chunked one. The Codex event stream is one chunk, and the run stream of the control
-//! channel is one chunk for each record, written while the run goes on.
+//! `Expect: 100-continue` gets the interim answer before the body. Every answer closes the connection, except the
+//! WebSocket upgrade of the Agent Spawner, which gives the connection to its handler. An answer body has a
+//! `Content-Length`, except a chunked one. The Codex event stream is one chunk, and the run stream of the control channel
+//! is one chunk for each record, written while the run goes on.
 
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
+
+use super::websocket;
 
 #[cfg(test)]
 mod tests;
@@ -61,6 +64,9 @@ impl Request {
 /// The writer of a streamed body: it gets the connection after the head, and each write is one chunk.
 pub(crate) type StreamedBody = Box<dyn FnOnce(&mut ChunkedWriter<'_>) -> io::Result<()> + Send>;
 
+/// The handler of an upgraded connection: it gets the connection after the head of the `101` answer, and owns it.
+pub(crate) type Upgraded = Box<dyn FnOnce(TcpStream) + Send>;
+
 /// What an answer sends after its head.
 pub(crate) enum Body {
     /// The whole body, with its length.
@@ -71,6 +77,8 @@ pub(crate) enum Body {
     Chunked(Vec<u8>),
     /// The chunks that a writer sends while it runs, then the last chunk.
     Streamed(StreamedBody),
+    /// No body: the handler takes the connection after the head of a `101` answer.
+    Upgrade(Upgraded),
 }
 
 /// One answer: the status, the content type, the other headers and the body.
@@ -126,6 +134,21 @@ impl Response {
         }
     }
 
+    /// The `101` answer that accepts the WebSocket upgrade with the `Sec-WebSocket-Key` value `key`. Then `handler`
+    /// takes the connection.
+    pub(crate) fn upgrade(key: &str, handler: Upgraded) -> Self {
+        Self {
+            status: 101,
+            content_type: None,
+            headers: vec![
+                ("Upgrade".to_owned(), "websocket".to_owned()),
+                ("Connection".to_owned(), "Upgrade".to_owned()),
+                ("Sec-WebSocket-Accept".to_owned(), websocket::accept_key(key)),
+            ],
+            body: Body::Upgrade(handler),
+        }
+    }
+
     /// The same answer with the header `name: value` too.
     #[must_use]
     pub(crate) fn header(mut self, name: &str, value: &str) -> Self {
@@ -138,7 +161,7 @@ impl Response {
         match &self.body {
             Body::Full(bytes) | Body::Chunked(bytes) => bytes.len(),
             Body::Truncated { sent, .. } => sent.len(),
-            Body::Streamed(_) => 0,
+            Body::Streamed(_) | Body::Upgrade(_) => 0,
         }
     }
 }
@@ -265,7 +288,8 @@ fn read_chunked(reader: &mut impl BufRead, max_body: usize) -> Result<Vec<u8>, R
 }
 
 /// Writes `response` to `stream`. A `head_only` answer to a `HEAD` request sends no body, and its writer does not run.
-pub(crate) fn write_response(stream: &mut (impl Write + Send), response: Response, head_only: bool) -> io::Result<()> {
+/// An upgrade writes its head without `Connection: close`, and answers the handler that takes the connection.
+pub(crate) fn write_response(stream: &mut (impl Write + Send), response: Response, head_only: bool) -> io::Result<Option<Upgraded>> {
     let mut head = format!("HTTP/1.1 {} {}\r\n", response.status, reason(response.status));
     if let Some(content_type) = &response.content_type {
         head.push_str(&format!("Content-Type: {content_type}\r\n"));
@@ -277,9 +301,14 @@ pub(crate) fn write_response(stream: &mut (impl Write + Send), response: Respons
         Body::Full(bytes) => head.push_str(&format!("Content-Length: {}\r\n", bytes.len())),
         Body::Truncated { announced, .. } => head.push_str(&format!("Content-Length: {announced}\r\n")),
         Body::Chunked(_) | Body::Streamed(_) => head.push_str("Transfer-Encoding: chunked\r\n"),
+        Body::Upgrade(_) => {}
     }
-    head.push_str("Connection: close\r\n\r\n");
+    if !matches!(response.body, Body::Upgrade(_)) {
+        head.push_str("Connection: close\r\n");
+    }
+    head.push_str("\r\n");
     stream.write_all(head.as_bytes())?;
+    let mut upgraded = None;
     if !head_only {
         match response.body {
             Body::Full(bytes) => stream.write_all(&bytes)?,
@@ -293,9 +322,11 @@ pub(crate) fn write_response(stream: &mut (impl Write + Send), response: Respons
                 writer(&mut ChunkedWriter { stream: &mut *stream })?;
                 stream.write_all(LAST_CHUNK)?;
             }
+            Body::Upgrade(handler) => upgraded = Some(handler),
         }
     }
-    stream.flush()
+    stream.flush()?;
+    Ok(upgraded)
 }
 
 /// The last chunk of a chunked body, with no trailer.
@@ -327,11 +358,13 @@ impl Write for ChunkedWriter<'_> {
 /// The reason phrase of `status`.
 const fn reason(status: u16) -> &'static str {
     match status {
+        101 => "Switching Protocols",
         200 => "OK",
         204 => "No Content",
         302 => "Found",
         400 => "Bad Request",
         401 => "Unauthorized",
+        403 => "Forbidden",
         404 => "Not Found",
         405 => "Method Not Allowed",
         409 => "Conflict",

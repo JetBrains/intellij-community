@@ -27,6 +27,8 @@ pub(crate) struct FakeServices {
     pub fault: Mutex<(String, Option<u16>, Option<u64>)>,
     /// The base URL of the emulated JetBrains Cloud that `account-approve-sign-in` requires.
     pub cloud_base_url: Mutex<String>,
+    /// The agent key of each attach of the Agent Spawner, in order.
+    pub spawner_attaches: Mutex<Vec<Option<String>>>,
 }
 
 impl ServiceControl for FakeServices {
@@ -64,6 +66,11 @@ impl ServiceControl for FakeServices {
     }
 
     fn cloud_clear(&self) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn cloud_attach_spawner(&self, agent_key: Option<&str>) -> Result<(), String> {
+        self.spawner_attaches.lock().unwrap().push(agent_key.map(str::to_owned));
         Ok(())
     }
 
@@ -931,38 +938,93 @@ fn a_suite_without_its_bridge_requests_fails_its_prologue() {
     assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
 }
 
-// The lane daemon has no Cloud spawner yet. So a suite whose fixture uses a Cloud agent of the lane fails at once as one
-// `lane_unsupported` container: no scenario starts, and no request reaches the IDE.
-#[test]
-fn a_suite_with_a_cloud_agent_is_refused_before_any_request() {
-    let fake = green_fake();
+/// The lane document of the tests with the Cloud agents `keys`, each a copy of its first agent.
+fn with_cloud_agents(keys: &[(&str, bool)]) -> LaneDocument {
+    let mut document = lane_document();
+    for (key, controlled) in keys {
+        let mut cloud = document.agents[0].clone();
+        cloud.key = (*key).to_owned();
+        cloud.delivery = Delivery::Cloud;
+        cloud.controlled = *controlled;
+        document.agents.push(cloud);
+    }
+    document
+}
+
+/// The green story whose fixture uses the agents `agents`.
+fn story_with_agents(agents: &[&str]) -> Suite {
     let (vocabulary, profile) = green_story();
     let mut suite = story(&vocabulary, &json!([profile]));
-    suite.program.fixtures.get_mut("fixture").unwrap().agents = vec!["remote-scenarios".to_owned()];
-    let mut document = lane_document();
-    let mut cloud = document.agents[0].clone();
-    cloud.key = "remote-scenarios".to_owned();
-    cloud.delivery = Delivery::Cloud;
-    document.agents.push(cloud);
+    suite.program.fixtures.get_mut("fixture").unwrap().agents = agents.iter().map(|key| (*key).to_owned()).collect();
+    suite
+}
+
+// The prologue of a suite points the Agent Spawner at the Cloud agent of its fixture, so a dial of the IDE reaches the
+// control server under that key, and the suite runs.
+#[test]
+fn a_suite_with_a_cloud_agent_attaches_the_spawner_to_its_key_and_runs() {
+    let fake = green_fake();
+    let suite = story_with_agents(&["air-ui-flow-acp", "remote-scenarios"]);
     let ran = run_set(
         &fake,
         &[suite],
         &Setup {
-            document,
+            document: with_cloud_agents(&[("remote-scenarios", true)]),
             ..Setup::default()
         },
     );
-    let failed = ran.events("containerFailed");
-    assert_eq!(failed.len(), 1, "{failed:#?}");
-    assert_eq!(failed[0]["type"], kind::UNSUPPORTED);
-    assert!(
-        failed[0]["message"]
-            .as_str()
-            .is_some_and(|message| message.ends_with("there is no Cloud spawner in the lane daemon (IJAI-4053)")),
-        "{failed:#?}"
+    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    assert_eq!(
+        *fake.services.spawner_attaches.lock().unwrap(),
+        [Some("remote-scenarios".to_owned())]
     );
-    assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
-    assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+}
+
+// A fixture with only a local agent of the lane is no Cloud suite: it detaches the spawner, and runs.
+#[test]
+fn a_suite_with_a_local_agent_detaches_the_spawner_and_runs() {
+    let fake = green_fake();
+    let ran = run(&fake, &[story_with_agents(&["air-ui-flow-acp"])], None);
+    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    assert_eq!(*fake.services.spawner_attaches.lock().unwrap(), [None]);
+}
+
+// The spawner steers one key, and only a controlled agent has a credential of the control server. So a suite with two
+// Cloud agents, or with an uncontrolled one, fails at once as one `lane_document` container, and no request reaches
+// the IDE.
+#[test]
+fn a_suite_with_two_cloud_agents_or_an_uncontrolled_one_is_refused_before_any_request() {
+    for (agents, document, reason) in [
+        (
+            vec!["remote-a", "remote-b"],
+            with_cloud_agents(&[("remote-a", true), ("remote-b", true)]),
+            "the suite 'rename-session' uses the Cloud agents [\"remote-a\", \"remote-b\"], and the Agent Spawner of the lane steers one",
+        ),
+        (
+            vec!["remote-a"],
+            with_cloud_agents(&[("remote-a", false)]),
+            "the suite 'rename-session' uses the Cloud agent 'remote-a', which is not controlled, so the Agent Spawner has no credential for it",
+        ),
+    ] {
+        let fake = green_fake();
+        let ran = run_set(
+            &fake,
+            &[story_with_agents(&agents)],
+            &Setup {
+                document,
+                ..Setup::default()
+            },
+        );
+        let failed = ran.events("containerFailed");
+        assert_eq!(failed.len(), 1, "{failed:#?}");
+        assert_eq!(failed[0]["type"], kind::DOCUMENT);
+        assert_eq!(failed[0]["message"], reason);
+        assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
+        assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
+        assert_eq!(*fake.services.spawner_attaches.lock().unwrap(), Vec::<Option<String>>::new());
+    }
 }
 
 // The host ids of the live lane are words of the vocabulary, and the lane daemon runs them from slice L-live on. So a
@@ -1001,18 +1063,6 @@ fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
     );
     assert_eq!(ran.events("testStarted"), Vec::<&Value>::new());
     assert_eq!(fake.requests(), Vec::<(u32, String)>::new());
-}
-
-// A fixture with a local agent of the lane is no Cloud suite, and runs.
-#[test]
-fn a_suite_with_a_local_agent_runs() {
-    let fake = green_fake();
-    let (vocabulary, profile) = green_story();
-    let mut suite = story(&vocabulary, &json!([profile]));
-    suite.program.fixtures.get_mut("fixture").unwrap().agents = vec!["air-ui-flow-acp".to_owned()];
-    let ran = run(&fake, &[suite], None);
-    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
-    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
 }
 
 // An authored part is one `authored-step` with the values it takes. It answers exactly the values it declares, and its

@@ -64,8 +64,11 @@ pub(crate) trait ServiceControl: Sync {
     fn registry_fault(&self) -> Result<String, String>;
     /// Empties the queue of the feedback capture.
     fn feedback_clear(&self) -> Result<(), String>;
-    /// Empties the record of the JetBrains Cloud emulator.
+    /// Empties the record of the JetBrains Cloud emulator and of its Agent Spawner.
     fn cloud_clear(&self) -> Result<(), String>;
+    /// Points the Agent Spawner of the JetBrains Cloud emulator at the control server credential `agent_key`, or at no
+    /// agent for `None`.
+    fn cloud_attach_spawner(&self, agent_key: Option<&str>) -> Result<(), String>;
     /// The base URL of the JetBrains Cloud emulator, which every sign-in URL of the IDE starts with.
     fn cloud_base_url(&self) -> Result<String, String>;
 }

@@ -7,6 +7,8 @@ targets:
   - ../crates/avl-guest/src/lane/package.rs
   - ../crates/avl-guest/src/lane/services.rs
   - ../crates/avl-guest/src/lane/services/*.rs
+  - ../crates/avl-guest/src/lane/services/cloud/*.rs
+  - ../crates/avl-guest/src/lane/services/cloud/spawner/*.rs
   - ../crates/avl-guest/testdata/lane-services/*
   - ../../../../plugins/air/tests/integration/bridge/resident/tests/AirLaneService*.kt
   - ../../../../plugins/air/tests/integration/flow/src/driver/AirLaneServiceControl.kt
@@ -35,7 +37,6 @@ has a control route. An in-IDE scenario body uses that route to arm a fault or t
 
 - Choosing the ports and the token. The lane identity derives them.
 - Starting and stopping the services. The lane daemon owns them.
-- The Agent Spawner of the JetBrains Cloud Platform. Its routes answer as unexpected requests.
 
 ## Requirements
 
@@ -58,8 +59,10 @@ has a control route. An in-IDE scenario body uses that route to arm a fault or t
 - A service answers `Expect: 100-continue` with the interim answer before it reads the body.
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs
 
-- Every answer has `Connection: close`, and the service closes the connection after it.
+- Every answer has `Connection: close`, and the service closes the connection after it. A WebSocket upgrade is the
+  one exception.
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
 
 - An answer body has a `Content-Length`. Only the event stream of the Codex mock model is chunked.
   [@test] ../crates/avl-guest/src/lane/services/http/tests.rs
@@ -255,14 +258,94 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
 - Any other path gets 501 with the text `the Air lane emulates no <target>`.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
-The control route of the emulator is `record`. GET answers the record, and DELETE answers the record and clears it.
+The control routes of the emulator are these:
+
+| route | method | request body | answer |
+| --- | --- | --- | --- |
+| `record` | GET | none | the record |
+| `record` | DELETE | none | the record, then the record is cleared |
+| `spawner` | GET | none | the spawner record |
+| `spawner` | DELETE | none | the spawner record, then the spawner record is cleared |
+| `spawner/fail` | POST | `{"count": n, "status": n}` | the spawner record |
+
 The record is `{"discoveries": n, "served": [request], "unexpected": [request]}`, and a request is `METHOD target`.
+The spawner record is `{"agentKey", "dials": [dial], "deleted": [id], "failNext": [status]}`. A dial is
+`{"index", "authorization", "outcome"}`.
 
 - The record counts each AI access discovery and lists each JCP request in arrival order.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - The record lists each request that got 501 in arrival order.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
+
+- The clear of `record` keeps the spawner record. The state reset of a scenario clears both records.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- `spawner/fail` takes a count of 1 to 100 and a status of 400 to 599. The default status is 401.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+### The Agent Spawner
+
+The emulator serves the Agent Spawner of the JCP. A Cloud session of the IDE dials it as a WebSocket. The prologue of a
+suite attaches the spawner to the Cloud agent of the suite, see [The UI-lane Controller](lane-controller.spec.md).
+
+| request | answer |
+| --- | --- |
+| the WebSocket upgrade of `/jcp/agent-spawner/acp` with a bearer token | `101`, then the bridge to the control server |
+| the same upgrade without a bearer token | 401 with an empty body |
+| `DELETE /jcp/agent-spawner/sessions/<id>` | 204, and the spawner records the decoded id |
+| any other request below `/jcp/agent-spawner/` | 501, as an unexpected request |
+
+- The `101` answer has the accept key of RFC 6455. No extension or subprotocol is accepted.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+
+- The spawner checks only that a bearer token is present. It does not check the value.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- A forced status answers the next dial instead of the upgrade. It also answers a dial without a token.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- The spawner lists each dial in arrival order with its index, its `Authorization` header and its outcome.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- An accepted dial connects to the control server in the IDE as one agent process of the attached key.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- Each text message of the dial reaches the control server as the next `inbound` frame.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+A command of the control server acts on the dial in this way:
+
+| command | what the spawner does |
+| --- | --- |
+| `write`, `writeMalformed` | it sends the line or the bytes as one text message, then it acknowledges the command |
+| `closeStdout` | it reports `stdout_closed`, acknowledges the command, and closes the dial with 1000 |
+| `exit` | it reports `process_exit` with the code, acknowledges the command, and closes the dial with 1001 |
+| `mcpCall`, `mcpListTools` | it answers an error result, because a remote spawner offers no MCP server |
+
+- Each command has the effect of the table.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- The end of a dial reports `stdin_eof`. Then the spawner closes the control connection.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- A dial before the attach closes with 1011. So does a dial that the control server refuses.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- A control connection that ends first closes the dial with 1011. So does a command of another identity.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- A ping of the dial gets a pong with the same payload. A message is at most 16 MiB.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+
+- A frame that breaks the protocol closes the dial with 1002.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+  [@test] ../crates/avl-guest/src/lane/services/websocket/tests.rs
+
+- A stopped emulator ends every open dial and its control connection.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
 
 ### The feedback capture
 
@@ -344,7 +427,8 @@ The tables of [Requirements](#requirements) give every route, every request body
 ## Error Handling
 
 Each refusal has a code: `lane_service_bind` and `lane_package_input` at the start, and `token_refused`,
-`unknown_route`, `method_not_allowed`, `bad_request` and `unknown_fault` on the control route.
+`unknown_route`, `method_not_allowed`, `bad_request` and `unknown_fault` on the control route. A dial of the Agent
+Spawner ends with a close code: 1000, 1001, 1002 or 1011.
 
 ## Testing / Local Run
 
@@ -353,8 +437,7 @@ test process read the golden of the control exchanges. Run them after a rewrite.
 
 ## Open Questions / Risks
 
-- The Agent Spawner WebSocket of the JetBrains Cloud emulator is not served yet.
-- No lane daemon starts the services yet, so no lane run proves them against a real IDE.
+None.
 
 ## References
 
