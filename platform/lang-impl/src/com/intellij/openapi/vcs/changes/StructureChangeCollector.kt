@@ -58,13 +58,11 @@ object StructureChangeCollector {
     }
     val statuses = PsiChangeTracker.getElementsChanged(elements.keys.toList(), oldElements.keys.toList(), filter)
     val changes = merge(oldNodes, nodes, statuses)
-    return flattenFileContainer(before, after, oldNodes, nodes, changes)
+    return flattenFileContainer(after, nodes, changes)
   }
 
   private fun flattenFileContainer(
-    before: PsiFile?,
     after: PsiFile,
-    oldNodes: List<Node>,
     nodes: List<Node>,
     changes: List<StructureChange>,
   ): List<StructureChange> {
@@ -72,10 +70,7 @@ object StructureChangeCollector {
     val element = node.element as? PsiNamedElement ?: return changes
     if (element.parent !== after || element.name != after.name.substringBeforeLast('.')) return changes
     val change = changes.singleOrNull() ?: return changes
-    if (change.id != node.id || change.children.isEmpty()) return changes
-    if (before == null) return change.children
-    val oldNode = oldNodes.singleOrNull() ?: return changes
-    if (oldNode.id != node.id || change.status != FileStatus.NOT_CHANGED) return changes
+    if (change.id != node.id) return changes
     return change.children
   }
 
