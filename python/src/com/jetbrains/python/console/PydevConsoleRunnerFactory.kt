@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.SystemProperties
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.targetEnvironmentRequest
+import com.intellij.python.sdk.backend.createMapper
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -31,7 +32,10 @@ import com.jetbrains.python.run.PlainEnvironmentController
 import com.jetbrains.python.run.PythonRunConfiguration
 import com.jetbrains.python.run.collectPythonPath
 import com.jetbrains.python.run.toStringLiteral
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonEnvUtil
+import com.jetbrains.python.sdk.destructured
+import com.jetbrains.python.sdk.moduleIfExists
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -90,33 +94,35 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
    *
    * Nothing inside this repository calls it, so an override here no longer decides what a console runs on.
    */
-  @Deprecated("Blocks. Override createConsoleParametersAsync.", ReplaceWith("createConsoleParametersAsync(project, contextModule)"))
+  @Deprecated("Blocks. Override createConsoleParametersAsync.",
+              ReplaceWith("createConsoleParametersAsync(toModuleOrProject(project, contextModule))"))
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun createConsoleParameters(project: Project, contextModule: Module?): ConsoleParameters =
-    runBlockingMaybeCancellable { createConsoleParametersAsync(project, contextModule) }
+    runBlockingMaybeCancellable { createConsoleParametersAsync(toModuleOrProject(project, contextModule)) }
 
-  protected open suspend fun createConsoleParametersAsync(project: Project, contextModule: Module?): ConsoleParameters {
-    val sdkAndModule = findPythonSdkAndModule(project, contextModule)
-    val module = sdkAndModule.second
-    val sdk = sdkAndModule.first
+  protected open suspend fun createConsoleParametersAsync(moduleOrProject: ModuleOrProject): ConsoleParameters {
+    val (interpreter, target) = findPythonSdkAndModule(moduleOrProject)
+    val project = target.project
+    @Suppress("DEPRECATION") // The console runner still takes an Sdk.
+    val sdk = interpreter?.getSdkAPI()
     val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-    val pathMapper = getPathMapper(project, sdk, settingsProvider)
+    val pathMapper = interpreter?.createMapper(project, settingsProvider.mappingSettings) ?: PyRemotePathMapper()
     val envs = settingsProvider.envs.toMutableMap()
     putIPythonEnvFlag(project, envs)
     // Both read the module's content and source roots, and this now runs on a background thread rather than on the
     // EDT, which held read access on its own. This read action is what the former runReadActionBlocking around the
     // whole creation stood for.
     val (workingDirFunction, setupScriptFunction) = readAction {
-      val workingDir = getWorkingDirFunction(project, module, pathMapper, settingsProvider)
-      workingDir to createSetupScriptFunction(project, module, workingDir, pathMapper, settingsProvider)
+      val workingDir = getWorkingDirFunction(target, pathMapper, settingsProvider)
+      workingDir to createSetupScriptFunction(target, workingDir, pathMapper, settingsProvider)
     }
     return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
-      .also { it.module = module }
+      .also { it.module = target.moduleIfExists }
   }
 
   override suspend fun createConsoleRunnerAsync(project: Project, contextModule: Module?): PydevConsoleRunner {
     val module = PyConsoleCustomizer.EP_NAME.extensionList.firstNotNullOfOrNull { it.guessConsoleModule(project, contextModule) }
-    return when (val consoleParameters = createConsoleParametersAsync(project, module)) {
+    return when (val consoleParameters = createConsoleParametersAsync(toModuleOrProject(project, module))) {
       is ConstantConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType,
                                                              consoleParameters.workingDir,
                                                              consoleParameters.envs, consoleParameters.settingsProvider,
@@ -131,7 +137,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
   }
 
   override suspend fun createConsoleRunnerWithFileAsync(project: Project, config: PythonRunConfiguration): PydevConsoleRunner {
-    val consoleParameters = createConsoleParametersAsync(project, config.module)
+    val consoleParameters = createConsoleParametersAsync(toModuleOrProject(project, config.module))
     val sdk = config.sdk ?: consoleParameters.sdk
     val consoleEnvs = mutableMapOf<String, String>()
     consoleEnvs.putAll(consoleParameters.envs)
@@ -173,20 +179,20 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, if (enabled) "True" else "False")
     }
 
-    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String {
-      var workingDir = getWorkingDirFromSettings(project, module, settingsProvider)
-      if (pathMapper != null) {
-        workingDir = pathMapper.convertToRemote(workingDir)
-      }
+    @Deprecated("Use the one with ModuleOrProject")
+    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String =
+      getWorkingDir(toModuleOrProject(project, module), pathMapper ?: PyRemotePathMapper(), settingsProvider)
+    fun getWorkingDir(moduleOrProject: ModuleOrProject, pathMapper: PathMapper, settingsProvider: PyConsoleSettings): String {
+      var workingDir = getWorkingDirFromSettings(moduleOrProject,  settingsProvider)
+      workingDir = pathMapper.convertToRemote(workingDir)
       return workingDir
     }
 
-    fun getWorkingDirFunction(project: Project,
-                              module: Module?,
-                              pathMapper: PathMapper?,
+    fun getWorkingDirFunction(moduleOrProject: ModuleOrProject,
+                              pathMapper: PathMapper,
                               settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String>? {
-      val workingDir = getWorkingDirFromSettings(project, module, settingsProvider)
-      if (pathMapper != null && pathMapper.canReplaceLocal(workingDir)) {
+      val workingDir = getWorkingDirFromSettings(moduleOrProject, settingsProvider)
+      if (pathMapper.canReplaceLocal(workingDir)) {
         return constant(pathMapper.convertToRemote(workingDir))
       }
 
@@ -204,15 +210,16 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       return path?.let { targetPath(it) } ?: if (workingDir.isNotBlank()) constant(workingDir) else null
     }
 
-    private fun getWorkingDirFromSettings(project: Project, module: Module?, settingsProvider: PyConsoleSettings): String {
+    private fun getWorkingDirFromSettings(moduleOrProject: ModuleOrProject, settingsProvider: PyConsoleSettings): String {
       val workingDirectoryInSettings = settingsProvider.workingDirectory
       if (workingDirectoryInSettings.isNotEmpty()) {
         return workingDirectoryInSettings
       }
+      val module = moduleOrProject.moduleIfExists
       if (module != null && ModuleRootManager.getInstance(module).contentRoots.isNotEmpty()) {
         return ModuleRootManager.getInstance(module).contentRoots[0].path
       }
-      val projectRoots = ProjectRootManager.getInstance(project).contentRoots
+      val projectRoots = ProjectRootManager.getInstance(moduleOrProject.project).contentRoots
       for (root in projectRoots) {
         if (root.isInLocalFileSystem) {
           // we can't start Python Console in remote folder without additional connection configurations
@@ -227,12 +234,12 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       return "\n" + line
     }
 
-    private fun createSetupScriptFunction(project: Project,
-                                          module: Module?,
+    private fun createSetupScriptFunction(moduleOrProject: ModuleOrProject,
                                           workingDir: TargetEnvironmentFunction<String>?,
                                           pathMapper: PyRemotePathMapper?,
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val customStartScript = makeStartWithEmptyLine(settingsProvider.myCustomStartScript)
+      val (project, module) = moduleOrProject.destructured
       val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
       ).toMutableSet()

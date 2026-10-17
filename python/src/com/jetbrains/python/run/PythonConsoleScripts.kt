@@ -11,6 +11,7 @@ import com.intellij.execution.target.value.plus
 import com.intellij.execution.target.value.targetPath
 import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedScriptName
@@ -29,10 +30,12 @@ import java.nio.file.Path
  *               directory
  * @return lines to be executed in Python REPL
  */
+
+@RequiresBackgroundThread
 fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
   val project = config.project
   val sdk = config.sdk
-  val pathMapper = getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
+  val pathMapper = sdk?.let{ getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)}
   return buildScriptFunctionWithConsoleRun(
     config,
     ::StringScriptBuilder,

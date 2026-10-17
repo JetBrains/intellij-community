@@ -9,6 +9,7 @@ import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteSdkAdditionalData
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -52,20 +53,20 @@ private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: 
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
  */
-@ApiStatus.Internal
 internal fun getTargetPathForPythonConsoleExecution(project: Project,
                                            sdk: Sdk?,
                                            pathMapper: PyRemotePathMapper?,
                                            localPath: Path): TargetEnvironmentFunction<String> {
   val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
-                   ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
+                   ?: sdk?.let{ getPythonConsolePathMapper(project, sdk).convertToRemoteOrNull(localPath) }
   return targetPath?.let { constant(it) } ?: targetPath(localPath)
 }
 
 /**
  * Note that the returned mapper includes the path mappings collected by the execution of [appendBasicMappings].
  */
-private fun getPythonConsolePathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper? =
+@RequiresBackgroundThread
+private fun getPythonConsolePathMapper(project: Project, sdk: Sdk): PyRemotePathMapper =
   getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
 
 private fun PyRemotePathMapper.convertToRemoteOrNull(localPath: Path): String? =

@@ -16,6 +16,10 @@ import java.nio.file.Path
  * The debugger uses it to convert the breakpoint and the frame positions.
  */
 internal class PyEelPathMapper(private val eel: EelDescriptor) : PyRemotePathMapper() {
+  // Callers check this before they call `convertToRemote`. This mapper has no path mappings, so without this override
+  // the check always fails and `convertToRemote` is never called.
+  override fun canReplaceLocal(localPath: String): Boolean = convertToRemote(localPath) != localPath
+
   override fun convertToRemote(localPath: String): String = pathOnEelOrNull(localPath) ?: localPath
 
   override fun convertToLocal(remotePath: String): String =

@@ -10,6 +10,8 @@ import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -18,11 +20,13 @@ import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -49,6 +53,7 @@ interface FileSystem<P : PathHolder> {
    */
   val eelOrTarget: EelOrTarget
 
+  fun createMapper(project: Project, console: PathMappingSettings, sdk: Sdk): PyRemotePathMapper
   /**
    * Path on remote machine. As an exception, MRFS path is also supported by Eel impl.
    */

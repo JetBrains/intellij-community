@@ -75,6 +75,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -492,6 +493,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
+  @RequiresBackgroundThread
   private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull Sdk sdk,
                                                                              @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest,
                                                                              int ideServerPort,
@@ -569,7 +571,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     Process process = targetEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
     communicationServer.setPythonConsoleProcess(process);
     String commandLineString = StringUtil.join(targetedCommandLine.getCommandPresentation(targetEnvironment), " ");
-    PyRemotePathMapper pathMapper =
+    var pathMapper =
       PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
     boolean isMostlySilentProcess = true;
     ProcessHandler processHandler = PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString,

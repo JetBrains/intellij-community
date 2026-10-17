@@ -1,18 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.jetbrains.python.sdk.guessLocalFlavorAndData
-import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
-import com.intellij.python.sdk.common.PyEnvRef
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.jetbrains.python.sdk.PySdkDataProvider
-import com.intellij.python.sdk.common.PyInterpreterRef
-import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -25,7 +13,9 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -33,8 +23,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
@@ -69,17 +61,22 @@ import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.backend.resolvePythonBinary
+import com.intellij.python.sdk.common.PyEnvRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.intellij.util.PathMappingSettings
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
+import com.jetbrains.python.debugger.PyEelPathMapper
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
@@ -89,19 +86,28 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.BASE_DIR
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
+import com.jetbrains.python.sdk.PySdkDataProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.sdk.getSdksToInstall
+import com.jetbrains.python.sdk.guessLocalFlavorAndData
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -149,6 +155,12 @@ data class EelFileSystem(
     title: String,
   ): ActionListener =
     ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, descriptor.withRoots(getRootsForBrowsing()), fieldAccessor)
+
+  override fun createMapper(
+    project: Project,
+    console: PathMappingSettings,
+    sdk: Sdk,
+  ): PyRemotePathMapper = PyEelPathMapper(eelApi.descriptor)
 
   private fun getRootsForBrowsing(): List<VirtualFile> {
     val vfs = LocalFileSystem.getInstance()
@@ -493,7 +505,15 @@ internal data class TargetFileSystem(
 ) : FileSystem<PathHolder.Target> {
   override val eelOrTarget: EelOrTarget.IsTarget = EelOrTarget.IsTarget(targetEnvironmentConfiguration)
 
-  override suspend fun getExistingSelectableInterpreters(projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> = emptyList()
+  override suspend fun getExistingSelectableInterpreters(projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> =
+    emptyList()
+
+  override fun createMapper(
+    project: Project,
+    console: PathMappingSettings,
+    sdk: Sdk,
+    // Target SDK has this data
+  ): PyRemotePathMapper = createTargetPathMapperImpl(project, console, sdk.targetAdditionalData!!)
 
   override fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
@@ -591,7 +611,8 @@ internal data class TargetFileSystem(
         it.applyToTargetConfiguration()
         it.applyToAdditionalData(data)
       }
-      val name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(moduleOrProject.project, data, languageLevel.toPythonVersion())
+      val name =
+        PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(moduleOrProject.project, data, languageLevel.toPythonVersion())
       data to name
     }
 
@@ -619,7 +640,8 @@ internal data class TargetFileSystem(
   override suspend fun directoryExists(path: PathHolder.Target): Boolean = executeCommand("test -d ${path.pathString}").isSuccess
 
   /** A target is always Unix, see [platformAndRoot]. */
-  override fun resolveChild(dir: PathHolder.Target, name: String): PathHolder.Target = PathHolder.Target("${dir.pathString.trimEnd('/')}/$name")
+  override fun resolveChild(dir: PathHolder.Target, name: String): PathHolder.Target =
+    PathHolder.Target("${dir.pathString.trimEnd('/')}/$name")
 
   override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
     val pythonBinaryPath = resolvePythonBinary(homePath)
