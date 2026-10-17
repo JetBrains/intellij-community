@@ -23,7 +23,7 @@ class PresentationIconDescriptorTest {
     val presentation = Presentation()
     presentation.iconDescriptor = descriptor
 
-    assertSame(Presentation.NO_ICON_DESCRIPTOR, presentation.iconDescriptor)
+    assertNull(presentation.iconDescriptor)
     assertSame(descriptor, presentation.iconDescriptorSupplier?.get())
     assertNull(presentation.icon)
   }

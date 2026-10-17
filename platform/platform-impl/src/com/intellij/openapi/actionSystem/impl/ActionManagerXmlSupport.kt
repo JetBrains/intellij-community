@@ -43,11 +43,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.icons.AllIconDescriptors
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.getClassNameByIconPath
+import com.intellij.ui.icons.isReflectivePath
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.dom.XmlElement
+import org.jetbrains.annotations.ApiStatus
 import java.util.ResourceBundle
 import java.util.concurrent.CancellationException
 import javax.swing.Icon
@@ -129,6 +135,9 @@ internal fun updateIconFromStub(
     anAction.templatePresentation.setIconSupplier(SynchronizedClearableLazy {
       loadIcon(module = module, iconPath = iconPath, requestor = requestor)
     })
+    anAction.templatePresentation.setIconDescriptorSupplier(SynchronizedClearableLazy {
+      loadIconDescriptor(module = module, iconPath = iconPath, requestor = requestor)
+    })
   }
 
   val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
@@ -187,6 +196,99 @@ internal fun loadIcon(module: PluginDescriptor, iconPath: String, requestor: Str
   }
   IconLoadMeasurer.actionIcon.end(start)
   return icon
+}
+
+/**
+ * Descriptor counterpart of [loadIcon] for the experimental icons pipeline (see `ExperimentalIcons`).
+ *
+ * Resolves the XML `icon` attribute to an [IconDescriptor]:
+ * - a resource path (e.g. `expui/actions/foo.svg`) via [imageIconDescriptor];
+ * - a reflective reference (e.g. `AllIcons.Actions.Foo`) via [getReflectiveIconDescriptor].
+ *
+ * Returns `null` when no descriptor can be produced (e.g. a reflective reference into a third-party icon holder that has
+ * no generated descriptor equivalent); consumers must fall back accordingly. Never falls back to a Swing icon here.
+ */
+@Suppress("DEPRECATION")
+@ApiStatus.Experimental
+internal fun loadIconDescriptor(module: PluginDescriptor, iconPath: String, requestor: String?): IconDescriptor? {
+  return try {
+    if (isReflectivePath(iconPath)) {
+      getReflectiveIconDescriptor(iconPath, module.classLoader)
+    }
+    else {
+      imageIconDescriptor(iconPath, module.classLoader)
+    }
+  }
+  catch (e: Throwable) {
+    actionManagerImplLog.warn("Icon descriptor cannot be found in '$iconPath', action '$requestor'", e)
+    null
+  }
+}
+
+// AllIcons is the one icon holder whose generated descriptors move to a different package (see `IconsClassGenerator`).
+private const val ALL_ICONS_CLASS = "com.intellij.icons.AllIcons"
+private const val ALL_ICON_DESCRIPTORS_CLASS = "com.intellij.platform.icons.AllIconDescriptors"
+
+/**
+ * Maps a reflective icon reference (`AllIcons.Actions.Foo`, or any `com.example.SomeIcons.Bar`) to its generated
+ * descriptor holder and reads the [IconDescriptor] via the generated `@JvmStatic` getter.
+ *
+ * The icon-class -> descriptor-class naming mirrors the generator (`KotlinNewApiIconClassSpecificsGenerator`): the
+ * top-level `*Icons` holder becomes `*IconDescriptors` in the same package - except `AllIcons`, whose descriptors are
+ * generated into `com.intellij.platform.icons`. Holders that have no generated descriptor class (most third-party icon
+ * holders today) resolve to `null` rather than to a Swing fallback, keeping API gaps visible.
+ */
+private fun getReflectiveIconDescriptor(path: String, moduleClassLoader: ClassLoader): IconDescriptor? {
+  val fieldName = path.substring(path.lastIndexOf('.') + 1)
+  // Reuse the legacy icon-path -> holder-class derivation so nested classes and short-name packages match exactly.
+  val iconClassName = getClassNameByIconPath(path)
+  val descriptorClassName = toDescriptorClassName(iconClassName) ?: return null
+
+  // AllIconDescriptors lives in the `intellij.platform.icons` module. Its own classloader is the only one guaranteed to
+  // load it *and* its nested holders: an action's plugin classloader may not see it, and `IconDescriptor`'s classloader
+  // (the `intellij.platform.icons.api` module, a dependency of icons) cannot load a class from its dependent module.
+  // A third-party `*IconDescriptors` holder, in contrast, lives in the plugin's own module - use the module classloader.
+  val classLoader = if (descriptorClassName.startsWith(ALL_ICON_DESCRIPTORS_CLASS)) {
+    AllIconDescriptors::class.java.classLoader
+  }
+  else {
+    moduleClassLoader
+  }
+
+  val holderClass = try {
+    classLoader.loadClass(descriptorClassName)
+  }
+  catch (_: ClassNotFoundException) {
+    // No generated descriptor holder for this icon class (yet); leave the gap visible.
+    return null
+  }
+  // The generated descriptor holder is a Kotlin object with `@JvmStatic val` fields, i.e. static getters.
+  val getter = holderClass.getMethod("get" + fieldName.replaceFirstChar { it.uppercaseChar() })
+  return getter.invoke(null) as? IconDescriptor
+}
+
+/**
+ * Converts a fully-qualified icon-holder class name - as produced by [getClassNameByIconPath], e.g.
+ * `com.intellij.icons.AllIcons${'$'}Actions` or `icons.SomeIcons${'$'}Foo` - into its generated descriptor-holder class
+ * name, following the generator's convention. Returns `null` when the name does not denote an `*Icons` holder.
+ */
+private fun toDescriptorClassName(iconClassName: String): String? {
+  // AllIcons descriptors live in a different package; everything after the class name (nested `$` classes) is preserved.
+  if (iconClassName == ALL_ICONS_CLASS || iconClassName.startsWith(ALL_ICONS_CLASS + "\$")) {
+    return ALL_ICON_DESCRIPTORS_CLASS + iconClassName.substring(ALL_ICONS_CLASS.length)
+  }
+
+  // Otherwise: `<same package>.<TopLevel with Icons -> IconDescriptors>[$Nested...]`.
+  val nestedStart = iconClassName.indexOf('$')
+  val topLevel = if (nestedStart == -1) iconClassName else iconClassName.substring(0, nestedStart)
+  val nested = if (nestedStart == -1) "" else iconClassName.substring(nestedStart)
+
+  val lastDot = topLevel.lastIndexOf('.')
+  val simpleName = topLevel.substring(lastDot + 1)
+  if (!simpleName.contains("Icons")) {
+    return null
+  }
+  return topLevel.substring(0, lastDot + 1) + simpleName.replace("Icons", "IconDescriptors") + nested
 }
 
 @Suppress("HardCodedStringLiteral")
@@ -403,6 +505,9 @@ internal fun configureGroupDescriptionAndIcon(
   if (iconPath != null && group !is ActionGroupStub) {
     presentation.setIconSupplier(SynchronizedClearableLazy {
       loadIcon(module = module, iconPath = iconPath, requestor = className)
+    })
+    presentation.setIconDescriptorSupplier(SynchronizedClearableLazy {
+      loadIconDescriptor(module = module, iconPath = iconPath, requestor = className)
     })
   }
 }
