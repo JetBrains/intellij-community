@@ -3,7 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.Java11Shim
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -16,13 +15,13 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Experimental
 fun Job.cancelOnDispose(disposable: Disposable) {
-  val caller = Java11Shim.INSTANCE.getStackTrace(1, FILE_CLASS_NAME).firstOrNull()
+  val caller = StackTraceSnapshot.captureOnHotPath(1, FILE_CLASS_NAME)
   val childDisposable = object : Disposable {
     override fun dispose() {
       cancel("disposed")
     }
 
-    override fun toString(): String = "Cancel on dispose spawned in `$caller`"
+    override fun toString(): String = "Cancel on dispose spawned in `${caller.topFrame}`"
   }
   Disposer.register(disposable, childDisposable)
   invokeOnCompletion {

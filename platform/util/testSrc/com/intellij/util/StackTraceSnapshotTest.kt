@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+
 package com.intellij.util
 
 import com.intellij.testFramework.callUnderOwnClassLoader
+import com.intellij.util.containers.DefaultJava11Shim
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -40,7 +43,19 @@ internal class StackTraceSnapshotTest {
     assertThat(call.result.toString()).contains("com.intellij.testFramework.OwnClassLoaderCaller.apply(")
   }
 
+  @Test
+  fun `a hot path snapshot without a fast shim keeps the stack and gives the same frames`() {
+    val frames = captureOnHotPathHere(limit = 2).toThrowable().stackTrace
+
+    assertThat(frames).hasSize(2)
+    assertThat(frames.first().methodName).isEqualTo("captureOnHotPathHere")
+  }
+
   private fun captureHere(limit: Int): StackTraceSnapshot = StackTraceSnapshot.capture(limit)
+
+  private fun captureOnHotPathHere(limit: Int): StackTraceSnapshot {
+    return StackTraceSnapshot.captureOnHotPath(DefaultJava11Shim(), limit, emptyArray())
+  }
 
   private object Callee {
     fun capture(): StackTraceSnapshot = inner()

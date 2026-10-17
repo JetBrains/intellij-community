@@ -21,6 +21,22 @@ abstract class Java11Shim {
     fun <V> createConcurrentIntObjectMap(initialCapacity:Int, loadFactor:Float, concurrencyLevel:Int): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap(initialCapacity, loadFactor, concurrencyLevel)
     fun <V> createConcurrentIntObjectSoftValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeySoftValueHashMap()
     fun <V> createConcurrentIntObjectWeakValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeyWeakValueHashMap()
+
+    /** Whether [className] is one of [classNames] or a class nested in one of them. */
+    @JvmStatic
+    fun isClassOrNestedClass(className: String, classNames: Array<out String>): Boolean {
+      return classNames.any { name -> className.startsWith(name) && (className.length == name.length || className[name.length] == '$') }
+    }
+
+    /** The top [limit] of [frames] below their leading frames of [skippedClassNames] and of the classes nested in them. */
+    @JvmStatic
+    fun topFrames(frames: Array<StackTraceElement>, limit: Int, skippedClassNames: Array<out String>): Array<StackTraceElement> {
+      val start = frames.indexOfFirst { !isClassOrNestedClass(it.className, skippedClassNames) }
+      if (start < 0) {
+        return emptyArray()
+      }
+      return frames.copyOfRange(start, if (limit >= frames.size - start) frames.size else start + limit)
+    }
   }
 
   /**
@@ -52,14 +68,20 @@ abstract class Java11Shim {
    * The top [limit] frames of the current stack below the frames of this shim and of [calleeClassNames]:
    * the stack of the code that called into those classes. A nested class of a callee class counts as that class.
    * A [StackTraceElement] holds no class, so a caller can keep the frames and keep no class loader.
+   * When [walksOnlyRequestedFrames] is false, the call converts the whole stack.
    */
   abstract fun getStackTrace(limit: Int, vararg calleeClassNames: String): Array<StackTraceElement>
 
+  /**
+   * Whether [getStackTrace] reads only the frames that it returns. When it does not, it converts the whole stack,
+   * so a caller on a hot path keeps a Throwable instead, see [com.intellij.util.StackTraceSnapshot.captureOnHotPath].
+   */
+  open val walksOnlyRequestedFrames: Boolean
+    get() = false
+
   /** Whether a frame of [className] belongs to this shim, or to one of [calleeClassNames] or a class nested in it. */
   protected fun isSkippedFrame(className: String, calleeClassNames: Array<out String>): Boolean {
-    return className == javaClass.name || calleeClassNames.any { callee ->
-      className.startsWith(callee) && (className.length == callee.length || className[callee.length] == '$')
-    }
+    return className == javaClass.name || isClassOrNestedClass(className, calleeClassNames)
   }
 
   @Contract(value = "_, -> new", pure = true)

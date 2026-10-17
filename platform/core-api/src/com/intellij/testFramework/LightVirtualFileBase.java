@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.StackTraceSnapshot;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * In-memory implementation of {@link VirtualFile}.
@@ -238,7 +241,7 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
 
   private void registerCreationTrace(@Nullable Object creationTrace) {
     if (creationTrace == DEFAULT_CREATION_TRACE) {
-      creationTrace = getDefaultCreationTrace();
+      creationTrace = getDefaultCreationTrace(getClass());
     }
 
     if (creationTrace != null) {
@@ -246,24 +249,36 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     }
   }
 
-  private static @Nullable Object getDefaultCreationTrace() {
+  private static @Nullable Object getDefaultCreationTrace(@NotNull Class<? extends LightVirtualFileBase> fileClass) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode()) {
       return null;
     }
 
-    return captureCreationTrace();
+    return captureCreationTrace(fileClass);
   }
 
   /**
-   * The creation trace that a light file keeps outside the unit test mode: the top {@code CREATION_TRACE_FRAMES} frames of the code
-   * that creates the file, as {@link StackTraceSnapshot} data. A plugin can create a light file that outlives the plugin, and the
-   * data keeps no class loader. Light files are created on hot paths, so the trace is bounded.
+   * The creation trace that a light file of {@code fileClass} keeps outside the unit test mode: the top {@code CREATION_TRACE_FRAMES}
+   * frames of the code that creates the file, below the constructors of {@code fileClass} and of its superclasses, as
+   * {@link StackTraceSnapshot} data. A plugin can create a light file that outlives the plugin, and the data keeps no class loader.
+   * Light files are created on hot paths, so the trace is bounded, see {@link StackTraceSnapshot#captureOnHotPath}.
    */
   @ApiStatus.Internal
   @VisibleForTesting
-  public static @NotNull Object captureCreationTrace() {
-    return StackTraceSnapshot.captureCallerOf(LightVirtualFileBase.class, CREATION_TRACE_FRAMES);
+  public static @NotNull Object captureCreationTrace(@NotNull Class<? extends LightVirtualFileBase> fileClass) {
+    return StackTraceSnapshot.captureOnHotPath(CREATION_TRACE_FRAMES, lightFileClassNames(fileClass));
+  }
+
+  /** The names of {@code fileClass} and of its superclasses up to {@link LightVirtualFileBase}, whose constructors create a file. */
+  private static String @NotNull [] lightFileClassNames(@NotNull Class<? extends LightVirtualFileBase> fileClass) {
+    List<String> names = new ArrayList<>(4);
+    Class<?> aClass = fileClass;
+    while (aClass != null && LightVirtualFileBase.class.isAssignableFrom(aClass)) {
+      names.add(aClass.getName());
+      aClass = aClass.getSuperclass();
+    }
+    return names.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   private static final int CREATION_TRACE_FRAMES = 16;

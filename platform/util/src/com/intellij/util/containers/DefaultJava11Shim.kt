@@ -62,12 +62,7 @@ internal class DefaultJava11Shim : Java11Shim() {
   }
 
   override fun getStackTrace(limit: Int, vararg calleeClassNames: String): Array<StackTraceElement> {
-    val frames = Throwable().stackTrace
-    val start = frames.indexOfFirst { !isSkippedFrame(it.className, calleeClassNames) }
-    if (start < 0) {
-      return emptyArray()
-    }
-    return frames.copyOfRange(start, if (limit >= frames.size - start) frames.size else start + limit)
+    return topFrames(Throwable().stackTrace, limit, arrayOf(DefaultJava11Shim::class.java.name, *calleeClassNames))
   }
 
   override fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any> {
