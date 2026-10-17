@@ -134,13 +134,16 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
             body
         );
     }
-    let acp = testing::get(address, "/jcp/ai-management/api/provisioning/v1/acp");
-    assert_eq!((acp.status, acp.raw_body.len()), (404, 0));
+    for path in ["acp", "mcp"] {
+        let answer = testing::get(address, &format!("/jcp/ai-management/api/provisioning/v1/{path}"));
+        assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{path}");
+    }
 
     let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
     assert_eq!(record["discoveries"], 1);
     assert_eq!(record["served"][1], "GET /jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(record["served"].as_array().unwrap().len(), 6);
+    assert_eq!(record["served"].as_array().unwrap().len(), 7);
+    assert_eq!(record["served"][6], "GET /jcp/ai-management/api/provisioning/v1/mcp");
     assert_eq!(record["unexpected"], json!([]));
 
     let none = start_cloud(Organization::None);

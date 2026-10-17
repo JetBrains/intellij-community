@@ -47,6 +47,7 @@ const TOOLS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/tools"
 const GATEWAYS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/gateways";
 const AGENTS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/agents";
 const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
+const MCP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/mcp";
 
 /// The largest `count` of the control route `spawner/fail`.
 const MAX_FAILED_DIALS: usize = 100;
@@ -260,8 +261,8 @@ impl Cloud {
             TOOLS_PROVISIONING_PATH => Some(TOOLS_PROVISIONING_BODY),
             GATEWAYS_PROVISIONING_PATH => Some(GATEWAYS_PROVISIONING_BODY),
             AGENTS_PROVISIONING_PATH => Some(AGENTS_PROVISIONING_BODY),
-            // The organization has no ACP registry. Air reads 404 as "not configured".
-            ACP_PROVISIONING_PATH => None,
+            // The organization has no ACP registry and provisions no MCP server. Air reads 404 as "not configured".
+            ACP_PROVISIONING_PATH | MCP_PROVISIONING_PATH => None,
             _ => return None,
         };
         let mut record = self.lock();

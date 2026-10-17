@@ -233,6 +233,7 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
 | `/jcp/ai-management/api/provisioning/v1/gateways` | no gateway |
 | `/jcp/ai-management/api/provisioning/v1/agents` | no agent |
 | `/jcp/ai-management/api/provisioning/v1/acp` | 404 |
+| `/jcp/ai-management/api/provisioning/v1/mcp` | 404 |
 
 - The configuration names the emulator for every account URL and as the JCP URL.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
@@ -253,6 +254,9 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - The AI access discovery answers one cloud workspace or no option, as the lane states the organization.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
+
+- The ACP and the MCP provisioning answer 404 with an empty body. The record lists them as served requests.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - Any other path gets 501 with the text `the Air lane emulates no <target>`.
