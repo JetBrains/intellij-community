@@ -90,8 +90,11 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   /** The parameter of the evaluator, until [setDone]. A listener of the evaluation reads it before [setDone]. */
   internal val evaluationParam: T
-    @Suppress("UNCHECKED_CAST")
-    get() = param as T
+    get() {
+      val param = param
+      check(param != null || !hasParam) { "The parameter of $this is read after setDone released it" }
+      return evaluationParamOf(param)
+    }
 
   @ApiStatus.Internal
   val uniqueId: Long = nextDeferredIconId.getAndIncrement()
@@ -369,25 +372,32 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     return evaluate()
   }
 
-  override fun evaluate(): Icon = runEvaluator {
+  /** After [setDone] released [param], gives [scaledDelegateIcon], the icon that this icon paints. */
+  override fun evaluate(): Icon {
     val param = param
-    val evaluator = evaluator
-    if (evaluator == null || (param == null && hasParam)) EMPTY_ICON else evaluator(evaluationParamOf(param)) ?: EMPTY_ICON
+    if (param == null && hasParam) {
+      return scaledDelegateIcon
+    }
+    return runEvaluator {
+      val evaluator = evaluator
+      if (evaluator == null) EMPTY_ICON else evaluator(evaluationParamOf(param)) ?: EMPTY_ICON
+    }
   }
 
   /**
    * Computes and returns the computed icon immediately.
    *
    * Unlike [evaluate], supports suspending evaluators, falling back to the regular one if no suspending was specified.
+   * After [setDone] released [param], gives [scaledDelegateIcon], as [evaluate] does.
    */
   @ApiStatus.Internal
   @VisibleForTesting
-  suspend fun evaluateAsync(): Icon = runEvaluator {
+  suspend fun evaluateAsync(): Icon {
     val param = param
     if (param == null && hasParam) {
-      EMPTY_ICON
+      return scaledDelegateIcon
     }
-    else {
+    return runEvaluator {
       asyncEvaluator?.invoke(evaluationParamOf(param)) ?: evaluator?.invoke(evaluationParamOf(param)) ?: EMPTY_ICON
     }
   }
@@ -441,9 +451,10 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   override fun getToolTip(composite: Boolean): String? = (scaledDelegateIcon as? IconWithToolTip)?.getToolTip(composite)
 
   /**
-   * Icons of equal parameters are equal, before and after the evaluation. After [setDone], an icon compares its parameter through a
-   * weak reference, so it equals no other icon once the parameter is collected. That happens only after a cache that held the
-   * parameter is cleared, such as at the unload of a plugin.
+   * Icons of equal parameters are equal, before and after the evaluation, while the parameter lives. After [setDone], an icon compares
+   * its parameter through a weak reference. The parameter can be collected right after [setDone], because a holder of it, such as the
+   * cache of [IconDeferrerImpl], can be cleared at any time. After that, a done icon equals only itself. So equals stays reflexive,
+   * symmetric and transitive.
    */
   override fun equals(other: Any?): Boolean {
     return when {
