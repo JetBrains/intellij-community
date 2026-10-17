@@ -2,13 +2,18 @@
 package com.intellij.openapi.vfs.impl.eel
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.impl.eel.EelFileWatcher.Companion.LOG
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink
 import com.intellij.openapi.vfs.local.PluggableFileWatcher
+import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.PathChange
@@ -95,19 +100,51 @@ class EelFileWatcher : PluggableFileWatcher() {
     sortRoots(recursiveFiltered, newData, true)
     sortRoots(flatFiltered, newData, false)
 
-    newData.forEach { (key, incoming) ->
-      val existing = myWatchedEels[key]
-      when {
-        existing == null -> myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming))
-        existing.data != incoming -> {
-          existing.cancel()
-          existing.data.reload(incoming)
-          myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming))
+    synchronized(myWatchedEels) {
+      newData.forEach { (key, incoming) ->
+        val existing = myWatchedEels[key]
+        when {
+          existing == null -> myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming).cancel)
+          existing.data != incoming -> {
+            existing.cancel()
+            existing.data.reload(incoming)
+            myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming).cancel)
+          }
         }
       }
+      removeObsoleteWatchedEels(newData.keys)
     }
+  }
 
-    removeObsoleteWatchedEels(newData.keys)
+  /**
+   * Starts the watch of [descriptor] again, on the current session of the environment.
+   *
+   * The watch stream ends with the session that it runs on, and nothing starts it again.
+   * A caller that deployed the session again calls this function.
+   * The new watch reports its roots as reset and refreshes the local roots, so every dirty file is scanned too.
+   * The platform also reports a reset after a restart of the native watcher.
+   * Usually a watcher does not refresh. This one does, because a reset that nobody acts on is worthless.
+   *
+   * The function connects to the environment on the calling thread, so call it from a background thread.
+   *
+   * @return the job that ends after the refresh or after a failed start, or `null` when nothing is watched for [descriptor]
+   */
+  fun restartWatching(descriptor: EelDescriptor): Job? = synchronized(myWatchedEels) {
+    val watched = myWatchedEels[descriptor] ?: return null
+    // the old session is gone, so an unwatch on it fails
+    watched.cancel(resetRemoteWatches = false)
+    val setup = setupWatcherJob(watched.data) { resetAndRefreshRoots(watched.data) }
+    myWatchedEels[descriptor] = WatchedEel(watched.data, setup.cancel)
+    setup.job
+  }
+
+  private suspend fun resetAndRefreshRoots(data: EelData) {
+    val roots = (data.recursive + data.flat).map { it.asNioPath() }
+    roots.forEach { myNotificationSink.notifyReset(it.toString()) }
+    val files = roots.mapNotNull { LocalFileSystem.getInstance().findFileByNioFile(it) }.filterIsInstance<NewVirtualFile>()
+    // the sink applies a reset later, so the roots are marked here before the refresh
+    readAction { files.forEach { it.markDirtyRecursively() } }
+    RefreshQueue.getInstance().refresh(true, ManagingFS.getInstance().localRoots.toList())
   }
 
   private fun removeObsoleteWatchedEels(activeDescriptors: Set<EelDescriptor>) {
@@ -154,8 +191,8 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private fun setupWatcherJob(data: EelData): (Boolean) -> Unit {
-    if (myShuttingDown) return { _ -> }
+  private fun setupWatcherJob(data: EelData, onStarted: suspend () -> Unit = {}): WatcherSetup {
+    if (myShuttingDown) return WatcherSetup.NONE
 
     mySettingRoots.incrementAndGet()
     val scope = GlobalScope.childScope("IJentFileWatcher")
@@ -185,13 +222,15 @@ class EelFileWatcher : PluggableFileWatcher() {
         catch (e: Exception) {
           LOG.warn("Failed to start watching for ${data.descriptor}", e)
           reportManualWatchRoots(data)
+          return@launch
         }
         finally {
           mySettingRoots.decrementAndGet()
         }
+        onStarted()
       }
 
-      return { resetRemoteWatches ->
+      return WatcherSetup(job) { resetRemoteWatches ->
         job.cancel()
         scope.cancel()
         if (resetRemoteWatches) {
@@ -204,7 +243,7 @@ class EelFileWatcher : PluggableFileWatcher() {
       mySettingRoots.decrementAndGet()
       scope.cancel()
       reportManualWatchRoots(data)
-      return { _ -> }
+      return WatcherSetup.NONE
     }
   }
 
@@ -229,9 +268,11 @@ class EelFileWatcher : PluggableFileWatcher() {
       sortRoots(recursiveResolved, newData, true)
       sortRoots(flatResolved, newData, false)
 
-      newData.forEach { (key, incoming) ->
-        if (!myWatchedEels.containsKey(key)) {
-          myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming))
+      synchronized(myWatchedEels) {
+        newData.forEach { (key, incoming) ->
+          if (!myWatchedEels.containsKey(key)) {
+            myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming).cancel)
+          }
         }
       }
     }
@@ -312,5 +353,13 @@ private class WatchedEel(val data: EelData, private val cancelCallback: (Boolean
     } catch (e: UnsupportedOperationException) {
       LOG.warn(e.message)
     }
+  }
+}
+
+/** The [job] that starts a watch, and the callback that cancels the watch. */
+private class WatcherSetup(val job: Job, val cancel: (Boolean) -> Unit) {
+  companion object {
+    /** A setup that started no watch. Its job is complete. */
+    val NONE: WatcherSetup = WatcherSetup(Job().apply { complete() }) { _ -> }
   }
 }
