@@ -97,10 +97,13 @@ public final class Presentation implements Cloneable {
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private @Nullable Supplier<? extends @Nullable Icon> icon;
-  private @Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor;
   private Icon disabledIcon;
   private Icon hoveredIcon;
   private Icon selectedIcon;
+
+  private @Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor;
+  private @Nullable IconDescriptor hoveredIconDescriptor;
+  private @Nullable IconDescriptor selectedIconDescriptor;
 
   private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
 
@@ -360,6 +363,38 @@ public final class Presentation implements Cloneable {
     IconDescriptor newValue = iconDescriptor == null ? null : iconDescriptor.get();
     if (Objects.equals(oldValue, newValue)) return;
     fireObjectPropertyChange(PROP_ICON_DESCRIPTOR, oldValue, newValue);
+  }
+
+  /**
+   * Icon descriptor for the hovered state in the experimental icons pipeline, gated by {@link ExperimentalIcons}.
+   *
+   * @return the descriptor, or {@code null} when none is set or the pipeline is off. A component then uses the base descriptor.
+   */
+  @ApiStatus.Experimental
+  public @Nullable IconDescriptor getHoveredIconDescriptor() {
+    if (!ExperimentalIcons.isEnabled()) return null;
+    return hoveredIconDescriptor;
+  }
+
+  @ApiStatus.Experimental
+  public void setHoveredIconDescriptor(@Nullable IconDescriptor hoveredIconDescriptor) {
+    this.hoveredIconDescriptor = hoveredIconDescriptor;
+  }
+
+  /**
+   * Icon descriptor for the selected state in the experimental icons pipeline, gated by {@link ExperimentalIcons}.
+   *
+   * @return the descriptor, or {@code null} when none is set or the pipeline is off. A component then uses the base descriptor.
+   */
+  @ApiStatus.Experimental
+  public @Nullable IconDescriptor getSelectedIconDescriptor() {
+    if (!ExperimentalIcons.isEnabled()) return null;
+    return selectedIconDescriptor;
+  }
+
+  @ApiStatus.Experimental
+  public void setSelectedIconDescriptor(@Nullable IconDescriptor selectedIconDescriptor) {
+    this.selectedIconDescriptor = selectedIconDescriptor;
   }
 
   @ApiStatus.Internal // do not expose
@@ -737,6 +772,9 @@ public final class Presentation implements Cloneable {
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
+
+    setSelectedIconDescriptor(presentation.selectedIconDescriptor);
+    setHoveredIconDescriptor(presentation.hoveredIconDescriptor);
 
     if (!myUserMap.equals(presentation.myUserMap)) {
       Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
