@@ -195,7 +195,7 @@ pub struct IdeSection {
     /// agent archives.
     pub fake_agent_jar: RuntimeFile,
     pub flags_file: RuntimeFile,
-    /// The jar that holds the lane documents below `lanes/`.
+    /// The jar that holds the lane documents below `lanes/`, and the flow vocabulary file at its root.
     pub lane_documents: RuntimeFile,
     pub plugins: Vec<IdePluginFile>,
     pub project_archive: RuntimeFile,

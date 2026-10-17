@@ -2,7 +2,8 @@
 //! `plugins/air/docs/scripts/flowLanes.ts` writes it.
 //!
 //! The config key of a lane hashes the bytes of this document, so a runner reads the launch inputs here and nowhere
-//! else. This side reads every field and refuses an unknown one: a field that a runner does not know is a launch input
+//! else. The digest of the flow vocabulary is not a launch input: [`crate::program::read_vocabulary_digest`] reads it
+//! from the resource root. This side reads every field and refuses an unknown one: a field that a runner does not know is a launch input
 //! that it would not apply. A local agent has an `acp.json` entry with the tokens [`JAVA_TOKEN`] and
 //! [`FAKE_AGENT_JAR_TOKEN`], which the runner resolves. A controlled agent also gets the address and the credential of
 //! the control channel, which derive from the config key and so are not in the document.
@@ -15,7 +16,7 @@ use serde::{Deserialize, Serialize};
 mod tests;
 
 /// The version of the lane document that this reader reads, `LANE_DOCUMENT_SCHEMA_VERSION` of the generator.
-pub const LANE_DOCUMENT_SCHEMA_VERSION: u32 = 1;
+pub const LANE_DOCUMENT_SCHEMA_VERSION: u32 = 2;
 
 /// The token for the `java` that runs the fake agent, in an `acp.json` entry.
 pub const JAVA_TOKEN: &str = "${java}";
@@ -71,8 +72,6 @@ pub struct LaneDocument {
     pub schema_version: u32,
     /// The Kotlin constant of the lane, such as `UI` or `GUI_CHAT`.
     pub lane: String,
-    /// The digest of the flow vocabulary that the bridge of the lane must serve.
-    pub vocabulary_digest: String,
     /// The `-D` properties beyond the requirements and the services, in launch order.
     pub launch_properties: Vec<LaunchProperty>,
     /// The requirements of the lane, sorted by name.

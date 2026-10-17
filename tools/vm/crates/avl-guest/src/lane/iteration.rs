@@ -1,7 +1,7 @@
 //! One iteration of the lane daemon: the run stream of `/run` from `runStarted` to `summary`.
 //!
-//! The iteration reads the lane document and the suite documents from the jars that the push stored, selects the
-//! documents of the lane, makes the IDE of the lane ready, and names the plan. The program runner of
+//! The iteration reads the lane document, the digest of the flow vocabulary and the suite documents from the jars that
+//! the push stored, selects the documents of the lane, makes the IDE of the lane ready, and names the plan. The program runner of
 //! [`super::program`] then runs each scenario of each selected document, under the watchdog of [`super::watchdog`] and
 //! with the recorder of [`super::trace`]. The bundles of the recorder go to `<iterationDir>/air-traces`, which the
 //! trace pull of the controller packs. The JUnit XML of the stream goes to `<iterationDir>/test.xml`, which `/results`
@@ -18,7 +18,7 @@ use std::time::Duration;
 use avl_trace::protocol;
 use avl_wire::daemon::{LaneClass, LaneInputs, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
 use avl_wire::program::lane::{LaneDocument, parse_lane_document};
-use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents};
+use avl_wire::program::{parse_suite_program, read_lane_documents, read_suite_documents, read_vocabulary_digest};
 use regex::Regex;
 use serde_json::{Value, json};
 
@@ -47,11 +47,13 @@ const IDE_BUDGET: Duration = Duration::from_mins(5);
 /// The JUnit XML of an iteration in its directory.
 pub(crate) const TEST_XML_FILE: &str = "test.xml";
 
-/// The suite documents that an iteration runs, and the lane document of their lane.
+/// The suite documents that an iteration runs, the lane document of their lane, and the digest of the flow vocabulary.
 #[derive(Debug)]
 pub(crate) struct Selection {
     pub lane_bytes: Vec<u8>,
     pub lane: LaneDocument,
+    /// The digest of the flow vocabulary file beside the lane documents, which the bridge of the lane must serve.
+    pub vocabulary_digest: String,
     pub suites: Vec<Suite>,
     /// The suites of the lane that the controller names and that have no suite document. The plan names each one, and
     /// each ends as a failed container [`kind::UNSUPPORTED`].
@@ -83,7 +85,8 @@ pub(crate) struct SelectionInputs<'a> {
     pub lane_classes: &'a [LaneClass],
 }
 
-/// Reads the lane document `<lane>.json` and the suite documents of its lane. A selector names the `testClassName` of a
+/// Reads the lane document `<lane>.json`, the digest of the flow vocabulary beside it, and the suite documents of its
+/// lane. A selector names the `testClassName` of a
 /// document, with or without a package. A `#<scenario>` part keeps only the scenario of that name or key. No selector
 /// selects every document of the lane. The JUnit5 filters then narrow the documents, see [`apply_filters`].
 ///
@@ -99,6 +102,7 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
         )
     })?;
     let lane = parse_lane_document(&lane_bytes).map_err(|problem| format!("the lane document {name} {problem}"))?;
+    let vocabulary_digest = read_vocabulary_digest(inputs.lane_documents)?;
     let mut documents = Vec::new();
     for (file, content) in read_suite_documents(inputs.suite_documents)? {
         let suite = parse_suite_program(&content).map_err(|problem| format!("the suite document {file} {problem}"))?;
@@ -150,6 +154,7 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
     Ok(Selection {
         lane_bytes,
         lane,
+        vocabulary_digest,
         suites,
         undocumented,
     })
@@ -360,6 +365,7 @@ fn execute(daemon: &Daemon, request: &RunRequest, stream: &Stream<'_>, iteration
     let identity = LaneIdentity::new(key, daemon.port());
     let launch = LaneLaunch {
         document: &selection.lane,
+        vocabulary_digest: &selection.vocabulary_digest,
         identity: &identity,
         product_stamp: &request.product_stamp,
         fake_agent_jar: &fake_agent_jar,

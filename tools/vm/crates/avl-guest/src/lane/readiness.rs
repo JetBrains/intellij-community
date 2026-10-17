@@ -2,9 +2,9 @@
 //!
 //! The gate, in order: the lifecycle long poll waits for `READY` with no quiet time, because the IDE decides readiness
 //! after the first scan of its project. A state that names a failed bind of the control server ends the wait at once,
-//! because such an IDE never gets ready. The vocabulary digest of the bridge must be the digest of the lane document.
-//! The chain of `InputRobot` and `Ping` proves that gestures go through the input-events robot and that the typed bridge
-//! answers. The Junie offer of the IDE start gets `Skip`, unless the caller keeps it open.
+//! because such an IDE never gets ready. The vocabulary digest of the bridge must be the digest of the vocabulary file
+//! of the run. The chain of `InputRobot` and `Ping` proves that gestures go through the input-events robot and that the
+//! typed bridge answers. The Junie offer of the IDE start gets `Skip`, unless the caller keeps it open.
 //!
 //! A bare IDE passes the first two steps only, see [`await_lifecycle_ready`]: it measures its own start-up, so it gets
 //! no request of the bridge before its first instruction.
@@ -110,7 +110,7 @@ impl Bridge {
 }
 
 /// Waits until the IDE of `launch` is ready, and drives it to the state a scenario expects. `vocabulary_digest` is the
-/// digest of the lane document. With `keep_junie_offer`, the Junie offer of the IDE start stays open. `note` gets each
+/// digest of the vocabulary file of the run. With `keep_junie_offer`, the Junie offer of the IDE start stays open. `note` gets each
 /// fact a person reads in the log.
 pub(crate) fn await_ready(
     bridge: &Bridge,
@@ -128,7 +128,7 @@ pub(crate) fn await_ready(
 }
 
 /// Waits until the lifecycle of the IDE of `launch` reports `READY`, and holds the bridge to `vocabulary_digest`, the
-/// digest of the lane document. It sends no request of the bridge, because the resident plugin serves the lifecycle
+/// digest of the vocabulary file of the run. It sends no request of the bridge, because the resident plugin serves the lifecycle
 /// route: the readiness of a bare IDE ends here.
 pub(crate) fn await_lifecycle_ready(
     bridge: &Bridge,
@@ -183,7 +183,7 @@ fn not_ready(launch: &str, error: &WaitError) -> AgentRefusal {
 /// Whether the daemon noted a bridge without a vocabulary digest already: it notes that once per daemon.
 static MISSING_DIGEST_NOTED: AtomicBool = AtomicBool::new(false);
 
-/// Refuses a bridge whose vocabulary is not the vocabulary of the lane document. A bridge that names no vocabulary
+/// Refuses a bridge whose vocabulary is not the vocabulary of the run. A bridge that names no vocabulary
 /// passes, and `note` gets one line about it, the first time that `noted` sees one.
 pub(crate) fn check_vocabulary(
     launch: &str,

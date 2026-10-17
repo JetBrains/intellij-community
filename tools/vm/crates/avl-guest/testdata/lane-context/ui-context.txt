@@ -8,48 +8,48 @@ exec '/runtimes/node/bin/node' '/runtimes/pi/it'"'"'s/cli.js' "$@"
 == config/air-ui-test/control.json 600
 {
   "schemaVersion": 1,
-  "port": 30049,
+  "port": 30067,
   "agentJava": "/home/admin/air-lane/jbr/bin/java",
   "agentJar": "<ctx>/home/.air-lane/acp-scenario-agent.jar",
   "credentials": [
     {
       "agentKey": "workflow-source",
-      "token": "ea92664561415d6dae2625afd0fcda02",
+      "token": "b080e6d16409eda9c2368f3c63191599",
       "terminalLogin": false
     },
     {
       "agentKey": "workflow-source-terminal-login",
-      "token": "53e9c056be49bdba2582257fa12bce39",
+      "token": "8804d7e5afe413f0977dfdf7d658d902",
       "terminalLogin": true
     },
     {
       "agentKey": "session-window-first",
-      "token": "f470df2e49a061e1409f3259f9f978e6",
+      "token": "d39513594259f39f1da357bf17038e5d",
       "terminalLogin": false
     },
     {
       "agentKey": "session-window-first-terminal-login",
-      "token": "f7afcb926d100c49f9ef0360c8328b71",
+      "token": "3dfe6ca0d755a6bbfb997e351e75da98",
       "terminalLogin": true
     },
     {
       "agentKey": "session-window-second",
-      "token": "0478179bc32db0a3cb16225c2b9f793d",
+      "token": "b5452d5fd7d5efbdb6a73442772be0bf",
       "terminalLogin": false
     },
     {
       "agentKey": "session-window-second-terminal-login",
-      "token": "779ff8400ca18cdaf47b6e53ddf20110",
+      "token": "f70f270827438c119a7adc9ec1be5527",
       "terminalLogin": true
     },
     {
       "agentKey": "genui-agent",
-      "token": "0a6c95132173eceb3c3e6d9867f2f49c",
+      "token": "6e23cd359b21e0ce344a52877d1f808a",
       "terminalLogin": false
     },
     {
       "agentKey": "genui-agent-terminal-login",
-      "token": "ab9f43a863c498ad7e1af746691779f7",
+      "token": "4d5812d8da71ee776719ee093846fe00",
       "terminalLogin": true
     }
   ]
@@ -57,14 +57,14 @@ exec '/runtimes/node/bin/node' '/runtimes/pi/it'"'"'s/cli.js' "$@"
 == config/air-ui-test/lane-services.json 600
 {
   "schemaVersion": 1,
-  "token": "baefd120ec7e0c2459c108ce4026350c",
-  "registry": "http://127.0.0.1:28102",
-  "cloud": "http://127.0.0.1:32102",
+  "token": "acedb3aaa69536d1d2b4158b83d2d74c",
+  "registry": "http://127.0.0.1:26857",
+  "cloud": "http://127.0.0.1:32357",
   "feedback": null,
   "codex": "http://127.0.0.1:31500"
 }
 == config/air-ui-test/token 600
-00289e9975cfd1185f28c0f5ba3052b4
+19daf19e092ea40bcf56240bccf0dd60
 == config/options/Minimap.xml
 <application>
   <component name="Minimap">
@@ -146,4 +146,4 @@ wire_api = "responses"
 request_max_retries = 0
 stream_max_retries = 0
 == home/.jetbrains/acp.json
-{"agent_servers":{"air-ui-flow-resume-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow resume ACP"}},"air-ui-context-first":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI context first"}},"air-ui-context-second":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI context second"}},"air-ui-flow-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow ACP event"}},"air-ui-flow-mark-done-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow Mark Done ACP"}},"air-ui-flow-closed-project-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow closed project ACP"}},"air-ui-flow-activity-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_DEBUG_TEST_RESPONSE_DELAY_MS":"9000","ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow activity"}},"air-ui-flow-activity-ask-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_DEBUG_TEST_ASK_PERMISSION":"true","ACP_DEBUG_TEST_RESPONSE_DELAY_MS":"9000","ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow activity ask"}},"air-ui-flow-restart-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow restart ACP"}},"air-ui-flow-restart-reads-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow restart reads ACP"}},"air-ui-flow-worktree-session-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow worktree session ACP"}},"air-scenario-workflow-run":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Workflow completed"}},"air-scenario-workflow-source":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30049/control?token=ea92664561415d6dae2625afd0fcda02","ACP_FAKE_AGENT_CONTROL_KEY":"workflow-source"}},"air-scenario-session-window-seed":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Session window seed response"}},"air-scenario-session-window-first":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30049/control?token=f470df2e49a061e1409f3259f9f978e6","ACP_FAKE_AGENT_CONTROL_KEY":"session-window-first"}},"air-scenario-session-window-second":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30049/control?token=0478179bc32db0a3cb16225c2b9f793d","ACP_FAKE_AGENT_CONTROL_KEY":"session-window-second"}},"air-scenario-genui-seed":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"GenUI seed response"}},"air-scenario-genui-agent":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30049/control?token=0a6c95132173eceb3c3e6d9867f2f49c","ACP_FAKE_AGENT_CONTROL_KEY":"genui-agent"}}}}
+{"agent_servers":{"air-ui-flow-resume-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow resume ACP"}},"air-ui-context-first":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI context first"}},"air-ui-context-second":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI context second"}},"air-ui-flow-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow ACP event"}},"air-ui-flow-mark-done-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow Mark Done ACP"}},"air-ui-flow-closed-project-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow closed project ACP"}},"air-ui-flow-activity-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_DEBUG_TEST_RESPONSE_DELAY_MS":"9000","ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow activity"}},"air-ui-flow-activity-ask-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_DEBUG_TEST_ASK_PERMISSION":"true","ACP_DEBUG_TEST_RESPONSE_DELAY_MS":"9000","ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow activity ask"}},"air-ui-flow-restart-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow restart ACP"}},"air-ui-flow-restart-reads-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow restart reads ACP"}},"air-ui-flow-worktree-session-acp":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Air UI flow worktree session ACP"}},"air-scenario-workflow-run":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Workflow completed"}},"air-scenario-workflow-source":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30067/control?token=b080e6d16409eda9c2368f3c63191599","ACP_FAKE_AGENT_CONTROL_KEY":"workflow-source"}},"air-scenario-session-window-seed":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"Session window seed response"}},"air-scenario-session-window-first":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30067/control?token=d39513594259f39f1da357bf17038e5d","ACP_FAKE_AGENT_CONTROL_KEY":"session-window-first"}},"air-scenario-session-window-second":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30067/control?token=b5452d5fd7d5efbdb6a73442772be0bf","ACP_FAKE_AGENT_CONTROL_KEY":"session-window-second"}},"air-scenario-genui-seed":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX":"GenUI seed response"}},"air-scenario-genui-agent":{"command":"/home/admin/air-lane/jbr/bin/java","args":["-jar","<ctx>/home/.air-lane/acp-scenario-agent.jar"],"env":{"ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30067/control?token=6e23cd359b21e0ce344a52877d1f808a","ACP_FAKE_AGENT_CONTROL_KEY":"genui-agent"}}}}

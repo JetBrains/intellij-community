@@ -17,7 +17,10 @@ use serde_json::value::RawValue;
 mod documents;
 pub mod lane;
 
-pub use documents::{LANE_DOCUMENT_DIRECTORY, SUITE_DOCUMENT_DIRECTORY, read_lane_documents, read_suite_documents};
+pub use documents::{
+    FLOW_VOCABULARY_FILE, LANE_DOCUMENT_DIRECTORY, SUITE_DOCUMENT_DIRECTORY, read_lane_documents, read_suite_documents,
+    read_vocabulary_digest,
+};
 
 #[cfg(test)]
 mod tests;

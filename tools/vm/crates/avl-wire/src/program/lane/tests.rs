@@ -6,7 +6,7 @@ use super::*;
 /// A lane document of one local deterministic agent, one controlled registry agent and one journey suite.
 fn document() -> Value {
     json!({
-        "schemaVersion": 1, "lane": "UI", "vocabularyDigest": "digest",
+        "schemaVersion": 2, "lane": "UI",
         "launchProperties": [
             {"key": "idea.is.internal", "value": "true"},
             {"key": "jdk.gtk.version", "value": "2", "when": "linux"},
@@ -86,8 +86,8 @@ fn an_unknown_field_and_another_schema_version_are_refused() {
     unknown["launchInputs"] = json!([]);
     assert!(parse(&unknown).unwrap_err().contains("unknown field `launchInputs`"));
     let mut newer = document();
-    newer["schemaVersion"] = json!(2);
-    assert_eq!(parse(&newer).unwrap_err(), "has the schema version 2, and this reader reads 1");
+    newer["schemaVersion"] = json!(3);
+    assert_eq!(parse(&newer).unwrap_err(), "has the schema version 3, and this reader reads 2");
 }
 
 #[test]

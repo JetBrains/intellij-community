@@ -27,8 +27,12 @@ fn suite(name: &str, lane: &str, class: &str, scenarios: usize) -> String {
     .to_string()
 }
 
-/// A resource root with the committed lane document of the lane `UI` and three suite documents: two of `UI`, one of
-/// `GUI_CHAT`.
+/// The flow vocabulary file of [`documents`], and its digest.
+const VOCABULARY: &str = "{\"actions\":{\n}}\n";
+const VOCABULARY_DIGEST: &str = "9a94d68734a668df684ca70106e71aed9da1748f2bacabd12481cd152595f675";
+
+/// A resource root with the committed lane document of the lane `UI`, a flow vocabulary file, and three suite
+/// documents: two of `UI`, one of `GUI_CHAT`.
 fn documents() -> TempDir {
     let root = TempDir::new().unwrap();
     let lanes = root.path().join(avl_wire::program::LANE_DOCUMENT_DIRECTORY);
@@ -37,6 +41,7 @@ fn documents() -> TempDir {
     fs::create_dir_all(&suites).unwrap();
     let lane = avl_testkit::crate_path!("testdata/lane-context/ui.json");
     fs::copy(&lane, lanes.join("ui.json")).unwrap();
+    fs::write(root.path().join(avl_wire::program::FLOW_VOCABULARY_FILE), VOCABULARY).unwrap();
     for (name, lane, class, scenarios) in [
         ("rename-session", "UI", "AirRenameSessionGeneratedFlowUiTest", 2),
         ("add-to-agent-context", "UI", "AirAddToAgentContextGeneratedFlowUiTest", 3),
@@ -72,6 +77,20 @@ fn lane_class(suite: &str, test_class_name: &str) -> LaneClass {
         suite: suite.to_owned(),
         test_class_name: test_class_name.to_owned(),
     }
+}
+
+// The bridge of the lane must serve the vocabulary of the documents, so the selection carries the digest of the file. A
+// root without the file is refused, so a stale documents jar fails before the IDE launches.
+#[test]
+fn the_selection_carries_the_digest_of_the_flow_vocabulary_file_and_a_root_without_it_is_refused() {
+    let root = documents();
+    assert_eq!(selected(root.path(), "ui", &[]).unwrap().vocabulary_digest, VOCABULARY_DIGEST);
+
+    fs::remove_file(root.path().join(avl_wire::program::FLOW_VOCABULARY_FILE)).unwrap();
+    assert_eq!(
+        selected(root.path(), "ui", &[]).unwrap_err(),
+        format!("{} holds no flow-vocabulary.json", root.path().display())
+    );
 }
 
 // The plan names every suite of the lane that the controller names. A suite with no suite document is planned as an

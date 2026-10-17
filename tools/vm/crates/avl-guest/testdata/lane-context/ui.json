@@ -1,7 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "lane": "UI",
-  "vocabularyDigest": "6968c4fc4487987467de333d3a697a6ea2713616312a18e453bc5e7d43d3fae5",
   "launchProperties": [
     {
       "key": "jb.consents.confirmation.enabled",

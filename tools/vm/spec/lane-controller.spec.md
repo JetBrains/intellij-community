@@ -388,6 +388,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-wire/src/program/documents/tests.rs
   [@test] ../../../../plugins/air/tests/integration/vm-contract/lane_documents.rs (`the_jar_and_the_directory_give_the_committed_lane_documents`)
 
+- The same reader gives the digest of the flow vocabulary: the lowercase hex SHA-256 of the bytes of
+  `flow-vocabulary.json` at the root of the source. A source without that file is refused by its name. No document
+  states the digest, and the bridge module holds a copy of the file with the same bytes.
+  [@test] ../crates/avl-wire/src/program/documents/tests.rs (`a_source_without_the_flow_vocabulary_file_is_refused_by_name`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_selection_carries_the_digest_of_the_flow_vocabulary_file_and_a_root_without_it_is_refused`)
+  [@test] ../../../../plugins/air/tests/integration/vm-contract/lane_documents.rs (`the_jar_the_directory_and_the_bridge_give_one_flow_vocabulary_file`)
+
 - VM preparation installs and probes no agent CLI. An existing image can keep an unused installation.
   [@test] ../crates/avl-vm/src/lane/env/tests.rs
   [@test] ../crates/avl-guest/src/image/provision/tests.rs
@@ -1765,8 +1772,8 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_ready_ide_passes_the_gate_and_the_junie_offer_gets_skip`)
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`another_robot_is_refused`)
 
-- A bridge that serves another flow vocabulary than the lane document is refused as `lane_vocabulary_skew`, which
-  names both digests. A bridge that names no digest passes, and the daemon notes that once.
+- A bridge that serves another flow vocabulary than the documents jar of the run is refused as `lane_vocabulary_skew`,
+  which names both digests. A bridge that names no digest passes, and the daemon notes that once.
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_is_noted_once`)
 
 - An IDE whose control server of the controlled agents did not bind never gets ready. Readiness ends at the first state

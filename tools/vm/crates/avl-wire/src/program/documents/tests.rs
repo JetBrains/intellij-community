@@ -8,15 +8,20 @@ use zip::write::SimpleFileOptions;
 
 use super::*;
 
-/// The files of a resource root: two suite documents, one lane document, and the names that are not documents.
-const ROOT: [(&str, &str); 6] = [
+/// The files of a resource root: two suite documents, one lane document, the flow vocabulary file, and the names that
+/// are not documents.
+const ROOT: [(&str, &str); 7] = [
     ("flow-profiles/rename-session.json", r#"{"suite": "rename-session"}"#),
     ("flow-profiles/new-session.json", r#"{"suite": "new-session"}"#),
     ("flow-profiles/nested/deeper.json", "{}"),
     ("flow-profiles/README.txt", "not a document"),
     ("lanes/ui.json", r#"{"lane": "UI"}"#),
     ("authored-suites.json", "[]"),
+    ("flow-vocabulary.json", "{\"actions\":{\n}}\n"),
 ];
+
+/// The lowercase hex SHA-256 of the flow vocabulary file of [`ROOT`].
+const ROOT_VOCABULARY_DIGEST: &str = "9a94d68734a668df684ca70106e71aed9da1748f2bacabd12481cd152595f675";
 
 fn write_tree(root: &Path, files: &[(&str, &str)]) {
     for (name, content) in files {
@@ -129,5 +134,46 @@ fn a_document_name_that_is_a_directory_is_refused() {
     assert_eq!(
         read_lane_documents(&directory).unwrap_err(),
         format!("{} is not a file", directory.join("lanes/ui.json").display())
+    );
+}
+
+#[test]
+fn a_directory_and_a_zip_of_one_root_give_the_digest_of_the_flow_vocabulary_file() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("resources");
+    write_tree(&directory, &ROOT);
+    let jar = temp.path().join("flow-profiles.jar");
+    write_zip(&jar, &ROOT);
+
+    assert_eq!(read_vocabulary_digest(&directory).unwrap(), ROOT_VOCABULARY_DIGEST);
+    assert_eq!(read_vocabulary_digest(&jar).unwrap(), ROOT_VOCABULARY_DIGEST);
+}
+
+#[test]
+fn a_source_without_the_flow_vocabulary_file_is_refused_by_name() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("resources");
+    write_tree(&directory, &[("lanes/ui.json", "{}"), ("lanes/flow-vocabulary.json", "{}")]);
+    let jar = temp.path().join("lanes-only.jar");
+    write_zip(&jar, &[("lanes/ui.json", "{}"), ("lanes/flow-vocabulary.json", "{}")]);
+
+    assert_eq!(
+        read_vocabulary_digest(&directory).unwrap_err(),
+        format!("{} holds no flow-vocabulary.json", directory.display())
+    );
+    assert_eq!(
+        read_vocabulary_digest(&jar).unwrap_err(),
+        format!("{} holds no flow-vocabulary.json", jar.display())
+    );
+}
+
+#[test]
+fn a_flow_vocabulary_file_that_is_a_directory_is_refused() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("resources");
+    fs::create_dir_all(directory.join(FLOW_VOCABULARY_FILE)).unwrap();
+    assert_eq!(
+        read_vocabulary_digest(&directory).unwrap_err(),
+        format!("{} is not a file", directory.join(FLOW_VOCABULARY_FILE).display())
     );
 }

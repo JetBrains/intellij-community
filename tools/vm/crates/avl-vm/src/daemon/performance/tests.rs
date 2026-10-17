@@ -10,7 +10,7 @@ use super::*;
 /// A lane document with no agent, and `series` as its performance series when it names any.
 fn lane_document(series: Option<Value>) -> Value {
     let mut document = json!({
-        "schemaVersion": 1, "lane": "UI_PERF", "vocabularyDigest": "digest", "launchProperties": [], "requirements": [],
+        "schemaVersion": 2, "lane": "UI_PERF", "launchProperties": [], "requirements": [],
         "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": [], "services": {},
     });
     if let Some(series) = series {

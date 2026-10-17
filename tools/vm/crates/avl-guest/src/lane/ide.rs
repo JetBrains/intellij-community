@@ -303,9 +303,11 @@ impl Records<'_> {
     }
 }
 
-/// What one iteration asks of the IDE: the lane, its identity, and the context plugins.
+/// What one iteration asks of the IDE: the lane, its vocabulary, its identity, and the context plugins.
 pub(crate) struct LaneLaunch<'a> {
     pub document: &'a LaneDocument,
+    /// The digest of the flow vocabulary of the run, which the bridge of the IDE must serve.
+    pub vocabulary_digest: &'a str,
     pub identity: &'a LaneIdentity,
     pub product_stamp: &'a str,
     pub fake_agent_jar: &'a Path,
@@ -467,7 +469,7 @@ impl IdeOwner {
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        readiness::await_ready(&bridge, &key, &launch.document.vocabulary_digest, false, &mut |text| {
+        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, false, &mut |text| {
             records.note(text);
         })?;
         Ok(decision)
@@ -486,7 +488,7 @@ impl IdeOwner {
             .map_err(|error| error.to_string())
             .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
             .and_then(|()| {
-                readiness::await_ready(bridge, key, &launch.document.vocabulary_digest, true, &mut |text| {
+                readiness::await_ready(bridge, key, launch.vocabulary_digest, true, &mut |text| {
                     records.note(text);
                 })
                 .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))
@@ -794,7 +796,7 @@ impl IdeOwner {
             readiness::READY_TIMEOUT.as_secs()
         ));
         let bridge = Bridge::new(BRIDGE_PORT, &token)?;
-        readiness::await_lifecycle_ready(&bridge, key, &launch.document.vocabulary_digest, &mut |text| {
+        readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut |text| {
             records.note(text);
         })
     }

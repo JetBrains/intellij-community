@@ -200,7 +200,7 @@ fn lane_runfiles(root: &std::path::Path) -> (PathBuf, PathBuf) {
 fn documents_jar(suites: &[(&str, serde_json::Value)]) -> Vec<u8> {
     use std::io::Write as _;
     let lane = serde_json::json!({
-        "schemaVersion": 1, "lane": "UI", "vocabularyDigest": "v", "launchProperties": [], "requirements": [],
+        "schemaVersion": 2, "lane": "UI", "launchProperties": [], "requirements": [],
         "agents": [], "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": ["codex", "pi"],
         "services": {"codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply", "jetBrainsCloud": "jba-jcp-emulator-1"},
     });
@@ -208,6 +208,8 @@ fn documents_jar(suites: &[(&str, serde_json::Value)]) -> Vec<u8> {
     let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
     writer.start_file("lanes/ui.json", options).unwrap();
     writer.write_all(lane.to_string().as_bytes()).unwrap();
+    writer.start_file(avl_wire::program::FLOW_VOCABULARY_FILE, options).unwrap();
+    writer.write_all(b"{\"actions\":{\n}}\n").unwrap();
     for (name, suite) in suites {
         writer.start_file(format!("flow-profiles/{name}.json"), options).unwrap();
         writer.write_all(suite.to_string().as_bytes()).unwrap();

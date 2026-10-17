@@ -83,7 +83,7 @@ impl IdeOwner {
         self.relaunch(launch, cause, records)?;
         let key = launch.identity.key();
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
-        readiness::await_ready(&bridge, key, &launch.document.vocabulary_digest, keep_junie_offer, &mut |text| {
+        readiness::await_ready(&bridge, key, launch.vocabulary_digest, keep_junie_offer, &mut |text| {
             records.note(text);
         })?;
         down.map_err(|error| refused(format!("the file operations while the IDE of '{key}' was down failed: {error}")))
