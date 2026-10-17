@@ -480,7 +480,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = getCurrentRendererComponent();
 
     c.setFont(comboBox.getFont());
-    if (UIUtil.getDeprecatedBackground() != null
+    if (UIUtil.isDeprecatedBackgroundEnabled()
         && c instanceof JComponent jComponent
         && !ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
       UIUtil.applyDeprecatedBackground(jComponent);

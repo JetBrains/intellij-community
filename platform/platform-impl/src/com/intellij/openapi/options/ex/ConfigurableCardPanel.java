@@ -147,7 +147,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   private static @NotNull JComponent decorate(@NotNull Configurable configurable, @NotNull JComponent component) {
     if (ConfigurableWrapper.cast(MasterDetails.class, configurable) != null) return component;
 
-    if (UIUtil.getDeprecatedBackground() != null) {
+    if (UIUtil.isDeprecatedBackgroundEnabled()) {
       UIUtil.uiTraverser(component)
         .filter(JComponent.class)
         .forEach(c -> {

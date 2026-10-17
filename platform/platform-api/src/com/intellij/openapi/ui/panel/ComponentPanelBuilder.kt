@@ -216,13 +216,13 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
 
   override fun createPanel(): JPanel {
     val panel: JPanel
-    if (UIUtil.getDeprecatedBackground() == null) {
-      panel = NonOpaquePanel(GridBagLayout())
-    }
-    else {
+    if (UIUtil.isDeprecatedBackgroundEnabled()) {
       panel = JPanel(GridBagLayout())
       UIUtil.applyDeprecatedBackground(panel)
       UIUtil.applyDeprecatedBackground(myComponent)
+    }
+    else {
+      panel = NonOpaquePanel(GridBagLayout())
     }
     val gc = GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                 null, 0, 0)
