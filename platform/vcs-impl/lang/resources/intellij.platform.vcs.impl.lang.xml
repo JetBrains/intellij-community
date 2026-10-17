@@ -31,6 +31,8 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <vcs.changes.changesViewModifier implementation="com.intellij.openapi.vcs.changes.StructuralChangesViewModifier"/>
+
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.ConversionServiceImpl"/>
 
@@ -51,4 +53,10 @@
     <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <action id="ChangesView.ShowStructuralChanges" class="com.intellij.openapi.vcs.changes.ShowStructuralChangesAction">
+      <add-to-group group-id="ChangesView.ViewOptions"/>
+    </action>
+  </actions>
 </idea-plugin>
