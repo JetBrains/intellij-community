@@ -1890,10 +1890,10 @@ class FileEditorManagerTest {
 
   /**
    * The Switcher and Search Everywhere open a file with [FileEditorManagerImpl.OpenMode.RIGHT_SPLIT] on Shift+Enter.
-   * A file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] stays in its window.
+   * An open file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] stays in its window.
    */
   @Test
-  fun testRightSplitModeKeepsFileWithForbiddenSplitInItsWindow(): Unit = timeoutRunBlocking {
+  fun testRightSplitModeKeepsOpenFileWithForbiddenSplitInItsWindow(): Unit = timeoutRunBlocking {
     val file = getSourceFile("1.txt")
     file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     try {
@@ -1912,6 +1912,36 @@ class FileEditorManagerTest {
         assertThat(manager.splitters.openInRightSplit(file, false)).isNull()
       }
       assertThat(manager.windows).hasSize(1)
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  /**
+   * A closed file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] has no window to stay in.
+   * [FileEditorManagerImpl.OpenMode.RIGHT_SPLIT] opens it in the split like any other file.
+   */
+  @Test
+  fun testRightSplitModeOpensClosedFileWithForbiddenSplitInTheRightSplit(): Unit = timeoutRunBlocking {
+    val file = getSourceFile("1.txt")
+    file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    try {
+      withContext(Dispatchers.UiWithModelAccess) {
+        openSingleTextEditor(getSourceFile("2.txt"))
+      }
+      val initialWindow = manager.windows.single()
+
+      val composite = manager.openFile(
+        file = file,
+        options = FileEditorOpenOptions(openMode = FileEditorManagerImpl.OpenMode.RIGHT_SPLIT, reuseOpen = true, requestFocus = true),
+      )
+
+      assertThat(composite.allEditors).isNotEmpty()
+      assertThat(manager.windows).hasSize(2)
+      val splitWindow = manager.windows.single { it !== initialWindow }
+      assertThat(splitWindow.fileList).containsExactly(file)
+      assertThat(initialWindow.fileList).doesNotContain(file)
     }
     finally {
       file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
