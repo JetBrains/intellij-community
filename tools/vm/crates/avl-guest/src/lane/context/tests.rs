@@ -3,9 +3,10 @@ use std::fmt::Write as _;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use avl_wire::ide::IdePrepared;
-use avl_wire::program::lane::{LaneDocument, parse_lane_document};
+use avl_wire::program::lane::{ControlOwner, Delivery, LaneAgent, LaneDocument, parse_lane_document};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
@@ -356,6 +357,112 @@ fn the_files_carry_the_values_of_the_identity() {
         servers["air-scenario-workflow-source"]["env"][CONTROL_URL_ENV_NAME],
         Value::from(identity.control_url("workflow-source"))
     );
+}
+
+/// The fixture document with the Cloud agent of the `GUI_CHAT` lane.
+fn document_with_a_cloud_agent() -> LaneDocument {
+    let mut document = document();
+    document.agents.push(LaneAgent {
+        key: "remote-scenarios".to_owned(),
+        delivery: Delivery::Cloud,
+        config_name: None,
+        registry_id: None,
+        display_name: "Cloud".to_owned(),
+        controlled: true,
+        control_owner: Some(ControlOwner::Ide),
+        deterministic: None,
+        required_executable: None,
+        acp_json: None,
+        env: None,
+    });
+    document
+}
+
+/// The trimmed output of `git` with `arguments` in `directory`.
+fn git_output(directory: &Path, arguments: &[&str]) -> String {
+    let output = Command::new("git")
+        .args(arguments)
+        .current_dir(directory)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "git {arguments:?}: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).unwrap().trim().to_owned()
+}
+
+// A lane with a Cloud agent makes its project a Git repository, as `AirCloudGitRemote.prepare` of the test process
+// does: one commit of every project file on `main`, and the upstream `origin/main` in a bare repository beside the
+// project. A second write keeps that repository. A lane without a Cloud agent leaves the project as it is.
+#[test]
+fn a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin() {
+    let (cloud, runtimes) = (document_with_a_cloud_agent(), runtimes());
+    let identity = identity(&cloud, &runtimes);
+    let prepared = prepared();
+    let project = PathBuf::from(&prepared.paths.project_dir);
+    fs::write(project.join("README.md"), "plain\n").unwrap();
+    fs::create_dir_all(project.join("src")).unwrap();
+    fs::write(project.join("src/Main.kt"), "fun main() {}\n").unwrap();
+    let jar = fixture_jar();
+    let context = LaneContext {
+        document: &cloud,
+        identity: &identity,
+        java: Path::new(FIXTURE_JAVA),
+        fake_agent_jar: &jar,
+        runtimes: &runtimes,
+    };
+    context.write(&prepared.paths).unwrap();
+    let origin = prepared.context.join("project/plain-project-origin.git");
+    let facts = [
+        ("branch", git_output(&project, &["rev-parse", "--abbrev-ref", "HEAD"])),
+        (
+            "upstream",
+            git_output(&project, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]),
+        ),
+        (
+            "origin",
+            git_output(&project, &["remote", "get-url", "origin"]).replace(&prepared.context.display().to_string(), "<ctx>"),
+        ),
+        ("commits", git_output(&project, &["log", "--format=%an <%ae> %s"])),
+        ("files", git_output(&project, &["ls-files"])),
+        ("status", git_output(&project, &["status", "--porcelain"])),
+        ("bare", git_output(&origin, &["rev-parse", "--is-bare-repository"])),
+        ("remote head", git_output(&origin, &["rev-parse", CLOUD_BRANCH])),
+    ];
+    let head = git_output(&project, &["rev-parse", "HEAD"]);
+    let rendered: Vec<String> = facts.iter().map(|(name, value)| format!("{name}: {value}")).collect();
+    assert_eq!(
+        rendered.join("\n").replace(&head, "<head>"),
+        [
+            "branch: main",
+            "upstream: origin/main",
+            "origin: <ctx>/project/plain-project-origin.git",
+            "commits: Air Lane <air-lane@example.com> Initial commit",
+            "files: README.md\nsrc/Main.kt",
+            "status: ",
+            "bare: true",
+            "remote head: <head>",
+        ]
+        .join("\n")
+    );
+    context.write(&prepared.paths).unwrap();
+    assert_eq!(
+        git_output(&project, &["rev-parse", "HEAD"]),
+        head,
+        "a second write keeps the repository"
+    );
+
+    let (plain, _, _) = written(&document());
+    let plain_project = PathBuf::from(&plain.paths.project_dir);
+    assert!(
+        !plain_project.join(".git").exists(),
+        "a lane without a Cloud agent gets no repository"
+    );
+    assert!(!plain.context.join("project/plain-project-origin.git").exists());
 }
 
 #[test]

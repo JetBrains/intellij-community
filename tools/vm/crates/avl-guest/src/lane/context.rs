@@ -13,6 +13,7 @@
 //! | `home/.jetbrains/acp.json` | one entry for each local agent, when the lane has one |
 //! | `bin/<runtime>` | one launcher for each declared CLI runtime |
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
+//! | `project/<name>/.git`, `project/<name>-origin.git` | the Git remote of the project, when the lane has a Cloud agent |
 //!
 //! A bare IDE gets the option files and the token of the bridge only, see [`write_bare`].
 //!
@@ -24,6 +25,7 @@ use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use avl_wire::ide::{ADVANCED_SETTINGS_FILE, IdePrepared, NO_README_SETTINGS};
 use avl_wire::program::lane::{Delivery, FAKE_AGENT_JAR_TOKEN, JAVA_TOKEN, LaneAgent, LaneDocument, Requirement};
@@ -84,6 +86,19 @@ pub(crate) const CLOUD_IDENTITY: &str = "jba-jcp-emulator-1";
 
 /// The lane of the live agents, which runs with credentials of the host. The lane daemon launches no live lane.
 const LIVE_LANE: &str = "UI_LIVE";
+
+/// The branch of the repository that the project of a Cloud lane becomes, `AirCloudGitRemote.BRANCH`.
+pub(crate) const CLOUD_BRANCH: &str = "main";
+
+/// The author of the one commit of that repository, and no signature, as `AirCloudGitRemote` runs `git`.
+const CLOUD_GIT_CONFIG: [&str; 6] = [
+    "-c",
+    "user.name=Air Lane",
+    "-c",
+    "user.email=air-lane@example.com",
+    "-c",
+    "commit.gpgsign=false",
+];
 
 /// `PathManager.OPTIONS_DIRECTORY`.
 const OPTIONS_DIR: &str = "options";
@@ -255,6 +270,9 @@ impl LaneContext<'_> {
     pub(crate) fn write(&self, paths: &IdePrepared) -> Result<ServicePorts, AgentRefusal> {
         let ports = self.check()?;
         let (home, project) = (Path::new(&paths.home_dir), Path::new(&paths.project_dir));
+        if self.document.agents.iter().any(|agent| agent.delivery == Delivery::Cloud) {
+            prepare_cloud_remote(&real_path(project)?)?;
+        }
         let bridge = write_options_and_token(paths, &self.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
         write_private(&bridge.join(LANE_SERVICES_FILE), &json_document(&self.lane_services(ports))?)?;
         let control = bridge.join(CONTROL_FILE);
@@ -452,6 +470,49 @@ fn codex_config(project: &Path, port: u16) -> String {
          wire_api = \"responses\"\nrequest_max_retries = 0\nstream_max_retries = 0\n",
         model = toml_string(codex::MODEL),
     )
+}
+
+/// Makes `project` a Git repository with one commit on [CLOUD_BRANCH], and gives it the `origin` `<name>-origin.git`
+/// beside it: a bare repository that holds the commit. This is `AirCloudGitRemote.prepare` of the test process. A Cloud
+/// launch reads the URL and the remote branch from Git, and `git ls-remote` proves the branch. The emulated spawner
+/// never clones the URL, so the bare repository is the whole remote. A project that is a repository already stays.
+fn prepare_cloud_remote(project: &Path) -> Result<(), AgentRefusal> {
+    if project.join(".git").symlink_metadata().is_ok() {
+        return Ok(());
+    }
+    let name = project.file_name().unwrap_or_default().to_string_lossy();
+    let origin = project.with_file_name(format!("{name}-origin.git"));
+    let branch = format!("--initial-branch={CLOUD_BRANCH}");
+    git(project, &["init", &branch])?;
+    git(project, &["add", "--all"])?;
+    git(project, &["commit", "--message", "Initial commit"])?;
+    create_dirs(&origin)?;
+    git(&origin, &["init", "--bare", &branch])?;
+    git(project, &["remote", "add", "origin", &origin.display().to_string()])?;
+    git(project, &["push", "--set-upstream", "origin", CLOUD_BRANCH])
+}
+
+/// Runs `git` with `arguments` in `directory`, with [CLOUD_GIT_CONFIG]. It reads no global and no system configuration,
+/// so a hook or a template of the machine cannot change the repository.
+fn git(directory: &Path, arguments: &[&str]) -> Result<(), AgentRefusal> {
+    let output = Command::new("git")
+        .args(CLOUD_GIT_CONFIG)
+        .args(arguments)
+        .current_dir(directory)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .output()
+        .map_err(|error| write_failure(format!("cannot run git in {}: {error}", directory.display())))?;
+    if output.status.success() {
+        return Ok(());
+    }
+    Err(write_failure(format!(
+        "`git {}` failed in {} with {}: {}",
+        arguments.join(" "),
+        directory.display(),
+        output.status,
+        String::from_utf8_lossy(&output.stderr).trim()
+    )))
 }
 
 /// A launcher that runs `command` with the arguments of the launcher, executable by the owner.

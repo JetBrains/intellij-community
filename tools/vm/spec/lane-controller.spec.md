@@ -533,6 +533,7 @@ Before a launch, the lane daemon writes these files into the context:
 | `home/.jetbrains/acp.json` | one entry for each local agent |
 | `bin/<runtime>` | one launcher for each CLI runtime |
 | `home/.codex/config.toml` | the Codex mock model and the trusted project |
+| `project/<name>/.git`, `project/<name>-origin.git` | the Git remote of the project, for a lane with a Cloud agent |
 
 - The files of the context of the `UI` lane are the golden `testdata/lane-context/ui-context.txt`.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_context_of_the_ui_lane_is_the_golden`)
@@ -552,6 +553,12 @@ Before a launch, the lane daemon writes these files into the context:
 - `control.json` lists each agent whose control owner in the lane document is the IDE, and the terminal sign-in of
   each one.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_files_carry_the_values_of_the_identity`)
+
+- A lane with a Cloud agent makes its project a Git repository with one commit on `main`.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin`)
+
+- The bare repository `<name>-origin.git` beside the project is its `origin`, and it holds that commit.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin`)
 
 - A lane whose IDE serves no agent has no `control.json`. The daemon deletes an earlier one.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a_stale_control_file`)
