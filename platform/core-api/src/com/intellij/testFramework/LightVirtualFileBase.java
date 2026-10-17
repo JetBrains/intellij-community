@@ -14,9 +14,12 @@ import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.StackTraceSnapshot;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 
@@ -249,8 +252,21 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
       return null;
     }
 
-    return new Throwable();
+    return captureCreationTrace();
   }
+
+  /**
+   * The creation trace that a light file keeps outside the unit test mode: the top {@code CREATION_TRACE_FRAMES} frames of the code
+   * that creates the file, as {@link StackTraceSnapshot} data. A plugin can create a light file that outlives the plugin, and the
+   * data keeps no class loader. Light files are created on hot paths, so the trace is bounded.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Object captureCreationTrace() {
+    return StackTraceSnapshot.captureCallerOf(LightVirtualFileBase.class, CREATION_TRACE_FRAMES);
+  }
+
+  private static final int CREATION_TRACE_FRAMES = 16;
 
   /** marker object saying that the creation trace should be inferred with the default algorithm */
   static final @NotNull Object DEFAULT_CREATION_TRACE = ObjectUtils.sentinel("default creation trace");

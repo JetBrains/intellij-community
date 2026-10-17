@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Experimental
 fun Job.cancelOnDispose(disposable: Disposable) {
-  val caller = Java11Shim.INSTANCE.getCallerFrame(FILE_CLASS_NAME)
+  val caller = Java11Shim.INSTANCE.getStackTrace(1, FILE_CLASS_NAME).firstOrNull()
   val childDisposable = object : Disposable {
     override fun dispose() {
       cancel("disposed")

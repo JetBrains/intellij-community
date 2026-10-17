@@ -49,10 +49,18 @@ abstract class Java11Shim {
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 
   /**
-   * The frame that called into the class [calleeClassName]: the first frame of the current stack outside this shim and outside that class.
-   * A [StackTraceElement] holds no class, so a caller can keep it and keep no class loader.
+   * The top [limit] frames of the current stack below the frames of this shim and of [calleeClassNames]:
+   * the stack of the code that called into those classes. A nested class of a callee class counts as that class.
+   * A [StackTraceElement] holds no class, so a caller can keep the frames and keep no class loader.
    */
-  abstract fun getCallerFrame(calleeClassName: String): StackTraceElement?
+  abstract fun getStackTrace(limit: Int, vararg calleeClassNames: String): Array<StackTraceElement>
+
+  /** Whether a frame of [className] belongs to this shim, or to one of [calleeClassNames] or a class nested in it. */
+  protected fun isSkippedFrame(className: String, calleeClassNames: Array<out String>): Boolean {
+    return className == javaClass.name || calleeClassNames.any { callee ->
+      className.startsWith(callee) && (className.length == callee.length || className[callee.length] == '$')
+    }
+  }
 
   @Contract(value = "_, -> new", pure = true)
   abstract fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any> = HashingStrategy.canonical()): ConcurrentMap<K & Any, V & Any>
