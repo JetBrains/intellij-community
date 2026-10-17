@@ -115,10 +115,6 @@ com.intellij.lexer.RestartableLexer
 - java.lang.IllegalStateException
 - com.intellij.openapi.diagnostic.ControlFlowException
 - <init>(com.intellij.model.SideEffectGuard$EffectType):V
-*:com.intellij.model.Symbol
-- a:createPointer():com.intellij.model.Pointer
-- a:equals(java.lang.Object):Z
-- a:hashCode():I
 *:com.intellij.model.presentation.SymbolDeclarationPresentation
 - com.intellij.navigation.ItemPresentation
 - s:getFor(com.intellij.model.psi.PsiSymbolDeclaration):com.intellij.model.presentation.SymbolDeclarationPresentation

@@ -602,6 +602,10 @@ a:com.intellij.model.SingleTargetReference
 - <init>():V
 - f:resolveReference():java.util.Collection
 - pa:resolveSingleTarget():com.intellij.model.Symbol
+com.intellij.model.Symbol
+- a:createPointer():com.intellij.model.Pointer
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
 com.intellij.model.search.SearchRequest
 - s:of(java.lang.String):com.intellij.model.search.SearchRequest
 - s:of(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchRequest
