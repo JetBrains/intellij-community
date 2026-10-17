@@ -8,7 +8,6 @@
 
   <dependencies>
     <module name="intellij.lambda.testFramework"/>
-    <module name="intellij.libraries.byte.buddy"/>
   </dependencies>
 
   <!-- region additional -->
