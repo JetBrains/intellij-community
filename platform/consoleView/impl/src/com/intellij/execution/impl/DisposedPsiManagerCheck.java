@@ -23,17 +23,22 @@ import org.jetbrains.annotations.NotNull;
 
 public final class DisposedPsiManagerCheck {
   private static final Logger LOG = Logger.getInstance(DisposedPsiManagerCheck.class);
-  private final Throwable myAllocationPlace;
+  /**
+   * The stack that created this check. It holds names only, not classes, so a console that outlives a plugin keeps no class loader of it.
+   */
+  private final StackTraceElement[] myAllocationPlace;
   private final Project myProject;
 
   public DisposedPsiManagerCheck(@NotNull Project project) {
     myProject = project;
-    myAllocationPlace = new Throwable();
+    myAllocationPlace = new Throwable().getStackTrace();
   }
 
   public void performCheck() {
     if (myProject.isDisposed()) {
-      LOG.error("Disposed" + "\n" + StringUtil.getThrowableText(myAllocationPlace));
+      Throwable allocationPlace = new Throwable();
+      allocationPlace.setStackTrace(myAllocationPlace);
+      LOG.error("Disposed" + "\n" + StringUtil.getThrowableText(allocationPlace));
     }
   }
 }
