@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mps.build" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
   </component>
 </module>
