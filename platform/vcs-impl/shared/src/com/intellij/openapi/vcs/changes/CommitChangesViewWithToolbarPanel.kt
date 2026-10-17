@@ -15,8 +15,10 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.StructuralChangesPreview
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.selectedDiffableNode
@@ -40,6 +42,7 @@ import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -231,33 +234,52 @@ private class ChangesViewInputHandler(
   private val cs: CoroutineScope,
   private val changesView: ChangesListView,
 ) {
+  private val structuralPreview = StructuralChangesPreview(changesView, cs)
+
   val diffRequests: MutableSharedFlow<ClientId> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @RequiresEdt
   fun installListeners() {
+    structuralPreview.install()
     changesView.doubleClickHandler = Processor { e: MouseEvent ->
+      val path = TreeUtil.getPathForLocation(changesView, e.x, e.y)
+      if (path?.lastPathComponent is ChangesBrowserStructuralNode<*> &&
+          !TreeUtil.isLocationInExpandControl(changesView, path, e.x, e.y)) {
+        navigateToSource(requestFocus = true)
+        return@Processor true
+      }
       if (EditSourceOnDoubleClickHandler.isToggleEvent(changesView, e)) return@Processor false
       handleEnterOrDoubleClick(requestFocus = true)
+      true
     }
     changesView.enterKeyHandler = Processor {
       handleEnterOrDoubleClick(requestFocus = false)
+      true
     }
   }
 
-  private fun handleEnterOrDoubleClick(requestFocus: Boolean): Boolean {
+  private fun handleEnterOrDoubleClick(requestFocus: Boolean) {
+    if (changesView.leadSelectionPath?.lastPathComponent is ChangesBrowserStructuralNode<*>) {
+      navigateToSource(requestFocus)
+      return
+    }
     if (!performHoverAction()) {
       val diffPreviewOnDoubleClickOrEnter = changesView.project.service<CommitToolWindowViewModel>().diffPreviewOnDoubleClickOrEnter
       if (diffPreviewOnDoubleClickOrEnter && changesView.selectedDiffableNode != null) {
         diffRequests.tryEmit(ClientId.current)
       }
       else {
-        val dataContext = DataManager.getInstance().getDataContext(changesView)
-        val parameters = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-        requestNavigate(changesView.project, dataContext, parameters, cs)
+        navigateToSource(requestFocus)
       }
     }
-    return true
+  }
+
+  private fun navigateToSource(requestFocus: Boolean) {
+    structuralPreview.cancelPendingPreview()
+    val dataContext = DataManager.getInstance().getDataContext(changesView)
+    val parameters = NavigationOptions.defaultOptions().requestFocus(requestFocus)
+    requestNavigate(changesView.project, dataContext, parameters, cs)
   }
 
   private fun performHoverAction(): Boolean {

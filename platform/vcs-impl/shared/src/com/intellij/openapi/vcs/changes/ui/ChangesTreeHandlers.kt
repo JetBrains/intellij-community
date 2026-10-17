@@ -26,7 +26,7 @@ internal class ChangesTreeHandlers(private val tree: ChangesTree) {
       val handler = enterKeyHandler ?: return
 
       if (VK_ENTER != e.keyCode || e.modifiers != 0) return
-      if (tree.selectionCount <= 1 && !tree.isLeafSelected()) return
+      if (tree.selectionCount <= 1 && !tree.isLeafSelected() && tree.lastSelectedPathComponent !is ChangesBrowserStructuralNode<*>) return
 
       if (handler.process(e)) e.consume()
     }

@@ -87,7 +87,8 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
       renderer.setIcon(additionalIcon);
       return;
     }
-    renderer.setIcon(filePath, filePath.isDirectory() || !isLeaf());
+    var hasFileChildren = iterateNodeChildren().filter(node -> !(node instanceof ChangesBrowserStructuralNode<?>)).isNotEmpty();
+    renderer.setIcon(filePath, filePath.isDirectory() || hasFileChildren);
   }
 
   private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {

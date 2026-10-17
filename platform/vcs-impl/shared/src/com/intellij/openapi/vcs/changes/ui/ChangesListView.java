@@ -31,6 +31,7 @@ import com.intellij.platform.vcs.impl.shared.actions.VcsTransferableDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection;
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -89,7 +90,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   public int getToggleClickCount() {
-    return 2;
+    return getLastSelectedPathComponent() instanceof ChangesBrowserStructuralNode<?> ? -1 : 2;
   }
 
   @Override
@@ -105,6 +106,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    if (node instanceof ChangesBrowserStructuralNode<?>) return false;
     ChangesBrowserNode<?> subtreeRoot = getSubtreeRoot(node);
     Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
@@ -115,6 +117,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+    if (node instanceof ChangesBrowserStructuralNode<?>) return false;
     if (VcsTreeModelDataExKt.isUnderTag(node, RESOLVED_CONFLICTS_NODE_TAG)) return true;
 
     return super.isIncludable(node);
@@ -150,7 +153,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     sink.set(DATA_KEY, this);
     sink.set(VcsSharedDataKeys.CHANGES, getSelectedChanges()
       .toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(VcsSharedDataKeys.CHANGE_LEAD_SELECTION, VcsTreeModelData.exactlySelected(this)
+    sink.set(VcsSharedDataKeys.CHANGE_LEAD_SELECTION, VcsTreeModelData.exactlySelectedForActions(this)
       .iterateUserObjects(Change.class)
       .toArray(Change.EMPTY_CHANGE_ARRAY));
     sink.set(VcsSharedDataKeys.CHANGE_LISTS, VcsTreeModelData.exactlySelected(this)
@@ -171,7 +174,9 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
 
     VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-    VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+    VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelectedForActions(this);
+    var navigationSelection = VcsTreeModelData.exactlySelected(this).iterateRawNodes().toList();
+    var hasStructuralSelection = navigationSelection.stream().anyMatch(node -> node instanceof ChangesBrowserStructuralNode<?>);
     sink.lazy(SelectInContext.DATA_KEY, () -> {
       VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
@@ -188,12 +193,25 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       return VcsTreeModelData.mapToVirtualFile(treeSelection);
     });
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      if (hasStructuralSelection) {
+        return navigationSelection.size() == 1
+               ? ((ChangesBrowserStructuralNode<?>)navigationSelection.getFirst()).getNavigatable()
+               : null;
+      }
       VirtualFile file = VcsTreeModelData.mapToNavigatableFile(treeSelection).single();
       return file != null && !file.isDirectory()
              ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
              : null;
     });
     sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      if (hasStructuralSelection) {
+        return JBIterable.from(navigationSelection).flatMap(node -> {
+          if (node instanceof ChangesBrowserStructuralNode<?> structuralNode) {
+            return JBIterable.of(structuralNode.getNavigatable()).filterNotNull();
+          }
+          return JBIterable.of(getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(VcsTreeModelData.allUnder(node))));
+        }).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      }
       return getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(treeSelection));
     });
     sink.lazy(EXACTLY_SELECTED_FILES_DATA_KEY, () -> {

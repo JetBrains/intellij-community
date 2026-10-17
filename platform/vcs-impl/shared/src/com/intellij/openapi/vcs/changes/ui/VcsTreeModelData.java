@@ -48,6 +48,12 @@ public abstract class VcsTreeModelData {
     return new ExactlySelectedData(tree);
   }
 
+  @ApiStatus.Internal
+  public static @NotNull VcsTreeModelData exactlySelectedForActions(@NotNull JTree tree) {
+    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
+    return new ActionSelectionData(tree);
+  }
+
   public static @NotNull VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
 
@@ -138,7 +144,7 @@ public abstract class VcsTreeModelData {
     }
   }
 
-  private static class SelectedData extends ExactlySelectedData {
+  private static class SelectedData extends ActionSelectionData {
 
     SelectedData(@NotNull JTree tree) {
       super(tree);
@@ -166,6 +172,25 @@ public abstract class VcsTreeModelData {
 
       return JBIterable.of(paths).map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
     }
+  }
+
+  private static class ActionSelectionData extends ExactlySelectedData {
+    ActionSelectionData(@NotNull JTree tree) {
+      super(tree);
+    }
+
+    @Override
+    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return super.iterateRawNodes().map(VcsTreeModelData::getActionNode).unique();
+    }
+  }
+
+  private static @NotNull ChangesBrowserNode<?> getActionNode(@NotNull ChangesBrowserNode<?> node) {
+    if (node instanceof ChangesBrowserStructuralNode<?> structuralNode) {
+      var changeNode = structuralNode.getChangeNode();
+      if (changeNode != null) return changeNode;
+    }
+    return node;
   }
 
   private static class ExactlySelectedTagData extends VcsTreeModelData {
@@ -201,6 +226,7 @@ public abstract class VcsTreeModelData {
     @Override
     public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return super.iterateRawNodes()
+        .map(VcsTreeModelData::getActionNode)
         .flatMap(ChangesBrowserNode::traverse)
         .unique(); // filter out nodes that already were processed (because their parent selected too)
     }
@@ -280,11 +306,11 @@ public abstract class VcsTreeModelData {
     sink.set(VcsSharedDataKeys.CHANGES_SELECTION,
              getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class)));
     sink.set(VcsSharedDataKeys.CHANGE_LEAD_SELECTION,
-             mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
+             mapToChange(exactlySelectedForActions(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
     sink.set(VcsSharedDataKeys.FILE_PATHS, mapToFilePath(selected(tree)));
 
     VcsTreeModelData treeSelection = selected(tree);
-    VcsTreeModelData exactSelection = exactlySelected(tree);
+    VcsTreeModelData exactSelection = exactlySelectedForActions(tree);
     sink.lazy(SelectInContext.DATA_KEY, () -> {
       if (project == null) return null;
       VirtualFile file = mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
@@ -340,7 +366,8 @@ public abstract class VcsTreeModelData {
   }
 
   private static @Nullable VirtualFile treePathToVirtualFile(@NotNull TreePath path) {
-    VirtualFile virtualFile = objectToVirtualFile(((ChangesBrowserNode<?>)path.getLastPathComponent()).getUserObject());
+    var node = getActionNode((ChangesBrowserNode<?>)path.getLastPathComponent());
+    VirtualFile virtualFile = objectToVirtualFile(node.getUserObject());
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return virtualFile;
   }
@@ -424,4 +451,3 @@ public abstract class VcsTreeModelData {
     return (ChangesBrowserNode<?>)tree.getModel().getRoot();
   }
 }
-
