@@ -19,6 +19,8 @@ import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PydevConsoleRunnerFactory
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.remote.PyRemotePathMapper
+import com.jetbrains.python.sdk.ModuleOrProject
 
 /**
  * Contributes file path references for Python string literals in the Python console.
@@ -74,7 +76,8 @@ class PyConsoleFileReferenceContributor : PsiReferenceContributor() {
       val project = file.project
       val module = ModuleUtilCore.findModuleForFile(file)
       val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(project, module, null, settingsProvider)
+      val modOrProj = if (module != null) ModuleOrProject.ModuleAndProject(module) else ModuleOrProject.ProjectOnly(project)
+      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(modOrProj, PyRemotePathMapper(), settingsProvider)
       val workingDir =  StandardFileSystems.local().findFileByPath(workingDirPath) ?: return null
       return PsiManager.getInstance(project).findDirectory(workingDir)
     }

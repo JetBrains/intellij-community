@@ -179,9 +179,6 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, if (enabled) "True" else "False")
     }
 
-    @Deprecated("Use the one with ModuleOrProject")
-    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String =
-      getWorkingDir(toModuleOrProject(project, module), pathMapper ?: PyRemotePathMapper(), settingsProvider)
     fun getWorkingDir(moduleOrProject: ModuleOrProject, pathMapper: PathMapper, settingsProvider: PyConsoleSettings): String {
       var workingDir = getWorkingDirFromSettings(moduleOrProject,  settingsProvider)
       workingDir = pathMapper.convertToRemote(workingDir)
