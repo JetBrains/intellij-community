@@ -1,6 +1,8 @@
 package com.intellij.devkit.compose.demo
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import com.intellij.ui.components.Badge
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
@@ -98,6 +100,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import org.jetbrains.jewel.ui.component.Badge as JewelBadge
+import org.jetbrains.jewel.ui.component.OnOffButton as JewelOnOffButton
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   private val mainContent =
@@ -126,6 +129,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       menusRow()
       separator()
       gotItTooltipRow()
+      separator()
+      onOffButtonRow()
       separator()
     }
       .apply {
@@ -286,7 +291,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
             })
             activeDefaultSplitButtonPopup = popup
             popup.show(RelativePoint.fromScreen(mouseLocation))
-          } else {
+          }
+          else {
             activeDefaultSplitButtonPopup?.cancel()
             activeDefaultSplitButtonPopup = null
           }
@@ -314,7 +320,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
             })
             activeOutlinedSplitButtonPopup = popup
             popup.show(RelativePoint.fromScreen(mouseLocation))
-          } else {
+          }
+          else {
             activeOutlinedSplitButtonPopup?.cancel()
             activeOutlinedSplitButtonPopup = null
           }
@@ -725,7 +732,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
               .withPosition(balloonPosition[currentBalloonPosition % balloonPosition.size])
               .withShowCount(999)
               .withLink(DevkitComposeBundle.message("jewel.swing.gotit.example.link"), {})
-              .withBrowserLink(DevkitComposeBundle.message("jewel.swing.gotit.example.browser.link"), URI.create("https://www.jetbrains.com/help/idea/getting-started.html").toURL())
+              .withBrowserLink(DevkitComposeBundle.message("jewel.swing.gotit.example.browser.link"),
+                               URI.create("https://www.jetbrains.com/help/idea/getting-started.html").toURL())
               .show(this, gotItPosition[currentGotItPosition % gotItPosition.size])
           }
         }
@@ -854,6 +862,60 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       }.align(AlignY.TOP)
     }
       .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.onOffButtonRow() {
+    row(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.label")) {
+      panel {
+        row(DevkitComposeBundle.message("jewel.swing.label")) {
+          cell(OnOffButton()).applyToComponent { this.isSelected = true }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.on"))
+          cell(OnOffButton()).applyToComponent { this.isSelected = false }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.off"))
+          cell(object : OnOffButton() {
+            override fun hasFocus(): Boolean = true
+          }).applyToComponent { this.isSelected = true }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.on.focused"))
+          cell(object : OnOffButton() {
+            override fun hasFocus(): Boolean = true
+          }).applyToComponent { this.isSelected = false }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.off.focused"))
+          cell(OnOffButton()).applyToComponent { this.isSelected = true; this.isEnabled = false }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.on.disabled")).enabled(false)
+          cell(OnOffButton()).applyToComponent { this.isSelected = false; this.isEnabled = false }.align(AlignY.CENTER)
+          label(DevkitComposeBundle.message("jewel.swing.comparison.onoffbutton.off.disabled")).enabled(false)
+        }.layout(RowLayout.PARENT_GRID)
+
+        row(DevkitComposeBundle.message("jewel.compose.label")) {
+          compose(Modifier) { JewelOnOffButton(true, {}) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("On") }.align(AlignY.CENTER)
+          compose(Modifier) { JewelOnOffButton(false, {}) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("Off") }.align(AlignY.CENTER)
+          compose(Modifier) { FocusedJewelOnOffButton(checked = true) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("Focused On") }.align(AlignY.CENTER)
+          compose(Modifier) { FocusedJewelOnOffButton(checked = false) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("Focused Off") }.align(AlignY.CENTER)
+          compose(Modifier) { JewelOnOffButton(true, {}, enabled = false) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("Disabled On", color = JewelTheme.globalColors.text.disabled) }.align(AlignY.CENTER)
+          compose(Modifier) { JewelOnOffButton(false, {}, enabled = false) }.align(AlignY.CENTER)
+          compose(Modifier) { Text("Disabled Off", color = JewelTheme.globalColors.text.disabled) }.align(AlignY.CENTER)
+        }.layout(RowLayout.PARENT_GRID)
+      }
+    }
+  }
+
+  /**
+   * Draws the focused state without taking real focus, so several toggles can show it at once, like the Swing row's
+   * `hasFocus()` override. The interactions flow doesn't replay, so this effect comes after the toggle: effects are
+   * launched in composition order, so the toggle is already collecting when the event is sent.
+   */
+  @Composable
+  private fun FocusedJewelOnOffButton(checked: Boolean) {
+    val interactionSource = remember { MutableInteractionSource() }
+    JewelOnOffButton(checked = checked, onCheckedChange = {}, interactionSource = interactionSource)
+    LaunchedEffect(interactionSource) {
+      interactionSource.emit(FocusInteraction.Focus())
+    }
   }
 
   private fun createIntelliJMenuActionGroup(): DefaultActionGroup {

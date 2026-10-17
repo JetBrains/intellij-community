@@ -1,0 +1,5 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <rect fill="none" stroke="#6C707E" x="1.5" y="4.5" width="13" height="7" rx="3.5"/>
+  <circle fill="#6C707E" cx="11" cy="8" r="2"/>
+</svg>

@@ -8,6 +8,7 @@ import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
 import org.jetbrains.jewel.ui.painter.hints.ColorBasedPaletteReplacement
+import org.jetbrains.jewel.ui.painter.hints.ColorKeyPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
 import org.jetbrains.jewel.ui.painter.hints.KeyBasedPaletteReplacement
@@ -27,6 +28,7 @@ public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
     override val checkBoxByKeyPaletteHint: PainterHint
     override val treePaletteHint: PainterHint
     override val uiPaletteHint: PainterHint
+    override val togglePaletteHint: PainterHint
 
     private val overrideHint: PainterHint =
         PathOverride(
@@ -58,6 +60,13 @@ public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
         checkBoxByColorPaletteHint = ColorBasedPaletteReplacement(checkBoxesByColor)
         treePaletteHint = ColorBasedPaletteReplacement(trees)
         uiPaletteHint = ColorBasedPaletteReplacement(ui)
+
+        val toggleDefaults = if (isDark) darkToggleColors else lightToggleColors
+        val themeToggleColors =
+            themeColorPalette.mapNotNull { (key, color) ->
+                if (key.startsWith("toggle-")) color?.let { key to it } else null
+            }
+        togglePaletteHint = ColorKeyPaletteReplacement(toggleDefaults + themeToggleColors)
     }
 
     private fun registerColorBasedReplacement(map: MutableMap<Color, Color>, key: String, value: String) {
@@ -152,6 +161,43 @@ public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
                 "Checkbox.Focus.Thin.Selected.Dark" to "#466D94",
                 "Tree.iconColor" to "#808080",
                 "Tree.iconColor.Dark" to "#AFB1B3",
+            )
+
+        // The toggle-* colors of the IntelliJ theme (platform-resources/src/themes/intellijlaf.theme.json).
+        // expUI_light.theme.json does not define any toggle-* colors, it inherits from intellijlaf.theme.json.
+        private val lightToggleColors =
+            mapOf(
+                "toggle-on-bg" to Color(0xFF3871E1),
+                "toggle-off-bg" to Color(0x30000000),
+                "toggle-off-border" to Color(0x00FFFFFF),
+                "toggle-on-border" to Color(0xFF3871E1),
+                "toggle-on-disabled-bg" to Color(0xFFF7F8F9),
+                "toggle-off-disabled-bg" to Color(0xFFF7F8F9),
+                "toggle-on-disabled-border" to Color(0xFFDDDFE4),
+                "toggle-off-disabled-border" to Color(0xFFDDDFE4),
+                "toggle-focus-border" to Color(0xFF3871E1),
+                "toggle-on-notch" to Color(0xFFFFFFFF),
+                "toggle-off-notch" to Color(0xFFFFFFFF),
+                "toggle-on-disabled-notch" to Color(0xFFC3C5CB),
+                "toggle-off-disabled-notch" to Color(0xFFC3C5CB),
+            )
+
+        // The toggle-* colors of the Int UI dark theme (platform-resources/src/themes/expUI/expUI_dark.theme.json)
+        private val darkToggleColors =
+            mapOf(
+                "toggle-on-bg" to Color(0xFF3871E1),
+                "toggle-off-bg" to Color(0x3BFFFFFF),
+                "toggle-off-border" to Color(0x00191A1C),
+                "toggle-on-border" to Color(0xFF3871E1),
+                "toggle-on-disabled-bg" to Color(0x00191A1C),
+                "toggle-off-disabled-bg" to Color(0x00191A1C),
+                "toggle-on-disabled-border" to Color(0xFF33353B),
+                "toggle-off-disabled-border" to Color(0xFF33353B),
+                "toggle-focus-border" to Color(0xFF3871E1),
+                "toggle-on-notch" to Color(0xFFFFFFFF),
+                "toggle-off-notch" to Color(0xFFD1D3D9),
+                "toggle-on-disabled-notch" to Color(0xFF5F6269),
+                "toggle-off-disabled-notch" to Color(0xFF5F6269),
             )
 
         private val supportedCheckboxKeys: Set<String> =
