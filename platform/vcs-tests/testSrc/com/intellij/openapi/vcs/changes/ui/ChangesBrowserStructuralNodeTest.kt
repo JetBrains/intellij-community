@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -182,14 +183,16 @@ internal class ChangesBrowserStructuralNodeTest {
   }
 
   @Test
-  fun `test structural selection reuses a preview tab across files`(): Unit = timeoutRunBlocking {
+  fun `test structural selection reuses a preview tab when global preview is disabled`(): Unit = timeoutRunBlocking {
+    val permanentFile = LightVirtualFile("permanent.txt", "permanent\n")
     val firstFile = LightVirtualFile("first.txt", "first\nsecond\n")
     val secondFile = LightVirtualFile("second.txt", "first\nsecond\n")
     val firstDescriptor = OpenFileDescriptor(project, firstFile, 0)
     val secondDescriptor = OpenFileDescriptor(project, secondFile, 6)
     val fixture = createPreviewFixture(firstDescriptor, secondDescriptor)
 
-    withPreviewTabs { manager ->
+    withPreviewTabsDisabled { manager ->
+      requestNavigate(project, OpenFileDescriptor(project, permanentFile, 0), coroutineScope = this).await()
       previewSelection(fixture) {
         view.selectionPath = TreePath(first.path)
       }
@@ -199,12 +202,12 @@ internal class ChangesBrowserStructuralNodeTest {
       previewSelection(fixture) {
         view.selectionPath = TreePath(second.path)
       }
-      val (openFiles, secondIsPreview, offset) = withContext(Dispatchers.EDT) {
-        Triple(manager.openFiles.toList(), manager.getComposite(secondFile)!!.isPreview,
+      val (openFiles, previewFiles, offset) = withContext(Dispatchers.EDT) {
+        Triple(manager.openFiles.toSet(), manager.openFiles.filter { manager.getComposite(it)!!.isPreview },
                (manager.getSelectedEditor(secondFile) as TextEditor).editor.caretModel.offset)
       }
-      assertEquals(listOf(secondFile), openFiles)
-      assertTrue(secondIsPreview)
+      assertEquals(setOf(permanentFile, secondFile), openFiles)
+      assertEquals(listOf(secondFile), previewFiles)
       assertEquals(6, offset)
       assertFalse(firstDescriptor.isUsePreviewTab)
       assertFalse(secondDescriptor.isUsePreviewTab)
@@ -218,7 +221,7 @@ internal class ChangesBrowserStructuralNodeTest {
     val permanentDescriptor = OpenFileDescriptor(project, permanentFile, 6)
     val fixture = createPreviewFixture(permanentDescriptor, OpenFileDescriptor(project, previewFile, 0))
 
-    withPreviewTabs { manager ->
+    withPreviewTabsDisabled { manager ->
       requestNavigate(project, permanentDescriptor, coroutineScope = this).await()
       previewSelection(fixture) {
         view.selectionPath = TreePath(first.path)
@@ -254,7 +257,7 @@ internal class ChangesBrowserStructuralNodeTest {
     val descriptor = OpenFileDescriptor(project, explicitFile, 6)
     val fixture = createPreviewFixture(descriptor, OpenFileDescriptor(project, previewFile, 0))
 
-    withPreviewTabs { manager ->
+    withPreviewTabsDisabled { manager ->
       previewSelection(fixture) {
         view.selectionPath = TreePath(first.path)
       }
@@ -276,11 +279,12 @@ internal class ChangesBrowserStructuralNodeTest {
   }
 
   @Test
-  fun `test structural selection respects disabled preview tabs`(): Unit = timeoutRunBlocking {
+  fun `test structural selection respects files that prohibit preview`(): Unit = timeoutRunBlocking {
     val fixture = createFixture()
     val descriptor = fixture.first.getNavigatable() as OpenFileDescriptor
+    descriptor.file.putUserData(FileEditorManagerKeys.FORBID_PREVIEW_TAB, true)
 
-    withPreviewTabs(enabled = false) { manager ->
+    withPreviewTabsDisabled { manager ->
       previewSelection(fixture) {
         view.selectionPath = TreePath(first.path)
       }
@@ -521,14 +525,15 @@ internal class ChangesBrowserStructuralNodeTest {
   private suspend fun createPreviewFixture(first: Navigatable, second: Navigatable = PreviewNavigatable()): Fixture =
     withContext(Dispatchers.EDT) { createFixture(StructuralNode("first", first), StructuralNode("second", second)) }
 
-  private suspend fun withPreviewTabs(enabled: Boolean = true, test: suspend (FileEditorManagerImpl) -> Unit) {
+  private suspend fun withPreviewTabsDisabled(test: suspend (FileEditorManagerImpl) -> Unit) {
     val manager = fileEditorManagerFixture.get()
     val settings = UISettings.getInstance()
     val wasEnabled = withContext(Dispatchers.UI) {
-      settings.openInPreviewTabIfPossible.also { settings.openInPreviewTabIfPossible = enabled }
+      settings.openInPreviewTabIfPossible.also { settings.openInPreviewTabIfPossible = false }
     }
     try {
       test(manager)
+      assertFalse(withContext(Dispatchers.UI) { settings.openInPreviewTabIfPossible })
     }
     finally {
       withContext(NonCancellable + Dispatchers.EDT) {
@@ -627,14 +632,15 @@ internal class ChangesBrowserStructuralNodeTest {
 
   private class StructuralNode(private val name: String, private val navigatable: Navigatable, preview: Navigatable? = null) :
     ChangesBrowserStructuralNode<String>(name) {
-    private val previewNavigatable = preview ?: if (navigatable is OpenFileDescriptor) {
-      OpenFileDescriptor(navigatable.project, navigatable.file, navigatable.offset).setUsePreviewTab(true)
-    }
-    else navigatable
+    private val previewNavigatable = preview ?: navigatable
 
     override fun getTextPresentation(): String = name
     override fun getNavigatable(): Navigatable = navigatable
-    override fun getPreviewNavigatable(): Navigatable = previewNavigatable
+    override fun getPreviewNavigationRequest(): NavigationRequest? {
+      val target = previewNavigatable.takeIf { it.canNavigateToSource() } ?: return null
+      return if (target is OpenFileDescriptor) NavigationRequest.sourceNavigationRequest(target.project, target.file, target.offset)
+      else target.navigationRequest()
+    }
   }
 
   private class Snapshot {

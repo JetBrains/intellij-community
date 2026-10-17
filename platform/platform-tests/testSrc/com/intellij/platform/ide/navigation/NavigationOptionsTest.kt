@@ -33,7 +33,7 @@ internal class NavigationOptionsTest {
   @Test
   fun `context options retain their fields and include the context editor`() {
     val options = NavigationOptions.defaultOptions().requestFocus(false).openInRightSplit(true).preserveCaret(true)
-      .recordAsBackHistory(false).caretPlacement(CaretPlacement.TOKEN_END)
+      .recordAsBackHistory(false).caretPlacement(CaretPlacement.TOKEN_END).forcePreviewTab(true)
 
     assertEquals(options.requestedEditor(RequestedEditor.Specific(editor.get())), context(options).toNavigationOptions())
   }

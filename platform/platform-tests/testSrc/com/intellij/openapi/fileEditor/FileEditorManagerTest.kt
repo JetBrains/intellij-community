@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -860,6 +861,34 @@ class FileEditorManagerTest {
   @Test
   fun testFileEditorOpenRequestUsesManagedMode() {
     assertThat(FileEditorOpenRequest.defaults().openMode).isEqualTo(FileEditorOpenMode.MANAGED)
+  }
+
+  @ParameterizedTest
+  @CsvSource("false, false, false, false", "true, false, false, true", "false, true, false, true",
+             "true, true, false, true", "false, true, true, false", "true, true, true, false")
+  fun testPreviewTabRequestOptions(
+    automaticPreview: Boolean,
+    forcePreview: Boolean,
+    forbidPreview: Boolean,
+    expectedPreview: Boolean,
+  ): Unit = timeoutRunBlocking {
+    val settings = UISettings.getInstance()
+    val wasEnabled = withContext(Dispatchers.UI) {
+      settings.openInPreviewTabIfPossible.also { settings.openInPreviewTabIfPossible = automaticPreview }
+    }
+    try {
+      val file = LightVirtualFile("preview.txt", "text")
+      file.putUserData(FileEditorManagerKeys.FORBID_PREVIEW_TAB, forbidPreview)
+      manager.openFile(file, FileEditorOpenOptions(usePreviewTab = !forcePreview, forcePreviewTab = forcePreview))
+      val isPreview = withContext(Dispatchers.EDT) { manager.getComposite(file)!!.isPreview }
+      assertThat(isPreview).isEqualTo(expectedPreview)
+      assertThat(withContext(Dispatchers.UI) { settings.openInPreviewTabIfPossible }).isEqualTo(automaticPreview)
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.UI) {
+        settings.openInPreviewTabIfPossible = wasEnabled
+      }
+    }
   }
 
   @ParameterizedTest

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.vcs.VcsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -47,7 +49,6 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -114,14 +115,12 @@ internal class StructuralChangesViewModifierTest {
     val text = "first=1\nsecond=2"
     val node = build(change(null, text)).last()
     val explicit = node.getNavigatable() as OpenFileDescriptor
-    val preview = node.getPreviewNavigatable() as OpenFileDescriptor
+    val preview = readAction { node.getPreviewNavigationRequest() as SourceNavigationRequest }
 
-    assertNotSame(explicit, preview)
     assertFalse(explicit.isUsePreviewTab)
-    assertTrue(preview.isUsePreviewTab)
     assertEquals(fileFixture.get(), preview.file)
-    assertEquals(text.indexOf("second"), preview.offset)
-    assertEquals(explicit.offset, preview.offset)
+    assertEquals(text.indexOf("second"), preview.offsetMarker?.startOffset)
+    assertEquals(explicit.offset, preview.offsetMarker?.startOffset)
   }
 
   @Test
@@ -133,7 +132,7 @@ internal class StructuralChangesViewModifierTest {
 
     assertEquals(listOf("changed", "added", "removed"), nodes.map { it.textPresentation })
     assertNull(nodes.last().getNavigatable())
-    assertNull(nodes.last().getPreviewNavigatable())
+    assertNull(readAction { nodes.last().getPreviewNavigationRequest() })
     assertEquals(after.indexOf("added"), (nodes[1].getNavigatable() as OpenFileDescriptor).offset)
   }
 
