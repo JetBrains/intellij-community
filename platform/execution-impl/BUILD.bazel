@@ -225,7 +225,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.execution.tests",
+    associates = [
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+    ],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -250,8 +253,6 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/consoleView",
         "//platform/consoleView:consoleView_test_lib",
-        "//platform/execution",
-        "//platform/execution:execution_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl",
@@ -290,6 +291,8 @@ jvm_library(
         "//platform/util/text-matching:text-matching_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/eel-nioFs",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

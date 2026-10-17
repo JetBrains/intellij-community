@@ -15,6 +15,7 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.eel.provider.EelPathDescriptorKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -151,7 +152,9 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       generalCommandLine.withCharset(commandLine.getCharset());
       String workingDirectory = commandLine.getWorkingDirectory();
       if (workingDirectory != null) {
-        generalCommandLine.withWorkDirectory(workingDirectory);
+        // The working directory is on the eel of the executable. This eel is local or remote.
+        var eelDescriptor = EelPathDescriptorKt.getEelDescriptor(Paths.get(generalCommandLine.getExePath()));
+        generalCommandLine.withWorkingDirectory(LocalTargets.convertWorkDirToEel(workingDirectory, eelDescriptor));
       }
       generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
       generalCommandLine.setRedirectErrorStream(commandLine.isRedirectErrorStream());
