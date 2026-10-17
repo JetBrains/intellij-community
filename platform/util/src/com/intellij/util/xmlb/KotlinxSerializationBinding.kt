@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb
 
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.util.xml.dom.XmlElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -11,6 +13,7 @@ import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 
 @Volatile
@@ -27,12 +30,33 @@ val __json: Json
   get() = json
 
 /**
- * Replaces [__json] with a new instance of the same configuration.
- * The new instance starts with an empty schema cache.
+ * Replaces [__json] with a new instance of the same configuration, and empties the schema cache of [Json.Default].
+ * The new instance starts with an empty schema cache. Every plugin shares [Json.Default], and it cannot be replaced.
+ * Its cache keeps the descriptor of each class that it decoded, so a plugin that unloads would stay reachable through it.
  */
 @Internal
 fun clearKotlinxSerializationCache() {
   json = createJson()
+  try {
+    schemaCacheOf(Json.Default).clear()
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    fileLogger().warn("The schema cache of Json.Default is not where it was, so it keeps unloaded plugins", e)
+  }
+}
+
+/**
+ * The map of the schema cache of [json], keyed by descriptor. The cache is internal to kotlinx.serialization,
+ * so this reads it by reflection. A change of the library internals fails here, and a test of the cleanup fails too.
+ */
+@Internal
+@VisibleForTesting
+@Throws(ReflectiveOperationException::class)
+fun schemaCacheOf(json: Json): MutableMap<*, *> {
+  val cache = Json::class.java.getDeclaredField("_schemaCache").apply { isAccessible = true }.get(json)
+  @Suppress("UNCHECKED_CAST")
+  return cache.javaClass.getDeclaredField("map").apply { isAccessible = true }.get(cache) as MutableMap<*, *>
 }
 
 private fun createJson(): Json {
