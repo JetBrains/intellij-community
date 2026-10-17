@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.StackTraceSnapshot;
 import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +40,11 @@ public class ID<K, V> extends IndexId<K,V> {
 
   private static final Object lock = new Object();
   private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
-  private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
+  /**
+   * The stack that registered each ID, as data. An ID lives as long as the application, and its registration can run under the frames
+   * of any plugin, so a kept Throwable would keep each of those plugins loaded.
+   */
+  private static volatile Map<@NotNull ID<?, ?>, @NotNull StackTraceSnapshot> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
   @ApiStatus.Internal
   public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
@@ -109,7 +114,7 @@ public class ID<K, V> extends IndexId<K,V> {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       idToPluginId = with(idToPluginId, this, pluginId == null ? CORE_PLUGIN_ID : pluginId);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, new Throwable());
+      idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, StackTraceSnapshot.capture());
     }
   }
 
@@ -151,7 +156,8 @@ public class ID<K, V> extends IndexId<K,V> {
       String requiredPluginIdStr = requiredPluginId == null ? "" : requiredPluginId.getIdString();
 
       if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
-        Throwable registrationStackTrace = idToRegistrationStackTrace.get(id);
+        StackTraceSnapshot registrationTrace = idToRegistrationStackTrace.get(id);
+        Throwable registrationStackTrace = registrationTrace == null ? null : registrationTrace.toThrowable();
         String message = getInvalidIdAccessMessage(name, actualPluginIdStr, requiredPluginIdStr, registrationStackTrace);
         if (registrationStackTrace == null) {
           throw new AssertionError(message);
@@ -182,7 +188,8 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   public @NotNull Throwable getRegistrationTrace() {
-    return idToRegistrationStackTrace.get(this);
+    StackTraceSnapshot registrationTrace = idToRegistrationStackTrace.get(this);
+    return registrationTrace == null ? new Throwable("The registration of " + getName() + " is unknown") : registrationTrace.toThrowable();
   }
 
   @ApiStatus.Internal
