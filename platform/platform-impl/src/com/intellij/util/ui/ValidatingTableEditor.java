@@ -15,6 +15,8 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.TableView;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -233,7 +235,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
         addItem();
       }
     });
-
+    myContentPane.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
 
     myRemoveButton = new DumbAwareAction(ApplicationBundle.message("button.remove"), null, IconUtil.getRemoveIcon()) {
       @Override
