@@ -91,6 +91,9 @@
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.ui.IdeUICustomization"
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmIdeUICustomization"
+                        overrides="true"/>
 
     <!--Settings -->
     <projectConfigurable groupId="project"

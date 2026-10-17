@@ -25,8 +25,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.productMode.ProductMode
+import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ObjectUtils
-import com.intellij.util.PlatformUtils.freeIdePaidVersionName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -306,7 +306,7 @@ object DynamicPlugins {
 
   internal fun defaultLoadingTitle(plugins: Collection<PluginMainDescriptor>): @NlsContexts.ModalProgressTitle String {
     return if (plugins.any { it.pluginId == PluginManagerCore.ULTIMATE_PLUGIN_ID }) {
-      IdeBundle.message("modal.progress.title.activating.ultimate.subscription", freeIdePaidVersionName())
+      IdeBundle.message("modal.progress.title.activating.ultimate.subscription", IdeUICustomization.getInstance().paidVersionName)
     }
     else {
       IdeBundle.message("modal.progress.title.loading.plugins")

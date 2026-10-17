@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +71,14 @@ public class IdeUICustomization {
    */
   public @NotNull String getVcsToolWindowName() {
     return UIBundle.message("tool.window.name.version.control");
+  }
+
+  /**
+   * Returns the name of the paid version of an IDE with a free tier, for example "Ultimate".
+   */
+  @ApiStatus.Internal
+  public @NotNull @NlsSafe String getPaidVersionName() {
+    return "Ultimate";
   }
 }
 
