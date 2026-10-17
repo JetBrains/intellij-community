@@ -12,6 +12,7 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -97,6 +98,7 @@ class IjentSessionExitReasonTest {
     override val isRunning: Boolean get() = error("Unused")
     override val platform: EelPlatform get() = error("Unused")
     override val remotePathToBinary: String get() = error("Unused")
+    override val transportConnected = MutableStateFlow(true)
     override suspend fun updateLogLevel(): Unit = error("Unused")
     override suspend fun setParentProcessToWatch(pid: Long): Unit = error("Unused")
     override fun close(): Unit = error("Unused")

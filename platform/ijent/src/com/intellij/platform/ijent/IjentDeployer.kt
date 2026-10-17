@@ -43,6 +43,14 @@ interface IjentSession {
   val remotePathToBinary: String  // TODO Use IjentPath.Absolute.
 
   /**
+   * `false` while the transport is down on a live session and the reconnect layer is recovering it.
+   *
+   * A dead session keeps its last value, which may be `true`, so check [isRunning] first.
+   * Always `true` without a reconnect layer (stdio, reconnects off): there is nothing to recover.
+   */
+  val transportConnected: StateFlow<Boolean>
+
+  /**
    * A scope for the process. Use very cautiously, it's not a supervisor scope, it can destroy the whole communication.
    */
   @DelicateCoroutinesApi
