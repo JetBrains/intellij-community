@@ -1150,8 +1150,9 @@ class EditorWindow internal constructor(
 
 private fun shouldReservePreview(file: VirtualFile, options: FileEditorOpenOptions, project: Project): Boolean {
   return when {
-    !UISettings.getInstance().openInPreviewTabIfPossible -> false
     FileEditorManagerKeys.FORBID_PREVIEW_TAB.get(file, false) -> false
+    options.forcePreviewTab -> true
+    !UISettings.getInstance().openInPreviewTabIfPossible -> false
     options.usePreviewTab -> true
     !options.selectAsCurrent || options.requestFocus -> false
     else -> {

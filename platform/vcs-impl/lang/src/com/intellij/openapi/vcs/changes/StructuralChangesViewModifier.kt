@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiModificationTracker
@@ -103,11 +104,13 @@ private class StructuralChangeNode(
   private val element: StructureChange,
 ) : ChangesBrowserStructuralNode<String>(element.id) {
   private val navigatable = element.offset?.let { OpenFileDescriptor(project, file, it) }
-  private val previewNavigatable = element.offset?.let { OpenFileDescriptor(project, file, it).setUsePreviewTab(true) }
 
   override fun getNavigatable(): Navigatable? = navigatable
 
-  override fun getPreviewNavigatable(): Navigatable? = previewNavigatable
+  override fun getPreviewNavigationRequest(): NavigationRequest? {
+    val descriptor = navigatable ?: return null
+    return NavigationRequest.sourceNavigationRequest(descriptor.project, descriptor.file, descriptor.offset)
+  }
 
   override fun getTextPresentation(): String = element.text
 

@@ -27,6 +27,8 @@ data class FileEditorOpenOptions(
   // it makes sense only if openMode == NEW_WINDOW
   @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,
   @Internal @JvmField val forceFocus: Boolean = false,
+  /** Requests a preview tab even when automatic preview is disabled. Existing permanent tabs remain permanent. */
+  @Internal @JvmField val forcePreviewTab: Boolean = false,
   /**
    * **DO NOT USE!**
    **/

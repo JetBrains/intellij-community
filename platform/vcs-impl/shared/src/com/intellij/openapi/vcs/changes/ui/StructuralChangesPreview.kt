@@ -84,13 +84,13 @@ class StructuralChangesPreview(
     pendingPreview = cs.launch(Dispatchers.EDT + modality.asContextElement()) {
       delay(Registry.intValue("ide.autoscroll.to.source.delay", 100).milliseconds)
       if (!isCurrentSelection(model, node)) return@launch
-      val navigatable = withContext(Dispatchers.Default) {
-        readAction { node.getPreviewNavigatable()?.takeIf { it.canNavigateToSource() } }
+      val request = withContext(Dispatchers.Default) {
+        readAction { node.getPreviewNavigationRequest() }
       } ?: return@launch
       if (!isCurrentSelection(model, node)) return@launch
       val options = NavigationOptions.defaultOptions()
-        .requestFocus(false).preserveCaret(true).sourceNavigationOnly(true).recordAsBackHistory(false)
-      requestNavigate(tree.project, navigatable, options, coroutineScope = this).await()
+        .requestFocus(false).preserveCaret(true).sourceNavigationOnly(true).recordAsBackHistory(false).forcePreviewTab(true)
+      requestNavigate(tree.project, request, options, coroutineScope = this).await()
     }
   }
 

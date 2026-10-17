@@ -2,7 +2,10 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -17,7 +20,10 @@ abstract class ChangesBrowserStructuralNode<T>(userObject: T) : ChangesBrowserNo
 
   abstract fun getNavigatable(): Navigatable?
 
-  open fun getPreviewNavigatable(): Navigatable? = getNavigatable()
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  open fun getPreviewNavigationRequest(): NavigationRequest? =
+    getNavigatable()?.takeIf { it.canNavigateToSource() }?.navigationRequest()
 
   final override fun getFileCount(): Int = 0
 

@@ -79,6 +79,14 @@ interface NavigationOptions {
   fun forceFocus(value: Boolean): NavigationOptions
 
   /**
+   * Requests a preview tab even when automatic preview is disabled.
+   * Applies to structured source navigation. Raw navigatables control their own editor behavior.
+   * Existing permanent tabs remain permanent. Files that prohibit preview still open in permanent tabs.
+   */
+  @Internal
+  fun forcePreviewTab(value: Boolean): NavigationOptions
+
+  /**
    * Identifies if the navigation should be recorded in the history.
    * Captures a place where navigation started, commits as a back-history entry after the navigation completes,
    * omitting records with no changes.
@@ -116,6 +124,7 @@ interface NavigationOptions {
       recordAsBackHistory = true,
       requestedEditor = RequestedEditor.Unspecified,
       caretPlacement = CaretPlacement.TARGET_OFFSET,
+      forcePreviewTab = false,
     )
   }
 
@@ -132,6 +141,7 @@ interface NavigationOptions {
     @Experimental @JvmField val recordAsBackHistory: Boolean,
     @Experimental @JvmField val requestedEditor: RequestedEditor,
     @Experimental @JvmField val caretPlacement: CaretPlacement,
+    @Internal @JvmField val forcePreviewTab: Boolean,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
 
@@ -142,6 +152,8 @@ interface NavigationOptions {
     override fun sourceNavigationOnly(value: Boolean): NavigationOptions = copy(sourceNavigationOnly = value)
 
     override fun forceFocus(value: Boolean): NavigationOptions = copy(forceFocus = value, requestFocus = if (value) true else requestFocus)
+
+    override fun forcePreviewTab(value: Boolean): NavigationOptions = copy(forcePreviewTab = value)
 
     override fun recordAsBackHistory(value: Boolean): NavigationOptions = copy(recordAsBackHistory = value)
 

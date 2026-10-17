@@ -503,6 +503,7 @@ private suspend fun openFile(
       openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
       window = targetWindow,
       forceFocus = options.forceFocus,
+      forcePreviewTab = options.forcePreviewTab,
     ),
   )
 
