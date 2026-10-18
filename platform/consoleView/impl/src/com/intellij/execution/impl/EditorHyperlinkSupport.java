@@ -82,18 +82,28 @@ public final class EditorHyperlinkSupport {
   private final EditorHyperlinkInteraction myLinkInteraction;
   private final AsyncFilterRunner myFilterRunner;
 
-  private final CopyOnWriteArrayList<EditorHyperlinkListener> myHyperlinkListeners = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<EditorHyperlinkListener> myHyperlinkListeners;
 
   /**
-   * If your editor has a project inside, better use {@link #get(Editor)}
+   * @deprecated use {@link #get(Editor)} instead
    */
+  @Deprecated
   public EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project) {
-    this(editor, project, false);
+    this(doGet(editor, project, false));
+  }
+
+  private EditorHyperlinkSupport(@NotNull EditorHyperlinkSupport shared) {
+    myEditor = shared.myEditor;
+    myProject = shared.myProject;
+    myLinkInteraction = shared.myLinkInteraction;
+    myFilterRunner = shared.myFilterRunner;
+    myHyperlinkListeners = shared.myHyperlinkListeners;
   }
 
   private EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project, boolean trackChangesManually) {
     myEditor = (EditorEx)editor;
     myProject = project;
+    myHyperlinkListeners = new CopyOnWriteArrayList<>();
     Disposable editorDisposable = Disposer.newDisposable(project);
     EditorUtil.disposeWithEditor(editor, editorDisposable);
     myLinkInteraction = new EditorHyperlinkInteraction(myEditor, new MyEffectSupplier(), editorDisposable);
@@ -171,12 +181,23 @@ public final class EditorHyperlinkSupport {
 
   @ApiStatus.Internal
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor, boolean trackDocumentChangesManually) {
+    return doGet(editor, editor.getProject(), trackDocumentChangesManually);
+  }
+
+  /**
+   * Returns a cached EditorHyperlinkSupport instance or creates a new one.
+   * Ensures that only a single instance is created per editor.
+   */
+  private static @NotNull EditorHyperlinkSupport doGet(
+    @NotNull Editor editor,
+    @Nullable Project project,
+    boolean trackDocumentChangesManually
+  ) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
       synchronized (LOCK) {
         instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
         if (instance == null) {
-          Project project = editor.getProject();
           assert project != null;
           instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
           editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
