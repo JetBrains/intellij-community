@@ -748,7 +748,7 @@ fn the_help_names_the_wrapper_and_interpolates_the_lists_it_does_not_own() {
         "none|fresh-ide|daemon",
         "capped at 5",
         "default --reset fresh-ide",
-        "include-tag, exclude-tag",
+        "include-classname, exclude-classname",
     ] {
         assert!(text.contains(expected), "the help text does not carry {expected:?}");
     }

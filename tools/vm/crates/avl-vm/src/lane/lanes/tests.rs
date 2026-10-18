@@ -2,7 +2,7 @@ use avl_host_testkit::{quiet, refusal};
 use std::fs;
 use std::path::Path;
 
-use avl_affected::ui_lane_names;
+use avl_affected::{air_area, ui_lane_names};
 use avl_base::{Backend, Exit, GuestOs};
 use bt_core::Lanes;
 use pretty_assertions::assert_eq;
@@ -29,11 +29,6 @@ fn only_the_ide_lanes_are_runnable() {
             lane.name
         );
         assert!(!lane.label.is_empty(), "{lane:?}");
-        assert!(
-            jvm_junit_tag(lane.name).is_ok_and(|tag| tag.starts_with("air-")),
-            "the JVM runner has no JUnit tag of the UI lane {}",
-            lane.name
-        );
     }
     let refused = refusal(lane_selection("fast"));
     assert_eq!(refused.exit, Exit::USAGE);
@@ -44,10 +39,10 @@ fn only_the_ide_lanes_are_runnable() {
     );
 }
 
-/// A lane iteration is selected by JUnit tag, because the daemon is one warm JVM holding every lane's classpath and
-/// a Bazel tag filter cannot reach inside it.
+/// A whole lane has no filter: the lane daemon selects the documents of the lane by its name, and the documents carry
+/// no JUnit tag. An explicit-only lane is a lane `--lane` selects like any other.
 #[test]
-fn a_lane_selects_itself_by_junit_tag() {
+fn a_lane_selects_its_documents_by_its_name_and_has_no_filter() {
     avl_affected::bridge::install_fixture();
     let selection = lane_selection("gui-chat").unwrap();
     assert_eq!(
@@ -55,49 +50,21 @@ fn a_lane_selects_itself_by_junit_tag() {
         Selection {
             label: "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test".to_owned(),
             lane: Some("gui-chat".to_owned()),
-            test_env: BTreeMap::from([("JB_TEST_JUNIT5_FILTERS".to_owned(), "include-tag=air-gui-chat".to_owned())]),
+            test_env: BTreeMap::new(),
         }
     );
-}
-
-/// Bazel's valueless `--test_env=NAME` form means "forward the client's NAME", and a host value names a machine
-/// the guest is not. `ui-live` keeps its host passthroughs for `BT --lane ui-live`, so the selection drops every
-/// valueless form: none reaches a guest's test environment, nor the daemon's union of them.
-#[test]
-fn a_valueless_test_env_form_never_reaches_the_selection() {
-    let live = &lanes().get("ui-live").unwrap().extra;
+    let live = lane_selection("ui-live").unwrap();
+    assert_eq!(live.label, "//plugins/air/tests/integration/ui-live:ui-live_lane_test");
+    assert_eq!(live.test_env, BTreeMap::new());
+    // The ui-live lane keeps its host passthroughs for `BT --lane ui-live`, and none reaches the selection.
     assert!(
-        live.iter().any(|extra| extra == "--test_env=CLAUDE_BIN"),
-        "the ui-live lane no longer declares a host passthrough, so this test proves nothing: {live:?}"
-    );
-    for lane in ui_lanes() {
-        let test_env = lane_selection(lane.name).unwrap().test_env;
-        for extra in &lanes().get(lane.name).unwrap().extra {
-            if let Some(name) = extra.strip_prefix("--test_env=").filter(|name| !name.contains('=')) {
-                assert!(!test_env.contains_key(name), "the {} lane forwards the client's {name}", lane.name);
-            }
-        }
-        for name in test_env.keys() {
-            assert!(!name.ends_with("_BIN"), "{name} reached the guest's test environment from the host");
-        }
-    }
-    for name in crate::lane::env::environment_union().keys() {
-        assert!(
-            !name.ends_with("_BIN") && !name.ends_with("_API_KEY"),
-            "{name} reached the daemon's environment"
-        );
-    }
-}
-
-/// An explicit-only lane is a lane `--lane` selects like any other, by its JUnit tag.
-#[test]
-fn the_explicit_only_lane_selects_itself_by_junit_tag() {
-    avl_affected::bridge::install_fixture();
-    let selection = lane_selection("ui-live").unwrap();
-    assert_eq!(selection.label, "//plugins/air/tests/integration/ui-live:ui-live_lane_test");
-    assert_eq!(
-        selection.test_env,
-        BTreeMap::from([("JB_TEST_JUNIT5_FILTERS".to_owned(), "include-tag=air-flow-ui-live".to_owned())])
+        lanes()
+            .get("ui-live")
+            .unwrap()
+            .extra
+            .iter()
+            .any(|extra| extra == "--test_env=CLAUDE_BIN"),
+        "the ui-live lane no longer declares a host passthrough"
     );
 }
 

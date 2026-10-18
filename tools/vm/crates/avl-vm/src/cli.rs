@@ -92,7 +92,7 @@ Test-code changes are pushed over HTTP and need no remount, and the IDE relaunch
 
 The selection is a flow id, a suite id, --changed PATH..., a TestClass or FQN[#method], or --lane {lanes}. A flow id \
 selects every generated suite whose scenarios tell or walk the flow, and a suite id selects that one suite, as one \
-lane's tag and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
+lane and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
 is refused, because an iteration that runs nothing is not a passing run. With --changed, every argument that is not \
 an option is a changed path, so \"--changed A B\" and \"--changed A --changed B\" are the same run, and a change no \
 generated suite covers is refused, naming each path.

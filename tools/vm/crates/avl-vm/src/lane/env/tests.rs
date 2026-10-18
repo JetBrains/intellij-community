@@ -15,37 +15,22 @@ fn environment_of(pairs: &[String]) -> BTreeMap<String, String> {
         .collect()
 }
 
-/// The daemon is booted with the union, which makes `--lane ui-real` a pure filter question and makes the answer
-/// the same whichever lane happened to boot it. A JUnit filter belongs to one iteration, not to that lifetime.
+/// The daemon is booted with what no build produces and no lane sets: the Node of the guest, the directory of the run
+/// secrets as a path that is the same for every run, and the locale. It learns no value of a secret, because the boot
+/// environment is part of the launch digest and outlives the run. No JUnit filter reaches it, because a filter belongs
+/// to one iteration.
 #[test]
-fn the_daemon_environment_is_the_union_without_the_junit_filter() {
-    avl_affected::bridge::install_fixture();
-    assert!(
-        !environment_union().contains_key("JB_TEST_JUNIT5_FILTERS"),
-        "a JUnit filter reached the daemon's launch environment, where it would outlive its iteration"
-    );
-    let settings = docker();
-    let environment = daemon_environment(&settings);
-    // The controller names the Node of the Docker image.
-    assert_eq!(environment.get("NODE_BIN").map(String::as_str), Some("/usr/local/bin/node"));
-    assert!(!environment.contains_key("JB_TEST_JUNIT5_FILTERS"));
-}
-
-/// The daemon learns where a run's secrets are, as a path that is the same for every run, and learns no value: the
-/// boot environment is part of the launch digest and outlives the run.
-#[test]
-fn the_daemon_environment_names_the_run_secrets_directory_only() {
+fn the_daemon_environment_is_the_node_the_run_secrets_directory_and_the_locale() {
     let settings = docker();
     let environment = daemon_environment(&settings);
     assert_eq!(
-        environment.get("AIR_VM_RUN_SECRETS").map(String::as_str),
-        Some("/dev/shm/air-run-secrets")
+        environment,
+        BTreeMap::from([
+            ("AIR_VM_RUN_SECRETS".to_owned(), "/dev/shm/air-run-secrets".to_owned()),
+            ("LANG".to_owned(), DAEMON_LOCALE.to_owned()),
+            ("NODE_BIN".to_owned(), "/usr/local/bin/node".to_owned()),
+        ])
     );
-    // The locale of the daemon JVM is here, so a change of it restarts the warm daemon.
-    assert_eq!(environment.get("LANG").map(String::as_str), Some(DAEMON_LOCALE));
-    let union = environment_union();
-    let added: Vec<&String> = environment.keys().filter(|name| !union.contains_key(*name)).collect();
-    assert_eq!(added, ["AIR_VM_RUN_SECRETS", "LANG", "NODE_BIN"]);
 }
 
 /// The guest, not the host and not the hypervisor, decides which distribution and JBR a lane is built for.

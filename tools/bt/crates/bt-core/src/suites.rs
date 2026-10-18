@@ -95,7 +95,7 @@ pub struct Affected {
     pub suites: Vec<AffectedSuite>,
     pub unmapped: Vec<UnmappedPath>,
     /// The distinct lanes of the suites, sorted. More than one lane is a caller decision rather than an answer:
-    /// one iteration runs one lane's tag, and a GUI-chat suite needs the guest the user chose.
+    /// one iteration runs one lane, and a GUI-chat suite needs the guest the user chose.
     pub lanes: Vec<String>,
 }
 

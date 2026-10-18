@@ -1658,13 +1658,14 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   must match the whole class name. A filter that keeps no document is a refusal.
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
 
-- The `lane` field selects the documents of the lane, so the controller sends no filter of the lane's own tag. The
-  verb refuses a tag filter, because the documents carry no JUnit tag.
-  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane`)
+- The `lane` field selects the documents of the lane, and the documents carry no JUnit tag. So `--filter` of the
+  controller takes no tag kind, and the verb refuses a tag filter.
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_class_filters_of_a_suite`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`a_filter_is_typed_and_spelled_back_as_written`)
   [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_junit5_filters_narrow_the_documents_by_their_class`)
 
 - The controller sends the lane daemon every suite of the lane that the catalog names: each suite document, by test
-  class. The JVM runner runs each of them, because each carries the JUnit tag of the lane.
+  class.
   [@test] ../crates/avl-vm/src/lane/affected/tests.rs (`the_lane_classes_are_the_suite_documents_of_the_lane`)
 
 - The plan names each of these suites, also a suite with no suite document. The selectors and the class filters

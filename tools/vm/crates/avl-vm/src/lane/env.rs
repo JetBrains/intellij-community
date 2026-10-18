@@ -2,15 +2,13 @@
 
 use std::collections::BTreeMap;
 
-use avl_affected::ui_lanes;
 use avl_base::{Config, GuestArch, GuestOs};
 use avl_host_sys::guest::guest_join;
 
-use crate::lane::lanes::{JUNIT5_FILTERS, lane_selection};
 use crate::lane::secrets::RUN_SECRETS_VARIABLE;
 
-/// The environment a daemon is exec'd with that no build produces: the lane values, the guest's Node, and the
-/// directory of the run secrets.
+/// The environment a daemon is exec'd with that no build produces: the guest's Node, the directory of the run secrets,
+/// and the locale.
 ///
 /// A JVM cannot change its own environment, so this is fixed for a daemon's lifetime and part of its launch
 /// identity. It is the same answer for every worker of one pool, because nothing in it is a guest's own reply.
@@ -18,7 +16,7 @@ use crate::lane::secrets::RUN_SECRETS_VARIABLE;
 pub(crate) const DAEMON_LOCALE: &str = "C.UTF-8";
 
 pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> {
-    let mut environment = environment_union();
+    let mut environment = BTreeMap::new();
     // The guest's node, named by the controller: the Node of the Docker image or of the macOS golden, or the one
     // `AIR_VM_NODE` names. The supervisor used to answer this with its own interpreter, which is the same file only
     // by coincidence.
@@ -32,22 +30,6 @@ pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> 
     // because a daemon keeps its environment for its lifetime: a change must restart the warm daemon.
     environment.insert("LANG".to_owned(), DAEMON_LOCALE.to_owned());
     environment
-}
-
-/// Every variable any UI lane sets by value, whether or not this run selected that lane.
-///
-/// The daemon is the test JVM, and a JVM's environment is fixed at exec time - so a lane's `--test_env` values
-/// cannot be applied per iteration the way a one-shot run applied them. Booting the daemon with the union instead
-/// makes `--lane ui-real` a pure filter question, and makes the answer the same whichever lane happened to boot it.
-pub(crate) fn environment_union() -> BTreeMap<String, String> {
-    let mut union: BTreeMap<String, String> = ui_lanes()
-        .iter()
-        .filter_map(|lane| lane_selection(lane.name).ok())
-        .flat_map(|selection| selection.test_env)
-        .collect();
-    // JUnit filters belong to a single iteration, not to the daemon's lifetime.
-    union.remove(JUNIT5_FILTERS);
-    union
 }
 
 /// The JBR and distribution platform this guest's descriptor must declare.

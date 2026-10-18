@@ -510,9 +510,13 @@ async fn parse_run_refuses_the_usage_ladder() {
         (&["--lane"][..], "--lane <LANE>"),
         (&["--frobnicate"], "unexpected argument '--frobnicate'"),
         (&["--filter"], "--filter <OPTION=VALUE>"),
-        (&["--filter", "include-tag"], "expects <option>=<value>"),
+        (&["--filter", "include-classname"], "expects <option>=<value>"),
         (&["--filter", "=x"], "expects <option>=<value>"),
         (&["--lane", "ui", "--filter", "include-engine=x"], "not one the daemon applies"),
+        (
+            &["--lane", "ui", "--filter", "include-tag=air-flow-ui"],
+            "not one the daemon applies",
+        ),
         (
             &["--lane", "ui", "--timeout", "8.0"],
             "--timeout expects positive per-execution seconds",
@@ -628,7 +632,7 @@ pub(crate) fn three_lane_catalog(root: &Path) {
     }
 }
 
-// `--changed` is the lane's tag plus one class filter per suite the change reaches, resolved from the checkout the
+// `--changed` is the lane plus one class filter per suite the change reaches, resolved from the checkout the
 // fixture owns. What is pinned here is that a parsed `--changed` reaches the daemon as an ordinary selection and says
 // what it selected; the refusals belong to the `lane` module, which owns the join.
 #[tokio::test]
@@ -642,10 +646,7 @@ async fn parse_run_turns_a_changed_path_into_its_suites_class_filters() {
         .unwrap();
     assert_eq!(
         parsed_run.selection.junit5_filters,
-        [
-            "include-tag=air-flow-ui",
-            r"include-classname=(^|.*\.)AirPresetGeneratedFlowUiTest$"
-        ]
+        [r"include-classname=(^|.*\.)AirPresetGeneratedFlowUiTest$"]
     );
     // The description is what a false-green verdict prints, so it names the classes it selected.
     assert_eq!(
@@ -694,7 +695,15 @@ async fn parse_run_composes_a_lanes_filters() {
         .host
         .parse_run(
             &Ctx::background(),
-            &parsed(&["--lane", "ui", "--filter", "exclude-tag=slow", "--timeout", "600", "--fresh-ide"]),
+            &parsed(&[
+                "--lane",
+                "ui",
+                "--filter",
+                "exclude-classname=.*Slow.*",
+                "--timeout",
+                "600",
+                "--fresh-ide",
+            ]),
         )
         .await
         .unwrap();
@@ -702,8 +711,8 @@ async fn parse_run_composes_a_lanes_filters() {
         parsed_run.selection.selectors.is_empty(),
         "a lane selects by filter, never by selector"
     );
-    assert_eq!(parsed_run.selection.junit5_filters, ["include-tag=air-flow-ui", "exclude-tag=slow"]);
-    assert_eq!(parsed_run.selection.description, "lane ui (filters: exclude-tag=slow)");
+    assert_eq!(parsed_run.selection.junit5_filters, ["exclude-classname=.*Slow.*"]);
+    assert_eq!(parsed_run.selection.description, "lane ui (filters: exclude-classname=.*Slow.*)");
     // The requested timeout wins and the gap falls back to the environment's.
     assert_eq!(
         parsed_run.policy,
@@ -715,7 +724,7 @@ async fn parse_run_composes_a_lanes_filters() {
     assert!(parsed_run.fresh_ide);
 }
 
-// An explicit-only lane is one `run` of its tag, and `shard` and `flake`, which read one selection to repeat it,
+// An explicit-only lane is one `run` of its documents, and `shard` and `flake`, which read one selection to repeat it,
 // refuse it by name: `--lane` and its own target alike. A repeat would multiply its billed turns.
 #[tokio::test]
 async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
@@ -726,7 +735,7 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
         .await
         .unwrap();
     assert_eq!(plan.iterations.len(), 1);
-    assert_eq!(plan.iterations[0].selection.junit5_filters, ["include-tag=air-flow-ui-live"]);
+    assert_eq!(plan.iterations[0].selection.junit5_filters, Vec::<String>::new());
     for argv in [
         &["--lane", "ui-live"][..],
         &["//plugins/air/tests/integration/ui-live:ui-live_lane_test"][..],
@@ -781,40 +790,37 @@ async fn watchdog_budgets_come_from_the_environment() {
 // A `--filter` is typed at the parse, and the request spells it back as it was written.
 #[test]
 fn a_filter_is_typed_and_spelled_back_as_written() {
-    let filter = parse_filter("exclude-tag=slow").unwrap();
+    let filter = parse_filter("exclude-package=com.example.slow").unwrap();
     assert_eq!(
         filter,
         Junit5Filter {
-            kind: Junit5FilterKind::ExcludeTag,
-            value: "slow".to_owned(),
+            kind: Junit5FilterKind::ExcludePackage,
+            value: "com.example.slow".to_owned(),
         }
     );
-    assert_eq!(filter.to_string(), "exclude-tag=slow");
+    assert_eq!(filter.to_string(), "exclude-package=com.example.slow");
     assert_eq!(parse_filter("include-classname=a=b").unwrap().value, "a=b");
-    assert!(
-        parse_filter("include-method=x")
-            .unwrap_err()
-            .contains("accepted: include-tag, exclude-tag")
-    );
+    // The documents carry no JUnit tag, so a tag filter is refused at the parse, before anything is built.
+    for refused in ["include-method=x", "include-tag=air-flow-ui", "exclude-tag=slow"] {
+        assert!(
+            parse_filter(refused)
+                .unwrap_err()
+                .ends_with("accepted: include-classname, exclude-classname, include-package, exclude-package"),
+            "{refused}"
+        );
+    }
 }
 
-// The six JUnit5 filter options are the daemon's own list, verbatim: `AirUiDaemonIteration.buildFilters`.
+// The four JUnit5 filter options are the list of the lane daemon, verbatim: `apply_filters` of `avl-guest`.
 #[test]
-fn junit5_filter_options_match_the_daemons_six() {
+fn junit5_filter_options_match_the_four_of_the_lane_daemon() {
     assert_eq!(
         Junit5FilterKind::ALL.map(Junit5FilterKind::as_str),
-        [
-            "include-tag",
-            "exclude-tag",
-            "include-classname",
-            "exclude-classname",
-            "include-package",
-            "exclude-package",
-        ]
+        ["include-classname", "exclude-classname", "include-package", "exclude-package",]
     );
 }
 
-// A flow id and a suite id reach the daemon as the selection `--changed` makes: the lane's tag and one class filter
+// A flow id and a suite id reach the daemon as the selection `--changed` makes: the lane and one class filter
 // per suite. The description names what was asked and what it selected, because a false-green verdict prints it.
 #[tokio::test]
 async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
@@ -825,20 +831,19 @@ async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
         (
             "a flow",
             vec!["flow-rename-session"],
-            vec!["include-tag=air-flow-ui".to_owned(), class("AirRenameSessionGeneratedFlowUiTest")],
+            vec![class("AirRenameSessionGeneratedFlowUiTest")],
             "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest",
         ),
         (
             "a suite",
             vec!["new-session-shell"],
-            vec!["include-tag=air-flow-ui".to_owned(), class("AirNewSessionShellGeneratedFlowUiTest")],
+            vec![class("AirNewSessionShellGeneratedFlowUiTest")],
             "new-session-shell -> lane ui: AirNewSessionShellGeneratedFlowUiTest",
         ),
         (
             "a two-lane flow settled by --lane",
             vec!["flow-new-session", "--lane", "ui"],
             vec![
-                "include-tag=air-flow-ui".to_owned(),
                 class("AirNewSessionNativeGeneratedFlowUiTest"),
                 class("AirNewSessionShellGeneratedFlowUiTest"),
             ],
@@ -847,13 +852,12 @@ async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
         ),
         (
             "a flow narrowed by --filter",
-            vec!["flow-rename-session", "--filter", "exclude-tag=slow"],
+            vec!["flow-rename-session", "--filter", "exclude-classname=.*Slow.*"],
             vec![
-                "include-tag=air-flow-ui".to_owned(),
                 class("AirRenameSessionGeneratedFlowUiTest"),
-                "exclude-tag=slow".to_owned(),
+                "exclude-classname=.*Slow.*".to_owned(),
             ],
-            "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest (filters: exclude-tag=slow)",
+            "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest (filters: exclude-classname=.*Slow.*)",
         ),
     ] {
         let parsed_run = fixture
@@ -942,10 +946,7 @@ async fn a_run_plan_holds_every_reached_lane() {
     let chat = &plan.iterations[2];
     assert_eq!(
         chat.selection.junit5_filters,
-        [
-            "include-tag=air-gui-chat",
-            r"include-classname=(^|.*\.)AirThreeLanesChatGeneratedFlowUiTest$"
-        ]
+        [r"include-classname=(^|.*\.)AirThreeLanesChatGeneratedFlowUiTest$"]
     );
     assert_eq!(chat.classes, ["AirThreeLanesChatGeneratedFlowUiTest"]);
 
@@ -970,8 +971,8 @@ async fn a_run_plan_holds_every_reached_lane() {
 // line whichever order they were typed in.
 #[test]
 fn the_same_options_spell_the_same_command_line() {
-    let typed = parsed(&["--fresh-ide", "--filter", "exclude-tag=slow", "--lane", "ui"]);
-    let reordered = parsed(&["--lane", "ui", "--filter", "exclude-tag=slow", "--fresh-ide"]);
+    let typed = parsed(&["--fresh-ide", "--filter", "exclude-classname=.*Slow.*", "--lane", "ui"]);
+    let reordered = parsed(&["--lane", "ui", "--filter", "exclude-classname=.*Slow.*", "--fresh-ide"]);
     assert_eq!(typed.argv(), reordered.argv());
     assert_eq!(parsed(&typed.argv().iter().map(String::as_str).collect::<Vec<_>>()), typed);
 }
@@ -987,7 +988,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             &["com.example.AirSmokeTest#opensAProject"],
             &[],
         ),
-        // No package to select by, so it travels as a regex over a full hot-tier scan.
+        // No package to select by, so it travels as a pattern over the class names of the documents.
         ("AirSmokeTest", &[], &[r"include-classname=(^|.*\.)AirSmokeTest$"]),
     ];
     for (filter, want_selectors, want_filters) in cases {
@@ -1068,16 +1069,15 @@ async fn the_lane_daemon_gets_the_recorded_sessions() {
     assert!(!serde_json::to_string(&without).unwrap().contains("sessionLogs"));
 }
 
-// The lane field selects the documents of the lane, so the lane daemon gets no filter of the lane's own tag. A suite
-// filter goes to it.
+// The lane field selects the documents of the lane, and the class filters of a suite go to the lane daemon as they are.
 #[tokio::test]
-async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane() {
+async fn the_lane_daemon_gets_the_class_filters_of_a_suite() {
     let (fixture, prep, _) = executing().await;
     let policy = fixture.host.watchdog_policy(None, None);
     let class = r"include-classname=(^|.*\.)AirRenameSessionGeneratedFlowUiTest$".to_owned();
     let selection = RunSelection {
         lane: Some("ui".to_owned()),
-        junit5_filters: vec!["include-tag=air-flow-ui".to_owned(), class.clone()],
+        junit5_filters: vec![class.clone()],
         ..RunSelection::default()
     };
     let verb = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();

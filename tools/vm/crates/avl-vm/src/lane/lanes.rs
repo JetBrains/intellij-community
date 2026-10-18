@@ -1,12 +1,10 @@
 //! What a `--lane` or a selector becomes. The UI lanes themselves are `avl_affected::lanes`.
 
 use std::collections::BTreeMap;
-use std::sync::LazyLock;
 
-use avl_affected::{air_area, air_areas, ui_lane, ui_lane_of_label, ui_lanes};
+use avl_affected::{air_areas, ui_lane, ui_lane_of_label, ui_lanes};
 use avl_base::{Config, Exit, Refusal, Reporter};
 use bt_core::{ResolutionInputs, Selector, resolve_selector};
-use regex::Regex;
 
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
@@ -15,61 +13,25 @@ use avl_base::RefusalExt;
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Selection {
     pub label: String,
-    /// `None` for a selector, which names no lane at all. The daemon branches on it: a lane iteration is selected
-    /// by tag, a selector iteration by class filter.
+    /// `None` for a selector, which names no lane at all. The lane daemon branches on it: a lane iteration runs the
+    /// documents of its lane, and a selector iteration narrows them by class filter.
     pub lane: Option<String>,
-    /// The environment for the guest test JVM: lane JUnit filters, or the resolved class filter.
+    /// The filters of the selection, as the variables of a Bazel test spell them: the class filters, or the resolved
+    /// test filter. Empty for a whole lane.
     pub test_env: BTreeMap<String, String>,
 }
 
 /// The variable a JUnit filter travels in, for the daemon's runner and for `JUnit5BazelRunner` alike.
 pub(crate) const JUNIT5_FILTERS: &str = "JB_TEST_JUNIT5_FILTERS";
 
-/// The JUnit tag that the suites of each UI lane carry, by lane name. Only the JVM runner reads it: one warm JVM holds
-/// the classpath of every lane, so an iteration names its lane by a JUnit filter. The lane daemon selects the documents
-/// of its lane and reads no tag, so the lane table of `bt` carries none. The table goes with the JVM runner.
-const JVM_JUNIT_TAGS: [(&str, &str); 6] = [
-    ("ui", "air-flow-ui"),
-    ("ui-real", "air-flow-ui-real"),
-    ("ui-live", "air-flow-ui-live"),
-    ("ui-perf", "air-ui-perf"),
-    ("jcp", "air-jcp"),
-    ("gui-chat", "air-gui-chat"),
-];
-
-/// The JUnit tag of the UI lane `lane` for the JVM runner, or an internal refusal for a lane that the table misses.
-pub(crate) fn jvm_junit_tag(lane: &str) -> Result<&'static str, Refusal> {
-    JVM_JUNIT_TAGS
-        .iter()
-        .find(|(name, _)| *name == lane)
-        .map(|(_, tag)| *tag)
-        .ok_or_else(|| Refusal::internal(format!("the JVM runner knows no JUnit tag of the UI lane {lane}")))
-}
-
-/// The JUnit5 filter of the lane `lane` that the JVM runner selects it by, `include-tag=<tag>`.
-pub(crate) fn jvm_lane_filter(lane: &str) -> Result<String, Refusal> {
-    Ok(format!("include-tag={}", jvm_junit_tag(lane)?))
-}
-
-/// Answers what one UI lane runs, and refuses a lane a VM worker cannot.
+/// Answers what one UI lane runs, and refuses a lane a VM worker cannot. The lane daemon selects the documents of the
+/// lane by its name, so a whole lane has no filter.
 pub(crate) fn lane_selection(lane: &str) -> Result<Selection, Refusal> {
     let ui = ui_lane(lane)?;
-    let mut test_env = BTreeMap::from([(JUNIT5_FILTERS.to_owned(), jvm_lane_filter(ui.name)?)]);
-    // Bazel's `--test_env=NAME=VALUE` form: a variable the lane sets *by value*. The valueless form forwards the
-    // client's own variable, and a host value names a machine the guest is not.
-    static ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
-        // An invariant: a literal pattern, exercised by the tests.
-        Regex::new(r"^--test_env=([A-Za-z_][A-Za-z0-9_]*)=(.*)$").expect("a literal pattern compiles")
-    });
-    for extra in air_area().lanes().get(lane).map(|spec| spec.extra.as_slice()).unwrap_or_default() {
-        if let Some(assignment) = ASSIGNMENT.captures(extra) {
-            test_env.insert(assignment[1].to_owned(), assignment[2].to_owned());
-        }
-    }
     Ok(Selection {
         label: ui.label.to_owned(),
         lane: Some(ui.name.to_owned()),
-        test_env,
+        test_env: BTreeMap::new(),
     })
 }
 

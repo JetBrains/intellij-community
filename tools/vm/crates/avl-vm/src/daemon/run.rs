@@ -36,16 +36,13 @@ pub(crate) mod tests;
 
 // --- the option grammar ------------------------------------------------------------------------------------------
 
-/// The kinds of JUnit5 filter the daemon implements, and therefore the only ones `--filter` accepts.
+/// The kinds of JUnit5 filter the lane daemon applies, and therefore the only ones `--filter` accepts.
 ///
-/// Kept host-side because the alternative is a round trip: an unknown option reaches
-/// `AirUiDaemonIteration.buildFilters` as an `IllegalArgumentException` after the build, the daemon start and the
-/// jar push have all been paid for, and it surfaces as a container failure rather than as a typo. This enum has to
-/// stay in step with that `when` - it is the same six options.
+/// Kept host-side because the alternative is a round trip: an unknown option reaches `apply_filters` of the lane
+/// daemon as a refusal after the build, the daemon start and the jar push have all been paid for. This enum has to
+/// stay in step with that `match`. The documents carry no JUnit tag, so a tag is no kind.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Junit5FilterKind {
-    IncludeTag,
-    ExcludeTag,
     IncludeClassname,
     ExcludeClassname,
     IncludePackage,
@@ -53,10 +50,8 @@ pub(crate) enum Junit5FilterKind {
 }
 
 impl Junit5FilterKind {
-    /// Every kind, in the order of the daemon's `when`.
-    pub(crate) const ALL: [Self; 6] = [
-        Self::IncludeTag,
-        Self::ExcludeTag,
+    /// Every kind, in the order of the `match` of the lane daemon.
+    pub(crate) const ALL: [Self; 4] = [
         Self::IncludeClassname,
         Self::ExcludeClassname,
         Self::IncludePackage,
@@ -66,8 +61,6 @@ impl Junit5FilterKind {
     /// The option as the daemon and `--filter` spell it.
     pub(crate) const fn as_str(self) -> &'static str {
         match self {
-            Self::IncludeTag => "include-tag",
-            Self::ExcludeTag => "exclude-tag",
             Self::IncludeClassname => "include-classname",
             Self::ExcludeClassname => "exclude-classname",
             Self::IncludePackage => "include-package",
@@ -304,8 +297,8 @@ impl Host {
 
     /// `run`'s arguments as its iterations, a watchdog policy and the fresh-IDE flag.
     ///
-    /// A flow id, a suite id and `--changed` select generated suites: per lane, the lane's tag and one class filter
-    /// per suite. Without `--lane`, the plan holds one iteration per reached lane; see
+    /// A flow id, a suite id and `--changed` select generated suites: per lane, the lane and one class filter per
+    /// suite. Without `--lane`, the plan holds one iteration per reached lane; see
     /// [`crate::lane::Reached::every_lane`].
     pub(crate) async fn plan_run(&self, ctx: &Ctx, args: &RunArgs) -> Result<RunPlan, Refusal> {
         self.plan(ctx, args, true).await
@@ -615,8 +608,8 @@ pub(crate) struct RunExecution {
 ///
 /// The lane daemon gets the lane, the digests of the lane inputs, `lane_classes`, the suites of the lane that the
 /// catalog names, and `session_logs`, the recorded sessions that the push stored. A run of no lane is refused here,
-/// before the request goes out, because the lane daemon cannot choose a lane IDE for it. The `lane` field selects the documents of the lane, so the JUnit5 filter of the lane's own tag does not
-/// go to the lane daemon; every other filter does.
+/// before the request goes out, because the lane daemon cannot choose a lane IDE for it. The `lane` field selects the
+/// documents of the lane, and the filters of the selection narrow them.
 pub(crate) fn run_request(
     prep: &PreparedBuild,
     selection: &RunSelection,
@@ -624,7 +617,7 @@ pub(crate) fn run_request(
     lane_classes: Vec<LaneClass>,
     session_logs: &[SessionLog],
 ) -> Result<RunRequest, Refusal> {
-    let mut junit5_filters = selection.junit5_filters.clone();
+    let junit5_filters = selection.junit5_filters.clone();
     let Some(lane) = &selection.lane else {
         return Err(Refusal::new(
             "lane_daemon_lane_unknown",
@@ -647,8 +640,6 @@ pub(crate) fn run_request(
         lane_documents: digest("laneDocuments")?,
         suite_documents: digest("suiteDocuments")?,
     };
-    let own_tag = crate::lane::lanes::jvm_lane_filter(lane)?;
-    junit5_filters.retain(|filter| *filter != own_tag);
     Ok(RunRequest {
         selectors: selection.selectors.clone(),
         junit5_filters,

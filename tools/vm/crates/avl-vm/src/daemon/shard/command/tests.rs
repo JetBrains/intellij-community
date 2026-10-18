@@ -144,7 +144,7 @@ fn shard_owns_three_options_and_hands_every_other_one_to_the_run_grammar() {
         "--lane",
         "ui",
         "--filter",
-        "exclude-tag=slow",
+        "exclude-classname=.*Slow.*",
         "--timeout",
         "600",
         "--fresh-ide",
@@ -153,7 +153,15 @@ fn shard_owns_three_options_and_hands_every_other_one_to_the_run_grammar() {
     // `run`'s grammar is the one owner of what a lane selects, and a second parser here would be a second answer.
     assert_eq!(
         parsed.run.argv(),
-        ["--lane", "ui", "--filter", "exclude-tag=slow", "--timeout", "600", "--fresh-ide"]
+        [
+            "--lane",
+            "ui",
+            "--filter",
+            "exclude-classname=.*Slow.*",
+            "--timeout",
+            "600",
+            "--fresh-ide"
+        ]
     );
     let joined = shard_args(&["--shards=2", "--lane=ui"]);
     assert_eq!((joined.shards, joined.run.lane.as_deref()), (2, Some("ui")));
