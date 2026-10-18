@@ -114,7 +114,7 @@ impl Booted {
 fn run_request(launch_digest: &str) -> Vec<u8> {
     json!({
         "selectors": [], "junit5Filters": [], "productStamp": "product-1", "launchDigest": launch_digest,
-        "hotJars": [], "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300, "idePlugins": [],
+        "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300, "idePlugins": [],
     })
     .to_string()
     .into_bytes()

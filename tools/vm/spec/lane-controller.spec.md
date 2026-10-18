@@ -376,10 +376,10 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
 - The runtime descriptor names three lane inputs: the fake agent jar, the jar of the suite documents and the jar of
-  the lane documents. The controller pushes them by digest with the hot jars. No identity reads them, so an edit of
-  the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input that the
-  data, the stable jars or another staged file also names. A lane input can be a hot jar. Each iteration names the
-  digest of each lane input in the journal.
+  the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
+  an edit of the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input
+  that the data, the stable jars or another staged file also names. A lane input can be a hot jar. Each iteration names
+  the digest of each lane input in the journal.
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`every_way_the_descriptor_can_be_wrong_is_its_own_refusal`)
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest`)
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`push_jars_uploads_only_missing_digests`)
@@ -771,15 +771,16 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/console/state/tests.rs
 
 - A run says why the controller chose each action on the daemon, the shares and the IDE. Examples are a
-  restart, a remount, a relaunch, a reuse, and pushed test jars. Each choice is a `decision` record with
+  restart, a remount, a relaunch, a reuse, and pushed files. Each choice is a `decision` record with
   its reason, in every output form.
   [@test] ../crates/avl-wire/src/progress/tests.rs
   [@test] ../crates/avl-vm/src/console/state/tests.rs
 
-- A test jar that the host rebuilt while the iteration ran is a note, not a verdict diagnostic. The terminal and the
-  run journal show the note, and the report carries it in `notes`. The note names the jars. The status follows the
-  counts.
+- A pushed file that the host rebuilt while the iteration ran is a note, not a verdict diagnostic. The pushed files
+  are the context plugin files and the lane inputs. The terminal and the run journal show the note, and the report
+  carries it in `notes`. The note names the files. The status follows the counts.
   [@test] ../crates/avl-report/src/report/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`pushed_file_drift_names_a_file_that_was_rebuilt_under_the_run`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The run journal holds the life of the lane IDE. An `ideLaunched` record names the pid, the launch name, the
@@ -1402,8 +1403,8 @@ The daemon's half and the IDE's half of supervision are in
   state. The decision and the timing line say `relaunch`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
-- The push offers the context plugin files with the test jars, and uploads only the files that the guest does not
-  hold. A change of only the context plugins leaves the IDE to the lane daemon, which compares the digest of each
+- The push offers the context plugin files and the lane inputs, and uploads only the files that the guest does not
+  hold. No jar of the hot tier travels. A change of only the context plugins leaves the IDE to the lane daemon, which compares the digest of each
   plugin directory itself. The controller then relaunches nothing and refreshes no share. No lane distribution carries
   the bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a plugin
   identity decides nothing on it.

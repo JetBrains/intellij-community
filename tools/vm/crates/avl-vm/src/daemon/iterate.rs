@@ -558,7 +558,7 @@ impl Host {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
         let (archives, traces_error) = traces.finish(self, ctx, pulls).await;
-        let drift = prep.hot_jar_drift();
+        let drift = prep.pushed_file_drift();
         if let Some(drift) = &drift {
             self.reporter.note(drift.clone(), Some(&scope));
         }

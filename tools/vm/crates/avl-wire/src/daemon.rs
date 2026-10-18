@@ -228,7 +228,6 @@ pub struct RunRequest {
     pub product_stamp: String,
     /// The launch generation that the controller prepared the run for. A daemon of another generation refuses it.
     pub launch_digest: String,
-    pub hot_jars: Vec<String>,
     pub active_execution_timeout_sec: u64,
     pub progress_gap_timeout_sec: u64,
     /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.

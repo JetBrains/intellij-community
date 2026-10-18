@@ -145,7 +145,7 @@ pub(crate) fn conclude(
         // something it expects to execute.
         Status::NoTests => {
             let summary = match reach {
-                Reach::Iteration(id) => format!("{selection} matched no tests in the hot tier (iteration {id}); check the selector's FQN"),
+                Reach::Iteration(id) => format!("{selection} matched no tests (iteration {id}); check the selector's FQN"),
                 Reach::Shards(count) => format!(
                     "{selection} matched no tests in any of {count} shard(s); the split covers the whole lane by \
                      construction, so this is the lane's own selection"

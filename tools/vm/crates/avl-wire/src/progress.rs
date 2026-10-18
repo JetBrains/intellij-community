@@ -61,7 +61,7 @@ vocabulary! {
         /// The `bazel build` of the lane on the host.
         HostBuild = "host-build",
         /// Reading what the host build produced and hashing it: the runtime descriptor, the identities of the daemon
-        /// and the hot tier. It touches no worker.
+        /// and the files of the push. It touches no worker.
         Prepare = "prepare",
         /// Taking a worker. A worker that is not warm is cloned, booted and provisioned here.
         Lease = "lease",

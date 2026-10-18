@@ -282,7 +282,7 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     }
     let request = serde_json::json!({
         "selectors": [], "junit5Filters": [], "productStamp": "product-1", "launchDigest": "launch-1",
-        "hotJars": [], "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300,
+        "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300,
         "idePlugins": [
             {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "sha256": sha256(&bridge)},
             {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "sha256": sha256(&resident)},

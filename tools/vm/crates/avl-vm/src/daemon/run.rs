@@ -477,7 +477,7 @@ pub(crate) fn upload_concurrency(bytes: u64) -> usize {
         .clamp(1, MAX_PARALLEL_UPLOADS)
 }
 
-/// Offers the hot tier, the context plugin files, the lane inputs and the zips of the recorded sessions by digest, and
+/// Offers the files of the build, [`PreparedBuild::pushed_files`], and the zips of the recorded sessions by digest, and
 /// uploads only what the guest does not already hold, answering how many files travelled. A digest that two files
 /// share is offered once.
 ///
@@ -492,10 +492,7 @@ pub(crate) async fn push_jars(
 ) -> Result<usize, Refusal> {
     let mut offered = HashSet::new();
     let jars: Vec<&PathDigest> = prep
-        .hot_jars
-        .iter()
-        .chain(prep.plugin_files.iter().map(|file| &file.host))
-        .chain(prep.lane_inputs.iter().map(|input| &input.host))
+        .pushed_files()
         .chain(session_logs)
         .filter(|jar| offered.insert(jar.sha256.as_str()))
         .collect();
@@ -657,7 +654,6 @@ pub(crate) fn run_request(
         junit5_filters,
         product_stamp: prep.product_digest.clone(),
         launch_digest: prep.launch_digest.clone(),
-        hot_jars: prep.hot_jars.iter().map(|jar| jar.sha256.clone()).collect(),
         active_execution_timeout_sec: policy.active_execution.as_secs(),
         progress_gap_timeout_sec: policy.progress_gap.as_secs(),
         ide_plugins: prep

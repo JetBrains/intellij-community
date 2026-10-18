@@ -226,7 +226,6 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         junit5_filters: junit5_filters(args, variable),
         product_stamp,
         launch_digest: LAUNCH_DIGEST.to_owned(),
-        hot_jars: Vec::new(),
         active_execution_timeout_sec: args.active_execution_timeout_sec,
         progress_gap_timeout_sec: args.progress_gap_timeout_sec,
         ide_plugins,

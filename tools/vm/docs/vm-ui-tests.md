@@ -496,13 +496,11 @@ guest process: the **lane daemon**, the `lane-daemon` verb of the guest agent. I
 lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
-The classpath of the JVM daemon has two tiers. The **stable**
-tier is the platform and framework jars and the daemon's own module, and it is the JVM's app
-classpath. The **hot** tier is everything built from `plugins/air` except the daemon's own
-module. It is withheld from the app classpath, and each iteration loads it in a child classloader,
-from a guest-local content-addressed store the controller pushes into. A hot jar that reaches the
-app classpath is not a degraded mode but a silent one: parent-first delegation would answer every
-reload with the bytes the daemon booted on.
+The runtime descriptor still declares the two classpath tiers of the retired JVM daemon. The **stable** tier is the
+platform and framework jars and the daemon's own module, and the guest still stages it. The **hot** tier is everything
+built from `plugins/air` except the daemon's own module. Nothing reads it, and the controller pushes no hot jar. The
+test code of a run reaches the lane IDE as the context plugin files and the lane inputs, which the controller pushes by
+digest.
 
 Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
 `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` is "owner contains `//plugins/air/` and
@@ -558,15 +556,15 @@ share.
 ### Invalidation
 
 Per `run`, the controller builds on the host and digests the stub's runfiles manifest with a
-stat-keyed content cache. It then pushes only changed hot jars into the daemon's store over HTTP.
+stat-keyed content cache. It then pushes only the changed context plugin files and lane inputs into the store of
+the lane daemon over HTTP.
 One connection carries a push of at most 8 MiB, and each further 8 MiB begun opens one more, up to four. It streams the JUnit run back as NDJSON. Three levels fall out of the digests, and each
 iteration's timing line reports the one it took.
 
 | change | detection | cost |
 | --- | --- | --- |
-| test code, meaning the Air test-only modules | hot-jar digest diff | a push plus a fresh classloader. The IDE is reused, and there is **no remount** |
 | product inputs, meaning anything inside the prepared distribution | product stamp diff | stop every lane IDE, remount, then launch the IDE again. The daemon survives, and nothing is assembled |
-| the context plugins, meaning the in-IDE test bridge and its resident part, which no lane distribution carries | the digest of each plugin directory | a push of the changed plugin files, with **no remount** and no distribution compose. Under the lane daemon, an edit of the bridge directory alone reloads the bridge plugin in the running IDE, and the timing line reports `ide reload`. An edit of the resident part relaunches the IDE on the same context, and so does a reload that fails. The JVM daemon relaunches the IDE for each plugin edit, and the timing line reports `ide relaunch` |
+| the context plugins, meaning the in-IDE test bridge and its resident part, which no lane distribution carries | the digest of each plugin directory | a push of the changed plugin files, with **no remount** and no distribution compose. Under the lane daemon, an edit of the bridge directory alone reloads the bridge plugin in the running IDE, and the timing line reports `ide reload`. An edit of the resident part relaunches the IDE on the same context, and so does a reload that fails |
 | the daemon's parent tier, meaning platform and framework jars | stable digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
 | the container's declaration, meaning the image tag, the share or the display | create-record diff | a recreate plus a cold daemon start; Docker only |
 
@@ -580,9 +578,7 @@ The first row of each kind includes a host build of 7 to 13 s.
 | R3 | a literal of the resident plugin | `ide relaunch` | 23.1, 19.6, 15.9 |
 | R4 | a literal of the bridge plugin | `ide reload` | 20.4, 8.7, 9.1. The reload took 3.6, 2.4 and 2.4 s |
 
-The three questions are asked independently, and one file may answer yes to more than one. An Air
-production jar is both hot and a product input. Treating "hot" as an answer to the product question
-is what would let a run report green against an IDE built from the previous commit.
+The questions are asked independently, and one file may answer yes to more than one.
 
 The product stamp reads the `fingerprint.txt` that the dev build wrote inside the distribution's
 tree artifact. It is an xxh3 over every entry's content hash, so stamping never walks a
@@ -654,17 +650,18 @@ count and each discovered class. The report lists each class without a later res
 
 ### What a host build during a run takes away
 
-The guest runs the jars the iteration pushed, so a host build while a run is in flight does not corrupt the
+The guest runs the files the iteration pushed, so a host build while a run is in flight does not corrupt the
 execution. It corrupts the **attribution**. The verdict then describes bytes the checkout no longer produces,
-and a reader maps it to the source in their editor. Bazel replaces a jar by rename, so nothing else notices:
+and a reader maps it to the source in their editor. Bazel replaces a file by rename, so nothing else notices:
 the run keeps its open handles and reports green.
 
-So each iteration re-hashes its own hot tier when the run ends and compares it with what it pushed. A jar that
-moved is a note. The note names the jars and says to re-run. The terminal and the run journal show it, and the
-report carries it in `notes`. A note never changes the verdict, so the status follows the counts. The guest ran the
-bytes that the iteration pushed, so the execution and its counts stay true. Only the attribution to the checkout is
-lost. `PreparedBuild::hot_jar_drift` in `crates/avl-vm/src/daemon/build.rs` is the check. The verdict card shows no
-note, so read the journal or the report before you map a verdict to your editor.
+So each iteration re-hashes the files it pushed when the run ends, the context plugin files and the lane inputs, and
+compares them with what it pushed. A file that moved is a note. The note names the files and says to re-run. The
+terminal and the run journal show it, and the report carries it in `notes`. A note never changes the verdict, so the
+status follows the counts. The guest ran the bytes that the iteration pushed, so the execution and its counts stay
+true. Only the attribution to the checkout is lost. `PreparedBuild::pushed_file_drift` in
+`crates/avl-vm/src/daemon/build.rs` is the check. The verdict card shows no note, so read the journal or the report
+before you map a verdict to your editor.
 
 ### What a remount does not notice
 

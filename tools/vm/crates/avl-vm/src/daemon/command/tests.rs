@@ -994,7 +994,7 @@ async fn command_run_reports_no_tests_discovered_at_six() {
     let failure = refusal(result);
     assert_eq!((failure.code.as_ref(), failure.exit), ("no_tests_discovered", Exit::TESTS_FAILED));
     assert!(
-        failure.message.contains("matched no tests in the hot tier (iteration it-23)"),
+        failure.message.contains("matched no tests (iteration it-23)"),
         "{:?}",
         failure.message
     );

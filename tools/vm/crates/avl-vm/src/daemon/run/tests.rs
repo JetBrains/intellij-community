@@ -9,6 +9,7 @@ use serde_json::{Value, json};
 use tokio_util::sync::CancellationToken;
 
 use super::*;
+use crate::daemon::build::PluginFile;
 use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::{ndjson_line, run_started_record, summary_record};
 
@@ -206,7 +207,6 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
             "junit5Filters": [],
             "productStamp": prep.product_digest,
             "launchDigest": prep.launch_digest,
-            "hotJars": [prep.hot_jars[0].sha256],
             "activeExecutionTimeoutSec": 1_800,
             "progressGapTimeoutSec": 300,
             "idePlugins": [{"destination": "bridge/lib/bridge.jar", "sha256": prep.plugin_files[0].host.sha256}],
@@ -328,24 +328,24 @@ async fn non_record_lines_are_kept_as_output() {
     );
 }
 
-// The push offers the hot tier, the context plugin files and the lane inputs by digest, and uploads only what the guest
-// does not hold. The jars of the documents are the hot jar of the fixture, so their digest is offered once.
+// The push offers the context plugin files and the lane inputs by digest, and uploads only what the guest does not
+// hold. The two documents of the fixture are one jar, so their digest is offered once. No jar of the hot tier travels.
 #[tokio::test]
 async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;
     let ctx = Ctx::background();
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 0);
-    let sha = prep.hot_jars[0].sha256.clone();
+    let documents = prep.lane_inputs[1].host.sha256.clone();
     let plugin = prep.plugin_files[0].host.sha256.clone();
     let agent = prep.lane_inputs[0].host.sha256.clone();
-    fixture.daemon.script().missing = vec![sha.clone()];
+    fixture.daemon.script().missing = vec![documents.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     {
         let script = fixture.daemon.script();
         assert_eq!(script.uploads.len(), 1);
-        assert!(script.uploads[0].contains(&sha), "the upload names the digest");
+        assert!(script.uploads[0].contains(&documents), "the upload names the digest");
         let body: Value = serde_json::from_slice(&script.jars_body).unwrap();
-        assert_eq!(body, json!({ "jars": [sha, plugin, agent] }));
+        assert_eq!(body, json!({ "jars": [plugin, agent, documents] }));
     }
     fixture.daemon.script().missing = vec![plugin.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
@@ -364,14 +364,14 @@ async fn push_jars_uploads_only_missing_digests() {
     );
 }
 
-// A plugin file or a lane input whose bytes equal a hot jar is offered and uploaded once. The jars of the documents of
-// the fixture are its hot jar already.
+// A plugin file or a lane input whose bytes equal another pushed file is offered and uploaded once. The two documents
+// of the fixture are one jar already.
 #[tokio::test]
 async fn a_digest_that_two_files_share_is_offered_once() {
     let (fixture, mut prep, state) = executing().await;
-    prep.plugin_files[0].host = prep.hot_jars[0].clone();
-    prep.lane_inputs[0].host = prep.hot_jars[0].clone();
-    let sha = prep.hot_jars[0].sha256.clone();
+    prep.plugin_files[0].host = prep.lane_inputs[1].host.clone();
+    prep.lane_inputs[0].host = prep.lane_inputs[1].host.clone();
+    let sha = prep.lane_inputs[1].host.sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(
         push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[])
@@ -383,18 +383,21 @@ async fn a_digest_that_two_files_share_is_offered_once() {
     assert_eq!(body, json!({ "jars": [sha] }));
 }
 
-/// A build whose hot tier is `count` jars of `size` bytes each, every one missing on the guest, written under
-/// `directory`.
-fn missing_hot_jars(fixture: &Fixture, prep: &mut PreparedBuild, directory: &Path, count: usize, size: usize) {
-    prep.hot_jars.clear();
+/// A build whose context plugin files are `count` jars of `size` bytes each, every one missing on the guest, written
+/// under `directory`. The lane inputs stay, and the guest holds them.
+fn missing_plugin_files(fixture: &Fixture, prep: &mut PreparedBuild, directory: &Path, count: usize, size: usize) {
+    prep.plugin_files.clear();
     for index in 0..count {
         let content = vec![u8::try_from(index).expect("a small index"); size];
-        let path = directory.join(format!("hot-{index}.jar"));
+        let path = directory.join(format!("part-{index}.jar"));
         fs::write(&path, &content).unwrap();
         let sha256 = avl_report::digest::sha256_file(&path).unwrap();
-        prep.hot_jars.push(PathDigest::new(path.to_string_lossy(), sha256));
+        prep.plugin_files.push(PluginFile {
+            destination: format!("bridge/lib/part-{index}.jar"),
+            host: PathDigest::new(path.to_string_lossy(), sha256),
+        });
     }
-    fixture.daemon.script().missing = prep.hot_jars.iter().map(|jar| jar.sha256.clone()).collect();
+    fixture.daemon.script().missing = prep.plugin_files.iter().map(|file| file.host.sha256.clone()).collect();
 }
 
 /// Waits until the double holds `count` uploads at once, or fails the test after 30 s.
@@ -436,7 +439,7 @@ fn the_upload_concurrency_follows_the_bytes() {
 async fn a_small_push_opens_no_relay_more() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 4, 64 * 1024);
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 4, 64 * 1024);
     let pushed = push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[]).await;
     assert_eq!(pushed.unwrap(), 4);
     assert_eq!(relays(&fixture), 1, "{:?}", fixture.channel().lines());
@@ -446,10 +449,10 @@ async fn a_small_push_opens_no_relay_more() {
 // 15 MiB of jars travel two at a time over two relays, and every missing jar arrives. The answer is a count, so the
 // order in which the uploads end changes nothing in it.
 #[tokio::test]
-async fn the_hot_jars_upload_with_a_bounded_concurrency() {
+async fn the_plugin_files_upload_with_a_bounded_concurrency() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 3, 5 * MIB);
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 3, 5 * MIB);
     let hold = CancellationToken::new();
     fixture.daemon.script().upload_hold = Some(hold.clone());
     let ctx = Ctx::background();
@@ -465,9 +468,9 @@ async fn the_hot_jars_upload_with_a_bounded_concurrency() {
     let mut uploaded: Vec<String> = fixture.daemon.script().uploads.clone();
     uploaded.sort();
     let mut expected: Vec<String> = prep
-        .hot_jars
+        .plugin_files
         .iter()
-        .map(|jar| wire::upload_jar(&jar.sha256).path.into_owned())
+        .map(|file| wire::upload_jar(&file.host.sha256).path.into_owned())
         .collect();
     expected.sort();
     assert_eq!(uploaded, expected);
@@ -479,8 +482,8 @@ async fn the_hot_jars_upload_with_a_bounded_concurrency() {
 async fn a_failed_upload_ends_the_others_and_keeps_its_refusal() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 2, 8 * MIB);
-    let refused = prep.hot_jars[1].clone();
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 2, 8 * MIB);
+    let refused = prep.plugin_files[1].host.clone();
     {
         let mut script = fixture.daemon.script();
         script.upload_hold = Some(CancellationToken::new());
@@ -997,7 +1000,6 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             junit5_filters: junit5_filters.clone(),
             product_stamp: String::new(),
             launch_digest: String::new(),
-            hot_jars: Vec::new(),
             active_execution_timeout_sec: 0,
             progress_gap_timeout_sec: 0,
             ide_plugins: Vec::new(),

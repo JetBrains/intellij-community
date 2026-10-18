@@ -1126,13 +1126,13 @@ async fn a_tree_failure_is_recorded_and_never_the_verdict() {
     assert_eq!(report.verdict_diagnostic, None);
 }
 
-// A test jar that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
+// A pushed file that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
 // and the status still follows the counts.
 #[tokio::test]
-async fn a_rebuilt_hot_jar_is_a_note_and_never_the_verdict() {
+async fn a_rebuilt_pushed_file_is_a_note_and_never_the_verdict() {
     let (fixture, _, _) = iteration_fixture("it-52").await;
     let built = fixture.prepared().await;
-    let jar = Path::new(&built.hot_jars[0].path);
+    let jar = Path::new(&built.plugin_files[0].host.path);
     let name = jar.file_name().unwrap().to_string_lossy().into_owned();
     std::fs::write(jar, b"rebuilt on the host").unwrap();
     let attempt = fixture

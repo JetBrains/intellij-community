@@ -58,10 +58,11 @@ async fn the_stamp_through_a_manifest_is_the_stamp_of_the_tree() {
     assert_eq!(over_manifest.runtime_digest, over_tree.runtime_digest);
     assert_eq!(over_manifest.product_digest, over_tree.product_digest);
     assert_eq!(over_manifest.mount_digest, over_tree.mount_digest);
+    let documents = &over_manifest.lane_inputs[1].host;
     assert!(
-        Path::new(&over_manifest.hot_jars[0].path).starts_with(&store),
-        "a hot jar travels by its MANIFEST target, was {}",
-        over_manifest.hot_jars[0].path
+        Path::new(&documents.path).starts_with(&store),
+        "a pushed file travels by its MANIFEST target, was {}",
+        documents.path
     );
     assert_eq!(over_manifest.guest_runfiles_root, over_manifest.guest_tree.root);
     assert!(
@@ -100,34 +101,41 @@ async fn a_runfile_in_the_checkout_is_staged_with_its_digest() {
     );
 }
 
-// The trap this closes: bazel replaces a jar by rename, so a host build during a run changes nothing the run can
-// notice. The verdict is then about bytes the checkout no longer produces, and it reads green.
+// The trap this closes: bazel replaces a file by rename, so a host build during a run changes nothing the run can
+// notice. The verdict is then about bytes the checkout no longer produces, and it reads green. The documents of the
+// fixture are one jar for two lane inputs, so the drift names it once.
 #[tokio::test]
-async fn hot_jar_drift_names_a_jar_that_was_rebuilt_under_the_run() {
+async fn pushed_file_drift_names_a_file_that_was_rebuilt_under_the_run() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    assert_eq!(prep.hot_jar_drift(), None, "an untouched build drifted");
+    assert_eq!(prep.pushed_file_drift(), None, "an untouched build drifted");
 
-    fs::write(&prep.hot_jars[0].path, "rebuilt by another agent").unwrap();
-    let drift = prep.hot_jar_drift().expect("a rebuilt jar left the verdict believable");
+    fs::write(&prep.lane_inputs[1].host.path, "rebuilt by another agent").unwrap();
+    let drift = prep.pushed_file_drift().expect("a rebuilt file left the verdict believable");
     assert!(
-        drift.contains("a.jar") && drift.contains("do not build while a run is active"),
-        "the drift does not name the jar and the remedy: {drift}"
+        drift.starts_with("1 pushed file(s) were rebuilt")
+            && drift.contains("a.jar")
+            && drift.contains("do not build while a run is active"),
+        "the drift does not name the file once and the remedy: {drift}"
     );
+
+    fs::write(&prep.plugin_files[0].host.path, "a rebuilt bridge").unwrap();
+    let drift = prep.pushed_file_drift().unwrap();
+    assert!(drift.starts_with("2 pushed file(s)") && drift.contains("bridge.jar"), "{drift}");
 }
 
-// A jar that is gone is drift too, and the reason has to reach the reader rather than being swallowed.
+// A file that is gone is drift too, and the reason has to reach the reader rather than being swallowed.
 #[tokio::test]
-async fn hot_jar_drift_reports_a_jar_that_is_gone() {
+async fn pushed_file_drift_reports_a_file_that_is_gone() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    fs::remove_file(&prep.hot_jars[0].path).unwrap();
-    let drift = prep.hot_jar_drift().expect("a missing jar left the verdict believable");
+    fs::remove_file(&prep.lane_inputs[1].host.path).unwrap();
+    let drift = prep.pushed_file_drift().expect("a missing file left the verdict believable");
     assert!(drift.contains("a.jar (unreadable: "), "{drift}");
 }
 
 // The launch digest is its three parts and nothing else: the runtime, the controller's boot settings, and the
-// daemon environment. The hot tier travels by host path, in classpath order.
+// daemon environment. A pushed file travels by host path.
 #[tokio::test]
 async fn the_launch_digest_is_composed_of_the_runtime_the_boot_settings_and_the_environment() {
     let fixture = Fixture::new().await;
@@ -137,14 +145,14 @@ async fn the_launch_digest_is_composed_of_the_runtime_the_boot_settings_and_the_
         prep.launch_digest,
         launch_digest(&prep.runtime_digest, &boot, &prep.daemon_environment)
     );
-    assert_eq!(prep.hot_jars.len(), 1);
+    let documents = &prep.lane_inputs[1].host;
     assert!(
-        prep.hot_jars[0].path.ends_with("_main/hot/a.jar")
-            && Path::new(&prep.hot_jars[0].path).starts_with(runtime::runfiles_root(&fixture.bazel.descriptor_path)),
-        "a hot jar travels by host path, was {}",
-        prep.hot_jars[0].path
+        documents.path.ends_with("_main/hot/a.jar")
+            && Path::new(&documents.path).starts_with(runtime::runfiles_root(&fixture.bazel.descriptor_path)),
+        "a pushed file travels by host path, was {}",
+        documents.path
     );
-    assert_eq!(prep.hot_jars[0].sha256, digest::sha256_text("hot-a"));
+    assert_eq!(documents.sha256, digest::sha256_text("hot-a"));
     assert_eq!(
         prep.daemon_environment.get("NODE_BIN"),
         Some(&fixture.settings.vm_node),
@@ -282,9 +290,8 @@ async fn a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest
     let before = fixture.prepared().await;
     let fields: Vec<&str> = before.lane_inputs.iter().map(|input| input.field).collect();
     assert_eq!(fields, ["fakeAgentJar", "laneDocuments", "suiteDocuments"]);
-    // The jars of the documents are the hot jar of the fixture, so the push offers their digest once.
-    assert_eq!(before.lane_inputs[1].host, before.hot_jars[0]);
-    assert_eq!(before.lane_inputs[2].host, before.hot_jars[0]);
+    // The two documents of the fixture are one jar, so the push offers their digest once.
+    assert_eq!(before.lane_inputs[1].host, before.lane_inputs[2].host);
 
     let agent = runtime::runfiles_root(&fixture.bazel.descriptor_path).join(crate::daemon::testing::FIXTURE_FAKE_AGENT_JAR);
     fs::write(&agent, "another fake agent").unwrap();

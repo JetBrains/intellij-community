@@ -1,6 +1,6 @@
 //! The one host build, stamped: what to launch, and the four identities that decide what can be reused.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -64,14 +64,11 @@ pub(crate) struct PreparedBuild {
     /// this one.
     pub guest_runfiles_root: String,
     pub descriptor: RuntimeDescriptor,
-    /// The test tier by host path and content digest, in classpath order: what `/jars` is asked about and what a
-    /// missing digest is uploaded from.
-    pub hot_jars: Vec<PathDigest>,
-    /// The files of the context plugins, in descriptor order: pushed with the hot tier, and installed by the daemon into
-    /// the plugin directory of the IDE context.
+    /// The files of the context plugins, in descriptor order: pushed by digest, and installed by the daemon into the
+    /// plugin directory of the IDE context.
     pub plugin_files: Vec<PluginFile>,
-    /// The lane inputs of the descriptor, in key order: pushed with the hot tier. No identity reads them, so an edit of
-    /// the fake agent or of a document restages nothing and restarts nothing.
+    /// The lane inputs of the descriptor, in key order: pushed by digest with the context plugin files. No identity
+    /// reads them, so an edit of the fake agent or of a document restages nothing and restarts nothing.
     pub lane_inputs: Vec<LaneInput>,
     pub runtime_digest: String,
     pub launch_digest: String,
@@ -357,7 +354,6 @@ const BUILD_TXT: &str = "build.txt";
 /// The digests of one descriptor's inputs, which is all the stamp reads from disk.
 struct Stamped {
     guest_tree: GuestRunfilesTree,
-    hot_jars: Vec<PathDigest>,
     plugin_files: Vec<PluginFile>,
     lane_inputs: Vec<LaneInput>,
     runtime_digest: String,
@@ -392,11 +388,6 @@ fn stamp(
     let jbr = jbr_input(&mut cache, runfiles, descriptor)?;
     let mut file = |file: &RuntimeFile| declared_input(&mut cache, runfiles, file, false);
 
-    let mut hot_jars = Vec::with_capacity(descriptor.classpath.hot.len());
-    for jar in &descriptor.classpath.hot {
-        let declared = file(jar)?;
-        hot_jars.push(PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256));
-    }
     let mut plugin_files = Vec::with_capacity(descriptor.ide.plugins.len());
     for plugin in &descriptor.ide.plugins {
         let declared = file(&plugin.file)?;
@@ -457,7 +448,6 @@ fn stamp(
     let guest_tree = runfiles.guest_tree(tree_inputs)?;
     Ok(Stamped {
         guest_tree,
-        hot_jars,
         plugin_files,
         lane_inputs,
         runtime_digest,
@@ -473,8 +463,8 @@ fn stamp(
 }
 
 impl Host {
-    /// Runs the one host build and stamps it: the four digests, the hot tier by content, and the launch identity
-    /// everything downstream compares.
+    /// Runs the one host build and stamps it: the four digests, the files of the push by content, and the launch
+    /// identity everything downstream compares.
     ///
     /// The build fixes the bytes that a run pushes, so the checkout tree is read when the build starts, beside it,
     /// and adds no time to it.
@@ -561,7 +551,6 @@ impl Host {
             guest_tree: stamped.guest_tree,
             guest_runfiles_root,
             descriptor,
-            hot_jars: stamped.hot_jars,
             plugins_digest: plugins_digest(&stamped.plugin_files),
             plugin_directories: plugin_directories(&stamped.plugin_files),
             plugin_files: stamped.plugin_files,
@@ -580,27 +569,36 @@ impl Host {
 }
 
 impl PreparedBuild {
+    /// The files of the build that a run pushes by digest: the context plugin files, then the lane inputs.
+    pub(crate) fn pushed_files(&self) -> impl Iterator<Item = &PathDigest> {
+        self.plugin_files
+            .iter()
+            .map(|file| &file.host)
+            .chain(self.lane_inputs.iter().map(|input| &input.host))
+    }
+
     /// Why this iteration cannot be attributed to the current checkout, or `None`.
     ///
-    /// The guest runs the jars this iteration pushed, so a host rebuild during the run does not corrupt the
+    /// The guest runs the files this iteration pushed, so a host rebuild during the run does not corrupt the
     /// execution. What it corrupts is the attribution: the verdict is about bytes the checkout no longer produces,
-    /// and a reader maps it to the source in their editor. Bazel replaces a jar by rename, so nothing else notices
+    /// and a reader maps it to the source in their editor. Bazel replaces a file by rename, so nothing else notices
     /// at all - the run keeps its open file handles and reports green.
     ///
-    /// Hashing rather than comparing a stat, because the digest is what every other comparison here is made of,
-    /// and the hot tier is the test jars alone.
-    pub(crate) fn hot_jar_drift(&self) -> Option<String> {
+    /// Hashing rather than comparing a stat, because the digest is what every other comparison here is made of. The
+    /// pushed files are the test code of a run: the bridge plugin, the fake agent and the documents.
+    pub(crate) fn pushed_file_drift(&self) -> Option<String> {
+        let mut checked = HashSet::new();
         let moved: Vec<String> = self
-            .hot_jars
-            .iter()
-            .filter_map(|jar| {
-                let path = Path::new(&jar.path);
+            .pushed_files()
+            .filter(|file| checked.insert(file.path.as_str()))
+            .filter_map(|file| {
+                let path = Path::new(&file.path);
                 let name = path
                     .file_name()
-                    .map_or_else(|| jar.path.clone(), |name| name.to_string_lossy().into_owned());
+                    .map_or_else(|| file.path.clone(), |name| name.to_string_lossy().into_owned());
                 match digest::sha256_file(path) {
                     Err(error) => Some(format!("{name} (unreadable: {error})")),
-                    Ok(sum) if sum != jar.sha256 => Some(name),
+                    Ok(sum) if sum != file.sha256 => Some(name),
                     Ok(_) => None,
                 }
             })
@@ -609,7 +607,7 @@ impl PreparedBuild {
             return None;
         }
         Some(format!(
-            "{} test jar(s) were rebuilt on the host while this iteration ran, so its verdict describes bytes this \
+            "{} pushed file(s) were rebuilt on the host while this iteration ran, so its verdict describes bytes this \
              checkout no longer produces: {}. Re-run the iteration, and do not build while a run is active",
             moved.len(),
             moved.join(", ")
