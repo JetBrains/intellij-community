@@ -61,6 +61,7 @@ class GitGpgConfigDialog(
 
   private var isLoading: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
   private var hasLoadedKeys: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
+  private var initialConfig: RepoConfig? = null
 
   init {
     title = message("settings.configure.sign.gpg.for.repo.dialog.title", GitUtil.mention(repository))
@@ -115,6 +116,7 @@ class GitGpgConfigDialog(
       if (config.key != null) {
         comboBoxModel.selectedItem = config.key
       }
+      initialConfig = config
 
       val keys = secretKeys.load()
       comboBoxModel.addAll(keys.keys)
@@ -135,9 +137,26 @@ class GitGpgConfigDialog(
     isOKActionEnabled = !isLoading && (hasLoadedKeys || !checkBox.isSelected)
   }
 
+  private fun getModifiedKey(): GpgKey? {
+    val initialConfig = initialConfig ?: return null
+    if (!checkBox.isSelected) return null
+    return comboBox.item.takeIf { initialConfig.key != it }
+  }
+
+  private fun getModifiedIsEnabled(): Boolean? {
+    val initialConfig = initialConfig ?: return null
+    return checkBox.isSelected.takeIf { initialConfig.isEnabled != it }
+  }
+
   override fun doOKAction() {
+    val newGpgKey = getModifiedKey()
+    val newIsEnabled = getModifiedIsEnabled()
+    if (newGpgKey == null && newIsEnabled == null) {
+      close(OK_EXIT_CODE)
+      return
+    }
     launch("writing result") {
-      writeGitSettings(if (checkBox.isSelected) comboBox.item else null)
+      writeGitSettings(newGpgKey, newIsEnabled)
       repoConfig.reload()
       close(OK_EXIT_CODE)
     }
@@ -167,9 +186,9 @@ class GitGpgConfigDialog(
   }
 
   @Throws(VcsException::class)
-  private suspend fun writeGitSettings(gpgKey: GpgKey?) {
+  private suspend fun writeGitSettings(gpgKey: GpgKey?, isEnabled: Boolean?) {
     withContext(Dispatchers.IO) {
-      coroutineToIndicator { writeGitGpgConfig(repository, gpgKey) }
+      coroutineToIndicator { writeGitGpgConfig(repository, gpgKey, isEnabled) }
     }
   }
 

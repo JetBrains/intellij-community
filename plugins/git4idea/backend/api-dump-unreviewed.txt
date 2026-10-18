@@ -1941,7 +1941,6 @@ f:git4idea.config.gpg.GitGpgConfigUtilsKt
 - sf:getGpgSignKeyCached(git4idea.repo.GitRepository):java.lang.String
 - sf:isGpgSignEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isGpgSignEnabledCached(git4idea.repo.GitRepository):Z
-- sf:writeGitGpgConfig(git4idea.repo.GitRepository,git4idea.config.gpg.GpgKey):V
 f:git4idea.config.gpg.GitGpgMultiRootConfigDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:Companion:git4idea.config.gpg.GitGpgMultiRootConfigDialog$Companion

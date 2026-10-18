@@ -133,13 +133,12 @@ fun getGpgSignKey(project: Project, root: VirtualFile): String? {
 }
 
 @Throws(VcsException::class)
-fun writeGitGpgConfig(repository: GitRepository, gpgKey: GpgKey?) {
-  if (gpgKey != null) {
-    GitConfigUtil.setValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN, "true")
-    GitConfigUtil.setValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY, gpgKey.id)
+fun writeGitGpgConfig(repository: GitRepository, gpgKey: GpgKey?, isEnabled: Boolean?) {
+  if (isEnabled != null) {
+    GitConfigUtil.setValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN, if (isEnabled) "true" else "false")
   }
-  else {
-    GitConfigUtil.setValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN, "false")
+  if (gpgKey != null) {
+    GitConfigUtil.setValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY, gpgKey.id)
   }
 }
 
