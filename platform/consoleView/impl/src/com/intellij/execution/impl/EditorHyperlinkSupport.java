@@ -75,6 +75,7 @@ public final class EditorHyperlinkSupport {
   private static final Key<Unit> INLAY = Key.create("EDITOR_HYPERLINK_SUPPORT_INLAY");
   private static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
   private static final Expirable ETERNAL_TOKEN = () -> false;
+  private static final Object LOCK = new Object();
 
   private final EditorEx myEditor;
   private final @NotNull Project myProject;
@@ -172,10 +173,15 @@ public final class EditorHyperlinkSupport {
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor, boolean trackDocumentChangesManually) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
-      Project project = editor.getProject();
-      assert project != null;
-      instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
-      editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
+      synchronized (LOCK) {
+        instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+        if (instance == null) {
+          Project project = editor.getProject();
+          assert project != null;
+          instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
+          editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
+        }
+      }
     }
     return instance;
   }
