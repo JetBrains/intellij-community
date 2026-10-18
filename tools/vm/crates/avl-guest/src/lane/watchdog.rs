@@ -257,6 +257,8 @@ pub(crate) struct Watch {
     anchor: (Instant, Timestamp),
     /// How long a step may be open before the IDE dumps its threads, [`SLOW_STEP_BUDGET`] outside a test.
     slow_step: Duration,
+    /// How long the watchdog waits for the run thread to complete after a kill, [`KILL_GRACE`] outside a test.
+    kill_grace: Duration,
 }
 
 impl Watch {
@@ -274,7 +276,29 @@ impl Watch {
             changed: Condvar::new(),
             anchor: (now, Timestamp::now()),
             slow_step: SLOW_STEP_BUDGET,
+            kill_grace: KILL_GRACE,
         }
+    }
+
+    /// The same watch with a kill grace of `grace`, so a test sees the end of the wait after a kill at once.
+    #[cfg(test)]
+    pub(crate) const fn with_kill_grace(mut self, grace: Duration) -> Self {
+        self.kill_grace = grace;
+        self
+    }
+
+    /// Waits at most `within` for the run thread to complete the watch, and answers whether it did.
+    fn await_completion(&self, within: Duration) -> bool {
+        let deadline = Instant::now() + within;
+        let mut state = self.lock();
+        while state.deadlines.phase != Phase::Completed {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return false;
+            }
+            state = self.changed.wait_timeout(state, left).unwrap_or_else(PoisonError::into_inner).0;
+        }
+        true
     }
 
     /// The same watch with a slow-step budget of `budget`, so a test sees the dumps of a step in a second.
@@ -388,7 +412,8 @@ impl Watch {
     }
 }
 
-/// The watchdog thread of a run: it returns when the watch completes, or after it expired the run.
+/// The watchdog thread of a run: it returns when the watch completes, or after it expired the run and the run thread
+/// completed or the kill grace ended.
 pub(crate) fn watch(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, iteration_dir: &Path) {
     let mut next_heartbeat = Instant::now() + HEARTBEAT;
     let mut dismissal: Option<Option<String>> = None;
@@ -487,7 +512,12 @@ pub(crate) fn ide_dump(bridge: &Bridge) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
-/// Writes `watchdogExpired`, marks the run expired, and kills the IDE so the run thread unwinds.
+/// Marks the run expired, kills the IDE so the run thread unwinds, writes `watchdogExpired`, and waits the kill grace
+/// for the run thread to complete.
+///
+/// The kill comes before the record and its log line, so an expiry ends the IDE even when the stream or the standard
+/// error blocks. A run thread that does not complete within the grace waits on something other than the IDE, and the
+/// watchdog says so.
 fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expiry) {
     let reason = format!(
         "the watchdog ended the run: {}{}",
@@ -495,6 +525,7 @@ fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expi
         expiry.detail.as_deref().map(|detail| format!(": {detail}")).unwrap_or_default()
     );
     watch.lock().expired = Some(reason);
+    let killed = probes.kill();
     stream.emit(&RunEventKind::WatchdogExpired(WatchdogExpired {
         reason: expiry.reason.wire().to_owned(),
         deadline: watch.wire_instant(expiry.deadline),
@@ -503,8 +534,15 @@ fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expi
         active_execution: expiry.active.clone(),
         evidence: Vec::new(),
     }));
-    if let Err(error) = probes.kill() {
+    if let Err(error) = killed {
         stream.note(format!("the watchdog could not kill the IDE: {error}"));
+    }
+    if !watch.await_completion(watch.kill_grace) {
+        stream.note(format!(
+            "the run thread did not unwind within {} ms after the watchdog killed the IDE: it waits on something \
+             other than the IDE",
+            watch.kill_grace.as_millis()
+        ));
     }
 }
 

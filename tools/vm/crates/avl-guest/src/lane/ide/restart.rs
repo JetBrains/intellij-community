@@ -3,6 +3,7 @@
 //! held run, which the watchdog kills, and the lane services, which a host id steers.
 
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, PoisonError};
 
 use super::{IdeOwner, LaneLaunch, LaneServices, Records, refused};
 use crate::lane::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE};
@@ -13,6 +14,27 @@ use crate::lane::services::cloud::Cloud;
 use crate::lane::services::feedback::Feedback;
 use crate::lane::services::registry::Registry;
 use crate::reply::AgentRefusal;
+
+/// The IDE run that a kill of the watchdog ends: its context directory, its run id, and the `jcmd` that dumps its
+/// threads first.
+pub(crate) type RunTarget = (PathBuf, String, Option<PathBuf>);
+
+/// The run that the watchdog kills. The owner publishes it right after a launch returns, and clears it in a quit. The
+/// watchdog reads it without the lock of the owner, so a kill during a relaunch reaches the run that the relaunch
+/// launched, and never the run that it quit.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct KillTarget(Arc<Mutex<Option<RunTarget>>>);
+
+impl KillTarget {
+    /// The run that a kill ends now, or `None` while no IDE run is held.
+    pub(crate) fn current(&self) -> Option<RunTarget> {
+        self.0.lock().unwrap_or_else(PoisonError::into_inner).clone()
+    }
+
+    pub(super) fn publish(&self, target: Option<RunTarget>) {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = target;
+    }
+}
 
 /// Why the owner relaunches the IDE on its context: the base of the launch name, the line of the run log, and whether
 /// the start restores the editor tabs of the previous run.
@@ -87,11 +109,23 @@ impl IdeOwner {
         down.map_err(|error| refused(format!("the file operations while the IDE of '{key}' was down failed: {error}")))
     }
 
-    /// The context directory and the run id of the held IDE run, and the `jcmd` that dumps its threads before a kill.
-    pub(crate) fn kill_target(&self) -> Option<(PathBuf, String, Option<PathBuf>)> {
-        self.held
-            .as_ref()
-            .map(|held| (held.context().to_path_buf(), held.run_id(), self.inputs.jcmd()))
+    /// The run that a kill of the watchdog ends, as the owner publishes it.
+    pub(crate) fn kill_target(&self) -> KillTarget {
+        self.target.clone()
+    }
+
+    /// Publishes the held IDE run as the target of a kill, or no target when the owner holds no IDE.
+    pub(super) fn publish_target(&self) {
+        self.target.publish(
+            self.held
+                .as_ref()
+                .map(|held| (held.context().to_path_buf(), held.run_id(), self.inputs.jcmd())),
+        );
+    }
+
+    /// The context directory of the held IDE.
+    pub(crate) fn context_dir(&self) -> Option<PathBuf> {
+        self.held.as_ref().map(|held| held.context().to_path_buf())
     }
 
     /// The pid of the held IDE run, as its launch named it.

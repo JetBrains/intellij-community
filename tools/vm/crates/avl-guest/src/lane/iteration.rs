@@ -12,7 +12,6 @@ use std::fs;
 use std::io::Write;
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
 use avl_trace::protocol;
@@ -24,7 +23,7 @@ use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
-use super::ide::{ContextPlugin, LaneLaunch, Records, Relaunch};
+use super::ide::{ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::live::LiveRun;
@@ -579,10 +578,9 @@ fn execute_selection(
         stream,
         bridge: Bridge::new(BRIDGE_PORT, &token).map_err(|refusal| refusal.message)?,
         token,
-        held: Mutex::new(None),
+        target: daemon.with_ide(|owner| owner.kill_target()),
         live,
     };
-    daemon_lane.refresh_held();
     // Dropped at the end of the run, which removes the copies from the context.
     let staged = session_logs::stage(daemon_lane.context_dir().as_deref(), &request.session_logs, &|sha256| {
         daemon.stored(sha256)
@@ -637,19 +635,14 @@ struct DaemonLane<'a, 's> {
     stream: &'a Stream<'s>,
     bridge: Bridge,
     token: String,
-    /// The context directory, the run id and the `jcmd` of the held IDE run, read after each launch, so the watchdog
-    /// kills the run without the lock of the owner.
-    held: Mutex<Option<(PathBuf, String, Option<PathBuf>)>>,
+    /// The IDE run that a kill ends, as the owner publishes it after each launch and clears it in each quit. The
+    /// watchdog reads it without the lock of the owner, which the run thread holds during a relaunch.
+    target: KillTarget,
     /// The live run of the iteration, for the live lane alone.
     live: Option<&'a LiveRun>,
 }
 
 impl DaemonLane<'_, '_> {
-    fn refresh_held(&self) {
-        let held = self.daemon.with_ide(|owner| owner.kill_target());
-        *self.held.lock().unwrap_or_else(PoisonError::into_inner) = held;
-    }
-
     fn with_services<T>(&self, work: impl FnOnce(&super::ide::LaneServices) -> Result<T, String>) -> Result<T, String> {
         self.daemon.with_ide(|owner| {
             owner
@@ -678,7 +671,6 @@ impl Lane for DaemonLane<'_, '_> {
                 &mut Records(&mut |record| self.stream.emit(&record)),
             )
         });
-        self.refresh_held();
         restarted.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
     }
 
@@ -691,11 +683,7 @@ impl Lane for DaemonLane<'_, '_> {
     }
 
     fn context_dir(&self) -> Option<PathBuf> {
-        self.held
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .as_ref()
-            .map(|(context, _, _)| context.clone())
+        self.daemon.with_ide(|owner| owner.context_dir())
     }
 
     fn recorder_bridge(&self) -> Option<protocol::Bridge> {
@@ -716,7 +704,6 @@ impl Lane for DaemonLane<'_, '_> {
         let launched = self
             .daemon
             .with_ide(|owner| owner.launch_bare(self.launch, key, &mut Records(&mut |record| self.stream.emit(&record))));
-        self.refresh_held();
         launched.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
     }
 
@@ -734,7 +721,6 @@ impl Lane for DaemonLane<'_, '_> {
         let ended = self
             .daemon
             .with_ide(|owner| owner.end_bare(&mut Records(&mut |record| self.stream.emit(&record))));
-        self.refresh_held();
         ended.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))
     }
 
@@ -852,7 +838,7 @@ impl Probes for DaemonLane<'_, '_> {
     }
 
     fn kill(&self) -> Result<(), String> {
-        let Some((context, run_id, jcmd)) = self.held.lock().unwrap_or_else(PoisonError::into_inner).clone() else {
+        let Some((context, run_id, jcmd)) = self.target.current() else {
             return Err("no IDE run is held".to_owned());
         };
         supervisor::cancel(

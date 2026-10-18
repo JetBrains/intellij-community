@@ -41,7 +41,7 @@ use crate::cli::{CancelArgs, LogArgs, RootArgs, StartArgs};
 use crate::clock::stamp;
 use crate::reply::{self, AgentRefusal, Streams};
 
-pub(crate) use launch::LaunchHost;
+pub(crate) use launch::{LaunchHost, reap_ended};
 pub(crate) use supervise::supervise;
 #[cfg(test)]
 pub(crate) use supervise::{CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, child_path, has_utf8_locale};

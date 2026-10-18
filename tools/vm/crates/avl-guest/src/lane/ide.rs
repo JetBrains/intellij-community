@@ -57,7 +57,7 @@ use crate::supervisor::{self, Launcher, LiveSystem};
 
 mod restart;
 
-pub(crate) use restart::Relaunch;
+pub(crate) use restart::{KillTarget, Relaunch};
 #[cfg(test)]
 mod tests;
 
@@ -378,15 +378,18 @@ pub(crate) struct IdeOwner {
     held: Option<HeldIde>,
     /// The record of the lane IDE that a bare launch quit, until the bare suite ends.
     parked: Option<HeldIde>,
+    /// The held run as the target of a kill of the watchdog, see [`KillTarget`].
+    target: KillTarget,
 }
 
 impl IdeOwner {
-    pub(crate) const fn new(inputs: LaunchInputs) -> Self {
+    pub(crate) fn new(inputs: LaunchInputs) -> Self {
         Self {
             inputs,
             services: None,
             held: None,
             parked: None,
+            target: KillTarget::default(),
         }
     }
 
@@ -451,6 +454,7 @@ impl IdeOwner {
             ));
             emit_launched(&adopted, records);
             self.held = Some(adopted);
+            self.publish_target();
         }
         let decision = self.decide(launch, &key);
         records.decide(&decision);
@@ -682,6 +686,7 @@ impl IdeOwner {
 
     /// Installs the plugins of `launch` into the context of `held` and starts its run.
     fn start_run(&mut self, mut held: HeldIde, launch: &LaneLaunch<'_>, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        supervisor::reap_ended();
         let distribution: Vec<String> = self.inputs.distribution_plugins.iter().cloned().collect();
         install_plugins(Path::new(&held.paths.plugins_dir), launch.plugins, &distribution)?;
         let properties = self.launch_properties(launch, &held)?;
@@ -711,6 +716,7 @@ impl IdeOwner {
             log_dir: launched.log_dir,
         }));
         self.held = Some(held);
+        self.publish_target();
         Ok(())
     }
 
@@ -832,12 +838,14 @@ impl IdeOwner {
     /// `/ide/stop` asks for it, so the next run makes a fresh context.
     pub(crate) fn quit(&mut self, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let Some(mut held) = self.held.take() else {
+            self.publish_target();
             return Ok(());
         };
         let result = self.end_run(&mut held, records);
         if result.is_err() {
             self.held = Some(held);
         }
+        self.publish_target();
         result
     }
 
@@ -882,6 +890,8 @@ impl IdeOwner {
                 records.emit(exited(held, &state));
             }
         }
+        // The supervisor of the run ended with it, and this process is its parent, so it reaps it now.
+        supervisor::reap_ended();
         Ok(())
     }
 

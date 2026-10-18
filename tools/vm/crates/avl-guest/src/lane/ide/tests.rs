@@ -221,3 +221,69 @@ fn a_recycle_removes_the_restored_tabs_and_a_restart_keeps_them() {
     );
     assert_eq!(fs::read_to_string(&file).unwrap(), "<project version=\"4\">\n</project>\n");
 }
+
+/// The inputs of an owner whose IDE root is `root`, with no file behind them.
+fn owner_inputs(root: &Path) -> LaunchInputs {
+    LaunchInputs {
+        ide_root: root.join("ide"),
+        home: root.join("home"),
+        dist_home: root.join("dist"),
+        ide_config: root.join("dist.properties"),
+        java_home: root.join("dist/jbr"),
+        flags_file: root.join("flags.txt"),
+        project_archive: root.join("project.zip"),
+        project_root: "plain-project".to_owned(),
+        runtimes: Vec::new(),
+        distribution_plugins: std::collections::BTreeSet::new(),
+        trace: crate::lane::inputs::TraceInputs::default(),
+    }
+}
+
+/// A held IDE of the context `context`, whose launch `launch_name` has no run on disk, so a quit finds it ended.
+fn held_ide(context: &Path, launch_name: &str) -> HeldIde {
+    let path = |name: &str| context.join(name).display().to_string();
+    HeldIde {
+        key: "air-ui-lane".to_owned(),
+        token: "token".to_owned(),
+        paths: IdePrepared {
+            context_dir: context.display().to_string(),
+            config_dir: path("config"),
+            system_dir: path("system"),
+            plugins_dir: path("plugins"),
+            project_dir: path("project"),
+            home_dir: path("home"),
+            bin_dir: path("bin"),
+        },
+        launch_name: launch_name.to_owned(),
+        pid: None,
+        relaunches: 0,
+        exit_reported: true,
+        bare: false,
+    }
+}
+
+// The watchdog kills the run that the owner published last, through a handle that it reads without the lock of the
+// owner. A launch publishes its run, and a quit clears it. So a kill during a relaunch reaches the run that the
+// relaunch launched, and a kill between the quit and the launch kills no run.
+#[test]
+fn the_kill_target_is_the_run_of_the_last_launch_and_a_quit_clears_it() {
+    let root = TempDir::new().unwrap();
+    let context = root.path().join("ide/air-ui-lane");
+    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    let target = owner.kill_target();
+    assert_eq!(target.current(), None, "an owner with no IDE publishes no target");
+
+    // What start_run does after the launch of the first run returns.
+    owner.held = Some(held_ide(&context, "start-mve37si6"));
+    owner.publish_target();
+    let run_of = |target: &KillTarget| target.current().map(|(directory, run_id, _)| (directory, run_id));
+    assert_eq!(run_of(&target), Some((context.clone(), "run-ide-start-mve37si6".to_owned())));
+
+    // The relaunch quits the first run, and nothing is held until the next launch returns.
+    owner.quit(&mut Records(&mut |_| {})).unwrap();
+    assert_eq!(target.current(), None, "a quit leaves the run it ended as the target");
+
+    owner.held = Some(held_ide(&context, "restart-1-mve37si7"));
+    owner.publish_target();
+    assert_eq!(run_of(&target), Some((context, "run-ide-restart-1-mve37si7".to_owned())));
+}

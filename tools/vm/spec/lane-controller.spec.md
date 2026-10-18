@@ -813,10 +813,25 @@ The daemon's half and the IDE's half of supervision are in
   of each scenario, and one minute.
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_deadlines_follow_the_phase_and_the_emergency_caps_the_run`)
 
-- On expiry the watchdog of the lane daemon writes `watchdogExpired` and kills the IDE run with a thread dump. The
-  scenario in flight ends as `ABORTED`, and the run starts no further scenario.
+- On expiry the watchdog of the lane daemon kills the IDE run with a thread dump, and then writes `watchdogExpired`.
+  So a stream or a standard error that blocks cannot hold the kill. The scenario in flight ends as `ABORTED`, and the
+  run starts no further scenario.
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide`)
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_kill_comes_before_the_expiry_record_so_a_blocked_stream_does_not_hold_it`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_scenario_past_its_timeout_is_aborted_and_no_later_scenario_starts`)
+
+- The kill ends the IDE run that the last launch started, also when the expiry comes during a relaunch. A launch
+  publishes its run as the target, and a quit clears it.
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`the_kill_target_is_the_run_of_the_last_launch_and_a_quit_clears_it`)
+
+- After the kill the watchdog waits one minute for the run thread to complete. A run thread that does not complete in
+  that time waits on something other than the IDE, and the run log says so.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`a_run_thread_that_completes_after_the_kill_ends_the_wait_without_a_note`)
+
+- `lane-run` and the lane daemon reap each supervisor that they spawned and that ended. A supervisor that nobody
+  reaps stays a zombie, and the identity check reads a zombie as a live supervisor.
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`an_ended_supervisor_stays_a_zombie_until_its_parent_reaps_it`)
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`a_zombie_supervisor_reads_as_alive_and_only_its_reap_repairs_a_run_it_left_running`)
 
 - The first modal intruder of a run gets one dismissal. An intruder that the next tick still sees expires the run as
   `ide_intrusion`, and the detail names the dismissal.

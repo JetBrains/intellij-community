@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::io::Write;
+use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, Instant};
 
 use avl_testkit::http::{FakeHttp, Response};
@@ -87,7 +88,7 @@ impl Probes for Intruded {
 fn an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide() {
     let directory = TempDir::new().unwrap();
     let probes = Intruded::default();
-    let watch = Watch::new(POLICY);
+    let watch = Watch::new(POLICY).with_kill_grace(Duration::from_millis(20));
     let mut out = Vec::new();
     let stream = Stream::new(&mut out);
     watch.execution_started(&stream, identity("first"));
@@ -102,6 +103,11 @@ fn an_intruder_that_survives_its_dismissal_expires_the_run_and_kills_the_ide() {
     assert!(
         expiry.contains("The run tried to clear it first: cancelled 'EAP expired'"),
         "{expiry}"
+    );
+    // No run thread completes the watch here, so the watchdog says that the run thread did not unwind.
+    assert!(
+        records.contains("the run thread did not unwind within 20 ms after the watchdog killed the IDE"),
+        "{records}"
     );
 }
 
@@ -206,4 +212,149 @@ fn the_ide_dump_comes_from_the_resident_route_while_the_bridge_unloads() {
         refused,
         format!("GET {DUMP_ROUTE}: the bridge answered HTTP 401: unsigned Air UI-test dump request")
     );
+}
+
+/// The budget of a scenario that the first tick after one second finds spent.
+const SPENT: Policy = Policy {
+    active_execution: Duration::from_millis(10),
+    progress_gap: Duration::from_mins(5),
+};
+
+/// A writer that blocks each write while it is shut, as a stream does whose reader stopped reading.
+struct Gate {
+    shut: Arc<(Mutex<bool>, Condvar)>,
+    written: Arc<Mutex<Vec<u8>>>,
+}
+
+impl Write for Gate {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        let (lock, opened) = &*self.shut;
+        let mut shut = lock.lock().unwrap();
+        while *shut {
+            shut = opened.wait(shut).unwrap();
+        }
+        self.written.lock().unwrap().extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// Probes whose kill counts itself and opens the gate of the stream.
+struct OpensTheGate {
+    shut: Arc<(Mutex<bool>, Condvar)>,
+    kills: Mutex<u32>,
+}
+
+impl Probes for OpensTheGate {
+    fn intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        Ok(String::new())
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        *self.kills.lock().unwrap() += 1;
+        let (lock, opened) = &*self.shut;
+        *lock.lock().unwrap() = false;
+        opened.notify_all();
+        Ok(())
+    }
+}
+
+// The kill comes before the watchdogExpired record. A stream that blocks then holds only the record, and the IDE ends
+// anyway, so the run thread can unwind.
+#[test]
+fn the_kill_comes_before_the_expiry_record_so_a_blocked_stream_does_not_hold_it() {
+    let directory = TempDir::new().unwrap();
+    let shut = Arc::new((Mutex::new(false), Condvar::new()));
+    let written = Arc::new(Mutex::new(Vec::new()));
+    let mut out = Gate {
+        shut: Arc::clone(&shut),
+        written: Arc::clone(&written),
+    };
+    let stream = Stream::new(&mut out);
+    let watch = Watch::new(SPENT).with_kill_grace(Duration::from_millis(10));
+    watch.execution_started(&stream, identity("first"));
+    *shut.0.lock().unwrap() = true;
+    let probes = OpensTheGate {
+        shut: Arc::clone(&shut),
+        kills: Mutex::new(0),
+    };
+    std::thread::scope(|scope| {
+        scope.spawn(|| super::watch(&watch, &stream, &probes, directory.path()));
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while *probes.kills.lock().unwrap() == 0 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let killed = *probes.kills.lock().unwrap() == 1;
+        // Opens the gate in any case, so a watchdog that waits on the stream returns and the scope ends.
+        *shut.0.lock().unwrap() = false;
+        shut.1.notify_all();
+        assert!(killed, "the kill waited for the stream");
+    });
+    let records = String::from_utf8(written.lock().unwrap().clone()).unwrap();
+    assert!(records.contains("\"watchdogExpired\""), "{records}");
+}
+
+/// Probes whose kill completes the watch, as a run thread does that unwinds at once after the kill.
+struct CompletesOnKill<'a, 's> {
+    watch: &'a Watch,
+    stream: &'a Stream<'s>,
+}
+
+impl Probes for CompletesOnKill<'_, '_> {
+    fn intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        Ok(String::new())
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        self.watch.completed(self.stream);
+        Ok(())
+    }
+}
+
+// After a kill the watchdog waits for the run thread to complete, and a run thread that does complete ends the wait at
+// once and gets no note.
+#[test]
+fn a_run_thread_that_completes_after_the_kill_ends_the_wait_without_a_note() {
+    let directory = TempDir::new().unwrap();
+    let watch = Watch::new(SPENT).with_kill_grace(Duration::from_mins(1));
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    watch.execution_started(&stream, identity("first"));
+    let started = Instant::now();
+    super::watch(
+        &watch,
+        &stream,
+        &CompletesOnKill {
+            watch: &watch,
+            stream: &stream,
+        },
+        directory.path(),
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(30),
+        "the watchdog waited out its kill grace"
+    );
+    drop(stream);
+    let records = String::from_utf8(out).unwrap();
+    assert!(records.contains("\"watchdogExpired\""), "{records}");
+    assert!(!records.contains("did not unwind"), "{records}");
 }
