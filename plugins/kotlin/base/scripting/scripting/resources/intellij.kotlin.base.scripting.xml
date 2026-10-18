@@ -223,6 +223,8 @@
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsBuildListener"
+              topic="com.intellij.task.ProjectTaskListener"/>
   </projectListeners>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">

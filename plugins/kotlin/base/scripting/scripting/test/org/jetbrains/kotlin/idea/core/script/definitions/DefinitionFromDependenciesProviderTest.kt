@@ -1,14 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.pathString
 
 private const val IN_JAR: String = "testData/script/templatesFromDependencies/inJar/"
+private const val IN_PRODUCTION_RESOURCES: String = "testData/script/templatesFromDependencies/inProductionResources/"
 
 @TestRoot("base/scripting/scripting")
 @TestDataPath($$"$CONTENT_ROOT")
@@ -22,6 +33,11 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
     @TestMetadata("inJar")
     fun testInJar() {
         runTest("testData/script/templatesFromDependencies/inJar/")
+    }
+
+    @TestMetadata("inProductionResources")
+    fun testInProductionResources() {
+        runTest(IN_PRODUCTION_RESOURCES)
     }
 
     @TestMetadata("inTests")
@@ -114,4 +130,74 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         )
     }
 
+    fun testBuildInvalidatesDiscovery() {
+        runTest(IN_PRODUCTION_RESOURCES)
+
+        val provider = DefinitionFromDependenciesProvider(project)
+        assertEmpty(provider.definitionClasses())
+        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
+        val definitionsCount = definitionsTracker.modificationCount
+        val templatesDirectory = getOrCreateProjectBaseDir().findFileByRelativePath("module/classes/$SCRIPT_TEMPLATE_MARKER_DIR")!!
+
+        runWriteAction {
+            templatesDirectory.createChildData(this, "MyTemplate.classname")
+        }
+        refreshDefinitionsAfterBuild()
+
+        assertTrue("A build that adds a marker file must reload script definitions", definitionsTracker.modificationCount > definitionsCount)
+        assertEquals(listOf("MyTemplate"), provider.definitionClasses())
+    }
+
+    fun testBuildWithoutMarkerChangeKeepsDefinitions() {
+        runTest(IN_JAR)
+
+        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
+        val definitionsCount = definitionsTracker.modificationCount
+
+        refreshDefinitionsAfterBuild()
+
+        assertEquals("A build that changes no marker file must not reload script definitions", definitionsCount, definitionsTracker.modificationCount)
+    }
+
+    fun testMarkerInTestScopeLibraryIsDiscovered() {
+        runTest(IN_JAR)
+
+        val module = ModuleManager.getInstance(project).modules.single { it.name.endsWith("_module") }
+        ModuleRootModificationUtil.updateModel(module) { model ->
+            model.orderEntries.filterIsInstance<LibraryOrderEntry>().forEach { it.scope = DependencyScope.TEST }
+        }
+
+        assertEquals(listOf("MyTemplate1"), DefinitionFromDependenciesProvider(project).definitionClasses())
+    }
+
+    fun testOutputDirectoryCreatedAfterDiscoveryIsScanned() {
+        runTest(IN_PRODUCTION_RESOURCES)
+
+        val module = ModuleManager.getInstance(project).modules.single { it.name.endsWith("_module") }
+        val projectDirectory = getOrCreateProjectBaseDir()
+        PsiTestUtil.setCompilerOutputPath(module, "${projectDirectory.url}/module/out", false)
+        val provider = DefinitionFromDependenciesProvider(project)
+        assertEmpty(provider.definitionClasses())
+
+        runWriteAction {
+            VfsUtil.createDirectoryIfMissing(projectDirectory, "module/out/$SCRIPT_TEMPLATE_MARKER_DIR")!!.createChildData(this, "MyTemplate.classname")
+        }
+        refreshDefinitionsAfterBuild()
+
+        assertEquals(listOf("MyTemplate"), provider.definitionClasses())
+    }
+
+    fun testDiscoveryRunsInsideReadActionAndOnEdt() {
+        runTest(IN_JAR)
+
+        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
+        definitionsTracker.incModificationCount()
+        assertEquals(listOf("MyTemplate1"), runReadActionBlocking { DefinitionFromDependenciesProvider(project).definitionClasses() })
+        definitionsTracker.incModificationCount()
+        assertEquals(listOf("MyTemplate1"), runInEdtAndGet { DefinitionFromDependenciesProvider(project).definitionClasses() })
+    }
+
+    private fun refreshDefinitionsAfterBuild() {
+        ScriptDefinitionsBuildListener(project).refreshDefinitions().blockingGet(1, TimeUnit.MINUTES)
+    }
 }
