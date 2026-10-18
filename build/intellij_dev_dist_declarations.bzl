@@ -14,7 +14,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plat
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
+load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_repository_label", "platform_parts")
 load(":intellij_dev.bzl", "intellij_dev_dist_config", "intellij_dev_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
@@ -220,7 +220,26 @@ PACKED_JARS_COMPONENT = "platform_packed_content_modules"
 
 # The component that places the platform's declared dist files: the files of the unpacked dev-launch archives that
 # `PlatformLayout.withDistFiles` names, at their distribution paths. The generated plan states them per host platform.
+# The component also places the files of the bundled runtime below `jbr/`.
 PLATFORM_ASSETS_COMPONENT = "platform_assets"
+
+# The directory of the bundled runtime in a distribution home. On macOS the runtime is a bundle with `Contents/Home`.
+_RUNTIME_DIRECTORY = "jbr"
+
+def _runtime_executables(platform):
+    """The `unpacked_archive_executables` values of the bundled runtime of one host platform.
+
+    The composer gives the executable bit only to a destination that this list names.
+    """
+    os = platform_parts(platform).os
+    if os == "windows":
+        return []
+
+    # BundledRuntimeImpl.executableFilesPatterns
+    if os == "darwin":
+        # Production omits `jspawnhelper` on macOS. The archive gives it the executable bit, and `posix_spawn` needs it.
+        return [_RUNTIME_DIRECTORY + "/Contents/Home/bin/", _RUNTIME_DIRECTORY + "/Contents/Home/lib/jspawnhelper"]
+    return [_RUNTIME_DIRECTORY + "/bin/", _RUNTIME_DIRECTORY + "/lib/jexec", _RUNTIME_DIRECTORY + "/lib/jspawnhelper"]
 
 # The component of `bin/idea.properties`, the vmoptions file, `bin/product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
@@ -252,13 +271,11 @@ def _platform_fragment_layout(tables, product):
     the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
     the one owner of that list; the declaring macro and the label lookup both read it.
     """
-    plan = _plan(tables, product)
     layout = [
         struct(suffix = _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT), fragment_name = _PLATFORM_RESOURCES_FRAGMENT),
         struct(suffix = PACKED_JARS_COMPONENT, fragment_name = PACKED_JARS_COMPONENT),
+        struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT),
     ]
-    if plan.platform_assets:
-        layout.append(struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT))
     return layout
 
 def _has_runtime_module_repository(tables, product):
@@ -478,12 +495,13 @@ def _platform_set(tables, product, name, target_platform, visibility):
 
     def assets_component():
         # The generated plan states each file as `struct(source, path, executable)` per host platform. The rule takes
-        # the files as two label-to-path dicts, one per executable bit.
+        # the files as two label-to-path dicts, one per executable bit. The bundled runtime goes in as an unpacked
+        # archive, and the rule refuses a runtime file at the path of an explicit asset.
         def asset_files(entries, executable):
             return {entry.source: entry.path for entry in entries if entry.executable == executable}
 
         def selected(executable):
-            return per_platform(lambda platform: asset_files(plan.platform_assets.get(platform, []), executable))
+            return per_platform(lambda platform: asset_files(getattr(plan, "platform_assets", {}).get(platform, []), executable))
 
         intellij_dev_packed_jars_component(
             name = name + "_assets",
@@ -495,6 +513,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
             target_platform = target_platform,
             files = selected(False),
             executable_files = selected(True),
+            unpacked_archives = per_platform(lambda platform: {jbr_runtime_repository_label(platform): _RUNTIME_DIRECTORY}),
+            unpacked_archive_executables = per_platform(_runtime_executables),
         )
 
     # Declared in the layout's order, which is the composition order the returned lists state.

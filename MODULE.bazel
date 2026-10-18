@@ -189,6 +189,7 @@ use_repo(
     "dev_launch_%s_%s" % (platform, group),
 ) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
     "jbr",
+    "jbr_runtime_extracted",
     "jcef",
     "pyrefly",
     "pyrefly_extracted",
