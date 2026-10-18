@@ -110,6 +110,10 @@ fn invalid_platform_jars() {
             r#"[{"source":"in","relativePath":"jna","tree":true,"coreClassPath":true}]"#,
             "states coreClassPath for a native tree",
         ),
+        (
+            r#"[{"source":"in","relativePath":"a.jar","checkSourceMode":true}]"#,
+            "states checkSourceMode, which only a file record can",
+        ),
     ] {
         write_file("jars.json", text);
         require_error(platform_jars("jars.json"), message);
@@ -155,7 +159,7 @@ fn explicit_files_keep_their_destination() {
 ]"#,
     );
     assert_eq!(
-        explicit_files("files.json").unwrap(),
+        explicit_files("files.json", "linux").unwrap(),
         [
             SourcedFile {
                 executable: true,
@@ -165,7 +169,30 @@ fn explicit_files_keep_their_destination() {
         ]
     );
     write_file("files.json", "[]");
-    assert_eq!(explicit_files("files.json").unwrap(), []);
+    assert_eq!(explicit_files("files.json", "linux").unwrap(), []);
+}
+
+/// A file of an unpacked archive states `checkSourceMode`. The inventory checks the mode of its source for every target
+/// OS except Windows.
+#[test]
+fn explicit_files_check_the_source_mode_of_an_unpacked_archive() {
+    let _directory = WorkingDirectory::enter();
+    write_file(
+        "files.json",
+        r#"[
+  {"source":"jbr/bin/java", "relativePath":"jbr/bin/java", "executable":true, "checkSourceMode":true},
+  {"source":"jbr/release", "relativePath":"jbr/release", "executable":false, "checkSourceMode":true},
+  {"source":"build.txt", "relativePath":"build.txt", "executable":false}
+]"#,
+    );
+    for (os, checked) in [("linux", true), ("mac", true), ("windows", false)] {
+        let files = explicit_files("files.json", os).unwrap();
+        assert_eq!(
+            files.iter().map(|file| file.check_source_mode).collect::<Vec<_>>(),
+            [checked, checked, false],
+            "{os}"
+        );
+    }
 }
 
 #[test]
@@ -214,17 +241,17 @@ fn invalid_explicit_files() {
         ("[] []", "trailing characters"),
     ] {
         write_file("files.json", text);
-        require_error(explicit_files("files.json"), message);
+        require_error(explicit_files("files.json", "linux"), message);
     }
     write_file("files.json", [b'[', 0xff, b']']);
-    require_error(explicit_files("files.json"), "files.json");
+    require_error(explicit_files("files.json", "linux"), "files.json");
     // The shared destination check reports a repeated destination of the file mode.
     write_file(
         "files.json",
         r#"[{"source":"in","relativePath":"out","executable":true},{"source":"other","relativePath":"out","executable":false}]"#,
     );
     require_error(
-        explicit_files("files.json").and_then(|files| inventory(&files)),
+        explicit_files("files.json", "linux").and_then(|files| inventory(&files)),
         "conflicting destination: out",
     );
 }
