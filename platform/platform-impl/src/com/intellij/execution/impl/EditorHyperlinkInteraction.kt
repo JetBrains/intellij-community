@@ -17,12 +17,14 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.Font
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
-internal class EditorHyperlinkInteraction(
+@ApiStatus.Internal
+class EditorHyperlinkInteraction(
   private val editor: EditorEx,
   private val effectSupplier: EditorHyperlinkEffectSupplier,
   parentDisposable: Disposable,
