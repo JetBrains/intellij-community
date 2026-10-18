@@ -234,3 +234,30 @@ fn an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name() {
         .contains("has two values")
     );
 }
+
+// lane-run proves the host only where nothing proved it yet: on Linux, for a run that launches an IDE, and on a host
+// that no controller prepared. A worker of the controller names the run secrets directory, and validate-guest proved
+// that worker at its boot, so a run there pays nothing.
+#[test]
+fn only_a_linux_run_on_a_host_that_no_controller_prepared_probes_the_host() {
+    let host = environment(&[]);
+    let worker = environment(&[("AIR_VM_RUN_SECRETS", "/dev/shm/air-run-secrets")]);
+
+    assert!(host_probe_applies(&args(&[]), &host, true));
+    assert!(host_probe_applies(&args(&[]), &environment(&[("AIR_VM_RUN_SECRETS", " ")]), true));
+    assert!(!host_probe_applies(&args(&[]), &worker, true));
+    assert!(!host_probe_applies(&args(&["--plan-only"]), &host, true));
+    assert!(!host_probe_applies(&args(&[]), &host, false));
+}
+
+// The lane IDE opens its windows on an X display, so a host without DISPLAY is refused by name before the probe.
+#[test]
+fn a_host_without_a_display_is_refused_by_name() {
+    assert_eq!(host_display(&environment(&[("DISPLAY", ":0")])).unwrap(), ":0");
+
+    let refusal = host_display(&environment(&[("DISPLAY", "")])).unwrap_err();
+
+    assert_eq!(refusal.code, CODE_DISPLAY_MISSING);
+    assert!(refusal.message.contains("DISPLAY is unset"), "{}", refusal.message);
+    assert_eq!(host_display(&environment(&[])).unwrap_err().code, CODE_DISPLAY_MISSING);
+}

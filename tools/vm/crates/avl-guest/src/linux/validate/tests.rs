@@ -771,3 +771,92 @@ fn the_validate_guest_verb_refuses_under_its_own_name() {
     assert!(answered.code().starts_with("linux_"), "{}", answered.stderr);
     assert_eq!(answered.failure()["command"], AgentVerb::ValidateGuest.as_str());
 }
+
+// --- the host probe of lane-run ---------------------------------------------------------------------------------
+
+/// A host of `lane-run` that has what the lane IDE needs: the healthy worker with `git` on its PATH.
+fn healthy_host() -> Fixture {
+    let mut fixture = Fixture::healthy();
+    fixture.worker().reply("git --version", "git version 2.43.0\n");
+    fixture
+}
+
+// A host with an answering display, a window manager, the libraries of the distribution, git and the screen of a lane
+// guest passes the probe with no note.
+#[test]
+fn a_host_that_has_what_the_lane_ide_needs_passes_the_probe_with_no_note() {
+    let mut fixture = healthy_host();
+
+    assert_eq!(fixture.validator.probe_host().unwrap(), Vec::<String>::new());
+    assert!(fixture.worker().ran("git --version"));
+}
+
+// A screen smaller than the 1920x1080 of a lane guest, such as the Xvfb of a TeamCity agent at 1024x768, is a note and
+// not a refusal. An answer that names no dimensions is a note too.
+#[test]
+fn a_smaller_screen_is_a_note_and_not_a_refusal() {
+    let mut fixture = healthy_host();
+    fixture.worker().reply(
+        XDPYINFO_TOOL,
+        "screen #0:\n  dimensions:    1024x768 pixels (271x203 millimeters)\n",
+    );
+    assert_eq!(
+        fixture.validator.probe_host().unwrap(),
+        [
+            "the screen of the display :88 is 1024x768, smaller than the 1920x1080 of a lane guest, so a window of the \
+          lane IDE can lay out differently"
+        ]
+    );
+
+    fixture.worker().reply(XDPYINFO_TOOL, "name of display:    :88\n");
+    assert_eq!(
+        fixture.validator.probe_host().unwrap(),
+        ["xdpyinfo names no screen dimensions of the display :88"]
+    );
+}
+
+// A host without git is refused by name before the lane IDE starts, because the merge-conflict and worktree scenarios
+// spawn it.
+#[test]
+fn a_host_without_git_is_refused_by_name() {
+    let mut fixture = Fixture::healthy();
+    fixture.worker().fail_with("git --version", 127);
+
+    let refusal = fixture.validator.probe_host().unwrap_err();
+
+    assert_eq!(refusal.code, GIT_MISSING_CODE);
+    assert!(
+        refusal
+            .message
+            .starts_with("this host cannot run the lane IDE: `git --version` fails"),
+        "{}",
+        refusal.message
+    );
+}
+
+// A host whose display has no window manager, or whose distribution links a library that the host lacks, is refused
+// with the code of the same check of a worker. The message names the host, and the refusal of a library names the
+// first missing one. The probe stops there and asks for no git.
+#[test]
+fn a_host_without_a_window_manager_or_a_library_is_refused_with_the_code_of_the_guest_check() {
+    let mut fixture = healthy_host();
+    fixture.worker().reply(&root_xprop(), ABSENT);
+    let refusal = fixture.validator.probe_host().unwrap_err();
+    assert_eq!(refusal.code, "linux_window_manager_missing");
+    assert!(
+        refusal.message.starts_with("this host cannot run the lane IDE: "),
+        "{}",
+        refusal.message
+    );
+
+    let mut fixture = healthy_host();
+    fixture.stage_shared_object("lib/libskiko-linux-arm64.so", "\tlibEGL.so.1 => not found\n");
+    let refusal = fixture.validator.probe_host().unwrap_err();
+    assert_eq!(refusal.code, "linux_shared_object_unresolved");
+    assert!(
+        refusal.message.starts_with("this host cannot run the lane IDE: ") && refusal.message.contains("needs libEGL.so.1"),
+        "{}",
+        refusal.message
+    );
+    assert!(!fixture.worker().ran("git"), "the probe stops at the first missing requirement");
+}

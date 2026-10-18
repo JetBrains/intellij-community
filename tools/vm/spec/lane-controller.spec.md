@@ -1594,6 +1594,20 @@ the lanes to the verb, and it goes with the JVM daemon.
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_notes_of_a_lane_run_follow_the_start_of_the_run`)
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
 
+- Before the lane IDE starts, `lane-run` on a Linux host that no controller prepared proves the host. A TeamCity
+  agent and a developer host are such hosts. `lane-run` skips the probe under `--plan-only` and on a worker, which
+  names the run secrets directory. The probe refuses a host without `DISPLAY`, and it runs the checks of
+  `validate-guest` with the distribution as the root of the shared objects. A host without an answering display, a
+  window manager or a library of the distribution is refused with the code of that check. The refusal names the host.
+  The probe then refuses a host without `git` with `lane_host_git_missing`. A screen smaller than 1920x1080 is a note in
+  the run stream, not a refusal.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_linux_run_on_a_host_that_no_controller_prepared_probes_the_host`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_host_without_a_display_is_refused_by_name`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_that_has_what_the_lane_ide_needs_passes_the_probe_with_no_note`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_without_a_window_manager_or_a_library_is_refused_with_the_code_of_the_guest_check`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_without_git_is_refused_by_name`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_smaller_screen_is_a_note_and_not_a_refusal`)
+
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
   and a plan of suites of a bare IDE alone names no lane key.

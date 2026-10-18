@@ -16,17 +16,20 @@ use std::io::{self, Write};
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 
-use avl_wire::daemon::{IdePlugin, LaneInputs, RunEventKind, RunRequest, SessionLog, decode_run_event};
+use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEventKind, RunRequest, SessionLog, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
 use avl_wire::session_log;
 use serde::Serialize;
 
 use super::channel::{self, BOOT_CODE, log};
-use super::inputs::{self, guest_platform};
+use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
 use super::package::sha256_hex;
-use crate::cli::{LaneDaemonArgs, LaneRunArgs};
+use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
+use crate::ide::launch::CODE_DISPLAY_MISSING;
+use crate::linux::validate::GuestValidator;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
+use crate::step::SystemRunner;
 
 #[cfg(test)]
 mod tests;
@@ -194,7 +197,12 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     })?;
     let descriptor = runtime::parse_runtime_descriptor(&content, &args.descriptor, guest_platform())
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
-    let daemon = channel::boot(&daemon_args, inputs::from_descriptor(&descriptor, &daemon_args)?)?;
+    let launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
+    let mut notes = flags.notes;
+    if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
+        notes.extend(probe_host(&launch_inputs, variable)?);
+    }
+    let daemon = channel::boot(&daemon_args, launch_inputs)?;
     let runfile = |file: &RuntimeFile| runtime::runtime_file_path(&runfiles_root, file);
     let lane_inputs = LaneInputs {
         fake_agent_jar: daemon.store_file(&runfile(&descriptor.ide.fake_agent_jar))?,
@@ -243,7 +251,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
-    let xml = iteration::run_split(&daemon, &request, flags.split, &flags.notes, &mut Tee(stream, io::stdout()));
+    let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut Tee(stream, io::stdout()));
     let written = write_xml(&root, &xml, variable);
     let finished = daemon.finish();
     if let Err(refusal) = &finished {
@@ -254,6 +262,34 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let green = is_green(&stream) && finished.is_ok();
     written?;
     Ok(u8::from(!green))
+}
+
+/// Whether lane-run proves the host before the lane IDE starts: on Linux, for a run that launches an IDE, on a host that
+/// no controller prepared, such as a TeamCity agent or a developer host. The controller names the run secrets
+/// directory for its workers alone, and `validate-guest` proved such a worker at its boot, so a run there pays nothing.
+pub(crate) fn host_probe_applies(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
+    linux && !args.plan_only && variable(RUN_SECRETS_VARIABLE).is_none_or(|value| value.trim().is_empty())
+}
+
+/// The X display of the host, `DISPLAY`, refused by name when it is unset, because the lane IDE opens its windows on it.
+pub(crate) fn host_display(variable: &dyn Fn(&str) -> Option<String>) -> Result<String, AgentRefusal> {
+    variable("DISPLAY").filter(|display| !display.trim().is_empty()).ok_or_else(|| {
+        AgentRefusal::refused(
+            CODE_DISPLAY_MISSING,
+            "this host cannot run the lane IDE: DISPLAY is unset, and the lane IDE opens its windows on an X display \
+             with a window manager; start Xvfb and a window manager such as fluxbox, and export DISPLAY",
+        )
+    })
+}
+
+/// Proves the host before the lane IDE starts, with the distribution of `inputs` as the root of the shared objects,
+/// and answers the notes of the probe.
+fn probe_host(inputs: &LaunchInputs, variable: &dyn Fn(&str) -> Option<String>) -> Result<Vec<String>, AgentRefusal> {
+    let probe = ValidateGuestArgs {
+        display: host_display(variable)?,
+        runtime_root: inputs.dist_home.clone(),
+    };
+    GuestValidator::new(&probe, SystemRunner).probe_host()
 }
 
 /// The refusal code of a plan whose documents do not select.

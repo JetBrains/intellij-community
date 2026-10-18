@@ -40,6 +40,18 @@ mod tests;
 /// stopped being a diagnosis; the count of what is not shown is reported beside the ones that are.
 const MAX_REPORTED_UNRESOLVED: usize = 10;
 
+/// The refusal code of a host with no `git` on its PATH.
+pub(crate) const GIT_MISSING_CODE: &str = "lane_host_git_missing";
+
+/// The tool that [`GuestValidator::probe_host`] needs on the PATH of a host, run by its bare name.
+const GIT_TOOL: &str = "git";
+
+/// The screen of a lane guest, the default of `AIR_VM_SCREEN`. A host with a smaller screen gets a note.
+const LANE_SCREEN: (u32, u32) = (1920, 1080);
+
+/// The start of every refusal of [`GuestValidator::probe_host`], so a TeamCity log names the host and not a worker.
+const HOST_REFUSAL: &str = "this host cannot run the lane IDE";
+
 /// The marker `ldd` prints for a dependency it could not resolve, matched as a substring of the line: that is the
 /// method the guide tells an operator to run by hand, so the check and the manual procedure cannot disagree.
 const LDD_NOT_FOUND: &str = "not found";
@@ -154,6 +166,49 @@ impl<R: Runner> GuestValidator<R> {
             shared_objects,
             note,
         })
+    }
+
+    /// Proves a host that no controller prepared, such as a TeamCity agent, before `lane-run` starts the lane IDE, and
+    /// answers the notes of the probe.
+    ///
+    /// It runs [`Self::validate`] with the runtime root at the distribution. So a host whose display does not answer,
+    /// which has no window manager, or which cannot resolve a shared object of the distribution is refused with the
+    /// code of the same check of a worker. Then it needs `git` on the PATH, because the merge-conflict and worktree
+    /// scenarios spawn it. A screen smaller than the one of a lane guest is a note and not a refusal.
+    pub(crate) fn probe_host(&mut self) -> Result<Vec<String>, AgentRefusal> {
+        let on_host = |mut refusal: AgentRefusal| {
+            refusal.message = format!("{HOST_REFUSAL}: {}", refusal.message);
+            refusal
+        };
+        let report = self.validate().map_err(on_host)?;
+        let mut notes: Vec<String> = report.note.into_iter().collect();
+        let screen = self
+            .runner
+            .run(&on_display(Step::new([XDPYINFO_TOOL]).capture(), &self.display))
+            .unwrap_or_default();
+        let (width, height) = LANE_SCREEN;
+        match screen_dimensions(&screen) {
+            Some((found_width, found_height)) if found_width < width || found_height < height => notes.push(format!(
+                "the screen of the display {} is {found_width}x{found_height}, smaller than the {width}x{height} of a \
+                 lane guest, so a window of the lane IDE can lay out differently",
+                self.display
+            )),
+            Some(_) => {}
+            None => notes.push(format!(
+                "{XDPYINFO_TOOL} names no screen dimensions of the display {}",
+                self.display
+            )),
+        }
+        self.runner.run(&Step::new([GIT_TOOL, "--version"]).capture()).map_err(|error| {
+            AgentRefusal::refused(
+                GIT_MISSING_CODE,
+                format!(
+                    "{HOST_REFUSAL}: `{GIT_TOOL} --version` fails ({error:#}), and the merge-conflict and worktree \
+                         scenarios of the lane spawn {GIT_TOOL}; put {GIT_TOOL} on the PATH of the host"
+                ),
+            )
+        })?;
+        Ok(notes)
     }
 
     /// Makes one pass of the driver's two hops.
@@ -360,6 +415,14 @@ fn shipped_sonames(libraries: &[PathBuf]) -> HashSet<String> {
 /// script's `2>/dev/null || true` threw away. Regular files only: the staged tree hardlinks and symlinks nothing,
 /// so a symlink would be `ldd`'d twice under two names. Sorted whole, so two boots of the same broken worker name
 /// the same objects under the cap.
+/// The width and the height of the first screen in the answer of `xdpyinfo`, from its `dimensions:    1920x1080 pixels`
+/// line.
+pub(crate) fn screen_dimensions(xdpyinfo: &str) -> Option<(u32, u32)> {
+    let line = xdpyinfo.lines().find_map(|line| line.trim().strip_prefix("dimensions:"))?;
+    let (width, height) = line.split_whitespace().next()?.split_once('x')?;
+    Some((width.parse().ok()?, height.parse().ok()?))
+}
+
 pub(crate) fn find_shared_objects(root: &Path) -> walkdir::Result<Vec<PathBuf>> {
     if !fs::metadata(root).is_ok_and(|info| info.is_dir()) {
         return Ok(Vec::new());
