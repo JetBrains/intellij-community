@@ -111,7 +111,7 @@ class GitGpgConfigDialog(
       val comboBoxModel = comboBox.model as DefaultComboBoxModel
 
       val config = repoConfig.load()
-      checkBox.isSelected = config.key != null
+      checkBox.isSelected = config.isEnabled
       if (config.key != null) {
         comboBoxModel.selectedItem = config.key
       }

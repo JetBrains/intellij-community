@@ -156,7 +156,8 @@ class GitGpgMultiRootConfigDialog(val project: Project,
         when {
           error != null -> append(message("settings.configure.sign.gpg.error.table.text", error))
           config == null -> append(message("settings.configure.sign.gpg.loading.table.text"))
-          config.key == null -> append(message("settings.configure.sign.gpg.do.not.sign.table.text"))
+          !config.isEnabled -> append(message("settings.configure.sign.gpg.do.not.sign.table.text"))
+          config.key == null -> append(message("settings.configure.sign.gpg.no.key.table.text"))
           else -> {
             append(config.key.id)
 

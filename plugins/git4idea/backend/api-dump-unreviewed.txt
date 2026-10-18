@@ -1965,7 +1965,6 @@ f:git4idea.config.gpg.GpgSignConfigurableRow
 f:git4idea.config.gpg.GpgSignConfigurableRow$Companion
 - f:createGpgSignRow(com.intellij.ui.dsl.builder.Panel,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 f:git4idea.config.gpg.RepoConfig
-- <init>(git4idea.config.gpg.GpgKey):V
 - f:getKey():git4idea.config.gpg.GpgKey
 f:git4idea.config.gpg.RepoConfigValue
 - git4idea.config.gpg.Value
