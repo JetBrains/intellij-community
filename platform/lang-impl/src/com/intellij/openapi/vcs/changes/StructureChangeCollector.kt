@@ -75,7 +75,9 @@ object StructureChangeCollector {
         return elements[first]?.id == oldElements[second]?.id
       }
     }
-    val statuses = PsiChangeTracker.getElementsChanged(elements.keys.toList(), oldElements.keys.toList(), filter)
+    val statuses = PsiChangeTracker.getElementsChanged(elements.keys.toList(), oldElements.keys.toList(), filter) {
+      (elements[it] ?: oldElements.getValue(it)).comparisonText
+    }
     val changes = merge(oldNodes, nodes, statuses)
     return flattenFileContainer(after, nodes, changes)
   }
@@ -124,6 +126,15 @@ object StructureChangeCollector {
         continue
       }
       if (!element.isValid || element.containingFile?.viewProvider !== file.viewProvider || !visited.add(element)) continue
+      val comparisonElement = structureElement.valueForComparison as? PsiElement
+      if (comparisonElement == null || !comparisonElement.isValid || comparisonElement.containingFile?.viewProvider !== file.viewProvider) {
+        continue
+      }
+      val comparisonText = comparisonElement.text
+      if (comparisonText == null) {
+        result.addAll(readNodes(treeElement.children.asList(), file, model, visited))
+        continue
+      }
       val presentation = treeElement.presentation
       val text = presentation.presentableText ?: (element as? PsiNamedElement)?.name ?: continue
       val displayText = ElementDescriptionUtil.getElementDescription(element, StructureChangeDescriptionLocation(text))
@@ -132,7 +143,7 @@ object StructureChangeCollector {
       val children = readNodes(treeElement.children.asList(), file, model, visited)
       val isContainer = model.shouldEnterElement(element) ||
                         (model as? StructureViewModel.ElementInfoProvider)?.isAlwaysShowsPlus(structureElement) == true
-      result.add(Node(element, key, text, displayText, presentation.getIcon(false), children, isContainer))
+      result.add(Node(element, comparisonElement, comparisonText, key, text, displayText, presentation.getIcon(false), children, isContainer))
     }
     return result
   }
@@ -197,9 +208,9 @@ object StructureChangeCollector {
 
   private fun ownText(node: Node): String {
     val children = Collections.newSetFromMap(IdentityHashMap<PsiElement, Boolean>())
-    node.children.mapTo(children) { it.element }
+    node.children.mapTo(children) { it.comparisonElement }
     val text = StringBuilder()
-    node.element.accept(object : PsiRecursiveElementWalkingVisitor() {
+    node.comparisonElement.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitElement(element: PsiElement) {
         ProgressManager.checkCanceled()
         if (element in children || element is PsiWhiteSpace) return
@@ -214,6 +225,8 @@ object StructureChangeCollector {
   @Suppress("StatefulEp")
   private class Node(
     val element: PsiElement,
+    val comparisonElement: PsiElement,
+    val comparisonText: String,
     val key: String,
     val text: @NlsSafe String,
     val displayText: @NlsSafe String,

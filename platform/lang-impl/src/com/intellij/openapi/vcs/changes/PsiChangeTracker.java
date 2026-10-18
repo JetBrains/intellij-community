@@ -8,12 +8,13 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiFilter;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.ApiStatus;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,7 +27,14 @@ public final class PsiChangeTracker {
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(List<? extends T> elements,
                                                                            List<? extends T> oldElements,
                                                                            PsiFilter<? super T> filter) {
-    return calculateStatuses(elements, new ArrayList<>(oldElements), new HashMap<>(), filter);
+    return getElementsChanged(elements, oldElements, filter, PsiElement::getText);
+  }
+
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(List<? extends T> elements,
+                                                                           List<? extends T> oldElements,
+                                                                           PsiFilter<? super T> filter,
+                                                                           Function<? super T, String> textExtractor) {
+    return calculateStatuses(elements, new ArrayList<>(oldElements), new HashMap<>(), filter, textExtractor);
   }
 
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiElement file,
@@ -38,8 +46,7 @@ public final class PsiChangeTracker {
 
     if (file == null) {
       oldFile.accept(filter.createVisitor(oldElements));
-      calculateStatuses(elements, oldElements, result, filter);
-      return result;
+      return getElementsChanged(elements, oldElements, filter);
     }
 
     final Project project = file.getProject();
@@ -62,14 +69,14 @@ public final class PsiChangeTracker {
 
     if (oldFile == null) return result;
     oldFile.accept(filter.createVisitor(oldElements));
-    calculateStatuses(elements, oldElements, result, filter);
-
-    return result;
+    return getElementsChanged(elements, oldElements, filter);
   }
 
   private static <T extends PsiElement> Map<T, FileStatus> calculateStatuses(List<? extends T> elements,
                                                                              List<? extends T> oldElements,
-                                                                             Map<T, FileStatus> result, PsiFilter<? super T> filter) {
+                                                                             Map<T, FileStatus> result,
+                                                                             PsiFilter<? super T> filter,
+                                                                             Function<? super T, String> textExtractor) {
     for (T element : elements) {
       T e = null;
       for (T oldElement : oldElements) {
@@ -80,7 +87,7 @@ public final class PsiChangeTracker {
       }
       if (e != null) {
         oldElements.remove(e);
-        if (!element.getText().equals(e.getText())) {
+        if (!textExtractor.apply(element).equals(textExtractor.apply(e))) {
           result.put(element, FileStatus.MODIFIED);
         }
       }

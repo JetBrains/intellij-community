@@ -98,6 +98,10 @@ a:com.intellij.ide.structureView.StructureViewFactory
 - a:handleClick(com.intellij.ide.structureView.StructureViewClickEvent):java.util.concurrent.CompletableFuture
 com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
 - *:getMinimumAutoExpandDepth():I
+com.intellij.ide.structureView.StructureViewTreeElement
+- com.intellij.ide.util.treeView.smartTree.TreeElement
+- com.intellij.pom.Navigatable
+- *:getValueForComparison():java.lang.Object
 *:com.intellij.ide.ui.ToolbarSettings
 - com.intellij.openapi.components.PersistentStateComponent
 - *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
