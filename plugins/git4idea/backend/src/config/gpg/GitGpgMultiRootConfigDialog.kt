@@ -144,21 +144,20 @@ class GitGpgMultiRootConfigDialog(val project: Project,
       else if (value is RepoConfigValue) {
         val error = value.error
         val config = value.value
+        val availableKeys = secretKeys.value
 
         when {
           error != null -> append(message("settings.configure.sign.gpg.error.table.text", error))
           config == null -> append(message("settings.configure.sign.gpg.loading.table.text"))
           !config.isEnabled -> append(message("settings.configure.sign.gpg.do.not.sign.table.text"))
+          availableKeys != null && availableKeys.keys.isEmpty() ->
+            append(message("settings.configure.sign.gpg.no.available.keys.table.text"), SimpleTextAttributes.ERROR_ATTRIBUTES)
           config.key == null -> append(message("settings.configure.sign.gpg.no.key.table.text"))
           else -> {
             append(config.key.id)
-
-            val descriptions = secretKeys.value?.descriptions ?: return
-            val description = descriptions[config.key]
-            if (description != null) {
-              append(FontUtil.spaceAndThinSpace())
-              append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-            }
+            val description = availableKeys?.descriptions[config.key] ?: return
+            append(FontUtil.spaceAndThinSpace())
+            append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
         }
       }
