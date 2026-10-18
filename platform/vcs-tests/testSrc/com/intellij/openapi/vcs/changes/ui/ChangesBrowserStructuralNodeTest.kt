@@ -16,12 +16,16 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.LocalChangesListView
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
@@ -29,6 +33,7 @@ import com.intellij.platform.vcs.VcsSharedDataKeys
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -47,6 +52,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Answers
 import org.mockito.Mockito.mock
@@ -57,8 +64,19 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 @TestApplication
+@RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
 internal class ChangesBrowserStructuralNodeTest {
   private val project: Project get() = projectFixture.get()
+
+  @BeforeEach
+  fun enableStructuralChanges() {
+    StructuralChangesViewSettings.setEnabled(project, true)
+  }
+
+  @AfterEach
+  fun disableStructuralChanges() {
+    StructuralChangesViewSettings.setEnabled(project, false)
+  }
 
   @Test
   fun `test structural children preserve file counts and inclusion`(): Unit = timeoutRunBlocking {
@@ -211,6 +229,196 @@ internal class ChangesBrowserStructuralNodeTest {
       assertEquals(6, offset)
       assertFalse(firstDescriptor.isUsePreviewTab)
       assertFalse(secondDescriptor.isUsePreviewTab)
+    }
+  }
+
+  @Test
+  fun `test changed and added files use preview tabs`(): Unit = timeoutRunBlocking {
+    for (added in listOf(false, true)) {
+      val file = LightVirtualFile("file-$added.txt", "first\nsecond\n")
+      val fixture = createFilePreviewFixture(file, added)
+
+      withPreviewTabsDisabled { manager ->
+        previewSelection(fixture) {
+          view.selectionPath = TreePath(fileNode.path)
+        }
+
+        val (selected, isPreview) = withContext(Dispatchers.EDT) {
+          manager.selectedFiles.toList() to manager.getComposite(file)?.isPreview
+        }
+        assertEquals(listOf(file), selected)
+        assertEquals(true, isPreview)
+      }
+    }
+  }
+
+  @Test
+  fun `test unversioned file rows use preview tabs`(): Unit = timeoutRunBlocking {
+    val fixture = createFixture()
+    val pathFile = LightVirtualFile("unversioned-path.txt", "first\nsecond\n")
+    val virtualFile = LightVirtualFile("unversioned-virtual.txt", "first\nsecond\n")
+    val nodes = withContext(Dispatchers.EDT) {
+      listOf(ChangesBrowserFilePathNode(filePath(pathFile), FileStatus.UNKNOWN), ChangesBrowserFileNode(project, virtualFile))
+        .onEach { fixture.view.model.insertNodeInto(it, fixture.root, fixture.root.childCount) }
+    }
+
+    withPreviewTabsDisabled { manager ->
+      for ((node, file) in nodes.zip(listOf(pathFile, virtualFile))) {
+        previewSelection(fixture) {
+          view.selectionPath = TreePath(node.path)
+        }
+
+        val (openFiles, isPreview) = withContext(Dispatchers.EDT) {
+          manager.openFiles.toList() to manager.getComposite(file)?.isPreview
+        }
+        assertEquals(listOf(file), openFiles)
+        assertEquals(true, isPreview)
+      }
+    }
+  }
+
+  @Test
+  fun `test switching files and members preserves caret and permanent tabs`(): Unit = timeoutRunBlocking {
+    val permanentFile = LightVirtualFile("permanent.txt", "first\nsecond\n")
+    val firstFile = LightVirtualFile("first.txt", "first\nsecond\n")
+    val secondFile = LightVirtualFile("second.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(firstFile)
+    val (secondFileNode, permanentFileNode) = withContext(Dispatchers.EDT) {
+      val second = ChangesBrowserFilePathNode(filePath(secondFile), FileStatus.UNKNOWN)
+      val permanent = ChangesBrowserFilePathNode(filePath(permanentFile), FileStatus.UNKNOWN)
+      fixture.view.model.insertNodeInto(second, fixture.root, fixture.root.childCount)
+      fixture.view.model.insertNodeInto(permanent, fixture.root, fixture.root.childCount)
+      second to permanent
+    }
+
+    withPreviewTabsDisabled { manager ->
+      requestNavigate(project, OpenFileDescriptor(project, permanentFile, 2), coroutineScope = this).await()
+      for (node in listOf(fixture.fileNode, fixture.second, fixture.fileNode)) {
+        previewSelection(fixture) {
+          view.selectionPath = TreePath(node.path)
+        }
+      }
+      val fileOffset = withContext(Dispatchers.EDT) {
+        (manager.getSelectedEditor(firstFile) as TextEditor).editor.caretModel.offset
+      }
+      assertEquals(6, fileOffset)
+
+      previewSelection(fixture) { view.selectionPath = TreePath(secondFileNode.path) }
+      assertEquals(setOf(permanentFile, secondFile), withContext(Dispatchers.EDT) { manager.openFiles.toSet() })
+      previewSelection(fixture) { view.selectionPath = TreePath(second.path) }
+      previewSelection(fixture) { view.selectionPath = TreePath(permanentFileNode.path) }
+
+      val (openFiles, previewFiles, permanentOffset) = withContext(Dispatchers.EDT) {
+        Triple(manager.openFiles.toSet(), manager.openFiles.filter { manager.getComposite(it)!!.isPreview },
+               (manager.getSelectedEditor(permanentFile) as TextEditor).editor.caretModel.offset)
+      }
+      assertEquals(setOf(permanentFile, firstFile), openFiles)
+      assertEquals(listOf(firstFile), previewFiles)
+      assertEquals(2, permanentOffset)
+    }
+  }
+
+  @Test
+  fun `test clicking a selected file restores its preview`(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("selected.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(file)
+
+    withPreviewTabsDisabled { manager ->
+      previewSelection(fixture) { view.selectionPath = TreePath(fileNode.path) }
+      withContext(Dispatchers.EDT) { manager.closeFile(file) }
+      previewSelection(fixture) { clickSelectedElement(view) }
+
+      assertEquals(listOf(file), withContext(Dispatchers.EDT) { manager.selectedFiles.toList() })
+      assertTrue(withContext(Dispatchers.EDT) { manager.getComposite(file)!!.isPreview })
+    }
+  }
+
+  @Test
+  fun `test disabled structural option prevents file and member previews`(): Unit = timeoutRunBlocking {
+    StructuralChangesViewSettings.setEnabled(project, false)
+    checkDisabledPreviews()
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "false")
+  fun `test disabled registry prevents file and member previews`(): Unit = timeoutRunBlocking {
+    checkDisabledPreviews()
+  }
+
+  private suspend fun checkDisabledPreviews() {
+    val file = LightVirtualFile("disabled.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(file)
+
+    withPreviewTabsDisabled { manager ->
+      for (node in listOf(fixture.fileNode, fixture.second)) {
+        previewSelection(fixture) { view.selectionPath = TreePath(node.path) }
+        assertTrue(withContext(Dispatchers.EDT) { manager.openFiles.isEmpty() })
+      }
+    }
+  }
+
+  @Test
+  fun `test disabling structural option cancels delayed file and member previews`(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("disabled-during-delay.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(file)
+
+    withPreviewTabsDisabled { manager ->
+      for (node in listOf(fixture.fileNode, fixture.second)) {
+        StructuralChangesViewSettings.setEnabled(project, true)
+        previewSelection(fixture) {
+          view.selectionPath = TreePath(node.path)
+          StructuralChangesViewSettings.setEnabled(project, false)
+        }
+        assertTrue(withContext(Dispatchers.EDT) { manager.openFiles.isEmpty() })
+      }
+    }
+  }
+
+  @Test
+  fun `test disabling structural option during request preparation prevents preview`(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("disabled-during-request.txt", "first\nsecond\n")
+    val request = readAction { NavigationRequest.sourceNavigationRequest(project, file, 6) }
+    val navigation = PendingSourceNavigatable()
+    val fixture = createPreviewFixture(navigation)
+
+    withPreviewTabsDisabled { manager ->
+      previewSelection(fixture) {
+        view.selectionPath = TreePath(first.path)
+        navigation.started.await()
+        StructuralChangesViewSettings.setEnabled(project, false)
+        navigation.request.complete(request)
+      }
+      assertTrue(withContext(Dispatchers.EDT) { manager.openFiles.isEmpty() })
+    }
+  }
+
+  @Test
+  fun `test directories deleted files and unavailable revisions do not preview`(): Unit = timeoutRunBlocking {
+    val fixture = createFixture()
+    val deletedFile = LightVirtualFile("deleted.txt", "first\nsecond\n")
+    val directory = object : LightVirtualFile("directory") {
+      override fun isDirectory(): Boolean = true
+    }
+    val invalidFile = object : LightVirtualFile("invalid.txt") {
+      override fun isValid(): Boolean = false
+    }
+    val nodes = withContext(Dispatchers.EDT) {
+      listOf(
+        ChangesBrowserChangeNode(project, Change(revision(filePath(deletedFile)), null), null),
+        ChangesBrowserFilePathNode(filePath(directory)),
+        ChangesBrowserFileNode(project, directory),
+        ChangesBrowserChangeNode(project, Change(null, CurrentContentRevision(filePath(directory))), null),
+        ChangesBrowserFileNode(project, invalidFile),
+        ChangesBrowserFilePathNode(LocalFilePath("/ChangesViewTest/unavailable.txt", false)),
+        ChangesBrowserChangeNode(project, Change(null, CurrentContentRevision(LocalFilePath("/ChangesViewTest/unavailable.txt", false))), null),
+      ).onEach { fixture.view.model.insertNodeInto(it, fixture.root, fixture.root.childCount) } + fixture.fileNode
+    }
+
+    withPreviewTabsDisabled { manager ->
+      for (node in nodes) {
+        previewSelection(fixture) { view.selectionPath = TreePath(node.path) }
+        assertTrue(withContext(Dispatchers.EDT) { manager.openFiles.isEmpty() }, node.textPresentation)
+      }
     }
   }
 
@@ -525,6 +733,13 @@ internal class ChangesBrowserStructuralNodeTest {
   private suspend fun createPreviewFixture(first: Navigatable, second: Navigatable = PreviewNavigatable()): Fixture =
     withContext(Dispatchers.EDT) { createFixture(StructuralNode("first", first), StructuralNode("second", second)) }
 
+  private suspend fun createFilePreviewFixture(file: VirtualFile, added: Boolean = false): Fixture = withContext(Dispatchers.EDT) {
+    val path = filePath(file)
+    createFixture(StructuralNode("first", OpenFileDescriptor(project, file, 0)),
+                  StructuralNode("second", OpenFileDescriptor(project, file, 6)),
+                  Change(if (added) null else revision(path), CurrentContentRevision(path)))
+  }
+
   private suspend fun withPreviewTabsDisabled(test: suspend (FileEditorManagerImpl) -> Unit) {
     val manager = fileEditorManagerFixture.get()
     val settings = UISettings.getInstance()
@@ -572,8 +787,11 @@ internal class ChangesBrowserStructuralNodeTest {
     return withContext(Dispatchers.EDT) { createFixture(first, second) }
   }
 
-  private fun createFixture(first: StructuralNode, second: StructuralNode): Fixture {
-    val change = Change(null, revision("changed.txt"))
+  private fun createFixture(
+    first: StructuralNode,
+    second: StructuralNode,
+    change: Change = Change(null, revision("changed.txt")),
+  ): Fixture {
     val another = Change(null, revision("another.txt"))
     val list = LocalChangeListImpl.Builder(project, "Default")
       .setDefault(true)
@@ -591,9 +809,15 @@ internal class ChangesBrowserStructuralNodeTest {
     return Fixture(view, root, change, fileNode, first, second)
   }
 
-  private fun revision(name: String): ContentRevision = object : ContentRevision {
+  private fun filePath(file: VirtualFile): FilePath = object : LocalFilePath(file.path, file.isDirectory) {
+    override fun getVirtualFile(): VirtualFile = file
+  }
+
+  private fun revision(name: String): ContentRevision = revision(LocalFilePath("/ChangesViewTest/$name", false))
+
+  private fun revision(path: FilePath): ContentRevision = object : ContentRevision {
     override fun getContent(): String = ""
-    override fun getFile(): FilePath = LocalFilePath("/ChangesViewTest/$name", false)
+    override fun getFile(): FilePath = path
     override fun getRevisionNumber(): VcsRevisionNumber = VcsRevisionNumber.NULL
   }
 
@@ -681,7 +905,7 @@ internal class ChangesBrowserStructuralNodeTest {
   )
 
   companion object {
-    private val projectFixture = projectFixture()
+    private val projectFixture = projectFixture(openAfterCreation = true)
     private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
   }
 }
