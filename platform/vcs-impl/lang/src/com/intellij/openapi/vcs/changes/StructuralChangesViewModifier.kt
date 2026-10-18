@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -29,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.ui.SimpleTextAttributes
 import java.util.concurrent.Callable
@@ -61,9 +60,9 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
           val baseline = baseText?.let { TextPresentationTransformers.fromPersistent(it, file).toString() }
           val beforeText = getBeforeContent(change, baseline)
           if (beforeRevision != null && beforeText == null) return@Callable emptyList()
-          val factory = PsiFileFactory.getInstance(project)
-          val before = beforeText?.let { factory.createFileFromText(path.name, path.fileType, StringUtil.convertLineSeparators(it)) }
-          val after = factory.createFileFromText(path.name, path.fileType, afterText)
+          val original = PsiManager.getInstance(project).findFile(file) ?: return@Callable emptyList()
+          val before = beforeText?.let { StructureChangeCollector.createSnapshot(original, it) ?: return@Callable emptyList() }
+          val after = StructureChangeCollector.createSnapshot(original, afterText) ?: return@Callable emptyList()
           StructureChangeCollector.collect(before, after).map { createNode(file, it) }
         }).expireWith(project).executeSynchronously()
         for (element in elements) {
