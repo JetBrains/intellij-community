@@ -49,7 +49,7 @@
       "name": "air-integration-ui-live",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The live suites with real agents and real accounts, `ui-live_test`. `BT --lane ui-live` selects it."
+      "description": "The live suites with real agents and real accounts, `ui-live_lane_test`. `BT --lane ui-live` selects it."
     },
     {
       "name": "air-integration-ui-perf",
@@ -75,7 +75,6 @@
     "//plugins/air/tests/integration/headless/opencode:opencode_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
-    "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
     "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
@@ -140,7 +139,7 @@
     {
       "name": "ui-live",
       "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-live)",
-      "target": "//plugins/air/tests/integration/ui-live:ui-live_test",
+      "target": "//plugins/air/tests/integration/ui-live:ui-live_lane_test",
       "extra": [
         "--test_env=AIR_LIVE_CREDENTIALS",
         "--test_env=AIR_LIVE_REUSE_HOST_HOMES",
@@ -155,7 +154,7 @@
       "shards": 1,
       "integrationTag": "air-integration-ui-live",
       "documentLane": "UI_LIVE",
-      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test"
+      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_lane_test"
     },
     {
       "name": "ui-perf",

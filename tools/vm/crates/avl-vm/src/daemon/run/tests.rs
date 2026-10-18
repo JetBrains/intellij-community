@@ -702,7 +702,7 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
     assert_eq!(plan.iterations[0].selection.junit5_filters, ["include-tag=air-flow-ui-live"]);
     for argv in [
         &["--lane", "ui-live"][..],
-        &["//plugins/air/tests/integration/ui-live:ui-live_test"][..],
+        &["//plugins/air/tests/integration/ui-live:ui-live_lane_test"][..],
     ] {
         let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(argv)).await);
         assert_eq!(

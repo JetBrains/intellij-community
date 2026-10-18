@@ -94,7 +94,7 @@ fn a_valueless_test_env_form_never_reaches_the_selection() {
 fn the_explicit_only_lane_selects_itself_by_junit_tag() {
     avl_affected::bridge::install_fixture();
     let selection = lane_selection("ui-live").unwrap();
-    assert_eq!(selection.label, "//plugins/air/tests/integration/ui-live:ui-live_test");
+    assert_eq!(selection.label, "//plugins/air/tests/integration/ui-live:ui-live_lane_test");
     assert_eq!(
         selection.test_env,
         BTreeMap::from([("JB_TEST_JUNIT5_FILTERS".to_owned(), "include-tag=air-flow-ui-live".to_owned())])
@@ -104,16 +104,18 @@ fn the_explicit_only_lane_selects_itself_by_junit_tag() {
 // --- selector resolution --------------------------------------------------------------------------------------
 
 /// A repository shaped the way resolution requires, and no more: one module with a test source root, its
-/// `jps_test`, and one test class. The module is the one of the ui-live lane, which still runs a JUnit target.
+/// `jps_test`, and one test class. The module is the one of the jcp lane, the one IDE lane whose row still names a
+/// JUnit target. When the JVM runner goes (E2), a class of a lane resolves through its suite document alone, and
+/// this fixture goes with the JUnit path of the resolution.
 fn fixture_repo(repo: &Path) {
-    let module = repo.join("plugins/air/tests/integration/ui-live");
+    let module = repo.join("plugins/air/tests/integration/jcp");
     fs::create_dir_all(module.join("testSrc/flow")).unwrap();
     fs::write(
-        module.join("intellij.air.uiLive.iml"),
+        module.join("intellij.air.jcp.iml"),
         r#"<module><component><content url="file://$MODULE_DIR$"><sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" /></content></component></module>"#,
     )
     .unwrap();
-    fs::write(module.join("BUILD.bazel"), "jps_test(\n  name = \"ui-live_test\",\n)\n").unwrap();
+    fs::write(module.join("BUILD.bazel"), "jps_test(\n  name = \"jcp_test\",\n)\n").unwrap();
     fs::write(
         module.join("testSrc/flow/AirFlowSmokeTest.kt"),
         "package com.intellij.air.integration.flow\n\nclass AirFlowSmokeTest\n",
@@ -134,7 +136,7 @@ fn a_selector_inside_a_lane_resolves_to_its_filter() {
     assert_eq!(
         selection,
         Selection {
-            label: "//plugins/air/tests/integration/ui-live:ui-live_test".to_owned(),
+            label: "//plugins/air/tests/integration/jcp:jcp_test".to_owned(),
             lane: None,
             test_env: BTreeMap::from([(
                 "TESTBRIDGE_TEST_ONLY".to_owned(),
