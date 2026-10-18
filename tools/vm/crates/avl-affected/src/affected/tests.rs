@@ -488,9 +488,9 @@ fn a_deleted_suite_document_is_unreadable() {
     assert_eq!(reasons_of(&affected), reason::PATH_UNREADABLE);
 }
 
-/// The base catalog plus the layout of the lane harness: the root integration module with a lane rule under it, a
-/// shared harness module with the generated suite list, the bridge with an authored body, a headless module beside
-/// them, and this controller and BT outside the area.
+/// The base catalog plus the layout of the lane harness: the root integration module with a lane rule under it, the
+/// bridge with the state reset and an authored body, a headless module beside them, and this controller and BT outside
+/// the area.
 fn harness_tree() -> Tree {
     let mut tree = reach_tree();
     put(
@@ -504,21 +504,11 @@ fn harness_tree() -> Tree {
     put(&mut tree, BT_SOURCE, "//! the lane table\n");
     put(
         &mut tree,
-        "plugins/air/tests/integration/flow/intellij.air.integrationTests.flow.iml",
-        "<module />",
-    );
-    // The harness spells real flow ids in its comments and fixtures. They must not answer.
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt",
-        kdoc(&["@flow flow-new-session-terminal"]),
-    );
-    put(&mut tree, SUITE_LIST, "package air\n");
-    put(
-        &mut tree,
         "plugins/air/tests/integration/bridge/intellij.air.integrationTests.bridge.iml",
         "<module />",
     );
+    // The harness spells real flow ids in its comments and fixtures. They must not answer.
+    put(&mut tree, HARNESS_SOURCE, kdoc(&["@flow flow-new-session-terminal"]));
     put(&mut tree, AUTHORED_BODY, "package air\n");
     put(
         &mut tree,
@@ -536,19 +526,16 @@ fn harness_tree() -> Tree {
 const LANE_RULE: &str = "plugins/air/tests/integration/ui_lane_ide.bzl";
 const CONTROLLER_SOURCE: &str = "community/tools/vm/crates/avl-affected/src/affected.rs";
 const BT_SOURCE: &str = "community/tools/bt/crates/bt-core/src/lanes.rs";
-const SUITE_LIST: &str = "plugins/air/tests/integration/flow/testGen/AirFlowTestSuites.generated.kt";
+const HARNESS_SOURCE: &str = "plugins/air/tests/integration/bridge/tests/AirInIdeStateReset.kt";
 const AUTHORED_BODY: &str = "plugins/air/tests/integration/bridge/tests/authored/AirAuthoredPluginReload.kt";
 
 #[test]
 fn a_harness_path_reaches_every_suite_of_every_lane() {
-    let affected = affected_of(
-        &FakeRuntime::with_tree(&harness_tree()),
-        &["plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt"],
-    );
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[HARNESS_SOURCE]);
     assert_eq!(classes_of(&affected), format!("{LAUNCH_PRESET_BOTH},{TERMINAL}"));
     for suite in &affected.suites {
         // The entry names the harness module and nothing its text matched.
-        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}intellij.air.integrationTests.flow")]);
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}intellij.air.integrationTests.bridge")]);
     }
 }
 
@@ -566,7 +553,7 @@ fn a_harness_path_reaches_no_suite_of_an_explicit_only_lane() {
             "flow-manage-launch-preset",
         ),
     );
-    let affected = affected_of(&fake, &["plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt"]);
+    let affected = affected_of(&fake, &[HARNESS_SOURCE]);
     assert_eq!(classes_of(&affected), format!("{LAUNCH_PRESET_BOTH},{TERMINAL}"));
     assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
 }
@@ -699,10 +686,10 @@ fn a_suite_selector_names_an_authored_suite() {
 
 const FEEDBACK_SPEC: &str = "plugins/air/spec/core/feedback.spec.md";
 const GENERATED_SPEC: &str = "plugins/air/spec/other/generated.spec.md";
-const GENERATED_LINK: &str = "  [@test] ../../tests/integration/flow/testGen/AirFlowTestSuites.generated.kt";
+const GENERATED_LINK: &str = "  [@test] ../../tests/integration/bridge/testGen/AirFlowEnums.generated.kt";
 
 /// The authored catalog plus two specs: one owns a directory by a glob and links an authored test class and a suite
-/// document, and one links only the generated suite list.
+/// document, and one links only a generated bridge file.
 fn spec_tree() -> Tree {
     let mut tree = authored_tree();
     put(

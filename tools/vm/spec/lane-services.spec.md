@@ -11,7 +11,6 @@ targets:
   - ../crates/avl-guest/src/lane/services/cloud/spawner/*.rs
   - ../crates/avl-guest/testdata/lane-services/*
   - ../../../../plugins/air/tests/integration/bridge/resident/tests/AirLaneService*.kt
-  - ../../../../plugins/air/tests/integration/flow/src/driver/AirLaneServiceControl.kt
 ---
 
 # The Lane Services

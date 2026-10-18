@@ -249,8 +249,8 @@ pub(crate) fn apply_context_file_ops(context: &Path, operations: &[ContextFileOp
     Ok(reads)
 }
 
-/// Approves the login of `url` in the emulator at `base_url`, as `AirJetBrainsCloudEmulator.authorize` does. The
-/// authorization answers a redirect to the callback of the IDE, and the callback must answer a success or a redirect.
+/// Approves the login of `url` in the emulator at `base_url`. The authorization answers a redirect to the callback of
+/// the IDE, and the callback must answer a success or a redirect.
 /// A `url` of another server is refused, because the IDE must open the emulated JetBrains Account.
 pub(crate) fn approve_sign_in(url: &str, base_url: &str) -> Result<(), String> {
     if !url.starts_with(base_url) {

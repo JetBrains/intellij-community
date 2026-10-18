@@ -400,9 +400,8 @@ fn git_output(directory: &Path, arguments: &[&str]) -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_owned()
 }
 
-// A lane with a Cloud agent makes its project a Git repository, as `AirCloudGitRemote.prepare` of the test process
-// does: one commit of every project file on `main`, and the upstream `origin/main` in a bare repository beside the
-// project. A second write keeps that repository. A lane without a Cloud agent leaves the project as it is.
+// A lane with a Cloud agent makes its project a Git repository: one commit of every project file on `main`, and the
+// upstream `origin/main` in a bare repository beside the project. A second write keeps that repository. A lane without a Cloud agent leaves the project as it is.
 #[test]
 fn a_lane_with_a_cloud_agent_makes_its_project_a_repository_with_an_origin() {
     let (cloud, runtimes) = (document_with_a_cloud_agent(), runtimes());

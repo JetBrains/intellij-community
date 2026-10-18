@@ -226,9 +226,9 @@ The generator publishes the suite facts that the controller reads, as
   which walks that flow. A path reaches every suite whose routes walk its own module.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
-- The lane harness modules are the flow driver, the scenario runner, the state reset, the bridge, the daemon
-  and the controller. A change there can break every suite of its lanes, so a narrower answer would hide a
-  failure.
+- The lane harness modules are the shared drivers, the bridge, the fake agents, the daemon and the controller. The
+  bridge holds the state reset and the authored bodies. A change there can break every suite of its lanes, so a
+  narrower answer would hide a failure.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
 - The two tag relations answer before the spec and module relations, and a path whose tag answered uses no
@@ -1882,8 +1882,8 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_registry_ids_arm_hold_release_and_check_the_package_fault`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_request_count_reads_the_package_requests_after_the_mark`)
 
-- `account-approve-sign-in` approves the sign-in as `AirJetBrainsCloudEmulator.authorize` does. The URL must start
-  with the base URL of the emulator. The emulator must answer a redirect, and the callback of the IDE must answer 200
+- `account-approve-sign-in` approves the sign-in in the JetBrains Cloud emulator. The URL must start with the base
+  URL of the emulator. The emulator must answer a redirect, and the callback of the IDE must answer 200
   to 399. A callback URL with a query and no path keeps its query, and each address of its host is tried in turn.
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`the_sign_in_approval_follows_the_redirect_to_a_callback_with_a_query_and_no_path`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_url_with_a_query_and_no_path_splits_after_its_port`)

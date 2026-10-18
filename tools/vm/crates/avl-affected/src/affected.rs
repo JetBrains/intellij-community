@@ -46,17 +46,15 @@
 //!
 //! # The harness reaches its whole lane
 //!
-//! A path in a lane-wide module is the lane harness: the flow driver, `AirScenarioRunner`, the state reset, the
-//! generated scaffolding, the daemon or the bridge. A change there can break every suite of the lanes the module
-//! serves. The list is held by module name because the module cache already names a path's module, so no path list
+//! A path in a lane-wide module is the lane harness: the shared drivers, the daemon, or the bridge with the state
+//! reset and the authored bodies. A change there can break every suite of the lanes the module serves. The list is held by module name because the module cache already names a path's module, so no path list
 //! goes stale beside it. Each entry is a decision about what the module holds:
 //!
 //! - `intellij.air.integrationTests` is `support/`, the drivers every lane uses, and the directories without a
 //!   module of their own under it, such as the lane `.bzl` rules.
-//! - `…flow` is the flow driver, `AirScenarioRunner`, the state reset, and the generated shared scaffolding.
 //! - `…uiDaemon` is the daemon, one JVM over the classpath of every lane.
 //! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test. The bridge also
-//!   holds the authored bodies of the suites.
+//!   holds the state reset and the authored bodies of the suites.
 //! - `…testSupport` is the fake agents and the fake registry the flow harness links for every lane.
 //!
 //! Left out on purpose: `…contract` runs in the fast lane and in no UI lane, `…flowProfiles` holds suite documents

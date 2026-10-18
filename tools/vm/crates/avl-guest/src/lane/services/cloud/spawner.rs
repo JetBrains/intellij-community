@@ -37,7 +37,7 @@ mod proxy;
 #[cfg(test)]
 mod tests;
 
-/// The path of the ACP WebSocket below the JCP base URL, `AirSpawnerBridge.ACP_PATH`.
+/// The path of the ACP WebSocket below the JCP base URL.
 pub(crate) const ACP_PATH: &str = "/agent-spawner/acp";
 
 /// The prefix of the session delete route below the JCP base URL.

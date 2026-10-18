@@ -35,7 +35,7 @@ That is the reason to care, and it is also the part this note does *not* propose
 None of this needed to be built; it was found.
 
 **The tests are not macOS-coupled.** Every flow lane pins
-`driver.robot.use.input.events=true` (`plugins/air/tests/integration/flow/src/flow/AirFlowLaneHost.kt`),
+`driver.robot.use.input.events=true` (the lane documents of `plugins/air/docs/scripts/flowFixtures.ts`),
 and the platform picks that same robot automatically on Wayland —
 `IdeRobot.useInputEvents()` is `System.getProperty("driver.robot.use.input.events").toBoolean() ||
 StartupUiUtil.isWaylandToolkit()`. Air's own input primitives run inside the IDE on that same robot

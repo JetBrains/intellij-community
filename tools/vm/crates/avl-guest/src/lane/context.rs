@@ -82,13 +82,13 @@ pub(crate) const ACP_JSON: &str = ".jetbrains/acp.json";
 /// The Codex configuration below the home of the context.
 pub(crate) const CODEX_CONFIG: &str = ".codex/config.toml";
 
-/// The identity of the JetBrains Cloud emulator that the lane document states, `AirJetBrainsCloudEmulator.IDENTITY`.
+/// The identity of the JetBrains Cloud emulator that the lane document states.
 pub(crate) const CLOUD_IDENTITY: &str = "jba-jcp-emulator-1";
 
-/// The branch of the repository that the project of a Cloud lane becomes, `AirCloudGitRemote.BRANCH`.
+/// The branch of the repository that the project of a Cloud lane becomes.
 pub(crate) const CLOUD_BRANCH: &str = "main";
 
-/// The author of the one commit of that repository, and no signature, as `AirCloudGitRemote` runs `git`.
+/// The author of the one commit of that repository, and no signature.
 const CLOUD_GIT_CONFIG: [&str; 6] = [
     "-c",
     "user.name=Air Lane",
@@ -487,9 +487,9 @@ fn codex_config(project: &Path, port: u16) -> String {
 }
 
 /// Makes `project` a Git repository with one commit on [CLOUD_BRANCH], and gives it the `origin` `<name>-origin.git`
-/// beside it: a bare repository that holds the commit. This is `AirCloudGitRemote.prepare` of the test process. A Cloud
-/// launch reads the URL and the remote branch from Git, and `git ls-remote` proves the branch. The emulated spawner
-/// never clones the URL, so the bare repository is the whole remote. A project that is a repository already stays.
+/// beside it: a bare repository that holds the commit. A Cloud launch reads the URL and the remote branch from Git, and
+/// `git ls-remote` proves the branch. The emulated spawner never clones the URL, so the bare repository is the whole
+/// remote. A project that is a repository already stays.
 fn prepare_cloud_remote(project: &Path) -> Result<(), AgentRefusal> {
     if project.join(".git").symlink_metadata().is_ok() {
         return Ok(());

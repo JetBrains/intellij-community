@@ -80,7 +80,6 @@
   ],
   "laneWideModules": {
     "intellij.air.integrationTests": [],
-    "intellij.air.integrationTests.flow": [],
     "intellij.air.integrationTests.uiDaemon": [],
     "intellij.air.integrationTests.bridge": [],
     "intellij.air.integrationTests.bridge.plugin": [],
