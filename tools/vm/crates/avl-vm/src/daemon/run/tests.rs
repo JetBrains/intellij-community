@@ -148,6 +148,14 @@ const POLICY: WatchdogPolicy = WatchdogPolicy {
     progress_gap: Duration::from_secs(300),
 };
 
+/// A selection of the lane `ui`, the lane that the suite document of the fixture checkout names.
+fn ui_selection() -> RunSelection {
+    RunSelection {
+        lane: Some("ui".to_owned()),
+        ..RunSelection::default()
+    }
+}
+
 async fn execute(fixture: &Fixture, prep: &PreparedBuild, state: &HostState, selection: &RunSelection) -> Result<RunExecution, Refusal> {
     fixture
         .host
@@ -164,8 +172,8 @@ async fn execute(fixture: &Fixture, prep: &PreparedBuild, state: &HostState, sel
         .await
 }
 
-// The `/run` body is the one the Kotlin daemon decodes: every key present, and an empty selection an empty list rather
-// than `null`, because the far end's fields are non-nullable.
+// The `/run` body is the one the lane daemon decodes: every key present, and an empty selection an empty list rather
+// than `null`. It names the lane, the digests of the lane inputs and the suites of the lane that the catalog names.
 #[tokio::test]
 async fn the_run_request_body_carries_every_key_and_empty_lists() {
     let (fixture, prep, state) = executing().await;
@@ -177,11 +185,20 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
         selectors: vec!["com.example.MyTest#method".to_owned()],
         junit5_filters: Vec::new(),
         description: "selector".to_owned(),
-        lane: None,
+        lane: Some("ui".to_owned()),
     };
     let execution = execute(&fixture, &prep, &state, &selection).await.unwrap();
     assert!(execution.protocol_failure.is_none());
     let body: Value = serde_json::from_slice(&fixture.daemon.script().run_body).unwrap();
+    let digest = |field: &str| {
+        prep.lane_inputs
+            .iter()
+            .find(|input| input.field == field)
+            .unwrap()
+            .host
+            .sha256
+            .clone()
+    };
     assert_eq!(
         body,
         json!({
@@ -193,6 +210,13 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
             "activeExecutionTimeoutSec": 1_800,
             "progressGapTimeoutSec": 300,
             "idePlugins": [{"destination": "bridge/lib/bridge.jar", "sha256": prep.plugin_files[0].host.sha256}],
+            "lane": "ui",
+            "laneInputs": {
+                "fakeAgentJar": digest("fakeAgentJar"),
+                "laneDocuments": digest("laneDocuments"),
+                "suiteDocuments": digest("suiteDocuments"),
+            },
+            "laneClasses": [{"suite": "fixture-suite", "testClassName": "AirFixtureSuiteUiTest"}],
         })
     );
     assert_eq!(execution.iteration_id.as_deref(), Some("it-1"));
@@ -225,7 +249,7 @@ async fn a_409_is_triaged_into_stale_and_busy_at_75() {
         ),
     ] {
         fixture.daemon.script().conflict = Some(conflict);
-        let failure = refusal(execute(&fixture, &prep, &state, &RunSelection::default()).await);
+        let failure = refusal(execute(&fixture, &prep, &state, &ui_selection()).await);
         assert_eq!((failure.code.as_ref(), failure.exit), (code, Exit::TEMP_FAIL), "{name}");
         assert!(failure.message.contains(fragment), "{name}: said {:?}", failure.message);
     }
@@ -240,7 +264,7 @@ async fn a_protocol_break_is_returned_as_a_value_not_an_error() {
         ndjson_line(&run_started_record("it-2")),
         r#"{"event":"somethingNobodyDeclared"}"#.to_owned(),
     ];
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default())
+    let execution = execute(&fixture, &prep, &state, &ui_selection())
         .await
         .expect("a protocol failure is a value");
     let failure = execution.protocol_failure.as_ref().unwrap();
@@ -266,7 +290,7 @@ async fn a_mid_stream_death_is_explained_as_daemon_died() {
         script.run_lines = vec![ndjson_line(&run_started_record("it-3"))];
         script.close_mid_stream = true;
     }
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default())
+    let execution = execute(&fixture, &prep, &state, &ui_selection())
         .await
         .expect("a death mid-stream is a value");
     let failure = execution.protocol_failure.as_ref().unwrap();
@@ -290,7 +314,7 @@ async fn non_record_lines_are_kept_as_output() {
         ndjson_line(&run_started_record("it-4")),
         ndjson_line(&summary_record("it-4", 0, 0, 0, 0, 0, false)),
     ];
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default()).await.unwrap();
+    let execution = execute(&fixture, &prep, &state, &ui_selection()).await.unwrap();
     assert!(execution.protocol_failure.is_none(), "stdout noise is no failure");
     assert_eq!(execution.events.len(), 3);
     assert_eq!(
@@ -990,7 +1014,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
 }
 
 // The lane daemon gets the lane of the selection and the digests of the three lane inputs, and a selection of no lane
-// is refused before the request goes out. The JVM daemon gets neither field, because it refuses an unknown one.
+// is refused before the request goes out.
 #[tokio::test]
 async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
     let (fixture, prep, _) = executing().await;
@@ -999,9 +1023,7 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
         lane: Some("ui".to_owned()),
         ..RunSelection::default()
     };
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &[]).unwrap();
-    assert_eq!((jvm.lane, jvm.lane_inputs), (None, None));
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &[]).unwrap();
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
     assert_eq!(verb.lane.as_deref(), Some("ui"));
     let digest = |field: &str| {
         prep.lane_inputs
@@ -1020,14 +1042,13 @@ async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
             suite_documents: digest("suiteDocuments"),
         })
     );
-    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon, Vec::new(), &[]).unwrap_err();
+    let refused = run_request(&prep, &RunSelection::default(), policy, Vec::new(), &[]).unwrap_err();
     assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
 }
 
-// The lane daemon gets the recorded sessions that the push stored. The JVM daemon gets none, because it refuses an
-// unknown field.
+// The lane daemon gets the recorded sessions that the push stored, and a run without one sends no field.
 #[tokio::test]
-async fn the_lane_daemon_gets_the_recorded_sessions_and_the_jvm_daemon_none() {
+async fn the_lane_daemon_gets_the_recorded_sessions() {
     let (fixture, prep, _) = executing().await;
     let policy = fixture.host.watchdog_policy(None, None);
     let selection = RunSelection {
@@ -1038,15 +1059,14 @@ async fn the_lane_daemon_gets_the_recorded_sessions_and_the_jvm_daemon_none() {
         label: "thread-7".to_owned(),
         sha256: "z".to_owned(),
     }];
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &logs).unwrap();
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &logs).unwrap();
     assert_eq!(verb.session_logs, logs);
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &logs).unwrap();
-    assert!(jvm.session_logs.is_empty());
-    assert!(!serde_json::to_string(&jvm).unwrap().contains("sessionLogs"));
+    let without = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
+    assert!(!serde_json::to_string(&without).unwrap().contains("sessionLogs"));
 }
 
 // The lane field selects the documents of the lane, so the lane daemon gets no filter of the lane's own tag. A suite
-// filter goes to it, and the JVM daemon gets every filter.
+// filter goes to it.
 #[tokio::test]
 async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_its_lane() {
     let (fixture, prep, _) = executing().await;
@@ -1057,8 +1077,6 @@ async fn the_lane_daemon_gets_the_class_filters_of_a_suite_and_not_the_tag_of_it
         junit5_filters: vec!["include-tag=air-flow-ui".to_owned(), class.clone()],
         ..RunSelection::default()
     };
-    let verb = run_request(&prep, &selection, policy, Runner::Daemon, Vec::new(), &[]).unwrap();
-    assert_eq!(verb.junit5_filters, std::slice::from_ref(&class));
-    let jvm = run_request(&prep, &selection, policy, Runner::Jvm, Vec::new(), &[]).unwrap();
-    assert_eq!(jvm.junit5_filters, ["include-tag=air-flow-ui".to_owned(), class]);
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
+    assert_eq!(verb.junit5_filters, [class]);
 }

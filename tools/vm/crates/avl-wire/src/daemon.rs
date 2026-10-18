@@ -1,10 +1,8 @@
 //! The daemon control channel's wire: the state file, the HTTP routes, the run request, and the NDJSON run stream.
 //!
-//! Two far ends serve it. The guest agent's `lane-daemon` verb speaks [`PROTOCOL_VERSION`], and the JVM daemon of
-//! `plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt` speaks [`JVM_PROTOCOL_VERSION`]. The
-//! [`Runner`] of the controller names the one it starts. Two guards make it worth its own module: the version refuses
-//! a daemon this controller does not understand, and the decoder refuses a record it cannot read rather than yielding a
-//! silent zero.
+//! The guest agent's `lane-daemon` verb serves it and speaks [`PROTOCOL_VERSION`]. Two guards make it worth its own
+//! module: the version refuses a daemon this controller does not understand, and the decoder refuses a record it
+//! cannot read rather than yielding a silent zero.
 //!
 //! Two rules run through the whole file, and they are opposites on purpose:
 //!
@@ -35,32 +33,6 @@ pub const PROTOCOL_VERSION: u32 = 6;
 /// The daemon environment variable that names the guest directory of the run inputs of `run --test-env NAME=@FILE`.
 /// The controller sets it to a path, never to a value. A file of that directory holds a secret of one run.
 pub const RUN_SECRETS_VARIABLE: &str = "AIR_VM_RUN_SECRETS";
-
-/// The protocol of the JVM daemon, `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. It has the two quiesce routes
-/// and the two status fields that protocol 6 dropped. The controller never calls the routes and ignores the fields.
-/// It goes with [`Runner::Jvm`].
-pub const JVM_PROTOCOL_VERSION: u32 = 5;
-
-vocabulary! {
-    /// Which process serves the control channel in the run slot of a worker. A transition argument: the JVM daemon
-    /// stays the default until each lane runs through the verb, and then the JVM daemon and this choice go.
-    pub enum Runner {
-        /// The JVM daemon of `plugins/air/tests/integration/uiDaemon`, launched from the staged JBR with its @-file.
-        Jvm = "jvm",
-        /// The `lane-daemon` verb of the installed guest agent.
-        Daemon = "daemon",
-    }
-}
-
-impl Runner {
-    /// The protocol version that a daemon of this runner reports.
-    pub const fn protocol_version(self) -> u32 {
-        match self {
-            Self::Jvm => JVM_PROTOCOL_VERSION,
-            Self::Daemon => PROTOCOL_VERSION,
-        }
-    }
-}
 
 /// The Bazel target the runtime descriptor of a macOS guest comes from.
 pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
@@ -240,8 +212,8 @@ pub mod conflict {
 
 /// `POST /run`: what one iteration runs, and the inputs it runs with.
 ///
-/// The JVM daemon reads the fields up to `ide_plugins` and refuses an unknown one, so the lane-daemon fields are absent
-/// for [`Runner::Jvm`]. An empty selection is `[]` and never `null`.
+/// An empty selection is `[]` and never `null`. A field that a run does not use is absent, so a request of a run with no
+/// lane inputs, such as one in a test, stays short.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunRequest {
@@ -256,19 +228,19 @@ pub struct RunRequest {
     pub progress_gap_timeout_sec: u64,
     /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
     pub ide_plugins: Vec<IdePlugin>,
-    /// The catalog lane of the run, such as `ui`: the lane document `lanes/<lane>.json`. The lane daemon only.
+    /// The catalog lane of the run, such as `ui`: the lane document `lanes/<lane>.json`.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub lane: Option<String>,
-    /// The digests that the push stored the lane inputs under. The lane daemon only.
+    /// The digests that the push stored the lane inputs under.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub lane_inputs: Option<LaneInputs>,
-    /// Every suite of the lane that the catalog names, which the JVM runner runs: the suite documents and the authored
-    /// suites. The lane daemon plans each one, and a suite without a suite document ends as a failed container. The
-    /// lane daemon only. Empty plans the suite documents alone.
+    /// Every suite of the lane that the catalog names: the suite documents and the authored suites. The lane daemon
+    /// plans each one, and a suite without a suite document ends as a failed container. Empty plans the suite documents
+    /// alone.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub lane_classes: Vec<LaneClass>,
     /// The recorded sessions of the run, which the push stored as zips. The lane daemon unpacks them into the context
-    /// of the lane IDE, as [`crate::session_log`] states. The lane daemon only.
+    /// of the lane IDE, as [`crate::session_log`] states.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub session_logs: Vec<SessionLog>,
 }

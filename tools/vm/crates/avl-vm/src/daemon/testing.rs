@@ -150,7 +150,7 @@ impl FakeDaemon {
         let token = "fixture-token".to_owned();
         let script = Arc::new(Mutex::new(DaemonScript {
             requests: Vec::new(),
-            protocol_version: wire::JVM_PROTOCOL_VERSION,
+            protocol_version: wire::PROTOCOL_VERSION,
             protocol_after_shutdown: None,
             boot_stamp: "boot-1".to_owned(),
             launch_digest: String::new(),
@@ -244,14 +244,13 @@ impl FakeDaemon {
             last_mount_digest: String::new(),
             last_plugins_digest: String::new(),
             agent_digest: String::new(),
-            runner: None,
         }
     }
 
     /// What the guest daemon publishes for the boot poll to read, aimed at this double.
     pub(crate) fn state_file_json(&self) -> String {
         json!({
-            "protocolVersion": wire::JVM_PROTOCOL_VERSION,
+            "protocolVersion": wire::PROTOCOL_VERSION,
             "port": self.port(),
             "token": self.token,
             "pid": 7,
@@ -286,17 +285,14 @@ async fn serve(State(served): State<Served>, request: Request) -> Response {
             if let Some(code) = script.status_code {
                 return status(code).into_response();
             }
-            // The two fields of the JVM daemon that protocol 6 dropped, which the controller ignores.
             json!({
                 "protocolVersion": script.protocol_version,
                 "daemonBootStamp": script.boot_stamp,
                 "controllerLaunchDigest": script.launch_digest,
-                "mountQuiesced": false,
                 "productStamp": "stamp",
                 "ideRunning": script.ide_running,
                 "busy": script.busy,
                 "iterationCount": script.iteration_count,
-                "metaspaceUsedBytes": 1,
                 "pid": 42,
             })
             .to_string()
@@ -768,11 +764,8 @@ impl DaemonFixture {
 
     async fn build(backend: Backend, guest_os: GuestOs, extra: &[(&str, &str)], over_hypervisor: bool) -> Self {
         avl_affected::bridge::install_fixture();
-        // The daemon double speaks the protocol of the JVM daemon, so the fixture runs the JVM runner. A test of the lane
-        // daemon sets the runner on a copy of the settings, or speaks the lane protocol on the double.
-        let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION)
-            .with_git()
-            .with_daemon_runner(wire::Runner::Jvm);
+        // The daemon double speaks the protocol of the lane daemon, which every run starts.
+        let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION).with_git();
         if over_hypervisor {
             builder = builder.without_tart_bin();
         }
@@ -803,6 +796,17 @@ impl DaemonFixture {
             None
         };
         let pool = builder.build();
+        // A checkout holds the suite documents, which the lane daemon reads the classes of a lane from: one of the lane UI.
+        let documents = pool
+            .root()
+            .join("plugins/air/tests/integration/flow-profiles/resources/flow-profiles");
+        std::fs::create_dir_all(&documents).expect("the fixture checkout holds the directory of the suite documents");
+        std::fs::write(
+            documents.join("fixture-suite.json"),
+            r#"{"suite": "fixture-suite", "lane": "UI", "testClassName": "AirFixtureSuiteUiTest",
+  "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.AirFixtureSuiteUiTest"}], "profiles": []}"#,
+        )
+        .expect("the fixture checkout holds a suite document");
         if over_hypervisor {
             pool.fake.exec_once();
         }

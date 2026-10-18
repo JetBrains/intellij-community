@@ -356,25 +356,17 @@ fn a_global_option_after_the_command_is_the_same_option() {
     );
 }
 
-// `--runner` is a global option: a known word names the runner on either side of the command, and an unknown word is a
-// usage refusal before any command runs.
+// The controller runs the lane daemon alone, so `--runner` is no option any more: a command line that still names it is
+// a usage refusal before any command runs.
 #[test]
-fn the_runner_is_a_global_option_with_two_words() {
+fn a_command_line_with_the_retired_runner_option_is_refused() {
     let pipe = TerminalFacts::default();
-    assert_eq!(invocation(&["status"], &pipe).runner, None);
-    assert_eq!(
-        invocation(&["--runner", "daemon", "daemon", "status"], &pipe).runner,
-        Some(Runner::Daemon)
-    );
-    assert_eq!(
-        invocation(&["daemon", "status", "--runner", "jvm"], &pipe).runner,
-        Some(Runner::Jvm)
-    );
-    let Parsed::Refused { command, refusal, .. } = parse_argv(&["--runner", "kotlin", "status"], &pipe) else {
-        panic!("an unknown runner was accepted");
-    };
-    assert_eq!((command, refusal.exit), (None, Exit::USAGE));
-    assert!(refusal.message.contains("the runners are jvm, daemon"), "{}", refusal.message);
+    for argv in [&["--runner", "daemon", "status"][..], &["daemon", "status", "--runner", "jvm"][..]] {
+        let Parsed::Refused { refusal, .. } = parse_argv(argv, &pipe) else {
+            panic!("{argv:?} was accepted");
+        };
+        assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}: {}", refusal.message);
+    }
 }
 
 // An acquisition that names no holder takes the invoking user's, in the shape a self-leased run uses, so a caller

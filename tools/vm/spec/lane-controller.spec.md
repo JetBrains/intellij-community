@@ -1369,8 +1369,7 @@ The daemon's half and the IDE's half of supervision are in
   another checkout does that, such as the release of a lease there. The start of a daemon records the digest of the
   agent that it installed. A run of the lane daemon asks the guest which agent it holds now. Another digest restarts
   the daemon, and the start installs the agent of the checkout of the run. The restart keeps the lane IDE. A note of
-  the run stream names both digests, and the decision says `restart`. A JVM daemon is no guest agent, so its run does
-  not ask. A record without the digest decides nothing.
+  the run stream names both digests, and the decision says `restart`. A record without the digest decides nothing.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_guest_agent_was_reinstalled_restarts`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_recorded_agent`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
@@ -1396,18 +1395,18 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The push offers the context plugin files with the test jars, and uploads only the files that the guest does not
-  hold. With the JVM daemon, a change of only the context plugins relaunches the IDE and refreshes no share. The
-  decision and the timing line say `relaunch`, and the reason is `the bridge plugin changed`. No lane distribution
-  carries the bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a
-  plugin identity decides nothing on it.
+  hold. A change of only the context plugins leaves the IDE to the lane daemon, which compares the digest of each
+  plugin directory itself. The controller then relaunches nothing and refreshes no share. No lane distribution carries
+  the bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a plugin
+  identity decides nothing on it.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
 
 - The controller stamps each context plugin directory into a digest of its own. The run log names each directory
-  with its digest. With the lane daemon, a change of only the context plugins leaves the IDE to the lane daemon. The
-  timing line then says the action of its last decision about the IDE.
+  with its digest. A change of only the context plugins leaves the IDE to the lane daemon. The timing line then says
+  the action of its last decision about the IDE.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`each_context_plugin_directory_has_its_own_digest_and_a_note`)
-  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_lane_daemon_decides_a_change_of_the_context_plugins_itself`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_change_of_the_context_plugins_alone_leaves_the_ide_to_the_lane_daemon`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_ide_action_of_the_lane_daemon_is_its_last_decision_about_the_ide`)
 
 - Every other daemon start stops every lane IDE of the worker. A restart that remounts a VirtioFS share also stops
@@ -1489,55 +1488,38 @@ The daemon's half and the IDE's half of supervision are in
 
 #### The lane-daemon verb
 
-The global option `--runner` names the process of the run slot. `daemon` is the `lane-daemon` verb of the installed
-guest agent and the default for every lane, the live lane too. `jvm` is the JVM daemon. The option is for the move of
-the lanes to the verb, and it goes with the JVM daemon.
+The run slot of a worker holds the `lane-daemon` verb of the installed guest agent, for every lane.
 
-- A run without `--runner` runs the lane daemon.
-  [@test] ../crates/avl-base/src/config/tests.rs (`the_linux_defaults_are_the_documented_ones`)
-
-- `--runner` takes `jvm` or `daemon` on either side of the command. Another word is a usage refusal.
-  [@test] ../crates/avl-vm/src/cli/tests.rs (`the_runner_is_a_global_option_with_two_words`)
-
-- With `daemon`, the run slot holds the verb. It gets the state directory, the port, the launch digest, the runtime
-  descriptor, the runfiles root, the IDE root and the home of the generation.
+- The run slot holds the verb. It gets the state directory, the port, the launch digest, the runtime descriptor, the
+  runfiles root, the IDE root and the home of the generation.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent`)
 
-- The runner is a boot setting, so a change of the runner restarts the daemon. The JVM runner keeps its launch digest.
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`the_runner_enters_the_launch_digest`)
+- The controller has no `--runner` option any more. A command line that still names it is a usage refusal.
+  [@test] ../crates/avl-vm/src/cli/tests.rs (`a_command_line_with_the_retired_runner_option_is_refused`)
 
-- The verb speaks protocol 6, and the JVM daemon speaks protocol 5. The controller refuses a daemon that speaks a
-  protocol of no runner, and it names both versions. A daemon that it started refuses the same way when it does not
-  speak the protocol of the runner.
-  [@test] ../crates/avl-wire/src/daemon/tests.rs (`each_runner_reports_its_own_protocol_version`)
+- The verb speaks protocol 6. The controller refuses a daemon that speaks another protocol, and it names both versions.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_lane_daemon_speaks_protocol_6`)
   [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`daemon_status_answers_only_the_daemon_this_controller_launched`)
 
-- A daemon that speaks the protocol of the other runner is another daemon, as one of another launch is. A run whose
-  `--runner` differs from the runner of the last run retires the daemon on the guest and starts its own. This is a
-  transition rule, and it goes with the JVM runner.
-  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`a_daemon_of_the_other_runner_is_another_daemon`)
-  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`only_the_protocol_of_the_other_runner_names_a_runner`)
-  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_started`)
-
-- The daemon record names the runner of the daemon, and each run writes its runner into it. `daemon status` and the
-  release of a slot ask the daemon in the protocol of that runner, and `daemon status` names it. So a lane daemon is
-  parked and reachable for a command of `--runner jvm`. A run of the other runner still retires it.
+- A guest can still hold the JVM daemon of an older controller, which speaks protocol 5. The controller retires it as a
+  daemon of another launch, and a run starts the lane daemon in its place. The status of that daemon still decodes,
+  and the slot probe never reads it as parked.
+  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`a_leftover_jvm_daemon_is_another_daemon`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started`)
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_status_of_either_runner_decodes`)
   [@test] ../crates/avl-vm/src/daemon/slot/tests.rs (`only_an_answering_idle_daemon_reads_as_parked`)
-  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`command_daemon_status_asks_a_lane_daemon_in_its_own_protocol`)
-  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_run_writes_its_runner_into_the_record_of_its_daemon`)
 
-- A record of an older controller names no runner. A command asks that daemon in the protocol of its own `--runner`,
-  and the next run writes the runner into the record.
+- A daemon record of an older controller can name the runner of its daemon. The reader ignores that field, and
+  `daemon status` names no runner.
   [@test] ../crates/avl-vm/src/daemon/state/tests.rs (`a_state_reads_only_with_every_field`)
-  [@test] ../crates/avl-vm/src/daemon/slot/tests.rs (`a_record_without_a_runner_is_asked_in_the_protocol_of_the_caller`)
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`command_daemon_status_reports_the_daemons_own_account`)
 
-- Protocol 6 has no route that quiesces the shares, and its status has no quiesce field and no metaspace field. The
-  status of the JVM daemon still decodes.
+- Protocol 6 has no route that quiesces the shares, and its status has no quiesce field and no metaspace field.
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`routes_are_matched_the_way_the_daemon_routes_them`)
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_status_of_either_runner_decodes`)
 
 - The run request of the verb names the lane and the digests of the three lane inputs. A selection of no lane is
-  refused before the request goes out. The JVM daemon gets neither field.
+  refused before the request goes out.
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_run_request_names_the_lane_inputs_for_the_lane_daemon_only`)
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs`)
 
@@ -1703,11 +1685,10 @@ the lanes to the verb, and it goes with the JVM daemon.
   [@test] ../crates/avl-vm/src/daemon/session_logs/tests.rs (`no_variable_packs_nothing_and_a_wrong_entry_is_refused`)
 
 - The controller packs each log as one zip of stored entries, with its `attachments` and `outputs` directories. It
-  pushes the zips by digest, and the run request names them in `sessionLogs`. The zips then leave the host. The JVM
-  runner gets no `sessionLogs`, and the controller notes that it stages no recorded session.
+  pushes the zips by digest, and the run request names them in `sessionLogs`. The zips then leave the host.
   [@test] ../crates/avl-wire/src/session_log/tests.rs (`a_log_packs_its_events_and_siblings_and_unpacks_to_the_same_tree`)
   [@test] ../crates/avl-vm/src/daemon/session_logs/tests.rs (`each_named_log_is_one_zip_of_the_push_and_leaves_the_host_after_it`)
-  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_recorded_sessions_and_the_jvm_daemon_none`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_recorded_sessions`)
 
 - The lane daemon unpacks each log into `<context>/air-real-session-logs/<label>/` before the first suite. The zip
   then leaves the jar store, and the copies leave the context at the end of the run. `lane-run` reads the variable on

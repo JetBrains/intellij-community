@@ -585,7 +585,7 @@ impl Manager {
             self.end_orphaned_run_process(ctx, tart, worker, &identity).await?;
             return Ok(StopState::Stopped);
         }
-        // Suspending keeps what the worker is expensive to rebuild: the warm UI-test daemon and the IDE it holds open
+        // Suspending keeps what the worker is expensive to rebuild: the warm lane daemon and the IDE it holds open
         // come back with the guest. Measured on 2026-08-12 that costs about two seconds and a ~6 GB state file, and
         // resuming takes 29 s against a 32 s cold boot - so the reason to prefer it is the warm guest.
         let suspending = self.settings.vm_suspendable;

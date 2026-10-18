@@ -11,7 +11,7 @@ use crate::worker::worker::{ChannelFactory, Manager};
 use avl_base::format::clip;
 use avl_base::{Exit, Refusal};
 use avl_host_sys::Ctx;
-use avl_wire::daemon::{self as wire, Endpoint, ProtocolError, Runner, Status};
+use avl_wire::daemon::{self as wire, Endpoint, ProtocolError, Status};
 use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
 use hyper::body::Incoming;
@@ -112,8 +112,6 @@ fn budget_text(budget: Duration) -> String {
 #[derive(Clone)]
 pub(crate) struct DaemonClient {
     client: Client<RelayConnector, Full<Bytes>>,
-    /// The runner whose protocol a daemon must speak.
-    runner: Runner,
 }
 
 impl std::fmt::Debug for DaemonClient {
@@ -123,39 +121,18 @@ impl std::fmt::Debug for DaemonClient {
 }
 
 impl DaemonClient {
-    /// A client that reaches each worker through the channel `channels` names for it, of a daemon of `runner`.
-    pub(crate) fn new(channels: ChannelFactory, runner: Runner) -> Self {
+    /// A client that reaches each worker through the channel `channels` names for it.
+    pub(crate) fn new(channels: ChannelFactory) -> Self {
         let client = Client::builder(TokioExecutor::new())
             .pool_timer(TokioTimer::new())
             .build(RelayConnector::new(channels));
-        Self { client, runner }
+        Self { client }
     }
 
-    /// A client over the worker manager's exec channels, of the runner of its settings.
+    /// A client over the worker manager's exec channels.
     pub(crate) fn over(manager: &Arc<Manager>) -> Self {
-        let runner = manager.settings().daemon.runner;
         let manager = Arc::clone(manager);
-        Self::new(Arc::new(move |worker: &str| manager.channel(worker)), runner)
-    }
-
-    /// The runner whose protocol a daemon must speak.
-    pub(crate) const fn runner(&self) -> Runner {
-        self.runner
-    }
-
-    /// The same client for the daemon of `state`: in the protocol of the runner of its record ([`HostState::runner`]),
-    /// or of this client's own runner for a record that names none. A command that only asks about a daemon uses it. A
-    /// run keeps its own runner, so it retires a daemon of the other one.
-    pub(crate) fn for_record(&self, state: &HostState) -> Self {
-        self.for_runner(state.runner.unwrap_or(self.runner))
-    }
-
-    /// The same client for a daemon of `runner`.
-    pub(crate) fn for_runner(&self, runner: Runner) -> Self {
-        Self {
-            client: self.client.clone(),
-            runner,
-        }
+        Self::new(Arc::new(move |worker: &str| manager.channel(worker)))
     }
 
     /// Sends the request for one endpoint, authenticated, and answers the response head. `/run` reads its body as a
@@ -239,10 +216,10 @@ impl DaemonClient {
     /// One `/status` probe, classified.
     ///
     /// Every answer but [`StatusProbe::Healthy`] means "start a fresh one" to a caller that only asks whether a
-    /// daemon is usable. A protocol that no runner speaks is *not* one of them: a daemon speaking another protocol
-    /// version would be restarted forever by a controller that is itself the stale half - so it refuses instead,
-    /// naming both versions. The protocol of the other runner is a daemon of that runner. It is
-    /// [`StatusProbe::OtherDaemon`], so a switch of `--runner` retires it ([`other_runner`]).
+    /// daemon is usable. A protocol that this controller does not speak is *not* one of them: a daemon speaking another
+    /// protocol version would be restarted forever by a controller that is itself the stale half - so it refuses
+    /// instead, naming both versions. The protocol of the JVM daemon of an older controller is
+    /// [`StatusProbe::OtherDaemon`], so a run retires it ([`RETIRED_JVM_PROTOCOL_VERSION`]).
     pub(crate) async fn probe_status(&self, ctx: &Ctx, state: &HostState) -> Result<StatusProbe, Refusal> {
         let (status, body) = match self.exchange(ctx, state, &wire::STATUS, None).await {
             Ok(answered) => answered,
@@ -265,13 +242,13 @@ impl DaemonClient {
         // An unusable daemon is an answer, but one that answers with a body this controller cannot read is a
         // protocol failure, and folding the two together is what would restart a mismatched daemon forever.
         let decoded = wire::decode_status(&body).map_err(protocol_refusal)?;
-        if let Some(other) = other_runner(decoded.protocol_version, self.runner) {
+        if decoded.protocol_version == RETIRED_JVM_PROTOCOL_VERSION {
             return Ok(StatusProbe::OtherDaemon(format!(
-                "a daemon of the runner {other} (protocol {}), and this controller runs {}",
-                decoded.protocol_version, self.runner
+                "a JVM daemon of an older controller (protocol {RETIRED_JVM_PROTOCOL_VERSION}), and this controller \
+                 runs the lane daemon"
             )));
         }
-        require_supported_protocol(decoded.protocol_version, self.runner)?;
+        require_supported_protocol(decoded.protocol_version)?;
         // A rebooted daemon has a fresh token, so a matching boot stamp is implied by the 200; still verified.
         if decoded.daemon_boot_stamp != state.daemon_boot_stamp {
             return Ok(StatusProbe::OtherDaemon(format!(
@@ -374,41 +351,28 @@ impl StatusProbe {
     }
 }
 
-/// The other runner whose daemon reports the protocol `reported`, for a controller of `runner`. A guest keeps the daemon
-/// of the runner that the last run used, so a run with the other `--runner` finds it. That daemon is no skew: it is a
-/// daemon to retire, as one of another launch is. `None` for the protocol of `runner` itself and for a protocol that no
-/// runner speaks.
-///
-/// A transition rule: it goes with the JVM runner.
-pub(crate) fn other_runner(reported: u32, runner: Runner) -> Option<Runner> {
-    if reported == runner.protocol_version() {
-        return None;
-    }
-    Runner::ALL.iter().copied().find(|other| other.protocol_version() == reported)
-}
+/// The protocol of the JVM daemon of a controller before this one. A guest can still hold such a daemon in its run
+/// slot. It is no skew: this controller starts no JVM daemon, so it retires that daemon as one of another launch.
+pub(crate) const RETIRED_JVM_PROTOCOL_VERSION: u32 = 5;
 
-/// Refuses a daemon this controller cannot read, by name and at boot. Each runner has its own protocol version.
+/// Refuses a daemon this controller cannot read, by name and at boot.
 ///
-/// The launch digest already restarts a daemon built from another build, and a change of the runner. What this
-/// catches is the other skew: this controller lives outside the Bazel graph, so a Kotlin protocol change and a
-/// controller one can be committed apart. Without the check the first symptom is a decode failure mid-run, after a
-/// build and an IDE launch.
-pub(crate) fn require_supported_protocol(reported: u32, runner: Runner) -> Result<(), Refusal> {
-    let expected = runner.protocol_version();
+/// The launch digest already restarts a daemon built from another build. What this catches is the other skew: a guest
+/// can hold an agent of another tree than this controller. Without the check the first symptom is a decode failure
+/// mid-run, after a build and an IDE launch.
+pub(crate) fn require_supported_protocol(reported: u32) -> Result<(), Refusal> {
+    let expected = wire::PROTOCOL_VERSION;
     if reported == expected {
         return Ok(());
     }
-    let far_end = match runner {
-        Runner::Jvm => "`plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt`",
-        Runner::Daemon => "the lane-daemon verb of `community/tools/vm/crates/avl-guest`",
-    };
     Err(Refusal::new(
         "daemon_protocol_unsupported",
         Exit::SOFTWARE,
         format!(
-            "the guest daemon speaks run protocol {reported}, and this controller speaks {expected} for the runner \
-             {runner}. One half of {far_end} and `community/tools/vm/crates/avl-wire` was updated without the other, or \
-             the guest still holds a daemon from before the change, which `daemon stop` retires."
+            "the guest daemon speaks run protocol {reported}, and this controller speaks {expected}. One half of the \
+             lane-daemon verb of `community/tools/vm/crates/avl-guest` and `community/tools/vm/crates/avl-wire` was \
+             updated without the other, or the guest still holds a daemon from before the change, which `daemon stop` \
+             retires."
         ),
     ))
 }

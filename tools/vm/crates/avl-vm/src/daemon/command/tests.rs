@@ -126,8 +126,8 @@ async fn daemon_warm_reports_the_build_identities_and_touches_no_guest() {
     assert!(!fixture.settings.worker_dir(&fixture.worker).join("host-build.log").exists());
 }
 
-// `daemon status` reports a healthy daemon's own account and the runner that started it, and "no healthy daemon"
-// otherwise.
+// `daemon status` reports a healthy daemon's own account, and "no healthy daemon" otherwise. A record of an older
+// controller can name the runner of its daemon, and the status reads past it.
 #[tokio::test]
 async fn command_daemon_status_reports_the_daemons_own_account() {
     let fixture = Fixture::new().await;
@@ -138,38 +138,17 @@ async fn command_daemon_status_reports_the_daemons_own_account() {
     assert_eq!(outcome.data["reachable"], json!(false));
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
+    let path = HostState::path(&fixture.settings, &fixture.worker);
+    let mut record: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    record["runner"] = json!("jvm");
+    std::fs::write(&path, record.to_string()).unwrap();
     fixture.daemon.script().iteration_count = 4;
     let outcome = fixture.host.command_daemon(&ctx, DaemonVerb::Status, Some(&receipt)).await.unwrap();
-    assert_eq!(
-        outcome.text,
-        format!("daemon={}\nrunner=jvm\nide=stopped\niterations=4", state.run_id)
-    );
+    assert_eq!(outcome.text, format!("daemon={}\nide=stopped\niterations=4", state.run_id));
     assert_eq!(outcome.data["reachable"], json!(true));
     assert_eq!(outcome.data["daemon"]["runId"], json!(state.run_id));
-    assert_eq!(outcome.data["daemon"]["runner"], json!("jvm"));
+    assert_eq!(outcome.data["daemon"].get("runner"), None);
     assert_eq!(outcome.data["status"]["iterationCount"], json!(4));
-}
-
-// `daemon status` asks a daemon in the protocol of the runner that started it, not in that of its own `--runner`. So a
-// lane daemon is reachable for a command of `--runner jvm`, which a pull script and a hand command are.
-#[tokio::test]
-async fn command_daemon_status_asks_a_lane_daemon_in_its_own_protocol() {
-    let fixture = Fixture::new().await;
-    assert_eq!(fixture.host.daemon().runner(), Runner::Jvm);
-    let receipt = fixture.lease_receipt();
-    let prep = fixture.prepared().await;
-    let mut state = fixture.seed_healthy_daemon(&prep);
-    state.runner = Some(Runner::Daemon);
-    state.write(&fixture.settings, &fixture.worker).unwrap();
-    fixture.daemon.script().protocol_version = avl_wire::daemon::PROTOCOL_VERSION;
-    let outcome = fixture
-        .host
-        .command_daemon(&Ctx::background(), DaemonVerb::Status, Some(&receipt))
-        .await
-        .unwrap();
-    assert_eq!(outcome.data["reachable"], json!(true), "{}", outcome.text);
-    assert_eq!(outcome.data["daemon"]["runner"], json!("daemon"));
-    assert!(outcome.text.contains("\nrunner=daemon\n"), "{}", outcome.text);
 }
 
 // `daemon stop` retires the state and says which run it stopped.
@@ -1439,10 +1418,7 @@ async fn a_run_of_several_lanes_answers_one_envelope_with_a_verdict_per_lane() {
     );
     assert_eq!(published.counts.started, 3);
     let last: Value = serde_json::from_slice(&fixture.daemon.script().run_body).unwrap();
-    assert!(
-        last["junit5Filters"].to_string().contains("include-tag=air-gui-chat"),
-        "the last iteration asked for {last}"
-    );
+    assert_eq!(last["lane"], "gui-chat", "the last iteration asked for {last}");
 }
 
 // The exit is the worst of the lanes, so a red middle lane is still exit 6, and the green lanes are still in the

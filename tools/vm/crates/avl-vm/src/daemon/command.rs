@@ -13,7 +13,7 @@ use avl_base::plain::release_command;
 use avl_base::{Exit, Outcome, Refusal, Scope, Selection, history};
 use avl_host_sys::Ctx;
 use avl_host_sys::guest::{SupervisorOptions, ensure_host_paths};
-use avl_wire::daemon::{Runner, Status as DaemonStatus};
+use avl_wire::daemon::Status as DaemonStatus;
 use avl_wire::progress::{Event, LeaseDisposition, PlannedIteration, RunPlanned, Verdict, VerdictLease};
 use avl_wire::report::{RunReport, Status};
 use serde::{Deserialize, Serialize};
@@ -147,9 +147,6 @@ pub(crate) struct DaemonName {
     pub run_id: String,
     /// The worker and the daemon's guest port, as `worker:port`.
     pub endpoint: String,
-    /// The runner whose protocol the status probe spoke: the one of the record, or the command's own for a record that
-    /// names none.
-    pub runner: Runner,
 }
 
 /// `daemon warm`'s payload: no worker, the configuration that was warmed, and the four identities the build
@@ -819,18 +816,14 @@ impl Host {
 
     async fn daemon_status_outcome(&self, ctx: &Ctx, worker: &str) -> Result<Outcome, Refusal> {
         let state = HostState::read(&self.settings, worker);
-        // The protocol of the runner that started the daemon, so the answer does not depend on this command's `--runner`.
-        let asked = state.as_ref().map(|state| self.daemon.for_record(state));
-        let status = match (&state, &asked) {
-            (Some(state), Some(asked)) => asked.status(ctx, state).await?,
-            _ => None,
+        let status = match &state {
+            Some(state) => self.daemon.status(ctx, state).await?,
+            None => None,
         };
-        let runner = asked.as_ref().map_or(self.daemon.runner(), super::http::DaemonClient::runner);
         let text = match (&state, &status) {
             (Some(state), Some(status)) => format!(
-                "daemon={}\nrunner={}\nide={}\niterations={}",
+                "daemon={}\nide={}\niterations={}",
                 state.run_id,
-                runner,
                 if status.ide_running { "running" } else { "stopped" },
                 status.iteration_count
             ),
@@ -841,7 +834,6 @@ impl Host {
             daemon: state.map(|state| DaemonName {
                 endpoint: format!("{}:{}", state.worker, state.port),
                 run_id: state.run_id,
-                runner,
             }),
             reachable: status.is_some(),
             status,

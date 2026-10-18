@@ -143,7 +143,6 @@ fn the_linux_defaults_are_the_documented_ones() {
             health: Duration::from_secs(180),
             active_execution: Duration::from_mins(30),
             progress_gap: Duration::from_secs(300),
-            runner: Runner::Daemon,
         }
     );
 }
@@ -365,7 +364,6 @@ fn the_daemon_budgets_come_from_the_environment() {
             health: Duration::from_secs(240),
             active_execution: Duration::from_mins(15),
             progress_gap: Duration::from_secs(30),
-            runner: Runner::Daemon,
         }
     );
 }

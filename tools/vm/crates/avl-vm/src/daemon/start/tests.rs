@@ -171,7 +171,7 @@ async fn an_unwritten_state_file_loops_and_the_protocol_gate_runs_before_any_htt
     // The version this controller speaks, spelled from the constant: a bump would otherwise make the replacement a
     // no-op, and the test would pass a state file it never made stale.
     let stale = fixture.daemon.state_file_json().replacen(
-        &format!(r#""protocolVersion":{}"#, wire::JVM_PROTOCOL_VERSION),
+        &format!(r#""protocolVersion":{}"#, wire::PROTOCOL_VERSION),
         r#""protocolVersion":99"#,
         1,
     );
@@ -570,11 +570,11 @@ async fn a_full_start_boots_polls_and_records_its_state() {
         fixture.root().display()
     );
 
-    // The supervisor start runs the staged JVM under /usr/bin/env with the run environment.
+    // The supervisor start runs the lane-daemon verb of the installed agent under /usr/bin/env with the run environment.
     let starts = channel.calls_containing("vm-guest-agent start");
     assert_eq!(starts.len(), 1, "{starts:?}");
     assert!(
-        starts[0].contains("@/vm/data/daemon/daemon-jvm.args") && starts[0].contains("SELF_LOCATION="),
+        starts[0].contains(" lane-daemon --state-dir /vm/data/daemon ") && starts[0].contains("SELF_LOCATION="),
         "{}",
         starts[0]
     );
@@ -1018,30 +1018,15 @@ async fn a_container_linux_launch_binds_every_interface_of_the_container() {
     assert!(!prefix.contains("air.ui.daemon.bind"), "{prefix}");
 }
 
-// With `--runner daemon` the run slot holds the `lane-daemon` verb of the installed guest agent. It gets as arguments
-// what the JVM daemon gets as properties of its @-file. The JVM runner keeps its JVM and @-file.
+// The run slot holds the `lane-daemon` verb of the installed guest agent. It gets the state directory, the port, the
+// launch digest, the runtime descriptor, the runfiles root, the IDE root and the home of the generation.
 #[tokio::test]
 async fn the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent() {
     let (fixture, prep) = start_ready().await;
-    let jvm = [
-        "/vm/data/daemon-runtime/jbr/bin/java".to_owned(),
-        "@/vm/data/daemon/daemon-jvm.args".to_owned(),
-    ];
-    assert_eq!(
-        daemon_command(
-            &fixture.settings,
-            &prep,
-            "/vm/data/daemon",
-            "/runfiles/_main/ui_daemon.runtime.json",
-            jvm.clone()
-        ),
-        jvm
-    );
-    let mut settings = Config::clone(&fixture.settings);
-    settings.daemon.runner = Runner::Daemon;
+    let settings = &fixture.settings;
     let home = format!("/vm/data/daemon-runtime/generations/{}/home", prep.runtime_digest);
     assert_eq!(
-        daemon_command(&settings, &prep, "/vm/data/daemon", "/runfiles/_main/ui_daemon.runtime.json", jvm),
+        daemon_command(settings, &prep, "/vm/data/daemon", "/runfiles/_main/ui_daemon.runtime.json"),
         [
             settings.vm_agent.as_str(),
             "lane-daemon",

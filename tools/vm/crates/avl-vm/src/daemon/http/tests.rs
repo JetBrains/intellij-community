@@ -134,37 +134,23 @@ async fn probe_status_names_what_it_saw() {
     );
 }
 
-// A guest keeps the daemon of the runner that its last run used. To a controller of the other runner, that daemon is
-// another daemon to retire, never a protocol refusal.
+// A guest can still hold the JVM daemon of a controller before this one, which speaks protocol 5. This controller
+// starts no JVM daemon, so that daemon is another daemon to retire, never a protocol refusal.
 #[tokio::test]
-async fn a_daemon_of_the_other_runner_is_another_daemon() {
+async fn a_leftover_jvm_daemon_is_another_daemon() {
     let fixture = Fixture::new().await;
     let ctx = Ctx::background();
     let state = fixture.daemon.host_state("run-1", "launch-1");
     let daemon = fixture.host.daemon();
-    let other = Runner::ALL
-        .iter()
-        .copied()
-        .find(|runner| *runner != daemon.runner())
-        .expect("two runners");
-    fixture.daemon.script().protocol_version = other.protocol_version();
+    fixture.daemon.script().protocol_version = RETIRED_JVM_PROTOCOL_VERSION;
     let seen = daemon.probe_status(&ctx, &state).await.unwrap();
     assert_eq!(seen.reason(), "other_daemon");
     assert!(
-        seen.detail().contains(&format!("a daemon of the runner {other}")),
+        seen.detail().contains("a JVM daemon of an older controller (protocol 5)"),
         "{}",
         seen.detail()
     );
     assert_eq!(daemon.status(&ctx, &state).await.unwrap(), None);
-}
-
-// Only the protocol of the other runner names a runner. The own protocol and a protocol that no runner speaks name none.
-#[test]
-fn only_the_protocol_of_the_other_runner_names_a_runner() {
-    assert_eq!(other_runner(wire::JVM_PROTOCOL_VERSION, Runner::Daemon), Some(Runner::Jvm));
-    assert_eq!(other_runner(wire::PROTOCOL_VERSION, Runner::Jvm), Some(Runner::Daemon));
-    assert_eq!(other_runner(wire::PROTOCOL_VERSION, Runner::Daemon), None);
-    assert_eq!(other_runner(99, Runner::Jvm), None);
 }
 
 // A relay that opens and never answers is no reply rather than no connection: the classifier puts a timeout after

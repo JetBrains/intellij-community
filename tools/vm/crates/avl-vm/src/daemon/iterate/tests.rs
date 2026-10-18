@@ -20,6 +20,7 @@ use serde_json::json;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
+use crate::daemon::http::RETIRED_JVM_PROTOCOL_VERSION;
 use crate::lane::secrets::{RunSecretFile, ScriptedStdin, SecretSource};
 use avl_base::RefusalExt;
 
@@ -88,11 +89,11 @@ fn the_daemon_decision_names_the_axis_that_moved() {
             true,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        // Only the context plugins moved: a relaunch on the same context, and no remount.
+        // Only the context plugins moved: the lane daemon compares the digest of each plugin directory itself.
         (
             Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true)),
             false,
-            DaemonAction::RelaunchForPlugins,
+            DaemonAction::Reuse,
         ),
         // A record of an older controller holds no plugin identity, so nothing is decided on it.
         (
@@ -124,39 +125,16 @@ fn the_daemon_decision_names_the_axis_that_moved() {
         ),
     ] {
         assert_eq!(
-            decide_daemon_action(seen, BUILD, fresh_ide, Runner::Jvm),
+            decide_daemon_action(seen, BUILD, fresh_ide),
             expected,
             "{seen:?} fresh_ide={fresh_ide}"
         );
     }
 }
 
-// The lane daemon compares the digest of each context plugin directory itself, so a change of the context plugins alone
-// leaves the IDE to it. Every other axis decides as for the JVM daemon.
-#[test]
-fn the_lane_daemon_decides_a_change_of_the_context_plugins_itself() {
-    let plugins_moved = healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true);
-    assert_eq!(
-        decide_daemon_action(Some(plugins_moved), BUILD, false, Runner::Daemon),
-        DaemonAction::Reuse
-    );
-    for (seen, fresh_ide) in [
-        (healthy_with_plugins("launch-1", "mount-0", "runtime-1", "plugins-0", true), false),
-        (healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", false), false),
-        (plugins_moved, true),
-        (healthy("launch-0", "mount-1", "runtime-1", true), false),
-    ] {
-        assert_eq!(
-            decide_daemon_action(Some(seen), BUILD, fresh_ide, Runner::Daemon),
-            decide_daemon_action(Some(seen), BUILD, fresh_ide, Runner::Jvm),
-            "{seen:?} fresh_ide={fresh_ide}"
-        );
-    }
-}
-
 // A lane daemon is its guest agent. When the guest holds another agent than the one the daemon started from, the run
-// restarts the daemon, so the code of the daemon is the code of the install. The new daemon keeps the IDE. The JVM
-// daemon is no agent, and an agent that the run does not know decides nothing.
+// restarts the daemon, so the code of the daemon is the code of the install. The new daemon keeps the IDE. An agent that
+// the run does not know decides nothing.
 #[test]
 fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
     let with_agent = |started: &'static str, installed: &'static str, mount: &'static str| HealthyDaemon {
@@ -172,22 +150,12 @@ fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
         reason: AGENT_REINSTALLED,
         keep_ide: true,
     };
-    let decide = |seen, runner| decide_daemon_action(Some(seen), BUILD, false, runner);
-    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-1"), Runner::Daemon), restart);
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-1")), restart);
     // The start refreshes the shares too, so a moved mount restarts the same way.
-    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-0"), Runner::Daemon), restart);
-    assert_eq!(
-        decide(with_agent("agent-a", "agent-a", "mount-1"), Runner::Daemon),
-        DaemonAction::Reuse
-    );
-    assert_eq!(
-        decide(with_agent("agent-a", "agent-b", "mount-1"), Runner::Jvm),
-        DaemonAction::Reuse
-    );
-    assert_eq!(
-        decide(healthy("launch-1", "mount-1", "runtime-1", true), Runner::Daemon),
-        DaemonAction::Reuse
-    );
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-0")), restart);
+    assert_eq!(decide(with_agent("agent-a", "agent-a", "mount-1")), DaemonAction::Reuse);
+    assert_eq!(decide(healthy("launch-1", "mount-1", "runtime-1", true)), DaemonAction::Reuse);
 }
 
 /// A healthy lane daemon of `launch` that started from the agent `started`, whose build made the agent `built`. The guest
@@ -205,7 +173,7 @@ fn with_built(launch: &'static str, started: &'static str, built: Option<&'stati
 
 // The context writer is part of the guest agent. So a lane daemon whose build made another guest agent restarts, and the
 // restart keeps no IDE: the new daemon makes a fresh context and writes its files. A restart for the stable tier keeps
-// its reason and also keeps no IDE then. The JVM daemon is no agent, so its run decides nothing on the agent.
+// its reason and also keeps no IDE then.
 #[test]
 fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide() {
     let fresh = DaemonAction::Start {
@@ -213,29 +181,21 @@ fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide(
         reason: AGENT_BUILT,
         keep_ide: false,
     };
-    let decide = |seen, runner| decide_daemon_action(Some(seen), BUILD, false, runner);
-    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-b")), Runner::Daemon), fresh);
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
+    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-b"))), fresh);
     let mut reinstalled = with_built("launch-1", "agent-a", Some("agent-b"));
     reinstalled.agent = reinstalled.agent.map(|agent| AgentDigests {
         installed: Some("agent-c"),
         ..agent
     });
+    assert_eq!(decide(reinstalled), fresh, "the built agent wins over a reinstalled one");
     assert_eq!(
-        decide(reinstalled, Runner::Daemon),
-        fresh,
-        "the built agent wins over a reinstalled one"
-    );
-    assert_eq!(
-        decide(with_built("launch-0", "agent-a", Some("agent-b")), Runner::Daemon),
+        decide(with_built("launch-0", "agent-a", Some("agent-b"))),
         DaemonAction::Start {
             verb: "restart",
             reason: "the controller boot settings changed",
             keep_ide: false,
         }
-    );
-    assert_eq!(
-        decide(with_built("launch-1", "agent-a", Some("agent-b")), Runner::Jvm),
-        DaemonAction::Reuse
     );
 }
 
@@ -243,7 +203,7 @@ fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide(
 // run does not know. A restart for the stable tier then keeps the IDE of the product.
 #[test]
 fn a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused() {
-    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false, Runner::Daemon);
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
     assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-a"))), DaemonAction::Reuse);
     assert_eq!(decide(with_built("launch-1", "agent-a", None)), DaemonAction::Reuse);
     assert_eq!(
@@ -266,17 +226,16 @@ async fn the_run_reads_the_agent_of_the_build_only_for_a_lane_daemon_with_a_reco
     let source = fixture.settings.vm_agent_source.as_ref().expect("the pool names the agent source");
     let built = avl_host_sys::guest::agent_digest(&std::fs::read(source).unwrap());
     let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
-    assert_eq!(fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    assert_eq!(fixture.host.built_agent(&ctx, &state, &scope).await, None);
     state.agent_digest = built.clone();
-    assert_eq!(fixture.host.built_agent(&ctx, &state, Runner::Jvm, &scope).await, None);
     assert_eq!(
-        fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        fixture.host.built_agent(&ctx, &state, &scope).await.as_deref(),
         Some(built.as_str())
     );
     let started = avl_host_sys::guest::agent_digest(b"agent of an earlier build");
     state.agent_digest = started.clone();
     assert_eq!(
-        fixture.host.built_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        fixture.host.built_agent(&ctx, &state, &scope).await.as_deref(),
         Some(built.as_str())
     );
     let said = fixture.stdout.text() + &fixture.stderr.text();
@@ -301,13 +260,12 @@ async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_reco
     let contract = |digest: &str| answer_text(json!({ "selfDigest": digest }).to_string());
     let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
     fixture.on("contract", contract(&reinstalled));
-    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
     state.agent_digest = started.clone();
-    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Jvm, &scope).await, None);
     assert!(fixture.channel().calls_containing("vm-guest-agent contract").is_empty());
 
     assert_eq!(
-        fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
         Some(reinstalled.as_str())
     );
     let said = fixture.stdout.text() + &fixture.stderr.text();
@@ -320,11 +278,11 @@ async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_reco
 
     fixture.on("contract", contract(&started));
     assert_eq!(
-        fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await.as_deref(),
+        fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
         Some(started.as_str())
     );
     fixture.on("contract", answer_exit(70));
-    assert_eq!(fixture.host.installed_agent(&ctx, &state, Runner::Daemon, &scope).await, None);
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
     let said = fixture.stdout.text() + &fixture.stderr.text();
     assert_eq!(said.matches(&moved).count(), 1, "{said}");
     assert!(
@@ -363,8 +321,6 @@ fn the_ide_action_of_the_lane_daemon_is_its_last_decision_about_the_ide() {
 
 #[test]
 fn the_push_notes_count_the_changed_jars() {
-    assert_eq!(reuse_reason(0), "no daemon input and no test jar changed");
-    assert_eq!(reuse_reason(2), "the daemon inputs did not change");
     assert_eq!(jar_push_reason(0), None);
     assert_eq!(jar_push_reason(1).as_deref(), Some("1 changed test jar"));
     assert_eq!(jar_push_reason(3).as_deref(), Some("3 changed test jars"));
@@ -657,10 +613,11 @@ async fn an_iteration_names_the_digests_of_the_lane_inputs() {
     assert!(notes.contains(&expected), "{notes:?}");
 }
 
-// A change of the context plugins alone relaunches the IDE on the same context: no remount, no stop and no daemon
-// start. The state records the plugin identity the iteration ran with.
+// A change of the context plugins alone leaves the IDE to the lane daemon, which compares the digest of each plugin
+// directory itself: no remount, no stop, no daemon start and no IDE decision of the controller. The state records the
+// plugin identity the iteration ran with.
 #[tokio::test]
-async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
+async fn a_change_of_the_context_plugins_alone_leaves_the_ide_to_the_lane_daemon() {
     let (fixture, prep, mut state) = iteration_fixture("it-12p").await;
     fixture.daemon.script().ide_running = true;
     state.last_plugins_digest = "plugins-before".to_owned();
@@ -668,18 +625,14 @@ async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
     let recorded = Recorded::start(&fixture.host.reporter);
     let attempt = run_warm_iteration(&fixture, false).await;
     report_of(&attempt);
-    assert_eq!(attempt.ide_action, IdeAction::Relaunch);
-    assert!(attempt.timing.contains("  ide relaunch  "), "{:?}", attempt.timing);
+    assert_eq!(attempt.ide_action, IdeAction::Reuse);
     assert!(!fixture.daemon.saw_request("POST /ide/stop"));
     assert!(
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
-        "a relaunch for the plugins keeps the daemon"
+        "a change of the plugins keeps the daemon"
     );
     let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
-    assert!(
-        decisions.contains(&json!({"subject": "ide", "action": "relaunch", "reason": "the bridge plugin changed"})),
-        "{decisions:?}"
-    );
+    assert!(!decisions.iter().any(|decision| decision["subject"] == "ide"), "{decisions:?}");
     assert!(!decisions.iter().any(|decision| decision["subject"] == "shares"), "{decisions:?}");
     let written = HostState::read(&fixture.settings, &fixture.worker).expect("the state is kept");
     assert_eq!(written.last_plugins_digest, prep.plugins_digest);
@@ -724,49 +677,34 @@ async fn no_healthy_daemon_restarts_the_daemon() {
     );
 }
 
-// A run writes its runner into the record of the daemon it ran on, so the record of an older controller, which names
-// none, names it after the next run.
+// A guest can still hold the JVM daemon of an older controller, whose record names its runner. A run retires that
+// daemon and starts the lane daemon, and it does not refuse `daemon_protocol_unsupported`.
 #[tokio::test]
-async fn a_run_writes_its_runner_into_the_record_of_its_daemon() {
-    let (fixture, _, state) = iteration_fixture("it-34").await;
-    assert_eq!(state.runner, None);
-    let attempt = run_warm_iteration(&fixture, false).await;
-    report_of(&attempt);
-    let recorded = HostState::read(&fixture.settings, &fixture.worker).expect("the record stays");
-    assert_eq!(recorded.runner, Some(fixture.host.daemon().runner()));
-}
-
-// A run with `--runner` switched finds the daemon of the other runner on the guest, whose record names that runner. It
-// retires that daemon and starts its own, and it does not refuse `daemon_protocol_unsupported`. Only a command that
-// asks about the daemon speaks the protocol of the record.
-#[tokio::test]
-async fn a_daemon_of_the_other_runner_is_retired_and_a_daemon_of_this_runner_started() {
+async fn a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
     fixture.install_happy_guest(&prep);
-    let mut state = fixture.seed_healthy_daemon(&prep);
-    let runner = fixture.host.daemon().runner();
-    let other = Runner::ALL.iter().copied().find(|other| *other != runner).expect("two runners");
-    state.runner = Some(other);
-    state.write(&fixture.settings, &fixture.worker).unwrap();
+    let state = fixture.seed_healthy_daemon(&prep);
+    let path = HostState::path(&fixture.settings, &fixture.worker);
+    let mut record: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    record["runner"] = json!("jvm");
+    std::fs::write(&path, record.to_string()).unwrap();
+    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), Some(state));
     {
         let mut script = fixture.daemon.script();
-        script.protocol_version = other.protocol_version();
-        script.protocol_after_shutdown = Some(runner.protocol_version());
+        script.protocol_version = RETIRED_JVM_PROTOCOL_VERSION;
+        script.protocol_after_shutdown = Some(wire::PROTOCOL_VERSION);
     }
     fixture.script_run(passing_run_lines("it-13r"));
     fixture.mark_ready().await;
     let attempt = run_warm_iteration(&fixture, false).await;
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::DaemonRestart);
-    assert!(
-        fixture.daemon.saw_request("POST /shutdown"),
-        "the daemon of the other runner is retired"
-    );
+    assert!(fixture.daemon.saw_request("POST /shutdown"), "the JVM daemon is retired");
     assert_eq!(
         fixture.channel().calls_containing("vm-guest-agent start").len(),
         1,
-        "a daemon of this runner is started"
+        "the lane daemon is started"
     );
 }
 

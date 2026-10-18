@@ -492,9 +492,8 @@ holds no checkout, no credentials and no cache, so a recycle loses nothing.
 
 A one-shot run would pay fixed costs on every iteration: a fresh test JVM, an IDE assembly inside
 it, and an IDE launch with a project open. `run` keeps those paid-for states warm in a persistent
-guest process. By default that process is the **lane daemon**, the `lane-daemon` verb of the guest agent.
-`--runner jvm` selects the JVM **UI-test daemon**, module `intellij.air.integrationTests.uiDaemon`, until that runner
-goes. Both runners read the same runtime descriptor. Why a daemon is kept,
+guest process: the **lane daemon**, the `lane-daemon` verb of the guest agent. It reads the runtime descriptor of the
+lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
 The classpath of the JVM daemon has two tiers. The **stable**
@@ -514,11 +513,9 @@ the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` v
 `daemon_launch_arg_file` beside it emits the argfile, and `AirUiDaemonServer` re-checks the result against its
 own classpath at boot.
 
-Every UI lane runs over this one descriptor. Its classpath holds the suite documents of every lane and the JUnit
-classes of the `ui-perf` and `ui-live` lanes. The run request of the lane daemon names the lane, and to the JVM daemon
-a lane is only a JUnit filter. Air's own `AirLaneIde`, in the stable module of the JVM daemon, then
-carries the warm IDE across whole controller iterations
-([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
+Every UI lane runs over this one descriptor, which names the suite documents and the lane documents of every lane. The
+run request of the lane daemon names the lane, and the lane daemon carries the warm IDE across whole controller
+iterations ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
 
 The guest agent launches the IDE and owns its process
 ([ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)). The daemon

@@ -9,7 +9,7 @@ use avl_base::{Backend, Config, Exit, OrRefuse, Refusal, Scope};
 use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
 use avl_host_sys::{Backoff, Channel, Ctx, Poll, SpawnOptions};
 use avl_report::digest;
-use avl_wire::daemon::{self as wire, Runner, StateFile};
+use avl_wire::daemon::{self as wire, StateFile};
 use avl_wire::progress::Phase;
 use avl_wire::runtime::{self, LaunchOptions};
 use avl_wire::stage::{self as stage_wire, ArgFileRequest, LaunchPrep, LaunchPrepResult};
@@ -407,8 +407,7 @@ impl Host {
             &prep.guest_runfiles_root,
             &location,
         ));
-        let jvm = [staged.java_binary.clone(), format!("@{}", launch.arg_file.destination)];
-        arguments.extend(daemon_command(settings, prep, &state_dir, &location, jvm));
+        arguments.extend(daemon_command(settings, prep, &state_dir, &location));
         let started = {
             let (step, _phase) = ctx.begin("supervisor-start");
             self.guest(&step, channel)
@@ -490,7 +489,7 @@ impl Host {
         };
         // Before the first request, and before this controller has read a single event: the state file is the
         // earliest the two protocol versions can be compared.
-        require_supported_protocol(published.protocol_version, self.settings.daemon.runner)?;
+        require_supported_protocol(published.protocol_version)?;
 
         let state = HostState {
             run_id: run_id.to_owned(),
@@ -504,7 +503,6 @@ impl Host {
             last_mount_digest: prep.mount_digest.clone(),
             last_plugins_digest: prep.plugins_digest.clone(),
             agent_digest: agent_digest.to_owned(),
-            runner: Some(self.settings.daemon.runner),
         };
         // From here a failed poll leaves a record, so `daemon log` reads the boot, and `daemon stop` and the next
         // start retire it.
@@ -793,43 +791,36 @@ impl Host {
     }
 }
 
-/// The command of the daemon in the run slot, after the environment: the JVM daemon with `jvm`, its JVM and its @-file,
-/// or the `lane-daemon` verb of the installed guest agent.
+/// The command of the daemon in the run slot, after the environment: the `lane-daemon` verb of the installed guest
+/// agent.
 ///
-/// The verb reads the runtime descriptor at `location` itself, and the lane IDE inputs from it. Its arguments name what
-/// the JVM daemon gets as properties of its @-file: the state directory, the port, the launch digest, the IDE root and
-/// the home of the generation, which the IDE gets as `idea.dev.project.root`. The launch-prep runs for both runners: it
-/// makes those directories and removes the state file of the previous daemon.
-pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir: &str, location: &str, jvm: [String; 2]) -> Vec<String> {
-    match settings.daemon.runner {
-        Runner::Jvm => jvm.into(),
-        Runner::Daemon => {
-            let mut command = words([
-                &settings.vm_agent,
-                AgentVerb::LaneDaemon.as_str(),
-                "--state-dir",
-                state_dir,
-                "--port",
-                &settings.daemon.port.to_string(),
-                "--launch-digest",
-                &prep.launch_digest,
-                "--descriptor",
-                location,
-                "--runfiles-root",
-                &prep.guest_runfiles_root,
-                "--ide-root",
-                &guest_ide_root(settings),
-                "--home",
-                &guest_home(settings, &prep.runtime_digest),
-            ]);
-            if settings.backend == Backend::ContainerLinux {
-                // The reason of the JVM daemon's `-Dair.ui.daemon.bind`: a published port forwards to the address of the
-                // container, not to its loopback.
-                command.extend(words(["--bind", "0.0.0.0"]));
-            }
-            command
-        }
+/// The verb reads the runtime descriptor at `location` itself, and the lane IDE inputs from it. Its arguments name the
+/// state directory, the port, the launch digest, the IDE root and the home of the generation, which the IDE gets as
+/// `idea.dev.project.root`. The launch-prep makes those directories and removes the state file of the previous daemon.
+pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir: &str, location: &str) -> Vec<String> {
+    let mut command = words([
+        &settings.vm_agent,
+        AgentVerb::LaneDaemon.as_str(),
+        "--state-dir",
+        state_dir,
+        "--port",
+        &settings.daemon.port.to_string(),
+        "--launch-digest",
+        &prep.launch_digest,
+        "--descriptor",
+        location,
+        "--runfiles-root",
+        &prep.guest_runfiles_root,
+        "--ide-root",
+        &guest_ide_root(settings),
+        "--home",
+        &guest_home(settings, &prep.runtime_digest),
+    ]);
+    if settings.backend == Backend::ContainerLinux {
+        // A published port forwards to the address of the container, not to its loopback.
+        command.extend(words(["--bind", "0.0.0.0"]));
     }
+    command
 }
 
 /// The refusal of a daemon the health poll never reached, naming what the last probe saw. Only a relay that never

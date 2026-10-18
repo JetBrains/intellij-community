@@ -452,20 +452,3 @@ fn each_guest_builds_its_own_daemon_target() {
     assert_eq!(daemon_label(GuestOs::Macos), LABEL);
     assert_eq!(daemon_label(GuestOs::Linux), LINUX_GUEST_LABEL);
 }
-
-// The runner is a boot setting: a change of it restarts the daemon. The JVM runner adds nothing to the boot settings,
-// so the launch digest of a JVM daemon stays what it was.
-#[tokio::test]
-async fn the_runner_enters_the_launch_digest() {
-    let fixture = Fixture::new().await;
-    let prep = fixture.prepared().await;
-    let jvm = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100, &prep.runtime_digest);
-    assert_eq!(
-        prep.launch_digest,
-        launch_digest(&prep.runtime_digest, &jvm, &prep.daemon_environment)
-    );
-    let mut settings = Config::clone(&fixture.settings);
-    settings.daemon.runner = Runner::Daemon;
-    let verb = controller_boot_digest(&settings, &prep.guest_runfiles_root, 27_100, &prep.runtime_digest);
-    assert_ne!(jvm, verb);
-}

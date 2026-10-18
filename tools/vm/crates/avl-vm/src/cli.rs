@@ -40,7 +40,6 @@ use crate::report::ReportVerb;
 use crate::worker::lease::{AcquireRequest, LeaseCommand, parse_count};
 use crate::worker::worker::{PoolCommand, PoolTarget};
 use avl_base::{Environment, Exit, Refusal, Selection};
-use avl_wire::daemon::Runner;
 use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 
@@ -66,10 +65,7 @@ pool stop, acts on the docker pool. A lease receipt records the selection, so la
 infer it.
 
 Global options, accepted before or after the command and anywhere before a literal --: --json and --text choose the \
-output form, --stream adds NDJSON progress, --backend selects the pool, --lease-file passes the receipt, and --runner \
-names the process of the run slot: daemon (the default) is the lane-daemon verb of the guest agent, and jvm is the JVM \
-daemon. --runner is a transition option, and it goes with the JVM daemon. \
-So \"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
+output form, --stream adds NDJSON progress, --backend selects the pool, and --lease-file passes the receipt. So \"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
 value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text - \
 as JSON data under --json, as prose under --text; after the command it prints that command's own help the same way.
 
@@ -192,9 +188,6 @@ pub(crate) struct Global {
     /// The mode-0600 lease receipt.
     #[arg(long = "lease-file", global = true, value_name = "FILE")]
     pub lease_file: Option<PathBuf>,
-    /// The process of the run slot: jvm, the JVM daemon, or daemon, the lane-daemon verb of the guest agent.
-    #[arg(long, global = true, value_name = "jvm|daemon")]
-    pub runner: Option<String>,
 }
 
 /// The commands.
@@ -443,8 +436,6 @@ pub(crate) struct Invocation {
     /// defaulted cannot be told apart from an absent one, and the precedence rule turns on exactly that.
     pub selection: Option<Selection>,
     pub lease_file: Option<PathBuf>,
-    /// `None` when no `--runner` was given: the settings keep their default.
-    pub runner: Option<Runner>,
     /// `None` when the command line named no command.
     pub command: Option<Cmd>,
 }
@@ -467,7 +458,7 @@ pub(crate) enum Parsed {
 }
 
 /// The options that are global, which a parse error about one of them reports with no command named.
-const GLOBAL_OPTIONS: [&str; 7] = ["--json", "--text", "--stream", "--backend", "--lease-file", "--runner", "--help"];
+const GLOBAL_OPTIONS: [&str; 6] = ["--json", "--text", "--stream", "--backend", "--lease-file", "--help"];
 
 /// Reads a command line.
 ///
@@ -510,24 +501,11 @@ fn validate(cli: Cli, facts: &TerminalFacts) -> Parsed {
     if global.lease_file.as_ref().is_some_and(|path| path.as_os_str().is_empty()) {
         return refused(lease_file_needs_a_value());
     }
-    let runner = match global.runner.as_deref().map(str::parse::<Runner>) {
-        None => None,
-        Some(Ok(runner)) => Some(runner),
-        Some(Err(unknown)) => {
-            let words: Vec<&str> = Runner::ALL.iter().map(|runner| runner.as_str()).collect();
-            return refused(Refusal::usage(format!(
-                "--runner {:?} names no runner; the runners are {}",
-                unknown.word,
-                words.join(", ")
-            )));
-        }
-    };
     Parsed::Invocation(Invocation {
         form,
         stream: global.stream,
         selection,
         lease_file: global.lease_file,
-        runner,
         command,
     })
 }
