@@ -114,7 +114,8 @@ impl Planner<'_> {
         inputs
     }
 
-    /// One VM run and one host run per lane, VM first.
+    /// One VM run and one host run per lane, VM first. The live lane gets no host run: it runs only in the lane daemon of
+    /// a Linux guest, with the Central login piped in, and `lane-run` refuses it on a host.
     ///
     /// Per lane, because a lane is the unit a person picks and the one a guest is chosen for: the skill keeps a
     /// GUI-chat suite on the guest the user chose, and a run per lane lets them run one and not the other. Each line
@@ -152,6 +153,9 @@ impl Planner<'_> {
                 lines,
                 warning: explicit.then(|| explicit_warning(lane).to_owned()),
             });
+            if lane == LIVE_LANE {
+                continue;
+            }
             commands.push(Command {
                 kind: CommandKind::Host,
                 title: format!("the {lane} lane on this machine{kind} ({} class(es))", classes.len()),

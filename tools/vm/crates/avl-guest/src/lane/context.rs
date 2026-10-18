@@ -114,7 +114,7 @@ const DEFAULT_PROJECT_DIRECTORY: &str = "{{defaultProjectDirectory}}";
 const TRUSTED_PATH_ENTRIES: &str = "{{trustedPathEntries}}";
 
 /// Each option file of a new context by its name, in write order, as its template. These are the bytes of
-/// `AirIdeLaunchDefaults.OPTION_FILE_TEMPLATES`, and a test holds both digests to one value. The last one keeps the
+/// `AirIdeLaunchDefaults.OPTION_FILE_TEMPLATES`, and a test pins the digest of this side. The last one keeps the
 /// project from opening its README, so every IDE that the daemon launches starts with an empty editor area.
 pub(crate) const OPTION_FILE_TEMPLATES: [(&str, &str); 6] = [
     (GENERAL_SETTINGS_FILE, include_str!("context/options/ide.general.xml")),

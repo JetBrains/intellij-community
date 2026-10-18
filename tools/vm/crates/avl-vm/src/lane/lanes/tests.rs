@@ -56,15 +56,11 @@ fn a_lane_selects_its_documents_by_its_name_and_has_no_filter() {
     let live = lane_selection("ui-live").unwrap();
     assert_eq!(live.label, "//plugins/air/tests/integration/ui-live:ui-live_lane_test");
     assert_eq!(live.test_env, BTreeMap::new());
-    // The ui-live lane keeps its host passthroughs for `BT --lane ui-live`, and none reaches the selection.
+    // The live lane runs only in the lane daemon of a Linux guest, with the Central login piped in, so it declares no
+    // host passthrough.
     assert!(
-        lanes()
-            .get("ui-live")
-            .unwrap()
-            .extra
-            .iter()
-            .any(|extra| extra == "--test_env=CLAUDE_BIN"),
-        "the ui-live lane no longer declares a host passthrough"
+        lanes().get("ui-live").unwrap().extra.is_empty(),
+        "the ui-live lane declares a host passthrough again"
     );
 }
 

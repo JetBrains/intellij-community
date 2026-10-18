@@ -157,8 +157,9 @@ fn live_lane_document(input: &str, source: &str) -> String {
 
 // --- names ---------------------------------------------------------------------------------------------------
 
-/// A generated class plans every scenario of its suite, in its own lane, with the VM sequence and the host run.
-/// Asked of every committed suite, so a document the reader misreads is found by name.
+/// A generated class plans every scenario of its suite, in its own lane, with the VM sequence and the host run, and a
+/// class of the live lane with no host run. Asked of every committed suite, so a document the reader misreads is found
+/// by name.
 #[test]
 #[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
 fn every_committed_class_plans_its_suites_scenarios() {
@@ -179,8 +180,15 @@ fn every_committed_class_plans_its_suites_scenarios() {
             vec![vm_run(lane, &[&document.test_class_name], input.as_ref())],
             "{suite}"
         );
+        if lane == "ui-live" {
+            assert!(
+                !result.commands.iter().any(|command| command.kind == CommandKind::Host),
+                "{suite}: the live lane got a host run"
+            );
+            continue;
+        }
         let host = command_of(&result, CommandKind::Host, lane);
-        assert_eq!(host.lines, vec![host_line(lane, &document.test_class_name)], "{suite}");
+        assert_eq!(host.lines, vec![host_line(&document.test_class_name)], "{suite}");
         // A suite of an explicit-only lane is planned when its own class names it, with the warning of its lane.
         let warning = if explicit_only(lane) {
             format!("{HOST_WARNING}; {}", explicit_warning(lane))
@@ -198,18 +206,9 @@ fn every_committed_class_plans_its_suites_scenarios() {
     }
 }
 
-/// The host line of one class of `lane`. A class of the live lane names the passthroughs of its lane, because only
-/// `--lane` applies them.
-fn host_line(lane: &str, class: &str) -> String {
-    if lane == "ui-live" {
-        format!(
-            "./community/tools/bt.cmd {class} --test-env AIR_LIVE_CREDENTIALS --test-env AIR_LIVE_REUSE_HOST_HOMES --test-env \
-             ANTHROPIC_API_KEY --test-env CLAUDE_BIN --test-env JUNIE_API_KEY --test-env JUNIE_BIN --test-env NODE_BIN \
-             --test-env NPM_BIN --test-env OPENAI_API_KEY"
-        )
-    } else {
-        format!("./community/tools/bt.cmd {class}")
-    }
+/// The host line of one class of a lane that has no passthrough.
+fn host_line(class: &str) -> String {
+    format!("./community/tools/bt.cmd {class}")
 }
 
 /// A VM line is one self-leased run: `vm.cmd run` without a receipt warms the analysis, takes a lease and releases
@@ -283,10 +282,10 @@ fn plan_classes_with(classes: &[(&str, &str)], lanes: &[(&str, &str)]) -> PlanRe
 }
 
 /// An explicit-only lane spends a billed turn per scenario, and its guest run needs the Central login piped in. The
-/// plan says both: the VM line pipes the developer's own session, and the host line names the lane's passthroughs,
-/// because only `--lane` applies them. A lane with a catalog lane keeps its plain lines.
+/// plan says both: the VM line pipes the developer's own session, and the live lane gets no host run, because
+/// `lane-run` refuses it on a host. A lane with a catalog lane keeps its plain lines.
 #[test]
-fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
+fn an_explicit_only_class_plans_the_piped_guest_run_and_no_host_run_of_the_live_lane() {
     let live = live_lane_document("AIR_LIVE_CENTRAL_LOGIN", "central login export");
     let result = plan_classes_with(
         &[("AirLiveLaneEnvironmentUiTest", "ui-live"), ("AirFlowSessionUiTest", "ui")],
@@ -307,20 +306,13 @@ fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
             warning: Some(BILLED_WARNING.to_owned()),
         }
     );
-    let host = command_of(&result, CommandKind::Host, "ui-live");
-    assert_eq!(
-        host,
-        &Command {
-            kind: CommandKind::Host,
-            title: "the ui-live lane on this machine, explicit-only (1 class(es))".to_owned(),
-            lines: vec![
-                "./community/tools/bt.cmd AirLiveLaneEnvironmentUiTest --test-env AIR_LIVE_CREDENTIALS --test-env \
-                 AIR_LIVE_REUSE_HOST_HOMES --test-env ANTHROPIC_API_KEY --test-env CLAUDE_BIN --test-env JUNIE_API_KEY \
-                 --test-env JUNIE_BIN --test-env NODE_BIN --test-env NPM_BIN --test-env OPENAI_API_KEY"
-                    .to_owned()
-            ],
-            warning: Some(format!("{HOST_WARNING}; {BILLED_WARNING}")),
-        }
+    assert!(
+        !result
+            .commands
+            .iter()
+            .any(|command| command.kind == CommandKind::Host && command.title.starts_with("the ui-live lane")),
+        "the live lane got a host run: {:?}",
+        result.commands
     );
     assert!(BILLED_WARNING.contains("billed turn"), "{BILLED_WARNING}");
     let text = render(&result);

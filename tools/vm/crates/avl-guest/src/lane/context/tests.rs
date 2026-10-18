@@ -17,7 +17,8 @@ use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
 /// The daemon port of the default lane daemon, `AIR_VM_DAEMON_PORT`.
 const DAEMON_PORT: u16 = 27_100;
 
-/// The digest of the option file templates that `AirLaneDigestTest` pins on the Kotlin side.
+/// The digest of the option file templates. `AirIdeLaunchDefaults.OPTION_FILES_DIGEST` is the same value on the Kotlin
+/// side, but no Kotlin test reads it.
 const KOTLIN_OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c7083dbe88810fb110c4";
 
 /// A controlled agent of the fixture. The IDE serves the control channel of every controlled agent.

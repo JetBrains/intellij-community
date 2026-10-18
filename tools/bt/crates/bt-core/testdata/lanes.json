@@ -138,19 +138,9 @@
     },
     {
       "name": "ui-live",
-      "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-live)",
+      "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; it runs only as vm.cmd run --lane ui-live in a Linux guest)",
       "target": "//plugins/air/tests/integration/ui-live:ui-live_lane_test",
-      "extra": [
-        "--test_env=AIR_LIVE_CREDENTIALS",
-        "--test_env=AIR_LIVE_REUSE_HOST_HOMES",
-        "--test_env=ANTHROPIC_API_KEY",
-        "--test_env=CLAUDE_BIN",
-        "--test_env=JUNIE_API_KEY",
-        "--test_env=JUNIE_BIN",
-        "--test_env=NODE_BIN",
-        "--test_env=NPM_BIN",
-        "--test_env=OPENAI_API_KEY"
-      ],
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-live",
       "documentLane": "UI_LIVE",
