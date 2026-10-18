@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.highlighter
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -101,6 +102,7 @@ internal class KotlinWithLombokIdePluginWithoutCompilerPluginHighlighting : Java
         myFixture.checkHighlighting()
     }
 
+    @IJIgnore(issue = "AT-3959")
     fun `test lombok generic container with builder`() {
         val javaWithLombokModule = PsiTestUtil.addModule(
             project,

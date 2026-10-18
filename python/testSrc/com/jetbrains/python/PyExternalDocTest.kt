@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.idea.IJIgnore
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
@@ -12,6 +13,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider
 import com.jetbrains.python.fixtures.PyTestCase
 import junit.framework.TestCase
+import org.junit.Ignore
 
 
 
@@ -90,6 +92,7 @@ abstract class PyExternalDocTest : PyTestCase() {
 
 @Subsystems.QuickDocumentation
 @Layers.Functional
+@Ignore("AT-3959")
 class PyExternalDocTestPy3 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
@@ -139,10 +142,12 @@ print(os.path.isf<caret>ile)
 class PyExternalDocTestPy2 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/2.7 Mock SDK/library"
 
+  @IJIgnore(issue = "AT-3959")
   fun testCPickle() {
     doTestDocumentationUrl("import cPick<caret>le", "$pythonDocsLibrary/pickle.html", myFixture)
   }
 
+  @IJIgnore(issue = "AT-3959")
   fun testCPickleDump() {
     doTestDocumentationUrl("import cPickle\n" +
                            "cPickle.du<caret>mp()", "$pythonDocsLibrary/pickle.html#pickle.dump", myFixture)

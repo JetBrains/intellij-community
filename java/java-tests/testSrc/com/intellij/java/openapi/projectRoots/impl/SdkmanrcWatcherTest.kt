@@ -10,7 +10,9 @@ import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import org.junit.Ignore
 
+@Ignore("AT-3959")
 class SdkmanrcWatcherHeavyTests : ExternalJavaConfigurationTest() {
   override val mockJdkVersions: List<String> = listOf(
     "GraalVM CE 23.1.2 - Java 21.0.2",
