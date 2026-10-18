@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -68,42 +69,44 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
         checkFiles(
             files.filter { it.extension == "kt" },
             project,
-            object : GradleDaemonAnalyzerTestCase(
-                testLineMarkers = true,
-                checkWarnings = true,
-                checkInfos = false,
-                rootDisposable = testRootDisposable
-            ) {
-                override fun renderAdditionalAttributeForTag(tag: TagsTestDataUtil.TagInfo<*>): String? {
-                    val lineMarkerInfo = tag.data as? LineMarkerInfo<*> ?: return null
-
-                    // Hacky way to check if it's test line-marker info. Can't rely on extractConfigurationsFromContext returning no
-                    // suitable configurationsFromContext, because it basically works on offsets, so if for some range we have two-line
-                    // markers - one with tests, and one without, - then we'll get proper ConfigurationFromContext for both
-
-                    val extractConfigurationsFromContext = lineMarkerInfo.extractConfigurationsFromContext()
-                    val kotlinRunConfigsFromContext = extractConfigurationsFromContext
-                        .filter { it.configuration is KotlinRunConfiguration }
-                    kotlinRunConfigsFromContext.singleOrNull()?.let {
-                        return "mainClass=\"${(it.configuration as KotlinRunConfiguration).runClass}\""
-                    }
-
-                    if ("Run Test" !in lineMarkerInfo.lineMarkerTooltip.orEmpty()) return null
-
-                    val kotlinGradleConfigsFromContext = extractConfigurationsFromContext
-                        .filter { it.configuration is GradleRunConfiguration }
-                    if (kotlinRunConfigsFromContext.isNotEmpty()) return "settings=\"Nothing here\""
-
-                    if (kotlinGradleConfigsFromContext.isEmpty()) return "settings=\"Nothing here\""
-
-                    val configFromContext = kotlinGradleConfigsFromContext.single() // can we have more than one?
-
-                    val tagsToRender = RunConfigurationsTags.getTagsToRender(lineMarkerInfo.element!!.containingFile)
-
-                    return configFromContext.renderDescription(tagsToRender)
-                }
-            }
+            LineMarkerTagAnalyzer(testRootDisposable)
         )
+    }
+
+    private inner class LineMarkerTagAnalyzer(rootDisposable: Disposable) : GradleDaemonAnalyzerTestCase(
+        testLineMarkers = true,
+        checkWarnings = true,
+        checkInfos = false,
+        rootDisposable = rootDisposable
+    ) {
+        override fun renderAdditionalAttributeForTag(tag: TagsTestDataUtil.TagInfo<*>): String? {
+            val lineMarkerInfo = tag.data as? LineMarkerInfo<*> ?: return null
+
+            // Hacky way to check if it's test line-marker info. Can't rely on extractConfigurationsFromContext returning no
+            // suitable configurationsFromContext, because it basically works on offsets, so if for some range we have two-line
+            // markers - one with tests, and one without, - then we'll get proper ConfigurationFromContext for both
+
+            val extractConfigurationsFromContext = lineMarkerInfo.extractConfigurationsFromContext()
+            val kotlinRunConfigsFromContext = extractConfigurationsFromContext
+                .filter { it.configuration is KotlinRunConfiguration }
+            kotlinRunConfigsFromContext.singleOrNull()?.let {
+                return "mainClass=\"${(it.configuration as KotlinRunConfiguration).runClass}\""
+            }
+
+            if ("Run Test" !in lineMarkerInfo.lineMarkerTooltip.orEmpty()) return null
+
+            val kotlinGradleConfigsFromContext = extractConfigurationsFromContext
+                .filter { it.configuration is GradleRunConfiguration }
+            if (kotlinRunConfigsFromContext.isNotEmpty()) return "settings=\"Nothing here\""
+
+            if (kotlinGradleConfigsFromContext.isEmpty()) return "settings=\"Nothing here\""
+
+            val configFromContext = kotlinGradleConfigsFromContext.single() // can we have more than one?
+
+            val tagsToRender = RunConfigurationsTags.getTagsToRender(lineMarkerInfo.element!!.containingFile)
+
+            return configFromContext.renderDescription(tagsToRender)
+        }
     }
 
     private enum class RunConfigurationsTags {

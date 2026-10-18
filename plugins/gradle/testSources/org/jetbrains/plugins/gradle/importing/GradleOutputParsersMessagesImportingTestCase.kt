@@ -7,7 +7,7 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 
 @Suppress("GrUnresolvedAccess")
-open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImportingTestCase() {
+abstract class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImportingTestCase() {
 
   var enableStackTraceImportingOption = false
   var quietLogLevelImportingOption = false

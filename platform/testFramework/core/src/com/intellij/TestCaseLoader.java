@@ -379,6 +379,9 @@ public class TestCaseLoader {
     if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
       return false;
     }
+    if ("org.jetbrains.kotlin.jps.build.RelocatableJpsCachesTest$runTestAndCopyKotlinCaches$testCase$1".equals(className)) {  // TODO: https://youtrack.jetbrains.com/issue/KTI-3382
+      return false;
+    }
 
     return ourCommonTestClassesFilter.getValue().matches(className);
   }

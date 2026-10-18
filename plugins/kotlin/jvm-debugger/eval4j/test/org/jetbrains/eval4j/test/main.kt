@@ -7,6 +7,7 @@ import junit.framework.TestSuite
 import org.jetbrains.eval4j.Eval
 import org.jetbrains.eval4j.ExceptionThrown
 import org.jetbrains.eval4j.FieldDescription
+import org.jetbrains.eval4j.InterpreterResult
 import org.jetbrains.eval4j.MemberDescription
 import org.jetbrains.eval4j.MethodDescription
 import org.jetbrains.eval4j.NOT_A_VALUE
@@ -44,34 +45,38 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Array as JArray
 
-fun suite(): TestSuite = buildTestSuite { methodNode, ownerClass, expected ->
-    object : TestCase(getTestName(methodNode.name)) {
+fun suite(): TestSuite = buildTestSuite { methodNode, ownerClass, expected -> ReflectionEvalTestCase(methodNode, ownerClass, expected) }
 
-        override fun runTest() {
-            if (!isIgnored(methodNode)) {
-                val value = interpreterLoop(
-                    methodNode,
-                    initFrame(
-                        ownerClass.getInternalName(),
-                        methodNode
-                    ),
-                    REFLECTION_EVAL
-                )
+private class ReflectionEvalTestCase(
+    private val methodNode: MethodNode,
+    private val ownerClass: Class<*>,
+    private val expected: InterpreterResult?
+) : TestCase(getTestName(methodNode.name)) {
 
-                if (expected is ExceptionThrown && value is ExceptionThrown) {
-                    assertEquals(expected.exception.toString(), value.exception.toString())
-                } else {
-                    assertEquals(expected.toString(), value.toString())
-                }
+    override fun runTest() {
+        if (!isIgnored(methodNode)) {
+            val value = interpreterLoop(
+                methodNode,
+                initFrame(
+                    ownerClass.getInternalName(),
+                    methodNode
+                ),
+                REFLECTION_EVAL
+            )
+
+            if (expected is ExceptionThrown && value is ExceptionThrown) {
+                assertEquals(expected.exception.toString(), value.exception.toString())
+            } else {
+                assertEquals(expected.toString(), value.toString())
             }
         }
+    }
 
-        private fun isIgnored(methodNode: MethodNode): Boolean {
-            return methodNode.visibleAnnotations?.any {
-                val annotationDesc = it.desc
-                annotationDesc != null && Type.getType(annotationDesc) == Type.getType(IgnoreInReflectionTests::class.java)
-            } ?: false
-        }
+    private fun isIgnored(methodNode: MethodNode): Boolean {
+        return methodNode.visibleAnnotations?.any {
+            val annotationDesc = it.desc
+            annotationDesc != null && Type.getType(annotationDesc) == Type.getType(IgnoreInReflectionTests::class.java)
+        } ?: false
     }
 }
 

@@ -8,11 +8,13 @@ import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import com.sun.jdi.ThreadReference
+import com.sun.jdi.VirtualMachine
 import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.ClassPrepareEvent
 import junit.framework.TestCase
 import junit.framework.TestSuite
 import org.jetbrains.eval4j.ExceptionThrown
+import org.jetbrains.eval4j.InterpreterResult
 import org.jetbrains.eval4j.MethodDescription
 import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.ValueReturned
@@ -26,6 +28,7 @@ import org.jetbrains.eval4j.test.buildTestSuite
 import org.jetbrains.eval4j.test.getTestName
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -100,59 +103,69 @@ fun suite(): TestSuite {
 
     val suite = buildTestSuite { methodNode, ownerClass, expected ->
         remainingTests.incrementAndGet()
-        object : TestCase(getTestName(methodNode.name)) {
-
-            override fun runTest() {
-                val eval = JDIEval(vm, classLoader!!, thread!!, 0)
-
-                val args = if ((methodNode.access and Opcodes.ACC_STATIC) == 0) {
-                    // Instance method
-                    val newInstance = eval.newInstance(Type.getType(ownerClass))
-                    val thisValue =
-                        eval.invokeMethod(newInstance, MethodDescription(ownerClass.name, "<init>", "()V", false), listOf(), true)
-                    listOf(thisValue)
-                } else {
-                    listOf()
-                }
-
-                val value = interpreterLoop(
-                    methodNode,
-                    makeInitialFrame(methodNode, args),
-                    eval
-                )
-
-                fun ObjectReference?.callToString(): String? {
-                    if (this == null) return "null"
-                    return (eval.invokeMethod(
-                        this.asValue(),
-                        MethodDescription(
-                            "java/lang/Object",
-                            "toString",
-                            "()Ljava/lang/String;",
-                            false
-                        ),
-                        listOf()
-                    ).jdiObj as StringReference).value()
-
-                }
-
-                try {
-                    if (expected is ValueReturned && value is ValueReturned && value.result is ObjectValue) {
-                        assertEquals(expected.result.obj().toString(), value.result.jdiObj.callToString())
-                    } else if (expected is ExceptionThrown && value is ExceptionThrown) {
-                        val valueObj = value.exception.obj()
-                        val actual = if (valueObj is ObjectReference) valueObj.callToString() else valueObj.toString()
-                        assertEquals(expected.exception.obj().toString(), actual)
-                    } else {
-                        assertEquals(expected, value)
-                    }
-                } finally {
-                    if (remainingTests.decrementAndGet() == 0) vm.resume()
-                }
-
-            }
-        }
+        JdiEvalTestCase(methodNode, ownerClass, expected, vm, classLoader!!, thread!!, remainingTests)
     }
 
     return suite
+}
+
+private class JdiEvalTestCase(
+    private val methodNode: MethodNode,
+    private val ownerClass: Class<*>,
+    private val expected: InterpreterResult?,
+    private val vm: VirtualMachine,
+    private val classLoader: ClassLoaderReference,
+    private val thread: ThreadReference,
+    private val remainingTests: AtomicInteger
+) : TestCase(getTestName(methodNode.name)) {
+
+    override fun runTest() {
+        val eval = JDIEval(vm, classLoader, thread, 0)
+
+        val args = if ((methodNode.access and Opcodes.ACC_STATIC) == 0) {
+            // Instance method
+            val newInstance = eval.newInstance(Type.getType(ownerClass))
+            val thisValue =
+                eval.invokeMethod(newInstance, MethodDescription(ownerClass.name, "<init>", "()V", false), listOf(), true)
+            listOf(thisValue)
+        } else {
+            listOf()
+        }
+
+        val value = interpreterLoop(
+            methodNode,
+            makeInitialFrame(methodNode, args),
+            eval
+        )
+
+        fun ObjectReference?.callToString(): String? {
+            if (this == null) return "null"
+            return (eval.invokeMethod(
+                this.asValue(),
+                MethodDescription(
+                    "java/lang/Object",
+                    "toString",
+                    "()Ljava/lang/String;",
+                    false
+                ),
+                listOf()
+            ).jdiObj as StringReference).value()
+
+        }
+
+        try {
+            if (expected is ValueReturned && value is ValueReturned && value.result is ObjectValue) {
+                assertEquals(expected.result.obj().toString(), value.result.jdiObj.callToString())
+            } else if (expected is ExceptionThrown && value is ExceptionThrown) {
+                val valueObj = value.exception.obj()
+                val actual = if (valueObj is ObjectReference) valueObj.callToString() else valueObj.toString()
+                assertEquals(expected.exception.obj().toString(), actual)
+            } else {
+                assertEquals(expected, value)
+            }
+        } finally {
+            if (remainingTests.decrementAndGet() == 0) vm.resume()
+        }
+
+    }
 }
