@@ -19,14 +19,12 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.FontUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
@@ -45,7 +43,6 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
-import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 class GitGpgConfigDialog(
@@ -79,12 +76,6 @@ class GitGpgConfigDialog(
   }
 
   override fun getPreferredFocusedComponent(): JComponent = checkBox
-
-  override fun createSouthAdditionalPanel(): JPanel {
-    val label = JBLabel(message("settings.configure.sign.gpg.synced.with.gitconfig.text"))
-    label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-    return JBUI.Panels.simplePanel(label)
-  }
 
   override fun createCenterPanel(): JComponent =
     panel {

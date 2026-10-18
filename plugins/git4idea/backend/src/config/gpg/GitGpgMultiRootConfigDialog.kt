@@ -12,7 +12,6 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
@@ -27,7 +26,6 @@ import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
@@ -74,12 +72,6 @@ class GitGpgMultiRootConfigDialog(val project: Project,
 
     init()
     initTable()
-  }
-
-  override fun createSouthAdditionalPanel(): JPanel {
-    val label = JBLabel(message("settings.configure.sign.gpg.synced.with.gitconfig.text"))
-    label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-    return JBUI.Panels.simplePanel(label)
   }
 
   override fun createCenterPanel(): JComponent {
