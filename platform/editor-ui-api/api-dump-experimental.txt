@@ -101,6 +101,7 @@ com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
 com.intellij.ide.structureView.StructureViewTreeElement
 - com.intellij.ide.util.treeView.smartTree.TreeElement
 - com.intellij.pom.Navigatable
+- *:getPresentableTextForComparison():java.lang.String
 - *:getValueForComparison():java.lang.Object
 *:com.intellij.ide.ui.ToolbarSettings
 - com.intellij.openapi.components.PersistentStateComponent

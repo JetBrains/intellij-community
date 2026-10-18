@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -70,6 +71,15 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
   @Override
   public IProperty getValue() {
     return ReadAction.computeBlocking(this::getProperty);
+  }
+
+  @Override
+  public @Nullable String getPresentableTextForComparison() {
+    return ReadAction.computeBlocking(() -> {
+      var property = getProperty();
+      return property == null ? null : StringUtil.escapeLineBreak(
+        StringUtil.notNullize(property.getKey()) + "=" + StringUtil.notNullize(property.getValue()));
+    });
   }
 
   @Override

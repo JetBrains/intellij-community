@@ -13,7 +13,6 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -137,7 +136,7 @@ object StructureChangeCollector {
       }
       val presentation = treeElement.presentation
       val text = presentation.presentableText ?: (element as? PsiNamedElement)?.name ?: continue
-      val displayText = ElementDescriptionUtil.getElementDescription(element, StructureChangeDescriptionLocation(text))
+      val displayText = structureElement.presentableTextForComparison ?: text
       val name = (treeElement as? SortableTreeElement)?.alphaSortKey ?: (element as? PsiNamedElement)?.name ?: text
       val key = element.javaClass.name + ":" + name
       val children = readNodes(treeElement.children.asList(), file, model, visited)
