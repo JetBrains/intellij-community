@@ -5,6 +5,7 @@ exports_files(
     [
         "tools/mac/scripts/makedmg.sh",
         "tools/mac/scripts/makedmg.py",
+        "tools/mac/scripts/retry.sh",
     ],
     visibility = ["//visibility:public"],
 )

@@ -20,26 +20,7 @@ function log() {
   echo "$(date '+[%H:%M:%S]') [$RESULT_DMG] $*"
 }
 
-function retry() {
-  local operation=$1
-  local limit=$2
-  shift
-  shift
-  local attempt=1
-  while true; do
-    # shellcheck disable=SC2015
-    "$@" && { log "$operation done"; return 0; } || {
-      ec=$?
-      if [[ $attempt -ge limit ]]; then
-        log "$operation failed with exit code $ec. Attempt $attempt/$limit."
-        return $ec
-      fi
-      log "$operation failed with exit code $ec. Attempt $attempt/$limit, will wait 30 seconds before next attempt."
-      sleep 30;
-      ((attempt++))
-    }
-  done
-}
+source ./retry.sh
 
 
 BUILD_NAME=$(ls "$EXPLODED")
@@ -63,8 +44,9 @@ function generate_DS_Store() {
   fi
   log "ds_store library is required for DMG/DS_Store generation, installing in a Python virtual environment"
   python3 -m venv .
-  ./bin/pip3 install "setuptools<72"
-  ./bin/pip3 install --no-build-isolation mac-alias==2.2.0 ds-store==1.3.0
+  # PyPI sometimes answers with no versions at all, "No matching distribution found"
+  retry "Installing setuptools" 3 ./bin/pip3 install "setuptools<72"
+  retry "Installing ds_store" 3 ./bin/pip3 install --no-build-isolation mac-alias==2.2.0 ds-store==1.3.0
   ./bin/python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
   log "DMG/DS_Store is generated"
   rm -rf "$MOUNT_POINT/.fseventsd"
