@@ -191,6 +191,9 @@ e:git4idea.config.GitVersionSpecialty
 - f:existsIn(git4idea.repo.GitRepository):Z
 - s:getEntries():kotlin.enums.EnumEntries
 - f:getVersion():git4idea.config.GitVersion
+f:git4idea.config.gpg.RepoConfig
+- <init>(git4idea.config.gpg.GpgKey,Z):V
+- f:isEnabled():Z
 f:git4idea.diff.GitDiffProvider
 - <init>(com.intellij.openapi.project.Project):V
 a:git4idea.diff.GitSubmoduleContentRevision
