@@ -24,12 +24,18 @@ fn flow_profile_dir() -> &'static str {
 }
 
 /// Every committed suite document, by file name, or `None` where this run cannot reach them.
+pub(super) fn committed_documents() -> Option<BTreeMap<String, Vec<u8>>> {
+    let source = committed_root()?;
+    Some(avl_wire::program::read_suite_documents(&source).unwrap_or_else(|error| panic!("{error}")))
+}
+
+/// The resource root of the committed documents, or `None` where this run cannot reach them.
 ///
 /// Under Bazel they arrive as the `flow-profiles` module's test resource jar, named by `AIR_FLOW_PROFILES_JAR`. Only
 /// `//plugins/air/tests/integration/vm-contract:air-trace-plan-test` of the ultimate root has the jar, so the test of
 /// this crate in the community module skips. Under cargo they are read where the generator writes them in the ultimate
 /// checkout, and a community checkout skips. Both sources go through the reader of the lane daemon.
-pub(super) fn committed_documents() -> Option<BTreeMap<String, Vec<u8>>> {
+fn committed_root() -> Option<PathBuf> {
     let source = if let Some(rlocation) = std::env::var_os("AIR_FLOW_PROFILES_JAR").filter(|value| !value.is_empty()) {
         avl_testkit::rlocation(&rlocation.to_string_lossy())
     } else {
@@ -52,7 +58,7 @@ pub(super) fn committed_documents() -> Option<BTreeMap<String, Vec<u8>>> {
         );
         directory.parent().expect("the suite documents have a resource root").to_owned()
     };
-    Some(avl_wire::program::read_suite_documents(&source).unwrap_or_else(|error| panic!("{error}")))
+    Some(source)
 }
 
 /// Returns from the test, saying why, when the committed documents are out of reach.
@@ -83,8 +89,8 @@ pub(super) fn lane_word(document: &SuiteDocument) -> &'static str {
         .unwrap_or_else(|| panic!("{} declares no UI lane", document.suite))
 }
 
-/// A checkout holding the committed suite documents where the generator writes them, and nothing else until a test
-/// adds it. The path is resolved: on macOS the temporary directory is reached through `/var`, a link to
+/// A checkout holding the committed suite documents and lane documents where the generator writes them, and nothing
+/// else until a test adds it. The path is resolved: on macOS the temporary directory is reached through `/var`, a link to
 /// `/private/var`, and the join answers paths relative to the resolved root.
 pub(super) struct Repo {
     _dir: TempDir,
@@ -98,7 +104,21 @@ pub(super) fn fixture_repo(documents: &BTreeMap<String, Vec<u8>>) -> Repo {
     for (name, content) in documents {
         write_bytes(&repo.root, &format!("{}/{name}", flow_profile_dir()), content);
     }
+    let root = committed_root().expect("the committed documents are in reach");
+    for (name, content) in avl_wire::program::read_lane_documents(&root).unwrap_or_else(|error| panic!("{error}")) {
+        write_bytes(&repo.root, &lane_document_path(&name), &content);
+    }
     repo
+}
+
+/// The path of the lane document `name`, such as `ui-live.json`, where the generator writes it: beside the directory of
+/// the suite documents.
+pub(super) fn lane_document_path(name: &str) -> String {
+    let resources = flow_profile_dir()
+        .rsplit_once('/')
+        .expect("the suite documents have a resource root")
+        .0;
+    format!("{resources}/{}/{name}", avl_wire::program::LANE_DOCUMENT_DIRECTORY)
 }
 
 impl Repo {

@@ -546,7 +546,8 @@ impl<'r> Planner<'r> {
             .collect();
         self.result.classes = classes;
         self.note_wider_classes();
-        self.result.commands = self.commands();
+        let inputs = self.guest_inputs();
+        self.result.commands = self.commands(&inputs);
         for line in self.bt_notes.lines() {
             self.note(line);
         }

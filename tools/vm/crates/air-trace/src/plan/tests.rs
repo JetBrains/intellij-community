@@ -14,7 +14,7 @@ use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::cli::run_plan;
-use super::commands::{BILLED_WARNING, EXPLICIT_WARNING, HOST_WARNING, explicit_only, explicit_warning, render, vm_run};
+use super::commands::{BILLED_WARNING, EXPLICIT_WARNING, GuestInput, HOST_WARNING, explicit_only, explicit_warning, render, vm_run};
 use super::names::git_list_files;
 use super::*;
 
@@ -133,6 +133,28 @@ fn notes_of(result: &PlanResult) -> String {
     result.notes.join("\n")
 }
 
+/// The guest input that the committed lane document of `lane` states: the Central login of the live lane alone.
+fn committed_input(lane: &str) -> Option<GuestInput> {
+    (lane == "ui-live").then(|| GuestInput {
+        input: "AIR_LIVE_CENTRAL_LOGIN".to_owned(),
+        source: "central login export".to_owned(),
+    })
+}
+
+/// A lane document of the live lane whose live context names the run input `input` and its host command `source`.
+fn live_lane_document(input: &str, source: &str) -> String {
+    json!({
+        "schemaVersion": 2, "lane": "UI_LIVE", "launchProperties": [], "requirements": [], "agents": [],
+        "registryAgents": [], "disabledPluginIds": [], "cliRuntimes": [],
+        "services": {"jetBrainsCloud": "jba-jcp-emulator-1"},
+        "live": {"loginInput": input, "loginSource": source, "centralRuntime": "central", "centralPort": 19516,
+            "centralAgents": ["codex", "claude-code", "junie"],
+            "runtimes": [{"name": "claude", "environment": {}}, {"name": "junie", "environment": {}}],
+            "projectUnpackRoot": "/tmp/air-ui-live/project"},
+    })
+    .to_string()
+}
+
 // --- names ---------------------------------------------------------------------------------------------------
 
 /// A generated class plans every scenario of its suite, in its own lane, with the VM sequence and the host run.
@@ -151,7 +173,12 @@ fn every_committed_class_plans_its_suites_scenarios() {
         assert_eq!(result.lanes, [lane], "{suite}");
         assert_eq!(result.classes, vec![document.test_class_name.clone()], "{suite}");
         let vm = command_of(&result, CommandKind::Vm, lane);
-        assert_eq!(vm.lines, vec![vm_run(lane, &[&document.test_class_name])], "{suite}");
+        let input = committed_input(lane);
+        assert_eq!(
+            vm.lines,
+            vec![vm_run(lane, &[&document.test_class_name], input.as_ref())],
+            "{suite}"
+        );
         let host = command_of(&result, CommandKind::Host, lane);
         assert_eq!(host.lines, vec![host_line(lane, &document.test_class_name)], "{suite}");
         // A suite of an explicit-only lane is planned when its own class names it, with the warning of its lane.
@@ -227,7 +254,17 @@ fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
 
 /// Plans classes by lane with no catalog, the way a resolved class name adds one, and answers the plan.
 fn plan_classes(classes: &[(&str, &str)]) -> PlanResult {
+    plan_classes_with(classes, &[])
+}
+
+/// [`plan_classes`] in a checkout that also holds the lane documents `lanes`, each a file name and its text.
+fn plan_classes_with(classes: &[(&str, &str)], lanes: &[(&str, &str)]) -> PlanResult {
     let repo = tempfile::TempDir::new().expect("a temporary checkout");
+    for (name, content) in lanes {
+        let path = repo.path().join(fixture::lane_document_path(name));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, content).unwrap();
+    }
     let notes = BtNotes::default();
     let runtime = bt_runtime(repo.path(), notes.clone());
     let selectors = ResolutionInputs::new(&runtime, air_areas());
@@ -250,7 +287,11 @@ fn plan_classes(classes: &[(&str, &str)]) -> PlanResult {
 /// because only `--lane` applies them. A lane with a catalog lane keeps its plain lines.
 #[test]
 fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
-    let result = plan_classes(&[("AirLiveLaneEnvironmentUiTest", "ui-live"), ("AirFlowSessionUiTest", "ui")]);
+    let live = live_lane_document("AIR_LIVE_CENTRAL_LOGIN", "central login export");
+    let result = plan_classes_with(
+        &[("AirLiveLaneEnvironmentUiTest", "ui-live"), ("AirFlowSessionUiTest", "ui")],
+        &[("ui-live.json", &live)],
+    );
 
     let vm = command_of(&result, CommandKind::Vm, "ui-live");
     assert_eq!(
@@ -307,6 +348,38 @@ fn an_explicit_only_class_plans_the_piped_guest_run_and_the_billed_host_run() {
     let ui_host = command_of(&result, CommandKind::Host, "ui");
     assert_eq!(ui_host.lines, vec!["./community/tools/bt.cmd AirFlowSessionUiTest".to_owned()]);
     assert_eq!(ui_host.warning.as_deref(), Some(HOST_WARNING));
+}
+
+// The VM line of the live lane pipes the login that the live context of its committed lane document names, so the
+// planner keeps no copy of the run input or of its host command. A lane document that is not there leaves the line
+// without a pipe. One that does not read gives a note too, and the guest run then fails and names its input.
+#[test]
+fn the_vm_line_pipes_the_login_that_the_lane_document_names() {
+    let class = [("AirLiveLaneEnvironmentUiTest", "ui-live")];
+    let qa = live_lane_document("AIR_QA_CENTRAL_LOGIN", "central login export --account qa");
+
+    let named = plan_classes_with(&class, &[("ui-live.json", &qa)]);
+    let without = plan_classes(&class);
+    let broken = plan_classes_with(&class, &[("ui-live.json", "{\"lane\": \"UI_LIVE\"")]);
+
+    assert_eq!(
+        command_of(&named, CommandKind::Vm, "ui-live").lines,
+        [
+            "central login export --account qa | ./community/tools/vm.cmd run AirLiveLaneEnvironmentUiTest --test-env \
+          AIR_QA_CENTRAL_LOGIN=@-"
+        ]
+    );
+    assert_eq!(notes_of(&named), notes_of(&without));
+    let plain = ["./community/tools/vm.cmd run AirLiveLaneEnvironmentUiTest".to_owned()];
+    assert_eq!(command_of(&without, CommandKind::Vm, "ui-live").lines, plain);
+    assert_eq!(command_of(&broken, CommandKind::Vm, "ui-live").lines, plain);
+    let notes = notes_of(&broken);
+    assert!(
+        notes.contains("the lane document ")
+            && notes.contains("ui-live.json")
+            && notes.contains("the VM line of ui-live names no guest input"),
+        "{notes}"
+    );
 }
 
 /// A scenario name, a suite id, a step id and a check id each reach the scenarios that carry them, and a class
