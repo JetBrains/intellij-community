@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use tempfile::TempDir;
 
 use super::*;
+use crate::lane::stream::Counts;
 use crate::lane::trace::tests::Recording;
 use crate::lane::watchdog::Policy;
 
@@ -400,6 +401,8 @@ fn scenario(name: &str, instructions: &Value) -> Value {
 struct Ran {
     records: Vec<Value>,
     trace: Vec<String>,
+    /// The counts of the summary of the run.
+    counts: Counts,
     _iteration: TempDir,
 }
 
@@ -474,7 +477,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
         Trace::hello(iteration.path(), "iter-golden", false, fake.recorder_bridge()),
     );
     let mut out = Vec::new();
-    {
+    let counts = {
         let stream = Stream::new(&mut out);
         let policy = Policy {
             active_execution: active,
@@ -494,7 +497,8 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
                 .run(suites);
             watch.completed(&stream);
         });
-    }
+        stream.counts()
+    };
     let records = String::from_utf8(out)
         .unwrap()
         .lines()
@@ -509,6 +513,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
     Ran {
         records,
         trace,
+        counts,
         _iteration: iteration,
     }
 }
@@ -1472,7 +1477,9 @@ fn a_failed_part_reports_the_metrics_of_its_performance_file() {
     .unwrap();
     let ran = run(&fake, &[one_part_suite()], None);
     let finished = ran.events("testFinished");
+    // A failure without the field `aborted` is a verdict.
     assert_eq!(finished[0]["status"], "FAILED");
+    assert_eq!((ran.counts.failed, ran.counts.skipped), (1, 0));
     assert_eq!(finished[0]["message"], "the open took too long");
     assert_eq!(
         finished[0]["report"],
@@ -1489,6 +1496,27 @@ fn a_failed_part_reports_the_metrics_of_its_performance_file() {
         notes[2].ends_with("the metric open.label of air-performance.json is no number: \"x\""),
         "{notes:#?}"
     );
+}
+// A body that aborts its scenario answers a failure that the bridge marks aborted. The scenario reached no verdict,
+// so the case ends as ABORTED, and the run counts it as skipped, not as failed. The after reset still runs.
+#[test]
+fn an_authored_part_that_aborts_its_scenario_finishes_as_aborted_and_counts_as_skipped() {
+    let failure = json!({"type": "com.intellij.air.integration.bridge.AirUiTestAbortException",
+        "message": "IJAI-3115: the lane gives no AI source", "stack": [], "aborted": true});
+    let fake = Fake::new(Script {
+        failures: BTreeMap::from([("action/authored-step".to_owned(), failure)]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[one_part_suite()], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(finished.len(), 1, "{:?}", ran.records);
+    assert_eq!(finished[0]["status"], "ABORTED");
+    assert_eq!(finished[0]["message"], "IJAI-3115: the lane gives no AI source");
+    assert_eq!((ran.counts.started, ran.counts.failed, ran.counts.skipped), (1, 0, 1));
+    let requests = fake.requests();
+    assert_eq!(requests.last().map(|(_, kind)| kind.as_str()), Some("Reset"), "{requests:?}");
+    let done = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
+    assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
 }
 
 // A part that answered reports its own metrics, so the runner reads no performance file after it.

@@ -36,7 +36,7 @@ const ENGINE: &str = "[engine:lane-daemon]";
 pub(crate) enum CaseStatus {
     Successful,
     Failed,
-    /// The scenario started and reached no verdict: the watchdog ended it.
+    /// The scenario started and reached no verdict: the watchdog ended it, or the body aborted it.
     Aborted,
 }
 

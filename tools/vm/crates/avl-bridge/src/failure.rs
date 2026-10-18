@@ -17,11 +17,14 @@ pub struct BridgeFailure {
     /// The frames of the stack, outermost first, as `StackTraceElement.toString` writes them.
     pub stack: Vec<String>,
     pub cause: Option<Box<Self>>,
+    /// Whether the body aborted its scenario: an `AirUiTestAbortException`, the field `aborted`. The bridge writes the
+    /// field only when it is true.
+    pub aborted: bool,
 }
 
 impl BridgeFailure {
-    /// Decodes a failure `{type, message, stack, cause}`. A field the bridge adds later is ignored. A missing
-    /// `message`, `stack` or `cause` is the Kotlin default: no message, no frames, no cause.
+    /// Decodes a failure `{type, message, stack, cause, aborted}`. A field the bridge adds later is ignored. A missing
+    /// `message`, `stack`, `cause` or `aborted` is the Kotlin default: no message, no frames, no cause, no abort.
     pub fn decode(value: &Value) -> Result<Self, String> {
         let Value::Object(fields) = value else {
             return Err(format!("the failure {value} is not an object"));
@@ -48,11 +51,17 @@ impl BridgeFailure {
             None | Some(Value::Null) => None,
             Some(cause) => Some(Box::new(Self::decode(cause)?)),
         };
+        let aborted = match fields.get("aborted") {
+            None | Some(Value::Null) => false,
+            Some(Value::Bool(aborted)) => *aborted,
+            Some(other) => return Err(format!("the `aborted` {other} of the failure {type_name} is not a boolean")),
+        };
         Ok(Self {
             type_name,
             message,
             stack,
             cause,
+            aborted,
         })
     }
 }

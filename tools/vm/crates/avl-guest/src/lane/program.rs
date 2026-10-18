@@ -238,7 +238,7 @@ pub(crate) struct Failure {
     pub stack: Vec<String>,
     /// What a later failure added: an after reset that failed too, or a recycle that failed.
     pub suppressed: Vec<String>,
-    /// The scenario reached no verdict: the watchdog ended it.
+    /// The scenario reached no verdict: the watchdog ended it, or the body aborted it.
     pub aborted: bool,
 }
 
@@ -253,7 +253,8 @@ impl Failure {
         }
     }
 
-    /// The failure of a bridge request: the failure in the IDE, or why the request got no answer.
+    /// The failure of a bridge request: the failure in the IDE, or why the request got no answer. The outermost failure
+    /// in the IDE says whether the body aborted its scenario.
     pub(crate) fn of_bridge(error: &avl_bridge::Error) -> Self {
         match error.kind() {
             ErrorKind::Failed(failure) => Self {
@@ -261,7 +262,7 @@ impl Failure {
                 message: failure.message.clone().unwrap_or_default(),
                 stack: stack_lines(failure),
                 suppressed: Vec::new(),
-                aborted: false,
+                aborted: failure.aborted,
             },
             _ => Self::runner(kind::BRIDGE, error.to_string()),
         }

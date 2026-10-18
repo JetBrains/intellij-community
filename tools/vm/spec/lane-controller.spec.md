@@ -1685,6 +1685,13 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_part_reports_the_metrics_of_its_performance_file`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_part_that_answered_reports_no_metric_of_its_performance_file`)
 
+- A body aborts its scenario when the lane cannot give a precondition. The bridge marks that failure `aborted`. The
+  scenario then ends as `ABORTED`, and the run counts it as skipped. The after reset still runs. A failure without
+  the mark ends as `FAILED`.
+  [@test] ../crates/avl-bridge/src/failure/tests.rs (`a_failure_marked_aborted_decodes_as_an_abort_and_an_unmarked_one_does_not`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`an_authored_part_that_aborts_its_scenario_finishes_as_aborted_and_counts_as_skipped`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_part_reports_the_metrics_of_its_performance_file`)
+
 - A run of the lane daemon takes the recorded sessions that `AIR_UI_REAL_SESSION_LOGS` names on the host. Each entry is
   an `events.jsonl` or a thread directory that holds one, and the path separator divides the entries. The label of a
   log follows the rule of the JVM host. A variable that names no events file, or two logs of one label, is refused.

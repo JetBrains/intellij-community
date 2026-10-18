@@ -265,7 +265,8 @@ pub(crate) struct TraceFailure {
     pub message: Option<String>,
     /// The stack lines, each `at <frame>` or `Caused by: <type>: <message>`, without the header line.
     pub stack: Vec<String>,
-    /// A failure that did not reach a verdict: a scenario that never ran, or a step the watchdog ended.
+    /// A failure that did not reach a verdict: a scenario that never ran, a step the watchdog ended, or a body that
+    /// aborted its scenario.
     pub aborted: bool,
 }
 

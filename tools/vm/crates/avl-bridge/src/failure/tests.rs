@@ -28,7 +28,9 @@ fn a_failure_decodes_with_its_cause_chain_and_reads_as_the_ide_describes_it() {
                 message: None,
                 stack: Vec::new(),
                 cause: None,
+                aborted: false,
             })),
+            aborted: false,
         }
     );
     assert_eq!(
@@ -60,7 +62,32 @@ fn a_failure_without_its_type_or_with_a_wrong_field_is_refused() {
             json!({"type": "T", "cause": {"stack": []}}),
             r#"the failure {"stack":[]} has no text `type`"#,
         ),
+        (
+            json!({"type": "T", "aborted": "yes"}),
+            r#"the `aborted` "yes" of the failure T is not a boolean"#,
+        ),
     ] {
         assert_eq!(BridgeFailure::decode(&wire), Err(says.to_owned()), "{wire}");
     }
+}
+
+/// A body that aborts its scenario throws `AirUiTestAbortException`, and the bridge marks its failure aborted. The
+/// field crosses only when it is true, so an absent or a null field is no abort.
+#[test]
+fn a_failure_marked_aborted_decodes_as_an_abort_and_an_unmarked_one_does_not() {
+    let failure = |aborted: Option<Value>| {
+        let mut wire = json!({
+            "type": "com.intellij.air.integration.bridge.AirUiTestAbortException",
+            "message": "IJAI-3115: the lane gives no AI source",
+            "stack": [],
+        });
+        if let Some(aborted) = aborted {
+            wire["aborted"] = aborted;
+        }
+        BridgeFailure::decode(&wire).unwrap().aborted
+    };
+    assert!(failure(Some(json!(true))));
+    assert!(!failure(Some(json!(false))));
+    assert!(!failure(Some(Value::Null)));
+    assert!(!failure(None));
 }
