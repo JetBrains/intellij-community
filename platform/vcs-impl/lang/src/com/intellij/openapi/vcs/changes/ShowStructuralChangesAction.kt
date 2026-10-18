@@ -12,7 +12,7 @@ internal class ShowStructuralChangesAction : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null && !IdeProductMode.isFrontend
+    e.presentation.isEnabledAndVisible = e.project != null && !IdeProductMode.isFrontend && StructuralChangesViewSettings.isAvailable()
   }
 
   override fun isSelected(e: AnActionEvent): Boolean = e.project?.let(StructuralChangesViewSettings::isEnabled) ?: false

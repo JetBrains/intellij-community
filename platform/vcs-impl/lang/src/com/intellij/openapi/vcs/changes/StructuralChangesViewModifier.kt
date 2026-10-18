@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diff.util.Side
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
@@ -14,6 +13,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
@@ -34,8 +36,9 @@ import java.util.concurrent.Callable
 
 internal class StructuralChangesViewModifier(private val project: Project) : ChangesViewModifier {
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
-    if (!StructuralChangesViewSettings.isEnabled(project) || builder !is TreeModelBuilder) return
+    if (builder !is TreeModelBuilder) return
     project.service<StructuralChangesViewUpdates>()
+    if (!StructuralChangesViewSettings.isEnabled(project)) return
 
     val changeNodes = builder.myRoot.traverse().filter(ChangesBrowserChangeNode::class.java).toList()
     for (node in changeNodes) {
@@ -121,21 +124,15 @@ private class StructuralChangeNode(
   }
 }
 
-internal object StructuralChangesViewSettings {
-  private const val KEY = "ChangesView.ShowStructuralChanges"
-
-  fun isEnabled(project: Project): Boolean = PropertiesComponent.getInstance(project).getBoolean(KEY)
-
-  fun setEnabled(project: Project, enabled: Boolean) {
-    PropertiesComponent.getInstance(project).setValue(KEY, enabled)
-    project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
-  }
-}
-
 @Service(Service.Level.PROJECT)
 internal class StructuralChangesViewUpdates(private val project: Project) : Disposable {
   init {
     project.messageBus.connect(this).subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener { refresh() })
+    RegistryManager.getInstance().get(StructuralChangesViewSettings.REGISTRY_KEY).addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
+      }
+    }, this)
   }
 
   private fun refresh() {
