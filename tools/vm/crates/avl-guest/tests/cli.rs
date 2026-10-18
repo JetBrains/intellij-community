@@ -18,11 +18,12 @@ fn agent() -> PathBuf {
     std::path::absolute(path).unwrap()
 }
 
-/// The agent as a command whose environment holds no shard variable of the Bazel test that runs this file. Bazel may
-/// split this test into shards, and `lane-run` refuses a run that Bazel splits.
+/// The agent as a command whose environment holds no shard variable and no timeout of the Bazel test that runs this file.
+/// Bazel may split this test into shards, and `lane-run` refuses a run that Bazel splits. `lane-run` also takes the
+/// timeout of a Bazel test as its budget, and the timeout of this test is not the budget of a lane.
 fn agent_command() -> Command {
     let mut command = Command::new(agent());
-    for name in ["TEST_TOTAL_SHARDS", "TEST_SHARD_INDEX", "TEST_SHARD_STATUS_FILE"] {
+    for name in ["TEST_TOTAL_SHARDS", "TEST_SHARD_INDEX", "TEST_SHARD_STATUS_FILE", "TEST_TIMEOUT"] {
         command.env_remove(name);
     }
     command

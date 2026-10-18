@@ -50,6 +50,7 @@ fn a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached() 
             timestamp: "t".to_owned(),
             discovered_executions: 2,
             class_names: vec!["Reached".to_owned(), "Dropped".to_owned()],
+            executions: Vec::new(),
         })),
         RunEvent::synthesized(RunEventKind::TestStarted(TestStarted {
             timestamp: "t".to_owned(),

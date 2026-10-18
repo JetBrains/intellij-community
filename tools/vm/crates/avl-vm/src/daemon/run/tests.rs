@@ -1002,6 +1002,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             launch_digest: String::new(),
             active_execution_timeout_sec: 0,
             progress_gap_timeout_sec: 0,
+            run_budget_sec: None,
             ide_plugins: Vec::new(),
             lane: None,
             lane_inputs: None,

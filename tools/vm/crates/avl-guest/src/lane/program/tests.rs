@@ -442,6 +442,8 @@ struct Setup {
     slow_step: Option<Duration>,
     margin: Duration,
     active: Duration,
+    /// The budget of the whole run, from the start of the run.
+    run_budget: Option<Duration>,
     recording: Recording,
     document: LaneDocument,
     session_logs: Vec<StagedLog>,
@@ -453,6 +455,7 @@ impl Default for Setup {
             slow_step: None,
             margin: INSTRUCTION_MARGIN,
             active: Duration::from_mins(30),
+            run_budget: None,
             recording: Recording::default(),
             document: lane_document(),
             session_logs: Vec::new(),
@@ -466,6 +469,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
         slow_step,
         margin,
         active,
+        run_budget,
         recording,
         document,
         session_logs,
@@ -482,6 +486,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
         let policy = Policy {
             active_execution: active,
             progress_gap: Duration::from_mins(5),
+            run_end: run_budget.map(|budget| Instant::now() + budget),
         };
         let watch = match slow_step {
             Some(budget) => Watch::new(policy).with_slow_step(budget),
@@ -1517,6 +1522,32 @@ fn an_authored_part_that_aborts_its_scenario_finishes_as_aborted_and_counts_as_s
     assert_eq!(requests.last().map(|(_, kind)| kind.as_str()), Some("Reset"), "{requests:?}");
     let done = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
     assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
+}
+
+// No instruction waits past the budget of the run: the deadline of a part is cut to the budget left, and the IDE gets
+// the cut deadline as timeoutMs, so its body stops through its scope first.
+#[test]
+fn a_part_deadline_is_cut_to_the_budget_left() {
+    let fake = Fake::new(Script::default());
+    let ran = run_set(
+        &fake,
+        &[one_part_suite()],
+        &Setup {
+            run_budget: Some(Duration::from_secs(100)),
+            ..Setup::default()
+        },
+    );
+    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
+    let parts = fake.bodies("action/authored-step");
+    let timeout = parts[0]["timeoutMs"].as_u64().unwrap();
+    assert!(
+        timeout <= 100_000 && timeout > 90_000,
+        "the part of 180000 ms got timeoutMs {timeout}"
+    );
+
+    let unbounded = Fake::new(Script::default());
+    run(&unbounded, &[one_part_suite()], None);
+    assert_eq!(unbounded.bodies("action/authored-step")[0]["timeoutMs"], 180_000);
 }
 
 // A part that answered reports its own metrics, so the runner reads no performance file after it.

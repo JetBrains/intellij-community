@@ -656,6 +656,7 @@ pub(crate) fn run_request(
         launch_digest: prep.launch_digest.clone(),
         active_execution_timeout_sec: policy.active_execution.as_secs(),
         progress_gap_timeout_sec: policy.progress_gap.as_secs(),
+        run_budget_sec: None,
         ide_plugins: prep
             .plugin_files
             .iter()

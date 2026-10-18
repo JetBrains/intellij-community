@@ -1614,6 +1614,36 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_without_git_is_refused_by_name`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_smaller_screen_is_a_note_and_not_a_refusal`)
 
+- The budget of a `lane-run` is the smaller of `--run-budget-sec` and `$TEST_TIMEOUT` of a Bazel test, less a
+  teardown reserve of 180 s. A run that names neither has no budget. A `$TEST_TIMEOUT` that is no whole number is
+  refused with `lane_run_budget`, and so is a budget that the reserve leaves nothing of. The rule `air_lane_test` passes
+  a budget of 2700 s, because a lane job of TeamCity ends at 60 minutes. The lanes ui-perf, ui-live and ui-real pass
+  none, because their parts run longer. Their budget is the timeout of the Bazel test.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_run_budget_is_the_smaller_of_the_flag_and_test_timeout_less_the_reserve`)
+
+- The budget of the run caps every deadline of the watchdog. At its end the watchdog ends the run as
+  `run_budget_timeout`. No instruction waits past it: the deadline of a part is cut to the budget left, and the IDE
+  gets the cut deadline as `timeoutMs`. A reset that fails gets no recycle that cannot end inside the budget left, and
+  each scenario left is skipped with the reason.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_run_budget_caps_every_deadline_and_ends_the_run_as_run_budget_timeout`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_part_deadline_is_cut_to_the_budget_left`)
+  [@test] ../crates/avl-guest/src/lane/recycle/tests.rs (`a_recycle_that_cannot_fit_the_budget_skips_the_scenarios_left`)
+
+- A monitor thread of `lane-run` writes a hang report on the standard error every 3 minutes. The report names the
+  scenario that runs, the open steps of the run thread and the budget left. It also names each thread of the process
+  with its state, its wait channel and its system call. A call on a file descriptor names the target of the
+  descriptor.
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`each_thread_is_named_with_its_state_its_wait_and_the_target_of_its_descriptor`)
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`a_snapshot_names_the_scenario_the_open_steps_and_the_budget_left`)
+
+- One minute after the end of the budget, a run thread that did not return gets the hard stop of the monitor. The
+  monitor writes the JUnit XML of the records so far. The open scenario is unfinished there, and each planned scenario
+  that never ran is skipped with the reason. The monitor then cancels each IDE run that the stream launched and did
+  not end, and it kills each recorder. It writes the hang report and one line, and the process exits 1. `planStarted`
+  names each planned scenario for it.
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder`)
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped`)
+
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
   and a plan of suites of a bare IDE alone names no lane key.

@@ -49,8 +49,8 @@ use serde_json::{Map, Value, json};
 
 use super::host_ids::{self, HostId, HostSide, ServiceControl};
 use super::ide::Relaunch;
-use super::readiness::request;
-use super::recycle::{Isolation, ResetPhase, never_ran};
+use super::readiness::{READY_TIMEOUT, request};
+use super::recycle::{Isolation, RecycleBudget, ResetPhase, never_ran};
 use super::session_logs::{self, StagedLog};
 use super::stream::{CaseIdentity, CaseStatus, Stream};
 use super::trace::{Trace, TraceFailure};
@@ -87,6 +87,8 @@ const INSTRUCTION_MARGIN: Duration = Duration::from_secs(10);
 
 /// The deadline of `Reset` and `ResetManagedAgents`, `AIR_UI_TEST_RESET_TIMEOUT_MS`.
 const RESET_TIMEOUT: Duration = Duration::from_mins(2);
+/// What one recycle can take: the readiness of the new IDE, the reset again, and a minute for the quit and the launch.
+const RECYCLE_NEED: Duration = Duration::from_secs(READY_TIMEOUT.as_secs() + RESET_TIMEOUT.as_secs() + 60);
 
 /// The default deadline of a bridge operation, `AIR_UI_TEST_DEFAULT_OPERATION_TIMEOUT_MS`.
 const DEFAULT_OPERATION_MS: u64 = 10_000;
@@ -790,17 +792,32 @@ impl<'r, 's> Runner<'r, 's> {
     }
 
     /// One side's reset as a `reset` span, under the isolation that recycles the IDE when it does not hold.
+    /// `timeout_ms`, cut to what is left of the budget of the run, so no instruction waits past the end of the budget. A
+    /// cut timeout is at least one millisecond, and the watchdog ends the run at the end of the budget.
+    fn within_budget(&self, timeout_ms: u64) -> u64 {
+        self.watch.budget_left().map_or(timeout_ms, |left| {
+            timeout_ms.min(u64::try_from(left.as_millis()).unwrap_or(u64::MAX).max(1))
+        })
+    }
+
+    /// What is left of the budget of the run for a recycle, or `None` for a run with no budget.
+    fn recycle_budget(&self) -> Option<RecycleBudget> {
+        self.watch.budget_left().map(|left| RecycleBudget { left, need: RECYCLE_NEED })
+    }
+
     fn traced_reset(&self, phase: ResetPhase, scenario: &str, reset: &SuiteReset) -> Result<(), Failure> {
         let side = phase.as_str();
         let span = self
             .trace()
             .open_span(SpanKind::Reset, side, &format!("[reset] {side} {scenario}"), None);
         let outcome = self.watch.step(&format!("{side} reset of {scenario}"), || {
-            self.isolation
-                .borrow_mut()
-                .ensure_clean(phase, scenario, &mut || self.reset(phase, scenario, reset), &mut || {
-                    self.relaunch_span(Relaunch::Recycle, &mut |_| Ok(()))
-                })
+            self.isolation.borrow_mut().ensure_clean(
+                phase,
+                scenario,
+                self.recycle_budget(),
+                &mut || self.reset(phase, scenario, reset),
+                &mut || self.relaunch_span(Relaunch::Recycle, &mut |_| Ok(())),
+            )
         });
         self.attach_dumps();
         let failure = outcome.err().map(|failure| Failure {
@@ -1013,7 +1030,7 @@ impl<'r, 's> Runner<'r, 's> {
         } else {
             fields.extend(values.request_fields(label, spec).map_err(missing)?);
         }
-        let timeout = authored_timeout(instruction).unwrap_or(spec.timeout_ms);
+        let timeout = self.within_budget(authored_timeout(instruction).unwrap_or(spec.timeout_ms));
         fields.insert("timeoutMs".to_owned(), json!(timeout));
         let request_name = request_class(id_kind, id);
         let answer = self.call(
@@ -1090,7 +1107,7 @@ impl<'r, 's> Runner<'r, 's> {
             authored: suite.authored,
             scenario: operation,
             reset: suite.reset.as_ref(),
-            deadline: Duration::from_millis(suite.spec_of(instruction).map_or(0, |spec| spec.timeout_ms)),
+            deadline: Duration::from_millis(self.within_budget(suite.spec_of(instruction).map_or(0, |spec| spec.timeout_ms))),
         };
         host_ids::perform(host, label, &instruction.args, values, &mut side).map_err(|message| Failure::runner(kind::HOST, message))
     }
@@ -1120,6 +1137,7 @@ impl<'r, 's> Runner<'r, 's> {
             .ensure_clean(
                 ResetPhase::Before,
                 scenario,
+                self.recycle_budget(),
                 &mut || {
                     resets.set(resets.get() + 1);
                     if resets.get() == 1 {
@@ -1621,7 +1639,7 @@ fn label_value(suite: &SuiteProgram, name: &str) -> Option<String> {
 }
 
 /// The identity of the case of `profile`: the class and the factory method of the JUnit node of the JVM host.
-fn case_identity(suite: &SuiteProgram, profile: &ScenarioProgram) -> CaseIdentity {
+pub(crate) fn case_identity(suite: &SuiteProgram, profile: &ScenarioProgram) -> CaseIdentity {
     CaseIdentity {
         suite: suite.suite.clone(),
         class_name: class_label(suite),

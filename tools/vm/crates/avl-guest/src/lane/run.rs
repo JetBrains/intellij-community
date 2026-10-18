@@ -15,6 +15,7 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEventKind, RunRequest, SessionLog, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
@@ -24,7 +25,9 @@ use serde::Serialize;
 use super::channel::{self, BOOT_CODE, log};
 use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
+use super::monitor::{self, LiveStop, Monitor, MonitorPaths};
 use super::package::sha256_hex;
+use super::watchdog::KILL_GRACE;
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
 use crate::linux::validate::GuestValidator;
@@ -50,6 +53,15 @@ const TEST_FILTER_VARIABLE: &str = "TESTBRIDGE_TEST_ONLY";
 const JUNIT5_FILTERS_VARIABLE: &str = "JB_TEST_JUNIT5_FILTERS";
 /// The variable of the shard count of a Bazel test.
 const TOTAL_SHARDS_VARIABLE: &str = "TEST_TOTAL_SHARDS";
+/// The variable of the timeout of a Bazel test, in seconds. Bazel ends the test at it.
+const TEST_TIMEOUT_VARIABLE: &str = "TEST_TIMEOUT";
+/// The variable of the outputs directory of a Bazel test, which Bazel keeps after the test.
+const OUTPUTS_VARIABLE: &str = "TEST_UNDECLARED_OUTPUTS_DIR";
+/// What the budget of a run leaves for its end: the kill grace of the watchdog, the hard stop with its JUnit XML and the
+/// cancel of the IDE with a thread dump, and the kill delay of Bazel.
+pub(crate) const TEARDOWN_RESERVE: Duration = Duration::from_mins(3);
+/// The refusal code of a budget that a run cannot keep.
+pub(crate) const BUDGET_CODE: &str = "lane_run_budget";
 /// The refusal code of a run that Bazel splits into shards.
 pub(crate) const SHARDED_CODE: &str = "lane_run_sharded";
 /// The refusal code of a recorded session that the variable names and that cannot be packed.
@@ -168,8 +180,11 @@ pub(crate) fn session_logs(
 /// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
 /// environment.
 pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
+    let started = Instant::now();
     let flags = jvm_flags(&args.jvm_flags)?;
     refuse_shards(variable)?;
+    // A plan launches no IDE, so it spends no budget.
+    let budget = if args.plan_only { None } else { run_budget(args, variable)? };
     let root = runtime_root(args, variable)?;
     let runfiles_root = args
         .runfiles_root
@@ -194,6 +209,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let descriptor = runtime::parse_runtime_descriptor(&content, &args.descriptor, guest_platform())
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
     let launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
+    let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
         notes.extend(probe_host(&launch_inputs, variable)?);
@@ -228,6 +244,8 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         launch_digest: LAUNCH_DIGEST.to_owned(),
         active_execution_timeout_sec: args.active_execution_timeout_sec,
         progress_gap_timeout_sec: args.progress_gap_timeout_sec,
+        // What the staging left of the budget, so the watchdog ends the run at the end of the budget of the process.
+        run_budget_sec: budget.map(|budget| budget.saturating_sub(started.elapsed()).as_secs()),
         ide_plugins,
         lane: Some(args.lane.clone()),
         lane_inputs: Some(lane_inputs),
@@ -246,9 +264,28 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
-    let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut Tee(stream, io::stdout()));
-    let written = write_xml(&root, &xml, variable);
-    let finished = daemon.finish();
+    let monitor = Monitor::new(
+        &daemon,
+        MonitorPaths {
+            stream: stream_path.clone(),
+            xml: xml_files(&root, variable),
+            ide_root: daemon_args.ide_root,
+            report: variable(OUTPUTS_VARIABLE)
+                .filter(|directory| !directory.is_empty())
+                .map(|directory| PathBuf::from(directory).join(monitor::REPORT_FILE)),
+        },
+        budget,
+        budget.map(|budget| started + budget + KILL_GRACE),
+    );
+    let (written, finished) = std::thread::scope(|scope| {
+        scope.spawn(|| monitor.watch(&LiveStop { jcmd }));
+        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut Tee(stream, io::stdout()));
+        monitor.run_returned();
+        let written = write_xml(&root, &xml, variable);
+        let finished = daemon.finish();
+        monitor.end();
+        (written, finished)
+    });
     if let Err(refusal) = &finished {
         log(&format!("the IDE did not quit: {}: {}", refusal.code, refusal.message));
     }
@@ -360,10 +397,41 @@ pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: Runner
 
 /// Writes `xml` into the run directory `root`, and to the file that `$JB_XML_OUTPUT_FILE` or `$XML_OUTPUT_FILE` names.
 /// Bazel and `bt` count the cases of that file, so a write that fails fails the run.
-pub(crate) fn write_xml(root: &Path, xml: &str, variable: &dyn Fn(&str) -> Option<String>) -> Result<(), AgentRefusal> {
+/// The files of the JUnit XML of a run: the one in the run directory `root`, and the XML file of a Bazel test.
+pub(crate) fn xml_files(root: &Path, variable: &dyn Fn(&str) -> Option<String>) -> Vec<PathBuf> {
     let mut files = vec![root.join(XML_FILE)];
     files.extend(avl_junit::destination(variable).map(PathBuf::from));
-    for file in files {
+    files
+}
+
+/// The budget of the run: the smaller of `--run-budget-sec` and `$TEST_TIMEOUT`, less [`TEARDOWN_RESERVE`], or `None`
+/// when neither names one. A `$TEST_TIMEOUT` that is no whole number of seconds is refused, and so is a budget that the
+/// reserve leaves nothing of.
+pub(crate) fn run_budget(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<Option<Duration>, AgentRefusal> {
+    let refused = |message: String| AgentRefusal::refused(BUDGET_CODE, message);
+    let timeout = variable(TEST_TIMEOUT_VARIABLE)
+        .filter(|value| !value.trim().is_empty())
+        .map(|value| {
+            value
+                .trim()
+                .parse::<u64>()
+                .map_err(|error| refused(format!("${TEST_TIMEOUT_VARIABLE} is no whole number of seconds: {value} ({error})")))
+        })
+        .transpose()?;
+    let Some(seconds) = [args.run_budget_sec, timeout].into_iter().flatten().min() else {
+        return Ok(None);
+    };
+    match Duration::from_secs(seconds).checked_sub(TEARDOWN_RESERVE) {
+        Some(budget) if !budget.is_zero() => Ok(Some(budget)),
+        _ => Err(refused(format!(
+            "the run budget of {seconds} s leaves nothing after the teardown reserve of {} s",
+            TEARDOWN_RESERVE.as_secs()
+        ))),
+    }
+}
+
+pub(crate) fn write_xml(root: &Path, xml: &str, variable: &dyn Fn(&str) -> Option<String>) -> Result<(), AgentRefusal> {
+    for file in xml_files(root, variable) {
         if let Some(parent) = file.parent() {
             fs::create_dir_all(parent)
                 .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", parent.display())))?;

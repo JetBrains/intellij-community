@@ -230,6 +230,10 @@ pub struct RunRequest {
     pub launch_digest: String,
     pub active_execution_timeout_sec: u64,
     pub progress_gap_timeout_sec: u64,
+    /// The budget of the whole run, in seconds from the request. The watchdog ends the run at it, and no instruction
+    /// waits past it. Absent sets no budget.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub run_budget_sec: Option<u64>,
     /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
     pub ide_plugins: Vec<IdePlugin>,
     /// The catalog lane of the run, such as `ui`: the lane document `lanes/<lane>.json`.
@@ -441,6 +445,10 @@ pub struct PlanStarted {
     pub timestamp: String,
     pub discovered_executions: u32,
     pub class_names: Vec<String>,
+    /// Each scenario of the plan, in run order, so that a reader of a cut-off stream names each scenario that never
+    /// ran. The lane daemon writes it. An empty list is absent on the wire.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub executions: Vec<ExecutionIdentity>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -12,7 +12,8 @@ use std::fs;
 use std::io::Write;
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use avl_trace::protocol;
 use avl_wire::daemon::{LaneClass, LaneInputs, PlanStarted, RunEventKind, RunFailed, RunRequest, RunStarted, Summary, WatchdogState};
@@ -28,7 +29,7 @@ use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity
 use super::inputs::TraceInputs;
 use super::live::LiveRun;
 use super::package::sha256_hex;
-use super::program::{Failure, IdeProcess, Lane, Runner, Suite, class_label, kind};
+use super::program::{Failure, IdeProcess, Lane, Runner, Suite, case_identity, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
@@ -301,8 +302,10 @@ pub(crate) fn run_split(
         request.lane.as_deref().unwrap_or("<none>")
     ));
     // A panic of the run is a failed iteration with a summary, so the stream never ends without one.
+    // The budget of the run counts from the request, so the boot of the IDE spends it too.
+    let run_end = request.run_budget_sec.map(|seconds| Instant::now() + Duration::from_secs(seconds));
     let executed = panic::catch_unwind(AssertUnwindSafe(|| {
-        execute(daemon, request, split, &stream, &iteration_dir, &iteration_id)
+        execute(daemon, request, split, &stream, &iteration_dir, &iteration_id, run_end)
     }))
     .unwrap_or_else(|panic| {
         let message = panic
@@ -412,6 +415,7 @@ fn execute(
     stream: &Stream<'_>,
     iteration_dir: &Path,
     iteration_id: &str,
+    run_end: Option<Instant>,
 ) -> Result<bool, String> {
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err("the run request names no lane and no lane inputs, which the lane daemon needs".to_owned());
@@ -438,6 +442,7 @@ fn execute(
         &fake_agent_jar,
         &selection,
         live.as_ref(),
+        run_end,
     );
     let Some(live) = live else {
         return outcome;
@@ -503,6 +508,7 @@ fn execute_selection(
     fake_agent_jar: &Path,
     selection: &Selection,
     live: Option<&LiveRun>,
+    run_end: Option<Instant>,
 ) -> Result<bool, String> {
     let lane = request.lane.as_deref().unwrap_or_default();
     let plugins: Vec<ContextPlugin> = request
@@ -562,6 +568,17 @@ fn execute_selection(
         timestamp: now_stamp(),
         discovered_executions: discovered,
         class_names: selection.class_names(),
+        executions: selection
+            .suites
+            .iter()
+            .flat_map(|suite| {
+                suite
+                    .program
+                    .profiles
+                    .iter()
+                    .map(|profile| case_identity(&suite.program, profile).execution())
+            })
+            .collect(),
     }));
     for class in &selection.undocumented {
         stream.container_failed(
@@ -596,11 +613,13 @@ fn execute_selection(
     }
     let trace_inputs = daemon.with_ide(|owner| owner.trace_inputs().clone());
     let trace = start_trace(&trace_inputs, iteration_dir, iteration_id, daemon_lane.recorder_bridge());
-    let watch = Watch::new(Policy {
+    let watch = Arc::new(Watch::new(Policy {
         active_execution: Duration::from_secs(request.active_execution_timeout_sec),
         progress_gap: Duration::from_secs(request.progress_gap_timeout_sec),
-    });
+        run_end,
+    }));
     watch.plan_started(stream, discovered);
+    daemon.publish_watch(Some(Arc::clone(&watch)));
     std::thread::scope(|scope| {
         scope.spawn(|| watchdog::watch(&watch, stream, &daemon_lane, iteration_dir));
         Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace)
@@ -608,6 +627,7 @@ fn execute_selection(
             .run(&selection.suites);
         watch.completed(stream);
     });
+    daemon.publish_watch(None);
     Ok(watch.expired().is_some())
 }
 

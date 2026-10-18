@@ -47,6 +47,7 @@ fn plan(classes: &[&str]) -> RunEvent {
         timestamp: "plan".to_owned(),
         discovered_executions: 1,
         class_names: classes.iter().map(|class| (*class).to_owned()).collect(),
+        executions: Vec::new(),
     }))
 }
 

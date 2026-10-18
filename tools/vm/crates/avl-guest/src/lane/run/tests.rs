@@ -261,3 +261,37 @@ fn a_host_without_a_display_is_refused_by_name() {
     assert!(refusal.message.contains("DISPLAY is unset"), "{}", refusal.message);
     assert_eq!(host_display(&environment(&[])).unwrap_err().code, CODE_DISPLAY_MISSING);
 }
+
+// The budget of a run is the smaller of --run-budget-sec and $TEST_TIMEOUT, less the teardown reserve. A run that names
+// neither has no budget. A $TEST_TIMEOUT that is no whole number, and a budget that the reserve leaves nothing of, are
+// refused.
+#[test]
+fn the_run_budget_is_the_smaller_of_the_flag_and_test_timeout_less_the_reserve() {
+    let none = environment(&[]);
+    let reserve = TEARDOWN_RESERVE.as_secs();
+    let budget = |flags: &[&str], variables: &[(&str, &str)]| run_budget(&args(flags), &environment(variables));
+    assert_eq!(budget(&[], &[]).unwrap(), None);
+    assert_eq!(
+        budget(&["--run-budget-sec", "2700"], &[]).unwrap(),
+        Some(Duration::from_secs(2700 - reserve))
+    );
+    assert_eq!(
+        budget(&[], &[("TEST_TIMEOUT", "14400")]).unwrap(),
+        Some(Duration::from_secs(14_400 - reserve))
+    );
+    assert_eq!(
+        budget(&["--run-budget-sec", "2700"], &[("TEST_TIMEOUT", "14400")]).unwrap(),
+        Some(Duration::from_secs(2700 - reserve))
+    );
+    assert_eq!(
+        budget(&["--run-budget-sec", "2700"], &[("TEST_TIMEOUT", "900")]).unwrap(),
+        Some(Duration::from_secs(900 - reserve))
+    );
+    assert_eq!(budget(&[], &[("TEST_TIMEOUT", "an hour")]).unwrap_err().code, BUDGET_CODE);
+    let short = run_budget(&args(&["--run-budget-sec", "180"]), &none).unwrap_err();
+    assert_eq!(short.code, BUDGET_CODE);
+    assert_eq!(
+        short.message,
+        "the run budget of 180 s leaves nothing after the teardown reserve of 180 s"
+    );
+}

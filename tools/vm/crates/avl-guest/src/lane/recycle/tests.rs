@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::time::Duration;
 
 use pretty_assertions::assert_eq;
 
@@ -23,9 +24,14 @@ impl Script {
     }
 
     fn ensure(&self, isolation: &mut Isolation, scenario: &str) -> Result<(), ResetFailure> {
+        self.ensure_within(isolation, scenario, None)
+    }
+
+    fn ensure_within(&self, isolation: &mut Isolation, scenario: &str, budget: Option<RecycleBudget>) -> Result<(), ResetFailure> {
         isolation.ensure_clean(
             ResetPhase::Before,
             scenario,
+            budget,
             &mut || self.resets.borrow_mut().pop_front().unwrap_or(Ok(())),
             &mut || {
                 *self.recycled.borrow_mut() += 1;
@@ -108,5 +114,34 @@ fn the_fourth_dirty_reset_exhausts_the_budget_of_three_recycles() {
         isolation.exhaustion_reason(),
         "the shared IDE was recycled 3 time(s) and isolation still failed: before 's0': dirty; before 's1': dirty; \
          before 's2': dirty; before 'last': dirty again"
+    );
+}
+
+// A recycle that cannot end inside what is left of the time budget of the run is refused. The isolation is exhausted,
+// so each scenario left is skipped with the reason, and a recycle with time enough still runs.
+#[test]
+fn a_recycle_that_cannot_fit_the_budget_skips_the_scenarios_left() {
+    let need = Duration::from_mins(13);
+    let script = Script::new(vec![Err("tabs remain open"), Ok(()), Err("tabs remain open")], vec![]);
+    let mut isolation = Isolation::default();
+    let fits = RecycleBudget {
+        left: Duration::from_mins(20),
+        need,
+    };
+    assert_eq!(script.ensure_within(&mut isolation, "first", Some(fits)), Ok(()));
+    assert_eq!(*script.recycled.borrow(), 1);
+
+    let short = RecycleBudget {
+        left: Duration::from_mins(5),
+        need,
+    };
+    let failure = script.ensure_within(&mut isolation, "second", Some(short)).unwrap_err();
+    assert_eq!(*script.recycled.borrow(), 1, "a recycle ran past the budget");
+    assert_eq!(failure.suppressed, ["the lane budget left 300 s, and a recycle needs up to 780 s"]);
+    assert!(isolation.exhausted());
+    assert_eq!(
+        isolation.exhaustion_reason(),
+        "the lane budget left 300 s, and a recycle needs up to 780 s, so no recycle answered these resets: before \
+         'first': tabs remain open; before 'second': tabs remain open"
     );
 }

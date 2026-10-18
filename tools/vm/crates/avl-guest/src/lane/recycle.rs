@@ -11,8 +11,12 @@
 //!   over, and every scenario left is skipped.
 //! - **insufficient**: the recycle worked and the reset still failed. This scenario fails, and the budget decides
 //!   whether the next one runs.
+//!
+//! A run with a time budget also refuses a recycle that cannot end inside what is left of it. Every scenario left is
+//! then skipped, so the run ends with an account of each one and not at the hard stop.
 
 use std::fmt;
+use std::time::Duration;
 
 #[cfg(test)]
 mod tests;
@@ -53,6 +57,13 @@ impl fmt::Display for ResetFailure {
     }
 }
 
+/// What is left of the time budget of a run when a reset fails, and what one recycle can take.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RecycleBudget {
+    pub left: Duration,
+    pub need: Duration,
+}
+
 /// The isolation of the scenarios of one run, and its recycle budget.
 #[derive(Debug, Default)]
 pub(crate) struct Isolation {
@@ -62,6 +73,8 @@ pub(crate) struct Isolation {
     recycles: Vec<String>,
     /// Why the remedy was unavailable, once it was.
     remedy_failure: Option<String>,
+    /// Why the time budget of the run refused a recycle, once it did.
+    budget_refusal: Option<String>,
     exhausted: bool,
 }
 
@@ -71,11 +84,13 @@ impl Isolation {
         self.exhausted
     }
 
-    /// Runs `reset`. A reset that fails recycles the IDE through `recycle` and runs `reset` again.
+    /// Runs `reset`. A reset that fails recycles the IDE through `recycle` and runs `reset` again. With `budget`, a
+    /// recycle that needs more than is left of the time budget is refused, and the isolation is exhausted.
     pub(crate) fn ensure_clean(
         &mut self,
         phase: ResetPhase,
         scenario: &str,
+        budget: Option<RecycleBudget>,
         reset: &mut dyn FnMut() -> Result<(), String>,
         recycle: &mut dyn FnMut() -> Result<(), String>,
     ) -> Result<(), ResetFailure> {
@@ -88,6 +103,17 @@ impl Isolation {
         };
         if self.recycles.len() >= MAX_RECYCLES {
             self.exhausted = true;
+            return Err(failure);
+        }
+        if let Some(budget) = budget.filter(|budget| budget.left < budget.need) {
+            let refusal = format!(
+                "the lane budget left {} s, and a recycle needs up to {} s",
+                budget.left.as_secs(),
+                budget.need.as_secs()
+            );
+            self.budget_refusal = Some(refusal.clone());
+            self.exhausted = true;
+            failure.suppressed.push(refusal);
             return Err(failure);
         }
         if let Err(unavailable) = recycle() {
@@ -109,6 +135,9 @@ impl Isolation {
     /// Why nothing further is worth running. The two causes have different fixes, so the sentence tells them apart.
     pub(crate) fn exhaustion_reason(&self) -> String {
         let history = self.incidents.join("; ");
+        if let Some(refusal) = &self.budget_refusal {
+            return format!("{refusal}, so no recycle answered these resets: {history}");
+        }
         match &self.remedy_failure {
             None => format!(
                 "the shared IDE was recycled {} time(s) and isolation still failed: {history}",

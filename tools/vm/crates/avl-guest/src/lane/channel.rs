@@ -29,6 +29,7 @@ use super::iteration::{self, stored_path};
 use super::package::sha256_hex;
 use super::services::http::{Request, Response};
 use super::services::{Handler, Service};
+use super::watchdog::Watch;
 use crate::cli::LaneDaemonArgs;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 
@@ -77,6 +78,8 @@ pub(crate) struct Daemon {
     ide_running: AtomicBool,
     owner: Mutex<IdeOwner>,
     shutdown: (Mutex<bool>, Condvar),
+    /// The watch of the run in flight, which the monitor of `lane-run` reads. No lock of the run thread guards it.
+    watch: Mutex<Option<Arc<Watch>>>,
 }
 
 impl Daemon {
@@ -95,7 +98,18 @@ impl Daemon {
             ide_running: AtomicBool::new(false),
             owner: Mutex::new(IdeOwner::new(inputs)),
             shutdown: (Mutex::new(false), Condvar::new()),
+            watch: Mutex::new(None),
         }
+    }
+
+    /// Names `watch` as the watch of the run in flight, or no watch when the run ended.
+    pub(crate) fn publish_watch(&self, watch: Option<Arc<Watch>>) {
+        *self.watch.lock().unwrap_or_else(PoisonError::into_inner) = watch;
+    }
+
+    /// The watch of the run in flight, or `None` between runs.
+    pub(crate) fn watch(&self) -> Option<Arc<Watch>> {
+        self.watch.lock().unwrap_or_else(PoisonError::into_inner).clone()
     }
 
     pub(crate) fn boot_stamp(&self) -> &str {

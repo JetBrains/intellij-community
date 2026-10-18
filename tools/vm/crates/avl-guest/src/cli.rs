@@ -322,6 +322,11 @@ pub(crate) struct LaneRunArgs {
     /// The budget between two records of the run, in seconds.
     #[arg(long, value_name = "SECONDS", default_value_t = 300)]
     pub progress_gap_timeout_sec: u64,
+    /// The budget of the whole run, in seconds. lane-run takes the smaller of it and $TEST_TIMEOUT of a Bazel test, less
+    /// a teardown reserve of 180 s. At the end of the budget the watchdog ends the run. A minute later lane-run writes
+    /// the JUnit XML of the records so far itself, cancels the lane IDE and exits 1.
+    #[arg(long, value_name = "SECONDS")]
+    pub run_budget_sec: Option<u64>,
     /// Stage the inputs, select the suite documents, write the plan of the run on standard output, and launch no IDE.
     #[arg(long)]
     pub plan_only: bool,

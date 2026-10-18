@@ -108,6 +108,7 @@ fn a_plan_of_simple_names_is_reached_by_records_of_fqns() {
         timestamp: "t".to_owned(),
         discovered_executions: 1,
         class_names: vec!["AgentProjectWorkflowsUiTest".to_owned(), "Dropped".to_owned()],
+        executions: Vec::new(),
     }));
     let mut lines = messages.record(WORKER, &plan);
     lines.extend(messages.record(

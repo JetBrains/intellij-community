@@ -101,6 +101,15 @@ pub(crate) trait Transport: Send {
     fn close(&mut self);
 }
 
+/// The recorders that this process runs, by pid. The monitor of `lane-run` kills them at the hard stop, because the run
+/// thread that owns them is then the thread that does not return.
+static RUNNING_RECORDERS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
+
+/// The pids of the recorders that this process runs now.
+pub(crate) fn running_recorders() -> Vec<u32> {
+    RUNNING_RECORDERS.lock().unwrap_or_else(PoisonError::into_inner).clone()
+}
+
 /// The `air-trace-record` process, over its standard input and output.
 ///
 /// No pipe write happens on the run thread: a recorder that stopped reading would block it in the kernel. One thread
@@ -127,6 +136,7 @@ impl RecorderProcess {
             let _ = child.kill();
             return Err("the recorder has no pipes".to_owned());
         };
+        RUNNING_RECORDERS.lock().unwrap_or_else(PoisonError::into_inner).push(child.id());
         let (lines, pending) = mpsc::sync_channel::<Vec<u8>>(MAX_PENDING_LINES);
         let writing_since = Arc::new(Mutex::new(None));
         {
@@ -178,6 +188,24 @@ impl RecorderProcess {
             queued: 0,
             gone: None,
         })
+    }
+
+    /// Waits [`EXIT_GRACE`] for the recorder to exit after EOF, and kills it after that.
+    fn await_exit(&mut self) {
+        let deadline = Instant::now() + EXIT_GRACE;
+        loop {
+            match self.child.try_wait() {
+                Ok(Some(_)) => return,
+                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(100)),
+                _ => break,
+            }
+        }
+        log(&format!(
+            "the recorder did not exit within {} s of EOF; killing it",
+            EXIT_GRACE.as_secs()
+        ));
+        let _ = self.child.kill();
+        let _ = self.child.wait();
     }
 
     fn gone_because(&mut self, reason: String) -> String {
@@ -233,20 +261,12 @@ impl Transport for RecorderProcess {
         self.gone_because("the recorder's input is closed".to_owned());
         // EOF: the input thread ends when the queue closes, and then drops the pipe.
         self.lines = None;
-        let deadline = Instant::now() + EXIT_GRACE;
-        loop {
-            match self.child.try_wait() {
-                Ok(Some(_)) => return,
-                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(100)),
-                _ => break,
-            }
-        }
-        log(&format!(
-            "the recorder did not exit within {} s of EOF; killing it",
-            EXIT_GRACE.as_secs()
-        ));
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        self.await_exit();
+        let pid = self.child.id();
+        RUNNING_RECORDERS
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .retain(|running| *running != pid);
     }
 }
 

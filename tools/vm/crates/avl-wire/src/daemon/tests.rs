@@ -241,6 +241,7 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         launch_digest: "l".to_owned(),
         active_execution_timeout_sec: 1800,
         progress_gap_timeout_sec: 300,
+        run_budget_sec: None,
         ide_plugins: vec![IdePlugin {
             destination: "air-integrationTests-bridge-plugin/lib/a.jar".to_owned(),
             sha256: "s".to_owned(),

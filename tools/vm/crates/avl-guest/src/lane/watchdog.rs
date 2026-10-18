@@ -56,7 +56,7 @@ const DUMP_MEDIA_TYPE: &str = "text/plain";
 /// How long a modal window may be unclaimed before it counts as an intruder.
 pub(crate) const INTRUDER_GRACE_MS: u64 = 3_000;
 /// What the emergency deadline adds for the kill.
-const KILL_GRACE: Duration = Duration::from_mins(1);
+pub(crate) const KILL_GRACE: Duration = Duration::from_mins(1);
 
 /// The directory of the slow-step dumps in the directory of an iteration.
 pub(crate) const SLOW_STEPS_DIR: &str = "slow-steps";
@@ -81,6 +81,8 @@ pub(crate) enum ExpiryReason {
     ProgressGap,
     Emergency,
     IdeIntrusion,
+    /// The budget of the whole run ended, see [`Policy::run_end`].
+    RunBudget,
 }
 
 impl ExpiryReason {
@@ -90,6 +92,7 @@ impl ExpiryReason {
             Self::ProgressGap => "progress_gap_timeout",
             Self::Emergency => "emergency_timeout",
             Self::IdeIntrusion => "ide_intrusion",
+            Self::RunBudget => "run_budget_timeout",
         }
     }
 }
@@ -112,11 +115,14 @@ impl Phase {
     }
 }
 
-/// The two budgets of the run request.
+/// The budgets of the run request.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Policy {
     pub active_execution: Duration,
     pub progress_gap: Duration,
+    /// The end of the budget of the whole run, from `runBudgetSec` of the request. No deadline passes it, and the
+    /// watchdog ends the run at it. `None` sets no budget.
+    pub run_end: Option<Instant>,
 }
 
 /// One expiry of the deadlines.
@@ -139,6 +145,8 @@ pub(crate) struct Deadlines {
     phase_deadline: Option<Instant>,
     emergency: Option<Instant>,
     active: Option<ExecutionIdentity>,
+    /// When the scenario in [`Self::active`] started.
+    active_since: Option<Instant>,
 }
 
 impl Deadlines {
@@ -147,9 +155,10 @@ impl Deadlines {
             policy,
             started: now,
             phase: Phase::ProgressGap,
-            phase_deadline: Some(now + policy.progress_gap),
+            phase_deadline: Some(cap(now + policy.progress_gap, policy.run_end)),
             emergency: None,
             active: None,
+            active_since: None,
         }
     }
 
@@ -158,7 +167,7 @@ impl Deadlines {
     pub(crate) fn plan_started(&mut self, count: u32, now: Instant) {
         let gaps = self.policy.progress_gap.saturating_mul(count.saturating_add(2));
         let active = self.policy.active_execution.saturating_mul(count);
-        self.emergency = Some(self.started + gaps + active + KILL_GRACE);
+        self.emergency = Some(cap(self.started + gaps + active + KILL_GRACE, self.policy.run_end));
         self.enter_gap(now);
     }
 
@@ -167,8 +176,9 @@ impl Deadlines {
             return;
         }
         self.phase = Phase::ActiveExecution;
-        self.phase_deadline = Some(now + self.policy.active_execution);
+        self.phase_deadline = Some(cap(now + self.policy.active_execution, self.policy.run_end));
         self.active = Some(identity);
+        self.active_since = Some(now);
     }
 
     pub(crate) fn execution_finished(&mut self, now: Instant) {
@@ -180,6 +190,7 @@ impl Deadlines {
         self.phase_deadline = None;
         self.emergency = None;
         self.active = None;
+        self.active_since = None;
     }
 
     fn enter_gap(&mut self, now: Instant) {
@@ -187,8 +198,9 @@ impl Deadlines {
             return;
         }
         self.phase = Phase::ProgressGap;
-        self.phase_deadline = Some(now + self.policy.progress_gap);
+        self.phase_deadline = Some(cap(now + self.policy.progress_gap, self.policy.run_end));
         self.active = None;
+        self.active_since = None;
     }
 
     /// The expiry at `now`, or `None` while every deadline holds.
@@ -203,6 +215,9 @@ impl Deadlines {
             detail: None,
             active: self.active.clone(),
         };
+        if let Some(end) = self.policy.run_end.filter(|end| now >= *end) {
+            return Some(expired(ExpiryReason::RunBudget, end));
+        }
         if let Some(emergency) = self.emergency.filter(|emergency| now >= *emergency) {
             return Some(expired(ExpiryReason::Emergency, emergency));
         }
@@ -229,6 +244,23 @@ impl Deadlines {
     fn next_deadline(&self) -> Option<Instant> {
         [self.phase_deadline, self.emergency].into_iter().flatten().min()
     }
+}
+
+/// `deadline`, or the end of the run budget when that comes first.
+fn cap(deadline: Instant, run_end: Option<Instant>) -> Instant {
+    run_end.map_or(deadline, |end| deadline.min(end))
+}
+
+/// What the run thread does now, as the watch knows it. The monitor of `lane-run` reads it without any lock that the
+/// run thread holds for longer than a field update.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct RunSnapshot {
+    /// The scenario that runs, as `<class>.<scenario>`, and for how long.
+    pub scenario: Option<(String, Duration)>,
+    /// The open steps of the run thread, outermost first and joined by ` > `, and how long the innermost one is open.
+    pub steps: Option<(String, Duration)>,
+    /// What is left of the budget of the run, when the run has one.
+    pub budget_left: Option<Duration>,
 }
 
 /// A step of the run thread that the slow-step dumps watch.
@@ -338,6 +370,39 @@ impl Watch {
     /// Ends the watch: the watchdog thread returns at its next wake.
     pub(crate) fn completed(&self, stream: &Stream<'_>) {
         self.transition(stream, |deadlines, _| deadlines.completed());
+    }
+
+    /// What is left of the budget of the run now, or `None` for a run with no budget.
+    pub(crate) fn budget_left(&self) -> Option<Duration> {
+        self.lock()
+            .deadlines
+            .policy
+            .run_end
+            .map(|end| end.saturating_duration_since(Instant::now()))
+    }
+
+    /// What the run thread does now.
+    pub(crate) fn snapshot(&self) -> RunSnapshot {
+        let now = Instant::now();
+        let state = self.lock();
+        let deadlines = &state.deadlines;
+        let scenario = deadlines.active.as_ref().zip(deadlines.active_since).map(|(active, since)| {
+            let class = active
+                .class_name
+                .as_deref()
+                .map(avl_junit::cases::simple_class_name)
+                .unwrap_or_default();
+            (format!("{class}.{}", active.display_name), now.saturating_duration_since(since))
+        });
+        let steps = state.steps.last().map(|innermost| {
+            let path = state.steps.iter().map(|step| step.title.as_str()).collect::<Vec<_>>().join(" > ");
+            (path, now.saturating_duration_since(innermost.started))
+        });
+        RunSnapshot {
+            scenario,
+            steps,
+            budget_left: deadlines.policy.run_end.map(|end| end.saturating_duration_since(now)),
+        }
     }
 
     /// Why the watchdog ended the run, once it did.

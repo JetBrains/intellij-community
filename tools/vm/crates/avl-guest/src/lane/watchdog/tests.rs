@@ -12,6 +12,7 @@ use super::*;
 const POLICY: Policy = Policy {
     active_execution: Duration::from_mins(30),
     progress_gap: Duration::from_mins(5),
+    run_end: None,
 };
 
 fn identity(name: &str) -> ExecutionIdentity {
@@ -53,6 +54,61 @@ fn the_deadlines_follow_the_phase_and_the_emergency_caps_the_run() {
     deadlines.completed();
     assert_eq!(deadlines.expiry(emergency + Duration::from_hours(1)), None);
     assert_eq!(deadlines.intrusion("a dialog".to_owned(), emergency), None);
+}
+
+// The budget of the run caps every deadline: the gap, the budget of a scenario and the emergency. At its end the run
+// expires as run_budget_timeout, also inside a scenario whose own budget is far from spent.
+#[test]
+fn the_run_budget_caps_every_deadline_and_ends_the_run_as_run_budget_timeout() {
+    let start = Instant::now();
+    let end = start + Duration::from_mins(10);
+    let mut deadlines = Deadlines::new(
+        Policy {
+            run_end: Some(end),
+            ..POLICY
+        },
+        start,
+    );
+    deadlines.plan_started(20, start);
+    assert_eq!(deadlines.emergency, Some(end), "the emergency deadline passed the budget");
+    deadlines.execution_started(identity("first"), start + Duration::from_mins(8));
+    assert_eq!(
+        deadlines.phase_deadline,
+        Some(end),
+        "the budget of the scenario passed the budget of the run"
+    );
+    assert_eq!(deadlines.expiry(start + Duration::from_secs(599)), None);
+    let expiry = deadlines.expiry(end).unwrap();
+    assert_eq!((expiry.reason, expiry.deadline), (ExpiryReason::RunBudget, end));
+    assert_eq!(expiry.reason.wire(), "run_budget_timeout");
+    assert_eq!(expiry.active, Some(identity("first")));
+    deadlines.execution_finished(start + Duration::from_mins(9));
+    assert_eq!(deadlines.phase_deadline, Some(end), "the gap passed the budget of the run");
+}
+
+// A watch says what the run thread does: the scenario that runs, its open steps, outermost first, and the budget left.
+#[test]
+fn a_snapshot_names_the_scenario_the_open_steps_and_the_budget_left() {
+    let watch = Watch::new(Policy {
+        run_end: Some(Instant::now() + Duration::from_mins(10)),
+        ..POLICY
+    });
+    assert_eq!(watch.snapshot().scenario, None);
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    watch.execution_started(&stream, identity("restore-loaded"));
+    let snapshot = watch.step("relaunch for ide", || watch.step("readiness", || watch.snapshot()));
+    assert_eq!(
+        snapshot.scenario.map(|(name, _)| name).as_deref(),
+        Some("AirSuiteGeneratedFlowUiTest.restore-loaded")
+    );
+    assert_eq!(
+        snapshot.steps.map(|(path, _)| path).as_deref(),
+        Some("relaunch for ide > readiness")
+    );
+    let left = snapshot.budget_left.unwrap();
+    assert!(left > Duration::from_mins(9) && left <= Duration::from_mins(10), "{left:?}");
+    assert_eq!(watch.snapshot().steps, None, "a step that returned is still open");
 }
 
 /// Probes that answer an intruder on every probe and count what the watchdog asked.
@@ -218,6 +274,7 @@ fn the_ide_dump_comes_from_the_resident_route_while_the_bridge_unloads() {
 const SPENT: Policy = Policy {
     active_execution: Duration::from_millis(10),
     progress_gap: Duration::from_mins(5),
+    run_end: None,
 };
 
 /// A writer that blocks each write while it is shut, as a stream does whose reader stopped reading.

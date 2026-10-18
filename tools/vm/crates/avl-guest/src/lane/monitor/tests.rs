@@ -1,0 +1,331 @@
+use std::cell::RefCell;
+use std::collections::BTreeSet;
+use std::fs;
+use std::os::unix::fs::symlink;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
+use avl_wire::daemon::{ExecutionIdentity, IdeExited, IdeLaunched, PlanStarted, TestFinished, TestStarted, TypedFailure};
+use avl_wire::report::ScenarioReport;
+use pretty_assertions::assert_eq;
+use tempfile::TempDir;
+
+use super::*;
+use crate::lane::inputs::{LaunchInputs, TraceInputs};
+use crate::lane::watchdog::{Policy, Watch};
+
+/// The number of the system call `name` on this architecture.
+fn number_of(name: &str) -> i64 {
+    let (number, _, _) = SYSCALLS
+        .iter()
+        .find(|(_, known, _)| *known == name)
+        .unwrap_or_else(|| panic!("no system call {name} on this architecture"));
+    *number
+}
+
+/// Writes one thread `tid` of a fake `/proc/self` under `process`.
+fn thread(process: &Path, tid: u32, comm: &str, stat: &str, wchan: &str, syscall: &str) {
+    let task = process.join("task").join(tid.to_string());
+    fs::create_dir_all(&task).unwrap();
+    fs::write(task.join("comm"), format!("{comm}\n")).unwrap();
+    fs::write(task.join("stat"), format!("{stat}\n")).unwrap();
+    fs::write(task.join("wchan"), wchan).unwrap();
+    fs::write(task.join("syscall"), format!("{syscall}\n")).unwrap();
+}
+
+// The report names each thread by its id and its name, with its state, its wait channel and its system call. A call on
+// a file descriptor names what the descriptor is, and wait4 names its pid. A name with a parenthesis keeps the state.
+#[test]
+fn each_thread_is_named_with_its_state_its_wait_and_the_target_of_its_descriptor() {
+    let root = TempDir::new().unwrap();
+    let process = root.path();
+    fs::create_dir_all(process.join("fd")).unwrap();
+    symlink("pipe:[4026]", process.join("fd/5")).unwrap();
+    thread(
+        process,
+        7,
+        "vm-guest-agent",
+        "7 (vm-guest-agent) S 1 7 7",
+        "futex_wait_queue",
+        &format!("{} 0x7f00 0x80 0x0 0x0 0x0 0x0 0x7ffd 0x7f01", number_of("futex")),
+    );
+    thread(
+        process,
+        8,
+        "lane (trace)",
+        "8 (lane (trace)) D 1 7 7",
+        "pipe_write",
+        &format!("{} 0x5 0x7f02 0x40 0x0 0x0 0x0 0x7ffd 0x7f01", number_of("write")),
+    );
+    thread(
+        process,
+        9,
+        "lane-watchdog",
+        "9 (lane-watchdog) S 1 7 7",
+        "do_wait",
+        &format!("{} 0x1092 0x0 0x0 0x0 0x0 0x0 0x7ffd 0x7f01", number_of("wait4")),
+    );
+    thread(process, 10, "lane-monitor", "10 (lane-monitor) R 1 7 7", "0", "running");
+    thread(process, 11, "idle", "11 (idle) S 1 7 7", "", "-1 0x7ffd 0x7f01");
+    assert_eq!(
+        thread_lines(process),
+        [
+            "lane-run: thread 7 'vm-guest-agent': state S, wchan futex_wait_queue, syscall futex",
+            "lane-run: thread 8 'lane (trace)': state D, wchan pipe_write, syscall write on fd 5 -> pipe:[4026]",
+            "lane-run: thread 9 'lane-watchdog': state S, wchan do_wait, syscall wait4 of pid 4242",
+            "lane-run: thread 10 'lane-monitor': state R, wchan 0, syscall running",
+            "lane-run: thread 11 'idle': state S, wchan ?, syscall none",
+        ]
+    );
+    assert_eq!(
+        thread_lines(&root.path().join("absent")),
+        [format!(
+            "lane-run: no thread report: {} has no task directory",
+            root.path().join("absent").display()
+        )]
+    );
+}
+
+fn execution(class: &str, scenario: &str) -> ExecutionIdentity {
+    ExecutionIdentity {
+        id: format!("[engine:lane-daemon]/[suite:suite]/[scenario:{scenario}]"),
+        display_name: scenario.to_owned(),
+        class_name: Some(class.to_owned()),
+        method_name: None,
+    }
+}
+
+/// The records of a run that planned three scenarios of one class, passed the first, launched an IDE twice, and stopped
+/// in the second scenario.
+fn cut_off_run() -> Vec<RunEventKind> {
+    let class = "com.intellij.air.AcpDynamicFakeAgentRestoreUiTest";
+    vec![
+        RunEventKind::PlanStarted(PlanStarted {
+            timestamp: "t0".to_owned(),
+            discovered_executions: 3,
+            class_names: vec!["AcpDynamicFakeAgentRestoreUiTest".to_owned()],
+            executions: vec![
+                execution(class, "restore-loaded"),
+                execution(class, "restore-fresh-session"),
+                execution(class, "restore-failed"),
+            ],
+        }),
+        RunEventKind::IdeLaunched(IdeLaunched {
+            pid: 100,
+            launch_name: "start-mve37si6".to_owned(),
+            launch_key: "air-gui_chat-fa2b".to_owned(),
+            log_dir: "/ide/log".to_owned(),
+        }),
+        RunEventKind::TestStarted(TestStarted {
+            timestamp: "t1".to_owned(),
+            execution: execution(class, "restore-loaded"),
+        }),
+        RunEventKind::IdeExited(IdeExited {
+            pid: 100,
+            exit_code: 0,
+            signal: None,
+        }),
+        RunEventKind::IdeLaunched(IdeLaunched {
+            pid: 101,
+            launch_name: "restart-1-mve37si7".to_owned(),
+            launch_key: "air-gui_chat-fa2b".to_owned(),
+            log_dir: "/ide/log".to_owned(),
+        }),
+        RunEventKind::TestFinished(TestFinished {
+            timestamp: "t2".to_owned(),
+            execution: execution(class, "restore-loaded"),
+            status: "SUCCESSFUL".to_owned(),
+            duration_ms: 36_000,
+            error: None,
+            failure: TypedFailure::default(),
+            report: ScenarioReport::default(),
+        }),
+        RunEventKind::TestStarted(TestStarted {
+            timestamp: "t3".to_owned(),
+            execution: execution(class, "restore-fresh-session"),
+        }),
+    ]
+}
+
+/// The run stream file of `records`, one JSON record per line, and a last line that the run thread did not finish.
+fn stream_file(directory: &Path, records: &[RunEventKind]) -> PathBuf {
+    let mut text: String = records
+        .iter()
+        .map(|record| format!("{}\n", serde_json::to_string(record).unwrap()))
+        .collect();
+    text.push_str("{\"event\":\"output\",\"te");
+    let file = directory.join("run.ndjson");
+    fs::write(&file, text).unwrap();
+    file
+}
+
+// The JUnit XML of a cut-off run: the scenario that passed, the open one unfinished, and each planned scenario that never
+// ran skipped with the reason. A torn last line is left out.
+#[test]
+fn a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped() {
+    let root = TempDir::new().unwrap();
+    let file = stream_file(root.path(), &cut_off_run());
+    let events = decode_stream(&fs::read(file).unwrap());
+    assert_eq!(events.len(), 7);
+    let (xml, cases) = partial_xml(events, "the lane budget of 2520 s ended the run before this scenario ran");
+    assert_eq!(cases, 3);
+    assert!(
+        xml.contains(
+            r#"<testsuite name="com.intellij.air.AcpDynamicFakeAgentRestoreUiTest" tests="3" failures="1" errors="0" skipped="1""#
+        ),
+        "{xml}"
+    );
+    assert!(
+        xml.contains(r#"name="restore-fresh-session""#) && xml.contains(r#"type="unfinished""#),
+        "{xml}"
+    );
+    assert!(
+        xml.contains(r#"<skipped message="the lane budget of 2520 s ended the run before this scenario ran"/>"#),
+        "{xml}"
+    );
+    assert!(!xml.contains("unreported"), "{xml}");
+}
+
+// The IDE runs that a hard stop cancels: each one that an ideLaunched record names and no ideExited record of its pid
+// ended.
+#[test]
+fn an_ide_run_is_unended_until_an_exit_of_its_pid() {
+    let events: Vec<RunEvent> = cut_off_run().into_iter().map(RunEvent::synthesized).collect();
+    assert_eq!(
+        unended_ide_runs(&events),
+        [("air-gui_chat-fa2b".to_owned(), "restart-1-mve37si7".to_owned())]
+    );
+}
+
+/// The effects of a hard stop as a test sees them: each cancel, and each kill of a recorder.
+#[derive(Default)]
+struct Recorded {
+    canceled: RefCell<Vec<(PathBuf, String)>>,
+    killed: RefCell<Vec<u32>>,
+}
+
+impl StopEffects for Recorded {
+    fn cancel_ide(&self, context: &Path, run_id: &str) -> Result<(), String> {
+        self.canceled.borrow_mut().push((context.to_path_buf(), run_id.to_owned()));
+        Ok(())
+    }
+
+    fn recorders(&self) -> Vec<u32> {
+        vec![77]
+    }
+
+    fn kill_recorder(&self, pid: u32) {
+        self.killed.borrow_mut().push(pid);
+    }
+}
+
+fn daemon(root: &Path) -> Daemon {
+    let inputs = LaunchInputs {
+        ide_root: root.join("ide"),
+        home: root.join("home"),
+        dist_home: root.join("dist"),
+        ide_config: root.join("dist.properties"),
+        java_home: root.join("dist/jbr"),
+        flags_file: root.join("flags.txt"),
+        project_archive: root.join("project.zip"),
+        project_root: "plain-project".to_owned(),
+        runtimes: Vec::new(),
+        distribution_plugins: BTreeSet::new(),
+        trace: TraceInputs::default(),
+    };
+    Daemon::new(root.join("state"), "lane-run".to_owned(), 0, inputs)
+}
+
+// The hard stop writes the JUnit XML of the records so far to each file of the run, cancels the IDE run that the
+// stream launched and did not end, kills each recorder, and says so in one line with what the run thread did. Once the
+// run thread returned, the XML is its own, and the hard stop writes none.
+#[test]
+fn the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder() {
+    let root = TempDir::new().unwrap();
+    let daemon = daemon(root.path());
+    let watch = Arc::new(Watch::new(Policy {
+        active_execution: Duration::from_mins(30),
+        progress_gap: Duration::from_mins(5),
+        run_end: Some(Instant::now()),
+    }));
+    let mut out = Vec::new();
+    let stream = super::super::stream::Stream::new(&mut out);
+    watch.execution_started(
+        &stream,
+        execution("com.intellij.air.AcpDynamicFakeAgentRestoreUiTest", "restore-fresh-session"),
+    );
+    daemon.publish_watch(Some(Arc::clone(&watch)));
+    let xml = root.path().join("bazel/test.xml");
+    let monitor = Monitor::new(
+        &daemon,
+        MonitorPaths {
+            stream: stream_file(root.path(), &cut_off_run()),
+            xml: vec![root.path().join("test.xml"), xml.clone()],
+            ide_root: root.path().join("ide"),
+            report: None,
+        },
+        Some(Duration::from_secs(2520)),
+        None,
+    );
+    let effects = Recorded::default();
+    let stop = watch.step("relaunch for ide", || monitor.hard_stop(&effects));
+    assert_eq!(stop.cases, Some(3));
+    assert!(fs::read_to_string(&xml).unwrap().contains(r#"type="unfinished""#));
+    assert_eq!(fs::read(&xml).unwrap(), fs::read(root.path().join("test.xml")).unwrap());
+    let context = root.path().join("ide/air-gui_chat-fa2b");
+    assert_eq!(
+        effects.canceled.borrow().as_slice(),
+        [(context.clone(), "run-ide-restart-1-mve37si7".to_owned())]
+    );
+    assert_eq!(stop.canceled, [format!("{}/run-ide-restart-1-mve37si7", context.display())]);
+    assert_eq!((stop.killed_recorders, effects.killed.borrow().clone()), (vec![77], vec![77]));
+    assert!(
+        stop.line.starts_with(
+            "lane-run: the hard stop ended the run: the lane budget of 2520 s and the kill grace of the watchdog \
+             passed, and the run thread did not return. AcpDynamicFakeAgentRestoreUiTest.restore-fresh-session runs for "
+        ) && stop.line.contains("; step 'relaunch for ide' is open for ")
+            && stop
+                .line
+                .ends_with("; 0 s of the budget left. the JUnit XML holds 3 case(s); 1 IDE run(s) canceled, 1 recorder(s) killed; exit 1"),
+        "{}",
+        stop.line
+    );
+
+    fs::remove_file(&xml).unwrap();
+    monitor.run_returned();
+    let stop = monitor.hard_stop(&Recorded::default());
+    assert_eq!(stop.cases, None);
+    assert!(!xml.exists(), "the hard stop wrote the XML of a run thread that returned");
+    assert!(stop.line.contains("the run thread writes the JUnit XML"), "{}", stop.line);
+}
+
+// The hang report of a heartbeat starts with the run as the watch knows it, and a run between two runs says so.
+#[test]
+fn the_hang_report_starts_with_the_run_as_the_watch_knows_it() {
+    let root = TempDir::new().unwrap();
+    let daemon = daemon(root.path());
+    let monitor = Monitor::new(
+        &daemon,
+        MonitorPaths {
+            stream: root.path().join("run.ndjson"),
+            xml: Vec::new(),
+            ide_root: root.path().join("ide"),
+            report: None,
+        },
+        None,
+        None,
+    );
+    let absent = root.path().join("absent");
+    assert_eq!(
+        monitor.report(&absent)[0],
+        "lane-run: hang report: no scenario runs; no step is open; the run has no budget"
+    );
+}
+
+// On Linux the report reads this process: the thread that reads its own system call is running.
+#[cfg(target_os = "linux")]
+#[test]
+fn the_report_of_this_process_names_the_thread_that_reads_it() {
+    let lines = thread_lines(Path::new(PROC_SELF));
+    assert!(lines.iter().any(|line| line.ends_with("syscall running")), "{lines:#?}");
+}

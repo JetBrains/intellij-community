@@ -13,6 +13,7 @@ pub(crate) mod identity;
 pub(crate) mod inputs;
 pub(crate) mod iteration;
 pub(crate) mod live;
+pub(crate) mod monitor;
 pub(crate) mod package;
 pub(crate) mod program;
 pub(crate) mod readiness;
