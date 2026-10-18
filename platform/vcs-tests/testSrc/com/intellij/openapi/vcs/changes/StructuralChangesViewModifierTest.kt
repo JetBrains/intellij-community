@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
@@ -36,7 +38,9 @@ import com.intellij.psi.impl.FakePsiElement
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
@@ -57,6 +61,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
@@ -86,7 +91,25 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  fun `structural changes are hidden by default`() {
+    assertFalse(StructuralChangesViewSettings.isAvailable())
+    assertToggleVisible(false)
+  }
+
+  @Test
+  fun `registry gate preserves a saved option without adding children`(): Unit = timeoutRunBlocking {
+    PropertiesComponent.getInstance(project).setValue(OPTION_ID, true)
+
+    assertFalse(StructuralChangesViewSettings.isEnabled(project))
+    assertToggleVisible(false)
+    assertTrue(build(change(null, "first=1\nsecond=2")).isEmpty())
+    assertTrue(PropertiesComponent.getInstance(project).getBoolean(OPTION_ID))
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `toggle controls the structural children`(): Unit = timeoutRunBlocking {
+    assertToggleVisible(true)
     val change = change(null, "first=1\nsecond=2")
     assertTrue(build(change).isEmpty())
 
@@ -98,6 +121,31 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `registry changes refresh the tree and retain the saved option`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val change = change(null, "first=1")
+    assertEquals(1, build(change).size)
+    val updates = AtomicInteger()
+    project.messageBus.connect(disposable).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifier.ChangesViewModifierListener {
+      updates.incrementAndGet()
+    })
+    val registryValue = RegistryManager.getInstance().get(StructuralChangesViewSettings.REGISTRY_KEY)
+
+    registryValue.setValue(false)
+    assertEquals(1, updates.get())
+    assertFalse(StructuralChangesViewSettings.isEnabled(project))
+    assertTrue(PropertiesComponent.getInstance(project).getBoolean(OPTION_ID))
+    assertTrue(build(change).isEmpty())
+
+    registryValue.setValue(true)
+    assertEquals(2, updates.get())
+    assertTrue(StructuralChangesViewSettings.isEnabled(project))
+    assertEquals(1, build(change).size)
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `added files show their complete structure with navigation`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val text = "first=1\nsecond=2"
@@ -110,6 +158,7 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `preview navigation keeps explicit navigation separate`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val text = "first=1\nsecond=2"
@@ -124,6 +173,7 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `modified files omit unchanged structure elements`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val before = "changed=1\nunchanged=2\nremoved=3"
@@ -137,6 +187,7 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `unavailable baseline does not mark the file as added`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val added = change(null, "first=1\nsecond=2")
@@ -146,6 +197,7 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `structure uses the unsaved document text`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val change = change("first=1\nsecond=2", "first=1\nsecond=2")
@@ -160,6 +212,7 @@ internal class StructuralChangesViewModifierTest {
   }
 
   @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `structural icons keep their logical size and full paint at device scales`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val change = change(null, "element=1")
@@ -227,6 +280,14 @@ internal class StructuralChangesViewModifierTest {
     }
     assertEquals(Dimension(width, height), bounds?.size, description)
     assertEquals(width * height, pixelCount, "The icon must paint every pixel: $description")
+  }
+
+  private fun assertToggleVisible(visible: Boolean) {
+    val action = ActionManager.getInstance().getAction(OPTION_ID) as ToggleAction
+    val event = TestActionEvent.createTestEvent(action, SimpleDataContext.getProjectContext(project))
+    action.update(event)
+    assertEquals(visible, event.presentation.isVisible)
+    assertEquals(visible, event.presentation.isEnabled)
   }
 
   private suspend fun setSelected(selected: Boolean) {
