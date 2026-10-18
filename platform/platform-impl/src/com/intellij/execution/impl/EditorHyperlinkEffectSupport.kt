@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
-internal interface EditorHyperlinkEffectSupplier {
+@ApiStatus.Internal
+interface EditorHyperlinkEffectSupplier {
   fun getFollowedHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
   fun getHoveredHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
   fun isInvisibleLink(highlighter: RangeHighlighterEx): Boolean
