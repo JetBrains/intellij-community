@@ -260,6 +260,7 @@ private class ChangesViewInputHandler(
   }
 
   private fun handleEnterOrDoubleClick(requestFocus: Boolean) {
+    structuralPreview.cancelPendingPreview()
     if (changesView.leadSelectionPath?.lastPathComponent is ChangesBrowserStructuralNode<*>) {
       navigateToSource(requestFocus)
       return

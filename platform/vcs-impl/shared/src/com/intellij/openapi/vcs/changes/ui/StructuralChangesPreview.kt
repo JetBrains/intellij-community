@@ -7,11 +7,15 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.ui.ClickListener
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,8 +57,7 @@ class StructuralChangesPreview(
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
         if (clickCount != 1 || !SwingUtilities.isLeftMouseButton(event) || tree.selectionCount != 1) return false
         val path = TreeUtil.getPathForLocation(tree, event.x, event.y) ?: return false
-        if (path == tree.selectionPath && path.lastPathComponent is ChangesBrowserStructuralNode<*> &&
-            !TreeUtil.isLocationInExpandControl(tree, path, event.x, event.y)) {
+        if (path == tree.selectionPath && !TreeUtil.isLocationInExpandControl(tree, path, event.x, event.y)) {
           selectionChanged()
         }
         return false
@@ -78,14 +81,14 @@ class StructuralChangesPreview(
   private fun selectionChanged() {
     cancelPendingPreview()
     if (!canPreviewSelection()) return
-    val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserStructuralNode<*> ?: return
+    val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserNode<*> ?: return
     val model = tree.model
     val modality = ModalityState.defaultModalityState()
     pendingPreview = cs.launch(Dispatchers.EDT + modality.asContextElement()) {
       delay(Registry.intValue("ide.autoscroll.to.source.delay", 100).milliseconds)
       if (!isCurrentSelection(model, node)) return@launch
       val request = withContext(Dispatchers.Default) {
-        readAction { node.getPreviewNavigationRequest() }
+        readAction { getPreviewNavigationRequest(node) }
       } ?: return@launch
       if (!isCurrentSelection(model, node)) return@launch
       val options = NavigationOptions.defaultOptions()
@@ -96,9 +99,24 @@ class StructuralChangesPreview(
 
   @RequiresEdt
   private fun canPreviewSelection(): Boolean =
-    !tree.project.isDisposed && !tree.isModelUpdateInProgress && tree.selectionCount == 1 && tree.isShowing
+    !tree.project.isDisposed && StructuralChangesViewSettings.isEnabled(tree.project) &&
+    !tree.isModelUpdateInProgress && tree.selectionCount == 1 && tree.isShowing
 
   @RequiresEdt
-  private fun isCurrentSelection(model: TreeModel, node: ChangesBrowserStructuralNode<*>): Boolean =
+  private fun isCurrentSelection(model: TreeModel, node: ChangesBrowserNode<*>): Boolean =
     canPreviewSelection() && tree.hasFocus() && tree.model === model && tree.selectionPath?.lastPathComponent === node
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  private fun getPreviewNavigationRequest(node: ChangesBrowserNode<*>): NavigationRequest? {
+    if (node is ChangesBrowserStructuralNode<*>) return node.getPreviewNavigationRequest()
+    val file = when (node) {
+      is ChangesBrowserChangeNode -> node.userObject.afterRevision?.file?.virtualFile
+      is ChangesBrowserFileNode -> node.userObject
+      is ChangesBrowserFilePathNode -> node.userObject.virtualFile
+      else -> null
+    } ?: return null
+    if (!file.isValid || file.isDirectory) return null
+    return NavigationRequest.sourceNavigationRequest(tree.project, file, -1)
+  }
 }
