@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement
@@ -85,6 +86,7 @@ object StructureChangeCollector {
     changes: List<StructureChange>,
   ): List<StructureChange> {
     val node = nodes.singleOrNull() ?: return changes
+    if (!node.isContainer) return changes
     val element = node.element as? PsiNamedElement ?: return changes
     if (element.parent !== after || element.name != after.name.substringBeforeLast('.')) return changes
     val change = changes.singleOrNull() ?: return changes
@@ -99,20 +101,26 @@ object StructureChangeCollector {
     try {
       val visited = Collections.newSetFromMap(IdentityHashMap<PsiElement, Boolean>())
       val root = model.root
-      return readNodes(if (root.value is PsiFile) root.children.asList() else listOf(root), file, visited)
+      return readNodes(if (root.value is PsiFile) root.children.asList() else listOf(root), file, model, visited)
     }
     finally {
       Disposer.dispose(model)
     }
   }
 
-  private fun readNodes(treeElements: List<TreeElement>, file: PsiFile, visited: MutableSet<PsiElement>): List<Node> {
+  private fun readNodes(
+    treeElements: List<TreeElement>,
+    file: PsiFile,
+    model: StructureViewModel,
+    visited: MutableSet<PsiElement>,
+  ): List<Node> {
     val result = ArrayList<Node>()
     for (treeElement in treeElements) {
       ProgressManager.checkCanceled()
-      val element = (treeElement as? StructureViewTreeElement)?.value as? PsiElement
+      val structureElement = treeElement as? StructureViewTreeElement
+      val element = structureElement?.value as? PsiElement
       if (element == null || element is PsiFile) {
-        result.addAll(readNodes(treeElement.children.asList(), file, visited))
+        result.addAll(readNodes(treeElement.children.asList(), file, model, visited))
         continue
       }
       if (!element.isValid || element.containingFile?.viewProvider !== file.viewProvider || !visited.add(element)) continue
@@ -121,8 +129,10 @@ object StructureChangeCollector {
       val displayText = ElementDescriptionUtil.getElementDescription(element, StructureChangeDescriptionLocation(text))
       val name = (treeElement as? SortableTreeElement)?.alphaSortKey ?: (element as? PsiNamedElement)?.name ?: text
       val key = element.javaClass.name + ":" + name
-      val children = readNodes(treeElement.children.asList(), file, visited)
-      result.add(Node(element, key, text, displayText, presentation.getIcon(false), children))
+      val children = readNodes(treeElement.children.asList(), file, model, visited)
+      val isContainer = model.shouldEnterElement(element) ||
+                        (model as? StructureViewModel.ElementInfoProvider)?.isAlwaysShowsPlus(structureElement) == true
+      result.add(Node(element, key, text, displayText, presentation.getIcon(false), children, isContainer))
     }
     return result
   }
@@ -209,6 +219,7 @@ object StructureChangeCollector {
     val displayText: @NlsSafe String,
     val icon: Icon?,
     val children: List<Node>,
+    val isContainer: Boolean,
     var id: String = "",
   )
 }
