@@ -30,45 +30,6 @@ import org.jetbrains.annotations.PropertyKey
 //suppress to be clear, what type is used
 @ApiStatus.Experimental
 class PrattExpressionParser(private val myParser: JavaParser) {
-  private val ourInfixParsers: MutableMap<SyntaxElementType?, ParserData?>
-
-  init {
-    ourInfixParsers = HashMap<SyntaxElementType?, ParserData?>()
-    val assignmentParser = AssignmentParser()
-    val polyExprParser = PolyExprParser()
-    val instanceofParser = InstanceofParser()
-    val conditionalExprParser = ConditionalExprParser()
-
-    for (type in listOf(JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.ASTERISKEQ, JavaSyntaxTokenType.DIVEQ,
-                                           JavaSyntaxTokenType.PERCEQ, JavaSyntaxTokenType.PLUSEQ, JavaSyntaxTokenType.MINUSEQ,
-                                           JavaSyntaxTokenType.LTLTEQ, JavaSyntaxTokenType.GTGTEQ, JavaSyntaxTokenType.GTGTGTEQ,
-                                           JavaSyntaxTokenType.ANDEQ, JavaSyntaxTokenType.OREQ, JavaSyntaxTokenType.XOREQ)) {
-      ourInfixParsers.put(type, ParserData(ASSIGNMENT_PRECEDENCE, assignmentParser))
-    }
-    for (type in listOf(JavaSyntaxTokenType.PLUS, JavaSyntaxTokenType.MINUS)) {
-      ourInfixParsers.put(type, ParserData(ADDITIVE_PRECEDENCE, polyExprParser))
-    }
-    for (type in listOf(JavaSyntaxTokenType.DIV, JavaSyntaxTokenType.ASTERISK, JavaSyntaxTokenType.PERC)) {
-      ourInfixParsers.put(type, ParserData(MULTIPLICATION_PRECEDENCE, polyExprParser))
-    }
-    for (type in listOf(JavaSyntaxTokenType.LTLT, JavaSyntaxTokenType.GTGT, JavaSyntaxTokenType.GTGTGT)) {
-      ourInfixParsers.put(type, ParserData(SHIFT_PRECEDENCE, polyExprParser))
-    }
-    for (type in listOf(JavaSyntaxTokenType.LT, JavaSyntaxTokenType.GT, JavaSyntaxTokenType.LE, JavaSyntaxTokenType.GE)) {
-      ourInfixParsers.put(type, ParserData(COMPARISON_AND_INSTANCEOF_PRECEDENCE, polyExprParser))
-    }
-    ourInfixParsers.put(JavaSyntaxTokenType.INSTANCEOF_KEYWORD, ParserData(COMPARISON_AND_INSTANCEOF_PRECEDENCE, instanceofParser))
-    for (type in listOf(JavaSyntaxTokenType.EQEQ, JavaSyntaxTokenType.NE)) {
-      ourInfixParsers.put(type, ParserData(EQUALITY_PRECEDENCE, polyExprParser))
-    }
-    ourInfixParsers.put(JavaSyntaxTokenType.OR, ParserData(BITWISE_OR_PRECEDENCE, polyExprParser))
-    ourInfixParsers.put(JavaSyntaxTokenType.AND, ParserData(BITWISE_AND_PRECEDENCE, polyExprParser))
-    ourInfixParsers.put(JavaSyntaxTokenType.XOR, ParserData(BITWISE_XOR_PRECEDENCE, polyExprParser))
-    ourInfixParsers.put(JavaSyntaxTokenType.ANDAND, ParserData(LOGICAL_AND_PRECEDENCE, polyExprParser))
-    ourInfixParsers.put(JavaSyntaxTokenType.OROR, ParserData(LOGICAL_OR_PRECEDENCE, polyExprParser))
-    ourInfixParsers.put(JavaSyntaxTokenType.QUEST, ParserData(CONDITIONAL_EXPR_PRECEDENCE, conditionalExprParser))
-  }
-
   fun parse(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
     return tryParseWithPrecedenceAtMost(builder, ASSIGNMENT_PRECEDENCE, 0)
   }
@@ -86,7 +47,7 @@ class PrattExpressionParser(private val myParser: JavaParser) {
 
     while (true) {
       val type = getBinOpToken(builder) ?: break
-      val data = ourInfixParsers[type] ?: break
+      val data = INFIX_PARSERS[type] ?: break
       val opPrecedence = data.myPrecedence
       if (maxPrecedence < opPrecedence) {
         break
@@ -859,7 +820,7 @@ class PrattExpressionParser(private val myParser: JavaParser) {
 
   private class ParserData(val myPrecedence: Int, val myParser: InfixParser)
 
-  private inner class AssignmentParser : InfixParser {
+  private class AssignmentParser : InfixParser {
     override fun parse(
       parser: PrattExpressionParser,
       builder: SyntaxTreeBuilder,
@@ -868,16 +829,16 @@ class PrattExpressionParser(private val myParser: JavaParser) {
       currentPrecedence: Int,
       mode: Int
     ) {
-      advanceBinOpToken(builder, binOpType)
+      parser.advanceBinOpToken(builder, binOpType)
       val right = parser.tryParseWithPrecedenceAtMost(builder, ASSIGNMENT_PRECEDENCE, mode)
       if (right == null) {
         error(builder, message("expected.expression"))
       }
-      done(beforeLhs, JavaSyntaxElementType.ASSIGNMENT_EXPRESSION, myParser.languageLevel)
+      done(beforeLhs, JavaSyntaxElementType.ASSIGNMENT_EXPRESSION, parser.myParser.languageLevel)
     }
   }
 
-  private inner class PolyExprParser : InfixParser {
+  private class PolyExprParser : InfixParser {
     override fun parse(
       parser: PrattExpressionParser,
       builder: SyntaxTreeBuilder,
@@ -888,13 +849,13 @@ class PrattExpressionParser(private val myParser: JavaParser) {
     ) {
       var operandCount = 1
       while (true) {
-        advanceBinOpToken(builder, binOpType)
+        parser.advanceBinOpToken(builder, binOpType)
         val rhs = parser.tryParseWithPrecedenceAtMost(builder, currentPrecedence - 1, mode)
         if (rhs == null) {
           error(builder, message("expected.expression"))
         }
         operandCount++
-        val nextToken: SyntaxElementType? = getBinOpToken(builder)
+        val nextToken: SyntaxElementType? = parser.getBinOpToken(builder)
         if (nextToken !== binOpType) {
           break
         }
@@ -902,7 +863,7 @@ class PrattExpressionParser(private val myParser: JavaParser) {
       done(beforeLhs, if (operandCount > 2)
         JavaSyntaxElementType.POLYADIC_EXPRESSION
       else
-        JavaSyntaxElementType.BINARY_EXPRESSION, myParser.languageLevel)
+        JavaSyntaxElementType.BINARY_EXPRESSION, parser.myParser.languageLevel)
     }
   }
 
@@ -1045,6 +1006,47 @@ class PrattExpressionParser(private val myParser: JavaParser) {
     private val POSTFIX_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.PLUSPLUS, JavaSyntaxTokenType.MINUSMINUS)
     private val PREF_ARITHMETIC_OPS: SyntaxElementTypeSet = POSTFIX_OPS + JavaSyntaxTokenType.PLUS + JavaSyntaxTokenType.MINUS
     private val PREFIX_OPS: SyntaxElementTypeSet = PREF_ARITHMETIC_OPS + JavaSyntaxTokenType.TILDE + JavaSyntaxTokenType.EXCL
+
+    /** The infix operator table. It has no state, so all parser instances share it. */
+    private val INFIX_PARSERS: Map<SyntaxElementType, ParserData> = createInfixParsers()
+
+    private fun createInfixParsers(): Map<SyntaxElementType, ParserData> {
+      val infixParsers = HashMap<SyntaxElementType, ParserData>()
+      val assignmentParser = AssignmentParser()
+      val polyExprParser = PolyExprParser()
+      val instanceofParser = InstanceofParser()
+      val conditionalExprParser = ConditionalExprParser()
+
+      for (type in listOf(JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.ASTERISKEQ, JavaSyntaxTokenType.DIVEQ,
+                                             JavaSyntaxTokenType.PERCEQ, JavaSyntaxTokenType.PLUSEQ, JavaSyntaxTokenType.MINUSEQ,
+                                             JavaSyntaxTokenType.LTLTEQ, JavaSyntaxTokenType.GTGTEQ, JavaSyntaxTokenType.GTGTGTEQ,
+                                             JavaSyntaxTokenType.ANDEQ, JavaSyntaxTokenType.OREQ, JavaSyntaxTokenType.XOREQ)) {
+        infixParsers[type] = ParserData(ASSIGNMENT_PRECEDENCE, assignmentParser)
+      }
+      for (type in listOf(JavaSyntaxTokenType.PLUS, JavaSyntaxTokenType.MINUS)) {
+        infixParsers[type] = ParserData(ADDITIVE_PRECEDENCE, polyExprParser)
+      }
+      for (type in listOf(JavaSyntaxTokenType.DIV, JavaSyntaxTokenType.ASTERISK, JavaSyntaxTokenType.PERC)) {
+        infixParsers[type] = ParserData(MULTIPLICATION_PRECEDENCE, polyExprParser)
+      }
+      for (type in listOf(JavaSyntaxTokenType.LTLT, JavaSyntaxTokenType.GTGT, JavaSyntaxTokenType.GTGTGT)) {
+        infixParsers[type] = ParserData(SHIFT_PRECEDENCE, polyExprParser)
+      }
+      for (type in listOf(JavaSyntaxTokenType.LT, JavaSyntaxTokenType.GT, JavaSyntaxTokenType.LE, JavaSyntaxTokenType.GE)) {
+        infixParsers[type] = ParserData(COMPARISON_AND_INSTANCEOF_PRECEDENCE, polyExprParser)
+      }
+      infixParsers[JavaSyntaxTokenType.INSTANCEOF_KEYWORD] = ParserData(COMPARISON_AND_INSTANCEOF_PRECEDENCE, instanceofParser)
+      for (type in listOf(JavaSyntaxTokenType.EQEQ, JavaSyntaxTokenType.NE)) {
+        infixParsers[type] = ParserData(EQUALITY_PRECEDENCE, polyExprParser)
+      }
+      infixParsers[JavaSyntaxTokenType.OR] = ParserData(BITWISE_OR_PRECEDENCE, polyExprParser)
+      infixParsers[JavaSyntaxTokenType.AND] = ParserData(BITWISE_AND_PRECEDENCE, polyExprParser)
+      infixParsers[JavaSyntaxTokenType.XOR] = ParserData(BITWISE_XOR_PRECEDENCE, polyExprParser)
+      infixParsers[JavaSyntaxTokenType.ANDAND] = ParserData(LOGICAL_AND_PRECEDENCE, polyExprParser)
+      infixParsers[JavaSyntaxTokenType.OROR] = ParserData(LOGICAL_OR_PRECEDENCE, polyExprParser)
+      infixParsers[JavaSyntaxTokenType.QUEST] = ParserData(CONDITIONAL_EXPR_PRECEDENCE, conditionalExprParser)
+      return infixParsers
+    }
   }
 }
 
