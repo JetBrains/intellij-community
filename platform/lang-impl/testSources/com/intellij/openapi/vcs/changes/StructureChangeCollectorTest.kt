@@ -1,17 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.LanguageStructureViewBuilder
+import com.intellij.lang.PsiStructureViewFactory
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -330,6 +345,73 @@ internal class StructureChangeCollectorTest {
     }
   }
 
+  @Test
+  fun `snapshots retain the file context without changing its content`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    suspendUntilIndexesAreReady(project)
+    smartReadAction(project) {
+      val factory = PsiFileFactory.getInstance(project)
+      val fileType = FileTypeManager.getInstance().getFileTypeByFileName("Sample.java")
+      val originalText = "class Sample { int value() { return 1; } }"
+      val changedText = "class Sample { int value() { return 2; } }"
+      val original = factory.createFileFromText("Sample.java", fileType, originalText, 0, true)
+      val before = requireNotNull(StructureChangeCollector.createSnapshot(original, originalText))
+      val after = requireNotNull(StructureChangeCollector.createSnapshot(original, changedText))
+
+      assertSame(original, before.originalFile)
+      assertSame(original, after.originalFile)
+      assertNotSame(original.virtualFile, requireNotNull(before.virtualFile))
+      assertNotSame(original.virtualFile, requireNotNull(after.virtualFile))
+      assertNotSame(before.virtualFile, after.virtualFile)
+      assertEquals(originalText, original.text)
+      assertEquals(originalText, before.text)
+      assertEquals(changedText, after.text)
+      val change = StructureChangeCollector.collect(before, after).single()
+      assertEquals("value", change.memberName)
+      assertEquals(FileStatus.MODIFIED, change.status)
+      assertEquals(changedText.indexOf("value()"), change.offset)
+    }
+  }
+
+  @Test
+  fun `secondary PSI roots retain their structural changes`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    suspendUntilIndexesAreReady(project)
+    val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
+    val builders = LanguageStructureViewBuilder.getInstance()
+    builders.addExplicitExtension(PlainTextLanguage.INSTANCE, PsiStructureViewFactory { file ->
+      builders.getStructureViewBuilder(requireNotNull(file.viewProvider.getPsi(javaLanguage)))
+    }, disposable)
+    smartReadAction(project) {
+      val beforeText = "class Sample { int changed() { return 1; } void removed() {} void stable() {} }"
+      val afterText = "class Sample { int changed() { return 2; } void added() {} void stable() {} }"
+      val manager = PsiManager.getInstance(project)
+      fun file(text: String): PsiFile {
+        val provider = JavaTemplateViewProvider(manager, LightVirtualFile("Sample.txt", PlainTextFileType.INSTANCE, text), javaLanguage)
+        val root = requireNotNull(provider.getPsi(provider.baseLanguage))
+        val javaRoot = requireNotNull(provider.getPsi(javaLanguage))
+        assertNotSame(root, javaRoot)
+        assertSame(root.viewProvider, javaRoot.viewProvider)
+        return root
+      }
+
+      val before = file(beforeText)
+      val after = file(afterText)
+      val owner = StructureChangeCollector.collect(before, after).single()
+      assertEquals("Sample", owner.text)
+      assertEquals(FileStatus.NOT_CHANGED, owner.status)
+      assertEquals(mapOf("changed" to FileStatus.MODIFIED, "added" to FileStatus.ADDED, "removed" to FileStatus.DELETED),
+                   owner.children.associate { it.memberName to it.status })
+      assertEquals(afterText.indexOf("changed()"), owner.children.single { it.memberName == "changed" }.offset)
+      assertEquals(afterText.indexOf("added()"), owner.children.single { it.memberName == "added" }.offset)
+      assertNull(owner.children.single { it.memberName == "removed" }.offset)
+
+      val added = StructureChangeCollector.collect(null, after).single()
+      assertEquals(setOf("changed", "added", "stable"), added.children.map { it.memberName }.toSet())
+      assertTrue(flatten(listOf(added)).all { it.status == FileStatus.ADDED })
+    }
+  }
+
   private suspend fun collect(before: String?, after: String, fileName: String = "Sample.java"): List<StructureChange> {
     val project = projectFixture.get()
     suspendUntilIndexesAreReady(project)
@@ -347,4 +429,20 @@ internal class StructureChangeCollectorTest {
 
   private fun flatten(changes: List<StructureChange>): List<StructureChange> =
     changes.flatMap { listOf(it) + flatten(it.children) }
+
+  private class JavaTemplateViewProvider(
+    manager: PsiManager,
+    file: VirtualFile,
+    private val javaLanguage: Language,
+  ) : MultiplePsiFilesPerDocumentFileViewProvider(manager, file, false) {
+    override fun getBaseLanguage(): Language = PlainTextLanguage.INSTANCE
+
+    override fun getLanguages(): Set<Language> = setOf(baseLanguage, javaLanguage)
+
+    override fun createFile(language: Language): PsiFile =
+      requireNotNull(LanguageParserDefinitions.INSTANCE.forLanguage(language)).createFile(this)
+
+    override fun cloneInner(fileCopy: VirtualFile): MultiplePsiFilesPerDocumentFileViewProvider =
+      JavaTemplateViewProvider(manager, fileCopy, javaLanguage)
+  }
 }
