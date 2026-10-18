@@ -10,6 +10,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 
+use avl_wire::daemon::LINUX_GUEST_LIVE_LABEL;
 use avl_wire::ide::IdePrepared;
 use avl_wire::program::lane::LiveContext;
 
@@ -29,9 +30,6 @@ pub(crate) const LIVE_INPUT_CODE: &str = "lane_live_input";
 
 /// The daemon environment variable of the Node of the guest, which the controller names.
 const NODE_VARIABLE: &str = "NODE_BIN";
-
-/// The define of the build that gives the runtime descriptor the live runtimes.
-const LIVE_RUNTIMES_DEFINE: &str = "--define=air_lane_live_runtimes=on";
 
 /// The live run of one iteration: the guest account, the declared runtimes of the live context, and the lane home that
 /// the seed wrote. Each line of what it did waits in its notes until the iteration takes them.
@@ -88,8 +86,8 @@ impl LiveRun {
             .collect();
         if !missing.is_empty() {
             return Err(refused(format!(
-                "the live lane needs the declared CLI runtimes {}, and the runtime descriptor lacks {}; build it with \
-                 {LIVE_RUNTIMES_DEFINE}",
+                "the live lane needs the declared CLI runtimes {}, and the runtime descriptor lacks {}; run it over \
+                 {LINUX_GUEST_LIVE_LABEL}, which `vm.cmd run --lane ui-live` builds",
                 spoken_list(&needed),
                 spoken_list(&missing)
             )));

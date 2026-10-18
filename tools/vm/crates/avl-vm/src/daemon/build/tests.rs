@@ -446,9 +446,12 @@ fn the_environment_digest_is_by_name() {
     );
 }
 
-/// The guest is a target and not a build option, so each guest OS has its own daemon target.
+/// The guest and the live CLIs are targets and not build options, so each guest OS has its own daemon target, and a
+/// Linux guest has one more for a run that holds the live lane. A macOS guest runs no live lane.
 #[test]
 fn each_guest_builds_its_own_daemon_target() {
-    assert_eq!(daemon_label(GuestOs::Macos), LABEL);
-    assert_eq!(daemon_label(GuestOs::Linux), LINUX_GUEST_LABEL);
+    assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::Lanes), LABEL);
+    assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::Lanes), LINUX_GUEST_LABEL);
+    assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::LiveLane), LINUX_GUEST_LIVE_LABEL);
+    assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::LiveLane), LABEL);
 }

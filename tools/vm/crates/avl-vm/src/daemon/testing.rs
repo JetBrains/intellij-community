@@ -588,6 +588,8 @@ pub(crate) struct FakeBazel {
     pub(crate) descriptor_path: PathBuf,
     build_error: Mutex<Option<Refusal>>,
     build_calls: AtomicUsize,
+    /// The label of each build, in order.
+    built_labels: Mutex<Vec<String>>,
 }
 
 impl FakeBazel {
@@ -596,6 +598,7 @@ impl FakeBazel {
             descriptor_path,
             build_error: Mutex::new(None),
             build_calls: AtomicUsize::new(0),
+            built_labels: Mutex::new(Vec::new()),
         }
     }
 
@@ -611,6 +614,11 @@ impl FakeBazel {
 
     pub(crate) fn build_calls(&self) -> usize {
         self.build_calls.load(Ordering::SeqCst)
+    }
+
+    /// The label of each build so far, in order.
+    pub(crate) fn built_labels(&self) -> Vec<String> {
+        lock(&self.built_labels).clone()
     }
 }
 
@@ -629,6 +637,7 @@ impl avl_host_sys::guest::BazelHost for FakeBazel {
 impl crate::daemon::host::BazelHost for FakeBazel {
     async fn build(&self, _ctx: &Ctx, log_path: &Path, label: &str) -> Result<(), Refusal> {
         self.build_calls.fetch_add(1, Ordering::SeqCst);
+        lock(&self.built_labels).push(label.to_owned());
         let build_error = lock(&self.build_error).clone();
         if let Some(refusal) = build_error {
             return Err(refusal);

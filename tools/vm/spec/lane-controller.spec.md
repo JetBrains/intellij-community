@@ -606,9 +606,19 @@ runtimes and the unpack root of the project. No field of the lane document holds
   names the command that pipes the login.
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`a_live_run_without_its_login_input_is_refused_before_any_build`)
 
+- A run that holds the live lane builds the descriptor `ui_daemon_linux_guest_live`, which adds the CLIs of the live
+  lane, in place of `ui_daemon_linux_guest`. A build of another lane fetches none of them, and no build needs an option
+  of its own. The lane test of `ui-live` runs over `ui_daemon_live`, which adds them to `ui_daemon`.
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`a_live_run_builds_the_live_descriptor_and_another_run_the_one_of_the_lanes`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`each_guest_builds_its_own_daemon_target`)
+  [@test] ../../../../plugins/air/tests/integration/vm-contract/daemon_runtime.rs (`only_the_descriptors_of_the_live_lane_carry_its_clis`)
+
+- `vm.cmd run` refuses a run of the live lane on a macOS guest with `lane_live_input`, before the build and the lease.
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`a_live_run_on_a_macos_guest_is_refused_before_the_build_and_the_lease`)
+
 - A runtime descriptor without the Central runtime or a live runtime is refused with `lane_live_input` before any
-  Central step. The refusal names the missing runtimes and the define that builds them.
-  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_descriptor_without_the_live_runtimes_is_refused_with_the_define`)
+  Central step. The refusal names the missing runtimes and the descriptor of the live lane.
+  [@test] ../crates/avl-guest/src/lane/live/tests.rs (`a_descriptor_without_the_live_runtimes_is_refused_naming_the_live_descriptor`)
 
 - Before the lane IDE launches, the lane daemon provisions the guest account with the declared Central CLI. It pins
   the release track, the analytics and the port, and imports the login on stdin. Then it starts the proxy, wires each

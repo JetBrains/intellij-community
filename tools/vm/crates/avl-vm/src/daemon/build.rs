@@ -12,7 +12,7 @@ use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
 use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
-use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL};
+use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL, LINUX_GUEST_LIVE_LABEL};
 use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
@@ -34,11 +34,22 @@ pub(crate) fn lane_environment_digest(environment: &BTreeMap<String, String>) ->
     digest::path_sensitive_digest(&entries)
 }
 
-/// The daemon target of a guest: one target per guest OS, because the guest is a target and not a build option.
-pub(crate) const fn daemon_label(guest_os: GuestOs) -> &'static str {
-    match guest_os {
-        GuestOs::Macos => LABEL,
-        GuestOs::Linux => LINUX_GUEST_LABEL,
+/// Which daemon descriptor a build builds: the one of the lanes, or the one of the live lane, which adds its CLIs.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) enum DaemonTarget {
+    #[default]
+    Lanes,
+    /// A run that holds the live lane. Only a Linux guest runs it, and a run refuses it on a macOS guest before the build.
+    LiveLane,
+}
+
+/// The daemon target of a guest: one target per guest OS and per [`DaemonTarget`], because the guest and the live CLIs
+/// are targets and not build options. An option of its own would discard the analysis of the shared Bazel server.
+pub(crate) const fn daemon_label(guest_os: GuestOs, target: DaemonTarget) -> &'static str {
+    match (guest_os, target) {
+        (GuestOs::Macos, _) => LABEL,
+        (GuestOs::Linux, DaemonTarget::Lanes) => LINUX_GUEST_LABEL,
+        (GuestOs::Linux, DaemonTarget::LiveLane) => LINUX_GUEST_LIVE_LABEL,
     }
 }
 
@@ -147,6 +158,8 @@ pub(crate) fn plugins_digest(files: &[PluginFile]) -> String {
 pub(crate) struct BuildScope {
     pub log: PathBuf,
     pub digest_cache: PathBuf,
+    /// The daemon descriptor that the build builds.
+    pub target: DaemonTarget,
 }
 
 impl BuildScope {
@@ -155,7 +168,14 @@ impl BuildScope {
         Ok(Self {
             log: directory.join("host-build.log"),
             digest_cache: directory.join("daemon-digests.json"),
+            target: DaemonTarget::Lanes,
         })
+    }
+
+    /// The same scope for the descriptor `target`.
+    pub(crate) const fn for_target(mut self, target: DaemonTarget) -> Self {
+        self.target = target;
+        self
     }
 
     /// One worker's own build and digest cache.
@@ -463,7 +483,7 @@ impl Host {
     /// the phase is the digest sweep and asks Bazel nothing.
     pub(crate) async fn prepare_build(&self, ctx: &Ctx, scope: &BuildScope) -> Result<PreparedBuild, Refusal> {
         let build_started = Instant::now();
-        let label = daemon_label(self.settings.guest_os);
+        let label = daemon_label(self.settings.guest_os, scope.target);
         let (built, tree) = tokio::join!(
             self.bazel.build(ctx, &scope.log, label),
             read_checkout_tree(ctx, &self.runner, &self.settings)

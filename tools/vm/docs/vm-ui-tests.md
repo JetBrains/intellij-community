@@ -326,10 +326,10 @@ central login export | ./community/tools/vm.cmd run --lane ui-live --test-env AI
 
 The lane daemon imports that login into the guest account, starts the Central proxy and wires the agents with
 `central add`. It tears all of it down at the end of the iteration, before the run reports its verdict. A run without
-the login input is refused with `lane_live_input` before any build or lease. A macOS guest refuses the lane by name. The pinned Linux CLIs
-reach only a build that opts in with `build --define=air_lane_live_runtimes=on` in
-`.bazelrc-user.bazelrc`, until the mirror holds them. Every session of this checkout shares that file, so all their
-builds carry the define, still share one analysis, and their Linux-guest builds fetch the archives too. The skill's live-lane reference has the procedure.
+the login input is refused with `lane_live_input` before any build or lease, and so is a run on a macOS guest. A run
+that holds the live lane builds the descriptor `ui_daemon_linux_guest_live`, which adds the pinned Linux CLIs of Claude
+Code, Junie and Central. A build of another lane fetches none of them, and no build needs an option of its own. The
+skill's live-lane reference has the procedure.
 
 ## Windows
 

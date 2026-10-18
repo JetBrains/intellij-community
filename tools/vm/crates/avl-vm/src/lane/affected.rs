@@ -22,7 +22,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use avl_affected::{affected_suites, air_area};
-use avl_base::{Config, Outcome, Refusal, Reporter};
+use avl_base::{Config, Exit, Outcome, Refusal, Reporter};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Ctx, Runner};
 use bt_core::{
@@ -32,6 +32,8 @@ use bt_core::{
 use serde::Serialize;
 
 use avl_wire::daemon::LaneClass;
+use avl_wire::program::LANE_DOCUMENT_DIRECTORY;
+use avl_wire::program::lane::{LiveContext, parse_lane_document};
 
 use crate::lane::lanes::{JUNIT5_FILTERS, Selection, as_usage, lane_selection};
 use crate::lane::runtime::bt_runtime;
@@ -148,6 +150,32 @@ pub(crate) fn lane_document_root(settings: &Config) -> Result<Option<PathBuf>, R
         return Ok(None);
     };
     Ok(settings.host_repo()?.join(catalog.flow_profile_dir).parent().map(Path::to_path_buf))
+}
+
+/// The live context of the committed lane document of `lane` below the resource root `documents`, or `None` for a lane
+/// without a document there or whose document states none. A document that cannot be read or does not parse is a
+/// refusal that names it.
+pub(crate) fn lane_live_context(documents: &Path, lane: &str) -> Result<Option<LiveContext>, Refusal> {
+    let path = documents.join(LANE_DOCUMENT_DIRECTORY).join(format!("{lane}.json"));
+    let bytes = match std::fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(Refusal::new(
+                "lane_document_unreadable",
+                Exit::NO_INPUT,
+                format!("cannot read the lane document {}: {error}", path.display()),
+            ));
+        }
+    };
+    let document = parse_lane_document(&bytes).map_err(|problem| {
+        Refusal::new(
+            "lane_document",
+            Exit::DATA_ERR,
+            format!("the lane document {} {problem}", path.display()),
+        )
+    })?;
+    Ok(document.live)
 }
 
 /// Every suite of the lane `lane` that the catalog names, by test class: the generated suite documents and the authored

@@ -18,6 +18,7 @@ use avl_wire::report::{AggregateError, RunReport, ShardVerdict};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::daemon::build::DaemonTarget;
 use crate::daemon::leased::Workers;
 use crate::daemon::shard::{
     ShardArgs, ShardAssignment, ShardBaseline, ShardKind, ShardPlan, plan_shards, read_shard_baseline, shard_selection,
@@ -137,6 +138,7 @@ async fn shard(ctx: &Ctx, host: &Host, args: &ShardArgs, run_id: &str) -> Result
             run_id,
             "shard-run",
             workers,
+            DaemonTarget::Lanes,
             |held: &[HeldWorker]| divide(reporter, args, &baseline, held.len(), &program),
             async |plan: &ShardPlan, index: usize, current: Lease, built: &Arc<PreparedBuild>| {
                 run_shard(ctx, host, &parsed, plan, index, &current, built).await

@@ -18,8 +18,7 @@ use avl_base::format::words;
 use avl_base::{Exit, Refusal};
 use avl_host_sys::SpawnOptions;
 use avl_host_sys::guest::{Guest, guest_join};
-use avl_wire::program::LANE_DOCUMENT_DIRECTORY;
-use avl_wire::program::lane::parse_lane_document;
+use avl_wire::program::lane::LiveContext;
 
 use avl_base::RefusalExt;
 
@@ -230,33 +229,10 @@ impl RunSecrets {
         self.secrets.iter().map(|secret| secret.name.as_str()).collect()
     }
 
-    /// Refuses a run of the live lane `lane` whose secrets lack the run input of its Central login, so a missing pipe
-    /// costs no build and no lease. The live context is the one of the committed lane document of `lane` below the
-    /// resource root `documents`. A lane without a document there, or whose document states no live context, passes.
-    /// The refusal names the input and the command that fills it, never a value.
-    pub(crate) fn require_live_login(&self, documents: &Path, lane: &str) -> Result<(), Refusal> {
-        let path = documents.join(LANE_DOCUMENT_DIRECTORY).join(format!("{lane}.json"));
-        let bytes = match std::fs::read(&path) {
-            Ok(bytes) => bytes,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-            Err(error) => {
-                return Err(Refusal::new(
-                    "lane_document_unreadable",
-                    Exit::NO_INPUT,
-                    format!("cannot read the lane document {}: {error}", path.display()),
-                ));
-            }
-        };
-        let document = parse_lane_document(&bytes).map_err(|problem| {
-            Refusal::new(
-                "lane_document",
-                Exit::DATA_ERR,
-                format!("the lane document {} {problem}", path.display()),
-            )
-        })?;
-        let Some(live) = document.live else {
-            return Ok(());
-        };
+    /// Refuses a run of the live lane `lane` whose secrets lack the run input of the Central login that its live context
+    /// `live` names, so a missing pipe costs no build and no lease. The refusal names the input and the command that
+    /// fills it, never a value.
+    pub(crate) fn require_live_login(&self, lane: &str, live: &LiveContext) -> Result<(), Refusal> {
         if self.names().contains(&live.login_input.as_str()) {
             return Ok(());
         }

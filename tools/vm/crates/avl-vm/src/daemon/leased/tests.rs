@@ -10,6 +10,7 @@ use avl_wire::progress::{Kind, PhaseChange, PhaseState};
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::daemon::build::DaemonTarget;
 use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::Recorded;
 use crate::worker::run_marker::read_run_marker;
@@ -67,6 +68,7 @@ async fn the_build_comes_before_the_lease() {
             RUN_ID,
             "test",
             two(None),
+            DaemonTarget::Lanes,
             |_| Ok(()),
             async |(): &(), _: usize, _: Lease, _: &Arc<PreparedBuild>| {
                 ran.fetch_add(1, Ordering::SeqCst);
@@ -94,6 +96,7 @@ async fn the_build_comes_before_the_lease() {
         RUN_ID,
         "test",
         two(None),
+        DaemonTarget::Lanes,
         |_| Ok(()),
         async |(): &(), _: usize, _: Lease, _: &Arc<PreparedBuild>| {},
     ))
@@ -138,6 +141,7 @@ async fn a_refused_division_gives_back_every_worker_it_acquired() {
             RUN_ID,
             "test",
             two(None),
+            DaemonTarget::Lanes,
             |held: &[HeldWorker]| -> Result<(), Refusal> {
                 assert_eq!(held.len(), 2, "the division sees every held worker");
                 Err(Refusal::usage("this split cannot be planned"))
@@ -172,6 +176,7 @@ async fn a_lock_refusal_is_one_settled_entry_and_its_siblings_still_run() {
         RUN_ID,
         "test",
         two(None),
+        DaemonTarget::Lanes,
         |held: &[HeldWorker]| {
             // The second worker's lease changes under the run: another holder's token is on disk now.
             fixture.leased_by(&held[1].lease.worker, "somebody-else", GuestOs::Macos);
@@ -207,6 +212,7 @@ async fn an_interrupt_keeps_every_acquired_lease_and_names_each_receipt() {
         RUN_ID,
         "test",
         two(None),
+        DaemonTarget::Lanes,
         |_| Ok(()),
         async |(): &(), index: usize, _: Lease, _: &Arc<PreparedBuild>| {
             if index == 0 {
@@ -258,6 +264,7 @@ async fn every_body_runs_under_its_run_marker_with_the_lock_free() {
                     run_id,
                     "test",
                     two(None),
+                    DaemonTarget::Lanes,
                     |_| Ok(()),
                     async |(): &(), _: usize, current: Lease, _: &Arc<PreparedBuild>| {
                         let lock = fixture.manager.lifecycle_lock_path(&current.worker);
@@ -308,6 +315,7 @@ async fn a_signal_before_the_fan_out_starts_no_body() {
         RUN_ID,
         "test",
         two(None),
+        DaemonTarget::Lanes,
         |_| {
             interrupts.deliver(Signal::Terminate);
             Ok(())
@@ -337,6 +345,7 @@ async fn a_borrowed_receipt_runs_first_and_is_never_released() {
         RUN_ID,
         "test",
         two(Some(&receipt)),
+        DaemonTarget::Lanes,
         |_| Ok(()),
         async |(): &(), index: usize, current: Lease, _: &Arc<PreparedBuild>| (index, current.worker),
     ))
@@ -369,6 +378,7 @@ async fn a_borrowed_receipt_of_another_guest_costs_no_build_and_no_lease() {
             RUN_ID,
             "test",
             two(Some(&receipt)),
+            DaemonTarget::Lanes,
             |_| Ok(()),
             async |(): &(), _: usize, _: Lease, _: &Arc<PreparedBuild>| {},
         ))
@@ -398,6 +408,7 @@ async fn the_run_id_is_the_holder_unless_one_is_named() {
                         run_id,
                         "test",
                         workers,
+                        DaemonTarget::Lanes,
                         |_| Ok(()),
                         async |(): &(), _: usize, current: Lease, _: &Arc<PreparedBuild>| current.holder,
                     )

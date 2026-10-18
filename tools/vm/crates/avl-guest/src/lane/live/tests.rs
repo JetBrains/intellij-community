@@ -214,9 +214,10 @@ fn a_live_lane_outside_a_live_run_is_refused_by_name() {
     );
 }
 
-// The window of SMOKE-1 compares this text literally: a build without the define has none of the live runtimes.
+// A descriptor of another lane has none of the live runtimes. The refusal names the descriptor of the live lane, which
+// has them, and the command that builds it.
 #[test]
-fn a_descriptor_without_the_live_runtimes_is_refused_with_the_define() {
+fn a_descriptor_without_the_live_runtimes_is_refused_naming_the_live_descriptor() {
     let fixture = Fixture::new();
 
     let refusal = fixture.start(&fixture.declared[..2]).unwrap_err();
@@ -225,13 +226,14 @@ fn a_descriptor_without_the_live_runtimes_is_refused_with_the_define() {
     assert_eq!(
         refusal.message,
         "the live lane needs the declared CLI runtimes central, claude and junie, and the runtime descriptor lacks central, \
-         claude and junie; build it with --define=air_lane_live_runtimes=on"
+         claude and junie; run it over //plugins/air/tests/integration/ui:ui_daemon_linux_guest_live, which \
+         `vm.cmd run --lane ui-live` builds"
     );
     let partial = fixture.start(&fixture.declared[..4]).unwrap_err();
     assert!(
         partial
             .message
-            .ends_with("lacks junie; build it with --define=air_lane_live_runtimes=on"),
+            .contains("lacks junie; run it over //plugins/air/tests/integration/ui:ui_daemon_linux_guest_live"),
         "{}",
         partial.message
     );

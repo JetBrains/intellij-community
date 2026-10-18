@@ -306,6 +306,9 @@ pub(crate) struct RunPlan {
     /// The digests of the lane inputs in the jar store.
     pub lane_inputs: LaneInputs,
     pub context_plugin_files: usize,
+    /// The names of the declared CLI runtimes of the descriptor, sorted. The descriptor of the live lane adds `central`,
+    /// `claude` and `junie`.
+    pub cli_runtimes: Vec<String>,
     /// The suites of the shared IDE, then the suites of a bare IDE, as the program runner runs them.
     pub suites: Vec<PlannedSuite>,
 }
@@ -336,6 +339,8 @@ pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: Runner
     } else {
         None
     };
+    let mut cli_runtimes: Vec<String> = daemon.with_ide(|owner| owner.runtimes().iter().map(|runtime| runtime.name.clone()).collect());
+    cli_runtimes.sort();
     let (bare, shared): (Vec<_>, Vec<_>) = selection.suites.iter().partition(|suite| suite.program.launch.is_some());
     let suites = shared
         .into_iter()
@@ -353,6 +358,7 @@ pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: Runner
         product_stamp: request.product_stamp.clone(),
         lane_inputs: lane_inputs.clone(),
         context_plugin_files: request.ide_plugins.len(),
+        cli_runtimes,
         suites,
     })
 }

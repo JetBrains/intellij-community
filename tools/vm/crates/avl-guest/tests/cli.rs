@@ -367,6 +367,7 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     assert!(whole["laneKey"].as_str().unwrap().starts_with("air-ui-"), "{whole}");
     assert_eq!(whole["productStamp"], sha256(b"product-1"));
     assert_eq!(whole["laneInputs"]["suiteDocuments"], sha256(&jar));
+    assert!(whole["cliRuntimes"].is_array(), "the plan names the declared CLI runtimes: {whole}");
     let suites: Vec<(&str, Option<&str>)> = whole["suites"]
         .as_array()
         .unwrap()

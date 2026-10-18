@@ -1282,6 +1282,56 @@ async fn a_live_run_without_its_login_input_is_refused_before_any_build() {
     assert!(!fixture.daemon.saw_request("/run"), "a refused live run reached the daemon");
 }
 
+// A run that holds the live lane builds the descriptor of the live lane, which adds its CLIs, and a run of another lane
+// builds the one of the lanes. The live CLIs are a target and not a build option, so neither build needs an option of
+// its own.
+#[tokio::test]
+async fn a_live_run_builds_the_live_descriptor_and_another_run_the_one_of_the_lanes() {
+    let (fixture, receipt) = run_outcome_fixture(Vec::new()).await;
+    assert_eq!(fixture.settings.guest_os, GuestOs::Linux);
+    commit_live_lane_document(&fixture);
+    fixture.queue_runs(vec![passing_run_lines("it-36"), passing_run_lines("it-37")]);
+    fixture.stdin.feed(b"central-login-export-from-a-pipe-0123456789\n");
+    let (live, _) = run_for_verdict(
+        &fixture,
+        &["--lane", "ui-live", "--test-env", "AIR_LIVE_CENTRAL_LOGIN=@-"],
+        Some(&receipt),
+    )
+    .await;
+    live.unwrap();
+    assert_eq!(
+        fixture.bazel.built_labels().last().map(String::as_str),
+        Some(avl_wire::daemon::LINUX_GUEST_LIVE_LABEL)
+    );
+    let (lanes, _) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
+    lanes.unwrap();
+    assert_eq!(
+        fixture.bazel.built_labels().last().map(String::as_str),
+        Some(avl_wire::daemon::LINUX_GUEST_LABEL)
+    );
+}
+
+// Only a Linux guest runs the live lane, and no macOS guest has its descriptor. So a live run on a macOS guest is
+// refused before the build and the lease, and a wrong backend costs seconds.
+#[tokio::test]
+async fn a_live_run_on_a_macos_guest_is_refused_before_the_build_and_the_lease() {
+    let fixture = Fixture::tart_macos().await;
+    assert_eq!(fixture.settings.guest_os, GuestOs::Macos);
+    commit_live_lane_document(&fixture);
+    let builds = fixture.bazel.build_calls();
+    fixture.stdin.feed(b"central-login-export-from-a-pipe-0123456789\n");
+    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui-live", "--test-env", "AIR_LIVE_CENTRAL_LOGIN=@-"], None).await;
+    let failure = refusal(result);
+    assert_eq!((failure.code.as_ref(), failure.exit), ("lane_live_input", Exit::USAGE));
+    assert_eq!(
+        failure.message,
+        "the lane ui-live runs only in a Linux guest, and the backend tart has macOS guests; run it with --backend docker"
+    );
+    assert!(verdict.is_none());
+    assert_eq!(fixture.bazel.build_calls(), builds, "the refusal costs no build");
+    require_unleased(&fixture);
+}
+
 // An interrupt while the iteration is in flight keeps the lease, as `shard` does: a release proves no run is active,
 // which is not true here. The refusal names the receipt that frees the worker.
 #[tokio::test]

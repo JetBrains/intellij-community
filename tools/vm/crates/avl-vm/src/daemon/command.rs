@@ -10,7 +10,7 @@ use avl_base::clock::millis;
 use avl_base::format::{seconds, words};
 use avl_base::phase::{Timeline, Timing};
 use avl_base::plain::release_command;
-use avl_base::{Exit, Outcome, Refusal, Scope, Selection, history};
+use avl_base::{Exit, GuestOs, Outcome, Refusal, Scope, Selection, history};
 use avl_host_sys::Ctx;
 use avl_host_sys::guest::{SupervisorOptions, ensure_host_paths};
 use avl_wire::daemon::Status as DaemonStatus;
@@ -19,7 +19,7 @@ use avl_wire::report::{RunReport, Status};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::daemon::build::{BuildScope, PreparedBuild};
+use crate::daemon::build::{BuildScope, DaemonTarget, PreparedBuild};
 use crate::daemon::host::Host;
 use crate::daemon::iterate::RunAttempt;
 use crate::daemon::leased::Workers;
@@ -27,7 +27,7 @@ use crate::daemon::run::{RunArgs, RunCommandArgs, RunPlan};
 use crate::daemon::state::HostState;
 use crate::daemon::verdict::{iteration_verdict, lanes_verdict};
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note};
-use crate::lane::secrets::{RunSecrets, clear_run_secrets};
+use crate::lane::secrets::{LIVE_INPUT_CODE, RunSecrets, clear_run_secrets};
 use avl_base::RefusalExt;
 
 /// The timeout of the supervisor verb that reads the tail of the daemon log for `daemon log`: a read of one file in
@@ -232,18 +232,35 @@ impl Host {
         .await
     }
 
-    /// [`Host::plan_run`], refused for a live lane whose run lacks the run input of its Central login. The check reads
-    /// the committed lane documents, so the refusal costs no build and no lease. A plan of `--lane` alone reads no
-    /// checkout, so the host paths resolve here first.
-    async fn plan_run_with(&self, ctx: &Ctx, args: &RunArgs, secrets: &RunSecrets) -> Result<RunPlan, Refusal> {
+    /// [`Host::plan_run`], and the daemon descriptor that its build builds. A plan that holds the live lane builds the
+    /// descriptor of the live lane, which adds its CLIs. Such a plan is refused when its run lacks the run input of the
+    /// Central login, and on a macOS guest. The check reads the committed lane documents, so a refusal costs no build
+    /// and no lease. A plan of `--lane` alone reads no checkout, so the host paths resolve here first.
+    async fn plan_run_with(&self, ctx: &Ctx, args: &RunArgs, secrets: &RunSecrets) -> Result<(RunPlan, DaemonTarget), Refusal> {
         let plan = self.plan_run(ctx, args).await?;
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
+        let mut target = DaemonTarget::Lanes;
         if let Some(documents) = crate::lane::lane_document_root(&self.settings)? {
             for lane in plan.iterations.iter().filter_map(|iteration| iteration.selection.lane.as_deref()) {
-                secrets.require_live_login(&documents, lane)?;
+                let Some(live) = crate::lane::lane_live_context(&documents, lane)? else {
+                    continue;
+                };
+                secrets.require_live_login(lane, &live)?;
+                if self.settings.guest_os != GuestOs::Linux {
+                    return Err(Refusal::new(
+                        LIVE_INPUT_CODE,
+                        Exit::USAGE,
+                        format!(
+                            "the lane {lane} runs only in a Linux guest, and the backend {} has macOS guests; run it with \
+                             --backend docker",
+                            self.settings.backend
+                        ),
+                    ));
+                }
+                target = DaemonTarget::LiveLane;
             }
         }
-        Ok(plan)
+        Ok((plan, target))
     }
 
     /// Says what the run will execute, once its selection resolved, and how long that work took in the earlier
@@ -286,10 +303,10 @@ impl Host {
             .run_id()
             .ok_or_else(|| Refusal::internal("a run under a receipt has no run id"))?;
         with_run_marker(ctx, &self.manager, &receipt, run_id, "run", async |current: Lease| {
-            let plan = self.plan_run_with(ctx, args, secrets).await?;
+            let (plan, target) = self.plan_run_with(ctx, args, secrets).await?;
             self.publish_plan(&plan, argv);
             ensure_host_paths(ctx, &self.runner, &self.settings).await?;
-            let scope = BuildScope::worker(&self.settings, &current.worker)?;
+            let scope = BuildScope::worker(&self.settings, &current.worker)?.for_target(target);
             let built = self.prepare_build(ctx, &scope).await?;
             let attempts = self.run_plan(ctx, &current, &built, &plan, secrets).await;
             let (outcome, verdict) = plan_verdict(&self.reporter.program(), &plan, &attempts, None);
@@ -354,7 +371,7 @@ impl Host {
         run_id: &str,
         secrets: &RunSecrets,
     ) -> Result<Outcome, Refusal> {
-        let plan = self.plan_run_with(ctx, args, secrets).await?;
+        let (plan, target) = self.plan_run_with(ctx, args, secrets).await?;
         self.publish_plan(&plan, argv);
         let workers = Workers {
             borrowed: None,
@@ -368,6 +385,7 @@ impl Host {
                 run_id,
                 "run",
                 workers,
+                target,
                 |_| Ok(()),
                 async |(): &(), _, current: Lease, built: &Arc<PreparedBuild>| self.run_plan(ctx, &current, built, &plan, secrets).await,
             )

@@ -42,6 +42,11 @@ pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
 /// (`plugins/air/tests/integration/ui_lane_ide.bzl`).
 pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest";
 
+/// The Bazel target of the runtime descriptor of a Linux guest with the CLIs of the live lane. A run that holds the live
+/// lane builds it in place of [`LINUX_GUEST_LABEL`], so a build of another lane fetches no archive of them, and no build
+/// needs an option of its own.
+pub const LINUX_GUEST_LIVE_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_live";
+
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.
 pub const DAEMON_RUN_PREFIX: &str = "run-ui-daemon-";
