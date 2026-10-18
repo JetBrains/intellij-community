@@ -7,7 +7,7 @@
 //! hand-maintained lists disagreed about.
 //!
 //! The verbs do not collide: `start|supervise|status|active|log|cancel` are the run supervisor's,
-//! `stage|stage-check|launch-prep|gc` are the stager's, `provision-image|validate-image` build the macOS golden
+//! `stage|stage-check|gc` are the stager's, `provision-image|validate-image` build the macOS golden
 //! image, `validate-guest` proves a Linux worker, and `trace-pack-ready` zips the trace bundles that finished since
 //! the last pull with `air-trace pack`'s own code. `relay` bridges its standard streams to a guest loopback port,
 //! which is how the controller reaches the UI daemon. `read-file` copies one file to its standard output unchanged,

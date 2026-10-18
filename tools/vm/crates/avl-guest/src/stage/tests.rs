@@ -2,7 +2,7 @@ use std::fs;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-use avl_wire::stage::{ArgFileRequest, LaunchPrep, RuntimeManifest, RuntimeResult};
+use avl_wire::stage::{RuntimeManifest, RuntimeResult};
 use avl_wire::verb::AgentVerb;
 use pretty_assertions::assert_eq;
 use sha2::{Digest, Sha256};
@@ -125,7 +125,6 @@ fn a_staging_failure_answers_a_structured_refusal_its_message_can_travel_in() {
 
     for (verb, code) in [
         (AgentVerb::Gc, "guest_gc_failed"),
-        (AgentVerb::LaunchPrep, "guest_launch_prep_failed"),
         (AgentVerb::Stage, "guest_stage_failed"),
         (AgentVerb::StageCheck, "guest_stage_check_failed"),
     ] {
@@ -257,166 +256,6 @@ fn a_failed_record_write_names_the_file() {
         refusal.starts_with(&format!("cannot write {}: ", marker.display())),
         "the refusal does not name the marker: {refusal}"
     );
-}
-
-// --- preparing one daemon launch -------------------------------------------------------------------------------
-
-/// Writes one generation's staged jars and the `classpath.txt` recording them the way `stage` writes it, and
-/// answers the runtime root and that recorded classpath.
-fn seed_staged_generation(root: &Path, names: &[&str]) -> (PathBuf, Vec<String>) {
-    let runtime_root = root.join("daemon-runtime");
-    let generation = generations_dir(&runtime_root).join(digest_of('b'));
-    fs::create_dir_all(generation.join("lib")).unwrap();
-    let classpath: Vec<String> = names
-        .iter()
-        .map(|name| {
-            let jar = generation.join("lib").join(name);
-            fs::write(&jar, format!("jar {name}")).unwrap();
-            jar.to_string_lossy().into_owned()
-        })
-        .collect();
-    fs::write(generation.join("classpath.txt"), classpath.join("\n") + "\n").unwrap();
-    (runtime_root, classpath)
-}
-
-fn launch_request(destination: &Path, entries: u32) -> LaunchPrep {
-    LaunchPrep {
-        schema_version: avl_wire::stage::SCHEMA_VERSION,
-        runtime_digest: digest_of('b'),
-        stable_count: entries,
-        directories: vec![],
-        remove_files: vec![],
-        arg_file: ArgFileRequest {
-            destination: destination.to_string_lossy().into_owned(),
-            prefix: vec![
-                "-Djava.io.tmpdir=/g/tmp dir".into(),
-                "-Xmx4g".into(),
-                r#"-Dair.ui.probe=a\b"c"#.into(),
-            ],
-            main_class: "com.example.Main".into(),
-            sha256: digest_of('c'),
-        },
-    }
-}
-
-fn prepare(runtime_root: &Path, request: &LaunchPrep) -> Result<avl_wire::stage::LaunchPrepResult, AgentRefusal> {
-    launch_prep::prepare(&runtime_root.to_string_lossy(), request)
-}
-
-/// The whole point of the verb: the ~1000 classpath paths never cross the exec channel, so the file the JVM reads
-/// is assembled here from the list this guest recorded when it staged the generation - the controller's prefix,
-/// then `-cp`, the joined list, and the main class. The request arrives on stdin.
-#[test]
-fn launch_prep_assembles_the_argfile_from_its_own_classpath() {
-    let root = tempfile::tempdir().unwrap();
-    let (runtime_root, classpath) = seed_staged_generation(root.path(), &["0000-util.jar", "0001-core.jar"]);
-    let destination = root.path().join("daemon-jvm.args");
-    let request = launch_request(&destination, 2);
-
-    let answered = run_agent(&[Path::new("launch-prep"), &runtime_root], &serde_json::to_vec(&request).unwrap());
-    assert_eq!(answered.exit, 0, "{}", answered.stderr);
-    let mut tokens = request.arg_file.prefix;
-    tokens.extend(["-cp".to_owned(), classpath.join(":"), "com.example.Main".to_owned()]);
-    let want = avl_wire::stage::arg_file_text(&tokens);
-    assert_eq!(fs::read_to_string(&destination).unwrap(), want);
-    let reply = answered.document();
-    assert_eq!(reply["argFile"], destination.to_string_lossy().as_ref());
-    assert_eq!(reply["entries"], 2);
-    assert_eq!(reply["bytes"], want.len());
-    assert_eq!(
-        reply["sha256"],
-        hex::encode(Sha256::digest(want.as_bytes())),
-        "the digest is not over the bytes"
-    );
-}
-
-/// The count is what stands between "the generation this controller staged" and "whatever is in that directory
-/// now". A generation restaged by another controller, or one whose `classpath.txt` lost a line, is refused rather
-/// than launched with a short classpath, which boots and then reads as a test failure.
-#[test]
-fn launch_prep_refuses_a_generation_whose_classpath_count_disagrees() {
-    let root = tempfile::tempdir().unwrap();
-    let (runtime_root, _) = seed_staged_generation(root.path(), &["0000-util.jar", "0001-core.jar"]);
-    let destination = root.path().join("daemon-jvm.args");
-
-    let refusal = prepare(&runtime_root, &launch_request(&destination, 3)).unwrap_err();
-    assert!(
-        refusal.message.contains("has 2 entries, expected 3"),
-        "the refusal must name both counts: {refusal}"
-    );
-    assert!(
-        !destination.exists(),
-        "nothing may be published over a generation that failed its count check"
-    );
-
-    // A generation that was never staged is the same refusal rather than an empty classpath.
-    let mut absent = launch_request(&destination, 2);
-    absent.runtime_digest = digest_of('d');
-    assert!(
-        prepare(&runtime_root, &absent).is_err(),
-        "a generation that was never staged was accepted"
-    );
-}
-
-/// The two round-trips this verb absorbed: the directories a run writes into, and the previous daemon's state file,
-/// whose absence is the ordinary case on a worker's first start.
-#[test]
-fn launch_prep_creates_its_directories_and_removes_the_stale_state() {
-    let root = tempfile::tempdir().unwrap();
-    let (runtime_root, _) = seed_staged_generation(root.path(), &["0000-util.jar"]);
-    let state_dir = root.path().join("daemon");
-    let outputs = root.path().join("tmp/run-1/outputs");
-    let stale = state_dir.join("daemon.json");
-    fs::create_dir_all(&state_dir).unwrap();
-    fs::write(&stale, r#"{"port":1}"#).unwrap();
-
-    let mut request = launch_request(&state_dir.join("daemon-jvm.args"), 1);
-    request.directories = vec![state_dir.to_string_lossy().into(), outputs.to_string_lossy().into()];
-    request.remove_files = vec![
-        stale.to_string_lossy().into(),
-        state_dir.join("never-existed.json").to_string_lossy().into(),
-    ];
-    prepare(&runtime_root, &request).unwrap();
-
-    let info = fs::metadata(&outputs).unwrap();
-    assert!(info.is_dir());
-    assert_eq!(info.permissions().mode() & 0o777, 0o700);
-    assert!(!stale.exists(), "the previous daemon's state file survived");
-}
-
-/// Published with a rename, so the JVM started next reads a whole @-file or none. An in-place rewrite would keep
-/// the destination's 0644, and a publish that left its temporary behind would leave two files instead of one.
-#[test]
-fn launch_prep_publishes_the_argfile_atomically() {
-    let root = tempfile::tempdir().unwrap();
-    let (runtime_root, _) = seed_staged_generation(root.path(), &["0000-util.jar"]);
-    let published = root.path().join("publish");
-    fs::create_dir_all(&published).unwrap();
-    let destination = published.join("daemon-jvm.args");
-    fs::write(&destination, "the previous launch\n").unwrap();
-    fs::set_permissions(&destination, fs::Permissions::from_mode(0o644)).unwrap();
-    let inode = fs::metadata(&destination).unwrap().ino();
-
-    prepare(&runtime_root, &launch_request(&destination, 1)).unwrap();
-    assert!(!fs::read_to_string(&destination).unwrap().contains("previous launch"));
-    let info = fs::metadata(&destination).unwrap();
-    assert_eq!(
-        info.permissions().mode() & 0o777,
-        0o600,
-        "the prefix carries the launch's properties"
-    );
-    assert_ne!(
-        info.ino(),
-        inode,
-        "the previous @-file was written over in place rather than replaced"
-    );
-    assert_eq!(fs::read_dir(&published).unwrap().count(), 1, "the publish left debris");
-
-    // A destination nothing can be renamed onto fails, and still leaves no temporary behind.
-    let blocked = published.join("occupied");
-    fs::create_dir_all(blocked.join("child")).unwrap();
-    prepare(&runtime_root, &launch_request(&blocked, 1)).unwrap_err();
-    assert_eq!(fs::read_dir(&published).unwrap().count(), 2, "a failed publish left debris");
 }
 
 // --- linking one generation from the last ----------------------------------------------------------------------

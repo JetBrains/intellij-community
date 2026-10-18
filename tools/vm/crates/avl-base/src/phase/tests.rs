@@ -91,7 +91,7 @@ fn the_slowest_guest_call_names_the_dearest_of_two() {
     let timeline = Timeline::collecting();
     timeline.declare_guest_head("tart");
 
-    let dear = timeline.begin("prepare-launch");
+    let dear = timeline.begin("stage-runtime");
     let open = dear.handle();
     open.record_subprocess(&["tart", "exec", "air-linux-1", "mkdir"], 200 * MS);
     open.record_subprocess(&["tart", "exec", "air-linux-1", "tee"], 10_600 * MS);

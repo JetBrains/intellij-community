@@ -185,10 +185,6 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         ide_root: root.join("ide"),
         home: root.join("home"),
     };
-    for directory in [&daemon_args.state_dir, &daemon_args.ide_root, &daemon_args.home] {
-        fs::create_dir_all(directory)
-            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", directory.display())))?;
-    }
     let content = fs::read(&args.descriptor).map_err(|error| {
         AgentRefusal::failure(
             BOOT_CODE,
@@ -202,7 +198,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
         notes.extend(probe_host(&launch_inputs, variable)?);
     }
-    let daemon = channel::boot(&daemon_args, launch_inputs)?;
+    let daemon = channel::boot(&daemon_args, launch_inputs, variable)?;
     let runfile = |file: &RuntimeFile| runtime::runtime_file_path(&runfiles_root, file);
     let lane_inputs = LaneInputs {
         fake_agent_jar: daemon.store_file(&runfile(&descriptor.ide.fake_agent_jar))?,

@@ -8,10 +8,6 @@ use super::*;
 const GUEST_JBR_PLATFORM: &str = "linux-x64";
 const DESCRIPTOR_PATH: &str = "/out/bin/plugins/air/ui_daemon.runtime.json";
 
-fn staged<const N: usize>(paths: [&str; N]) -> Vec<String> {
-    paths.map(str::to_owned).to_vec()
-}
-
 fn file(logical_path: &str, owner: &str) -> Value {
     json!({
         "execPath": format!("bazel-out/k8-fastbuild/bin/{logical_path}"),
@@ -649,81 +645,4 @@ fn the_runfiles_root_is_derived_from_the_descriptor_path() {
         runtime_file_path(&root, &file),
         root.join("_main").join("platform").join("util.jar")
     );
-}
-
-// --- the daemon @-file ----------------------------------------------------------------------------------------
-
-#[test]
-fn the_daemon_arg_file_is_the_exact_bytes_the_jvm_reads() {
-    let descriptor = parse(&valid_descriptor());
-    // A tmpdir with a space in it, because the controller's own runtime root on macOS lives under
-    // `Library/Application Support` and an unquoted @-file token would split there.
-    let content = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/util.jar", "/g/core.jar"]),
-        &LaunchOptions {
-            test_tmp_dir: "/g/tmp dir".to_owned(),
-            extra_flags: vec!["-Dair.ui.machine=air-linux-1".to_owned()],
-        },
-    )
-    .unwrap();
-    let want = [
-        r#""-Djava.io.tmpdir=/g/tmp dir""#,
-        r#""-Xmx4g""#,
-        r#""-Dsun.io.useCanonCaches=false""#,
-        r#""-Dair.ui.runfiles=/out/rf/_main""#,
-        r#""-Dair.ui.machine=air-linux-1""#,
-        r#""-cp""#,
-        r#""/g/util.jar:/g/core.jar""#,
-        r#""com.intellij.air.uiDaemon.AirUiDaemonMain""#,
-    ]
-    .join("\n");
-    assert_eq!(content, want);
-}
-
-#[test]
-fn arg_file_tokens_are_escaped_rather_than_trusted() {
-    let descriptor = parse(&valid_descriptor());
-    let content = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/a.jar", "/g/b.jar"]),
-        &LaunchOptions {
-            test_tmp_dir: r#"/g/a\b"c"#.to_owned(),
-            extra_flags: Vec::new(),
-        },
-    )
-    .unwrap();
-    assert_eq!(content.split('\n').next().unwrap(), r#""-Djava.io.tmpdir=/g/a\\b\"c""#);
-}
-
-#[test]
-fn a_staged_classpath_of_the_wrong_length_is_refused() {
-    let descriptor = parse(&valid_descriptor());
-    let refusal = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/util.jar"]),
-        &LaunchOptions::default(),
-    )
-    .unwrap_err();
-    assert_eq!(refusal.code, code::DAEMON_STAGE_INVALID);
-    assert!(refusal.message.contains("has 1 entries, expected 2"), "{}", refusal.message);
-}
-
-/// The only way to reach the guard, since the substitution that precedes it removes every occurrence of the
-/// token. Still worth keeping: the root is derived from a path a caller supplied.
-#[test]
-fn a_runfiles_root_that_names_the_token_is_refused_rather_than_execd() {
-    let descriptor = parse(&valid_descriptor());
-    let refusal = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/${RUNFILES_ROOT}"),
-        &staged(["a", "b"]),
-        &LaunchOptions::default(),
-    )
-    .unwrap_err();
-    assert_eq!(refusal.code, code::FLAG_UNRESOLVED);
-    assert!(refusal.message.contains("unresolved RUNFILES_ROOT"), "{}", refusal.message);
 }

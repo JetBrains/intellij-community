@@ -5,7 +5,6 @@ use avl_base::phase::Timeline;
 use avl_host_sys::{Captured, Signal};
 use avl_host_testkit::agent::{agent_reply, argv_value, run_state};
 use avl_host_testkit::{answer_exit, answer_text, handler, has, refusal, said};
-use avl_wire::stage::decode_launch_prep;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -476,17 +475,8 @@ async fn an_interrupted_start_is_daemon_start_interrupted() {
     assert!(cancels(&fixture).is_empty());
 }
 
-/// The launch-prep document the start sent, decoded by the guest's own decoder.
-fn launch_prep_request(fixture: &Fixture) -> LaunchPrep {
-    let options = fixture
-        .channel()
-        .options_for_call_containing("vm-guest-agent launch-prep")
-        .expect("a launch-prep call was made");
-    decode_launch_prep(options.stdin.as_deref().unwrap_or_default()).expect("the controller sent a request its own guest accepts")
-}
-
-// The full start: agent installed, runtime staged, the launch prepared, supervisor started, state file read, health
-// proven, state recorded, old generations collected - with the phase table naming each step.
+// The full start: agent installed, runtime staged, supervisor started, state file read, health proven, state
+// recorded, old generations collected - with the phase table naming each step.
 #[tokio::test]
 async fn a_full_start_boots_polls_and_records_its_state() {
     let (fixture, prep) = start_ready().await;
@@ -520,62 +510,28 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     );
 
     let channel = fixture.channel();
-    // One guest call prepares the launch, and the round-trips it replaced are gone rather than moved.
-    assert_eq!(channel.calls_containing("vm-guest-agent launch-prep").len(), 1);
-    for retired in ["/usr/bin/tee /vm/data/daemon/daemon-jvm.args", "/bin/rm -f"] {
-        assert!(channel.calls_containing(retired).is_empty(), "{retired}");
-    }
-
-    // The launch identity is the controller's, whichever half writes the file: every `-D` property is in the prefix
-    // it sent, and the main class is named outright.
-    let request = launch_prep_request(&fixture);
-    let prefix = request.arg_file.prefix.join("\n");
-    let generation = format!("/vm/data/daemon-runtime/generations/{}", prep.runtime_digest);
-    for fragment in [
-        format!("-Dair.ui.daemon.controller.launch.digest={}", prep.launch_digest),
-        "-Dair.ui.daemon.port=27100".to_owned(),
-        // The home is an empty directory of the generation, and every path the platform derives from it is named.
-        format!("-Didea.home.path={generation}/home"),
-        format!("-Didea.config.path={}/daemon/config", fixture.settings.vm_out),
-        format!("-Didea.system.path={}/daemon/system", fixture.settings.vm_out),
-        format!("-Didea.log.path={}/daemon/log", fixture.settings.vm_out),
-        format!("-Dide.starter.out.dir={}", fixture.settings.vm_out),
-        // How the daemon launches the lane IDE: the installed agent and the context root.
-        format!("-Dair.lane.agent={}", fixture.settings.vm_agent),
-        "-Dair.lane.ide.root=/vm/data/ide".to_owned(),
-    ] {
-        assert!(prefix.contains(&fragment), "{fragment} missing from\n{prefix}");
-    }
-    // The lane IDE runs on the JBR of its distribution, so no flag names a JVM for it.
-    assert!(
-        !prefix.contains("-Dair.lane.java.home"),
-        "the launch names a JVM for the IDE:\n{prefix}"
-    );
-    assert_eq!(request.arg_file.main_class, "com.example.Main");
-    assert_eq!(request.arg_file.destination, "/vm/data/daemon/daemon-jvm.args");
-    assert_eq!(request.remove_files, ["/vm/data/daemon/daemon.json"]);
-    assert_eq!(
-        request.directories[2..],
-        [
-            format!("{generation}/home"),
-            format!("{}/daemon/config", fixture.settings.vm_out),
-            format!("{}/daemon/system", fixture.settings.vm_out),
-            format!("{}/daemon/log", fixture.settings.vm_out),
-        ]
-    );
-    // No flag names the checkout: the guest has none.
-    assert!(
-        !prefix.contains(&fixture.root().display().to_string()),
-        "the launch names the checkout {}:\n{prefix}",
-        fixture.root().display()
-    );
-
     // The supervisor start runs the lane-daemon verb of the installed agent under /usr/bin/env with the run environment.
+    // The verb gets the home of the generation and the IDE root, and its boot makes them. No guest call of the
+    // controller prepares the launch or removes the state file of the previous daemon.
     let starts = channel.calls_containing("vm-guest-agent start");
     assert_eq!(starts.len(), 1, "{starts:?}");
+    let generation = format!("/vm/data/daemon-runtime/generations/{}", prep.runtime_digest);
+    for fragment in [
+        " lane-daemon --state-dir /vm/data/daemon ".to_owned(),
+        "SELF_LOCATION=".to_owned(),
+        format!(" --home {generation}/home"),
+        " --ide-root /vm/data/ide ".to_owned(),
+    ] {
+        assert!(starts[0].contains(&fragment), "{fragment} missing from {}", starts[0]);
+    }
+    for retired in ["vm-guest-agent launch-prep", "/bin/rm -f"] {
+        assert!(channel.calls_containing(retired).is_empty(), "{retired}");
+    }
+    // No argument names the checkout: the guest has none.
     assert!(
-        starts[0].contains(" lane-daemon --state-dir /vm/data/daemon ") && starts[0].contains("SELF_LOCATION="),
-        "{}",
+        !starts[0].contains(&fixture.root().display().to_string()),
+        "the start names the checkout {}: {}",
+        fixture.root().display(),
         starts[0]
     );
 
@@ -602,7 +558,7 @@ async fn a_full_start_boots_polls_and_records_its_state() {
 }
 
 /// The phase table of a green start, in order.
-const PHASES: [&str; 12] = [
+const PHASES: [&str; 11] = [
     "install-agent",
     "stop-daemon",
     "ide-gc",
@@ -610,7 +566,6 @@ const PHASES: [&str; 12] = [
     "remount",
     "parity-probe",
     "stage-runtime",
-    "prepare-launch",
     "supervisor-start",
     "boot-poll",
     "health-poll",
@@ -699,78 +654,6 @@ async fn a_failed_ide_gc_refuses_the_start() {
     assert_eq!(failure.code, "guest_agent_failed");
     assert_eq!(remounts(&fixture), 0);
     assert!(fixture.channel().calls_containing("vm-guest-agent stage").is_empty());
-}
-
-// The regression tripwire. What the collapse bought is that the ~1000 staged classpath paths stop crossing the exec
-// channel, and nothing about the request's shape would fail if a later change put them back - the start would
-// simply be 10.6 s slower again. So the bytes are searched for one.
-#[tokio::test]
-async fn the_launch_prep_request_carries_no_classpath() {
-    let (fixture, prep) = start_ready().await;
-    start(&fixture, &prep).await.unwrap();
-    let options = fixture
-        .channel()
-        .options_for_call_containing("vm-guest-agent launch-prep")
-        .expect("a launch-prep call was made");
-    let sent = String::from_utf8(options.stdin.unwrap()).unwrap();
-    let generation = format!("/vm/data/daemon-runtime/generations/{}", prep.runtime_digest);
-    for staged in [format!("{generation}/classpath/000.jar"), "-cp".to_owned()] {
-        assert!(
-            !sent.contains(&staged),
-            "the request names {staged:?}; the guest joins its own classpath:\n{sent}"
-        );
-    }
-    // The count does cross, and it is what the guest holds its own list against.
-    let request = launch_prep_request(&fixture);
-    assert_eq!(request.stable_count, 2);
-    assert_eq!(request.runtime_digest, prep.runtime_digest);
-}
-
-// The guest composes the @-file; it does not decide it. A reply whose digest is not the one the controller computed
-// from the staged classpath is a refused start.
-#[tokio::test]
-async fn a_guest_answer_whose_argfile_hash_differs_is_refused() {
-    let answer = |arg_file: &str, entries: u32| LaunchPrepResult {
-        arg_file: arg_file.to_owned(),
-        sha256: "e".repeat(64),
-        bytes: 4096,
-        entries,
-    };
-    let (fixture, prep) = start_ready().await;
-    for (name, reply) in [
-        ("another digest", answer("/vm/data/daemon/daemon-jvm.args", 2)),
-        ("another destination", answer("/vm/tmp/somewhere-else.args", 2)),
-        ("another entry count", answer("/vm/data/daemon/daemon-jvm.args", 1)),
-        (
-            "no answer at all",
-            LaunchPrepResult {
-                arg_file: String::new(),
-                sha256: String::new(),
-                bytes: 0,
-                entries: 0,
-            },
-        ),
-    ] {
-        ready_again(&fixture, &prep);
-        fixture.on("launch-prep", answer_text(serde_json::to_string(&reply).unwrap()));
-        let failure = refusal(start(&fixture, &prep).await);
-        assert_eq!(
-            (failure.code.as_ref(), failure.exit),
-            ("daemon_launch_prep_failed", Exit::SOFTWARE),
-            "{name}"
-        );
-        assert!(failure.message.contains("this controller expected"), "{name}: {}", failure.message);
-        assert!(
-            fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
-            "{name}: no daemon may be started from an @-file this controller did not verify"
-        );
-    }
-    // Output that is not a reply at all names itself rather than being read as a mismatch.
-    ready_again(&fixture, &prep);
-    fixture.on("launch-prep", answer_text("Killed: 9"));
-    let failure = refusal(start(&fixture, &prep).await);
-    assert_eq!(failure.code, "daemon_launch_prep_failed");
-    assert!(failure.message.contains("invalid JSON: Killed: 9"), "{}", failure.message);
 }
 
 // A parity layout that does not show the descriptor refuses before anything is staged, at 65.
@@ -998,24 +881,21 @@ async fn the_parity_probe_asks_for_the_label_derived_descriptor() {
 }
 
 /// On container-linux the daemon binds every interface of the container, because the published port forwards to
-/// the container's address and not to its loopback. The launch prefix says so, and the other backends keep the
-/// loopback default.
+/// the container's address and not to its loopback. The argument of the lane-daemon verb says so, and the other
+/// backends keep the loopback default.
 #[cfg(unix)]
 #[tokio::test]
 async fn a_container_linux_launch_binds_every_interface_of_the_container() {
+    let started = |fixture: &Fixture| fixture.channel().calls_containing("vm-guest-agent start").concat();
     let (fixture, prep) = ready(Fixture::over_container_linux().await).await;
     start(&fixture, &prep).await.unwrap();
-    let prefix = launch_prep_request(&fixture).arg_file.prefix.join("\n");
-    assert!(prefix.contains("-Dair.ui.daemon.bind=0.0.0.0"), "{prefix}");
-    assert!(
-        prefix.contains(&format!("-Dide.starter.out.dir={}", fixture.settings.vm_out)),
-        "{prefix}"
-    );
+    let call = started(&fixture);
+    assert!(call.contains(" lane-daemon ") && call.ends_with(" --bind 0.0.0.0"), "{call}");
 
     let (tart, prep) = start_ready().await;
     start(&tart, &prep).await.unwrap();
-    let prefix = launch_prep_request(&tart).arg_file.prefix.join("\n");
-    assert!(!prefix.contains("air.ui.daemon.bind"), "{prefix}");
+    let call = started(&tart);
+    assert!(call.contains(" lane-daemon ") && !call.contains("--bind"), "{call}");
 }
 
 // The run slot holds the `lane-daemon` verb of the installed guest agent. It gets the state directory, the port, the

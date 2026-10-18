@@ -502,7 +502,7 @@ fn the_phase_table_names_the_slowest_guest_call_beside_the_guest_column() {
     let skeleton = "tart exec … /vm/agent stage";
     let table = render_phase_table(&[
         Timing {
-            name: "prepare-launch".to_owned(),
+            name: "stage-runtime".to_owned(),
             elapsed_ms: 11_000,
             guest_calls: 2,
             guest_ms: 10_900,

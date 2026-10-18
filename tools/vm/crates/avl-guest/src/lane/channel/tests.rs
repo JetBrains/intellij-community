@@ -38,23 +38,27 @@ struct Booted {
     state: StateFile,
 }
 
+fn daemon_args(root: &Path) -> LaneDaemonArgs {
+    LaneDaemonArgs {
+        state_dir: root.join("state"),
+        port: 1,
+        bind: Ipv4Addr::LOCALHOST.into(),
+        launch_digest: LAUNCH_DIGEST.to_owned(),
+        descriptor: root.join("ui_daemon.runtime.json"),
+        runfiles_root: root.join("runfiles"),
+        ide_root: root.join("ide"),
+        home: root.join("home"),
+    }
+}
+
 fn booted() -> Booted {
     let root = TempDir::new().unwrap();
     let state_dir = root.path().join("state");
     fs::create_dir_all(state_dir.join("jars")).unwrap();
     fs::write(state_dir.join("jars").join("stale"), "from the previous boot").unwrap();
     fs::write(state_dir.join(STATE_FILE), "{}").unwrap();
-    let args = LaneDaemonArgs {
-        state_dir: state_dir.clone(),
-        port: 1,
-        bind: Ipv4Addr::LOCALHOST.into(),
-        launch_digest: LAUNCH_DIGEST.to_owned(),
-        descriptor: root.path().join("ui_daemon.runtime.json"),
-        runfiles_root: root.path().join("runfiles"),
-        ide_root: root.path().join("ide"),
-        home: root.path().join("home"),
-    };
-    let daemon = Arc::new(boot(&args, inputs(root.path())).unwrap());
+    let args = daemon_args(root.path());
+    let daemon = Arc::new(boot(&args, inputs(root.path()), &|_| None).unwrap());
     assert!(
         !state_dir.join(STATE_FILE).exists(),
         "the boot removes the state file of the previous daemon"
@@ -70,6 +74,31 @@ fn booted() -> Booted {
         channel,
         state,
     }
+}
+
+/// The boot makes each directory of the daemon and of the lane IDE, readable only by this account: the home, the IDE
+/// root, and the scratch and outputs directories that the run environment names. The controller makes none of them.
+/// A directory that exists keeps its mode, as the scratch directory of a Bazel test does.
+#[test]
+fn the_boot_makes_the_directories_of_the_run_readable_only_by_its_account() {
+    let root = TempDir::new().unwrap();
+    let scratch = root.path().join("tmp/run-1");
+    fs::create_dir_all(&scratch).unwrap();
+    fs::set_permissions(&scratch, fs::Permissions::from_mode(0o755)).unwrap();
+    let outputs = scratch.join("outputs");
+    let environment = [
+        ("TEST_TMPDIR", scratch.display().to_string()),
+        ("TEST_UNDECLARED_OUTPUTS_DIR", outputs.display().to_string()),
+    ];
+    let variable = |name: &str| environment.iter().find(|(key, _)| *key == name).map(|(_, value)| value.clone());
+    let args = daemon_args(root.path());
+    boot(&args, inputs(root.path()), &variable).unwrap();
+
+    let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
+    for directory in [&args.home, &args.ide_root, &outputs, &args.state_dir.join("jars")] {
+        assert_eq!(mode(directory), 0o700, "{}", directory.display());
+    }
+    assert_eq!(mode(&scratch), 0o755, "the boot changed the mode of a directory that exists");
 }
 
 impl Booted {

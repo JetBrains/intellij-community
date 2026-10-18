@@ -12,7 +12,8 @@
 
 use std::ffi::OsString;
 use std::fs;
-use std::io::Read;
+use std::io::{self, Read, Write};
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use avl_wire::ide::{
@@ -27,7 +28,6 @@ use serde::Deserialize;
 use super::{create_private_dirs, reap, require_free_slot};
 use crate::clock::stamp;
 use crate::reply::{AgentRefusal, AgentRefusalExt, refuse};
-use crate::stage::launch_prep::publish_privately;
 use crate::stage::{is_directory, is_file};
 use crate::supervisor::{self, Launcher, System};
 
@@ -322,4 +322,24 @@ fn data_options(paths: &LaunchPaths) -> Vec<String> {
         format!("-XX:HeapDumpPath={log}/heap-dump/heap-dump.hprof"),
         format!("-Xlog:gc*:file={log}/gcLog.log"),
     ]
+}
+
+/// Writes `content` where a reader sees the whole file or no file, readable only by this account.
+///
+/// The publish is atomic, because the IDE that starts next reads the file. A half-written argument file is an IDE
+/// that starts with part of its options. The file is synced before the rename, because a worker can hard-reset. A
+/// failed publish leaves no temporary file.
+fn publish_privately(path: &Path, content: &[u8]) -> io::Result<()> {
+    let parent = path.parent().unwrap_or(Path::new("."));
+    let name = path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+    let mut temporary = tempfile::Builder::new()
+        .prefix(&format!(".{name}."))
+        .permissions(fs::Permissions::from_mode(0o600))
+        .tempfile_in(parent)?;
+    temporary.write_all(content)?;
+    temporary.as_file().sync_all()?;
+    let mut temporary = temporary.into_temp_path();
+    fs::rename(&temporary, path)?;
+    temporary.disable_cleanup(true);
+    Ok(())
 }

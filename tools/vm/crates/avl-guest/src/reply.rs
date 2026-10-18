@@ -83,7 +83,7 @@ macro_rules! refuse {
 }
 pub(crate) use refuse;
 
-/// The refusal code one verb's failure answers with: `guest_gc_failed`, `guest_launch_prep_failed`,
+/// The refusal code one verb's failure answers with: `guest_gc_failed`, `guest_stage_failed`,
 /// `guest_stage_check_failed`. Derived from the verb, so it needs no list to stay accurate.
 pub(crate) fn verb_refusal_code(verb: AgentVerb) -> String {
     format!("guest_{}_failed", verb.as_str().replace('-', "_"))

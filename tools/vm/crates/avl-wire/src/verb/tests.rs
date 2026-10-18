@@ -21,7 +21,6 @@ fn every_verb_keeps_its_wire_spelling() {
             "cancel",
             "stage",
             "stage-check",
-            "launch-prep",
             "gc",
             "provision-image",
             "validate-image",

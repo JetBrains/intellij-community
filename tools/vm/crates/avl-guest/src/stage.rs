@@ -15,7 +15,6 @@
 
 pub(crate) mod donor;
 pub(crate) mod gc;
-pub(crate) mod launch_prep;
 pub(crate) mod runtime;
 
 #[cfg(test)]

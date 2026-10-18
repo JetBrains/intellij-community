@@ -509,9 +509,8 @@ Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
 not the daemon's own module". The rule emits the two tiers as a versioned JSON **runtime
 descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor rather than a
 Java launcher. Both ends assert its `schemaVersion`, so the shape is a contract between Bazel and
-the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed,
-`daemon_launch_arg_file` beside it emits the argfile, and `AirUiDaemonServer` re-checks the result against its
-own classpath at boot.
+the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed. The lane
+daemon reads the inputs of the lane IDE from it at its boot, and the boot makes the directories of the run.
 
 Every UI lane runs over this one descriptor, which names the suite documents and the lane documents of every lane. The
 run request of the lane daemon names the lane, and the lane daemon carries the warm IDE across whole controller
@@ -988,7 +987,7 @@ every guest-side verb:
 | --- | --- |
 | `start`, `status`, `active`, `log`, `cancel` | the run supervisor, for the daemon and for each lane IDE. `cancel --thread-dump <jcmd>` writes a thread dump of the process before the signal |
 | `ide-prepare`, `ide-launch`, `ide-gc` | the lane IDE: the layout of one context, the launch of one IDE run with its argument file, and the stop of the IDE runs that a worker must not keep, with the removal of old log directories |
-| `stage`, `stage-check`, `launch-prep`, `gc` | the runtime stager, the probe that answers whether a generation is already staged, and one daemon launch's preparation |
+| `stage`, `stage-check`, `gc` | the runtime stager, the probe that answers whether a generation is already staged, and the collection of old generations |
 | `contract` | what the agent declares about itself, its own digest included. An install that would push a binary the guest already has is skipped |
 | `validate-guest` | the Linux boot |
 | `provision-image`, `validate-image` | the macOS image pipeline |

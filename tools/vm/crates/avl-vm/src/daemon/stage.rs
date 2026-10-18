@@ -94,19 +94,13 @@ fn generation_root(settings: &Config, runtime_digest: &str) -> String {
     wire::generation_dir(&settings.guest_runtime_root(), runtime_digest)
 }
 
-/// The home of the daemon JVM, `idea.home.path`: an empty directory inside the generation of `runtime_digest`.
+/// The home of the generation of `runtime_digest`: an empty directory inside it. The lane daemon gets it as `--home`,
+/// and the lane IDE as `idea.dev.project.root`.
 ///
-/// The platform refuses a home that is not a directory, and without the property it guesses one from the classpath,
-/// which the staged generation cannot satisfy. Launch-prep makes the directory before each start, so a generation
-/// staged before the home existed gets it too.
+/// The boot of the lane daemon makes the directory before each start, so a generation staged before the home existed
+/// gets it too.
 pub(crate) fn guest_home(settings: &Config, runtime_digest: &str) -> String {
     guest_join(&generation_root(settings, runtime_digest), "home")
-}
-
-/// The config, system and log directories of the daemon JVM, under the guest output tree.
-pub(crate) fn guest_daemon_directories(settings: &Config) -> [(&'static str, String); 3] {
-    let root = guest_join(&settings.vm_out, "daemon");
-    ["config", "system", "log"].map(|name| (name, guest_join(&root, name)))
 }
 
 /// The timeout of `stage-check`. It reads the marker of one generation and stats each staged jar on the guest's own

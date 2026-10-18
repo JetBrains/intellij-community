@@ -23,7 +23,6 @@ vocabulary! {
         Cancel = "cancel",
         Stage = "stage",
         StageCheck = "stage-check",
-        LaunchPrep = "launch-prep",
         Gc = "gc",
         ProvisionImage = "provision-image",
         ValidateImage = "validate-image",

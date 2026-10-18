@@ -97,8 +97,6 @@ pub(crate) enum Verb {
     Stage(StageArgs),
     /// Answer whether a staged runtime generation can be reused as it is.
     StageCheck(StageCheckArgs),
-    /// Prepare one daemon launch; the request is read from standard input.
-    LaunchPrep(LaunchPrepArgs),
     /// Remove staged generations, keeping the two newest and the requested ones.
     Gc(GcArgs),
     /// Turn a freshly cloned macOS base into the golden image.
@@ -141,7 +139,6 @@ impl Verb {
             Self::Cancel(_) => AgentVerb::Cancel,
             Self::Stage(_) => AgentVerb::Stage,
             Self::StageCheck(_) => AgentVerb::StageCheck,
-            Self::LaunchPrep(_) => AgentVerb::LaunchPrep,
             Self::Gc(_) => AgentVerb::Gc,
             Self::ProvisionImage(_) => AgentVerb::ProvisionImage,
             Self::ValidateImage(_) => AgentVerb::ValidateImage,
@@ -234,11 +231,6 @@ pub(crate) struct StageCheckArgs {
     pub stable_count: String,
     pub java_home_suffix: String,
     pub classpath_sha256: String,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct LaunchPrepArgs {
-    pub runtime_root: String,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -485,11 +477,6 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
             answer_bare(streams, name, result)
         }
         Verb::StageCheck(args) => answer_bare(streams, name, stage::runtime::check(&args)),
-        Verb::LaunchPrep(args) => {
-            let result = stage::launch_prep::read_request(streams.stdin)
-                .and_then(|request| stage::launch_prep::prepare(&args.runtime_root, &request));
-            answer_bare(streams, name, result)
-        }
         Verb::Gc(args) => answer_bare(streams, name, stage::gc::collect(&args.root, &args.keep)),
         Verb::ProvisionImage(pins) => {
             let mut provisioner = image::provision::ImageProvisioner::new(&pins, SystemRunner);
@@ -527,7 +514,7 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
             answer_bare(streams, name, result)
         }
         Verb::IdeGc(args) => answer_bare(streams, name, ide::gc::collect(&system, &args)),
-        Verb::LaneDaemon(args) => match lane::channel::serve(&args) {
+        Verb::LaneDaemon(args) => match lane::channel::serve(&args, &|name| std::env::var(name).ok()) {
             Ok(exit) => exit,
             Err(refusal) => reply::fail(streams, name.as_str(), refusal),
         },

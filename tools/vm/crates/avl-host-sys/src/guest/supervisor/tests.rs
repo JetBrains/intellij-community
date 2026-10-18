@@ -280,13 +280,13 @@ async fn invoke_agent_reports_the_agents_own_refusal() {
 #[tokio::test]
 async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
     let host = Host::new(GuestOs::Linux);
-    let usage = "usage: vm-guest-agent stage <runtime-root> <manifest> | stage-check <runtime-root> <digest>\n";
+    let usage = "usage: vm-guest-agent stage <runtime-root> <manifest> | gc <root> [<digest>...]\n";
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, usage)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::LaunchPrep,
+            AgentVerb::StageCheck,
             &words(["/vm/runtime"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
@@ -294,7 +294,7 @@ async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
         .unwrap_err();
     assert_eq!(refusal.code, "guest_agent_failed");
     for fragment in [
-        "launch-prep",
+        "stage-check",
         "air-docker-1",
         "exited with 64",
         "usage: vm-guest-agent stage",
@@ -313,13 +313,13 @@ async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
 #[tokio::test]
 async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
     let host = Host::new(GuestOs::Linux);
-    let answer = refused("launch-prep", "usage", "usage: vm-guest-agent launch-prep <runtime-root>");
+    let answer = refused("stage-check", "usage", "usage: vm-guest-agent stage-check <runtime-root> <digest>");
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, &answer)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::LaunchPrep,
+            AgentVerb::StageCheck,
             &[],
             &SpawnOptions::within(Duration::from_mins(1)),
         )
@@ -328,7 +328,7 @@ async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
     assert_eq!(refusal.code, "usage");
     assert_eq!(
         refusal.message,
-        "the guest agent's launch-prep in air-docker-1 refused: usage: vm-guest-agent launch-prep <runtime-root>. \
+        "the guest agent's stage-check in air-docker-1 refused: usage: vm-guest-agent stage-check <runtime-root> <digest>. \
          the installed guest agent does not have this verb or these arguments, which is what an agent older than \
          this controller looks like"
     );

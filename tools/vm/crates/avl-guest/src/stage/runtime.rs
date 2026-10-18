@@ -76,8 +76,8 @@ pub(crate) fn read_classpath(root: &Path) -> std::io::Result<Vec<String>> {
 
 /// Whether every recorded entry is a staged file of this generation.
 ///
-/// One predicate for two answers: the reuse probe reads a false here as "stage again", and `launch-prep` reads it
-/// as a refusal, because a classpath pointing outside the generation is a tree nothing may launch from.
+/// The reuse probe reads a false here as "stage again", because a classpath that points outside the generation is a
+/// tree nothing may launch from.
 pub(crate) fn classpath_is_staged_under(root: &Path, classpath: &[String]) -> bool {
     let lib = root.join("lib");
     classpath.iter().all(|entry| {

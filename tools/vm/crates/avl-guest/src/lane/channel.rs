@@ -1,19 +1,19 @@
 //! The control channel of the lane daemon, and the verb `lane-daemon` that serves it in the run slot of a worker.
 //!
-//! The controller starts the verb through the run supervisor, as it starts the JVM daemon, and reaches it through the
-//! relay. The channel speaks [`avl_wire::daemon::PROTOCOL_VERSION`]: the routes of [`avl_wire::daemon::match_route`],
-//! the token of the state file in `X-Air-Daemon-Token`, one run at a time, and a chunked NDJSON stream on `/run`.
+//! The controller starts the verb through the run supervisor and reaches it through the relay. The channel speaks
+//! [`avl_wire::daemon::PROTOCOL_VERSION`]: the routes of [`avl_wire::daemon::match_route`], the token of the state file
+//! in `X-Air-Daemon-Token`, one run at a time, and a chunked NDJSON stream on `/run`.
 //!
-//! At its boot the verb reads the launch inputs from the runtime descriptor, empties its jar store, binds the channel,
-//! and then publishes the state file `daemon.json`: a temporary file with the mode 0600, renamed. The boot poll of the
-//! controller reads it. The lane services and the lane IDE belong to the [`IdeOwner`]. `/shutdown` refuses new runs,
-//! waits for the run in flight up to [`WEDGE_GRACE`], closes the lane services, and leaves the IDE running. A run that
-//! outlives the grace ends the verb with [`EXIT_WEDGED`].
+//! At its boot the verb reads the launch inputs from the runtime descriptor, makes its directories, empties its jar
+//! store, binds the channel, and then publishes the state file `daemon.json`: a temporary file with the mode 0600,
+//! renamed. The boot poll of the controller reads it. The lane services and the lane IDE belong to the [`IdeOwner`].
+//! `/shutdown` refuses new runs, waits for the run in flight up to [`WEDGE_GRACE`], closes the lane services, and
+//! leaves the IDE running. A run that outlives the grace ends the verb with [`EXIT_WEDGED`].
 
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::net::SocketAddr;
-use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
@@ -52,6 +52,10 @@ pub(crate) const EXIT_WEDGED: u8 = 3;
 
 /// The largest file of the jar push. A context plugin file is the largest, and every one is below it.
 const MAX_JAR_BYTES: usize = 512 << 20;
+/// The variables of the run environment that name a directory of the run: the scratch directory and the outputs
+/// directory. On a worker the controller names both below the scratch directory of the run, and the boot makes them.
+/// A Bazel test has them already.
+const RUN_DIRECTORY_VARIABLES: [&str; 2] = ["TEST_TMPDIR", "TEST_UNDECLARED_OUTPUTS_DIR"];
 
 /// Writes one line of the log of the lane daemon on standard error, which the run supervisor keeps as `run.log`. Each
 /// line starts with the time, so a reader sees where a run spent its time.
@@ -204,10 +208,11 @@ impl Daemon {
     }
 }
 
-/// Serves the control channel until `/shutdown`, and answers the exit status of the verb.
-pub(crate) fn serve(args: &LaneDaemonArgs) -> Result<u8, AgentRefusal> {
+/// Serves the control channel until `/shutdown`, and answers the exit status of the verb. `variable` reads the run
+/// environment.
+pub(crate) fn serve(args: &LaneDaemonArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
     let inputs = inputs::read(args)?;
-    let daemon = Arc::new(boot(args, inputs)?);
+    let daemon = Arc::new(boot(args, inputs, variable)?);
     let channel = bind(&daemon, SocketAddr::new(args.bind, args.port))?;
     publish_state_file(&daemon, channel.address().port())?;
     log(&format!(
@@ -231,7 +236,11 @@ pub(crate) fn serve(args: &LaneDaemonArgs) -> Result<u8, AgentRefusal> {
 }
 
 /// The daemon of `args` over an empty jar store and a fresh state file.
-pub(crate) fn boot(args: &LaneDaemonArgs, inputs: LaunchInputs) -> Result<Daemon, AgentRefusal> {
+///
+/// The boot makes each directory that the daemon and the lane IDE write into, readable only by this account: the jar
+/// store, the iterations, the home, the IDE root, and each directory of [`RUN_DIRECTORY_VARIABLES`] that `variable`
+/// names. A directory that exists keeps its mode.
+pub(crate) fn boot(args: &LaneDaemonArgs, inputs: LaunchInputs, variable: &dyn Fn(&str) -> Option<String>) -> Result<Daemon, AgentRefusal> {
     let daemon = Daemon::new(args.state_dir.clone(), args.launch_digest.clone(), args.port, inputs);
     let failure = |what: &str, path: &Path, error: std::io::Error| {
         AgentRefusal::failure(BOOT_CODE, format!("cannot {what} {}: {error}", path.display()))
@@ -241,8 +250,20 @@ pub(crate) fn boot(args: &LaneDaemonArgs, inputs: LaunchInputs) -> Result<Daemon
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(failure("empty", &jars, error)),
         _ => {}
     }
-    for directory in [jars, args.state_dir.join("iterations")] {
-        fs::create_dir_all(&directory).map_err(|error| failure("create", &directory, error))?;
+    let run_directories = RUN_DIRECTORY_VARIABLES
+        .iter()
+        .filter_map(|name| variable(name))
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from);
+    let directories = [jars, args.state_dir.join("iterations"), args.home.clone(), args.ide_root.clone()]
+        .into_iter()
+        .chain(run_directories);
+    for directory in directories {
+        fs::DirBuilder::new()
+            .recursive(true)
+            .mode(0o700)
+            .create(&directory)
+            .map_err(|error| failure("create", &directory, error))?;
     }
     let state_file = args.state_dir.join(STATE_FILE);
     match fs::remove_file(&state_file) {

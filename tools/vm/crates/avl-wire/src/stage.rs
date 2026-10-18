@@ -74,62 +74,6 @@ pub struct RuntimeReuse {
     pub classpath_file: Option<String>,
 }
 
-// --- preparing the guest for one daemon -------------------------------------------------------------------
-
-/// Everything the guest has to do between a staged generation and a supervisor start: the directories the run
-/// writes into, the previous daemon's state file, and the JVM `@argfile`.
-///
-/// One document rather than three calls: each was a `tart exec`, and on a warm restart two of them were 5.4 s
-/// and 10.6 s of the phase table. `stable_count` and `runtime_digest` make the guest's own `classpath.txt`
-/// usable as input: the guest refuses a generation that does not hold exactly this many entries, so one
-/// collected or half-written between the stage and the launch is a refusal rather than a daemon started with
-/// the wrong jars.
-///
-/// `directories` and `remove_files` are required: an empty list is a request to create nothing, while a
-/// request that never mentioned the field is from a controller this guest does not understand.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LaunchPrep {
-    pub schema_version: u32,
-    /// The generation whose `classpath.txt` the `-cp` token is joined from.
-    pub runtime_digest: String,
-    pub stable_count: u32,
-    /// Absolute guest paths to create, and absolute guest paths to delete if they exist.
-    pub directories: Vec<String>,
-    pub remove_files: Vec<String>,
-    pub arg_file: ArgFileRequest,
-}
-
-/// The half of the `@argfile` the controller decides, plus the digest of the whole.
-///
-/// Every flag, every `-D` property, the main class and the destination are the controller's: `prefix` is those
-/// tokens in order, and the guest appends `-cp <joined>` and `main_class` - it composes, it does not choose.
-/// `sha256` is over the finished bytes ([`arg_file_text`] of the whole token list), computed by the controller
-/// from the classpath the stage reported to it, so the only file a daemon can launch from is one the
-/// controller already knows byte for byte.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ArgFileRequest {
-    pub destination: String,
-    pub prefix: Vec<String>,
-    pub main_class: String,
-    pub sha256: String,
-}
-
-/// What the guest published, in terms the controller can hold against what it asked for.
-///
-/// `bytes` is redundant with `sha256` and reported anyway: when the digests disagree, the length separates "a
-/// truncated write" from "a classpath this controller did not expect", for a reader with no access to the
-/// guest's disk.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LaunchPrepResult {
-    pub arg_file: String,
-    pub sha256: String,
-    pub bytes: u64,
-    pub entries: u32,
-}
-
 // --- garbage collection ----------------------------------------------------------------------------------
 
 /// What a collection removed. Always an array on the wire: an empty list says "nothing to remove", and a null
@@ -144,7 +88,6 @@ pub struct GcResult {
 #[derive(Debug)]
 pub enum StageError {
     InvalidRuntimeManifest,
-    InvalidLaunchPrep,
     /// Not JSON at all.
     Json(serde_json::Error),
 }
@@ -153,7 +96,6 @@ impl fmt::Display for StageError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidRuntimeManifest => f.write_str("invalid runtime stage manifest"),
-            Self::InvalidLaunchPrep => f.write_str("invalid launch preparation request"),
             Self::Json(error) => error.fmt(f),
         }
     }
@@ -163,7 +105,7 @@ impl std::error::Error for StageError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Json(error) => Some(error),
-            _ => None,
+            Self::InvalidRuntimeManifest => None,
         }
     }
 }
@@ -187,22 +129,6 @@ pub fn decode_runtime_manifest(raw: &[u8]) -> Result<RuntimeManifest, StageError
         return Err(StageError::InvalidRuntimeManifest);
     }
     Ok(manifest)
-}
-
-/// Reads a launch-prep request and refuses one the guest cannot act on.
-pub fn decode_launch_prep(raw: &[u8]) -> Result<LaunchPrep, StageError> {
-    let request: LaunchPrep = decode(raw, StageError::InvalidLaunchPrep)?;
-    let arg_file = &request.arg_file;
-    if request.schema_version != SCHEMA_VERSION
-        || !is_sha256_hex(&request.runtime_digest)
-        || request.stable_count == 0
-        || arg_file.destination.is_empty()
-        || arg_file.main_class.is_empty()
-        || !is_sha256_hex(&arg_file.sha256)
-    {
-        return Err(StageError::InvalidLaunchPrep);
-    }
-    Ok(request)
 }
 
 // --- a generation on the guest's disk ---------------------------------------------------------------------
@@ -234,37 +160,8 @@ pub fn classpath_file_text<S: AsRef<str>>(classpath: &[S]) -> String {
 
 /// The classpath a classpath file lists, in classpath order.
 ///
-/// Blank lines are dropped, which makes the trailing newline harmless. The reuse probe and `launch-prep` both count
-/// the entries against what the controller remembers, so they read the file through this one function.
+/// Blank lines are dropped, which makes the trailing newline harmless. The reuse probe counts the entries against
+/// what the controller remembers, so it reads the file through this one function.
 pub fn parse_classpath_file(text: &str) -> Vec<String> {
     text.split('\n').filter(|line| !line.is_empty()).map(str::to_owned).collect()
-}
-
-// --- the `@argfile` ---------------------------------------------------------------------------------------
-//
-// The byte format of a JVM `@argfile`, on the wire because both halves write one: the guest joins its own
-// staged list into the `-cp` token and renders the file, while the controller renders the same tokens locally
-// to know what digest to expect. A disagreement about how a backslash is escaped is a refused start on every
-// launch, so the rule exists once, here.
-
-/// Spells one token the way the JVM's `@argfile` reader expects.
-///
-/// Everything is quoted, including tokens that need no quoting, because the alternative is a rule deciding
-/// which ones do - and a staged path containing a space is ordinary on macOS. The backslash is doubled before
-/// the quote is escaped; the other order escapes the escapes.
-pub fn quote_for_arg_file(token: &str) -> String {
-    let escaped = token.replace('\\', "\\\\").replace('"', "\\\"");
-    format!("\"{escaped}\"")
-}
-
-/// The exact bytes a JVM reads from `@<path>`: one quoted token per line, and no trailing newline.
-///
-/// The absence of that newline is contract rather than taste: the bytes are what [`ArgFileRequest::sha256`]
-/// is taken over, so a newline added on one side is a launch the other side refuses.
-pub fn arg_file_text<S: AsRef<str>>(tokens: &[S]) -> String {
-    tokens
-        .iter()
-        .map(|token| quote_for_arg_file(token.as_ref()))
-        .collect::<Vec<_>>()
-        .join("\n")
 }

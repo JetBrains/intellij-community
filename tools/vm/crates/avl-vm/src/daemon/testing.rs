@@ -30,12 +30,12 @@ use avl_host_sys::{Ctx, GuestStream, Interrupts, ProcessTable, Runner};
 use avl_host_testkit::agent::{active_reply, agent_reply, argv_value, run_state};
 use avl_host_testkit::answer::base_name;
 use avl_host_testkit::{
-    Answer, ConnectHandler, FakeChannel, FakeGuests, FakeProcesses, HostPool, PinnedBazel, Verbs, answer_text, failed, handler, said,
+    Answer, ConnectHandler, FakeChannel, FakeGuests, FakeProcesses, HostPool, PinnedBazel, Verbs, answer_text, failed, handler,
     serve_on_connect,
 };
 use avl_wire::daemon::{self as wire, Route};
 use avl_wire::progress::{Kind, Record, Verdict};
-use avl_wire::stage::{LaunchPrepResult, RuntimeResult, arg_file_text, decode_launch_prep};
+use avl_wire::stage::RuntimeResult;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -44,7 +44,6 @@ use hyper::body::Bytes;
 use hyper_util::rt::TokioIo;
 use hyper_util::service::TowerToHyperService;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 use tokio::io::DuplexStream;
 use tokio_util::sync::CancellationToken;
 
@@ -970,11 +969,10 @@ impl DaemonFixture {
                 handler(move |argv, _| Ok(agent_reply(verb, &run_state(argv_value(argv, "--run"), phase)))),
             );
         }
-        let staged_classpath = vec![format!("{generation}/classpath/000.jar"), format!("{generation}/classpath/001.jar")];
         let result = RuntimeResult {
             root: generation.clone(),
             java_binary: format!("{generation}/jbr/bin/java"),
-            classpath: staged_classpath.clone(),
+            classpath: vec![format!("{generation}/classpath/000.jar"), format!("{generation}/classpath/001.jar")],
             classpath_file: format!("{generation}/classpath.txt"),
             reused: false,
         };
@@ -993,33 +991,6 @@ impl DaemonFixture {
                     "runfiles-tree",
                     &json!({"root": root, "digest": "d", "entries": 1, "reused": true}),
                 ))
-            }),
-        );
-        // The launch-prep double does what the guest does: it decodes the request and renders the @-file from the
-        // classpath the stage above reported. A double that echoed the requested digest back would agree with the
-        // controller no matter what either half actually rendered, which is the one thing this reply proves.
-        self.on(
-            "launch-prep",
-            handler(move |_, options| {
-                let stdin = options.stdin.as_deref().unwrap_or_default();
-                let request = match decode_launch_prep(stdin) {
-                    Ok(request) => request,
-                    Err(error) => {
-                        return Ok(failed(70, &error.to_string()));
-                    }
-                };
-                let mut tokens = request.arg_file.prefix.clone();
-                tokens.push("-cp".to_owned());
-                tokens.push(staged_classpath.join(":"));
-                tokens.push(request.arg_file.main_class.clone());
-                let content = arg_file_text(&tokens);
-                let answer = LaunchPrepResult {
-                    arg_file: request.arg_file.destination,
-                    sha256: hex::encode(Sha256::digest(content.as_bytes())),
-                    bytes: content.len() as u64,
-                    entries: u32::try_from(staged_classpath.len()).expect("a staged classpath fits a u32"),
-                };
-                Ok(said(&serde_json::to_string(&answer).expect("a launch-prep result encodes")))
             }),
         );
         self.on("cat", answer_text(self.daemon.state_file_json()));

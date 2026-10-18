@@ -404,3 +404,34 @@ fn a_fresh_preparation_keeps_the_evidence_of_a_stopped_ide() {
     );
     assert!(Path::new(&second.log_dir).is_dir());
 }
+
+/// The publish renames a private temporary file onto the destination, so the IDE reads a whole file or none. An
+/// in-place write would keep the mode 0644 of the destination, and a publish that left its temporary file would leave
+/// two files.
+#[test]
+fn a_publish_replaces_the_file_atomically_and_privately() {
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
+
+    let root = tempfile::tempdir().unwrap();
+    let destination = root.path().join(ARG_FILE);
+    fs::write(&destination, "the previous launch\n").unwrap();
+    fs::set_permissions(&destination, fs::Permissions::from_mode(0o644)).unwrap();
+    let inode = fs::metadata(&destination).unwrap().ino();
+
+    publish_privately(&destination, b"the next launch").unwrap();
+    assert_eq!(fs::read_to_string(&destination).unwrap(), "the next launch");
+    let info = fs::metadata(&destination).unwrap();
+    assert_eq!(info.permissions().mode() & 0o777, 0o600);
+    assert_ne!(info.ino(), inode, "the previous file was written over in place");
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1, "the publish left a temporary file");
+
+    // A destination that no file can be renamed onto fails, and still leaves no temporary file.
+    let blocked = root.path().join("occupied");
+    fs::create_dir_all(blocked.join("child")).unwrap();
+    publish_privately(&blocked, b"refused").unwrap_err();
+    assert_eq!(
+        fs::read_dir(root.path()).unwrap().count(),
+        2,
+        "a failed publish left a temporary file"
+    );
+}

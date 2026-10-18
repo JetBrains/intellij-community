@@ -1,4 +1,4 @@
-//! The Bazel runtime descriptor a daemon is launched from, and the JVM @-file built out of it.
+//! The Bazel runtime descriptor a daemon is launched from.
 //!
 //! The far end is Starlark: `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` writes the document, and its
 //! `_SCHEMA_VERSION` is [`SCHEMA_VERSION`]. A refusal here is a [`DescriptorError`], whose code is agent-facing.
@@ -63,11 +63,6 @@ pub mod code {
     pub const DUPLICATE_LOGICAL_PATH: &str = "daemon_runtime_duplicate_logical_path";
     /// A descriptor built for a different guest; see [`super::parse_runtime_descriptor`].
     pub const PLATFORM_MISMATCH: &str = "daemon_runtime_platform_mismatch";
-    /// A JVM flag that still names the runfiles tree at the point where it is written into an @-file. The host
-    /// tree is not mounted in the guest, and the flag would silently name nothing.
-    pub const FLAG_UNRESOLVED: &str = "daemon_runtime_flag_unresolved";
-    /// A staged classpath that does not correspond to the descriptor's, entry for entry.
-    pub const DAEMON_STAGE_INVALID: &str = "daemon_runtime_stage_invalid";
     /// A context plugin file whose destination is not a file inside a plugin directory, or that a second file claims
     /// too. The daemon joins the destination onto the plugin directory of the IDE context, so one that escapes is a
     /// write outside that directory.
@@ -80,10 +75,7 @@ pub mod code {
     pub const LANE_INPUT_STAGED: &str = "daemon_runtime_lane_input_staged";
 }
 
-/// The token the descriptor's flags carry where the host runfiles root belongs.
-const RUNFILES_ROOT_TOKEN: &str = "${RUNFILES_ROOT}";
-
-/// Why a descriptor, or the @-file built out of one, is refused.
+/// Why a descriptor is refused.
 ///
 /// `code` is one of [`code`], agent-facing. Every one of them is the far end of the contract being unreadable, so
 /// a caller retries none of them.
@@ -583,77 +575,4 @@ pub fn runfiles_root(descriptor_path: &Path) -> PathBuf {
 /// Where one declared runfile actually is on the host.
 pub fn runtime_file_path(runfiles_root: &Path, file: &RuntimeFile) -> PathBuf {
     runfiles_root.join(&file.logical_path)
-}
-
-// --- the daemon @-file ----------------------------------------------------------------------------------------
-
-/// What a lane contributes to the daemon's own @-file.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct LaunchOptions {
-    /// The guest-local directory the JVM writes temporaries into. Named explicitly because the default is the
-    /// guest's shared `/tmp`, and two workers on one host would then collide there.
-    pub test_tmp_dir: String,
-    pub extra_flags: Vec<String>,
-}
-
-/// Every @-file token that precedes the classpath: the tmpdir, the descriptor's static flags with their runfiles
-/// root substituted, and the lane's own.
-///
-/// These are exactly the tokens that cross to the guest in `stage::ArgFileRequest::prefix` - the guest
-/// appends `-cp` and the main class and renders the file itself. [`daemon_launch_arg_file`] is built from this
-/// rather than restating it: a second spelling of this order would be a launch whose digest the controller
-/// computed over tokens it did not send.
-pub fn daemon_launch_prefix(
-    descriptor: &RuntimeDescriptor,
-    runfiles_root: &Path,
-    options: &LaunchOptions,
-) -> Result<Vec<String>, DescriptorError> {
-    let unresolved = |detail: &str| descriptor_error(code::FLAG_UNRESOLVED, "<loaded>", detail);
-    let root = runfiles_root
-        .to_str()
-        .ok_or_else(|| unresolved("the runfiles root is not UTF-8, so no JVM flag can name it"))?;
-    let mut prefix = Vec::with_capacity(descriptor.static_jvm_flags.len() + options.extra_flags.len() + 1);
-    prefix.push(format!("-Djava.io.tmpdir={}", options.test_tmp_dir));
-    for flag in &descriptor.static_jvm_flags {
-        let resolved = flag.replace(RUNFILES_ROOT_TOKEN, root);
-        // After the substitution, so the only way to trip it is a runfiles root that itself names the token - not
-        // a paranoid case: the root is derived from a descriptor path a caller supplied, and shipping the literal
-        // token to a JVM is a flag that names a directory nothing created.
-        if resolved.contains(RUNFILES_ROOT_TOKEN) {
-            return Err(unresolved("a JVM flag still contains an unresolved RUNFILES_ROOT token"));
-        }
-        prefix.push(resolved);
-    }
-    prefix.extend(options.extra_flags.iter().cloned());
-    Ok(prefix)
-}
-
-/// The exact JVM @-file of the daemon, from the declared flags and the staged, guest-local stable classpath.
-///
-/// Still built in full even though the guest writes the file: these bytes are what the digest the guest's reply
-/// is held against is taken over (`stage::ArgFileRequest::sha256`).
-pub fn daemon_launch_arg_file(
-    descriptor: &RuntimeDescriptor,
-    runfiles_root: &Path,
-    stable_classpath: &[String],
-    options: &LaunchOptions,
-) -> Result<String, DescriptorError> {
-    // Counted rather than trusted: the staged list comes back from the guest, and a stage that materialized fewer
-    // jars than it was asked for would produce a classpath that boots and then fails to find a class, which reads
-    // as a test failure rather than as a broken stage.
-    if stable_classpath.len() != descriptor.classpath.stable.len() {
-        return Err(DescriptorError::new(
-            code::DAEMON_STAGE_INVALID,
-            format!(
-                "staged classpath has {} entries, expected {}",
-                stable_classpath.len(),
-                descriptor.classpath.stable.len()
-            ),
-        ));
-    }
-    let mut tokens = daemon_launch_prefix(descriptor, runfiles_root, options)?;
-    tokens.push("-cp".to_owned());
-    tokens.push(stable_classpath.join(":"));
-    tokens.push(descriptor.main_class.clone());
-    Ok(crate::stage::arg_file_text(&tokens))
 }
