@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -193,18 +194,22 @@ public final class EditorHyperlinkSupport {
     @Nullable Project project,
     boolean trackDocumentChangesManually
   ) {
-    EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
-    if (instance == null) {
-      synchronized (LOCK) {
-        instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
-        if (instance == null) {
-          assert project != null;
-          instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
-          editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
-        }
-      }
+    EditorHyperlinkSupport cached = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+    if (cached != null) {
+      return cached;
     }
-    return instance;
+    return EditorThreading.compute(() -> {
+      // acquire the read action before `LOCK` to avoid deadlocks
+      synchronized (LOCK) {
+        EditorHyperlinkSupport created = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+        if (created == null) {
+          assert project != null;
+          created = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
+          editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, created);
+        }
+        return created;
+      }
+    });
   }
 
   public void clearHyperlinks() {
