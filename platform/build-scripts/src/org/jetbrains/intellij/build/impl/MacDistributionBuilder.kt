@@ -673,6 +673,7 @@ private fun prepareDmgBuildScripts(tempDir: Path, staple: Boolean, customizer: M
   NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
   Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  Files.copy(scriptsDir.resolve("retry.sh"), tempDir.resolve("retry.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   val entrypoint = tempDir.resolve("build.sh")
   Files.writeString(
     entrypoint,
