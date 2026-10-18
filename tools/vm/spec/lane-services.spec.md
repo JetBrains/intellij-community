@@ -110,10 +110,8 @@ lane secret with the purpose `air-lane-services`, and the IDE reads it from `lan
   [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServicesClientTest.kt
 
 - Each service answers the script of the golden `testdata/lane-services/control-exchanges.json` with the recorded
-  status and the recorded answer. The services of the test process answer the same script until the lane daemon
-  serves every lane.
+  status and the recorded answer.
   [@test] ../crates/avl-guest/src/lane/services/tests.rs
-  [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServiceRoutesTest.kt
 
 - One client in the IDE reads and arms the four services. It decodes every recorded answer of the golden, and its
   refusal names the service, the status and the code. A wait of the client fails at its deadline and names the wait.

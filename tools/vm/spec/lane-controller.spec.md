@@ -491,7 +491,6 @@ values to the IDE as files, so the IDE computes no secret.
 - The config key hashes one line for each input. The first lines are the lane, the digest of the lane document and
   the product stamp. Then come each CLI runtime by its name and the digest of the option file templates.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`the_identity_of_the_fixed_key_is_the_golden`)
-  [@test] ../../../../plugins/air/tests/integration/contract/test/flow/AirLaneDigestTest.kt
 
 - A blank product stamp is no stamp. The key is `air-`, the lowercase lane, a dash and 16 hex digits.
   [@test] ../crates/avl-guest/src/lane/identity/tests.rs (`a_lane_without_a_stamp_states_no_stamp_line_and_its_prefix_is_the_lowercase_lane`)
