@@ -136,7 +136,10 @@ class ReusedExtension : BeforeAllCallback,
     val recovery = IdeStateRecovery(
       strategy = strategy,
       extensionContext = extensionContext,
-      testContext = cachedTestContext.createCurrentTestContext(contextDirName),
+      testContext = cachedTestContext.createCurrentTestContext(contextDirName).applyVMOptionsPatch {
+        // Recovery reopens the project before each test, and waits for the background post-startup activities.
+        addSystemProperty("ide.background.post.startup.activity.delay", 0)
+      },
       runTimeout = ideRunTimeout(extensionContext.requiredTestClass),
       baseline = ReusedSessionBaseline.of(cachedTestContext),
     )

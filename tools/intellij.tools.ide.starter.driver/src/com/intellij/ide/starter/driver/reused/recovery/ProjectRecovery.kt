@@ -158,6 +158,23 @@ private fun Driver.waitForProjectInitialized(project: Project) {
   }
 }
 
+/**
+ * Waits until [project] has applied its project model files.
+ *
+ * A project that opens from the workspace model cache loads its `iml` and `xml` files later, in the background. That
+ * load replaces a change that the test makes before it ends.
+ */
+private fun Driver.waitForProjectModelFilesLoaded(project: Project) {
+  val basePath = project.getBasePath()
+  waitFor(
+    message = "Project model files are loaded: $basePath",
+    timeout = INDEXES_TIMEOUT,
+    errorMessage = { "Project model files are not loaded: $basePath" },
+  ) {
+    utility<JpsProjectLoadingManager>().getInstance(project).isProjectLoaded()
+  }
+}
+
 internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
   val projects = getOpenProjects(RdTarget.BACKEND)
   if (projects.isEmpty()) {
@@ -168,6 +185,7 @@ internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
   logOutput("[ReusedRecovery] Waiting for open projects to have no pending indexing work before $reason: ${projects.joinToString(", ")}")
   projects.forEach { project ->
     waitForProjectInitialized(project)
+    waitForProjectModelFilesLoaded(project)
     val basePath = project.getBasePath()
     val dumbService = utility<DumbServiceImpl>().getInstance(project)
     // Smart mode can be observed before required startup dumb tasks are submitted, so force submission before inspecting queues.
@@ -200,6 +218,16 @@ internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
 private fun Driver.updateLastProjectPath() {
   logOutput("[ReusedRecovery] Updating RecentProjectsManager last project path")
   utility<RecentProjectsManagerBase>().getInstanceEx().updateLastProjectPath()
+}
+
+@Remote("com.intellij.workspaceModel.ide.JpsProjectLoadingManager", rdTarget = RdTarget.BACKEND)
+private interface JpsProjectLoadingManager {
+  fun getInstance(project: Project): JpsProjectLoadingManagerImpl
+}
+
+@Remote("com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl", rdTarget = RdTarget.BACKEND)
+private interface JpsProjectLoadingManagerImpl {
+  fun isProjectLoaded(): Boolean
 }
 
 @Remote("com.intellij.openapi.project.ex.ProjectManagerEx", rdTarget = RdTarget.BACKEND)
