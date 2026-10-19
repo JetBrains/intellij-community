@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.plugins.gradle
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RdTarget
+import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.waitForIndicators
@@ -21,6 +22,7 @@ fun Driver.importGradleProject(project: Project? = null, completionTimeout: Dura
     val forProject = project ?: singleProject()
     this.utility(ImportGradleProjectUtil::class).importProject(forProject)
 
-    waitForIndicators(forProject, completionTimeout)
+    @OptIn(ManualWaitForIndicators::class)
+    waitForIndicators(forProject, completionTimeout, waitSmartLongEnough = false)
   }
 }
