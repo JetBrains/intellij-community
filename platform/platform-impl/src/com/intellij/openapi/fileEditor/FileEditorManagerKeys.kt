@@ -62,6 +62,8 @@ object FileEditorManagerKeys {
   /**
    * Prohibits showing the [VirtualFile] in two [FileEditor] simultaneously.
    * The new [openFile] requests will close old editors before opening a new one.
+   * [com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.RIGHT_SPLIT] does not do this.
+   * It selects the open editor in its window.
    *
    * Works on [VirtualFile] objects
    */

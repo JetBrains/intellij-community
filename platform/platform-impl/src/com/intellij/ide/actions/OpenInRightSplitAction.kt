@@ -94,7 +94,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
      */
     @Internal
     fun canOpenInRightSplit(project: Project, file: VirtualFile): Boolean {
-      return !FileEditorManagerImpl.forbidSplitFor(file) || !FileEditorManagerEx.getInstanceEx(project).isFileOpen(file)
+      return FileEditorManagerImpl.isRightSplitAvailable(FileEditorManagerEx.getInstanceEx(project), file)
     }
 
     /**

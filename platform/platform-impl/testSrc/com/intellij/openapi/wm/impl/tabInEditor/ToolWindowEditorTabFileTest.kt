@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -176,6 +178,29 @@ class ToolWindowEditorTabFileTest {
 
       assertThat(file.isValid).isTrue()
     }
+
+  @Test
+  fun `the right split keeps an open tab in its window`(): Unit = timeoutRunBlocking {
+    val content = withContext(Dispatchers.UiWithModelAccess) { createTabContent() }
+    val (file, window, composite) = withContext(Dispatchers.UiWithModelAccess) {
+      val file = createTabFile(project = project, toolWindowId = "TestToolWindow", content = content)
+      manager.openFile(file, true)
+      val window = requireNotNull(manager.currentWindow)
+      Triple(file, window, requireNotNull(window.getComposite(file)))
+    }
+
+    val result = manager.openFile(
+      file = file,
+      options = FileEditorOpenOptions(openMode = FileEditorManagerImpl.OpenMode.RIGHT_SPLIT, requestFocus = true),
+    )
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      assertThat(result).isSameAs(composite)
+      assertThat(manager.windows).containsExactly(window)
+      assertThat(file.isValid).isTrue()
+      assertThat(file.attachedContent(project)).isSameAs(content)
+    }
+  }
 
   @Test
   fun `invalidate marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
