@@ -27,3 +27,8 @@ fun Driver.getContentEntries(module: Module): List<ContentEntry> {
 fun Driver.getOrderEntries(module: Module): List<OrderEntry> {
   return utility<ModuleRootManager>().getInstance(module).getOrderEntries().toList()
 }
+
+/** The presentable names of the order entries of every module of [project], for example the name of the module SDK. */
+fun Driver.moduleOrderEntryNames(project: Project? = null): List<String> = withReadAction {
+  getModules(project).flatMap { module -> getOrderEntries(module).map { it.getPresentableName() } }
+}
