@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -13,7 +14,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -136,7 +136,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testMultiJDKConflict() {
-    String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);
@@ -159,7 +159,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSameFQNClasses() {
-    String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);
@@ -170,7 +170,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSameClassesInSourceAndLib() {
-    String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
+    String path = JavaTestUtil.getJavaTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);

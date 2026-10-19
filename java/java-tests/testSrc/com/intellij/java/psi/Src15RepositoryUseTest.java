@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
@@ -49,7 +49,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     super.setUp();
 
     IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
-    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/src15";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure( root);
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -21,8 +22,8 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final Pattern PATTERN = Pattern.compile("/\\*_(.*)\\*/");
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ipp/com/siyeh/ipp/" + getRelativePath();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ipp/com/siyeh/ipp/" + getRelativePath();
   }
 
   @NonNls

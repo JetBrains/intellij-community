@@ -15,8 +15,8 @@ public class RecursiveCallLineMarkerTest extends LightJavaCodeInsightFixtureTest
   
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/recursive";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/recursive";
   }
 
   public void testQualifiedCall() {

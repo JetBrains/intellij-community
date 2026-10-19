@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -27,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/junit/simplifiable_junit_assertion";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/junit/simplifiable_junit_assertion";
   }
 
   public void testSimplifiableJUnitAssertion() {

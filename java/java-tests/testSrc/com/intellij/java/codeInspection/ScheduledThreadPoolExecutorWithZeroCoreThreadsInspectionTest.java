@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/scheduledThreadPoolExecutorWithZeroCoreThreads";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/scheduledThreadPoolExecutorWithZeroCoreThreads";
   }
 
   @Override

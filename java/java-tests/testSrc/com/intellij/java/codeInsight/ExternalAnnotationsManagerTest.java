@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,7 +109,10 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   public void testBundledAnnotationXmlSyntax() {
-    findAnnotationsXmlAndCheckSyntax(PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations/resources");
+    String path = BazelTestUtil.isUnderBazelTest()
+                  ? BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/jdkAnnotations/resources").toString()
+                  : PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations/resources";
+    findAnnotationsXmlAndCheckSyntax(path);
   }
 
   private void findAnnotationsXmlAndCheckSyntax(String root) {

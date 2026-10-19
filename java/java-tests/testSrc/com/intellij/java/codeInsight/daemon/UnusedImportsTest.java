@@ -14,8 +14,8 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports/";
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   @Override

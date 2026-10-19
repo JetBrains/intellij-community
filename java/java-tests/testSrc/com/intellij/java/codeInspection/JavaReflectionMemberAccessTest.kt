@@ -17,7 +17,7 @@ class JavaReflectionMemberAccessTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_8 // older mock JREs are missing some bits
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
 
   fun testFields() = doTest()
   fun testMethods() = doTest()

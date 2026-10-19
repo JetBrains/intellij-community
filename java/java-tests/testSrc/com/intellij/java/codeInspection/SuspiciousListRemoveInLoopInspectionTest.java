@@ -17,7 +17,7 @@ public class SuspiciousListRemoveInLoopInspectionTest extends LightJavaInspectio
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/listRemoveInLoop/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/listRemoveInLoop/";
   }
 }

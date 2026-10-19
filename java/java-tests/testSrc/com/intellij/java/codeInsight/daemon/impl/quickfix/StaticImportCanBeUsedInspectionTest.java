@@ -338,8 +338,8 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/staticImportCanBeUsed/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/staticImportCanBeUsed/";
   }
 
   @SuppressWarnings("SameParameterValue")

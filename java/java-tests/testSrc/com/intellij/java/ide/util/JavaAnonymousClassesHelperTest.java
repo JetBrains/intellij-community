@@ -67,7 +67,7 @@ public class JavaAnonymousClassesHelperTest extends LightJavaCodeInsightFixtureT
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/anonymous/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/anonymous/";
   }
 }

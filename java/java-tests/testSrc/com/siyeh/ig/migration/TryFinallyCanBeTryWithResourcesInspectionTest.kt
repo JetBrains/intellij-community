@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration
 
+import com.intellij.JavaTestUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.javaCodeInsightFixture
@@ -41,6 +42,7 @@ class TryFinallyCanBeTryWithResourcesInspectionTest {
 
   @BeforeEach
   fun setUp() {
+    fixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/migration/try_finally_can_be_try_with_resources"
     fixture.enableInspections(TryFinallyCanBeTryWithResourcesInspection())
   }
 

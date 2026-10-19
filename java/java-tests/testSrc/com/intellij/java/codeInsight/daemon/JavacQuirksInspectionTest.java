@@ -20,8 +20,8 @@ public class JavacQuirksInspectionTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/javacQuirks";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/javacQuirks";
   }
 
   public void testMethodReferenceRefersInaccessibleType() {

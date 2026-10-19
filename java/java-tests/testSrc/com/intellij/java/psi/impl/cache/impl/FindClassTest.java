@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -198,7 +198,7 @@ public class FindClassTest extends JavaPsiTestCase {
       Module module2 = modifiableModel.newModule("a.iml", JavaModuleType.getModuleType().getId());
       newModules.add(module2);
       ModuleRootModificationUtil.addDependency(module2, getModule());
-      File repoLib = new File(PathManagerEx.getTestDataPath(), "/psi/cls/repo/");
+      File repoLib = new File(JavaTestUtil.getJavaTestDataPath(), "/psi/cls/repo/");
       VirtualFile repoRoot = StandardFileSystems.local().findFileByPath(repoLib.getAbsolutePath());
       assertNotNull(repoRoot);
       ModuleRootModificationUtil.addModuleLibrary(module2, repoRoot.getUrl());

@@ -15,13 +15,17 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 
 public class SdkEqualityTest extends LightPlatformTestCase {
   public void testSdkEquality() {
     Sdk jdk8 = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_1_8.toJavaVersion());
     Sdk jdk8_copy = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_1_8.toJavaVersion());
 
-    String someRandomStrangePath = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/resources/javax";
+    String someRandomStrangePath = FileUtil.toSystemIndependentName(
+      BazelTestUtil.isUnderBazelTest()
+      ? BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/jdkAnnotations/resources/javax").toString()
+      : PlatformTestUtil.getCommunityPath() + "/java/jdkAnnotations/resources/javax");
     VirtualFile root = StandardFileSystems.local().findFileByPath(someRandomStrangePath);
     Sdk jdk8_annotated = PsiTestUtil.addRootsToJdk(jdk8, AnnotationOrderRootType.getInstance(), root);
 

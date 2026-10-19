@@ -15,12 +15,12 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.FileInEditorProcessor;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.TextRangeType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
@@ -95,6 +95,6 @@ public class JavaDetectableIndentsTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }

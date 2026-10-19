@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.editor.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
@@ -9,7 +10,6 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder;
 import com.intellij.find.FindManager;
 import com.intellij.java.codeInsight.folding.JavaFoldingTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -426,7 +426,7 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
   public void testEmptyMethod() { doTest(); }
 
   private void doTest() {
-    myFixture.testFolding(PathManagerEx.getTestDataPath() + "/codeInsight/folding/" + getTestName(false) + ".java");
+    myFixture.testFolding(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/folding/" + getTestName(false) + ".java");
   }
 
   public void test_custom_folding_IDEA_122715_and_IDEA_87312() {

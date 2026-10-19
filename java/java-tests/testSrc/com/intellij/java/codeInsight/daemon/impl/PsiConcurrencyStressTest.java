@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -8,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,7 +48,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     super.setUp();
 
     IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
-    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/src";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure( root);
   }

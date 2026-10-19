@@ -2,7 +2,6 @@
 package com.intellij.java.configurationStore
 
 import com.intellij.ide.actions.convertToDirectoryBasedFormat
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.project.stateStore
 import com.intellij.testFramework.TemporaryDirectory
@@ -23,8 +22,8 @@ class SaveAsDirectoryBasedFormatActionTest : BareTestFixtureTestCase() {
 
   @Test
   fun `convert sample project to directory based format`() = runBlocking {
-    val projectFile = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
-    val projectDir = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
+    val projectFile = jpsModelSerializationTestDataRoot.resolve("sampleProject-ipr/sampleProject.ipr")
+    val projectDir = jpsModelSerializationTestDataRoot.resolve("sampleProject")
     loadProjectAndCheckResults(listOf(projectFile), tempDirectory) { project ->
       val store = project.stateStore
       val baseDir = store.projectFilePath.parent

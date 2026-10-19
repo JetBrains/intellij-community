@@ -15,7 +15,7 @@ public class IdempotentLoopBodyInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath()+"/inspection/idempotentLoopBody";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath()+"/inspection/idempotentLoopBody";
   }
 }

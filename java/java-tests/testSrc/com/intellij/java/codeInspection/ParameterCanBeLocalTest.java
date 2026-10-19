@@ -7,8 +7,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class ParameterCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/parameterCanBeLocal";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/parameterCanBeLocal";
   }
 
   private void doTest() {

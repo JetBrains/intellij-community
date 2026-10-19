@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightUnnamedVariablesHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingUnnamed";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingUnnamed";
   }
 
   @Override

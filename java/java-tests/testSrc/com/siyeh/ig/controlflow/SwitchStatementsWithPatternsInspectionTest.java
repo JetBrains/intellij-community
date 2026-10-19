@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -11,8 +12,8 @@ public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspect
   private final SwitchStatementsWithoutDefaultInspection myInspection = new SwitchStatementsWithoutDefaultInspection();
 
   @Override
-  protected String getBasePath() {
-    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/controlflow/switch_statements_with_patterns";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/controlflow/switch_statements_with_patterns";
   }
 
   public void testIgnoreExhaustiveSwitchStatementsTrue() {

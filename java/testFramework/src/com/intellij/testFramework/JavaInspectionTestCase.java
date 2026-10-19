@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEP;
@@ -17,7 +18,6 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
@@ -229,6 +229,6 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
 
   @Override
   protected @NonNls String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/inspection/";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/";
   }
 }

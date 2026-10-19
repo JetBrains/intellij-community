@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.StubBuilder;
@@ -26,7 +26,7 @@ public class JavaStubBuilderPerformanceTest extends LightIdeaTestCase {
 
 
   public void testPerformance() throws IOException {
-    String path = PathManagerEx.getTestDataPath() + "/psi/stub/StubPerformanceTest.java";
+    String path = JavaTestUtil.getJavaTestDataPath() + "/psi/stub/StubPerformanceTest.java";
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -19,8 +20,8 @@ public class TooBroadScopeInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/dataflow/scope";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/dataflow/scope";
   }
 
   @Override

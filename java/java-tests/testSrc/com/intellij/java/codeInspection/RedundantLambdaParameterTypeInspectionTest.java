@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class RedundantLambdaParameterTypeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantLambdaParameterType";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantLambdaParameterType";
   }
 
   @NotNull

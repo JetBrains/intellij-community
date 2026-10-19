@@ -9,7 +9,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
 
   fun testInExpression() = doTest()
   fun testInStatement() = doTest()

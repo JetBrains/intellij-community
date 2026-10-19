@@ -1,5 +1,6 @@
 package com.siyeh.ig.assignment;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
@@ -26,7 +27,7 @@ public class AssignmentToMethodParameterInspectionTest extends LightJavaInspecti
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/assignment/method_parameter";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/assignment/method_parameter";
   }
 }

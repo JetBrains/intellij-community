@@ -17,7 +17,7 @@ public class WrapperTypeMayBePrimitiveInspectionTest extends LightJavaInspection
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/wrapperTypeMayBePrimitive/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/wrapperTypeMayBePrimitive/";
   }
 }

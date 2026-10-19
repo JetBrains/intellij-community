@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class NavigateToApparentlyAccessedElementFixTest extends LightQuickFixParameterizedTestCase {
@@ -22,6 +21,6 @@ public class NavigateToApparentlyAccessedElementFixTest extends LightQuickFixPar
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH;
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/";
   }
 }

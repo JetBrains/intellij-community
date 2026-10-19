@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
@@ -34,6 +34,6 @@ public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
+    return JavaTestUtil.getJavaTestDataPath() + "/ig";
   }
 }

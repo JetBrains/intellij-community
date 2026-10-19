@@ -15,6 +15,7 @@
  */
 package com.intellij.java.slicer;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
@@ -53,8 +54,8 @@ public class SliceBackwardTest extends SliceTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/codeInsight/slice/backward/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/slice/backward/";
   }
 
   private void doTest(@NotNull String filter, @NotNull String @NotNull... stack) throws Exception {

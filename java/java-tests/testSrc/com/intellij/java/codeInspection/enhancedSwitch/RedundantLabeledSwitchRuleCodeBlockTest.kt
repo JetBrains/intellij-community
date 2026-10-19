@@ -12,7 +12,7 @@ class RedundantLabeledSwitchRuleCodeBlockTest  : LightJavaCodeInsightFixtureTest
       RedundantLabeledSwitchRuleCodeBlockInspection())
   }
   
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantLabeledSwitchRuleCodeBlock"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantLabeledSwitchRuleCodeBlock"
 
   fun testInExpression() = doTest()
   fun testInStatement() = doTest()

@@ -4,7 +4,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.internationalization.ConvertToBasicLatinInspection;
@@ -13,6 +15,10 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.getFileFromBazelRuntime(BazelLabel.Companion.fromString("@community//plugins/java-i18n:testData"))
+        .resolve("quickFix/convertToBasicLatin").toString();
+    }
     return PathManager.getCommunityHomePath() + "/plugins/java-i18n/testData/quickFix/convertToBasicLatin";
   }
 

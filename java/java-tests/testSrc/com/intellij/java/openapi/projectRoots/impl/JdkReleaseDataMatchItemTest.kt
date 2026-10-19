@@ -9,7 +9,9 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListParser
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPlatform
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.BazelTestUtil
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -143,7 +145,13 @@ class JdkReleaseDataMatchItemTest : UsefulTestCase() {
   }
 
   private fun loadFeed(name: String): JsonObject {
-    val rawData = Files.readString(PathManagerEx.findFileUnderCommunityHome("platform/lang-impl/testData/jdkDownload/$name").toPath())
+    val file = if (BazelTestUtil.isUnderBazelTest) {
+      BazelTestUtil.getFileFromBazelRuntime(BazelLabel.fromString("@community//platform/lang-impl:testData")).resolve("jdkDownload/$name")
+    }
+    else {
+      PathManagerEx.findFileUnderCommunityHome("platform/lang-impl/testData/jdkDownload/$name").toPath()
+    }
+    val rawData = Files.readString(file)
     return Json.decodeFromString<JsonElement>(rawData).jsonObject
   }
 }

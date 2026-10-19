@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class AtomicReferenceImplicitUsageTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_8
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/atomicReferenceImplicitUsage/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/atomicReferenceImplicitUsage/"
 
   override fun setUp() {
     super.setUp()

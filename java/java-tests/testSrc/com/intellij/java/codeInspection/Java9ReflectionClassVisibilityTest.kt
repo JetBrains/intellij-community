@@ -25,7 +25,7 @@ import com.intellij.openapi.util.io.FileUtil
 
 class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/java9ReflectionClassVisibility"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9ReflectionClassVisibility"
 
   override fun setUp() {
     super.setUp()

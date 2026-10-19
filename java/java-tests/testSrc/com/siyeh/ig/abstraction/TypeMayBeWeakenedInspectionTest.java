@@ -58,8 +58,8 @@ public interface Supplier<T> {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/ig/com/siyeh/igtest/abstraction/weaken_type";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/abstraction/weaken_type";
   }
 
   @NotNull

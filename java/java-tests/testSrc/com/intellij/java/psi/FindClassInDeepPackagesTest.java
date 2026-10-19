@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
@@ -35,7 +35,7 @@ public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
   }
 
   private void setUpLibrary(final String s) {
-    final String testRoot = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/deepPackages";
+    final String testRoot = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/deepPackages";
     VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       String path = testRoot + "/" + s;
       path = path.replace(File.separatorChar, '/');

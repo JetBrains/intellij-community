@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -71,7 +72,7 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/migration/if_switch";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/migration/if_switch";
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -41,7 +42,7 @@ public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightJavaIn
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/controlflow/loop_condition_not_updated";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/controlflow/loop_condition_not_updated";
   }
 }

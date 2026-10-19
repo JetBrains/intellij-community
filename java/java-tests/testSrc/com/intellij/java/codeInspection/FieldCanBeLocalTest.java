@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/fieldCanBeLocal";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/fieldCanBeLocal";
   }
 
   @Override

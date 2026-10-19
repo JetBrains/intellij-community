@@ -23,8 +23,8 @@ public class MismatchedJavadocCodeInspectionTest extends LightJavaCodeInsightFix
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javadocMismatchCode";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/javadocMismatchCode";
   }
 
   @Override

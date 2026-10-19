@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
@@ -144,5 +144,5 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     myMainFile = addFile("org.example.main/Main.java", mainText)
   }
 
-  override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/redundantRequiresStatement/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantRequiresStatement/"
 }

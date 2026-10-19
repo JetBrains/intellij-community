@@ -13,7 +13,7 @@ class DuplicateExpressionsTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateExpressions"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressions"
 
   fun testUpdateInWhileLoop() = doTest(70)
   fun testIntFloatMixedMath() = doTest(50)

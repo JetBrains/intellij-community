@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -10,7 +11,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -185,7 +185,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
   }
 
   protected static VirtualFile getContentRoot(String path) {
-    String filePath = PathManagerEx.getTestDataPath() + File.separator + "application" + File.separator + "modulePath" +
+    String filePath = JavaTestUtil.getJavaTestDataPath() + File.separator + "application" + File.separator + "modulePath" +
                       File.separator + path;
     return StandardFileSystems.local().findFileByPath(filePath.replace(File.separatorChar, '/'));
   }

@@ -65,7 +65,7 @@ public class JavaUsageTypeProviderTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/usages/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/usages/";
   }
 }

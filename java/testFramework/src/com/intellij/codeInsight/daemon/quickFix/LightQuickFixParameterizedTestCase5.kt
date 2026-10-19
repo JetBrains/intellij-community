@@ -20,14 +20,10 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProjectDescriptor? = null)
   : LightJavaCodeInsightFixtureTestCase5(projectDescriptor), FileBasedTestCaseHelperEx {
-  protected abstract val basePath: String
-
-  override fun getRelativePath(): String {
-    return super.getRelativePath() + basePath
-  }
+  abstract override fun getTestDataPath(): String
 
   override fun getRelativeBasePath(): String {
-    return basePath
+    return ""
   }
 
   override fun getFileSuffix(fileName: String): String? {
@@ -44,12 +40,12 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
   @ArgumentsSource(FileBasedArgumentProvider::class)
   @Throws(Throwable::class)
   fun parameterized(fileName: String) {
-    val filePath = "/" + LightQuickFixTestCase.BEFORE_PREFIX + fileName
+    val filePath = LightQuickFixTestCase.BEFORE_PREFIX + fileName
     val file = fixture.configureByFile(filePath)
     val (hint, context) = runReadAction { ActionHint.parse(file, file.text) to fixture.actionContext }
     val action = hint.findAndCheck(fixture.availableIntentions, context) {
       """
-             Test: ${getRelativePath() + filePath}
+             Test: ${getTestDataPath()}/$filePath
              Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
              SDK: ${ModuleRootManager.getInstance(ModuleUtilCore.findModuleForFile(fixture.file)!!).sdk}
              Infos: ${LightQuickFixTestCase.getCurrentHighlightingInfo(fixture.doHighlighting())}
@@ -67,7 +63,7 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
       if (afterAction != null && Comparing.equal(element, runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) })) {
         fail("Action '$text' is still available after its invocation in test $filePath")
       }
-      fixture.checkResultByFile("/" + LightQuickFixTestCase.AFTER_PREFIX + fileName)
+      fixture.checkResultByFile(LightQuickFixTestCase.AFTER_PREFIX + fileName)
     }
   }
 

@@ -112,7 +112,7 @@ public class LiveTemplateEditorActionsTest extends LightJavaCodeInsightFixtureTe
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/editor/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/editor/";
   }
 }

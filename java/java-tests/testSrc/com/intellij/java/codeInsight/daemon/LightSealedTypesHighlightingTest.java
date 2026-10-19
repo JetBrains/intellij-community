@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingSealedTypes";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingSealedTypes";
   }
 
   @NotNull

@@ -11,8 +11,8 @@ public class UnusedParameterInHierarchyTest extends LightJavaCodeInsightFixtureT
   private UnusedDeclarationInspection inspection;
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/unusedParameterInHierarchy";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/unusedParameterInHierarchy";
   }
 
   @NotNull

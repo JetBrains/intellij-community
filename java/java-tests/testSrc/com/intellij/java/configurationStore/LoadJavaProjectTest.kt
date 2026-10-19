@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.JavaTestUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
@@ -30,7 +30,7 @@ class LoadJavaProjectTest {
 
   @Test
   fun `load java project with custom language level`() = runBlocking {
-    val projectPath = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore/java-module-with-custom-language-level")
+    val projectPath = Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("configurationStore/java-module-with-custom-language-level")
     loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       val modules = ModuleManager.getInstance(project).modules.sortedBy { it.name }
       assertThat(modules).hasSize(2)

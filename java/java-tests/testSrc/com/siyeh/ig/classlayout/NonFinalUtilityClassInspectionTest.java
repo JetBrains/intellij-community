@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +16,8 @@ public class NonFinalUtilityClassInspectionTest extends LightJavaCodeInsightFixt
     new DedicatedClassNameImplicitSubclassProvider("ConcreteNoUtilityClass");
 
   @Override
-  protected String getBasePath() {
-    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/non_final_utility_class";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/non_final_utility_class";
   }
 
   @Override

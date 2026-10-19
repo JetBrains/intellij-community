@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -9,7 +10,6 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -51,7 +51,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     blockExtensionUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
-    PathManagerEx.getTestDataPath(); // to cache stuff
+    JavaTestUtil.getJavaTestDataPath(); // to cache stuff
   }
 
   @Override

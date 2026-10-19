@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
@@ -14,7 +15,6 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -83,7 +83,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
 
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations";
+    final String dataPath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/externalAnnotations";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder<?> builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);

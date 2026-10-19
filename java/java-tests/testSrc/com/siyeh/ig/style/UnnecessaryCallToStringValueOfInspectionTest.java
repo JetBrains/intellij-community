@@ -1,5 +1,6 @@
 package com.siyeh.ig.style;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -39,8 +40,8 @@ public class UnnecessaryCallToStringValueOfInspectionTest extends LightJavaInspe
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/unnecessary_valueof";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/style/unnecessary_valueof";
   }
 
   @Override

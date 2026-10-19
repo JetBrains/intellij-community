@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.io.File;
 
 public class TabIndentingTest extends LightIdeaTestCase {
-  private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/formatter/tabIndenting";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/tabIndenting";
 
   public void testSpace() throws Exception {
     doTest("Test.java", "Space_after.java");

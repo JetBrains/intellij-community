@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -81,7 +81,7 @@ public abstract class JavaFormatterTestCase {
   }
 
   protected @NotNull String getTestDataDir() {
-    return PathManagerEx.getTestDataPath() + File.separatorChar + getBasePath();
+    return JavaTestUtil.getJavaTestDataPath() + File.separatorChar + getBasePath();
   }
 
   /**

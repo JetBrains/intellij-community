@@ -15,6 +15,7 @@
  */
 package com.intellij.java.slicer;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -32,8 +33,8 @@ import java.util.Map;
 
 public class SliceForwardTest extends SliceTestCase {
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/codeInsight/slice/forward/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/slice/forward/";
   }
 
   private void dotest() {

@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -72,7 +72,7 @@ public class MissingOverrideAnnotationInspectionTest extends LightJavaInspection
     @NotNull
     @Override
     protected String getTestDataPath() {
-      return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
+      return JavaTestUtil.getJavaTestDataPath() + "/ig";
     }
   }
 }

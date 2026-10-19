@@ -1,19 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M6
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M7
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaInspectionTestCase
 import org.intellij.lang.annotations.Language
 
 class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/unusedServiceImplementations/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedServiceImplementations/"
 
   override fun setUp() {
     super.setUp()

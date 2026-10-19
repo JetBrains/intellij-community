@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix
 
-import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
+import com.intellij.JavaTestUtil.getJavaTestDataPath
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -12,7 +12,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 
 class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
-  override fun getBasePath(): String = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
+  override fun getTestDataPath(): String = getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
 
   fun testExports1(): Unit = doTest("exports", "my.api")
   fun testExports2(): Unit = doTest("exports", "my.api")

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -22,7 +23,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
-  static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
+  static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/optimizeImports";
 
   @Override
   protected String getTestDataPath() {

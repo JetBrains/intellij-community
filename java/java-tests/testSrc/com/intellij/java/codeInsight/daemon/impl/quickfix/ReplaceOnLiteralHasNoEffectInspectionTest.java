@@ -17,7 +17,7 @@ public class ReplaceOnLiteralHasNoEffectInspectionTest extends LightJavaInspecti
   public void testReplaceOnLiteral() {doTest();}
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/replaceOnLiteral/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/replaceOnLiteral/";
   }
 }

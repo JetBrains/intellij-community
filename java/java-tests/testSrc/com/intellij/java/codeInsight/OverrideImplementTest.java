@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/overrideImplement";
   }
 
   private void addRecordClass() {

@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -72,7 +72,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     super.setUp();
 
     IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
-    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/src";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure( root);
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
@@ -152,6 +154,17 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     newText.append(classText, start, classText.length());
     myFixture.configureByText(fileName, newText.toString());
     myFixture.testHighlighting(true, false, false);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      String basePath = getBasePath();
+      if (basePath.startsWith(INSPECTION_GADGETS_TEST_DATA_PATH)) {
+        return JavaTestUtil.getJavaTestDataPath() + "/ig/" + basePath.substring(INSPECTION_GADGETS_TEST_DATA_PATH.length());
+      }
+    }
+    return super.getTestDataPath();
   }
 
   @Override

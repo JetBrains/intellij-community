@@ -27,7 +27,6 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.FileStructureTestFixture;
 import com.intellij.testFramework.FileStructureTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -57,7 +56,7 @@ public abstract class JavaFileStructureTestCase {
   @BeforeEach
   void setUpFileStructure(TestInfo testInfo) {
     myFixture = codeInsightFixture.get();
-    myFixture.setTestDataPath(IdeaTestExecutionPolicy.getHomePathWithPolicy() + getBasePath());
+    myFixture.setTestDataPath(getTestDataPath());
     myPopupFixture = new FileStructureTestFixture(myFixture);
     myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
     myShowAnonymousByDefault = PropertiesComponent.getInstance().getBoolean(getAnonymousPropertyName());
@@ -105,7 +104,7 @@ public abstract class JavaFileStructureTestCase {
     return TreeStructureUtil.getPropertyName(JavaAnonymousClassesNodeProvider.JAVA_ANONYMOUS_PROPERTY_NAME);
   }
 
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/fileStructure/" + getTestDataFolderName();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/fileStructure/" + getTestDataFolderName();
   }
 }

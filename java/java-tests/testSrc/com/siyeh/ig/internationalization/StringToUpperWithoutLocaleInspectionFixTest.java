@@ -3,9 +3,9 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class StringToUpperWithoutLocaleInspectionFixTest extends LightQuickFixPa
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
+    return JavaTestUtil.getJavaTestDataPath() + "/ig";
   }
 
   @Override

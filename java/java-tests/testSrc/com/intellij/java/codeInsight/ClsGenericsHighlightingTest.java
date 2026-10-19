@@ -16,7 +16,7 @@
 
 package com.intellij.java.codeInsight;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -45,7 +45,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     super.setUp();
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/clsHighlighting");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/clsHighlighting");
     JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setLanguageLevel(getLanguageLevel());
     builder.addJdkVersion(LanguageLevel.JDK_1_8);

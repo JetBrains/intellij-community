@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -98,7 +98,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
   public void testClassFileUpdate() throws IOException {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
-    File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
+    File file1 = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(testFile.getAbsolutePath());
     vFile.refresh(false, false);
@@ -118,7 +118,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(aClass);
     VirtualFile virtualFile = file.getVirtualFile();
 
-    File file2 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/2_TestClass.class");
+    File file2 = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + "/2_TestClass.class");
     FileUtil.copy(file2, testFile);
     assertTrue(testFile.setLastModified(System.currentTimeMillis() + 5000));
     vFile.refresh(false, false);
@@ -575,7 +575,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
   }
 
   private PsiJavaFile getFile(String name) {
-    String path = PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/pack/" + name + ".class";
+    String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + "/pack/" + name + ".class";
     VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(path, file);
     PsiFile clsFile = PsiManager.getInstance(getProject()).findFile(file);
@@ -595,7 +595,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
   public void testMirrorBecomesInvalidTogetherWithCls() throws IOException {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
-    File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
+    File file1 = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile copyVFile = StandardFileSystems.local().refreshAndFindFileByPath(testFile.getAbsolutePath());
     ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);

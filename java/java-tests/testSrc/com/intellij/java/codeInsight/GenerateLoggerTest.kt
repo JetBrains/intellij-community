@@ -21,7 +21,7 @@ import junit.framework.TestCase
 import javax.swing.ListModel
 
 class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateLogger"
+  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/generateLogger"
 
   fun testSlf4j() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)

@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
 
   fun testSimpleExpression() = doTest()
   fun testSimpleStatement() = doTest()

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -16,8 +17,8 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
 
   @NotNull
   @Override
-  protected String getRelativePath() {
-    return super.getRelativePath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   @BeforeEach

@@ -69,8 +69,8 @@ public class SimplifiableJUnitAssertionFixTest extends LightJavaInspectionTestCa
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/ig/com/siyeh/igfixes/junit/simplifiable_junit_assertion";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igfixes/junit/simplifiable_junit_assertion";
   }
 
   @Override

@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.IndexingModeCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
 
@@ -30,7 +29,7 @@ public class JavadocCompletionInSnippetTest extends BasePlatformTestCase impleme
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/java/java-tests/testData/codeInsight/javadoc/snippet/completion/";
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadoc/snippet/completion/";
   }
 
   @NotNull

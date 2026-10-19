@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class ProtectedMemberInFinalClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -23,8 +23,8 @@ public class ProtectedMemberInFinalClassInspectionTest extends LightJavaCodeInsi
   }
 
   @Override
-  protected String getBasePath() {
-    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/protected_member_in_final_class";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/protected_member_in_final_class";
   }
 
   public void testProtectedMemberInFinalClass() {

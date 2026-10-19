@@ -38,7 +38,7 @@ public class ShowImplementationsTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/showImplementations/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/showImplementations/";
   }
 }

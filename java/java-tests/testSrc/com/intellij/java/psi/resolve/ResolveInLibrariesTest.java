@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -110,7 +110,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testAcceptThatWithDifferentLibraryVersionsInheritanceRelationMayBeIntransitive() {
-    VirtualFile lib = StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/inheritance");
+    VirtualFile lib = StandardFileSystems.local().refreshAndFindFileByPath(JavaTestUtil.getJavaTestDataPath() + "/libResolve/inheritance");
 
     //Foo, Middle implements Foo, Other extends Middle
     PsiTestUtil.addLibrary(getModule(), "full", lib.getPath(), new String[]{"/fullLibrary.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
@@ -165,7 +165,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   public void testDoNotParseNotStubbedSourcesInClassJars() {
     VirtualFile lib =
-      StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources");
+      StandardFileSystems.local().refreshAndFindFileByPath(JavaTestUtil.getJavaTestDataPath() + "/libResolve/classesAndSources");
     PsiTestUtil.addLibrary(getModule(), "cas", lib.getPath(), new String[]{"/classesAndSources.jar!/"},
                            new String[]{"/classesAndSources.jar!/"});
 
@@ -198,7 +198,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
-    String testDataPathForTest = PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources";
+    String testDataPathForTest = JavaTestUtil.getJavaTestDataPath() + "/libResolve/classesAndSources";
     VirtualFile lib = StandardFileSystems.local().refreshAndFindFileByPath(testDataPathForTest);
     VirtualFile localFile = myFixture.copyFileToProject(testDataPathForTest + File.separator + "Foo.java", "Foo.java");
     assertNotNull(localFile);
@@ -230,7 +230,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   public void testLibraryClassWithoutConstructors() {
     VirtualFile lib =
-      StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classWithoutConstructors");
+      StandardFileSystems.local().refreshAndFindFileByPath(JavaTestUtil.getJavaTestDataPath() + "/libResolve/classWithoutConstructors");
 
     PsiTestUtil.addLibrary(getModule(), "lib", lib.getPath(), new String[] {"/test.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
     myFixture.configureByText("p/Generous.java", """
@@ -250,7 +250,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testDirectoryWithClassFilesInsideProjectContent() {
-    String testData = PathManagerEx.getTestDataPath() + "/codeInsight/interJarDependencies";
+    String testData = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/interJarDependencies";
     myFixture.setTestDataPath(testData);
     PsiTestUtil.addLibrary(getModule(), "lib2", testData, "lib2.jar");
 
@@ -269,7 +269,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdateMethodHierarchyOnClassFileChange() throws IOException {
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/libResolve/methodHierarchy");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/libResolve/methodHierarchy");
     myFixture.copyDirectoryToProject("", "lib");
     PsiTestUtil.addLibrary(getModule(), "lib", myFixture.getTempDirFixture().getFile("").getPath(), "lib");
 
@@ -289,7 +289,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testNestedGenericSignatureFromBinary() {
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/libResolve/genericSignature");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/libResolve/genericSignature");
     myFixture.copyDirectoryToProject("", "lib");
     PsiTestUtil.addLibrary(getModule(), "lib", myFixture.getTempDirFixture().getFile("").getPath(), "lib");
 

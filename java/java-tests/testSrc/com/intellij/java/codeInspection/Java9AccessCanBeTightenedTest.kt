@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9AccessCanBeTightened/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9AccessCanBeTightened/"
   override fun getProjectDescriptor() = JAVA_9
 
   private lateinit var inspection: VisibilityInspection

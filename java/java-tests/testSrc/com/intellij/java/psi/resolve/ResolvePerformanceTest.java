@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -36,7 +36,7 @@ import java.util.List;
 @PerformanceUnitTest
 public class ResolvePerformanceTest extends JavaResolveTestCase {
   public void testPerformance1() throws Exception{
-    final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";
+    final String fullPath = JavaTestUtil.getJavaTestDataPath() + "/psi/resolve/Thinlet.java";
     final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     final List<PsiReference> references = new ArrayList<>();
     assertNotNull("file " + fullPath + " not found", vFile);
@@ -73,7 +73,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
  }
 
   public void testPerformance2() throws Exception{
-    final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/ant/build.xml";
+    final String fullPath = JavaTestUtil.getJavaTestDataPath() + "/psi/resolve/ant/build.xml";
     final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     final List<PsiReference> references = new ArrayList<>();
     assertNotNull("file " + fullPath + " not found", vFile);

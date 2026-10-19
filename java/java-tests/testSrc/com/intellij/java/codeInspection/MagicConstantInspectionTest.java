@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MagicConstantInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/magic/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/magic/";
   }
 
   @NotNull

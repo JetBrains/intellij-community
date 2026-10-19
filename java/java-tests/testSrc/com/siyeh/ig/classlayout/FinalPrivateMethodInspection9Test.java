@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalPrivateMethodInspection9Test extends FinalPrivateMethodInspectionTest {
   @Override
-  protected String getBasePath() {
-    return super.getBasePath() + '9';
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + '9';
   }
 
   @NotNull

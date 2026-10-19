@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.slicer;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -48,8 +49,8 @@ import java.util.Set;
 
 public class SliceTreeTest extends SliceTestCase {
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/codeInsight/slice/backward/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/slice/backward/";
   }
 
   private SliceTreeStructure configureTree(@NonNls String name) {

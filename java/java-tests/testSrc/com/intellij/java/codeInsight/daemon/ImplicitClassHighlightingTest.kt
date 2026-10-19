@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_LATEST_WITH_LATEST_JDK
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass"
 
   fun testHighlightInsufficientLevel() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20, Runnable {

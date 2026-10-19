@@ -18,7 +18,7 @@ public class OverflowingIndexLoopInspectionTest extends LightJavaInspectionTestC
   public void testOverflowingLoop() {doTest();}
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/overflowingLoop/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/overflowingLoop/";
   }
 }

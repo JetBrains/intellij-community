@@ -93,8 +93,8 @@ public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/refactoring/encapsulateFields/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/encapsulateFields/";
   }
 
 

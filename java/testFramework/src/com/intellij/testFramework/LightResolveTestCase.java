@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -15,6 +15,6 @@ public abstract class LightResolveTestCase extends LightJavaCodeInsightFixtureTe
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/psi/resolve/";
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/resolve/";
   }
 }

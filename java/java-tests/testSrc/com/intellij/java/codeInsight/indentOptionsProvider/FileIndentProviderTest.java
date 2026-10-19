@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.indentOptionsProvider;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
@@ -12,12 +13,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 
 public class FileIndentProviderTest extends BasePlatformTestCase {
   private final FileIndentOptionsProvider TEST_FILE_INDENT_OPTIONS_PROVIDER = new TestIndentOptionsProvider();
@@ -41,7 +40,7 @@ public class FileIndentProviderTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/java/java-tests/testData/codeInsight/indentProvider";
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/indentProvider";
   }
 
   private void doTestTyping(char c) {

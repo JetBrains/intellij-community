@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimplifyStreamApiCallChainsInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/simplifyStreamApiCallChains";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/simplifyStreamApiCallChains";
   }
 
   private void doTest() {

@@ -87,7 +87,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
   }
 
   @Override
-  public String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/extractMethodRecommender";
+  public String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/extractMethodRecommender";
   }
 }

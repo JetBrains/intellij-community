@@ -16,8 +16,8 @@
 
 package com.intellij.java.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -71,7 +71,7 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
     super.setUp();
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/refactoring/multipleJdks");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/refactoring/multipleJdks");
     JavaModuleFixtureBuilder<?> builder7 = projectBuilder.addModule(JavaModuleFixtureBuilder.class).setLanguageLevel(LanguageLevel.JDK_1_7);
     JavaModuleFixtureBuilder<?> builder8 = projectBuilder.addModule(JavaModuleFixtureBuilder.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     myFixture.setUp();

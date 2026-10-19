@@ -12,8 +12,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 @TestDataPath("$CONTENT_ROOT/testData/inspection/redundantCast")
 public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantCast";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantCast";
   }
 
   @Override

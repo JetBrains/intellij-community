@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.i18n.I18nQuickFixHandler;
 import com.intellij.codeInspection.i18n.I18nizeAction;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
@@ -8,7 +9,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +41,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "place", dataContext);
     action.update(event);
     @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + "java";
-    boolean afterFileExists = new File(PathManagerEx.getTestDataPath() + afterFile).exists();
+    boolean afterFileExists = new File(JavaTestUtil.getJavaTestDataPath() + afterFile).exists();
     I18nQuickFixHandler<T> handler = (I18nQuickFixHandler<T>)I18nizeAction.getHandler(event);
     try {
       if (handler != null) {

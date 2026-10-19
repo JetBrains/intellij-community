@@ -37,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
   }
 
   public void testHidingOnDemandImports() {

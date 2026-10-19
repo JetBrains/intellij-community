@@ -25,7 +25,7 @@ public class OnlyOneElementUsedInspectionTest extends LightJavaInspectionTestCas
   public void testOnlyOneElementUsed() {doTest();}
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/onlyOneElementUsed/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/onlyOneElementUsed/";
   }
 }

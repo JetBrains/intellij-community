@@ -1395,11 +1395,11 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
   }
 
   @Override
-  public final String getBasePath() {
+  public final String getTestDataPath() {
     return basePath;
   }
 
-  private final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/";
+  private final String basePath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/";
 
   private static class MyMirrorMacro extends Macro {
     MyMirrorMacro(String variableName) {

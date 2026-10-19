@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 
 
 class JavaRetypeTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
+  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath()
 
   override fun getTempDirFixture(): TempDirTestFixture {
     return TempDirTestFixtureImpl()

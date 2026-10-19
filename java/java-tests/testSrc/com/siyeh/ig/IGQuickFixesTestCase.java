@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IndexingTestUtil;
@@ -57,7 +57,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igfixes/";
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igfixes/";
   }
 
   protected void assertQuickfixNotAvailable() {

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
@@ -144,7 +144,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
   public void testEditLibraryForModuleLoadFromXml() {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Module a = loadModule(Paths.get(PathManagerEx.getHomePath(getClass())).resolve("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml"));
+      Module a = loadModule(Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("moduleRootManager/rootsChanged/emptyModule/a.iml"));
       myModuleRootListener.assertEventsCount(1);
 
       final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());

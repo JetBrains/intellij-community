@@ -31,7 +31,7 @@ class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaReflectionInvocation"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionInvocation"
 
   fun testMethodParamCount() = doTest()
   fun testMethodParamTypes() = doTest()

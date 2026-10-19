@@ -89,11 +89,11 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
   }
 
   /**
-   * Return absolute path to the test data. Not intended to be overridden.
+   * Returns the absolute path to the test data.
    *
    * @return absolute path to the test data.
    */
-  protected final @NonNls String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
     return path.replace(File.separatorChar, '/') + getBasePath();
   }

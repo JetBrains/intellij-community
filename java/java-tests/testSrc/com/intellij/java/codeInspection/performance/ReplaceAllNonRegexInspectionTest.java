@@ -37,7 +37,7 @@ public class ReplaceAllNonRegexInspectionTest extends LightJavaInspectionTestCas
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/replaceAllNonRegex";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/replaceAllNonRegex";
   }
 }

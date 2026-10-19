@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -24,7 +24,7 @@ import java.nio.file.Path;
 
 public class ExportingModulesTest extends JavaProjectTestCase {
   public void test1() {
-    String rootPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
+    String rootPath = JavaTestUtil.getJavaTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
     VirtualFile testRoot = StandardFileSystems.local().refreshAndFindFileByPath(rootPath);
     assertNotNull(testRoot);
 

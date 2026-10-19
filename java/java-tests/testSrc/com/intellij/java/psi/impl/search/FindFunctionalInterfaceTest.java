@@ -291,8 +291,8 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/findUsages/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/findUsages/";
   }
 
   @NotNull

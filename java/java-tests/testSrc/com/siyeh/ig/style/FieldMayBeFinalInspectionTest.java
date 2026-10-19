@@ -1,5 +1,6 @@
 package com.siyeh.ig.style;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -24,7 +25,7 @@ public class FieldMayBeFinalInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/field_final";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/style/field_final";
   }
 }

@@ -15,8 +15,8 @@ public class RedundantLambdaParameterTypeFixTest extends LightJavaCodeInsightFix
   private static final String ourIntentionName = "Remove redundant parameter types";
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInspection/redundantLambdaParameterType";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInspection/redundantLambdaParameterType";
   }
 
   @NotNull

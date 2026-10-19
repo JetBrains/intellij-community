@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.project;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -31,7 +31,7 @@ import static com.intellij.testFramework.RunAll.runAll;
 public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
-    String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
+    String projectPath = JavaTestUtil.getJavaTestDataPath() + "/model/model.ipr";
     myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
     FileEditorManagerImpl editorManager = new FileEditorManagerImpl(myProject, ((ComponentManagerEx)myProject).getCoroutineScope());
     ServiceContainerUtil.replaceService(myProject, FileEditorManager.class, editorManager, getTestRootDisposable());

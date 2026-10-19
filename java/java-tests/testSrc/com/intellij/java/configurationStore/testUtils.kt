@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
+import com.intellij.JavaTestUtil
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
@@ -20,13 +22,22 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths
 
 internal val configurationStoreTestDataRoot: Path
-  get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
+  get() = Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("configurationStore")
+
+internal val jpsModelSerializationTestDataRoot: Path
+  get() = if (BazelTestUtil.isUnderBazelTest) {
+    BazelTestUtil.getFileFromBazelRuntime(BazelLabel.fromString("@community//jps/model-serialization:testData"))
+  }
+  else {
+    Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData")
+  }
 
 internal fun ProjectModelRule.saveProjectState() {
   runBlocking { project.stateStore.save() }

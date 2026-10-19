@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -576,7 +576,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   @Override
   protected String getBasePath() {
-    return PathManagerEx.getTestDataPath() + "/codeStyle";
+    return JavaTestUtil.getJavaTestDataPath() + "/codeStyle";
   }
 
   @Nullable

@@ -26,8 +26,8 @@ import java.util.List;
 public class OverrideImplementFromLibraryTest extends CodeInsightFixtureTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   private static final String BASE_DIR = "/codeInsight/overrideImplement/libraries/";

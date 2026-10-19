@@ -45,7 +45,7 @@ class JavaLangReflectHandleInvocationTest : LightJavaCodeInsightFixtureTestCase(
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class SuspiciousArrayMethodCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousArrayMethodCall";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousArrayMethodCall";
   }
 
   @NotNull

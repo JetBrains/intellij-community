@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.roots.ui.configuration;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -23,7 +23,7 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(PathManagerEx.getTestDataPath("/ide/project")), getTestRootDisposable());
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(JavaTestUtil.getJavaTestDataPath(), "ide/project"), getTestRootDisposable());
     myCombo = new LanguageLevelCombo("default") {
       @Override
       protected LanguageLevel getDefaultLevel() {

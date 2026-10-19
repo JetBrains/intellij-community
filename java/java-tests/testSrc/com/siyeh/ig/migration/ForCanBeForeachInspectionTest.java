@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
@@ -44,6 +45,7 @@ public class ForCanBeForeachInspectionTest {
 
   @BeforeEach
   void setUp() {
+    fixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/migration/foreach");
     fixture.get().enableInspections(new ForCanBeForeachInspection());
   }
 

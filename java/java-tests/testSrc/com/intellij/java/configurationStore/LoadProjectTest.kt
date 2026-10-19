@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
+import com.intellij.JavaTestUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -28,7 +28,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Consumer
 
 class LoadProjectTest {
@@ -134,7 +133,7 @@ class LoadProjectTest {
 
   @Test
   fun `load repository libraries`() = runBlocking {
-    val projectPath = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("jps/model-serialization/testData/repositoryLibraries")
+    val projectPath = jpsModelSerializationTestDataRoot.resolve("repositoryLibraries")
     loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       assertThat(ModuleManager.getInstance(project).modules).isEmpty()
       val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.sortedBy { it.name }
@@ -159,7 +158,7 @@ class LoadProjectTest {
   }
 
   private suspend fun loadProjectAndCheckResults(testDataDirName: String, beforeOpen: Consumer<Project>? = null, checkProject: suspend (Project) -> Unit) {
-    val testDataRoot = Path.of(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
+    val testDataRoot = Path.of(JavaTestUtil.getJavaTestDataPath()).resolve("configurationStore")
     return loadProjectAndCheckResults(projectPaths = listOf(element = testDataRoot.resolve(testDataDirName)),
                                       tempDirectory = tempDirectory,
                                       beforeOpen = beforeOpen,

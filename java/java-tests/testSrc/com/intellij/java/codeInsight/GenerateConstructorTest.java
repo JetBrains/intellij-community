@@ -43,8 +43,8 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateConstructor";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/generateConstructor";
   }
 
   public void testClassNestedInImplicitClass() { doTest(); }

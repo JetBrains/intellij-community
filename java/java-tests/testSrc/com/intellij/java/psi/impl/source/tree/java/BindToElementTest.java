@@ -15,9 +15,9 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -39,7 +39,7 @@ import java.io.File;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class BindToElementTest extends JavaCodeInsightTestCase {
-  public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
+  public static final String TEST_ROOT = JavaTestUtil.getJavaTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
 
   @Override
   protected void setUp() throws Exception {

@@ -24,7 +24,7 @@ public class ValueClassHighlightingTest extends LightJavaCodeInsightFixtureTestC
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/valueClass";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/valueClass";
   }
 }

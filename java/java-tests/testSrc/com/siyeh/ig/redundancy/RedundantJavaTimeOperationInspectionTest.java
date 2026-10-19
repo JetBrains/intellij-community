@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -10,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class RedundantJavaTimeOperationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/redundancy/redundant_java_time_operations/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/redundancy/redundant_java_time_operations/";
   }
 
   @Override

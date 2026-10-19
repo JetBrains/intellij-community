@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
@@ -27,8 +28,8 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   }
 
   @Override
-  protected @NotNull String getRelativePath() {
-    return super.getRelativePath() + "/codeInsight/daemonCodeAnalyzer/missingJavadoc/";
+  protected @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/missingJavadoc/";
   }
 
   @Test void testAllDisabled(){

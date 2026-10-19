@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.fileTemplates.impl
 
+import com.intellij.JavaTestUtil
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.FileTemplate
@@ -14,7 +15,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -51,7 +51,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
   }
 
   fun testAllTemplates() {
-    val testsDir = File("${PathManagerEx.getTestDataPath()}/ide/fileTemplates")
+    val testsDir = File("${JavaTestUtil.getJavaTestDataPath()}/ide/fileTemplates")
     val includeTemplateName = "include1.inc"
     val includeTemplateExtension = "txt"
     val customIncludeFileName = "$includeTemplateName.$includeTemplateExtension"

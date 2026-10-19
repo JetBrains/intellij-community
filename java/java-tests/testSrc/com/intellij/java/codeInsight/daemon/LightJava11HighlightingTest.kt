@@ -14,7 +14,7 @@ import org.junit.Assert
 
 class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_11
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting11"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting11"
 
   fun testMixedVarAndExplicitTypesInLambdaDeclaration() = doTest()
 

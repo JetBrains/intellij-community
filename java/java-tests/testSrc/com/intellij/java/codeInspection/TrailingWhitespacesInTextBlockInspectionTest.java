@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.TrailingWhitespacesInTextBlockInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -36,8 +37,8 @@ public class TrailingWhitespacesInTextBlockInspectionTest extends LightJavaInspe
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/inspection/trailingWhitespacesInTextBlock";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/trailingWhitespacesInTextBlock";
   }
 
   private void doTestEscape() {

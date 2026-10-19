@@ -26,8 +26,8 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
   };
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInspection/makeTypeGeneric";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInspection/makeTypeGeneric";
   }
 
   @Override

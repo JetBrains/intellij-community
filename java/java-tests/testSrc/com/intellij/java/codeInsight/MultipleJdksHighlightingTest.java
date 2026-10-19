@@ -16,10 +16,10 @@
 
 package com.intellij.java.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -82,7 +82,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     super.setUp();
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/multipleJdks");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/multipleJdks");
     final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[3];
 
     builders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);

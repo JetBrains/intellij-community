@@ -51,7 +51,7 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantStringOperation/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantStringOperation/";
   }
 }

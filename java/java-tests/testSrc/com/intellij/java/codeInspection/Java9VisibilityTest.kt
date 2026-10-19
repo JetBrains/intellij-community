@@ -15,14 +15,14 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.openapi.application.ex.PathManagerEx
 
 class Java9VisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9Visibility/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9Visibility/"
 
   fun testPublicClass() = doTestClass()
   fun testPublicInnerClass() = doTestClass()

@@ -65,8 +65,8 @@ public abstract class CreateFileQuickFixTestCase extends LightJavaCodeInsightFix
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + getTestCasePath();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + getTestCasePath();
   }
 
   protected abstract String getTestCasePath();

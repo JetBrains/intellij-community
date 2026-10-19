@@ -2,6 +2,7 @@
 
 package com.intellij.java.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase5;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -19,7 +20,7 @@ public class NotNullFieldNotInitializedFixesTest extends LightQuickFixParameteri
   }
 
   @Override
-  protected @NotNull String getBasePath() {
-    return "/inspection/notNullField/quickFix";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/notNullField/quickFix";
   }
 }

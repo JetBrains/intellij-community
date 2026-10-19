@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -9,7 +10,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModStartRename;
 import com.intellij.modcommand.ModUpdateFileText;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +85,7 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ipp/com/siyeh/ipp/junit/";
+    return JavaTestUtil.getJavaTestDataPath() + "/ipp/com/siyeh/ipp/junit/";
   }
 
   @Override

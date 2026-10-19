@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.VisualPosition;
@@ -8,10 +9,16 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class EndActionTest extends LightPlatformCodeInsightTestCase {
 
   private static final String PATH = "/codeInsight/endAction/";
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
   
   public void testNormal1() { doTest(); }
   public void testNormal2() { doTest(); }

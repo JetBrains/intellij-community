@@ -31,8 +31,8 @@ public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/overwrittenKey/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/overwrittenKey/";
   }
 
   @NotNull

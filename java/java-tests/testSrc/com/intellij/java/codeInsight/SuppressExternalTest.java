@@ -16,11 +16,11 @@
 
 package com.intellij.java.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -58,7 +58,7 @@ public class SuppressExternalTest extends UsefulTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations");
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/externalAnnotations");
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
     new File(myFixture.getTempDirPath() + "/src/").mkdir();
     builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");

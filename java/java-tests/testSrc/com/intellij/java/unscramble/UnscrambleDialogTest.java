@@ -122,7 +122,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/unscramble/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/unscramble/";
   }
 }

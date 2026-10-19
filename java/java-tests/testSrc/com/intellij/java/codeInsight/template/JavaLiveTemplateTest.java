@@ -983,9 +983,9 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   }
 
   @Override
-  public final String getBasePath() {
+  public final String getTestDataPath() {
     return basePath;
   }
 
-  private final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/";
+  private final String basePath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/";
 }

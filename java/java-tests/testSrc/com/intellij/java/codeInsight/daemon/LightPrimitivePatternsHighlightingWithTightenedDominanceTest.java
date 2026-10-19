@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 //partially use testdata from LightPrimitivePatternsHighlightingTest
 public class LightPrimitivePatternsHighlightingWithTightenedDominanceTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingPatternsWithPrimitives";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingPatternsWithPrimitives";
   }
 
   @NotNull

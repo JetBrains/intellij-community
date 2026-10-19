@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
+import com.intellij.JavaTestUtil
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
@@ -60,7 +60,7 @@ class ReloadProjectTest {
   val logging = TestLoggerFactory.createTestWatcher()
 
   private val testDataRoot
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
+    get() = Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("reloading")
 
   @Test
   fun `reload module with module library`() = runBlocking {

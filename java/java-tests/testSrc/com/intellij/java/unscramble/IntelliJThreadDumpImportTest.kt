@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.unscramble
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.JavaTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.threadDumpParser.ThreadState
@@ -201,7 +201,7 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
 internal abstract class AbstractThreadDumpImportTest {
 
   protected fun loadThreadDump(path: String): String {
-    return Files.readString(Path(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/threadDump").resolve(path)).trim()
+    return Files.readString(Path(JavaTestUtil.getJavaTestDataPath()).resolve("threadDump").resolve(path)).trim()
   }
 
   protected fun assertDumpItem(

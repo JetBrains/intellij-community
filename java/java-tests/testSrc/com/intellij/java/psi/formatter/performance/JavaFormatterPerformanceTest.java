@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
@@ -11,7 +12,6 @@ import com.intellij.java.psi.formatter.java.JavaFormatterTestCase;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +54,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
 
   @Test
   public void testPerformance1() throws Exception {
-    File testFile = new File(PathManagerEx.getTestDataPath(), BASE_PATH + "/performance.java");
+    File testFile = new File(JavaTestUtil.getJavaTestDataPath(), BASE_PATH + "/performance.java");
     String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
     PsiFile file = FormatterTestUtil.createFile(getProject(), testFile.getName(), text);
 

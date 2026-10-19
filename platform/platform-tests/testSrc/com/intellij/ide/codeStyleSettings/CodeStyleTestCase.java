@@ -26,8 +26,6 @@ import java.io.IOException;
 @SuppressWarnings("SameParameterValue")
 public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
-  protected static final String BASE_PATH = PathManagerEx.getTestDataPath("/../../../platform/platform-tests/testData/codeStyle/");
-
   public static void assertXmlOutputEquals(String expected, Element root) throws IOException {
     EditorColorSchemeTestUtil.assertXmlOutputEquals(expected, root);
   }
@@ -105,6 +103,6 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   }
 
   protected String getBasePath() {
-    return BASE_PATH;
+    return PathManagerEx.getTestDataPath("/../../../platform/platform-tests/testData/codeStyle/");
   }
 }

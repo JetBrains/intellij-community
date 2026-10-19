@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.editor.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +20,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -29,7 +29,6 @@ import com.intellij.ui.tabs.TabInfo;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
@@ -131,6 +130,6 @@ public class JavaFileEditorManagerTest {
   }
 
   private static String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/java/java-tests/testData/fileEditorManager";
+    return JavaTestUtil.getJavaTestDataPath() + "/fileEditorManager";
   }
 }

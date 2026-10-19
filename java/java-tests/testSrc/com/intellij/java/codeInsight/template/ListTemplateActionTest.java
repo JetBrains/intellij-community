@@ -39,8 +39,8 @@ public class ListTemplateActionTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/list/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/list/";
   }
 
   public void testWithSameKeys() {

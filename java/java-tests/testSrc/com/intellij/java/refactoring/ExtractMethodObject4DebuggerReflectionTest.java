@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
@@ -158,7 +158,7 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/refactoring/extractMethodObject4Debugger";
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractMethodObject4Debugger";
   }
 
   private void doTest(@NotNull String evaluatedText) throws PrepareFailedException {

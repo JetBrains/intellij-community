@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightStringTemplatesHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingStringTemplates";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingStringTemplates";
   }
 
   @NotNull

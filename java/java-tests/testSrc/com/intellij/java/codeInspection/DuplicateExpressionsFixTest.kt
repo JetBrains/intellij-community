@@ -20,7 +20,7 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateExpressionsFix"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressionsFix"
 
   fun testIntroduceVariable() {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))

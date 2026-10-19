@@ -15,8 +15,8 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -34,7 +34,7 @@ public abstract class GenericsTestCase extends JavaPsiTestCase {
   }
 
   protected void setupGenericSampleClasses() {
-    final String commonPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/src";
+    final String commonPath = JavaTestUtil.getJavaTestDataPath().replace(File.separatorChar, '/') + "/psi/types/src";
     final VirtualFile[] commonRoot = { null };
     ApplicationManager.getApplication().runWriteAction(() -> {
       commonRoot[0] = StandardFileSystems.local().refreshAndFindFileByPath(commonPath);

@@ -42,7 +42,7 @@ public class SealClassActionFailingTest extends LightJavaCodeInsightFixtureTestC
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/sealClass/failing/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/sealClass/failing/";
   }
 }

@@ -41,7 +41,7 @@ public class JavaLocalClassesHelperTest extends LightJavaCodeInsightFixtureTestC
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/local/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/local/";
   }
 }

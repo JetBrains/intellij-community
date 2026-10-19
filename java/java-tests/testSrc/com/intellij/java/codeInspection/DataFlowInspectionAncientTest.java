@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DataFlowInspectionAncientTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/dataFlow/ancient";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/ancient";
   }
 
   @NotNull

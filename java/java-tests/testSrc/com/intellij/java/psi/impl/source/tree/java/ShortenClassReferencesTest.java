@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.CommonClassNames;
@@ -37,7 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestCase {
-  private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/shortenClassRefs";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/shortenClassRefs";
 
   @Override
   protected String getTestDataPath() {

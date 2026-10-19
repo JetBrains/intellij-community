@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -17,8 +18,8 @@ import java.util.List;
 
 public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected String getBasePath() {
-    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/jdk/forward_compatibility";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/jdk/forward_compatibility";
   }
 
   @Nullable

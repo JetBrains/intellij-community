@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -10,7 +11,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.MapDataContext;
@@ -54,6 +54,6 @@ public class ApplicationContextConfigurationTest extends BaseConfigurationTestCa
   @Override
   @NotNull
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.codeInspection.longLine.LongLineInspection
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 class JavaLongLineInspectionTest : JavaCodeInsightFixtureTestCase() {
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/longLine"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/longLine"
 
   fun testSimple() {
     doTest()

@@ -55,8 +55,8 @@ import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurren
 
 public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/parameterInfo/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/parameterInfo/";
   }
 
   public void testPrivateMethodOfEnclosingClass() { doTest(); }

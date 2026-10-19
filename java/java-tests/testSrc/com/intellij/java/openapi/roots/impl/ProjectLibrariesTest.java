@@ -15,8 +15,8 @@
  */
 package com.intellij.java.openapi.roots.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -41,7 +41,7 @@ public class ProjectLibrariesTest extends JavaProjectTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myRoot = StandardFileSystems.local().findFileByPath(PathManagerEx.getTestDataPath() + "/psi/cls/repo");
+    myRoot = StandardFileSystems.local().findFileByPath(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/repo");
     assertNotNull(myRoot);
 
     myLib = WriteCommandAction.runWriteCommandAction(null,

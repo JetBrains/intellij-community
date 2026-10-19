@@ -13,8 +13,8 @@ public final class LightJava21HighlightingTest extends LightJavaCodeInsightFixtu
   }
 
   @Override
-  public String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting21";
+  public String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting21";
   }
 
   public void testMyCNMap() {

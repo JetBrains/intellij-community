@@ -81,8 +81,8 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
   }
 
   @NotNull

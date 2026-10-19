@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.lambda;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
@@ -14,8 +15,8 @@ class MostSpecificResolutionTest extends LightJavaCodeInsightFixtureTestCase5 {
 
   @NotNull
   @Override
-  protected String getRelativePath() {
-    return super.getRelativePath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   @BeforeEach

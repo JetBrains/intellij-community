@@ -21,8 +21,8 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/copyReference";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/copyReference";
   }
 
   @Override

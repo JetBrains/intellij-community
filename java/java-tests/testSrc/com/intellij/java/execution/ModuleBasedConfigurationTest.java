@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -37,6 +37,6 @@ public class ModuleBasedConfigurationTest extends BaseConfigurationTestCase {
   @Override
   @NotNull
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }

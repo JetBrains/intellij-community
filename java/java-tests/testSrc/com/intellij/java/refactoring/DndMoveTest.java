@@ -15,7 +15,7 @@
  */
 package com.intellij.java.refactoring;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -29,7 +29,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class DndMoveTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/refactoring/dndMove/";
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/dndMove/";
   }
 
   public void testPublicJavaClass() {

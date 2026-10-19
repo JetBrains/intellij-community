@@ -19,8 +19,8 @@ import java.util.List;
 
 public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/classUtil/";
   }
 
   public void testFindPsiClassByJvmName() {

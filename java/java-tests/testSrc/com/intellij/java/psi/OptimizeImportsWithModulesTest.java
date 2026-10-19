@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,7 +31,7 @@ import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDe
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN;
 
 public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsightFixtureTestCase {
-  static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImportsWithModules";
+  static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/optimizeImportsWithModules";
 
   @Override
   protected String getTestDataPath() {

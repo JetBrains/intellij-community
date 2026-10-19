@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -45,7 +45,7 @@ public class TypesTest extends GenericsTestCase {
     super.setUp();
     setupGenericSampleClasses();
 
-    final String testPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
+    final String testPath = JavaTestUtil.getJavaTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
     final VirtualFile[] testRoot = { null };
     ApplicationManager.getApplication().runWriteAction(() -> {
       testRoot[0] = StandardFileSystems.local().refreshAndFindFileByPath(testPath);

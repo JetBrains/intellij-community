@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots
 
+import com.intellij.JavaTestUtil
 import com.intellij.configurationStore.runInAllowSaveMode
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
@@ -31,7 +31,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
       ModuleEntity::class.java).toList()
   
   fun `test load project`() {
-    val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
+    val projectPath = FileUtilRt.toSystemIndependentName(File(JavaTestUtil.getJavaTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
     val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), testRootDisposable)
     val moduleManager = ModuleManager.getInstance(project)
     assertEquals(3, moduleManager.allModuleDescriptions.size)

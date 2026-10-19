@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
@@ -14,7 +15,6 @@ import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -109,7 +109,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   };
 
   private static VirtualFile getAnnotationsRoot() {
-    String annotationsPath = PathManagerEx.getTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations";
+    String annotationsPath = JavaTestUtil.getJavaTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations";
     VirtualFile annotationsDir = StandardFileSystems.local().refreshAndFindFileByPath(annotationsPath);
     assertNotNull(annotationsDir);
     return annotationsDir;

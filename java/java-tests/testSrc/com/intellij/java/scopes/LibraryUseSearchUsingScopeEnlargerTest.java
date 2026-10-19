@@ -97,8 +97,8 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
   }
 
   @Override
-  protected @NonNls String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/libraryScopeEnlarger/";
+  protected @NonNls String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/libraryScopeEnlarger/";
   }
 
   @Override

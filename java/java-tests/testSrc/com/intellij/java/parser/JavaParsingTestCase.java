@@ -4,7 +4,6 @@ package com.intellij.java.parser;
 import com.intellij.JavaTestUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,7 +23,7 @@ public abstract class JavaParsingTestCase {
   private LanguageLevel myLanguageLevel;
 
   public JavaParsingTestCase(String dataPath, String fileExt, ParserDefinition... parserDefinitions) {
-    parsingFixture = parsingFixture(projectFixture, PathManagerEx.getTestDataPath() + "/" + "psi/" + dataPath, fileExt, false,
+    parsingFixture = parsingFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/" + "psi/" + dataPath, fileExt, false,
                                     parserDefinitions);
   }
 

@@ -117,7 +117,7 @@ public class ChangeSignatureGestureTest extends LightJavaCodeInsightFixtureTestC
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 }

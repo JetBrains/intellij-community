@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class OptionalGetWithoutIsPresentInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/optionalGet";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/optionalGet";
   }
 
   public void testAbstractEnum() { doTest(); }

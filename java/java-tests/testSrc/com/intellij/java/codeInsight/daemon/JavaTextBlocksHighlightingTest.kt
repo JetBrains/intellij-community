@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
+  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
 
   fun testTextBlocks() = doTest()
   fun testUnclosedTextBlock() = doTest()

@@ -2,6 +2,7 @@
 
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase5;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTest
   }
  
   @Override
-  protected @NotNull String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithOfNullable";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithOfNullable";
   }
 }

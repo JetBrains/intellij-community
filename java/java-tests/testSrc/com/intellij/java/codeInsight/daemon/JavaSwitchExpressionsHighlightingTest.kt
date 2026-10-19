@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_15
-  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
+  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
 
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()

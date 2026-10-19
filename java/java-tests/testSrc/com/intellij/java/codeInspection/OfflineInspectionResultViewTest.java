@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.actions.ViewOfflineResultsAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -14,7 +15,6 @@ import com.intellij.codeInspection.ui.InspectionRootNode;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
@@ -102,7 +102,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
   private Map<String, Map<String, Set<OfflineProblemDescriptor>>> parse() throws IOException {
     final String moduleName = getModule().getName();
-    final File res = new File(PathManagerEx.getTestDataPath(), getTestPath() + File.separator + "res");
+    final File res = new File(JavaTestUtil.getJavaTestDataPath(), getTestPath() + File.separator + "res");
     final File[] files = res.listFiles();
     assert files != null;
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();

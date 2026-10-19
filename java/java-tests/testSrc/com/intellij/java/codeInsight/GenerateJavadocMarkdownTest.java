@@ -19,8 +19,8 @@ import java.util.Arrays;
 public class GenerateJavadocMarkdownTest extends LightFixtureCompletionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateJavadocMarkdown/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/generateJavadocMarkdown/";
   }
 
   public void testClass() { doTestWithTemplates(); }

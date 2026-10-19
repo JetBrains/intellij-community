@@ -24,8 +24,8 @@ public class AdvHighlighting14Test extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting";
   }
 
   public void testPackageLocals() {

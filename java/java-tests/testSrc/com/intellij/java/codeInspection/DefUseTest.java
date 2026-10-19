@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/defUse";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/defUse";
   }
 
   public void testSCR5144() { doTest(); }

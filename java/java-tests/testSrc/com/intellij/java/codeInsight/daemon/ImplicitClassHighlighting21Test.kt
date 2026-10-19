@@ -9,7 +9,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class ImplicitClassHighlighting21Test : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_11
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass21"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass21"
 
   fun testImplicitClassToExplicit() {
     doTest()

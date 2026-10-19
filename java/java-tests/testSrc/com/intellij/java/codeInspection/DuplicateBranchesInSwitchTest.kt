@@ -15,7 +15,7 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateBranchesInSwitch"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInSwitch"
 
   fun testSimple() = doTest()
   fun testReturn() = doTest()

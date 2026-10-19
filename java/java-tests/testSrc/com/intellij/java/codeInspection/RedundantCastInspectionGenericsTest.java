@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class RedundantCastInspectionGenericsTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantCast/generics";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantCast/generics";
   }
 
   @NotNull

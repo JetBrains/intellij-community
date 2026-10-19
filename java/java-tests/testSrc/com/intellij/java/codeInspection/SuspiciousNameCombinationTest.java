@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class SuspiciousNameCombinationTest extends LightJavaInspectionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousNameCombination";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousNameCombination";
   }
 
   @Nullable

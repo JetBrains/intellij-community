@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -9,7 +10,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -43,7 +43,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void setUpProject() throws Exception {
-    final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
+    final String root = JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
 
     VirtualFile tempProjectRootDir = createTestProjectStructure(null, FileUtil.toSystemIndependentName(root), false, getTempDir());
 

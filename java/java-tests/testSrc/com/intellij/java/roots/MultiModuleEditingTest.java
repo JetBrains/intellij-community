@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MultiModuleEditingTest extends JavaModuleTestCase {
-  private static final String TEST_PATH = PathManagerEx.getTestDataPath() +
+  private static final String TEST_PATH = JavaTestUtil.getJavaTestDataPath() +
                                           "/moduleRootManager/multiModuleEditing".replace('/', File.separatorChar);
   @Override
   protected void setUpModule() {

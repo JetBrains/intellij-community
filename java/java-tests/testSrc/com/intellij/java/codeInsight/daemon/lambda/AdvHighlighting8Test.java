@@ -29,8 +29,8 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   @NotNull

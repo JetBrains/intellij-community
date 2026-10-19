@@ -1,5 +1,6 @@
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -63,7 +64,7 @@ public class TooBroadCatchInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/errorhandling/toobroadcatch";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/errorhandling/toobroadcatch";
   }
 }

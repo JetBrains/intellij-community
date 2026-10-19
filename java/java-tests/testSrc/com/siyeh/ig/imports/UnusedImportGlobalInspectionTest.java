@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.imports;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -39,7 +39,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/imports/globalInspection";
   }
 
   @Override

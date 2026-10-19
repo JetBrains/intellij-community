@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,6 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +28,14 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
 
   // extension.setLanguageLevel uses message bus
   private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    if (myTestDataPath == null && BazelTestUtil.isUnderBazelTest()) {
+      return JavaTestUtil.getJavaTestDataPath();
+    }
+    return super.getTestDataPath();
+  }
 
   public JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(getProject());

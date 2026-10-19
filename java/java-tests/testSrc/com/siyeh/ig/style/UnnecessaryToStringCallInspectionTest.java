@@ -1,5 +1,6 @@
 package com.siyeh.ig.style;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,8 @@ public class UnnecessaryToStringCallInspectionTest extends LightJavaInspectionTe
   }
 
   @Override
-  protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/unnecessary_tostring";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/style/unnecessary_tostring";
   }
 
   @Override

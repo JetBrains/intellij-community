@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -206,7 +205,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindUsages() {
     initProject("findManager", "src", "src1");
-    String projectDir = FileUtil.toSystemDependentName(PathManagerEx.getTestDataPath() + "/find/findManager");
+    String projectDir = FileUtil.toSystemDependentName(JavaTestUtil.getJavaTestDataPath() + "/find/findManager");
 
     FindModel findModel = new FindModel();
     findModel.setStringToFind("done");

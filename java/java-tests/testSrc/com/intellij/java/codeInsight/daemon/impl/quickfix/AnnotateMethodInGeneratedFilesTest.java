@@ -26,8 +26,8 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
   };
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() +
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() +
            "/codeInsight/daemonCodeAnalyzer/quickFix/annotateMethodInGeneratedFiles";
   }
 

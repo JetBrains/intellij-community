@@ -27,8 +27,8 @@ public final class JavaColorProviderPerformanceTest extends LightJavaCodeInsight
   }
 
   @Override
-  public String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/colors/";
+  public String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/colors/";
   }
 
   public void testLargeArrayLiteral() {

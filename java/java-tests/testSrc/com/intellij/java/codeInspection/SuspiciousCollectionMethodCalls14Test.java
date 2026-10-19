@@ -25,8 +25,8 @@ public class SuspiciousCollectionMethodCalls14Test extends LightJavaCodeInsightF
   private SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousCalls";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousCalls";
   }
 
   private void doTest() {

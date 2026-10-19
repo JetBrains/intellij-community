@@ -27,8 +27,8 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   public void testStaticImports() {

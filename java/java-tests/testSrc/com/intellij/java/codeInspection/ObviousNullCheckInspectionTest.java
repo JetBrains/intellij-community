@@ -37,8 +37,8 @@ public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase 
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + TEST_DATA_DIR;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + TEST_DATA_DIR;
   }
 
   @NotNull

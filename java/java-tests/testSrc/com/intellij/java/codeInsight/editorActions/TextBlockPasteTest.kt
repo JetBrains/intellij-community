@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.awt.datatransfer.StringSelection
 
 class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
-  override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/editorActions/textBlockPaste"
+  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/editorActions/textBlockPaste"
 
   fun testPasteSimple() {
     doTest("""

@@ -15,10 +15,10 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.io.File;
 
 public class IndentTest extends LightIdeaTestCase {
-  private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/formatter/indent";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/indent";
 
   private CommonCodeStyleSettings getJavaSettings() {
     return  CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);

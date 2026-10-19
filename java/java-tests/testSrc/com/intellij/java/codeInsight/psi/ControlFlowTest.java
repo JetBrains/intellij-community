@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.psi;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeBlock;
@@ -57,7 +57,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doAllTests() throws Exception {
-    final String testDirPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + BASE_PATH;
+    final String testDirPath = JavaTestUtil.getJavaTestDataPath().replace(File.separatorChar, '/') + BASE_PATH;
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles((dir, name) -> name.endsWith(".java"));
     for (File file : files) {

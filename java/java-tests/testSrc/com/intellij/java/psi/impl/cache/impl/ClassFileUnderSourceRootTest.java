@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +23,7 @@ public class ClassFileUnderSourceRootTest extends JavaProjectTestCase {
     Path dir = root.toNioPath();
 
     PathKt.write(dir.resolve("p/A.java"), "package p;\npublic class A { }");
-    FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), dir.resolve("pack/MyClass.class").toFile());
+    FileUtil.copy(new File(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), dir.resolve("pack/MyClass.class").toFile());
 
     root.refresh(false, true);
     assertSize(2, root.getChildren());

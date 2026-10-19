@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaLangInvokeHandleSignatureTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/inspection/invokeHandleSignature"
+  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/inspection/invokeHandleSignature"
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_9

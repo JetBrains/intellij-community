@@ -7,8 +7,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 class ShowTypeDefinitionActionTest : JavaCodeInsightFixtureTestCase() {
-  override fun getBasePath(): String {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/showTypeDefinition/"
+  override fun getTestDataPath(): String {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/showTypeDefinition/"
   }
 
   fun testReference() {

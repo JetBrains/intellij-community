@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.imports;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -8,7 +9,6 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
@@ -604,7 +604,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspectionWithModules";
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/imports/globalInspectionWithModules";
   }
 
   private void doTest(@Language("JAVA") @NotNull String classText) {
