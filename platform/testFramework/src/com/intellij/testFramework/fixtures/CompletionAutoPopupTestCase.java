@@ -5,6 +5,10 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link CompletionAutoPopupTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class CompletionAutoPopupTestCase extends BasePlatformTestCase {
   protected CompletionAutoPopupTester myTester;
 
