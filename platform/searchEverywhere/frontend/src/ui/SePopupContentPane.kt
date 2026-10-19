@@ -169,6 +169,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class SePopupContentPane(
   private val project: Project?,
   private val resizePopupHandler: (Dimension) -> Unit,
+  private val closePopupHandler: () -> Unit,
   private val searchStatePublisher: SeSearchStatePublisher,
   private val coroutineScope: CoroutineScope,
   initialTabs: List<SeDummyTabVm>,
@@ -187,8 +188,6 @@ class SePopupContentPane(
   private val tabConfigurationState = MutableStateFlow(SePopupHeaderPane.Configuration.createInitial(initialTabs, selectedTabId))
   private val vmState = MutableStateFlow<SePopupVm?>(null)
   private val contentPane = this
-
-  internal var closePopupHandler: () -> Unit = {}
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
     project,
@@ -936,6 +935,10 @@ class SePopupContentPane(
       return
     }
     if (ApplicationManagerEx.isInIntegrationTest()) {
+      return
+    }
+    // The popup can lose focus for a moment while it opens. Close it on focus loss only after the view model is set.
+    if (vmState.value == null) {
       return
     }
 

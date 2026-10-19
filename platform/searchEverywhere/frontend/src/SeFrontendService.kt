@@ -235,7 +235,12 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           if (!popupFuture.isDone) {
             // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
             withContext(Dispatchers.EDT) {
-              if (popup.isDisposed) return@withContext
+              if (popup.isDisposed) {
+                if (e !is CancellationException) {
+                  SeLog.warn("Exception while opening the popup. The popup is already closed. Exception: ${e.message}\n${e.stackTraceToString()}")
+                }
+                return@withContext
+              }
               popup.cancel()
 
               if (isRetry) {
@@ -427,6 +432,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                              popup.size = size
                                            }
                                          },
+                                         closePopupHandler = { popup?.cancel() },
                                          searchStatePublisher,
                                          popupScope,
                                          initialTabs,
@@ -441,7 +447,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       onCancel(contentPane)
       selectionState = contentPane.getSelectionState()
     }
-    contentPane.closePopupHandler = popup::cancel
 
     // The content pane is disposed together with the popup. Stop its UI coroutines at the same time.
     Disposer.register(popup) { popupScope.cancel() }

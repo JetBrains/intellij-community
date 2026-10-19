@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
@@ -46,9 +47,11 @@ internal class SePopupContentPaneTest {
     try {
       val popup = withContext(Dispatchers.UI) {
         val field = if (externalField) SeToolbarSearchField(ActionPlaces.MAIN_TOOLBAR) else null
+        lateinit var popup: JBPopup
         val content = SePopupContentPane(
           project = null,
           resizePopupHandler = {},
+          closePopupHandler = { popup.cancel() },
           searchStatePublisher = SeSearchStatePublisher(),
           coroutineScope = popupScope,
           initialTabs = listOf(SeDummyTabVm(SeActionsTab.ID, SeTabInfo(SeActionsTab.PRIORITY, SeActionsTab.NAME))),
@@ -59,13 +62,12 @@ internal class SePopupContentPaneTest {
           initialSelectionState = null,
           externalTextField = field,
         )
-        val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content.preferableFocusedComponent)
+        popup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content.preferableFocusedComponent)
           .setCancelKeyEnabled(false)
           .createPopup()
         Disposer.register(disposable, popup)
         Disposer.register(popup, content)
         Disposer.register(popup) { popupScope.cancel() }
-        content.closePopupHandler = popup::cancel
 
         (content.preferableFocusedComponent as JTextField).text = "Find Action"
         val escapeShortcuts = ActionManager.getInstance().getAction("EditorEscape").shortcutSet.shortcuts.toSet()

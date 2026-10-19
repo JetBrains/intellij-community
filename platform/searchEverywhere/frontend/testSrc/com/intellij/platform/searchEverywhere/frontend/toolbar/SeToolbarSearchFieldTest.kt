@@ -158,6 +158,7 @@ internal class SeToolbarSearchFieldTest {
     return SePopupContentPane(
       project = null,
       resizePopupHandler = { },
+      closePopupHandler = { },
       searchStatePublisher = SeSearchStatePublisher(),
       coroutineScope = scope,
       initialTabs = listOf(allTab),
