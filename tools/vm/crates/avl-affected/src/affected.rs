@@ -46,11 +46,11 @@
 //!
 //! # The harness reaches its whole lane
 //!
-//! A path in a lane-wide module is the lane harness: the shared drivers, the daemon, or the bridge with the state
-//! reset and the authored bodies. A change there can break every suite of the lanes the module serves. The list is held by module name because the module cache already names a path's module, so no path list
-//! goes stale beside it. Each entry is a decision about what the module holds:
+//! A path in a lane-wide module is the lane harness: the bridge with the state reset and the authored bodies, or the
+//! fake agents. A change there can break every suite of the lanes the module serves. The list is held by module name
+//! because the module cache already names a path's module, so no path list goes stale beside it. Each entry is a
+//! decision about what the module holds:
 //!
-//! - `…uiDaemon` is the daemon, one JVM over the classpath of every lane.
 //! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test. The bridge also
 //!   holds the state reset and the authored bodies of the suites.
 //! - `…testSupport` is the fake agents and the fake registry the flow harness links for every lane.

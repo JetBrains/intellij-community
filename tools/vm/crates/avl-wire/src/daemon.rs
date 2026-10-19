@@ -166,8 +166,8 @@ pub fn match_route(method: &str, path: &str) -> Option<Route> {
 
 // --- the bodies those routes answer with ------------------------------------------------------------------
 //
-// The Kotlin DTOs behind these carry no `@SerialName`, so every name below is a Kotlin property name spelled
-// out by hand. `AirUiDaemonProtocolTest` asserts these keys as bytes on the Kotlin side.
+// The lane daemon of the guest agent writes these bodies with the same types, so each name below is the name on both
+// ends.
 
 /// `GET /status`.
 ///

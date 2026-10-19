@@ -417,11 +417,9 @@ the path table and the digest of each staged runfile, so the host predicts the r
 predicted one is `guest_runfiles_mismatch`, and a bad reply is `guest_runfiles_protocol`. The verb keeps that tree
 and the newest other one.
 
-The daemon JVM gets `-Didea.home.path=<generation>/home`, an empty directory of its staged generation, and an
-explicit config, system and log directory under `$AIR_VM_DATA/out/daemon`. IDE Starter keeps its output tree in
-`$AIR_VM_DATA/out` (`-Dide.starter.out.dir`). So no path of the JVM derives from a checkout.
-`AirUiDaemonServer.requireStagedRuntime` refuses a home outside the generation. The IDE distribution itself is
-read, not written, and the IDE writes its data into its context under `$AIR_VM_DATA/ide`.
+The lane daemon gets `--home <generation>/home`, a directory of its staged generation, and its IDE root on the
+guest disk. The boot of the verb makes both, so no path of the lane daemon derives from a checkout. The IDE
+distribution itself is read, not written, and the IDE writes its data into its context under `$AIR_VM_DATA/ide`.
 
 The share arrives on Apple's one VirtioFS automount device, and the controller mounts that device
 itself: at `/mnt/AirVmShares` on a Linux guest and `/Volumes/AirVmShares` on a macOS one
@@ -497,10 +495,10 @@ lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
 The runtime descriptor still declares the two classpath tiers of the retired JVM daemon. The **stable** tier is the
-platform and framework jars and the daemon's own module, and the guest still stages it. The **hot** tier is everything
-built from `plugins/air` except the daemon's own module. Nothing reads it, and the controller pushes no hot jar. The
-test code of a run reaches the lane IDE as the context plugin files and the lane inputs, which the controller pushes by
-digest.
+JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty, and the
+guest still stages it. The **hot** tier is the jars built from `plugins/air`: the jars of the suite and lane
+documents. Nothing reads it, and the controller pushes no hot jar. The test code of a run reaches the lane IDE as the
+context plugin files and the lane inputs, which the controller pushes by digest.
 
 Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
 `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` is "owner contains `//plugins/air/` and
@@ -582,14 +580,12 @@ The questions are asked independently, and one file may answer yes to more than 
 
 The product stamp reads the `fingerprint.txt` that the dev build wrote inside the distribution's
 tree artifact. It is an xxh3 over every entry's content hash, so stamping never walks a
-multi-gigabyte tree. The stamp folds into the lane config key (`AirFlowLaneHost.configKey`), so a
+multi-gigabyte tree. The stamp folds into the lane config key of the guest agent, so a
 relaunch is the host's own key-change path rather than a new mechanism. The launch record of each IDE
 context names the product digest, which is how a restart knows which IDE it may keep.
 
-Nothing the daemon holds open lives on the share, and `AirUiDaemonServer.requireStagedRuntime`
-asserts that rather than arranging it: it refuses to serve unless `user.dir`, every stable classpath
-entry and `java.home` are under the guest-local runtime root. So the daemon can outlive a remount,
-and there are two remount windows:
+Nothing the lane daemon holds open lives on the share. It runs from the installed guest agent and its
+staged generation, so the daemon can outlive a remount, and there are two remount windows:
 
 - **With the daemon alive**, for a product change. `POST /ide/stop` makes the daemon quit its IDE, and it
   answers `409 busy` if a run is in flight. `ide-gc --stop-all` then cancels every other IDE run of the
@@ -746,7 +742,7 @@ names are no longer owed, because the engine is retired.
 The **daemon** is the expensive warm state, several times the IDE it holds. A restart that keeps the
 IDE saves the launch and its readiness dwell, and it pays the rest of the restart. Read those rows
 against the invalidation ladder. A test-only edit pays the 11 s row. An Air product edit pays about 61 s,
-including its host build. Only a platform, framework or `uiDaemon` edit pays the restart.
+including its host build. Only an edit that changes the launch digest of the lane daemon pays the restart.
 `ide remount` in the timing line is a label rather than a duration, so one run cannot price the IDE
 action.
 
@@ -785,7 +781,7 @@ Normal execution requires neither Peekaboo nor guest Screen Recording or Accessi
 
 | what | where in the guest |
 | --- | --- |
-| JUnit XML of the JVM daemon, per iteration. A wedged exit flushes partial XML. The controller writes its own XML of the stream beside the report on the host | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
+| JUnit XML of the lane daemon, per iteration, which `/results` serves. The controller writes its own XML of the stream beside the report on the host | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
 | `idea.log`, the heartbeat screenshots and the other IDE logs, per IDE launch | `$AIR_VM_DATA/ide/<launchKey>/log/<launchName>/` |
 | the thread dump of an IDE that the watchdog or a stop killed | `threadDump-before-kill-<millis>.txt` in that same directory |
 | the standard output and error of one IDE launch, and its supervisor log | `$AIR_VM_DATA/ide/<launchKey>/run-ide-<launchName>/` |

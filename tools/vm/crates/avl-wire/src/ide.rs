@@ -1,8 +1,7 @@
 //! The wire of the lane IDE: the context document that `ide-prepare` reads, the launch document that `ide-launch`
 //! reads, their answers, the launch record that `ide-launch` writes into the context, and the answer of `ide-gc`.
 //!
-//! The caller is the stable tier of the UI daemon (`AirLaneIde`), and in a standalone lane run the same class on the
-//! host. One context is `<ideRoot>/<launchKey>`. It holds the data directories of the IDE, the project, the home and
+//! The lane daemon of the guest agent prepares and launches its IDE through the same code in process. One context is `<ideRoot>/<launchKey>`. It holds the data directories of the IDE, the project, the home and
 //! the `bin` directory of the IDE environment, the argument file, the launch record, and the run slot of the run
 //! supervisor. One IDE run is the supervisor run [`ide_run_id`] of one launch name, so a relaunch on the same context
 //! is a new run in the same slot.

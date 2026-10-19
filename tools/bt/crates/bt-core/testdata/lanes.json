@@ -79,8 +79,6 @@
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
   "laneWideModules": {
-    "intellij.air.integrationTests": [],
-    "intellij.air.integrationTests.uiDaemon": [],
     "intellij.air.integrationTests.bridge": [],
     "intellij.air.integrationTests.bridge.plugin": [],
     "intellij.air.integrationTests.bridge.resident": [],

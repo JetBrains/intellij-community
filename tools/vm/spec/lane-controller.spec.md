@@ -226,8 +226,8 @@ The generator publishes the suite facts that the controller reads, as
   which walks that flow. A path reaches every suite whose routes walk its own module.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
-- The lane harness modules are the shared drivers, the bridge, the fake agents, the daemon and the controller. The
-  bridge holds the state reset and the authored bodies. A change there can break every suite of its lanes, so a
+- The lane harness modules are the bridge and the fake agents. The bridge holds the state reset and the authored
+  bodies. The lane-wide paths are the controller and the lane files of `plugins/air/tests/integration`. A change there can break every suite of its lanes, so a
   narrower answer would hide a failure.
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
@@ -473,11 +473,10 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_runfile_in_the_checkout_is_staged_with_its_digest`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
-- The home of the daemon JVM is an empty directory of its staged generation. Its config, system and log directories
-  and the output tree of IDE Starter are on the guest disk. Each one has its own flag, so no path derives from a
-  checkout. The daemon refuses a home outside its generation.
+- The home of the lane daemon is a directory of its staged generation, and its IDE root is on the guest disk. Each
+  one has its own flag, so no path derives from a checkout. The boot of the verb makes both.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
-  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonStagedHomeTest.kt
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_boot_makes_the_directories_of_the_run_readable_only_by_its_account`)
 
 - A run that rules out each of its classes is not a run that matched no class. The controller gives the
   reason of each class, and does not tell the person to look at the selector.
@@ -793,8 +792,6 @@ The daemon's half and the IDE's half of supervision are in
   controller. No `output` record of a run follows its summary.
   [@test] ../crates/avl-wire/src/daemon/tests.rs
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
-  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonStampedOutputTest.kt
-  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocolTest.kt
 
 - The watchdog evidence may name a file of an IDE context. Examples are a heartbeat screenshot and the thread
   dump before a kill.
@@ -961,7 +958,6 @@ The daemon's half and the IDE's half of supervision are in
 
 - On the daemon control channel, a field that is absent is absent, and is not null. The controller tells
   the two apart. The controller refuses an explicit null on that channel.
-  [@test] ../../../../plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocolTest.kt
   [@test] ../crates/avl-wire/src/daemon/tests.rs
 
 - The controller refuses a record with an unknown name, or a declared field of the wrong type. It does not
