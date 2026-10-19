@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions
 import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
@@ -77,6 +78,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import java.util.function.BiFunction
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import javax.swing.JTree
@@ -208,12 +210,21 @@ internal class TreeBasedFrontendProjectViewPane(
       else {
         LOG.debug { "The pane $id doesn't need to expand the first top node (already expanded something)" }
       }
-      if (tree.selectionPath == null && tree.rowCount > 0) {
-        LOG.debug { "The pane $id has no initial selection, selecting the first row" }
-        tree.selectionPath = tree.getPathForRow(0)
-      }
     }
-    tree.addTreeSelectionListener(RestoreSelectionListener())
+    val restoreSelectionListener = RestoreSelectionListener()
+    ClientProperty.put(tree, RestoreSelectionListener.MATCHER, BiFunction { pathComponent, thisComponent ->
+      if (pathComponent == thisComponent) {
+        true
+      }
+      else {
+        val pathId = TreeState.calcId(pathComponent)
+        val pathType = TreeState.calcType(pathComponent)
+        val thisId = TreeState.calcId(thisComponent)
+        val thisType = TreeState.calcType(thisComponent)
+        pathId == thisId && pathType == thisType
+      }
+    })
+    tree.addTreeSelectionListener(restoreSelectionListener)
     enableDnD(tree, paneTreeModel)
     if (!descriptor.isDefault) {
       tree.emptyText
@@ -480,20 +491,24 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override fun saveStateTo(element: Element): Boolean {
     if (paneTreeModel.isEffectivelyEmpty) return false
-    TreeState.createOn(tree, true, false, true).writeExternal(element)
+    TreeState.createOn(tree, true, true, true).writeExternal(element)
     return true
   }
 
-  override fun restoreStateFrom(element: Element?) {
+  override fun restoreStateFrom(element: Element?, options: RestorePaneStateOptions) {
     val treeState = TreeState.createFrom(element)
     if (!treeState.isEmpty) {
       singleRootExpandRequest.value = SingleRootExpand.NOT_NEEDED
-      treeState.applyTo(tree)
+      treeState.applyTo(tree, options.restoreSelection)
       lateTopLevelCachedPresentation.stateRestored(treeState.cachedPresentationData)
     }
     else {
       singleRootExpandRequest.value = SingleRootExpand.DEFINITELY_NEEDED
       lateTopLevelCachedPresentation.stateRestored(null)
+    }
+    if (tree.selectionPath == null && tree.rowCount > 0) {
+      LOG.debug { "The pane $id has no initial selection, selecting the first row" }
+      tree.selectionPath = tree.getPathForRow(0)
     }
   }
 }

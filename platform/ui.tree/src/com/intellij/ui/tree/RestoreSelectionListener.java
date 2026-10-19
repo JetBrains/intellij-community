@@ -10,6 +10,7 @@ import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
+import java.util.function.BiFunction;
 
 import static com.intellij.util.ui.tree.TreeUtil.visitVisibleRows;
 import static java.awt.EventQueue.invokeLater;
@@ -27,6 +28,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
    * </p>
    */
   public static final @NotNull Key<Boolean> DISABLED = Key.create("RestoreSelectionListener.DISABLED");
+  public static final @NotNull Key<BiFunction<Object, Object, Boolean>> MATCHER = Key.create("RestoreSelectionListener.MATCHER");
 
   @Override
   public void valueChanged(TreeSelectionEvent event) {
@@ -43,6 +45,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
                 // restore a path selection only if nothing is selected now
                 Reference<TreePath> reference = new Reference<>();
                 reference.set(tree.getPathForRow(0)); // select first node if old path removed completely
+                var matcher = ClientProperty.get(tree, MATCHER);
                 TreeVisitor visitor = new TreeVisitor.ByTreePath<>(path, o -> o) {
                   @Override
                   protected @NotNull Action visit(@NotNull TreePath path, Object component) {
@@ -55,7 +58,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
                   protected boolean matches(@NotNull Object pathComponent, @NotNull Object thisComponent) {
                     // If "loading..." was replaced by the real nodes, we should select the first new one.
                     if (thisComponent instanceof LoadingNode) return true;
-                    return super.matches(pathComponent, thisComponent);
+                    return matcher != null ? matcher.apply(pathComponent, thisComponent) : super.matches(pathComponent, thisComponent);
                   }
                 };
                 visitVisibleRows(tree, visitor);
