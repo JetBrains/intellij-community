@@ -41,6 +41,7 @@ import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewUpdate
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
+import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptionsImpl
 import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
@@ -381,7 +382,10 @@ internal class ProjectViewToolWindowServiceImpl(
   
   private fun loadPaneState(pane: FrontendProjectViewPane) {
     val paneState = persistentState.getPaneState(pane.id)
-    pane.restoreStateFrom(paneState)
+    val isLightToSmartMigration =
+      paneState?.paneKind == ProjectViewPaneKind.LIGHT &&
+      pane.descriptorImpl.kind == ProjectViewPaneKind.BACKEND
+    pane.restoreStateFrom(paneState?.element, RestorePaneStateOptionsImpl(restoreSelection = isLightToSmartMigration))
     LOG.debug { "Applied the loaded state for ${pane.id}" }
   }
   
@@ -394,7 +398,7 @@ internal class ProjectViewToolWindowServiceImpl(
     val paneElement = Element("pane")
     paneElement.setAttribute("pane", pane.id.idString)
     if (pane.saveStateTo(paneElement)) {
-      persistentState.putPaneState(pane.id, paneElement)
+      persistentState.putPaneState(pane.id, PaneState(paneElement, pane.descriptorImpl.kind))
       LOG.debug { "Saved the last state for ${pane.id}" }
     }
     else {
@@ -737,7 +741,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
 private class ProjectViewToolWindowServiceState {
   private val selectedPaneState = AtomicReference<ProjectViewPaneId?>(null)
-  private val paneState = ConcurrentHashMap<ProjectViewPaneId, Element>()
+  private val paneState = ConcurrentHashMap<ProjectViewPaneId, PaneState>()
 
   fun getSelectedPaneState(): ProjectViewPaneId? {
     return selectedPaneState.load()
@@ -747,11 +751,11 @@ private class ProjectViewToolWindowServiceState {
     selectedPaneState.store(state)
   }
 
-  fun getPaneState(paneId: ProjectViewPaneId): Element? {
+  fun getPaneState(paneId: ProjectViewPaneId): PaneState? {
     return paneState[paneId]
   }
 
-  fun putPaneState(paneId: ProjectViewPaneId, state: Element) {
+  fun putPaneState(paneId: ProjectViewPaneId, state: PaneState) {
     paneState[paneId] = state
   }
 
@@ -770,7 +774,7 @@ private class ProjectViewToolWindowServiceState {
   private fun writePanes(element: Element) {
     val panesElement = Element("panes")
     for (paneState in paneState.values) {
-      panesElement.addContent(paneState.clone())
+      panesElement.addContent(paneState.element.clone())
     }
     element.addContent(panesElement)
   }
@@ -792,10 +796,17 @@ private class ProjectViewToolWindowServiceState {
     for (paneElement in panesElement?.getChildren("pane") ?: emptyList()) {
       val paneIdString = paneElement.getAttribute("pane")?.value ?: continue
       val paneId = projectViewPaneId(paneIdString)
-      paneState[paneId] = paneElement
+      // The pane kind is only needed for light => smart switch.
+      // Therefore, it is not persisted, as it's only used in-process.
+      paneState[paneId] = PaneState(paneElement, paneKind = null)
     }
   }
 }
+
+private data class PaneState(
+  val element: Element,
+  val paneKind: ProjectViewPaneKind?,
+)
 
 private fun defaultSelectedPaneId(): ProjectViewPaneId =
   projectViewPaneId(ProjectViewPane.ID)

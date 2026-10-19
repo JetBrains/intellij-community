@@ -844,7 +844,8 @@ public final class TreeState implements JDOMExternalizable {
     return null;
   }
 
-  static @NotNull String calcId(@Nullable Object node) {
+  @ApiStatus.Internal
+  public static @NotNull String calcId(@Nullable Object node) {
     if (node == null) return "";
     var provider = getProvider(node);
     // The easiest case: the node provides an ID explicitly.
@@ -872,7 +873,8 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  static @NotNull String calcType(@Nullable Object node) {
+  @ApiStatus.Internal
+  public static @NotNull String calcType(@Nullable Object node) {
     if (node == null) return "";
     var provider = getProvider(node);
     if (provider != null) {
@@ -899,10 +901,18 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree) {
-    applyTo(tree, tree.getModel().getRoot());
+    applyTo(tree, tree.getModel().getRoot(), true);
+  }
+
+  public void applyTo(@NotNull JTree tree, boolean restoreSelection) {
+    applyTo(tree, tree.getModel().getRoot(), restoreSelection);
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
+    applyTo(tree, root, true);
+  }
+
+  public void applyTo(@NotNull JTree tree, @Nullable Object root, boolean restoreSelection) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("TreeState.applyTo: " + tree + "\n" + this);
     }
@@ -910,7 +920,7 @@ public final class TreeState implements JDOMExternalizable {
       jbTree.fireTreeStateRestoreStarted();
     }
     applyCachedPresentation(tree);
-    if (visit(tree)) return; // AsyncTreeModel#accept
+    if (visit(tree, restoreSelection)) return; // AsyncTreeModel#accept
     if (root == null) return;
     var cache = new PathMatcherCache();
     TreeFacade facade = TreeFacade.getFacade(tree);
@@ -920,7 +930,7 @@ public final class TreeState implements JDOMExternalizable {
         facade.batch(indicator -> applyExpandedTo(facade, new CachingTreePath(root), indicator, cache));
       }
     });
-    if (tree.getSelectionCount() == 0) {
+    if (restoreSelection && tree.getSelectionCount() == 0) {
       callback.doWhenDone(new TreeRunnable("TreeState.applyTo: on done") {
         @Override
         public void perform() {
@@ -1192,19 +1202,21 @@ public final class TreeState implements JDOMExternalizable {
     return TreeUtil.promiseSelect(tree, mySelectedPaths.stream().map(elements -> new SinglePathVisitor(elements)));
   }
 
-  private boolean visit(@NotNull JTree tree) {
+  private boolean visit(@NotNull JTree tree, boolean restoreSelection) {
     TreeModel model = tree.getModel();
 
     if (myPresentationData != null && model instanceof DefaultTreeModelWithCachedPresentation defaultModel && tree instanceof CachedTreePresentationSupport) {
+      // We can restore the selection immediately, because we have the cached nodes that match.
+      // It leads to better UX, and it allows the caller to synchronously check if the selection is actually restored.
+      if (restoreSelection && tree.isSelectionEmpty()) {
+        applySelectedTo(tree, new PathMatcherCache());
+      }
       var started = System.currentTimeMillis();
       // The presentation is applied, meaning that everything is expanded already.
       // We only have to wait until the nodes are actually loaded, and the model supports this directly.
       defaultModel.promiseRealNodes().onProcessed(loaded -> {
         List<TreePath> expanded = loaded == null ? Collections.emptyList() : loaded.stream().filter(path -> tree.isExpanded(path)).toList();
         onExpandFinished(tree, expanded, started);
-        if (tree.isSelectionEmpty()) {
-          select(tree);
-        }
       });
       return true;
     }
@@ -1214,7 +1226,7 @@ public final class TreeState implements JDOMExternalizable {
     var started = System.currentTimeMillis();
     expand(tree, promise -> expand(tree).onProcessed(expanded -> {
       onExpandFinished(tree, expanded, started);
-      if (isSelectionNeeded(expanded, tree, promise)) {
+      if (restoreSelection && isSelectionNeeded(expanded, tree, promise)) {
         select(tree).onProcessed(selected -> promise.setResult(null));
       }
     }));

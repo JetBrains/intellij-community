@@ -5,7 +5,7 @@
 - a:getSelectInTargets():java.util.Collection
 - a:isCurrent():Z
 - a:manage(kotlin.coroutines.Continuation):java.lang.Object
-- a:restoreStateFrom(org.jdom.Element):V
+- a:restoreStateFrom(org.jdom.Element,com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions):V
 - a:saveStateTo(org.jdom.Element):Z
 - a:setCurrent(Z):V
 *:com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneModel
@@ -13,3 +13,5 @@
 - a:describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPaneProvider
 - a:getPaneModelsFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
+*:com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions
+- a:getRestoreSelection():Z

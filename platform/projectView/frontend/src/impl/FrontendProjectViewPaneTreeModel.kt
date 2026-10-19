@@ -79,6 +79,9 @@ internal class FrontendProjectViewPaneTreeModel(
   internal val treeModel = DefaultTreeModelWithCachedPresentation()
   internal val rootChildren: StateFlow<List<TreePath>>
     field = MutableStateFlow(emptyList())
+  
+  internal val hasCachedPresentation: Boolean
+    get() = treeModel.cachedPresentation != null
 
   private val optionSupport = ActionSupport()
 

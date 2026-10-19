@@ -1358,6 +1358,8 @@ f:com.intellij.ide.util.treeView.TreeState
 - sf:CALLBACK:com.intellij.openapi.util.Key
 - applyTo(javax.swing.JTree):V
 - applyTo(javax.swing.JTree,java.lang.Object):V
+- applyTo(javax.swing.JTree,java.lang.Object,Z):V
+- applyTo(javax.swing.JTree,Z):V
 - s:createFrom(org.jdom.Element):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree,java.util.List,java.util.List):com.intellij.ide.util.treeView.TreeState

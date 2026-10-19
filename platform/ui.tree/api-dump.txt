@@ -57,6 +57,7 @@ f:com.intellij.ui.tree.FilteringTreeModel
 f:com.intellij.ui.tree.RestoreSelectionListener
 - javax.swing.event.TreeSelectionListener
 - sf:DISABLED:com.intellij.openapi.util.Key
+- sf:MATCHER:com.intellij.openapi.util.Key
 - <init>():V
 com.intellij.ui.tree.Searchable
 - a:getTreePath(java.lang.Object):org.jetbrains.concurrency.Promise
