@@ -4,10 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JetBrains</title>
+  <meta name="color-scheme" content="light dark">
   <style>
+    :root {
+      color-scheme: light dark;
+    }
+
     body {
       margin: 0;
       background: #fff;
+      color: #000;
       font-family: system-ui;
       font-size: 1.5em;
     }
@@ -34,6 +40,21 @@
 
     .status.failure {
       color: #c7222d;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #19191c;
+        color: #fff;
+      }
+
+      .status.success {
+        color: #81c784;
+      }
+
+      .status.failure {
+        color: #f47067;
+      }
     }
   </style>
 </head>
