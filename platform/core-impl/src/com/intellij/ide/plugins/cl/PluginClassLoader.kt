@@ -61,7 +61,8 @@ private val defaultResolveScopeManager = object : ResolveScopeManager {
 
 private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClassesUsedInSignatures()
 
-private var logStream: Writer? = null
+// a boolean, not the log: with the log off, no class of the log loads, also in compiled code
+private val isClassLogOn: Boolean = System.getProperty("plugin.classloader.debug", "").isNotEmpty()
 
 @ApiStatus.Internal
 class PluginClassLoader(
@@ -81,6 +82,15 @@ class PluginClassLoader(
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
+
+  /** The state of this loader in [PluginClassLog], or `null` when the log is off. */
+  private val logState: PluginClassLogState? = if (isClassLogOn) {
+    createPluginClassLogState(pluginId.idString, (pluginDescriptor as IdeaPluginDescriptor).descriptorPath?.removeSuffix(".xml"))
+  }
+  else {
+    null
+  }
+
   @Suppress("SSBasedInspection")
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
@@ -91,30 +101,6 @@ class PluginClassLoader(
       assert(isParallelCapable)
     }
 
-    init {
-      var logStreamCandidate: Writer? = null
-      var debugFilePath = System.getProperty("plugin.classloader.debug", "")
-      if (!debugFilePath.isEmpty()) {
-        try {
-          if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {
-            debugFilePath = System.getProperty("user.home") + debugFilePath.substring(1)
-          }
-          logStreamCandidate = Files.newBufferedWriter(Paths.get(debugFilePath))
-          ShutDownTracker.getInstance().registerShutdownTask {
-            try {
-              logStream?.close()
-            }
-            catch (e: IOException) {
-              logger<PluginClassLoader>().error(e)
-            }
-          }
-        }
-        catch (e: IOException) {
-          logger<PluginClassLoader>().error(e)
-        }
-      }
-      logStream = logStreamCandidate
-    }
   }
 
   fun getLibDirectories(): List<Path> = libDirectories
@@ -151,7 +137,6 @@ class PluginClassLoader(
       return it
     }
 
-    flushDebugLog()
     throw ClassNotFoundException("$name $this")
   }
 
@@ -290,33 +275,31 @@ class PluginClassLoader(
         return c
       }
 
+      val state = logState
+      val logStartTime = if (state == null) -1L else System.nanoTime()
       c = try {
         classPath.findClass(name, fileName, packageNameHash, classDataConsumer)
       }
       catch (e: LinkageError) {
-        logStream?.let { logClass(name = name, logStream = it, exception = e) }
-        flushDebugLog()
+        state?.log?.defineFailed(state = state, className = name, message = e.message)
         throw PluginException("Cannot load class $name (\n  error: ${e.message},\n  classLoader=$this\n)", e, pluginId)
       }
       if (c == null) {
         return null
       }
 
-      loadedClassCounter.incrementAndGet()
-      logStream?.let { logClass(name = name, logStream = it, exception = null) }
+      val isFirstClass = loadedClassCounter.incrementAndGet() == 1
+      if (state != null) {
+        val log = state.log
+        val findClassNanos = System.nanoTime() - logStartTime
+        log.classDefined(
+          state = state,
+          className = name,
+          findClassNanos = findClassNanos,
+          stack = if (isFirstClass) log.captureStack() else null,
+        )
+      }
       return c
-    }
-  }
-
-  private fun logClass(name: String, logStream: Writer, exception: LinkageError?) {
-    try {
-      // must be as one write call since write is performed from multiple threads
-      val descriptorPath = (pluginDescriptor as IdeaPluginDescriptor).descriptorPath
-      val specifier = if (descriptorPath == null) "m" else "sub = $descriptorPath"
-      logStream.write("""$name [$specifier] ${pluginId.idString}${if (packagePrefix == null) "" else ":$packagePrefix"}
-${if (exception == null) "" else exception.message}""")
-    }
-    catch (_: IOException) {
     }
   }
 
@@ -480,13 +463,4 @@ private fun mustBeLoadedByPlatform(name: @NonNls String): Boolean {
           name.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
           name.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
           KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(name))
-}
-
-private fun flushDebugLog() {
-  val logStream = logStream ?: return
-  try {
-    logStream.flush()
-  }
-  catch (_: IOException) {
-  }
 }
