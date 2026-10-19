@@ -93,6 +93,11 @@ data class PluginValidationOptions(
   val moduleLevelServicesToIgnore: Set<String> = emptySet(),
 
   /**
+   * Set of implementation classes of existing `com.intellij.additionalLibraryRootsProvider` extensions that shouldn't be reported as errors.
+   */
+  val additionalLibraryRootsProvidersToIgnore: Set<String> = emptySet(),
+
+  /**
    * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
    * to be registered as `open`.
    */
@@ -217,6 +222,7 @@ internal class PluginModelValidator(
 
     for (descriptorFileInfo in descriptorFileInfos) {
       checkLazyRpcExtensionAttributes(descriptorFileInfo)
+      checkAdditionalLibraryRootsProviders(descriptorFileInfo)
     }
 
     // 3. check dependencies - we are aware about all modules now
@@ -358,6 +364,22 @@ internal class PluginModelValidator(
           )
         }
       }
+    }
+  }
+
+  private fun checkAdditionalLibraryRootsProviders(descriptorFileInfo: DescriptorFileInfo) {
+    val extensions = descriptorFileInfo.descriptor.extensions.get("com.intellij.additionalLibraryRootsProvider") ?: return
+    for (extension in extensions) {
+      if (extension.implementation in validationOptions.additionalLibraryRootsProvidersToIgnore) continue
+      reportError(
+        """
+        |Additional library roots provider '${extension.implementation}' is defined in '${descriptorFileInfo.sourceModule.name}'.
+        |AdditionalLibraryRootsProvider is not incremental, so it is forbidden to add new ones in intellij monorepo.
+        |Describe the files with a workspace entity and a WorkspaceFileIndexContributor instead.
+        """.trimMargin(),
+        descriptorFileInfo.sourceModule,
+        mapOf("descriptorFile" to descriptorFileInfo.descriptorFile),
+      )
     }
   }
 
