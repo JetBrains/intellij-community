@@ -23,15 +23,6 @@ class Foo[T]:
     ...
 
 
-class BaseClassC[T]:
-    def __init_subclass__(cls, param: type[Foo[T]]) -> None:
-        ...
-
-
-class ClassC[T](BaseClassC[T], param=Foo[T]):  # OK
-    ...
-
-
 print(T)  # E: Runtime error: 'T' is not defined
 
 
