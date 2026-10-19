@@ -1,0 +1,6 @@
+class B<T>
+
+val map = mapOf<B<*>, B<String>>()
+val value: B<*>? = null
+val nested: List<B<*>> = emptyList()
+val doublyNested: B<B<*>>? = null

@@ -1,0 +1,2 @@
+val first: Pair<String, *>? = null
+val second: Pair<*, Int>? = null

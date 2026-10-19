@@ -174,6 +174,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/lambdaExpression.kt");
         }
 
+        @TestMetadata("mixedStarReordered.kt")
+        public void testMixedStarReordered() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/mixedStarReordered.kt");
+        }
+
         @TestMetadata("nestedAliasConstructor.kt")
         public void testNestedAliasConstructor() throws Exception {
             runTest("testData/inline/inlineTypeAlias/nestedAliasConstructor.kt");
@@ -197,6 +202,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("simpleAlias.kt")
         public void testSimpleAlias() throws Exception {
             runTest("testData/inline/inlineTypeAlias/simpleAlias.kt");
+        }
+
+        @TestMetadata("starProjectedFunctionType.kt")
+        public void testStarProjectedFunctionType() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/starProjectedFunctionType.kt");
+        }
+
+        @TestMetadata("starProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/starProjection.kt");
         }
 
         @TestMetadata("stdlibAliasSupertype.kt")
