@@ -22,6 +22,7 @@ import com.intellij.grazie.spellcheck.dictionary.ExtendedWordListWithFrequency
 import com.intellij.grazie.spellcheck.dictionary.WordListAdapter
 import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.grazie.spellcheck.ranker.DiacriticSuggestionRanker
+import com.intellij.grazie.utils.runWithCheckCanceledOrKnownSlow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
@@ -40,6 +41,8 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentMap
@@ -65,6 +68,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
 
   override fun getTransformation(): Transformation = Transformation()
 
+  private val mutex = Mutex()
   private val manager by lazy { SpellCheckerManager.getInstance(project) }
   private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
@@ -126,7 +130,23 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
     this.speller = speller
   }
 
-  fun getSpeller(): Speller? = speller
+  internal suspend fun ensureSpellerInitialized() {
+    if (speller != null) return
+    mutex.withLock {
+      if (speller == null) {
+        initializeSpeller(project)
+      }
+    }
+  }
+
+  fun getSpeller(): Speller? {
+    if (speller == null) {
+      runWithCheckCanceledOrKnownSlow("IJPL-33249") {
+        ensureSpellerInitialized()
+      }
+    }
+    return speller
+  }
 
   override fun dispose() {
     coroutineScope.cancel()
@@ -154,7 +174,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
 
   override fun isCorrect(word: String): Boolean {
     if (word.isEmpty()) return true
-    val speller = speller ?: return true
+    val speller = getSpeller() ?: return true
     if (word.length > MAX_WORD_LENGTH) {
       return true
     }
@@ -163,7 +183,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    if (speller == null) {
+    if (getSpeller() == null) {
       return emptyList()
     }
     if (word.length > MAX_WORD_LENGTH) {

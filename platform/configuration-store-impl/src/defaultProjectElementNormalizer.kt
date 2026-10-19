@@ -51,6 +51,13 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
         }
       }
 
+      "ProjectDictionaryState" -> {
+        iterator.remove()
+        convertProfiles(component.getChildren("dictionary").iterator(), componentName, projectConfigDir.resolve("dictionaries")) {
+          it.getAttributeValue("name")
+        }
+      }
+
       JpsProjectLoader.MODULE_MANAGER_COMPONENT -> {
         iterator.remove()
       }

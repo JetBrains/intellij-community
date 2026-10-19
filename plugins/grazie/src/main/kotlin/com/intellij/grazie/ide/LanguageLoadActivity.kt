@@ -28,7 +28,7 @@ internal abstract class LanguageLoadActivity : ProjectActivity {
 
   internal class SpellingPreloader : LanguageLoadActivity() {
     override suspend fun execute(project: Project) {
-      GrazieSpellCheckerEngine.getInstance(project).initializeSpeller(project)
+      GrazieSpellCheckerEngine.getInstance(project).ensureSpellerInitialized()
       SpellCheckerManager.getInstance(project)
     }
   }

@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.runBlocking
 import ai.grazie.text.TextRange as GrazieTextRange
 
 @JvmField
@@ -117,9 +118,10 @@ internal fun getGrazieTracker(file: PsiFile): ModificationTracker {
   }
 }
 
-internal fun <T> runWithCheckCanceledOrKnownSlow(ytTicket: String, block: () -> T): T {
+internal fun <T> runWithCheckCanceledOrKnownSlow(ytTicket: String, block: suspend () -> T): T {
   if (EDT.isCurrentThreadEdt()) {
-    return SlowOperations.knownIssue(ytTicket).use { block() }
+    @Suppress("SSBasedInspection")
+    return SlowOperations.knownIssue(ytTicket).use { runBlocking { block() } }
   } else {
     return runWithCheckCanceled { block() }
   }
