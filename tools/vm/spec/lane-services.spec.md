@@ -322,13 +322,17 @@ A command of the control server acts on the dial in this way:
 | --- | --- |
 | `write`, `writeMalformed` | it sends the line or the bytes as one text message, then it acknowledges the command |
 | `closeStdout` | it reports `stdout_closed`, acknowledges the command, and closes the dial with 1000 |
-| `exit` | it reports `process_exit` with the code, acknowledges the command, and closes the dial with 1001 |
+| `exit` | it reports `process_exit` with the code, acknowledges the command, closes the control connection, and closes the dial with 1001 |
 | `mcpCall`, `mcpListTools` | it answers an error result, because a remote spawner offers no MCP server |
 
 - Each command has the effect of the table.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
 
-- The end of a dial reports `stdin_eof`. Then the spawner closes the control connection.
+- The end of a dial before an exit reports `stdin_eof`. Then the spawner closes the control connection.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
+
+- An exit closes the control connection at once. The dial then waits at most 2 s for the answer of the IDE to its
+  close. Then the connection of the dial ends, also without the answer.
   [@test] ../crates/avl-guest/src/lane/services/cloud/spawner/tests.rs
 
 - A dial before the attach closes with 1011. So does a dial that the control server refuses.

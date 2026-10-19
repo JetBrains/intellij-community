@@ -4,7 +4,7 @@
 use std::io::{ErrorKind, Read, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::sync::{Arc, mpsc};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
@@ -351,7 +351,7 @@ fn the_end_of_the_dial_reports_stdin_eof_and_closes_the_control_connection() {
 }
 
 #[test]
-fn an_exit_reports_process_exit_acknowledges_and_closes_the_dial_with_going_away() {
+fn an_exit_reports_process_exit_acknowledges_and_closes_the_control_connection_and_the_dial() {
     let control = FakeControl::start();
     let service = attached(&control);
     let (sender, mut receiver, session) = dial_through(&service, &control);
@@ -367,8 +367,24 @@ fn an_exit_reports_process_exit_acknowledges_and_closes_the_dial_with_going_away
     );
     assert_eq!(control.next(), envelope(&session, "writeAck", &json!({ "commandId": "c2" })));
     sender.close(websocket::GOING_AWAY);
-    assert_eq!(control.next()["kind"], "stdin_eof");
     assert_eq!(control.next(), json!({ "type": "<close>", "code": 1000 }));
+}
+
+#[test]
+fn an_exit_ends_the_control_connection_and_the_dial_although_the_ide_never_answers_the_close() {
+    let control = FakeControl::start();
+    let service = attached(&control);
+    let (sender, mut receiver, session) = dial_through(&service, &control);
+    session.command("exit", &json!({ "commandId": "c4", "code": 0 }));
+    assert_eq!(control.next()["kind"], "process_exit");
+    assert_eq!(control.next(), envelope(&session, "writeAck", &json!({ "commandId": "c4" })));
+    assert_eq!(control.next(), json!({ "type": "<close>", "code": 1000 }));
+    assert_eq!(receiver.next(&sender).unwrap(), Message::Close(Some(websocket::GOING_AWAY)));
+    let deadline = Instant::now() + WAIT;
+    while !lock(&service.handler().spawner().state).open.is_empty() {
+        assert!(Instant::now() < deadline, "the connection of the unanswered dial did not end");
+        thread::sleep(Duration::from_millis(20));
+    }
 }
 
 #[test]

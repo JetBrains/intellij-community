@@ -35,7 +35,7 @@ pub(crate) const MAX_MESSAGE_BYTES: usize = 16 << 20;
 
 /// How long a peer that sent a close waits for the answer of the other peer, as the minimal server of the test process
 /// does.
-const CLOSE_GRACE: Duration = Duration::from_secs(2);
+pub(crate) const CLOSE_GRACE: Duration = Duration::from_secs(2);
 
 const GUID: &str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 const FIN: u8 = 0x80;
@@ -188,8 +188,9 @@ impl Sender {
         self.frame(opcode::PONG, payload)
     }
 
-    /// Sends a close frame with `code`, once, and ends the writing direction. The read of the other half then waits at
-    /// most [CLOSE_GRACE] for the answer of the other peer. It answers whether this call sent the close.
+    /// Sends a close frame with `code`, once, and ends the writing direction. A later read of the other half waits at
+    /// most [CLOSE_GRACE] for the answer of the other peer. A read that already waits keeps its bound, so its owner
+    /// ends it with [Sender::shutdown]. It answers whether this call sent the close.
     pub(crate) fn close(&self, code: u16) -> bool {
         let mut stream = self.stream.lock().unwrap_or_else(PoisonError::into_inner);
         if self.close_sent.swap(true, Ordering::SeqCst) {

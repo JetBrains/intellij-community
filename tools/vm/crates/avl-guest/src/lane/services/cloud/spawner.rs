@@ -10,11 +10,15 @@
 //! | `write` | sends the line as one text message, then acknowledges the command |
 //! | `writeMalformed` | sends the bytes as one text message, then acknowledges the command |
 //! | `closeStdout` | reports `stdout_closed`, acknowledges the command, and closes with 1000 |
-//! | `exit` | reports `process_exit` with the code, acknowledges the command, and closes with 1001 |
+//! | `exit` | reports `process_exit` with the code, acknowledges the command, closes the control connection, and closes with 1001 |
 //! | `mcpCall`, `mcpListTools` | answers an error result, because a remote spawner offers no MCP server |
 //!
-//! The end of a dial reports `stdin_eof`. A dial before the attach, a control server that refuses the `hello`, and a
-//! control connection that ends first each close the dial with 1011.
+//! The end of a dial before an exit reports `stdin_eof`. A dial before the attach, a control server that refuses the
+//! `hello`, and a control connection that ends first each close the dial with 1011.
+//!
+//! An exit closes the control connection at once, as an agent process that exits does, whatever the dial does. The dial
+//! then waits at most [websocket::CLOSE_GRACE] for the answer of the IDE to its close, and then its connection ends. So
+//! an IDE that does not read the dial does not keep the agent process alive.
 //!
 //! The spawner checks that a bearer token is present and records it. It does not check the value, because the emulated
 //! account mints a token for any audience.
@@ -23,9 +27,9 @@ use std::collections::{BTreeMap, VecDeque};
 use std::io;
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 
@@ -251,11 +255,11 @@ fn bridge(state: &Mutex<State>, index: usize, stream: TcpStream) {
             return;
         }
     };
-    let ide_ended = AtomicBool::new(false);
+    let ends = Ends::default();
     if open.add(proxy.sender().try_clone_stream()) {
         thread::scope(|scope| {
-            scope.spawn(|| forward_inbound(&mut dial, &ide, &proxy, &ide_ended));
-            apply_commands(index, &mut commands, &ide, &proxy, &ide_ended);
+            scope.spawn(|| forward_inbound(&mut dial, &ide, &proxy, &ends));
+            apply_commands(index, &mut commands, &ide, &proxy, &ends);
         });
     }
     proxy.shutdown();
@@ -269,8 +273,50 @@ fn process_id(index: usize) -> String {
     format!("spawner-{index}-{nanos:x}")
 }
 
-/// Forwards each text message of the IDE as an `inbound` frame, until the dial ends. The end reports `stdin_eof`.
-fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ide_ended: &AtomicBool) {
+/// What the two halves of one bridge tell each other. The forwarding half marks the end of the dial. The command half
+/// marks the exit of the agent process before it closes the connections.
+#[derive(Default)]
+struct Ends {
+    dial_ended: Mutex<bool>,
+    changed: Condvar,
+    exited: AtomicBool,
+}
+
+impl Ends {
+    fn mark_dial_end(&self) {
+        *self.dial_end() = true;
+        self.changed.notify_all();
+    }
+
+    fn dial_ended(&self) -> bool {
+        *self.dial_end()
+    }
+
+    /// Waits at most `timeout` for the end of the dial, and answers whether the dial ended.
+    fn await_dial_end(&self, timeout: Duration) -> bool {
+        let (ended, _) = self
+            .changed
+            .wait_timeout_while(self.dial_end(), timeout, |ended| !*ended)
+            .unwrap_or_else(PoisonError::into_inner);
+        *ended
+    }
+
+    fn mark_exit(&self) {
+        self.exited.store(true, Ordering::SeqCst);
+    }
+
+    fn exited(&self) -> bool {
+        self.exited.load(Ordering::SeqCst)
+    }
+
+    fn dial_end(&self) -> MutexGuard<'_, bool> {
+        self.dial_ended.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+}
+
+/// Forwards each text message of the IDE as an `inbound` frame, until the dial ends. The end reports `stdin_eof`,
+/// unless the agent process exited.
+fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ends: &Ends) {
     let forwarded = loop {
         match dial.next(ide) {
             Ok(Message::Text(text)) => {
@@ -290,7 +336,11 @@ fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ide_ended: 
             }
         }
     };
-    ide_ended.store(true, Ordering::SeqCst);
+    ends.mark_dial_end();
+    // The exit closed both connections, and an agent process that exited reports nothing more.
+    if ends.exited() {
+        return;
+    }
     let reported = forwarded.and_then(|()| proxy.lifecycle(Lifecycle::StdinEof, "the WebSocket closed", None));
     if let Err(error) = reported {
         let _ = proxy.lifecycle(Lifecycle::ControlFailure, &format!("{:?}", error.kind()), None);
@@ -300,8 +350,8 @@ fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ide_ended: 
 }
 
 /// Applies each command of the control server to the dial `index`, until the control connection ends. When it ends
-/// before the dial, the dial closes with 1011.
-fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &Proxy, ide_ended: &AtomicBool) {
+/// before the dial and without an exit, the dial closes with 1011.
+fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &Proxy, ends: &Ends) {
     let ended = loop {
         let command = match commands.next(proxy) {
             Ok(command) => command,
@@ -326,9 +376,7 @@ fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &P
             Command::Exit { id, code } => proxy
                 .lifecycle(Lifecycle::ProcessExit, "exit command", Some(code))
                 .and_then(|()| proxy.ack(&id))
-                .map(|()| {
-                    ide.close(websocket::GOING_AWAY);
-                }),
+                .map(|()| exit(ide, proxy, ends)),
             Command::Mcp { id } => proxy.mcp_error(&id, NO_MCP_SERVER),
         };
         if let Err(error) = applied {
@@ -336,8 +384,20 @@ fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &P
         }
     };
     proxy.close();
-    if !ide_ended.load(Ordering::SeqCst) {
+    if !ends.dial_ended() && !ends.exited() {
         crate::lane::channel::log(&format!("the control channel of the spawner dial {index} ended: {ended}"));
         ide.close(websocket::INTERNAL_ERROR);
+    }
+}
+
+/// Ends the agent process after the acknowledged exit command. The control connection closes at once, and the dial
+/// closes with 1001. A read of the dial that already waits does not get the bound of the close. So when the IDE does
+/// not answer within [websocket::CLOSE_GRACE], the connection of the dial ends without the answer.
+fn exit(ide: &Sender, proxy: &Proxy, ends: &Ends) {
+    ends.mark_exit();
+    proxy.close();
+    ide.close(websocket::GOING_AWAY);
+    if !ends.await_dial_end(websocket::CLOSE_GRACE) {
+        ide.shutdown();
     }
 }
