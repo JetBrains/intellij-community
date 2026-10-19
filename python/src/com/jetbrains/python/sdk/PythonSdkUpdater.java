@@ -11,11 +11,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -74,7 +72,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -175,11 +172,6 @@ public final class PythonSdkUpdater {
       return false;
     }
 
-    if (requestData.background && !isSdkInUse(sdk, project)) {
-      LOG.info("Skipping the background update of '" + sdk.getName() + "': no module of '" + project.getName() + "' uses it");
-      return false;
-    }
-
     if (!ourEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return true;
@@ -212,12 +204,13 @@ public final class PythonSdkUpdater {
   /**
    * Schedules an update that a background process asked for, and not a user.
    * <p>
-   * Such an update does nothing while no module of {@code project} uses {@code sdk}: the interpreter is registered, but
-   * the project does not use it, and skeleton generation and a package scan would start it for nothing. A user action
-   * and the creation of an interpreter call {@link #scheduleUpdate(Sdk, Project)} instead, because an interpreter that
-   * no module uses yet still has to be set up. See PY-88315.
+   * Such an update does nothing while no Python project of {@code project} uses {@code sdk}: the interpreter is
+   * registered, but the project does not use it, and skeleton generation and a package scan would start it for nothing.
+   * The task checks this on its background thread, against the current snapshot. A user action and the creation of an
+   * interpreter call {@link #scheduleUpdate(Sdk, Project)} instead, because an interpreter that no module uses yet still
+   * has to be set up. See PY-88315.
    *
-   * @return whether the project uses the interpreter, so the update was scheduled
+   * @return whether the request was accepted, see {@link #scheduleUpdate(Sdk, Project, PyUpdateSdkRequestData)}
    */
   @ApiStatus.Internal
   public static boolean scheduleBackgroundUpdate(@NotNull Sdk sdk, @NotNull Project project) {
@@ -225,11 +218,12 @@ public final class PythonSdkUpdater {
   }
 
   /**
-   * Whether a module of {@code project} uses {@code sdk}.
+   * Whether a Python project of {@code project} uses {@code sdk}. Waits for the first snapshot.
    */
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   public static boolean isSdkInUse(@NotNull Sdk sdk, @NotNull Project project) {
-    return getPythonSdks(project).contains(sdk);
+    return PySdkUsage.usesSdk(PySdkUsage.awaitSnapshot(project), sdk);
   }
 
   /**
@@ -377,6 +371,7 @@ public final class PythonSdkUpdater {
     }
   }
 
+  @RequiresBackgroundThread
   private static void updateSdkPaths(
     @NotNull PythonInterpreter pythonInterpreter,
     @NotNull List<String> paths
@@ -436,6 +431,10 @@ public final class PythonSdkUpdater {
       HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
       nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
       pathsToTransfer.removeAll(nonTransferredModuleRoots);
+      // The owner gets the roots only while its Python project uses the SDK.
+      if (!PySdkUsage.modulesUsing(PySdkUsage.awaitSnapshot(ownerModule.getProject()), sdk).contains(ownerModule)) {
+        return;
+      }
       if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
         PyTransferredSdkRootsKt.removeTransferredRoots(ownerModule, sdk);
         PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
@@ -578,6 +577,10 @@ public final class PythonSdkUpdater {
       // An SDK built outside the blessed creation path carries no PythonSdkAdditionalData, and the package manager is
       // keyed by it. Nothing here can recover that, and this task runs in the background, so skip such an SDK.
       if (!(mySdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData)) {
+        return;
+      }
+      if (myRequestData.background && !isSdkInUse(mySdk, myProject)) {
+        LOG.info("Skipping the background update of '" + mySdk.getName() + "': no Python project of '" + myProject.getName() + "' uses it");
         return;
       }
       // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
@@ -847,28 +850,6 @@ public final class PythonSdkUpdater {
         effectiveModificator.commitChanges();
       }
     });
-  }
-
-  /**
-   * Returns unique Python SDKs for the open modules of the project.
-   */
-  @ApiStatus.Internal
-  public static @NotNull Set<Sdk> getPythonSdks(@NotNull Project project) {
-    final Set<Sdk> pythonSdks = new LinkedHashSet<>();
-
-    ReadAction.run(
-      () ->
-      {
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-          if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-            pythonSdks.add(sdk);
-          }
-        }
-      }
-    );
-
-    return pythonSdks;
   }
 
   private enum Trigger {

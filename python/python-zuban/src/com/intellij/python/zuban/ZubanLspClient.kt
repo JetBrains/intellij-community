@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.zuban
 
+import com.jetbrains.python.project.PyProject
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lang.annotation.AnnotationHolder
@@ -8,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -23,8 +23,8 @@ import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.lsp.core.isUsable
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
-import com.intellij.python.lsp.core.pyLspModulesToServeWith
-import com.intellij.python.lsp.core.pyServedModules
+import com.intellij.python.lsp.core.pyLspProjectsToServeWith
+import com.intellij.python.lsp.core.pyServedProjects
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.lsp.core.pyLspInterpreterOf
@@ -57,8 +57,8 @@ private const val MYPYPATH = "MYPYPATH"
  * needs a new server, which the base provider starts.
  */
 class ZubanLspIntegrationProvider : PyLspToolIntegrationProvider() {
-  override fun getDescriptor(module: Module): PyLspToolDescriptor {
-    val served = pyLspModulesToServeWith(module, zubanPyTool())
+  override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor {
+    val served = pyLspProjectsToServeWith(pyProject, zubanPyTool())
     val descriptor = ZubanLspClientDescriptor(served.first(), served)
     // A descriptor that `fileOpened` did not build must still reach this provider, see `attach`.
     pyLspAttachedDescriptor(descriptor, ZubanLspIntegrationProvider::class.java)
@@ -115,7 +115,7 @@ private class ZubanPackageListener(private val project: Project) : PythonPackage
     if (clients.isEmpty()) return
     project.service<PyLspService>().cs.launch {
       for (client in clients) {
-        if (client.isUsable && client.pyServedModules.any { !it.isDisposed && pyLspInterpreterOf(it) == interpreter }) {
+        if (client.isUsable && client.pyServedProjects.any { !it.residesOnModule.isDisposed && pyLspInterpreterOf(it) == interpreter }) {
           client.invalidateServerResults()
         }
       }
@@ -124,8 +124,8 @@ private class ZubanPackageListener(private val project: Project) : PythonPackage
 }
 
 /**
- * The descriptor of one zuban server, see [ZubanLspIntegrationProvider]. All [servedModules] share the
- * interpreter of [module], which goes to zuban as `pythonExecutable`.
+ * The descriptor of one zuban server, see [ZubanLspIntegrationProvider]. All [servedProjects] share the
+ * interpreter of [pyProject], which goes to zuban as `pythonExecutable`.
  *
  * The excluded roots do not go to zuban, so `usesExcludedRoots` stays `false`. Zuban reads excludes only
  * from the `exclude` setting of its configuration file. No initialization option and no environment
@@ -134,9 +134,9 @@ private class ZubanPackageListener(private val project: Project) : PythonPackage
  * [zubanInitializationOptions], zuban would also check the excluded directories.
  */
 class ZubanLspClientDescriptor(
-  module: Module,
-  servedModules: List<Module> = listOf(module),
-) : PyLspToolDescriptor(module, zubanPyTool(), servedModules) {
+  pyProject: PyProject,
+  servedProjects: List<PyProject> = listOf(pyProject),
+) : PyLspToolDescriptor(pyProject, zubanPyTool(), servedProjects) {
   override val toolConfig: PyLspToolSettings
     get() = project.service<ZubanConfiguration>()
 
@@ -151,7 +151,7 @@ class ZubanLspClientDescriptor(
   override suspend fun resolveCommandLine(): GeneralCommandLine {
     val commandLine = super.resolveCommandLine()
     @Suppress("DEPRECATION") // The local check still reads the SDK.
-    val interpreter = pyLspInterpreterOf(module)?.takeIf { PyTypeEngineUtils.isLocalSdk(it.getSdkAPI()) }
+    val interpreter = pyLspInterpreterOf(pyProject)?.takeIf { PyTypeEngineUtils.isLocalSdk(it.getSdkAPI()) }
     pythonExecutable = interpreter?.detectedEnvironment?.pythonBinaryPath?.let { zubanPythonExecutable(it) }
     val firstRoot = readAction {
       refreshModuleRoots()

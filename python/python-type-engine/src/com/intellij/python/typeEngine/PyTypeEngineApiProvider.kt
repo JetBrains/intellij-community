@@ -2,11 +2,7 @@
 package com.intellij.python.typeEngine
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
@@ -15,11 +11,11 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
@@ -33,8 +29,6 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
-import com.jetbrains.python.sdk.PySdkListener
-import com.jetbrains.python.sdk.pythonSdk
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -42,6 +36,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 internal class PyTypeEngineApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -52,9 +47,14 @@ internal class PyTypeEngineApiProvider : RemoteApiProvider {
 private object PyTypeEngineApiImpl : PyTypeEngineApi {
   override suspend fun observeState(projectId: ProjectId): Flow<PyTypeEngineStateDto> {
     val project = projectId.findProject()
+    val model = EvoPyProjectModel.getInstance(project)
     return stateChanges(project)
       .buffer(Channel.CONFLATED)
-      .map { readAction { state(project) } }
+      .map {
+        // Waits for the first snapshot, so a state is never computed without interpreters.
+        val snapshot = model.snapshot()
+        readAction { state(project, snapshot) }
+      }
   }
 
   /**
@@ -81,7 +81,7 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
         }
       }
     }
-    return state(project)
+    return currentState(project)
   }
 
   override suspend fun install(request: PyTypeEngineRequest): PyTypeEngineOperationResultDto {
@@ -91,7 +91,7 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     }
     val path = TyUtil.downloadTyBinary()
       ?: return PyTypeEngineOperationResultDto.Failure("Cannot install ty")
-    return PyTypeEngineOperationResultDto.Success(state(project), path.toString())
+    return PyTypeEngineOperationResultDto.Success(currentState(project), path.toString())
   }
 
   override suspend fun logEvent(request: PyTypeEngineEventRequest) {
@@ -104,8 +104,8 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
 }
 
 /**
- * Signals a possible change of the type engine state.
- * The project model sends one module event per module inside a write action, so the listeners do not compute the state.
+ * Signals a possible change of the type engine state. A Python project that arrives or leaves lands in a new snapshot.
+ * The listeners do not compute the state, because some events come inside a write action.
  */
 private fun stateChanges(project: Project): Flow<Unit> = callbackFlow {
   val connection = project.messageBus.connect()
@@ -116,30 +116,32 @@ private fun stateChanges(project: Project): Flow<Unit> = callbackFlow {
   connection.subscribe(PyLspListener.TOPIC, object : PyLspListener {
     override fun onTypeSettingsChange() = publish()
   })
-  connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
-    override fun modulesAdded(project: Project, modules: List<Module?>) = publish()
-    override fun moduleRemoved(project: Project, module: Module) = publish()
-  })
-  connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
-    override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) = publish()
-  })
   connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
     override fun packagesChanged(interpreter: PythonInterpreter) = publish()
   })
+  // A new interpreter of a Python project lands in a new snapshot, and the state reads the interpreters from it.
+  val snapshots = launch { EvoPyProjectModel.getInstance(project).snapshotFlow().collect { publish() } }
   publish()
-  awaitClose { connection.disconnect() }
+  awaitClose {
+    snapshots.cancel()
+    connection.disconnect()
+  }
 }
 
-private fun state(project: Project): PyTypeEngineStateDto {
+/** The state of [project] with the interpreters of the current snapshot. Waits for the first snapshot. */
+private suspend fun currentState(project: Project): PyTypeEngineStateDto {
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+  return readAction { state(project, snapshot) }
+}
+
+/** The state of [project], with the interpreters that [snapshot] gives its Python projects. */
+private fun state(project: Project, snapshot: EvoPyProjectModel.Snapshot): PyTypeEngineStateDto {
   val supported = PyTypeEngineProvider.getSupportedTypes(project).mapTo(mutableSetOf()) { it.toFrontendId() }
-  val sdks = project.modules.mapNotNull { it.pythonSdk }.distinct()
   val installed = supported.filterTo(mutableSetOf()) { type ->
     when (type) {
       PyTypeEngineId.PYCHARM -> true
       PyTypeEngineId.TY -> TyUtil.isTyInstalled()
-      else -> sdks.any { sdk ->
-        // A read action, so it does not wait. Before the first registry computation, the engine is not installed.
-        val interpreter = project.findPythonInterpreterIfReady(sdk) ?: return@any false
+      else -> snapshot.interpreters.any { interpreter ->
         PythonPackageManager.forPythonInterpreter(project, interpreter).hasInstalledPackageSnapshot(type.packageName)
       }
     }

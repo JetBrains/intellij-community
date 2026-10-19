@@ -3,10 +3,8 @@ package com.intellij.python.pyrefly
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getPythonInfo
 import kotlin.time.Duration
 
 object PyreflyUsageCollector : CounterUsagesCollector() {
@@ -28,22 +26,15 @@ object PyreflyUsageCollector : CounterUsagesCollector() {
     PYREFLY_AUTO_INSTALLED.log(success)
   }
 
-  fun logServerStartup(success: Boolean, sdk: Sdk?) {
+  /** Logs a start of the server for [interpreter]. The version comes from what the interpreter records, so nothing runs. */
+  fun logServerStartup(success: Boolean, interpreter: PythonInterpreter?) {
     val fields = buildList {
       add(SUCCESS with success)
-      sdk.pythonVersion()?.let {
+      interpreter?.getPythonInfo()?.successOrNull?.languageLevel?.let {
         add(PYTHON_VERSION with it.toPythonVersion())
       }
     }
     SERVER_STARTUP.log(*fields.toTypedArray())
-  }
-
-  private fun Sdk?.pythonVersion(): LanguageLevel? {
-    if (this == null || !PythonSdkUtil.isPythonSdk(this)) return null
-
-    return PythonSdkFlavor.getFlavor(this)
-             ?.getLanguageLevel(this)
-           ?: versionString?.let(LanguageLevel::fromPythonVersion)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

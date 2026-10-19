@@ -1,31 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution
 
-import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
-import com.intellij.python.sdk.backend.evolution.EvoToolContext
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.python.externalIndex.PyExternalFilesIndexService
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
@@ -34,36 +26,45 @@ import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.psi.PsiElement
+import com.intellij.python.community.common.sdk.sendPythonAvailableEvent
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
+import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithStorage
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
+import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithStorage
-import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.jetbrains.python.project.project
-import java.nio.file.Path
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.minutes
-import com.intellij.openapi.diagnostic.fileLogger
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 private val logger = fileLogger()
 
@@ -243,6 +244,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
             project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart("Python project structure changed")
           }
         }
+    }
+
+    scope.launch {
+      // The client shows the Python tool windows only for a project with a Python project, see `SdkAwareToolWindowFactory`.
+      snapshotFlow().collect { sendPythonAvailableEvent(project, it.workspaces.isNotEmpty()) }
     }
 
     project.messageBus.connect(scope).subscribe(FILE_EDITOR_MANAGER, object : FileEditorManagerListener {

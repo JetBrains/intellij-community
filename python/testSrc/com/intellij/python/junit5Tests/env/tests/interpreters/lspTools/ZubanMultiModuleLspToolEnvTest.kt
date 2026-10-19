@@ -25,7 +25,7 @@ import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
-import com.intellij.python.lsp.core.pyServedModules
+import com.intellij.python.lsp.core.pyServedProjects
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
@@ -109,9 +109,9 @@ class ZubanMultiModuleLspToolEnvTest {
     val (rootFile, serviceFile) = setUpModules(oneInterpreter = false)
     servicePyProject.installToolPackage(LspToolVersions.requirement("types-requests"))
 
-    val rootClient = awaitZubanClientOf(rootModule, "the root module needs a server of its own") { it.pyServedModules == listOf(rootModule) }
+    val rootClient = awaitZubanClientOf(rootModule, "the root module needs a server of its own") { it.pyServedModulesForTest == listOf(rootModule) }
     val serviceClient = awaitZubanClientOf(serviceModule, "the service module needs a server of its own") {
-      it.pyServedModules == listOf(serviceModule)
+      it.pyServedModulesForTest == listOf(serviceModule)
     }
     awaitStubsError(rootClient, rootFile)
     // The stubs are only in the service venv, so its server must use that interpreter.
@@ -122,7 +122,7 @@ class ZubanMultiModuleLspToolEnvTest {
   @Test
   fun `a module that moves to the interpreter of another group joins its server`(): Unit = timeoutRunBlocking(12.minutes) {
     val (rootFile, serviceFile) = setUpModules(oneInterpreter = false)
-    awaitZubanClientOf(serviceModule, "the service module needs a server of its own") { it.pyServedModules == listOf(serviceModule) }
+    awaitZubanClientOf(serviceModule, "the service module needs a server of its own") { it.pyServedModulesForTest == listOf(serviceModule) }
 
     ModuleRootModificationUtil.setModuleSdk(serviceModule, projectSdk)
 
@@ -183,7 +183,7 @@ class ZubanMultiModuleLspToolEnvTest {
   /** The one zuban client of the project, once it serves both modules. */
   private suspend fun awaitOneZubanServer(): LspClient =
     awaitZubanClientOf(rootModule, "no single zuban server serves both modules") { client ->
-      client.pyServedModules.toSet() == setOf(rootModule, serviceModule) &&
+      client.pyServedModulesForTest.toSet() == setOf(rootModule, serviceModule) &&
       LspClientManager.getInstance(project).getClients<ZubanLspIntegrationProvider>().size == 1
     }
 
@@ -201,7 +201,7 @@ class ZubanMultiModuleLspToolEnvTest {
       var found: LspClient? = null
       while (found == null) {
         found = manager.getClients<ZubanLspIntegrationProvider>().firstOrNull {
-          module in it.pyServedModules && it.state == LspServerState.Running && condition(it)
+          module in it.pyServedModulesForTest && it.state == LspServerState.Running && condition(it)
         }
         if (found == null) delay(200.milliseconds)
       }
@@ -220,3 +220,7 @@ class ZubanMultiModuleLspToolEnvTest {
     return file
   }
 }
+
+/** The modules of the Python projects that the server behind [this] answers for. */
+private val LspClient.pyServedModulesForTest: List<Module>
+  get() = pyServedProjects.map { it.residesOnModule }

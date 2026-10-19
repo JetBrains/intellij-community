@@ -48,14 +48,11 @@
 
     <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
               topic="com.intellij.python.lsp.core.listener.PyLspListener"/>
-    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
-              topic="com.jetbrains.python.sdk.PySdkListener"/>
-    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
-              topic="com.intellij.openapi.project.ModuleListener"/>
   </projectListeners>
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.typeEngine.RestartLspServersListener$SnapshotActivity"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.typeEngine.PyTypeEngineApiProvider"
                                             apiInterfaces="com.intellij.python.typeEngine.common.PyTypeEngineApi"/>
 

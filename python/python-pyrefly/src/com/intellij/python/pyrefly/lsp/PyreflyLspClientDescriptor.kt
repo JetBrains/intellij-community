@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClient
@@ -27,8 +26,7 @@ import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.pyrefly.PyreflyExecutableProvider
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.ConfigurationItem
@@ -38,11 +36,10 @@ import org.eclipse.lsp4j.InitializeResult
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
-@Suppress("UsagesOfObsoleteApi")
 class PyreflyLspClientDescriptor(
-  module: Module,
-  servedModules: List<Module> = listOf(module),
-) : PyLspToolDescriptor(module, PyreflyPyTool.getInstance(), servedModules) {
+  pyProject: PyProject,
+  servedProjects: List<PyProject> = listOf(pyProject),
+) : PyLspToolDescriptor(pyProject, PyreflyPyTool.getInstance(), servedProjects) {
   override val toolConfig: PyLspToolSettings
     get() = project.service<PyreflyConfiguration>()
 
@@ -75,7 +72,7 @@ class PyreflyLspClientDescriptor(
     override fun serverInitialized(params: InitializeResult) {
       super.serverInitialized(params)
       initialized = true
-      PyreflyUsageCollector.logServerStartup(success = true, sdk = module.pythonSdk)
+      PyreflyUsageCollector.logServerStartup(success = true, interpreter = startedInterpreterOf(pyProject))
     }
 
     override fun serverStopped(shutdownNormally: Boolean) {
@@ -83,7 +80,7 @@ class PyreflyLspClientDescriptor(
       // The platform can report the stop after the project is gone.
       if (project.isDisposed) return
       if (!shutdownNormally && !initialized) {
-        PyreflyUsageCollector.logServerStartup(success = false, sdk = module.pythonSdk)
+        PyreflyUsageCollector.logServerStartup(success = false, interpreter = startedInterpreterOf(pyProject))
       }
       initialized = false
       PyLspServerModificationTracker.getInstance(project).incModificationCount()
@@ -116,7 +113,7 @@ class PyreflyLspClientDescriptor(
     if (!withContext(Dispatchers.IO) { executable.isExecutable() }) {
       throw ExecutionException(PyreflyBundle.message("pyrefly.executable.unavailable", executable))
     }
-    val workingDirectory = module.asPyProject()?.baseDir
+    val workingDirectory = pyProject.baseDir
     // The type engine sends `typeServer/*` requests, and only the TSP server answers them. That server
     // answers the LSP requests too, so one connection serves the tool and the engine. The `lsp` server
     // rejects `typeServer/*` with `Unknown request`, and every type is then `Any`.
@@ -126,7 +123,7 @@ class PyreflyLspClientDescriptor(
   }
 
   override fun createInitializationOptions(): Map<String, Any>? {
-    val homePath = module.pythonSdk?.homePath ?: return null
+    val pythonPath = startedPythonPathOf(pyProject) ?: return null
     // The platform builds these options on its connect pool thread, which holds no lock, so the
     // excludes are read here. The `workspace/configuration` replies only reuse them, because they
     // run on the LSP listener thread, see [projectExcludes].
@@ -135,7 +132,7 @@ class PyreflyLspClientDescriptor(
       refreshModuleRoots()
     }
     return buildMap {
-      put("pythonPath", homePath)
+      put("pythonPath", pythonPath)
       put("pyrefly", buildPyreflyClientSettings())
       put("analysis", buildPyreflyAnalysisSettings())
     }
@@ -198,8 +195,8 @@ class PyreflyLspClientDescriptor(
    * without it would drop the interpreter that [createInitializationOptions] sent.
    */
   override fun getWorkspaceConfiguration(item: ConfigurationItem): Map<String, Any> = buildMap {
-    val scopeModule = servedModuleForScope(item) ?: module.takeUnless { it.isDisposed }
-    scopeModule?.pythonSdk?.homePath?.let { put("pythonPath", it) }
+    val scopeProject = servedProjectForScope(item) ?: pyProject.takeUnless { it.residesOnModule.isDisposed }
+    scopeProject?.let(::startedPythonPathOf)?.let { put("pythonPath", it) }
     put("pyrefly", buildPyreflyClientSettings())
     put("analysis", buildPyreflyAnalysisSettings())
   }
@@ -222,15 +219,18 @@ class PyreflyLspClientDescriptor(
 
   override fun startServerProcess(): BaseProcessHandler<*> {
     // Pyrefly always runs against the module interpreter (discovery mode is no longer selectable).
-    val pythonSdk = module.pythonSdk ?: error("Cannot find PythonSdk for module " + module.name)
-    // Per-module check (not the single-module engine check): the Pyrefly tool runs against any
-    // local, non-read-only interpreter, including in multi-module projects (PY-89705).
-    if (!PyTypeEngineUtils.isLocalNonReadOnlySdk(module)) {
-      error("Pyrefly is available only for local, non read-only interpreters. Current:$pythonSdk")
+    val interpreter = currentInterpreterOf(pyProject) ?: error("Cannot find the Python interpreter of module " + module.name)
+    // Per-project check (not the single-module engine check): the Pyrefly tool runs against any
+    // native, non-read-only interpreter, including in multi-module projects (PY-89705).
+    if (!PyTypeEngineUtils.isServedInterpreter(interpreter)) {
+      error("Pyrefly is available only for native, non read-only interpreters. Current: $interpreter")
     }
 
     return super.startServerProcess()
   }
+
+  /** The Python binary of the interpreter that [pyProject] had when the server started, as pyrefly's `pythonPath`. */
+  private fun startedPythonPathOf(pyProject: PyProject): String? = startedInterpreterOf(pyProject)?.pythonBinary?.toString()
 
   private companion object {
     const val TSP_SERVER_ARGUMENT = "tsp"

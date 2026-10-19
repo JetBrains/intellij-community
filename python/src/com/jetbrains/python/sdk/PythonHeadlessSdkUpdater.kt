@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.PyBundle
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
@@ -31,8 +32,8 @@ internal class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
     waitForTasks(project)
   }
 
-  private fun scheduleTasks(project: Project) {
-    PythonSdkUpdater.getPythonSdks(project).forEach { sdk ->
+  private suspend fun scheduleTasks(project: Project) {
+    EvoPyProjectModel.getInstance(project).snapshot().sdks().forEach { sdk ->
       LOG.info("Scheduling update: ${sdk.homePath}")
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
@@ -43,7 +44,7 @@ internal class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
     val start = System.currentTimeMillis()
 
     LOG.info("Waiting for $title tasks...")
-    while (PythonSdkUpdater.getPythonSdks(project).any { PythonSdkUpdater.isUpdateScheduled(it) }) {
+    while (EvoPyProjectModel.getInstance(project).snapshot().sdks().any { PythonSdkUpdater.isUpdateScheduled(it) }) {
       delay(DELAY)
     }
 

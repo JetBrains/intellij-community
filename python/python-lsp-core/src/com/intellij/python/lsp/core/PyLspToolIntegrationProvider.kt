@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
-import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
@@ -11,10 +10,10 @@ import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
-import com.intellij.icons.AllIcons
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -22,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -37,13 +35,12 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.openapi.util.text.buildHtml
@@ -75,22 +72,25 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.asGeneralCommandLine
+import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.isFor
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgs
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgsIfReady
+import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.JBColor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PySdkListener
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -112,15 +112,19 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
 
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientStarter) {
     // The tool decides first, because [getDescriptor] is not cheap. A tool that answers for every
-    // module reads the interpreter and the installed packages of each one, see
-    // [pyLspModulesToServeWith], and this runs in a read action for every file the user opens. A
+    // Python project reads the interpreter and the installed packages of each one, see
+    // [pyLspProjectsToServeWith], and this runs in a read action for every file the user opens. A
     // project that runs neither the tool nor its type engine must pay none of that.
-    if (!pyTool(project).isActiveOn(project))
+    val pyTool = pyTool(project)
+    if (!pyTool.isActiveOn(project))
       return
+    // Subscribe before the first snapshot too: its arrival starts the server of this file, see [watchInterpreters].
+    subscribe(project, pyTool)
 
-    // Find the module for this file
+    // Only a Python project gets a server. This runs under a read lock, so it reads the snapshot and does not wait.
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return
-    val descriptor = getDescriptor(module)
+    val pyProject = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.forModule(module)?.pyProject ?: return
+    val descriptor = getDescriptor(pyProject)
     if (!descriptor.isSupportedFile(file))
       return
     attach(descriptor)
@@ -143,7 +147,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   @ApiStatus.Internal
   fun attach(descriptor: PyLspToolDescriptor) {
     descriptor.supportProvider = this
-    val project = descriptor.project
+    subscribe(descriptor.project, descriptor.pyTool)
+  }
+
+  /** Subscribes to the project changes this provider watches, once for each project. */
+  private fun subscribe(project: Project, pyTool: PyLspTool<*>) {
     if (project.isDisposed || project in listenerConnectedForProjects) return
 
     // The set is app-level, because the provider is an application extension. So the disposable that
@@ -160,7 +168,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       listenerConnectedForProjects.remove(project)
     }
     try {
-      subscribeOnChanges(descriptor.pyTool, project, listenerDisposable)
+      subscribeOnChanges(pyTool, project, listenerDisposable)
     }
     catch (e: Throwable) {
       // `fileOpened` runs in a read action that a write action cancels, for example while the first
@@ -188,7 +196,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
         super.createWidgetInlineActions() + OpenPyExternalToolsSettingsAction()
     }
 
-  abstract fun getDescriptor(module: Module): PyLspToolDescriptor
+  abstract fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor
 
   fun getIcon(lspClient: LspClient): Icon = (lspClient.descriptor as PyLspToolDescriptor).pyTool.icon
 
@@ -207,7 +215,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    * each folder its own interpreter, as ty and pyrefly do, or need no interpreter, as Ruff does. A
    * server that gives every folder the same interpreter, as Zuban does, may set it too, when its tool
    * sets [PyLspTool.serverNeedsOneInterpreter]. [getDescriptor] of such a tool builds its descriptor
-   * from [pyLspModulesToServeWith]. Any other tool keeps `false` and runs one server for each module,
+   * from [pyLspProjectsToServeWith]. Any other tool keeps `false` and runs one server for each module,
    * and its servers never need a restart for a change of the folder set.
    */
   open val servesEveryModule: Boolean get() = false
@@ -222,13 +230,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     val connection = project.messageBus.connect(parentDisposable)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
     connection.subscribe(ModuleRootListener.TOPIC, LspFolderSetListener(project))
-    // A new module SDK can resolve another binary of the tool, and a running server keeps the old one.
-    connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
-      override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
-        if (module.project == project && prevSdk != newSdk) interpreterChanged.schedule()
-      }
-    })
-    connection.subscribe(ModuleRootListener.TOPIC, LspInterpreterChangeListener(project, interpreterChanged))
+    watchInterpreters(project, interpreterChanged, parentDisposable)
     // A refresh of the serve keys lands without a project event, so it triggers the checks itself. A
     // server that started before the refresh can hold the wrong group, and a module that just got the
     // tool can need a server that nothing started.
@@ -245,27 +247,18 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   }
 
   /**
-   * Restarts the clients of this tool when the workspace folders they should serve change.
+   * Tells the running clients that the roots around their folders changed, see [PyLspToolDescriptor.projectChangedAround].
    *
-   * The platform builds the server identity from the root paths and never sends
-   * `didChangeWorkspaceFolders`, so a running server holds a stale folder set once a module or a
-   * content root arrives or leaves. Without the restart the next start request builds a descriptor
-   * with other roots, which starts a second server and leaves the first one running.
-   *
-   * A module that arrives or leaves also changes the project roots, so `rootsChanged` is the one
-   * event to watch. The root manager moves its counter before it fires the event, so the cached
-   * served set is fresh here. The restart only happens when the folder set really differs, see
-   * [pyLspFolderSetIsStale].
+   * A source root or an excluded root moves no snapshot, so `rootsChanged` is the event for these. A Python project
+   * that arrives or leaves, and a new content root, land in a snapshot, and [watchInterpreters] checks the folder sets
+   * then.
    */
   inner class LspFolderSetListener(private val project: Project) : ModuleRootListener {
     override fun rootsChanged(event: ModuleRootEvent) {
       // A tool that runs one server for each module never grows a folder set, so it needs no restart.
       if (!servesEveryModule) return
-      // `rootsChanged` runs inside a write action. Reading an interpreter and its packages there does
-      // first-touch I/O, and it throws for a disposed SDK, which is worse than a late restart.
+      // `rootsChanged` runs inside a write action, and the roots are read after it.
       project.service<PyLspService>().cs.launch {
-        if (restartStaleClients(project)) return@launch
-        // Every folder set still fits, but a module nested in a folder can have come or gone.
         val providerClass = this@PyLspToolIntegrationProvider::class.java
         for (client in LspClientManager.getInstance(project).getClients(providerClass)) {
           (client.descriptor as? PyLspToolDescriptor)?.projectChangedAround(client)
@@ -275,30 +268,33 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   }
 
   /**
-   * Schedules [interpreterChanged] when a client of this tool serves a module whose interpreter is no
-   * longer the one the client started with, see [PyLspToolDescriptor.interpreterChanged].
+   * Acts on each new snapshot. It schedules [interpreterChanged] when the snapshot gives a Python project that a
+   * client of this tool serves another interpreter than the one the client started with, see
+   * [PyLspToolDescriptor.interpreterChanged]. It also starts the clients that the open files need.
    *
-   * The Project Structure dialog, the SDK table and a new project interpreter fire only `rootsChanged`,
-   * not [PySdkListener].
+   * A new interpreter of a Python project reaches the project only through a new snapshot. The Project Structure
+   * dialog, the SDK table and a set through the Python project all end in one. [fileOpened] builds no descriptor
+   * before the first snapshot, so the start here gives a server to a file that the user opened before it.
+   *
+   * The folder sets are checked here too, see [restartStaleClients]. The platform builds the server identity from the
+   * root paths and never sends `didChangeWorkspaceFolders`, so a running server holds a stale folder set once a Python
+   * project or a content root arrives or leaves, and both land in a snapshot.
    */
-  inner class LspInterpreterChangeListener(
-    private val project: Project,
-    private val interpreterChanged: PyToolChangeDebouncer,
-  ) : ModuleRootListener {
-    override fun rootsChanged(event: ModuleRootEvent) {
-      val clientManager = LspClientManager.getInstance(project)
-      if (clientManager.getClients(this@PyLspToolIntegrationProvider::class.java).isEmpty()) return
-      // `rootsChanged` runs inside a write action, and the interpreters are read after it.
-      project.service<PyLspService>().cs.launch {
-        if (readAction { anyClientInterpreterChanged(project) }) interpreterChanged.schedule()
+  private fun watchInterpreters(project: Project, interpreterChanged: PyToolChangeDebouncer, parentDisposable: Disposable) {
+    val job = project.service<PyLspService>().cs.launch {
+      EvoPyProjectModel.getInstance(project).snapshotFlow().collect { snapshot ->
+        if (anyClientInterpreterChanged(project, snapshot)) interpreterChanged.schedule()
+        LspClientManager.getInstance(project).startClientsIfNeeded(this@PyLspToolIntegrationProvider::class.java)
+        restartStaleClients(project)
       }
     }
+    Disposer.register(parentDisposable) { job.cancel() }
   }
 
-  @RequiresReadLock
-  private fun anyClientInterpreterChanged(project: Project): Boolean =
+  /** Reads the snapshot and the clients only, so it needs no lock. */
+  private fun anyClientInterpreterChanged(project: Project, snapshot: EvoPyProjectModel.Snapshot): Boolean =
     LspClientManager.getInstance(project).getClients(this::class.java)
-      .any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged() == true }
+      .any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged(snapshot) == true }
 
   /**
    * Calls [PyLspTool.onExecutableChanged] when a client still runs with an interpreter that its modules left,
@@ -312,7 +308,8 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   private suspend fun onInterpreterChanged(pyTool: PyLspTool<*>, project: Project) {
     project.service<PyLspService>().restartMutex.withLock {
       val noClient = readAction { LspClientManager.getInstance(project).getClients(this::class.java).isEmpty() }
-      if (!noClient && !readAction { anyClientInterpreterChanged(project) }) return@withLock
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+      if (!noClient && !anyClientInterpreterChanged(project, snapshot)) return@withLock
       thisLogger().debug("The interpreter of a module of ${pyTool.lspServerName} changed. Telling the tool.")
       pyTool.onExecutableChanged(project)
     }
@@ -357,9 +354,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     val pyTool = descriptors.first().pyTool
     // Outside the read action, because it reads the interpreter of every served module.
     val keys = pyLspRefreshServeKeys(project, pyTool)
+    val served = pyLspServedProjects(project)
     val (stale, servesNothing) = readAction {
-      val served = pyLspServedModules(project)
-      val keyOf = { module: Module -> keys[module] ?: pyLspServeKeyWithoutVersion(module) }
+      val keyOf = { pyProject: PyProject -> keys.keyOf(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
       pyLspFolderSetIsStale(descriptors, served, keyOf) to descriptors.any { pyLspServesNothing(it, served) }
     }
 
@@ -401,13 +398,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
      */
     private val versionByInterpreter: ConcurrentMap<PythonInterpreter, String> = ConcurrentHashMap()
 
-    /** Whether a client of this provider serves a module whose interpreter is [interpreter]. */
+    /** Whether a client of this provider serves a Python project whose interpreter is [interpreter]. */
     private suspend fun runsFor(interpreter: PythonInterpreter): Boolean {
-      val modules = project.evoPyProjects().filter { it.interpreter == interpreter }.mapTo(HashSet()) { it.pyProject.residesOnModule }
-      return readAction {
-        LspClientManager.getInstance(project).getClients(this@PyLspToolIntegrationProvider::class.java)
-          .any { client -> client.pyServedModules.any { !it.isDisposed && it in modules } }
-      }
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+      return LspClientManager.getInstance(project).getClients(this@PyLspToolIntegrationProvider::class.java)
+        .any { client -> client.pyServedProjects.any { snapshot.forPyProject(it)?.interpreter == interpreter } }
     }
 
     override fun packagesChanged(interpreter: PythonInterpreter) {
@@ -415,10 +410,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       // Acting on another project's interpreter would restart the servers of this one for nothing
       // (PY-91655).
       //
-      // The read action guards the project model. This runs on a pool thread with no lock of its
-      // own, and `pyLspServedModules` reads the root manager of each module, which throws once a
-      // write action disposes one.
-      if (runReadActionBlocking { pyLspServedModules(project).none { it.pythonSdk?.let(interpreter::isFor) == true } }) return
+      // This runs under the package reload lock of the interpreter, so it does not wait for a snapshot. Before the first
+      // snapshot no server runs, and the first snapshot starts the servers with the current packages.
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return
+      if (pyLspServedProjects(snapshot).none { snapshot.forPyProject(it)?.interpreter == interpreter }) return
 
       val version = pyLspToolVersionOf(interpreter, project, pyTool)
       // `put` answers `null` for an interpreter this listener never saw, which is not the same as an
@@ -477,8 +472,8 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
  * manager on the first call and does first-touch I/O.
  */
 private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool): Boolean {
-  val modules = readAction { pyLspServedModules(project) }.toSet()
-  val interpreters = project.evoPyProjects().filter { it.pyProject.residesOnModule in modules }.mapNotNull { it.interpreter }
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+  val interpreters = pyLspServedProjects(snapshot).mapNotNull { snapshot.forPyProject(it)?.interpreter }
   return interpreters.none { pyLspToolVersionOf(it, project, pyTool) != null }
 }
 
@@ -491,70 +486,89 @@ private val GLOB_CHARACTERS: CharArray = charArrayOf('*', '?', '[', ']', '{', '}
 /**
  * Base class for a Python LSP tool descriptor.
  *
- * The server answers for the content roots of [servedModules], which holds [module] alone by
- * default. A tool whose server keeps one workspace for each folder passes [pyLspModulesToServeWith],
+ * The server answers for the content roots of [servedProjects], which holds [pyProject] alone by
+ * default. A tool whose server keeps one workspace for each folder passes [pyLspProjectsToServeWith],
  * and then one server answers for the whole project. Such a tool also sets
  * [PyLspToolIntegrationProvider.servesEveryModule] to `true`.
  *
- * [module] is the primary module. It answers for a request that carries no workspace scope.
+ * [pyProject] is the primary Python project. It answers for a request that carries no workspace scope.
  */
 abstract class PyLspToolDescriptor(
-  val module: Module,
+  val pyProject: PyProject,
   val pyTool: PyLspTool<*>,
-  val servedModules: List<Module> = listOf(module),
-) : LspClientDescriptor(module.project, pyTool.lspServerName, *pyLspContentRootsOf(servedModules)) {
+  val servedProjects: List<PyProject> = listOf(pyProject),
+) : LspClientDescriptor(pyProject.project, pyTool.lspServerName, *pyLspContentRootsOf(servedProjects)) {
+  /** The module of [pyProject], for the platform API that takes a module. */
+  val module: Module get() = pyProject.residesOnModule
+
   /**
    * Whether this python LSP tool can serve Jupyter notebooks. Defaults to `true` because all current Python LSP tools support notebooks.
    */
   open val supportsNotebooks: Boolean get() = true
 
   override fun isSupportedFile(file: VirtualFile): Boolean =
-    isPythonFile(file, notebookSupported = supportsNotebooks) && servedModuleOf(file) != null
+    isPythonFile(file, notebookSupported = supportsNotebooks) && servedProjectOf(file) != null
 
   /**
-   * The served modules that are still alive. A running client keeps its descriptor, and the
-   * descriptor keeps every served module, so a module can be disposed while this server still runs.
-   * Reading [ModuleRootManager] of a disposed module throws.
+   * The served Python projects that are still alive. A running client keeps its descriptor, and the descriptor keeps
+   * every served Python project, so its module can be disposed while this server still runs. Reading
+   * [ModuleRootManager] of a disposed module throws.
    */
-  val liveServedModules: List<Module> get() = servedModules.filterNot { it.isDisposed }
+  val liveServedProjects: List<PyProject> get() = servedProjects.filterNot { it.residesOnModule.isDisposed }
 
   /**
-   * The home path of the interpreter of each served module when [createCommandLine] last ran, or
-   * `null` before that. The binary of the server comes from these interpreters.
+   * The interpreter of each served Python project when [createCommandLine] last ran, or `null` before that. The
+   * binary of the server comes from these interpreters.
+   *
+   * Only a served interpreter counts, see [PyTypeEngineUtils.servedInterpreterOf], so a Python project of a target or a
+   * read-only interpreter maps to `null` here.
    */
   @Volatile
-  private var interpreterHomes: Map<Module, String?>? = null
+  private var startedInterpreters: Map<PyProject, NativePythonInterpreter?>? = null
 
   /**
-   * Whether a live served module now has another interpreter than when the server started. The binary
-   * of the tool comes from the interpreter, so the server can then run the wrong binary.
+   * The interpreter that [pyProject] had when the server started, see [createCommandLine]. `null` before the start
+   * and for a Python project that had none. For a callback of the running server, which must neither take a lock nor
+   * wait.
    */
-  @RequiresReadLock
-  fun interpreterChanged(): Boolean {
-    val started = interpreterHomes ?: return false
-    return liveServedModules.any { started[it] != it.pythonSdk?.homePath }
+  fun startedInterpreterOf(pyProject: PyProject): NativePythonInterpreter? = startedInterpreters?.keyOf(pyProject)
+
+  /** The interpreter of [pyProject] in the current snapshot. Waits for the first snapshot, so call it off the EDT. */
+  @RequiresBackgroundThread
+  fun currentInterpreterOf(pyProject: PyProject): PythonInterpreter? =
+    runBlockingMaybeCancellable { EvoPyProjectModel.getInstance(project).snapshot() }.forPyProject(pyProject)?.interpreter
+
+  /**
+   * Whether [snapshot] gives a live served Python project another interpreter than the one the server started with.
+   * The binary of the tool comes from the interpreter, so the server can then run the wrong binary.
+   */
+  fun interpreterChanged(snapshot: EvoPyProjectModel.Snapshot): Boolean {
+    val started = startedInterpreters ?: return false
+    return liveServedProjects.any { started[it] != snapshot.forPyProject(it)?.interpreter?.let(PyTypeEngineUtils::servedInterpreterOf) }
   }
 
-  /** The served module that holds [file], or `null` when no served module does. */
-  fun servedModuleOf(file: VirtualFile): Module? =
-    ModuleUtilCore.findModuleForFile(file, project)?.takeIf { it in liveServedModules }
+  /** The served Python project that holds [file], or `null` when no served Python project does. */
+  fun servedProjectOf(file: VirtualFile): PyProject? {
+    val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
+    return liveServedProjects.firstOrNull { it.residesOnModule == module }
+  }
 
   /**
-   * The served module that the `scopeUri` of [item] points at, or `null`.
+   * The served Python project that the `scopeUri` of [item] points at, or `null`.
    *
    * The server sends one `workspace/configuration` item for each workspace folder it wants the
-   * settings of. Use this to answer with the settings of that folder, so every module gets its own
-   * interpreter. A `null` result means the item names no folder this descriptor serves, and the
-   * caller then answers for the primary module. Two cases give `null`, and they differ:
+   * settings of. Use this to answer with the settings of that folder, so every Python project gets its
+   * own interpreter. A `null` result means the item names no folder this descriptor serves, and the
+   * caller then answers for the primary Python project. Two cases give `null`, and they differ:
    *
    * - The item carries no `scopeUri`. It asks for the settings of the server's default workspace,
    *   which every server asks for once, next to the scoped items. This is expected, so the log entry
-   *   is a debug one. The primary module answers, which is the wrong interpreter for every other
-   *   served module, and only the scoped items keep those modules right.
+   *   is a debug one. The primary Python project answers, which is the wrong interpreter for every
+   *   other served one, and only the scoped items keep those right.
    * - The item names a folder this descriptor does not serve. Nothing explains that, so it is a
    *   warning.
    */
-  fun servedModuleForScope(item: ConfigurationItem): Module? {
+  fun servedProjectForScope(item: ConfigurationItem): PyProject? {
     val scopeUri = item.scopeUri
     if (scopeUri == null) {
       thisLogger().debug("$presentableName asked for the configuration of its default workspace. " +
@@ -563,7 +577,7 @@ abstract class PyLspToolDescriptor(
     }
     val scopeFile = findFileByUri(scopeUri)
     val served = scopeFile?.let { file ->
-      liveServedModules.firstOrNull { ModuleRootManager.getInstance(it).contentRoots.any { root -> root == file } }
+      liveServedProjects.firstOrNull { ModuleRootManager.getInstance(it.residesOnModule).contentRoots.any { root -> root == file } }
     }
     if (served == null) {
       thisLogger().warn("$presentableName asked for the configuration of '$scopeUri', which is no served content root. " +
@@ -583,23 +597,23 @@ abstract class PyLspToolDescriptor(
    */
   private suspend fun findExecutable(waitForInterpreters: Boolean): Pair<BinaryToExec, List<String>>? {
     for (served in executableCandidates()) {
-      val moduleOrProject = ModuleOrProject.ModuleAndProject(served)
+      val moduleOrProject = ModuleOrProject.ModuleAndProject(served.residesOnModule)
       val executable = if (waitForInterpreters) moduleOrProject.toolExecutableWithBaseArgs(pyTool, executableName)
       else moduleOrProject.toolExecutableWithBaseArgsIfReady(pyTool, executableName)
       executable.successOrNull?.let { return it }
-      thisLogger().info("$presentableName has no executable in module '${served.name}'.")
+      thisLogger().info("$presentableName has no executable in module '${served.residesOnModule.name}'.")
     }
     return null
   }
 
   /**
-   * The live served modules that may provide the binary, in the order to ask them. The rule is
+   * The live served Python projects that may provide the binary, in the order to ask them. The rule is
    * [pyLspExecutableCandidates], applied to the serve-key snapshot of this tool.
    *
-   * No `ifEmpty { listOf(module) }` fallback: `module` is a served module, so an empty answer means
-   * it is disposed too, and reading the interpreter of a disposed module throws.
+   * No `ifEmpty { listOf(pyProject) }` fallback: [pyProject] is a served Python project, so an empty answer means
+   * its module is disposed too, and reading the interpreter of a disposed module throws.
    */
-  fun executableCandidates(): List<Module> = pyLspExecutableCandidates(liveServedModules, pyLspServeKeysView(project, pyTool))
+  fun executableCandidates(): List<PyProject> = pyLspExecutableCandidates(liveServedProjects, pyLspServeKeysView(project, pyTool))
 
   /** The last computed [projectExcludes]. Only [refreshProjectExcludes] writes it. */
   @Volatile
@@ -623,7 +637,7 @@ abstract class PyLspToolDescriptor(
   /** Computes the [projectExcludes] again, and answers whether they changed. */
   @RequiresReadLock
   fun refreshProjectExcludes(): Boolean {
-    val fresh = pyLspForeignNestedRoots(liveServedModules, project.modules.toList())
+    val fresh = pyLspForeignNestedRoots(liveServedProjects, project.modules.toList())
       .filter { path -> GLOB_CHARACTERS.none { it in path } }
     if (fresh == cachedProjectExcludes) return false
     cachedProjectExcludes = fresh
@@ -671,7 +685,7 @@ abstract class PyLspToolDescriptor(
   @RequiresReadLock
   fun refreshModuleRoots(): Boolean {
     if (!usesSourceRoots && !usesExcludedRoots) return false
-    val managers = liveServedModules.map { ModuleRootManager.getInstance(it) }
+    val managers = liveServedProjects.map { ModuleRootManager.getInstance(it.residesOnModule) }
     val fresh = ModuleRoots(
       sourceRoots = if (usesSourceRoots) managers.flatMap { it.sourceRoots.mapNotNull(::absolutePathOf) }.distinct() else emptyList(),
       excludedRoots = if (usesExcludedRoots) managers.flatMap { it.excludeRoots.mapNotNull(::absolutePathOf) }.distinct() else emptyList(),
@@ -697,8 +711,8 @@ abstract class PyLspToolDescriptor(
   /** Resolves the command line before the client starts. Bundled tools can override this function. */
   open suspend fun resolveCommandLine(): GeneralCommandLine {
     @Suppress("HardCodedStringLiteral") // this text goes only to the IDE logs
-    val noExecutable = liveServedModules.ifEmpty { null }
-                         ?.let { "No module of ${it.joinToString { m -> m.name }} provides the $presentableName executable" }
+    val noExecutable = liveServedProjects.ifEmpty { null }
+                         ?.let { "No module of ${it.joinToString { p -> p.residesOnModule.name }} provides the $presentableName executable" }
                        ?: "Every module the $presentableName server serves is gone"
     // Outside a read action, when the server starts, so it waits for the interpreters.
     val (binary, baseArgs) = findExecutable(waitForInterpreters = true) ?: throw ExecutionException(noExecutable)
@@ -708,7 +722,8 @@ abstract class PyLspToolDescriptor(
   }
 
   override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable {
-    interpreterHomes = readAction { liveServedModules.associateWith { it.pythonSdk?.homePath } }
+    val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+    startedInterpreters = liveServedProjects.associateWith { snapshot.forPyProject(it)?.interpreter?.let(PyTypeEngineUtils::servedInterpreterOf) }
     resolveCommandLine()
   }
 

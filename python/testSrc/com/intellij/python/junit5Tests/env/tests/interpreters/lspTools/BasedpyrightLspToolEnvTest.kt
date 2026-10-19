@@ -87,7 +87,7 @@ class BasedpyrightLspToolEnvTest {
         server
       }
     }, disposable)
-    repeat(3) { PyrightLspClientDescriptor(module) }
+    repeat(3) { PyrightLspClientDescriptor(pyProject) }
 
     enablePyrightAndInstall()
     val file = codeInsightFixture.configureByText("typecheck.py", """

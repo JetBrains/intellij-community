@@ -1,11 +1,13 @@
 package com.intellij.python.lsp.core.typeEngine
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.isReadOnly
@@ -19,7 +21,7 @@ object PyTypeEngineUtils {
    *
    * The key does not decide how many servers run. A tool whose server keeps one workspace for each
    * folder always runs one server for the whole project, see
-   * [com.intellij.python.lsp.core.pyLspModulesToServeWith].
+   * [com.intellij.python.lsp.core.pyLspProjectsToServeWith].
    */
   const val MULTI_MODULE_REGISTRY_KEY: String = "pycharm.type.engine.multi.module"
 
@@ -31,36 +33,38 @@ object PyTypeEngineUtils {
    * Whether the external **type engine** may be used for [project]. The engine is single-module
    * only unless [MULTI_MODULE_REGISTRY_KEY] is set. For the per-module check
    * used by the Pyrefly/ty **tool** (which is always allowed in multi-module projects) see
-   * [isLocalNonReadOnlySdk].
+   * [isServedInterpreter].
    */
   fun isExternalTypeEngineSupported(project: Project): Boolean {
+    // A multi-module project only needs one Python project the engine can serve: the others are skipped
+    // per-project (see PyreflyLspTypeEngineProvider) instead of disabling the engine project-wide. This
+    // runs under a read lock, so it reads the snapshot and does not wait. Before the first snapshot the
+    // engine is not supported, and the first snapshot updates the servers.
+    val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return false
+    return isExternalTypeEngineSupported(project, snapshot)
+  }
+
+  /** [isExternalTypeEngineSupported] for [snapshot]. */
+  fun isExternalTypeEngineSupported(project: Project, snapshot: EvoPyProjectModel.Snapshot): Boolean {
     if (!Registry.`is`("pycharm.type.engine", true))
       return false
-
-    val modules = project.modules
-    val multiModuleAllowed = modules.size <= 1 || isMultiModuleSupportEnabled
-    // A multi-module project only needs one module the engine can serve: the others are skipped
-    // per-module (see PyreflyLspTypeEngineProvider) instead of disabling the engine project-wide.
-    return multiModuleAllowed && modules.any { isLocalNonReadOnlySdk(it) }
+    val multiModuleAllowed = project.modules.size <= 1 || isMultiModuleSupportEnabled
+    return multiModuleAllowed && snapshot.interpreters.any(::isServedInterpreter)
   }
 
   /**
-   * Whether [module]'s interpreter is a local, non-read-only SDK — the only requirement for running
-   * an external LSP tool against it. Unlike [isExternalTypeEngineSupported] this places no
-   * single-module restriction, so the Pyrefly/ty tool can run per-module in multi-module projects.
+   * [interpreter] when an LSP tool can run against it, else `null`: a native interpreter that is not read-only. A tool
+   * runs on the machine of the interpreter through Eel, so WSL and Docker count. A legacy target, such as SSH, has no
+   * such machine.
    */
-  fun isLocalNonReadOnlySdk(module: Module): Boolean = localNonReadOnlySdk(module) != null
-
-  /**
-   * [module]'s interpreter when [isLocalNonReadOnlySdk] accepts it, else `null`. Use this instead of
-   * a separate [isLocalNonReadOnlySdk] call and SDK lookup when you need the SDK itself.
-   */
-  fun localNonReadOnlySdk(module: Module): Sdk? {
-    // Peeks at the snapshot. Before the first one, the module has no interpreter here.
-    @Suppress("DEPRECATION") // The read-only and local checks read an SDK.
-    val pythonSdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI() ?: return null
-    return pythonSdk.takeIf { !it.isReadOnly && isLocalSdk(it) }
+  @Suppress("DEPRECATION") // The read-only state is recorded on the SDK.
+  fun servedInterpreterOf(interpreter: PythonInterpreter): NativePythonInterpreter? = when (interpreter) {
+    is NativePythonInterpreter -> interpreter.takeUnless { it.getSdkAPI().isReadOnly }
+    is TargetPythonInterpreter -> null
   }
+
+  /** Whether an LSP tool can run against [interpreter], see [servedInterpreterOf]. */
+  fun isServedInterpreter(interpreter: PythonInterpreter): Boolean = servedInterpreterOf(interpreter) != null
 
   /**
    * Whether [sdk] runs on this machine. A read-only system interpreter counts, so use this for a tool

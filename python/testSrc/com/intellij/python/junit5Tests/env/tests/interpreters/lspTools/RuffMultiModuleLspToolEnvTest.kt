@@ -25,7 +25,7 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
-import com.intellij.python.lsp.core.pyServedModules
+import com.intellij.python.lsp.core.pyServedProjects
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
@@ -145,7 +145,7 @@ class RuffMultiModuleLspToolEnvTest {
     val client = awaitRuffClientOf(serviceModule, "the Ruff server of module 'service' did not restart with Ruff $SPARE_RUFF_VERSION") {
       it.ruffVersion == SPARE_RUFF_VERSION
     }
-    assertEquals(listOf(serviceModule), client.pyServedModules, "the service module keeps a server of its own")
+    assertEquals(listOf(serviceModule), client.pyServedModulesForTest, "the service module keeps a server of its own")
   }
 
   @Test
@@ -228,7 +228,7 @@ class RuffMultiModuleLspToolEnvTest {
   private suspend fun awaitOneRuffServer(version: String): LspClient =
     awaitRuffClientOf(rootModule, "no single Ruff $version server serves both modules") { client ->
       client.ruffVersion == version &&
-      client.pyServedModules.toSet() == setOf(rootModule, serviceModule) &&
+      client.pyServedModulesForTest.toSet() == setOf(rootModule, serviceModule) &&
       LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>().size == 1
     }
 
@@ -248,7 +248,7 @@ class RuffMultiModuleLspToolEnvTest {
       var found: LspClient? = null
       while (found == null) {
         found = manager.getClients<RuffLspIntegrationProvider>().firstOrNull {
-          module in it.pyServedModules && it.state == LspServerState.Running && condition(it)
+          module in it.pyServedModulesForTest && it.state == LspServerState.Running && condition(it)
         }
         if (found == null) delay(200.milliseconds)
       }
@@ -267,3 +267,7 @@ class RuffMultiModuleLspToolEnvTest {
     return file
   }
 }
+
+/** The modules of the Python projects that the server behind [this] answers for. */
+private val LspClient.pyServedModulesForTest: List<Module>
+  get() = pyServedProjects.map { it.residesOnModule }

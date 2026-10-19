@@ -1,10 +1,11 @@
 package com.intellij.python.pyright
 
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.google.gson.JsonObject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
@@ -43,15 +44,15 @@ internal fun restartOrStopPyrightProvider(project: Project) {
 }
 
 class PyrightLspIntegrationProvider : PyLspToolIntegrationProvider() {
-  override fun getDescriptor(module: Module): PyLspToolDescriptor =
-    PyrightLspClientDescriptor(module)
+  override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor =
+    PyrightLspClientDescriptor(pyProject)
 
   override fun pyTool(project: Project): PyLspTool<*> = activePyrightTool(project)
 }
 
-class PyrightLspClientDescriptor(module: Module) : PyLspToolDescriptor(
-  module = module,
-  pyTool = activePyrightTool(module.project),
+class PyrightLspClientDescriptor(pyProject: PyProject) : PyLspToolDescriptor(
+  pyProject = pyProject,
+  pyTool = activePyrightTool(pyProject.project),
 ) {
 
   init {

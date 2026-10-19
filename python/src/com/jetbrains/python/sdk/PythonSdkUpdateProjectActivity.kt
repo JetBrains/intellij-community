@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
@@ -13,6 +12,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil.getSitePackagesDirectory
@@ -48,7 +49,7 @@ internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
     if (dropUpdaterInHeadless()) return  // see PythonHeadlessSdkUpdater
     if (project.isDisposed) return
 
-    for (sdk in PythonSdkUpdater.getPythonSdks(project)) {
+    for (sdk in EvoPyProjectModel.getInstance(project).snapshot().sdks()) {
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
   }

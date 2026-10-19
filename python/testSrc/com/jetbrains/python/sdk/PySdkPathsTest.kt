@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -404,6 +406,7 @@ class PySdkPathsTest {
     mockPythonPluginDisposable()
     sdk.associateWith(moduleRoot)
 
+    awaitPythonInterpreters(projectModel.project)
     PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, null)
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
 
@@ -431,7 +434,12 @@ class PySdkPathsTest {
       FileUtil.createTempDirectory("my", "project", false).absolutePath
     )!!.also { deleteOnTearDown(it) }
 
-    val module = projectModel.createModule(name)
+    // A Python module, so the snapshot holds a Python project for it: the updater transfers roots only to a module whose
+    // Python project uses the SDK.
+    val module = runWriteActionAndWait {
+      projectModel.moduleManager.newModule(projectModel.projectRootDir.resolve("$name/$name.iml"), PYTHON_MODULE_ID)
+    }
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(PyUtil.getSourceRoots(module)).isEmpty()
 
     ModuleRootManager.getInstance(module).modifiableModel.apply {
@@ -470,6 +478,7 @@ class PySdkPathsTest {
   }
 
   private fun updateSdkPaths(sdk: @NotNull Sdk) {
+    awaitPythonInterpreters(projectModel.project)
     PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, projectModel.project)
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
   }
