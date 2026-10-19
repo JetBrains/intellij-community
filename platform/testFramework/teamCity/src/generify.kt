@@ -42,6 +42,7 @@ fun generifyErrorMessage(originalMessage: String): String {
     .generifyHexCode()
     .generifyNumber()
     .generifyKernelMessage()
+    .generifyLineEndings()
 }
 
 fun String.generifyFileNames(): String {
@@ -123,3 +124,6 @@ fun String.generifyHexCode(): String = this.replace("0x[\\da-fA-F]+".toRegex(), 
 
 /** text1234text => text<NUM>text */
 fun String.generifyNumber(): String = this.replace("\\d+".toRegex(), "<NUM>")
+
+/** text123\r\n => text123\n */
+fun String.generifyLineEndings(): String = this.replace("\r\n", "\n")
