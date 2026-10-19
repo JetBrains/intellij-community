@@ -22,12 +22,22 @@ import javax.swing.Icon
 /**
  * A pill-shaped badge [Icon] that renders [text] over a colored background.
  *
- * Use the predefined fields [new], [alpha], [beta], [trial], [free]
+ * Use the predefined fields [new], [beta], [trial], [free], [alpha]
  * for common badge types, or construct directly with a custom [text] and [colorType].
  *
  * Colors are resolved from `Badge.*` theme keys (see `IntelliJPlatform.themeMetadata.json`).
  * When [enabled] is `false`, the badge uses `Badge.disabledBackground` / `Badge.disabledForeground`
  * regardless of [colorType].
+ *
+ * ### Usage rules
+ * - Use [ColorType.BLUE_SECONDARY] by default. If you are not sure which color to use, use this one.
+ * - For standard words, like "New" or "Beta", always use the predefined fields instead of a custom badge.
+ *   This keeps the text and color consistent across the IDE, so they can be changed in one place.
+ * - For a different color, size, or any other custom look, use an SVG icon instead of this class.
+ * - If a badge is clickable, make sure it is not the only place to perform the action:
+ *   the click area is small, and users usually don't see a badge as a clickable element.
+ *
+ * See [ColorType] for how to choose a color.
  *
  * @param text the localized label displayed inside the badge
  * @param colorType the color variant to use (default: [ColorType.BLUE_SECONDARY])
@@ -79,13 +89,39 @@ class Badge(
    *
    * Each type maps to a pair of background/foreground theme colors
    * resolved via `Badge.*` UI keys (e.g. `Badge.blueBackground`).
+   *
+   * Pick the color by how much attention the badge should get and by its meaning.
    */
   enum class ColorType {
+    /**
+     * Solid blue background. High attention, for example "New".
+     */
     BLUE,
+
+    /**
+     * Tinted blue background. Medium attention, for anything.
+     * The default: use it when you are not sure which color to choose.
+     */
     BLUE_SECONDARY,
+
+    /**
+     * Solid green background. Success, money, or payments that need more attention, for example "Free" or "Purchased".
+     */
     GREEN,
+
+    /**
+     * Tinted green background. Success, money, or payments, for example "Trial", "Active", or "Paid".
+     */
     GREEN_SECONDARY,
+
+    /**
+     * Tinted purple background. Something unusual or AI-related, for example "Beta" or "AI Assistant".
+     */
     PURPLE_SECONDARY,
+
+    /**
+     * Tinted gray background. Low attention.
+     */
     GRAY_SECONDARY,
   }
 
