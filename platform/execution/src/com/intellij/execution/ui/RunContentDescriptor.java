@@ -58,7 +58,7 @@ public class RunContentDescriptor implements Disposable {
   private Content myContent;
   private String myContentToolWindowId;
   private RunContentDescriptorId myId = null;
-  private final AnAction @NotNull [] myRestartActions;
+  private AnAction @NotNull [] myRestartActions;
 
   private @Nullable Runnable myActivationCallback;
 
@@ -163,6 +163,7 @@ public class RunContentDescriptor implements Disposable {
     myContent = null;
     myActivationCallback = null;
     myRunnerLayoutUi = null;
+    myRestartActions = AnAction.EMPTY_ARRAY;
   }
 
   /**
