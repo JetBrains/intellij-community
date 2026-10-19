@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.io.URLUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
@@ -28,7 +27,7 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
         return@readAction emptyList()
       }
       val file = PsiManager.getInstance(project).findFile(targetFile) ?: return@readAction emptyList()
-      return@readAction HeaderAnchorIndex.collectHeaders(file, URLUtil.unescapePercentSequences(anchor)).map(MarkdownHeaderMapper::map)
+      return@readAction HeaderAnchorIndex.collectHeaders(file, anchor).map(MarkdownHeaderMapper::map)
     }
   }
 }

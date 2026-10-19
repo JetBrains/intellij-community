@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.util.Urls
+import com.intellij.util.io.URLUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
@@ -28,7 +29,7 @@ object MarkdownLinkNavigationResolver {
   /**
    * Resolves [link] against [document] through [MarkdownPreviewPathResolver].
    *
-   * [collectHeaders] gets the anchor of the link, the target file and its project.
+   * [collectHeaders] gets the decoded anchor of the link, the target file and its project.
    * It returns `null` when it cannot answer, and the caller shows the dumb mode notification.
    */
   suspend fun resolve(
@@ -49,7 +50,8 @@ object MarkdownLinkNavigationResolver {
     }
 
     path += "#$anchor"
-    return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), collectHeaders(anchor, file, project))
+    val headers = collectHeaders(URLUtil.unescapePercentSequences(anchor), file, project)
+    return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), headers)
   }
 
   /** Collects the headers of [anchor] from the PSI of [file]. A process without an index uses this lookup. */

@@ -21,6 +21,33 @@ class MarkdownLinkNavigationResolverTest : BasePlatformTestCase() {
     assertEquals(listOf("# Other Heading"), data.headers?.map { it.headerText })
   }
 
+  fun `test an encoded anchor finds its header and stays encoded in the uri`() = timeoutRunBlocking {
+    myFixture.addFileToProject("docs/other.md", "# тест\n")
+    val source = myFixture.addFileToProject("index.md", "[link](docs/other.md#%D1%82%D0%B5%D1%81%D1%82)\n")
+
+    val data = MarkdownLinkNavigationResolver.resolve(
+      link = "docs/other.md#%D1%82%D0%B5%D1%81%D1%82",
+      document = source.virtualFile,
+      collectHeaders = MarkdownLinkNavigationResolver::collectHeadersFromPsi,
+    )
+
+    assertTrue("uri was ${data.uri}", data.uri.endsWith("/docs/other.md#%D1%82%D0%B5%D1%81%D1%82"))
+    assertEquals(listOf("# тест"), data.headers?.map { it.headerText })
+  }
+
+  fun `test an anchor is decoded only once`() = timeoutRunBlocking {
+    myFixture.addFileToProject("docs/other.md", "# тест\n")
+    val source = myFixture.addFileToProject("index.md", "[link](docs/other.md#%25D1%2582%25D0%25B5%25D1%2581%25D1%2582)\n")
+
+    val data = MarkdownLinkNavigationResolver.resolve(
+      link = "docs/other.md#%25D1%2582%25D0%25B5%25D1%2581%25D1%2582",
+      document = source.virtualFile,
+      collectHeaders = MarkdownLinkNavigationResolver::collectHeadersFromPsi,
+    )
+
+    assertEquals(emptyList<String>(), data.headers?.map { it.headerText })
+  }
+
   fun `test a link without an anchor has no headers`() = timeoutRunBlocking {
     myFixture.addFileToProject("docs/other.md", "# Other Heading\n")
     val source = myFixture.addFileToProject("index.md", "[link](docs/other.md)\n")
