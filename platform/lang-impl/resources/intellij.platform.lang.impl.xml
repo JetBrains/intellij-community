@@ -1776,7 +1776,7 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTracker"
                         serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
-    <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationRestoreActivity"/>
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
                         serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
     <applicationSettings service="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
