@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
@@ -45,7 +46,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     root.accept(object: MarkdownElementVisitor(), PsiRecursiveVisitor {
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
-        if (element.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER)) {
+        if (element.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER) && isFrontMatterFoldable(element.containingFile)) {
           addDescriptors(element)
         }
         element.acceptChildren(this)
@@ -264,6 +265,10 @@ private val foldedElementsPresentations = hashMapOf(
   MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
   MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
 )
+
+private fun isFrontMatterFoldable(file: PsiFile): Boolean {
+  return MarkdownFrontMatterFoldingPolicy.EP_NAME.extensionList.all { it.isFoldable(file) }
+}
 
 private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
   if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
