@@ -1,0 +1,9 @@
+@Target(AnnotationTarget.TYPE)
+annotation class Foo
+
+@Target(AnnotationTarget.TYPE)
+annotation class Bar
+
+class Box<T>
+
+val projected: @Foo @Bar Box<out String> = TODO()

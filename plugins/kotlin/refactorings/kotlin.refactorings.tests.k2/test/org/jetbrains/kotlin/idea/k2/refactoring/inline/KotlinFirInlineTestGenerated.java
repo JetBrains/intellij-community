@@ -174,6 +174,21 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/suspendFunctionTypeReceiver.kt");
         }
 
+        @TestMetadata("typeAnnotationAtUsage.kt")
+        public void testTypeAnnotationAtUsage() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/typeAnnotationAtUsage.kt");
+        }
+
+        @TestMetadata("typeAnnotationGeneric.kt")
+        public void testTypeAnnotationGeneric() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/typeAnnotationGeneric.kt");
+        }
+
+        @TestMetadata("typeAnnotationProjected.kt")
+        public void testTypeAnnotationProjected() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/typeAnnotationProjected.kt");
+        }
+
         @TestMetadata("useSiteVariance.kt")
         public void testUseSiteVariance() throws Exception {
             runTest("testData/inline/inlineTypeAlias/useSiteVariance.kt");

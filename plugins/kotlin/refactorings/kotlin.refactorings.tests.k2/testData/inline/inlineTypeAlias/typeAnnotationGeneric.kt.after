@@ -1,0 +1,11 @@
+@Target(AnnotationTarget.TYPE)
+annotation class Foo
+
+@Target(AnnotationTarget.TYPE)
+annotation class Bar
+
+class Box<T>
+
+val generic: @Foo Box<String> = TODO()
+val combined: @Foo @Bar Box<String> = TODO()
+val nullable: @Foo Box<String>? = null

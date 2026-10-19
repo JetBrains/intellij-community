@@ -1,0 +1,4 @@
+@Target(AnnotationTarget.TYPE)
+annotation class Foo
+
+val a: @Foo Unit = Unit
