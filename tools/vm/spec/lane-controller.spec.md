@@ -1726,7 +1726,7 @@ after that move.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
 
 - `restart-ide` performs the file operations of `whileDown` while the IDE is down, and it answers `whileDownReads`.
-  It then states the fixture to the new IDE. A fixture can keep the Junie offer of the new start open.
+  It then states the fixture to the new IDE.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_restart_performs_while_down_and_states_the_fixture_again`)
   [@test] ../crates/avl-guest/src/lane/host_ids/tests.rs (`a_restart_performs_while_down_and_answers_the_reads`)
 
@@ -1793,8 +1793,8 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`a_decision_of_the_lane_daemon_is_published_as_a_decision`)
 
 - An IDE is ready when the lifecycle says `READY`, the robot is the input-events robot, and the ping echoes its
-  nonce. The Junie offer of the IDE start then gets `Skip`.
-  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_ready_ide_passes_the_gate_and_the_junie_offer_gets_skip`)
+  nonce.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_ready_ide_passes_the_gate_after_one_chain_of_the_robot_and_the_ping`)
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`another_robot_is_refused`)
 
 - A bridge that serves another flow vocabulary than the documents jar of the run is refused as `lane_vocabulary_skew`,

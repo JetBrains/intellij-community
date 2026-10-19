@@ -60,7 +60,6 @@ vocabulary! {
     pub enum Requirement {
         AcpTransportCapture = "ACP_TRANSPORT_CAPTURE",
         FeedbackCapture = "FEEDBACK_CAPTURE",
-        JunieStartupPromo = "JUNIE_STARTUP_PROMO",
         Workflows = "WORKFLOWS",
     }
 }

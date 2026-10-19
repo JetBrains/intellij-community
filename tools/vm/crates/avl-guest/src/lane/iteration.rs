@@ -492,14 +492,12 @@ impl Lane for DaemonLane<'_, '_> {
     fn relaunch(
         &self,
         cause: Relaunch,
-        keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
     ) -> Result<(), String> {
         let restarted = self.daemon.with_ide(|owner| {
             owner.restart(
                 self.launch,
                 cause,
-                keep_junie_offer,
                 while_down,
                 &mut Records(&mut |record| self.stream.emit(&record)),
             )

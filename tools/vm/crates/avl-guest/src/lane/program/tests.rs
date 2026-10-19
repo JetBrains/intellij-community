@@ -101,7 +101,7 @@ struct Fake {
     client: avl_bridge::Client,
     script: Arc<Mutex<Script>>,
     pid: Arc<AtomicU32>,
-    relaunches: Mutex<Vec<(Relaunch, bool)>>,
+    relaunches: Mutex<Vec<Relaunch>>,
     context: TempDir,
     services: FakeServices,
     /// Set by the kill of the watchdog. A request that answers after it fails, as a request to a dead IDE does.
@@ -264,10 +264,9 @@ impl Lane for Fake {
     fn relaunch(
         &self,
         cause: Relaunch,
-        keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
     ) -> Result<(), String> {
-        self.relaunches.lock().unwrap().push((cause, keep_junie_offer));
+        self.relaunches.lock().unwrap().push(cause);
         let down = while_down(self.context.path());
         if !self.relaunch_keeps_pid.load(Ordering::SeqCst) {
             self.pid.fetch_add(1, Ordering::SeqCst);
@@ -352,10 +351,10 @@ fn story_document(vocabulary: &Value, profiles: &Value) -> Value {
         ],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": vocabulary,
-        "reset": {"flagKeys": ["air.inline.empty.state.prompt"], "offerJuniePromo": false, "laneFlags": {},
+        "reset": {"flagKeys": ["air.inline.empty.state.prompt"], "laneFlags": {},
             "agentLoginAcpAgentIds": ["acp.air-scenario-rename"]},
         "agents": {},
-        "fixtures": {"fixture": {"managedAgentStartsInstalled": false, "keepsJunieStartupOffer": true, "bridge": {
+        "fixtures": {"fixture": {"managedAgentStartsInstalled": false, "bridge": {
             "setScenarioFixture": {"type": format!("{BRIDGE}SetScenarioFixture"), "facts": {"preset": {"id": "preset-1"}}},
             "seedSessionPresets": {"type": format!("{BRIDGE}SeedSessionPresets"), "presets": [{"id": "preset-1"}],
                 "refreshAvailability": true, "timeoutMs": 30_000},
@@ -792,7 +791,7 @@ fn a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid() {
     let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
     let instructions = json!([{"action": "rename-session-select"}]);
     let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
-    assert_eq!(*fake.relaunches.lock().unwrap(), [(Relaunch::Recycle, false)]);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
     let select = fake
         .requests()
@@ -860,8 +859,8 @@ fn resets_that_never_hold_spend_the_budget_and_skip_the_rest() {
 
 const MAX_RECYCLES_IN_TEST: usize = crate::lane::recycle::MAX_RECYCLES;
 
-// `restart-ide` performs `whileDown` while the IDE is down, keeps the Junie offer of a fixture that asks for it, states
-// the fixture again to the new IDE, and answers `whileDownReads` to the next instruction.
+// `restart-ide` performs `whileDown` while the IDE is down, states the fixture again to the new IDE, and answers
+// `whileDownReads` to the next instruction.
 #[test]
 fn a_restart_performs_while_down_and_states_the_fixture_again() {
     let fake = Fake::new(Script::default());
@@ -884,7 +883,7 @@ fn a_restart_performs_while_down_and_states_the_fixture_again() {
     ]);
     let ran = run(&fake, &[story(&vocabulary, &json!([scenario("restarts", &instructions)]))], None);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL", "{:?}", ran.records);
-    assert_eq!(*fake.relaunches.lock().unwrap(), [(Relaunch::Restart, true)]);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Restart]);
     assert_eq!(fs::read_to_string(&file).unwrap(), "<before/><after/>");
     let kinds: Vec<(u32, String)> = fake.requests();
     let restated = kinds
@@ -1044,7 +1043,7 @@ fn a_suite_that_runs_a_live_host_id_is_refused_before_any_request() {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.live.AirLiveLaunchUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "the composer launches a live session", "key": "generation", "fixture": "authored", "flags": {},
             "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
@@ -1090,7 +1089,7 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.workflows.AgentWorkflowGitUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "a commit starts the workflow", "key": "commit", "method": "gitScenarios", "fixture": "authored",
             "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
@@ -1142,7 +1141,7 @@ fn recycle_smoke() -> Suite {
         "restartsIde": true, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
             "recycle-through-failed-reset": host(1), "restart-ide": host(1)}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored-lane-recycle-smoke": {}},
         "profiles": [{"name": "failed reset recycles one warm IDE and retries on the replacement", "key": "recycle",
             "method": "recycleSmokeScenarios", "fixture": "authored-lane-recycle-smoke", "flags": {}, "flagKeys": [],
@@ -1169,10 +1168,7 @@ fn the_recycle_proof_recycles_once_and_resets_the_replacement_on_a_new_pid() {
     let ran = run(&fake, &[recycle_smoke()], None);
     let finished = ran.events("testFinished");
     assert_eq!(finished[0]["status"], "SUCCESSFUL", "{finished:?}");
-    assert_eq!(
-        *fake.relaunches.lock().unwrap(),
-        [(Relaunch::Recycle, false), (Relaunch::Restart, false)]
-    );
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle, Relaunch::Restart]);
     let resets: Vec<u32> = fake
         .requests()
         .into_iter()
@@ -1361,7 +1357,7 @@ fn one_part_suite() -> Suite {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.genui.AirGenUiHostUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "the theme follows the IDE", "key": "theme", "fixture": "authored", "flags": {}, "flagKeys": [],
             "requiredExecutables": [], "setups": [], "steps": [],
@@ -1438,7 +1434,7 @@ fn session_suite() -> Suite {
         "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRealSessionColdOpenUiTest"}],
         "restartsIde": false, "modules": [], "implementationFlows": [],
         "vocabulary": {"runnerAnswers": ["realSessionLogs"], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "every recorded session opens", "key": "cold-open", "fixture": "authored", "flags": {},
             "flagKeys": [], "requiredExecutables": [], "requiresRunnerValues": ["realSessionLogs"], "setups": [], "steps": [],
@@ -1662,7 +1658,7 @@ fn plugin_reload() -> Suite {
         "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
             "reload-air": {"side": "host", "timeoutMs": 420_000, "restarts": 0, "answers": [], "mayAnswer": [],
                 "takes": [], "mayTake": [], "params": {}}}, "assertions": {}},
-        "reset": {"flagKeys": [], "offerJuniePromo": false, "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
         "fixtures": {"authored": {}},
         "profiles": [{"name": "Air reloads and leaves no class loader", "key": "reload", "fixture": "authored",
             "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],

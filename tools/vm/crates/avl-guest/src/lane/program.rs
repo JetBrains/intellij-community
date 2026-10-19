@@ -128,11 +128,10 @@ pub(crate) trait Lane: Probes {
     fn call(&self, request: &Value, within: Duration) -> Result<Value, avl_bridge::Error>;
 
     /// Quits the IDE, performs `while_down` on its context directory, launches it again on the same context, and waits
-    /// for readiness. With `keep_junie_offer`, the Junie offer of the new start stays open.
+    /// for readiness.
     fn relaunch(
         &self,
         cause: Relaunch,
-        keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
     ) -> Result<(), String>;
 
@@ -726,7 +725,7 @@ impl<'r, 's> Runner<'r, 's> {
             self.isolation
                 .borrow_mut()
                 .ensure_clean(phase, scenario, &mut || self.reset(phase, scenario, reset), &mut || {
-                    self.relaunch_span(Relaunch::Recycle, false, &mut |_| Ok(()))
+                    self.relaunch_span(Relaunch::Recycle, &mut |_| Ok(()))
                 })
         });
         self.attach_dumps();
@@ -745,7 +744,6 @@ impl<'r, 's> Runner<'r, 's> {
         let fields = json!({
             "flagKeys": reset.flag_keys,
             "afterScenario": phase == ResetPhase::After,
-            "offerJuniePromo": reset.offer_junie_promo,
             "laneFlags": reset.lane_flags,
             "agentLoginAcpAgentIds": reset.agent_login_acp_agent_ids,
         });
@@ -772,7 +770,6 @@ impl<'r, 's> Runner<'r, 's> {
     fn relaunch_span(
         &self,
         cause: Relaunch,
-        keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
     ) -> Result<(), String> {
         let id = match cause {
@@ -782,7 +779,7 @@ impl<'r, 's> Runner<'r, 's> {
         let span = self.trace().open_span(SpanKind::Restart, id, &format!("[restart] {id}"), None);
         self.trace().restart();
         let outcome = self.watch.step(&format!("relaunch for {id}"), || {
-            self.watch.relaunching(|| self.lane.relaunch(cause, keep_junie_offer, while_down))
+            self.watch.relaunching(|| self.lane.relaunch(cause, while_down))
         });
         let failure = outcome
             .as_ref()
@@ -1056,7 +1053,7 @@ impl<'r, 's> Runner<'r, 's> {
                     }
                     self.reset(ResetPhase::Before, scenario, reset)
                 },
-                &mut || self.relaunch_span(Relaunch::Recycle, false, &mut |_| Ok(())),
+                &mut || self.relaunch_span(Relaunch::Recycle, &mut |_| Ok(())),
             )
             .map_err(|failure| failure.to_string())?;
         let after = self.lane.ide_process()?;
@@ -1431,8 +1428,7 @@ impl HostSide for RunnerHost<'_, '_, '_> {
     }
 
     fn restart_ide(&mut self, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
-        self.runner
-            .relaunch_span(Relaunch::Restart, self.fixture.keeps_junie_startup_offer, while_down)?;
+        self.runner.relaunch_span(Relaunch::Restart, while_down)?;
         // The restarted IDE holds no fixture facts, so a story scenario states them again.
         if !self.authored
             && let Some(bridge) = &self.fixture.bridge

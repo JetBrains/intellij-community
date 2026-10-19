@@ -4,7 +4,7 @@
 //! after the first scan of its project. A state that names a failed bind of the control server ends the wait at once,
 //! because such an IDE never gets ready. The vocabulary digest of the bridge must be the digest of the vocabulary file
 //! of the run. The chain of `InputRobot` and `Ping` proves that gestures go through the input-events robot and that the
-//! typed bridge answers. The Junie offer of the IDE start gets `Skip`, unless the caller keeps it open.
+//! typed bridge answers.
 //!
 //! A bare IDE passes the first two steps only, see [`await_lifecycle_ready`]: it measures its own start-up, so it gets
 //! no request of the bridge before its first instruction.
@@ -50,12 +50,6 @@ const TRANSPORT_GRACE: Duration = Duration::from_secs(10);
 
 /// The default deadline of a bridge operation, `AIR_UI_TEST_DEFAULT_OPERATION_TIMEOUT_MS`.
 const DEFAULT_OPERATION: Duration = Duration::from_secs(10);
-
-/// The control of the Junie offer that stops it, as `AgentThreadsBundle` states it.
-const JUNIE_SKIP: &str = "Skip";
-
-/// How long the tooltip of the Junie offer may take to close after the `Skip`.
-const JUNIE_TOOLTIP_CLOSE: Duration = Duration::from_secs(30);
 
 /// The JSON of the bridge request `name` with `fields`, an object.
 pub(crate) fn request(name: &str, fields: Value) -> Value {
@@ -110,21 +104,15 @@ impl Bridge {
 }
 
 /// Waits until the IDE of `launch` is ready, and drives it to the state a scenario expects. `vocabulary_digest` is the
-/// digest of the vocabulary file of the run. With `keep_junie_offer`, the Junie offer of the IDE start stays open. `note` gets each
-/// fact a person reads in the log.
+/// digest of the vocabulary file of the run. `note` gets each fact a person reads in the log.
 pub(crate) fn await_ready(
     bridge: &Bridge,
     launch: &str,
     vocabulary_digest: &str,
-    keep_junie_offer: bool,
     note: &mut dyn FnMut(String),
 ) -> Result<(), AgentRefusal> {
     await_lifecycle_ready(bridge, launch, vocabulary_digest, note)?;
-    ping(bridge)?;
-    if !keep_junie_offer {
-        skip_junie_offer(bridge, note)?;
-    }
-    Ok(())
+    ping(bridge)
 }
 
 /// Waits until the lifecycle of the IDE of `launch` reports `READY`, and holds the bridge to `vocabulary_digest`, the
@@ -247,39 +235,6 @@ pub(crate) fn check_robot_and_ping(answer: &Value, nonce: &str) -> Result<(), Ag
             "the bridge answered the ping with '{echoed}', expected '{nonce}'"
         )));
     }
-    Ok(())
-}
-
-/// Answers `Skip` on the Junie offer of the IDE start. An offer that did not decide within its budget is cancelled by
-/// the IDE, and no tooltip opens later.
-fn skip_junie_offer(bridge: &Bridge, note: &mut dyn FnMut(String)) -> Result<(), AgentRefusal> {
-    let offer = bridge.call(&request("AwaitJunieStartupOffer", json!({})), Duration::from_secs(15))?;
-    if offer.get("ended").and_then(Value::as_bool) != Some(true) {
-        note("the Junie offer of the IDE start did not decide within its budget; the IDE cancelled it".to_owned());
-    }
-    if offer.get("tooltip").is_none_or(Value::is_null) {
-        return Ok(());
-    }
-    let target = bridge.call(
-        &request("JuniePromoTooltipControlTarget", json!({ "text": JUNIE_SKIP })),
-        DEFAULT_OPERATION,
-    )?;
-    let clicked = bridge.call(
-        &request("PerformTargetInput", json!({ "target": target, "input": { "type": "click" } })),
-        DEFAULT_OPERATION,
-    )?;
-    if clicked != Value::Bool(true) {
-        return Err(AgentRefusal::refused(
-            NOT_READY_CODE,
-            format!("the click on {JUNIE_SKIP} of the Junie offer was not performed: {clicked}"),
-        ));
-    }
-    let closing = request(
-        "AwaitJuniePromoTooltip",
-        json!({ "showing": false, "timeoutMs": JUNIE_TOOLTIP_CLOSE.as_millis() }),
-    );
-    bridge.call(&closing, JUNIE_TOOLTIP_CLOSE)?;
-    note("the Junie offer of the IDE start got Skip".to_owned());
     Ok(())
 }
 

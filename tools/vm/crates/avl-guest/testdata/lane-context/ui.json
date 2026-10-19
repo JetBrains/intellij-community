@@ -182,12 +182,6 @@
       }
     },
     {
-      "name": "JUNIE_STARTUP_PROMO",
-      "properties": {
-        "air.junie.promo.in.integration.test": "true"
-      }
-    },
-    {
       "name": "WORKFLOWS",
       "properties": {
         "air.workflows": "true"

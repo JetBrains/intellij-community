@@ -469,15 +469,14 @@ impl IdeOwner {
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, false, &mut |text| {
+        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, &mut |text| {
             records.note(text);
         })?;
         Ok(decision)
     }
 
     /// Reloads the bridge plugin of the held IDE from the context plugins of `launch`, and waits until the new copy is
-    /// ready. The Junie offer belongs to the IDE start, so the gate after a reload asks nothing of it. The error is the
-    /// reason of the relaunch that follows, and the staged copy is gone then.
+    /// ready. The error is the reason of the relaunch that follows, and the staged copy is gone then.
     fn reload(&self, launch: &LaneLaunch<'_>, bridge: &Bridge, records: &mut Records<'_>) -> Result<(), String> {
         let Some(held) = &self.held else {
             return Err("a reload was decided without an IDE".to_owned());
@@ -488,7 +487,7 @@ impl IdeOwner {
             .map_err(|error| error.to_string())
             .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
             .and_then(|()| {
-                readiness::await_ready(bridge, key, launch.vocabulary_digest, true, &mut |text| {
+                readiness::await_ready(bridge, key, launch.vocabulary_digest, &mut |text| {
                     records.note(text);
                 })
                 .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))

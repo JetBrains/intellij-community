@@ -156,9 +156,6 @@ pub struct SuiteFixture {
     /// The keys of the agents that the suite installs before its first scenario.
     #[serde(default)]
     pub preinstalled: Vec<String>,
-    /// A restart of a scenario of this fixture keeps the Junie offer of the IDE start open.
-    #[serde(default)]
-    pub keeps_junie_startup_offer: bool,
     /// The bridge requests of the scenario preparation, rendered by the generator. Absent in a document that predates
     /// them.
     #[serde(default, deserialize_with = "crate::json::non_null")]
@@ -182,8 +179,6 @@ pub struct FixtureBridge {
 pub struct SuiteReset {
     /// Every registry flag that a scenario of the suite sets, sorted.
     pub flag_keys: Vec<String>,
-    /// The reset forgets the answer to the Junie promo, so the next IDE start offers it.
-    pub offer_junie_promo: bool,
     /// The lane value of each registry flag that has one.
     pub lane_flags: BTreeMap<String, String>,
     /// The full id of each fake agent of the suite except the Cloud agent, sorted. The reset saves Agent login as the AI

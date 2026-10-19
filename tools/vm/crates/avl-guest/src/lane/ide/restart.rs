@@ -54,8 +54,7 @@ impl Relaunch {
 
 impl IdeOwner {
     /// Quits the held IDE, performs `while_down` on its context directory, launches it again on the same context as
-    /// `<cause>-<n>-<millis>`, and waits for readiness. With `keep_junie_offer`, the Junie offer of the new start stays
-    /// open.
+    /// `<cause>-<n>-<millis>`, and waits for readiness.
     ///
     /// The launch happens even when `while_down` fails, so the lane keeps an IDE. The failure of `while_down` is then the
     /// failure of the restart.
@@ -63,7 +62,6 @@ impl IdeOwner {
         &mut self,
         launch: &LaneLaunch<'_>,
         cause: Relaunch,
-        keep_junie_offer: bool,
         while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
         records: &mut Records<'_>,
     ) -> Result<(), AgentRefusal> {
@@ -83,7 +81,7 @@ impl IdeOwner {
         self.relaunch(launch, cause, records)?;
         let key = launch.identity.key();
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
-        readiness::await_ready(&bridge, key, launch.vocabulary_digest, keep_junie_offer, &mut |text| {
+        readiness::await_ready(&bridge, key, launch.vocabulary_digest, &mut |text| {
             records.note(text);
         })?;
         down.map_err(|error| refused(format!("the file operations while the IDE of '{key}' was down failed: {error}")))
