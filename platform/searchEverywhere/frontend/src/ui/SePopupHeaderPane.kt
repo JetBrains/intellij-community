@@ -127,9 +127,7 @@ class SePopupHeaderPane(
       }
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      disposeToolbarListenerOnCancellation(coroutineScope)
-    }
+    disposeToolbarListenerOnCancellation(coroutineScope)
   }
 
   /**
