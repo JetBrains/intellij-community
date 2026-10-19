@@ -15,7 +15,7 @@ mod launch;
 mod log;
 mod state;
 mod supervise;
-mod thread_dump;
+pub(crate) mod thread_dump;
 
 #[cfg(test)]
 mod tests;

@@ -1,9 +1,10 @@
 use std::io::Write;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use avl_testkit::http::{FakeHttp, Response};
-use avl_wire::daemon::ExecutionIdentity;
+use avl_wire::daemon::{ExecutionIdentity, decode_run_event};
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -136,6 +137,10 @@ impl Probes for Intruded {
         *self.kills.lock().unwrap() += 1;
         Ok(())
     }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 // The first intrusion of a run gets one dismissal. The next tick that still sees it expires the run as an intrusion,
@@ -191,6 +196,10 @@ impl Probes for Counting {
 
     fn kill(&self) -> Result<(), String> {
         Ok(())
+    }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        None
     }
 }
 
@@ -325,6 +334,10 @@ impl Probes for OpensTheGate {
         opened.notify_all();
         Ok(())
     }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 // The kill comes before the watchdogExpired record. A stream that blocks then holds only the record, and the IDE ends
@@ -385,6 +398,10 @@ impl Probes for CompletesOnKill<'_, '_> {
         self.watch.completed(self.stream);
         Ok(())
     }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 // After a kill the watchdog waits for the run thread to complete, and a run thread that does complete ends the wait at
@@ -414,4 +431,148 @@ fn a_run_thread_that_completes_after_the_kill_ends_the_wait_without_a_note() {
     let records = String::from_utf8(out).unwrap();
     assert!(records.contains("\"watchdogExpired\""), "{records}");
     assert!(!records.contains("did not unwind"), "{records}");
+}
+
+/// Probes of an IDE with a log directory: no intruder until the run thread raises one, a dump for each slow step, and a
+/// kill that writes its thread dump into the log directory, as the supervisor does.
+struct Logged {
+    log_dir: PathBuf,
+    intruding: AtomicBool,
+    kill_dump: Mutex<Option<PathBuf>>,
+}
+
+impl Probes for Logged {
+    fn intrusion(&self) -> Option<String> {
+        self.intruding
+            .load(Ordering::SeqCst)
+            .then(|| "an unexpected modal dialog no scenario opened is showing: 'EAP expired'".to_owned())
+    }
+
+    fn dismiss_intrusion(&self) -> Option<String> {
+        None
+    }
+
+    fn diagnostic_dump(&self) -> Result<String, String> {
+        Ok("\"main\" RUNNABLE".to_owned())
+    }
+
+    fn kill(&self) -> Result<(), String> {
+        let file = self.log_dir.join(thread_dump::file_name(Timestamp::now()));
+        fs::write(&file, "\"main\" WAITING").map_err(|error| error.to_string())?;
+        *self.kill_dump.lock().unwrap() = Some(file);
+        Ok(())
+    }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        Some(self.log_dir.clone())
+    }
+}
+
+/// Polls `done` until it holds, for 30 s at most, and answers whether it held.
+fn eventually(done: impl Fn() -> bool) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(30);
+    while !done() {
+        if Instant::now() >= deadline {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    true
+}
+
+/// Makes `directory` look changed `ago` before now.
+fn changed_before(directory: &Path, ago: Duration) {
+    fs::File::open(directory).unwrap().set_modified(SystemTime::now() - ago).unwrap();
+}
+
+// An expired run names its evidence: the thread dump that the kill wrote, the newest screenshot set of the IDE, and the
+// IDE dumps of the slow steps of the scenario that ran. The dump of an earlier kill, an older set, a set with no
+// picture and the dumps of an earlier scenario stay out.
+#[test]
+fn an_expired_run_names_the_kill_dump_the_newest_screenshots_and_the_dumps_of_its_scenario() {
+    let iteration = TempDir::new().unwrap();
+    let log = TempDir::new().unwrap();
+    let screenshots = log.path().join(SCREENSHOTS_DIR);
+    let older = screenshots.join("001_heartbeat");
+    let newest = screenshots.join("002_heartbeat");
+    let empty = screenshots.join("003_heartbeat");
+    for (set, files) in [
+        (&older, &["frame0.png"][..]),
+        (&newest, &["frame0.png", "dialog0.PNG", "windows.json"]),
+        (&empty, &[]),
+    ] {
+        fs::create_dir_all(set).unwrap();
+        for file in files {
+            fs::write(set.join(file), "picture").unwrap();
+        }
+    }
+    changed_before(&older, Duration::from_hours(1));
+    changed_before(&newest, Duration::from_mins(30));
+    let earlier_kill = Timestamp::from_millisecond(Timestamp::now().as_millisecond() - 3_600_000).unwrap();
+    fs::write(log.path().join(thread_dump::file_name(earlier_kill)), "an earlier kill").unwrap();
+    let probes = Logged {
+        log_dir: log.path().to_path_buf(),
+        intruding: AtomicBool::new(false),
+        kill_dump: Mutex::new(None),
+    };
+    let watch = Watch::new(POLICY).with_slow_step(Duration::from_millis(100));
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    let phase_dumps = || watch.lock().phase_dumps.len();
+    let (first, second) = std::thread::scope(|scope| {
+        scope.spawn(|| super::watch(&watch, &stream, &probes, iteration.path()));
+        watch.execution_started(&stream, identity("first"));
+        let first = watch.step("slow first", || eventually(|| phase_dumps() == 1));
+        watch.execution_finished(&stream);
+        watch.execution_started(&stream, identity("second"));
+        let second = watch.step("hang", || {
+            let dumped = eventually(|| phase_dumps() == 1);
+            probes.intruding.store(true, Ordering::SeqCst);
+            dumped && eventually(|| watch.expired().is_some() && probes.kill_dump.lock().unwrap().is_some())
+        });
+        // Completes the watch in any case, so the watchdog thread returns and the scope ends.
+        watch.completed(&stream);
+        (first, second)
+    });
+    assert!(first, "the slow step of the first scenario got no dump");
+    assert!(second, "the second scenario got no dump, or the watchdog did not expire the run");
+    drop(stream);
+    let records = String::from_utf8(out).unwrap();
+    let expired = records
+        .lines()
+        .filter_map(|line| decode_run_event(line.as_bytes()).ok())
+        .find_map(|event| match event.kind {
+            RunEventKind::WatchdogExpired(expired) => Some(expired),
+            _ => None,
+        })
+        .unwrap();
+    let kill_dump = probes.kill_dump.lock().unwrap().clone().unwrap();
+    let named = |file: &Path| file.display().to_string();
+    assert_eq!(
+        expired.evidence,
+        [
+            named(&kill_dump),
+            named(&newest.join("dialog0.PNG")),
+            named(&newest.join("frame0.png")),
+            named(&iteration.path().join(SLOW_STEPS_DIR).join("02-hang-ide-dump.txt")),
+        ]
+    );
+}
+
+// The evidence of an expiry holds four files at most, and the newest dumps of the phase come first. An IDE run with no
+// log directory adds no file.
+#[test]
+fn the_evidence_of_an_expiry_keeps_the_four_newest_dumps() {
+    let dumps: Vec<PathBuf> = (1..=5)
+        .map(|ordinal| PathBuf::from(format!("/slow-steps/0{ordinal}-ide-dump.txt")))
+        .collect();
+    assert_eq!(
+        evidence(None, Timestamp::now(), &dumps),
+        [
+            "/slow-steps/05-ide-dump.txt",
+            "/slow-steps/04-ide-dump.txt",
+            "/slow-steps/03-ide-dump.txt",
+            "/slow-steps/02-ide-dump.txt"
+        ]
+    );
 }

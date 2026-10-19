@@ -259,6 +259,10 @@ impl Probes for Fake {
         self.killed.store(true, Ordering::SeqCst);
         Ok(())
     }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 impl Lane for Fake {

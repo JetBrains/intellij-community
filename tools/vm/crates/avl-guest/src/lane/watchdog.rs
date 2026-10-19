@@ -3,8 +3,8 @@
 //! The watchdog thread ticks each [`TICK`] while the run thread waits for the IDE:
 //! - **Deadlines.** Between scenarios the progress gap of the run request applies, during a scenario its active
 //!   execution timeout. An emergency deadline caps the whole run from the count of discovered scenarios. On expiry the
-//!   watchdog writes `watchdogExpired`, kills the IDE run with a thread dump, and marks the run expired. The run thread
-//!   sees the mark at its next instruction and starts no further scenario.
+//!   watchdog marks the run expired, kills the IDE run with a thread dump, and writes `watchdogExpired` with the files
+//!   of its evidence. The run thread sees the mark at its next instruction and starts no further scenario.
 //! - **Intruder probe.** `ModalIntruder` with a [`PROBE_TIMEOUT`] asks the IDE for a modal window that no scenario
 //!   opened. The first intrusion of a run gets one `DismissIntruder` with a [`DISMISS_TIMEOUT`]; the next one that a
 //!   tick sees expires the run as `ide_intrusion`. A relaunch holds the probe off, because no IDE answers then.
@@ -22,14 +22,16 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use avl_wire::daemon::{ExecutionIdentity, RunEventKind, SlowStep, WatchdogExpired, WatchdogState};
+use avl_wire::report::MAX_EVIDENCE_FILES;
 use jiff::Timestamp;
 
 use super::readiness::Bridge;
 use super::stream::Stream;
 use crate::clock::{now_stamp, stamp};
+use crate::supervisor::thread_dump;
 
 #[cfg(test)]
 mod tests;
@@ -62,6 +64,9 @@ pub(crate) const KILL_GRACE: Duration = Duration::from_mins(1);
 
 /// The directory of the slow-step dumps in the directory of an iteration.
 pub(crate) const SLOW_STEPS_DIR: &str = "slow-steps";
+/// The directory of the screenshots in the log directory of the IDE. With `ide.performance.screenshot=heartbeat` the
+/// IDE writes a set into `<NNN>_heartbeat` there each minute, with one PNG for each window.
+const SCREENSHOTS_DIR: &str = "screenshots";
 const MAX_SLUG_CHARS: usize = 40;
 
 /// What the watchdog asks of the IDE. Every answer may be "nothing": a probe never fails a run by itself.
@@ -74,6 +79,9 @@ pub(crate) trait Probes: Sync {
     fn diagnostic_dump(&self) -> Result<String, String>;
     /// Kills the IDE run with a thread dump first.
     fn kill(&self) -> Result<(), String>;
+    /// The log directory of the IDE run that [`Probes::kill`] ends, or `None` while no IDE run is held. The IDE writes
+    /// its heartbeat screenshots there, and the kill writes its thread dump there.
+    fn log_dir(&self) -> Option<PathBuf>;
 }
 
 /// Why the watchdog gave up on a run, the `reason` of `watchdogExpired`.
@@ -282,6 +290,9 @@ struct State {
     expired: Option<String>,
     /// The IDE dumps that the watchdog wrote and the run thread did not attach yet: the step and the file.
     dumps: Vec<(String, PathBuf)>,
+    /// The IDE dumps that the watchdog wrote since the phase began, oldest first: of the scenario that runs, or of the
+    /// gap between two scenarios. An expiry names them as its evidence.
+    phase_dumps: Vec<PathBuf>,
 }
 
 /// What the run thread and the watchdog thread share.
@@ -306,6 +317,7 @@ impl Watch {
                 quiet: 0,
                 expired: None,
                 dumps: Vec::new(),
+                phase_dumps: Vec::new(),
             }),
             changed: Condvar::new(),
             anchor: (now, Timestamp::now()),
@@ -346,11 +358,12 @@ impl Watch {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Changes the deadlines and writes the new state.
+    /// Changes the deadlines and writes the new state. A new phase starts with no dump of its own.
     fn transition(&self, stream: &Stream<'_>, change: impl FnOnce(&mut Deadlines, Instant)) {
         let record = {
             let mut state = self.lock();
             change(&mut state.deadlines, Instant::now());
+            state.phase_dumps.clear();
             self.changed.notify_all();
             self.record(&state.deadlines)
         };
@@ -543,7 +556,9 @@ pub(crate) fn watch(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, ite
                         .join(" > ");
                     let record = slow_step(probes, iteration_dir, dumps, &step, &path, watch.slow_step);
                     if let RunEventKind::SlowStep(SlowStep { ide_dump: Some(file), .. }) = &record {
-                        watch.lock().dumps.push((step.title.clone(), PathBuf::from(file)));
+                        let mut state = watch.lock();
+                        state.dumps.push((step.title.clone(), PathBuf::from(file)));
+                        state.phase_dumps.push(PathBuf::from(file));
                     }
                     stream.emit(&record);
                 } else if dumps == MAX_DUMPS + 1 {
@@ -579,8 +594,8 @@ pub(crate) fn ide_dump(bridge: &Bridge) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
-/// Marks the run expired, kills the IDE so the run thread unwinds, writes `watchdogExpired`, and waits the kill grace
-/// for the run thread to complete.
+/// Marks the run expired, kills the IDE so the run thread unwinds, writes `watchdogExpired` with the files of
+/// [`evidence`], and waits the kill grace for the run thread to complete.
 ///
 /// The kill comes before the record and its log line, so an expiry ends the IDE even when the stream or the standard
 /// error blocks. A run thread that does not complete within the grace waits on something other than the IDE, and the
@@ -591,7 +606,14 @@ fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expi
         expiry.reason.wire(),
         expiry.detail.as_deref().map(|detail| format!(": {detail}")).unwrap_or_default()
     );
-    watch.lock().expired = Some(reason);
+    let dumps = {
+        let mut state = watch.lock();
+        state.expired = Some(reason);
+        state.phase_dumps.clone()
+    };
+    // The log directory of the run that the kill ends, before a relaunch can publish another run.
+    let log_dir = probes.log_dir();
+    let killed_since = Timestamp::now();
     let killed = probes.kill();
     stream.emit(&RunEventKind::WatchdogExpired(WatchdogExpired {
         reason: expiry.reason.wire().to_owned(),
@@ -599,7 +621,7 @@ fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expi
         expired_at: watch.wire_instant(expiry.at),
         detail: expiry.detail.clone(),
         active_execution: expiry.active.clone(),
-        evidence: Vec::new(),
+        evidence: evidence(log_dir.as_deref(), killed_since, &dumps),
     }));
     if let Err(error) = killed {
         stream.note(format!("the watchdog could not kill the IDE: {error}"));
@@ -611,6 +633,57 @@ fn expire(watch: &Watch, stream: &Stream<'_>, probes: &dyn Probes, expiry: &Expi
             watch.kill_grace.as_millis()
         ));
     }
+}
+
+/// The files that an expiry names as its evidence, [`MAX_EVIDENCE_FILES`] at most: the thread dump that the kill wrote
+/// in `log_dir` at `killed_since` or later, the newest heartbeat screenshots of the IDE in `log_dir`, and the IDE
+/// `dumps` of the slow steps of the phase, newest first.
+///
+/// The lane daemon sets the log directory of the IDE itself, so it finds these files without a request to an IDE that
+/// can hang. The dumps come last, because their `slowStep` records bring them to the controller in any case.
+fn evidence(log_dir: Option<&Path>, killed_since: Timestamp, dumps: &[PathBuf]) -> Vec<String> {
+    let kill_dump = log_dir.and_then(|directory| thread_dump::newest_since(directory, killed_since));
+    let screenshots = log_dir.map_or_else(Vec::new, newest_screenshots);
+    kill_dump
+        .into_iter()
+        .chain(screenshots)
+        .chain(dumps.iter().rev().cloned())
+        .take(MAX_EVIDENCE_FILES)
+        .map(|file| file.display().to_string())
+        .collect()
+}
+
+/// The newest screenshot set of the IDE in its log directory `log_dir`: the pictures of the subdirectory of
+/// [`SCREENSHOTS_DIR`] that changed last and holds a picture, sorted by name.
+fn newest_screenshots(log_dir: &Path) -> Vec<PathBuf> {
+    let entries = |directory: &Path| fs::read_dir(directory).into_iter().flatten().filter_map(Result::ok);
+    let mut sets: Vec<(SystemTime, PathBuf)> = entries(&log_dir.join(SCREENSHOTS_DIR))
+        .filter_map(|entry| {
+            let metadata = entry.metadata().ok().filter(fs::Metadata::is_dir)?;
+            Some((metadata.modified().ok()?, entry.path()))
+        })
+        .collect();
+    sets.sort();
+    sets.into_iter()
+        .rev()
+        .map(|(_, set)| {
+            let mut pictures: Vec<PathBuf> = entries(&set)
+                .filter(|entry| entry.metadata().is_ok_and(|metadata| metadata.is_file()))
+                .map(|entry| entry.path())
+                .filter(|file| is_picture(file))
+                .collect();
+            pictures.sort();
+            pictures
+        })
+        .find(|pictures| !pictures.is_empty())
+        .unwrap_or_default()
+}
+
+/// Whether `file` is a PNG or a JPEG by its extension.
+fn is_picture(file: &Path) -> bool {
+    file.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| ["png", "jpg", "jpeg"].iter().any(|picture| extension.eq_ignore_ascii_case(picture)))
 }
 
 /// Writes the dumps of the slow step `step`, the `ordinal`th of the run, and answers its `slowStep` record.

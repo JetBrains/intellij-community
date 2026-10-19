@@ -879,6 +879,12 @@ impl Probes for DaemonLane<'_, '_> {
         .map(|_| ())
         .map_err(|refusal| refusal.message)
     }
+
+    fn log_dir(&self) -> Option<PathBuf> {
+        self.target
+            .current()
+            .map(|(context, run_id, _)| supervisor::thread_dump::directory(&context, &run_id))
+    }
 }
 
 /// The verdict line of an intruder that `ModalIntruder` answered, or `None` for no intruder.
