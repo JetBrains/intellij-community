@@ -1,9 +1,9 @@
 //! The run secrets of `run --test-env NAME=@FILE`: the grammar, the one read of each host file, the guest directory
 //! the files go to, and the scan of the artifacts a run fetched back.
 //!
-//! A run hands its guest test JVM a file, never a variable. The daemon's environment is fixed at boot and is part of
+//! A run hands the lane daemon a file, never a variable. The daemon's environment is fixed at boot and is part of
 //! the launch digest, so a value there would outlive the run and re-key the daemon. The daemon environment carries
-//! only the directory, as [`RUN_SECRETS_VARIABLE`]; a test reads `<directory>/<NAME>`.
+//! only the directory, as [`RUN_SECRETS_VARIABLE`]; the lane daemon reads `<directory>/<NAME>`.
 //!
 //! A value reaches the guest over the exec channel's stdin ([`Guest::write_secret_file`]) and nowhere else: not an
 //! argv, not the daemon environment, not a host state file, not a phase line, not a refusal. [`RunSecrets`] prints
@@ -71,8 +71,8 @@ pub(crate) struct RunSecretFile {
 /// refused, because a value on the command line is a value in the shell history and in `ps`. A host file named `-`
 /// is `@./-`.
 ///
-/// The name is a shell variable name, because a test reads the file under that name, and the name is a file name in
-/// the guest directory as well.
+/// The name is a shell variable name, because the lane daemon reads the file under that name. The name is also a
+/// file name in the guest directory.
 ///
 /// A refusal, not a `String`: clap quotes the whole value in front of a `String` error, and the value of a mistaken
 /// `NAME=VALUE` is the secret itself. A refusal is answered as it is, and none of these repeats what was given,

@@ -1,4 +1,4 @@
-//! The environment the guest launches its daemon with, and the one each iteration's test JVM gets.
+//! The environment that the controller starts the lane daemon with.
 
 use std::collections::BTreeMap;
 
@@ -7,14 +7,14 @@ use avl_host_sys::guest::guest_join;
 
 use crate::lane::secrets::RUN_SECRETS_VARIABLE;
 
-/// The environment a daemon is exec'd with that no build produces: the guest's Node, the directory of the run secrets,
-/// and the locale.
-///
-/// A JVM cannot change its own environment, so this is fixed for a daemon's lifetime and part of its launch
-/// identity. It is the same answer for every worker of one pool, because nothing in it is a guest's own reply.
-/// The `LANG` of the daemon JVM. See [`daemon_environment`].
+/// The `LANG` of the lane daemon. See [`daemon_environment`].
 pub(crate) const DAEMON_LOCALE: &str = "C.UTF-8";
 
+/// The environment of the lane daemon that no build produces: the guest's Node, the directory of the run secrets,
+/// and the locale.
+///
+/// The lane daemon keeps its environment for its lifetime, so this is part of its launch identity. It is the same
+/// answer for every worker of one pool, because nothing in it is a guest's own reply.
 pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> {
     let mut environment = BTreeMap::new();
     // The guest's node, named by the controller: the Node of the Docker image or of the macOS golden, or the one
@@ -24,10 +24,10 @@ pub(crate) fn daemon_environment(settings: &Config) -> BTreeMap<String, String> 
     // A path and never a value: a run writes its `--test-env` files there, and the boot environment stays the same
     // for every run.
     environment.insert(RUN_SECRETS_VARIABLE.to_owned(), settings.vm_run_secrets.clone());
-    // The locale of the daemon JVM, and so the encoding of every path it names. The Linux worker image ships only the
-    // C locales; a locale that is not installed falls back to POSIX, and a JVM in it cannot name a file with a
-    // character outside ASCII. `C.UTF-8` is in every glibc since 2.35. It is here and not in the run environment,
-    // because a daemon keeps its environment for its lifetime: a change must restart the warm daemon.
+    // The locale of the lane daemon. The context policy of the supervisor passes it on to the lane IDE. The Linux worker
+    // image ships only the C locales. A locale that is not installed falls back to POSIX, and a JVM in it cannot name a
+    // file with a character outside ASCII. `C.UTF-8` is in every glibc since 2.35. It is here and not in the run
+    // environment, because a daemon keeps its environment for its lifetime. A change must restart the warm daemon.
     environment.insert("LANG".to_owned(), DAEMON_LOCALE.to_owned());
     environment
 }
@@ -60,14 +60,13 @@ pub(crate) fn guest_platform_path_entries(guest_os: GuestOs) -> Vec<&'static str
         .collect()
 }
 
-/// The `NAME=VALUE` environment one iteration's test JVM is exec'd with, in name order.
+/// The `NAME=VALUE` environment that the lane daemon starts with, in name order.
 ///
 /// `runfiles_root` and `self_location` are guest paths: the guest's own view of the runfiles tree, which the
 /// caller maps from the host tree. Every path here is a guest path, so it is joined as text with `/`, never with a
 /// host path operation that writes `\` on a Windows host.
 ///
-/// A lane value in `test_env` wins over a name this function also sets. `HOME` is the case that matters: a lane
-/// that pinned it would otherwise be silently overruled by the guest's own.
+/// A value of `test_env` wins over a name that this function also sets. The start passes the daemon environment there.
 pub(crate) fn guest_run_environment(
     settings: &Config,
     test_env: &BTreeMap<String, String>,

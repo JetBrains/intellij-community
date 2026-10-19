@@ -67,7 +67,7 @@ fn only_a_macos_guest_is_searched_in_homebrew() {
 }
 
 /// The guest PATH is the guest's Node and then the platform's own directories, in that order. A lane value is never
-/// a PATH entry: the test JVM receives it as a variable of its own.
+/// a PATH entry: the lane daemon receives it as a variable of its own.
 #[test]
 fn the_guest_path_is_the_guests_node_then_the_platform() {
     let settings = docker();

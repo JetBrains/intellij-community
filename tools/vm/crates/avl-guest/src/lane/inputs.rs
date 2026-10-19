@@ -2,7 +2,7 @@
 //! file, the project, and the declared CLI runtimes.
 //!
 //! The lane daemon reads them once, at its boot. Every path is a guest path below the runfiles root that the controller
-//! built. The JVM daemon read the same facts from the system properties of its @-file, which the descriptor wrote.
+//! built.
 
 use std::collections::BTreeSet;
 use std::fs;

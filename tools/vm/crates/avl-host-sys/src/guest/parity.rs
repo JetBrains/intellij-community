@@ -98,9 +98,7 @@ pub fn parity_marker_content(settings: &Config, worker: &str) -> String {
 /// [`GuestPaths`] root. On a Unix host this is the host's own absolute path.
 ///
 /// Bazel's output user root becomes one symlink onto its read-only mount. The writable roots of a run are real
-/// directories on the guest disk: the output tree, where IDE Starter and the dev-mode build server write, the temp
-/// directory and the download cache. Build-dependency downloads divert through the test JVM
-/// (`-Dintellij.build.download.cache.dir`), with the manifests resolving from pinned runfiles. The marker records
+/// directories on the guest disk: the output tree, the temp directory and the download cache. The marker records
 /// what the layout was built for.
 pub fn parity_script(settings: &Config, worker: &str, bazel_mount: &str) -> Result<String, Refusal> {
     let paths = GuestPaths::of(settings)?;

@@ -9,7 +9,7 @@ use bt_core::{ResolutionInputs, Selector, resolve_selector};
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
 
-/// What a `--lane` or a selector became: the lane's content label, and the test JVM's filters.
+/// What a `--lane` or a selector became: the lane's content label, and the filters that the run request gets.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Selection {
     pub label: String,
@@ -21,7 +21,7 @@ pub(crate) struct Selection {
     pub test_env: BTreeMap<String, String>,
 }
 
-/// The variable a JUnit filter travels in, for the daemon's runner and for `JUnit5BazelRunner` alike.
+/// The variable that a Bazel test reads a JUnit filter from. The controller turns it into the filters of the run request.
 pub(crate) const JUNIT5_FILTERS: &str = "JB_TEST_JUNIT5_FILTERS";
 
 /// Answers what one UI lane runs, and refuses a lane a VM worker cannot. The lane daemon selects the documents of the

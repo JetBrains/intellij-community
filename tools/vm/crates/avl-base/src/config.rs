@@ -1139,8 +1139,7 @@ pub struct Config {
     /// is part of the launch digest. A Linux guest keeps it on `/dev/shm`, a tmpfs, so a secret never reaches the
     /// persistent data volume. A macOS guest has no tmpfs and keeps it under [`Config::vm_tmp`].
     pub vm_run_secrets: String,
-    /// The build-dependencies download cache the test JVM is redirected to, since the guest has no checkout to keep
-    /// it in. Persistent across runs: a warm cache keeps the per-class inner loop at about a minute.
+    /// The build-dependencies download cache of the guest, which the parity layout makes writable. It persists across runs.
     pub vm_download_cache: String,
 
     pub git: String,
@@ -1435,7 +1434,7 @@ impl Config {
         }
         let docker = docker_bin.or_else(|| (host != HostOs::Macos).then(|| PathBuf::from("docker")));
 
-        // The daemon JVM sets no `-Xmx`, so its default maximum heap follows the cap. An Apple `container` worker is a
+        // The memory cap of a worker, which holds the lane daemon and the lane IDE. An Apple `container` worker is a
         // VM of its own; see [`Config::vm_memory_mib`]. It resolves before the slots, because the Apple `container`
         // pool size follows it.
         let vm_memory_fallback = match (backend, docker_engine) {

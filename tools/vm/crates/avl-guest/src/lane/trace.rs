@@ -2,7 +2,7 @@
 //! [`avl_trace::protocol`].
 //!
 //! The lane daemon starts the recorder once per iteration, with no argument, and roots its bundles at
-//! `<iterationDir>/air-traces` as the JVM daemon did. It sends `hello`, then per scenario `scenario`, the spans, one
+//! `<iterationDir>/air-traces`. It sends `hello`, then per scenario `scenario`, the spans, one
 //! `call` per bridge request, the snapshots, the attachments and `done`. Its standard input reaching EOF ends the
 //! session, so the recorder finishes a truncated bundle when the lane daemon dies.
 //!

@@ -154,8 +154,8 @@ impl RunArgs {
 pub(crate) struct RunCommandArgs {
     #[command(flatten)]
     pub run: RunArgs,
-    /// A file the guest test JVM reads as AIR_VM_RUN_SECRETS/NAME; repeatable. NAME=@- reads a pipe, NAME=@FILE a host
-    /// file: a value is refused.
+    /// A file that the lane daemon reads as AIR_VM_RUN_SECRETS/NAME; repeatable. NAME=@- reads a pipe, NAME=@FILE a
+    /// host file: a value is refused.
     #[arg(long = "test-env", value_name = "NAME=@-|NAME=@FILE", value_parser = crate::lane::secrets::parse_test_env)]
     pub test_env: Vec<crate::lane::secrets::RunSecretFile>,
 }
@@ -390,9 +390,8 @@ impl Host {
         }
 
         if let Some(lane) = lane {
-            // Every UI lane runs through this daemon: its classpath is the union of both IDE-launching targets, and
-            // the lane's agent-CLI passthroughs are already in its boot environment. What is left of a lane here is
-            // its JUnit filter.
+            // Every UI lane runs through the lane daemon, which selects the documents of the lane by its name. A lane
+            // adds no filter here, so only the filters of the command line narrow it.
             let selected = crate::lane::lane_selection(lane)?;
             if !every_lane {
                 refuse_explicit_only(&selected.label, &self.reporter.program())?;
