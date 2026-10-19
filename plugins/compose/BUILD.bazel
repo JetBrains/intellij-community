@@ -68,7 +68,6 @@ ij_plugin(
     content_modules = [
         # do not sort,
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
-        "//plugins/compose/intellij.compose.ide.plugin.shared.android:ide-plugin-shared-android",
         "//plugins/compose/intellij.compose.ide.plugin.codeInsight:ide-plugin-codeInsight",
         "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
