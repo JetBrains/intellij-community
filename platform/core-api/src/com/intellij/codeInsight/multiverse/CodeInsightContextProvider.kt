@@ -58,7 +58,10 @@ interface CodeInsightContextProvider {
     @RequiresWriteLock
     fun requestInvalidation()
 
-    /** Drops the cached contexts of [files]. Any thread, no lock. */
+    /**
+     * Checks the contexts of [files] again and drops only the changed ones. An empty [files] does nothing.
+     * Any thread, no lock.
+     */
     fun requestInvalidation(files: Collection<VirtualFile>)
   }
 

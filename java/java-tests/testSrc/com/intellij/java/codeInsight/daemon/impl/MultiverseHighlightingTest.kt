@@ -392,6 +392,48 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertEquals("the other file keeps its cached answer", listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
   }
 
+  // A recheck builds the answer again and drops only a changed answer, so an unchanged one costs no write action.
+
+  fun testRecheckOfUnchangedAnswerKeepsTheEditorContext() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val second = FakeContext("second")
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"), second)), preferred = second)
+    val editorContextManager = EditorContextManager.getInstance(project)
+    assertEquals(second, editorContextManager.getEditorContexts(editor).mainContext)
+    val changes = recordPerFileChanges()
+
+    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+
+    assertEmpty(changes)
+    assertEquals(second, editorContextManager.getCachedEditorContexts(editor)?.mainContext)
+  }
+
+  fun testRecheckOfChangedPreferredContextDropsTheFile() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val second = FakeContext("second")
+    val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
+    assertEquals(second, getPreferredContext())
+    val changes = recordPerFileChanges()
+
+    provider.preferred = first
+    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+
+    assertEquals(listOf(setOf(virtualFile)), changes)
+    assertEquals(first, getPreferredContext())
+  }
+
+  // The GC can clear a cached answer while the editor still uses its contexts, so the recheck cannot skip such a file.
+  fun testRecheckOfFileWithNoCachedAnswerDropsTheFile() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
+    val changes = recordPerFileChanges()
+
+    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+
+    assertEquals(listOf(setOf(virtualFile)), changes)
+  }
+
   private fun recordPerFileChanges(): List<Set<VirtualFile>> {
     val changes = ArrayList<Set<VirtualFile>>()
     project.messageBus.connect(testRootDisposable).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
