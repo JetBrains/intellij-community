@@ -1,0 +1,6 @@
+<!-- "Remove attribute id" "true" -->
+
+<!DOCTYPE tag [
+<!ELEMENT tag (#PCDATA)>
+]>
+<tag<caret>/>

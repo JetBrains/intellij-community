@@ -1,0 +1,3 @@
+<!-- "Rename end tag 'anothertag' to 'tag'" "true" -->
+
+<ta<caret>g></tag>

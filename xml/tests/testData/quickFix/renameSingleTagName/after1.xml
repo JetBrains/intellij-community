@@ -1,0 +1,3 @@
+<!-- "Rename start tag 'tag' to 'anothertag'" "true" -->
+
+<anotherta<caret>g></anothertag>

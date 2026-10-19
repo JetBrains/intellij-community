@@ -1,0 +1,6 @@
+<!DOCTYPE ta<caret>g [
+   <!ENTITY our SYSTEM "6.dtd">
+   %our;
+]>
+<tag id="1">
+</tag>

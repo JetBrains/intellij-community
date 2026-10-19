@@ -1,0 +1,7 @@
+<!DOCTYPE tag [
+<!ELEMENT t<caret>ag (tag)*>
+<!ATTLIST tag
+    id CDATA #IMPLIED>
+]>
+<tag id="1">
+</tag>

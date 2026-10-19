@@ -1,0 +1,15 @@
+<xsd:schema
+    xmlns = "http://aaa.bbb"
+    xmlns:xsd = "http://www.w3.org/2001/XMLSchema"
+    targetNamespace = "http://aaa.bbb"
+    elementFormDefault = "qualified"
+    attributeFormDefault = "unqualified">
+  <xsd:simpleType name="Comp<caret>any">
+  </xsd:simpleType>
+  
+  <xsd:simpleType name="ZZZ">
+    <xsd:union memberTypes="Company  Company " />
+  </xsd:simpleType>
+  
+  <xsd:element name="zzz" type="Company"/>
+</xsd:schema>
