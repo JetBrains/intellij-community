@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -74,11 +75,13 @@ import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isIgnoredExpectDeclaration
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
@@ -114,6 +117,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionCon
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -131,11 +135,30 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
+import org.jetbrains.kotlin.resolve.constants.evaluate.canEvalOp
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
 import kotlin.reflect.KClass
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
+
+private val COMPILE_TIME_TYPES: Map<ClassId, CompileTimeType> = mapOf(
+    StandardClassIds.Byte to CompileTimeType.BYTE,
+    StandardClassIds.Short to CompileTimeType.SHORT,
+    StandardClassIds.Int to CompileTimeType.INT,
+    StandardClassIds.Long to CompileTimeType.LONG,
+    StandardClassIds.UByte to CompileTimeType.UBYTE,
+    StandardClassIds.UShort to CompileTimeType.USHORT,
+    StandardClassIds.UInt to CompileTimeType.UINT,
+    StandardClassIds.ULong to CompileTimeType.ULONG,
+    StandardClassIds.Double to CompileTimeType.DOUBLE,
+    StandardClassIds.Float to CompileTimeType.FLOAT,
+    StandardClassIds.Char to CompileTimeType.CHAR,
+    StandardClassIds.Boolean to CompileTimeType.BOOLEAN,
+    StandardClassIds.String to CompileTimeType.STRING,
+    StandardClassIds.Any to CompileTimeType.ANY,
+)
 
 /**
  * This contributor is responsible for emitting callable elements (e.g. properties, methods).
@@ -868,10 +891,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     ): Sequence<CallableWithMetadataForCompletion> {
         if (!position.isInsideAnnotationEntryArgumentList()) return this
 
+        val isIntrinsicConstEvaluationEnabled =
+            position.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+
         return filter { callableWithMetadata ->
             val symbol = callableWithMetadata.signature.symbol
 
             if (symbol.hasConstEvaluationAnnotation()) return@filter true
+            if (isIntrinsicConstEvaluationEnabled && symbol.isCompileTimeBuiltin()) return@filter true
 
             when (symbol) {
                 is KaJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
@@ -895,6 +922,28 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
     context(_: KaSession)
     private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
+
+    /**
+     * Checks whether the symbol can be used for compile-time constants.
+     */
+    context(_: KaSession)
+    private fun KaCallableSymbol.isCompileTimeBuiltin(): Boolean {
+        val callableId = when (this) {
+            is KaNamedFunctionSymbol -> callableId
+            is KaPropertySymbol -> fakeOverrideOriginal.callableId
+            else -> null
+        } ?: return false
+
+        val valueParameters = (this as? KaNamedFunctionSymbol)?.valueParameters.orEmpty()
+        if (valueParameters.size > 1) return false
+        val firstParameter = valueParameters.firstOrNull()
+
+        // Only overloads of the supported functions that take only compile time types (or none) qualify.
+        val firstParameterCompileTimeType = firstParameter?.let { COMPILE_TIME_TYPES[it.returnType.classId] ?: return false }
+        val receiverClassId = (containingSymbol as? KaClassSymbol)?.classId ?: receiverType?.classId
+        val receiverCompileTimeType = COMPILE_TIME_TYPES[receiverClassId]
+        return canEvalOp(callableId, receiverCompileTimeType, firstParameterCompileTimeType)
+    }
 
     context(_: KaSession)
     protected fun KaNamedClassSymbol.staticScope(withCompanionScope: Boolean = true): KaScope = buildList {
