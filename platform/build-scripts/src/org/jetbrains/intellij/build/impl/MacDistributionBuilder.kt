@@ -417,16 +417,18 @@ class MacDistributionBuilder(
           mainClass = context.ideMainClassName,
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           customCommands = run {
-            val vmOptionsFilePath: (BuildContext) -> String = {
-              "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
+            if (context.productProperties.launcherCustomCommands) {
+              val vmOptionsFilePath: (BuildContext) -> String = {
+                "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
+              }
+              listOfNotNull(
+                generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
+                generateIjLightLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
+                generateQodanaLaunchData(context, arch, OsFamily.MACOS),
+                generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
+              )
             }
-            val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
-              generateIjLightLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
-              generateQodanaLaunchData(context, arch, OsFamily.MACOS),
-              generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
-            )
-            if (context.productProperties.launcherCustomCommands) base else emptyList()
+            else emptyList()
           }
         )
       ),

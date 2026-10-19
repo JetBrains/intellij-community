@@ -406,16 +406,18 @@ class LinuxDistributionBuilder(
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           startupWmClass = getLinuxFrameClass(context),
           customCommands = run {
-            val vmOptionsFilePath: (BuildContext) -> String = {
-              "bin/${it.add64IfNeeded(it.productProperties.baseFileName)}.vmoptions"
+            if (context.productProperties.launcherCustomCommands) {
+              val vmOptionsFilePath: (BuildContext) -> String = {
+                "bin/${it.add64IfNeeded(it.productProperties.baseFileName)}.vmoptions"
+              }
+              listOfNotNull(
+                generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
+                generateIjLightLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
+                generateQodanaLaunchData(context, arch, OsFamily.LINUX),
+                generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
+              )
             }
-            val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
-              generateIjLightLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
-              generateQodanaLaunchData(context, arch, OsFamily.LINUX),
-              generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
-            )
-            if (context.productProperties.launcherCustomCommands) base else emptyList()
+            else emptyList()
           }
         )
       ),

@@ -555,16 +555,18 @@ internal class WindowsDistributionBuilder(
           mainClass = context.ideMainClassName,
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           customCommands = run {
-            val vmOptionsFilePath: (BuildContext) -> String = { clientCtx ->
-              "bin/${clientCtx.add64IfNeeded(clientCtx.productProperties.baseFileName)}.exe.vmoptions"
+            if (context.productProperties.launcherCustomCommands) {
+              val vmOptionsFilePath: (BuildContext) -> String = { clientCtx ->
+                "bin/${clientCtx.add64IfNeeded(clientCtx.productProperties.baseFileName)}.exe.vmoptions"
+              }
+              listOfNotNull(
+                generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
+                generateIjLightLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
+                generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
+                generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
+              )
             }
-            val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
-              generateIjLightLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
-              generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
-              generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
-            )
-            if (context.productProperties.launcherCustomCommands) base else emptyList()
+            else emptyList()
           },
         )
       ),
