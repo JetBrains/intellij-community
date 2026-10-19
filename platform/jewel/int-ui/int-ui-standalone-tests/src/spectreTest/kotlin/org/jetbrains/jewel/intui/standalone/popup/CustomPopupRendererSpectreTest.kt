@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
+import org.jetbrains.jewel.intui.standalone.stopApplicationWindow
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
@@ -277,21 +278,24 @@ private fun PopupEscapeScreen() {
 private class SpectreTestApplication(private val content: @Composable () -> Unit = { PopupEscapeScreen() }) {
     private val exitApplication = AtomicReference<(() -> Unit)?>(null)
     private val window = AtomicReference<ComposeWindow?>(null)
+    private val appThread = AtomicReference<Thread?>(null)
 
     fun start() {
-        thread(name = "spectre-popup-test-window", isDaemon = true) {
-            application(exitProcessOnExit = false) {
-                exitApplication.set(::exitApplication)
-                JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel Spectre popup test") {
-                    this@SpectreTestApplication.window.compareAndSet(null, window)
-                    IntUiTheme { content() }
+        val startedThread =
+            thread(name = "spectre-popup-test-window", isDaemon = true) {
+                application(exitProcessOnExit = false) {
+                    exitApplication.set(::exitApplication)
+                    JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel Spectre popup test") {
+                        this@SpectreTestApplication.window.compareAndSet(null, window)
+                        IntUiTheme { content() }
+                    }
                 }
             }
-        }
+        appThread.set(startedThread)
     }
 
     fun stop() {
-        exitApplication.get()?.invoke()
+        stopApplicationWindow(exitApplication, window, appThread)
     }
 
     suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
