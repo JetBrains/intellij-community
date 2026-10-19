@@ -141,7 +141,7 @@ pub(crate) fn answer_enveloped<T: Serialize>(streams: &mut Streams<'_>, verb: Ag
     }
 }
 
-/// Answers `result` as the bare document, which the controller decodes for the verbs of the lane IDE, or fails.
+/// Answers `result` as the bare document, which the controller decodes for `ide-gc`, or fails.
 pub(crate) fn answer_bare<T: Serialize>(streams: &mut Streams<'_>, verb: AgentVerb, result: Result<T, AgentRefusal>) -> u8 {
     match result {
         Ok(document) => write_document(streams, verb, &document),

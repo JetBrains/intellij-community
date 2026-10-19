@@ -9,7 +9,6 @@ use super::*;
 use crate::ide::CODE_IDE_RUNNING;
 use crate::ide::fixture::{FakeIde, Fixture, mode, prepared, wait_for_file};
 use crate::supervisor::LiveSystem;
-use crate::testing::run_agent;
 
 // A fresh preparation lays out the context, each directory private, unpacks the project and writes the disabled
 // plugins. It writes no argument file and no launch record: the launch does.
@@ -116,23 +115,31 @@ fn a_relocated_project_unpacks_into_its_own_root() {
     assert!(!fixture.path("ide/key-1/project/BookmarksTestProject").exists());
 }
 
-// The verb reads the document on standard input and answers the paths as a bare document.
+// The preparation checks its document itself, so the lane daemon that calls it gets the check too. A refused document
+// lays out nothing.
 #[test]
-fn the_verb_reads_the_document_on_standard_input() {
+fn a_context_document_that_the_preparation_cannot_act_on_is_refused() {
     let fixture = Fixture::new();
-    let mut document = serde_json::to_value(fixture.context_document(true)).unwrap();
-    document["fresh"] = serde_json::json!("yes");
-    let answered = run_agent(&["ide-prepare"], document.to_string().as_bytes());
-    assert_eq!(answered.exit, 70, "{}", answered.stderr);
-    assert_eq!(answered.code(), "guest_ide_prepare_failed");
-    assert_eq!(answered.stdout, "");
-
-    let valid = serde_json::to_vec(&fixture.context_document(true)).unwrap();
-    let answered = run_agent(&["ide-prepare"], &valid);
-    assert_eq!(answered.exit, 0, "{}", answered.stderr);
-    let answer: IdePrepared = serde_json::from_str(&answered.stdout).unwrap();
-    assert_eq!(answer.context_dir, fixture.text("ide/key-1"));
-    assert_eq!(answer.home_dir, fixture.text("ide/key-1/home"));
+    for id in ["", " ", "com.intellij.copyright\norg.jetbrains.junie"] {
+        let mut document = fixture.context_document(true);
+        document.disabled_plugin_ids = vec![id.to_owned()];
+        let refusal = prepare(&LiveSystem, &document).unwrap_err();
+        assert_eq!(
+            (refusal.code.as_ref(), refusal.exit),
+            ("guest_ide_prepare_failed", AgentExit::Refused),
+            "{id:?}"
+        );
+        assert!(
+            refusal.message.contains(&format!("{id:?} is not a plugin id")),
+            "{}",
+            refusal.message
+        );
+    }
+    let mut document = fixture.context_document(true);
+    document.project.archive_root = "../outside".to_owned();
+    let refusal = prepare(&LiveSystem, &document).unwrap_err();
+    assert!(refusal.message.contains("project.archiveRoot"), "{}", refusal.message);
+    assert!(!fixture.context().exists(), "a refused preparation laid out its context");
 }
 
 #[test]

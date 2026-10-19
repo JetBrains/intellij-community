@@ -1154,9 +1154,15 @@ The daemon's half and the IDE's half of supervision are in
   name against the spelling the installed agents already send.
   [@test] ../crates/avl-wire/src/verb/tests.rs
 
-- The guest agent reads the two documents of the lane IDE on standard input. `ide-prepare` reads the context
-  document, and `ide-launch` reads the launch document. Neither document holds a secret.
+- The lane daemon prepares and launches the lane IDE in its own process. The guest agent has no verb that reads a
+  context document or a launch document. Neither document holds a secret.
+  [@test] ../crates/avl-guest/src/cli/tests.rs (`the_ide_verbs_check_their_flags`)
+
+- A preparation and a launch check their documents before they change a file, so the lane daemon gets these checks
+  too. A preparation refuses a context document that it cannot act on, and a launch refuses such a launch document.
   [@test] ../crates/avl-wire/src/ide/tests.rs
+  [@test] ../crates/avl-guest/src/ide/prepare/tests.rs (`a_context_document_that_the_preparation_cannot_act_on_is_refused`)
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs (`a_launch_document_that_names_a_data_directory_is_refused`)
 
 - A preparation lays out the context: the data directories, the project, the disabled plugins, and the `home` and
   `bin` directories. Each directory has mode 0700.
@@ -1187,7 +1193,8 @@ The daemon's half and the IDE's half of supervision are in
 - The agent owns the data directories of the IDE. A launch document or a flags file that sets one of their paths
   is refused.
   [@test] ../crates/avl-wire/src/ide/tests.rs
-  [@test] ../crates/avl-guest/src/ide/launch/tests.rs
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs (`a_launch_document_that_names_a_data_directory_is_refused`)
+  [@test] ../crates/avl-guest/src/ide/launch/tests.rs (`a_flag_that_states_a_data_path_is_refused`)
 
 - A launch on a Linux guest refuses `ide_display_missing` when the agent's own environment has no `DISPLAY`. A
   preparation or a launch for a context whose IDE runs refuses `ide_running`.

@@ -157,9 +157,9 @@ provenance. A Docker row of `status` has no field for any of them.
 
 A Linux guest has no seat until something starts an X server. The entrypoint of the image starts
 `Xvfb :88` and `fluxbox`, and it waits for the display to answer. The IDE gets `DISPLAY=:88` from the
-environment of the guest agent. The agent's `ide-launch` refuses `ide_display_missing` on a Linux guest when that
-environment has no `DISPLAY`. So every IDE of a lane reuses one display. A server image also carries none of the shared
-libraries the IDE's own native code links against. `GUEST_PACKAGES` names them, and their absence is quiet.
+environment of the guest agent. The agent's launch of the IDE refuses `ide_display_missing` on a Linux guest when
+that environment has no `DISPLAY`. So every IDE of a lane reuses one display. A server image also carries none of the
+shared libraries the IDE's own native code links against. `GUEST_PACKAGES` names them, and their absence is quiet.
 
 So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless three things
 hold. The C library is glibc, the display answers, and a window manager is registered on it. Each refusal
@@ -516,12 +516,13 @@ iterations ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-
 
 The guest agent launches the IDE and owns its process
 ([ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)). The daemon
-decides what to launch and when. The agent's `ide-prepare` lays out the context `$AIR_VM_DATA/ide/<launchKey>`:
-the data directories, the project, the disabled plugins, and the `home` and `bin` directories. The daemon then
-writes the option files, the bridge token, the seeds of the home and the launchers into the context. The agent's
-`ide-launch` composes the argument file of the IDE and starts the supervisor run `run-ide-<launchName>` in that
-context, in one call. So the context is also the run slot of the IDE. The IDE argv is
-`java @<context>/ide-jvm.args <project>`.
+decides what to launch and when, and it prepares and launches the IDE in its own process. The preparation lays out
+the context `$AIR_VM_DATA/ide/<launchKey>`: the data directories, the project, the disabled plugins, and the `home`
+and `bin` directories. The daemon then writes the option files, the bridge token, the seeds of the home and the
+launchers into the context. The launch composes the argument file of the IDE and starts the supervisor run
+`run-ide-<launchName>` in that context, in one call. So the context is also the run slot of the IDE. The preparation
+and the launch check their documents first. A launch property that names a data directory of the context is refused.
+The IDE argv is `java @<context>/ide-jvm.args <project>`.
 
 The environment of the IDE is closed, and the layout of its context sets it. `HOME` is the `home` directory of the
 context, and `PATH` starts with its `bin` directory. The agent copies a short allowlist from its own environment,
@@ -980,7 +981,7 @@ every guest-side verb:
 | verbs | concern |
 | --- | --- |
 | `start`, `status`, `active`, `log`, `cancel` | the run supervisor, for the daemon and for each lane IDE. `cancel --thread-dump <jcmd>` writes a thread dump of the process before the signal |
-| `ide-prepare`, `ide-launch`, `ide-gc` | the lane IDE: the layout of one context, the launch of one IDE run with its argument file, and the stop of the IDE runs that a worker must not keep, with the removal of old log directories |
+| `ide-gc` | the lane IDE: the stop of the IDE runs that a worker must not keep, with the removal of old log directories. The lane daemon prepares and launches the IDE in its own process |
 | `contract` | what the agent declares about itself, its own digest included. An install that would push a binary the guest already has is skipped |
 | `validate-guest` | the Linux boot |
 | `provision-image`, `validate-image` | the macOS image pipeline |

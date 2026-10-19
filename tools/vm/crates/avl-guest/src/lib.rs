@@ -11,9 +11,9 @@
 //! `relay` bridges its standard streams to a guest loopback port, which is how the controller reaches the UI daemon.
 //! `read-file` copies one file to its standard output unchanged, which is how the controller pulls a file.
 //! `runfiles-tree` builds the runfiles tree of a host MANIFEST, for a Windows host that writes no tree.
-//! `ide-prepare`, `ide-launch` and `ide-gc` own the contexts of the lane IDE, whose process is a supervisor run.
+//! `ide-gc` stops the IDE runs under an IDE root and removes their old logs. A lane IDE process is a supervisor run.
 //! `lane-daemon` serves the control channel of the lane daemon in the run slot: it owns the lane services and the lane
-//! IDE, and it streams the records of each iteration.
+//! IDE, and it streams the records of each iteration. It prepares and launches the lane IDE in its own process.
 //!
 //! The image pair takes three named flags (`--macos-version --node-major --junie-version`), because the Packer
 //! template `air-macos.pkr.hcl` passes them by name. `validate-guest` takes one positional argument, the X display.

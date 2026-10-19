@@ -1,21 +1,22 @@
-//! The wire of the lane IDE: the context document that `ide-prepare` reads, the launch document that `ide-launch`
-//! reads, their answers, the launch record that `ide-launch` writes into the context, and the answer of `ide-gc`.
+//! The documents of the lane IDE: the context document of a preparation, the launch document of a launch, their
+//! answers, the launch record that a launch writes into the context, and the answer of `ide-gc`.
 //!
-//! The lane daemon of the guest agent prepares and launches its IDE through the same code in process. One context is `<ideRoot>/<launchKey>`. It holds the data directories of the IDE, the project, the home and
-//! the `bin` directory of the IDE environment, the argument file, the launch record, and the run slot of the run
-//! supervisor. One IDE run is the supervisor run [`ide_run_id`] of one launch name, so a relaunch on the same context
-//! is a new run in the same slot.
+//! The lane daemon of the guest agent prepares and launches its IDE in its own process. One context is
+//! `<ideRoot>/<launchKey>`. It holds the data directories of the IDE, the project, the home and the `bin` directory of
+//! the IDE environment, the argument file, the launch record, and the run slot of the run supervisor. One IDE run is
+//! the supervisor run [`ide_run_id`] of one launch name, so a relaunch on the same context is a new run in the same
+//! slot.
+//!
+//! [`validate_ide_context`] and [`validate_ide_launch`] are the checks of the two documents. The guest agent calls
+//! them at the start of each preparation and each launch.
 //!
 //! No document here holds a secret. The bridge token is a file that the caller writes into the config directory, and
-//! the IDE environment is the layout of the context, not data. So the documents derive their `Debug` form. A decode
-//! error names the JSON path and not the value, because `serde_path_to_error` gives that at no cost.
+//! the IDE environment is the layout of the context, not data. So the documents derive their `Debug` form.
 
 use std::collections::BTreeMap;
 use std::fmt;
 
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use serde_json::error::Category;
 
 use crate::supervisor::RunState;
 
@@ -37,7 +38,7 @@ pub const PLUGINS_DIR: &str = "plugins";
 pub const LOG_DIR: &str = "log";
 /// The default unpack root of the project archive.
 pub const PROJECT_DIR: &str = "project";
-/// The `HOME` of the IDE process. The caller seeds it between `ide-prepare` and `ide-launch`.
+/// The `HOME` of the IDE process. The caller seeds it between the preparation and the launch.
 pub const HOME_DIR: &str = "home";
 /// The first directory of the `PATH` of the IDE process. The caller puts its launchers into it.
 pub const BIN_DIR: &str = "bin";
@@ -113,10 +114,10 @@ pub fn context_dir(ide_root: &str, launch_key: &str) -> String {
 
 // --- the context document ----------------------------------------------------------------------------------
 
-/// What `ide-prepare` reads on standard input: the layout of one context.
+/// What a preparation lays out: one context.
 ///
-/// The caller sends it once per context, before it seeds the home, the `bin` directory and the config files. A
-/// relaunch on the same context sends it with `fresh` false.
+/// The caller prepares a context once, before it seeds the home, the `bin` directory and the config files. A relaunch
+/// on the same context prepares it with `fresh` false.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeContext {
@@ -149,7 +150,7 @@ pub struct ProjectSource {
     pub relocate_to: Option<String>,
 }
 
-/// What `ide-prepare` answers: the paths of the context.
+/// What a preparation answers: the paths of the context.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdePrepared {
@@ -167,7 +168,7 @@ pub struct IdePrepared {
 
 // --- the launch document -----------------------------------------------------------------------------------
 
-/// What `ide-launch` reads on standard input: one launch of the IDE on a prepared context.
+/// What a launch starts: one launch of the IDE on a prepared context.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeLaunch {
@@ -199,7 +200,7 @@ pub struct IdeLaunch {
     pub product_digest: String,
 }
 
-/// What `ide-launch` answers: the log directory and the argument file of the launch, and the state of its run.
+/// What a launch answers: the log directory and the argument file of the launch, and the state of its run.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeLaunched {
@@ -268,7 +269,7 @@ pub struct AbandonedRun {
     pub abandoned_at: String,
 }
 
-// --- decoding -----------------------------------------------------------------------------------------------
+// --- the checks ---------------------------------------------------------------------------------------------
 
 /// Why a context or launch document is refused. The message names a field or a key, and never a value.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -288,9 +289,8 @@ fn refuse(message: impl Into<String>) -> IdeDocumentError {
     IdeDocumentError { message: message.into() }
 }
 
-/// Reads a context document and refuses one that the agent cannot act on.
-pub fn decode_ide_context(raw: &[u8]) -> Result<IdeContext, IdeDocumentError> {
-    let document: IdeContext = decode(raw, "the IDE context document")?;
+/// Refuses a context document that the agent cannot act on. A preparation calls it before it changes a file.
+pub fn validate_ide_context(document: &IdeContext) -> Result<(), IdeDocumentError> {
     validate_slot(
         "the IDE context document",
         document.schema_version,
@@ -303,12 +303,12 @@ pub fn decode_ide_context(raw: &[u8]) -> Result<IdeContext, IdeDocumentError> {
             return Err(refuse(format!("{id:?} is not a plugin id")));
         }
     }
-    Ok(document)
+    Ok(())
 }
 
-/// Reads a launch document and refuses one that the agent cannot act on.
-pub fn decode_ide_launch(raw: &[u8]) -> Result<IdeLaunch, IdeDocumentError> {
-    let document: IdeLaunch = decode(raw, "the IDE launch document")?;
+/// Refuses a launch document that the agent cannot act on. One such document sets a property of [`OWNED_PROPERTIES`],
+/// which names a data directory of the context. A launch calls it before it changes a file.
+pub fn validate_ide_launch(document: &IdeLaunch) -> Result<(), IdeDocumentError> {
     validate_slot(
         "the IDE launch document",
         document.schema_version,
@@ -345,30 +345,7 @@ pub fn decode_ide_launch(raw: &[u8]) -> Result<IdeLaunch, IdeDocumentError> {
     if document.product_digest.contains(['\n', '\r']) {
         return Err(refuse("productDigest holds a line break"));
     }
-    Ok(document)
-}
-
-/// Reads one JSON document `what`. A data error names only its JSON path, and a syntax error only its line and column.
-fn decode<T: DeserializeOwned>(raw: &[u8], what: &str) -> Result<T, IdeDocumentError> {
-    let mut deserializer = serde_json::Deserializer::from_slice(raw);
-    let document: T = serde_path_to_error::deserialize(&mut deserializer).map_err(|error| {
-        let path = error.path().to_string();
-        let inner = error.into_inner();
-        match inner.classify() {
-            Category::Data => refuse(format!("{what} has no valid value at `{path}`")),
-            Category::Io | Category::Syntax | Category::Eof => {
-                refuse(format!("{what} is not JSON (line {}, column {})", inner.line(), inner.column()))
-            }
-        }
-    })?;
-    deserializer.end().map_err(|error| {
-        refuse(format!(
-            "{what} has trailing data (line {}, column {})",
-            error.line(),
-            error.column()
-        ))
-    })?;
-    Ok(document)
+    Ok(())
 }
 
 /// Refuses another schema version, an IDE root that the agent cannot delete below, and a launch key that is not one.

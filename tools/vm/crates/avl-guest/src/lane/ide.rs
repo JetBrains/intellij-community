@@ -593,7 +593,7 @@ impl IdeOwner {
         Some(HeldIde { pid: state.pid, ..held })
     }
 
-    /// The paths of the context `context`, by the layout of `ide-prepare`.
+    /// The paths of the context `context`, by the layout of a preparation.
     fn layout(&self, context: &Path) -> IdePrepared {
         let child = |name: &str| context.join(name).display().to_string();
         let unpack = context.join(wire_ide::PROJECT_DIR);

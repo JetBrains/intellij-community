@@ -85,7 +85,7 @@ fn identity(document: &LaneDocument, runtimes: &[CliRuntime]) -> LaneIdentity {
     LaneIdentity::new(inputs.config_key(), DAEMON_PORT)
 }
 
-/// A prepared context below a new temporary directory, as `ide-prepare` lays it out.
+/// A prepared context below a new temporary directory, as a preparation lays it out.
 struct Prepared {
     _root: tempfile::TempDir,
     context: PathBuf,
