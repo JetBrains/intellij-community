@@ -103,6 +103,8 @@ Skill descriptions are always loaded into Codex context, so canonical `SKILL.md`
 - All descriptions available in one edition are limited to 6 KiB (`6 * 1024` bytes) combined.
 - Front-load the skill's action and decisive trigger terms; keep detailed guidance in the skill body.
 
+An ultimate-only skill can name the community skills that it replaces in a single-line `replaces:` key, for example `replaces: youtrack-community` in the `youtrack` skill. The ULTIMATE edition then renders the replaced skill only into `community/.claude/skills`, leaves it out of `.agents/skills/INDEX.md`, and does not count its description. A name that is not a community skill fails the render.
+
 The renderer validates the canonical sources available to the selected edition before writing or pruning generated files. If rendering fails on this budget, shorten the reported canonical descriptions and rerun the renderer; do not edit generated skill stubs.
 
 Every skill added spends from a fixed budget, so each run reports what is left:

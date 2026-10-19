@@ -57,6 +57,8 @@
     ["bun", "run", "build"],
     ["node", "--test"],
     ["./.ownership/cli.cmd"],
+    ["bd", "--version"],
+    ["bd", "lease", "status"],
     ["teamcity"],
     ["npm", "view"],
     ["git", "status"],

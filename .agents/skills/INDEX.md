@@ -45,6 +45,5 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ tests with `bt.cmd` or `tests.cmd`. |
 | [testing-internals](testing-internals/SKILL.md) | Debug IntelliJ `bt.cmd` and `tests.cmd` runs, discovery, and runner internals. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, and labels. |
-| [workspace-lease](workspace-lease/SKILL.md) | Lease, land and return an isolated workspace with `bd lease` of Branch Deck. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT. |
 | [youtrack-community](youtrack-community/SKILL.md) | YouTrack CLI for a community checkout; the monorepo uses `youtrack`. |

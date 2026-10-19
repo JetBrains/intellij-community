@@ -741,8 +741,31 @@ async function collectCanonicalSkillSources(communitySourceDir, agentsDir, editi
     }
   }
 
-  const descriptionBytes = validateSkillDescriptions(communitySkills, ultimateOnlySkills, edition);
-  return {communitySkills, ultimateOnlySkills, descriptionBytes};
+  const replacedSkillNames = edition === "ULTIMATE" ? collectReplacedSkillNames(ultimateOnlySkills, communitySkills) : new Set();
+  const editionCommunitySkills = new Map([...communitySkills].filter(([name]) => !replacedSkillNames.has(name)));
+  const descriptionBytes = validateSkillDescriptions(editionCommunitySkills, ultimateOnlySkills, edition);
+  return {communitySkills, editionCommunitySkills, ultimateOnlySkills, descriptionBytes};
+}
+
+/**
+ * An ultimate-only skill can name the community skills that it replaces in a single-line `replaces:` key. The ULTIMATE
+ * edition renders no copy of a replaced skill outside `community/`, and its description costs no budget there.
+ */
+function collectReplacedSkillNames(ultimateOnlySkills, communitySkills) {
+  const replacedSkillNames = new Set();
+  for (const {frontmatter, skillPath} of ultimateOnlySkills.values()) {
+    const line = frontmatter.split("\n").find(it => it.startsWith("replaces:"));
+    if (line === undefined) {
+      continue;
+    }
+    for (const name of line.slice("replaces:".length).split(/[\s,]+/).filter(Boolean)) {
+      if (!communitySkills.has(name)) {
+        throw new Error(`${skillPath}: replaces '${name}', but no community skill has this name.`);
+      }
+      replacedSkillNames.add(name);
+    }
+  }
+  return replacedSkillNames;
 }
 
 /** Returns the total description size in bytes for `edition`, so callers can report the remaining headroom. */
@@ -931,25 +954,25 @@ export async function renderSkills(options = {}) {
   } = options;
   const normalizedEdition = edition === undefined ? await detectEdition() : normalizeEdition(edition);
   const communityTargets = [agentsDir, claudeDir, communityClaudeDir];
-  const {communitySkills, ultimateOnlySkills, descriptionBytes} = await collectCanonicalSkillSources(
-    communitySourceDir,
-    agentsDir,
-    normalizedEdition,
-  );
+  const {communitySkills, editionCommunitySkills, ultimateOnlySkills, descriptionBytes} =
+    await collectCanonicalSkillSources(communitySourceDir, agentsDir, normalizedEdition);
 
   const communitySkillNames = new Set(communitySkills.keys());
+  const editionCommunitySkillNames = new Set(editionCommunitySkills.keys());
   const claudeExpectedSkillNames = normalizedEdition === "ULTIMATE"
-    ? new Set([...communitySkillNames, ...ultimateOnlySkills.keys()])
-    : new Set(communitySkillNames);
+    ? new Set([...editionCommunitySkillNames, ...ultimateOnlySkills.keys()])
+    : new Set(editionCommunitySkillNames);
 
   // Remove stale generated stubs no longer represented by current sources.
-  await pruneGeneratedSkillDirs(agentsDir, communitySkillNames);
+  await pruneGeneratedSkillDirs(agentsDir, editionCommunitySkillNames);
   await pruneGeneratedSkillDirs(claudeDir, claudeExpectedSkillNames);
   await pruneGeneratedSkillDirs(communityClaudeDir, communitySkillNames);
 
-  // Pass 1: Community skills → .agents/skills/, .claude/skills/, community/.claude/skills/
+  // Pass 1: Community skills → .agents/skills/, .claude/skills/, community/.claude/skills/. A skill that an
+  // ultimate-only skill replaces goes only to community/.claude/skills/.
   for (const [dirName, {skillPath: sourcePath, content}] of communitySkills) {
-    for (const targetDir of communityTargets) {
+    const targetDirs = editionCommunitySkillNames.has(dirName) ? communityTargets : [communityClaudeDir];
+    for (const targetDir of targetDirs) {
       await writeSkillStub(targetDir, dirName, content, sourcePath);
     }
   }
@@ -963,7 +986,7 @@ export async function renderSkills(options = {}) {
 
   // Pass 3: the name → description index beside each canonical source tree. `agentsDir` holds the
   // full set an agent working from this root can reach; `communitySourceDir` holds the community set.
-  await writeSkillIndex(agentsDir, new Map([...communitySkills, ...(
+  await writeSkillIndex(agentsDir, new Map([...editionCommunitySkills, ...(
     normalizedEdition === "ULTIMATE" ? ultimateOnlySkills : new Map()
   )]));
   await writeSkillIndex(communitySourceDir, communitySkills);

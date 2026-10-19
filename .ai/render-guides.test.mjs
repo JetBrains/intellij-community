@@ -474,6 +474,55 @@ describe('render-guides skills', () => {
     }
   })
 
+  it('renders a replaced community skill only into the community claude tree in ULTIMATE', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+
+    try {
+      writeSkill(join(communitySourceDir, 'tracker-community'), 'tracker-community', 'body', undefined, 'x'.repeat(100))
+      mkdirSync(join(agentsDir, 'tracker'), {recursive: true})
+      writeFileSync(
+        join(agentsDir, 'tracker', 'SKILL.md'),
+        '---\nname: tracker\ndescription: tracker\nreplaces: tracker-community\n---\nbody\n',
+        'utf8',
+      )
+      writeSkill(join(agentsDir, 'tracker-community'), 'tracker-community', 'stale\n', 'community/.agents/skills/tracker-community/SKILL.md')
+
+      const withReplacement = await renderSkills({communitySourceDir, agentsDir, claudeDir, communityClaudeDir, edition: 'ULTIMATE'})
+
+      ok(!existsSync(join(agentsDir, 'tracker-community')), 'the stale agents copy of a replaced skill is pruned')
+      ok(!existsSync(join(claudeDir, 'tracker-community')), 'the claude tree gets no copy of a replaced skill')
+      ok(existsSync(join(communityClaudeDir, 'tracker-community', 'SKILL.md')), 'the community claude tree keeps it')
+      ok(!readFileSync(join(agentsDir, 'INDEX.md'), 'utf8').includes('tracker-community'), 'the agents index leaves it out')
+      ok(readFileSync(join(communitySourceDir, 'INDEX.md'), 'utf8').includes('tracker-community'), 'the community index keeps it')
+
+      writeFileSync(join(agentsDir, 'tracker', 'SKILL.md'), '---\nname: tracker\ndescription: tracker\n---\nbody\n', 'utf8')
+      const withoutReplacement = await renderSkills({communitySourceDir, agentsDir, claudeDir, communityClaudeDir, edition: 'ULTIMATE'})
+      equal(withoutReplacement.descriptionBytes - withReplacement.descriptionBytes, 100, 'a replaced skill costs no budget')
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it('fails fast when an ultimate skill replaces an unknown community skill', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+
+    try {
+      mkdirSync(join(agentsDir, 'tracker'), {recursive: true})
+      writeFileSync(
+        join(agentsDir, 'tracker', 'SKILL.md'),
+        '---\nname: tracker\ndescription: tracker\nreplaces: missing-community\n---\nbody\n',
+        'utf8',
+      )
+
+      await rejects(
+        renderSkills({communitySourceDir, agentsDir, claudeDir, communityClaudeDir, edition: 'ULTIMATE'}),
+        /replaces 'missing-community', but no community skill has this name/,
+      )
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
   it('fails fast when community and manual ultimate skill names collide', async () => {
     const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
 
