@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.Switcher
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.ui.UISettings
@@ -1945,6 +1946,32 @@ class FileEditorManagerTest {
     }
     finally {
       file.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
+    }
+  }
+
+  /**
+   * The Switcher shows the right split icon of a file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] only while the file is closed.
+   * A file without the key can always open in the right split.
+   */
+  @Test
+  fun testCanOpenInRightSplitForFileWithForbiddenSplitOnlyWhileItIsClosed(): Unit = timeoutRunBlocking {
+    val forbidden = getSourceFile("1.txt")
+    val regular = getSourceFile("2.txt")
+    forbidden.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    try {
+      assertThat(OpenInRightSplitAction.canOpenInRightSplit(project, forbidden)).isTrue()
+      assertThat(OpenInRightSplitAction.canOpenInRightSplit(project, regular)).isTrue()
+
+      withContext(Dispatchers.UiWithModelAccess) {
+        openSingleTextEditor(forbidden)
+        openSingleTextEditor(regular)
+      }
+
+      assertThat(OpenInRightSplitAction.canOpenInRightSplit(project, forbidden)).isFalse()
+      assertThat(OpenInRightSplitAction.canOpenInRightSplit(project, regular)).isTrue()
+    }
+    finally {
+      forbidden.putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, null)
     }
   }
 

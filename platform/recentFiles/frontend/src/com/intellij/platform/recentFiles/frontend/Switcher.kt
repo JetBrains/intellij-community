@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
@@ -369,7 +370,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(maybeSearchableModel) {
         it.virtualFile?.let { file ->
-          !FileEditorManagerImpl.forbidSplitFor(file)
+          OpenInRightSplitAction.canOpenInRightSplit(project, file)
         } ?: false
       }
       files.visibleRowCount = files.itemsCount

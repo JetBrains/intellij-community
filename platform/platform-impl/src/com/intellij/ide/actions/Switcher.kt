@@ -350,7 +350,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(speedSearch?.wrap(filesModel) ?: filesModel) {
-        !FileEditorManagerImpl.forbidSplitFor(it.file)
+        OpenInRightSplitAction.canOpenInRightSplit(project, it.file)
       }
       files.visibleRowCount = files.itemsCount
       files.selectionMode = if (pinned) ListSelectionModel.MULTIPLE_INTERVAL_SELECTION else ListSelectionModel.SINGLE_SELECTION
