@@ -5,18 +5,25 @@ import com.intellij.JavaTestUtil
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
+  companion object {
+    private val PROJECT_DESCRIPTOR = DefaultLightProjectDescriptor()
+      .withJetBrainsAnnotationsWithTypeUse()
+  }
+
   private val commonSettings: CommonCodeStyleSettings
     get() = CodeStyle.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE)
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR
 
   override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/typeAnnotation/"
 
@@ -24,8 +31,7 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
     super.setUp()
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
-    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8)
-    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8, myFixture.testRootDisposable)
   }
 
   fun testKnownAnnotationBeforeType() = doTest()

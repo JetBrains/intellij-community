@@ -45,7 +45,7 @@ public class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
       if (overrides > 0) {
         val isAbstractMethod = isAbstractMethod(element)
         return CodeVisionInfo(if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
-        else JavaBundle.message("code.vision.overrides.hint", overrides), overrides)
+                              else JavaBundle.message("code.vision.overrides.hint", overrides), overrides)
       }
     }
     return null
