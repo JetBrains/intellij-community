@@ -13,6 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -38,7 +40,8 @@ interface ContextAnchor {
 }
 
 class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
-  override val sdk: Sdk? = module.getSdk()
+  @Suppress("DEPRECATION") // The anchor still answers an SDK.
+  override val sdk: Sdk? = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
   override val project: Project = module.project
   override val qualifiedNameResolveContext: PyQualifiedNameResolveContext = fromModule(module)
   override val scope: GlobalSearchScope = module.moduleContentScope

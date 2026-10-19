@@ -7,17 +7,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -255,14 +255,12 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private Sdk getSelectedSdk() {
     if (isUseModuleSdk()) {
-      Module module = getModule();
-      return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
+      return PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
     }
     Sdk sdk = getSdk();
     if (sdk == null) {
       // A run configuration with no SDK runs with the SDK of its module, see AbstractPythonRunConfiguration.getSdkHome.
-      Module module = getModule();
-      return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
+      return PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
     }
     return sdk;
   }

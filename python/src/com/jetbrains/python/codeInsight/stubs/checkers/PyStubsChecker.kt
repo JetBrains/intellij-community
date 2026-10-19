@@ -1,21 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stubs.checkers
 
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.statistics.sdks
 
 internal abstract class PyStubsChecker(val project: Project) : Disposable.Default {
   val key: Key<Set<PyPackageStubLink>> = Key(this::class.java.name)
@@ -30,7 +28,8 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
 
     })
 
-    project.sdks.filter { PythonSdkUtil.isPythonSdk(it) }.forEach { startCheckForSdk(it) }
+    // Before the first snapshot nothing is checked here. The package reload of each interpreter fires the listener above.
+    EvoPyProjectModel.getInstance(project).snapshotOrNull()?.interpreters?.forEach { startCheck(it) }
   }
 
   /** The stubs suggested for [interpreter], or none before the first check. */
@@ -39,25 +38,19 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
   protected abstract suspend fun detectSuggestedStubs(packageManager: PythonPackageManager): List<PyPackageStubLink>
 
 
-  private fun startCheckForSdk(sdk: Sdk) {
-    if (sdk.getUserData(key) != null) return
+  private fun startCheck(interpreter: PythonInterpreter) {
+    if (interpreter.stubsHolder.getUserData(key) != null) return
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       runBlockingMaybeCancellable {
-        checkSdk(sdk)
+        check(PythonPackageManager.forPythonInterpreter(project, interpreter))
       }
     }
     else {
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        checkSdk(sdk)
+        check(PythonPackageManager.forPythonInterpreter(project, interpreter))
       }
     }
-  }
-
-  private suspend fun checkSdk(sdk: Sdk) {
-    // A broken SDK has no packages, so no stubs to suggest.
-    val interpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return
-    check(PythonPackageManager.forPythonInterpreter(project, interpreter))
   }
 
   /** Stores the stubs [packageManager] suggests for its interpreter, where [getCached] reads them. */

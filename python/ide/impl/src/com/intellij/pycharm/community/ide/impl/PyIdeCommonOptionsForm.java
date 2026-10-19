@@ -1,28 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl;
 
-import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
-import com.intellij.python.sdk.common.PyInterpreterRef;
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
+import com.intellij.python.sdk.common.PyInterpreterItem;
+import com.intellij.python.sdk.common.PyInterpreterRef;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -204,7 +203,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   private void updateDefaultInterpreter(Module module) {
-    final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
+    final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     content.interpreterComboBox.setRenderer(
       sdk == null
       ? new PySdkListCellRenderer()

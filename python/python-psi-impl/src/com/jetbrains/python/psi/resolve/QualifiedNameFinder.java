@@ -37,7 +37,6 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.pyi.PyiFile;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,11 +229,11 @@ public final class QualifiedNameFinder {
   }
 
   private static @NotNull PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
-    if (PythonSdkUtil.isElementInSkeletons(initPy)) {
+    if (MainPythonSdkKt.isElementInSkeletons(initPy)) {
       QualifiedName packageName = findShortestImportableQName(initPy);
       if (packageName != null) {
         List<PsiElement> namesakeResults = PyResolveImportUtil.resolveQualifiedName(packageName, PyResolveImportUtil.fromFoothold(initPy));
-        PsiElement nonSkeletonResult = ContainerUtil.find(namesakeResults, e -> !PythonSdkUtil.isElementInSkeletons(e));
+        PsiElement nonSkeletonResult = ContainerUtil.find(namesakeResults, e -> !MainPythonSdkKt.isElementInSkeletons(e));
         PsiDirectory libPackage = as(nonSkeletonResult, PsiDirectory.class);
         if (libPackage != null) {
           PyFile libInitPy = as(PyUtil.turnDirIntoInit(libPackage), PyFile.class);

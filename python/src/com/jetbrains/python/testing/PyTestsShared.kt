@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
@@ -59,7 +61,6 @@ import com.jetbrains.python.extensions.asPsiElement
 import com.jetbrains.python.extensions.asVirtualFile
 import com.jetbrains.python.extensions.getElementAndResolvableName
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.extensions.isWellFormed
 import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.PyClass
@@ -209,7 +210,8 @@ private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
     return null
   }
   val folder = matcher.group(1)
-  val sdk = module.getSdk()
+  @Suppress("DEPRECATION") // The path mappings live on the SDK.
+  val sdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
   if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
     return sdk.getMapping(module.project).find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
   }

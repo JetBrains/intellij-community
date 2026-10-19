@@ -174,19 +174,6 @@ public final class PythonSdkUtil {
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
-  public static boolean isElementInSkeletons(final @NotNull PsiElement element) {
-    final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        final Sdk sdk = findPythonSdk(element);
-        if (sdk != null && isFileInSkeletons(virtualFile, sdk)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 
   /**
    * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
