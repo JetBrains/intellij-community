@@ -161,6 +161,11 @@ public final class JavaGenericsUtil {
   }
 
   public static boolean isUncheckedCast(@NotNull PsiType castType, @NotNull PsiType operandType) {
+    return isUncheckedCast(castType, operandType, new HashSet<>());
+  }
+
+  private static boolean isUncheckedCast(@NotNull PsiType castType, @NotNull PsiType operandType,
+                                         @NotNull Set<PsiTypeParameter> visitedTypeParameters) {
     if (TypeConversionUtil.isAssignable(castType, operandType, false)) return false;
 
     castType = castType.getDeepComponentType();
@@ -173,6 +178,20 @@ public final class JavaGenericsUtil {
 
       if (!(operandType instanceof PsiClassType)) return false;
       final PsiClassType operandClassType = (PsiClassType)operandType;
+      final PsiClass operandTarget = operandClassType.resolve();
+      if (operandTarget instanceof PsiTypeParameter && !(castClassType.resolve() instanceof PsiTypeParameter)) {
+        final PsiTypeParameter operandTypeParameter = (PsiTypeParameter)operandTarget;
+        // The value is an instance of every bound, so the cast is checked if it is checked from at least one bound
+        if (!visitedTypeParameters.add(operandTypeParameter)) return true;
+        PsiClassType[] bounds = operandTypeParameter.getExtendsListTypes();
+        if (bounds.length == 0) {
+          bounds = new PsiClassType[]{PsiType.getJavaLangObject(operandTypeParameter.getManager(), operandTypeParameter.getResolveScope())};
+        }
+        for (PsiClassType bound : bounds) {
+          if (!isUncheckedCast(castClassType, bound, visitedTypeParameters)) return false;
+        }
+        return true;
+      }
       final PsiClassType.ClassResolveResult castResult = castClassType.resolveGenerics();
       final PsiClassType.ClassResolveResult operandResult = operandClassType.resolveGenerics();
       final PsiClass operandClass = operandResult.getElement();
