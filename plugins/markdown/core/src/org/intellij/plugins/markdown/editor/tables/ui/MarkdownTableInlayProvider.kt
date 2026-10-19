@@ -22,10 +22,10 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTex
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import javax.swing.JPanel
 
 class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings>, DumbAware {
@@ -57,8 +57,9 @@ class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings>, DumbAware {
       val regularRows = table.getRows(true)
       val separatorRow = table.separatorRow ?: return
       val rows = regularRows.asSequence() + sequenceOf(separatorRow)
+      val tableRangeMarker = editor.document.createRangeMarker(table.textRange)
       for (row in rows) {
-        val presentation = VerticalBarPresentation.create(factory, editor, row)
+        val presentation = VerticalBarPresentation.create(factory, editor, row, tableRangeMarker)
         val startOffset = row.calculateStartOffsetForInlay()
         sink.addInlineElement(startOffset, false, presentation, false)
       }

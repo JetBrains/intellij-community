@@ -24,7 +24,6 @@ import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
-import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
@@ -65,14 +64,14 @@ class VerticalBarPresentation private constructor(
     OTHER
   }
 
-  constructor(editor: Editor, row: PsiElement, hover: Boolean, accent: Boolean = false) : this(
+  constructor(editor: Editor, row: PsiElement, hover: Boolean, accent: Boolean = false, tableRangeMarker: RangeMarker) : this(
     editor,
     row,
     calculateRowLocation(row),
-    createTableRangeMarker(editor, row),
+    tableRangeMarker,
     hover,
     accent,
-    null,
+    null
   )
 
   init {
@@ -256,10 +255,6 @@ class VerticalBarPresentation private constructor(
       else -> RowLocation.OTHER
     }
 
-    private fun createTableRangeMarker(editor: Editor, row: PsiElement): RangeMarker? {
-      return TableUtils.findTable(row)?.textRange?.let(editor.document::createRangeMarker)
-    }
-
     private fun uiDataSnapshot(sink: DataSink, row: PsiElement) {
       val elementReference = WeakReference(row)
       sink.lazy(TableActionKeys.ELEMENT) { elementReference }
@@ -273,8 +268,8 @@ class VerticalBarPresentation private constructor(
       )
     }
 
-    fun create(factory: PresentationFactory, editor: Editor, row: PsiElement): InlayPresentation {
-      val basePresentation = VerticalBarPresentation(editor, row, false)
+    fun create(factory: PresentationFactory, editor: Editor, row: PsiElement, tableRangeMarker: RangeMarker): InlayPresentation {
+      val basePresentation = VerticalBarPresentation(editor, row, false, tableRangeMarker = tableRangeMarker)
       val base = wrapPresentation(factory, editor, basePresentation)
       return factory.changeOnHover(
         base,
