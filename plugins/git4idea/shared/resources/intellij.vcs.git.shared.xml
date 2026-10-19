@@ -22,8 +22,10 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.shared"/>

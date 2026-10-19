@@ -49,6 +49,8 @@ jvm_library(
         "//platform/vcs-api/shared",
         "//platform/util:util-ui",
         "//platform/collaboration-tools/shared",
+        "//platform/vcs-api/vcs-api-core:vcs-core",
+        "//platform/util/diff",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.shared` end

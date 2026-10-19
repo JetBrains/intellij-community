@@ -131,6 +131,9 @@ f:git4idea.branch.GitTagType
 - git4idea.branch.GitRefType
 - sf:INSTANCE:git4idea.branch.GitTagType
 - getName():java.lang.String
+f:git4idea.changes.GitBranchComparisonResultImplKt
+- sf:getFilePath(com.intellij.openapi.diff.impl.patch.FilePatch):java.lang.String
+f:git4idea.changes.GitBranchComparisonResultKt
 e:git4idea.config.GitIncomingRemoteCheckStrategy
 - java.lang.Enum
 - sf:FETCH:git4idea.config.GitIncomingRemoteCheckStrategy

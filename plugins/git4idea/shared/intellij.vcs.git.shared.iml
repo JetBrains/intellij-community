@@ -54,5 +54,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.shared" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
   </component>
 </module>
