@@ -365,6 +365,38 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
     .checkFileLinks("""C:\path\to\file""", """C:\path\to\file""", """C:\path\to\file""")
 
   @Test
+  fun `trailing dot of a Windows path is dropped even if the file system finds it`() {
+    // Windows opens `a.txt.` as `a.txt`, so a file system lookup finds both
+    val run = getFilterResultAndCheckHighlightPositions("""
+      | see C:\temp\ht-q\a.txt.
+            ^^^^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf("""C:\temp\ht-q\a.txt""", """C:\temp\ht-q\a.txt."""), windows = true)
+    run.checkFileLinks("""C:\temp\ht-q\a.txt""")
+    Assertions.assertThat(run.lookedUpPaths).containsExactly(run.path("""C:\temp\ht-q\a.txt"""))
+  }
+
+  @Test
+  fun `trailing dots and spaces of a Windows path are dropped even if the file system finds them`() {
+    val file = """C:\temp\ht-q\a.txt"""
+    getFilterResultAndCheckHighlightPositions("""
+      | see C:\temp\ht-q\a.txt...
+            ^^^^^^^^^^^^^^^^^^
+      | see C:\temp\ht-q\a.txt  next
+            ^^^^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf(file, "$file.", "$file..", "$file...", "$file "), windows = true)
+      .checkFileLinks(file, file)
+  }
+
+  @Test
+  fun `Windows path that ends with a parent directory reference keeps it`() {
+    getFilterResultAndCheckHighlightPositions("""
+      | see C:\temp\ht-q\..
+            ^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf("""C:\temp\ht-q\.."""), windows = true)
+      .checkFileLinks("""C:\temp\ht-q\..""")
+  }
+
+  @Test
   fun `path with a position in brackets`() = getFilterResultAndCheckHighlightPositions("""
     | [/path/to/file.md:10]
        ^^^^^^^^^^^^^^^^^^^

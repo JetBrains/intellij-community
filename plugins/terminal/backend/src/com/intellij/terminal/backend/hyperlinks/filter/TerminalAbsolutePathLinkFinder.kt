@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFileHyperlinkInfo
@@ -121,6 +122,11 @@ internal class TerminalAbsolutePathLinkFinder(
     if (path.all { it == '/' || it == '\\' }) {
       // Ignore single slashes, as these are probably referring to something
       // other than the file system root (e.g. progress indicators like "[10 / 1,000]").
+      return null
+    }
+    if (eelDescriptor.osFamily.isWindows && willBeTrimmedByWin32(path)) {
+      // Path with trailing dots or spaces is not suitable, even though Windows sees it as existing.
+      // Skip it, `findFile(..., trimPunctuation=true)` will look up the trimmed path next.
       return null
     }
     val resolvedPath = if (path[0] == '~') {

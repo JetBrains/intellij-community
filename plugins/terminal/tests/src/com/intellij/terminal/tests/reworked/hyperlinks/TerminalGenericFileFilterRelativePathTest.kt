@@ -312,6 +312,18 @@ internal class TerminalGenericFileFilterRelativePathTest {
   }
 
   @Test
+  fun `recognize relative path before an ellipsis`() {
+    val result = applyFilter("Compiling src/Main.kt...")
+    assertSingleLink(result, mainKt, 10, 21)
+  }
+
+  @Test
+  fun `recognize relative path before many dots`() {
+    val result = applyFilter("Compiling src/Main.kt.....")
+    assertSingleLink(result, mainKt, 10, 21)
+  }
+
+  @Test
   fun `recognize relative path with line range in middle of text`() {
     val result = applyFilter("see lib/Util.kt:5-10 for details")
     assertSingleLink(result, utilKt, 4, 20, 5)

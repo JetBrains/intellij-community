@@ -37,7 +37,7 @@ internal class TerminalRelativePathLinkFinder(
     val char = line.getOrElse(linkEndExclusiveIndex, ' ')
     if (isNonPathChar(char)) return true
     // Allow a dot after the position, e.g. "See src/Main.kt:10:20."
-    // Merge with `addLinkWithoutTrailingDot`
+    // Merge with `addLinkWithoutTrailingDots`
     return char == '.' && isNonPathChar(line.getOrElse(linkEndExclusiveIndex + 1, ' '))
   }
 
@@ -70,8 +70,16 @@ internal class TerminalRelativePathLinkFinder(
     return true
   }
 
-  private fun addLinkWithoutTrailingDot(endInd: Int) {
-    val pathEndExclusiveIndex = if (endInd > 0 && line[endInd - 1] == '.') endInd - 1 else endInd
+  /**
+   * Adds a link for the path that ends before [endInd], without the trailing dots of
+   * its last name. Such dots end a sentence or are an ellipsis, so `src/Main.kt.` and
+   * `src/Main.kt...` link `src/Main.kt`.
+   */
+  private fun addLinkWithoutTrailingDots(endInd: Int) {
+    var pathEndExclusiveIndex = endInd
+    while (pathEndExclusiveIndex > 0 && line[pathEndExclusiveIndex - 1] == '.') {
+      pathEndExclusiveIndex--
+    }
     addLink(pathEndExclusiveIndex, null, false)
   }
 
@@ -112,7 +120,7 @@ internal class TerminalRelativePathLinkFinder(
                 state = ParsingState.CANCELED_PATH
               }
               isNonPathChar(char) -> {
-                addLinkWithoutTrailingDot(ind)
+                addLinkWithoutTrailingDots(ind)
                 state = ParsingState.NORMAL
               }
             }
@@ -127,7 +135,7 @@ internal class TerminalRelativePathLinkFinder(
       ind++
     }
     if (state == ParsingState.PATH) {
-      addLinkWithoutTrailingDot(ind)
+      addLinkWithoutTrailingDots(ind)
     }
   }
 
@@ -152,6 +160,11 @@ internal class TerminalRelativePathLinkFinder(
     }
     if (name == "..") {
       return parentDirectory.parent?.let { Child(it, TerminalFileKind.DIRECTORY) }
+    }
+    if (isWindows && willBeTrimmedByWin32(name)) {
+      // Name with trailing dots or spaces is not suitable, even though Windows sees it as existing.
+      // Skip it, `addLinkWithoutTrailingDots` looks up the name without its trailing dots.
+      return null
     }
     val child = try {
       parentDirectory.resolve(name)
