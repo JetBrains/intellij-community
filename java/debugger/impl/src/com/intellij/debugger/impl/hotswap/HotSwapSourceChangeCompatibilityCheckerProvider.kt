@@ -9,11 +9,15 @@ import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Allows JVM language plugins to provide source change compatibility checks for HotSwap.
+ * Allows plugins to customize source change compatibility checks for HotSwap.
  */
 @ApiStatus.Internal
 interface HotSwapSourceChangeCompatibilityCheckerProvider {
+
   fun provideCheckersForSession(debuggerSession: DebuggerSession): List<SourceFileChangeCompatibilityChecker>
+
+  /** Returns true to disable compatibility checks from all providers for this session, i.e. always try to do HotSwap. */
+  fun shouldSuppressCompatibilityChecks(debuggerSession: DebuggerSession): Boolean = false
 
   companion object {
     private val EP_NAME: ExtensionPointName<HotSwapSourceChangeCompatibilityCheckerProvider> =
@@ -22,7 +26,9 @@ interface HotSwapSourceChangeCompatibilityCheckerProvider {
     fun findCompatibilityCheckersForSession(debuggerSession: DebuggerSession): List<SourceFileChangeCompatibilityChecker> {
       if (!Registry.`is`("debugger.hotswap.source.change.compatibility.checks.enabled")) return emptyList()
       if (DefaultDebugEnvironment.hasEnhancedClassRedefinitionEnabled(debuggerSession.debugEnvironment)) return emptyList()
-      return EP_NAME.extensionList.flatMap { it.provideCheckersForSession(debuggerSession) }
+      val providers = EP_NAME.extensionList
+      if (providers.any { it.shouldSuppressCompatibilityChecks(debuggerSession) }) return emptyList()
+      return providers.flatMap { it.provideCheckersForSession(debuggerSession) }
     }
   }
 }
