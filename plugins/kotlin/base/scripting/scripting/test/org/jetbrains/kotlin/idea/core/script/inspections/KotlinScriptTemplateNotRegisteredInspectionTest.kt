@@ -92,6 +92,30 @@ class KotlinScriptTemplateNotRegisteredInspectionTest : NewLightKotlinCodeInsigh
         )
     }
 
+    fun testHighlightsObjectAndOffersBothFixes() {
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
+                package com.example
+                import kotlin.script.experimental.annotations.KotlinScript
+                @KotlinScript
+                object <warning descr="Script definition is not registered in settings and has no marker file for JAR auto-discovery.">My<caret>Script</warning>
+            """.trimIndent()
+        )
+        myFixture.checkHighlighting(true, false, false, false)
+        val fixNames = inspectionFixNames()
+        assertContainsElements(fixNames, "Register in Kotlin Scripting settings", "Create marker file")
+    }
+
+    fun testNoHighlightOnObjectWithoutAnnotation() {
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
+                package com.example
+                object PlainObject
+            """.trimIndent()
+        )
+        assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING))
+    }
+
     private fun inspectionFixNames(): List<String> =
         myFixture.availableIntentions.map(IntentionAction::getText)
 }
