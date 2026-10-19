@@ -24,6 +24,13 @@ class AtomicMapCache<K : Any, V : Any>(private val newInstance: () -> Concurrent
     _cache.set(null)
   }
 
+  fun remove(keys: Collection<K>) {
+    val cache = getCacheIfInitialized() ?: return
+    for (key in keys) {
+      cache.remove(key)
+    }
+  }
+
 
 
   operator fun get(key: K): V? = getCacheIfInitialized()?.get(key)

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.multiverse
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.EditorSelectedContexts
@@ -292,9 +293,15 @@ internal class CodeInsightContextSwitcher(
     init {
       setDefaultContext()
 
-      CodeInsightContextManager.getInstance(project).changeFlow
-        .onEach { setDefaultContext() } // todo IJPL-339 how to restore the last used context?
-        .launchIn(scope)
+      project.messageBus.connect(scope).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
+        override fun contextsChanged() {
+          setDefaultContext() // todo IJPL-339 how to restore the last used context?
+        }
+
+        override fun contextsChanged(files: Set<VirtualFile>) {
+          if (file in files) setDefaultContext()
+        }
+      })
 
       EditorContextManager.getInstance(project).eventFlow
         .filter { it.editor == editor }
