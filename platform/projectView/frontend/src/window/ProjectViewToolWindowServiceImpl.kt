@@ -122,7 +122,7 @@ internal class ProjectViewToolWindowServiceImpl(
   private val optionService = ProjectViewActionSupportImpl(currentPaneMutableFlow)
 
   override val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
-    get() = currentPaneMutableFlow.value?.descriptor as ProjectViewPaneDescriptorImpl?
+    get() = currentPaneMutableFlow.value?.descriptorImpl
 
   private val orderedDescriptors = MutableStateFlow<List<ProjectViewPaneDescriptorImpl>>(emptyList())
   
@@ -275,7 +275,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
   private fun updateMenuActions(newPane: FrontendProjectViewPane?) {
     menuActionGroup.removeAll()
-    if ((newPane?.descriptor as ProjectViewPaneDescriptorImpl?)?.kind == ProjectViewPaneKind.UI_ONLY) return
+    if (newPane?.descriptorImpl?.kind == ProjectViewPaneKind.UI_ONLY) return
     val group = ActionManager.getInstance().getAction("ProjectView.ToolWindow.SecondaryActions") as DefaultActionGroup
     for (action in group.getChildActionsOrStubs()) {
       menuActionGroup.addAction(action).setAsSecondary(true)
@@ -407,7 +407,7 @@ internal class ProjectViewToolWindowServiceImpl(
     private val initialSelection: Lazy<ProjectViewPaneId?>,
   ) {
     val descriptor: ProjectViewPaneDescriptorImpl
-      get() = pane.descriptor as ProjectViewPaneDescriptorImpl
+      get() = pane.descriptorImpl
     
     private val initialized = CompletableDeferred<Unit>()
     
@@ -583,7 +583,7 @@ internal class ProjectViewToolWindowServiceImpl(
       get() = pane.id
     
     val descriptor: ProjectViewPaneDescriptorImpl
-      get() = pane.descriptor as ProjectViewPaneDescriptorImpl
+      get() = pane.descriptorImpl
   }
   
   private inner class PaneContentManager @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(toolWindow: ToolWindow) {
@@ -626,7 +626,7 @@ internal class ProjectViewToolWindowServiceImpl(
     fun createAndAddContent(pane: FrontendProjectViewPane): PaneContent? {
       val newContent = ContentFactory.getInstance().createContent(
         /* component = */ pane.component,
-        /* displayName = */ (pane.descriptor as ProjectViewPaneDescriptorImpl).presentableName,
+        /* displayName = */ pane.descriptorImpl.presentableName,
         /* isLockable = */ false
       )
       newContent.setPreferredFocusedComponent { pane.componentToFocus }
@@ -798,6 +798,9 @@ private class ProjectViewToolWindowServiceState {
 
 private fun defaultSelectedPaneId(): ProjectViewPaneId =
   projectViewPaneId(ProjectViewPane.ID)
+
+private val FrontendProjectViewPane.descriptorImpl: ProjectViewPaneDescriptorImpl
+  get() = descriptor as ProjectViewPaneDescriptorImpl
 
 /**
  * How long the tool window waits for the pane to select.
