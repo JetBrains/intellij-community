@@ -164,8 +164,9 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 and the defaults of the verb.
 
 Every run is an integration test, as every run of the IDE Starter is, so a welcome run measures what the perf test of
-the welcome screen measures. `session.json` names this measurement model, and ADR 0234 records it. A metric of a
-welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
+the welcome screen measures. `session.json` names this measurement model, and
+[a welcome run measures what the perf test measures](docs/decisions/2026-10-12-a-welcome-run-measures-what-the-perf-test-measures.md)
+records it. A metric of a welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
 anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
