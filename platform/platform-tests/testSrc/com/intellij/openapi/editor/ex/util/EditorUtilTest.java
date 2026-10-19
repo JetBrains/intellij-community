@@ -36,6 +36,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.DocumentUtil;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.FlowKt;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
@@ -288,6 +290,56 @@ public class EditorUtilTest {
       finally {
         editorFactory.releaseEditor(editor);
       }
+    });
+  }
+
+  @Test
+  public void testRunBatchFoldingOperationOutsideOfBulkUpdateRunsOperationOnce() {
+    myFixture.runTest(() -> {
+      createEditor("text");
+      var document = myFixture.getEditor().getDocument();
+      var runCount = new AtomicInteger();
+
+      DocumentUtil.executeInBulk(document, () -> {
+        EditorUtil.runBatchFoldingOperationOutsideOfBulkUpdate(myFixture.getEditor(), runCount::incrementAndGet);
+        assertEquals(0, runCount.get());
+      });
+      assertEquals(1, runCount.get());
+
+      DocumentUtil.executeInBulk(document, () -> {});
+      assertEquals(1, runCount.get());
+    });
+  }
+
+  @Test
+  public void testRunBatchFoldingOperationOutsideOfBulkUpdateSkipsEditorReleasedInBulkUpdate() {
+    myFixture.runTest(() -> {
+      var editorFactory = EditorFactory.getInstance();
+      var document = editorFactory.createDocument("text");
+      var editor = editorFactory.createEditor(document);
+      var runCount = new AtomicInteger();
+
+      DocumentUtil.executeInBulk(document, () -> {
+        EditorUtil.runBatchFoldingOperationOutsideOfBulkUpdate(editor, runCount::incrementAndGet);
+        editorFactory.releaseEditor(editor);
+      });
+      assertEquals(0, runCount.get());
+    });
+  }
+
+  @Test
+  public void testRunBatchFoldingOperationOutsideOfBulkUpdateSkipsReleasedEditor() {
+    myFixture.runTest(() -> {
+      var editorFactory = EditorFactory.getInstance();
+      var document = editorFactory.createDocument("text");
+      var editor = editorFactory.createEditor(document);
+      editorFactory.releaseEditor(editor);
+      var runCount = new AtomicInteger();
+
+      DocumentUtil.executeInBulk(document, () -> {
+        EditorUtil.runBatchFoldingOperationOutsideOfBulkUpdate(editor, runCount::incrementAndGet);
+      });
+      assertEquals(0, runCount.get());
     });
   }
 

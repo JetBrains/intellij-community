@@ -49,6 +49,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -108,6 +109,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.font.FontRenderContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -135,17 +137,16 @@ public final class EditorUtil {
 
   public static @Nullable EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
     Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() : null;
-    return editor instanceof EditorEx ? (EditorEx)editor : null;
+    return editor instanceof EditorEx ex ? ex : null;
   }
 
-  public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
+  public static int getLastVisualLineColumnNumber(@NotNull Editor editor, int line) {
     if (editor instanceof EditorImpl editorImpl) {
       int lineEndOffset = line >= editorImpl.getVisibleLineCount()
-                          ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
+                          ? editor.getDocument().getTextLength()
+                          : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
     }
-
-
     return EditorThreading.compute(() -> {
       Document document = editor.getDocument();
       int lastLine = document.getLineCount() - 1;
@@ -275,6 +276,7 @@ public final class EditorUtil {
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
       int yPos = caretLocation.y;
+      //noinspection lossy-conversions
       yPos -= viewArea.height * proportion;
       editor.getScrollingModel().scrollVertically(yPos);
     });
@@ -296,13 +298,13 @@ public final class EditorUtil {
   }
 
   public static void fillVirtualSpaceUntilCaret(@NotNull Editor editor) {
-    final LogicalPosition position = editor.getCaretModel().getLogicalPosition();
+    LogicalPosition position = editor.getCaretModel().getLogicalPosition();
     fillVirtualSpaceUntil(editor, position.column, position.line);
   }
 
   public static void fillVirtualSpaceUntil(final @NotNull Editor editor, int columnNumber, int lineNumber) {
-    final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    final String filler = EditorModificationUtilEx.calcStringToFillVirtualSpace(editor);
+    int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
+    String filler = EditorModificationUtilEx.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
       WriteAction.run(() -> {
         editor.getDocument().insertString(offset, filler);
@@ -324,9 +326,9 @@ public final class EditorUtil {
 
   public static int calcColumnNumber(@Nullable Editor editor,
                                      @NotNull CharSequence text,
-                                     final int start,
-                                     final int offset,
-                                     final int tabSize) {
+                                     int start,
+                                     int offset,
+                                     int tabSize) {
     if (editor instanceof TextComponentEditor) {
       return offset - start;
     }
@@ -349,20 +351,22 @@ public final class EditorUtil {
         }
       }
     }
-
     if (editor != null && useOptimization) {
       Document document = editor.getDocument();
       if (start < offset - 1 && document.getLineNumber(start) != document.getLineNumber(offset - 1)) {
-        String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
+        String editorInfo = editor instanceof EditorImpl impl ? ". Editor info: " + impl.dumpState() : "";
         String documentInfo;
-        if (text instanceof Dumpable) {
-          documentInfo = ((Dumpable)text).dumpState();
+        if (text instanceof Dumpable dumpable) {
+          documentInfo = dumpable.dumpState();
         }
         else {
           documentInfo = "Text holder class: " + text.getClass();
         }
-        LOG.error("detected incorrect offset -> column number calculation", new Throwable(), AttachmentFactory.createContext(
-          "start: " + start + ", given offset: " + offset + ", given tab size: " + tabSize + ". " + documentInfo + editorInfo));
+        LOG.error(
+          "detected incorrect offset -> column number calculation",
+          new Throwable(),
+          AttachmentFactory.createContext("start: " + start + ", given offset: " + offset + ", given tab size: " + tabSize + ". " + documentInfo + editorInfo)
+        );
       }
     }
 
@@ -376,19 +380,19 @@ public final class EditorUtil {
     return offset - start + shift;
   }
 
-  public static @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
+  public static @NotNull FontInfo fontForChar(char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     return EditorThreading.compute(() -> {
-      EditorColorsScheme colorsScheme = editor.getColorsScheme();
-      return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences(),
-                                                             FontInfo.getFontRenderContext(editor.getContentComponent()));
+      FontPreferences preferences = editor.getColorsScheme().getFontPreferences();
+      FontRenderContext renderContext = FontInfo.getFontRenderContext(editor.getContentComponent());
+      return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, preferences, renderContext);
     });
   }
 
   public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
-    if (Registry.is("editor.scale.gutter.icons") && editor instanceof EditorImpl && icon instanceof ScalableIcon) {
-      float scale = ((EditorImpl)editor).getScale();
+    if (Registry.is("editor.scale.gutter.icons") && editor instanceof EditorImpl impl && icon instanceof ScalableIcon scalable) {
+      float scale = impl.getScale();
       if (Math.abs(1f - scale) > 0.1f) {
-        return ((ScalableIcon)icon).scale(scale);
+        return scalable.scale(scale);
       }
     }
     return icon;
@@ -429,7 +433,6 @@ public final class EditorUtil {
       return x + plainSpaceWidth;
     }
     tabSize *= plainSpaceWidth;
-
     int nTabs = x / tabSize;
     return (nTabs + 1) * tabSize;
   }
@@ -761,8 +764,8 @@ public final class EditorUtil {
     if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
       // don't move 'focus' to empty last line
       int scrollOffset;
-      if (editor instanceof EditorEx) {
-        JScrollBar verticalScrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
+      if (editor instanceof EditorEx ex) {
+        JScrollBar verticalScrollBar = ex.getScrollPane().getVerticalScrollBar();
         scrollOffset = verticalScrollBar.getMaximum() - verticalScrollBar.getModel().getExtent();
       }
       else {
@@ -802,7 +805,7 @@ public final class EditorUtil {
   public static @NotNull TextRange getSelectionInAnyMode(Editor editor) {
     return EditorThreading.compute(() -> {
       List<Caret> carets = editor.getCaretModel().getAllCarets();
-      return carets.get(0).getSelectionRange().union(carets.get(carets.size() - 1).getSelectionRange());
+      return carets.getFirst().getSelectionRange().union(carets.getLast().getSelectionRange());
     });
   }
 
@@ -843,9 +846,9 @@ public final class EditorUtil {
         int lineStartOffset = document.getLineStartOffset(logicalLine);
         int lineEndOffset = document.getLineEndOffset(logicalLine);
         FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
-        if (foldRegion instanceof CustomFoldRegion) {
+        if (foldRegion instanceof CustomFoldRegion customFold) {
           int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
-          Interval interval = new TextRangeInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+          Interval interval = new TextRangeInterval(startY, startY + customFold.getHeightInPixels());
           return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
                                        foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
         }
@@ -876,8 +879,8 @@ public final class EditorUtil {
   public static @NotNull Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
     return EditorThreading.compute(() -> {
       int visualLine = editor.yToVisualLine(y);
-      if (editor instanceof EditorImpl) {
-        VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
+      if (editor instanceof EditorImpl impl) {
+        VisualLinesIterator iterator = new VisualLinesIterator(impl, visualLine);
         if (!iterator.atEnd()) {
           return new TextRangeInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
         }
@@ -1112,6 +1115,7 @@ public final class EditorUtil {
       // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       if (hostEditor instanceof EditorImpl editorImpl) {
+        //noinspection deprecation
         if (!Disposer.tryRegister(editorImpl.getDisposable(), disposable)) {
           Disposer.dispose(disposable);
         }
@@ -1125,14 +1129,14 @@ public final class EditorUtil {
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
     if (editor.getDocument().isInBulkUpdate()) {
       Disposable disposable = Disposer.newDisposable();
-      disposeWithEditor(editor, disposable);
       editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void bulkUpdateFinished(@NotNull Document document) {
-          editor.getFoldingModel().runBatchFoldingOperation(operation);
           Disposer.dispose(disposable);
+          editor.getFoldingModel().runBatchFoldingOperation(operation);
         }
-      });
+      }, disposable);
+      disposeWithEditor(editor, disposable);
     }
     else {
       editor.getFoldingModel().runBatchFoldingOperation(operation);
@@ -1141,11 +1145,11 @@ public final class EditorUtil {
 
   public static void runWithAnimationDisabled(@NotNull Editor editor, @NotNull Runnable taskWithScrolling) {
     ScrollingModel scrollingModel = editor.getScrollingModel();
-    if (!(scrollingModel instanceof ScrollingModelImpl)) {
+    if (!(scrollingModel instanceof ScrollingModelImpl scrollingImpl)) {
       taskWithScrolling.run();
     }
     else {
-      boolean animationWasEnabled = ((ScrollingModelImpl)scrollingModel).isAnimationEnabled();
+      boolean animationWasEnabled = scrollingImpl.isAnimationEnabled();
       scrollingModel.disableAnimation();
       try {
         taskWithScrolling.run();
@@ -1178,12 +1182,12 @@ public final class EditorUtil {
     return EditorThreading.compute(() -> {
       Editor e = editor;
       LogicalPosition logicalPosition = e.offsetToLogicalPosition(offset);
-      if (e instanceof EditorWindow) {
-        logicalPosition = ((EditorWindow)e).injectedToHost(logicalPosition);
-        e = ((EditorWindow)e).getDelegate();
+      if (e instanceof EditorWindow window) {
+        logicalPosition = window.injectedToHost(logicalPosition);
+        e = window.getDelegate();
       }
       VisualPosition pos = e.logicalToVisualPosition(logicalPosition);
-      Inlay inlay;
+      Inlay<?> inlay;
       while ((inlay = e.getInlayModel().getInlineElementAt(pos)) != null) {
         if (inlay.isRelatedToPrecedingText()) break;
         pos = new VisualPosition(pos.line, pos.column + 1);
@@ -1192,9 +1196,9 @@ public final class EditorUtil {
     });
   }
 
-  public static int getTotalInlaysHeight(@NotNull List<? extends Inlay> inlays) {
+  public static int getTotalInlaysHeight(@NotNull List<? extends Inlay<?>> inlays) {
     int sum = 0;
-    for (Inlay inlay : inlays) {
+    for (Inlay<?> inlay : inlays) {
       sum += inlay.getHeightInPixels();
     }
     return sum;
@@ -1212,7 +1216,7 @@ public final class EditorUtil {
   /**
    * Tells whether given inlay element is invisible due to folding of text in editor
    */
-  public static boolean isInlayFolded(@NotNull Inlay inlay) {
+  public static boolean isInlayFolded(@NotNull Inlay<?> inlay) {
     if (showWhenFolded(inlay)) {
       return false;
     }
@@ -1242,6 +1246,7 @@ public final class EditorUtil {
 
   /**
    * Returns bottom Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
+   * @noinspection unused
    */
   public static int getVisualLineAreaEndY(@NotNull Editor editor, int visualLine) {
     return EditorThreading.compute(() -> editor.visualLineToYRange(visualLine)[1] + getInlaysHeight(editor, visualLine, false));
