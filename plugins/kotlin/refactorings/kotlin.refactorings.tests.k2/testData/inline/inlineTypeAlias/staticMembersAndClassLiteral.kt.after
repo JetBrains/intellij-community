@@ -1,0 +1,8 @@
+fun main() {
+    val value = String()
+    val comparator = String.CASE_INSENSITIVE_ORDER
+    val formatted = String.format("%s", value)
+    val javaClass = String::class.java
+    val kotlinClass = String::class
+    println(listOf(comparator, formatted, javaClass, kotlinClass))
+}

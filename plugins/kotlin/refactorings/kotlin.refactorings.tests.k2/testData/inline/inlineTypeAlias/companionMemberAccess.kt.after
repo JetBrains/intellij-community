@@ -1,0 +1,8 @@
+class Host {
+    companion object {
+        val answer = 42
+    }
+}
+
+val companion = Host.Companion
+val answer = Host.answer

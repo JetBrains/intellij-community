@@ -119,6 +119,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("companionMemberAccess.kt")
+        public void testCompanionMemberAccess() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/companionMemberAccess.kt");
+        }
+
         @TestMetadata("extensionFunctionTypeToFunctionType.kt")
         public void testExtensionFunctionTypeToFunctionType() throws Exception {
             runTest("testData/inline/inlineTypeAlias/extensionFunctionTypeToFunctionType.kt");
@@ -227,6 +232,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("starProjection.kt")
         public void testStarProjection() throws Exception {
             runTest("testData/inline/inlineTypeAlias/starProjection.kt");
+        }
+
+        @TestMetadata("staticMembersAndClassLiteral.kt")
+        public void testStaticMembersAndClassLiteral() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/staticMembersAndClassLiteral.kt");
         }
 
         @TestMetadata("stdlibAliasSupertype.kt")
