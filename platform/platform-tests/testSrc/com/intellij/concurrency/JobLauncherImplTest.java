@@ -31,6 +31,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -1023,6 +1025,48 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
       finally {
         pool.shutdownNow();
       }
+    }
+  }
+
+  // while the caller of processConcurrentlyAsync() waits for a worker, FJP lets the caller run the tasks that this worker forked
+  public void testForeignTaskRunByWaitingCallerDoesNotSeeRecursionGuardsOfCaller() throws Exception {
+    RecursionGuard<String> guard = RecursionManager.createGuard(getName());
+    AtomicReference<Thread> caller = new AtomicReference<>();
+    AtomicReference<Thread> foreignTaskThread = new AtomicReference<>();
+    AtomicReference<String> foreignTaskResult = new AtomicReference<>();
+    CountDownLatch foreignTaskForked = new CountDownLatch(1);
+    CountDownLatch foreignTaskDone = new CountDownLatch(1);
+    try (ForkJoinPool pool = new ForkJoinPool(2)) {
+      JobLauncherImpl launcher = new JobLauncherImpl(pool);
+      ForkJoinTask<Boolean> future = pool.submit(() -> ProgressManager.getInstance().runProcess(() -> {
+        caller.set(Thread.currentThread());
+        return guard.doPreventingRecursion("key", false, () -> launcher.processConcurrentlyAsync(List.of(1, 2), _ -> {
+          if (Thread.currentThread() != caller.get()) {
+            ForkJoinTask.adapt(() -> {
+              foreignTaskThread.set(Thread.currentThread());
+              foreignTaskResult.set(guard.doPreventingRecursion("key", false, () -> "computed"));
+              foreignTaskDone.countDown();
+            }).fork();
+            foreignTaskForked.countDown();
+            awaitOrFail(foreignTaskDone);
+          }
+          return true;
+        }, () -> awaitOrFail(foreignTaskForked)));
+      }, new DaemonProgressIndicator()));
+      assertEquals(Boolean.TRUE, future.get(30, TimeUnit.SECONDS));
+    }
+    assertSame("the waiting caller must run the foreign task", caller.get(), foreignTaskThread.get());
+    assertEquals("computed", foreignTaskResult.get());
+  }
+
+  private static void awaitOrFail(@NotNull CountDownLatch latch) {
+    try {
+      if (!latch.await(10, TimeUnit.SECONDS)) {
+        fail(ThreadDumper.dumpThreadsToString());
+      }
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 
