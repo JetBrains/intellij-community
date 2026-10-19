@@ -77,8 +77,8 @@ class DurableDatabaseIndexLayoutProvider(
       .housekeeping(scheduler, scheduler)
       .startupHousekeeping(
         SparseChunksEvacuationHousekeeper(
-          /* evacuateBelow:       */ 0.15f,
-          /* maxEvacuation:       */ 15L * MiB,
+          /* evacuateBelow:       */ 0.25f,
+          /* maxEvacuation:       */ 25L * MiB,
           /* maxBlocksToEvacuate: */ 1000
         ),
         DropRetiredChunksHousekeeper(),

@@ -282,25 +282,43 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     return databaseChunks.chunkSize();
   }
 
-  /// Evacuates all non-retired blocks from one sealed chunk and retires the source chunk.
-  /// The caller must invoke this method during startup, before application storages access the database.
-  void evacuateChunk(@NotNull DatabaseChunk sourceChunk) throws IOException {
+  /// Evacuates non-retired blocks from `sourceChunk` that fit in the given budgets, and retires the `sourceChunk` if it becomes
+  /// empty after evacuation;
+  /// Method changes blocks physical location, so it can only be called on startup, before application storages access the database.
+  @NotNull ChunkEvacuationResult evacuateBlocksFromChunk(@NotNull DatabaseChunk sourceChunk,
+                                                         long bytesBudget,
+                                                         int blocksBudget) throws IOException {
+    if (bytesBudget < 0 || blocksBudget < 0) {
+      throw new IllegalArgumentException("Evacuation budgets must not be negative");
+    }
     synchronized (databaseLock) {
       ensureNotClosed();
       if (sourceChunk.state() != DatabaseCatalog.ChunkState.SEALED) {
         throw new IllegalArgumentException("Chunk " + sourceChunk.chunkId() + " is not sealed");
       }
 
+      long evacuatedBytes = 0;
+      int evacuatedBlocks = 0;
       for (var block : sourceChunk.blocks()) {
-        if (block.state() != BlocksStore.Block.LifecycleState.RETIRED) {
-          databaseBlocks.evacuateBlock(block);
+        if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
+          continue;
         }
+        if (evacuatedBlocks == blocksBudget) {
+          break;
+        }
+        if (block.blockLength() > bytesBudget - evacuatedBytes) {
+          continue;
+        }
+        databaseBlocks.evacuateBlock(block);
+        evacuatedBytes += block.blockLength();
+        evacuatedBlocks++;
       }
-      if (!retireIfUnused(sourceChunk)) {
-        throw new IllegalStateException("Evacuated chunk " + sourceChunk.chunkId() + " is not ready for retirement");
-      }
+      var sourceChunkRetired = retireIfUnused(sourceChunk);
+      return new ChunkEvacuationResult(evacuatedBytes, evacuatedBlocks, sourceChunkRetired);
     }
   }
+
+  record ChunkEvacuationResult(long evacuatedBytes, int evacuatedBlocks, boolean sourceChunkRetired) { }
 
   /// Retires the chunk if it is sealed and contains only retired blocks.
   /// Retirement hides the chunk and its blocks from the database API. The database keeps the chunk resources until close.

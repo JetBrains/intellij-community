@@ -13,9 +13,12 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-/// Evacuates blocks from sparse sealed chunks and retires the source chunks.
-/// Completely empty chunks that do not need evacuation -- are retired right away
+/// Evacuates blocks from sparse sealed chunks into a newer chunks, and retires empty chunks.
 /// Runs before application storages open.
+///
+/// Blocks are evacuated within the budgets.
+/// If all the live blocks of the chunk are evacuated -> empty chunk is retired.
+/// Partially evacuated chunks remain for the next attempt.
 @ApiStatus.Internal
 public final class SparseChunksEvacuationHousekeeper implements OnStartupHousekeeper {
   private static final Logger LOG = Logger.getInstance(SparseChunksEvacuationHousekeeper.class);
@@ -69,45 +72,45 @@ public final class SparseChunksEvacuationHousekeeper implements OnStartupHouseke
 
     long remainingBytes = evacuatedBytesBudget;
     int remainingBlocks = evacuatedBlocksBudget;
-    int evacuatedChunks = 0;
+    int retiredChunks = 0;
     long evacuatedBytes = 0;
     int evacuatedBlocks = 0;
     for (var sparseChunkInfo : sparseChunksSmallerToLarger) {
       if (sparseChunkInfo.liveBlocks == 0) {
-        //shortcut: empty chunk doesn't need to be evacuated, so retire them right away
+        //shortcut: empty chunk doesn't need to be evacuated => retire it right away
         database.retireChunkIfUnused(sparseChunkInfo.chunk, /*cancellationRequest: */() -> false);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Empty chunk " + sparseChunkInfo + " -> retired immediately");
-        }
+        retiredChunks++;
         continue;
       }
 
-      if (sparseChunkInfo.liveBytes > remainingBytes || sparseChunkInfo.liveBlocks > remainingBlocks) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(
-            "Sparse chunk " + sparseChunkInfo + " -> skipped (over budget): " +
-            "remaining budget is " + remainingBlocks + " blocks and " + remainingBytes + " bytes"
-          );
-        }
-        continue;
+      if (sparseChunkInfo.maxLiveBlockSizeBytes > evacuatedBytesBudget) {
+        LOG.warn("Chunk #" + sparseChunkInfo.chunk.chunkId() + " contains a live block of " +
+                 sparseChunkInfo.maxLiveBlockSizeBytes + " bytes > " + evacuatedBytesBudget + " bytes evacuation budget " +
+                 "=> could never be evacuated!");
       }
 
-      database.evacuateChunk(sparseChunkInfo.chunk);
 
-      evacuatedChunks++;
-      evacuatedBytes += sparseChunkInfo.liveBytes;
-      evacuatedBlocks += sparseChunkInfo.liveBlocks;
-      remainingBytes -= sparseChunkInfo.liveBytes;
-      remainingBlocks -= sparseChunkInfo.liveBlocks;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Sparse chunk " + sparseChunkInfo + " -> evacuated");
+      var evacuationResult = database.evacuateBlocksFromChunk(
+        sparseChunkInfo.chunk,
+        remainingBytes,
+        remainingBlocks
+      );
+      if (evacuationResult.sourceChunkRetired()) {
+        retiredChunks++;
+      }
+      evacuatedBytes += evacuationResult.evacuatedBytes();
+      evacuatedBlocks += evacuationResult.evacuatedBlocks();
+      remainingBytes -= evacuationResult.evacuatedBytes();
+      remainingBlocks -= evacuationResult.evacuatedBlocks();
+      if (remainingBytes == 0 || remainingBlocks == 0) {
+        break;
       }
     }
 
-    if (evacuatedChunks > 0) {
+    if (evacuatedBlocks > 0) {
       LOG.info("Sparse chunk evacuation: " +
-               "evacuated " + evacuatedChunks + " chunks (of " + sparseChunksInfo.size() + " sparse chunks found), " +
-               evacuatedBlocks + " blocks, " + evacuatedBytes + " bytes"
+               "retired " + retiredChunks + " chunks (of " + sparseChunksInfo.size() + " sparse chunks found), " +
+               "evacuated " + evacuatedBlocks + " blocks, " + evacuatedBytes + " bytes"
       );
     }
   }
@@ -124,19 +127,16 @@ public final class SparseChunksEvacuationHousekeeper implements OnStartupHouseke
   private static @NotNull ChunkInfo describeChunk(@NotNull DatabaseChunk chunk) {
     long liveBytes = 0;
     int liveBlocks = 0;
+    int maximumLiveBlockBytes = 0;
     for (var block : chunk.blocks()) {
       if (block.state() != BlocksStore.Block.LifecycleState.RETIRED) {
         liveBytes += block.blockLength();
         liveBlocks++;
+        maximumLiveBlockBytes = Math.max(maximumLiveBlockBytes, block.blockLength());
       }
     }
-    return new ChunkInfo(chunk, liveBytes, liveBlocks);
+    return new ChunkInfo(chunk, liveBytes, liveBlocks, maximumLiveBlockBytes);
   }
 
-  private record ChunkInfo(@NotNull DatabaseChunk chunk, long liveBytes, int liveBlocks) {
-    @Override
-    public String toString() {
-      return "{chunk #" + chunk.chunkId() + ": liveBytes=" + liveBytes + ", liveBlocks=" + liveBlocks + '}';
-    }
-  }
+  private record ChunkInfo(@NotNull DatabaseChunk chunk, long liveBytes, int liveBlocks, int maxLiveBlockSizeBytes) { }
 }
