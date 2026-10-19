@@ -75,12 +75,13 @@ public class DataGridSearchSession implements GridSearchSession<GridRow, GridCol
     myFindModel = findModel;
     myPreviousFilterComponent = previousFilterComponent;
     myFindModel.addObserver(this);
+    myCoroutineScope = CoroutineScopeKt.childScope(grid.getCoroutineScope(), getClass().getName(), Dispatchers.getDefault(), true);
+    // Tests update the search bar actions while the bar is built, and these actions read the worker.
+    worker = new DataGridSearchSessionWorker(myCoroutineScope, grid, FindManager.getInstance(myProject), myFindModel);
     mySearchComponent = createSearchComponent();
     applyFindModel(mySearchComponent, myFindModel);
-    myCoroutineScope = CoroutineScopeKt.childScope(grid.getCoroutineScope(), getClass().getName(), Dispatchers.getDefault(), true);
     Disposer.register(grid, this);
 
-    worker = new DataGridSearchSessionWorker(myCoroutineScope, grid, FindManager.getInstance(myProject), myFindModel);
     worker.submitStartSearch();
     worker.subscribeOnUpdateEDT((selectOccurence) -> {
       FindUtil.updateFindInFileModel(myProject, myFindModel, true);
