@@ -24,6 +24,9 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
   fun `test problem registered in deep sublists`() = doTest()
 
   @Test
+  fun `test no warning for paragraph content`() = doTest()
+
+  @Test
   fun `test no warning for list item with code block`() = doTest()
 
   @Test
