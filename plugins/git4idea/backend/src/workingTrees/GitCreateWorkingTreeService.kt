@@ -19,6 +19,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -281,6 +282,8 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     openAfterCreation: Boolean = true,
   ) {
     GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
+
+    FileDocumentManager.getInstance().saveAllDocuments()
 
     val project = request.repository.project
     val path = request.workingTreePath.path
