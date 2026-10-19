@@ -494,7 +494,7 @@
     />
     <registryKey
       key="ide.welcome.screen.recent.project.vcs.actions"
-      defaultValue="false"
+      defaultValue="true"
       description="Show the VCS actions icon and menu for a recent version control project on the welcome screen"
       restartRequired="true"
     />
