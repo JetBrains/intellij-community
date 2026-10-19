@@ -1,6 +1,4 @@
-<fold text='front matter: ---
-Some front matter
----' expand='true'>---
+<fold text='--- Some front matter ---' expand='true'>---
 Some front matter
 ---</fold>
 

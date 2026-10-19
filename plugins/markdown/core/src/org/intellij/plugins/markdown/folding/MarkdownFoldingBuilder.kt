@@ -143,6 +143,11 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
 
   override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
     val elementType = PsiUtilCore.getElementType(node)
+    if (elementType == MarkdownElementTypes.FRONT_MATTER_HEADER) {
+      val text = node.text.replace(Regex("\\s+"), " ").trim()
+      return StringUtil.shortenTextWithEllipsis(text, 30, 0)
+    }
+
     val explicitName = foldedElementsPresentations[elementType]
     val elementText = StringUtil.shortenTextWithEllipsis(node.text, 30, 5)
     return explicitName?.let { "$it: $elementText" } ?: elementText
@@ -262,8 +267,7 @@ private val foldedElementsPresentations = hashMapOf(
   MarkdownElementTypes.ORDERED_LIST to MarkdownBundle.message("markdown.folding.ordered.list.name"),
   MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
   MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
-  MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
-  MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
+  MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name")
 )
 
 private fun isFrontMatterFoldable(file: PsiFile): Boolean {
