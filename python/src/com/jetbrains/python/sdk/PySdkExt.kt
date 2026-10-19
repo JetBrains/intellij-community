@@ -23,6 +23,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.nio.file.Path
 import kotlin.io.path.div
 
@@ -63,8 +64,10 @@ fun Project.mainPythonInterpreterIfReady(): PythonInterpreter? = findMainEvoPyPr
   "An interpreter belongs to a Python project. Use the interpreter of the PyProject, or findMainPythonInterpreter for the main one.",
   ReplaceWith("mainPythonInterpreterIfReady()?.getSdkAPI()", "com.intellij.python.sdk.backend.getSdkAPI"),
 )
-@Suppress("DEPRECATION") // It still answers an SDK.
 val Project.pythonSdk: Sdk?
+  @ScheduledForRemoval
+  @Deprecated("An interpreter belongs to a Python project. Use the interpreter of the PyProject.")
+  @Suppress("DEPRECATION") // It still answers an SDK.
   get() = mainPythonInterpreterIfReady()?.getSdkAPI()
 
 @Internal

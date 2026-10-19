@@ -62,6 +62,7 @@ public final class PythonSdkUtil {
    * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     return module == null ? null : MainPythonSdkKt.pythonSdkIfReady(module);
   }
