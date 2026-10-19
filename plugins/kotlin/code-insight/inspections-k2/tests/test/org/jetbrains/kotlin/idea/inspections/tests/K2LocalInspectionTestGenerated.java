@@ -4518,9 +4518,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("changedParameterOrder.kt")
+        public void testChangedParameterOrder() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/changedParameterOrder.kt");
+        }
+
         @TestMetadata("checkNotNull.kt")
         public void testCheckNotNull() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/checkNotNull.kt");
+        }
+
+        @TestMetadata("freeStandingWithSideEffect.kt")
+        public void testFreeStandingWithSideEffect() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/freeStandingWithSideEffect.kt");
         }
 
         @TestMetadata("notNull.kt")
@@ -4566,6 +4576,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("usedAsExpression3.kt")
         public void testUsedAsExpression3() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/usedAsExpression3.kt");
+        }
+
+        @TestMetadata("withExplicitFunctionType.kt")
+        public void testWithExplicitFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/withExplicitFunctionType.kt");
+        }
+
+        @TestMetadata("withFunctionCallNotNullableResult.kt")
+        public void testWithFunctionCallNotNullableResult() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/withFunctionCallNotNullableResult.kt");
+        }
+
+        @TestMetadata("withFunctionCallNullableResult.kt")
+        public void testWithFunctionCallNullableResult() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantRequireNotNullCall/withFunctionCallNullableResult.kt");
         }
     }
 

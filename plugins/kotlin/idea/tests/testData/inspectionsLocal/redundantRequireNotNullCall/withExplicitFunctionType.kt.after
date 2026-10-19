@@ -1,0 +1,5 @@
+// WITH_STDLIB
+fun main() {
+    val length = { it: String -> it.length }
+    println(length("abc"))
+}

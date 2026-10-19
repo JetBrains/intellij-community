@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun main() {
+    var counter = 0
+    requireNotN<caret>ull(++counter)
+    println(counter)
+}
