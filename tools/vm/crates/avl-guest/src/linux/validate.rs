@@ -26,10 +26,10 @@ use super::{
     XVFB_PROCESS, on_display, supporting_window_id, wait_budget,
 };
 use crate::cli::ValidateGuestArgs;
+use crate::fs::is_file;
 use crate::reply::AgentRefusalExt;
 use crate::reply::{AgentRefusal, quoted};
 use crate::shape;
-use crate::stage::is_file;
 use crate::step::{Runner, Step};
 
 #[cfg(test)]

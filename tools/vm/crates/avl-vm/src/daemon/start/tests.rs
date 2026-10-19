@@ -524,7 +524,8 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     for retired in ["vm-guest-agent launch-prep", "/bin/rm -f"] {
         assert!(channel.calls_containing(retired).is_empty(), "{retired}");
     }
-    // The start stages no runtime generation and collects none. So no guest call names a verb of the stager.
+    // The start stages no runtime generation and collects none. The agent has no verb for either, and no guest call
+    // names one.
     for retired in ["vm-guest-agent stage", "vm-guest-agent gc "] {
         assert!(channel.calls_containing(retired).is_empty(), "{retired}");
     }

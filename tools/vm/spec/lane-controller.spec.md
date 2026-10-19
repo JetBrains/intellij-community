@@ -8,7 +8,6 @@ targets:
   - ../crates/avl-guest/src/supervisor/state.rs
   - ../crates/avl-guest/src/supervisor/identity.rs
   - ../crates/avl-guest/src/supervisor/supervise.rs
-  - ../crates/avl-guest/src/stage.rs
   - ../crates/avl-guest/src/image.rs
   - ../crates/avl-guest/src/image/provision.rs
   - ../crates/avl-guest/src/image/validate.rs
@@ -45,7 +44,7 @@ targets:
   - ../crates/avl-wire/src/supervisor.rs
   - ../crates/avl-wire/src/verb.rs
   - ../crates/avl-wire/src/pull.rs
-  - ../crates/avl-wire/src/stage.rs
+  - ../crates/avl-wire/src/digest.rs
   - ../crates/avl-wire/src/daemon.rs
   - ../crates/avl-wire/src/runtime.rs
   - ../crates/avl-wire/src/report.rs

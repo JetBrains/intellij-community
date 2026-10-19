@@ -180,7 +180,7 @@ fn retain(destination: &Path, current: &str) -> Vec<String> {
         let Ok(metadata) = entry.path().symlink_metadata() else {
             continue;
         };
-        if metadata.is_dir() && avl_wire::stage::is_sha256_hex(&name) {
+        if metadata.is_dir() && avl_wire::digest::is_sha256_hex(&name) {
             let modified = metadata.modified().unwrap_or(std::time::UNIX_EPOCH);
             trees.push((modified, entry.path()));
         } else {
@@ -230,7 +230,7 @@ fn populate(staging: &Path, manifest: &RunfilesManifest, request: &RunfilesTreeR
                 ));
             };
             if request.copy_package_stores && is_package_store_directory(&entry.path, Path::new(&guest)) {
-                crate::stage::copy_tree(Path::new(&guest), &entry_path)
+                crate::fs::copy_tree(Path::new(&guest), &entry_path)
             } else {
                 std::os::unix::fs::symlink(guest, &entry_path)
             }

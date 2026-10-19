@@ -1,6 +1,6 @@
 [package]
 name = "avl-guest"
-description = "The guest half: the run supervisor, the runtime stager, the lane IDE contexts, provisioning verbs and the agent binary."
+description = "The guest half: the run supervisor, the lane IDE contexts, provisioning verbs and the agent binary."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

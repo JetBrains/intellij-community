@@ -16,7 +16,7 @@ use clap::{Args, ColorChoice, Parser, Subcommand};
 use crate::reply::AgentRefusalExt;
 use crate::reply::{self, AgentRefusal, Streams, answer_bare, answer_enveloped};
 use crate::step::SystemRunner;
-use crate::{ide, image, lane, linux, read_file, relay, runfiles, shape, stage, supervisor, tracepack};
+use crate::{ide, image, lane, linux, read_file, relay, runfiles, shape, supervisor, tracepack};
 
 #[cfg(test)]
 mod tests;
@@ -43,8 +43,6 @@ does not name, and adds them to LEDGER. When nothing is new it writes no zip.
 
 relay copies bytes both ways between its standard streams and 127.0.0.1:PORT until the guest side closes. It \
 writes nothing on stdout that the guest side did not send.
-
-stage reads its manifest on standard input, or from the file MANIFEST names. It refuses a manifest in both places.
 
 read-file copies PATH to standard output unchanged. Then it writes its envelope on standard error, which names the \
 size and the SHA-256 of what it wrote.
@@ -93,12 +91,6 @@ pub(crate) enum Verb {
     Log(LogArgs),
     /// Cancel a run: TERM its process group, then KILL it after the grace period.
     Cancel(CancelArgs),
-    /// Stage the daemon's runtime generation.
-    Stage(StageArgs),
-    /// Answer whether a staged runtime generation can be reused as it is.
-    StageCheck(StageCheckArgs),
-    /// Remove staged generations, keeping the two newest and the requested ones.
-    Gc(GcArgs),
     /// Turn a freshly cloned macOS base into the golden image.
     ProvisionImage(ImagePins),
     /// Prove a finished macOS golden image.
@@ -137,9 +129,6 @@ impl Verb {
             Self::Active(_) => AgentVerb::Active,
             Self::Log(_) => AgentVerb::Log,
             Self::Cancel(_) => AgentVerb::Cancel,
-            Self::Stage(_) => AgentVerb::Stage,
-            Self::StageCheck(_) => AgentVerb::StageCheck,
-            Self::Gc(_) => AgentVerb::Gc,
             Self::ProvisionImage(_) => AgentVerb::ProvisionImage,
             Self::ValidateImage(_) => AgentVerb::ValidateImage,
             Self::ValidateGuest(_) => AgentVerb::ValidateGuest,
@@ -209,35 +198,6 @@ pub(crate) struct CancelArgs {
     /// Run `JCMD <pid> Thread.print` before the TERM, when the child is still alive.
     #[arg(long, value_name = "JCMD", value_parser = absolute_path)]
     pub thread_dump: Option<PathBuf>,
-}
-
-// --- the stager ---------------------------------------------------------------------------------------------
-//
-// The runtime root and every value after it are checked inside the verb rather than here, so a malformed one
-// is the verb's own refusal (`guest_stage_failed`, exit 70), as it always was.
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct StageArgs {
-    pub runtime_root: String,
-    /// A manifest file. Without it, the manifest is read from standard input.
-    #[arg(value_name = "MANIFEST")]
-    pub manifest: Option<PathBuf>,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct StageCheckArgs {
-    pub runtime_root: String,
-    pub digest: String,
-    pub stable_count: String,
-    pub java_home_suffix: String,
-    pub classpath_sha256: String,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct GcArgs {
-    pub root: String,
-    /// Generations to keep whatever their age.
-    pub keep: Vec<String>,
 }
 
 // --- the lane IDE -------------------------------------------------------------------------------------------
@@ -478,12 +438,6 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
         Verb::Active(args) => answer_enveloped(streams, name, supervisor::active(&system, &args)),
         Verb::Log(args) => answer_enveloped(streams, name, supervisor::log(&system, &args)),
         Verb::Cancel(args) => answer_enveloped(streams, name, supervisor::cancel(&system, &args)),
-        Verb::Stage(args) => {
-            let result = stage::runtime::stage(&args.runtime_root, args.manifest.as_deref(), streams.stdin);
-            answer_bare(streams, name, result)
-        }
-        Verb::StageCheck(args) => answer_bare(streams, name, stage::runtime::check(&args)),
-        Verb::Gc(args) => answer_bare(streams, name, stage::gc::collect(&args.root, &args.keep)),
         Verb::ProvisionImage(pins) => {
             let mut provisioner = image::provision::ImageProvisioner::new(&pins, SystemRunner);
             let result = provisioner.provision();

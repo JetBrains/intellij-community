@@ -98,6 +98,13 @@ fn unknown_verb_is_refused() {
     let bare = run_agent::<&str>(&[], b"");
     assert_eq!(bare.exit, 64);
     assert_eq!(bare.code(), "usage");
+
+    // The verbs of the runtime stager are gone. A controller that still sends one gets the usage refusal.
+    for retired in ["stage", "stage-check", "gc"] {
+        let answered = run_agent(&[retired, "/r"], b"");
+        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{retired}");
+        assert_eq!(answered.failure()["command"], retired);
+    }
 }
 
 /// The shapes the supervisor verbs check before anything touches the disk: each one is the usage refusal.
@@ -154,7 +161,7 @@ fn every_declared_verb_is_a_subcommand_under_its_wire_name() {
         assert!(command.find_subcommand(verb.as_str()).is_some(), "{verb} is not a verb");
     }
     assert_eq!(parsed(&["contract"]).name(), AgentVerb::Contract);
-    assert_eq!(parsed(&["gc", "/r"]).name(), AgentVerb::Gc);
+    assert_eq!(parsed(&["read-file", "/r"]).name(), AgentVerb::ReadFile);
     assert_eq!(parsed(&["trace-pack-ready", "/a", "/b", "/c"]).name(), AgentVerb::TracePackReady);
 }
 

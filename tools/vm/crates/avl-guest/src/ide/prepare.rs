@@ -18,8 +18,8 @@ use avl_wire::ide::{
 use avl_wire::verb::AgentVerb;
 
 use super::{create_private_dirs, require_free_slot};
+use crate::fs::{StagingTree, is_directory};
 use crate::reply::{AgentRefusal, AgentRefusalExt, refuse};
-use crate::stage::{StagingTree, is_directory};
 use crate::supervisor::System;
 
 #[cfg(test)]

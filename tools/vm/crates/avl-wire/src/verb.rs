@@ -6,7 +6,7 @@
 //! `air-macos.pkr.hcl`, and that spelling is not Rust.
 //!
 //! [`crate::supervisor::Command`] is the run supervisor's subset. It is a type of its own because those verbs
-//! answer a [`crate::supervisor::Envelope`], while the staging verbs answer a bare document.
+//! answer a [`crate::supervisor::Envelope`], while the verbs of the lane IDE answer a bare document.
 
 #[cfg(test)]
 mod tests;
@@ -21,9 +21,6 @@ vocabulary! {
         Active = "active",
         Log = "log",
         Cancel = "cancel",
-        Stage = "stage",
-        StageCheck = "stage-check",
-        Gc = "gc",
         ProvisionImage = "provision-image",
         ValidateImage = "validate-image",
         ValidateGuest = "validate-guest",

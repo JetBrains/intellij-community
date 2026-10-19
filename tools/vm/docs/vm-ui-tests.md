@@ -981,7 +981,6 @@ every guest-side verb:
 | --- | --- |
 | `start`, `status`, `active`, `log`, `cancel` | the run supervisor, for the daemon and for each lane IDE. `cancel --thread-dump <jcmd>` writes a thread dump of the process before the signal |
 | `ide-prepare`, `ide-launch`, `ide-gc` | the lane IDE: the layout of one context, the launch of one IDE run with its argument file, and the stop of the IDE runs that a worker must not keep, with the removal of old log directories |
-| `stage`, `stage-check`, `gc` | the runtime stager, the probe that answers whether a generation is already staged, and the collection of old generations |
 | `contract` | what the agent declares about itself, its own digest included. An install that would push a binary the guest already has is skipped |
 | `validate-guest` | the Linux boot |
 | `provision-image`, `validate-image` | the macOS image pipeline |

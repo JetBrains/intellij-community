@@ -232,12 +232,10 @@ impl<'de> Deserialize<'de> for IdePluginFile {
     }
 }
 
-/// The Bazel-owned launch contract, after validation.
+/// The Bazel-owned launch contract, after validation: what the host build produced.
 ///
-/// Unrelated to [`crate::stage::RuntimeManifest`] despite the overlap in vocabulary: this is what the *host
-/// build* produced, and a manifest is what the *host asks the guest to materialize*. Only this one carries host
-/// paths. It only ever exists as the answer of [`parse_runtime_descriptor`], which is why it has no `Deserialize`
-/// of its own: a caller cannot decode one and skip the checks.
+/// It only ever exists as the answer of [`parse_runtime_descriptor`], which is why it has no `Deserialize` of its
+/// own: a caller cannot decode one and skip the checks.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeDescriptor {

@@ -66,14 +66,14 @@ async fn the_container_linux_fixture_reaches_the_daemon_through_the_published_po
 #[tokio::test]
 async fn the_scripted_guest_routes_by_verb_and_records_per_worker() {
     let fixture = Fixture::new().await;
-    fixture.on("gc", answer_text("collected"));
+    fixture.on("ide-gc", answer_text("collected"));
     fixture.on("df", answer_exit(3));
     let channel = fixture.manager.channel(&fixture.worker);
     let ctx = Ctx::background();
     let options = SpawnOptions::within(Duration::from_mins(1));
     let agent = fixture.settings.vm_agent.clone();
     let gc = channel
-        .exec(&ctx, &words(["/usr/bin/sudo", "-H", "-u", "admin", &agent, "gc"]), &options)
+        .exec(&ctx, &words(["/usr/bin/sudo", "-H", "-u", "admin", &agent, "ide-gc"]), &options)
         .await
         .unwrap();
     assert_eq!(gc.stdout, "collected");

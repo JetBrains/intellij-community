@@ -479,7 +479,7 @@ fn conflict_answer(reason: &str, launch_digest: Option<String>) -> Response {
 }
 
 fn wire_digest(text: &str) -> bool {
-    avl_wire::stage::is_sha256_hex(text)
+    avl_wire::digest::is_sha256_hex(text)
 }
 
 /// 32 hex digits from the random source of the operating system, for the token and the boot stamp.

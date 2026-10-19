@@ -188,7 +188,7 @@ pub(crate) const GUEST_ARGV_MESSAGE_BYTES: usize = 240;
 
 /// How long one argument may be before it is redacted whole. Generous next to the phase skeleton's 48, because
 /// here a path *is* the diagnosis - which file `tee` could not write, which root the supervisor was asked about -
-/// and a 64-character generation digest has to survive too. What it stops is an element long enough to be a
+/// and a 64-character digest has to survive too. What it stops is an element long enough to be a
 /// payload rather than an argument.
 const GUEST_ARGV_ELEMENT_BYTES: usize = 96;
 

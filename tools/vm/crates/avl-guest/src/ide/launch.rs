@@ -27,8 +27,8 @@ use serde::Deserialize;
 
 use super::{create_private_dirs, reap, require_free_slot};
 use crate::clock::stamp;
+use crate::fs::{is_directory, is_file};
 use crate::reply::{AgentRefusal, AgentRefusalExt, refuse};
-use crate::stage::{is_directory, is_file};
 use crate::supervisor::{self, Launcher, System};
 
 #[cfg(test)]

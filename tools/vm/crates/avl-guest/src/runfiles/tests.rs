@@ -54,7 +54,7 @@ fn every_line_becomes_its_runfile_under_the_digest_and_a_second_build_reuses_it(
     assert_eq!(document["command"], "runfiles-tree");
     let data = &document["data"];
     let digest = data["digest"].as_str().unwrap().to_owned();
-    assert!(avl_wire::stage::is_sha256_hex(&digest), "{digest}");
+    assert!(avl_wire::digest::is_sha256_hex(&digest), "{digest}");
     let root = destination.join(&digest);
     assert_eq!(data["root"], root.to_string_lossy().as_ref());
     assert_eq!(data["entries"], 5);

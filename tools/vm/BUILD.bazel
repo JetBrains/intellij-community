@@ -31,7 +31,7 @@
 #                                test helpers, never a dependency of shipped code
 #
 # The boundaries are of different kinds, which is worth knowing before adding another: `avl_wire::supervisor`,
-# `avl_wire::stage` and `avl_wire::verb` are shared by the controller and the guest agent and exist to stop them
+# `avl_wire::runfiles` and `avl_wire::verb` are shared by the controller and the guest agent and exist to stop them
 # declaring the contract twice, and `avl-trace-tools`' pack report crosses between them the same way;
 # `avl_wire::runtime` is the Rust half of the descriptor `air_ui_daemon_runtime.bzl` writes; `avl_wire::daemon`,
 # `avl-trace` and `avl_trace_tools::viewer` are the Rust half of a contract whose far end is Kotlin or the docs

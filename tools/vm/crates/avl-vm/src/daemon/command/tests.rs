@@ -499,10 +499,10 @@ fn the_phase_table_aligns_its_rows_and_rounds_to_a_tenth() {
 // The slowest guest call is rendered beside the guest column it breaks down, and only when the phase made one.
 #[test]
 fn the_phase_table_names_the_slowest_guest_call_beside_the_guest_column() {
-    let skeleton = "tart exec … /vm/agent stage";
+    let skeleton = "tart exec … /vm/agent ide-gc";
     let table = render_phase_table(&[
         Timing {
-            name: "stage-runtime".to_owned(),
+            name: "ide-gc".to_owned(),
             elapsed_ms: 11_000,
             guest_calls: 2,
             guest_ms: 10_900,

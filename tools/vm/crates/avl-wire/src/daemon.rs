@@ -153,7 +153,7 @@ pub fn match_route(method: &str, path: &str) -> Option<Route> {
     {
         return Some(endpoint.route);
     }
-    if method == "PUT" && path.strip_prefix("/jars/").is_some_and(crate::stage::is_sha256_hex) {
+    if method == "PUT" && path.strip_prefix("/jars/").is_some_and(crate::digest::is_sha256_hex) {
         return Some(Route::UploadJar);
     }
     // One segment, so a traversal in the iteration id never reaches the results handler.

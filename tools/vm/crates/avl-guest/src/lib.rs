@@ -1,5 +1,4 @@
-//! The guest half: the run supervisor, the runtime stager, the lane IDE contexts, the image and guest verbs, and
-//! the agent binary.
+//! The guest half: the run supervisor, the lane IDE contexts, the image and guest verbs, and the agent binary.
 //!
 //! One static binary. The controller pushes it into the guest and invokes it over the one exec channel each
 //! hypervisor offers. The reason it is a typed binary is that every silent defect the controller has had lived on
@@ -7,12 +6,11 @@
 //! hand-maintained lists disagreed about.
 //!
 //! The verbs do not collide: `start|supervise|status|active|log|cancel` are the run supervisor's,
-//! `stage|stage-check|gc` are the stager's, `provision-image|validate-image` build the macOS golden
-//! image, `validate-guest` proves a Linux worker, and `trace-pack-ready` zips the trace bundles that finished since
-//! the last pull with `air-trace pack`'s own code. `relay` bridges its standard streams to a guest loopback port,
-//! which is how the controller reaches the UI daemon. `read-file` copies one file to its standard output unchanged,
-//! which is how the controller pulls a file. `runfiles-tree` builds the runfiles tree of a host MANIFEST, for a
-//! Windows host that writes no tree.
+//! `provision-image|validate-image` build the macOS golden image, `validate-guest` proves a Linux worker, and
+//! `trace-pack-ready` zips the trace bundles that finished since the last pull with `air-trace pack`'s own code.
+//! `relay` bridges its standard streams to a guest loopback port, which is how the controller reaches the UI daemon.
+//! `read-file` copies one file to its standard output unchanged, which is how the controller pulls a file.
+//! `runfiles-tree` builds the runfiles tree of a host MANIFEST, for a Windows host that writes no tree.
 //! `ide-prepare`, `ide-launch` and `ide-gc` own the contexts of the lane IDE, whose process is a supervisor run.
 //! `lane-daemon` serves the control channel of the lane daemon in the run slot: it owns the lane services and the lane
 //! IDE, and it streams the records of each iteration.
@@ -29,6 +27,7 @@
 
 mod cli;
 mod clock;
+mod fs;
 mod ide;
 mod image;
 mod lane;
@@ -38,7 +37,6 @@ mod relay;
 mod reply;
 mod runfiles;
 mod shape;
-mod stage;
 mod step;
 mod supervisor;
 #[cfg(test)]
