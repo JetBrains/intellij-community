@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -49,6 +50,15 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * The extension of the new Home file.
+ * [WelcomeNewEmptyFileAction] uses it when the data context has no [CommonDataKeys.LANGUAGE].
+ * For example, the language plugin is disabled.
+ */
+@ApiStatus.Internal
+@JvmField
+val WELCOME_NEW_FILE_EXTENSION: DataKey<String> = DataKey.create("WelcomeNewFileExtension")
+
 internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -64,7 +74,7 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
     context.filePrefix = "Untitled"
     context.language = CommonDataKeys.LANGUAGE.getData(e.dataContext)
     if (context.language == null) {
-      context.fileExtension = "txt"
+      context.fileExtension = WELCOME_NEW_FILE_EXTENSION.getData(e.dataContext) ?: "txt"
     }
     else {
       context.prepareText = false
