@@ -238,16 +238,7 @@ class NioFileTreeModel(
       fun isValid(path: Path?): Boolean = path != null && Files.exists(path)
 
       fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
-        val list = descriptor.roots
-          .mapNotNull { vf ->
-            try {
-              vf.toNioPath()
-            }
-            catch (_: UnsupportedOperationException) {
-              null
-            }
-          }
-          .filter { isValid(it) }
+        val list = NioFileChooserUtil.getNioRoots(descriptor).filter { isValid(it) }
         return if (list.isEmpty() && descriptor.isShowFileSystemRoots) null else list
       }
     }

@@ -130,10 +130,12 @@ jvm_library(
         # do not sort,
         ":ide-fileChooser-universal-tests",
         "//platform/platform-impl/file-chooser-universal:ide-fileChooser-universal_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/ide-core",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/util/progress",

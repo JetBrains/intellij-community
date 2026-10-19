@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +60,7 @@ public class FileChooserDescriptor {
   private @NlsContexts.Label String myDescription;
   private boolean myHideIgnored = true;
   private final List<VirtualFile> myRoots = new ArrayList<>();
+  private final List<Path> myPathRoots = new ArrayList<>();
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
@@ -110,6 +112,7 @@ public class FileChooserDescriptor {
     myDescription = d.getDescription();
     myHideIgnored = d.isHideIgnored();
     myRoots.addAll(d.getRoots());
+    myPathRoots.addAll(d.getPathRoots());
     myShowFileSystemRoots = d.isShowFileSystemRoots();
     myTreeRootVisible = d.isTreeRootVisible();
     myShowHiddenFiles = d.isShowHiddenFiles();
@@ -197,6 +200,38 @@ public class FileChooserDescriptor {
     if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myRoots.clear();
     myRoots.addAll(roots);
+    return this;
+  }
+
+  /**
+   * Returns the roots that {@link #withPathRoots} set.
+   */
+  @ApiStatus.Experimental
+  public @NotNull List<@NotNull Path> getPathRoots() {
+    return Collections.unmodifiableList(myPathRoots);
+  }
+
+  /**
+   * @see #withPathRoots(List)
+   */
+  @ApiStatus.Experimental
+  public FileChooserDescriptor withPathRoots(Path @NotNull ... roots) {
+    return withPathRoots(Arrays.asList(roots));
+  }
+
+  /**
+   * Sets the roots as NIO paths.
+   * <p>
+   * A path root does not need a {@link VirtualFile}. The caller can pass a root
+   * that the VFS has not loaded yet, for example a path in a remote environment.
+   * The IDE file chooser combines these roots with {@link #getRoots()}.
+   * The native choosers ignore them.
+   */
+  @ApiStatus.Experimental
+  public FileChooserDescriptor withPathRoots(@NotNull List<? extends Path> roots) {
+    if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
+    myPathRoots.clear();
+    myPathRoots.addAll(roots);
     return this;
   }
 

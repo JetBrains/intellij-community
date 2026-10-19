@@ -308,7 +308,7 @@ object UniversalFileChooser {
       tabbedPane = JBTabbedPane()
       val projectContrib = projectContributor(project, contributors)
       val localContrib = localContributor(contributors)
-      val rootOwners = rootOwnerContributors(descriptor.roots.mapNotNull { it.toNioPathOrNull() }, contributors)
+      val rootOwners = rootOwnerContributors(NioFileChooserUtil.getNioRoots(descriptor), contributors)
       val restrictedContributors: Set<UniversalFileChooserContributor>
       effectiveContributors = if (rootOwners.isNotEmpty()) {
         // The descriptor names the roots to show. The tree shows only these roots, so a tab that owns
