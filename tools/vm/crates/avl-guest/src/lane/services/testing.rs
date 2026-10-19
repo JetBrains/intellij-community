@@ -13,7 +13,7 @@ use crate::lane::package::Packages;
 /// The lane-service token of every test.
 pub(crate) const TOKEN: &str = "lane-service-test-token";
 
-/// The staged JBR `java` that the fixture packages name.
+/// The `java` of the distribution's JBR that the fixture packages name.
 pub(crate) const FIXTURE_JAVA: &str = "/home/admin/air-lane/jbr/bin/java";
 
 /// The fixture agent jar of `testdata/lane-services`.

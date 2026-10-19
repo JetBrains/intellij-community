@@ -355,8 +355,8 @@ impl LaneContext<'_> {
     }
 
     /// `acp.json` with one `agent_servers` entry for each local agent, in document order, or `None` for a lane without
-    /// one. The tokens of an entry resolve to the staged `java` and to the jar copy. A controlled agent also gets the
-    /// control environment of its owner.
+    /// one. The tokens of an entry resolve to the `java` of the distribution's JBR and to the jar copy. A controlled
+    /// agent also gets the control environment of its owner.
     fn acp_json(&self, jar: &Path) -> Option<String> {
         let entries: Vec<String> = self
             .document

@@ -1,8 +1,8 @@
 //! The fake ACP agent package that the lane's registry serves: one archive per platform and its checksum.
 //!
 //! Each archive holds the agent jar as `lib/acp-scenario-agent.jar`. A POSIX archive also holds the launcher
-//! `bin/acp-scenario-agent`, which runs the staged JBR's `java` by its absolute path. A Windows archive has no launcher,
-//! because its manifest command is `java.exe` itself.
+//! `bin/acp-scenario-agent`, which runs the `java` of the distribution's JBR by its absolute path. A Windows archive has
+//! no launcher, because its manifest command is `java.exe` itself.
 
 use std::fs;
 use std::path::Path;
@@ -49,8 +49,8 @@ struct Archive {
 }
 
 impl Packages {
-    /// Packs the agent jar at `agent_jar` for every platform. `java` is the absolute path of the staged JBR's
-    /// `bin/java`, which the POSIX launcher runs. The Windows command is `java.exe` beside it.
+    /// Packs the agent jar at `agent_jar` for every platform. `java` is the absolute path of `bin/java` of the
+    /// distribution's JBR, which the POSIX launcher runs. The Windows command is `java.exe` beside it.
     pub(crate) fn assemble(agent_jar: &Path, java: &Path) -> Result<Self, AgentRefusal> {
         let posix_java = absolute_text(java)?;
         let windows_java = absolute_text(&java.with_file_name("java.exe"))?;
