@@ -27,6 +27,35 @@ class ProjectFilesRestorerExclusionsTest {
   }
 
   @Test
+  fun `the build roots of a nested build are ignored`() {
+    createFile("app/build.gradle.kts", "")
+    createFile("app/buildSrc/build/classes/A.class", "baseline")
+    createFile("lib/pom.xml", "<project />")
+
+    ProjectFilesRestorer(projectDir).use { restorer ->
+      restorer.captureSnapshot()
+
+      createFile("app/.gradle/8.14/fileHashes.lock", "lock")
+      createFile("app/build/classes/Main.class", "compiled")
+      createFile("app/buildSrc/build/classes/A.class", "changed")
+      createFile("lib/target/test-classes/Test.class", "compiled")
+
+      assertFalse(restorer.hasChanges())
+    }
+  }
+
+  @Test
+  fun `a nested build directory with no build script is tracked`() {
+    ProjectFilesRestorer(projectDir).use { restorer ->
+      restorer.captureSnapshot()
+
+      createFile("src/main/java/com/example/build/Tool.java", "class Tool {}")
+
+      assertTrue(restorer.hasChanges())
+    }
+  }
+
+  @Test
   fun `project metadata outside default exclusions is tracked`() {
     ProjectFilesRestorer(projectDir).use { restorer ->
       restorer.captureSnapshot()

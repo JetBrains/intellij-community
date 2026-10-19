@@ -4,13 +4,14 @@ package com.intellij.ide.starter.testContextCache.utils
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 /**
  * Creates a reusable snapshot of tracked project files and restores them between UI tests.
  *
  * Project metadata inside the project directory, including `.idea`, is tracked by default.
- * The top-level roots in [excludedDirectories] are not tracked. By default these are the generated build roots,
+ * The build roots in [excludedDirectories] are not tracked. By default these are the generated build roots,
  * because their contents are not part of the asserted test state and may contain short-lived temporary files.
  */
 class ProjectFilesRestorer(
@@ -36,7 +37,7 @@ class ProjectFilesRestorer(
 
     val snapshot = FileTreeSnapshot.capture(
       root = projectPath,
-      shouldTrackDirectory = { relativePath -> !isUnderExcludedProjectRoot(relativePath) },
+      shouldTrackDirectory = { relativePath -> !isExcludedBuildRoot(relativePath) },
       base = base?.let { checkNotNull(it.snapshot) { "The base snapshot is not captured for ${it.projectPath}" } },
     )
     this.snapshot = snapshot
@@ -85,8 +86,16 @@ class ProjectFilesRestorer(
     }
   }
 
-  private fun isUnderExcludedProjectRoot(relativePath: Path): Boolean {
-    return relativePath.nameCount > 0 && relativePath.getName(0).toString() in excludedDirectories
+  /**
+   * A project can hold nested builds, so an excluded root can be at any depth. A nested `build` or `target` is a build
+   * root only next to a build script or in `buildSrc`, because a source package can have the same name.
+   */
+  private fun isExcludedBuildRoot(relativePath: Path): Boolean {
+    val name = relativePath.fileName?.toString() ?: return false
+    if (name !in excludedDirectories) return false
+    val parent = relativePath.parent ?: return true
+    return name.startsWith(".") || parent.fileName.toString() == "buildSrc" ||
+           BUILD_SCRIPTS.any { projectPath.resolve(parent).resolve(it).exists() }
   }
 
   companion object {
@@ -102,5 +111,7 @@ class ProjectFilesRestorer(
      * [com.intellij.ide.starter.testContextCache.CachedTestContext.restorePreparedProjectFiles].
      */
     val DEFAULT_EXCLUDED_DIRECTORIES: Set<String> = setOf(".kotlin", ".gradle", "build", "target")
+
+    private val BUILD_SCRIPTS = listOf("build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "pom.xml")
   }
 }
