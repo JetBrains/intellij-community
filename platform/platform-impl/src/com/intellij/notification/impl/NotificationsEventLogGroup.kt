@@ -27,7 +27,7 @@ object NotificationsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("notifications", 72)
+  val GROUP: EventLogGroup = EventLogGroup("notifications", 73)
 
   @JvmField
   val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
@@ -81,6 +81,9 @@ object NotificationsEventLogGroup : CounterUsagesCollector() {
 
   @JvmField
   val BALLOON_COLLAPSED: VarargEventId = registerNotificationEvent("balloon.collapsed")
+
+  @JvmField
+  val SOUND_PLAYED: VarargEventId = registerNotificationEvent("sound.played", DISPLAY_TYPE, SEVERITY)
 
   private fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
     return GROUP.registerVarargEvent(
