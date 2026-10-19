@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,7 +20,6 @@ import com.intellij.ui.SimpleTextAttributes
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-@IJIgnore(issue = "IJI-3451")
 internal class ChangesBrowserConflictsNodeTest : ChangesViewTestBase() {
   fun `test renders contributed actions using update presentation order`() {
     val fixture = createConflictsNode("sample.txt")
