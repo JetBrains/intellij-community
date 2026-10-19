@@ -46,6 +46,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
       TestSuiteStartedEvent startedEvent = new TestSuiteStartedEvent(suiteName,
                                                                      locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
                                                                      metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
+      startedEvent.setRetrySuite(Boolean.parseBoolean(attributes.getValue(TestResultsXmlFormatter.ATTR_RETRY_SUITE)));
       myProcessor.onSuiteStarted(startedEvent);
       mySuites.push(suiteName);
     }

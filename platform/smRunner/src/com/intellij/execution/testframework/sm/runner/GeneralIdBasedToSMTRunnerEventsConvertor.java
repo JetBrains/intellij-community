@@ -134,6 +134,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node node = findNode(startedNodeEvent, false);
     if (node != null) {
       SMTestProxy testProxy = node.getProxy();
+      if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent) {
+        testProxy.setRetrySuite(suiteStartedEvent.isRetrySuite());
+      }
       final String metainfo = startedNodeEvent.getMetainfo();
       if (metainfo != null) {
         // we change the meta-information if its value is different from the default value `null`
@@ -168,6 +171,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
+    if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent) {
+      childProxy.setRetrySuite(suiteStartedEvent.isRetrySuite());
+    }
     childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
     childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;

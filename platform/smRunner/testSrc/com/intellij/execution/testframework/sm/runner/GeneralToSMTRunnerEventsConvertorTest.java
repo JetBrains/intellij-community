@@ -798,6 +798,42 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   @Test
+  public void testRetrySuiteSurvivesHistoryRoundTrip() throws Exception {
+    mySuite.setSuiteStarted();
+    var retrySuite = createSuiteProxy("retry", mySuite);
+    retrySuite.setRetrySuite(true);
+    retrySuite.setSuiteStarted();
+    retrySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("failure", "trace", false);
+    var last = createTestProxy("last", retrySuite);
+    last.setStarted();
+    last.setFinished();
+    retrySuite.setFinished();
+    mySuite.setFinished();
+
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    var root = new SMTestProxy.SMRootTestProxy();
+    var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
+    try {
+      processor.onStartTesting();
+      ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), processor);
+      processor.onFinishTesting();
+
+      SMTestProxy retry = root.getChildren().getFirst();
+      assertTrue(retry.isRetrySuite());
+      assertTrue(retry.isPassed());
+      assertTrue(retry.getChildren().getFirst().isDefect());
+      assertTrue(retry.getChildren().getLast().isPassed());
+      assertTrue(root.isPassed());
+    }
+    finally {
+      Disposer.dispose(processor);
+      Disposer.dispose(root);
+    }
+  }
+
+  @Test
   public void testPreserveFullOutputAfterImport() throws Exception {
     runInEdtAndWait(() -> {
 

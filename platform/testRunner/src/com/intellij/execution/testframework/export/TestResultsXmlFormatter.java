@@ -55,6 +55,7 @@ public final class TestResultsXmlFormatter {
   public static final @NonNls String TOTAL_STATUS = "total";
   private static final @NonNls String ATTR_FOORTER_TEXT = "footerText";
   public static final @NonNls String ATTR_CONFIG = "isConfig";
+  public static final @NonNls String ATTR_RETRY_SUITE = "isRetrySuite";
   public static final @NonNls String STATUS_PASSED = "passed";
   public static final @NonNls String STATUS_FAILED = "failed";
   public static final @NonNls String STATUS_ERROR = "error";
@@ -207,6 +208,9 @@ public final class TestResultsXmlFormatter {
     }
     if (node.isConfig()) {
       attrs.put(ATTR_CONFIG, "true");
+    }
+    if (node.isRetrySuite()) {
+      attrs.put(ATTR_RETRY_SUITE, "true");
     }
     boolean started = false;
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;

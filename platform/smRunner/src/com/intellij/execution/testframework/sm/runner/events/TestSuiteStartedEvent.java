@@ -16,10 +16,22 @@
 package com.intellij.execution.testframework.sm.runner.events;
 
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
+  private boolean myRetrySuite;
+
+  @ApiStatus.Internal
+  public boolean isRetrySuite() {
+    return myRetrySuite;
+  }
+
+  @ApiStatus.Internal
+  public void setRetrySuite(boolean retrySuite) {
+    myRetrySuite = retrySuite;
+  }
 
   public TestSuiteStartedEvent(@Nullable String name,
                                @Nullable String id,
