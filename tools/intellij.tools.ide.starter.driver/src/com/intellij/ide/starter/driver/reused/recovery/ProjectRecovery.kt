@@ -175,7 +175,24 @@ private fun Driver.waitForProjectModelFilesLoaded(project: Project) {
   }
 }
 
+/**
+ * Waits until each global workspace model has applied its `jdk.table.xml` and global library files.
+ *
+ * An IDE that starts from the global workspace model cache loads those files 5 s later, in the background. That
+ * load replaces the SDKs that a test adds before it.
+ */
+private fun Driver.waitForGlobalModelFilesLoaded() {
+  waitFor(
+    message = "Global model files are loaded",
+    timeout = INDEXES_TIMEOUT,
+    errorMessage = { "Global model files are not loaded" },
+  ) {
+    service<GlobalWorkspaceModelRegistry>(RdTarget.BACKEND).getGlobalModels().all { it.getJpsSyncJob().isCompleted() }
+  }
+}
+
 internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
+  waitForGlobalModelFilesLoaded()
   val projects = getOpenProjects(RdTarget.BACKEND)
   if (projects.isEmpty()) {
     logOutput("[ReusedRecovery] No open projects; skipping pending indexing work wait before $reason")
@@ -218,6 +235,21 @@ internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
 private fun Driver.updateLastProjectPath() {
   logOutput("[ReusedRecovery] Updating RecentProjectsManager last project path")
   utility<RecentProjectsManagerBase>().getInstanceEx().updateLastProjectPath()
+}
+
+@Remote("com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry", rdTarget = RdTarget.BACKEND)
+private interface GlobalWorkspaceModelRegistry {
+  fun getGlobalModels(): List<GlobalWorkspaceModel>
+}
+
+@Remote("com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel", rdTarget = RdTarget.BACKEND)
+private interface GlobalWorkspaceModel {
+  fun getJpsSyncJob(): Job
+}
+
+@Remote("kotlinx.coroutines.Job", rdTarget = RdTarget.BACKEND)
+private interface Job {
+  fun isCompleted(): Boolean
 }
 
 @Remote("com.intellij.workspaceModel.ide.JpsProjectLoadingManager", rdTarget = RdTarget.BACKEND)
