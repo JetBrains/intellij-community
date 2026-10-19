@@ -20,6 +20,7 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -52,6 +53,8 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.DiagnosticsToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.IdeScriptToolset" />
+    <registryKey defaultValue="false" description="Enable the MCP tool that runs Kotlin scripts in the IDE process"
+                 key="mcp.ide.script.toolset.enabled" restartRequired="true"/>
     <buildProgressListenerRegistrar implementation="com.intellij.mcpserver.toolsets.util.RunConfigurationBuildListenerRegistrar"/>
   </extensions>
 </idea-plugin>
