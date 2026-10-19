@@ -400,10 +400,12 @@ route exists. No lane time is measured for this route.
 The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
 lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
 `//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
-the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. `-Dair.lane.ide.config` names
-that distribution's `_ide_config` companion target rather than the distribution itself. Beside it the descriptor
-carries the guest agent and the IDE flags file. The IDE runs on `jbr/` of the distribution, the production JBR, and
-gets JCEF from the JCEF plugin of the distribution.
+the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `devDist.config`
+of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
+The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
+it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and
+`-Dair.test.<name>.runtime`. The IDE runs on `jbr/` of the distribution, the production JBR, and gets JCEF from the
+JCEF plugin of the distribution.
 
 `run` resolves the selector with bt's resolution logic. It runs `bazel build` on the host against
 its warm cache, then it launches the built test stub in the guest. The launch environment is the one

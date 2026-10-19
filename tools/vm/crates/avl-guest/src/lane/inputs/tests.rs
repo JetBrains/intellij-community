@@ -38,8 +38,9 @@ fn the_distribution_home_and_its_jbr_come_from_the_ide_config() {
     assert!(refusal.message.starts_with("'home.path' is missing from"), "{}", refusal.message);
 }
 
-// A flag `-Dair.test.<name>.runtime` names the manifest of one CLI runtime. Its identity hashes the manifest, the
-// interpreter and the lock, in that order, and its command is the interpreter and the entry.
+// A flag `-Dair.test.<name>.runtime` names the manifest of one CLI runtime, and the recorder flag beside it declares no
+// runtime. The identity of a runtime hashes the manifest, the interpreter and the lock, in that order, and its command
+// is the interpreter and the entry.
 #[test]
 fn a_runtime_flag_names_the_manifest_of_one_cli_runtime() {
     let root = TempDir::new().unwrap();
@@ -55,7 +56,7 @@ fn a_runtime_flag_names_the_manifest_of_one_cli_runtime() {
     let codex_manifest = "version=0.9\npackage=_main/tools/codex/bin\nentry=codex\nlock=_main/MODULE.bazel\n";
     write(&runfiles.join("_main/tools/codex/runtime.properties"), codex_manifest, false);
     let flags = [
-        "-Dair.lane.ide.flags=${RUNFILES_ROOT}/_main/ide/flags.txt".to_owned(),
+        "-Dair.trace.recorder=${RUNFILES_ROOT}/community+/tools/vm/air-trace-record".to_owned(),
         "-Dair.test.pi.runtime=${RUNFILES_ROOT}/_main/tools/pi/runtime.properties".to_owned(),
         "-Dair.test.codex.runtime=${RUNFILES_ROOT}/_main/tools/codex/runtime.properties".to_owned(),
     ];
