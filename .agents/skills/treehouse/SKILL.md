@@ -1,7 +1,7 @@
 ---
 name: treehouse
 description: Safely acquire, inspect, and return leased Treehouse workspaces.
-allowed-tools: Bash(../../../community/tools/treehouse.cmd read:*), Bash(../../../community/tools/treehouse.cmd write:*), Bash(../../../tools/treehouse.cmd read:*), Bash(../../../tools/treehouse.cmd write:*), Bash(./community/tools/treehouse.cmd read:*), Bash(./community/tools/treehouse.cmd write:*), Bash(./tools/treehouse.cmd read:*), Bash(./tools/treehouse.cmd write:*)
+allowed-tools: Bash(bd lease:*), Bash(../../../community/tools/treehouse.cmd read:*), Bash(../../../community/tools/treehouse.cmd write:*), Bash(../../../tools/treehouse.cmd read:*), Bash(../../../tools/treehouse.cmd write:*), Bash(./community/tools/treehouse.cmd read:*), Bash(./community/tools/treehouse.cmd write:*), Bash(./tools/treehouse.cmd read:*), Bash(./tools/treehouse.cmd write:*)
 ---
 
 # Treehouse workspace lifecycle
@@ -11,6 +11,28 @@ Use this skill when a task needs an isolated workspace. Read
 only the leased lifecycle of Treehouse: `read status`, `write acquire`, and `write return`. It
 never installs Treehouse, and it does not expose `enter`, `init`, `update`, `prune`, `destroy`, or
 `--force`.
+
+## Use `bd lease` when Branch Deck is installed
+
+When `bd lease --help` exits with 0, use `bd lease` of [Branch Deck](https://github.com/develar/branch-deck)
+instead of the wrapper. Its pool reuses a free workspace after a rewrite of `master`, so a get writes only the diff
+between two commits. Never install Branch Deck. Without it, use the wrapper of the next sections.
+
+```bash
+bd lease status
+bd lease get --holder <session-id>
+bd lease return --workspace <leased-path>
+```
+
+- `get` runs from the repository root. Its JSON gives `path` and `lease_id`. The workspace is detached at the exact
+  `HEAD` of the caller, and the `.worktreeinclude` files are copied into it.
+- Land the commits with `bd -C <original checkout> pick --from <leased-path> --follow`, then return the lease.
+- `return` runs outside the workspace. It refuses a workspace with local changes, with commits that the source branch
+  does not hold by content, or with a process inside. It stops only the Bazel servers of the workspace itself.
+- Pass `--confirm-preserved` only after you checked that every change is preserved elsewhere.
+  The return then discards the local changes and the commits that it reported.
+- A `bd lease` workspace goes back with `bd lease return`. A Treehouse workspace goes back with the wrapper.
+- `bd lease status` reads only the pool state. The path that it reports is for inspection, not for work.
 
 ## Run the CLI
 
