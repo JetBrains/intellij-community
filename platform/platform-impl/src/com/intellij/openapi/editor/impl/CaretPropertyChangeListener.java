@@ -2,16 +2,18 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
 final class CaretPropertyChangeListener implements PropertyChangeListener {
-  private final EditorImpl myEditor;
-  private final Collection<CaretImpl> myCarets;
+  private final @NotNull EditorImpl myEditor;
+  private final @NotNull @Unmodifiable Collection<? extends CaretImpl> myCarets;
 
-  CaretPropertyChangeListener(EditorImpl editor, Collection<CaretImpl> carets) {
+  CaretPropertyChangeListener(@NotNull EditorImpl editor, @NotNull @Unmodifiable Collection<? extends CaretImpl> carets) {
     myEditor = editor;
     myCarets = carets;
   }

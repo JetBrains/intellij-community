@@ -1740,21 +1740,15 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
   }
 
-  final class SnapshotPositionMarker extends SnapshotRangeMarkerImpl implements PositionMarker {
+  private final class SnapshotPositionMarker extends SnapshotRangeMarkerImpl implements PositionMarker {
     private final SnapshotCaretMarkerStorage storage;
-    private final MarkerSpec spec;
     private int offsetBeforeChange;
 
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset) {
-      this(storage, offset, storage.nextMarkerId(), storage.positionSpec());
-    }
-
-    private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset, long markerId, @NotNull MarkerSpec spec) {
-      super(myDocument, storage.getRootStore(), markerId, spec, new TextRange(offset, offset));
+      super(myDocument, storage.getRootStore(), storage.nextMarkerId(), storage.positionSpec(), new TextRange(offset, offset));
       this.storage = storage;
-      this.spec = spec;
       offsetBeforeChange = offset;
-      storage.add(this, offset, offset, spec);
+      storage.add(this, offset, offset, storage.positionSpec());
     }
 
     private void beforeDocumentChange() {
@@ -1784,7 +1778,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       }
       newOffset = DocumentUtil.alignToCodePointBoundary(event.getDocument(), newOffset);
       if (newOffset != getStartOffset()) {
-        storage.relocate(this, newOffset, spec);
+        storage.relocate(this, newOffset, storage.positionSpec());
       }
 
       myLogicalColumnAdjustment = 0;
