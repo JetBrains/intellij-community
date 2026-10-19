@@ -93,9 +93,8 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
     private fun readAndDeserializeJson(openerState: KotlinProjectOpenerState, receiptPath: Path): KotlinProjectOpenEvent {
         val text = receiptPath.readText()
 
-        val json = Json { ignoreUnknownKeys = true }
         val event = try {
-            json.decodeFromString<KotlinProjectOpenEvent>(text)
+            KotlinProjectOpenerJson.decodeFromString<KotlinProjectOpenEvent>(text)
         } catch (e: Exception) {
             Logger.getInstance(this::class.java).error(
                 KotlinExceptionWithAttachments(e.message, e)
@@ -115,6 +114,8 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
         return PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
     }
 }
+
+private val KotlinProjectOpenerJson = Json { ignoreUnknownKeys = true }
 
 @Service(Level.PROJECT)
 @State(
