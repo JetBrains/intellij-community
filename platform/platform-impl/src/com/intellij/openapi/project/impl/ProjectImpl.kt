@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
@@ -435,5 +437,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
 
     asyncPreloadServiceScope.cancel()
     activityScope.cancel()
+  }
+
+  override fun isWelcomeProject(): Boolean {
+    @Suppress("DEPRECATION")
+    return ProjectFrameCapabilitiesService.getInstanceSync().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
   }
 }
