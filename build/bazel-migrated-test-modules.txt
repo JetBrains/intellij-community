@@ -33,6 +33,7 @@ intellij.gradle.backend.tests
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.toolingExtension.tests
+intellij.groovy.propertyBased.tests
 intellij.groovy.structuralSearch.tests
 intellij.groovy.tests
 intellij.groovy.uast.tests
@@ -63,6 +64,7 @@ intellij.java.jshell.console.tests
 intellij.java.jshell.protocol.tests
 intellij.java.manifest.tests
 intellij.java.mcp.tests
+intellij.java.propertyBased.tests
 intellij.java.rareRefactorings.tests
 intellij.java.structuralSearch.tests
 intellij.java.terminal.tests
@@ -214,6 +216,7 @@ intellij.platform.versionDownloadManager.tests
 intellij.platform.whatsNew.tests
 intellij.platform.workspace.jps.tests
 intellij.platform.workspace.storage.tests
+intellij.properties.propertyBased.tests
 intellij.properties.tests
 intellij.python.community.execService.tests
 intellij.python.community.junit5Tests.framework
