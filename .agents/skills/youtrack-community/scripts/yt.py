@@ -11,6 +11,10 @@ The token is resolved from, in order of precedence:
   2. $YOUTRACK_TOKEN
   3. $YOUTRACK_TOKEN_OP_PATH                 (read via the 1Password CLI)
 
+Read-only commands work without a token on public resources (omitting the
+Authorization header) and skip $YOUTRACK_TOKEN_OP_PATH so public reads do not
+trigger an interactive 1Password prompt. Mutating commands, `auth check`,
+`user me`, and `command apply --dry-run` / `link add --dry-run` require a token.
 The token is never printed, logged, or written to disk.
 
 Exit codes: 0 ok, 1 error, 2 usage, 3 auth, 4 not found, 5 validation,
@@ -172,11 +176,23 @@ class TransientError(YtError):
     exit_code = EXIT_TRANSIENT
 
 
-def error_for_status(status: int, message: str) -> YtError:
+UNAUTHENTICATED_HINT = (
+    " (request was unauthenticated; if this resource has restricted visibility, "
+    f"provide a token via --token-op-path, ${ENV_TOKEN}, or ${ENV_TOKEN_OP_PATH})"
+)
+
+
+def error_for_status(
+    status: int, message: str, *, authenticated: bool = True
+) -> YtError:
     """Map an HTTP status onto a typed error so callers can branch on exit code."""
     if status in (401, 403):
+        if not authenticated:
+            message = f"{message}{UNAUTHENTICATED_HINT}"
         return AuthError(message)
     if status == 404:
+        if not authenticated:
+            message = f"{message}{UNAUTHENTICATED_HINT}"
         return NotFoundError(message)
     if status == 400:
         return ValidationError(message)
@@ -279,8 +295,14 @@ def read_token_from_op(op_path: str) -> str:
     return token
 
 
-def resolve_token(op_path_flag: str | None) -> str:
-    """Resolve the API token, most-explicit source first."""
+def resolve_token(op_path_flag: str | None, *, required: bool = True) -> str | None:
+    """Resolve the API token, most-explicit source first.
+
+    When `required` is False (read-only commands and local dry-runs), an
+    explicit `--token-op-path` flag and `$YOUTRACK_TOKEN` are still honoured,
+    but `$YOUTRACK_TOKEN_OP_PATH` is skipped so public reads do not trigger an
+    interactive 1Password approval prompt.
+    """
     global _RESOLVED_TOKEN
 
     if op_path_flag:
@@ -291,6 +313,9 @@ def resolve_token(op_path_flag: str | None) -> str:
     if env_token:
         _RESOLVED_TOKEN = env_token
         return _RESOLVED_TOKEN
+
+    if not required:
+        return None
 
     env_op_path = os.environ.get(ENV_TOKEN_OP_PATH, "").strip()
     if env_op_path:
@@ -346,7 +371,12 @@ class PinnedRedirectHandler(urllib.request.HTTPRedirectHandler):
 
 
 def fetch_all(
-    path: str, *, token: str, params: dict[str, Any], verbose: bool, page: int = 200
+    path: str,
+    *,
+    token: str | None = None,
+    params: dict[str, Any],
+    verbose: bool,
+    page: int = 200,
 ) -> list[Any]:
     """Page through a collection endpoint until it stops returning full pages.
 
@@ -427,7 +457,7 @@ def request(
     method: str,
     path: str,
     *,
-    token: str,
+    token: str | None = None,
     params: dict[str, Any] | None = None,
     json_body: Any | None = None,
     raw_body: bytes | None = None,
@@ -450,7 +480,8 @@ def request(
         headers["Content-Type"] = "application/json"
     elif content_type:
         headers["Content-Type"] = content_type
-    headers["Authorization"] = f"Bearer {token}"
+    if token is not None:
+        headers["Authorization"] = f"Bearer {token}"
 
     if verbose:
         # Deliberately logs method/URL/body but never headers, which carry the token.
@@ -523,7 +554,11 @@ def request(
                 payload = b""
             finally:
                 exc.close()
-            err = error_for_status(exc.code, describe_error(exc.code, payload))
+            err = error_for_status(
+                exc.code,
+                describe_error(exc.code, payload),
+                authenticated=token is not None,
+            )
             if isinstance(err, TransientError) and retryable and attempt < MAX_RETRIES:
                 last = err
                 if verbose:
@@ -753,7 +788,9 @@ def parse_field_args(field_args: list[str]) -> list[dict[str, Any]]:
     return fields
 
 
-def resolve_project(token: str, short_name: str, verbose: bool) -> dict[str, Any]:
+def resolve_project(
+    token: str | None, short_name: str, verbose: bool
+) -> dict[str, Any]:
     """Look a project up by short name.
 
     Uses /api/admin/projects rather than fetching `<PROJECT>-1`: issue 1 is often
@@ -769,10 +806,11 @@ def resolve_project(token: str, short_name: str, verbose: bool) -> dict[str, Any
     for project in projects:
         if project.get("shortName", "").upper() == short_name.upper():
             return project
-    raise NotFoundError(f"No project with short name {short_name!r}.")
+    hint = UNAUTHENTICATED_HINT if token is None else ""
+    raise NotFoundError(f"No project with short name {short_name!r}.{hint}")
 
 
-def resolve_tag(token: str, name_or_id: str, verbose: bool) -> str:
+def resolve_tag(token: str | None, name_or_id: str, verbose: bool) -> str:
     """Return a tag's internal id, accepting either an id or a name."""
     tags = fetch_all("tags", token=token, params={"fields": F_TAG}, verbose=verbose)
     for tag in tags:
@@ -781,7 +819,8 @@ def resolve_tag(token: str, name_or_id: str, verbose: bool) -> str:
     for tag in tags:
         if tag.get("name", "").lower() == name_or_id.lower():
             return tag["id"]
-    raise NotFoundError(f"No tag named {name_or_id!r}.")
+    hint = UNAUTHENTICATED_HINT if token is None else ""
+    raise NotFoundError(f"No tag named {name_or_id!r}.{hint}")
 
 
 def apply_command(
@@ -1319,39 +1358,63 @@ def cmd_attach_delete(args, token):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument(
-        "--token-op-path",
-        metavar="op://VAULT/ITEM/FIELD",
-        help="Read the API token from 1Password. Takes precedence over "
-        f"${ENV_TOKEN} and ${ENV_TOKEN_OP_PATH}.",
-    )
-    common.add_argument(
-        "--format",
-        choices=("json", "table", "ids"),
-        default="json",
-        help="Output format (default: json).",
-    )
-    common.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Log requests to stderr. Never logs headers, which carry the token.",
-    )
+    # Subparsers must use default=SUPPRESS while the root parser holds the real
+    # defaults; sharing one `parents=[common]` container would otherwise let a
+    # leaf subparser's default clobber flags passed before the subcommand
+    # (e.g. `yt.py --verbose issue get X`).
+    def make_common(*, suppress_defaults: bool) -> argparse.ArgumentParser:
+        p = argparse.ArgumentParser(add_help=False)
+        p.add_argument(
+            "--token-op-path",
+            default=argparse.SUPPRESS if suppress_defaults else None,
+            metavar="op://VAULT/ITEM/FIELD",
+            help="Read the API token from 1Password. Takes precedence over "
+            f"${ENV_TOKEN} and ${ENV_TOKEN_OP_PATH}.",
+        )
+        p.add_argument(
+            "--format",
+            choices=("json", "table", "ids"),
+            default=argparse.SUPPRESS if suppress_defaults else "json",
+            help="Output format (default: json).",
+        )
+        p.add_argument(
+            "--verbose",
+            action="store_true",
+            default=argparse.SUPPRESS if suppress_defaults else False,
+            help="Log requests to stderr. Never logs headers, which carry the token.",
+        )
+        return p
 
-    # `common` is attached to every leaf parser AND to the root, so both
-    # `yt.py --verbose issue get X` and `yt.py issue get X --verbose` work.
-    # argparse would otherwise only accept the trailing form.
+    common = make_common(suppress_defaults=True)
+
+    # `common` is attached to every leaf parser and `root_common` to the root,
+    # so both `yt.py --verbose issue get X` and `yt.py issue get X --verbose`
+    # work.
     parser = argparse.ArgumentParser(
         prog="yt.py",
-        parents=[common],
+        parents=[make_common(suppress_defaults=False)],
         description=f"Command-line client for {BASE_URL}.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     top = parser.add_subparsers(dest="group", required=True)
 
-    def leaf(sub, name, func, help_text, *, dry_run=False, yes=False):
+    def leaf(
+        sub,
+        name,
+        func,
+        help_text,
+        *,
+        dry_run=False,
+        yes=False,
+        auth_required: bool | None = None,
+        dry_run_requires_auth=False,
+    ):
         p = sub.add_parser(name, parents=[common], help=help_text)
-        p.set_defaults(func=func)
+        p.set_defaults(
+            func=func,
+            auth_required=dry_run if auth_required is None else auth_required,
+            dry_run_requires_auth=dry_run_requires_auth,
+        )
         if dry_run:
             p.add_argument(
                 "--dry-run",
@@ -1366,7 +1429,13 @@ def build_parser() -> argparse.ArgumentParser:
     auth = top.add_parser("auth", help="Authentication.").add_subparsers(
         dest="cmd", required=True
     )
-    leaf(auth, "check", cmd_auth_check, "Verify the token works (prints login only).")
+    leaf(
+        auth,
+        "check",
+        cmd_auth_check,
+        "Verify the token works (prints login only).",
+        auth_required=True,
+    )
 
     # issue
     issue = top.add_parser("issue", help="Issues.").add_subparsers(dest="cmd", required=True)
@@ -1422,6 +1491,7 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_command_apply,
         "Apply a command to one or more issues.",
         dry_run=True,
+        dry_run_requires_auth=True,
     )
     p.add_argument("query", help="Command text, e.g. 'State In Review'.")
     p.add_argument(
@@ -1469,7 +1539,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p = leaf(link, "list", cmd_link_list, "List an issue's populated links.")
     p.add_argument("issue")
-    p = leaf(link, "add", cmd_link_add, "Link two issues.", dry_run=True)
+    p = leaf(
+        link,
+        "add",
+        cmd_link_add,
+        "Link two issues.",
+        dry_run=True,
+        dry_run_requires_auth=True,
+    )
     p.add_argument("issue", help="Issue the link starts from.")
     p.add_argument("--type", required=True, help="e.g. 'relates to', 'depends on'.")
     p.add_argument("--target", required=True, help="Issue the link points at.")
@@ -1491,7 +1568,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # user
     user = top.add_parser("user", help="Users.").add_subparsers(dest="cmd", required=True)
-    leaf(user, "me", cmd_user_me, "Show the authenticated user.")
+    leaf(user, "me", cmd_user_me, "Show the authenticated user.", auth_required=True)
     p = leaf(user, "search", cmd_user_search, "Search users.")
     p.add_argument("query")
     p.add_argument("--top", type=int, default=10)
@@ -1507,7 +1584,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     # saved queries
     sq = top.add_parser("saved-queries", parents=[common], help="List saved queries.")
-    sq.set_defaults(func=cmd_saved_queries, group="saved-queries", cmd=None)
+    sq.set_defaults(
+        func=cmd_saved_queries,
+        group="saved-queries",
+        cmd=None,
+        auth_required=False,
+        dry_run_requires_auth=False,
+    )
     sq.add_argument("--top", type=int, default=50)
 
     # attachments
@@ -1533,12 +1616,19 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def needs_auth(args: argparse.Namespace) -> bool:
+    """Return whether the parsed command requires an API token to run."""
+    if getattr(args, "dry_run", False):
+        return bool(getattr(args, "dry_run_requires_auth", False))
+    return bool(getattr(args, "auth_required", False))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
     try:
-        token = resolve_token(args.token_op_path)
+        token = resolve_token(args.token_op_path, required=needs_auth(args))
         result = args.func(args, token)
         if result is not None:
             emit(result, args.format)
