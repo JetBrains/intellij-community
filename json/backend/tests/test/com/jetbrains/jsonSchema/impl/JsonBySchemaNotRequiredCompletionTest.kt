@@ -3,10 +3,22 @@ package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionTestUtil.testBySchema
+import org.junit.jupiter.api.Test
 
 /** Describes all the behavior we cover have for common use cases that configure objects to have field only based on a condition. */
-class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
+@TestApplication
+class JsonBySchemaNotRequiredCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test not required x than it won't complete property x`() {
     assertThatSchema("""
       {
@@ -25,6 +37,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       .hasNoCompletionVariantsAtCaret()
   }
 
+  @Test
   fun `test not required x, y and z, then it will not complete the last of the three fields`() {
     assertThatSchema("""
       {
@@ -80,6 +93,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       .hasNoCompletionVariantsAtCaret()
   }
 
+  @Test
   fun `test with 'if x then not required y' only completes y given that x = false`() {
     assertThatSchema("""
       {
@@ -109,6 +123,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       .hasNoCompletionVariantsAtCaret()
   }
 
+  @Test
   fun `test with 'if x then not required y' inside allOf only completes y given that x = false`() {
     assertThatSchema("""
       {
@@ -142,6 +157,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       .hasNoCompletionVariantsAtCaret()
   }
 
+  @Test
   fun `test 'if a then not required b or if c then not required d'`() {
     assertThatSchema("""
       {
@@ -201,6 +217,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       .hasNoCompletionVariantsAtCaret()
   }
 
+  @Test
   fun `test 'if b then required a or if d then required c'`() {
     assertThatSchema("""
       {
@@ -263,6 +280,7 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
   private fun JsonSchemaAppliedToJsonSetup.hasCompletionVariantsAtCaret(vararg expectedVariants: String): JsonSchemaSetup {
     testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
       testBySchema(
+        myFixture,
         schemaSetup.schemaJson,
         json,
         "someFile.json",

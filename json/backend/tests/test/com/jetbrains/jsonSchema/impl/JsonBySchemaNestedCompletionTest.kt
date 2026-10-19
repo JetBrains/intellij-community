@@ -4,10 +4,23 @@ package com.jetbrains.jsonSchema.impl
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionTestUtil.testBySchema
 import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import org.junit.jupiter.api.Test
 
-class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
+@TestApplication
+class JsonBySchemaNestedCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test simple nested completion`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
@@ -23,6 +36,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test does not complete existing key`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
@@ -40,6 +54,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test that nodes that already exist aren't completed`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
@@ -57,6 +72,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test that nested nodes are not completed if it's not configured`() {
     assertThatSchema("""
       {
@@ -81,6 +97,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test that nested nodes are not completed if the node is isolated`() {
     assertThatSchema("""
       {
@@ -110,6 +127,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test completions can start in isolated regex nodes`() {
     val twoThreePropertyJsonText = """{
             "properties": {
@@ -174,6 +192,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  @Test
   fun `test nested completions stop at an isolated node`() {
     assertThatSchema("""
       {
@@ -244,6 +263,7 @@ class JsonBySchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
   private fun JsonSchemaAppliedToJsonSetup.hasCompletionVariantsAtCaret(vararg expectedVariants: String): JsonSchemaSetup {
     testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
       testBySchema(
+        myFixture,
         schemaSetup.schemaJson,
         json,
         "someFile.json",
