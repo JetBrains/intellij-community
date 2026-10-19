@@ -83,6 +83,13 @@ pub(crate) fn guest_state_dir(settings: &Config) -> String {
     guest_join(&settings.vm_data, "daemon")
 }
 
+/// The state file of the lane daemon in its state directory. It names the protocol, the port, the token and the pid of
+/// the daemon. The start removes the file of the previous daemon before the supervisor start, and the boot poll reads
+/// the file of the new daemon.
+pub(crate) fn guest_state_file(settings: &Config) -> String {
+    guest_join(&guest_state_dir(settings), "daemon.json")
+}
+
 /// The home of the lane daemon: a directory in its state directory. The lane IDE gets it as `idea.dev.project.root`,
 /// and the boot of the lane daemon makes it.
 ///

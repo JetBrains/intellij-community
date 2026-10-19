@@ -483,8 +483,9 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/space/tests.rs (`the_retired_runtime_generations_go_with_one_rm_and_a_failure_is_a_note`)
 
 - The run of the lane daemon starts in its state directory. Before the supervisor start, the daemon start makes that
-  directory and the directory of the guest agent.
+  directory and the directory of the guest agent. Then it removes the state file of the previous daemon.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`the_start_removes_the_state_file_of_the_previous_daemon_before_the_supervisor_start`)
 
 - A run that rules out each of its classes is not a run that matched no class. The controller gives the
   reason of each class, and does not tell the person to look at the selector.
@@ -978,6 +979,11 @@ The daemon's half and the IDE's half of supervision are in
   second result, and gives the name of the failure. The controller must not use the full boot period before
   it reports the second result.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- The boot poll accepts only a state file that names the pid of its run. The supervisor gives that pid. The poll
+  continues while the run has no pid or the file names another pid. A boot period that ends on a file of another pid
+  refuses with `daemon_state_file_foreign`. The refusal gives both pids.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`the_boot_poll_reads_only_the_state_file_of_the_process_of_its_run`)
 
 - A daemon start that fails after the supervisor started its run cancels that run. A start that read the state
   file keeps the daemon record, so `daemon log` still works.

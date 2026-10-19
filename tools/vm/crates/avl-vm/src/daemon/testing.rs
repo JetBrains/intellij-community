@@ -66,6 +66,19 @@ pub(crate) fn df_with_free_kib(kibibytes: &str) -> String {
     format!("Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/disk1 999 1 {kibibytes} 1% /vm/data\n")
 }
 
+/// The pid of the scripted lane daemon: its state file names it, and the supervisor names it for a running run.
+pub(crate) const DAEMON_PID: i32 = 7;
+
+/// The state of a daemon run as the supervisor answers it. A running run names the pid of its child, the lane daemon,
+/// as a real supervisor does.
+pub(crate) fn daemon_run_state(run_id: &str, phase: &str) -> Value {
+    let mut state = run_state(run_id, phase);
+    if phase == "running" {
+        state["pid"] = json!(DAEMON_PID);
+    }
+    state
+}
+
 // --- the fake daemon (HTTP) --------------------------------------------------------------------------------------
 
 /// What the fake daemon answers, and what it was sent. Every field is the suite's to set.
@@ -250,7 +263,7 @@ impl FakeDaemon {
             "protocolVersion": wire::PROTOCOL_VERSION,
             "port": self.port(),
             "token": self.token,
-            "pid": 7,
+            "pid": DAEMON_PID,
             "daemonBootStamp": self.script().boot_stamp,
         })
         .to_string()
@@ -956,7 +969,7 @@ impl DaemonFixture {
         for (verb, phase) in [("start", "running"), ("status", "running"), ("cancel", "finished")] {
             self.on(
                 verb,
-                handler(move |argv, _| Ok(agent_reply(verb, &run_state(argv_value(argv, "--run"), phase)))),
+                handler(move |argv, _| Ok(agent_reply(verb, &daemon_run_state(argv_value(argv, "--run"), phase)))),
             );
         }
         // The runfiles-tree double names the root the guest would build: the digest of the request it was sent.
