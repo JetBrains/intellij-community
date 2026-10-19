@@ -126,6 +126,35 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testFrontMatterIsNotFoldedWhenAPolicyForbidsIt() {
+    MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint().registerExtension(_ -> false, getTestRootDisposable());
+    myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertFalse(foldingDescription, foldingDescription.contains("<fold"));
+  }
+
+  public void testFrontMatterIsNotFoldedWhenOneOfSeveralPoliciesForbidsIt() {
+    var point = MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint();
+    point.registerExtension(_ -> true, getTestRootDisposable());
+    point.registerExtension(_ -> false, getTestRootDisposable());
+    point.registerExtension(_ -> true, getTestRootDisposable());
+    myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertFalse(foldingDescription, foldingDescription.contains("<fold"));
+  }
+
+  public void testFrontMatterIsFoldedWhenEveryPolicyAllowsIt() {
+    var point = MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint();
+    point.registerExtension(_ -> true, getTestRootDisposable());
+    point.registerExtension(_ -> true, getTestRootDisposable());
+    myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertTrue(foldingDescription, foldingDescription.contains("<fold"));
+  }
+
   private void doTest() {
     myFixture.testFolding(getTestDataPath() + "/" + getTestName(true) + ".md");
   }
