@@ -188,8 +188,8 @@ private fun CharSequence.blockQuoteMarkerOffsets(lineStart: Int, lineEnd: Int): 
           if (offset < lineEnd && this@blockQuoteMarkerOffsets[offset] in " \t") offset++
         }
         else -> {
-          val markerEnd = this@blockQuoteMarkerOffsets.listMarkerEnd(offset, lineEnd)
-          if (markerEnd == offset) break
+          val markerEnd = MarkdownLivePreviewUtils.getListMarkerEnd(this@blockQuoteMarkerOffsets, offset, lineEnd)
+          if (markerEnd == offset || markerEnd == lineEnd) break
           offset = this@blockQuoteMarkerOffsets.taskCheckboxEnd(markerEnd, lineEnd)
         }
       }
@@ -201,15 +201,6 @@ private fun CharSequence.taskCheckboxEnd(offset: Int, lineEnd: Int): Int {
   var cursor = offset
   while (cursor < lineEnd && this[cursor] in " \t") cursor++
   return if (cursor + 3 < lineEnd && MarkdownLivePreviewUtils.isCheckbox(this, cursor) && this[cursor + 3] in " \t") cursor + 3 else offset
-}
-
-private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
-  var cursor = offset
-  if (this[cursor] !in "-+*") {
-    while (cursor < lineEnd && this[cursor].isDigit()) cursor++
-    if (cursor == offset || cursor >= lineEnd || this[cursor] !in ".)") return offset
-  }
-  return if (cursor + 1 < lineEnd && this[cursor + 1] in " \t") cursor + 1 else offset
 }
 
 private fun PsiElement.alertType(): MarkdownLivePreviewSpec.AlertType? {

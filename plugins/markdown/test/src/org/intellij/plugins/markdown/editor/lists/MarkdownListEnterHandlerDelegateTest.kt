@@ -31,6 +31,24 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
   fun testNewItemTwoSpacesInMarkerAndDocumentEnd() = doTest()
 
   @Test
+  fun testPreservesLeadingSpacesOnRepeatedPaste() {
+    configureFromFileText("source.md", "```\n<selection>   - item</selection>\n```")
+    executeAction(IdeActions.ACTION_EDITOR_COPY)
+
+    configureFromFileText("target.md", "<!-- paste A1 here -->\n<caret>\n\n<!-- paste A2 here -->")
+    executeAction(IdeActions.ACTION_EDITOR_PASTE)
+
+    val document = editor.document
+    editor.selectionModel.setSelection(document.getLineStartOffset(1), document.getLineEndOffset(1))
+    executeAction(IdeActions.ACTION_EDITOR_COPY)
+    editor.selectionModel.removeSelection()
+    editor.caretModel.moveToOffset(document.getLineStartOffset(2))
+    executeAction(IdeActions.ACTION_EDITOR_PASTE)
+
+    checkResultByText("<!-- paste A1 here -->\n   - item\n   - item<caret>\n<!-- paste A2 here -->")
+  }
+
+  @Test
   fun testNewCheckBoxItem() {
     configureFromFileText("some.md", "- [ ] item<caret>")
     executeAction(IdeActions.ACTION_EDITOR_ENTER)

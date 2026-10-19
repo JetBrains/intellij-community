@@ -282,6 +282,7 @@
     <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
 
     <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
+    <copyPastePostProcessor implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListCopyPastePostProcessor"/>
     <formatting.injectedOptions implementation="org.intellij.plugins.markdown.lang.formatter.MarkdownInjectedFormattingOptionsProvider"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
                           order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
