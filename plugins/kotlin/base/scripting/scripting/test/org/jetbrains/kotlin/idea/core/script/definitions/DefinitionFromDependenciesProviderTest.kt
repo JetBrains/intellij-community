@@ -4,13 +4,18 @@ package org.jetbrains.kotlin.idea.core.script.definitions
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -168,6 +173,52 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         }
 
         assertEquals(listOf("MyTemplate1"), DefinitionFromDependenciesProvider(project).definitionClasses())
+    }
+
+    fun testClasspathGuessInDumbModeReloadsDefinitionsInSmartMode() {
+        runTest(IN_JAR)
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "com.example.Explicit") }
+
+        val definitionsTracker = ScriptDefinitionsModificationTracker.getInstance(project)
+        val definitionsCount = definitionsTracker.modificationCount
+        DumbModeTestUtils.runInDumbModeSynchronously(project) {
+            DefinitionFromDependenciesProvider(project).getTemplateClasspath()
+        }
+        runInEdtAndWait { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
+
+        assertTrue("The end of the dumb mode must reload script definitions", definitionsTracker.modificationCount > definitionsCount)
+    }
+
+    fun testDefaultProjectDoesNotQueryFileIndex() {
+        val defaultProject = ProjectManager.getInstance().defaultProject
+        val settings = KotlinScriptingSettings.getInstance(defaultProject)
+        val initialState = settings.state
+        val warnings = mutableListOf<String>()
+        val errors = mutableListOf<String>()
+        settings.update { it.copy(explicitTemplateClassNames = "com.example.Explicit") }
+        try {
+            LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+                override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+                    warnings += message
+                    return true
+                }
+
+                override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+                    errors += message
+                    return Action.NONE
+                }
+            }) {
+                val provider = DefinitionFromDependenciesProvider(defaultProject)
+                assertEquals(listOf("com.example.Explicit"), provider.definitionClasses())
+                assertEmpty(provider.getTemplateClasspath())
+            }
+        }
+        finally {
+            settings.update { initialState }
+        }
+
+        assertEmpty(warnings.filter { "default project" in it })
+        assertEmpty(errors)
     }
 
     fun testOutputDirectoryCreatedAfterDiscoveryIsScanned() {

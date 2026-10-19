@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
@@ -77,8 +78,13 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
     }
 
     private fun tryToGuessClasspath(fqns: List<String>): List<String> {
-        if (fqns.isEmpty()) return emptyList()
+        if (fqns.isEmpty() || project.isDefault) return emptyList()
         return runReadActionBlocking {
+            val dumbService = DumbService.getInstance(project)
+            if (dumbService.isDumb) {
+                dumbService.runWhenSmart { ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount() }
+                return@runReadActionBlocking emptyList()
+            }
             val javaFacade = JavaPsiFacade.getInstance(project)
             val projectScope = GlobalSearchScope.projectScope(project)
             val projectFileIndex = ProjectFileIndex.getInstance(project)
