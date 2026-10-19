@@ -82,7 +82,6 @@ impl Messages {
                             .failure
                             .message
                             .clone()
-                            .or_else(|| finished.error.clone())
                             .unwrap_or_else(|| "the run gave up on the test".to_owned());
                         flow.ignored(&mut out, &name, &reason);
                     }

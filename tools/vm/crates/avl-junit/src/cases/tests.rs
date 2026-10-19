@@ -22,13 +22,12 @@ fn started(id: &str, name: &str) -> RunEvent {
     }))
 }
 
-fn finished(id: &str, name: &str, status: &str, error: Option<&str>, typed: TypedFailure) -> RunEvent {
+fn finished(id: &str, name: &str, status: &str, typed: TypedFailure) -> RunEvent {
     RunEvent::synthesized(RunEventKind::TestFinished(TestFinished {
         timestamp: format!("end-{id}"),
         execution: identity(id, name, Some("Suite")),
         status: status.to_owned(),
         duration_ms: 7,
-        error: error.map(str::to_owned),
         failure: typed,
         report: ScenarioReport::default(),
     }))
@@ -110,27 +109,6 @@ fn the_report_of_a_scenario_rides_on_its_case() {
 }
 
 #[test]
-fn the_error_text_of_the_jvm_daemon_is_the_message_and_the_detail() {
-    let events = [
-        started("a", "fails"),
-        finished(
-            "a",
-            "fails",
-            STATUS_FAILED,
-            Some("expected: <1> but was: <2>\n\tat Suite.fails(Suite.kt:3)"),
-            TypedFailure::default(),
-        ),
-    ];
-    let [case] = cases(&events).try_into().expect("one case");
-    let CaseOutcome::Failed(failure) = case.outcome else {
-        panic!("the case failed");
-    };
-    assert_eq!(failure.r#type, None);
-    assert_eq!(failure.headline(), "expected: <1> but was: <2>");
-    assert_eq!(failure.text(), "expected: <1> but was: <2>\n\tat Suite.fails(Suite.kt:3)");
-}
-
-#[test]
 fn an_aborted_test_is_a_skip_and_a_test_still_running_at_the_end_is_unfinished() {
     let events = [
         started("a", "aborted"),
@@ -138,8 +116,10 @@ fn an_aborted_test_is_a_skip_and_a_test_still_running_at_the_end_is_unfinished()
             "a",
             "aborted",
             STATUS_ABORTED,
-            Some("Assumption failed: no codex\n\tat x"),
-            TypedFailure::default(),
+            TypedFailure {
+                message: Some("Assumption failed: no codex".to_owned()),
+                ..TypedFailure::default()
+            },
         ),
         started("b", "hangs"),
     ];
@@ -175,7 +155,6 @@ fn a_container_failure_with_no_class_is_named_after_its_display_name() {
     let events = [RunEvent::synthesized(RunEventKind::ContainerFailed(ContainerFailed {
         timestamp: "t".to_owned(),
         execution: identity("[engine:junit-jupiter]", "JUnit Jupiter", None),
-        error: None,
         failure: TypedFailure::default(),
     }))];
     let [case] = cases(&events).try_into().expect("one case");

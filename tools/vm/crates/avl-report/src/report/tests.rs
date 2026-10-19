@@ -82,34 +82,31 @@ fn started(id: &str, display_name: &str, class_name: Option<&str>, timestamp: &s
     }))
 }
 
-fn finished(id: &str, display_name: &str, status: &str, class_name: Option<&str>, error: Option<&str>) -> RunEvent {
-    finished_with(id, display_name, status, class_name, error, TypedFailure::default())
+/// A finished test whose failure, when `message` is given, holds only that message.
+fn finished(id: &str, display_name: &str, status: &str, class_name: Option<&str>, message: Option<&str>) -> RunEvent {
+    let failure = TypedFailure {
+        message: message.map(str::to_owned),
+        ..TypedFailure::default()
+    };
+    finished_with(id, display_name, status, class_name, failure)
 }
 
-fn finished_with(
-    id: &str,
-    display_name: &str,
-    status: &str,
-    class_name: Option<&str>,
-    error: Option<&str>,
-    failure: TypedFailure,
-) -> RunEvent {
+fn finished_with(id: &str, display_name: &str, status: &str, class_name: Option<&str>, failure: TypedFailure) -> RunEvent {
     RunEvent::synthesized(RunEventKind::TestFinished(TestFinished {
         timestamp: "t".to_owned(),
         execution: identity(id, display_name, class_name),
         status: status.to_owned(),
         duration_ms: 12_500,
-        error: error.map(str::to_owned),
         failure,
         report: ScenarioReport::default(),
     }))
 }
 
 /// One scenario of [`CLASS`] that started and ended with `status`.
-fn scenario(id: &str, status: &str, error: Option<&str>) -> Vec<RunEvent> {
+fn scenario(id: &str, status: &str, message: Option<&str>) -> Vec<RunEvent> {
     vec![
         started(id, "smoke", Some(CLASS), "2026-08-22T10:00:01Z"),
-        finished(id, "smoke", status, Some(CLASS), error),
+        finished(id, "smoke", status, Some(CLASS), message),
     ]
 }
 
@@ -133,7 +130,6 @@ fn container_failed(id: &str, failure: TypedFailure) -> RunEvent {
     RunEvent::synthesized(RunEventKind::ContainerFailed(ContainerFailed {
         timestamp: "t".to_owned(),
         execution: identity(id, id, Some(id)),
-        error: None,
         failure,
     }))
 }
@@ -190,8 +186,6 @@ fn archive(bundles: Vec<TraceBundle>) -> TraceArchive {
         bundles,
     }
 }
-
-const ASSERTION: &str = "java.lang.AssertionError: boom\n\tat org.junit.jupiter.api.Assertions.fail(Assertions.java:1)\n\tat com.intellij.air.AirFlowSmokeUiTest.smoke(A.kt:42)";
 
 // --- the verdict ladder ---------------------------------------------------------------------------------------
 
@@ -282,7 +276,7 @@ fn a_typed_failure_keeps_its_type_message_and_detail() {
     };
     let events = vec![
         started("1", "attach-file", Some(CLASS), "2026-08-22T10:00:01Z"),
-        finished_with("1", "attach-file", "FAILED", Some(CLASS), None, typed),
+        finished_with("1", "attach-file", "FAILED", Some(CLASS), typed),
     ];
     let document = built(input(Some(summary(1, 1, 0, 0, 0)), events));
     assert_eq!(document.status, Status::Failed, "{}", diagnostic(&document));
@@ -300,20 +294,6 @@ fn a_typed_failure_keeps_its_type_message_and_detail() {
         failure.relevant_frames,
         ["at com.intellij.air.integration.bridge.AirChip.visible(AirChip.kt:41)"]
     );
-}
-
-/// The JVM daemon sends an error text: its first line is the message, and its stack, reduced to the frames that
-/// name Air, is the detail.
-#[test]
-fn the_error_text_of_the_jvm_daemon_is_the_message_and_the_stack() {
-    let document = built(input(Some(summary(1, 1, 0, 0, 0)), scenario("1", "FAILED", Some(ASSERTION))));
-    let failure = &document.failures[0];
-    assert_eq!(
-        (failure.r#type.as_deref(), failure.message.as_str()),
-        (None, "java.lang.AssertionError: boom")
-    );
-    assert_eq!(failure.relevant_frames, ["at com.intellij.air.AirFlowSmokeUiTest.smoke(A.kt:42)"]);
-    assert_eq!(document.cases[0].status, CaseStatus::Failed);
 }
 
 #[test]

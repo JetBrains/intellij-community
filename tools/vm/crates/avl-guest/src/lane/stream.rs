@@ -196,7 +196,6 @@ impl<'a> Stream<'a> {
             execution: case.execution(),
             status: status.wire().to_owned(),
             duration_ms: i64::try_from(duration.as_millis()).unwrap_or(i64::MAX),
-            error: None,
             failure: failure.unwrap_or_default(),
             report,
         }));
@@ -229,7 +228,6 @@ impl<'a> Stream<'a> {
                 class_name: Some(class_name.to_owned()),
                 method_name: None,
             },
-            error: None,
             failure,
         }));
     }

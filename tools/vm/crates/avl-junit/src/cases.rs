@@ -90,53 +90,25 @@ impl CaseFailure {
 
 /// The failure of a failed `testFinished`.
 pub fn failure_of_test(finished: &TestFinished) -> CaseFailure {
-    failure(
-        FailureOrigin::Test,
-        &finished.execution,
-        finished.error.as_deref(),
-        &finished.failure,
-    )
+    failure(FailureOrigin::Test, &finished.execution, &finished.failure)
 }
 
 /// The failure of a `containerFailed`.
 pub fn failure_of_container(failed: &ContainerFailed) -> CaseFailure {
-    failure(
-        FailureOrigin::Container,
-        &failed.execution,
-        failed.error.as_deref(),
-        &failed.failure,
-    )
+    failure(FailureOrigin::Container, &failed.execution, &failed.failure)
 }
 
-/// The typed failure when the record has one, else the `error` text of the JVM daemon: its first line is the message,
-/// and the whole text is the detail, as the JVM daemon writes the message above the stack.
-fn failure(kind: FailureOrigin, execution: &ExecutionIdentity, error: Option<&str>, typed: &avl_wire::daemon::TypedFailure) -> CaseFailure {
-    let typed_present = typed.kind.is_some() || typed.message.is_some() || typed.detail.is_some();
-    if typed_present {
-        return CaseFailure {
-            kind,
-            r#type: typed.kind.clone().filter(|kind| !kind.is_empty()),
-            message: typed
-                .message
-                .clone()
-                .filter(|message| !message.is_empty())
-                .unwrap_or_else(|| format!("{} failed", execution.display_name)),
-            detail: typed.detail.clone().unwrap_or_default(),
-        };
-    }
-    match error.filter(|error| !error.is_empty()) {
-        Some(error) => CaseFailure {
-            kind,
-            r#type: None,
-            message: first_line(error).to_owned(),
-            detail: error.to_owned(),
-        },
-        None => CaseFailure {
-            kind,
-            r#type: None,
-            message: format!("{} failed", execution.display_name),
-            detail: String::new(),
-        },
+/// The typed failure of a record. A record with no message gets a message that names the case.
+fn failure(kind: FailureOrigin, execution: &ExecutionIdentity, typed: &avl_wire::daemon::TypedFailure) -> CaseFailure {
+    CaseFailure {
+        kind,
+        r#type: typed.kind.clone().filter(|kind| !kind.is_empty()),
+        message: typed
+            .message
+            .clone()
+            .filter(|message| !message.is_empty())
+            .unwrap_or_else(|| format!("{} failed", execution.display_name)),
+        detail: typed.detail.clone().unwrap_or_default(),
     }
 }
 
@@ -182,7 +154,6 @@ pub fn cases(events: &[RunEvent]) -> Vec<StreamCase> {
                             .failure
                             .message
                             .clone()
-                            .or_else(|| finished.error.as_deref().map(|error| first_line(error).to_owned()))
                             .unwrap_or_else(|| "the run gave up on the test".to_owned()),
                     ),
                     _ => CaseOutcome::Passed,

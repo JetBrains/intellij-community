@@ -924,10 +924,8 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-report/src/report/tests.rs (`the_stream_names_the_test_a_killed_run_died_on`)
   [@test] ../crates/avl-wire/src/report/tests.rs (`a_report_of_schema_2_is_refused_by_its_version`)
 
-- A failure of the report keeps the type, the message and the detail that the stream sent. From the JVM daemon, the
-  first line of the error text is the message.
+- A failure of the report keeps the type, the message and the detail that the stream sent.
   [@test] ../crates/avl-report/src/report/tests.rs (`a_typed_failure_keeps_its_type_message_and_detail`)
-  [@test] ../crates/avl-report/src/report/tests.rs (`the_error_text_of_the_jvm_daemon_is_the_message_and_the_stack`)
 
 - Each count of the summary is compared with the records of its stream. A count that differs is a diagnostic, so
   the run is an `infrastructure_error`.
@@ -1275,9 +1273,10 @@ The daemon's half and the IDE's half of supervision are in
   outcome.
   [@test] ../crates/avl-host-sys/src/guest/supervisor/tests.rs
 
-- A record of a failed test or container can carry the kind, the message and the detail of the failure. The JVM daemon
-  sends the error text instead. A record of either kind keeps its bytes when the controller publishes it again.
-  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_failure_record_carries_the_typed_failure_or_the_error_text`)
+- A record of a failed test or container carries the kind, the message and the detail of the failure. The record
+  keeps its bytes when the controller publishes it again. An `error` text of an older journal is no field of the
+  record, so the controller reads that record with no failure.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_failure_record_carries_the_typed_failure_and_no_error_text`)
 
 ### The worker lease and the warm daemon
 

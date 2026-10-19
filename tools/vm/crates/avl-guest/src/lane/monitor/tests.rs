@@ -141,7 +141,6 @@ fn cut_off_run() -> Vec<RunEventKind> {
             execution: execution(class, "restore-loaded"),
             status: "SUCCESSFUL".to_owned(),
             duration_ms: 36_000,
-            error: None,
             failure: TypedFailure::default(),
             report: ScenarioReport::default(),
         }),

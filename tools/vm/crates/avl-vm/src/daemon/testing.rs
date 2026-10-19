@@ -456,7 +456,8 @@ pub(crate) fn failing_run(iteration_id: &str) -> Vec<String> {
         ),
         ndjson_line(
             &json!({"event": "testFinished", "timestamp": "t", "displayName": "works", "id": "t1",
-            "className": "com.example.MyTest", "status": "FAILED", "durationMs": 5, "error": "boom\nstack"}),
+            "className": "com.example.MyTest", "status": "FAILED", "durationMs": 5, "type": "java.lang.AssertionError",
+            "message": "boom", "detail": "stack"}),
         ),
         ndjson_line(&summary_record(iteration_id, 1, 1, 0, 0, 0, true)),
     ]

@@ -313,9 +313,7 @@ pub struct LaneInputs {
     pub suite_documents: String,
 }
 
-/// Why a test or a container failed, as the lane daemon types it: the kind, the first account and the rest of it. The
-/// JVM daemon sends the `error` text of [`TestFinished`] and [`ContainerFailed`] instead. An aborted JVM test sends
-/// `message` too.
+/// Why a test or a container failed, as the lane daemon types it: the kind, the first account and the rest of it.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypedFailure {
     /// The kind of the failure, such as `not_implemented` or the class name of an exception in the IDE.
@@ -331,6 +329,18 @@ pub struct TypedFailure {
     /// The cause chain or the stack, after the message.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
+}
+
+impl TypedFailure {
+    /// The line that names the failure for a person: the first line of the message, else the kind. `None` when the
+    /// failure has neither.
+    pub fn headline(&self) -> Option<&str> {
+        self.message
+            .as_deref()
+            .and_then(|message| message.lines().next())
+            .filter(|line| !line.is_empty())
+            .or_else(|| self.kind.as_deref().filter(|kind| !kind.is_empty()))
+    }
 }
 
 /// What the daemon publishes for the controller to read over the hypervisor exec channel. The token never
@@ -466,12 +476,10 @@ pub struct TestFinished {
     pub execution: ExecutionIdentity,
     pub status: String,
     pub duration_ms: i64,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
     #[serde(flatten)]
     pub failure: TypedFailure,
     /// The notes and the metrics of the scenario, which the lane daemon reads from the answers of its authored parts.
-    /// Absent when the scenario reported none, and from the JVM daemon.
+    /// Absent when the scenario reported none.
     #[serde(default, skip_serializing_if = "crate::report::ScenarioReport::is_empty")]
     pub report: crate::report::ScenarioReport,
 }
@@ -490,8 +498,6 @@ pub struct ContainerFailed {
     pub timestamp: String,
     #[serde(flatten)]
     pub execution: ExecutionIdentity,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
     #[serde(flatten)]
     pub failure: TypedFailure,
 }

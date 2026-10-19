@@ -319,7 +319,7 @@ fn the_tests_line_counts_and_estimates() {
         "w",
     );
     run.daemon(
-        r#"{"event":"testFinished","timestamp":"t","id":"2","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":31000,"error":"expected \"hi\" but was \"\"\n\tat line 3"}"#,
+        r#"{"event":"testFinished","timestamp":"t","id":"2","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":31000,"type":"java.lang.AssertionError","message":"expected \"hi\" but was \"\"","detail":"\tat line 3"}"#,
         "w",
     );
     // The first test stopped waiting for its trace when the second finished. The second still waits, and the live
@@ -369,7 +369,7 @@ fn the_card_is_the_verdict() {
     );
     run.advance(90);
     run.daemon(
-        r#"{"event":"testFinished","timestamp":"t","id":"1","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":90000,"error":"no chip"}"#,
+        r#"{"event":"testFinished","timestamp":"t","id":"1","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":90000,"message":"no chip"}"#,
         "w",
     );
     run.daemon(
@@ -672,4 +672,31 @@ fn no_color_and_a_dumb_terminal_are_honoured() {
 
     let dumb = Paint::fallback(false, false);
     assert_eq!(dumb.link("trace", "http://x"), "trace");
+}
+
+// A failed test shows the headline of its typed failure under its line: the first line of the message, else the type.
+#[test]
+fn a_failed_test_shows_the_headline_of_its_typed_failure() {
+    let mut run = Run::new();
+    run.publish(&expected_lane(), "");
+    run.publish(&phase(PhaseState::Started, Phase::Iteration, "flow flow-new-session", 0), "w");
+    run.daemon(
+        r#"{"event":"testFinished","timestamp":"t","id":"1","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":2000,"type":"java.lang.AssertionError","message":"no chip\nmore","detail":"at line 3"}"#,
+        "w",
+    );
+    run.daemon(
+        r#"{"event":"testFinished","timestamp":"t","id":"2","className":"com.example.AirNewSessionFlowUiTest","displayName":"opens the chooser","status":"FAILED","durationMs":3000,"type":"java.lang.IllegalStateException"}"#,
+        "w",
+    );
+    run.publish(&iteration_reported("/r/it.json"), "w");
+    assert!(
+        run.has_line("✗ restores the draft 2s") && run.has_line("      no chip") && !run.has_line("more"),
+        "the scrollback is\n{}",
+        run.scrollback()
+    );
+    assert!(
+        run.has_line("✗ opens the chooser 3s") && run.has_line("      java.lang.IllegalStateException"),
+        "the scrollback is\n{}",
+        run.scrollback()
+    );
 }
