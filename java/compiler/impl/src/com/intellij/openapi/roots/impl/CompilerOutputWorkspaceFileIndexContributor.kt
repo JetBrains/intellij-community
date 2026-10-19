@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 
 internal class JavaProjectSettingsWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<JavaProjectSettingsEntity> {
@@ -23,10 +24,10 @@ internal class JavaModuleSettingsWorkspaceFileIndexContributor : WorkspaceFileIn
   override fun registerFileSets(entity: JavaModuleSettingsEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
     if (!entity.inheritedCompilerOutput && entity.excludeOutput) {
       entity.compilerOutput?.let {
-        registrar.registerExcludedRoot(it, entity)
+        registrar.registerExcludedRoot(it, WorkspaceFileKind.CONTENT, entity)
       }
       entity.compilerOutputForTests?.let {
-        registrar.registerExcludedRoot(it, entity)
+        registrar.registerExcludedRoot(it, WorkspaceFileKind.CONTENT, entity)
       }
     }
   }
