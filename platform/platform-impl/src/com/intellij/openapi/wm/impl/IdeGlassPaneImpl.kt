@@ -132,13 +132,15 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
     }
     else {
       trackFrameInteractiveWaiting(loadingState, coroutineScope)
+      val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
       if (hasSplash()) {
         loadingState.done.invokeOnCompletion {
-          FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
-          val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
           coroutineScope.launch(RawSwingDispatcher + startUpContextElementToPass + CoroutineName("hide splash")) {
             span("hide splash") {
               hideSplash()
+            }
+            withContext(Dispatchers.IO) {
+              FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
             }
           }
         }
