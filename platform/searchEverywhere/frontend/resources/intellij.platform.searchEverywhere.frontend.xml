@@ -53,12 +53,20 @@
     <extensionPoint name="searchEverywhere.previewPanelListener"
                     interface="com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener"
                     dynamic="true"/>
+    <extensionPoint name="searchEverywhere.actionsRanker"
+                    interface="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsRanker"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhere.manager implementation="com.intellij.platform.searchEverywhere.frontend.RemDevFriendlySearchEverywhereManager"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeRankerActionsProviderFactory"/>
+    <registryKey key="search.everywhere.actions.ranker"
+                 defaultValue=""
+                 restartRequired="false"
+                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off."/>
 
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>

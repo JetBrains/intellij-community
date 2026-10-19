@@ -23,7 +23,8 @@ class SeActionsTabFactory : SeEssentialTabFactory {
     val delegate = SeTabDelegate.create(project,
                                         session,
                                         "Actions",
-                                        listOf(SeProviderId(SeProviderIdUtils.ACTIONS_ID)),
+                                        listOf(SeProviderId(SeProviderIdUtils.ACTIONS_ID),
+                                               SeProviderId(SeProviderIdUtils.RANKER_ACTIONS_ID)),
                                         initEvent,
                                         scope)
 

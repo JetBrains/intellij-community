@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 object SeProviderIdUtils {
   const val WILDCARD_ID: String = "com.intellij.WildcardProviderId"
   const val ACTIONS_ID: String = "ActionSearchEverywhereContributor"
+  const val RANKER_ACTIONS_ID: String = "RankerActionsProvider"
   const val CLASSES_ID: String = "ClassSearchEverywhereContributor"
   const val FILES_ID: String = "FileSearchEverywhereContributor"
   const val NON_INDEXABLE_FILES_ID: String = NonIndexableFilesSEContributor.ID

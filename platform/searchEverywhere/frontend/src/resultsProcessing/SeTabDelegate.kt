@@ -34,6 +34,7 @@ import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecke
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
+import com.intellij.platform.searchEverywhere.frontend.SeSeparateTabOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.isWildcard
@@ -454,8 +455,9 @@ class SeTabDelegate(
       // This is needed because extensions are available on both sides in the monolith (BE and FE)
       // even if the extension was registered on BE only.
       // It's better to treat FE provider as BE in monolith than treat BE provider as FE in split mode.
+      val allTabFactoryIds = localFactories.filterValues { it !is SeSeparateTabOnlyItemsProviderFactory }.keys
       val localProviderIds =
-        (if (isAllTab) localFactories.keys else providerIds) - remoteProviderIds
+        (if (isAllTab) allTabFactoryIds else providerIds) - remoteProviderIds
 
       val localProviders = localProviderIds.mapNotNull { providerId ->
         localProvidersHolder.get(providerId, isAllTab)?.let {
