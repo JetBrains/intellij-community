@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.util.Disposer;
@@ -181,6 +182,8 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
     assertEquals("first attempt failed", first.getErrorMessage());
     assertContains(first.getStacktrace(), "java.lang.AssertionError: first attempt failed");
     assertEquals("second attempt errored", flaky.getChildren().get(1).getErrorMessage());
+    assertEquals(TestStateInfo.Magnitude.FAILED_INDEX, first.getMagnitudeInfo());
+    assertEquals(TestStateInfo.Magnitude.ERROR_INDEX, flaky.getChildren().get(1).getMagnitudeInfo());
     SMTestProxy passed = flaky.getChildren().getLast();
     assertEquals("repetition 3 of 3", passed.getName());
     assertTrue(passed.isPassed());
@@ -200,8 +203,69 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
     assertEquals("rerun failed", failed.getChildren().get(1).getErrorMessage());
     assertContains(failed.getChildren().get(1).getStacktrace(), "java.lang.AssertionError: rerun failed");
     assertEquals("rerun errored", failed.getChildren().getLast().getErrorMessage());
+    assertEquals(TestStateInfo.Magnitude.ERROR_INDEX, failed.getMagnitudeInfo());
     assertEquals("retry output", MockPrinter.fillPrinter(failed.getChildren().getLast()).getStdOut());
     assertFalse(failed.getChildren().getLast().getStacktrace().contains("retry output"));
+  }
+
+  @Test
+  public void testGradleMergedRerunsPreserveAttemptsAndOutput() throws Exception {
+    var root = parseTestResultFixture("gradle-merged-reruns.xml");
+
+    SMTestProxy flaky = findTest(root, "passes on retry");
+    assertTrue(flaky.isPassed());
+    assertEquals(3, flaky.getChildren().size());
+    SMTestProxy first = flaky.getChildren().getFirst();
+    assertEquals(TestStateInfo.Magnitude.FAILED_INDEX, first.getMagnitudeInfo());
+    assertEquals("first failure trace", first.getStacktrace().trim());
+    assertEquals("failed attempt stdout", MockPrinter.fillPrinter(first).getStdOut());
+    assertContains(MockPrinter.fillPrinter(first).getStdErr(), "failed attempt stderr");
+    assertEquals("second failure", flaky.getChildren().get(1).getErrorMessage());
+    assertEquals("final success stdout", MockPrinter.fillPrinter(flaky.getChildren().getLast()).getStdOut());
+    assertEquals(40L, flaky.getDuration());
+
+    SMTestProxy failed = findTest(root, "fails on every retry");
+    assertEquals(2, failed.getChildren().size());
+    assertEquals("repetition 1 of 2", failed.getChildren().getFirst().getName());
+    assertEquals("initial attempt stdout", MockPrinter.fillPrinter(failed.getChildren().getFirst()).getStdOut());
+    assertEquals("last failure trace", failed.getChildren().getLast().getStacktrace().trim());
+    assertContains(MockPrinter.fillPrinter(failed.getChildren().getLast()).getStdErr(), "last attempt stderr");
+    assertEquals(TestStateInfo.Magnitude.FAILED_INDEX, failed.getMagnitudeInfo());
+    assertEquals(30L, failed.getDuration());
+
+    SMTestProxy ordinary = findTest(root, "passes once");
+    assertFalse(ordinary.isSuite());
+    assertTrue(ordinary.isPassed());
+    assertEquals(3, root.getChildren().getFirst().getChildren().size());
+  }
+
+  @Test
+  public void testNamespacedDiagnosticsPreserveDirectText() throws Exception {
+    var root = parseTestResult("""
+      <j:testsuites xmlns:j="urn:example:junit">
+        <j:testsuite name="Tests">
+          <j:testcase name="flaky">
+            <j:flakyError type="Exception"><![CDATA[direct error trace]]></j:flakyError>
+          </j:testcase>
+          <j:testcase name="ordinary">
+            <j:unknownDiagnostic>unknown details</j:unknownDiagnostic>
+          </j:testcase>
+          <j:testcase name="skipped"><j:skipped message="disabled"/></j:testcase>
+        </j:testsuite>
+      </j:testsuites>
+      """);
+
+    SMTestProxy flaky = findTest(root, "flaky");
+    assertTrue(flaky.isPassed());
+    assertEquals(2, flaky.getChildren().size());
+    SMTestProxy first = flaky.getChildren().getFirst();
+    assertEquals(TestStateInfo.Magnitude.ERROR_INDEX, first.getMagnitudeInfo());
+    assertEquals("Exception", first.getErrorMessage());
+    assertEquals("direct error trace", first.getStacktrace());
+    SMTestProxy ordinary = findTest(root, "ordinary");
+    assertFalse(ordinary.isSuite());
+    assertTrue(ordinary.isPassed());
+    assertTrue(findTest(root, "skipped").isIgnored());
   }
 
   @Test

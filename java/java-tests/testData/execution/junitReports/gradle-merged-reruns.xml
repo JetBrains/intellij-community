@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="example.RetryTest" tests="3" skipped="0" failures="1" errors="0" time="0.12">
+  <testcase name="passes on retry" classname="example.RetryTest" time="0.04">
+    <flakyFailure message="first failure" type="java.lang.AssertionError">
+      <stackTrace>first failure trace</stackTrace>
+      <system-out>failed attempt stdout</system-out>
+      <system-err>failed attempt stderr</system-err>
+    </flakyFailure>
+    <flakyFailure message="second failure" type="java.lang.AssertionError">
+      <stackTrace>second failure trace</stackTrace>
+      <system-out>second attempt stdout</system-out>
+    </flakyFailure>
+    <system-out>final success stdout</system-out>
+  </testcase>
+  <testcase name="fails on every retry" classname="example.RetryTest" time="0.03">
+    <failure message="initial failure" type="java.lang.AssertionError">initial failure trace</failure>
+    <system-out>initial attempt stdout</system-out>
+    <rerunFailure message="last failure" type="java.lang.AssertionError">
+      <stackTrace>last failure trace</stackTrace>
+      <system-out>last attempt stdout</system-out>
+      <system-err>last attempt stderr</system-err>
+    </rerunFailure>
+  </testcase>
+  <testcase name="passes once" classname="example.RetryTest" time="0.05"/>
+</testsuite>
