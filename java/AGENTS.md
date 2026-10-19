@@ -54,7 +54,7 @@ monorepo only. A community checkout cannot run the check, but the rule holds the
   `java-psi-impl`, `java-analysis-api` with `java-analysis-impl`.
 - `java-impl` holds the code insight: the completion, the intentions, and the refactorings.
 - `java-frontend`, `java-backend` and `java-frontback-impl` serve the split mode. Read the
-  `remote-dev-code-placement` skill before you move code between them.
+  code-placement worker of the `remote-dev` skill before you move code between them.
 - `intellij.java.tests` owns `testSrc` and `testData`.
 
 ## Tests

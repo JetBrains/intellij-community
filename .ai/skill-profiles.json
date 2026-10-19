@@ -27,13 +27,6 @@
       "daemon-libraries",
       "investigate-split-completion",
       "remote-dev",
-      "remote-dev-actions",
-      "remote-dev-code-placement",
-      "remote-dev-language-plugin",
-      "remote-dev-module-layout",
-      "remote-dev-rpc",
-      "remote-dev-settings-sync",
-      "remote-dev-split-data-model",
       "setup-local-rd-flow",
       "split-mode-debug-run-config"
     ],
