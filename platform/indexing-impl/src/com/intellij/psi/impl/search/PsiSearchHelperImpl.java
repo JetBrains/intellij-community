@@ -324,10 +324,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    if (scope.getVirtualFiles().length <= 1) {
-      // scan the roots of one file on this thread: a fork-join join here can run an unrelated task (IDEA-392925)
-      return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_ -> ContainerUtil.process(scopeElements, localProcessor));
-    }
     return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor));
   }
 
