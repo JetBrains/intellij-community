@@ -191,7 +191,24 @@ private fun Driver.waitForGlobalModelFilesLoaded() {
   }
 }
 
+/**
+ * Waits until the commands of the startup script have finished.
+ *
+ * The script runs again on each IDE start, for example `%setupSDK` of the test case SDK. A command that ends after
+ * this wait would change the IDE during a test or after the baseline capture.
+ */
+private fun Driver.waitForStartupCommandsFinished() {
+  waitFor(
+    message = "Startup script commands have finished",
+    timeout = INDEXES_TIMEOUT,
+    errorMessage = { "Startup script commands have not finished" },
+  ) {
+    utility<CommandsRunner>().haveCommandsFinished()
+  }
+}
+
 internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
+  waitForStartupCommandsFinished()
   waitForGlobalModelFilesLoaded()
   val projects = getOpenProjects(RdTarget.BACKEND)
   if (projects.isEmpty()) {
@@ -235,6 +252,11 @@ internal fun Driver.waitForProjectsWithNoPendingIndexingWork(reason: String) {
 private fun Driver.updateLastProjectPath() {
   logOutput("[ReusedRecovery] Updating RecentProjectsManager last project path")
   utility<RecentProjectsManagerBase>().getInstanceEx().updateLastProjectPath()
+}
+
+@Remote("com.jetbrains.performancePlugin.CommandsRunner", plugin = "com.jetbrains.performancePlugin", rdTarget = RdTarget.BACKEND)
+private interface CommandsRunner {
+  fun haveCommandsFinished(): Boolean
 }
 
 @Remote("com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry", rdTarget = RdTarget.BACKEND)

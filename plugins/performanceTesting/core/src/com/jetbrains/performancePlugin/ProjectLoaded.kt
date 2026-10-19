@@ -394,6 +394,12 @@ private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>?
   return null
 }
 
+/** Whether the startup script has a line to run. A missing script has none. */
+internal fun hasStartupScriptCommands(): Boolean {
+  val file = ProjectLoaded.TEST_SCRIPT_FILE_PATH?.let { Path.of(it) } ?: return false
+  return Files.isRegularFile(file) && Files.readAllLines(file).any { it.isNotBlank() }
+}
+
 private fun runScriptFromFile(project: Project) {
   val playback = PlaybackRunnerExtended("%include " + getTestFile(), CommandLogger(), project)
   playback.scriptDir = getTestFile().parent.toFile()
