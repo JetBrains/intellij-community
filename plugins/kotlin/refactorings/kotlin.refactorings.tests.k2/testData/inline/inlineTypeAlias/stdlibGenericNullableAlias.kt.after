@@ -1,0 +1,8 @@
+import java.util.ArrayList
+
+// ASSERT_LIBRARY_ALIAS_SURVIVES
+
+fun main() {
+    val list: ArrayList<String>? = null
+    println(list)
+}

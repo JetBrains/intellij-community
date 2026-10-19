@@ -1,0 +1,6 @@
+import java.util.ArrayList
+
+fun main() {
+    val list: List<String> = ArrayList<String>()
+    println(list)
+}

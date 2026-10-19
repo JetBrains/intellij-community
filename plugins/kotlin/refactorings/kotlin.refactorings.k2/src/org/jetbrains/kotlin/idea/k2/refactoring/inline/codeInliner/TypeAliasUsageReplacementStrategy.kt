@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
-import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
@@ -51,21 +50,28 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageReplacementStrategy {
+
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun hasUnreplaceableInnerConstructor(usage: KtReferenceExpression): Boolean = allowAnalysisOnEdt {
         analyze(usage) {
             val callElement = usage.parent as? KtCallElement ?: return@analyze false
             if (callElement.getQualifiedExpressionForSelector() != null) return@analyze false
-            val classSymbol = typeAlias.symbol.expandedType.expandedSymbol as? KaNamedClassSymbol ?: return@analyze false
-            classSymbol.isInner && !shortNameResolvesTo(usage, classSymbol) && innerReceiverQualifier(usage, classSymbol) == null
+            val classSymbol = innerClassSymbol(callElement) ?: return@analyze false
+            !shortNameResolvesTo(usage, classSymbol) && innerReceiverQualifier(usage, classSymbol) == null
         }
     }
 
     context(_: KaSession)
+    private fun innerClassSymbol(callElement: KtCallElement): KaNamedClassSymbol? =
+        ((callElement as? KtExpression)?.expressionType?.expandedSymbol as? KaNamedClassSymbol)?.takeIf { it.isInner }
+
+    context(_: KaSession)
     private fun shortNameResolvesTo(usage: KtReferenceExpression, classSymbol: KaNamedClassSymbol): Boolean {
-        return usage.containingKtFile.scopeContext(usage).scopes.asSequence()
+        val scopes = usage.containingKtFile.scopeContext(usage).scopes
+        val visibleClass = scopes.asSequence()
             .flatMap { it.scope.classifiers(classSymbol.name) }
-            .firstOrNull() == classSymbol
+            .firstOrNull()
+        return visibleClass == classSymbol && scopes.none { it.scope.callables { name -> name == classSymbol.name }.any() }
     }
 
     context(_: KaSession)
@@ -118,49 +124,42 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
                 return null
             }
 
-            val typeAliasSymbol = typeAlias.symbol
-            val typeToInline = typeAliasSymbol.expandedType
 
-            val callElement = usage.parent as? KtCallExpression
-            val expandedTypeFqName = if (callElement != null) {
-                val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
-                val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
-                }, position = Variance.INVARIANT)
-                val psiFactory = KtPsiFactory(typeAlias.project)
-                val typeArgumentsIndex = expandedTypeText.indexOf("<")
-                if (typeArgumentsIndex >= 0) {
-                    val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
+            val callElement = usage.parent as? KtCallExpression ?: return null
 
-                    val originalTypeArgumentList = callElement.typeArgumentList
-                    if (originalTypeArgumentList != null) {
-                        shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-                    } else {
-                        shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
-                    }
+            val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
+            val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+            }, position = Variance.INVARIANT)
+            val psiFactory = KtPsiFactory(typeAlias.project)
+            val typeArgumentsIndex = expandedTypeText.indexOf("<")
+            if (typeArgumentsIndex >= 0) {
+                val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
+
+                val originalTypeArgumentList = callElement.typeArgumentList
+                if (originalTypeArgumentList != null) {
+                    shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+                } else {
+                    shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+                }
+            }
+
+            val expandedClassSymbol = expandedType.expandedSymbol
+            if (expandedClassSymbol is KaNamedClassSymbol && expandedClassSymbol.isInner) {
+                val innerClassName = expandedClassSymbol.name.asString()
+                val qualifiedCall = callElement.getQualifiedExpressionForSelector()
+                if (qualifiedCall != null || shortNameResolvesTo(usage, expandedClassSymbol)) {
+                    usage.replaced(psiFactory.createSimpleName(innerClassName))
+                    return callElement
                 }
 
-                val expandedClassSymbol = expandedType.expandedSymbol
-                if (expandedClassSymbol is KaNamedClassSymbol && expandedClassSymbol.isInner) {
-                    val innerClassName = expandedClassSymbol.name.asString()
-                    val qualifiedCall = callElement.getQualifiedExpressionForSelector()
-                    if (qualifiedCall != null || shortNameResolvesTo(usage, expandedClassSymbol)) {
-                        usage.replaced(psiFactory.createSimpleName(innerClassName))
-                        return callElement
-                    }
-
-                    val receiverQualifier = innerReceiverQualifier(usage, expandedClassSymbol)
-                    if (receiverQualifier != null) {
-                        usage.replaced(psiFactory.createSimpleName(innerClassName))
-                        return callElement.replaced(psiFactory.createExpression("$receiverQualifier.${callElement.text}"))
-                    }
+                val receiverQualifier = innerReceiverQualifier(usage, expandedClassSymbol)
+                if (receiverQualifier != null) {
+                    usage.replaced(psiFactory.createSimpleName(innerClassName))
+                    return callElement.replaced(psiFactory.createExpression("$receiverQualifier.${callElement.text}"))
                 }
-                expandedClassSymbol?.importableFqName
-            } else {
-                typeToInline.expandedSymbol?.importableFqName
-            } ?: return null
-
-
+            }
+            val expandedTypeFqName = expandedClassSymbol?.importableFqName ?: return null
             val newCallElement = ((usage.mainReference as KtSimpleNameReference).bindToFqName(
                 expandedTypeFqName
             ) as KtExpression).getNonStrictParentOfType<KtCallElement>()

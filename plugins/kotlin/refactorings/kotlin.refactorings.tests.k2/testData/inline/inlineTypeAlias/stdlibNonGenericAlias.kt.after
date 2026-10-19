@@ -1,0 +1,8 @@
+import java.util.RandomAccess
+
+// ASSERT_LIBRARY_ALIAS_SURVIVES
+
+fun main() {
+    val marker: RandomAccess? = null
+    println(marker)
+}

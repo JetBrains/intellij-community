@@ -1,0 +1,7 @@
+import java.util.ArrayList
+
+// ASSERT_LIBRARY_ALIAS_SURVIVES
+
+fun main() {
+    ArrayList<String>()
+}

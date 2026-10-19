@@ -1,0 +1,9 @@
+import java.util.ArrayList
+
+typealias BaseList<T> = java.util.ArrayList<T>
+
+fun main() {
+    val list: BaseList<String> = ArrayList<String>()
+    println(list)
+}
+// IGNORE_K2

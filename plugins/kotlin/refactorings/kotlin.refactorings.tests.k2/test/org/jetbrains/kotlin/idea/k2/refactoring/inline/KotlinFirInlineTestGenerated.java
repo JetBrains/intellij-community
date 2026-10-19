@@ -124,6 +124,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/extensionFunctionTypeToFunctionType.kt");
         }
 
+        @TestMetadata("fixedTypeArgumentAlias.kt")
+        public void testFixedTypeArgumentAlias() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/fixedTypeArgumentAlias.kt");
+        }
+
         @TestMetadata("functionTypeToFunctionType.kt")
         public void testFunctionTypeToFunctionType() throws Exception {
             runTest("testData/inline/inlineTypeAlias/functionTypeToFunctionType.kt");
@@ -169,6 +174,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/lambdaExpression.kt");
         }
 
+        @TestMetadata("nestedAliasConstructor.kt")
+        public void testNestedAliasConstructor() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/nestedAliasConstructor.kt");
+        }
+
         @TestMetadata("nullableSuspendFunctionType.kt")
         public void testNullableSuspendFunctionType() throws Exception {
             runTest("testData/inline/inlineTypeAlias/nullableSuspendFunctionType.kt");
@@ -187,6 +197,36 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("simpleAlias.kt")
         public void testSimpleAlias() throws Exception {
             runTest("testData/inline/inlineTypeAlias/simpleAlias.kt");
+        }
+
+        @TestMetadata("stdlibAliasSupertype.kt")
+        public void testStdlibAliasSupertype() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibAliasSupertype.kt");
+        }
+
+        @TestMetadata("stdlibGenericAlias.kt")
+        public void testStdlibGenericAlias() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibGenericAlias.kt");
+        }
+
+        @TestMetadata("stdlibGenericAliasInType.kt")
+        public void testStdlibGenericAliasInType() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibGenericAliasInType.kt");
+        }
+
+        @TestMetadata("stdlibGenericInferredAlias.kt")
+        public void testStdlibGenericInferredAlias() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibGenericInferredAlias.kt");
+        }
+
+        @TestMetadata("stdlibGenericNullableAlias.kt")
+        public void testStdlibGenericNullableAlias() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibGenericNullableAlias.kt");
+        }
+
+        @TestMetadata("stdlibNonGenericAlias.kt")
+        public void testStdlibNonGenericAlias() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/stdlibNonGenericAlias.kt");
         }
 
         @TestMetadata("suspendFunctionType.kt")

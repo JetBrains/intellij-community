@@ -80,6 +80,9 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
                     inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
                     inlineMethodThis?.let { settings.INLINE_METHOD_THIS = it }
                     handler.inlineElement(project, editor, targetElement)
+                    if (InTextDirectivesUtils.isDirectiveDefined(fileText, "ASSERT_LIBRARY_ALIAS_SURVIVES")) {
+                        assertTrue("The library alias was removed", targetElement?.isValid == true)
+                    }
                     for ((extraPsiFile, extraFile) in allFiles) {
                         if (!afterFileExists && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
                             fail("K1 is unable to inline property")
