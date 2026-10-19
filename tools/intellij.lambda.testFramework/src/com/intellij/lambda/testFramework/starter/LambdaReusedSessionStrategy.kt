@@ -13,6 +13,7 @@ import com.intellij.ide.starter.project.TestCaseTemplate
 import com.intellij.lambda.testFramework.junit.getCurrentRunMode
 import com.intellij.lambda.testFramework.junit.getCurrentRunModeOrNull
 import com.intellij.lambda.testFramework.project.TestAppProject
+import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -42,6 +43,8 @@ open class LambdaReusedSessionStrategy : ReusedSessionStrategy {
   override fun currentRunMode(context: ExtensionContext): IdeRunMode {
     return getCurrentRunMode(context)
   }
+
+  override fun injectedParameterTypes(): Set<Class<*>> = super.injectedParameterTypes() + IdeWithLambda::class.java
 
   override fun startIde(context: ExtensionContext, testContext: IDETestContext, ideRunTimeout: Duration): BackgroundRun {
     return LambdaIdeSession.startIde(context, testContext, ideRunTimeout)

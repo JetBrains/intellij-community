@@ -1,11 +1,11 @@
 package com.intellij.ide.starter.driver.reused
 
-import com.intellij.driver.client.Driver
-import com.intellij.ide.starter.driver.engine.BackgroundRun
+import com.intellij.ide.starter.driver.reused.ReusedSessionStrategy.Companion.createReusedSessionStrategy
 import org.junit.jupiter.api.DisplayNameGeneration
 import org.junit.jupiter.api.DisplayNameGenerator
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.platform.commons.support.AnnotationSupport
 import java.lang.annotation.Inherited
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
@@ -29,19 +29,24 @@ annotation class ReusedRun(
   val sessionStrategy: KClass<out ReusedSessionStrategy> = ReusedSessionStrategy.Companion.DefaultReusedSessionStrategy::class,
 )
 
-/** Hides framework-injected parameters from JUnit display names for [ReusedRun] tests. */
+/**
+ * Hides framework-injected parameters from JUnit display names for [ReusedRun] tests.
+ *
+ * The [ReusedSessionStrategy.injectedParameterTypes] of the test class tell which parameters to hide.
+ */
 class ReusedDisplayNameGenerator : DisplayNameGenerator.Standard() {
   override fun generateDisplayNameForMethod(
     enclosingInstanceTypes: List<Class<*>>,
     testClass: Class<*>,
     testMethod: Method,
-  ): String = generateDisplayName(testMethod)
+  ): String = generateDisplayName(testClass, testMethod)
 
   @Deprecated("Deprecated in Java")
-  override fun generateDisplayNameForMethod(testClass: Class<*>, testMethod: Method): String = generateDisplayName(testMethod)
+  override fun generateDisplayNameForMethod(testClass: Class<*>, testMethod: Method): String = generateDisplayName(testClass, testMethod)
 
-  private fun generateDisplayName(testMethod: Method): String {
-    val displayParameterTypes = testMethod.parameterTypes.filterNot(::isReusedIdeDisplayNameParameter)
+  private fun generateDisplayName(testClass: Class<*>, testMethod: Method): String {
+    val injectedParameterTypes = sessionStrategyOf(testClass).injectedParameterTypes()
+    val displayParameterTypes = testMethod.parameterTypes.filterNot { it in injectedParameterTypes }
     if (displayParameterTypes.isEmpty()) {
       return testMethod.name
     }
@@ -49,7 +54,10 @@ class ReusedDisplayNameGenerator : DisplayNameGenerator.Standard() {
   }
 }
 
-private fun isReusedIdeDisplayNameParameter(parameterType: Class<*>): Boolean = when (parameterType) {
-  BackgroundRun::class.java, Driver::class.java -> true
-  else -> false
+private fun sessionStrategyOf(testClass: Class<*>): ReusedSessionStrategy {
+  val strategyClass = AnnotationSupport.findAnnotation(testClass, ReusedRun::class.java)
+                        .map { it.sessionStrategy }
+                        .orElse(null)
+                      ?: ReusedSessionStrategy.Companion.DefaultReusedSessionStrategy::class
+  return createReusedSessionStrategy(strategyClass)
 }

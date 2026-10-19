@@ -47,6 +47,17 @@ class ReusedRunLaunchNameTest {
   }
 
   @Test
+  fun `reused run display names hide the parameters that the session strategy injects`() {
+    val generator = ReusedDisplayNameGenerator()
+    val stringAndDriverMethod = displayNameSampleMethod(String::class.java, Driver::class.java)
+
+    assertEquals(
+      "display name sample",
+      generator.generateDisplayNameForMethod(emptyList(), StringInjectingSample::class.java, stringAndDriverMethod),
+    )
+  }
+
+  @Test
   fun `the IDE run timeout covers one start and every test of the class`() {
     assertEquals(10.minutes + 1.hours + 5.minutes, ideRunTimeout(ClassTimeoutSample::class.java))
     assertEquals(10.minutes + 10.minutes + 10.minutes, ideRunTimeout(NoTimeoutSample::class.java))
@@ -67,6 +78,13 @@ class ReusedRunLaunchNameTest {
   private fun `display name sample`(name: String, driver: Driver) {
   }
 }
+
+private class StringInjectingStrategy : ReusedSessionStrategy {
+  override fun injectedParameterTypes(): Set<Class<*>> = super.injectedParameterTypes() + String::class.java
+}
+
+@ReusedRun(sessionStrategy = StringInjectingStrategy::class)
+private abstract class StringInjectingSample
 
 // The samples are abstract, so JUnit does not run their tests.
 @Suppress("unused")

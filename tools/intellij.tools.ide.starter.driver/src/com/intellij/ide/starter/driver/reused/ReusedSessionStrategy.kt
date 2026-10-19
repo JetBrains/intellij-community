@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.driver.reused
 
+import com.intellij.driver.client.Driver
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.ide.IDETestContext
@@ -36,6 +37,9 @@ interface ReusedSessionStrategy {
     TestContextCache.getOrCreate(projectConfiguration)
 
   fun currentRunMode(context: ExtensionContext): IdeRunMode = IdeRunMode.current()
+
+  /** The parameter types that the framework injects into a test method. The display name of the test leaves them out. */
+  fun injectedParameterTypes(): Set<Class<*>> = setOf(BackgroundRun::class.java, Driver::class.java)
 
   /**
    * Key for the reused IDE session owned by this invocation.
