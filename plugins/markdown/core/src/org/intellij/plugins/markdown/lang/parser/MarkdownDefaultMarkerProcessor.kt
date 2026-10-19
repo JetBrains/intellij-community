@@ -69,25 +69,25 @@ open class MarkdownDefaultMarkerProcessor(
     ))
   }
 
-  override fun getMarkerBlockProviders(): List<MarkerBlockProvider<StateInfo>> {
-    return buildList {
-      add(IndentedCodeFenceMarkerProvider())
-      add(CodeBlockProvider())
-      add(CodeFenceMarkerProvider())
-      add(SetextHeaderProvider())
-      add(GitHubAlertMarkerProvider())
-      add(BlockQuoteProvider(lazyContinuation = false))
-      add(ListMarkerProvider())
-      add(HtmlBlockProvider())
-      add(DefinitionListMarkerProvider())
-      add(AdmonitionMarkerProvider())
-      add(FrontMatterHeaderMarkerProvider())
-      add(HorizontalRuleProvider())
-      add(GitHubTableMarkerProvider())
-      add(AtxHeaderProvider())
-      add(CommentAwareLinkReferenceDefinitionProvider())
-    }
-  }
+  private val markerBlockProviders: List<MarkerBlockProvider<StateInfo>> = listOf(
+    IndentedCodeFenceMarkerProvider(),
+    CodeBlockProvider(),
+    CodeFenceMarkerProvider(),
+    SetextHeaderProvider(),
+    GitHubAlertMarkerProvider(),
+    BlockQuoteProvider(lazyContinuation = false),
+    ListMarkerProvider(),
+    HtmlBlockProvider(),
+    DefinitionListMarkerProvider(),
+    AdmonitionMarkerProvider(),
+    FrontMatterHeaderMarkerProvider(),
+    HorizontalRuleProvider(),
+    GitHubTableMarkerProvider(),
+    AtxHeaderProvider(),
+    CommentAwareLinkReferenceDefinitionProvider(),
+  )
+
+  override fun getMarkerBlockProviders(): List<MarkerBlockProvider<StateInfo>> = markerBlockProviders
 
   object Factory: MarkerProcessorFactory {
     override fun createMarkerProcessor(productionHolder: ProductionHolder): MarkerProcessor<*> {

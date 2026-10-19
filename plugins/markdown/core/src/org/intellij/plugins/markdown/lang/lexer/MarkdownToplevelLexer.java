@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.lang.lexer;
 
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.intellij.markdown.parser.MarkdownParser;
+import org.intellij.plugins.markdown.lang.parser.CancellableText;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class MarkdownToplevelLexer extends MarkdownTreeLexerBase {
     myBufferHash = bufferHash;
     myBufferStart = startOffset;
     myParsedEnd = startOffset;
-    reset(buffer, endOffset);
+    reset(CancellableText.of(buffer), endOffset);
     addNextTokens();
   }
 
