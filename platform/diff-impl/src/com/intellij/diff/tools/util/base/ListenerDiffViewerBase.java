@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -40,7 +40,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     List<VirtualFile> files = extractVirtualFiles(myRequest);
     if (!files.isEmpty()) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(VirtualFileManager.VFS_CHANGES, new MyBulkFileListener(files));
+        .subscribe(VirtualFileManager.VFS_CHANGES_BG, new MyBulkFileListener(files));
     }
 
     List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> {
@@ -91,7 +91,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     }
   }
 
-  private class MyBulkFileListener implements BulkFileListener {
+  private class MyBulkFileListener implements BulkFileListenerBackgroundable {
     private final List<VirtualFile> myFiles;
 
     MyBulkFileListener(@NotNull List<VirtualFile> files) {
@@ -111,9 +111,14 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
         }
       }
 
-      for (VirtualFile file : toRefresh) {
-        onFileChange(file);
-      }
+      if (toRefresh.isEmpty()) return;
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (isDisposed()) return;
+        for (VirtualFile file : toRefresh) {
+          onFileChange(file);
+        }
+      });
     }
   }
 }
