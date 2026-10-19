@@ -241,6 +241,7 @@ intellij.searchEverywhereMl.ranking.core.tests
 intellij.searchEverywhereMl.tests
 intellij.searchEverywhereMl.typos.tests
 intellij.settingsSync.tests
+intellij.sh.tests
 intellij.statsCollector.tests
 intellij.tasks.tests
 intellij.terminal.emulator.tests
