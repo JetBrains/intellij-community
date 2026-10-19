@@ -25,7 +25,7 @@ use serde::Serialize;
 use super::channel::{self, BOOT_CODE, log};
 use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
-use super::monitor::{self, LiveStop, Monitor, MonitorPaths};
+use super::monitor::{self, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
 use super::package::sha256_hex;
 use super::watchdog::KILL_GRACE;
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
@@ -278,7 +278,15 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         budget.map(|budget| started + budget + KILL_GRACE),
     );
     let (written, finished) = std::thread::scope(|scope| {
-        scope.spawn(|| monitor.watch(&LiveStop { jcmd }));
+        // Named, so a hang report tells the monitor from the run thread.
+        if let Err(error) = std::thread::Builder::new()
+            .name(MONITOR_THREAD.to_owned())
+            .spawn_scoped(scope, || monitor.watch(&LiveStop { jcmd }))
+        {
+            log(&format!(
+                "cannot start the monitor, so the run has no hang report and no hard stop: {error}"
+            ));
+        }
         let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut Tee(stream, io::stdout()));
         monitor.run_returned();
         let written = write_xml(&root, &xml, variable);

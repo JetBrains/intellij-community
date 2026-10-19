@@ -68,7 +68,7 @@ fn each_thread_is_named_with_its_state_its_wait_and_the_target_of_its_descriptor
     thread(process, 10, "lane-monitor", "10 (lane-monitor) R 1 7 7", "0", "running");
     thread(process, 11, "idle", "11 (idle) S 1 7 7", "", "-1 0x7ffd 0x7f01");
     assert_eq!(
-        thread_lines(process),
+        thread_lines(process, Some(12)),
         [
             "lane-run: thread 7 'vm-guest-agent': state S, wchan futex_wait_queue, syscall futex",
             "lane-run: thread 8 'lane (trace)': state D, wchan pipe_write, syscall write on fd 5 -> pipe:[4026]",
@@ -77,8 +77,13 @@ fn each_thread_is_named_with_its_state_its_wait_and_the_target_of_its_descriptor
             "lane-run: thread 11 'idle': state S, wchan ?, syscall none",
         ]
     );
+    // The thread that writes the report reads its own `syscall` file. It is named as the monitor alone.
     assert_eq!(
-        thread_lines(&root.path().join("absent")),
+        thread_lines(process, Some(10))[3],
+        format!("lane-run: thread 10 'lane-monitor': {OWN_THREAD}")
+    );
+    assert_eq!(
+        thread_lines(&root.path().join("absent"), None),
         [format!(
             "lane-run: no thread report: {} has no task directory",
             root.path().join("absent").display()
@@ -322,10 +327,18 @@ fn the_hang_report_starts_with_the_run_as_the_watch_knows_it() {
     );
 }
 
-// On Linux the report reads this process: the thread that reads its own system call is running.
+// On Linux the report reads this process. The thread that writes it reads its own system call file, so it is named as
+// the monitor, and not by a read on a descriptor that is closed by then.
 #[cfg(target_os = "linux")]
 #[test]
-fn the_report_of_this_process_names_the_thread_that_reads_it() {
-    let lines = thread_lines(Path::new(PROC_SELF));
-    assert!(lines.iter().any(|line| line.ends_with("syscall running")), "{lines:#?}");
+fn the_report_of_this_process_names_the_thread_that_writes_it_as_the_monitor() {
+    let own = own_thread().expect("/proc/thread-self names this thread");
+    let lines = thread_lines(Path::new(PROC_SELF), Some(own));
+    let line = format!("lane-run: thread {own} '");
+    assert!(
+        lines
+            .iter()
+            .any(|written| written.starts_with(&line) && written.ends_with(OWN_THREAD)),
+        "{lines:#?}"
+    );
 }

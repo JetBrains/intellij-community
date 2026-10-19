@@ -39,6 +39,8 @@ mod tests;
 
 /// How often the monitor writes the hang report.
 pub(crate) const HEARTBEAT: Duration = Duration::from_mins(3);
+/// The name of the thread of the monitor, which its own line of a hang report shows.
+pub(crate) const MONITOR_THREAD: &str = "lane-monitor";
 /// How long one write of the monitor on the standard error may take before the monitor goes on without it.
 const SAY_WAIT: Duration = Duration::from_secs(2);
 /// The file of the hang report in the outputs directory of a Bazel test, which Bazel keeps after the test.
@@ -197,7 +199,8 @@ impl<'a> Monitor<'a> {
     pub(crate) fn report(&self, process: &Path) -> Vec<String> {
         let snapshot = self.daemon.watch().map(|watch| watch.snapshot()).unwrap_or_default();
         let mut lines = vec![format!("lane-run: hang report: {}", describe_run(&snapshot))];
-        lines.extend(thread_lines(process));
+        let own = (process == Path::new(PROC_SELF)).then(own_thread).flatten();
+        lines.extend(thread_lines(process, own));
         lines
     }
 
@@ -343,10 +346,20 @@ pub(crate) fn unended_ide_runs(events: &[RunEvent]) -> Vec<(String, String)> {
     running.into_iter().map(|(_, key, name)| (key, name)).collect()
 }
 
+/// What the report says of the thread `own` that writes it. That thread reads its own `syscall` file, so its system call
+/// is a read on a descriptor that is closed when the report names it.
+pub(crate) const OWN_THREAD: &str = "the monitor, which writes this report";
+
+/// The id of the thread that calls this, from `/proc/thread-self`, or `None` on a host without it.
+pub(crate) fn own_thread() -> Option<u64> {
+    fs::read_link("/proc/thread-self").ok()?.file_name()?.to_str()?.parse().ok()
+}
+
 /// One line for each thread of the process that `process` names, `/proc/self` outside a test: its id, its name, its
 /// state, its wait channel and its system call. A system call on a file descriptor names the target of the descriptor,
-/// and `wait4` names the pid it waits for. A host without `/proc` gets one line that says so.
-pub(crate) fn thread_lines(process: &Path) -> Vec<String> {
+/// and `wait4` names the pid it waits for. The thread `own` is named as the monitor alone. A host without `/proc` gets
+/// one line that says so.
+pub(crate) fn thread_lines(process: &Path, own: Option<u64>) -> Vec<String> {
     let Ok(tasks) = fs::read_dir(process.join("task")) else {
         return vec![format!("lane-run: no thread report: {} has no task directory", process.display())];
     };
@@ -360,6 +373,9 @@ pub(crate) fn thread_lines(process: &Path) -> Vec<String> {
         .map(|(tid, task)| {
             let read = |name: &str| fs::read_to_string(task.join(name)).map(|text| text.trim().to_owned());
             let name = read("comm").unwrap_or_default();
+            if own == Some(tid) {
+                return format!("lane-run: thread {tid} '{name}': {OWN_THREAD}");
+            }
             let state = read("stat").ok().and_then(|stat| task_state(&stat)).unwrap_or('?');
             let wchan = read("wchan")
                 .ok()

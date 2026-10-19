@@ -1628,7 +1628,8 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 - A monitor thread of `lane-run` writes a hang report on the standard error every 3 minutes. The report names the
   scenario that runs, the open steps of the run thread and the budget left. It also names each thread of the process
   with its state, its wait channel and its system call. A call on a file descriptor names the target of the
-  descriptor.
+  descriptor. The thread that writes the report is named as the monitor, because its own system call is the read of
+  its own `syscall` file. The monitor thread and the watchdog thread have names of their own.
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`each_thread_is_named_with_its_state_its_wait_and_the_target_of_its_descriptor`)
   [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`a_snapshot_names_the_scenario_the_open_steps_and_the_budget_left`)
 
@@ -1639,6 +1640,11 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   names each planned scenario for it.
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder`)
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped`)
+
+- `lane-run` writes the run stream on standard output from the run thread and from the watchdog thread. The agent
+  locks standard output for each write, not for the whole run. So no thread of the run waits for a lock of the main
+  thread.
+  [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output`)
 
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,

@@ -35,7 +35,7 @@ use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::stream::Stream;
 use super::trace::{RecorderProcess, Trace};
-use super::watchdog::{self, DISMISS_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, Watch};
+use super::watchdog::{self, DISMISS_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, WATCHDOG_THREAD, Watch};
 use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
 use crate::supervisor::{self, LiveSystem};
@@ -621,7 +621,11 @@ fn execute_selection(
     watch.plan_started(stream, discovered);
     daemon.publish_watch(Some(Arc::clone(&watch)));
     std::thread::scope(|scope| {
-        scope.spawn(|| watchdog::watch(&watch, stream, &daemon_lane, iteration_dir));
+        // Named, so a hang report tells the watchdog from the run thread. A watchdog that does not start fails the run.
+        std::thread::Builder::new()
+            .name(WATCHDOG_THREAD.to_owned())
+            .spawn_scoped(scope, || watchdog::watch(&watch, stream, &daemon_lane, iteration_dir))
+            .expect("the watchdog thread starts");
         Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace)
             .with_session_logs(staged.logs.clone())
             .run(&selection.suites);

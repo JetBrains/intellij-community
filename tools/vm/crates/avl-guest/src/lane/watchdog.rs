@@ -38,6 +38,8 @@ mod tests;
 pub(crate) const TICK: Duration = Duration::from_secs(1);
 /// How often the watchdog writes its state while nothing else changes.
 pub(crate) const HEARTBEAT: Duration = Duration::from_mins(1);
+/// The name of the watchdog thread, which a hang report shows.
+pub(crate) const WATCHDOG_THREAD: &str = "lane-watchdog";
 /// How long the run thread may sit in one step before the IDE dumps its threads.
 pub(crate) const SLOW_STEP_BUDGET: Duration = Duration::from_secs(30);
 /// How many steps of one run get dumps.

@@ -418,3 +418,112 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
         "{stdout}{stderr}"
     );
 }
+
+/// `lane-run` writes its run stream on standard output from the run thread and from the watchdog thread. The agent held
+/// the lock of standard output for its whole run, so the first record of the watchdog thread blocked inside the stream,
+/// with the lock of the stream held, and the run thread blocked at its next record. On TeamCity each lane then hung until
+/// the hard stop of its budget. Here a bare IDE that never answers its bridge holds the run thread, and the watchdog ends
+/// the run after a progress gap of 1 s, so the watchdog thread writes `watchdogExpired`.
+///
+/// The test runs the binary, because the stream setup of `main` decides whether a thread other than the main one can
+/// write on standard output.
+#[test]
+fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
+    use std::time::{Duration, Instant};
+    let root = tempfile::tempdir().unwrap();
+    let (runfiles, descriptor) = lane_runfiles(root.path());
+    let main = runfiles.join("_main");
+    let java_home = if cfg!(target_os = "macos") {
+        "dist/home/jbr/Contents/Home"
+    } else {
+        "dist/home/jbr"
+    };
+    // An IDE that runs and never answers its bridge, in a distribution that the launch reads.
+    put(&main.join(java_home).join("bin/java"), b"#!/bin/sh\nexec sleep 120\n", true);
+    let (product_info, vm_options) = if cfg!(target_os = "macos") {
+        ("dist/home/Resources/product-info.json", "../bin/idea64.vmoptions")
+    } else {
+        ("dist/home/product-info.json", "bin/idea64.vmoptions")
+    };
+    let launch = serde_json::json!({"launch": [{"vmOptionsFilePath": vm_options}]});
+    put(&main.join(product_info), launch.to_string().as_bytes(), false);
+    put(&main.join("dist/home/bin/idea64.vmoptions"), b"-Xmx1g\n", false);
+    put(&main.join("dist/home/bin/idea.properties"), b"", false);
+    put(&main.join("dist/home/core-classpath.txt"), b"lib/a.jar\n", false);
+    let file =
+        |logical: &str| serde_json::json!({"execPath": format!("bazel-out/bin/{logical}"), "logicalPath": logical, "owner": "//test"});
+    let mut document: serde_json::Value = serde_json::from_slice(&std::fs::read(&descriptor).unwrap()).unwrap();
+    document["ide"]["plugins"] = serde_json::json!([
+        {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "file": file("_main/bridge.jar")},
+        {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "file": file("_main/resident.jar")},
+    ]);
+    document["ide"]["projectArchive"] = file("_main/project.zip");
+    put(&descriptor, document.to_string().as_bytes(), false);
+    put(&main.join("bridge.jar"), b"bridge", false);
+    put(&main.join("resident.jar"), b"resident", false);
+    put(&main.join("project.zip"), &project_zip(), false);
+    let startup = serde_json::json!({
+        "schemaVersion": 2, "suite": "startup-class-loading", "lane": "UI", "testClassName": "AirStartupClassLoadingBudgetUiTest",
+        "authored": true, "launch": {"profile": "bare", "key": "air-startup-class-loading"},
+        "restartsIde": false, "labels": [{"name": "testClass", "value": "air.AirStartupClassLoadingBudgetUiTest"}],
+        "modules": [], "implementationFlows": [], "vocabulary": {"runnerAnswers": [], "actions": {}, "assertions": {}},
+        "profiles": [{"name": "within budget", "fixture": "bare", "flags": {}, "setups": [], "steps": [], "program": []}],
+    });
+    put(
+        &main.join("documents.jar"),
+        &documents_jar(&[("startup-class-loading", startup)]),
+        false,
+    );
+    put(&main.join("agent.jar"), b"agent jar", false);
+    put(&main.join("dist/fingerprint.txt"), b"product-1", false);
+
+    let (stdout_path, stderr_path) = (root.path().join("stdout.txt"), root.path().join("stderr.txt"));
+    let path = |path: &std::path::Path| path.display().to_string();
+    let mut command = agent_command();
+    command
+        .args(["lane-run", "--lane", "ui", "--progress-gap-timeout-sec", "1"])
+        .args(["--descriptor", &path(&descriptor), "--runfiles-root", &path(&runfiles)])
+        .args(["--runtime-root", &path(&root.path().join("run"))])
+        // The JUnit XML and the hang report of this run are not the files of the Bazel test that runs this file.
+        .env_remove("XML_OUTPUT_FILE")
+        .env_remove("TEST_UNDECLARED_OUTPUTS_DIR")
+        .stdin(Stdio::null())
+        .stdout(std::fs::File::create(&stdout_path).unwrap())
+        .stderr(std::fs::File::create(&stderr_path).unwrap());
+    if cfg!(target_os = "linux") {
+        // A worker of the controller: no probe of the host, and a display for the launch.
+        command
+            .env(avl_wire::daemon::RUN_SECRETS_VARIABLE, root.path().join("secrets"))
+            .env("DISPLAY", ":0");
+    }
+    // Dropped at the end, which kills the run: the bare IDE is gone, and its readiness waits out its own deadline.
+    let mut run = Daemon(command.spawn().unwrap());
+    let read = |path: &std::path::Path| std::fs::read_to_string(path).unwrap_or_default();
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while !read(&stdout_path).contains(r#""event":"watchdogExpired""#) {
+        assert!(
+            run.0.try_wait().unwrap().is_none(),
+            "lane-run ended before its watchdog wrote\nstdout:\n{}\nstderr:\n{}",
+            read(&stdout_path),
+            read(&stderr_path)
+        );
+        assert!(
+            Instant::now() < deadline,
+            "the watchdog thread wrote no record on standard output within 60 s\nstdout:\n{}\nstderr:\n{}",
+            read(&stdout_path),
+            read(&stderr_path)
+        );
+        std::thread::sleep(Duration::from_millis(100));
+    }
+}
+
+/// The archive of the plain project of a lane: one directory and one file in it.
+fn project_zip() -> Vec<u8> {
+    use std::io::Write as _;
+    let mut writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    writer.add_directory("plain-project/", options).unwrap();
+    writer.start_file("plain-project/README.md", options).unwrap();
+    writer.write_all(b"plain project\n").unwrap();
+    writer.finish().unwrap().into_inner()
+}
