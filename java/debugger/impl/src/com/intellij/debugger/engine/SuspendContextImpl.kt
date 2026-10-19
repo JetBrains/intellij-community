@@ -144,9 +144,15 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
   fun setThread(thread: ThreadReference?) {
     assertCanBeUsed()
+    val currentThread = eventThread
+    if (currentThread != null && thread != null && currentThread.threadReference == thread) {
+      // The same thread again, as for every event after the first one of an event set. Compare the references:
+      // VirtualMachineProxyImpl does not cache the proxies of virtual threads, so a fresh proxy is not a different thread.
+      return
+    }
     val threadProxy = virtualMachineProxy.getThreadReferenceProxy(thread)
-    assertInLog(eventThread == null || eventThread === threadProxy) {
-      "Invalid thread setting in $this: myThread = ${eventThread}, thread = $thread"
+    assertInLog(currentThread == null || currentThread === threadProxy) {
+      "Invalid thread setting in $this: myThread = ${currentThread}, thread = $thread"
     }
     setThread(threadProxy)
   }
