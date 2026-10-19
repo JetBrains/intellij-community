@@ -96,7 +96,8 @@ final class FileIncludeManagerImpl extends FileIncludeManager implements Disposa
     context = context.getOriginalFile();
     VirtualFile contextFile = context.getVirtualFile();
     if (contextFile == null) return;
-    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) return;
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex != null && fileBasedIndex.getFileBeingCurrentlyIndexed() != null) return;
 
     String originalName = context.getName();
     Collection<String> names = getPossibleIncludeNames(context, originalName);

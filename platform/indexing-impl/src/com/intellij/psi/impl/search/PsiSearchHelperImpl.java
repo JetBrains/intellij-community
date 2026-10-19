@@ -236,7 +236,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     // TODO: direct forward index access is not used right now since IdIndex shared index doesn't have forward index
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiFile);
     IdIndexEntry key = new IdIndexEntry(name, true);
-    return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty();
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex != null && !fileBasedIndex.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty();
   }
 
   @Override
@@ -1381,9 +1382,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       LOG.trace("searching for words " + words + " in " + scope);
     }
 
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
     if (ApplicationManager.getApplication().isReadAccessAllowed() &&
         (!DumbService.isDumb(project) ||
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != null)) {
+         (fileBasedIndex != null && fileBasedIndex.getCurrentDumbModeAccessType(project) != null))) {
       return computeQueries(scope, processor, textIndexQueries);
     }
 
@@ -1394,7 +1396,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull TextIndexQuery @NotNull [] textIndexQueries) {
     Collection<AllKeysQuery<?, ?>> queries = ContainerUtil.concat(textIndexQueries, q -> q.toFileBasedIndexQueries());
-    return FileBasedIndex.getInstance().processFilesContainingAllKeys(queries, scope, processor);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex == null || fileBasedIndex.processFilesContainingAllKeys(queries, scope, processor);
   }
 
   @ApiStatus.Internal

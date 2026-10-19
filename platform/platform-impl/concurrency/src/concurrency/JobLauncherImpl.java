@@ -79,7 +79,10 @@ public final class JobLauncherImpl extends JobLauncher {
     Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
-    processor = FileBasedIndex.getInstance().inheritCurrentDumbAccessType(processor);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex != null) {
+      processor = fileBasedIndex.inheritCurrentDumbAccessType(processor);
+    }
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
 

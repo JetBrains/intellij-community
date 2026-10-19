@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -41,12 +42,15 @@ public final class FileTypeIndex {
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
   public static @Nullable FileType getIndexedFileType(@NotNull VirtualFile file, @NotNull Project project) {
-    Map<FileType, Void> data = FileBasedIndex.getInstance().getFileData(NAME, file, project);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return null;
+    Map<FileType, Void> data = fileBasedIndex.getFileData(NAME, file, project);
     return ContainerUtil.getFirstItem(data.keySet());
   }
 
   public static @NotNull @Unmodifiable Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex == null ? Collections.emptyList() : fileBasedIndex.getContainingFiles(NAME, fileType, scope);
   }
 
   public static boolean containsFileOfType(@NotNull FileType type, @NotNull GlobalSearchScope scope) {
@@ -54,7 +58,9 @@ public final class FileTypeIndex {
   }
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
-    @NotNull Iterator<VirtualFile> files = FileBasedIndex.getInstance().getContainingFilesIterator(NAME, fileType, scope);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return true;
+    @NotNull Iterator<VirtualFile> files = fileBasedIndex.getContainingFilesIterator(NAME, fileType, scope);
     while (files.hasNext()) {
       VirtualFile file = files.next();
       if (!processor.process(file)) {

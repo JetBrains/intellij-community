@@ -102,14 +102,13 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
 
   @Override
   public @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
-    if ((DumbService.getInstance(project).isDumb() &&
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != DumbModeAccessType.RELIABLE_DATA_ONLY) ||
-        NoAccessDuringPsiEvents.isInsideEventProcessing()) {
-      return null;
-    }
-
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     if (!(fileBasedIndex instanceof FileBasedIndexImpl)) {
+      return null;
+    }
+    if ((DumbService.getInstance(project).isDumb() &&
+         fileBasedIndex.getCurrentDumbModeAccessType(project) != DumbModeAccessType.RELIABLE_DATA_ONLY) ||
+        NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }
     boolean wasIndexedAlready = ((FileBasedIndexImpl)fileBasedIndex).isFileUpToDate(vFile);
@@ -286,7 +285,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
 
   @Override
   protected boolean isTooLarge(@NotNull VirtualFile file) {
-    return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file);
+    return FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index && index.isTooLarge(file);
   }
 
   void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {

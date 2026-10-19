@@ -186,7 +186,7 @@ private fun getFilenameIndexModificationTracker(project: Project): ModificationT
   return ModificationTracker {
     disableIndexUpToDateCheckInEdt<Long, RuntimeException> {
       @Suppress("removal", "DEPRECATION")
-      FileBasedIndex.getInstance().getIndexModificationStamp(FilenameIndex.NAME, project)
+      FileBasedIndex.getInstanceIfDefined()?.getIndexModificationStamp(FilenameIndex.NAME, project) ?: 0L
     }
   }
 }

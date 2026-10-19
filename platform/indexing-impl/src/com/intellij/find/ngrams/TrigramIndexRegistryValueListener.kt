@@ -17,7 +17,7 @@ import com.intellij.util.indexing.FileBasedIndex
 internal class TrigramIndexRegistryValueListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
     if (TrigramIndexFilter.ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY == value.key) {
-      FileBasedIndex.getInstance().requestRebuild(TrigramIndex.INDEX_ID)
+      FileBasedIndex.getInstanceIfDefined()?.requestRebuild(TrigramIndex.INDEX_ID)
     }
   }
 }

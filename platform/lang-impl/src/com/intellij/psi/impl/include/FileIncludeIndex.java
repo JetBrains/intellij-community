@@ -51,13 +51,17 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
   private static final ID<String, List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   public static @Unmodifiable @NotNull Stream<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
-    Map<String, List<FileIncludeInfoImpl>> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return Stream.empty();
+    Map<String, List<FileIncludeInfoImpl>> data = fileBasedIndex.getFileData(INDEX_ID, file, project);
     return data.values().stream().flatMap(Collection::stream);
   }
 
   static @NotNull Map<VirtualFile, List<? extends FileIncludeInfo>> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
     Map<VirtualFile, List<? extends FileIncludeInfo>> result = new HashMap<>();
-    FileBasedIndex.getInstance().processValues(INDEX_ID, fileName, null, (file, value) -> {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return result;
+    fileBasedIndex.processValues(INDEX_ID, fileName, null, (file, value) -> {
       result.put(file, value);
       return true;
     }, scope);
@@ -67,7 +71,9 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
   public static void collectIncludingFileCandidateFiles(@NotNull String fileName,
                                                         @NotNull GlobalSearchScope scope,
                                                         @NotNull Set<VirtualFile> result) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, fileName, null, (file, value) -> {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return;
+    fileBasedIndex.processValues(INDEX_ID, fileName, null, (file, value) -> {
       result.add(file);
       return true;
     }, scope);

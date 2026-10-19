@@ -97,9 +97,10 @@ private fun postAppRegistered(
 
     launch {
       fileTypeManagerJob.join()
+      // the backend module registers the index, so a light or frontend process has none
       val fileBasedIndex = span("FileBasedIndex preloading") {
-        app.serviceAsync<FileBasedIndex>()
-      }
+        app.getServiceAsyncIfDefined(FileBasedIndex::class.java)
+      } ?: return@launch
       span("FileBasedIndex.loadIndexes") {
         fileBasedIndex.loadIndexes()
       }

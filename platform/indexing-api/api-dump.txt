@@ -547,6 +547,7 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - a:getFilesWithKey(com.intellij.util.indexing.ID,java.util.Set,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
 - a:getIndexModificationStamp(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project):J
 - s:getInstance():com.intellij.util.indexing.FileBasedIndex
+- s:getInstanceIfDefined():com.intellij.util.indexing.FileBasedIndex
 - a:getSingleEntryIndexData(com.intellij.util.indexing.ID,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.Object
 - a:getValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.List
 - invalidateCaches():V

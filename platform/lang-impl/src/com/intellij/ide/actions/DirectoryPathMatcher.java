@@ -71,7 +71,8 @@ final class DirectoryPathMatcher {
   }
 
   private static @NotNull Predicate<VirtualFile> createProjectFileFilter(@NotNull Project project) {
-    IdFilter projectIndexableFilesFilter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    IdFilter projectIndexableFilesFilter = fileBasedIndex == null ? null : fileBasedIndex.projectIndexableFiles(project);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
       return vFile -> allScope.contains(vFile);
