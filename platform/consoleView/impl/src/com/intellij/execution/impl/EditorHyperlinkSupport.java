@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -182,7 +183,8 @@ public final class EditorHyperlinkSupport {
 
   @ApiStatus.Internal
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor, boolean trackDocumentChangesManually) {
-    return doGet(editor, editor.getProject(), trackDocumentChangesManually);
+    Project project = Objects.requireNonNull(editor.getProject(), "editor.getProject() must be not-null");
+    return doGet(editor, project, trackDocumentChangesManually);
   }
 
   /**
@@ -191,7 +193,7 @@ public final class EditorHyperlinkSupport {
    */
   private static @NotNull EditorHyperlinkSupport doGet(
     @NotNull Editor editor,
-    @Nullable Project project,
+    @NotNull Project project,
     boolean trackDocumentChangesManually
   ) {
     EditorHyperlinkSupport cached = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
@@ -335,9 +337,13 @@ public final class EditorHyperlinkSupport {
   }
 
   private @Nullable RangeHighlighterEx findLinkRangeAt(int offset) {
+    return findLinkRangeAt(myEditor, offset);
+  }
+
+  private static @Nullable RangeHighlighterEx findLinkRangeAt(@NotNull Editor editor, int offset) {
     // It should be synced with c.i.o.editor.impl.view.IterationState.LayerComparator.compare()
     Ref<RangeHighlighterEx> result = new Ref<>();
-    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, highlighter -> {
+    processHyperlinksAndHighlightings(offset, offset, editor, true, false, highlighter -> {
       if (result.isNull()) {
         result.set(highlighter);
       }
@@ -371,7 +377,17 @@ public final class EditorHyperlinkSupport {
   }
 
   public @Nullable HyperlinkInfo getHyperlinkAt(int offset) {
-    RangeHighlighter range = findLinkRangeAt(offset);
+    return getHyperlinkAt(myEditor, offset);
+  }
+
+  /**
+   * Returns the hyperlink at the given offset, or {@code null} if there is none.
+   * Unlike {@link #getHyperlinkAt(int)}, this method doesn't require a project
+   * and does not create the EditorHyperlinkSupport instance.
+   */
+  @ApiStatus.Internal
+  public static @Nullable HyperlinkInfo getHyperlinkAt(@NotNull Editor editor, int offset) {
+    RangeHighlighter range = findLinkRangeAt(editor, offset);
     return range == null ? null : getHyperlinkInfo(range);
   }
 

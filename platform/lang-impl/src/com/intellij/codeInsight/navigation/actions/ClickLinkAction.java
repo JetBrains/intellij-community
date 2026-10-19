@@ -33,7 +33,7 @@ public final class ClickLinkAction extends DumbAwareAction {
   private static @Nullable HyperlinkInfo getLink(@Nullable Editor editor, @Nullable Project project) {
     if (editor != null && project != null) {
       int offset = editor.getCaretModel().getOffset();
-      return EditorHyperlinkSupport.get(editor).getHyperlinkAt(offset);
+      return EditorHyperlinkSupport.getHyperlinkAt(editor, offset);
     }
     return null;
   }
