@@ -328,8 +328,14 @@ internal object SystemHealthMonitor {
       return
     }
 
-    // The native WSL support may not work properly in Rider and CLion yet.
-    if (PlatformUtils.isRider() || PlatformUtils.isCLion()) {
+    // Only IDEA, PhpStorm, WebStorm, GoLand, RubyMine are supported for the notification, e.g. there is no page for wslg,
+    // the native WSL support may not work properly in Rider and CLion yet
+    val supportedIdes = PlatformUtils.isIntelliJ() ||
+                        PlatformUtils.isPhpStorm() ||
+                        PlatformUtils.isWebStorm() ||
+                        PlatformUtils.isGoIde() ||
+                        PlatformUtils.isRubyMine()
+    if (!supportedIdes) {
       return
     }
 
