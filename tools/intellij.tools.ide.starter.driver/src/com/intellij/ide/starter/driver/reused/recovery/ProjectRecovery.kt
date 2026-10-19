@@ -17,6 +17,7 @@ import com.intellij.driver.sdk.ui.ProjectUtil
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.tools.ide.util.common.logOutput
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,12 +41,16 @@ private fun Driver.matchesConfiguredProject(project: Project, projectPath: Strin
   return if (isRemDevMode && rdTarget == RdTarget.FRONTEND) {
     // The frontend holds no backend base path, so match the name that the backend gives the project at that path.
     // The name can differ from the directory name, for example through `.idea/.name`.
-    project.getName() == getOpenProjects(RdTarget.BACKEND).singleOrNull { it.getBasePath() == projectPath }?.getName()
+    project.getName() == getOpenProjects(RdTarget.BACKEND).singleOrNull { isSamePath(it.getBasePath(), projectPath) }?.getName()
   }
   else {
-    project.getBasePath() == projectPath
+    isSamePath(project.getBasePath(), projectPath)
   }
 }
+
+/** [Project.getBasePath] uses `/` also on Windows, so compare the paths, not the strings. */
+private fun isSamePath(basePath: String?, projectPath: String): Boolean =
+  basePath != null && Path.of(basePath) == Path.of(projectPath)
 
 internal fun Driver.reopenProjects(projectPaths: List<String>) {
   if (projectPaths.isEmpty()) {
