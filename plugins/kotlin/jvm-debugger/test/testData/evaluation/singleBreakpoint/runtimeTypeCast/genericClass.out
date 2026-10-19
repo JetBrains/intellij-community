@@ -1,0 +1,9 @@
+LineBreakpoint created at genericClass.kt:11
+Run Java
+Connected to the target VM
+genericClass.kt:11
+Compile bytecode for (m as genericClass.C<kotlin.Int>).p
+Compile bytecode for (m as genericClass.C<kotlin.Int>).p + 1
+Disconnected from the target VM
+
+Process finished with exit code 0

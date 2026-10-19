@@ -1,0 +1,9 @@
+LineBreakpoint created at localClass.kt:13
+Run Java
+Connected to the target VM
+localClass.kt:13
+Compile bytecode for (i as A).p
+Compile bytecode for (i as A).p + 1
+Disconnected from the target VM
+
+Process finished with exit code 0

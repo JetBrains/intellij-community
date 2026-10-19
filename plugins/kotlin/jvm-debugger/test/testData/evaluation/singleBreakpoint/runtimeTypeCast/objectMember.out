@@ -1,0 +1,9 @@
+LineBreakpoint created at objectMember.kt:16
+Run Java
+Connected to the target VM
+objectMember.kt:16
+Compile bytecode for O.f()
+Compile bytecode for C.g()
+Disconnected from the target VM
+
+Process finished with exit code 0

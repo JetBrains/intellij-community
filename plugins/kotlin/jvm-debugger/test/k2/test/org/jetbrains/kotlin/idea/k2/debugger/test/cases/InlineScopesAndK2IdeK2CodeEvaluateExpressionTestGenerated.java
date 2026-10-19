@@ -1452,6 +1452,39 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/singleBreakpoint/runtimeTypeCast")
+        public static class RuntimeTypeCast extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
+            }
+
+            @TestMetadata("genericClass.kt")
+            public void testGenericClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/genericClass.kt");
+            }
+
+            @TestMetadata("localClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/localClass.kt");
+            }
+
+            @TestMetadata("missingMember.kt")
+            public void testMissingMember() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/missingMember.kt");
+            }
+
+            @TestMetadata("objectMember.kt")
+            public void testObjectMember() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/objectMember.kt");
+            }
+
+            @TestMetadata("ordinaryClass.kt")
+            public void testOrdinaryClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/ordinaryClass.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/simpleConstructors")
         public static class SimpleConstructors extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
