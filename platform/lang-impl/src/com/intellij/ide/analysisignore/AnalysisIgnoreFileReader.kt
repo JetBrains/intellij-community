@@ -21,7 +21,7 @@ internal fun readAnalysisIgnoreRecord(file: VirtualFile, urlManager: VirtualFile
   val baseDir = file.parent ?: return null
 
   val text = readTextOrNull(file)
-  val patterns = if (text == null) emptyList() else supportedPatternsOf(file, text)
+  val patterns = if (text == null) emptyList() else supportedPatternsOf(file.presentableUrl, text)
 
   val cacheableBaseDir = (baseDir as? CacheAvoidingVirtualFile)?.asCacheable() ?: baseDir
   return AnalysisIgnoreRecord(
@@ -31,9 +31,10 @@ internal fun readAnalysisIgnoreRecord(file: VirtualFile, urlManager: VirtualFile
 }
 
 /**
- * Returns the patterns of [text] that the format supports, in the order of the file. Names each pattern that the format refuses in the log.
+ * Returns the patterns of [text] that the format supports, in the order of the file. Names each pattern that the format refuses in the log,
+ * with [presentablePath] of the file.
  */
-private fun supportedPatternsOf(file: VirtualFile, text: CharSequence): List<String> {
+internal fun supportedPatternsOf(presentablePath: String, text: CharSequence): List<String> {
   val patterns = ArrayList<String>()
 
   var lineNumber = 0
@@ -45,7 +46,7 @@ private fun supportedPatternsOf(file: VirtualFile, text: CharSequence): List<Str
       AnalysisIgnoreValidated.Supported -> patterns.add(source)
       is AnalysisIgnoreValidated.Unsupported ->
         LOG.warn("$ANALYSIS_IGNORE_FILE_NAME does not support ${validated.reason.message}: " +
-                 "'$source' at ${file.presentableUrl}:$lineNumber")
+                 "'$source' at $presentablePath:$lineNumber")
     }
   }
 

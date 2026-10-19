@@ -36,37 +36,15 @@ import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 final class IgnoredFilesAndFoldersPanel extends JPanel {
 
   private final DefaultListModel<String> myModel = new DefaultListModel<>();
   private final JBList<String> myPatternList;
-  private final Predicate<String> myValidator;
-  private final @Nls String myInvalidMessage;
-  private final boolean myLogInteractions;
-  private final PatternEditField myEditField;
+  private final PatternEditField myEditField = new PatternEditField();
 
   IgnoredFilesAndFoldersPanel() {
-    this(FileTypesBundle.message("filetype.ignore.text"), IgnoredFilesAndFoldersPanel::isValidFileNamePattern,
-         FileTypesBundle.message("filetype.ignore.error.invalid"), true);
-  }
-
-  /**
-   * @param hint the grey text below the list
-   * @param validator accepts a pattern that the list can hold
-   * @param invalidMessage the error for a pattern that {@code validator} rejects
-   * @param logInteractions {@code true} to log the add, edit, and remove actions in {@link FileTypeConfigurableInteractions}
-   */
-  IgnoredFilesAndFoldersPanel(@NotNull @Nls String hint,
-                              @NotNull Predicate<String> validator,
-                              @NotNull @Nls String invalidMessage,
-                              boolean logInteractions) {
-    myValidator = validator;
-    myInvalidMessage = invalidMessage;
-    myLogInteractions = logInteractions;
-    myEditField = new PatternEditField();
     setLayout(new BorderLayout());
     myPatternList = new JBList<>();
     myPatternList.setModel(myModel);
@@ -86,23 +64,17 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     listPanel.add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
     add(listPanel, BorderLayout.CENTER);
-    JLabel label = new JLabel(hint);
+    JLabel label = new JLabel(FileTypesBundle.message("filetype.ignore.text"));
     label.setFont(JBUI.Fonts.smallFont());
     label.setForeground(JBColor.GRAY);
     label.setBorder(TitledSeparator.createEmptyBorder());
     add(label, BorderLayout.SOUTH);
   }
 
-  private static boolean isValidFileNamePattern(@NotNull String value) {
-    if (value.isBlank()) return false;
-    String withoutWildcards = value.trim().replaceAll("\\*", "a").replaceAll("\\?", "a");
-    return PathUtil.isValidFileName(withoutWildcards, true);
-  }
-
   private void removePattern() {
     int index = myPatternList.getSelectedIndex();
     if (index >= 0) {
-      if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternRemoved.log();
+      FileTypeConfigurableInteractions.ignorePatternRemoved.log();
       myModel.remove(index);
       if (!myModel.isEmpty()) {
         if (index >= myModel.size()) index = myModel.size() - 1;
@@ -112,29 +84,21 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
   }
 
   private void editPattern() {
-    if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternEdited.log();
+    FileTypeConfigurableInteractions.ignorePatternEdited.log();
     myEditField.startEdit(myPatternList.getSelectedValue());
   }
 
   private void addPattern() {
-    if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternAdded.log();
+    FileTypeConfigurableInteractions.ignorePatternAdded.log();
     myEditField.startEdit("");
   }
 
   @NotNull String getValues() {
-    return String.join(";", ArrayUtil.toStringArray(getPatterns()));
+    return String.join(";", ArrayUtil.toStringArray(Collections.list(myModel.elements())));
   }
 
   void setValues(@NotNull String values) {
-    setPatterns(Arrays.asList(values.split(";")));
-  }
-
-  @NotNull List<String> getPatterns() {
-    return Collections.list(myModel.elements());
-  }
-
-  void setPatterns(@NotNull List<String> patterns) {
-    fillList(patterns);
+    fillList(Arrays.asList(values.split(";")));
   }
 
   private void fillList(@NotNull List<String> patterns) {
@@ -217,7 +181,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
         return true;
       }
       else {
-        showError(myInvalidMessage);
+        showError(FileTypesBundle.message("filetype.ignore.error.invalid"));
         setBorder(false);
         return false;
       }
@@ -252,7 +216,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     }
   }
 
-  private final class PatternValueEditor extends TextFieldValueEditor<String> {
+  private static final class PatternValueEditor extends TextFieldValueEditor<String> {
 
     PatternValueEditor(@NotNull JTextField field) {
       super(field, FileTypesBundle.message("filetype.ignore.pattern"), "");
@@ -262,7 +226,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     public @NotNull String parseValue(@Nullable String text) throws InvalidDataException {
       if (text != null) {
         if (!isValid(text)) {
-          throw new InvalidDataException(myInvalidMessage);
+          throw new InvalidDataException(FileTypesBundle.message("filetype.ignore.error.invalid"));
         }
         return text;
       }
@@ -277,7 +241,9 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
 
     @Override
     public boolean isValid(@NotNull String value) {
-      return myValidator.test(value);
+      if (value.isBlank()) return false;
+      String withoutWildcards = value.trim().replaceAll("\\*", "a").replaceAll("\\?", "a");
+      return PathUtil.isValidFileName(withoutWildcards, true);
     }
   }
 }

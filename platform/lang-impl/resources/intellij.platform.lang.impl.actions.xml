@@ -573,5 +573,6 @@
     <action id="WelcomeFileChangeLanguage" class="com.intellij.ide.actions.WelcomeChangeLanguageAction" use-shortcut-of="Scratch.ChangeLanguage">
       <add-to-group group-id="EditorPopupMenu2" anchor="after" relative-to-action="Scratch.ChangeLanguage"/>
     </action>
+    <action id="EditAnalysisIgnoreDefaults" class="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction"/>
   </actions>
 </idea-plugin>

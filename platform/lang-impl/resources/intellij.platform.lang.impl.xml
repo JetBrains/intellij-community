@@ -871,7 +871,7 @@
     <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
-    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore" fieldName="INSTANCE"
+    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore;default.analysisignore" fieldName="INSTANCE"
               implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreFileType"/>
     <lang.parserDefinition language="AnalysisIgnore"
                            implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreParserDefinition"/>
@@ -880,6 +880,7 @@
     <lang.commenter language="AnalysisIgnore" implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreCommenter"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultLinesNotificationProvider"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction$AccessExtension"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ide.analysisignore.AnalysisIgnoreUsagesCollector"/>
     <workspaceModel.optionalExclusionContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreExclusionContributor"
                                                  order="last"/>
