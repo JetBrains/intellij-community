@@ -2,13 +2,16 @@ package com.intellij.driver.sdk.plugins.maven
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.waitForIndicators
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-@Remote("com.intellij.maven.performanceTesting.ImportMavenProjectUtil", plugin = "org.jetbrains.idea.maven/intellij.maven.performanceTesting")
+@Remote("com.intellij.maven.performanceTesting.ImportMavenProjectUtil",
+        plugin = "org.jetbrains.idea.maven/intellij.maven.performanceTesting",
+        rdTarget = RdTarget.BACKEND)
 interface ImportMavenProjectUtil {
   fun importProject(project: Project)
 }
