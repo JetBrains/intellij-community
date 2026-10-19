@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -166,6 +167,7 @@ public final class InspectionTestUtil {
   }
 
   @TestOnly
+  @RequiresEdt
   public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                              final @NotNull AnalysisScope scope,
                              final @NotNull GlobalInspectionContextForTests globalContext) {
