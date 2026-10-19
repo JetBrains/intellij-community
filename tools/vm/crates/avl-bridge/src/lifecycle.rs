@@ -172,6 +172,18 @@ impl Reader {
     /// A poll that fails with [Error::is_transient] restarts the dwell, and the next poll comes [RETRY_INTERVAL]
     /// later. Every other failed poll ends the wait, as a refused token does.
     pub fn await_phase(&self, phase: Phase, quiet_for: Duration, timeout: Duration) -> Result<State, WaitError> {
+        self.await_phase_while(phase, quiet_for, timeout, &mut || None)
+    }
+
+    /// [Self::await_phase], which also asks `ended` before each poll whether the process of the IDE ended. An answer
+    /// ends the wait at once with [WaitError::Ended], so a killed IDE costs no wait up to `timeout`.
+    pub fn await_phase_while(
+        &self,
+        phase: Phase,
+        quiet_for: Duration,
+        timeout: Duration,
+        ended: &mut dyn FnMut() -> Option<String>,
+    ) -> Result<State, WaitError> {
         let deadline = Instant::now() + timeout;
         let mut wait = PhaseWait::new(phase, quiet_for, self.launch.as_deref());
         loop {
@@ -180,6 +192,9 @@ impl Reader {
                 Verdict::Reached(state) => return Ok(state.clone()),
                 Verdict::Refused(refusal) => return Err(refusal),
                 Verdict::Waiting => {}
+            }
+            if let Some(reason) = ended() {
+                return Err(WaitError::Ended(reason));
             }
             let left = deadline.saturating_duration_since(now);
             if left.is_zero() {
@@ -203,6 +218,16 @@ impl Reader {
     /// [Self::await_phase] for [Phase::Ready].
     pub fn await_ready(&self, quiet_for: Duration, timeout: Duration) -> Result<State, WaitError> {
         self.await_phase(Phase::Ready, quiet_for, timeout)
+    }
+
+    /// [Self::await_phase_while] for [Phase::Ready].
+    pub fn await_ready_while(
+        &self,
+        quiet_for: Duration,
+        timeout: Duration,
+        ended: &mut dyn FnMut() -> Option<String>,
+    ) -> Result<State, WaitError> {
+        self.await_phase_while(Phase::Ready, quiet_for, timeout, ended)
     }
 
     /// [Self::poll], with a call that ends at `limit` at the latest.
@@ -358,6 +383,8 @@ pub enum WaitError {
     OtherLaunch { expected: String, state: Box<State> },
     /// The control server of the controlled agents in the IDE did not bind, so the IDE never gets ready.
     ControlBindFailed(Box<State>),
+    /// The process of the IDE ended, so it cannot reach the phase. The text says how it ended.
+    Ended(String),
     /// The deadline passed first.
     TimedOut(Box<TimedOut>),
 }
@@ -387,6 +414,7 @@ impl fmt::Display for WaitError {
                 "the lifecycle state names the launch {}, not {expected}, so the IDE of another lane answers on the port: {state}",
                 state.launch.as_deref().unwrap_or_default()
             ),
+            Self::Ended(reason) => write!(formatter, "the process of the IDE ended: {reason}"),
             Self::ControlBindFailed(state) => write!(
                 formatter,
                 "the IDE cannot reach READY, because its ACP control server did not bind; read idea.log of the IDE for the holder of the port: {state}"

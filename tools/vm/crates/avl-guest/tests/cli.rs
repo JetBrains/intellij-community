@@ -423,7 +423,9 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
 /// the lock of standard output for its whole run, so the first record of the watchdog thread blocked inside the stream,
 /// with the lock of the stream held, and the run thread blocked at its next record. On TeamCity each lane then hung until
 /// the hard stop of its budget. Here a bare IDE that never answers its bridge holds the run thread, and the watchdog ends
-/// the run after a progress gap of 1 s, so the watchdog thread writes `watchdogExpired`.
+/// the run after a progress gap of 1 s, so the watchdog thread writes `watchdogExpired`. The kill of the watchdog ends
+/// the run of the IDE, and the readiness wait sees that end, so the run ends with exit 1 well before the 600 s of the
+/// gate.
 ///
 /// The test runs the binary, because the stream setup of `main` decides whether a thread other than the main one can
 /// write on standard output.
@@ -496,7 +498,7 @@ fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
             .env(avl_wire::daemon::RUN_SECRETS_VARIABLE, root.path().join("secrets"))
             .env("DISPLAY", ":0");
     }
-    // Dropped at the end, which kills the run: the bare IDE is gone, and its readiness waits out its own deadline.
+    // Dropped at the end, which kills a run that did not end.
     let mut run = Daemon(command.spawn().unwrap());
     let read = |path: &std::path::Path| std::fs::read_to_string(path).unwrap_or_default();
     let deadline = Instant::now() + Duration::from_secs(60);
@@ -515,6 +517,24 @@ fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
         );
         std::thread::sleep(Duration::from_millis(100));
     }
+    let exit = loop {
+        if let Some(exit) = run.0.try_wait().unwrap() {
+            break exit;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "lane-run did not end after its watchdog killed the IDE\nstdout:\n{}\nstderr:\n{}",
+            read(&stdout_path),
+            read(&stderr_path)
+        );
+        std::thread::sleep(Duration::from_millis(100));
+    };
+    let stdout = read(&stdout_path);
+    assert_eq!(exit.code(), Some(1), "stdout:\n{stdout}\nstderr:\n{}", read(&stderr_path));
+    assert!(
+        stdout.contains("the process of the IDE ended"),
+        "the bare IDE did not fail on the end of its run\nstdout:\n{stdout}"
+    );
 }
 
 /// The archive of the plain project of a lane: one directory and one file in it.

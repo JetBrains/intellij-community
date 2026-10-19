@@ -94,7 +94,7 @@ fn fake_ide_in(
 fn ready(server: &FakeHttp) -> (Result<(), AgentRefusal>, Vec<String>) {
     let bridge = Bridge::at(server.url(), TOKEN).unwrap();
     let mut notes = Vec::new();
-    let result = await_ready(&bridge, LAUNCH, DIGEST, &mut |note| notes.push(note));
+    let result = await_ready(&bridge, LAUNCH, DIGEST, &mut || None, &mut |note| notes.push(note));
     (result, notes)
 }
 
@@ -115,13 +115,37 @@ fn the_readiness_of_a_bare_ide_sends_no_request_of_the_bridge() {
     let (server, log) = fake_ide(Some(DIGEST), INPUT_EVENTS_ROBOT);
     let bridge = Bridge::at(server.url(), TOKEN).unwrap();
     let mut notes = Vec::new();
-    await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut |note| notes.push(note)).unwrap();
+    await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut || None, &mut |note| notes.push(note)).unwrap();
     assert_eq!(*log.lock().unwrap(), Vec::<String>::new());
     assert!(notes.iter().any(|note| note.contains("is ready as pid 4321")), "{notes:?}");
     let (server, _) = fake_ide(Some("0000"), INPUT_EVENTS_ROBOT);
     let bridge = Bridge::at(server.url(), TOKEN).unwrap();
-    let refusal = await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut |_| {}).unwrap_err();
+    let refusal = await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut || None, &mut |_| {}).unwrap_err();
     assert_eq!(refusal.code, VOCABULARY_SKEW_CODE);
+}
+
+// An IDE whose run ended cannot get ready, so the wait ends at the first check after the end, not after the 600 s of
+// the gate. Here no bridge answers, as after a kill, and the run ends after the first poll.
+#[test]
+fn a_wait_on_an_ide_whose_run_ended_is_refused_at_once() {
+    let bridge = Bridge::at(
+        &format!("http://127.0.0.1:{}", avl_testkit::free_port_below_ephemeral_floor()),
+        TOKEN,
+    )
+    .unwrap();
+    let mut checks = 0;
+    let mut ended = || {
+        checks += 1;
+        (checks > 1).then(|| "its run run-ide-start-1 ended with 143".to_owned())
+    };
+    let started = Instant::now();
+    let refusal = await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut ended, &mut |_| {}).unwrap_err();
+    assert!(started.elapsed() < Duration::from_secs(10), "the wait took {:?}", started.elapsed());
+    assert_eq!(refusal.code, NOT_READY_CODE);
+    assert_eq!(
+        refusal.message,
+        format!("the IDE of '{LAUNCH}' did not get ready: the process of the IDE ended: its run run-ide-start-1 ended with 143")
+    );
 }
 
 // The bridge serves the vocabulary of one build and the documents name another: the gate names both digests. A

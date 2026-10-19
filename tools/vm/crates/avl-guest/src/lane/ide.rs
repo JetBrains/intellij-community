@@ -486,7 +486,7 @@ impl IdeOwner {
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, &mut |text| {
+        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
         })?;
         Ok(decision)
@@ -504,7 +504,7 @@ impl IdeOwner {
             .map_err(|error| error.to_string())
             .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
             .and_then(|()| {
-                readiness::await_ready(bridge, key, launch.vocabulary_digest, &mut |text| {
+                readiness::await_ready(bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
                     records.note(text);
                 })
                 .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))
@@ -814,9 +814,23 @@ impl IdeOwner {
             readiness::READY_TIMEOUT.as_secs()
         ));
         let bridge = Bridge::new(BRIDGE_PORT, &token)?;
-        readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut |text| {
+        readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
         })
+    }
+
+    /// The check of a readiness wait on the held IDE run: how the run ended, once it did. A run that the owner does not
+    /// hold, or whose state cannot be read, has not ended, so a slow read of the supervisor ends no wait.
+    pub(super) fn run_end(&self) -> impl FnMut() -> Option<String> + use<> {
+        let run = self.held.as_ref().map(|held| (held.context().to_path_buf(), held.run_id()));
+        move || {
+            let (context, run_id) = run.as_ref()?;
+            let state = supervisor::status(&LiveSystem, context, run_id).ok()?;
+            (state.phase == Phase::Finished).then(|| {
+                let exit = state.exit_code.map_or_else(String::new, |code| format!(" with {code}"));
+                format!("its run {run_id} ended{exit}")
+            })
+        }
     }
 
     /// Quits the bare IDE, and holds the record of the IDE of the lane again, so the next run relaunches it on its

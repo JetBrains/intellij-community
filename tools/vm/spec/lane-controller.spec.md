@@ -1957,6 +1957,13 @@ The proof of the decisions is a lane run on a worker, because each one needs a r
   that names the failure, and it refuses as `lane_control_bind_failed` with the text of the failure.
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_failed_control_bind_ends_the_gate_at_once_with_its_text`)
 
+- An IDE whose run ended never gets ready. Before each poll, the readiness asks the run supervisor whether the run of
+  the held IDE ended. An ended run ends the gate at once with `lane_ide_not_ready`. So an IDE that the watchdog killed ends
+  the run in seconds, and not after the 600 s of the gate.
+  [@test] ../crates/avl-bridge/src/lifecycle/tests.rs (`a_wait_whose_process_ended_ends_at_once_with_the_reason`)
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_wait_on_an_ide_whose_run_ended_is_refused_at_once`)
+  [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output`)
+
 - A quit asks the IDE through its bridge and waits one minute for the run to end. Then a kill with a thread dump
   follows. A process that survives both is a refusal, and no launch lands beside it.
   [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_quit_is_one_request`)

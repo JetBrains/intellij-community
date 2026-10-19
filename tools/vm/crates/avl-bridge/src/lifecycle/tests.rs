@@ -524,3 +524,22 @@ fn a_refused_token_ends_the_wait_at_once() {
         )
     );
 }
+
+// A wait that `ended` stops ends at once with the reason, and it does not wait for its deadline. No bridge answers here,
+// as after a kill, so each poll is a transient failure.
+#[test]
+fn a_wait_whose_process_ended_ends_at_once_with_the_reason() {
+    let port = avl_testkit::free_port_below_ephemeral_floor();
+    let reader = Reader::new(Client::new(&url(port), "token").unwrap(), Some("launch-1"));
+    let mut checks = 0;
+    let started = Instant::now();
+    let error = reader
+        .await_ready_while(Duration::ZERO, Duration::from_secs(30), &mut || {
+            checks += 1;
+            (checks == 3).then(|| "its run ended with 143".to_owned())
+        })
+        .unwrap_err();
+    assert!(started.elapsed() < Duration::from_secs(10), "the wait took {:?}", started.elapsed());
+    assert_eq!(checks, 3);
+    assert_eq!(error.to_string(), "the process of the IDE ended: its run ended with 143");
+}

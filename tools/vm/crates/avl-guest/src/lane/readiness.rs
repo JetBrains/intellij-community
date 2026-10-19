@@ -109,25 +109,28 @@ pub(crate) fn await_ready(
     bridge: &Bridge,
     launch: &str,
     vocabulary_digest: &str,
+    ended: &mut dyn FnMut() -> Option<String>,
     note: &mut dyn FnMut(String),
 ) -> Result<(), AgentRefusal> {
-    await_lifecycle_ready(bridge, launch, vocabulary_digest, note)?;
+    await_lifecycle_ready(bridge, launch, vocabulary_digest, ended, note)?;
     ping(bridge)
 }
 
 /// Waits until the lifecycle of the IDE of `launch` reports `READY`, and holds the bridge to `vocabulary_digest`, the
 /// digest of the vocabulary file of the run. It sends no request of the bridge, because the resident plugin serves the lifecycle
-/// route: the readiness of a bare IDE ends here.
+/// route: the readiness of a bare IDE ends here. `ended` answers how the process of the IDE ended, once it did, so a
+/// killed IDE ends the wait at once and not after [`READY_TIMEOUT`].
 pub(crate) fn await_lifecycle_ready(
     bridge: &Bridge,
     launch: &str,
     vocabulary_digest: &str,
+    ended: &mut dyn FnMut() -> Option<String>,
     note: &mut dyn FnMut(String),
 ) -> Result<(), AgentRefusal> {
     let started = Instant::now();
     let state = bridge
         .reader(launch)
-        .await_ready(Duration::ZERO, READY_TIMEOUT)
+        .await_ready_while(Duration::ZERO, READY_TIMEOUT, ended)
         .map_err(|error| not_ready(launch, &error))?;
     note(format!(
         "the IDE of '{launch}' is ready as pid {} after {} ms",
