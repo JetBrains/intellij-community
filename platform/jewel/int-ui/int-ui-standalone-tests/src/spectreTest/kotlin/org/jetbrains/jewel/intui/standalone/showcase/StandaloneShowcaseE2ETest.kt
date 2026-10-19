@@ -20,6 +20,7 @@ import org.jetbrains.jewel.e2e.PopupScenarios
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
+import org.jetbrains.jewel.intui.standalone.stopApplicationWindow
 import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.styling.macOs
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -61,21 +62,24 @@ class StandaloneShowcaseE2ETest {
 private class ShowcaseApplication {
     private val exitApplication = AtomicReference<(() -> Unit)?>(null)
     private val window = AtomicReference<ComposeWindow?>(null)
+    private val appThread = AtomicReference<Thread?>(null)
 
     fun start() {
-        thread(name = "spectre-showcase-window", isDaemon = true) {
-            application(exitProcessOnExit = false) {
-                exitApplication.set(::exitApplication)
-                JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel showcase") {
-                    this@ShowcaseApplication.window.compareAndSet(null, window)
-                    IntUiTheme { Showcase() }
+        val startedThread =
+            thread(name = "spectre-showcase-window", isDaemon = true) {
+                application(exitProcessOnExit = false) {
+                    exitApplication.set(::exitApplication)
+                    JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel showcase") {
+                        this@ShowcaseApplication.window.compareAndSet(null, window)
+                        IntUiTheme { Showcase() }
+                    }
                 }
             }
-        }
+        appThread.set(startedThread)
     }
 
     fun stop() {
-        exitApplication.get()?.invoke()
+        stopApplicationWindow(exitApplication, window, appThread)
     }
 
     suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()

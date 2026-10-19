@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
+import org.jetbrains.jewel.intui.standalone.stopApplicationWindow
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
@@ -409,7 +410,6 @@ class PopupRendererParitySpectreTest {
             return result
         } finally {
             app.stop()
-            delay(500.milliseconds)
             JewelFlags.useCustomPopupRenderer = previousRenderer
         }
     }
@@ -519,36 +519,38 @@ private fun SpeedSearchCombo() {
 private class MatrixApp(private val content: @Composable () -> Unit) {
     private val exitApplication = AtomicReference<(() -> Unit)?>(null)
     private val window = AtomicReference<ComposeWindow?>(null)
+    private val appThread = AtomicReference<Thread?>(null)
 
     fun start() {
-        thread(name = "spectre-matrix-window", isDaemon = true) {
-            application(exitProcessOnExit = false) {
-                exitApplication.set(::exitApplication)
-                JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel popup matrix") {
-                    this@MatrixApp.window.compareAndSet(null, window)
-                    IntUiTheme {
-                        Column(
-                            modifier =
-                                Modifier.padding(24.dp)
-                                    .onFocusEvent { if (it.hasFocus) hostGainedFocus.set(true) }
-                                    .onKeyEvent { event ->
-                                        if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                                            hostSawEscape.set(true)
+        val startedThread =
+            thread(name = "spectre-matrix-window", isDaemon = true) {
+                application(exitProcessOnExit = false) {
+                    exitApplication.set(::exitApplication)
+                    JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel popup matrix") {
+                        this@MatrixApp.window.compareAndSet(null, window)
+                        IntUiTheme {
+                            Column(
+                                modifier =
+                                    Modifier.padding(24.dp)
+                                        .onFocusEvent { if (it.hasFocus) hostGainedFocus.set(true) }
+                                        .onKeyEvent { event ->
+                                            if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
+                                                hostSawEscape.set(true)
+                                            }
+                                            false
                                         }
-                                        false
-                                    }
-                        ) {
-                            content()
+                            ) {
+                                content()
+                            }
                         }
                     }
                 }
             }
-        }
+        appThread.set(startedThread)
     }
 
     fun stop() {
-        exitApplication.get()?.invoke()
-        window.set(null)
+        stopApplicationWindow(exitApplication, window, appThread)
     }
 
     suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
