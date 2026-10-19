@@ -344,7 +344,6 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:CHANGES_TREE_POPUP:java.lang.String
 - sf:FIND_IN_FILES_POPUP:java.lang.String
 - sf:TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP:java.lang.String
-- sf:TOOLWINDOW_OPTIONS_POPUP:java.lang.String
 - sf:TOOLWINDOW_TAB_POPUP:java.lang.String
 - sf:XDEBUGGER_TREE_POPUP:java.lang.String
 - <init>():V
