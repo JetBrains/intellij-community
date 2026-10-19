@@ -13,12 +13,14 @@ import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClasspath
@@ -74,7 +76,11 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
             addAll(explicitClasspath)
             addAll(discoveredClasspath)
             addAll(autoResolvedClasspath)
-        }.distinct().map { Path.of(it) }
+        }.distinct().mapNotNull { entry ->
+            val path = entry.toNioPathOrNull()
+            if (path == null) scriptingWarnLog("Invalid script definition classpath entry is skipped: $entry")
+            path
+        }
     }
 
     private fun tryToGuessClasspath(fqns: List<String>): List<String> {
@@ -93,7 +99,7 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
                 val psiClass = javaFacade.findClass(fqn, projectScope) ?: continue
                 val classFile = psiClass.containingFile?.virtualFile ?: continue
                 val module = projectFileIndex.getModuleForFile(classFile) ?: continue
-                for (virtualFile in OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().roots) {
+                for (virtualFile in OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().classes().usingCache().roots) {
                     val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
                     classpath.addIfNotNull(localVirtualFile.fileSystem.getNioPath(localVirtualFile))
                 }
@@ -122,6 +128,7 @@ internal object ScriptTemplatesFromDependenciesCache {
         val templates = linkedSetOf<String>()
         val markerOrigins = linkedMapOf<String, ScriptTemplateMarkerOrigin>()
         val ownerModules = linkedSetOf<Module>()
+        val markerRoots = linkedSetOf<VirtualFile>()
         for (classRoot in markerCandidateRoots(project)) {
             ProgressManager.checkCanceled()
             val markerFiles = classRoot.findFileByRelativePath(SCRIPT_DEFINITION_MARKERS_PATH)?.children.orEmpty()
@@ -131,6 +138,7 @@ internal object ScriptTemplatesFromDependenciesCache {
 
             scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${classRoot.path}" }
             ownerModules += ownerModules(project, classRoot)
+            markerRoots += classRoot
             for (markerFile in markerFiles) {
                 val fqn = markerFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT)
                 templates += fqn
@@ -139,7 +147,7 @@ internal object ScriptTemplatesFromDependenciesCache {
         }
 
         val classpath = ownerModules
-            .flatMapTo(linkedSetOf()) { OrderEnumerator.orderEntries(it).withoutSdk().classes().usingCache().roots.asIterable() }
+            .flatMapTo(markerRoots) { OrderEnumerator.orderEntries(it).withoutSdk().productionOnly().classes().usingCache().roots.asIterable() }
             .mapNotNull { virtualFile ->
                 val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
                 localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.absolutePathString()

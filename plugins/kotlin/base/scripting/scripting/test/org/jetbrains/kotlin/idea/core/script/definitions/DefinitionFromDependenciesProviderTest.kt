@@ -8,10 +8,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndGet
@@ -172,7 +172,28 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
             model.orderEntries.filterIsInstance<LibraryOrderEntry>().forEach { it.scope = DependencyScope.TEST }
         }
 
-        assertEquals(listOf("MyTemplate1"), DefinitionFromDependenciesProvider(project).definitionClasses())
+        val provider = DefinitionFromDependenciesProvider(project)
+        assertEquals(listOf("MyTemplate1"), provider.definitionClasses())
+        assertTrue("The marker root must stay on the classpath", provider.getTemplateClasspath().any { it.pathString.endsWith("templates.jar") })
+    }
+
+    fun testTestOutputIsNotOnDefinitionClasspath() {
+        runTest(IN_PRODUCTION_RESOURCES)
+
+        val module = ModuleManager.getInstance(project).modules.single { it.name.endsWith("_module") }
+        val moduleDirectory = getOrCreateProjectBaseDir().findChild("module")!!
+        val (testSources, testOutput) = runWriteAction {
+            moduleDirectory.createChildDirectory(this, "test") to moduleDirectory.createChildDirectory(this, "test-classes")
+        }
+        PsiTestUtil.addSourceRoot(module, testSources, true)
+        PsiTestUtil.setCompilerOutputPath(module, testOutput.url, true)
+        runWriteAction {
+            moduleDirectory.findFileByRelativePath("classes/$SCRIPT_TEMPLATE_MARKER_DIR")!!.createChildData(this, "MyTemplate.classname")
+        }
+
+        val classpath = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+        assertTrue("The production output must be on the classpath", classpath.any { it.endsWith("module/classes") })
+        assertFalse("The test output must not be on the classpath", classpath.any { it.endsWith("test-classes") })
     }
 
     fun testClasspathGuessInDumbModeReloadsDefinitionsInSmartMode() {
@@ -219,6 +240,14 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
 
         assertEmpty(warnings.filter { "default project" in it })
         assertEmpty(errors)
+    }
+
+    fun testInvalidExplicitClasspathEntryIsSkipped() {
+        runTest(IN_JAR)
+        val discovered = DefinitionFromDependenciesProvider(project).getTemplateClasspath()
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClasspath = "bad\u0000path") }
+
+        assertEquals(discovered, DefinitionFromDependenciesProvider(project).getTemplateClasspath())
     }
 
     fun testOutputDirectoryCreatedAfterDiscoveryIsScanned() {
