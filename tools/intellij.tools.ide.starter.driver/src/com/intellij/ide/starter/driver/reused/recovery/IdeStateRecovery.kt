@@ -229,6 +229,9 @@ internal class IdeStateRecovery(
       if (!hasBaseline) {
         captureBaseline(bgRun)
       }
+      else {
+        bgRun.driver.waitForProjectsWithNoPendingIndexingWork("starting the first test on the reused IDE")
+      }
       return bgRun
     }
     catch (failure: Throwable) {
