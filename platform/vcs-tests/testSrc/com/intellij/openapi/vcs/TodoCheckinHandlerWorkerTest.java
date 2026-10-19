@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs;
 
-import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,7 +102,6 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
     assertEquals("TODO ? todo f", textRange.substring(myNewText));
   }
 
-  @IJIgnore(issue = "IJI-3451")
   public void testMultiLineTodoCreation() {
     doTestTodoUpdate(
       "// TODO first line\n" +
@@ -115,7 +113,6 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
     );
   }
 
-  @IJIgnore(issue = "IJI-3451")
   public void testMultiLineTodoRemoval() {
     doTestTodoUpdate(
       "// TODO first line\n" +

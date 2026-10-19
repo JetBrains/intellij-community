@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.idea.IJIgnore
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.xml.XmlFile
 
 class ElementStatusTrackerTest : BaseLineStatusTrackerTestCase() {
-  @IJIgnore(issue = "IJI-3451")
   fun testPsiChanges() {
     doTest("""
         <xml>
