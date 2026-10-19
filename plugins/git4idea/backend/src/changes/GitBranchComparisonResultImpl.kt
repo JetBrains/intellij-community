@@ -4,20 +4,19 @@ package git4idea.changes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.RefComparisonChange
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcsUtil.VcsUtil
-import git4idea.GitRevisionNumber
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 import java.util.Collections
+import java.util.Objects
 
 internal class GitBranchComparisonResultImpl(
-  private val project: Project,
-  private val vcsRoot: VirtualFile,
   override val baseSha: String,
   override val mergeBaseSha: String,
   override val commits: List<GitCommitShaWithPatches>,
   private val headPatches: List<FilePatch>,
+  private val createRevisionNumber: (String) -> ShortVcsRevisionNumber,
+  private val createFilePath: (String) -> FilePath,
 ) : GitBranchComparisonResult {
 
   override val headSha: String = commits.last().sha
@@ -115,34 +114,19 @@ internal class GitBranchComparisonResultImpl(
     }
 
   private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): RefComparisonChange {
-    val beforePath = if (patch.isNewFile) null else VcsUtil.getFilePath(vcsRoot, patch.beforeName)
-    val afterPath = if (patch.isDeletedFile) null else VcsUtil.getFilePath(vcsRoot, patch.afterName)
-    return RefComparisonChange(GitRevisionNumber(beforeRef), beforePath, GitRevisionNumber(afterRef), afterPath)
+    val beforePath = if (patch.isNewFile) null else createFilePath(patch.beforeName)
+    val afterPath = if (patch.isDeletedFile) null else createFilePath(patch.afterName)
+    return RefComparisonChange(createRevisionNumber(beforeRef), beforePath, createRevisionNumber(afterRef), afterPath)
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as GitBranchComparisonResultImpl
-
-    if (project != other.project) return false
-    if (vcsRoot != other.vcsRoot) return false
-    if (baseSha != other.baseSha) return false
-    if (mergeBaseSha != other.mergeBaseSha) return false
-    if (headSha != other.headSha) return false
-
-    return true
+    if (other !is GitBranchComparisonResultImpl) return false
+    return baseSha == other.baseSha && mergeBaseSha == other.mergeBaseSha && headSha == other.headSha &&
+           changes == other.changes
   }
 
-  override fun hashCode(): Int {
-    var result = project.hashCode()
-    result = 31 * result + vcsRoot.hashCode()
-    result = 31 * result + baseSha.hashCode()
-    result = 31 * result + mergeBaseSha.hashCode()
-    result = 31 * result + headSha.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = Objects.hash(baseSha, mergeBaseSha, headSha)
 
 
   companion object {

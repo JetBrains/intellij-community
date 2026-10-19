@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.create
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
 import kotlinx.coroutines.CoroutineScope

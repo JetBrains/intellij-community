@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.create
 import git4idea.changes.filePath
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepository

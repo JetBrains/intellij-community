@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.create
 import git4idea.changes.filePath
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
