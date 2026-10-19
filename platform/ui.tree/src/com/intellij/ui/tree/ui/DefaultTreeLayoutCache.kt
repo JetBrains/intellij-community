@@ -7,6 +7,7 @@ import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
@@ -72,13 +73,13 @@ class DefaultTreeLayoutCache(
       return
     }
     super.setRowHeight(rowHeight)
-    invalidateSizes()
     if (rowHeight <= 0 && variableHeight == null) {
       variableHeight = VariableHeightSupport()
     }
     else if (rowHeight > 0 && variableHeight != null) {
       variableHeight = null
     }
+    invalidateSizes()
     checkInvariants(Location("setRowHeight(%d)", rowHeight))
   }
 
@@ -211,6 +212,7 @@ class DefaultTreeLayoutCache(
 
   override fun invalidateSizes() {
     root?.invalidateSizeRecursively()
+    variableHeight?.updateSums() // We're resetting them all, so no point to update one-by-one.
   }
 
   override fun invalidatePathBounds(path: TreePath?) {
@@ -369,6 +371,18 @@ class DefaultTreeLayoutCache(
     checkInvariants(location)
   }
 
+  /**
+   * The height delta of a row of [value] until the cache measures the row. It comes from [TreeRowHeightEstimateProvider].
+   * A tree with a fixed row height does not use the height deltas, so the cache does not ask its values.
+   */
+  private fun estimatedHeightDelta(value: Any): Int {
+    if (rowHeight > 0) {
+      return 0
+    }
+    val height = TreeUtil.getUserObject(TreeRowHeightEstimateProvider::class.java, value)?.rowHeightEstimate ?: 0
+    return if (height > 0) height - defaultRowHeight else 0
+  }
+
   private fun getRowByY(y: Int): Int =
     if (rows.isEmpty()) {
       -1
@@ -442,7 +456,7 @@ class DefaultTreeLayoutCache(
     var row = -1
     var x = 0
     var width = 0
-    var heightDelta = 0
+    var heightDelta = estimatedHeightDelta(path.lastPathComponent)
     var fenwickTreeNodeForY = 0
 
     val y: Int
@@ -575,19 +589,19 @@ class DefaultTreeLayoutCache(
 
     fun invalidateSizeRecursively() {
       doInvalidateSize()
-      fenwickTreeNodeForY = 0 // We're resetting them all, so no point to update one-by-one.
       children?.forEach { it.invalidateSizeRecursively() }
     }
 
     fun invalidateSize() {
-      variableHeight?.updateHeightDelta(row, heightDelta, 0)
+      val oldHeightDelta = heightDelta
       doInvalidateSize()
+      variableHeight?.updateHeightDelta(row, oldHeightDelta, heightDelta)
     }
 
     private fun doInvalidateSize() {
       x = 0
       width = 0
-      heightDelta = 0
+      heightDelta = estimatedHeightDelta(userObject)
     }
 
     fun getVisibleChildCountRecursively(): Int {
