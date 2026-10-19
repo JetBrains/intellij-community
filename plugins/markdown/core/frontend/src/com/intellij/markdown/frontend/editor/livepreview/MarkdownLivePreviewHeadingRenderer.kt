@@ -99,15 +99,22 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       val height = fold.painter().height() - sourceLines * editor.lineHeight
       if (height > 0) wanted[range.endOffset] = height
     }
-    spacers.removeIf { spacer ->
+    val obsolete = ArrayList<Inlay<HeadingSpacer>>()
+    for (spacer in spacers) {
       val keep = spacer.isValid && wanted[spacer.offset] == spacer.renderer.height
-      if (keep) wanted.remove(spacer.offset) else Disposer.dispose(spacer)
-      !keep
+      if (keep) wanted.remove(spacer.offset) else obsolete += spacer
     }
+    val changeCount = obsolete.size + wanted.size
+    if (changeCount == 0) return
+
     // The spacer takes the place of the painted heading, so it sits closer to the line than other inlays, such as an image.
     val properties = InlayProperties().relatesToPrecedingText(true).priority(Int.MAX_VALUE)
-    for ((offset, height) in wanted) {
-      editor.inlayModel.addBlockElement(offset, properties, HeadingSpacer(height))?.let(spacers::add)
+    editor.inlayModel.execute(changeCount > 100) {
+      obsolete.forEach(Disposer::dispose)
+      spacers.removeAll(obsolete.toSet())
+      for ((offset, height) in wanted) {
+        editor.inlayModel.addBlockElement(offset, properties, HeadingSpacer(height))?.let(spacers::add)
+      }
     }
   }
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -262,6 +263,30 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
     assertFalse(inlay.isValid)
     assertEmpty(headingFolds())
+  }
+
+  fun testManyHeadingSpacersUseBatchInlayUpdates() {
+    val headings = (1..101).joinToString("\n") { "# heading $it" }
+    val content = "$headings\n\nbody"
+    val specs = configureWithLateSpecs(content, content.length)
+    val editor = myFixture.editor
+    editor.caretModel.moveToOffset(0)
+    for (line in 1..100) {
+      editor.caretModel.addCaret(editor.offsetToVisualPosition(editor.document.getLineStartOffset(line)))
+    }
+    var batchModeStarted = false
+    editor.inlayModel.addListener(object : InlayModel.Listener {
+      override fun onBatchModeStart(editor: Editor) {
+        batchModeStarted = true
+      }
+    }, testRootDisposable)
+
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+
+    assertTrue("Heading spacers must use batch inlay updates", batchModeStarted)
+    assertEmpty(headingFolds())
+    assertEquals(101, editor.inlayModel.getBlockElementsInRange(0, content.length).size)
+    assertEquals(content, editor.document.text)
   }
 
   fun testHeadingFoldRefreshesAfterEditorFontChange() {
