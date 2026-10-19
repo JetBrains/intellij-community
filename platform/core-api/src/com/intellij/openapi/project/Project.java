@@ -130,4 +130,19 @@ public interface Project extends ComponentManager, AreaInstance {
   default boolean isDefault() {
     return false;
   }
+
+  /**
+   * Returns {@code true} if this project is the welcome project.
+   * <p>
+   * The IDE opens the welcome project in a frame in place of the Welcome screen.
+   * The welcome project contains no user files.
+   * Use this method to hide project-specific UI or to skip project-level work in the welcome project.
+   * <p>
+   * Returns {@code false} for a disposed project.
+   *
+   * @see #isDefault()
+   */
+  default boolean isWelcomeProject() {
+    return false;
+  }
 }
