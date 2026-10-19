@@ -80,13 +80,22 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
 
     val contextFile = getVirtualFile(e)
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory &&
-                                         !FileEditorManagerImpl.forbidSplitFor(contextFile)
+                                         canOpenInRightSplit(project, contextFile)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
+
+    /**
+     * A file with [com.intellij.openapi.fileEditor.FileEditorManagerKeys.FORBID_TAB_SPLIT] can be open in one editor window only.
+     * It can open in the right split only while it is closed. An open file stays in its window.
+     */
+    @Internal
+    fun canOpenInRightSplit(project: Project, file: VirtualFile): Boolean {
+      return !FileEditorManagerImpl.forbidSplitFor(file) || !FileEditorManagerEx.getInstanceEx(project).isFileOpen(file)
+    }
 
     /**
      * Submits [files] opening into a single new right split, the first of them being the one the split is created for.
