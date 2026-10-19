@@ -11,7 +11,6 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
-import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,7 +25,6 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
@@ -115,43 +113,6 @@ internal class WelcomeNonProjectFileWritingAccessExtension(private val project: 
       return false
     }
     return WelcomeFilesRootType.Util.instance.containsFile(file) || FileEditorManager.getInstance(project).isFileOpen(file)
-  }
-}
-
-@ApiStatus.Internal
-class WelcomeSaveFileAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(event: AnActionEvent) {
-    val project = event.project
-    event.presentation.isEnabledAndVisible = project != null && isWelcomeFile(project, event)
-    event.presentation.text = ActionsBundle.message("action.WelcomeSaveFileAction.text")
-  }
-
-  override fun actionPerformed(event: AnActionEvent) {
-    val project = event.project ?: return
-    val file = getFile(project, event) ?: return
-    saveWelcomeFileAs(project, file, true)
-  }
-
-  @ApiStatus.Internal
-  fun isWelcomeFile(project: Project, event: AnActionEvent): Boolean = getFile(project, event) != null
-
-  private fun getFile(project: Project, event: AnActionEvent): VirtualFile? {
-    if (!WelcomeUtils.isWelcomeProject(project)) {
-      return null
-    }
-    val document = event.getData(CommonDataKeys.EDITOR)?.document
-    val file = if (document == null) {
-      event.getData(EditorWindow.DATA_KEY)?.getContextFile() ?: return null
-    }
-    else {
-      FileDocumentManager.getInstance().getFile(document) ?: return null
-    }
-    if (!WelcomeFilesRootType.Util.instance.containsFile(file)) {
-      return null
-    }
-    return file
   }
 }
 
