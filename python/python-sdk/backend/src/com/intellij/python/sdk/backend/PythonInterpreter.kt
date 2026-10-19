@@ -32,8 +32,17 @@ import kotlinx.coroutines.withContext
  */
 class PythonInterpreter internal constructor(
   internal val sdk: Sdk,
-  val environmentResult: PyResult<PythonEnvironment>?,
+  private val detectedOnBuild: PyResult<PythonEnvironment>?,
 ) {
+  /**
+   * The last detection for the SDK wins over the detection when this interpreter was built. The project model keeps
+   * one interpreter while the SDK stays in the table. A tool can recreate the environment on another Python in that
+   * time, and the SDK update then detects it again. Without this, every holder showed the old version until a restart
+   * (PY-93116).
+   */
+  val environmentResult: PyResult<PythonEnvironment>?
+    get() = sdk.cachedPythonEnvironmentResult() ?: detectedOnBuild
+
   /** The detected environment on success; `null` when [environmentResult] is `null` or a failure. */
   val pythonEnvironment: PythonEnvironment?
     get() = environmentResult?.successOrNull
