@@ -35,6 +35,9 @@ object ProcessMetrics {
   @Volatile
   private var residentSetSizeReaderIsBroken = false
 
+  @Volatile
+  private var cpuTimeReaderIsBroken = false
+
   /**
    * @return the resident set size of the process in bytes, or `null` when the process is gone,
    * the OS refuses the query, or the OS is not supported
@@ -63,7 +66,20 @@ object ProcessMetrics {
    * @return the user plus the kernel CPU time of the process, or `null` when the process is gone or the OS does not report it
    */
   fun cpuTime(pid: Long): Duration? {
-    return ProcessHandle.of(pid).getOrNull()?.info()?.totalCpuDuration()?.getOrNull()
+    val handle = ProcessHandle.of(pid).getOrNull() ?: return null
+    val cpuTime = handle.info().totalCpuDuration().getOrNull()
+    if (cpuTime != null || OS.CURRENT != OS.macOS || cpuTimeReaderIsBroken) {
+      return cpuTime
+    }
+    try {
+      return MacProcInfo.cpuTime(pid)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      cpuTimeReaderIsBroken = true
+      LOG.warn("The CPU time reader failed and is switched off", e)
+      return null
+    }
   }
 }
 
@@ -85,8 +101,12 @@ private object LinuxProcessStatus {
 }
 
 /**
- * Reads `pti_resident_size` of `struct proc_taskinfo` through a `proc_pidinfo(pid, PROC_PIDTASKINFO)` downcall.
+ * Reads `pti_resident_size`, `pti_total_user`, and `pti_total_system` of `struct proc_taskinfo`
+ * through a `proc_pidinfo(pid, PROC_PIDTASKINFO)` downcall.
  * The call works for a process of the current user without `task_for_pid`.
+ *
+ * The kernel reports the CPU times in Mach absolute time units, not in nanoseconds.
+ * On Intel one unit is one nanosecond, on Apple silicon it is 125/3 nanoseconds, so `mach_timebase_info` supplies the ratio.
  */
 private object MacProcInfo {
   private const val PROC_PIDTASKINFO = 4
@@ -96,6 +116,9 @@ private object MacProcInfo {
 
   /** The offset of `pti_resident_size`, the second `uint64_t` field. */
   private const val PTI_RESIDENT_SIZE = 8L
+  /** The offsets of `pti_total_user` and `pti_total_system`, the third and the fourth `uint64_t` fields. */
+  private const val PTI_TOTAL_USER = 16L
+  private const val PTI_TOTAL_SYSTEM = 24L
 
   /** `int proc_pidinfo(int pid, int flavor, uint64_t arg, void *buffer, int buffersize)`. It returns the byte count it wrote, `0` on failure. */
   private val PROC_PIDINFO: MethodHandle by lazy {
@@ -104,6 +127,28 @@ private object MacProcInfo {
       linker.defaultLookup().findOrThrow("proc_pidinfo"),
       FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_LONG, ADDRESS, JAVA_INT),
     )
+  }
+
+  /** `kern_return_t mach_timebase_info(mach_timebase_info_t info)`. The struct is two `uint32_t` fields, `numer` and `denom`. It returns `0` on success. */
+  private val MACH_TIMEBASE_INFO: MethodHandle by lazy {
+    val linker = Linker.nativeLinker()
+    linker.downcallHandle(
+      linker.defaultLookup().findOrThrow("mach_timebase_info"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS),
+    )
+  }
+
+  /** Nanoseconds per Mach absolute time unit as a `numer / denom` fraction. */
+  private val timebase: Pair<Long, Long> by lazy {
+    Arena.ofConfined().use { arena ->
+      val info = arena.allocate(8L)
+      val result = MACH_TIMEBASE_INFO.invokeExact(info) as Int
+      check(result == 0) { "mach_timebase_info failed with $result" }
+      val numer = info.get(JAVA_INT, 0L).toUInt().toLong()
+      val denom = info.get(JAVA_INT, 4L).toUInt().toLong()
+      check(numer > 0 && denom > 0) { "mach_timebase_info reported $numer/$denom" }
+      numer to denom
+    }
   }
 
   fun residentSetSize(pid: Long): Long? {
@@ -115,6 +160,23 @@ private object MacProcInfo {
       }
       return info.get(JAVA_LONG, PTI_RESIDENT_SIZE)
     }
+  }
+
+  fun cpuTime(pid: Long): Duration? {
+    Arena.ofConfined().use { arena ->
+      val info = arena.allocate(PROC_TASKINFO_SIZE.toLong())
+      val written = PROC_PIDINFO.invokeExact(pid.toInt(), PROC_PIDTASKINFO, 0L, info, PROC_TASKINFO_SIZE) as Int
+      if (written < PROC_TASKINFO_SIZE) {
+        return null
+      }
+      return Duration.ofNanos(machUnitsToNanos(info.get(JAVA_LONG, PTI_TOTAL_USER) + info.get(JAVA_LONG, PTI_TOTAL_SYSTEM)))
+    }
+  }
+
+  private fun machUnitsToNanos(units: Long): Long {
+    val (numer, denom) = timebase
+    // The multiplication is split so that the CPU time of a long-running process does not overflow `units * numer`.
+    return units / denom * numer + units % denom * numer / denom
   }
 }
 
