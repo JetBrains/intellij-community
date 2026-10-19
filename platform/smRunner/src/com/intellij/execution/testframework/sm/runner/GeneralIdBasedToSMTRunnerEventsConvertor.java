@@ -134,8 +134,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node node = findNode(startedNodeEvent, false);
     if (node != null) {
       SMTestProxy testProxy = node.getProxy();
-      if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent) {
-        testProxy.setRetrySuite(suiteStartedEvent.isRetrySuite());
+      if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent && suiteStartedEvent.isRetrySuite()) {
+        testProxy.setRetrySuite(true);
       }
       final String metainfo = startedNodeEvent.getMetainfo();
       if (metainfo != null) {

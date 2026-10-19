@@ -104,7 +104,6 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private final String myName;
   private boolean myIsSuite;
   private boolean myRetrySuite;
-
   private final String myLocationUrl;
   private volatile String myMetainfo;
   private final boolean myPreservePresentableName;
@@ -1033,9 +1032,9 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
         case ERROR_INDEX -> SuiteFinishedState.ERROR_SUITE;
         case FAILED_INDEX -> SuiteFinishedState.FAILED_SUITE;
         case IGNORED_INDEX -> SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
-        case TERMINATED_INDEX -> TerminatedState.INSTANCE;
+        // An incomplete final attempt cannot produce a passed suite.
+        case NOT_RUN_INDEX, RUNNING_INDEX, TERMINATED_INDEX -> TerminatedState.INSTANCE;
         case SKIPPED_INDEX, COMPLETE_INDEX, PASSED_INDEX -> SuiteFinishedState.PASSED_SUITE;
-        case NOT_RUN_INDEX, RUNNING_INDEX -> TerminatedState.INSTANCE;
       };
     }
     else if (isDefect()) {

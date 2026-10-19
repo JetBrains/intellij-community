@@ -798,6 +798,33 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   @Test
+  public void testRetrySuiteFlagSurvivesNodeReuse() {
+    var root = new SMTestProxy.SMRootTestProxy();
+    var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
+    try {
+      processor.onStartTesting();
+      processor.onSuiteTreeStarted("retry", "java:test://Tests/retry", null, null, null);
+      processor.onSuiteTreeEnded("retry");
+      processor.onBuildTreeEnded();
+      var started = new TestSuiteStartedEvent("retry", "java:test://Tests/retry");
+      started.setRetrySuite(true);
+      processor.onSuiteStarted(started);
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      processor.onSuiteStarted(new TestSuiteStartedEvent("retry", "java:test://Tests/retry"));
+
+      assertEquals(1, root.getChildren().size());
+      assertTrue(processor.getCurrentSuite().isRetrySuite());
+
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      processor.onFinishTesting();
+    }
+    finally {
+      Disposer.dispose(processor);
+      Disposer.dispose(root);
+    }
+  }
+
+  @Test
   public void testRetrySuiteSurvivesHistoryRoundTrip() throws Exception {
     mySuite.setSuiteStarted();
     var retrySuite = createSuiteProxy("retry", mySuite);

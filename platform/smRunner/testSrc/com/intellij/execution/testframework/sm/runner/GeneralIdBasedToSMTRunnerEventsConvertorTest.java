@@ -40,17 +40,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase {
+  private SMTRunnerConsoleView myConsole;
+  private GeneralIdBasedToSMTRunnerEventsConvertor myEventsProcessor;
+  private SMTestProxy.SMRootTestProxy myRootProxy;
+  private SMTestRunnerResultsForm myResultsViewer;
+
   @Test
   public void testRetrySuiteUpdatesAnExistingNode() {
     var root = new SMTestProxy.SMRootTestProxy();
     var processor = new GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), root, "test");
     try {
       processor.onStartTesting();
-      processor.onSuiteStarted(new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
-                                                        null, null, null, null, false));
+      var treeEvent = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
+                                                null, null, null, null, false);
+      treeEvent.setRetrySuite(true);
+      processor.onSuiteStarted(treeEvent);
       var started = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
                                               null, null, null, null, true);
-      started.setRetrySuite(true);
       processor.onSuiteStarted(started);
       processor.onTestStarted(new TestStartedEvent("first", "2", "1", null, null, null, null, true));
       processor.onTestFailure(new TestFailedEvent(null, "2", "failure", "trace", false,
@@ -71,11 +77,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
       Disposer.dispose(root);
     }
   }
-
-  private SMTRunnerConsoleView myConsole;
-  private GeneralIdBasedToSMTRunnerEventsConvertor myEventsProcessor;
-  private SMTestProxy.SMRootTestProxy myRootProxy;
-  private SMTestRunnerResultsForm myResultsViewer;
 
   @BeforeEach
   void setUp() {

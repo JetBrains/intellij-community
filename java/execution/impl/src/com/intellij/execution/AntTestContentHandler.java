@@ -128,12 +128,15 @@ public class AntTestContentHandler extends DefaultHandler {
                                           StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
                                           null));
     }
-    else if (ProblemKind.forElement(name) != null) {
-      myTextElements.push(new TextElement(name,
-                                          TextElementKind.PROBLEM,
-                                          StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
-                                          StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(TYPE))),
-                                          ProblemKind.forElement(name)));
+    else {
+      var problemKind = ProblemKind.forElement(name);
+      if (problemKind != null) {
+        myTextElements.push(new TextElement(name,
+                                            TextElementKind.PROBLEM,
+                                            StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
+                                            StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(TYPE))),
+                                            problemKind));
+      }
     }
   }
 
