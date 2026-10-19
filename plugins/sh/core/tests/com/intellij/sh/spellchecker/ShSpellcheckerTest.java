@@ -2,13 +2,13 @@
 package com.intellij.sh.spellchecker;
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class ShSpellcheckerTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/spellchecker";
+    return ShTestData.getTestDataPath() + "/spellchecker";
   }
 
   @Override

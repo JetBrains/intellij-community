@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.parser;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ public class ShParserTest {
   private static final TestFixture<Project> projectFixture = projectFixture();
 
   private final TestFixture<ParsingTestFixture> parsingFixture =
-    parsingFixture(projectFixture, PluginPathManager.getPluginHomePath("sh") + "/core/testData/parser", "sh", true, new ShParserDefinition());
+    parsingFixture(projectFixture, ShTestData.getTestDataPath() + "/parser", "sh", true, new ShParserDefinition());
 
   @Test public void testArithmeticExpansion() { parsingFixture.get().doTest(true); }
   @Test public void testTrickyStrings() { parsingFixture.get().doTest(true); }

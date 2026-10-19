@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.lexer;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.LexerTestFixture;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.junit5.fixture.TestFixtures;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Lex
 @TestFixtures
 public class ShOldLexerVersion3Test {
   private final TestFixture<LexerTestFixture> lexer =
-    lexerFixture(PluginPathManager.getPluginHomePath("sh") + "/core/testData/oldLexer/v3", () -> new ShLexer());
+    lexerFixture(ShTestData.getTestDataPath() + "/oldLexer/v3", () -> new ShLexer());
 
   @Test
   public void testSimpleDefTokenization() {

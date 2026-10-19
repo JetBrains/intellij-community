@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class ShLineIndentProviderTest extends BasePlatformTestCase {
@@ -11,7 +11,7 @@ public class ShLineIndentProviderTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/formatter";
+    return ShTestData.getTestDataPath() + "/formatter";
   }
 
   public void testShebang()               { doTest(); }

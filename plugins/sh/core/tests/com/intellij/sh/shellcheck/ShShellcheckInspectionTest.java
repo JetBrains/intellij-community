@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.sh.ShTestData;
 import com.intellij.sh.backend.shellcheck.ShQuickFixIntention;
 import com.intellij.sh.backend.shellcheck.ShShellcheckInspection;
 import com.intellij.sh.backend.shellcheck.intention.ShDisableInspectionIntention;
@@ -37,7 +37,7 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/shellcheck/";
+    return ShTestData.getTestDataPath() + "/shellcheck/";
   }
 
   public void testSuppressInspection() {

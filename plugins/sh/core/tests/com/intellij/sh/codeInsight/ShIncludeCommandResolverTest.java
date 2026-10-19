@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.codeInsight;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class ShIncludeCommandResolverTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/core/testData/resolve/include_command");
+    myFixture.setTestDataPath(ShTestData.getTestDataPath() + "/resolve/include_command");
     myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 

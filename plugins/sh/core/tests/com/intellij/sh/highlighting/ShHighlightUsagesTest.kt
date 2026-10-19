@@ -4,10 +4,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
+import com.intellij.sh.ShTestData
 import com.intellij.sh.psi.ShFile
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.UsefulTestCase
@@ -15,7 +15,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class ShHighlightUsagesTest : BasePlatformTestCase() {
 
-  override fun getTestDataPath(): String = PluginPathManager.getPluginHomePath("sh") + "/core/testData/highlight_usages/"
+  override fun getTestDataPath(): String = ShTestData.getTestDataPath() + "/highlight_usages/"
 
   fun testCallCommands() {
     doTest("3:5/5 reset", "4:5/5 reset")

@@ -5,8 +5,8 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.sh.ShTestData;
 import com.intellij.sh.backend.rename.ShRenameAllOccurrencesHandler;
 import com.intellij.sh.highlighting.ShHighlightUsagesTest;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -18,7 +18,7 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData/rename/";
+    return ShTestData.getTestDataPath() + "/rename/";
   }
 
   public void testBasic1() {

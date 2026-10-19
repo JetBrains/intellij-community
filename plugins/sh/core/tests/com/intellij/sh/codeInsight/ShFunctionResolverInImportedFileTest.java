@@ -1,16 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.codeInsight;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/core/testData/resolve/function_imported_scope");
+    myFixture.setTestDataPath(ShTestData.getTestDataPath() + "/resolve/function_imported_scope");
     myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 
