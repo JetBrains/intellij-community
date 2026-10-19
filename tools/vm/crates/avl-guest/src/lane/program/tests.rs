@@ -271,11 +271,7 @@ impl Lane for Fake {
             .post_json("/api/air/ui-test", &request.to_string(), Instant::now() + within)
     }
 
-    fn relaunch(
-        &self,
-        cause: Relaunch,
-        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
-    ) -> Result<(), String> {
+    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         self.relaunches.lock().unwrap().push(cause);
         let down = while_down(self.context.path());
         if !self.relaunch_keeps_pid.load(Ordering::SeqCst) {

@@ -682,11 +682,7 @@ impl Lane for DaemonLane<'_, '_> {
         self.bridge.post(request, within)
     }
 
-    fn relaunch(
-        &self,
-        cause: Relaunch,
-        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
-    ) -> Result<(), String> {
+    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         let restarted = self.daemon.with_ide(|owner| {
             owner.restart(
                 self.launch,

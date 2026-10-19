@@ -56,11 +56,7 @@ fn fake_ide(vocabulary: Option<&'static str>, robot: &'static str) -> (FakeHttp,
 }
 
 /// [`fake_ide`] whose lifecycle answers `phase`.
-fn fake_ide_in(
-    phase: &'static str,
-    vocabulary: Option<&'static str>,
-    robot: &'static str,
-) -> (FakeHttp, Arc<Mutex<Vec<String>>>) {
+fn fake_ide_in(phase: &'static str, vocabulary: Option<&'static str>, robot: &'static str) -> (FakeHttp, Arc<Mutex<Vec<String>>>) {
     let log = Arc::new(Mutex::new(Vec::new()));
     let seen = Arc::clone(&log);
     let server = FakeHttp::start(move |request| {

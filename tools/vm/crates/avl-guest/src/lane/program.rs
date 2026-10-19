@@ -135,11 +135,7 @@ pub(crate) trait Lane: Probes {
 
     /// Quits the IDE, performs `while_down` on its context directory, launches it again on the same context, and waits
     /// for readiness.
-    fn relaunch(
-        &self,
-        cause: Relaunch,
-        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
-    ) -> Result<(), String>;
+    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String>;
 
     fn services(&self) -> &dyn ServiceControl;
 
@@ -858,11 +854,7 @@ impl<'r, 's> Runner<'r, 's> {
 
     /// A relaunch of the IDE as a `restart` span with the key `restart:ide` for `restart-ide` and `restart:recycle` for a
     /// recycle, as the recorder keys them.
-    fn relaunch_span(
-        &self,
-        cause: Relaunch,
-        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
-    ) -> Result<(), String> {
+    fn relaunch_span(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         let id = match cause {
             Relaunch::Restart => "ide",
             Relaunch::Recycle => "recycle",
