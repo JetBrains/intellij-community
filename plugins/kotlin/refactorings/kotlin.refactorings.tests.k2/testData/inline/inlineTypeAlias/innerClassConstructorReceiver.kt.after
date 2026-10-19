@@ -1,0 +1,8 @@
+class Outer {
+    inner class Inner(val value: Int = 0)
+}
+
+fun main() {
+    Outer().Inner()
+    Outer().Inner(42)
+}

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -9,25 +12,25 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.simple
-import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.createSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isFunctionType
-import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
@@ -48,6 +51,33 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageReplacementStrategy {
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun hasUnreplaceableInnerConstructor(usage: KtReferenceExpression): Boolean = allowAnalysisOnEdt {
+        analyze(usage) {
+            val callElement = usage.parent as? KtCallElement ?: return@analyze false
+            if (callElement.getQualifiedExpressionForSelector() != null) return@analyze false
+            val classSymbol = typeAlias.symbol.expandedType.expandedSymbol as? KaNamedClassSymbol ?: return@analyze false
+            classSymbol.isInner && !shortNameResolvesTo(usage, classSymbol) && innerReceiverQualifier(usage, classSymbol) == null
+        }
+    }
+
+    context(_: KaSession)
+    private fun shortNameResolvesTo(usage: KtReferenceExpression, classSymbol: KaNamedClassSymbol): Boolean {
+        return usage.containingKtFile.scopeContext(usage).scopes.asSequence()
+            .flatMap { it.scope.classifiers(classSymbol.name) }
+            .firstOrNull() == classSymbol
+    }
+
+    context(_: KaSession)
+    private fun innerReceiverQualifier(usage: KtReferenceExpression, classSymbol: KaNamedClassSymbol): String? {
+        val outerClass = classSymbol.containingSymbol as? KaClassSymbol ?: return null
+        val receivers = usage.containingKtFile.scopeContext(usage).implicitReceivers
+        val receiverIndex = receivers.indexOfFirst { it.type.isSubtypeOf(outerClass) }
+        if (receiverIndex < 0) return null
+        if (receiverIndex == 0) return "this"
+        return receivers[receiverIndex].label?.let { "this@$it" }
+    }
+
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class) //under potemkin progress
     override fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)? {
         val refElement = usage.getParentOfTypeAndBranch<KtUserType> { referenceExpression }
@@ -91,30 +121,41 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
             val typeAliasSymbol = typeAlias.symbol
             val typeToInline = typeAliasSymbol.expandedType
 
-            val callElement = usage.parent as? KtCallElement
+            val callElement = usage.parent as? KtCallExpression
             val expandedTypeFqName = if (callElement != null) {
-                val callableCall = usage.tryResolveExpressionCall()?.single?.simple ?: return null
-                val substitution = callableCall.typeArgumentsMapping
-                if (substitution.size != typeAliasSymbol.typeParameters.size) return null
-                val substitutor = createSubstitutor(substitution)
+                val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
+                val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                    expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+                }, position = Variance.INVARIANT)
+                val psiFactory = KtPsiFactory(typeAlias.project)
+                val typeArgumentsIndex = expandedTypeText.indexOf("<")
+                if (typeArgumentsIndex >= 0) {
+                    val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
 
-                val expandedType = substitutor.substitute(typeToInline)
-
-                expandedType.expandedSymbol?.importableFqName?.also {
-                    val typeArguments = (expandedType as? KaClassType)?.typeArguments
-                    if (typeArguments != null && typeArguments.isNotEmpty()) {
-                        val expandedTypeArgumentList = KtPsiFactory(typeAlias.project).createTypeArguments(typeArguments.joinToString(
-                            prefix = "<", postfix = ">"
-                        ) { it.type?.render(position = Variance.INVARIANT) ?: "*" })
-
-                        val originalTypeArgumentList = callElement.typeArgumentList
-                        if (originalTypeArgumentList != null) {
-                            shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-                        } else {
-                            shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
-                        }
+                    val originalTypeArgumentList = callElement.typeArgumentList
+                    if (originalTypeArgumentList != null) {
+                        shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+                    } else {
+                        shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
                     }
                 }
+
+                val expandedClassSymbol = expandedType.expandedSymbol
+                if (expandedClassSymbol is KaNamedClassSymbol && expandedClassSymbol.isInner) {
+                    val innerClassName = expandedClassSymbol.name.asString()
+                    val qualifiedCall = callElement.getQualifiedExpressionForSelector()
+                    if (qualifiedCall != null || shortNameResolvesTo(usage, expandedClassSymbol)) {
+                        usage.replaced(psiFactory.createSimpleName(innerClassName))
+                        return callElement
+                    }
+
+                    val receiverQualifier = innerReceiverQualifier(usage, expandedClassSymbol)
+                    if (receiverQualifier != null) {
+                        usage.replaced(psiFactory.createSimpleName(innerClassName))
+                        return callElement.replaced(psiFactory.createExpression("$receiverQualifier.${callElement.text}"))
+                    }
+                }
+                expandedClassSymbol?.importableFqName
             } else {
                 typeToInline.expandedSymbol?.importableFqName
             } ?: return null

@@ -134,6 +134,31 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/functionTypeToNullableType.kt");
         }
 
+        @TestMetadata("innerClassConstructorGeneric.kt")
+        public void testInnerClassConstructorGeneric() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorGeneric.kt");
+        }
+
+        @TestMetadata("innerClassConstructorHiddenReceiver.kt")
+        public void testInnerClassConstructorHiddenReceiver() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorHiddenReceiver.kt");
+        }
+
+        @TestMetadata("innerClassConstructorImplicit.kt")
+        public void testInnerClassConstructorImplicit() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorImplicit.kt");
+        }
+
+        @TestMetadata("innerClassConstructorNested.kt")
+        public void testInnerClassConstructorNested() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorNested.kt");
+        }
+
+        @TestMetadata("innerClassConstructorReceiver.kt")
+        public void testInnerClassConstructorReceiver() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorReceiver.kt");
+        }
+
         @TestMetadata("keepImports.kt")
         public void testKeepImports() throws Exception {
             runTest("testData/inline/inlineTypeAlias/keepImports.kt");

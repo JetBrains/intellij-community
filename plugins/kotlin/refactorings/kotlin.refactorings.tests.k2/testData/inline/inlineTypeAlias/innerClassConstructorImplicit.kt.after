@@ -1,0 +1,15 @@
+class Outer {
+    inner class Inner(val value: String)
+
+    fun direct(): Inner = Inner("one")
+
+    fun shadowed(): Inner {
+        class Inner(val value: String)
+        return this.Inner("two")
+    }
+}
+
+fun use(outer: Outer) {
+    with(outer) { Inner("three") }
+    with(outer) { with("other receiver") { Inner("four") } }
+}

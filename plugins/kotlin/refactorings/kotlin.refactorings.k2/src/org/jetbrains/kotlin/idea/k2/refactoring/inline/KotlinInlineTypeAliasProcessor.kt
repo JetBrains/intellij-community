@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.TypeAliasUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlineNamedDeclarationProcessor
@@ -30,6 +34,17 @@ class KotlinInlineTypeAliasProcessor(
 ) {
 
     override fun createReplacementStrategy(): UsageReplacementStrategy = TypeAliasUsageReplacementStrategy(declaration)
+
+    override fun additionalPreprocessUsages(usages: Array<out UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
+        val strategy = TypeAliasUsageReplacementStrategy(declaration)
+        for (usage in usages) {
+            val reference = usage.element as? KtReferenceExpression ?: continue
+            if (strategy.hasUnreplaceableInnerConstructor(reference)) {
+                conflicts.putValue(reference, KotlinBundle.message("text.cannot.select.inner.class.receiver"))
+            }
+        }
+    }
+
     override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
         return fullyExpandCall(usage)
     }

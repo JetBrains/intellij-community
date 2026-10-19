@@ -1,0 +1,9 @@
+class Root {
+    inner class Middle {
+        inner class Deep(val value: Int)
+    }
+}
+
+fun use(root: Root) {
+    root.Middle().Deep(1)
+}

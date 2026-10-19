@@ -1,0 +1,9 @@
+class Outer {
+    inner class Inner<T>(val value: T)
+}
+
+fun use(outer: Outer, nullableOuter: Outer?) {
+    val typed: Outer.Inner<String> = outer.Inner<String>("one")
+    outer.Inner<String>("two")
+    nullableOuter?.Inner<String>("three")
+}
