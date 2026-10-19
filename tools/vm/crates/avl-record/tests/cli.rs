@@ -1,4 +1,4 @@
-//! The process-level tests of `air-trace-record`, the binary that the lane JVM starts with no argument.
+//! The process-level tests of `air-trace-record`, the binary that the lane starts with no argument.
 //!
 //! The tests take the path of the binary from `CARGO_BIN_EXE_air-trace-record`. Cargo sets it when it compiles the
 //! test, and the integration test that the rust-tools core declares sets it at run time.

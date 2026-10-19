@@ -54,7 +54,7 @@ impl CaseStatus {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct CaseIdentity {
     pub suite: String,
-    /// The `testClass` label of the suite: the class of the JUnit node of the JVM host.
+    /// The `testClass` label of the suite, which the case names as its class.
     pub class_name: String,
     pub method_name: Option<String>,
     pub name: String,

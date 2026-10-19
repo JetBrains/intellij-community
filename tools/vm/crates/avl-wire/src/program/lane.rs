@@ -50,7 +50,7 @@ vocabulary! {
 }
 
 vocabulary! {
-    /// Which process serves the control channel of a controlled agent, `AirAcpControlOwner` of the Kotlin fixture. The
+    /// Which process serves the control channel of a controlled agent, `FlowControlOwner` of `flowFixtures.ts`. The
     /// lane IDE serves every controlled agent.
     pub enum ControlOwner {
         /// The control server in the lane IDE, which the launch file `control.json` binds.
@@ -59,7 +59,7 @@ vocabulary! {
 }
 
 vocabulary! {
-    /// A lane fixture that no agent implies, as `AirLaneRequirement` names it.
+    /// A lane fixture that no agent implies, `FlowLaneRequirement` of `flowFixtures.ts`.
     pub enum Requirement {
         AcpTransportCapture = "ACP_TRANSPORT_CAPTURE",
         FeedbackCapture = "FEEDBACK_CAPTURE",
@@ -72,7 +72,7 @@ vocabulary! {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LaneDocument {
     pub schema_version: u32,
-    /// The Kotlin constant of the lane, such as `UI` or `GUI_CHAT`.
+    /// The name of the lane, such as `UI` or `GUI_CHAT`.
     pub lane: String,
     /// The `-D` properties beyond the requirements and the services, in launch order.
     pub launch_properties: Vec<LaunchProperty>,

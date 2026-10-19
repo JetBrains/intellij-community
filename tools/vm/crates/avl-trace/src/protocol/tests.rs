@@ -8,8 +8,8 @@ use serde::Deserialize;
 use super::*;
 use crate::testdata::decode_transcript;
 
-/// The golden transcript is the contract the sidecar is compared with byte for byte, so it has to be in the
-/// canonical form, or the comparison would be with a spelling no encoder produces.
+/// The golden transcripts stand for what a lane writes, and the lane writes the canonical form. So each line has to be
+/// in that form, or the recorder tests would replay a spelling that no encoder produces.
 #[test]
 fn every_transcript_line_decodes_and_is_canonical() {
     for name in [TRANSCRIPT, TRUNCATED_TRANSCRIPT] {
@@ -268,8 +268,8 @@ fn the_transcript_program_is_the_profile_it_ran() {
     }
 }
 
-/// The truncated transcript is the shape a watchdog's `exitProcess` leaves: the full session's first lines, then
-/// EOF with an assertion running.
+/// The truncated transcript is the shape that a lane leaves when it dies: the full session's first lines, then EOF
+/// with an assertion running.
 #[test]
 fn the_truncated_transcript_stops_inside_an_assertion() {
     let full = lines(&traces::path(TRANSCRIPT));
@@ -435,7 +435,7 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
     });
     assert!(encode_command(&invalid).is_err(), "an invalid span was encoded");
 
-    // An expectation or a JVM frame is full of `<`, `>` and `&`, and the sidecar writes them raw.
+    // An expectation or a JVM frame is full of `<`, `>` and `&`, and the lane writes them raw.
     let failed = Command::End(EndCommand {
         id: 4,
         status: Status::Failed,

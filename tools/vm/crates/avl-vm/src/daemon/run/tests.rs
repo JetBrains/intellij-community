@@ -995,7 +995,7 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
         let (selectors, junit5_filters) = selector_to_run_request(filter);
         assert_eq!(selectors, want_selectors, "{filter}");
         assert_eq!(junit5_filters, want_filters, "{filter}");
-        // Never null on the wire: the far end is Kotlin with non-nullable fields.
+        // Never null on the wire: the lane daemon reads these lists with no default.
         let encoded = serde_json::to_value(RunRequest {
             selectors: selectors.clone(),
             junit5_filters: junit5_filters.clone(),

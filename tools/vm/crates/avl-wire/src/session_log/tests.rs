@@ -14,8 +14,8 @@ fn write(path: &Path, content: &str) {
     fs::write(path, content).unwrap();
 }
 
-// The label is the rule of the JVM host: the thread directory, or the file name without its extension, URL-decoded,
-// with each character outside [A-Za-z0-9._-] as '_'.
+// The label is the thread directory, or the file name without its extension, URL-decoded, with each character outside
+// [A-Za-z0-9._-] as '_'.
 #[test]
 fn a_label_is_the_thread_directory_or_the_file_name_url_decoded_and_safe() {
     assert_eq!(label_of(Path::new("/logs/thread-7/events.jsonl")), "thread-7");

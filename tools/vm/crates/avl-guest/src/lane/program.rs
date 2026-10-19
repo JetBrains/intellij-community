@@ -1214,7 +1214,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// Keeps the trace attachments that the IDE queued during the part `label` for the trace: the stills of its steps,
     /// and its named captures and files. The IDE forgets an entry that a fetch took, and its next list forgets the rest
     /// of this one, so the runner fetches each listed id at once. A read that fails is a note and fails no part, because
-    /// an attachment is evidence. The JVM host reads the same two routes after each part.
+    /// an attachment is evidence.
     fn collect_trace_attachments(&self, label: &str) {
         let listed = self
             .lane
@@ -1609,7 +1609,7 @@ fn install_request(suite: &str, install: &RawValue) -> Result<(String, Value, Du
     Ok((name, request, Duration::from_millis(timeout)))
 }
 
-/// The extension of a file of the media type `media_type` in the bundle, as the JVM host names it.
+/// The extension of a file of the media type `media_type` in the bundle.
 fn extension_of_media_type(media_type: &str) -> &'static str {
     match media_type {
         "image/png" => "png",
@@ -1674,7 +1674,8 @@ fn label_value(suite: &SuiteProgram, name: &str) -> Option<String> {
         .map(|label| label.value.clone())
 }
 
-/// The identity of the case of `profile`: the class and the factory method of the JUnit node of the JVM host.
+/// The identity of the case of `profile`: the `testClass` label of its suite as the class, and the factory method as
+/// the method.
 pub(crate) fn case_identity(suite: &SuiteProgram, profile: &ScenarioProgram) -> CaseIdentity {
     CaseIdentity {
         suite: suite.suite.clone(),

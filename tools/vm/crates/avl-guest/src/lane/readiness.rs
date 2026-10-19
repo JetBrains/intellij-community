@@ -10,7 +10,7 @@
 //! no request of the bridge before its first instruction.
 //!
 //! A request is the JSON of one `AirUiTestRequest`: `{"type": "<class name>", ...fields}`, posted to the request
-//! endpoint. Its transport deadline is its `timeoutMs` and a grace, as the Kotlin client derives it.
+//! endpoint. Its transport deadline is its `timeoutMs` and [`TRANSPORT_GRACE`].
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};

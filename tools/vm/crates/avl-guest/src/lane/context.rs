@@ -113,9 +113,9 @@ const DEFAULT_PROJECT_DIRECTORY: &str = "{{defaultProjectDirectory}}";
 /// The placeholder of the trusted project paths: one `<entry>` line each, every line ended by a line feed.
 const TRUSTED_PATH_ENTRIES: &str = "{{trustedPathEntries}}";
 
-/// Each option file of a new context by its name, in write order, as its template. These are the bytes of
-/// `AirIdeLaunchDefaults.OPTION_FILE_TEMPLATES`, and a test pins the digest of this side. The last one keeps the
-/// project from opening its README, so every IDE that the daemon launches starts with an empty editor area.
+/// Each option file of a new context by its name, in write order, as its template. A test pins their digest, which the
+/// config key reads. The last one keeps the project from opening its README, so every IDE that the daemon launches
+/// starts with an empty editor area.
 pub(crate) const OPTION_FILE_TEMPLATES: [(&str, &str); 6] = [
     (GENERAL_SETTINGS_FILE, include_str!("context/options/ide.general.xml")),
     ("ide.general.local.xml", include_str!("context/options/ide.general.local.xml")),
@@ -135,7 +135,8 @@ pub(crate) fn option_files_digest() -> String {
     sha256_hex(text.as_bytes())
 }
 
-/// The identity of the Codex mock model that the lane document states, `AirLaneCodexModel.IDENTITY`.
+/// The identity of the Codex mock model that the lane document states, `SERVICE_IDENTITIES.codexModel` of
+/// `flowFixtures.ts`.
 pub(crate) fn codex_identity() -> String {
     format!("mock-responses port={} reply={}", codex::PORT, codex::REPLY)
 }

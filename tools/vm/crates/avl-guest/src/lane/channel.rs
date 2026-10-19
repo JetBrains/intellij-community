@@ -51,7 +51,7 @@ pub(crate) const BOOT_CODE: &str = "lane_daemon_boot";
 /// How long `/shutdown` waits for the run in flight.
 pub(crate) const WEDGE_GRACE: Duration = Duration::from_mins(1);
 
-/// The exit status of a verb whose run outlived [`WEDGE_GRACE`] after `/shutdown`, the JVM daemon's `EXIT_CODE_WEDGED`.
+/// The exit status of a verb whose run outlived [`WEDGE_GRACE`] after `/shutdown`.
 pub(crate) const EXIT_WEDGED: u8 = 3;
 
 /// The largest file of the jar push. A context plugin file is the largest, and every one is below it.

@@ -20,7 +20,7 @@ fn spec(answers: &[&str], may_answer: &[&str], takes: &[&str], may_take: &[&str]
 }
 
 // An id gets each value it takes as a field, and each value it may take when one exists. A missing value fails with
-// the sentence of the JVM host, which names the value and the instruction.
+// a sentence that names the value and the instruction.
 #[test]
 fn a_request_gets_the_values_it_takes_and_a_missing_one_is_named() {
     let values = Values::new([

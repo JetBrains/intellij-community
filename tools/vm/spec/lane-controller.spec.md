@@ -547,7 +547,7 @@ Before a launch, the lane daemon writes these files into the context:
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_context_of_the_ui_lane_is_the_golden`)
 
 - The option file templates have the digest that the test process pins.
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_are_the_bytes_of_the_kotlin_templates`)
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_have_the_pinned_digest`)
 
 - `acp.json` equals the file of the test process for the same lane, except the values that derive from the key.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values`)
@@ -1852,7 +1852,7 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   bench. The JVM runner writes the same file from its own copy of the option templates.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_context_opens_no_readme`)
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_are_the_bytes_of_the_kotlin_templates`)
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_have_the_pinned_digest`)
 
 - A recycle of a lane IDE starts on its context with no editor tab of the run before it. A reset that did not hold
   recycles the IDE. The decision of a run recycles it too. It does so for an IDE that exited or does not answer, and

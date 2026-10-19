@@ -4,10 +4,10 @@
 //! it is below: the file names, the manifest, and the frame index. What the files contain beyond the manifest is
 //! OTLP ([crate::otlp]) and the bridge's tree ([crate::bridge]).
 //!
-//! The lane's system properties are read by Kotlin, and no Rust code sets them; for the record they are
-//! `air.flow.trace.dir` (the root, set by the daemon for each iteration, which wins over the other two roots),
-//! `air.flow.trace.run.id` (the run id the daemon sets beside it: the iteration id), `air.flow.trace` (`off`
-//! disables tracing) and `air.trace.recorder` (the recorder binary, a runfiles path the lane resolves).
+//! The lane names the root and the run id in its `hello` ([crate::protocol::HelloCommand]). The lane daemon roots each
+//! iteration at `<iterationDir>/air-traces`, and the iteration id is the run id. The lane reads the recorder from the
+//! static JVM flags of the runtime descriptor: `-Dair.trace.recorder=` names the binary, a runfiles path that the lane
+//! resolves, and `-Dair.flow.trace=off` turns the trace off.
 
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
@@ -139,11 +139,11 @@ vocabulary! {
         Passed = "passed",
         Failed = "failed",
         Aborted = "aborted",
-        /// The lane stopped talking before `done`: its standard input reached EOF. That is a watchdog's
-        /// `exitProcess`, a killed JVM, or a lane that never sent `done`. The recorder still closes the video and
-        /// writes the manifest, naming the span that was running. It also writes every span still open to
-        /// [SPANS_FILE] as aborted, ending at the EOF, the root included, so the root's program reaches the viewer. A
-        /// reader treats those spans as cut off, not as having ended.
+        /// The lane stopped talking before `done`: its standard input reached EOF. That is a lane that died or was
+        /// killed, or a lane that never sent `done`. The recorder still closes the video and writes the manifest,
+        /// naming the span that was running. It also writes every span still open to [SPANS_FILE] as aborted, ending
+        /// at the EOF, the root included, so the root's program reaches the viewer. A reader treats those spans as cut
+        /// off, not as having ended.
         Truncated = "truncated",
     }
 }

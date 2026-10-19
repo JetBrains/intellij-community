@@ -1,8 +1,8 @@
 //! The golden replay and the process loop.
 //!
 //! The golden bundle is not a hand-written example of the format but what the recorder writes for the golden
-//! transcript. The viewer's tests read it, so this is the test that keeps the viewer honest about the recorder, and
-//! the transcript is the one the sidecar's contract test holds the lane to: the three ends meet here.
+//! transcript. The viewer's tests read it, so this is the test that keeps the viewer honest about the recorder. The
+//! transcript is in the canonical form that the lane writes, so the three ends meet here.
 //!
 //! This recorder wrote the goldens, so every file is compared byte for byte: a change of key order, float or escape
 //! formatting fails the replay. A deliberate format change regenerates the text files under cargo with
@@ -148,7 +148,7 @@ fn every_acked_line_is_answered_with_its_line_number() {
     );
 }
 
-/// A watchdog's `exitProcess` leaves the recorder reading EOF inside an assertion. The bundle is still finished:
+/// A lane that dies inside an assertion leaves the recorder reading EOF. The bundle is still finished:
 /// every span that was open is written as aborted, and the manifest names the assertion.
 #[test]
 fn a_truncated_transcript_closes_the_bundle_naming_the_running_span() {
@@ -206,8 +206,8 @@ fn compare_truncated_golden(produced: &BTreeMap<String, Vec<u8>>) {
     }
 }
 
-/// `AirTraceRecorderProcess` starts `air-trace-record` with no argument, and the recorder takes none. The argv an
-/// older lane passed, `record`, is refused as a usage error rather than taken for a session, and no refusal exits
+/// `RecorderProcess` of `avl-guest` starts `air-trace-record` with no argument, and the recorder takes none. The argv
+/// an older lane passed, `record`, is refused as a usage error rather than taken for a session, and no refusal exits
 /// with 78, which `trace.cmd` keeps for its own failures. `tests/cli.rs` holds the binary to the same.
 #[test]
 fn an_argument_is_refused_before_a_session_starts() {

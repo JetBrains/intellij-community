@@ -17,9 +17,9 @@ use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
 /// The daemon port of the default lane daemon, `AIR_VM_DAEMON_PORT`.
 const DAEMON_PORT: u16 = 27_100;
 
-/// The digest of the option file templates. `AirIdeLaunchDefaults.OPTION_FILES_DIGEST` is the same value on the Kotlin
-/// side, but no Kotlin test reads it.
-const KOTLIN_OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c7083dbe88810fb110c4";
+/// The digest of the option file templates, which the config key reads. A change of a template changes this value and
+/// the config key of every lane.
+const OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c7083dbe88810fb110c4";
 
 /// A controlled agent of the fixture. The IDE serves the control channel of every controlled agent.
 const IDE_OWNED_AGENT: &str = "genui-agent";
@@ -220,8 +220,8 @@ fn a_lane_context_opens_no_readme() {
 }
 
 #[test]
-fn the_option_templates_are_the_bytes_of_the_kotlin_templates() {
-    assert_eq!(option_files_digest(), KOTLIN_OPTION_FILES_DIGEST);
+fn the_option_templates_have_the_pinned_digest() {
+    assert_eq!(option_files_digest(), OPTION_FILES_DIGEST);
 }
 
 #[test]

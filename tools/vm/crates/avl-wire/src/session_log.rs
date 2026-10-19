@@ -3,7 +3,7 @@
 //!
 //! Each entry of the variable is an `events.jsonl`, or a thread directory that holds one. The label of a log is the name
 //! of the thread directory, or the file name without its extension, URL-decoded, with each character outside
-//! `[A-Za-z0-9._-]` as `_`. That is the rule of `airRealSessionLogs` of the JVM host, which reads the files in place.
+//! `[A-Za-z0-9._-]` as `_`, as [`label_of`] states.
 //!
 //! The lane IDE of a guest cannot read a file of the host. So a runner packs each log as one zip of stored entries:
 //! the events file as [`EVENTS_FILE`], and the files of the sibling directories [`SIBLING_DIRECTORIES`] when they exist.

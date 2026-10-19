@@ -45,7 +45,7 @@ pub(crate) const CONTROL_AGENT_KEY_ENV: &str = "ACP_FAKE_AGENT_CONTROL_KEY";
 /// The inputs of the config key that the lane document does not hold.
 #[derive(Clone, Debug)]
 pub(crate) struct KeyInputs<'a> {
-    /// The Kotlin constant of the lane, such as `UI` or `GUI_CHAT`.
+    /// The name of the lane in its lane document, such as `UI` or `GUI_CHAT`.
     pub lane: &'a str,
     /// The hex SHA-256 of the bytes of the lane document.
     pub lane_document: &'a str,

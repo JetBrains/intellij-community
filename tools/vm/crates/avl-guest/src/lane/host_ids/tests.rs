@@ -40,8 +40,8 @@ fn perform_id(id: HostId, args: Value, values: &mut Values, side: &mut Side<'_>)
     perform(id, "label", &args, values, side)
 }
 
-// The registry ids arm and clear the faults of the JVM driver: a held package answer for 120 s, and a 503 for the next
-// package. The fault assertion holds only for the package fault.
+// The registry ids arm and clear the faults of the fake registry: a held package answer for 120 s, and a 503 for the
+// next package. The fault assertion holds only for the package fault.
 #[test]
 fn the_registry_ids_arm_hold_release_and_check_the_package_fault() {
     let services = FakeServices::default();
@@ -205,8 +205,8 @@ fn serve_once(listener: std::net::TcpListener, answer: String) -> std::thread::J
     })
 }
 
-// `account-approve-sign-in` follows the redirect of the emulator to the callback of the IDE, as the JVM host does. The
-// callback URL has a query and no path, and the callback gets that query.
+// `account-approve-sign-in` follows the redirect of the emulator to the callback of the IDE. The callback URL has a
+// query and no path, and the callback gets that query.
 #[test]
 fn the_sign_in_approval_follows_the_redirect_to_a_callback_with_a_query_and_no_path() {
     let emulator = std::net::TcpListener::bind("127.0.0.1:0").unwrap();

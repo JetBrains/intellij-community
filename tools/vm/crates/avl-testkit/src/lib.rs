@@ -169,7 +169,7 @@ fn from_manifest(text: &str, key: &str) -> Option<PathBuf> {
 /// The scenario-trace goldens: the lane transcript and the golden bundles. Another program reads them too, so they stay
 /// plain files rather than a snapshot tool's format.
 ///
-/// They are `avl-trace`'s `testdata`, which the Kotlin contract test and the docs site read too. A test that reads them
+/// They are `avl-trace`'s `testdata`, which the docs site reads too. A test that reads them
 /// needs `//tools/vm/crates/avl-trace:testdata` of the community module in its `data` under Bazel. The recorder's
 /// replay test writes them: `UPDATE_EXPECT=1`, the variable of `expect-test`, rewrites the text files.
 pub mod traces {

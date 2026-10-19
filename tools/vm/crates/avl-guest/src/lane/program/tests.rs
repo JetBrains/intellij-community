@@ -1585,8 +1585,8 @@ fn session_suite() -> Suite {
     }))
 }
 
-// A scenario that requires a runner value which the runner has not is skipped before its reset, as the JVM host aborts
-// it. No reset and no part of it reach the IDE.
+// A scenario that requires a runner value which the runner has not is skipped before its reset. No reset and no part
+// of it reach the IDE.
 #[test]
 fn a_scenario_that_requires_an_absent_runner_value_is_skipped_before_its_reset() {
     let fake = Fake::new(Script::default());

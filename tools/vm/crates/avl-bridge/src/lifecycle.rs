@@ -37,10 +37,10 @@ pub const MAX_WAIT: Duration = Duration::from_secs(30);
 pub const POLL_WAIT: Duration = Duration::from_secs(1);
 
 /// The time that a poll waits for its answer past its wait. A bridge before `COMPONENTS_LOADED` reads a request and
-/// sends no answer, so this bounds what such a poll costs. It is the connect bound of the Kotlin client.
+/// sends no answer, so this bounds what such a poll costs.
 const CALL_MARGIN: Duration = Duration::from_secs(5);
 
-/// The pause before the next poll after a failed poll, the reconnect interval of the Kotlin client.
+/// The pause before the next poll after a failed poll.
 const RETRY_INTERVAL: Duration = Duration::from_millis(250);
 
 /// How far along the IDE is, as the IDE itself sees it. The Kotlin side's `AirUiTestIdePhase`.
@@ -244,8 +244,7 @@ impl Reader {
     }
 }
 
-/// The decision of one wait for a phase, as a function of the snapshots and the time. It is the port of the Kotlin
-/// side's `AirUiTestPhaseWait`.
+/// The decision of one wait for a phase, as a function of the snapshots and the time.
 ///
 /// The IDE sends a state only when it changes. So the dwell of `quiet_for` ends when time passes with no state in
 /// another phase. The dwell starts again when the reader cannot know that no such state went past: after a gap of two

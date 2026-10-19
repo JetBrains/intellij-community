@@ -44,7 +44,8 @@ impl Values {
         self.by_name.insert(name.to_owned(), value);
     }
 
-    /// The value `name` that the instruction `label` takes. A missing value fails with the sentence of the JVM host.
+    /// The value `name` that the instruction `label` takes. A missing value fails with a sentence that names the value
+    /// and the instruction.
     pub(crate) fn require(&self, label: &str, name: &str) -> Result<&Value, String> {
         self.get(name)
             .ok_or_else(|| format!("the instruction '{label}' takes the value '{name}', and no earlier instruction answered it"))
@@ -88,8 +89,8 @@ impl Values {
         Ok(())
     }
 
-    /// The `values` object of the part `label`: each value of `takes`. A missing one fails with the sentence of the JVM
-    /// host for a part.
+    /// The `values` object of the part `label`: each value of `takes`. A missing one fails with a sentence that names
+    /// the value and the part.
     pub(crate) fn part_values(&self, label: &str, takes: &[String]) -> Result<Map<String, Value>, String> {
         takes
             .iter()

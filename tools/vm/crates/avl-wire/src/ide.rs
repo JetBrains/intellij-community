@@ -22,8 +22,8 @@ use crate::supervisor::RunState;
 #[cfg(test)]
 mod tests;
 
-/// The version of the context and launch documents, of their answers and of the launch record. Bump it with the Kotlin
-/// client.
+/// The version of the context and launch documents, of their answers and of the launch record. The agent refuses a
+/// document or a record of another version.
 pub const SCHEMA_VERSION: u32 = 2;
 
 /// The prefix of the supervisor run id of an IDE launch.

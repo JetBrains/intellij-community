@@ -1,8 +1,8 @@
 //! The recorded exchanges of the control route of the four services, `testdata/lane-services/control-exchanges.json`.
 //!
 //! The document is a script of requests to the four services, each with the status of its answer, and the answer text
-//! of each control request. The Kotlin client of the IDE reads these answer bytes in its contract test, and the
-//! Kotlin services of the JVM host replay the script. So both sides of the route protocol read one set of bytes.
+//! of each control request. The Kotlin client of the IDE reads these answer bytes in `AirLaneServicesClientTest`. So
+//! both sides of the route protocol read one set of bytes.
 
 use std::net::SocketAddr;
 
