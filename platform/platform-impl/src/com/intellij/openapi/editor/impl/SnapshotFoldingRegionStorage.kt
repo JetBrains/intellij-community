@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
@@ -354,7 +355,9 @@ internal open class SnapshotFoldRegion(
     this.expanded = expanded
   }
 
-  override fun isValid(): Boolean = super.isValid() && startOffset < endOffset
+  override fun isValidResolution(resolution: PMarkerResolution): Boolean {
+    return super.isValidResolution(resolution) && !resolution.isEmpty
+  }
 
   override fun getPlaceholderText(): String = placeholder
 

@@ -90,8 +90,10 @@ open class SnapshotRangeMarkerImpl private constructor(
   override fun getTextRange(): TextRange = currentResolution()
 
   override fun isValid(): Boolean {
-    return !disposed && currentResolution().isValid && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
+    return !disposed && isValidResolution(currentResolution()) && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
   }
+
+  protected open fun isValidResolution(resolution: PMarkerResolution): Boolean = resolution.isValid
 
   override fun isGreedyToLeft(): Boolean = spec.isGreedyToLeft
 
