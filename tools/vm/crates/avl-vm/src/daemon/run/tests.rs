@@ -329,7 +329,7 @@ async fn non_record_lines_are_kept_as_output() {
 }
 
 // The push offers the context plugin files and the lane inputs by digest, and uploads only what the guest does not
-// hold. The two documents of the fixture are one jar, so their digest is offered once. No jar of the hot tier travels.
+// hold. The two documents of the fixture are one jar, so their digest is offered once.
 #[tokio::test]
 async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;

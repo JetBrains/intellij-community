@@ -179,16 +179,14 @@ fn lane_runfiles(root: &std::path::Path) -> (PathBuf, PathBuf) {
     let file =
         |logical: &str| serde_json::json!({"execPath": format!("bazel-out/bin/{logical}"), "logicalPath": logical, "owner": "//test"});
     let descriptor = serde_json::json!({
-        "schemaVersion": 9,
+        "schemaVersion": avl_wire::runtime::SCHEMA_VERSION,
         "kind": "air-ui-daemon-runtime",
-        "mainClass": "com.intellij.air.integration.daemon.AirUiDaemonServer",
         "staticJvmFlags": [
             "-Dair.test.codex.runtime=${RUNFILES_ROOT}/_main/tools/codex/runtime.properties",
             "-Dair.test.pi.runtime=${RUNFILES_ROOT}/_main/tools/pi/runtime.properties",
         ],
-        "classpath": {"hot": [file("_main/hot.jar"), file("_main/documents.jar")], "stable": [file("_main/stable.jar")]},
         "devDist": {"config": file("_main/dist/ide.properties"), "fingerprint": file("_main/dist/fingerprint.txt"), "home": file("_main/dist/home")},
-        "jbr": {"directory": "jbr", "javaHomeSuffix": "", "platform": guest_platform()},
+        "jbr": {"platform": guest_platform()},
         "ide": {
             "fakeAgentJar": file("_main/agent.jar"),
             "flagsFile": file("_main/ide/flags.txt"),

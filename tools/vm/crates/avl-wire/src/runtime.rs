@@ -5,11 +5,10 @@
 //!
 //! # Why the descriptor is validated fail-closed
 //!
-//! The descriptor is Bazel's half of the contract and this controller's only description of what to launch.
-//! Every field it declares is either a path that will be staged or a flag that will be exec'd, so a field that is
-//! absent, of the wrong type, or names a path outside the runfiles tree is a refusal here rather than a failure
-//! later - later being a staged tree that looks healthy, or a JVM that has already told the controller it
-//! started.
+//! The descriptor is Bazel's half of the contract and the only description of what the lane daemon launches. Each
+//! field is a path of the runfiles tree, a flag, or a fact that a reader checks. So a field that is absent, of the
+//! wrong type, or names a path outside the runfiles tree is a refusal here. Later, it would be a runfiles tree that
+//! looks healthy, or a lane IDE that fails after its launch.
 
 use std::collections::HashSet;
 use std::fmt;
@@ -26,7 +25,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 9;
+pub const SCHEMA_VERSION: u32 = 10;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -49,9 +48,6 @@ pub mod code {
     /// A declared field that is absent or of the wrong type. One code on purpose: both mean the rule did not
     /// emit what this controller reads, and neither is actionable in a different way.
     pub const FIELD_INVALID: &str = "daemon_runtime_field_invalid";
-    /// A list that is present, well-formed and empty: what a *filtered* rule emits. It stages a classpath that
-    /// boots a JVM with nothing on it, whose first symptom is a NoClassDefFoundError naming the platform.
-    pub const TIER_EMPTY: &str = "daemon_runtime_tier_empty";
     /// A logical path that is absolute or contains `..`. It is joined onto a runfiles root and then onto a
     /// *guest* staging root, so one that escapes is a write outside the tree this controller owns.
     pub const PATH_ESCAPES: &str = "daemon_runtime_path_escapes_runfiles";
@@ -67,11 +63,8 @@ pub mod code {
     /// too. The daemon joins the destination onto the plugin directory of the IDE context, so one that escapes is a
     /// write outside that directory.
     pub const PLUGIN_DESTINATION_INVALID: &str = "daemon_runtime_plugin_destination_invalid";
-    /// A JBR directory that is absolute or contains `..`, so that it names a directory outside the distribution
-    /// home.
-    pub const JBR_DIRECTORY_INVALID: &str = "daemon_runtime_jbr_directory_invalid";
-    /// A lane input that a share or the stable tier also carries. A lane input travels by the jar push only. A second
-    /// way in would move the mount identity at each change of the input.
+    /// A lane input that a share or another field of the descriptor also carries. A lane input travels by the jar push
+    /// only. A second way in would move the mount identity at each change of the input.
     pub const LANE_INPUT_STAGED: &str = "daemon_runtime_lane_input_staged";
 }
 
@@ -117,17 +110,6 @@ pub struct RuntimeFile {
     pub owner: String,
 }
 
-/// The daemon's classpath split by how often it changes.
-///
-/// `hot` is the test code, which changes every iteration and travels to the guest as individual jars keyed by
-/// content digest. `stable` is everything else, staged as one generation. The split is the whole reason a warm
-/// iteration is seconds rather than minutes, and it is declared by Bazel rather than guessed here.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ClasspathTiers {
-    pub hot: Vec<RuntimeFile>,
-    pub stable: Vec<RuntimeFile>,
-}
-
 /// The share-backed IDE distribution: the two documents that name it, and the tree itself.
 ///
 /// `fingerprint` is the whole identity of the distribution: the composer derives it from the component
@@ -139,23 +121,18 @@ pub struct DevDist {
     pub home: RuntimeFile,
 }
 
-/// The JBR of the distribution, which the daemon JVM runs on. The guest copies it into the generation of the daemon.
+/// The guest of the descriptor. The lane IDE runs on the JBR of the distribution, below [`DevDist::home`].
 ///
-/// `directory` is the slash path of the JBR below [`DevDist::home`]: `jbr` on Linux, and `Contents/jbr` for a macOS
-/// distribution, whose IDE home is `Contents`. It is the production place of the JBR.
+/// `platform` names the JBR and the distribution of one guest, such as `linux_aarch64`. Each reader refuses a
+/// descriptor of another guest; see [`parse_runtime_descriptor`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Jbr {
-    #[serde(deserialize_with = "non_empty")]
-    pub directory: String,
-    /// Empty is legal: the `bin/java` of a Linux JBR is directly below `directory`.
-    pub java_home_suffix: String,
     pub platform: String,
 }
 
 /// The keys of the `jbr` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
-pub const JBR_SECTION_FIELDS: [&str; 3] = ["directory", "javaHomeSuffix", "platform"];
+pub const JBR_SECTION_FIELDS: [&str; 1] = ["platform"];
 
 /// The keys of the `ide` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
@@ -199,7 +176,7 @@ pub struct IdeSection {
 
 impl IdeSection {
     /// The lane inputs with the key of each in the `ide` section, in key order. The two jars of the documents can be
-    /// one file, and each can be a jar of the hot tier.
+    /// one file.
     pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 3] {
         [
             ("fakeAgentJar", &self.fake_agent_jar),
@@ -242,9 +219,7 @@ pub struct RuntimeDescriptor {
     /// Checked before the typed decode (a `5.0` is version 5), and set from the constant afterwards.
     pub schema_version: u32,
     pub kind: String,
-    pub main_class: String,
     pub static_jvm_flags: Vec<String>,
-    pub classpath: ClasspathTiers,
     pub dev_dist: DevDist,
     pub jbr: Jbr,
     pub ide: IdeSection,
@@ -256,11 +231,7 @@ pub struct RuntimeDescriptor {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DescriptorFields {
-    #[serde(deserialize_with = "non_empty")]
-    main_class: String,
     static_jvm_flags: Vec<String>,
-    #[serde(deserialize_with = "object_only")]
-    classpath: ClasspathTiers,
     #[serde(deserialize_with = "object_only")]
     dev_dist: DevDist,
     #[serde(deserialize_with = "object_only")]
@@ -331,8 +302,7 @@ impl<'de> Deserialize<'de> for RuntimeFile {
     }
 }
 
-/// A string that must say something: an empty main class execs a JVM with no argv tail, and an empty path or
-/// owner names nothing.
+/// A string that must say something: an empty path, owner, project root or plugin destination names nothing.
 fn non_empty<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
     let value = String::deserialize(deserializer)?;
     if value.is_empty() {
@@ -350,10 +320,9 @@ fn descriptor_error(code: &'static str, descriptor_path: &str, detail: &str) -> 
 
 /// Reads and fail-closed validates the Bazel-owned daemon launch contract.
 ///
-/// `expected_jbr_platform` is the *guest's*, and checking it here is what keeps the wrong configuration from being
-/// staged silently. A darwin descriptor handed to a Linux worker names a macOS distribution, whose JBR does hold
-/// `Contents/Home/bin/java`, so staging succeeds and the first complaint is an exec-format error from a daemon that
-/// has already been told it started.
+/// `expected_jbr_platform` is the *guest's*, and the check here keeps the wrong configuration from a guest. A darwin
+/// descriptor on a Linux worker names a macOS distribution. Without the check, the first complaint is an exec-format
+/// error of a lane IDE after its launch.
 ///
 /// The version and the kind are read before the typed decode, so a document of another vintage is named as such
 /// rather than as a list of fields it lacks.
@@ -397,18 +366,13 @@ pub fn parse_runtime_descriptor(
     let descriptor = RuntimeDescriptor {
         schema_version: SCHEMA_VERSION,
         kind: DESCRIPTOR_KIND.to_owned(),
-        main_class: fields.main_class,
         static_jvm_flags: fields.static_jvm_flags,
-        classpath: fields.classpath,
         dev_dist: fields.dev_dist,
         jbr: fields.jbr,
         ide: fields.ide,
         data: fields.data,
     };
 
-    if descriptor.classpath.hot.is_empty() || descriptor.classpath.stable.is_empty() {
-        return Err(fail(code::TIER_EMPTY, "both classpath tiers must be non-empty"));
-    }
     if descriptor.jbr.platform != expected_jbr_platform {
         // Not phrased as an invalid descriptor: this document is well-formed and internally consistent, and the
         // mistake was made one level up, by a build that did not select the guest's configuration.
@@ -433,12 +397,6 @@ pub fn parse_runtime_descriptor(
             &format!("ide.projectRoot {} escapes the project archive", descriptor.ide.project_root),
         ));
     }
-    if escapes(&descriptor.jbr.directory) {
-        return Err(fail(
-            code::JBR_DIRECTORY_INVALID,
-            &format!("jbr.directory {} escapes the distribution home", descriptor.jbr.directory),
-        ));
-    }
     let mut destinations = HashSet::new();
     for (index, plugin) in descriptor.ide.plugins.iter().enumerate() {
         if !is_plugin_destination(&plugin.destination) {
@@ -460,11 +418,8 @@ pub fn parse_runtime_descriptor(
 
     // The order of this list decides which duplicate a message names when there are two.
     let staged = descriptor
-        .classpath
-        .hot
+        .data
         .iter()
-        .chain(&descriptor.classpath.stable)
-        .chain(&descriptor.data)
         .chain([
             &descriptor.dev_dist.config,
             &descriptor.dev_dist.fingerprint,
@@ -476,16 +431,12 @@ pub fn parse_runtime_descriptor(
     if let Some(duplicate) = first_duplicate(staged.clone()) {
         return Err(fail(code::DUPLICATE_LOGICAL_PATH, &format!("duplicate logical path {duplicate}")));
     }
-    let hot: HashSet<&str> = descriptor.classpath.hot.iter().map(|jar| jar.logical_path.as_str()).collect();
-    let shared: HashSet<&str> = staged
-        .map(|file| file.logical_path.as_str())
-        .filter(|logical_path| !hot.contains(logical_path))
-        .collect();
+    let staged_paths: HashSet<&str> = staged.map(|file| file.logical_path.as_str()).collect();
     if let Some((field, input)) = descriptor
         .ide
         .lane_inputs()
         .into_iter()
-        .find(|(_, input)| shared.contains(input.logical_path.as_str()))
+        .find(|(_, input)| staged_paths.contains(input.logical_path.as_str()))
     {
         return Err(fail(
             code::LANE_INPUT_STAGED,
@@ -507,9 +458,7 @@ fn labelled_files(descriptor: &RuntimeDescriptor) -> Vec<(String, &RuntimeFile)>
             .map(|(index, file)| (format!("{name}[{index}]"), file))
             .collect()
     }
-    let mut labelled = listed_in("classpath.hot", &descriptor.classpath.hot);
-    labelled.extend(listed_in("classpath.stable", &descriptor.classpath.stable));
-    labelled.extend(listed_in("data", &descriptor.data));
+    let mut labelled = listed_in("data", &descriptor.data);
     labelled.extend([
         ("devDist.config".to_owned(), &descriptor.dev_dist.config),
         ("devDist.fingerprint".to_owned(), &descriptor.dev_dist.fingerprint),

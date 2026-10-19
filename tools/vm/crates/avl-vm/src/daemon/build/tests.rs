@@ -153,12 +153,12 @@ async fn the_launch_digest_is_composed_of_the_static_launch_the_boot_settings_an
     );
     let documents = &prep.lane_inputs[1].host;
     assert!(
-        documents.path.ends_with("_main/hot/a.jar")
+        documents.path.ends_with(crate::daemon::testing::FIXTURE_DOCUMENTS_JAR)
             && Path::new(&documents.path).starts_with(runtime::runfiles_root(&fixture.bazel.descriptor_path)),
         "a pushed file travels by host path, was {}",
         documents.path
     );
-    assert_eq!(documents.sha256, digest::sha256_text("hot-a"));
+    assert_eq!(documents.sha256, digest::sha256_text("documents"));
     assert_eq!(
         prep.daemon_environment.get("NODE_BIN"),
         Some(&fixture.settings.vm_node),
@@ -186,20 +186,18 @@ async fn a_changed_static_flag_changes_the_launch_digest() {
     assert_eq!(before.mount_digest, after.mount_digest);
 }
 
-// No identity reads a jar of the classpath or a file of the JBR. The lane daemon runs no JVM, and the lane IDE runs on
-// the JBR of its distribution. The product identity reads the fingerprint of the distribution, which covers that JBR.
-// So a changed or missing stable jar or JBR moves no identity.
+// No identity reads a file of the JBR. The lane daemon runs no JVM, and the lane IDE runs on the JBR of its
+// distribution. The product identity reads the fingerprint of the distribution, which covers that JBR. So a changed or
+// missing JBR moves no identity.
 #[tokio::test]
-async fn a_changed_stable_jar_or_jbr_moves_no_identity() {
+async fn a_changed_or_missing_jbr_moves_no_identity() {
     let fixture = Fixture::new().await;
     let before = fixture.prepared().await;
     let root = runtime::runfiles_root(&fixture.bazel.descriptor_path);
-    fs::write(root.join("_main/stable/one.jar"), "another stable jar").unwrap();
-    fs::remove_file(root.join("_main/stable/two.jar")).unwrap();
     let jbr = root
         .join(crate::daemon::testing::FIXTURE_DIST_HOME)
         .join(crate::daemon::testing::FIXTURE_JBR_DIRECTORY);
-    fs::write(jbr.join("a&b/bin/java"), "another java").unwrap();
+    fs::write(jbr.join("bin/java"), "another java").unwrap();
     let changed = fixture.prepared().await;
     fs::remove_dir_all(&jbr).unwrap();
     let missing = fixture.prepared().await;

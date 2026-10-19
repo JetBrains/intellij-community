@@ -375,8 +375,8 @@ The rest of the scenario matrix is in
 - The runtime descriptor names three lane inputs: the fake agent jar, the jar of the suite documents and the jar of
   the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
   an edit of the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input
-  that the data, the stable jars or another staged file also names. A lane input can be a hot jar. Each iteration names
-  the digest of each lane input in the journal.
+  that the data or another field of the descriptor also names. Each iteration names the digest of each lane input in
+  the journal.
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`every_way_the_descriptor_can_be_wrong_is_its_own_refusal`)
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest`)
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`push_jars_uploads_only_missing_digests`)
@@ -400,11 +400,9 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-guest/src/image/provision/tests.rs
 
 - The launch identity reads the static flags of the runtime descriptor, the boot settings of the controller and the
-  daemon environment. A changed static flag restarts the daemon. No jar of the classpath enters an identity, so a
-  changed or missing stable jar moves none.
+  daemon environment. A changed static flag restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`the_launch_digest_is_composed_of_the_static_launch_the_boot_settings_and_the_environment`)
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_static_flag_changes_the_launch_digest`)
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_stable_jar_or_jbr_moves_no_identity`)
 
 - The daemon environment is part of the launch identity. A changed value restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
@@ -442,9 +440,9 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
 - The lane daemon runs no JVM, and a daemon start copies no JBR to the guest. The `jbr` section of the runtime
-  descriptor names the directory of the JBR below the distribution home. No identity reads a file of the JBR. The
-  product identity reads the fingerprint of the distribution, and the fingerprint covers the JBR.
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_stable_jar_or_jbr_moves_no_identity`)
+  descriptor names only the platform of the guest. No identity reads a file of the JBR. The product identity reads the
+  fingerprint of the distribution, and the fingerprint covers the JBR.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_or_missing_jbr_moves_no_identity`)
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`the_jbr_section_keys_are_the_ones_the_reader_reads`)
 
 - The guest reads no checkout. A worker has one share, the Bazel output user root, read-only, on every backend. A
@@ -1423,7 +1421,7 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The push offers the context plugin files and the lane inputs, and uploads only the files that the guest does not
-  hold. No jar of the hot tier travels. A change of only the context plugins leaves the IDE to the lane daemon, which compares the digest of each
+  hold. A change of only the context plugins leaves the IDE to the lane daemon, which compares the digest of each
   plugin directory itself. The controller then relaunches nothing and refreshes no share. No lane distribution carries
   the bridge plugin, so a bridge edit moves no product digest and needs no remount. A daemon record without a plugin
   identity decides nothing on it.

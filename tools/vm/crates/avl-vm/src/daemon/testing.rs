@@ -452,11 +452,9 @@ pub(crate) fn failing_run(iteration_id: &str) -> Vec<String> {
 // --- the runtime-descriptor fixture ------------------------------------------------------------------------------
 
 /// The runfiles every fixture descriptor declares, with their contents.
-pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 10] = [
-    ("_main/hot/a.jar", "hot-a"),
+pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 8] = [
+    (FIXTURE_DOCUMENTS_JAR, "documents"),
     (FIXTURE_FAKE_AGENT_JAR, "fake-agent"),
-    ("_main/stable/one.jar", "stable-one"),
-    ("_main/stable/two.jar", "stable-two"),
     ("_main/data/project.zip", "data-a"),
     ("_main/dist/x.ide.config", "config"),
     ("_main/dist/fingerprint.txt", "fingerprint"),
@@ -465,9 +463,12 @@ pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 10] = [
     ("_main/plugins/bridge/lib/bridge.jar", "bridge-plugin"),
 ];
 
-/// The fake agent jar of the fixture descriptor, a lane input. The jars of the documents are the hot jar, as the
-/// flow-profiles resource jar is a hot jar of the daemon.
+/// The fake agent jar of the fixture descriptor, a lane input.
 pub(crate) const FIXTURE_FAKE_AGENT_JAR: &str = "_main/agent/fake-agent.jar";
+
+/// The jar of the documents of the fixture descriptor. The two jars of the documents are this one file, as both are the
+/// flow-profiles resource jar of the real descriptor.
+pub(crate) const FIXTURE_DOCUMENTS_JAR: &str = "_main/documents/a.jar";
 
 /// The fixture's runtime descriptor, built for an arm64 Linux guest.
 pub(crate) fn fixture_descriptor() -> Value {
@@ -486,30 +487,23 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
     json!({
         "schemaVersion": avl_wire::runtime::SCHEMA_VERSION,
         "kind": "air-ui-daemon-runtime",
-        "mainClass": "com.example.Main",
         "staticJvmFlags": ["-Xmx1g", "-Dflag=<v>"],
-        "classpath": {
-            "hot": [file("_main/hot/a.jar")],
-            "stable": [file("_main/stable/one.jar"), file("_main/stable/two.jar")],
-        },
         "devDist": {
             "config": file("_main/dist/x.ide.config"),
             "fingerprint": file("_main/dist/fingerprint.txt"),
             "home": file("_main/dist/home"),
         },
         "jbr": {
-            "directory": FIXTURE_JBR_DIRECTORY,
-            "javaHomeSuffix": "a&b",
             "platform": jbr_platform,
         },
         "ide": {
             "fakeAgentJar": file(FIXTURE_FAKE_AGENT_JAR),
             "flagsFile": file("_main/ide/ide.jvm-flags.txt"),
-            "laneDocuments": file("_main/hot/a.jar"),
+            "laneDocuments": file(FIXTURE_DOCUMENTS_JAR),
             "plugins": [{"destination": "bridge/lib/bridge.jar", "file": file("_main/plugins/bridge/lib/bridge.jar")}],
             "projectArchive": file("_main/ide/project.zip"),
             "projectRoot": "Project",
-            "suiteDocuments": file("_main/hot/a.jar"),
+            "suiteDocuments": file(FIXTURE_DOCUMENTS_JAR),
         },
         "data": [file("_main/data/project.zip")],
     })
@@ -522,14 +516,14 @@ pub(crate) const FIXTURE_SOURCE_RUNFILE: &str = "_main/data/project.zip";
 /// the directory.
 pub(crate) const FIXTURE_DIST_HOME: &str = "_main/dist/home";
 
-/// The JBR directory of the fixture, below [`FIXTURE_DIST_HOME`].
+/// The JBR directory of the fixture, below [`FIXTURE_DIST_HOME`], as `jbr` is below the home of a Linux distribution.
 pub(crate) const FIXTURE_JBR_DIRECTORY: &str = "jbr";
 
-/// Writes the distribution home of the fixture below `root`: a JBR whose `java` is below the Java-home suffix of the
-/// fixture descriptor. Answers the home.
+/// Writes the distribution home of the fixture below `root`: a JBR with its `bin/java`. No field of the descriptor names
+/// the JBR. Answers the home.
 fn write_fixture_dist_home(root: &Path) -> PathBuf {
     let home = root.join(FIXTURE_DIST_HOME);
-    let bin = home.join(FIXTURE_JBR_DIRECTORY).join("a&b").join("bin");
+    let bin = home.join(FIXTURE_JBR_DIRECTORY).join("bin");
     std::fs::create_dir_all(&bin).expect("the JBR of the fixture is created");
     std::fs::write(bin.join("java"), "java").expect("the java of the fixture is written");
     home

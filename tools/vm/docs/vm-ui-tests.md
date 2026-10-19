@@ -453,7 +453,7 @@ the lane builds no runfile links: the controller reads the MANIFEST of the runti
 
 A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the daemon and
 in a standalone lane run. The lane daemon is a verb of the guest agent and runs no JVM, so a daemon start copies no
-JBR to the guest. The `jbr` section of the runtime descriptor names that directory below the distribution home. No
+JBR to the guest. The `jbr` section of the runtime descriptor names only the platform of the guest. No
 identity reads a file of the JBR, because the fingerprint of the distribution covers it. The lane daemon refuses a
 distribution without the JBR at its boot, and the refusal names the path. No lane target and no descriptor carries a
 JBR archive.
@@ -499,19 +499,14 @@ guest process: the **lane daemon**, the `lane-daemon` verb of the guest agent. I
 lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
-The runtime descriptor still declares the two classpath tiers of the retired JVM daemon. The **stable** tier is the
-JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty. No
-identity reads it, and nothing stages it. The **hot** tier is the jars built from `plugins/air`: the jars of
-the suite and lane documents. Nothing reads it, and the controller pushes no hot jar. The test code of a run reaches
-the lane IDE as the context plugin files and the lane inputs, which the controller pushes by digest.
-
-Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
-`plugins/air/tests/integration/air_ui_daemon_runtime.bzl` is "owner contains `//plugins/air/` and
-not the daemon's own module". The rule emits the two tiers as a versioned JSON **runtime
-descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor rather than a
-Java launcher. Both ends assert its `schemaVersion`, so the shape is a contract between Bazel and
-the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed. The lane
-daemon reads the inputs of the lane IDE from it at its boot, and the boot makes the directories of the run.
+The rule `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` writes a versioned JSON **runtime
+descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor. It names the static flags, the
+distribution, the guest platform, the inputs of the lane IDE and the data inputs. The test code of a run reaches the
+lane IDE as the context plugin files and the lane inputs, which the controller pushes by digest. The data inputs are
+the runfiles of the `data` of the rule, without the files that another field names. Each file that the descriptor
+names is a runfile of the descriptor target. Both ends assert its `schemaVersion`, so the shape is a contract between
+Bazel and the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed.
+The lane daemon reads the inputs of the lane IDE from it at its boot, and the boot makes the directories of the run.
 
 Every UI lane runs over this one descriptor, which names the suite documents and the lane documents of every lane. The
 run request of the lane daemon names the lane, and the lane daemon carries the warm IDE across whole controller
