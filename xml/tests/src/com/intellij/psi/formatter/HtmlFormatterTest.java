@@ -18,6 +18,7 @@ package com.intellij.psi.formatter;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -933,6 +934,28 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  <div>
                      <b>first</b> <i>second</i> <em> text </em>
                  </div>""");
+  }
+
+  @Test
+  public void testWeb46872() {
+    getHtmlSettings().HTML_KEEP_BLANK_LINES = 3;
+    doTextTest("<html>\n</html>\n\n\n\n\n\n\n\n", "<html>\n</html>\n\n\n\n");
+    doTextTest("<html>\n</html>\n  \n\t\n\n\n\n", "<html>\n</html>\n\n\n\n");
+    doTextTest("<html>\n</html>\n\n", "<html>\n</html>\n\n");
+    doTextTest("<html>\n</html>", "<html>\n</html>");
+  }
+
+  @Test
+  public void testWeb46872NoBlankLinesKept() {
+    getHtmlSettings().HTML_KEEP_BLANK_LINES = 0;
+    doTextTest("<html>\n</html>\n\n\n", "<html>\n</html>\n");
+  }
+
+  @Test
+  public void testWeb46872RangeBeforeEndOfFile() {
+    getHtmlSettings().HTML_KEEP_BLANK_LINES = 0;
+    myTextRange = new TextRange(0, 5);
+    doTextTest("<div></div>\n<div></div>\n\n\n", "<div></div>\n<div></div>\n\n\n");
   }
 
   @NotNull
