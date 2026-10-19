@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.createSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -29,12 +30,14 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
@@ -147,24 +150,23 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
             val substitutor = createSubstitutor(substitution)
             val expandedType = substitutor.substitute(typeToInline)
             val expandedTypeText = expandedType.render(position = Variance.INVARIANT)
-            val needParentheses =
-                (expandedType.isFunctionType && usage.parent is KtNullableType) || (expandedType.isExtensionFunctionType() && usage.getParentOfTypeAndBranch<KtFunctionType> { receiverTypeReference } != null)
-            val expandedTypeReference = psiFactory.createType(expandedTypeText)
-            return usage.replaced(expandedTypeReference.typeElement!!).apply {
-                if (needParentheses) {
-                    val sample = psiFactory.createParameterList("()")
-                    parent.addBefore(sample.firstChild, this)
-                    parent.addAfter(sample.lastChild, this)
-                }
+            val isFunctionType = expandedType.isFunctionType || expandedType.isSuspendFunctionType
+            val nullableType = usage.parent as? KtNullableType
+            val typeReference = usage.parent as? KtTypeReference
+            val isFunctionTypeReceiver = typeReference?.parent is KtFunctionTypeReceiver
+            val replacementText = when {
+                isFunctionType && nullableType != null -> "($expandedTypeText)?"
+                isFunctionType && isFunctionTypeReceiver -> "($expandedTypeText)"
+                else -> expandedTypeText
+            }
+            val replacementTypeReference = psiFactory.createType(replacementText)
+            return when {
+                nullableType != null && isFunctionType -> nullableType.replaced(replacementTypeReference.typeElement!!)
+                typeReference != null -> typeReference.replaced(replacementTypeReference)
+                else -> usage.replaced(replacementTypeReference.typeElement!!)
+            }.apply {
                 shortenReferences(this)
             }
         }
     }
-
-
-}
-
-private fun KaType.isExtensionFunctionType(): Boolean {
-    val functionalType = this as? KaFunctionType ?: return false
-    return functionalType.hasReceiver
 }

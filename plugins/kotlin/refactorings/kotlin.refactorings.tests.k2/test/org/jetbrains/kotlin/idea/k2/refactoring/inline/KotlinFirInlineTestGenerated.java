@@ -144,6 +144,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/lambdaExpression.kt");
         }
 
+        @TestMetadata("nullableSuspendFunctionType.kt")
+        public void testNullableSuspendFunctionType() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/nullableSuspendFunctionType.kt");
+        }
+
         @TestMetadata("replaceImports.kt")
         public void testReplaceImports() throws Exception {
             runTest("testData/inline/inlineTypeAlias/replaceImports.kt");
@@ -152,6 +157,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("simpleAlias.kt")
         public void testSimpleAlias() throws Exception {
             runTest("testData/inline/inlineTypeAlias/simpleAlias.kt");
+        }
+
+        @TestMetadata("suspendFunctionType.kt")
+        public void testSuspendFunctionType() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/suspendFunctionType.kt");
+        }
+
+        @TestMetadata("suspendFunctionTypeReceiver.kt")
+        public void testSuspendFunctionTypeReceiver() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/suspendFunctionTypeReceiver.kt");
         }
     }
 
