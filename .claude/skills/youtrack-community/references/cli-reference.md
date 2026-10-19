@@ -3,14 +3,16 @@
 Full command surface of [`../scripts/yt.py`](../scripts/yt.py). Read this before composing any
 invocation not already shown in [`../SKILL.md`](../SKILL.md).
 
-All examples assume `YT` points at the CLI and a token source is set. Use the **absolute** path to
-this skill's `scripts/yt.py` so it works from any working directory — replace `<SKILL-DIR>` with
+All examples assume `YT` points at the CLI. Read-only commands work without a token on public
+issues and projects; mutating commands, `auth check`, `user me`, `command apply --dry-run`,
+`link add --dry-run`, and restricted resources need a token source set. Use the **absolute** path
+to this skill's `scripts/yt.py` so it works from any working directory — replace `<SKILL-DIR>` with
 this skill's own directory (or a harness-provided variable such as `$CLAUDE_SKILL_DIR` under Claude
 Code):
 
 ```bash
 YT="<SKILL-DIR>/scripts/yt.py"
-export YOUTRACK_TOKEN_OP_PATH="op://VAULT/ITEM/FIELD"
+export YOUTRACK_TOKEN_OP_PATH="op://VAULT/ITEM/FIELD"   # only needed for writes or restricted data
 ```
 
 ## Contents
@@ -44,7 +46,9 @@ These work either side of the subcommand: `yt.py --verbose issue get X` and
 `yt.py issue get X --verbose` are equivalent.
 
 `--dry-run` exists on **every** mutating command, destructive ones included — use it to see the
-exact endpoint and payload without sending anything. `--yes` is additionally required to actually
+exact endpoint and payload without sending anything. Local and `GET`-backed `--dry-run` previews
+work without a token on public resources; `command apply --dry-run` and `link add --dry-run` call
+`POST /api/commands/assist` and require a token. `--yes` is additionally required to actually
 perform a destructive action (`comment delete`, `tag remove`, `attach delete`).
 
 Only `GET` requests are retried on 429/5xx. A `POST` or `DELETE` that fails is reported rather
@@ -67,7 +71,16 @@ Precedence, most explicit first — the first one set wins:
 3. `$YOUTRACK_TOKEN_OP_PATH`
 
 A blank or whitespace-only `$YOUTRACK_TOKEN` is ignored rather than treated as set, so it falls
-through to the next source. If none resolve, the CLI exits 3 and names all three options.
+through to the next source.
+
+- **Commands that require authentication** (`auth check`, `user me`, all mutating commands,
+  `command apply --dry-run`, and `link add --dry-run`) check all three sources and exit 3 if none
+  resolves.
+- **Read-only commands and other `--dry-run` previews** use `--token-op-path` or `$YOUTRACK_TOKEN`
+  when provided, and run without an `Authorization` header (`guest`) otherwise. They skip
+  `$YOUTRACK_TOKEN_OP_PATH` so public reads do not trigger an interactive 1Password approval
+  prompt. When an unauthenticated request fails with HTTP 401, 403, or 404, the error message notes
+  that a token may be needed if the resource has restricted visibility.
 
 See [Provide the token](../SKILL.md#provide-the-token) for choosing between them, and note that
 `op://` paths are user-specific: never hardcode a real one into a file or commit.

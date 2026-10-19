@@ -2,9 +2,9 @@
 name: youtrack-community
 description: YouTrack CLI for a community checkout; the monorepo uses `youtrack`.
 compatibility: >-
-  Needs python3 and no third-party packages, plus a YouTrack permanent token. The 1Password CLI
-  (op) is optional — used only when the token comes from an op:// secret path rather than
-  YOUTRACK_TOKEN.
+  Needs python3 and no third-party packages. Read-only commands on public resources work without a
+  token. Writes and restricted resources need a YouTrack permanent token. The 1Password CLI (op) is
+  optional and used only when the token comes from an op:// secret path rather than YOUTRACK_TOKEN.
 allowed-tools:
   - Bash
   - Read
@@ -44,7 +44,22 @@ use it** and should use this CLI.
 
 ## Get a token
 
-Every path below needs a YouTrack permanent token. If the user does not have one, point them at
+Read-only commands (`issue get`, `issue search`, `issue field list`, `comment list`, `tag list`,
+`link list`, `link types`, `work list`, `attach list`, `attach download`, `user search`,
+`project get`, and `saved-queries`) and local `--dry-run` previews work without a token on public
+issues and projects. Do not ask the user for a token when the task only reads public data.
+
+A YouTrack permanent token is required for:
+
+- All mutating commands (`issue create`, `issue update`, `issue field set`, `command apply`,
+  `comment add/update/delete`, `tag add/remove`, `link add`, `work log`, `attach upload/delete`),
+  plus `command apply --dry-run` and `link add --dry-run`.
+- `auth check` and `user me`.
+- Protected or restricted issues, comments, and attachments (YouTrack omits them from search and
+  list results or returns `401`/`403`/`404` to `guest`), `assignee: me` queries, and
+  `project fields`.
+
+If the user needs authentication and does not have a token, point them at
 [Obtain a permanent token](https://www.jetbrains.com/help/youtrack/cloud/manage-permanent-token.html#obtain-permanent-token)
 — do not try to mint one for them, and never ask them to paste the token into the conversation.
 
@@ -54,7 +69,12 @@ The CLI resolves a token from, in precedence order:
 
 1. `--token-op-path op://VAULT/ITEM/FIELD` — read via the 1Password CLI
 2. `$YOUTRACK_TOKEN`
-3. `$YOUTRACK_TOKEN_OP_PATH` — an `op://` path, read the same way
+3. `$YOUTRACK_TOKEN_OP_PATH` — an `op://` path, read the same way when authentication is required
+
+On read-only commands, `--token-op-path` and `$YOUTRACK_TOKEN` are still used when provided, while
+`$YOUTRACK_TOKEN_OP_PATH` is skipped so public reads do not trigger an interactive 1Password
+prompt. To authenticate a read-only call via 1Password (for example, to access a restricted issue),
+pass `--token-op-path` explicitly or export `YOUTRACK_TOKEN="$(op read 'op://VAULT/ITEM/FIELD')"`.
 
 **Which one applies depends on what the user has. Ask rather than assume.**
 
@@ -147,7 +167,8 @@ token.
 
 ## Core workflow
 
-1. `python3 $YT auth check` — confirm auth before a run of operations.
+1. For writes or restricted resources, run `python3 $YT auth check` first to confirm auth. Skip
+   this step for unauthenticated reads of public issues and projects.
 2. Run the operation. Output is JSON by default; `--format table` for reading, `--format ids`
    to pipe.
 3. Check the exit code:
@@ -156,8 +177,8 @@ token.
 |---|---|---|
 | 0 | ok | |
 | 2 | usage | bad arguments; re-read `--help` |
-| 3 | auth | no token resolved, or 401/403 — stop, tell the user, do **not** retry with other credentials |
-| 4 | not found | wrong issue/project/field id |
+| 3 | auth | no token resolved when required, or 401/403 — stop, tell the user, do **not** retry with other credentials |
+| 4 | not found | wrong issue/project/field id, or a restricted resource requested without a token |
 | 5 | validation | 400 — usually a missing or mistyped required custom field |
 | 6 | transient | rate limit or server error, already retried 3× |
 

@@ -6,8 +6,9 @@ the 1Password CLI mocked out.
 
     python3 -m unittest discover -s scripts        # from the skill directory
 
-Pass --live to additionally run read-only calls against the real instance. That
-needs a token in the environment and never writes anything:
+Pass --live to additionally run read-only calls against the real instance
+(works without a token for public resources, and also runs `auth check` when a
+token is configured). Never writes anything:
 
     python3 test_yt.py --live
 """
@@ -81,6 +82,27 @@ class TokenResolutionTest(unittest.TestCase):
         self.assertIn(yt.ENV_TOKEN, message)
         self.assertIn(yt.ENV_TOKEN_OP_PATH, message)
         self.assertEqual(ctx.exception.exit_code, yt.EXIT_AUTH)
+
+    def test_optional_returns_none_when_no_source_is_set(self):
+        with mock.patch.dict(yt.os.environ, {}, clear=True):
+            self.assertIsNone(yt.resolve_token(None, required=False))
+
+    def test_optional_skips_env_op_path_without_calling_op(self):
+        with mock.patch.dict(
+            yt.os.environ, {yt.ENV_TOKEN_OP_PATH: OP_PATH}, clear=True
+        ), mock.patch.object(yt.subprocess, "run") as run:
+            self.assertIsNone(yt.resolve_token(None, required=False))
+        run.assert_not_called()
+
+    def test_optional_still_uses_env_token(self):
+        with mock.patch.dict(
+            yt.os.environ, {yt.ENV_TOKEN: "tok-from-env"}, clear=True
+        ):
+            self.assertEqual(yt.resolve_token(None, required=False), "tok-from-env")
+
+    def test_optional_still_uses_explicit_op_path_flag(self):
+        with mock.patch.dict(yt.os.environ, {}, clear=True), fake_op():
+            self.assertEqual(yt.resolve_token(OP_PATH, required=False), "tok-from-op")
 
 
 class OpCliTest(unittest.TestCase):
@@ -240,6 +262,26 @@ class ErrorMappingTest(unittest.TestCase):
 
     def test_describe_error_handles_empty_body(self):
         self.assertEqual(yt.describe_error(502, b""), "HTTP 502")
+
+    def test_unauthenticated_401_403_404_append_token_hint(self):
+        for status in (401, 403, 404):
+            with self.subTest(status=status):
+                err = yt.error_for_status(status, f"HTTP {status}", authenticated=False)
+                msg = str(err)
+                self.assertIn("unauthenticated", msg)
+                self.assertIn("--token-op-path", msg)
+                self.assertIn(yt.ENV_TOKEN, msg)
+                self.assertIn(yt.ENV_TOKEN_OP_PATH, msg)
+
+    def test_authenticated_errors_and_other_statuses_omit_unauthenticated_hint(self):
+        for status in (401, 403, 404):
+            with self.subTest(status=status, authenticated=True):
+                err = yt.error_for_status(status, f"HTTP {status}", authenticated=True)
+                self.assertNotIn("unauthenticated", str(err))
+        for status in (400, 429, 500):
+            with self.subTest(status=status, authenticated=False):
+                err = yt.error_for_status(status, f"HTTP {status}", authenticated=False)
+                self.assertNotIn("unauthenticated", str(err))
 
 
 class CustomFieldPayloadTest(unittest.TestCase):
@@ -1022,31 +1064,270 @@ class ScalarFormattingTest(unittest.TestCase):
         self.assertEqual(yt._scalar([{"name": "a"}, {"name": "b"}]), "a, b")
 
 
+class UnauthenticatedExecutionTest(unittest.TestCase):
+    """Read-only commands and local dry-runs work without a token; writes require one."""
+
+    def setUp(self):
+        yt._RESOLVED_TOKEN = None
+
+    def tearDown(self):
+        yt._RESOLVED_TOKEN = None
+
+    def _capturing_opener(self, payload: bytes = b'{"idReadable": "JEWEL-1367"}'):
+        captured: list[urllib.request.Request] = []
+
+        class Resp:
+            def read(self_inner):
+                return payload
+
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *a):
+                return False
+
+        class Opener:
+            def open(self_inner, req, timeout=None):
+                captured.append(req)
+                return Resp()
+
+        return Opener(), captured
+
+    def test_request_omits_authorization_header_when_token_is_none(self):
+        opener, captured = self._capturing_opener()
+        with mock.patch.object(yt.urllib.request, "build_opener", return_value=opener):
+            yt.request("GET", "issues/JEWEL-1367", token=None)
+        self.assertEqual(len(captured), 1)
+        self.assertIsNone(captured[0].get_header("Authorization"))
+
+    def test_request_includes_bearer_header_when_token_is_given(self):
+        opener, captured = self._capturing_opener()
+        with mock.patch.object(yt.urllib.request, "build_opener", return_value=opener):
+            yt.request("GET", "issues/JEWEL-1367", token="secret-tok")
+        self.assertEqual(len(captured), 1)
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer secret-tok")
+
+    def test_request_adds_unauthenticated_hint_on_401_403_404_when_token_is_none(self):
+        for status, expected_cls in (
+            (401, yt.AuthError),
+            (403, yt.AuthError),
+            (404, yt.NotFoundError),
+        ):
+            with self.subTest(status=status):
+                class FailingOpener:
+                    def open(self_inner, req, timeout=None):
+                        raise urllib.error.HTTPError(
+                            req.full_url,
+                            status,
+                            "err",
+                            {},
+                            io.BytesIO(b'{"error_description":"Not found"}'),
+                        )
+
+                with mock.patch.object(
+                    yt.urllib.request, "build_opener", return_value=FailingOpener()
+                ):
+                    with self.assertRaises(expected_cls) as ctx:
+                        yt.request("GET", "issues/SECRET-1", token=None)
+                self.assertIn("unauthenticated", str(ctx.exception))
+                self.assertIn(yt.ENV_TOKEN, str(ctx.exception))
+
+    def test_resolve_project_and_tag_include_hint_when_unauthenticated(self):
+        with mock.patch.object(yt, "request", return_value=[]):
+            with self.assertRaises(yt.NotFoundError) as proj_ctx:
+                yt.resolve_project(None, "SECRET", verbose=False)
+            self.assertIn("unauthenticated", str(proj_ctx.exception))
+
+            with self.assertRaises(yt.NotFoundError) as tag_ctx:
+                yt.resolve_tag(None, "secret-tag", verbose=False)
+            self.assertIn("unauthenticated", str(tag_ctx.exception))
+
+    def test_read_only_commands_succeed_without_token(self):
+        read_only_argvs = [
+            ["issue", "get", "JEWEL-1367"],
+            ["issue", "search", "project: JEWEL"],
+            ["issue", "field", "list", "JEWEL-1367"],
+            ["comment", "list", "JEWEL-1367"],
+            ["tag", "list"],
+            ["tag", "list", "--issue", "JEWEL-1367"],
+            ["link", "list", "JEWEL-1367"],
+            ["link", "types"],
+            ["work", "list", "JEWEL-1367"],
+            ["user", "search", "sebp"],
+            ["saved-queries"],
+            ["attach", "list", "JEWEL-1367"],
+        ]
+        for argv in read_only_argvs:
+            with self.subTest(argv=argv):
+                opener, captured = self._capturing_opener(b"[]")
+                with mock.patch.dict(yt.os.environ, {}, clear=True), \
+                     mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    code = yt.main(argv)
+                self.assertEqual(code, yt.EXIT_OK)
+                self.assertEqual(len(captured), 1)
+                self.assertIsNone(captured[0].get_header("Authorization"))
+
+    def test_project_get_and_fields_work_without_token(self):
+        for argv in (["project", "get", "JEWEL"], ["project", "fields", "JEWEL"]):
+            with self.subTest(argv=argv):
+                opener, captured = self._capturing_opener(
+                    b'[{"id": "22-1758", "shortName": "JEWEL", "name": "Jewel"}]'
+                )
+                with mock.patch.dict(yt.os.environ, {}, clear=True), \
+                     mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    code = yt.main(argv)
+                self.assertEqual(code, yt.EXIT_OK)
+                self.assertTrue(all(r.get_header("Authorization") is None for r in captured))
+
+    def test_local_and_get_backed_dry_runs_succeed_without_token(self):
+        with tempfile.NamedTemporaryFile("wb", suffix=".txt", delete=False) as handle:
+            handle.write(b"hello")
+            upload_file = handle.name
+        self.addCleanup(Path(upload_file).unlink)
+
+        dry_run_argvs = [
+            (["issue", "create", "--project", "JEWEL", "--summary", "Title", "--dry-run"],
+             b'[{"id": "22-1758", "shortName": "JEWEL"}]'),
+            (["issue", "update", "JEWEL-1367", "--summary", "New", "--dry-run"], b"{}"),
+            (["issue", "field", "set", "JEWEL-1367", "State", "Open", "--dry-run"],
+             b'[{"id": "1-1", "name": "State"}]'),
+            (["comment", "add", "JEWEL-1367", "--text", "note", "--dry-run"], b"{}"),
+            (["comment", "update", "JEWEL-1367", "4-1", "--text", "note", "--dry-run"], b"{}"),
+            (["comment", "delete", "JEWEL-1367", "4-1", "--dry-run"], b"{}"),
+            (["tag", "add", "JEWEL-1367", "needs-triage", "--dry-run"],
+             b'[{"id": "6-1", "name": "needs-triage"}]'),
+            (["tag", "remove", "JEWEL-1367", "needs-triage", "--dry-run"],
+             b'[{"id": "6-1", "name": "needs-triage"}]'),
+            (["work", "log", "JEWEL-1367", "--duration", "1h", "--dry-run"], b"{}"),
+            (["attach", "upload", "JEWEL-1367", upload_file, "--dry-run"], b"{}"),
+            (["attach", "delete", "JEWEL-1367", "8-1", "--dry-run"], b"{}"),
+        ]
+        for argv, canned in dry_run_argvs:
+            with self.subTest(argv=argv):
+                opener, captured = self._capturing_opener(canned)
+                with mock.patch.dict(yt.os.environ, {}, clear=True), \
+                     mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    code = yt.main(argv)
+                self.assertEqual(code, yt.EXIT_OK)
+                self.assertTrue(all(r.get_header("Authorization") is None for r in captured))
+
+    def test_mutating_commands_and_auth_check_user_me_require_token(self):
+        auth_required_argvs = [
+            ["auth", "check"],
+            ["user", "me"],
+            ["issue", "create", "--project", "JEWEL", "--summary", "Title"],
+            ["issue", "update", "JEWEL-1367", "--summary", "New"],
+            ["issue", "field", "set", "JEWEL-1367", "State", "Open"],
+            ["command", "apply", "State Open", "--issue", "JEWEL-1367"],
+            ["command", "apply", "State Open", "--issue", "JEWEL-1367", "--dry-run"],
+            ["comment", "add", "JEWEL-1367", "--text", "note"],
+            ["comment", "update", "JEWEL-1367", "4-1", "--text", "note"],
+            ["comment", "delete", "JEWEL-1367", "4-1", "--yes"],
+            ["tag", "add", "JEWEL-1367", "needs-triage"],
+            ["tag", "remove", "JEWEL-1367", "6-1", "--yes"],
+            ["link", "add", "JEWEL-1367", "--type", "relates to", "--target", "JEWEL-525"],
+            ["link", "add", "JEWEL-1367", "--type", "relates to", "--target", "JEWEL-525", "--dry-run"],
+            ["work", "log", "JEWEL-1367", "--duration", "1h"],
+            ["attach", "upload", "JEWEL-1367", "file.png"],
+            ["attach", "delete", "JEWEL-1367", "8-1", "--yes"],
+        ]
+        for argv in auth_required_argvs:
+            with self.subTest(argv=argv):
+                opener, captured = self._capturing_opener()
+                with mock.patch.dict(yt.os.environ, {}, clear=True), \
+                     mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+                     contextlib.redirect_stderr(io.StringIO()):
+                    code = yt.main(argv)
+                self.assertEqual(code, yt.EXIT_AUTH)
+                self.assertEqual(captured, [])
+
+    def test_read_only_command_uses_token_when_provided_but_skips_env_op_path(self):
+        # 1. With $YOUTRACK_TOKEN_OP_PATH only: does not run op, sends unauthenticated request.
+        opener, captured = self._capturing_opener()
+        with mock.patch.dict(yt.os.environ, {yt.ENV_TOKEN_OP_PATH: OP_PATH}, clear=True), \
+             mock.patch.object(yt.subprocess, "run") as run, \
+             mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+             contextlib.redirect_stdout(io.StringIO()):
+            code = yt.main(["issue", "get", "JEWEL-1367"])
+        self.assertEqual(code, yt.EXIT_OK)
+        run.assert_not_called()
+        self.assertIsNone(captured[0].get_header("Authorization"))
+
+        # 2. With $YOUTRACK_TOKEN: sends Authorization header.
+        opener, captured = self._capturing_opener()
+        with mock.patch.dict(yt.os.environ, {yt.ENV_TOKEN: "env-tok"}, clear=True), \
+             mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+             contextlib.redirect_stdout(io.StringIO()):
+            code = yt.main(["issue", "get", "JEWEL-1367"])
+        self.assertEqual(code, yt.EXIT_OK)
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer env-tok")
+
+        # 3. With explicit --token-op-path: runs op and sends Authorization header.
+        opener, captured = self._capturing_opener()
+        with mock.patch.dict(yt.os.environ, {}, clear=True), \
+             fake_op(stdout="flag-tok"), \
+             mock.patch.object(yt.urllib.request, "build_opener", return_value=opener), \
+             contextlib.redirect_stdout(io.StringIO()):
+            code = yt.main(["--token-op-path", OP_PATH, "issue", "get", "JEWEL-1367"])
+        self.assertEqual(code, yt.EXIT_OK)
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer flag-tok")
+
+    def test_run_live_skips_auth_check_without_token_and_includes_it_with_token(self):
+        seen: list[list[str]] = []
+
+        def fake_main(argv):
+            seen.append(list(argv))
+            return yt.EXIT_OK
+
+        with mock.patch.dict(yt.os.environ, {}, clear=True), \
+             mock.patch.object(yt, "main", side_effect=fake_main), \
+             contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(run_live(), yt.EXIT_OK)
+        self.assertNotIn(["auth", "check"], seen)
+        self.assertEqual(len(seen), len(LIVE_READ_ONLY_CHECKS))
+
+        seen.clear()
+        with mock.patch.dict(yt.os.environ, {yt.ENV_TOKEN: "tok"}, clear=True), \
+             mock.patch.object(yt, "main", side_effect=fake_main), \
+             contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(run_live(), yt.EXIT_OK)
+        self.assertEqual(seen[0], ["auth", "check"])
+        self.assertEqual(len(seen), len(LIVE_READ_ONLY_CHECKS) + 1)
+
+
 # --------------------------------------------------------------------------
 # Optional live smoke check (read-only)
 # --------------------------------------------------------------------------
 
-LIVE_CHECKS = [
-    ("auth check", ["auth", "check"]),
+LIVE_READ_ONLY_CHECKS = [
     ("issue get", ["issue", "get", "JEWEL-1367", "--fields", "idReadable"]),
     ("attach list", ["attach", "list", "JEWEL-1367"]),
     ("project get", ["project", "get", "JEWEL"]),
 ]
+LIVE_CHECKS = [("auth check", ["auth", "check"]), *LIVE_READ_ONLY_CHECKS]
 
 
 def run_live() -> int:
     """Run read-only calls against the real instance. Never writes."""
     import os
 
-    if not (os.environ.get(yt.ENV_TOKEN) or os.environ.get(yt.ENV_TOKEN_OP_PATH)):
+    has_token = bool(
+        os.environ.get(yt.ENV_TOKEN, "").strip()
+        or os.environ.get(yt.ENV_TOKEN_OP_PATH, "").strip()
+    )
+    checks = LIVE_CHECKS if has_token else LIVE_READ_ONLY_CHECKS
+    if not has_token:
         print(
-            f"--live needs ${yt.ENV_TOKEN} or ${yt.ENV_TOKEN_OP_PATH} set.",
+            f"[live] no ${yt.ENV_TOKEN} or ${yt.ENV_TOKEN_OP_PATH} set; "
+            "running unauthenticated read-only checks (skipping auth check)",
             file=sys.stderr,
         )
-        return yt.EXIT_AUTH
 
     failures = 0
-    for label, argv in LIVE_CHECKS:
+    for label, argv in checks:
         code = yt.main(argv)
         status = "ok" if code == yt.EXIT_OK else f"FAILED (exit {code})"
         print(f"[live] {label}: {status}", file=sys.stderr)
