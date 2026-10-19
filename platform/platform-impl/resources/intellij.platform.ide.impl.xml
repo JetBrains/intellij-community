@@ -660,6 +660,7 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+    <vfs.asyncListenerBackgroundable implementation="com.intellij.openapi.vfs.newvfs.ProjectAsyncFileListenerBridge" order="first"/>
     <persistentFsConnectionListener
       implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyPersistentFsConnectionListener"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
@@ -678,6 +679,8 @@
                         serviceImplementation="com.intellij.ide.util.AppPropertyService" preload="true"/>
     <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                     serviceImplementation="com.intellij.ide.util.ProjectPropertyService"/>
+    <projectService serviceInterface="com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry"
+                    serviceImplementation="com.intellij.openapi.vfs.impl.ProjectBulkFileListenerRegistryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager" open="true"
                         serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl"/>
     <vfs.asyncListener order="first" implementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl$MyAsyncVfsListener"/>

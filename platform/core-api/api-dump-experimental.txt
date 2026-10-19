@@ -296,6 +296,14 @@ com.intellij.openapi.util.registry.RegistryManager
 - a:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Boolean
 *f:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - f:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):Z
+*:com.intellij.openapi.vfs.ProjectBulkFileListener
+- afterVfsChange(java.util.List,com.intellij.openapi.project.Project):V
+*:com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry
+- *sf:Companion:com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry$Companion
+- a:addListener(com.intellij.openapi.vfs.ProjectBulkFileListener,com.intellij.openapi.Disposable):V
+- a:addListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.ProjectBulkFileListener):V
+*f:com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry
 a:com.intellij.openapi.vfs.VirtualFile
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.util.ModificationTracker
