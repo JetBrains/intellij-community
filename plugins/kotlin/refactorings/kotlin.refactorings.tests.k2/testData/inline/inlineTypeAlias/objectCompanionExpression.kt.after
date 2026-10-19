@@ -1,0 +1,11 @@
+class Host {
+    companion object {
+        fun member() = "Host"
+    }
+}
+
+fun test() {
+    val companion = Host.Companion
+    println(Host.member())
+    println(companion)
+}

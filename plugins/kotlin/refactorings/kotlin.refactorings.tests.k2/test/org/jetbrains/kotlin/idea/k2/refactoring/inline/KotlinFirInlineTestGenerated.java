@@ -189,6 +189,21 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/nullableSuspendFunctionType.kt");
         }
 
+        @TestMetadata("objectAliasImport.kt")
+        public void testObjectAliasImport() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/objectAliasImport.kt");
+        }
+
+        @TestMetadata("objectCompanionExpression.kt")
+        public void testObjectCompanionExpression() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/objectCompanionExpression.kt");
+        }
+
+        @TestMetadata("objectExpression.kt")
+        public void testObjectExpression() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/objectExpression.kt");
+        }
+
         @TestMetadata("projectedFunctionType.kt")
         public void testProjectedFunctionType() throws Exception {
             runTest("testData/inline/inlineTypeAlias/projectedFunctionType.kt");

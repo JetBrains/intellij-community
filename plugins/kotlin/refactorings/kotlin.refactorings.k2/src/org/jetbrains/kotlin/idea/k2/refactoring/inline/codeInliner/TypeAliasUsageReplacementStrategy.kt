@@ -125,22 +125,24 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
             }
 
 
-            val callElement = usage.parent as? KtCallExpression ?: return null
-
-            val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
-            val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
-            }, position = Variance.INVARIANT)
             val psiFactory = KtPsiFactory(typeAlias.project)
-            val typeArgumentsIndex = expandedTypeText.indexOf("<")
-            if (typeArgumentsIndex >= 0) {
-                val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
 
-                val originalTypeArgumentList = callElement.typeArgumentList
-                if (originalTypeArgumentList != null) {
-                    shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-                } else {
-                    shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+            val callElement = usage.parent as? KtCallExpression ?: usage
+            val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
+            if (callElement is KtCallExpression) {
+                val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                    expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+                }, position = Variance.INVARIANT)
+                val typeArgumentsIndex = expandedTypeText.indexOf("<")
+                if (typeArgumentsIndex >= 0) {
+                    val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
+
+                    val originalTypeArgumentList = callElement.typeArgumentList
+                    if (originalTypeArgumentList != null) {
+                        shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+                    } else {
+                        shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+                    }
                 }
             }
 

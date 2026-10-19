@@ -1,0 +1,5 @@
+package declaration
+
+object Kotlin {
+    fun member() = "Kotlin"
+}

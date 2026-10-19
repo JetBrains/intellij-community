@@ -1,0 +1,5 @@
+package usage
+
+import declaration.Kotlin
+
+fun use() = Kotlin.member()

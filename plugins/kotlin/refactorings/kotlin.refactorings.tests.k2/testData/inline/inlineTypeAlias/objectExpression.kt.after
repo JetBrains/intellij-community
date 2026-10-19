@@ -1,0 +1,15 @@
+object Kotlin {
+    fun member() = "Kotlin"
+}
+
+fun accept(value: Kotlin) = value.member()
+
+fun test() {
+    val language = Kotlin
+    Kotlin.member()
+    accept(Kotlin)
+    when (language) {
+        Kotlin -> println("Kotlin")
+    }
+    println(language)
+}
