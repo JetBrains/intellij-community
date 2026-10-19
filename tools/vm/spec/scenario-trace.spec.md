@@ -39,12 +39,12 @@ Air docs site. `air-trace plan` says what to run to record new ones.
 the bridge routes and the viewer.
 
 The contract is declared once, in Rust, in `community/tools/vm/crates/avl-trace`. Two golden files there
-pin the Kotlin and TypeScript ends to it.
+pin the viewer to it.
 
 ## Goals
 
 - A bundle is self-contained, so a CI publisher can adopt it later without a viewer change.
-- A killed lane JVM still leaves a readable bundle, marked as truncated.
+- A killed lane still leaves a readable bundle, marked as truncated.
 - The parts that must run are Rust, so a guest needs no JVM to record, pack or serve.
 
 ## Non-goals

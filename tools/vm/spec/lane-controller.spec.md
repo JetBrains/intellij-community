@@ -176,7 +176,7 @@ Date: 2026-10-07
 
 ## Summary
 
-The UI-lane controller runs the Air UI scenarios on a worker. It leases the worker and starts the UI-test daemon
+The UI-lane controller runs the Air UI scenarios on a worker. It leases the worker and starts the lane daemon
 there. Then it runs the suites that a change reaches, and it reports the verdict with the evidence.
 
 [Flow UI Scenarios](../../../../plugins/air/spec/docs/flow-ui-scenarios.spec.md) specifies the scenario programs, the
@@ -259,7 +259,7 @@ The generator publishes the suite facts that the controller reads, as
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
 - `run --changed` runs the suites those paths reach. Every bare argument after `--changed` is a changed
-  path. For each lane, the filters are the lane's own tag, and then one class filter for each suite.
+  path. For each lane, the selection is the lane and one class filter for each suite.
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
   [@test] ../crates/avl-vm/src/lane/affected/tests.rs
 
@@ -547,10 +547,10 @@ Before a launch, the lane daemon writes these files into the context:
 - The files of the context of the `UI` lane are the golden `testdata/lane-context/ui-context.txt`.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_context_of_the_ui_lane_is_the_golden`)
 
-- The option file templates have the digest that the test process pins.
+- The option file templates have a pinned digest.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_have_the_pinned_digest`)
 
-- `acp.json` equals the file of the test process for the same lane, except the values that derive from the key.
+- `acp.json` equals the golden `testdata/lane-context/ui-acp-json.dump`, except the values that derive from the key.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values`)
 
 - Only the account can enter `config/air-ui-test` and read its files. Each launcher is executable.
@@ -1774,7 +1774,9 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 
 - A run of the lane daemon takes the recorded sessions that `AIR_UI_REAL_SESSION_LOGS` names on the host. Each entry is
   an `events.jsonl` or a thread directory that holds one, and the path separator divides the entries. The label of a
-  log follows the rule of the JVM host. A variable that names no events file, or two logs of one label, is refused.
+  log is the name of its thread directory, or its file name without the extension. A label keeps the ASCII letters,
+  the digits, `.`, `_` and `-` of the URL-decoded name, and every other character becomes `_`. A variable that names
+  no events file, or two logs of one label, is refused.
   [@test] ../crates/avl-wire/src/session_log/tests.rs (`the_variable_names_files_and_thread_directories`)
   [@test] ../crates/avl-wire/src/session_log/tests.rs (`a_label_is_the_thread_directory_or_the_file_name_url_decoded_and_safe`)
   [@test] ../crates/avl-vm/src/daemon/session_logs/tests.rs (`no_variable_packs_nothing_and_a_wrong_entry_is_refused`)
@@ -1866,7 +1868,7 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 - Every IDE that the daemon launches opens no README at the start, so the editor area starts empty and the empty-state
   composer shows. No lane tests the opening of a README. The option files of every context hold
   `config/options/advancedSettings.xml` with `ide.open.readme.md.on.startup` set to false, the bytes of the start-up
-  bench. The JVM runner writes the same file from its own copy of the option templates.
+  bench.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_lane_context_opens_no_readme`)
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_have_the_pinned_digest`)

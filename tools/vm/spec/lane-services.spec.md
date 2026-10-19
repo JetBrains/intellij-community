@@ -29,7 +29,6 @@ has a control route. An in-IDE scenario body uses that route to arm a fault or t
 
 ## Goals
 
-- The IDE gets the same answers from a lane service as from the earlier lane services of the test process.
 - A scenario body steers each service and reads its record through one protocol.
 
 ## Non-goals
@@ -104,7 +103,7 @@ lane secret with the purpose `air-lane-services`, and the IDE reads it from `lan
   [@test] ../crates/avl-guest/src/lane/services/codex/tests.rs
 
 - The IDE reads the token and the base URL of each service from `lane-services.json`. The reader refuses a file
-  with an unknown key, another schema version or an empty token. The writer of the test process writes the bytes of
+  with an unknown key, another schema version or an empty token. The writer of the bridge writes the same bytes as
   the lane daemon.
   [@test] ../../../../plugins/air/tests/integration/contract/test/driver/AirLaneServicesClientTest.kt
 
@@ -138,17 +137,17 @@ The platforms are `darwin-aarch64`, `darwin-x86_64`, `linux-aarch64`, `linux-x86
 - An archive holds the agent jar as `lib/acp-scenario-agent.jar`. A POSIX archive also holds `bin/acp-scenario-agent`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
-- The POSIX launcher starts the staged JBR `java` by its absolute path with `exec`.
+- The POSIX launcher starts the `java` of the distribution's JBR by its absolute path with `exec`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
-- A Windows manifest runs `java.exe` beside the staged `java`, with the arguments `-jar ./lib/acp-scenario-agent.jar`.
+- A Windows manifest runs `java.exe` beside that `java`, with the arguments `-jar ./lib/acp-scenario-agent.jar`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
 - Every entry is stored without compression at the time 0, with no file attributes.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
-- The archive bytes are the bytes that the packer of the test process writes for the same jar and the same `java`.
-  [@test] ../crates/avl-guest/src/lane/package/tests.rs
+- The archive bytes are the bytes that `AcpFakeAgentPackage` writes for the same jar and the same `java`.
+  [@test] ../crates/avl-guest/src/lane/package/tests.rs (`the_archives_are_the_bytes_of_the_java_packer`)
 
 - A relative `java` path or an unreadable jar is refused with the code `lane_package_input`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
@@ -437,8 +436,8 @@ Spawner ends with a close code: 1000, 1001, 1002 or 1011.
 
 ## Testing / Local Run
 
-Rewrite a golden with `UPDATE_EXPECT=1 cargo test -p avl-guest` in `community/tools/vm`. Two contract tests of the
-test process read the golden of the control exchanges. Run them after a rewrite.
+Rewrite a golden with `UPDATE_EXPECT=1 cargo test -p avl-guest` in `community/tools/vm`. The tests of
+`AirLaneServicesClientTest` read the golden of the control exchanges. Run them after a rewrite.
 
 ## Open Questions / Risks
 
