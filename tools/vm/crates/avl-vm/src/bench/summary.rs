@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
 use super::profile::{EdtProfile, ExcludedSamples, FrameSamples, ProfileEvent};
-use super::record::{RunKind, RunRecord};
+use super::record::{ClassMaps, RunKind, RunRecord};
 use super::session::{GitInfo, MeasureModel, SessionInfo};
 use super::trace::tenth;
 
@@ -152,13 +152,11 @@ impl Summary {
                 .iter()
                 .filter(|record| record.arm == *arm && record.kind == RunKind::Measured)
                 .map(|record| RunRecord {
-                    classes_by_plugin: BTreeMap::new(),
-                    classes_by_module: BTreeMap::new(),
-                    classes_by_plugin_at: BTreeMap::new(),
+                    class_maps: ClassMaps::default(),
                     ..record.clone()
                 })
                 .collect();
-            arms.insert(arm.key().to_owned(), arm_summary(*arm, runs));
+            arms.insert(arm.key(), arm_summary(arm.clone(), runs));
         }
         let (delta, delta_note) = delta(&arms);
         Self {
@@ -186,7 +184,11 @@ impl Summary {
 
     /// The arms that have no valid run.
     pub(crate) fn arms_without_valid_run(&self) -> Vec<Arm> {
-        self.arms.values().filter(|arm| arm.valid_runs == 0).map(|arm| arm.arm).collect()
+        self.arms
+            .values()
+            .filter(|arm| arm.valid_runs == 0)
+            .map(|arm| arm.arm.clone())
+            .collect()
     }
 }
 
@@ -222,7 +224,7 @@ fn arm_summary(arm: Arm, runs: Vec<RunRecord>) -> ArmSummary {
 
 /// The delta of the medians, non-modal minus modal, or the reason that there is none.
 fn delta(arms: &BTreeMap<String, ArmSummary>) -> (BTreeMap<String, f64>, Option<String>) {
-    let (Some(modal), Some(non_modal)) = (arms.get(Arm::Modal.key()), arms.get(Arm::NonModal.key())) else {
+    let (Some(modal), Some(non_modal)) = (arms.get(&Arm::MODAL.key()), arms.get(&Arm::NON_MODAL.key())) else {
         return (BTreeMap::new(), None);
     };
     if modal.valid_runs < MIN_RUNS_FOR_DELTA || non_modal.valid_runs < MIN_RUNS_FOR_DELTA {

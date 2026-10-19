@@ -1,5 +1,5 @@
 //! The verbs: a `welcome`, an `open-project` or a `project` session from the build to the summary, `replay`, `gc`,
-//! `trace`, `activities`, `classes`, `compare` and `ls`.
+//! `trace`, `activities`, `classes`, `triggers`, `compare` and `ls`.
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
@@ -15,7 +15,7 @@ use jiff::tz::TimeZone;
 use serde_json::json;
 
 use super::activities;
-use super::arm::Arm;
+use super::arm::{Arm, ArmKind};
 use super::binary::{self, BinaryAge};
 use super::classes;
 use super::compare::{self, Compared};
@@ -36,6 +36,7 @@ use super::session::{
 use super::spans;
 use super::stage::{self, Generation};
 use super::summary::Summary;
+use super::triggers;
 use crate::lane::Bazel;
 
 /// The directories below a run sandbox that a copy must not carry: the FUS logs of the run that wrote the source.
@@ -63,6 +64,8 @@ struct Plan {
     profile: bool,
     profile_event: ProfileEvent,
     project: Option<PlannedProject>,
+    /// The plugin that the twin arms suppress.
+    suppressed_plugin: Option<String>,
 }
 
 /// The project of a session.
@@ -100,12 +103,13 @@ impl Bench<'_> {
             BenchVerb::Welcome(args) => {
                 let plan = Plan {
                     command: "welcome",
-                    arms: args.arm.arms(),
+                    arms: args.arms(),
                     runs: args.runs,
                     cold: args.cold,
                     profile: args.profile,
                     profile_event: args.profile_event,
                     project: None,
+                    suppressed_plugin: args.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -116,12 +120,13 @@ impl Bench<'_> {
                 }
                 let plan = Plan {
                     command: "open-project",
-                    arms: vec![Arm::OpenProject],
+                    arms: vec![Arm::OPEN_PROJECT],
                     runs: args.runs,
                     cold: false,
                     profile: false,
                     profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Open(project)),
+                    suppressed_plugin: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -134,6 +139,7 @@ impl Bench<'_> {
                     profile: false,
                     profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
+                    suppressed_plugin: args.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -148,6 +154,10 @@ impl Bench<'_> {
             }
             BenchVerb::Classes(args) => {
                 let report = classes::report(&self.locate(&args.session)?, &args)?;
+                Outcome::new(&report, report.text())
+            }
+            BenchVerb::Triggers(args) => {
+                let report = triggers::report(&self.locate(&args.selection.session)?, &args)?;
                 Outcome::new(&report, report.text())
             }
             BenchVerb::Compare(args) => {
@@ -324,10 +334,11 @@ impl Bench<'_> {
             },
             project_file: project
                 .as_ref()
-                .filter(|_| plan.arms.contains(&Arm::Project))
+                .filter(|_| plan.arms.iter().any(|arm| arm.kind == ArmKind::Project))
                 .map(|project| project.file.display().to_string()),
             additional_modules: generation.config.additional_modules.clone(),
             max_load,
+            suppressed_plugin: plan.suppressed_plugin.clone(),
             warnings,
         };
         files::write_json(&session.join(SESSION_FILE), &info).map_err(|error| session_failed(format!("{error:#}")))?;
@@ -344,7 +355,7 @@ impl Bench<'_> {
         if !plan.cold {
             for arm in &plan.arms {
                 let id = RunId {
-                    arm: *arm,
+                    arm: arm.clone(),
                     kind: RunKind::Prime,
                     index: 0,
                 };
@@ -354,7 +365,7 @@ impl Bench<'_> {
         for index in 1..=plan.runs {
             for arm in &plan.arms {
                 let id = RunId {
-                    arm: *arm,
+                    arm: arm.clone(),
                     kind: RunKind::Measured,
                     index,
                 };
@@ -362,7 +373,7 @@ impl Bench<'_> {
                     template.clone()
                 } else {
                     let prime = RunId {
-                        arm: *arm,
+                        arm: arm.clone(),
                         kind: RunKind::Prime,
                         index: 0,
                     };
@@ -383,7 +394,7 @@ impl Bench<'_> {
         // than the session is not appended.
         let digest = stage::read_digest(&running.generation.root)?;
         session::check_digest(running.info, Some(&digest)).map_err(|reason| digest_mismatch(&reason))?;
-        let sandbox = session::live_sandbox(session, id.arm);
+        let sandbox = session::live_sandbox(session, &id.arm);
         if sandbox.root.exists() {
             std::fs::remove_dir_all(&sandbox.root)
                 .map_err(|error| session_failed(format!("cannot remove {}: {error}", sandbox.root.display())))?;
@@ -393,7 +404,7 @@ impl Bench<'_> {
             let _ = std::fs::remove_dir_all(sandbox.root.join(stale));
         }
         session::own_welcome_project(&sandbox).map_err(failed)?;
-        if id.arm == Arm::EmptyEditor {
+        if id.arm.kind == ArmKind::EmptyEditor {
             session::open_no_readme(&sandbox).map_err(failed)?;
         }
         let name = match id.kind {
@@ -412,7 +423,7 @@ impl Bench<'_> {
             .unwrap_or_default();
         self.reporter.note(format!("{name}: starting{load_text}"), None);
         let plan = RunPlan {
-            arm: id.arm,
+            arm: id.arm.clone(),
             kind: id.kind,
             project: running.project.map(|project| project.paths(&sandbox)),
             open_project: match &running.plan.project {
@@ -489,7 +500,7 @@ impl Bench<'_> {
     /// the reasons in prose too.
     fn answer(&self, summary: &Summary) -> Result<Outcome, Refusal> {
         let text = digest::render(summary);
-        let failed: Vec<&str> = summary.arms_without_valid_run().iter().map(|arm| arm.label()).collect();
+        let failed: Vec<String> = summary.arms_without_valid_run().iter().map(Arm::label).collect();
         if failed.is_empty() {
             return Outcome::new(summary, text);
         }

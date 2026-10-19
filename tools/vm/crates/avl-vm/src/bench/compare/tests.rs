@@ -20,12 +20,12 @@ const DIST_B: &str = "0b0b0b0b0b0b4c3e8d6f1a0b9c8e7d6f5a4b3c2d1e0f9a8b7c6d5e4f3a
 
 /// A replayed copy of the fixture session at `<root>/<name>`. Its `summary.json` holds five valid runs per arm: the
 /// run of the fixture times each factor of [`SPREADS`], times `factor` of the arm. `edit` changes the session inputs.
-fn session(root: &Path, name: &str, edit: impl FnOnce(&mut SessionInfo), factor: impl Fn(Arm) -> f64) -> Compared {
+fn session(root: &Path, name: &str, edit: impl FnOnce(&mut SessionInfo), factor: impl Fn(&Arm) -> f64) -> Compared {
     session_with(root, name, edit, &SPREADS, factor)
 }
 
 /// A session as [`session`] gives it, with the factors `spreads` in place of [`SPREADS`].
-fn session_with(root: &Path, name: &str, edit: impl FnOnce(&mut SessionInfo), spreads: &[f64], factor: impl Fn(Arm) -> f64) -> Compared {
+fn session_with(root: &Path, name: &str, edit: impl FnOnce(&mut SessionInfo), spreads: &[f64], factor: impl Fn(&Arm) -> f64) -> Compared {
     let dir = root.join(name);
     avl_testkit::traces::copy_tree(&testdata_dir().join("session"), &dir);
     let (reporter, _, _) = Reporter::in_memory("vm");
@@ -38,7 +38,7 @@ fn session_with(root: &Path, name: &str, edit: impl FnOnce(&mut SessionInfo), sp
             let mut run = arm.runs[0].clone();
             run.index = index;
             for value in run.metrics.values_mut() {
-                *value = (*value * spread * factor(run.arm) * 10.0).round() / 10.0;
+                *value = (*value * spread * factor(&run.arm) * 10.0).round() / 10.0;
             }
             records.push(run);
         }
@@ -63,7 +63,7 @@ fn other_dist(info: &mut SessionInfo) {
 /// A session B of another distribution and commit, whose arms are `modal` and `non_modal` times the medians of A.
 fn session_b(root: &Path, modal: f64, non_modal: f64) -> Compared {
     session(root, "develar-bench-bbbb2222", other_dist, |arm| {
-        if arm == Arm::Modal { modal } else { non_modal }
+        if *arm == Arm::MODAL { modal } else { non_modal }
     })
 }
 
@@ -85,7 +85,7 @@ fn a_session_of_another_measurement_model_than_a_gets_a_note() {
     assert_eq!(
         comparison.model_notes,
         [
-            "B has another measurement model than A: A none (a session from before the model), B integration-test v1; a delta B-A \
+            "B has another measurement model than A: A none (a session from before the model), B integration-test v2; a delta B-A \
              mixes the change with the model, so measure both sessions with one model"
         ]
     );
@@ -97,7 +97,7 @@ fn a_session_of_another_measurement_model_than_a_gets_a_note() {
     assert_eq!(json["sessions"][0]["measureModel"], serde_json::Value::Null);
     assert_eq!(
         json["sessions"][1]["measureModel"],
-        serde_json::json!({"name": "integration-test", "version": 1})
+        serde_json::json!({"name": "integration-test", "version": 2})
     );
     assert_eq!(json["modelNotes"][0], comparison.model_notes[0]);
 
@@ -151,8 +151,8 @@ fn the_comparison_of_two_sessions_matches_the_golden() {
     let check = &comparison.noise_arm[0];
     assert!(check.comparable, "{}", check.note);
     assert_eq!(
-        (check.arm, check.moved_ms, check.noise_ms),
-        (Some(Arm::Modal), Some(4.7), Some(34.7))
+        (check.arm.clone(), check.moved_ms, check.noise_ms),
+        (Some(Arm::MODAL), Some(4.7), Some(34.7))
     );
     let welcome = &comparison.arms[1].groups[0].1[0];
     assert_eq!(welcome.0, "welcomeBecameVisible");
@@ -200,13 +200,13 @@ fn a_session_below_three_valid_runs_or_without_the_modal_arm_has_no_delta_and_sa
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&few, &reporter).expect("a summary");
     let mut no_modal = session_b(root.path(), 1.0, 1.0);
-    no_modal.summary.arms.remove(Arm::Modal.key());
+    no_modal.summary.arms.remove(&Arm::MODAL.key());
     let sessions = [session_a(root.path()), Compared::read(few).expect("a summary"), no_modal];
     let comparison = report(&sessions, false).expect("a comparison");
     let checks: Vec<(Option<Arm>, bool, &str)> = comparison
         .noise_arm
         .iter()
-        .map(|check| (check.arm, check.comparable, check.note.as_str()))
+        .map(|check| (check.arm.clone(), check.comparable, check.note.as_str()))
         .collect();
     assert_eq!(
         checks,
@@ -218,7 +218,7 @@ fn a_session_below_three_valid_runs_or_without_the_modal_arm_has_no_delta_and_sa
                  in both sessions, so the noise is unknown (A: modal 5, non-modal 5; B: modal 1, non-modal 1)"
             ),
             (
-                Some(Arm::NonModal),
+                Some(Arm::NON_MODAL),
                 true,
                 "the non-modal arm agrees within the noise: A 2718 ms, C 2718 ms (noise 40 ms)"
             ),
@@ -245,14 +245,14 @@ fn sessions_without_the_modal_arm_take_the_noise_from_the_first_arm_that_both_ha
     let root = tempfile::tempdir().expect("a temporary root");
     let mut sessions = [session_a(root.path()), session_b(root.path(), 1.0, 1.002)];
     for compared in &mut sessions {
-        compared.summary.arms.remove(Arm::Modal.key());
+        compared.summary.arms.remove(&Arm::MODAL.key());
     }
     let comparison = report(&sessions, false).expect("a comparison");
     let check = &comparison.noise_arm[0];
     assert_eq!(
-        (check.arm, check.comparable, check.note.as_str()),
+        (check.arm.clone(), check.comparable, check.note.as_str()),
         (
-            Some(Arm::NonModal),
+            Some(Arm::NON_MODAL),
             true,
             "the non-modal arm agrees within the noise: A 2718 ms, B 2723 ms (noise 40 ms)"
         )
@@ -272,13 +272,13 @@ fn sessions_without_the_modal_arm_take_the_noise_from_the_first_arm_that_both_ha
 fn sessions_without_a_shared_arm_do_not_compare_and_name_their_arms() {
     let root = tempfile::tempdir().expect("a temporary root");
     let mut a = session_a(root.path());
-    a.summary.arms.remove(Arm::NonModal.key());
+    a.summary.arms.remove(&Arm::NON_MODAL.key());
     let mut b = session_b(root.path(), 1.0, 1.0);
-    b.summary.arms.remove(Arm::Modal.key());
+    b.summary.arms.remove(&Arm::MODAL.key());
     let comparison = report(&[a, b], false).expect("a comparison");
     let check = &comparison.noise_arm[0];
     assert_eq!(
-        (check.arm, check.comparable, check.moved_ms, check.note.as_str()),
+        (check.arm.clone(), check.comparable, check.moved_ms, check.note.as_str()),
         (
             None,
             false,
@@ -349,7 +349,7 @@ fn two_sessions_of_one_distribution_are_refused_only_when_a_change_is_expected()
 fn a_session_of_the_distribution_of_a_is_an_a_a_run() {
     let root = tempfile::tempdir().expect("a temporary root");
     let same_dist =
-        |root: &Path, name: &str, modal: f64| session(root, name, |_| {}, move |arm| if arm == Arm::Modal { modal } else { 1.0 });
+        |root: &Path, name: &str, modal: f64| session(root, name, |_| {}, move |arm| if *arm == Arm::MODAL { modal } else { 1.0 });
     let sessions = [
         session_a(root.path()),
         same_dist(root.path(), "develar-bench-bbbb2222", 1.002),

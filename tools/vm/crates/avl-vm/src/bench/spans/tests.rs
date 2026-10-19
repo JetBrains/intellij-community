@@ -84,7 +84,7 @@ fn the_helper_twins_stay_with_all_and_the_window_and_the_minimum_narrow_the_span
 #[test]
 fn a_run_without_the_frame_has_the_window_from_the_process_start_to_the_main_anchor_of_its_arm() {
     let (_dir, session) = replayed();
-    let modal = report(&session, &of_arm(Arm::Modal)).expect("a report");
+    let modal = report(&session, &of_arm(Arm::MODAL)).expect("a report");
     assert_eq!(
         (modal.run.as_str(), modal.median_by),
         ("modal-run-01", Some("welcomeBecameVisible"))
@@ -129,14 +129,14 @@ fn a_missing_end_widens_the_window_to_the_end_of_the_run() {
 #[test]
 fn an_arm_that_the_session_lacks_or_a_run_of_another_arm_is_refused() {
     let (_dir, session) = replayed();
-    let refusal = report(&session, &of_arm(Arm::Project)).expect_err("no project arm");
+    let refusal = report(&session, &of_arm(Arm::PROJECT)).expect_err("no project arm");
     assert!(
         refusal.message.ends_with("has no project arm; its arms are modal, non-modal"),
         "{}",
         refusal.message
     );
     let mut both = args(Some("non-modal-run-01"), None, None, 10.0, false);
-    both.selection.arm = Some(Arm::Modal);
+    both.selection.arm = Some(Arm::MODAL);
     let refusal = report(&session, &both).expect_err("a run of another arm");
     assert_eq!(
         refusal.message,

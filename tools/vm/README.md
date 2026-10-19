@@ -173,6 +173,32 @@ is a metric of the first group. A modal run opens no project, so the IDE writes 
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
 
+`--suppress-plugin <id>` of `welcome` and `project` adds a twin after each arm, such as `project-without-<id>`. A
+run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. The twin has its own
+prime run and sandbox, and its runs interleave with the runs of its arm. Every verb that reads a session takes the
+twin as an arm, and the noise check of `compare` uses the plain arms only.
+
+A module is the main module or a content module of a plugin, and each module has its own class loader. The debug log
+`plugin-classes.txt` names the module and the `findClass` nanos of each class. With the first class of a module, it
+writes the stack that loaded the class. The spec [Plugin Class Log](../../platform/core-impl/spec/plugin-class-log.spec.md)
+is the contract of its format. Its trailer `#cost` states the time that the IDE spent on the writes and on the stacks.
+The run has these two times as the metrics `pluginLog.writeMs` and `pluginLog.stackMs`. A log without the trailer,
+such as the log of a killed IDE, has neither metric. The reader also takes the legacy shape without a header.
+
+The thread of a class comes from the JVM. `class-load.log` names the tid of each class and the start of each thread.
+The JVM names a Java thread only when the thread ends, so each run writes the thread dump `threads.txt` with `jcmd`
+after its gate. The dump runs before the stop of the profile, and both take their time from the hold. It names the tid
+of the EDT, the thread `AWT-EventQueue-0`. A failed or late dump is a note of the run. A run without the dump has no
+thread, so its EDT and BG times print `-`. With the dump, `classes.edt@<anchor>` counts the named classes that the EDT
+loaded before the anchor.
+
+The trigger frame of a module is the frame nearest to the top of its stack whose class has another owner. The search
+skips the frames of the runtime, the language libraries, the service container, the extension points and the message
+bus. A class without an owner in the log is a platform class. A log from a distribution before this shape has no time
+and no stack, so the tables print `-` and say so. The decision record
+[The bench names the trigger of each plugin loader](docs/decisions/2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader.md)
+states the rule.
+
 `--profile` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
 run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
 `cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
@@ -192,7 +218,8 @@ that the JVM loads, and the digest notes how many samples it left out.
 | `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
-| `classes <session>` | Which classes did the JVM load before an anchor, and which plugin owns them? | The class totals of one arm, and one table by plugin and one by module. |
+| `classes <session>` | Which classes did the JVM load before an anchor, and which plugin and module own them? | The class totals of one arm, one table by plugin with its modules and its EDT and BG ms, and one table by module. `--plugin` adds the rank of a plugin. |
+| `triggers <session>` | Which code pulled each module of a plugin? | One row per trigger frame of one run, with its modules, their classes, their EDT ms and the first load, then the modules of each trigger. |
 | `compare <session> <session>...` | Did the change move the medians by more than the noise of the host? | The medians per arm with the delta to A, and one noise check per session. |
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
 | `gc` | Which generations can go? | One line per removed generation, with its size. |
@@ -223,9 +250,9 @@ A session directory holds:
 | file | what it holds |
 | --- | --- |
 | `events.ndjson` | the run journal |
-| `session.json` | the inputs, with the generation, its digest and the measurement model `measureModel`, which `compare` notes when two sessions differ in it |
+| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` of the twin arms |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
-| `<arm>-prime/`, `<arm>-run-NN/` | one run: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `fus.jsonl`, `result.json`, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
+| `<arm>-prime/`, `<arm>-run-NN/` | one run, by the label of its arm, such as `project-without-<id>-run-01` for a twin: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `threads.txt`, `plugin-classes.txt`, `fus.jsonl`, `result.json` with the class maps by plugin and by module and the activation of each module, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |
 | `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 

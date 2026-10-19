@@ -22,11 +22,11 @@ use avl_base::{Exit, Refusal};
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
-use super::arm::{Arm, Gate};
+use super::arm::{Arm, ArmKind, Gate};
 use super::files;
 use super::fus;
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
-use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind};
+use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind, THREAD_DUMP_FILE};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
 use super::stats;
@@ -93,6 +93,10 @@ pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welc
 /// dialog stops a run.
 pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
+/// The property of a twin arm, see [`Arm::suppressed`]. The IDE reads it as a list of plugin ids at the start and loads
+/// none of them.
+pub(crate) const SUPPRESSED_PLUGINS_PROPERTY: &str = "idea.suppressed.plugins.id";
+
 /// The file of the opened packages in a generation, a copy of
 /// `community/platform/platform-impl/resources/META-INF/OpenedPackages.txt`.
 pub(crate) const OPENED_PACKAGES_FILE: &str = "OpenedPackages.txt";
@@ -117,9 +121,9 @@ pub(crate) fn sandbox_options(sandbox: &Sandbox) -> Vec<String> {
 /// stays rare.
 pub(crate) const ASYNC_LOG_OPTIONS: [&str; 2] = ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"];
 
-/// The option that makes the JVM write [`CLASS_LOAD_LOG`] with the uptime of each class. The `-Xlog` grammar ends the
-/// file name at a `:`, so a run directory with a `:` in its path is an error that names it. A space is no problem,
-/// because the argfile quotes it.
+/// The option that makes the JVM write [`CLASS_LOAD_LOG`] with the uptime and the thread of each class, and the start
+/// of each thread. The `-Xlog` grammar ends the file name at a `:`, so a run directory with a `:` in its path is an
+/// error that names it. A space is no problem, because the argfile quotes it.
 pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
     let log = run_dir.join(CLASS_LOAD_LOG);
     let path = log.display().to_string();
@@ -129,14 +133,14 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
             run_dir.display()
         ));
     }
-    Ok(format!("-Xlog:class+load:file={path}:uptime,tags"))
+    Ok(format!("-Xlog:class+load,os+thread:file={path}:uptime,tid,tags"))
 }
 
 /// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
-/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm and the profiler. A run directory that the
-/// class-load log cannot name is an error, see [`class_load_option`]. The profiler starts with the JVM and writes
-/// [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
-pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the suppressed plugin of a twin and the
+/// profiler. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
+/// starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
+pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
     options.extend([
         property("idea.log.path", &run_dir.join("log")),
@@ -148,10 +152,13 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
     options.extend(ASYNC_LOG_OPTIONS.map(str::to_owned));
     options.push(class_load_option(run_dir)?);
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
-    match arm {
-        Arm::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
-        Arm::Project | Arm::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
-        Arm::NonModal | Arm::OpenProject => {}
+    match arm.kind {
+        ArmKind::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
+        ArmKind::Project | ArmKind::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
+        ArmKind::NonModal | ArmKind::OpenProject => {}
+    }
+    if let Some(plugin) = &arm.suppressed {
+        options.push(format!("-D{SUPPRESSED_PLUGINS_PROPERTY}={plugin}"));
     }
     if let Some(profiler) = profiler {
         options.push(DYNAMIC_AGENT_OPTION.to_owned());
@@ -179,6 +186,11 @@ pub(crate) fn profile_stop_argv(jcmd: &Path, pid: u32, library: &Path, file: &Pa
     ]
 }
 
+/// The argv that writes the thread dump of the IDE `pid`: `jcmd <pid> Thread.print`.
+pub(crate) fn thread_dump_argv(jcmd: &Path, pid: u32) -> Vec<String> {
+    vec![jcmd.display().to_string(), pid.to_string(), "Thread.print".to_owned()]
+}
+
 /// The PID of the IDE: the line `PID: <pid>` that `logEssentialInfoAboutIde` writes into `idea.log` at the start. A
 /// log without the line has none.
 pub(crate) fn idea_log_pid(log: &str) -> Option<u32> {
@@ -202,8 +214,10 @@ impl RunPlan<'_> {
     /// the IDE saves the editor state. A measured run passes the project only, and the IDE restores the editor. Each
     /// run of the `empty-editor` arm passes the project only, so the IDE saves and restores no editor.
     pub(crate) fn program_arguments(&self) -> Vec<String> {
-        match (&self.project, self.arm, self.kind) {
-            (Some(project), Arm::Project, RunKind::Prime) => vec![project.dir.display().to_string(), project.file.display().to_string()],
+        match (&self.project, self.arm.kind, self.kind) {
+            (Some(project), ArmKind::Project, RunKind::Prime) => {
+                vec![project.dir.display().to_string(), project.file.display().to_string()]
+            }
             (Some(project), _, _) => vec![project.dir.display().to_string()],
             (None, _, _) => Vec::new(),
         }
@@ -529,7 +543,7 @@ impl Launcher {
     /// Runs the IDE once in `run_dir` and answers what the controller saw. The run waits for the gate of its arm.
     pub(crate) async fn run(&self, ctx: &Ctx, run_dir: &Path, sandbox: &Sandbox, plan: &RunPlan<'_>) -> LaunchFacts {
         let mut facts = LaunchFacts::default();
-        let options = match measure_options(run_dir, sandbox, plan.arm, self.profiler.as_ref()) {
+        let options = match measure_options(run_dir, sandbox, &plan.arm, self.profiler.as_ref()) {
             Ok(options) => options,
             Err(failure) => {
                 facts.failure = Some(failure);
@@ -556,6 +570,9 @@ impl Launcher {
             Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+        if exited.is_none() && facts.failure.is_none() {
+            facts.thread_dump_failure = self.dump_threads(ctx, run_dir).await.err();
+        }
         if exited.is_none()
             && facts.failure.is_none()
             && let Some(profiler) = &self.profiler
@@ -615,6 +632,37 @@ impl Launcher {
             "jcmd wrote no {GATE_PROFILE} ({}); see {PROFILE_STOP_LOG}",
             describe(&result)
         ))
+    }
+
+    /// Writes [`THREAD_DUMP_FILE`] with `jcmd <pid> Thread.print` after the gate. The dump names the Java threads by
+    /// the tid of the class-load log, the EDT among them, which the log names only when a thread ends. It runs before
+    /// the stop of the profile, and both take their time from the hold. The timeout of the profile stop bounds it.
+    /// Answers why it could not: no `jcmd`, no PID, or a `jcmd` that failed or timed out. The record makes that a note
+    /// of the run, and the classes of the run then have no thread.
+    async fn dump_threads(&self, ctx: &Ctx, run_dir: &Path) -> Result<(), String> {
+        let jcmd = self.java.with_file_name(if cfg!(windows) { "jcmd.exe" } else { "jcmd" });
+        if !jcmd.is_file() {
+            return Err("the JBR of the generation has no bin/jcmd".to_owned());
+        }
+        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+            .ok()
+            .flatten()
+            .unwrap_or_default();
+        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
+        let file = run_dir.join(THREAD_DUMP_FILE);
+        let result = self
+            .runner
+            .checked_to_file(
+                ctx,
+                &thread_dump_argv(&jcmd, pid),
+                &file,
+                &self.logged(PROFILE_STOP_TIMEOUT, "bench_thread_dump_timeout"),
+            )
+            .await;
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(format!("jcmd Thread.print failed ({}); see {THREAD_DUMP_FILE}", describe(&result))),
+        }
     }
 
     /// Asks the running IDE to open `project`, and polls the trace for the highlighted editor.
