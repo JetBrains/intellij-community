@@ -36,8 +36,8 @@ use crate::selector::Resolution;
 ///   per story flow.
 /// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
 ///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
-///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness directory that no
-///   module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
+///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or directory
+///   that no module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {

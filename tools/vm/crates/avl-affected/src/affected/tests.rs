@@ -488,17 +488,14 @@ fn a_deleted_suite_document_is_unreadable() {
     assert_eq!(reasons_of(&affected), reason::PATH_UNREADABLE);
 }
 
-/// The base catalog plus the layout of the lane harness: the root integration module with a lane rule under it, the
-/// bridge with the state reset and an authored body, a headless module beside them, and this controller and BT outside
-/// the area.
+/// The base catalog plus the layout of the lane harness: a lane rule, a lane folder and a note with no module above
+/// them, the bridge with the state reset and an authored body, a headless module beside them, and this controller and
+/// BT outside the area.
 fn harness_tree() -> Tree {
     let mut tree = reach_tree();
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/intellij.air.integrationTests.iml",
-        "<module />",
-    );
     put(&mut tree, LANE_RULE, "def ui_lane_ide():\n    pass\n");
+    put(&mut tree, LANE_FOLDER_FILE, "air_lane_test(name = \"ui-live_lane_test\")\n");
+    put(&mut tree, UNLISTED_NOTE, "The table names no path of this note.\n");
     // The controller spells real flow ids in its tests. They must not answer.
     put(&mut tree, CONTROLLER_SOURCE, "//! the join of @flow flow-new-session-terminal\n");
     put(&mut tree, BT_SOURCE, "//! the lane table\n");
@@ -524,6 +521,9 @@ fn harness_tree() -> Tree {
 }
 
 const LANE_RULE: &str = "plugins/air/tests/integration/ui_lane_ide.bzl";
+const LANE_FOLDER: &str = "plugins/air/tests/integration/ui-live";
+const LANE_FOLDER_FILE: &str = "plugins/air/tests/integration/ui-live/BUILD.bazel";
+const UNLISTED_NOTE: &str = "plugins/air/tests/integration/NOTES.md";
 const CONTROLLER_SOURCE: &str = "community/tools/vm/crates/avl-affected/src/affected.rs";
 const BT_SOURCE: &str = "community/tools/bt/crates/bt-core/src/lanes.rs";
 const HARNESS_SOURCE: &str = "plugins/air/tests/integration/bridge/tests/AirInIdeStateReset.kt";
@@ -558,13 +558,37 @@ fn a_harness_path_reaches_no_suite_of_an_explicit_only_lane() {
     assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
 }
 
-/// A file without a module of its own belongs to the module above it. For a lane `.bzl` rule that is the root
-/// integration module, which serves every lane.
+/// A lane `.bzl` rule has no module above it. The lane table names the file as a lane-wide path, which serves every
+/// lane, and the entry names the file.
 #[test]
 fn a_lane_rule_is_the_harness_of_every_lane() {
     let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[LANE_RULE]);
     assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
     assert_eq!(affected.unmapped, []);
+    for suite in &affected.suites {
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}{LANE_RULE}")]);
+    }
+}
+
+/// A lane folder has no module either. The lane table names the folder, so a file in it is the harness of every lane,
+/// and the entry names the folder.
+#[test]
+fn a_file_of_a_lane_folder_is_the_harness_of_every_lane() {
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[LANE_FOLDER_FILE]);
+    assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
+    assert_eq!(affected.unmapped, []);
+    for suite in &affected.suites {
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}{LANE_FOLDER}")]);
+    }
+}
+
+/// The lane table names each harness path of the integration directory, not the directory. So a file there that the
+/// table does not name is not the harness.
+#[test]
+fn a_file_of_the_integration_directory_that_the_table_does_not_name_is_not_the_harness() {
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[UNLISTED_NOTE]);
+    assert_eq!(affected.suites, []);
+    assert_eq!(reasons_of(&affected), reason::NO_FLOW_TAG);
 }
 
 /// The controller has no module of the area. The lane table names its directory as a lane-wide path, which serves
@@ -587,8 +611,8 @@ fn a_tool_beside_the_controller_is_not_the_harness() {
     assert_eq!(reasons_of(&affected), reason::NO_FLOW_TAG);
 }
 
-/// The harness list matches a module by its exact name. The dotted-prefix rule would make the root integration
-/// module cover every headless module under it, and those run in no UI lane.
+/// The harness list matches a module by its exact name. The dotted-prefix rule would make the entry
+/// `intellij.air.integrationTests` cover every headless module, and those run in no UI lane.
 #[test]
 fn a_headless_module_under_the_harness_is_not_the_harness() {
     let affected = affected_of(

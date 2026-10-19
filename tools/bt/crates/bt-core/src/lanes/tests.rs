@@ -630,7 +630,7 @@ fn a_lane_wide_path_holds_its_directory_and_the_longer_directory_answers() {
 #[test]
 fn the_fixture_names_the_controller_workspace_as_a_lane_wide_path() {
     assert_eq!(
-        lanes().lane_wide_paths().collect::<Vec<_>>(),
-        [("community/tools/vm", &[] as &[String])]
+        lanes().lane_wide_path_lanes("community/tools/vm/crates/avl-affected/src/affected.rs"),
+        Some(("community/tools/vm", &[] as &[String]))
     );
 }

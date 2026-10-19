@@ -89,7 +89,22 @@
     "intellij.air.integrationTests.testSupport": []
   },
   "laneWidePaths": {
-    "community/tools/vm": []
+    "community/tools/vm": [],
+    "plugins/air/tests/integration/BUILD.bazel": [],
+    "plugins/air/tests/integration/air_lane_test.bzl": [],
+    "plugins/air/tests/integration/air_test_dependencies.bzl": [],
+    "plugins/air/tests/integration/air_ui_daemon_runtime.bzl": [],
+    "plugins/air/tests/integration/bridge_plugin_dir_test.bzl": [],
+    "plugins/air/tests/integration/gui-chat": [],
+    "plugins/air/tests/integration/ide": [],
+    "plugins/air/tests/integration/lanes.json": [],
+    "plugins/air/tests/integration/testData": [],
+    "plugins/air/tests/integration/ui": [],
+    "plugins/air/tests/integration/ui-live": [],
+    "plugins/air/tests/integration/ui-perf": [],
+    "plugins/air/tests/integration/ui-real": [],
+    "plugins/air/tests/integration/ui_lane_ide.bzl": [],
+    "plugins/air/tests/integration/vm-contract": []
   },
   "lanes": [
     {

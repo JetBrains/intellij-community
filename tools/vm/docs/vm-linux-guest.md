@@ -49,8 +49,8 @@ verifies it through EWMH `_NET_SUPPORTING_WM_CHECK`; `getRunningDisplays()` enum
 and `IdeFromCodeInstaller` — the dev-build path these lanes use — already selects the Linux command line
 when `SystemInfoRt.isLinux`.
 
-**The lanes do need a real display.** `AirIdeLaunch.kt` removes `java.awt.headless` on purpose, and JCEF
-needs a real X server. Xvfb satisfies both.
+**The lanes do need a real display.** The lane IDE runs headed on the display of the run, and JCEF needs a real X
+server. Xvfb satisfies both.
 
 **A Linux distribution cross-builds here, and does so today.**
 `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
