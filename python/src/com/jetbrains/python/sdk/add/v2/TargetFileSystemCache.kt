@@ -11,9 +11,16 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
+/**
+ * The [FileSystem] of each legacy target, cached for a short time because creating one probes the target.
+ *
+ * A module outside the Python plugin opts in to [PyInternalExecApi] to use it. The concrete file system stays internal,
+ * so a caller sees only the [FileSystem] interface.
+ */
 @Service(Service.Level.APP)
 @PyInternalExecApi
-internal class TargetFileSystemCache {
+@ApiStatus.Internal
+class TargetFileSystemCache {
 
   private data class CacheKey(private val targetId: String, private val runtimeProperties: PythonLanguageRuntimeConfiguration.State)
 
@@ -21,10 +28,14 @@ internal class TargetFileSystemCache {
     .expireAfterWrite(5.minutes.toJavaDuration())
     .build()
 
-  internal fun getOrCreate(
+  /**
+   * The file system on the target [targetConfig]. [runtimeConfiguration] holds the Python settings of the target, such
+   * as the interpreter path. A caller that reads none of them passes a new [PythonLanguageRuntimeConfiguration].
+   */
+  fun getOrCreate(
     targetConfig: TargetEnvironmentConfiguration,
     runtimeConfiguration: PythonLanguageRuntimeConfiguration,
-  ): TargetFileSystem = cache.get(CacheKey(targetConfig.uuid, runtimeConfiguration.state)) {
+  ): FileSystem<PathHolder.Target> = cache.get(CacheKey(targetConfig.uuid, runtimeConfiguration.state)) {
     TargetFileSystem(targetConfig, runtimeConfiguration)
   }
 }

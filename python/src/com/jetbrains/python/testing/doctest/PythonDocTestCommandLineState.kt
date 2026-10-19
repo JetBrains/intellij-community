@@ -15,6 +15,7 @@ import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.Tes
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FUNCTION
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_METHOD
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT
+import com.jetbrains.python.testing.PyTestSpecArg
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -48,26 +49,31 @@ class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: 
      * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
      */
     @ApiStatus.Internal
-    fun PythonDocTestRunConfiguration.buildTestSpec(): String =
+    fun PythonDocTestRunConfiguration.buildTestSpec(): String = buildTestSpecArg().asLocalString()
+
+    /**
+     * The same specification as [buildTestSpec], with the path still apart from the runner syntax.
+     *
+     * The doctest runner reads a test name after `::::` and a folder pattern after `/;`. Only this builder knows
+     * where the path ends, so a launcher that has to convert the path for another environment reads this.
+     * [PyTestSpecArg] says why.
+     */
+    @ApiStatus.Internal
+    fun PythonDocTestRunConfiguration.buildTestSpecArg(): PyTestSpecArg.WithPath =
       when (testType) {
-        TEST_SCRIPT -> scriptName
-        TEST_CLASS -> "$scriptName::$className"
-        TEST_METHOD -> "$scriptName::$className::$methodName"
-        TEST_FOLDER -> if (usePattern() && !pattern.isEmpty()) "$folderName/;$pattern" else "$folderName/"
-        TEST_FUNCTION -> "$scriptName::::$methodName"
+        TEST_SCRIPT -> PyTestSpecArg.WithPath(scriptName)
+        TEST_CLASS -> PyTestSpecArg.WithPath(scriptName, "::$className")
+        TEST_METHOD -> PyTestSpecArg.WithPath(scriptName, "::$className::$methodName")
+        TEST_FOLDER ->
+          if (usePattern() && !pattern.isEmpty()) PyTestSpecArg.WithPath(folderName, "/;$pattern")
+          else PyTestSpecArg.WithPath(folderName, "/")
+        TEST_FUNCTION -> PyTestSpecArg.WithPath(scriptName, "::::$methodName")
         else -> throw IllegalArgumentException("Unknown test type: $testType")
       }
 
-    private fun PythonDocTestRunConfiguration.buildTestSpec(request: TargetEnvironmentRequest): TargetEnvironmentFunction<String> =
-      when (testType) {
-        TEST_SCRIPT -> targetPath(Path.of(scriptName))
-        TEST_CLASS -> targetPath(Path.of(scriptName)) + "::$className"
-        TEST_METHOD -> targetPath(Path.of(scriptName)) + "::$className::$methodName"
-        TEST_FOLDER ->
-          if (usePattern() && !pattern.isEmpty()) targetPath(Path.of(folderName)) + "/;$pattern"
-          else targetPath(Path.of(folderName)) + "/"
-        TEST_FUNCTION -> targetPath(Path.of(scriptName)) + "::::$methodName"
-        else -> throw IllegalArgumentException("Unknown test type: $testType")
-      }
+    private fun PythonDocTestRunConfiguration.buildTestSpec(request: TargetEnvironmentRequest): TargetEnvironmentFunction<String> {
+      val spec = buildTestSpecArg()
+      return targetPath(Path.of(spec.path)) + spec.suffix
+    }
   }
 }
