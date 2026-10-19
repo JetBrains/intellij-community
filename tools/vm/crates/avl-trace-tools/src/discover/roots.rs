@@ -8,7 +8,7 @@ use avl_trace::vocabulary;
 vocabulary! {
     /// Why a root is looked in, for the listing and the startup lines.
     pub enum RootKind {
-        /// `<repo>/out/air-traces`, where a lane run from the IDE writes.
+        /// `<repo>/out/air-traces`. No lane writes there now. It holds the bundles of older JUnit runs from the IDE.
         AirTraces = "air-traces",
         /// The AIR lanes' `bazel-testlogs`, whose `test.outputs` hold a Bazel run's bundles: zipped into
         /// `outputs.zip`, or as directories while the test runs and under `--nozip_undeclared_test_outputs`.

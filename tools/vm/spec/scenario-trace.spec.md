@@ -417,10 +417,6 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   log adds the new file. A slice is capped at 32 MiB.
   [@test] ../crates/avl-record/src/idealog/tests.rs
 
-- Under the checkout's root the recorder keeps the newest 20 runs, the current run always among them. The
-  daemon's and Bazel's roots belong to owners who already clean them up.
-  [@test] ../crates/avl-record/src/retention.rs
-
 ### Packing and the VM pull
 
 - `air-trace pack SOURCE DEST` writes a deterministic zip of every bundle under a directory. Entries are in

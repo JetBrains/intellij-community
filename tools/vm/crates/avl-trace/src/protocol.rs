@@ -132,15 +132,12 @@ vocabulary! {
 }
 
 vocabulary! {
-    /// What started the lane JVM. It decides where the bundles go and who cleans them up.
+    /// What started the lane. It decides where the bundles go. The owner of that root cleans it up, not the recorder.
     pub enum Launcher {
-        /// The UI-test daemon, which roots each iteration at `<iterationDir>/air-traces`.
+        /// The lane daemon, which roots each iteration at `<iterationDir>/air-traces`.
         Daemon = "daemon",
         /// A Bazel test, which roots the bundles in `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`.
         Bazel = "bazel",
-        /// A JUnit run from the IDE, rooted at `<home>/out/air-traces` and pruned to
-        /// [crate::bundle::IDE_ROOT_RETAINED_RUNS].
-        Ide = "ide",
     }
 }
 
@@ -193,7 +190,7 @@ fn validate_bridge(bridge: Option<&Bridge>, op: Op) -> Result<(), Error> {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct HelloCommand {
     /// The directory bundles are written under. The lane decides it, not the recorder, because only the lane
-    /// knows which of the three roots applies; see [Launcher].
+    /// knows which root applies; see [Launcher].
     pub root: String,
     pub run_id: String,
     pub launcher: Launcher,

@@ -837,7 +837,6 @@ that could not be pulled leaves a green run green.
 | --- | --- | --- |
 | the daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
 | a Bazel test, host `bt.cmd` included | `air-traces/` inside the target's `bazel-testlogs/.../test.outputs/outputs.zip` | Bazel |
-| JUnit run from the IDE | `<checkout>/out/air-traces` | the recorder, which keeps the newest 20 runs |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
 `<scenario>.2`. The controller pulls each finished bundle after the test that finished it, so a failed
@@ -853,7 +852,7 @@ Before and After pictures of the step and the files that the lane attached to it
 code. A pulled zip holds the results of the bundles it holds. Open the results of a run with the Allure command line:
 
 ```bash
-allure serve out/air-traces/<runId>/allure-results
+allure serve <root>/<runId>/allure-results
 ```
 
 Unzip a Bazel `outputs.zip` or a pulled zip first, and pass the `allure-results` directory inside it. `allure serve`

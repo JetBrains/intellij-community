@@ -41,7 +41,6 @@ mod dumps;
 mod frames;
 mod idealog;
 mod ladder;
-mod retention;
 mod scenario;
 mod session;
 mod snap;

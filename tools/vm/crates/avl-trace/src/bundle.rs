@@ -75,13 +75,9 @@ pub fn attach_path(ordinal: u32, extension: &str) -> String {
 
 // --- where bundles live --------------------------------------------------------------------------------------
 
-/// The name of every root's last segment: the daemon's `<iterationDir>/air-traces`, Bazel's
-/// `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`, and the IDE's `<home>/out/air-traces`.
+/// The name of every root's last segment: the daemon's `<iterationDir>/air-traces` and Bazel's
+/// `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`.
 pub const ROOT_DIR_NAME: &str = "air-traces";
-
-/// How many runs the recorder keeps under the IDE's root, newest first. The other two roots belong to a daemon
-/// iteration and to a Bazel test, whose owners already clean them up.
-pub const IDE_ROOT_RETAINED_RUNS: usize = 20;
 
 /// The directory of one scenario's bundle under a root: `<root>/<runId>/<TestClass>/<scenario>`, each segment
 /// passed through [sanitize_name].
