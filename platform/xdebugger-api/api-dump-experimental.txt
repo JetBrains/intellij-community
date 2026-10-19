@@ -44,6 +44,52 @@ com.intellij.xdebugger.breakpoints.XBreakpointListener
 - java.util.EventListener
 - *:breakpointError(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.BreakpointErrorData):V
 - *:breakpointLogMessage(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,java.lang.String):V
+*e:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- java.lang.Enum
+- sf:ANY:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- *sf:Companion:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType$Companion
+- sf:READ:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- sf:WRITE:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- s:values():com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType[]
+*f:com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*e:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- java.lang.Enum
+- *sf:Companion:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode$Companion
+- sf:EQUAL_TO:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- sf:GREATER_THAN_OR_EQUAL_TO:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- sf:MULTIPLE_OF:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- s:values():com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode[]
+*f:com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*e:com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+- java.lang.Enum
+- *sf:Companion:com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime$Companion
+- sf:PERSISTENT:com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+- sf:STACK_FRAME:com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+- s:values():com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime[]
+*f:com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.xdebugger.breakpoints.XDataBreakpointProperties
+- a:getDataAccessType():com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+- a:getDataHitCountMode():com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+- a:getDataLifetime():com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+- a:getExpressionPresentation():java.lang.String
+- a:getHitCountEnabled():Z
+- a:getHitCountValue():I
+- a:getRegistrationError():java.lang.String
+- a:getSizeBytes():java.lang.Integer
+- a:setDataAccessType(com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType):V
+- a:setDataHitCountMode(com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode):V
+- a:setDataLifetime(com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime):V
+- a:setHitCountEnabled(Z):V
+- a:setHitCountValue(I):V
 *f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
 - f:getLogExpressionIfEnabled():com.intellij.xdebugger.XExpression
 - f:getSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
