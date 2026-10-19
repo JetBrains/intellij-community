@@ -155,8 +155,8 @@ public final class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside(), d.outside(), d.parents())));
 
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = new HashMap<>(inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly,
-                                                                                   elements, userData, foundDescriptorCallback));
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = new ConcurrentHashMap<>(inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly,
+                                                                                             elements, userData, foundDescriptorCallback));
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
