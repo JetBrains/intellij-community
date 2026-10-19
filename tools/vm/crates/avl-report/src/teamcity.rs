@@ -11,7 +11,6 @@
 //! the XML, when the `summary` of their iteration arrives or the run ends.
 
 use std::collections::BTreeSet;
-use std::fmt::Write as _;
 
 use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind};
 use avl_wire::progress::TraceReady;
@@ -21,13 +20,12 @@ use avl_junit::cases::{
     self, CaseFailure, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, UNFINISHED_MESSAGE, failure_of_container, failure_of_test,
     simple_class_name,
 };
+pub use avl_junit::teamcity::TEAMCITY_VERSION;
+use avl_junit::teamcity::{is_team_city, message};
 use avl_junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
 
 #[cfg(test)]
 mod tests;
-
-/// The environment variable that a TeamCity agent sets for every build step.
-pub const TEAMCITY_VERSION: &str = "TEAMCITY_VERSION";
 
 /// The directory of the build artifacts that holds the published trace zips.
 pub const TRACES_ARTIFACT_DIR: &str = "air-traces";
@@ -35,7 +33,7 @@ pub const TRACES_ARTIFACT_DIR: &str = "air-traces";
 /// Whether this controller is the build step of a TeamCity build: [`TEAMCITY_VERSION`] is set and not blank, and
 /// [`XML_OUTPUT_FILE`] is unset. A Bazel test reports through its XML, so the controller inside one writes no message.
 pub fn is_build_step(variable: impl Fn(&str) -> Option<String>) -> bool {
-    variable(TEAMCITY_VERSION).is_some_and(|version| !version.trim().is_empty()) && variable(XML_OUTPUT_FILE).is_none()
+    variable(XML_OUTPUT_FILE).is_none() && is_team_city(variable)
 }
 
 /// The state of the messages of one run: what each flow has open, and which zips are published.
@@ -316,39 +314,4 @@ impl Flow {
             .find(|(class, name)| name == scenario && simple_class_name(class) == simple_class_name(test_class))
             .map_or_else(|| format!("{test_class}.{scenario}"), |(class, name)| format!("{class}.{name}"))
     }
-}
-
-/// One service message: `##teamcity[<name> key='value' ...]`, or `##teamcity[<name> 'value']` for a message of one
-/// value.
-fn message(name: &str, attributes: &[(&str, &str)], value: Option<&str>) -> String {
-    let mut line = format!("##teamcity[{name}");
-    if let Some(value) = value {
-        let _ = write!(line, " '{}'", escape(value));
-    }
-    for (key, value) in attributes {
-        let _ = write!(line, " {key}='{}'", escape(value));
-    }
-    line.push(']');
-    line
-}
-
-/// Escapes a value as TeamCity reads it: `|` before each of `|`, `'`, `[` and `]`, `|n` and `|r` for the line ends,
-/// and `|x`, `|l` and `|p` for the next line, the line separator and the paragraph separator of Unicode.
-fn escape(value: &str) -> String {
-    let mut escaped = String::with_capacity(value.len());
-    for character in value.chars() {
-        match character {
-            '|' => escaped.push_str("||"),
-            '\'' => escaped.push_str("|'"),
-            '[' => escaped.push_str("|["),
-            ']' => escaped.push_str("|]"),
-            '\n' => escaped.push_str("|n"),
-            '\r' => escaped.push_str("|r"),
-            '\u{0085}' => escaped.push_str("|x"),
-            '\u{2028}' => escaped.push_str("|l"),
-            '\u{2029}' => escaped.push_str("|p"),
-            _ => escaped.push(character),
-        }
-    }
-    escaped
 }

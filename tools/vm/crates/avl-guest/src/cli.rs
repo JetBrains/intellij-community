@@ -324,7 +324,8 @@ pub(crate) struct LaneRunArgs {
     pub progress_gap_timeout_sec: u64,
     /// The budget of the whole run, in seconds. lane-run takes the smaller of it and $TEST_TIMEOUT of a Bazel test, less
     /// a teardown reserve of 180 s. At the end of the budget the watchdog ends the run. A minute later lane-run writes
-    /// the JUnit XML of the records so far itself, cancels the lane IDE and exits 1.
+    /// the JUnit XML of the records so far itself, cancels the lane IDE and exits 1. On a TeamCity agent both ends also
+    /// write a buildProblem on standard output, so a muted case cannot leave the build green.
     #[arg(long, value_name = "SECONDS")]
     pub run_budget_sec: Option<u64>,
     /// Stage the inputs, select the suite documents, write the plan of the run on standard output, and launch no IDE.

@@ -295,3 +295,54 @@ fn the_run_budget_is_the_smaller_of_the_flag_and_test_timeout_less_the_reserve()
         "the run budget of 180 s leaves nothing after the teardown reserve of 180 s"
     );
 }
+
+fn expired(reason: &str, active: Option<(&str, &str)>) -> RunEvent {
+    RunEvent {
+        raw: None,
+        kind: RunEventKind::WatchdogExpired(avl_wire::daemon::WatchdogExpired {
+            reason: reason.to_owned(),
+            deadline: "2026-10-19T05:42:20.794Z".to_owned(),
+            expired_at: "2026-10-19T05:42:20.795Z".to_owned(),
+            detail: None,
+            active_execution: active.map(|(class, scenario)| avl_wire::daemon::ExecutionIdentity {
+                id: format!("[engine:lane-daemon]/[suite:s]/[scenario:{scenario}]"),
+                display_name: scenario.to_owned(),
+                class_name: Some(class.to_owned()),
+                method_name: Some("sessionToolWindowComposerScenarios".to_owned()),
+            }),
+            evidence: Vec::new(),
+        }),
+    }
+}
+
+// On a TeamCity agent, a run that its budget ended is a build problem that names the case and the budget, because a
+// muted case cannot fail the build. Another expiry, and a run off TeamCity, are no build problem.
+#[test]
+fn a_run_that_its_budget_ended_is_a_teamcity_build_problem_with_the_case_and_the_budget() {
+    let team_city = environment(&[("TEAMCITY_VERSION", "2026.1")]);
+    let budget = Some(Duration::from_secs(2520));
+    let case = Some((
+        "com.intellij.air.integration.flow.AgentSessionToolWindowComposerUiTest",
+        "the 'second' frame",
+    ));
+    assert_eq!(
+        budget_problem(&[expired("run_budget_timeout", case)], budget, &team_city).as_deref(),
+        Some(
+            "##teamcity[buildProblem description='lane-run: the lane budget of 2520 s ended the run in \
+             AgentSessionToolWindowComposerUiTest.the |'second|' frame; the scenarios after it did not run' \
+             identity='lane-run-budget']"
+        )
+    );
+    assert_eq!(
+        budget_problem(&[expired("run_budget_timeout", None)], budget, &team_city).as_deref(),
+        Some(
+            "##teamcity[buildProblem description='lane-run: the lane budget of 2520 s ended the run between two \
+             scenarios; the scenarios after it did not run' identity='lane-run-budget']"
+        )
+    );
+    assert_eq!(budget_problem(&[expired("progress_gap_timeout", case)], budget, &team_city), None);
+    assert_eq!(
+        budget_problem(&[expired("run_budget_timeout", case)], budget, &environment(&[])),
+        None
+    );
+}

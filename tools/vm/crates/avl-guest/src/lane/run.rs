@@ -17,7 +17,9 @@ use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEventKind, RunRequest, SessionLog, decode_run_event};
+use avl_junit::cases::simple_class_name;
+use avl_junit::teamcity;
+use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEvent, RunEventKind, RunRequest, SessionLog, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
 use avl_wire::session_log;
 use serde::Serialize;
@@ -25,9 +27,9 @@ use serde::Serialize;
 use super::channel::{self, BOOT_CODE, log};
 use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
-use super::monitor::{self, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
+use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
 use super::package::sha256_hex;
-use super::watchdog::KILL_GRACE;
+use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
 use crate::linux::validate::GuestValidator;
@@ -276,6 +278,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         },
         budget,
         budget.map(|budget| started + budget + KILL_GRACE),
+        teamcity::is_team_city(variable),
     );
     let (written, finished) = std::thread::scope(|scope| {
         // Named, so a hang report tells the monitor from the run thread.
@@ -299,9 +302,39 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     }
     let stream = fs::read(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", stream_path.display())))?;
+    if let Some(problem) = budget_problem(&monitor::decode_stream(&stream), budget, variable) {
+        println!("{problem}");
+    }
     let green = is_green(&stream) && finished.is_ok();
     written?;
     Ok(u8::from(!green))
+}
+
+/// The TeamCity build problem of a run that its budget ended, on a TeamCity agent: the case that ran and the budget. A
+/// muted case is no failure of the build, so the case that the budget cut off cannot leave the build green.
+pub(crate) fn budget_problem(events: &[RunEvent], budget: Option<Duration>, variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
+    if !teamcity::is_team_city(variable) {
+        return None;
+    }
+    let expired = events.iter().find_map(|event| match &event.kind {
+        RunEventKind::WatchdogExpired(expired) if expired.reason == ExpiryReason::RunBudget.wire() => Some(expired),
+        _ => None,
+    })?;
+    let budget = budget.map_or_else(
+        || "its budget".to_owned(),
+        |budget| format!("the lane budget of {} s", budget.as_secs()),
+    );
+    let case = expired.active_execution.as_ref().map_or_else(
+        || "between two scenarios".to_owned(),
+        |execution| {
+            let class = execution.class_name.as_deref().map(simple_class_name).unwrap_or_default();
+            format!("in {class}.{}", execution.display_name)
+        },
+    );
+    Some(teamcity::build_problem(
+        &format!("lane-run: {budget} ended the run {case}; the scenarios after it did not run"),
+        BUDGET_PROBLEM,
+    ))
 }
 
 /// Whether lane-run proves the host before the lane IDE starts: on Linux, for a run that launches an IDE, on a host that

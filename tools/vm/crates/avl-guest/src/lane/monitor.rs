@@ -23,6 +23,7 @@ use std::sync::mpsc;
 use std::sync::{Condvar, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
+use avl_junit::teamcity;
 use avl_wire::daemon::{RunEvent, RunEventKind, Skipped, decode_run_event};
 use avl_wire::ide::ide_run_id;
 use nix::sys::signal::{Signal, kill};
@@ -39,6 +40,8 @@ mod tests;
 
 /// How often the monitor writes the hang report.
 pub(crate) const HEARTBEAT: Duration = Duration::from_mins(3);
+/// The identity of the TeamCity build problem of a run that its budget or the hard stop ended.
+pub(crate) const BUDGET_PROBLEM: &str = "lane-run-budget";
 /// The name of the thread of the monitor, which its own line of a hang report shows.
 pub(crate) const MONITOR_THREAD: &str = "lane-monitor";
 /// How long one write of the monitor on the standard error may take before the monitor goes on without it.
@@ -111,6 +114,8 @@ pub(crate) struct Monitor<'a> {
     budget: Option<Duration>,
     /// When the monitor ends the run itself, or `None` for a run with no budget.
     hard_stop: Option<Instant>,
+    /// Whether the run is a build step of TeamCity, so the hard stop also writes a build problem.
+    team_city: bool,
     state: Mutex<MonitorState>,
     changed: Condvar,
 }
@@ -134,15 +139,24 @@ pub(crate) struct HardStop {
     pub killed_recorders: Vec<u32>,
     /// The one line of the hard stop.
     pub line: String,
+    /// The TeamCity build problem of the hard stop, on a TeamCity agent.
+    pub build_problem: Option<String>,
 }
 
 impl<'a> Monitor<'a> {
-    pub(crate) fn new(daemon: &'a Daemon, paths: MonitorPaths, budget: Option<Duration>, hard_stop: Option<Instant>) -> Self {
+    pub(crate) fn new(
+        daemon: &'a Daemon,
+        paths: MonitorPaths,
+        budget: Option<Duration>,
+        hard_stop: Option<Instant>,
+        team_city: bool,
+    ) -> Self {
         Self {
             daemon,
             paths,
             budget,
             hard_stop,
+            team_city,
             state: Mutex::new(MonitorState::default()),
             changed: Condvar::new(),
         }
@@ -174,6 +188,9 @@ impl<'a> Monitor<'a> {
                 let stop = self.hard_stop(effects);
                 if let Some(file) = &self.paths.report {
                     let _ = fs::write(file, format!("{}\n{}\n", stop.line, report.join("\n")));
+                }
+                if let Some(problem) = stop.build_problem {
+                    say_on(Output::Stdout, problem);
                 }
                 say(format!("{}\n{}", report.join("\n"), stop.line));
                 std::process::exit(1);
@@ -249,11 +266,13 @@ impl<'a> Monitor<'a> {
             canceled.len(),
             killed_recorders.len()
         );
+        let build_problem = self.team_city.then(|| teamcity::build_problem(&line, BUDGET_PROBLEM));
         HardStop {
             cases,
             canceled,
             killed_recorders,
             line,
+            build_problem,
         }
     }
 }
@@ -280,9 +299,25 @@ fn describe_run(snapshot: &RunSnapshot) -> String {
 
 /// Writes `text` on the standard error, and waits at most [`SAY_WAIT`] for the write.
 fn say(text: String) {
+    say_on(Output::Stderr, text);
+}
+
+/// A standard stream of the process.
+#[derive(Clone, Copy)]
+enum Output {
+    Stdout,
+    Stderr,
+}
+
+/// Writes `text` on `output`, and waits at most [`SAY_WAIT`] for the write. The write runs on a thread of its own, so
+/// a stream that blocks cannot hold the monitor before the hard stop ends the process.
+fn say_on(output: Output, text: String) {
     let (written, done) = mpsc::channel();
     let _ = std::thread::Builder::new().name("lane-monitor-say".to_owned()).spawn(move || {
-        eprintln!("{text}");
+        match output {
+            Output::Stdout => println!("{text}"),
+            Output::Stderr => eprintln!("{text}"),
+        }
         let _ = written.send(());
     });
     let _ = done.recv_timeout(SAY_WAIT);

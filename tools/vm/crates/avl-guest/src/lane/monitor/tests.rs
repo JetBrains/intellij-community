@@ -271,6 +271,7 @@ fn the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_r
         },
         Some(Duration::from_secs(2520)),
         None,
+        true,
     );
     let effects = Recorded::default();
     let stop = watch.step("relaunch for ide", || monitor.hard_stop(&effects));
@@ -294,6 +295,18 @@ fn the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_r
                 .ends_with("; 0 s of the budget left. the JUnit XML holds 3 case(s); 1 IDE run(s) canceled, 1 recorder(s) killed; exit 1"),
         "{}",
         stop.line
+    );
+    // On a TeamCity agent the hard stop is a build problem too, so a muted case cannot leave the build green.
+    assert_eq!(
+        stop.build_problem.as_deref(),
+        Some(teamcity::build_problem(&stop.line, BUDGET_PROBLEM).as_str())
+    );
+    assert!(
+        stop.build_problem.as_deref().is_some_and(|problem| problem
+            .starts_with("##teamcity[buildProblem description='lane-run: the hard stop ended the run")
+            && problem.ends_with(" identity='lane-run-budget']")),
+        "{:?}",
+        stop.build_problem
     );
 
     fs::remove_file(&xml).unwrap();
@@ -319,6 +332,11 @@ fn the_hang_report_starts_with_the_run_as_the_watch_knows_it() {
         },
         None,
         None,
+        false,
+    );
+    assert!(
+        monitor.hard_stop(&Recorded::default()).build_problem.is_none(),
+        "a run off TeamCity writes no build problem"
     );
     let absent = root.path().join("absent");
     assert_eq!(

@@ -1641,6 +1641,13 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder`)
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped`)
 
+- On a TeamCity agent, `lane-run` also writes a `buildProblem` with the identity `lane-run-budget` on standard output.
+  It does so when the budget ends the run, naming the case and the budget, and at the hard stop, naming its line.
+  TeamCity mutes a failed case but not a build problem, so a cut-off run cannot leave the build green.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_that_its_budget_ended_is_a_teamcity_build_problem_with_the_case_and_the_budget`)
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder`)
+  [@test] ../crates/avl-junit/src/teamcity/tests.rs (`a_build_problem_names_its_escaped_description_and_its_identity`)
+
 - `lane-run` writes the run stream on standard output from the run thread and from the watchdog thread. The agent
   locks standard output for each write, not for the whole run. So no thread of the run waits for a lock of the main
   thread.

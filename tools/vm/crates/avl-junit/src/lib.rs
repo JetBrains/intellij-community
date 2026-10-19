@@ -11,6 +11,8 @@
 //!
 //! Two cases have no record of their own and still fail the document, so a cut-off run cannot count as green: a
 //! scenario that started and never finished, and a class of the plan that the run never reached.
+//!
+//! [`teamcity`] writes one TeamCity service message, which the controller and `lane-run` both write.
 
 use std::fmt::Write as _;
 
@@ -19,6 +21,7 @@ use avl_wire::daemon::RunEvent;
 use crate::cases::{CaseFailure, CaseOutcome, FailureOrigin, StreamCase, UNFINISHED_MESSAGE};
 
 pub mod cases;
+pub mod teamcity;
 #[cfg(test)]
 mod testing;
 #[cfg(test)]
