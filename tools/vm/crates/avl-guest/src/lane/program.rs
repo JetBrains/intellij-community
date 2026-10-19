@@ -37,6 +37,7 @@ use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
 use avl_wire::daemon::TypedFailure;
+use avl_wire::ide::SYSTEM_DIR;
 use avl_wire::program::lane::{Delivery, LIVE_LANE, LaneAgent, LaneDocument};
 use avl_wire::program::{
     HostAction, IdKind, IdSpec, Instruction, OperationProgram, ScenarioProgram, Side, SuiteFixture, SuiteProgram, SuiteReset,
@@ -126,6 +127,19 @@ const AIR_PERFORMANCE_FILE: &str = "air-performance.json";
 const TRACE_READ: Duration = Duration::from_secs(10);
 /// How many lines of a reset failure a skip reason and a failure carry.
 const CARRIED_FAILURE_LINES: usize = 20;
+/// The directory of the Codex daemons in the system directory of the IDE. It holds the ledger [`CODEX_LEDGER_FILE`] and
+/// the record `<id>.json` of each daemon. `CodexAppServerManager` and `FileCodexAppServerLedgerStore` of the Codex
+/// provider own the layout.
+const CODEX_DAEMONS_DIR: &str = "air/codex-app-server/generations";
+/// The Codex daemon ledger in [`CODEX_DAEMONS_DIR`].
+const CODEX_LEDGER_FILE: &str = "ledger.json";
+/// The fields of a Codex daemon record that a scenario never attaches. The startup arguments can name the MCP endpoint
+/// of the IDE, and the URL is the endpoint of the daemon.
+const CODEX_PRIVATE_FIELDS: [&str; 2] = ["startupConfigArgs", "tcpUrl"];
+/// How many Codex daemon records a failed scenario attaches beside the ledger, the newest first.
+const MAX_CODEX_RECORDS: usize = 32;
+/// The largest Codex file that a failed scenario attaches.
+const MAX_CODEX_FILE_BYTES: u64 = 1024 * 1024;
 
 /// What the program runner needs from the lane IDE: the bridge, the relaunch, the lane services, and the probes of the
 /// watchdog. The lane daemon gives its IDE owner; a test gives a fake.
@@ -685,6 +699,7 @@ impl<'r, 's> Runner<'r, 's> {
             .and_then(|()| self.body(suite, profile, &fixture));
         if verdict.is_err() {
             self.trace().snap_failure();
+            self.attach_codex_daemons();
         }
         if !self.isolation.borrow().exhausted() && self.watch.expired().is_none() {
             let cleanup = self.traced_reset(ResetPhase::After, &profile.name, reset);
@@ -1247,6 +1262,35 @@ impl<'r, 's> Runner<'r, 's> {
         }
     }
 
+    /// Attaches the Codex daemon ledger of the IDE and its newest [`MAX_CODEX_RECORDS`] daemon records to the trace of a
+    /// failed scenario, so a failure of a Codex daemon shows the history of each daemon. A record goes without its
+    /// [`CODEX_PRIVATE_FIELDS`]. An IDE with no Codex daemon directory attaches nothing. A file that cannot be read is a
+    /// note, because an attachment is evidence.
+    fn attach_codex_daemons(&self) {
+        let Some(context) = self.lane.context_dir() else {
+            return;
+        };
+        let (files, left_out) = codex_daemon_files(&context.join(SYSTEM_DIR).join(CODEX_DAEMONS_DIR));
+        if left_out > 0 {
+            self.stream.note(format!(
+                "[attachment] the IDE holds {left_out} Codex daemon record(s) more than the {MAX_CODEX_RECORDS} that a failed \
+                 scenario attaches"
+            ));
+        }
+        for file in files {
+            let name = file.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+            match read_codex_file(&file, name != CODEX_LEDGER_FILE) {
+                Ok(bytes) => {
+                    self.trace()
+                        .attach(&format!("Codex daemon {name}"), "application/json", &bytes, "json");
+                }
+                Err(error) => self
+                    .stream
+                    .note(format!("[attachment] cannot attach the Codex file {}: {error}", file.display())),
+            }
+        }
+    }
+
     /// Attaches each IDE dump that the watchdog wrote for a slow step since the last call to the innermost open span.
     fn attach_dumps(&self) {
         for (step, file) in self.watch.take_dumps() {
@@ -1753,4 +1797,53 @@ pub(crate) fn suites_of(documents: Vec<(SuiteProgram, Vec<u8>)>) -> Result<Vec<S
             Ok(Suite { program, raw_profiles })
         })
         .collect()
+}
+
+/// The Codex files of the daemon directory `directory`: the ledger first, then the [`MAX_CODEX_RECORDS`] newest daemon
+/// records, and how many older records stay out. Only regular `.json` files count, so a daemon log and a link stay out.
+fn codex_daemon_files(directory: &Path) -> (Vec<PathBuf>, usize) {
+    let mut ledger = None;
+    let mut records: Vec<(SystemTime, PathBuf)> = Vec::new();
+    for entry in fs::read_dir(directory).into_iter().flatten().filter_map(Result::ok) {
+        let path = entry.path();
+        if !entry.file_type().is_ok_and(|kind| kind.is_file()) || path.extension().is_none_or(|extension| extension != "json") {
+            continue;
+        }
+        if entry.file_name() == CODEX_LEDGER_FILE {
+            ledger = Some(path);
+        } else {
+            let modified = entry.metadata().and_then(|metadata| metadata.modified()).unwrap_or(UNIX_EPOCH);
+            records.push((modified, path));
+        }
+    }
+    records.sort_by(|(left_time, left), (right_time, right)| right_time.cmp(left_time).then_with(|| left.cmp(right)));
+    let left_out = records.len().saturating_sub(MAX_CODEX_RECORDS);
+    let files = ledger
+        .into_iter()
+        .chain(records.into_iter().take(MAX_CODEX_RECORDS).map(|(_, path)| path))
+        .collect();
+    (files, left_out)
+}
+
+/// The bytes of the Codex file `file` to attach, or why it is not attached: an error, or more than
+/// [`MAX_CODEX_FILE_BYTES`]. A daemon `record` goes as its JSON object without the [`CODEX_PRIVATE_FIELDS`], and a record
+/// that is no JSON object is not attached, because its private fields cannot be dropped.
+fn read_codex_file(file: &Path, record: bool) -> Result<Vec<u8>, String> {
+    let size = fs::metadata(file).map_err(|error| error.to_string())?.len();
+    if size > MAX_CODEX_FILE_BYTES {
+        return Err(format!(
+            "it holds {size} bytes, more than the {MAX_CODEX_FILE_BYTES} that a scenario attaches"
+        ));
+    }
+    let bytes = fs::read(file).map_err(|error| error.to_string())?;
+    if !record {
+        return Ok(bytes);
+    }
+    let Ok(Value::Object(mut fields)) = serde_json::from_slice::<Value>(&bytes) else {
+        return Err("it is no JSON object, so its private fields cannot be dropped".to_owned());
+    };
+    for private in CODEX_PRIVATE_FIELDS {
+        fields.remove(private);
+    }
+    serde_json::to_vec_pretty(&Value::Object(fields)).map_err(|error| error.to_string())
 }
