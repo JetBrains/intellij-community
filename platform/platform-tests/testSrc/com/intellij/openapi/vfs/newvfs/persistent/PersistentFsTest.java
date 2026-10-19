@@ -619,7 +619,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     tempDirectory.newFile("d/d1/x.txt");
     tempDirectory.newDirectory(".idea"); // for some reason when the test is run on TC .idea is not created (e.g. for temp project) or IDEA is notified later, so we create it here in advance
     Path source = tempDirectory.getRootPath().resolve("d");
-    Path target = tempDirectory.getRootPath().resolve("target");
+    Path target = tempDirectory.getRootPath().resolve("moved");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -633,7 +633,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertChildrenAreLoaded(vTemp);
     List<VirtualFile> rootChildren = ((VirtualDirectoryImpl)vTemp).getCachedChildren();
     assertSize(2, rootChildren);
-    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("target"));
+    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("moved"));
     assertNotNull(vTarget);
     assertChildrenAreLoaded(vTarget);
     VirtualFile vd1 = assertOneElement(((VirtualDirectoryImpl)vTarget).getCachedChildren());
@@ -648,7 +648,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     tempDirectory.newFile("d/d1/x.txt");
     tempDirectory.newDirectory(".idea"); // for some reason when the test is run on TC .idea is not created (e.g. for temp project) or IDEA is notified later, so we create it here in advance
     Path source = tempDirectory.getRootPath().resolve("d");
-    Path target = tempDirectory.getRootPath().resolve("target");
+    Path target = tempDirectory.getRootPath().resolve("moved");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -672,9 +672,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertChildrenAreLoaded(vTemp);
     List<VirtualFile> rootChildren = ((VirtualDirectoryImpl)vTemp).getCachedChildren();
     assertSize(2, rootChildren);
-    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("target"));
+    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("moved"));
     assertNotNull(vTarget);
-    assertEquals("target", vTarget.getName());
+    assertEquals("moved", vTarget.getName());
     assertChildrenAreLoaded(vTarget);
     VirtualFile vd1 = assertOneElement(((VirtualDirectoryImpl)vTarget).getCachedChildren());
     assertEquals("d1", vd1.getName());

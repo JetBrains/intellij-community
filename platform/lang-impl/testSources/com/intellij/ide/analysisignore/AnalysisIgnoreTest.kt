@@ -52,6 +52,8 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 private const val ENABLED = "ide.analysisignore.file.enabled"
 
+private const val DEFAULTS = "ide.analysisignore.defaults.enabled"
+
 @TestApplication
 class AnalysisIgnoreTest {
   @JvmField
@@ -639,6 +641,7 @@ class AnalysisIgnoreTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `deleting the file frees a path inside a source root below it`() = runBlocking {
     val srcDir = dir("projectRoot/src")
     val buildDir = dir("projectRoot/src/build")
@@ -1130,6 +1133,7 @@ class AnalysisIgnoreTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `deleting the file removes its exclusions`() = runBlocking {
     val buildDir = dir("projectRoot/build")
     val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build")
@@ -1163,6 +1167,7 @@ class AnalysisIgnoreTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `renaming the file away removes its exclusions`() = runBlocking {
     val buildDir = dir("projectRoot/build")
     val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build")

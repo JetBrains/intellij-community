@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 private const val ENABLED = "ide.analysisignore.file.enabled"
+private const val DEFAULTS = "ide.analysisignore.defaults.enabled"
 private const val MARKER_TEXT = "analysisignore reindex marker"
 
 @TestApplication
@@ -103,6 +104,7 @@ class AnalysisIgnoreReindexTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `a file indexed before the exclusion leaves the index and comes back`() = runBlocking {
     val projectRoot = projectModel.baseProjectDir.newVirtualDirectory("projectRoot")
     val marker = projectModel.baseProjectDir.newVirtualFile("projectRoot/vet/Marker.txt", MARKER_TEXT.toByteArray())

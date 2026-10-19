@@ -95,6 +95,7 @@ class AnalysisIgnoreExclusionContributorTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `marking a directory creates a file at the content root with a literal line`() = runBlocking {
     val buildDir = dir("projectRoot/build")
 
@@ -107,6 +108,7 @@ class AnalysisIgnoreExclusionContributorTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `marking a file writes a line without a trailing slash`() = runBlocking {
     val generated = file("projectRoot/gen/Foo.java")
 
@@ -199,6 +201,7 @@ class AnalysisIgnoreExclusionContributorTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `cancel exclusion after mark as excluded selects the new line`() = runBlocking {
     val buildDir = dir("projectRoot/build")
     invoke(MarkExcludeRootAction(), buildDir)
@@ -489,6 +492,7 @@ class AnalysisIgnoreExclusionContributorTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  @RegistryKey(key = DEFAULTS, value = "false")
   fun `cancel exclusion is not offered for a default name while the defaults are off`() = runBlocking {
     val nodeModules = dir("projectRoot/node_modules")
 
