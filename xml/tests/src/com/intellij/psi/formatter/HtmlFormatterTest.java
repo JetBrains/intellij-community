@@ -889,6 +889,23 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                  ></div>""");
   }
 
+  @Test
+  public void testJoinLinesNextToInlineTagsWithoutKeepLineBreaksInText() {
+    getHtmlSettings().HTML_KEEP_LINE_BREAKS_IN_TEXT = false;
+    doTextTest("""
+                 <div>
+                     <b>first</b>
+                     <i>second</i>
+                     <em>
+                         text
+                     </em>
+                 </div>""",
+               """
+                 <div>
+                     <b>first</b> <i>second</i> <em> text </em>
+                 </div>""");
+  }
+
   @NotNull
   private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyle.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
