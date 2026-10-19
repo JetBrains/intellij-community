@@ -60,7 +60,6 @@
                 class="com.intellij.platform.projectView.actions.ShowModules"
                 icon="AllIcons.Actions.GroupByModule">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
@@ -68,21 +67,18 @@
                 class="com.intellij.platform.projectView.actions.ShowMembers"
                 icon="AllIcons.ObjectBrowser.ShowMembers">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.ShowExcludedFiles"
                 class="com.intellij.platform.projectView.actions.ShowExcludedFiles">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.ShowVisibilityIcons"
                 class="com.intellij.platform.projectView.actions.ShowVisibilityIcons">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
@@ -90,14 +86,12 @@
                 class="com.intellij.platform.projectView.actions.ShowLibraryContents"
                 icon="AllIcons.ObjectBrowser.ShowLibraryContents">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.ShowScratchesAndConsoles"
                 class="com.intellij.platform.projectView.actions.ShowScratchesAndConsoles">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
@@ -129,7 +123,6 @@
         <action id="ProjectView.SortByName"
                 class="com.intellij.platform.projectView.actions.SortByName">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
@@ -137,21 +130,18 @@
                 class="com.intellij.platform.projectView.actions.SortByType"
                 icon="AllIcons.ObjectBrowser.SortByType">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.SortByTimeDescending"
                 class="com.intellij.platform.projectView.actions.SortByTimeDescending">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.SortByTimeAscending"
                 class="com.intellij.platform.projectView.actions.SortByTimeAscending">
           <override-text place="ToolwindowPopup"/>
-          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
           <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
