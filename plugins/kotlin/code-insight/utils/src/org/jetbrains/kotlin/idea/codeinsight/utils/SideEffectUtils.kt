@@ -23,6 +23,15 @@ fun KtExpression.isSideEffectFreeCondition(): Boolean =
     else -> false
   }
 
+@ApiStatus.Internal
+context(session: KaSession)
+fun KtExpression.isSideEffectFree(): Boolean =
+    when (val expression = KtPsiUtil.deparenthesize(this)) {
+      is KtConstantExpression -> true
+      is KtSimpleNameExpression -> expression.isSideEffectFreeReference()
+      else -> false
+    }
+
 context(session: KaSession)
 private fun KtSimpleNameExpression.isSideEffectFreeReference(): Boolean =
   when (val symbol = resolveSuccessfulSymbol()) {
