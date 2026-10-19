@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.assignment-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:2.5.20-dev-335">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:2.5.20-dev-1532">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-335/assignment-compiler-plugin-for-ide-2.5.20-dev-335.jar">
-              <sha256sum>e6b4170df324b200d9e4e05128a0b893200c1e5d963aedc1352af2af961455c4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-1532/assignment-compiler-plugin-for-ide-2.5.20-dev-1532.jar">
+              <sha256sum>076f4670b5649a126bc627ed036e9213ee5bd2de65cf0270be00e3c1ce65b69e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-335/assignment-compiler-plugin-for-ide-2.5.20-dev-335.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-1532/assignment-compiler-plugin-for-ide-2.5.20-dev-1532.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-335/assignment-compiler-plugin-for-ide-2.5.20-dev-335-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.20-dev-1532/assignment-compiler-plugin-for-ide-2.5.20-dev-1532-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

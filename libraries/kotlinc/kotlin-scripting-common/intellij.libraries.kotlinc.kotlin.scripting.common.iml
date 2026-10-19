@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.20-dev-335">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.20-dev-1532">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-335/kotlin-scripting-common-2.5.20-dev-335.jar">
-              <sha256sum>ea7e85bfeb0d4bc8d13c43e632ca4ba8d276561515954c56aec9b5e972bfcf1e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-1532/kotlin-scripting-common-2.5.20-dev-1532.jar">
+              <sha256sum>5ef6cc3c40fee47d355d3cdd411bc6677e246a97b97b5789468584675dca9b88</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-335/kotlin-scripting-common-2.5.20-dev-335.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-1532/kotlin-scripting-common-2.5.20-dev-1532.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-335/kotlin-scripting-common-2.5.20-dev-335-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.20-dev-1532/kotlin-scripting-common-2.5.20-dev-1532-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.allopen-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:2.5.20-dev-335">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:2.5.20-dev-1532">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-335/allopen-compiler-plugin-for-ide-2.5.20-dev-335.jar">
-              <sha256sum>954ecfc049cd4abb168964fa0de8c62e632ec3394dc739de0ec3bec954b6989c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-1532/allopen-compiler-plugin-for-ide-2.5.20-dev-1532.jar">
+              <sha256sum>395f472ebb978b66b2ac8a7a838f8a6977db686f3c0f48f1461d604c3ae1ba88</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-335/allopen-compiler-plugin-for-ide-2.5.20-dev-335.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-1532/allopen-compiler-plugin-for-ide-2.5.20-dev-1532.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-335/allopen-compiler-plugin-for-ide-2.5.20-dev-335-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.20-dev-1532/allopen-compiler-plugin-for-ide-2.5.20-dev-1532-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
