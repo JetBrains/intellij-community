@@ -191,10 +191,11 @@ pnpm run test:scripts
 pnpm run typecheck
 ```
 
-The `check` script of each site also runs `test:scripts` of the kernel. `src/noSiteImports.test.ts` fails on a kernel
-import from a site. The kernel has no Playwright run of its own. A site runs the kernel e2e suite from its own
-suite. It calls `defineKernelSuite` of `e2e/kernel.test.ts` with its `test` and `expect`. Playwright refuses a second
-copy of its test module. After a kernel change, run the checks and the e2e suite of both sites.
+`test:scripts` runs the tests with `scripts/scriptTests.ts`, which loads every test file into one process. The `check`
+script of each site also runs the kernel tests. `src/noSiteImports.test.ts` fails on a kernel import from a site. The
+kernel has no Playwright run of its own. A site runs the kernel e2e suite from its own suite. It calls
+`defineKernelSuite` of `e2e/kernel.test.ts` with its `test` and `expect`. Playwright refuses a second copy of its test
+module. After a kernel change, run the checks and the e2e suite of both sites.
 
 ## Add a site
 
