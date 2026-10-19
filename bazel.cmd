@@ -66,15 +66,18 @@ exec "$binary_path" "$@"
 setlocal
 
 set /p BAZELISK_VERSION=<"%~dp0.bazeliskversion"
+REM An emulated parent process, such as an x64 shell on ARM64, reports its own arch. The registry holds the native arch.
+set BAZELISK_ARCH=%PROCESSOR_ARCHITECTURE%
+for /f "tokens=3 delims= " %%a in ('%SystemRoot%\System32\reg.exe query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE" 2^>nul') do set "BAZELISK_ARCH=%%a"
 set BAZELISK_TARGET_DIR=%LOCALAPPDATA%\JetBrains\monorepo-bazelisk
-set BAZELISK_TARGET_FILE=%BAZELISK_TARGET_DIR%\bazelisk-%BAZELISK_VERSION%-windows-%PROCESSOR_ARCHITECTURE%.exe
+set BAZELISK_TARGET_FILE=%BAZELISK_TARGET_DIR%\bazelisk-%BAZELISK_VERSION%-windows-%BAZELISK_ARCH%.exe
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 set POWERSHELL_COMMAND= ^
 $ErrorActionPreference = \"Stop\"; ^
 $ProgressPreference = \"SilentlyContinue\"; ^
 Set-StrictMode -Version 3.0; ^
  ^
- $BazeliskUrl = \"https://cache-redirector.jetbrains.com/github.com/bazelbuild/bazelisk/releases/download/v%BAZELISK_VERSION%/bazelisk-windows-$(\"%PROCESSOR_ARCHITECTURE%\".ToLower()).exe\"; ^
+ $BazeliskUrl = \"https://cache-redirector.jetbrains.com/github.com/bazelbuild/bazelisk/releases/download/v%BAZELISK_VERSION%/bazelisk-windows-$(\"%BAZELISK_ARCH%\".ToLower()).exe\"; ^
  New-Item -ItemType Directory -Path \"%BAZELISK_TARGET_DIR%\" -Force; ^
  ^
  $randomSuffix = [System.IO.Path]::GetRandomFileName(); ^
