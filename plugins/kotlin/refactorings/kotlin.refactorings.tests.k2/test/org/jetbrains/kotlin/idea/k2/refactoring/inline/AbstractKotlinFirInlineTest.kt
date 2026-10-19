@@ -71,11 +71,14 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
             val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR_K2: ").takeIf { it.isNotEmpty() }
                 ?: InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
             val inlinePropertyKeepValue = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_PROPERTY_KEEP: ")
+            val inlineMethodThis = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_METHOD_THIS: ")
             val settings = KotlinCommonRefactoringSettings.getInstance()
             val oldInlinePropertyKeepValue = settings.INLINE_PROPERTY_KEEP
+            val oldInlineMethodThis = settings.INLINE_METHOD_THIS
             if (handler != null) {
                 try {
                     inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
+                    inlineMethodThis?.let { settings.INLINE_METHOD_THIS = it }
                     handler.inlineElement(project, editor, targetElement)
                     for ((extraPsiFile, extraFile) in allFiles) {
                         if (!afterFileExists && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
@@ -93,6 +96,7 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
                     assertEquals("Error message", expectedErrors[0].replace("\\n", "\n"), e.message)
                 } finally {
                     settings.INLINE_PROPERTY_KEEP = oldInlinePropertyKeepValue
+                    settings.INLINE_METHOD_THIS = oldInlineMethodThis
                 }
             } else {
                 assertFalse("No refactoring handler available", afterFileExists)

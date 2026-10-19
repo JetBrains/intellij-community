@@ -1076,6 +1076,26 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/inlineVariableOrProperty/SeparateInitializerInTry.kt");
             }
 
+            @TestMetadata("SuperCallInSameClass.kt")
+            public void testSuperCallInSameClass() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/SuperCallInSameClass.kt");
+            }
+
+            @TestMetadata("SuperCallInSubclass.kt")
+            public void testSuperCallInSubclass() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/SuperCallInSubclass.kt");
+            }
+
+            @TestMetadata("SuperCallOnOtherInstance.kt")
+            public void testSuperCallOnOtherInstance() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/SuperCallOnOtherInstance.kt");
+            }
+
+            @TestMetadata("SuperCallOutsideClass.kt")
+            public void testSuperCallOutsideClass() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/SuperCallOutsideClass.kt");
+            }
+
             @TestMetadata("thisQualificationInsideExtensionFunction.kt")
             public void testThisQualificationInsideExtensionFunction() throws Exception {
                 runTest("testData/inline/inlineVariableOrProperty/thisQualificationInsideExtensionFunction.kt");
@@ -2697,6 +2717,61 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("smartCastInThis.kt")
             public void testSmartCastInThis() throws Exception {
                 runTest("testData/inline/namedFunction/smartCastInThis.kt");
+            }
+
+            @TestMetadata("superCallDispatch.kt")
+            public void testSuperCallDispatch() throws Exception {
+                runTest("testData/inline/namedFunction/superCallDispatch.kt");
+            }
+
+            @TestMetadata("superCallInAnonymousObject.kt")
+            public void testSuperCallInAnonymousObject() throws Exception {
+                runTest("testData/inline/namedFunction/superCallInAnonymousObject.kt");
+            }
+
+            @TestMetadata("superCallInCompanionObject.kt")
+            public void testSuperCallInCompanionObject() throws Exception {
+                runTest("testData/inline/namedFunction/superCallInCompanionObject.kt");
+            }
+
+            @TestMetadata("superCallInReceiverLambda.kt")
+            public void testSuperCallInReceiverLambda() throws Exception {
+                runTest("testData/inline/namedFunction/superCallInReceiverLambda.kt");
+            }
+
+            @TestMetadata("superCallInSameClass.kt")
+            public void testSuperCallInSameClass() throws Exception {
+                runTest("testData/inline/namedFunction/superCallInSameClass.kt");
+            }
+
+            @TestMetadata("superCallInSubclass.kt")
+            public void testSuperCallInSubclass() throws Exception {
+                runTest("testData/inline/namedFunction/superCallInSubclass.kt");
+            }
+
+            @TestMetadata("superCallOnImplicitOtherInstance.kt")
+            public void testSuperCallOnImplicitOtherInstance() throws Exception {
+                runTest("testData/inline/namedFunction/superCallOnImplicitOtherInstance.kt");
+            }
+
+            @TestMetadata("superCallOnOtherInstance.kt")
+            public void testSuperCallOnOtherInstance() throws Exception {
+                runTest("testData/inline/namedFunction/superCallOnOtherInstance.kt");
+            }
+
+            @TestMetadata("superCallOutsideClass.kt")
+            public void testSuperCallOutsideClass() throws Exception {
+                runTest("testData/inline/namedFunction/superCallOutsideClass.kt");
+            }
+
+            @TestMetadata("superCallQualifiedDispatch.kt")
+            public void testSuperCallQualifiedDispatch() throws Exception {
+                runTest("testData/inline/namedFunction/superCallQualifiedDispatch.kt");
+            }
+
+            @TestMetadata("superCallQualifiedOutsideClass.kt")
+            public void testSuperCallQualifiedOutsideClass() throws Exception {
+                runTest("testData/inline/namedFunction/superCallQualifiedOutsideClass.kt");
             }
 
             @TestMetadata("thisAsArgument.kt")

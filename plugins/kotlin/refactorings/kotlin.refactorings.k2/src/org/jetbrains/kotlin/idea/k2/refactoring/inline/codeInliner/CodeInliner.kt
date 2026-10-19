@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
@@ -63,6 +64,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -75,16 +77,19 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtIntersectionType
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -100,6 +105,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
@@ -334,6 +340,21 @@ class CodeInliner(
 
         var receiver =
             usageExpression?.let { it.getReceiverExpression() ?: (it.parent as? KtCallableReferenceExpression)?.receiverExpression }
+        if (receiver is KtSuperExpression) {
+            val targetLabel = receiver.getTargetLabel()
+
+            val label = if (targetLabel is KtLabelReferenceExpression) {
+                targetLabel.getReferencedName()
+            } else {
+                val owner = receiver.getStrictParentOfType<KtClassOrObject>()
+                if (owner is KtObjectDeclaration && owner.isCompanion() && owner.name == null) {
+                    SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()
+                } else {
+                    owner?.name
+                }
+            }
+            receiver = psiFactory.createExpression(label?.let { "this@" + it.quoteIfNeeded() } ?: "this")
+        }
         receiver?.putCopyableUserData(USER_CODE_KEY, Unit)
         val labelsToAdd = mutableListOf<Pair<KtLambdaExpression, String>>()
         val labelsToReplace = mutableMapOf<String, String>()
