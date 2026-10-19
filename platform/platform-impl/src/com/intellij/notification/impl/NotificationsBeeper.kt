@@ -23,8 +23,10 @@ import java.awt.Toolkit
  */
 internal class NotificationsBeeper: Notifications {
   override fun notify(notification: Notification) {
-    if (playsSound(NotificationsConfigurationImpl.getSettings(notification.groupId))) {
+    val settings = NotificationsConfigurationImpl.getSettings(notification.groupId)
+    if (playsSound(settings)) {
       service<NotificationSoundPlayer>().play(notification)
+      NotificationCollector.getInstance().logSoundPlayed(notification, settings.displayType)
       boundSoundSignal(notification.groupId)?.let { AccessibilityUsageTrackerCollector.SOUND_SIGNAL_PLAYED.log(it.id) }
     }
   }

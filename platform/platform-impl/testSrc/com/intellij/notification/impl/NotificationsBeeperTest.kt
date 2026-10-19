@@ -21,6 +21,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -70,18 +71,20 @@ class NotificationsBeeperTest {
 
   @Test
   fun `a group with Play sound off plays nothing`() {
-    NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR))
+    val events = soundPlayedEvents { NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR)) }
 
     assertThat(pluginLoader.requested).isEmpty()
+    assertThat(events).isEmpty()
   }
 
   @Test
   fun `a binding does not apply to another group`() {
     enablePlaySound(UNBOUND_GROUP)
 
-    NotificationsBeeper().notify(Notification(UNBOUND_GROUP, "title", NotificationType.ERROR))
+    val events = soundPlayedEvents { NotificationsBeeper().notify(Notification(UNBOUND_GROUP, "title", NotificationType.ERROR)) }
 
     assertThat(pluginLoader.requested).isEmpty()
+    assertThat(events.map { it.event.data["notification_group"] }).containsExactly(UNBOUND_GROUP)
   }
 
   @Test
@@ -117,6 +120,16 @@ class NotificationsBeeperTest {
   }
 
   @Test
+  fun `a played sound of a group is reported`() {
+    enablePlaySound(BOUND_GROUP, NotificationDisplayType.NONE)
+
+    val events = soundPlayedEvents { NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR)) }
+
+    assertThat(events.map { listOf(it.event.data["notification_group"], it.event.data["display_type"], it.event.data["severity"]) })
+      .containsExactly(listOf(BOUND_GROUP, "NONE", "ERROR"))
+  }
+
+  @Test
   fun `with the feature off a group bound to a signal keeps its own Play sound`(): Unit = signalTest { settings ->
     Registry.get(SOUND_SIGNALS_ENABLED_REGISTRY_KEY).setValue(false, testDisposable)
     settings.loadSoundSignals(SoundSignalsSettingsState(signals = mapOf(SIGNAL.id to true)))
@@ -134,13 +147,17 @@ class NotificationsBeeperTest {
     body(settings)
   }
 
+  private fun soundPlayedEvents(action: () -> Unit): List<LogEvent> =
+    FUCollectorTestCase.collectLogEvents(testDisposable, action)
+      .filter { it.group.id == "notifications" && it.event.id == "sound.played" }
+
   private fun notifySignalGroup() {
     NotificationsBeeper().notify(Notification(SIGNAL_GROUP, "title", NotificationType.INFORMATION))
   }
 
-  private fun enablePlaySound(groupId: String) {
+  private fun enablePlaySound(groupId: String, displayType: NotificationDisplayType = NotificationDisplayType.BALLOON) {
     NotificationsConfigurationImpl.getInstanceImpl()
-      .changeSettings(NotificationSettings(groupId, NotificationDisplayType.BALLOON, false, false, true))
+      .changeSettings(NotificationSettings(groupId, displayType, false, false, true))
     Disposer.register(testDisposable) { NotificationsConfigurationImpl.remove(groupId) }
   }
 
