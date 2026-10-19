@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
@@ -257,6 +258,13 @@ open class EditorsSplitters internal constructor(
    */
   private var startupPresentationHoldTaken: Boolean = false
 
+  /**
+   * Set when startup finds no editor state to restore (see [markNoEditorsToRestore]).
+   *
+   * The release of the last startup hold then reports the empty state, because no restore reports it.
+   */
+  private var noEditorsToRestore: Boolean = false
+
   private val splittersLayout: EditorsSplittersLayout
     get() = layout as EditorsSplittersLayout
 
@@ -374,6 +382,32 @@ open class EditorsSplitters internal constructor(
     }
     enableRichEmptyStateComponents()
     applyStartupPresentationHolds()
+    if (startupPresentationHolds == 0) {
+      logEmptyStateIfNoEditorsWereRestored()
+    }
+  }
+
+  /**
+   * Reports that startup found no editor state to restore.
+   *
+   * Call it under the startup hold, before project open releases it.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  internal fun markNoEditorsToRestore() {
+    noEditorsToRestore = true
+  }
+
+  /**
+   * Reports the empty state once, when startup restored no editors and project open opened none of its own.
+   */
+  private fun logEmptyStateIfNoEditorsWereRestored() {
+    if (!noEditorsToRestore) {
+      return
+    }
+    noEditorsToRestore = false
+    if (EditorEmptyTextPainter.isEnabled() && showEmptyText()) {
+      FileEditorCollector.logEditorEmptyState(manager.project, EmptyStateCause.NO_EDITORS_TO_RESTORE)
+    }
   }
 
   /**
@@ -431,6 +465,7 @@ open class EditorsSplitters internal constructor(
     startupPresentationHolds = 0
     startupPresentationAbandoned = false
     startupPresentationHoldTaken = false
+    noEditorsToRestore = false
     applyStartupPresentationHolds()
   }
 

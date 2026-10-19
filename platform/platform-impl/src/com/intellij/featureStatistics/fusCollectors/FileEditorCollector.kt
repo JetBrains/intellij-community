@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -11,14 +12,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 object FileEditorCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("file.editor", 6)
+  private val GROUP = EventLogGroup("file.editor", 7)
   private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")
   private val ALTERNATIVE_FILE_EDITOR_SELECTED = GROUP.registerVarargEvent("alternative.file.editor.selected",
                                                                            FILE_EDITOR_FIELD,
                                                                            EventFields.AnonymizedPath,
                                                                            EventFields.PluginInfo)
-  private val EDITOR_EMPTY_STATE_SHOWN = GROUP.registerEvent("file.editor.empty.state.shown",
-                                                             EventFields.Enum<EmptyStateCause>("empty_state_cause"))
+  private val EMPTY_STATE_CAUSE_FIELD = EventFields.Enum<EmptyStateCause>("empty_state_cause")
+  private val EDITOR_EMPTY_STATE_SHOWN = GROUP.registerVarargEvent("file.editor.empty.state.shown",
+                                                                   EMPTY_STATE_CAUSE_FIELD,
+                                                                   EventFields.Projectless)
   private val EDITOR_MARKUP_RESTORED = GROUP.registerEvent("file.editor.markup.restored",
                                                            EventFields.AnonymizedPath,
                                                            EventFields.Enum<MarkupGraveEvent>("markup_grave_event"),
@@ -32,7 +35,7 @@ object FileEditorCollector : CounterUsagesCollector() {
   }
 
   fun logEditorEmptyState(project: Project, cause: EmptyStateCause) {
-    EDITOR_EMPTY_STATE_SHOWN.log(project, cause)
+    EDITOR_EMPTY_STATE_SHOWN.log(project, listOfNotNull(EMPTY_STATE_CAUSE_FIELD.with(cause), ProjectlessData.forProject(project)))
   }
 
   fun logEditorMarkupGrave(project: Project, file: VirtualFile, graveEvent: MarkupGraveEvent, restoredCount: Int) {
@@ -45,6 +48,7 @@ object FileEditorCollector : CounterUsagesCollector() {
     ALL_TABS_CLOSED,
     PROJECT_OPENED,
     CONTEXT_RESTORED,
+    NO_EDITORS_TO_RESTORE,
   }
 
   enum class MarkupGraveEvent {

@@ -5,6 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardGestureAction
@@ -661,6 +662,59 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
+  fun releasingTheStartupHoldWithNoEditorsToRestoreLogsTheEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    maskProjectFrameCapabilities(setOf(ProjectFrameCapability.WELCOME_EXPERIENCE), disposable)
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.markNoEditorsToRestore()
+
+    val events = collectEmptyStateEvents(disposable) {
+      splitters.endStartupEmptyStatePresentationHold()
+    }
+
+    assertThat(events).containsExactly(mapOf("empty_state_cause" to "NO_EDITORS_TO_RESTORE", "projectless" to true))
+  }
+
+  @Test
+  fun anEditorOpenedDuringTheStartupHoldWithNoEditorsToRestoreLogsNoEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.markNoEditorsToRestore()
+    manager.openFile(LightVirtualFile("empty-state-no-editors-to-restore.txt", "content"), false)
+
+    val events = collectEmptyStateEvents(disposable) {
+      splitters.endStartupEmptyStatePresentationHold()
+    }
+
+    assertThat(events).isEmpty()
+  }
+
+  @Test
+  fun theEmptyStateWithNoEditorsToRestoreIsLoggedOnlyWhenTheLastStartupHoldIsReleased(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    maskProjectFrameCapabilities(emptySet(), disposable)
+    // project open and a file named on the command line take one hold each
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.markNoEditorsToRestore()
+
+    var eventsAfterFirstRelease = -1
+    val events = collectEmptyStateEvents(disposable) { emptyStateEvents ->
+      splitters.endStartupEmptyStatePresentationHold()
+      eventsAfterFirstRelease = emptyStateEvents().size
+      splitters.endStartupEmptyStatePresentationHold()
+      // a release with no hold left to pair with must not log the empty state again
+      splitters.endStartupEmptyStatePresentationHold()
+    }
+
+    assertThat(eventsAfterFirstRelease).isZero()
+    assertThat(events).containsExactly(mapOf("empty_state_cause" to "NO_EDITORS_TO_RESTORE", "projectless" to false))
+  }
+
+  @Test
   fun theStartupHoldDoesNotHoldBackTheFallbackEmptyText(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     registerEmptyTextProvider(disposable)
@@ -1174,6 +1228,26 @@ internal class EditorEmptyTextPainterTest {
     assertThat(focusRequests).isEmpty()
     assertThat(handedBack).hasValue(0)
     assertThat(splitters.isEmptyStateFocusRequestPending()).isFalse()
+  }
+
+  /**
+   * Returns the cause and the projectless value of each `file.editor.empty.state.shown` event that [action] logs.
+   *
+   * [action] gets a function that returns the events logged so far.
+   */
+  private fun collectEmptyStateEvents(
+    disposable: Disposable,
+    action: (emptyStateEvents: () -> List<Map<String, Any?>>) -> Unit,
+  ): List<Map<String, Any?>> {
+    val logged = CopyOnWriteArrayList<Map<String, Any?>>()
+    FUCollectorTestCase.listenForEvents("FUS", disposable, { event ->
+      if (event.group.id == "file.editor" && event.event.id == "file.editor.empty.state.shown") {
+        logged.add(event.event.data.filterKeys { it == "empty_state_cause" || it == "projectless" })
+      }
+    }) {
+      action { logged.toList() }
+    }
+    return logged.toList()
   }
 
   private fun maskProjectFrameCapabilities(capabilities: Set<ProjectFrameCapability>, disposable: Disposable) {

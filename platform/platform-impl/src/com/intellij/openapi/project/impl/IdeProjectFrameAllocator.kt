@@ -778,6 +778,7 @@ private suspend fun restoreEditors(
       }
       if (editorState == null) {
         // there is nothing to restore, so preparation may start at once
+        editorComponent.markNoEditorsToRestore()
         editorComponent.finishStartupEditorRestore()
       }
     }
