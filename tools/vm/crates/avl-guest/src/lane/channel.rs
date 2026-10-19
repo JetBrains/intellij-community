@@ -4,11 +4,12 @@
 //! [`avl_wire::daemon::PROTOCOL_VERSION`]: the routes of [`avl_wire::daemon::match_route`], the token of the state file
 //! in `X-Air-Daemon-Token`, one run at a time, and a chunked NDJSON stream on `/run`.
 //!
-//! At its boot the verb reads the launch inputs from the runtime descriptor, makes its directories, empties its jar
-//! store, binds the channel, and then publishes the state file `daemon.json`: a temporary file with the mode 0600,
-//! renamed. The boot poll of the controller reads it. The lane services and the lane IDE belong to the [`IdeOwner`].
-//! `/shutdown` refuses new runs, waits for the run in flight up to [`WEDGE_GRACE`], closes the lane services, and
-//! leaves the IDE running. A run that outlives the grace ends the verb with [`EXIT_WEDGED`].
+//! At its boot the verb reads the launch inputs from the runtime descriptor. On a Linux guest it then proves the shared
+//! objects of the distribution. It makes its directories, empties its jar store, binds the channel, and then publishes
+//! the state file `daemon.json`: a temporary file with the mode 0600, renamed. The boot poll of the controller reads
+//! it. The lane services and the lane IDE belong to the [`IdeOwner`]. `/shutdown` refuses new runs, waits for the run
+//! in flight up to [`WEDGE_GRACE`], closes the lane services, and leaves the IDE running. A run that outlives the grace
+//! ends the verb with [`EXIT_WEDGED`].
 
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
@@ -31,7 +32,9 @@ use super::services::http::{Request, Response};
 use super::services::{Handler, Service};
 use super::watchdog::Watch;
 use crate::cli::LaneDaemonArgs;
+use crate::linux::validate::check_shared_objects;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
+use crate::step::{Runner, SystemRunner};
 
 #[cfg(test)]
 mod tests;
@@ -226,6 +229,7 @@ impl Daemon {
 /// environment.
 pub(crate) fn serve(args: &LaneDaemonArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
     let inputs = inputs::read(args)?;
+    prove_shared_objects(&inputs, &mut SystemRunner, cfg!(target_os = "linux"))?;
     let daemon = Arc::new(boot(args, inputs, variable)?);
     let channel = bind(&daemon, SocketAddr::new(args.bind, args.port))?;
     publish_state_file(&daemon, channel.address().port())?;
@@ -247,6 +251,26 @@ pub(crate) fn serve(args: &LaneDaemonArgs, variable: &dyn Fn(&str) -> Option<Str
     drop(channel);
     log("shut down; the lane IDE keeps running");
     Ok(0)
+}
+
+/// Proves on a Linux guest that the guest has each library that a shared object of the distribution links against.
+/// It runs [`check_shared_objects`] over the distribution home before the boot makes anything. A missing library
+/// refuses the boot with `linux_shared_object_unresolved`. The log names how many objects `ldd` read and how long the
+/// sweep took. `lane-run` runs the same sweep in its host probe, so it does not call this.
+///
+/// `linux` is false on a macOS guest, and then the boot sweeps nothing.
+pub(crate) fn prove_shared_objects(inputs: &LaunchInputs, runner: &mut impl Runner, linux: bool) -> Result<(), AgentRefusal> {
+    if !linux {
+        return Ok(());
+    }
+    let started = Instant::now();
+    let swept = check_shared_objects(runner, &inputs.dist_home)?;
+    log(&format!(
+        "ldd read {swept} shared objects of {} in {} ms, and none needs a library that the guest does not have",
+        inputs.dist_home.display(),
+        started.elapsed().as_millis()
+    ));
+    Ok(())
 }
 
 /// The daemon of `args` over an empty jar store and a fresh state file.

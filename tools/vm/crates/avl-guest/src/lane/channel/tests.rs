@@ -11,6 +11,8 @@ use tempfile::TempDir;
 
 use super::*;
 use crate::lane::services::testing::{Answer, call};
+use crate::linux::validate::SHARED_OBJECT_UNRESOLVED_CODE;
+use crate::step::tests_support::Transcript;
 
 const LAUNCH_DIGEST: &str = "launch-1";
 
@@ -99,6 +101,41 @@ fn the_boot_makes_the_directories_of_the_run_readable_only_by_its_account() {
         assert_eq!(mode(directory), 0o700, "{}", directory.display());
     }
     assert_eq!(mode(&scratch), 0o755, "the boot changed the mode of a directory that exists");
+}
+
+// On a Linux guest the boot of the lane daemon runs `ldd` over each shared object of the distribution. A library that
+// the guest does not have refuses the boot with the code of the sweep, and the refusal names the object and the
+// library. A library that the guest has passes. On a macOS guest the boot runs no `ldd`.
+#[test]
+fn the_boot_on_a_linux_guest_refuses_a_distribution_whose_library_is_missing() {
+    let root = TempDir::new().unwrap();
+    let inputs = inputs(root.path());
+    let skiko = inputs.dist_home.join("lib/libskiko-linux-arm64.so");
+    fs::create_dir_all(skiko.parent().unwrap()).unwrap();
+    fs::write(&skiko, "\x7fELF").unwrap();
+    fs::write(inputs.dist_home.join("lib/app.jar"), "not a shared object").unwrap();
+    let ldd = format!("ldd {}", skiko.display());
+    let mut guest = Transcript::default();
+    guest.answers.insert(ldd.clone(), "\tlibEGL.so.1 => not found\n".to_owned());
+
+    let refusal = prove_shared_objects(&inputs, &mut guest, true).unwrap_err();
+
+    assert_eq!(refusal.code, SHARED_OBJECT_UNRESOLVED_CODE);
+    assert!(
+        refusal.message.contains(&format!("{} needs libEGL.so.1", skiko.display())),
+        "{}",
+        refusal.message
+    );
+    assert_eq!(guest.lines(), std::slice::from_ref(&ldd));
+
+    guest
+        .answers
+        .insert(ldd, "\tlibEGL.so.1 => /lib/aarch64-linux-gnu/libEGL.so.1 (0x0000ffff)\n".to_owned());
+    prove_shared_objects(&inputs, &mut guest, true).unwrap();
+
+    let mut macos = Transcript::default();
+    prove_shared_objects(&inputs, &mut macos, false).unwrap();
+    assert!(macos.steps.is_empty(), "{:?}", macos.lines());
 }
 
 impl Booted {

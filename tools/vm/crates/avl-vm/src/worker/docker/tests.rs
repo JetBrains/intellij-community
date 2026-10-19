@@ -631,16 +631,13 @@ fn the_guest_packages_cover_the_display_and_the_ides_own_native_dependencies() {
     );
 }
 
-// Positional contract with the guest agent's `validate-guest`: the display, then the runtime root whose shared
-// objects it sweeps. Not the IDE root, where nothing is staged and the sweep would find nothing on every boot.
+// Positional contract with the guest agent's `validate-guest`: the display alone. No root of shared objects follows
+// it, because the lane daemon sweeps the shared objects of its distribution at its own boot.
 #[test]
 fn the_validate_argv_passes_what_the_guest_is_checked_against() {
     let fixture = Fixture::docker();
     let argv = validate_argv(&fixture.settings);
-    assert_eq!(
-        argv,
-        [fixture.settings.guest_display.clone(), fixture.settings.guest_runtime_root()]
-    );
+    assert_eq!(argv, std::slice::from_ref(&fixture.settings.guest_display));
     for word in &argv {
         assert!(!GUEST_PACKAGES.contains(&word.as_str()), "the package list leaked in: {argv:?}");
         assert!(!word.contains("node"), "the self-check is told about a Node: {argv:?}");

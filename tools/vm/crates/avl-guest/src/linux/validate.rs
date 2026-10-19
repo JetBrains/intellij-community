@@ -1,16 +1,22 @@
 //! `validate-guest`: proving a Linux worker can run a UI lane, before a lane discovers it cannot.
 //!
 //! Runs as root on every boot of a Docker worker, after the agent install. Every check exists because its absence was
-//! quiet: a worker whose C library is not the one the JBR is built against, whose X server never came up, whose
-//! window manager never registered, or whose runtime cannot resolve one shared object still accepts a run. The
-//! display failure surfaces minutes later as an IDE that cannot open a window, and the missing `.so` as one SEVERE
-//! `Failed to preload Skiko` line in `idea.log` that nobody reads while the lane goes on measuring nothing.
+//! quiet: a worker whose C library is not the one the JBR is built against, whose X server never came up, or whose
+//! window manager never registered still accepts a run. The display failure surfaces minutes later as an IDE that
+//! cannot open a window.
+//!
+//! # The sweep of the shared objects
+//!
+//! [`check_shared_objects`] runs `ldd` over the shared objects of a distribution. A missing `.so` is quiet too: it is
+//! one SEVERE `Failed to preload Skiko` line in `idea.log`, and the lane goes on. `validate-guest` does not run the
+//! sweep, because the boot of a worker does not know the distribution of a run. The lane daemon runs it over its
+//! distribution at its own boot on a Linux guest, and `lane-run` runs it in [`GuestValidator::probe_host`].
 //!
 //! # What it does not hold
 //!
 //! **No package list and no soname-to-package mapping.** The controller's `GUEST_PACKAGES` does not arrive here. This
-//! verb reads what the guest *has*: the C library, the display, and the shared objects under the staged runtime
-//! root. A package added to that list is covered here without being named here twice.
+//! verb reads what the guest *has*: the C library and the display. The sweep reads the shared objects of the
+//! distribution. A package added to that list is covered here without being named here twice.
 //!
 //! **No Node check.** The Docker image installs the pinned Node. The image tag is a digest over the Dockerfile, so
 //! the pin is the proof.
@@ -51,6 +57,13 @@ const LANE_SCREEN: (u32, u32) = (1920, 1080);
 
 /// The start of every refusal of [`GuestValidator::probe_host`], so a TeamCity log names the host and not a worker.
 const HOST_REFUSAL: &str = "this host cannot run the lane IDE";
+
+/// The refusal code of a shared object whose library the guest does not have. The sweep of the lane daemon and the
+/// probe of `lane-run` give the same code.
+pub(crate) const SHARED_OBJECT_UNRESOLVED_CODE: &str = "linux_shared_object_unresolved";
+
+/// The refusal code of a distribution that exists and that the sweep cannot read.
+pub(crate) const DISTRIBUTION_UNREADABLE_CODE: &str = "linux_distribution_unreadable";
 
 /// The marker `ldd` prints for a dependency it could not resolve, matched as a substring of the line: that is the
 /// method the guide tells an operator to run by hand, so the check and the manual procedure cannot disagree.
@@ -99,12 +112,6 @@ pub(crate) struct GuestReport {
     /// How many passes the two hops took before one answered: 1 on a warm worker, more on a first boot - the only
     /// number that says how close a boot came to the budget.
     pub window_manager_probes: u32,
-    /// How many objects under the runtime root `ldd` read.
-    pub shared_objects: usize,
-    /// The first boot's answer: nothing is staged yet. Present rather than silent, because a sweep of an empty tree
-    /// and a sweep that found no problems are the same success and only this field tells them apart.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub note: Option<String>,
 }
 
 /// One window-manager observation that is not a live window manager.
@@ -115,13 +122,9 @@ enum WindowManager {
     Refused(AgentRefusal),
 }
 
-/// The guest as this verb reads it: two values it was told, the loaders' paths, and the runner. The filesystem
-/// sweep walks a real directory, because "which files under this root look like shared objects" is a question a
-/// temporary directory answers more honestly than a table would.
+/// The guest as this verb reads it: the display it was told, the loaders' paths, and the runner.
 pub(crate) struct GuestValidator<R> {
     display: String,
-    /// Where staged daemon runtime generations live (`config.Config.GuestRuntimeRoot`).
-    runtime_root: PathBuf,
     pub loaders: LoaderPaths,
     pub runner: R,
 }
@@ -130,7 +133,6 @@ impl<R: Runner> GuestValidator<R> {
     pub(crate) fn new(args: &ValidateGuestArgs, runner: R) -> Self {
         Self {
             display: args.display.clone(),
-            runtime_root: args.runtime_root.clone(),
             loaders: LoaderPaths::default(),
             runner,
         }
@@ -139,9 +141,9 @@ impl<R: Runner> GuestValidator<R> {
     /// Answers what the worker is, or the first way in which it cannot run a lane.
     ///
     /// Dependency-first: the C library every other check's own program is linked against, then the display, then
-    /// the window manager on it, then the filesystem sweep. **The C library is first because a guest without it
-    /// cannot run `xdpyinfo` either**, and before this check such a guest refused `linux_display_not_answering` -
-    /// naming Xvfb for a fault in the loader.
+    /// the window manager on it. **The C library is first because a guest without it cannot run `xdpyinfo`
+    /// either**, and before this check such a guest refused `linux_display_not_answering` - naming Xvfb for a fault
+    /// in the loader.
     pub(crate) fn validate(&mut self) -> Result<GuestReport, AgentRefusal> {
         let glibc = self.check_glibc()?;
         // Not "the unit is active": an Xvfb that is still starting and one that died on a bad `-screen` are both
@@ -157,31 +159,35 @@ impl<R: Runner> GuestValidator<R> {
             )
         })?;
         let (window_manager, window_manager_probes) = self.await_window_manager()?;
-        let (shared_objects, note) = self.check_shared_objects()?;
         Ok(GuestReport {
             glibc,
             display: self.display.clone(),
             window_manager,
             window_manager_probes,
-            shared_objects,
-            note,
         })
     }
 
     /// Proves a host that no controller prepared, such as a TeamCity agent, before `lane-run` starts the lane IDE, and
     /// answers the notes of the probe.
     ///
-    /// It runs [`Self::validate`] with the runtime root at the distribution. So a host whose display does not answer,
-    /// which has no window manager, or which cannot resolve a shared object of the distribution is refused with the
-    /// code of the same check of a worker. Then it needs `git` on the PATH, because the merge-conflict and worktree
-    /// scenarios spawn it. A screen smaller than the one of a lane guest is a note and not a refusal.
-    pub(crate) fn probe_host(&mut self) -> Result<Vec<String>, AgentRefusal> {
+    /// It runs [`Self::validate`], and then [`check_shared_objects`] over `distribution`. So a host whose display does
+    /// not answer, which has no window manager, or which cannot resolve a shared object of the distribution is refused
+    /// with the code of the same check of a worker. Then it needs `git` on the PATH, because the merge-conflict and
+    /// worktree scenarios spawn it. A screen smaller than the one of a lane guest is a note and not a refusal. A
+    /// distribution without a shared object is a note too.
+    pub(crate) fn probe_host(&mut self, distribution: &Path) -> Result<Vec<String>, AgentRefusal> {
         let on_host = |mut refusal: AgentRefusal| {
             refusal.message = format!("{HOST_REFUSAL}: {}", refusal.message);
             refusal
         };
-        let report = self.validate().map_err(on_host)?;
-        let mut notes: Vec<String> = report.note.into_iter().collect();
+        self.validate().map_err(on_host)?;
+        let mut notes = Vec::new();
+        if check_shared_objects(&mut self.runner, distribution).map_err(on_host)? == 0 {
+            notes.push(format!(
+                "the distribution {} holds no shared object, so ldd checked nothing",
+                distribution.display()
+            ));
+        }
         let screen = self
             .runner
             .run(&on_display(Step::new([XDPYINFO_TOOL]).capture(), &self.display))
@@ -326,77 +332,72 @@ impl<R: Runner> GuestValidator<R> {
             ))),
         }
     }
+}
 
-    /// Refuses a guest that cannot resolve something the staged runtime links against, by the method that found
-    /// the gap: `ldd` over the runtime's *own* shared objects, reading the lines it marks `not found`. Measured on
-    /// `air-linux-1` on 2026-08-19: `libEGL.so.1` is what `libskiko-linux-arm64.so` needs, and five more are what
-    /// `libcef.so` and `libjcef.so` need.
-    ///
-    /// The runtime root and not the IDE root: the IDE root is empty in production, which made the check inert
-    /// until 2026-08-27. One root rather than `/`, which would spend minutes against libraries no lane loads.
-    fn check_shared_objects(&mut self) -> Result<(usize, Option<String>), AgentRefusal> {
-        let libraries = find_shared_objects(&self.runtime_root).map_err(|error| {
-            AgentRefusal::refused(
-                "linux_runtime_root_unreadable",
-                format!(
-                    "the staged runtime root {} could not be swept for shared objects: {error}",
-                    self.runtime_root.display()
-                ),
-            )
-        })?;
-        let shipped = shipped_sonames(&libraries);
-        let mut unresolved = Vec::new();
-        for library in &libraries {
-            // `ldd`'s own exit status is deliberately not read: it fails for a file that is not an ELF object, and
-            // a `.so`-named file that is not one is not this check's business. Only a resolvable object produces
-            // the `not found` lines this reads.
-            let path = library.to_string_lossy();
-            let output = self.runner.run(&Step::new([LDD_TOOL, &path]).capture()).unwrap_or_default();
-            let missing: Vec<String> = unresolved_sonames(&output)
-                .into_iter()
-                .filter(|soname| !shipped.contains(soname))
-                .collect();
-            if !missing.is_empty() {
-                unresolved.push(format!("{path} needs {}", missing.join(" ")));
-            }
+/// Refuses a guest that cannot resolve a library of a shared object of `distribution`, and answers how many objects
+/// `ldd` read.
+///
+/// It runs `ldd` over each shared object of the distribution and reads the lines that `ldd` marks `not found`. This is
+/// the method that found the gap. On `air-linux-1` on 2026-08-19, `libskiko-linux-arm64.so` needed `libEGL.so.1`, and
+/// `libcef.so` and `libjcef.so` needed five more. The distribution holds the JBR, JCEF and Skiko, so it is the root of
+/// the sweep. The sweep does not read `/`, because there it spends minutes on libraries that no lane loads.
+///
+/// A distribution without a shared object answers 0, and the caller decides what that means.
+pub(crate) fn check_shared_objects<R: Runner>(runner: &mut R, distribution: &Path) -> Result<usize, AgentRefusal> {
+    let libraries = find_shared_objects(distribution).map_err(|error| {
+        AgentRefusal::refused(
+            DISTRIBUTION_UNREADABLE_CODE,
+            format!(
+                "the distribution {} could not be swept for shared objects: {error}",
+                distribution.display()
+            ),
+        )
+    })?;
+    let shipped = shipped_sonames(&libraries);
+    let mut unresolved = Vec::new();
+    for library in &libraries {
+        // `ldd`'s own exit status is deliberately not read: it fails for a file that is not an ELF object, and a
+        // `.so`-named file that is not one is not this check's business. Only a resolvable object produces the
+        // `not found` lines this reads.
+        let path = library.to_string_lossy();
+        let output = runner.run(&Step::new([LDD_TOOL, &path]).capture()).unwrap_or_default();
+        let missing: Vec<String> = unresolved_sonames(&output)
+            .into_iter()
+            .filter(|soname| !shipped.contains(soname))
+            .collect();
+        if !missing.is_empty() {
+            unresolved.push(format!("{path} needs {}", missing.join(" ")));
         }
-        if !unresolved.is_empty() {
-            let hidden = unresolved.len().saturating_sub(MAX_REPORTED_UNRESOLVED);
-            let suffix = if hidden > 0 {
-                format!(" (and {hidden} more)")
-            } else {
-                String::new()
-            };
-            unresolved.truncate(MAX_REPORTED_UNRESOLVED);
-            return Err(AgentRefusal::refused(
-                "linux_shared_object_unresolved",
-                format!(
-                    "shared objects the staged runtime links against are not found in this guest: {}{suffix}; add \
-                     the package that carries them to GUEST_PACKAGES in crates/avl-vm/src/worker/docker.rs",
-                    unresolved.join("; ")
-                ),
-            ));
-        }
-        if libraries.is_empty() {
-            return Ok((
-                0,
-                Some(format!(
-                    "no shared objects under {} yet, so nothing is staged on this worker to check ldd against",
-                    self.runtime_root.display()
-                )),
-            ));
-        }
-        Ok((libraries.len(), None))
     }
+    if !unresolved.is_empty() {
+        let hidden = unresolved.len().saturating_sub(MAX_REPORTED_UNRESOLVED);
+        let suffix = if hidden > 0 {
+            format!(" (and {hidden} more)")
+        } else {
+            String::new()
+        };
+        unresolved.truncate(MAX_REPORTED_UNRESOLVED);
+        return Err(AgentRefusal::refused(
+            SHARED_OBJECT_UNRESOLVED_CODE,
+            format!(
+                "shared objects of the distribution {} link against libraries that this guest does not have: \
+                 {}{suffix}; add the package that carries them to GUEST_PACKAGES in \
+                 crates/avl-vm/src/worker/docker.rs",
+                distribution.display(),
+                unresolved.join("; ")
+            ),
+        ));
+    }
+    Ok(libraries.len())
 }
 
 /// Every soname the swept tree carries a file for, by base name.
 ///
-/// **This makes the sweep usable against the real runtime root.** Measured on `air-linux-2` on 2026-08-27: of 96
-/// shared objects, 54 report exactly one `not found`, always `libjvm.so` - which is in the tree at
+/// **This makes the sweep usable against a real JBR.** Measured on `air-linux-2` on 2026-08-27: of 96 shared objects
+/// of a staged runtime, 54 report exactly one `not found`, always `libjvm.so` - which is in the tree at
 /// `jbr/lib/server/libjvm.so`. The JVM does not resolve it through the loader's search path either: the launcher
-/// loads it from `server/` itself. So a soname the tree ships is not a base-image gap. Tree-wide rather than per
-/// generation, deliberately the looser rule: every generation is a copy of one JBR.
+/// loads it from `server/` itself. So a soname the tree ships is not a base-image gap. The rule is tree-wide: a file
+/// anywhere in the distribution covers every object of it.
 ///
 /// What this cannot mask is the six sonames the check was written for: none is a file name in the tree (the JBR's
 /// SwiftShader object is the *unversioned* `libEGL.so`, while `libegl1` supplies `libEGL.so.1`).
@@ -408,13 +409,6 @@ fn shipped_sonames(libraries: &[PathBuf]) -> HashSet<String> {
         .collect()
 }
 
-/// Lists the shared objects under the runtime root (`*.so` and `*.so.*`, regular files only), in a stable order.
-///
-/// An absent root is not an error: a worker is provisioned before anything is staged, so on a first boot the empty
-/// answer is the correct one. A root that exists and cannot be *read* is an error, which is the one distinction the
-/// script's `2>/dev/null || true` threw away. Regular files only: the staged tree hardlinks and symlinks nothing,
-/// so a symlink would be `ldd`'d twice under two names. Sorted whole, so two boots of the same broken worker name
-/// the same objects under the cap.
 /// The width and the height of the first screen in the answer of `xdpyinfo`, from its `dimensions:    1920x1080 pixels`
 /// line.
 pub(crate) fn screen_dimensions(xdpyinfo: &str) -> Option<(u32, u32)> {
@@ -423,6 +417,13 @@ pub(crate) fn screen_dimensions(xdpyinfo: &str) -> Option<(u32, u32)> {
     Some((width.parse().ok()?, height.parse().ok()?))
 }
 
+/// Lists the shared objects below `root` (`*.so` and `*.so.*`, regular files only), in a stable order.
+///
+/// An absent root is not an error: it holds no shared object, and the answer is empty. A root that exists and cannot
+/// be *read* is an error, which is the one distinction the script's `2>/dev/null || true` threw away. A root that is
+/// a link is followed, as the distribution of a guest runfiles tree is one. Below the root, regular files only: a
+/// symlink would be `ldd`'d twice under two names. Sorted whole, so two boots of the same broken guest name the same
+/// objects under the cap.
 pub(crate) fn find_shared_objects(root: &Path) -> walkdir::Result<Vec<PathBuf>> {
     if !fs::metadata(root).is_ok_and(|info| info.is_dir()) {
         return Ok(Vec::new());

@@ -476,10 +476,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_boot_makes_the_directories_of_the_run_readable_only_by_its_account`)
 
-- A daemon start stages no runtime generation and removes none. It checks the free space of the guest in the phase
-  `free-space`, before the supervisor start. A full guest refuses the start with `guest_disk_full`.
+- A daemon start stages no runtime generation. In the phase `free-space`, the start first removes the directory
+  `daemon-runtime` of the guest data with one `rm -rf`. An older controller staged its runtime generations there. A
+  missing directory is no error, and a failed removal is a note. Then the start checks the free space of the guest,
+  before the supervisor start. A full guest refuses the start with `guest_disk_full`.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_guest_disk_refuses_the_start_before_the_supervisor_start`)
+  [@test] ../crates/avl-vm/src/daemon/space/tests.rs (`the_retired_runtime_generations_go_with_one_rm_and_a_failure_is_a_note`)
 
 - The run of the lane daemon starts in its state directory. Before the supervisor start, the daemon start makes that
   directory and the directory of the guest agent.
@@ -1019,9 +1022,17 @@ The daemon's half and the IDE's half of supervision are in
 
 - The self-check gives a separate code for each check which refuses. A display which does not answer, an
   absent window manager, and a stale window manager property are three of these codes. A C library which is not
-  glibc, and a shared object which the guest cannot find, are two more. The self-check has no Node check,
-  because the image tag pins the Node of the image.
+  glibc is one more. The self-check has no Node check, because the image tag pins the Node of the image. It has no
+  sweep of the shared objects, because the boot of a worker does not know the distribution of a run.
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs
+
+- The lane daemon on a Linux guest proves the shared objects of its distribution at its boot. It runs `ldd` over each
+  shared object below the distribution home. A library which the guest does not have refuses the boot with
+  `linux_shared_object_unresolved`, and the refusal names the object and the library. A lane daemon on a macOS guest
+  runs no `ldd`.
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_boot_on_a_linux_guest_refuses_a_distribution_whose_library_is_missing`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`the_sweep_refuses_a_shared_object_whose_library_the_guest_does_not_have`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_distribution_that_is_a_link_is_swept_through_the_link`)
 
 - The self-check waits for a window manager on the display. It probes once a second, for one minute. A window
   manager which registers in that time does not stop the boot. The
@@ -1030,8 +1041,8 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs
 
 - A verb of the guest agent refuses an argument which it cannot act on. That refusal is a usage refusal, and
-  the verb touches no guest before it. For the self-check, a display of the wrong shape, a relative runtime root,
-  and a trailing package list are such arguments.
+  the verb touches no guest before it. For the self-check, a display of the wrong shape, a second argument and a
+  trailing package list are such arguments. The retired runtime root is a second argument.
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs
 
 - A pull copies one guest file to the host. On a Tart worker and on a Docker worker, the `read-file` verb of the
@@ -1595,17 +1606,18 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 
 - Before the lane IDE starts, `lane-run` on a Linux host that no controller prepared proves the host. A TeamCity
   agent and a developer host are such hosts. `lane-run` skips the probe under `--plan-only` and on a worker, which
-  names the run secrets directory. The probe refuses a host without `DISPLAY`, and it runs the checks of
-  `validate-guest` with the distribution as the root of the shared objects. A host without an answering display, a
-  window manager or a library of the distribution is refused with the code of that check. The refusal names the host.
-  The probe then refuses a host without `git` with `lane_host_git_missing`. A screen smaller than 1920x1080 is a note in
-  the run stream, not a refusal.
+  names the run secrets directory. The probe refuses a host without `DISPLAY`. It runs the checks of `validate-guest`,
+  and then the sweep of the shared objects of the distribution. A host without an answering display, a window manager
+  or a library of the distribution is refused with the code of that check. The refusal names the host. The probe then
+  refuses a host without `git` with `lane_host_git_missing`. A screen smaller than 1920x1080 and a distribution
+  without a shared object are notes in the run stream, not refusals.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_linux_run_on_a_host_that_no_controller_prepared_probes_the_host`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_host_without_a_display_is_refused_by_name`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_that_has_what_the_lane_ide_needs_passes_the_probe_with_no_note`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_without_a_window_manager_or_a_library_is_refused_with_the_code_of_the_guest_check`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_host_without_git_is_refused_by_name`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_smaller_screen_is_a_note_and_not_a_refusal`)
+  [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_distribution_without_a_shared_object_sweeps_nothing_and_the_probe_notes_it`)
 
 - The budget of a `lane-run` is the smaller of `--run-budget-sec` and `$TEST_TIMEOUT` of a Bazel test, less a
   teardown reserve of 180 s. A run that names neither has no budget. A `$TEST_TIMEOUT` that is no whole number is

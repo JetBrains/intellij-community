@@ -174,14 +174,13 @@ pub(crate) const GUEST_PACKAGES: &[&str] = &[
     // No video encoder: `air-trace-record` encodes the per-scenario video itself.
 ];
 
-/// What the guest agent's `validate-guest` verb is told: the display, and the runtime root whose shared objects it
-/// runs `ldd` over.
+/// What the guest agent's `validate-guest` verb is told: the display alone.
 ///
-/// Neither is the package list: the validator reads what the guest *has*, and one handed the list would need a
-/// soname-to-package mapping to use it. The root is [`Config::guest_runtime_root`], where the JBR and JCEF are, not
-/// the IDE root, where nothing is staged and the sweep would find nothing on every boot.
+/// It is not the package list: the validator reads what the guest *has*, and one handed the list would need a
+/// soname-to-package mapping to use it. The verb sweeps no shared object. The lane daemon runs `ldd` over the shared
+/// objects of its distribution at its own boot, because the boot of a worker does not know the distribution of a run.
 pub(crate) fn validate_argv(settings: &Config) -> Vec<String> {
-    vec![settings.guest_display.clone(), settings.guest_runtime_root()]
+    vec![settings.guest_display.clone()]
 }
 
 /// The build argument that carries [`GUEST_PACKAGES`]. The Dockerfile must read it, and a unit test holds it to that.

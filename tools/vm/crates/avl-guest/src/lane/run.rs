@@ -339,7 +339,8 @@ pub(crate) fn budget_problem(events: &[RunEvent], budget: Option<Duration>, vari
 
 /// Whether lane-run proves the host before the lane IDE starts: on Linux, for a run that launches an IDE, on a host that
 /// no controller prepared, such as a TeamCity agent or a developer host. The controller names the run secrets
-/// directory for its workers alone, and `validate-guest` proved such a worker at its boot, so a run there pays nothing.
+/// directory for its workers alone. `validate-guest` proved the display of such a worker at its boot, and the lane
+/// daemon of the worker proves the shared objects of its distribution at its own boot. So a run there pays nothing.
 pub(crate) fn host_probe_applies(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
     linux && !args.plan_only && variable(RUN_SECRETS_VARIABLE).is_none_or(|value| value.trim().is_empty())
 }
@@ -360,9 +361,8 @@ pub(crate) fn host_display(variable: &dyn Fn(&str) -> Option<String>) -> Result<
 fn probe_host(inputs: &LaunchInputs, variable: &dyn Fn(&str) -> Option<String>) -> Result<Vec<String>, AgentRefusal> {
     let probe = ValidateGuestArgs {
         display: host_display(variable)?,
-        runtime_root: inputs.dist_home.clone(),
     };
-    GuestValidator::new(&probe, SystemRunner).probe_host()
+    GuestValidator::new(&probe, SystemRunner).probe_host(&inputs.dist_home)
 }
 
 /// The refusal code of a plan whose documents do not select.

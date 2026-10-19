@@ -161,10 +161,14 @@ environment of the guest agent. The agent's `ide-launch` refuses `ide_display_mi
 environment has no `DISPLAY`. So every IDE of a lane reuses one display. A server image also carries none of the shared
 libraries the IDE's own native code links against. `GUEST_PACKAGES` names them, and their absence is quiet.
 
-So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless four things
-hold. The C library is glibc, the display answers, a window manager is registered on it, and `ldd`
-resolves every staged shared object. Each refusal carries its own code and sentence.
+So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless three things
+hold. The C library is glibc, the display answers, and a window manager is registered on it. Each refusal
+carries its own code and sentence.
 [ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) is why.
+
+The lane daemon proves the shared objects at its own boot. It runs `ldd` over each shared object of its
+distribution. A library that the guest does not have refuses the boot of the lane daemon with
+`linux_shared_object_unresolved`.
 
 The image carries Node 24.19.0 at `/usr/local/bin/node`, and `AIR_VM_NODE` defaults to that path. The
 image tag pins the Node, so a boot runs no Node check ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). Only `ui-live` uses the guest Node.
@@ -480,7 +484,7 @@ Everything a worker writes lives under `$AIR_VM_DATA`, in eight directories and 
 | `tmp` | temporary files |
 | `build-download` | the persistent build-dependency cache |
 | `daemon` | the daemon's own state, the `home` that the lane IDE gets as `idea.dev.project.root`, and each iteration's results. The run of the lane daemon starts in this directory |
-| `daemon-runtime` | the stable-tier and JBR generations of an older controller. A daemon start writes nothing there |
+| `daemon-runtime` | the stable-tier and JBR generations of an older controller. Each daemon start removes the directory before its free-space check |
 | `state` | the supervisor run roots, the SSH host-key fingerprint, and the guest agent binary itself |
 
 `state` is where the controller's own

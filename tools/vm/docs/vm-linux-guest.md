@@ -366,11 +366,13 @@ each refusal names what it looked at and what it found:
 - the Node the run supervisor will be started with runs at the path the controller configured, not whatever
   is first on PATH — `linux_node_not_runnable`, which says why it matters: the supervisor's children are Node
   programs, so a guest without that binary fails as a bare `exit 127` from the only command that mattered;
-- and `ldd` finds nothing missing under the staged IDE root, which is where the JBR, JCEF and Skiko `.so`
-  files live, since `skiko.library.path` points inside the distribution. `linux_shared_object_unresolved`
-  names each object with the sonames it wanted, caps the list with a count of what it did not show, and says
-  where to add the package that carries them. A root that exists and cannot be *read* is
-  `linux_ide_root_unreadable` — the one distinction the script's `2>/dev/null || true` threw away.
+- and `ldd` found nothing missing under a root of shared objects. That sweep is not part of the boot now. The
+  lane daemon runs it at its own boot on a Linux guest, over the distribution that it launches. The JBR, JCEF
+  and Skiko `.so` files are there, because `skiko.library.path` points inside the distribution.
+  `linux_shared_object_unresolved` names each object with the sonames it wanted. It caps the list with a count
+  of what it did not show, and it says where to add the package that carries them. A distribution that exists and
+  cannot be *read* is `linux_distribution_unreadable`. That is the one distinction that the script's
+  `2>/dev/null || true` threw away.
 
 **Where the exit codes went.** The script answered its five failure classes with a numeric vocabulary of its
 own, because a guest *script* has no envelope to speak in and the host withholds every non-envelope shape of
@@ -380,13 +382,13 @@ manager's two say which of its two repairs an operator has, where one integer ha
 [ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) owns that argument, names the five
 numbers, and says why the history of them stays there.
 
-The validator holds no package list and no soname-to-package mapping — it is passed a display, a Node path
-and an IDE root, and none of the three is the list. `GUEST_PACKAGES` in
+The validator holds no package list and no soname-to-package mapping. It gets the display alone, and the
+display is not the list. `GUEST_PACKAGES` in
 `crates/avl-host-sys/src/guest/linux.rs` stays the single list; the validator reads what the guest *has*, so a package added there is covered here without
 being named here twice, and the mapping from `libEGL.so.1` to `libegl1` — the third copy that using the list
-would need — never exists. A fresh worker is provisioned before anything is staged into the IDE root, so a
-first boot's sweep finds nothing to read and says so in its report rather than passing quietly; it runs again
-on every boot, and a warm worker is checked against the IDE it actually holds.
+would need — never exists. The boot of a worker does not know the distribution of a run, so the
+lane daemon sweeps the shared objects at its own boot. Each boot of the lane daemon checks the distribution that
+its lane IDE loads.
 
 Established on the host, not in a VM, and the port widened that rather than replacing it. Where the script
 was exercised against stubbed `xdpyinfo`, `xprop`, `node`, `ldd` and `find`, the two verbs are exercised

@@ -16,8 +16,7 @@
 //! IDE, and it streams the records of each iteration.
 //!
 //! The image pair takes three named flags (`--macos-version --node-major --junie-version`), because the Packer
-//! template `air-macos.pkr.hcl` passes them by name. `validate-guest` takes a positional argv: a `:88` and an
-//! absolute path are two shapes no transposition survives.
+//! template `air-macos.pkr.hcl` passes them by name. `validate-guest` takes one positional argument, the X display.
 //!
 //! This crate is dispatch plus the verbs. The documents that cross to the host, and every verb's name, are declared
 //! in `avl-wire`, where the host reads the same declaration; the pack report is `avl-trace-tools`'. Of the crates of

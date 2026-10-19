@@ -242,14 +242,14 @@ async fn invoke_agent_runs_a_verb_under_the_account_its_caller_named() {
         .invoke_agent(
             AgentAccount::Root,
             AgentVerb::ValidateGuest,
-            &words([":88", "/data"]),
+            &words([":88"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap();
     assert_eq!(
         channel.lines()[0],
-        format!("/usr/bin/sudo -H {} validate-guest :88 /data", host.settings.vm_agent)
+        format!("/usr/bin/sudo -H {} validate-guest :88", host.settings.vm_agent)
     );
 }
 

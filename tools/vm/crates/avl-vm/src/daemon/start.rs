@@ -360,10 +360,14 @@ impl Host {
             ));
         }
         {
-            // This is the free-space check of a start. It comes before the lane daemon and its IDE write anything.
+            // This is the free-space check of a start. It comes before the lane daemon and its IDE write anything. The
+            // removal of the retired runtime generations comes first, so the check counts the space that they held. It
+            // is inside this phase, because the phase table is a contract.
             let (step, _phase) = ctx.begin("free-space");
-            self.require_guest_free_space(&self.guest(&step, channel), Some(&Scope::worker(worker)))
-                .await?;
+            let guest = self.guest(&step, channel);
+            let scope = Scope::worker(worker);
+            self.remove_retired_runtime_generations(&guest, Some(&scope)).await;
+            self.require_guest_free_space(&guest, Some(&scope)).await?;
         }
 
         let run_id = wire::run_id(&avl_base::new_id());

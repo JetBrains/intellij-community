@@ -1748,12 +1748,6 @@ impl Config {
         }
     }
 
-    /// Where staged daemon runtime generations live in the guest, one directory per digest: the JBR and JCEF, so
-    /// the one place on a worker where the shared objects the guest must resolve are.
-    pub fn guest_runtime_root(&self) -> String {
-        format!("{}/daemon-runtime", self.vm_data)
-    }
-
     /// Whether the guest has an Aqua session, TCC, and the rest of the macOS-only path.
     pub fn is_macos_guest(&self) -> bool {
         self.guest_os == GuestOs::Macos

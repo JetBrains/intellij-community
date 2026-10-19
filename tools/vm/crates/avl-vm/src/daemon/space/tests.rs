@@ -1,3 +1,4 @@
+use avl_host_sys::guest::user_argv;
 use avl_host_sys::{Captured, Ctx};
 use avl_host_testkit::{answer_exit, answer_text, handler, refusal, said};
 use pretty_assertions::assert_eq;
@@ -144,6 +145,30 @@ async fn pruning_chunks_the_removal_argv_at_fifty() {
     let removals = channel.calls_containing("/bin/rm -rf");
     let sizes: Vec<usize> = removals.iter().map(|removal| removal.matches("/vm/data/").count()).collect();
     assert_eq!(sizes, [50, 50, 18]);
+}
+
+// The removal of the retired runtime generations is one `rm -rf` of `<vmData>/daemon-runtime`, as the guest user who
+// wrote them. A missing directory is no error, because `rm -rf` answers 0 for it. A failed removal is a note that
+// names the directory and the worker, and not a refusal.
+#[tokio::test]
+async fn the_retired_runtime_generations_go_with_one_rm_and_a_failure_is_a_note() {
+    assert_eq!(RETIRED_RUNTIME_ROOT, "daemon-runtime");
+    let fixture = Fixture::new().await;
+    let ctx = Ctx::background();
+    let channel = fixture.channel();
+    let guest = fixture.host.guest(&ctx, channel.as_ref());
+    fixture.host.remove_retired_runtime_generations(&guest, None).await;
+    let root = guest_join(&fixture.settings.vm_data, RETIRED_RUNTIME_ROOT);
+    let wanted = user_argv(&fixture.settings, &words(["/bin/rm", "-rf", &root])).join(" ");
+    assert_eq!(channel.calls_containing("/bin/rm"), [wanted]);
+
+    fixture.on("rm", answer_exit(1));
+    fixture.stderr.clear();
+    fixture.host.remove_retired_runtime_generations(&guest, None).await;
+    let notes = fixture.stderr.text();
+    for fragment in [root.as_str(), fixture.worker.as_str(), "retired runtime generations"] {
+        assert!(notes.contains(fragment), "{fragment} is not in\n{notes}");
+    }
 }
 
 // A df the guest refuses to answer propagates: it is the guest's error, and nothing swallows it.

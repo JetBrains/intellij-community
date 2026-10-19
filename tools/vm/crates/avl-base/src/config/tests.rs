@@ -106,7 +106,6 @@ fn refuse(selection: Selection, environment: &Environment) -> Refusal {
 #[test]
 fn the_linux_defaults_are_the_documented_ones() {
     let config = load_on(HostOs::Linux, docker(), &env(&[]));
-    let guest_runtime_root = config.guest_runtime_root();
     let cases = [
         ("vm user", config.vm_user.as_str(), "admin"),
         ("vm home", &config.vm_home, "/home/admin"),
@@ -118,8 +117,6 @@ fn the_linux_defaults_are_the_documented_ones() {
             "/home/admin/WorkerData/build-download",
         ),
         ("vm node", &config.vm_node, "/usr/local/bin/node"),
-        // The root `validate-guest` sweeps with `ldd`, and the root the daemon stages a generation into.
-        ("guest runtime root", &guest_runtime_root, "/home/admin/WorkerData/daemon-runtime"),
         ("vm uid", &config.vm_uid, "1000"),
         ("guest display", &config.guest_display, ":88"),
         ("share mount", config.guest.share_mount, "/mnt/AirVmShares"),

@@ -237,17 +237,18 @@ fn the_image_pins_are_three_named_required_flags() {
     }
 }
 
-/// The Linux verb's positional shapes, checked before any step runs. The retired Tart Linux verbs are unknown.
+/// The Linux verb's positional shape, checked before any step runs: the display alone. The retired runtime root is
+/// refused, and so are the retired Tart Linux verbs.
 #[test]
 fn the_linux_verb_checks_its_positional_shapes() {
-    let Verb::ValidateGuest(validate) = parsed(&["validate-guest", ":88", "/data/daemon-runtime"]) else {
+    let Verb::ValidateGuest(validate) = parsed(&["validate-guest", ":88"]) else {
         panic!("validate-guest parsed as another verb");
     };
     assert_eq!(validate.display, ":88");
     let refused: [&[&str]; 6] = [
-        &["validate-guest", ":88"],
-        &["validate-guest", ":88x", "/data/daemon-runtime"],
-        &["validate-guest", ":88", "daemon-runtime"],
+        &["validate-guest"],
+        &["validate-guest", ":88x"],
+        &["validate-guest", ":88", "/data/daemon-runtime"],
         &["provision-guest", "/w", ":88", "admin", "/mnt", "xvfb"],
         &["stage-node", "/node", "/node.tar.gz", "24.19.0"],
         &["check-node", "/node/bin/node", "24"],

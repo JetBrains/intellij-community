@@ -236,8 +236,9 @@ fn an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name() {
 }
 
 // lane-run proves the host only where nothing proved it yet: on Linux, for a run that launches an IDE, and on a host
-// that no controller prepared. A worker of the controller names the run secrets directory, and validate-guest proved
-// that worker at its boot, so a run there pays nothing.
+// that no controller prepared. A worker of the controller names the run secrets directory. validate-guest proved the
+// display of that worker at its boot, and its lane daemon proves the shared objects of the distribution at its own
+// boot, so a run there pays nothing.
 #[test]
 fn only_a_linux_run_on_a_host_that_no_controller_prepared_probes_the_host() {
     let host = environment(&[]);

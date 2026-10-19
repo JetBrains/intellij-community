@@ -47,6 +47,13 @@ pub(crate) const GUEST_RECLAIMABLE_ARTIFACT_DIRS: [&str; 2] =
 /// exec channel would fail precisely on the worker that needed it most.
 const REMOVAL_CHUNK: usize = 50;
 
+/// The root of the retired runtime generations, a directory below the guest data directory.
+///
+/// An older controller staged one generation there for each runtime digest: the stable classpath tier and a copy of the
+/// JBR. One Linux stable tier was 852 MiB. No start writes there now. A persistent disk keeps the directory: the Docker
+/// volume across a recreate, and a Tart or Parallels disk until a recycle. So each start removes it.
+pub(crate) const RETIRED_RUNTIME_ROOT: &str = "daemon-runtime";
+
 /// The `Available` column of `df -k`, in bytes, or `None` when the output is not what is expected.
 ///
 /// `None` means "do not know", and every caller treats that as "do not block the run": a `df` that cannot be parsed
@@ -121,6 +128,28 @@ impl Host {
             guest.as_user(&argv, &SpawnOptions::within(PRUNE_TIMEOUT)).await?;
         }
         Ok(doomed.len())
+    }
+
+    /// Removes [`RETIRED_RUNTIME_ROOT`] of the guest with one `rm -rf`, as the guest user, who wrote it.
+    ///
+    /// The start calls it before its free-space check, so the check counts the space of the old generations. A missing
+    /// directory is no error. A failed removal is a note and not a refusal, because the free-space check that follows
+    /// decides whether the start can go on.
+    pub(crate) async fn remove_retired_runtime_generations(&self, guest: &Guest<'_>, scope: Option<&Scope>) {
+        let root = guest_join(&self.settings.vm_data, RETIRED_RUNTIME_ROOT);
+        let removed = guest
+            .as_user(&words(["/bin/rm", "-rf", &root]), &SpawnOptions::within(PRUNE_TIMEOUT))
+            .await;
+        if let Err(refusal) = removed {
+            self.reporter.note(
+                format!(
+                    "{} keeps the retired runtime generations in {root}: the removal failed: {}",
+                    guest.worker(),
+                    refusal.message
+                ),
+                scope,
+            );
+        }
     }
 
     /// Fails before writing rather than part-way through, and bounds what the last runs left.

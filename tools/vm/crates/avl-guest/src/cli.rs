@@ -36,7 +36,7 @@ pub(crate) struct Agent {
 }
 
 // One line per paragraph: clap wraps to the terminal.
-const AFTER_HELP: &str = "validate-guest takes its arguments positionally, and every one of them is required.
+const AFTER_HELP: &str = "validate-guest takes the X display as its one positional argument, and it is required.
 
 trace-pack-ready zips only the finished bundles that LEDGER does not name yet, or with --all every bundle that it \
 does not name, and adds them to LEDGER. When nothing is new it writes no zip.
@@ -95,7 +95,7 @@ pub(crate) enum Verb {
     ProvisionImage(ImagePins),
     /// Prove a finished macOS golden image.
     ValidateImage(ImagePins),
-    /// Prove a Linux worker: the display, the window manager and the shared objects of the runtime.
+    /// Prove a Linux worker: the C library, the display and the window manager.
     ValidateGuest(ValidateGuestArgs),
     /// Zip the trace bundles no earlier call packed.
     TracePackReady(TracePackReadyArgs),
@@ -318,8 +318,6 @@ pub(crate) struct ImagePins {
 pub(crate) struct ValidateGuestArgs {
     #[arg(value_parser = display)]
     pub display: String,
-    #[arg(value_parser = absolute_path)]
-    pub runtime_root: PathBuf,
 }
 
 // --- the trace verb -----------------------------------------------------------------------------------------
