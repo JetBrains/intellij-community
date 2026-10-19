@@ -184,7 +184,7 @@ fun <T> HttpResponse<out InputStream>.readBodyWithLoggingBlocking(
         logger.trace("$requestName : Response body: $body")
 
         ByteArrayInputStream(out).use {
-          reader(contentType.first, contentType.second)
+          it.reader(contentType.first, contentType.second)
         }
       }
       else {
