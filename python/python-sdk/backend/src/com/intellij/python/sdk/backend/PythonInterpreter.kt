@@ -4,6 +4,7 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.sdk.backend.impl.cachedPythonEnvironmentResult
 import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.python.sdk.common.PyEnvId
 import com.intellij.python.sdk.common.PyInterpreterRef
@@ -82,13 +83,21 @@ class NativePythonInterpreter internal constructor(
    * [pythonBinaryPath].
    */
   val pythonBinary: PythonBinary,
+  private val detectedOnBuild: PyResult<PythonEnvironment>,
+) : PythonInterpreter(sdk) {
+  override val ref: PyInterpreterRef = PyInterpreterRef(PyInterpreterRef.Mode.Native, env)
+
   /**
    * The detected environment: a failure when detection ran and failed, for example for a bad home path, else the
    * [PythonEnvironment] found.
+   *
+   * The last detection for the SDK wins over the detection when this interpreter was built. The registry and the
+   * project model keep one interpreter while the SDK stays in the table. A tool can recreate the environment on another
+   * Python in that time, and the SDK update then detects it again. Without this, every holder showed the old version
+   * until a restart (PY-93116).
    */
-  val environmentResult: PyResult<PythonEnvironment>,
-) : PythonInterpreter(sdk) {
-  override val ref: PyInterpreterRef = PyInterpreterRef(PyInterpreterRef.Mode.Native, env)
+  val environmentResult: PyResult<PythonEnvironment>
+    get() = sdk.cachedPythonEnvironmentResult() ?: detectedOnBuild
 
   /** The detected environment on success; `null` when [environmentResult] is a failure. */
   val pythonEnvironment: PythonEnvironment?

@@ -54,3 +54,10 @@ internal fun Sdk.enrichLocalPythonSdkWithHomeInfo(forceRefresh: Boolean = false)
     putUserData(PYTHON_ENVIRONMENT_RESULT_KEY, it)
   }
 }
+
+/**
+ * The last result that [enrichLocalPythonSdkWithHomeInfo] stored for this SDK, or `null` when it stored none.
+ *
+ * Reads no file, so any thread can call it.
+ */
+internal fun Sdk.cachedPythonEnvironmentResult(): PyResult<PythonEnvironment>? = getUserData(PYTHON_ENVIRONMENT_RESULT_KEY)
