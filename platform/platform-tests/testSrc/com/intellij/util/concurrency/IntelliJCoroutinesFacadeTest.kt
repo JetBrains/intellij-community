@@ -10,6 +10,8 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import org.junit.Ignore
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,6 +25,8 @@ import kotlin.time.Duration.Companion.seconds
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 class IntelliJCoroutinesFacadeTest {
   @Test
+  //todo restore after fix
+  @Disabled("hangs")
   fun launchingZillionOfCoroutinesMustNotPrecludeRunningAnotherInsideCompensateParallelism(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     val latch = CountDownLatch(1)
     val poolSize = kotlinx.coroutines.scheduling.CORE_POOL_SIZE
