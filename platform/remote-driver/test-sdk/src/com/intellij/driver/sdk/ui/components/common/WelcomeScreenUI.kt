@@ -18,11 +18,13 @@ import java.awt.Window
 import javax.swing.JTree
 
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
-  val nonModalWelcomeScreenEnabled = driver.new(
-    WelcomeAccessPointEpRef::class,
-    "com.intellij.platform.ide.welcomeScreenAccessPoint",
-    rdTarget = RdTarget.BACKEND,
-  ).getExtensionsIfPointIsRegistered().singleOrNull()?.isAvailable() == true
+  val nonModalWelcomeScreenEnabled = driver.withContext {
+    new(
+      WelcomeAccessPointEpRef::class,
+      "com.intellij.platform.ide.welcomeScreenAccessPoint",
+      rdTarget = RdTarget.BACKEND,
+    ).getExtensionsIfPointIsRegistered().singleOrNull()?.isAvailable() == true
+  }
 
   if (nonModalWelcomeScreenEnabled) {
     return nonModalWelcomeScreen(action)
