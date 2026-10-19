@@ -5,8 +5,6 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
@@ -15,6 +13,9 @@ import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.Declarative
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -59,22 +60,43 @@ class DeclarativeInlayHintsPass(
         continue
       }
 
+      val providerClass = provider.javaClass
+      val collector = runProviderOrLogError(providerClass) {
+        provider.createCollector(myFile, editor)
+      }.getOrElse {
+        // provider threw: skip it
+        continue
+      }
+
       val sink = InlayTreeSinkImpl(providerInfo.providerId, providerInfo.optionToEnabled, isPreview, isProviderDisabled,
-                                   provider.javaClass, passSourceId)
+                                   providerClass, passSourceId)
       sinks.add(sink)
-      when (val collector = createCollector(provider)) {
-        is OwnBypassCollector -> ownCollectors.add(CollectionInfo(sink, collector))
-        is SharedBypassCollector -> sharedCollectors.add(CollectionInfo(sink, collector))
+      when (val collector = collector) {
+        is OwnBypassCollector -> ownCollectors.add(CollectionInfo(sink, collector, providerClass))
+        is SharedBypassCollector -> sharedCollectors.add(CollectionInfo(sink, collector, providerClass))
         null -> {}
       }
     }
-    for ((sink, collector) in ownCollectors) {
-      collector.collectHintsForFile(myFile, sink)
+    for ((sink, collector, providerClass) in ownCollectors) {
+      runProviderOrLogError(providerClass) {
+        collector.collectHintsForFile(myFile, sink)
+      }.onFailure {
+        // provider threw: ignore its results and continue
+        sinks.remove(sink)
+      }
     }
     val traverser = SyntaxTraverser.psiTraverser(rootElement)
     for (element in traverser) {
-      for ((sink, collector) in sharedCollectors) {
-        collector.collectFromElement(element, sink)
+      val iterator = sharedCollectors.iterator()
+      while (iterator.hasNext()) {
+        val (sink, collector, providerClass) = iterator.next()
+        runProviderOrLogError(providerClass) {
+          collector.collectFromElement(element, sink)
+        }.onFailure {
+          // provider threw: don't call it again in this pass, ignore its results and continue
+          iterator.remove()
+          sinks.remove(sink)
+        }
       }
     }
 
@@ -84,7 +106,8 @@ class DeclarativeInlayHintsPass(
 
   private data class CollectionInfo<T>(
     val sink: InlayTreeSinkImpl,
-    val collector: T
+    val collector: T,
+    val providerClass: Class<*>,
   )
 
   @ApiStatus.Internal
@@ -107,6 +130,8 @@ class DeclarativeInlayHintsPass(
 
   @ApiStatus.Internal
   companion object {
+    private val LOG = logger<DeclarativeInlayHintsPass>()
+
     @ApiStatus.Internal
     val passSourceId: String = DeclarativeInlayHintsPass::class.java.name
 
@@ -233,8 +258,15 @@ class DeclarativeInlayHintsPass(
     }
   }
 
-  private fun createCollector(provider: InlayHintsProvider): InlayHintsCollector? {
-    return provider.createCollector(myFile, editor)
+  private fun <T> runProviderOrLogError(providerClass: Class<*>, action: () -> T): Result<T> {
+    try {
+      return Result.success(action())
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error(PluginException.createByClass(e, providerClass))
+      return Result.failure(e)
+    }
   }
 }
 
