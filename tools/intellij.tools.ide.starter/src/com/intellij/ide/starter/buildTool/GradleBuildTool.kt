@@ -106,9 +106,12 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
       .filter { it.last().extension == "log" }
   }
 
-  fun useNewGradleLocalCache(): GradleBuildTool {
+  fun useNewGradleLocalCache(initScript: String? = null): GradleBuildTool {
     localGradleRepoPath.deleteRecursivelyQuietly()
     localGradleRepoPath.createDirectories()
+    if (initScript != null) {
+      localGradleRepoPath.resolve("init.d").createDirectories().resolve("ide-starter.gradle").writeText(initScript)
+    }
     testContext.applyVMOptionsPatch {
       withEnv("GRADLE_USER_HOME", localGradleRepoPath.toString(), wslenvParameters = "/p")
     }
