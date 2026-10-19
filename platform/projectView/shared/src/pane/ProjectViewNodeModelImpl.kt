@@ -2,6 +2,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.ui.BackgroundSupplier
@@ -143,11 +144,11 @@ data class ProjectViewNodeModelImpl<T : ProjectViewNodeUserObject>(
   override fun getElementBackground(row: Int): Color? = presentation.background
 
   override fun getPathElementType(): String {
-    return pathElementType
+    return if (ProjectViewNode.shouldUseSimplifiedProjectTreeState()) ProjectViewNode.GENERIC_PROJECT_VIEW_NODE_TYPE else pathElementType
   }
 
   override fun getPathElementId(): String {
-    return pathElementId
+    return if (ProjectViewNode.shouldUseSimplifiedProjectTreeState()) presentation.mainText else pathElementId
   }
 
   override fun canNavigate(): Boolean = (flags and FLAG_CAN_NAVIGATE) != 0

@@ -844,7 +844,28 @@ public final class TreeState implements JDOMExternalizable {
     return null;
   }
 
-  @ApiStatus.Internal
+  /**
+   * Computes the ID of the given node or the user object.
+   * <p>
+   *   The given node could be a tree node or a user object inside it.
+   *   If it's a node, then both it and its user object will be considered.
+   *   If either of them implements {@link PathElementIdProvider}, it'll be used to compute the return value.
+   *   If neither implements this interface, then the default implementation will be used.
+   * </p>
+   * <p>
+   *   This function is what {@code TreeState} itself uses to compute path elements.
+   *   Its main intended use is to delegate from various wrappers, decorators and DTOs.
+   *   They can implement the path element ID provider interface and delegate to whatever they're wrapping
+   *   or whatever was serialized and deserialized.
+   * </p>
+   * <p>
+   *   See {@link #calcType(Object)} for calculating the type the same way.
+   *   When implementing a delegate, it's expected that both are delegated.
+   * </p>
+   * @param node a node or a user object
+   * @return the computed path element ID
+   */
+  @ApiStatus.Experimental
   public static @NotNull String calcId(@Nullable Object node) {
     if (node == null) return "";
     var provider = getProvider(node);
@@ -873,7 +894,14 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  @ApiStatus.Internal
+  /**
+   * Computes the type ID of the given node or a user object.
+   * 
+   * @see #calcId(Object) 
+   * @param node a node or a user object
+   * @return the computed path element type ID
+   */
+  @ApiStatus.Experimental
   public static @NotNull String calcType(@Nullable Object node) {
     if (node == null) return "";
     var provider = getProvider(node);
