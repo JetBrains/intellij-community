@@ -2,8 +2,10 @@
 package com.intellij.python.community.execService.python.advancedApi
 
 import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecGetProcessOptions
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.HowToReportFile.AnArgument
 import com.intellij.python.community.execService.HowToReportFile.EnvVar
 import com.intellij.python.community.execService.ProcessInteractiveHandler
@@ -18,8 +20,10 @@ import com.intellij.python.community.execService.reportOutputAsProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PYTHONIOENCODING
 import com.jetbrains.python.PYTHONPATH
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.impl.PY3_HELPER_DEPENDENCIES_DIR
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -62,6 +66,26 @@ suspend fun <T> ExecService.executeHelperAdvanced(
     options.copy(env = mapOf(PYTHONIOENCODING to Charsets.UTF_8.name()) + options.env),
     transformerToHandler(listener, stdInProvider?.asChannelConsumer(), processOutputTransformer))
 }
+
+/**
+ * Starts [helper] on [python] and returns the process. The caller owns the process, see [ExecService.executeGetProcess].
+ * Use it for a helper that serves for a long time, such as a debug adapter. A helper that runs to completion belongs to
+ * [executeHelperAdvanced], which also reports its output and applies a timeout.
+ */
+suspend fun ExecService.executeHelperGetProcess(
+  python: ExecutablePython,
+  helper: PyHelper,
+  args: Args = Args(),
+  scopeToBind: CoroutineScope? = null,
+  options: ExecGetProcessOptions = ExecGetProcessOptions(),
+): Result<Process, ExecuteGetProcessError<*>> =
+  executeGetProcess(
+    binary = python.binary,
+    args = Args(*python.args.toTypedArray()).addHelper(helper).add(args),
+    scopeToBind = scopeToBind,
+    // We read the process output as UTF-8, but Python on Windows writes it in the ANSI code page by default.
+    options = options.copy(env = mapOf(PYTHONIOENCODING to Charsets.UTF_8.name()) + options.env + python.env),
+  )
 
 /**
  * Adds [helper] as an argument, and the helper dependencies directory to `PYTHONPATH`.
