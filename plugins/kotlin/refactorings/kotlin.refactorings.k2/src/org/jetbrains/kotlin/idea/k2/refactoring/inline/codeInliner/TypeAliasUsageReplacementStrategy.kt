@@ -7,18 +7,19 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.createSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionType
 import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNullableType
@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -129,39 +130,18 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
 
     private fun inlineIntoType(usage: KtUserType): KtElement? {
         analyze(usage) {
-            val typeAliasSymbol = typeAlias.symbol
-            val typeToInline = typeAliasSymbol.expandedType
-            val typeParameters = typeAliasSymbol.typeParameters
-
-            val psiFactory = KtPsiFactory(typeAlias.project)
-
-            val argumentTypes = usage
-                .typeArguments
-                .asSequence()
-                .filterNotNull()
-                .mapNotNull {
-                    it.typeReference?.type
-                }
-                .toList()
-
-            if (argumentTypes.size != typeParameters.size) return null
-            val substitution = (typeParameters zip argumentTypes).toMap()
-
-            val substitutor = createSubstitutor(substitution)
-            val expandedType = substitutor.substitute(typeToInline)
-            val expandedTypeText = expandedType.render(position = Variance.INVARIANT)
+            val expandedType = usage.getParentOfType<KtTypeReference>(true)?.type?.fullyExpandedType ?: return null
+            val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+            }, position = Variance.INVARIANT)
             val isFunctionType = expandedType.isFunctionType || expandedType.isSuspendFunctionType
             val nullableType = usage.parent as? KtNullableType
             val typeReference = usage.parent as? KtTypeReference
             val isFunctionTypeReceiver = typeReference?.parent is KtFunctionTypeReceiver
-            val replacementText = when {
-                isFunctionType && nullableType != null -> "($expandedTypeText)?"
-                isFunctionType && isFunctionTypeReceiver -> "($expandedTypeText)"
-                else -> expandedTypeText
-            }
-            val replacementTypeReference = psiFactory.createType(replacementText)
+            val replacementText = if (isFunctionType && isFunctionTypeReceiver) "($expandedTypeText)" else expandedTypeText
+            val replacementTypeReference = KtPsiFactory(typeAlias.project).createType(replacementText)
             return when {
-                nullableType != null && isFunctionType -> nullableType.replaced(replacementTypeReference.typeElement!!)
+                nullableType != null -> nullableType.parent.replaced(replacementTypeReference)
                 typeReference != null -> typeReference.replaced(replacementTypeReference)
                 else -> usage.replaced(replacementTypeReference.typeElement!!)
             }.apply {

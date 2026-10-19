@@ -149,6 +149,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/nullableSuspendFunctionType.kt");
         }
 
+        @TestMetadata("projectedFunctionType.kt")
+        public void testProjectedFunctionType() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/projectedFunctionType.kt");
+        }
+
         @TestMetadata("replaceImports.kt")
         public void testReplaceImports() throws Exception {
             runTest("testData/inline/inlineTypeAlias/replaceImports.kt");
@@ -167,6 +172,21 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("suspendFunctionTypeReceiver.kt")
         public void testSuspendFunctionTypeReceiver() throws Exception {
             runTest("testData/inline/inlineTypeAlias/suspendFunctionTypeReceiver.kt");
+        }
+
+        @TestMetadata("useSiteVariance.kt")
+        public void testUseSiteVariance() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/useSiteVariance.kt");
+        }
+
+        @TestMetadata("useSiteVarianceAliasArgument.kt")
+        public void testUseSiteVarianceAliasArgument() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/useSiteVarianceAliasArgument.kt");
+        }
+
+        @TestMetadata("useSiteVarianceReordered.kt")
+        public void testUseSiteVarianceReordered() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/useSiteVarianceReordered.kt");
         }
     }
 

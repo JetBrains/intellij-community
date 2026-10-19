@@ -1,0 +1,9 @@
+class B<T>
+class C
+@Target(AnnotationTarget.TYPE)
+annotation class Mark
+
+val out = mapOf<B<out C>, Unit>()
+val `in` = mapOf<B<in C>, Unit>()
+val nested: List<B<out C>> = emptyList()
+val annotated: @Mark B<out C> = TODO()

@@ -1,0 +1,2 @@
+val receiver: ((Nothing) -> Unit).() -> Unit = TODO()
+val nullable: ((Nothing) -> Unit)? = null

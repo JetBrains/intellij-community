@@ -1,0 +1,6 @@
+class B<T>
+typealias Inner = String
+
+val plain: B<Inner> = TODO()
+val projected: B<out Inner> = TODO()
+// IGNORE_K2

@@ -1,0 +1,5 @@
+class B<X, Y>
+class C
+class D
+
+val value: B<in D, out C>? = null
