@@ -197,9 +197,9 @@ A hand-derived launch was attempted first and is not evidence either way. It rea
 `java_binary` stub that started `PreBuiltDevMain`. That class path holds the launcher module, not the IDE, so
 `com.intellij.idea.Main` cannot start from it. The IDE starts from the `core-classpath.txt` of the distribution,
 as IDE Starter and every dev row do. The hand-assembled command line also failed to resolve `PathClassLoader` at VM
-init. That is a defect of the command line, not a finding about Linux. The supported path is IDE Starter's
-`PrebuiltDevDistRunner` inside the lane's own test JVM, reached through the daemon the controller already starts. The
-stub is gone.
+init. That is a defect of the command line, not a finding about Linux. The supported path is the launch of
+the lane daemon. It composes the argument file of the IDE from the distribution and starts the IDE on the JBR of the
+distribution. The stub is gone.
 
 ## What the run cost to get to
 
@@ -275,10 +275,10 @@ platform hides that splash only once an editor or a tool window is shown. It is 
 same 3-minute timeout. That coroutine is where the frame allocator sits during *any* project open, not the
 thing holding it.
 
-`AirFlowLaneHost.constantLaunchProperties` carries `nosplash` regardless, because a test IDE showing a
-splash it never asked for is worth removing on its own — just do not read that change as this fix. It sits
-in that map rather than in the shared starter, so it describes Air's own lane launches and no other team's,
-and so the lane's `configKey` covers it.
+`LANE_CONSTANT_PROPERTIES` in `plugins/air/docs/scripts/flowFixtures.ts` carries `nosplash` regardless. A test IDE
+that shows a splash it never asked for is worth a fix of its own. Do not read that change as this fix. The property
+sits in the lane documents, not in a shared starter. So it describes the lane launches of Air and of no other team,
+and the config key of the lane covers it.
 
 ## What a wrong diagnosis cost, and what names it now
 
