@@ -78,6 +78,172 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  fun `cached offsets advance across edits outside the marker`() {
+    val document = DocumentImpl("x".repeat(20), true)
+    val before = document.createRangeMarker(0, 1)
+    val containing = document.createRangeMarker(1, 20)
+    val after = document.createRangeMarker(12, 14)
+    val beforeRange = before.textRange
+    containing.textRange
+    after.textRange
+
+    document.insertString(10, "x")
+
+    assertSame(beforeRange, before.textRange)
+    assertEquals(TextRange(1, 21), containing.textRange)
+    assertEquals(TextRange(13, 15), after.textRange)
+    val afterRange = after.textRange
+
+    document.replaceString(10, 11, "y")
+
+    assertSame(beforeRange, before.textRange)
+    assertSame(afterRange, after.textRange)
+
+    document.deleteString(10, 11)
+    before.isGreedyToRight = true
+
+    assertSame(beforeRange, before.textRange)
+    assertEquals(TextRange(12, 14), after.textRange)
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `cached offsets resolve edits at marker boundaries`(greedy: Boolean) {
+    val document = DocumentImpl("abcdefgh", true)
+    val ending = document.createRangeMarker(0, 3)
+    val starting = document.createRangeMarker(3, 6)
+    val point = document.createRangeMarker(3, 3)
+    val markers = listOf(ending, starting, point)
+    for (marker in markers) {
+      marker.isGreedyToLeft = greedy
+      marker.isGreedyToRight = greedy
+      marker.textRange
+    }
+
+    document.insertString(3, "XX")
+
+    assertEquals(TextRange(0, if (greedy) 5 else 3), ending.textRange)
+    assertEquals(TextRange(if (greedy) 3 else 5, 8), starting.textRange)
+    assertEquals(TextRange(3, if (greedy) 5 else 3), point.textRange)
+    markers.forEach { assertCurrentResolution(it as SnapshotRangeMarkerImpl) }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `cached offsets observe policy changes before the edit`(invalidate: Boolean) {
+    val document = DocumentImpl("x".repeat(20), true)
+    val before = document.createRangeMarker(0, 1)
+    var transformed = false
+    val policy = MarkerPolicy { entry, _, _, _ ->
+      transformed = true
+      if (invalidate) MarkerTransformResult(entry, "Invalidated by test marker policy")
+      else MarkerTransformResult(entry.copy(nodeEnd = 5))
+    }
+    val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document, document.core.snapshot(), 2, 4, nonGreedySpec().copy(policy = policy),
+    ) as SnapshotRangeMarkerImpl
+    val containing = document.createRangeMarker(6, 20)
+    val beforeRange = before.textRange
+    assertEquals(TextRange(2, 4), marker.textRange)
+
+    document.insertString(10, "x")
+
+    assertTrue(transformed)
+    assertSame(beforeRange, before.textRange)
+    assertEquals(!invalidate, marker.isValid)
+    assertEquals(TextRange(2, if (invalidate) 4 else 5), marker.textRange)
+    assertCurrentResolution(marker)
+    assertEquals(TextRange(6, 21), containing.textRange)
+  }
+
+  @Test
+  fun `cached offsets fall back after skipped edits and branch switches`() {
+    val document = DocumentImpl("abcdefgh", true)
+    val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val reference = marker.currentRootReference()
+    val original = reference.get()
+    marker.textRange
+    val first = applyPatch(original, "abcdefgh", textPatch(0, 0, "X"))
+    reference.set(applyPatch(first, "Xabcdefgh", textPatch(0, 0, "YY")))
+
+    assertEquals(TextRange(5, 7), marker.textRange)
+
+    reference.set(applyPatch(original, "abcdefgh", textPatch(0, 0, "ZZ")))
+
+    assertEquals(TextRange(4, 6), marker.textRange)
+
+    reference.set(original)
+
+    assertEquals(TextRange(2, 4), marker.textRange)
+  }
+
+  @Test
+  fun `advancing cached offsets does not retain the previous root`() {
+    val document = DocumentImpl("abcdefgh", true)
+    val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    fun replaceRoot(): WeakReference<PMarkerRoot> {
+      val reference = marker.currentRootReference()
+      val root = reference.get()
+      marker.textRange
+      reference.set(applyPatch(root, "abcdefgh", textPatch(6, 6, "X")))
+      assertEquals(TextRange(2, 4), marker.textRange)
+      return WeakReference(root)
+    }
+    val previousRoot = replaceRoot()
+
+    GCUtil.tryGcSoftlyReachableObjects { previousRoot.get() == null }
+
+    assertNull(previousRoot.get())
+    Reference.reachabilityFence(marker)
+  }
+
+  @Test
+  fun `cached offsets match root resolution after random changes`() {
+    val seed = 0xCA43
+    val random = Random(seed)
+    val document = DocumentImpl("abc\n".repeat(32), true)
+    val markers = ArrayList<SnapshotRangeMarkerImpl>()
+    fun addMarker() {
+      val start = random.nextInt(document.textLength + 1)
+      val end = random.nextInt(start, document.textLength + 1)
+      val marker = document.createRangeMarker(start, end, random.nextBoolean()) as SnapshotRangeMarkerImpl
+      marker.isGreedyToLeft = random.nextBoolean()
+      marker.isGreedyToRight = random.nextBoolean()
+      marker.setStickingToRight(random.nextBoolean())
+      markers.add(marker)
+    }
+    repeat(50) { addMarker() }
+    markers.forEach { assertCurrentResolution(it) }
+
+    repeat(300) { iteration ->
+      val start = random.nextInt(document.textLength + 1)
+      val end = minOf(document.textLength, start + random.nextInt(9))
+      when (random.nextInt(4)) {
+        0 -> document.insertString(start, "x\n".repeat(random.nextInt(1, 4)))
+        1 -> document.deleteString(start, end)
+        2 -> document.replaceString(start, end, "y\n".repeat(random.nextInt(4)))
+        else -> {
+          val target = random.nextInt(document.textLength + 1)
+          if (target !in start..end) document.moveText(start, end, target)
+        }
+      }
+      if (iteration % 5 == 0) addMarker()
+      if (iteration % 17 == 0) {
+        val marker = markers.random(random)
+        marker.isGreedyToRight = !marker.isGreedyToRight
+      }
+      if (iteration % 31 == 0) document.replaceString(0, document.textLength, "abc\n".repeat(32))
+      if (iteration % 37 == 0) markers.random(random).dispose()
+      for (marker in markers) {
+        if (iteration % 13 == 0 || random.nextBoolean()) {
+          assertCurrentResolution(marker, "Seed $seed, iteration $iteration, marker ${marker.id}")
+        }
+      }
+    }
+    markers.forEach { assertCurrentResolution(it) }
+  }
+
+  @Test
   fun `root reference cache releases unused snapshots and roots`() {
     val fixture = Fixture("abcdef")
     fun cacheDetachedRoot(): Pair<WeakReference<DocumentSnapshot>, WeakReference<AtomicReference<PMarkerRoot>>> {
@@ -1396,6 +1562,16 @@ class SnapshotMarkerEngineImplTest {
     val childResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, rootFor(marker, child))
     assertEquals(4, childResolution.startOffset)
     assertEquals(6, childResolution.endOffset)
+  }
+
+  private fun assertCurrentResolution(marker: SnapshotRangeMarkerImpl, message: String = "") {
+    val expected = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, marker.currentRootReference().get())
+    val actual = marker.textRange
+    assertEquals(expected.javaClass, actual.javaClass, message)
+    assertEquals(expected, actual, message)
+    assertEquals(expected.isValid, marker.isValid, message)
+    assertEquals(expected.startOffset, marker.startOffset, message)
+    assertEquals(expected.endOffset, marker.endOffset, message)
   }
 
   private fun assertRange(marker: SnapshotMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
