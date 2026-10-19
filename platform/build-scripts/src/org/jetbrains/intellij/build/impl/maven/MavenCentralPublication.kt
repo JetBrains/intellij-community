@@ -25,7 +25,6 @@ import java.nio.file.Path
 import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.TimeoutException
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -51,7 +50,6 @@ import kotlin.time.TimeSource
  * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
-@OptIn(ExperimentalPathApi::class)
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
@@ -209,7 +207,8 @@ class MavenCentralPublication(
     files.forEachConcurrent { file ->
       val checksums = Checksums.compute(file, *checksumAlgorithms.toTypedArray())
       for (algorithm in checksumAlgorithms) {
-        checksums.verifyOrWriteChecksumFile(algorithm, false)
+        // Maven Central rejects `sha256sum` output and accepts a checksum itself only
+        checksums.verifyOrWriteChecksumFile(algorithm, withFileName = false)
       }
     }
     val missing = artifacts.asSequence()
