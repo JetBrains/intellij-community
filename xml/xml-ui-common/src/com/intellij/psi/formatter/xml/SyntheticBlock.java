@@ -147,7 +147,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
-      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksBetweenTextElements(),
+                                       myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (firstIsTag && insertLineFeedAfter((XmlTag)node1.getPsi())) {

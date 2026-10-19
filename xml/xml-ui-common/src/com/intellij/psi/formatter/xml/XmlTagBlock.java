@@ -428,7 +428,8 @@ public class XmlTagBlock extends AbstractXmlBlock {
                                           syntheticBlock1.getTextRange().getEndOffset() < syntheticBlock2.getTextRange().getStartOffset();
 
     if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
-      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksBetweenTextElements(),
+                                       myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag

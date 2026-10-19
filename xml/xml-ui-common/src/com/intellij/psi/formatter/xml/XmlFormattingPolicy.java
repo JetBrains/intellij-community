@@ -141,6 +141,16 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean getShouldKeepLineBreaksInText();
 
+  /**
+   * Tells if the formatter keeps a line break between two text elements, for example, next to an inline tag.
+   * For a line break between two words, the formatter always uses {@link #getShouldKeepLineBreaksInText()}.
+   *
+   * @return {@link #getShouldKeepLineBreaksInText()} by default.
+   */
+  public boolean getShouldKeepLineBreaksBetweenTextElements() {
+    return getShouldKeepLineBreaksInText();
+  }
+
   public abstract boolean getKeepWhiteSpacesInsideCDATA();
 
   public abstract int getWhiteSpaceAroundCDATAOption();
