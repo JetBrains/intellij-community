@@ -6,6 +6,13 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
@@ -17,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileSaverDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.tabActions.ALWAYS_SHOW_MODIFIED_MARKER
 import com.intellij.openapi.project.Project
@@ -44,6 +52,7 @@ import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,7 +68,8 @@ import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks the Home files of the welcome project: the modified marker on the tab, and the prompts when a tab or the project closes.
+ * Checks the Home files of the welcome project: the modified marker on the tab, the Save File action of the tab menu,
+ * and the prompts when a tab or the project closes.
  * A test save dialog replaces the real one. It selects no target, so the tests check no copy of a file.
  * A test directory chooser replaces the real one for the save of several files on the project close.
  */
@@ -266,6 +276,44 @@ internal class WelcomeFilesCloseTest {
   }
 
   @Test
+  fun `the tab menu shows Save File only for a Home file`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    val regularFile = LightVirtualFile("regular.txt", "text")
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      val homeFileEvent = createTabMenuEvent()
+      saveFileAction.update(homeFileEvent)
+      assertTrue(homeFileEvent.presentation.isEnabledAndVisible)
+
+      manager.openFile(regularFile, true)
+      val regularFileEvent = createTabMenuEvent()
+      saveFileAction.update(regularFileEvent)
+      assertFalse(regularFileEvent.presentation.isEnabledAndVisible)
+    }
+  }
+
+  @Test
+  fun `Save File in the tab menu shows the save dialog`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    val savedFileNames = ArrayList<String>()
+    replaceSaveDialog { savedFileNames += it }
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      saveFileAction.actionPerformed(createTabMenuEvent())
+    }
+
+    waitUntil("The save dialog is not shown", timeout = 5.seconds) { savedFileNames.isNotEmpty() }
+    assertEquals(listOf(file.name), savedFileNames)
+    // The test save dialog selects no target, so the file stays open.
+    assertTrue(withContext(Dispatchers.UiWithModelAccess) { manager.isFileOpen(file) })
+    assertTrue(file.isValid)
+  }
+
+  @Test
   fun `backend finds a Home file only in the welcome project`(): Unit = timeoutRunBlocking {
     val file = createWelcomeFile()
     val api = WelcomeFilesApi.getInstance()
@@ -369,6 +417,21 @@ internal class WelcomeFilesCloseTest {
     }
     createdFiles.add(file)
     return file
+  }
+
+  private val saveFileAction: AnAction
+    get() = checkNotNull(ActionManager.getInstance().getAction("WelcomeSaveFileAction")) { "The Save File action is not registered" }
+
+  /**
+   * Creates the event of the editor tab menu for the selected tab of the current window.
+   */
+  @RequiresEdt
+  private fun createTabMenuEvent(): AnActionEvent {
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(EditorWindow.DATA_KEY, manager.currentWindow)
+      .build()
+    return AnActionEvent.createEvent(saveFileAction, dataContext, null, ActionPlaces.EDITOR_TAB_POPUP, ActionUiKind.POPUP, null)
   }
 
   private suspend fun openAndAwaitMarker(file: VirtualFile) {
