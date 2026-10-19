@@ -890,6 +890,35 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   @Test
+  public void testWeb16112() {
+    doTextTest("""
+                 <div class="a"></div><!--
+                 --><div class="b"></div>""",
+               """
+                 <div class="a"></div><!--
+                 --><div class="b"></div>""");
+    doTextTest("""
+                 <div class="g_table"><!--
+                     --><div class="g_cell">a</div><!--
+                     --><div class="g_cell">b</div>
+                 </div>""",
+               """
+                 <div class="g_table"><!--
+                     --><div class="g_cell">a</div><!--
+                     --><div class="g_cell">b</div>
+                 </div>""");
+  }
+
+  @Test
+  public void testWeb16112WhitespaceAfterComment() {
+    doTextTest("<div><!-- a --> <div>b</div></div>",
+               """
+                 <div><!-- a -->
+                     <div>b</div>
+                 </div>""");
+  }
+
+  @Test
   public void testJoinLinesNextToInlineTagsWithoutKeepLineBreaksInText() {
     getHtmlSettings().HTML_KEEP_LINE_BREAKS_IN_TEXT = false;
     doTextTest("""

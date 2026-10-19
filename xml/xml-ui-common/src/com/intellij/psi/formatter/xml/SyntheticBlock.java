@@ -63,6 +63,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     if (type1 == XmlElementType.XML_COMMENT) {
+      if (child1.getTextRange().getEndOffset() == child2.getTextRange().getStartOffset()) {
+        // Keep an element that touches the end of a comment, e.g. a comment between inline-block elements
+        return Spacing.getReadOnlySpacing();
+      }
       ASTNode prev = node1.getTreePrev();
       if (prev != null) {
         node1 = prev;

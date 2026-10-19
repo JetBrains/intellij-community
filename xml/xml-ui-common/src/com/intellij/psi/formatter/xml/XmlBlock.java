@@ -17,6 +17,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
@@ -254,6 +255,11 @@ public class XmlBlock extends AbstractXmlBlock {
       return getSpacesInsideAttribute(type1, type2);
     }
 
+    if (node1.getTextRange().getEndOffset() == node2.getTextRange().getStartOffset() && endsWithComment(node1)) {
+      // Keep an element that touches the end of a comment, e.g. a comment between inline-block elements
+      return Spacing.getReadOnlySpacing();
+    }
+
     if (type1 == XmlElementType.XML_PROLOG) {
       return createDefaultSpace(true, false);
     }
@@ -267,6 +273,15 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     return createDefaultSpace(false, false);
+  }
+
+  /**
+   * Checks if the last leaf of {@code node} is the end of a comment.
+   * At the top level of an HTML document, a comment is a child of an {@code XML_TEXT} node.
+   */
+  private static boolean endsWithComment(@NotNull ASTNode node) {
+    ASTNode last = TreeUtil.findLastLeaf(node);
+    return last != null && last.getElementType() == XmlTokenType.XML_COMMENT_END;
   }
 
   protected Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
