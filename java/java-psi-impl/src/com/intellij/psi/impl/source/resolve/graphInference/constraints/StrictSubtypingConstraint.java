@@ -253,6 +253,8 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     TypeNullability nullability = myS.getNullability();
     if (nullability.nullability() == Nullability.UNKNOWN || nullability.source() instanceof NullabilitySource.ExtendsBound) {
       if (recorded) {
+        // myS.withNullability(UNKNOWN) may have no effect here if it was not ExtendsBound previously.
+        // That's intended.
         InferenceVariable.addBound(myT, myS.withNullability(TypeNullability.UNKNOWN), InferenceBound.LOWER, session);
       }
       return;
