@@ -1,5 +1,4 @@
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 
 use avl_host_testkit::git::FAKE_HEAD;
 use avl_host_testkit::refusal;
@@ -12,7 +11,7 @@ use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::fixture_descriptor;
 
 #[test]
-fn declared_data_accepts_directories_but_classpath_inputs_do_not() {
+fn declared_data_accepts_directories_but_a_file_input_does_not() {
     let root = tempfile::tempdir().unwrap();
     let package = root.path().join("_main/pi");
     fs::create_dir_all(&package).unwrap();
@@ -28,11 +27,11 @@ fn declared_data_accepts_directories_but_classpath_inputs_do_not() {
 
     let tree = HostRunfiles::Tree(root.path().to_owned());
     let initial = declared_input(&mut cache, &tree, &file, true).unwrap();
-    let classpath = declared_input(&mut cache, &tree, &file, false);
+    let file_input = declared_input(&mut cache, &tree, &file, false);
     assert_eq!(
-        refusal(classpath.map(|declared| declared.identity)).code,
+        refusal(file_input.map(|declared| declared.identity)).code,
         "daemon_runtime_input_missing",
-        "a classpath input accepted a directory"
+        "a file input accepted a directory"
     );
 
     fs::write(&entry, "new package contents").unwrap();
@@ -55,7 +54,6 @@ async fn the_stamp_through_a_manifest_is_the_stamp_of_the_tree() {
     assert!(matches!(HostRunfiles::of(descriptor).unwrap(), HostRunfiles::Manifest { .. }));
 
     let over_manifest = fixture.prepared().await;
-    assert_eq!(over_manifest.runtime_digest, over_tree.runtime_digest);
     assert_eq!(over_manifest.product_digest, over_tree.product_digest);
     assert_eq!(over_manifest.mount_digest, over_tree.mount_digest);
     let documents = &over_manifest.lane_inputs[1].host;
@@ -134,16 +132,24 @@ async fn pushed_file_drift_reports_a_file_that_is_gone() {
     assert!(drift.contains("a.jar (unreadable: "), "{drift}");
 }
 
-// The launch digest is its three parts and nothing else: the runtime, the controller's boot settings, and the
-// daemon environment. A pushed file travels by host path.
+/// The `@static-launch` digest of the descriptor that the fixture wrote.
+fn fixture_static_launch(fixture: &Fixture) -> String {
+    let path = &fixture.bazel.descriptor_path;
+    let platform = crate::lane::guest_jbr_platform(fixture.settings.guest_os, fixture.settings.guest_arch);
+    let descriptor = runtime::parse_runtime_descriptor(&fs::read(path).unwrap(), path, platform).unwrap();
+    static_launch_digest(&descriptor)
+}
+
+// The launch digest is its three parts and nothing else: the static launch facts of the descriptor, the controller's
+// boot settings, and the daemon environment. A pushed file travels by host path.
 #[tokio::test]
-async fn the_launch_digest_is_composed_of_the_runtime_the_boot_settings_and_the_environment() {
+async fn the_launch_digest_is_composed_of_the_static_launch_the_boot_settings_and_the_environment() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
     let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100);
     assert_eq!(
         prep.launch_digest,
-        launch_digest(&prep.runtime_digest, &boot, &prep.daemon_environment)
+        launch_digest(&fixture_static_launch(&fixture), &boot, &prep.daemon_environment)
     );
     let documents = &prep.lane_inputs[1].host;
     assert!(
@@ -159,84 +165,58 @@ async fn the_launch_digest_is_composed_of_the_runtime_the_boot_settings_and_the_
         "the daemon environment names the guest node the controller staged"
     );
     // Four distinct identities: none of them is another under a second name.
-    let mut identities = vec![&prep.runtime_digest, &prep.launch_digest, &prep.product_digest, &prep.mount_digest];
+    let mut identities = vec![&prep.launch_digest, &prep.product_digest, &prep.mount_digest, &prep.plugins_digest];
     identities.sort();
     identities.dedup();
     assert_eq!(identities.len(), 4);
 }
 
-// A launch fact no file carries still moves the runtime identity: a changed static flag is a new generation.
+// A launch fact no file carries still moves the launch identity: a changed static flag restarts the daemon.
 #[tokio::test]
-async fn a_changed_static_flag_changes_the_runtime_digest() {
+async fn a_changed_static_flag_changes_the_launch_digest() {
     let fixture = Fixture::new().await;
     let before = fixture.prepared().await;
     let mut descriptor = fixture_descriptor();
     descriptor["staticJvmFlags"] = serde_json::json!(["-Xmx2g", "-Dflag=<v>"]);
     fs::write(&fixture.bazel.descriptor_path, descriptor.to_string()).unwrap();
     let after = fixture.prepared().await;
-    assert_ne!(before.runtime_digest, after.runtime_digest);
     assert_ne!(before.launch_digest, after.launch_digest);
     // The product did not move, so neither did the mount.
     assert_eq!(before.product_digest, after.product_digest);
     assert_eq!(before.mount_digest, after.mount_digest);
 }
 
-// The daemon JVM runs on a copy of the JBR of the distribution, so a changed byte or mode of that JBR is a new
-// generation. The product identity reads the fingerprint of the distribution, which covers the JBR, and not the JBR.
+// No identity reads a jar of the classpath or a file of the JBR. The lane daemon runs no JVM, and the lane IDE runs on
+// the JBR of its distribution. The product identity reads the fingerprint of the distribution, which covers that JBR.
+// So a changed or missing stable jar or JBR moves no identity.
 #[tokio::test]
-async fn a_changed_jbr_of_the_distribution_changes_the_runtime_digest() {
+async fn a_changed_stable_jar_or_jbr_moves_no_identity() {
     let fixture = Fixture::new().await;
     let before = fixture.prepared().await;
-    let jbr = runtime::runfiles_root(&fixture.bazel.descriptor_path)
+    let root = runtime::runfiles_root(&fixture.bazel.descriptor_path);
+    fs::write(root.join("_main/stable/one.jar"), "another stable jar").unwrap();
+    fs::remove_file(root.join("_main/stable/two.jar")).unwrap();
+    let jbr = root
         .join(crate::daemon::testing::FIXTURE_DIST_HOME)
         .join(crate::daemon::testing::FIXTURE_JBR_DIRECTORY);
-    let java = jbr.join("a&b/bin/java");
-    fs::write(&java, "another java").unwrap();
-    let rebuilt = fixture.prepared().await;
-    assert_ne!(before.runtime_digest, rebuilt.runtime_digest);
-    assert_ne!(before.launch_digest, rebuilt.launch_digest);
-    assert_eq!(before.product_digest, rebuilt.product_digest);
-
-    fs::set_permissions(&java, fs::Permissions::from_mode(0o755)).unwrap();
-    let executable = fixture.prepared().await;
-    assert_ne!(
-        rebuilt.runtime_digest, executable.runtime_digest,
-        "a changed mode kept the generation"
-    );
-
-    // Another file of the distribution home is not the JBR, so it keeps the generation.
-    fs::write(jbr.parent().unwrap().join("build.txt"), "IU-262.1").unwrap();
-    assert_eq!(executable.runtime_digest, fixture.prepared().await.runtime_digest);
-}
-
-// A distribution without its JBR refuses before anything is staged, and the refusal names the path.
-#[tokio::test]
-async fn a_distribution_without_its_jbr_refuses_with_the_path() {
-    let fixture = Fixture::new().await;
-    let jbr = runtime::runfiles_root(&fixture.bazel.descriptor_path)
-        .join(crate::daemon::testing::FIXTURE_DIST_HOME)
-        .join(crate::daemon::testing::FIXTURE_JBR_DIRECTORY);
+    fs::write(jbr.join("a&b/bin/java"), "another java").unwrap();
+    let changed = fixture.prepared().await;
     fs::remove_dir_all(&jbr).unwrap();
-    let scope = BuildScope::worker(&fixture.settings, &fixture.worker).unwrap();
-    let failure = refusal(
-        fixture
-            .host
-            .prepare_build(&Ctx::background(), &scope)
-            .await
-            .map(|prep| prep.runtime_digest),
-    );
-    assert_eq!(failure.code, "daemon_runtime_input_missing");
-    assert!(
-        failure
-            .message
-            .contains(&format!("has no JBR: {} is not a directory", jbr.display())),
-        "the refusal must name the JBR directory, said {:?}",
-        failure.message
-    );
+    let missing = fixture.prepared().await;
+    let identities = |prep: &PreparedBuild| {
+        [
+            prep.launch_digest.clone(),
+            prep.product_digest.clone(),
+            prep.mount_digest.clone(),
+            prep.plugins_digest.clone(),
+        ]
+    };
+    assert_eq!(identities(&changed), identities(&before));
+    assert_eq!(identities(&missing), identities(&before));
 }
 
 // The IDE flags file is part of the IDE's identity: a restart keeps an IDE only of the same product, so a changed flag
-// must relaunch the IDE. It does not restage the daemon runtime.
+// must relaunch the IDE. It does not restart the daemon.
 #[tokio::test]
 async fn a_changed_ide_flags_file_changes_the_product_digest() {
     let fixture = Fixture::new().await;
@@ -246,7 +226,6 @@ async fn a_changed_ide_flags_file_changes_the_product_digest() {
     let after = fixture.prepared().await;
     assert_ne!(before.product_digest, after.product_digest);
     assert_ne!(before.mount_digest, after.mount_digest);
-    assert_eq!(before.runtime_digest, after.runtime_digest);
     assert_eq!(before.launch_digest, after.launch_digest);
 }
 
@@ -263,7 +242,7 @@ async fn a_changed_ide_project_archive_changes_only_the_mount_digest() {
 }
 
 // The context plugin files travel by the push: a changed file moves only the plugin identity, so it refreshes no share
-// and keeps the product, the runtime and the launch.
+// and keeps the product and the launch.
 #[tokio::test]
 async fn a_changed_context_plugin_file_changes_only_the_plugins_digest() {
     let fixture = Fixture::new().await;
@@ -278,7 +257,6 @@ async fn a_changed_context_plugin_file_changes_only_the_plugins_digest() {
     assert_ne!(before.plugin_directories["bridge"], after.plugin_directories["bridge"]);
     assert_eq!(before.product_digest, after.product_digest);
     assert_eq!(before.mount_digest, after.mount_digest);
-    assert_eq!(before.runtime_digest, after.runtime_digest);
     assert_eq!(before.launch_digest, after.launch_digest);
 }
 
@@ -299,7 +277,6 @@ async fn a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest
     assert_ne!(before.lane_inputs[0].host.sha256, after.lane_inputs[0].host.sha256);
     assert_eq!(before.mount_digest, after.mount_digest);
     assert_eq!(before.product_digest, after.product_digest);
-    assert_eq!(before.runtime_digest, after.runtime_digest);
     assert_eq!(before.launch_digest, after.launch_digest);
     assert_eq!(before.plugins_digest, after.plugins_digest);
 }
@@ -364,16 +341,17 @@ fn the_plugins_digest_reads_the_destination_and_the_content() {
 async fn the_daemon_port_enters_the_launch_digest() {
     let fixture = Fixture::with_environment(&[("AIR_VM_DAEMON_PORT", "27101")]).await;
     let prep = fixture.prepared().await;
+    let static_launch = fixture_static_launch(&fixture);
     let launched_on = |port| {
         let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, port);
-        launch_digest(&prep.runtime_digest, &boot, &prep.daemon_environment)
+        launch_digest(&static_launch, &boot, &prep.daemon_environment)
     };
     assert_eq!(prep.launch_digest, launched_on(27_101));
     assert_ne!(prep.launch_digest, launched_on(27_100));
 }
 
-// The daemon environment is part of the launch identity. A JVM cannot change its own environment, so a change there
-// must re-exec the daemon rather than wait for someone to restart it by hand.
+// The daemon environment is part of the launch identity. A running daemon cannot change its own environment. So a
+// change there must re-exec the daemon, and not wait for a restart by hand.
 #[tokio::test]
 async fn the_daemon_environment_enters_the_launch_digest() {
     let fixture = Fixture::new().await;
@@ -386,7 +364,7 @@ async fn the_daemon_environment_enters_the_launch_digest() {
     let other = BTreeMap::from([("NODE_BIN".to_owned(), "/other/node".to_owned())]);
     assert_ne!(
         prep.launch_digest,
-        launch_digest(&prep.runtime_digest, &boot, &other),
+        launch_digest(&fixture_static_launch(&fixture), &boot, &other),
         "the daemon environment does not reach the launch digest"
     );
 }
@@ -395,7 +373,7 @@ async fn the_daemon_environment_enters_the_launch_digest() {
 #[tokio::test]
 async fn a_missing_declared_input_refuses_naming_its_owner() {
     let fixture = Fixture::new().await;
-    let victim = runtime::runfiles_root(&fixture.bazel.descriptor_path).join("_main/stable/two.jar");
+    let victim = runtime::runfiles_root(&fixture.bazel.descriptor_path).join("_main/ide/ide.jvm-flags.txt");
     fs::remove_file(victim).unwrap();
     let scope = BuildScope::worker(&fixture.settings, &fixture.worker).unwrap();
     let failure = refusal(
@@ -403,11 +381,11 @@ async fn a_missing_declared_input_refuses_naming_its_owner() {
             .host
             .prepare_build(&Ctx::background(), &scope)
             .await
-            .map(|prep| prep.runtime_digest),
+            .map(|prep| prep.launch_digest),
     );
     assert_eq!(failure.code, "daemon_runtime_input_missing");
     assert!(
-        failure.message.contains("_main/stable/two.jar") && failure.message.contains("//fixture:two.jar"),
+        failure.message.contains("_main/ide/ide.jvm-flags.txt") && failure.message.contains("//fixture:ide.jvm-flags.txt"),
         "the refusal must name the file and its owner, said {:?}",
         failure.message
     );

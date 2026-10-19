@@ -236,7 +236,6 @@ impl FakeDaemon {
             token: self.token.clone(),
             worker: self.worker.clone(),
             daemon_boot_stamp: boot_stamp,
-            runtime_digest: String::new(),
             launch_digest: launch_digest.to_owned(),
             last_product_digest: String::new(),
             last_mount_digest: String::new(),
@@ -1029,7 +1028,6 @@ impl DaemonFixture {
     /// Records a daemon host state the HTTP double answers healthy for.
     pub(crate) fn seed_healthy_daemon(&self, prep: &PreparedBuild) -> HostState {
         let mut state = self.daemon.host_state("run-ui-daemon-seeded", &prep.launch_digest);
-        state.runtime_digest = prep.runtime_digest.clone();
         state.last_product_digest = prep.product_digest.clone();
         state.last_mount_digest = prep.mount_digest.clone();
         state.last_plugins_digest = prep.plugins_digest.clone();

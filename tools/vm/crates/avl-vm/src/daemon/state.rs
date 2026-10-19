@@ -18,8 +18,8 @@ mod tests;
 ///
 /// Every field but [`Self::last_plugins_digest`] and [`Self::agent_digest`] is required, because the next start compares
 /// every one: a file missing one is no daemon at all. A record of an older controller can name the runner of its
-/// daemon. The reader ignores that field, because this controller runs the lane daemon alone. The file is two-space JSON with a trailing newline, and only this controller reads
-/// it.
+/// daemon and a runtime digest. The reader ignores both fields, because this controller runs the lane daemon alone and
+/// keeps no runtime digest. The file is two-space JSON with a trailing newline, and only this controller reads it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct HostState {
@@ -29,7 +29,6 @@ pub(crate) struct HostState {
     /// The worker whose exec channel carries the relay to the daemon.
     pub worker: String,
     pub daemon_boot_stamp: String,
-    pub runtime_digest: String,
     pub launch_digest: String,
     pub last_product_digest: String,
     pub last_mount_digest: String,

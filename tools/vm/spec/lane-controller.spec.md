@@ -400,6 +400,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/lane/env/tests.rs
   [@test] ../crates/avl-guest/src/image/provision/tests.rs
 
+- The launch identity reads the static flags of the runtime descriptor, the boot settings of the controller and the
+  daemon environment. A changed static flag restarts the daemon. No jar of the classpath enters an identity, so a
+  changed or missing stable jar moves none.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`the_launch_digest_is_composed_of_the_static_launch_the_boot_settings_and_the_environment`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_static_flag_changes_the_launch_digest`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_stable_jar_or_jbr_moves_no_identity`)
+
 - The daemon environment is part of the launch identity. A changed value restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
@@ -436,10 +443,9 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
 - The lane daemon runs no JVM, and a daemon start copies no JBR to the guest. The `jbr` section of the runtime
-  descriptor names the directory of the JBR below the distribution home. A distribution without it is a refusal on
-  the host, and the refusal names the path. The tree digest of the JBR is part of the runtime digest.
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_jbr_of_the_distribution_changes_the_runtime_digest`)
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_distribution_without_its_jbr_refuses_with_the_path`)
+  descriptor names the directory of the JBR below the distribution home. No identity reads a file of the JBR. The
+  product identity reads the fingerprint of the distribution, and the fingerprint covers the JBR.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_stable_jar_or_jbr_moves_no_identity`)
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`the_jbr_section_keys_are_the_ones_the_reader_reads`)
 
 - The guest reads no checkout. A worker has one share, the Bazel output user root, read-only, on every backend. A
@@ -1388,8 +1394,8 @@ The daemon's half and the IDE's half of supervision are in
 
 - A run restarts a healthy lane daemon when the build made another guest agent than its start. The restart
   stops the lane IDE, so the new daemon makes a fresh context and writes its files. The reason is
-  `the guest agent of the build changed`, and a note of the run stream names both digests. A restart for the stable
-  tier also stops the lane IDE then.
+  `the guest agent of the build changed`, and a note of the run stream names both digests. A restart for another
+  launch digest also stops the lane IDE then.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`the_run_reads_the_agent_of_the_build_only_for_a_lane_daemon_with_a_recorded_agent`)
 
@@ -1397,8 +1403,8 @@ The daemon's half and the IDE's half of supervision are in
   run cannot read.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused`)
 
-- A daemon restart for a change of the stable tier keeps each live lane IDE of the same product. The decision and
-  the timing line say `keep`.
+- A daemon restart for another launch digest keeps each live lane IDE of the same product. Its reason is
+  `the launch of the daemon changed`. The decision about the IDE and the timing line say `keep`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
   [@test] ../crates/avl-guest/src/ide/gc/tests.rs
 
@@ -1521,8 +1527,8 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_status_of_either_runner_decodes`)
   [@test] ../crates/avl-vm/src/daemon/slot/tests.rs (`only_an_answering_idle_daemon_reads_as_parked`)
 
-- A daemon record of an older controller can name the runner of its daemon. The reader ignores that field, and
-  `daemon status` names no runner.
+- A daemon record of an older controller can name the runner of its daemon and a runtime digest. The reader ignores
+  both fields, and `daemon status` names no runner.
   [@test] ../crates/avl-vm/src/daemon/state/tests.rs (`a_state_reads_only_with_every_field`)
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`command_daemon_status_reports_the_daemons_own_account`)
 

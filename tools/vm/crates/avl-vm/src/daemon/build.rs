@@ -1,4 +1,4 @@
-//! The one host build, stamped: what to launch, and the four identities that decide what can be reused.
+//! The one host build, stamped: what to launch, and the three identities that decide what can be reused.
 
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
@@ -53,7 +53,7 @@ pub(crate) const fn daemon_label(guest_os: GuestOs, target: DaemonTarget) -> &'s
     }
 }
 
-/// One host build, stamped: what to launch, and the four identities that decide what can be reused.
+/// One host build, stamped: what to launch, and the three identities that decide what can be reused.
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedBuild {
     /// The daemon target this build built ([`daemon_label`]).
@@ -69,7 +69,6 @@ pub(crate) struct PreparedBuild {
     /// The lane inputs of the descriptor, in key order: pushed by digest with the context plugin files. No identity
     /// reads them, so an edit of the fake agent or of a document restages nothing and restarts nothing.
     pub lane_inputs: Vec<LaneInput>,
-    pub runtime_digest: String,
     pub launch_digest: String,
     pub product_digest: String,
     pub mount_digest: String,
@@ -149,7 +148,7 @@ pub(crate) fn plugins_digest(files: &[PluginFile]) -> String {
 /// A worker used to supply exactly these two paths and nothing else, which made a build look per-worker when it
 /// never was: the Bazel outputs it reads are identical for every worker of a guest. Naming the two paths lets N
 /// workers share one build and - the part that pays - one stat-keyed [`FileDigestCache`]: the first shard warms it
-/// and the rest hit it instead of re-hashing the same hundreds of megabytes of classpath.
+/// and the rest hit it instead of re-hashing the same hundreds of megabytes of declared data.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct BuildScope {
     pub log: PathBuf,
@@ -190,7 +189,8 @@ impl BuildScope {
 // Each is hashed as the compact JSON of the struct. The field order is part of the digest; changing it restarts
 // every daemon once, which is harmless and is why nothing else pins these bytes.
 
-/// `@static-launch`: the launch facts of the daemon JVM that no file carries.
+/// `@static-launch`: the facts of the runtime descriptor that no file carries. The lane daemon reads the descriptor at
+/// its boot, so a changed static flag restarts it.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StaticLaunch<'a> {
@@ -244,11 +244,27 @@ pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &st
     })
 }
 
-/// The launch digest over its three parts. A JVM cannot change its own environment, so a change to the daemon
-/// environment has to re-exec the daemon rather than stay invisible until someone restarts it by hand.
-pub(crate) fn launch_digest(runtime_digest: &str, controller_boot_digest: &str, daemon_environment: &BTreeMap<String, String>) -> String {
+/// The `@static-launch` digest of `descriptor`.
+fn static_launch_digest(descriptor: &RuntimeDescriptor) -> String {
+    literal_digest(&StaticLaunch {
+        schema_version: descriptor.schema_version,
+        main_class: &descriptor.main_class,
+        static_jvm_flags: &descriptor.static_jvm_flags,
+        jbr_platform: &descriptor.jbr.platform,
+        java_home_suffix: &descriptor.jbr.java_home_suffix,
+    })
+}
+
+/// The launch digest over its three parts. No jar of the classpath and no file of the JBR enters it. A running daemon
+/// cannot change its own environment. So a change to the daemon environment re-execs the daemon, and it does not wait
+/// for a restart by hand.
+pub(crate) fn launch_digest(
+    static_launch_digest: &str,
+    controller_boot_digest: &str,
+    daemon_environment: &BTreeMap<String, String>,
+) -> String {
     digest::path_sensitive_digest(&[
-        PathDigest::new("@runtime", runtime_digest),
+        PathDigest::new("@static-launch", static_launch_digest),
         PathDigest::new("@controller-boot", controller_boot_digest),
         PathDigest::new("@daemon-environment", lane_environment_digest(daemon_environment)),
     ])
@@ -296,42 +312,6 @@ pub(crate) fn declared_input(
     })
 }
 
-/// The JBR of the distribution, which the daemon JVM runs on a copy of: its host directory, digested as a tree.
-///
-/// The identity is named by the logical path of the directory, so the runtime digest moves when the JBR bytes
-/// or modes move, and not when another file of the distribution does. A distribution without the directory is a
-/// refusal that names the path.
-pub(crate) fn jbr_input(
-    cache: &mut FileDigestCache,
-    runfiles: &HostRunfiles,
-    descriptor: &RuntimeDescriptor,
-) -> Result<PathDigest, Refusal> {
-    let home = &descriptor.dev_dist.home;
-    let logical_path = format!("{}/{}", home.logical_path, descriptor.jbr.directory);
-    let missing = |path: &Path, cause: String| {
-        Refusal::new(
-            "daemon_runtime_input_missing",
-            Exit::SOFTWARE,
-            format!(
-                "the distribution {} ({}) has no JBR: {} is not a directory{cause}; the dev distribution places the \
-                 production JBR there",
-                home.logical_path,
-                home.owner,
-                path.display()
-            ),
-        )
-    };
-    let Some(home_path) = runfiles.host_path(&home.logical_path) else {
-        return Err(missing(&runfiles.location().join(&logical_path), String::new()));
-    };
-    let path = home_path.join(&descriptor.jbr.directory);
-    if !fs::metadata(&path).is_ok_and(|metadata| metadata.is_dir()) {
-        return Err(missing(&path, String::new()));
-    }
-    let sha256 = cache.digest(&path).map_err(|error| missing(&path, format!(": {error}")))?;
-    Ok(PathDigest::new(logical_path, sha256))
-}
-
 /// The build of the IDE of `descriptor`: the `build.txt` of its distribution without the product code, or why it cannot
 /// be read.
 fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<String, String> {
@@ -355,7 +335,6 @@ struct Stamped {
     guest_tree: GuestRunfilesTree,
     plugin_files: Vec<PluginFile>,
     lane_inputs: Vec<LaneInput>,
-    runtime_digest: String,
     product_digest: String,
     mount_digest: String,
     parts: StampParts,
@@ -370,11 +349,11 @@ struct StampParts {
     tree: Duration,
 }
 
-/// Hashes every declared input of a descriptor through the digest cache and composes three of the four identities;
-/// the launch digest needs the settings and is composed by the caller. The context plugin files are hashed here too,
-/// and their identity is composed apart from the other four. The lane inputs are hashed for the push, and no identity
-/// reads them. The guest runfiles tree is planned here too, because the
-/// plan reads each staged runfile. Blocking: the first sweep reads gigabytes.
+/// Hashes every declared input of a descriptor through the digest cache and composes the product and the mount
+/// identities. The caller composes the launch digest, because it needs the settings. The context plugin files
+/// are hashed here too, and their identity is composed apart from the other three. The lane inputs are hashed for the
+/// push, and no identity reads them. The guest runfiles tree is planned here too, because the plan reads each staged
+/// runfile. Blocking: the first sweep reads gigabytes.
 fn stamp(
     descriptor: &RuntimeDescriptor,
     runfiles: &HostRunfiles,
@@ -384,7 +363,6 @@ fn stamp(
     let started = Instant::now();
     let mut cache = FileDigestCache::open(cache_path);
     let opened = Instant::now();
-    let jbr = jbr_input(&mut cache, runfiles, descriptor)?;
     let mut file = |file: &RuntimeFile| declared_input(&mut cache, runfiles, file, false);
 
     let mut plugin_files = Vec::with_capacity(descriptor.ide.plugins.len());
@@ -403,23 +381,6 @@ fn stamp(
             host: PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256),
         });
     }
-    let mut runtime_entries = Vec::with_capacity(descriptor.classpath.stable.len() + 2);
-    for jar in &descriptor.classpath.stable {
-        runtime_entries.push(file(jar)?.identity);
-    }
-    runtime_entries.push(PathDigest::new(
-        "@static-launch",
-        literal_digest(&StaticLaunch {
-            schema_version: descriptor.schema_version,
-            main_class: &descriptor.main_class,
-            static_jvm_flags: &descriptor.static_jvm_flags,
-            jbr_platform: &descriptor.jbr.platform,
-            java_home_suffix: &descriptor.jbr.java_home_suffix,
-        }),
-    ));
-    runtime_entries.push(jbr);
-    let runtime_digest = digest::path_sensitive_digest(&runtime_entries);
-
     let distribution = digest::product_identity(&ProductIdentityInput {
         fingerprint: file(&descriptor.dev_dist.fingerprint)?.identity,
         config: file(&descriptor.dev_dist.config)?.identity,
@@ -449,7 +410,6 @@ fn stamp(
         guest_tree,
         plugin_files,
         lane_inputs,
-        runtime_digest,
         product_digest,
         mount_digest,
         parts: StampParts {
@@ -462,8 +422,8 @@ fn stamp(
 }
 
 impl Host {
-    /// Runs the one host build and stamps it: the four digests, the files of the push by content, and the launch
-    /// identity everything downstream compares.
+    /// Runs the one host build and stamps it: the product, mount and plugins digests, the files of the push by content,
+    /// and the launch identity everything downstream compares.
     ///
     /// The build fixes the bytes that a run pushes, so the checkout tree is read when the build starts, beside it,
     /// and adds no time to it.
@@ -512,6 +472,7 @@ impl Host {
         .map_err(avl_base::descriptor_refusal)?;
         let runfiles = HostRunfiles::of(&descriptor_path)?;
         let ide_build = ide_build(&runfiles, &descriptor);
+        let static_launch = static_launch_digest(&descriptor);
         let tree_inputs = GuestTreeInputs::of(&self.settings)?;
         let stamped = {
             let _one_sweep = self.stamping.lock().await;
@@ -539,7 +500,7 @@ impl Host {
         let guest_runfiles_root = stamped.guest_tree.root.clone();
         let boot = controller_boot_digest(&self.settings, &guest_runfiles_root, self.settings.daemon.port);
         let daemon_environment = crate::lane::daemon_environment(&self.settings);
-        let launch_digest = launch_digest(&stamped.runtime_digest, &boot, &daemon_environment);
+        let launch_digest = launch_digest(&static_launch, &boot, &daemon_environment);
         Ok(PreparedBuild {
             label,
             guest_tree: stamped.guest_tree,
@@ -548,7 +509,6 @@ impl Host {
             plugin_directories: plugin_directories(&stamped.plugin_files),
             plugin_files: stamped.plugin_files,
             lane_inputs: stamped.lane_inputs,
-            runtime_digest: stamped.runtime_digest,
             launch_digest,
             product_digest: stamped.product_digest,
             mount_digest: stamped.mount_digest,

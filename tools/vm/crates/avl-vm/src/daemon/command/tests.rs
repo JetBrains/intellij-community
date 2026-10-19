@@ -105,17 +105,17 @@ async fn daemon_warm_reports_the_build_identities_and_touches_no_guest() {
         .await
         .unwrap();
     for (key, digest) in [
-        ("runtimeDigest", &built.runtime_digest),
         ("launchDigest", &built.launch_digest),
         ("productDigest", &built.product_digest),
         ("mountDigest", &built.mount_digest),
     ] {
         assert_eq!(outcome.data[key], json!(digest), "{key}");
     }
+    assert_eq!(outcome.data.get("runtimeDigest"), None, "the payload names no runtime digest");
     assert!(
         outcome
             .text
-            .starts_with(&format!("warmed docker {} in ", &built.runtime_digest[..12]))
+            .starts_with(&format!("warmed docker {} in ", &built.launch_digest[..12]))
             && outcome.text.ends_with('s')
             && !outcome.text.contains('\n'),
         "one line naming the configuration, the digest and the cost: {:?}",
@@ -454,7 +454,7 @@ async fn command_daemon_start_reports_the_endpoint_and_phases() {
         (&outcome.data["worker"], &outcome.data["port"]),
         (&json!(fixture.worker), &json!(fixture.daemon.port()))
     );
-    assert_eq!(outcome.data["runtimeDigest"], json!(prep.runtime_digest));
+    assert_eq!(outcome.data.get("runtimeDigest"), None, "the payload names no runtime digest");
     assert_eq!(outcome.data["productDigest"], json!(prep.product_digest));
     assert!(!outcome.data["phases"].as_array().unwrap().is_empty());
     assert!(

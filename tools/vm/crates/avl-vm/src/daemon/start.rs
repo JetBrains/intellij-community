@@ -93,8 +93,7 @@ impl Host {
     ///
     /// Two digests rather than one. The mount digest is the share-backed data and the product identity; the launch
     /// digest is added because a start can be reached *because* the build moved, and a new build means new Bazel
-    /// outputs that the guest is about to read through the same share. It subsumes the runtime digest, so the inputs
-    /// of the runtime digest are covered by comparing it alone.
+    /// outputs that the guest is about to read through the same share.
     ///
     /// No prior state means refresh. A fresh daemon's worker may have been rebuilt against by another controller,
     /// may have rebooted since its mount was made, or may be one whose `daemon stop` deleted the only record of what
@@ -479,7 +478,6 @@ impl Host {
             token: published.token,
             worker: worker.to_owned(),
             daemon_boot_stamp: published.daemon_boot_stamp,
-            runtime_digest: prep.runtime_digest.clone(),
             launch_digest: prep.launch_digest.clone(),
             last_product_digest: prep.product_digest.clone(),
             last_mount_digest: prep.mount_digest.clone(),

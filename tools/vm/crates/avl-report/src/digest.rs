@@ -1,15 +1,13 @@
-//! The content identities that decide whether a warm iteration reuses a staged generation.
+//! The content identities that decide whether a warm iteration reuses the lane daemon, its IDE and its shares.
 //!
 //! # Why the identities are the point of this module
 //!
-//! A staged runtime generation holds the daemon's stable classpath tier and a copy of the JBR. On the Linux
-//! guest that stable tier alone was 852 MiB, and `stage-runtime` cost 22.0 s of a cold `daemon start`. Whether an
-//! iteration pays that or reuses what the guest already holds is decided by five digests composed out of the
-//! primitives here. Both ways of getting one wrong are expensive and neither announces itself: a digest that
-//! changes when nothing changed restages gigabytes every iteration, and a digest that stays the same when
-//! something *did* change runs the next test against the previous build's bytes and reports the result as if it
-//! were fresh. So every input that can change a staged tree is folded in explicitly, and nothing here derives an
-//! identity from anything a build tool merely happened to write.
+//! A warm iteration reuses the lane daemon, the lane IDE and the shares of its worker, or it pays a restart, a
+//! relaunch or a remount. Four digests that the primitives here compose decide which. Both ways of getting one wrong
+//! are expensive, and neither announces itself. A digest that changes when nothing changed pays a remount or a restart
+//! at each iteration. A digest that stays the same when something *did* change runs the next test against the bytes of
+//! the previous build, and it reports the result as fresh. So every input that can change what the guest runs is
+//! folded in explicitly, and nothing here derives an identity from anything a build tool merely happened to write.
 //!
 //! The Bazel runtime descriptor these identities are taken over is [`avl_wire::runtime`].
 
@@ -54,8 +52,8 @@ pub fn sha256_file(path: &Path) -> io::Result<String> {
 /// One named thing and the digest of its bytes.
 ///
 /// `path` is not always a path: the compositions mix in synthetic names like `@static-launch` and
-/// `@guest-policy`, so that a policy change is indistinguishable, to the reuse decision, from a file change. Both
-/// mean the staged tree cannot be reused.
+/// `@project-root`, so that a changed setting is indistinguishable, to the reuse decision, from a file change. Both
+/// mean that the guest cannot reuse what it holds.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct PathDigest {
     pub path: String,

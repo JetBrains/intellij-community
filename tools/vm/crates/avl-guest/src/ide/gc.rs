@@ -1,7 +1,7 @@
 //! `ide-gc`: the live IDE runs under an IDE root, canceled or kept, and the old log directories of each context.
 //!
 //! The controller calls it where it has no daemon to ask: `--stop-all` when it releases or recycles a worker or
-//! stops the daemon, and `--keep-product <digest>` when it restarts the daemon for a change of the stable tier. Then
+//! stops the daemon, and `--keep-product <digest>` when a restart of the daemon keeps the IDE of the product. Then
 //! an IDE whose launch record names the same product digest survives the restart. Without either flag it cancels
 //! nothing. Each call also keeps only the newest `--keep-logs` log directories of each context, and never the log
 //! directory of a live IDE.

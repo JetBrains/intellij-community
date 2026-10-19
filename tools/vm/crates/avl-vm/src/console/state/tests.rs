@@ -250,17 +250,17 @@ fn the_checklist_shows_the_plan_and_the_usual_times() {
 fn a_decision_explains_its_row() {
     let mut run = Run::new();
     run.publish(
-        &decision(Subject::Daemon, "restart", Some("the stable runtime or JBR changed")),
+        &decision(Subject::Daemon, "restart", Some("the launch of the daemon changed")),
         "air-linux-1",
     );
     assert!(
-        run.has_line("⟳ daemon restart — the stable runtime or JBR changed"),
+        run.has_line("⟳ daemon restart — the launch of the daemon changed"),
         "the scrollback is {:?}",
         run.scrollback
     );
     let live = run.live(120);
     assert!(
-        live.contains("restart — the stable runtime or JBR changed"),
+        live.contains("restart — the launch of the daemon changed"),
         "the daemon row does not say why:\n{live}"
     );
 

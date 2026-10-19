@@ -490,13 +490,8 @@ async fn a_full_start_boots_polls_and_records_its_state() {
         "the state aims at the daemon the guest named"
     );
     assert_eq!(
-        (
-            &state.launch_digest,
-            &state.runtime_digest,
-            &state.last_product_digest,
-            &state.last_mount_digest
-        ),
-        (&prep.launch_digest, &prep.runtime_digest, &prep.product_digest, &prep.mount_digest)
+        (&state.launch_digest, &state.last_product_digest, &state.last_mount_digest),
+        (&prep.launch_digest, &prep.product_digest, &prep.mount_digest)
     );
     assert_eq!(
         HostState::read(&fixture.settings, &fixture.worker).as_ref(),

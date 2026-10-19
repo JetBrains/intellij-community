@@ -332,7 +332,7 @@ pub struct Decision {
 }
 
 impl Decision {
-    /// The decision as one line of prose: `daemon restart: the stable runtime or JBR changed`.
+    /// The decision as one line of prose: `daemon restart: the launch of the daemon changed`.
     pub fn line(&self) -> String {
         match &self.reason {
             Some(reason) => format!("{} {}: {reason}", self.subject, self.action),

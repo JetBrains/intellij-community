@@ -449,9 +449,10 @@ the lane builds no runfile links: the controller reads the MANIFEST of the runti
 
 A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the daemon and
 in a standalone lane run. The lane daemon is a verb of the guest agent and runs no JVM, so a daemon start copies no
-JBR to the guest. The `jbr` section of the runtime descriptor names that directory below the distribution home. A
-distribution without it is a refusal on the host before the build is stamped, and the refusal names the path. No lane
-target and no descriptor carries a JBR archive.
+JBR to the guest. The `jbr` section of the runtime descriptor names that directory below the distribution home. No
+identity reads a file of the JBR, because the fingerprint of the distribution covers it. The lane daemon refuses a
+distribution without the JBR at its boot, and the refusal names the path. No lane target and no descriptor carries a
+JBR archive.
 
 **Remounting is a correctness requirement, not hygiene.** A VirtioFS guest keeps a dead node for any
 file the host rewrites after the mount. `stat` then still answers from the cache, while `open` fails
@@ -495,8 +496,8 @@ lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
 The runtime descriptor still declares the two classpath tiers of the retired JVM daemon. The **stable** tier is the
-JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty. Only the
-runtime digest reads it, and nothing stages it. The **hot** tier is the jars built from `plugins/air`: the jars of
+JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty. No
+identity reads it, and nothing stages it. The **hot** tier is the jars built from `plugins/air`: the jars of
 the suite and lane documents. Nothing reads it, and the controller pushes no hot jar. The test code of a run reaches
 the lane IDE as the context plugin files and the lane inputs, which the controller pushes by digest.
 
@@ -534,7 +535,7 @@ controller, or its own crash. An IDE that ended on its own, or whose bridge stop
 host's probe at the next suite boundary and relaunched on its context, so the lane pays a launch and no timeout.
 
 **The IDE outlives a daemon restart of the same product.** A cancel of the daemon run does not reach the IDE run.
-A restart for a change of the stable tier keeps each live IDE whose launch record names the product of the build,
+A restart for another launch digest keeps each live IDE whose launch record names the product of the build,
 and the timing line reports `ide keep`. The new daemon adopts that IDE on its first attach. Every other daemon
 start, `daemon stop`, a lease release and a pool recycle stop every lane IDE of the worker through the agent's
 `ide-gc`. The next run on a healthy daemon that holds no running IDE launches the IDE again, and the timing line
@@ -563,7 +564,7 @@ iteration's timing line reports the one it took.
 | --- | --- | --- |
 | product inputs, meaning anything inside the prepared distribution | product stamp diff | stop every lane IDE, remount, then launch the IDE again. The daemon survives, and nothing is assembled |
 | the context plugins, meaning the in-IDE test bridge and its resident part, which no lane distribution carries | the digest of each plugin directory | a push of the changed plugin files, with **no remount** and no distribution compose. Under the lane daemon, an edit of the bridge directory alone reloads the bridge plugin in the running IDE, and the timing line reports `ide reload`. An edit of the resident part relaunches the IDE on the same context, and so does a reload that fails |
-| the daemon's parent tier, meaning platform and framework jars | stable digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
+| the launch of the lane daemon, meaning a static flag of the runtime descriptor, a boot setting or the daemon environment | launch digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
 | the container's declaration, meaning the image tag, the share or the display | create-record diff | a recreate plus a cold daemon start; Docker only |
 
 The series of 2026-10-15 measured the plugin rows under the lane daemon. It ran on master `64c3e5270948e`, on
@@ -593,7 +594,7 @@ directory on the guest disk, so the daemon can outlive a remount, and there are 
   runners serve `/ide/stop`, so the remount needs no route of its own. The timing line reports `ide remount`. On
   Docker, the controller refreshes the shares with the 2 s settle instead of a remount. The timing
   line still reads `ide remount`.
-- **Between daemons**, for a stable-tier change. `start_daemon` in `crates/avl-vm/src/daemon/start.rs`
+- **Between daemons**, for a change of the launch digest. `start_daemon` in `crates/avl-vm/src/daemon/start.rs`
   remounts after the old daemon stops and before the new one starts. Before the remount, the guest
   agent's `ide-gc` keeps or stops the lane IDEs. On Docker, the controller refreshes the shares with
   the 2 s settle instead of a remount, so an IDE of the same product survives it.
@@ -632,7 +633,7 @@ published its state file in that case, so read `daemon log` to see why the daemo
 A worker whose VM Tart no longer lists, while its `tart run` process lives on, releases its lease
 without the guest check. `pool recycle <worker>` then ends that process and clones the slot again.
 
-The daemon environment is a fourth invalidation, because a JVM cannot change its own environment.
+The daemon environment is part of the launch row, because a running daemon cannot change its own environment.
 `prepare_build` in `crates/avl-vm/src/daemon/build.rs` folds that environment into the launch digest, so a
 changed value restarts the daemon.
 

@@ -67,11 +67,11 @@ pub mod code {
     /// too. The daemon joins the destination onto the plugin directory of the IDE context, so one that escapes is a
     /// write outside that directory.
     pub const PLUGIN_DESTINATION_INVALID: &str = "daemon_runtime_plugin_destination_invalid";
-    /// A JBR directory that is absolute or contains `..`. The controller joins it onto the distribution home, so a
-    /// directory that escapes stages a JVM from outside the distribution.
+    /// A JBR directory that is absolute or contains `..`, so that it names a directory outside the distribution
+    /// home.
     pub const JBR_DIRECTORY_INVALID: &str = "daemon_runtime_jbr_directory_invalid";
     /// A lane input that a share or the stable tier also carries. A lane input travels by the jar push only. A second
-    /// way in would move the mount or the runtime identity at each change of the input.
+    /// way in would move the mount identity at each change of the input.
     pub const LANE_INPUT_STAGED: &str = "daemon_runtime_lane_input_staged";
 }
 

@@ -126,7 +126,6 @@ pub(crate) struct DaemonStartData {
     pub worker: String,
     pub run_id: String,
     pub port: u16,
-    pub runtime_digest: String,
     pub product_digest: String,
     pub phases: Vec<Timing>,
 }
@@ -149,7 +148,7 @@ pub(crate) struct DaemonName {
     pub endpoint: String,
 }
 
-/// `daemon warm`'s payload: no worker, the configuration that was warmed, and the four identities the build
+/// `daemon warm`'s payload: no worker, the configuration that was warmed, and the three identities the build
 /// stamped.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -162,7 +161,6 @@ pub(crate) struct DaemonWarmData {
     /// configuration. Both, because the caller retypes the first and reasons about the second.
     pub config: String,
     pub guest_os: String,
-    pub runtime_digest: String,
     /// What a start compares its own build against, and warming reaches no guest to change it.
     pub launch_digest: String,
     pub product_digest: String,
@@ -762,7 +760,6 @@ impl Host {
             worker: None,
             config: label.to_owned(),
             guest_os: self.settings.guest_os.as_str().to_owned(),
-            runtime_digest: built.runtime_digest.clone(),
             launch_digest: built.launch_digest.clone(),
             product_digest: built.product_digest.clone(),
             mount_digest: built.mount_digest.clone(),
@@ -771,7 +768,7 @@ impl Host {
         };
         // The configuration is named in the prose form too, because the trap this command exists to remove is paid
         // for again by warming the wrong guest, and a bare digest does not say which one was warmed.
-        let short = built.runtime_digest.get(..12).unwrap_or(&built.runtime_digest);
+        let short = built.launch_digest.get(..12).unwrap_or(&built.launch_digest);
         Outcome::new(
             &data,
             format!("warmed {label} {short} in {}", seconds(millis(built.build + built.stamp) as f64)),
@@ -825,7 +822,6 @@ impl Host {
             worker: current.worker.clone(),
             run_id: state.run_id,
             port: state.port,
-            runtime_digest: prep.runtime_digest,
             product_digest: prep.product_digest,
             phases,
         };

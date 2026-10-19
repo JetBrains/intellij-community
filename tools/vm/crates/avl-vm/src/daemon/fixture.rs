@@ -113,7 +113,6 @@ impl Fixture {
         };
         daemon.script().boot_stamp = format!("boot-{worker}");
         let mut state = daemon.host_state(&format!("run-{worker}"), &prep.launch_digest);
-        state.runtime_digest = prep.runtime_digest.clone();
         state.last_product_digest = prep.product_digest.clone();
         state.last_mount_digest = prep.mount_digest.clone();
         state.last_plugins_digest = prep.plugins_digest.clone();

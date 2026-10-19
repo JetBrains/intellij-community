@@ -101,7 +101,6 @@ impl IdeAction {
 pub(crate) struct DaemonDigests<'a> {
     pub launch: &'a str,
     pub mount: &'a str,
-    pub runtime: &'a str,
     /// The context plugin identity. Empty in a record that predates it, which reads as unknown.
     pub plugins: &'a str,
 }
@@ -138,6 +137,10 @@ pub(crate) const AGENT_REINSTALLED: &str = "the guest agent was reinstalled unde
 
 /// The reason of the restart of a lane daemon whose start agent is not the guest agent that the build made.
 pub(crate) const AGENT_BUILT: &str = "the guest agent of the build changed";
+
+/// The reason of the restart of a daemon of another launch digest. A static flag of the runtime descriptor, a boot
+/// setting of the controller or the daemon environment changed.
+pub(crate) const LAUNCH_CHANGED: &str = "the launch of the daemon changed";
 
 /// What an iteration does with the daemon before it runs: the answer of [`decide_daemon_action`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -207,14 +210,9 @@ pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: Da
             DaemonAction::Reuse
         };
     }
-    let reason = if recorded.runtime == build.runtime {
-        "the controller boot settings changed"
-    } else {
-        "the stable runtime or JBR changed"
-    };
     DaemonAction::Start {
         verb: "restart",
-        reason,
+        reason: LAUNCH_CHANGED,
         keep_ide: !built_moved,
     }
 }
@@ -282,7 +280,6 @@ impl HostState {
         DaemonDigests {
             launch: &self.launch_digest,
             mount: &self.last_mount_digest,
-            runtime: &self.runtime_digest,
             plugins: &self.last_plugins_digest,
         }
     }
@@ -294,7 +291,6 @@ impl PreparedBuild {
         DaemonDigests {
             launch: &self.launch_digest,
             mount: &self.mount_digest,
-            runtime: &self.runtime_digest,
             plugins: &self.plugins_digest,
         }
     }

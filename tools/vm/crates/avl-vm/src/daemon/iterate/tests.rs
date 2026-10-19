@@ -34,35 +34,24 @@ use crate::daemon::traces::TRACE_PACK_TIMEOUT;
 const BUILD: DaemonDigests<'static> = DaemonDigests {
     launch: "launch-1",
     mount: "mount-1",
-    runtime: "runtime-1",
     plugins: "plugins-1",
 };
 
-fn healthy(launch: &'static str, mount: &'static str, runtime: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
-    healthy_with_plugins(launch, mount, runtime, "plugins-1", ide_running)
+fn healthy(launch: &'static str, mount: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
+    healthy_with_plugins(launch, mount, "plugins-1", ide_running)
 }
 
-fn healthy_with_plugins(
-    launch: &'static str,
-    mount: &'static str,
-    runtime: &'static str,
-    plugins: &'static str,
-    ide_running: bool,
-) -> HealthyDaemon<'static> {
+fn healthy_with_plugins(launch: &'static str, mount: &'static str, plugins: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
     HealthyDaemon {
-        recorded: DaemonDigests {
-            launch,
-            mount,
-            runtime,
-            plugins,
-        },
+        recorded: DaemonDigests { launch, mount, plugins },
         ide_running,
         agent: None,
     }
 }
 
 // A healthy daemon of this launch serves the iteration, refreshed or relaunched when an axis asks for it; any other
-// daemon is started, and the decision names which axis moved.
+// daemon is started, and the decision names which axis moved. A daemon of another launch restarts for one reason, and
+// `--fresh-ide` does not change it.
 #[test]
 fn the_daemon_decision_names_the_axis_that_moved() {
     let start = |verb, reason| DaemonAction::Start {
@@ -72,57 +61,49 @@ fn the_daemon_decision_names_the_axis_that_moved() {
     };
     for (seen, fresh_ide, expected) in [
         (None, false, start("start", "no healthy daemon")),
-        (Some(healthy("launch-1", "mount-1", "runtime-1", true)), false, DaemonAction::Reuse),
+        (Some(healthy("launch-1", "mount-1", true)), false, DaemonAction::Reuse),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", false)),
+            Some(healthy("launch-1", "mount-1", false)),
             false,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        (Some(healthy("launch-1", "mount-0", "runtime-1", true)), true, DaemonAction::Remount),
+        (Some(healthy("launch-1", "mount-0", true)), true, DaemonAction::Remount),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", true)),
+            Some(healthy("launch-1", "mount-1", true)),
             true,
             DaemonAction::Relaunch { stop_ide: true },
         ),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", false)),
+            Some(healthy("launch-1", "mount-1", false)),
             true,
             DaemonAction::Relaunch { stop_ide: false },
         ),
         // Only the context plugins moved: the lane daemon compares the digest of each plugin directory itself.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "plugins-0", true)),
             false,
             DaemonAction::Reuse,
         ),
         // A record of an older controller holds no plugin identity, so nothing is decided on it.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "", true)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "", true)),
             false,
             DaemonAction::Reuse,
         ),
         // A moved mount wins: the remount gives a fresh context, which installs the plugins anyway.
         (
-            Some(healthy_with_plugins("launch-1", "mount-0", "runtime-1", "plugins-0", true)),
+            Some(healthy_with_plugins("launch-1", "mount-0", "plugins-0", true)),
             false,
             DaemonAction::Remount,
         ),
         // An IDE that is not running is launched again, and the launch installs the plugins.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", false)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "plugins-0", false)),
             false,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        (
-            Some(healthy("launch-0", "mount-1", "runtime-0", true)),
-            false,
-            start("restart", "the stable runtime or JBR changed"),
-        ),
-        (
-            Some(healthy("launch-0", "mount-1", "runtime-1", true)),
-            true,
-            start("restart", "the controller boot settings changed"),
-        ),
+        (Some(healthy("launch-0", "mount-1", true)), false, start("restart", LAUNCH_CHANGED)),
+        (Some(healthy("launch-0", "mount-0", true)), true, start("restart", LAUNCH_CHANGED)),
     ] {
         assert_eq!(
             decide_daemon_action(seen, BUILD, fresh_ide),
@@ -143,7 +124,7 @@ fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
             installed: Some(installed),
             built: Some(started),
         }),
-        ..healthy("launch-1", mount, "runtime-1", true)
+        ..healthy("launch-1", mount, true)
     };
     let restart = DaemonAction::Start {
         verb: "restart",
@@ -155,7 +136,7 @@ fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
     // The start refreshes the shares too, so a moved mount restarts the same way.
     assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-0")), restart);
     assert_eq!(decide(with_agent("agent-a", "agent-a", "mount-1")), DaemonAction::Reuse);
-    assert_eq!(decide(healthy("launch-1", "mount-1", "runtime-1", true)), DaemonAction::Reuse);
+    assert_eq!(decide(healthy("launch-1", "mount-1", true)), DaemonAction::Reuse);
 }
 
 /// A healthy lane daemon of `launch` that started from the agent `started`, whose build made the agent `built`. The guest
@@ -167,12 +148,12 @@ fn with_built(launch: &'static str, started: &'static str, built: Option<&'stati
             installed: Some(started),
             built,
         }),
-        ..healthy(launch, "mount-1", "runtime-1", true)
+        ..healthy(launch, "mount-1", true)
     }
 }
 
 // The context writer is part of the guest agent. So a lane daemon whose build made another guest agent restarts, and the
-// restart keeps no IDE: the new daemon makes a fresh context and writes its files. A restart for the stable tier keeps
+// restart keeps no IDE: the new daemon makes a fresh context and writes its files. A restart for a moved launch keeps
 // its reason and also keeps no IDE then.
 #[test]
 fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide() {
@@ -193,14 +174,14 @@ fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide(
         decide(with_built("launch-0", "agent-a", Some("agent-b"))),
         DaemonAction::Start {
             verb: "restart",
-            reason: "the controller boot settings changed",
+            reason: LAUNCH_CHANGED,
             keep_ide: false,
         }
     );
 }
 
 // A lane daemon whose build made the agent of its start serves the run as it is, and so does one whose built agent the
-// run does not know. A restart for the stable tier then keeps the IDE of the product.
+// run does not know. A restart for a moved launch then keeps the IDE of the product.
 #[test]
 fn a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused() {
     let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
@@ -210,7 +191,7 @@ fn a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused() {
         decide(with_built("launch-0", "agent-a", Some("agent-a"))),
         DaemonAction::Start {
             verb: "restart",
-            reason: "the controller boot settings changed",
+            reason: LAUNCH_CHANGED,
             keep_ide: true,
         }
     );
@@ -708,15 +689,14 @@ async fn a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started() {
     );
 }
 
-// A restart for a stable-tier change keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc
-// keeps the product, the timing line says `keep`, and the decision names the kept IDE.
+// A restart for a moved launch keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc keeps
+// the product, the timing line says `keep`, and the decision names the kept IDE.
 #[tokio::test]
 async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     let (fixture, prep, _) = iteration_fixture_over(Fixture::docker().await, "it-16d").await;
     fixture.install_happy_guest();
-    // The recorded daemon answers for another launch of the same runtime and product, so the iteration restarts it.
+    // The recorded daemon answers for another launch of the same product, so the iteration restarts it.
     let mut recorded_state = fixture.daemon.host_state("run-ui-daemon-stale", "launch-stale");
-    recorded_state.runtime_digest = prep.runtime_digest.clone();
     recorded_state.last_product_digest = prep.product_digest.clone();
     recorded_state.last_mount_digest = prep.mount_digest.clone();
     recorded_state.write(&fixture.settings, &fixture.worker).unwrap();
