@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.python.sdk.backend.PythonEnvironment;
 import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.project.PyProject;
+import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +56,14 @@ public final class PythonSdkUtil {
   }
 
   /**
+   * The SDK of the interpreter of the Python project on {@code module}, read from the project structure. {@code null}
+   * before the first structure lands.
+   *
    * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}.
    */
   @Deprecated
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
-    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.findPythonSdk(module);
+    return module == null ? null : MainPythonSdkKt.pythonSdkIfReady(module);
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
@@ -88,15 +91,6 @@ public final class PythonSdkUtil {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getPythonExecutable(rootPath);
   }
 
-
-  /**
-   * @deprecated Use the interpreter of the Python project of the file, {@code findPythonInterpreter(file)}.
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  public static @Nullable Sdk findPythonSdk(final @NotNull PsiElement element) {
-    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.findPythonSdk(element);
-  }
 
 
   /**

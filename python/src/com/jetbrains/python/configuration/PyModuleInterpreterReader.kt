@@ -3,6 +3,8 @@
 
 package com.jetbrains.python.configuration
 
+import com.intellij.psi.PsiElement
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -25,6 +27,10 @@ fun findModuleSdkIfReady(module: Module?): Sdk? {
   @Suppress("DEPRECATION") // The Java callers still take an SDK.
   return findModuleInterpreterIfReady(module)?.getSdkAPI()
 }
+
+/** [findModuleSdkIfReady] for the module of [element]. A library file belongs to no module, so it answers `null`. */
+@ApiStatus.Internal
+fun findElementSdkIfReady(element: PsiElement): Sdk? = findModuleSdkIfReady(ModuleUtilCore.findModuleForPsiElement(element))
 
 /** [findModuleSdkIfReady] for a Java caller that takes the interpreter. */
 @ApiStatus.Internal

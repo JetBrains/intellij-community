@@ -42,7 +42,7 @@ internal class MinorPythonConsoleOptionsProvider : PyConsoleOptionsProvider {
    * Returns [PyConsoleParameters] for a module that has a [MinorPythonFacet]
    * with a configured SDK, or `null` if this module is not a mini-IDE Python
    * module.  A non-null return value guarantees that
-   * [com.jetbrains.python.sdk.legacy.PythonSdkUtil.findPythonSdk] will
+   * [com.jetbrains.python.module.PyModuleService.findPythonSdk] will
    * succeed for the returned module (the facet SDK is not null).
    */
   override fun getConsoleParameters(module: Module): PyConsoleParameters? {

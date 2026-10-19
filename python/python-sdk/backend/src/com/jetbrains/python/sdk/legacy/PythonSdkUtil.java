@@ -123,18 +123,9 @@ public final class PythonSdkUtil {
   }
 
   /**
-   * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}. It waits for the project structure.
-   * A caller that cannot wait reads the snapshot of {@code EvoPyProjectModel}.
-   */
-  @Deprecated
-  public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
-    return readStoredPythonSdk(module);
-  }
-
-  /**
-   * The Python SDK stored on {@code module}, read now. For low-level code that runs inside the platform roots-change
-   * cycle and fills an index from it, such as the language level pusher. Every other caller reads the interpreter of
-   * the Python project.
+   * The Python SDK stored on {@code module}, read now. For low-level code that the project structure depends on: the
+   * language level pusher, which runs inside the platform roots-change cycle and fills an index, and the SDK writer,
+   * which reports the previous value. Every other caller reads the interpreter of the Python project.
    */
   @ApiStatus.Internal
   public static @Nullable Sdk readStoredPythonSdk(@Nullable Module module) {
@@ -288,15 +279,6 @@ public final class PythonSdkUtil {
 
   public static @Nullable Sdk findSdkByKey(@NotNull String key) {
     return ProjectJdkTable.getInstance().findJdk(key);
-  }
-
-  /**
-   * @deprecated Use the interpreter of the Python project of the file, {@code findPythonInterpreter(file)}.
-   * A caller that cannot wait reads {@code EvoPyProjectModel.snapshotOrNull()?.forFile(file)}.
-   */
-  @Deprecated
-  public static @Nullable Sdk findPythonSdk(final @NotNull PsiElement element) {
-    return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
   /**

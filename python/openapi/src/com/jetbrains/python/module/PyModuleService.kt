@@ -13,7 +13,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PyModuleService {
   /**
-   * Returns the Python SDK configured for this module, or `null` if none is set.
+   * Returns the Python SDK stored on this module, or `null` if none is set.
+   *
+   * The project structure is built from this value, see `readPythonSdkForConfiguration`. Every other caller reads the
+   * interpreter of the Python project.
    *
    * Unlike [findPythonSdk], this method suspends until the project model is fully loaded
    * before resolving the SDK, so it is safe to call during startup.
@@ -22,7 +25,11 @@ interface PyModuleService {
   suspend fun findPythonSdkWaitingForProjectModel(module: Module): Sdk?
 
   /**
-   * Returns the Python SDK configured for this module, or `null` if none is set.
+   * Returns the Python SDK stored on this module, or `null` if none is set.
+   *
+   * Only for the code that the project structure depends on: the language level pusher, through
+   * `PythonSdkUtil.readStoredPythonSdk`, and a settings page that compares the stored value with what it wrote. Every
+   * other caller reads the interpreter of the Python project.
    *
    * **Startup caveat:** may return `null` when a Python SDK *is* configured but hasn't
    * resolved yet (e.g., the SDK table is still loading from a stale workspace model cache).

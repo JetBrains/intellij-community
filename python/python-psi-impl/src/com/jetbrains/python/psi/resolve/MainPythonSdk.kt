@@ -34,7 +34,7 @@ internal fun Project.mainPythonSdk(): Sdk? = findMainEvoPyProjectIfReady()?.inte
 @Suppress("DEPRECATION") // Resolve still reads the roots of an SDK.
 internal fun Module.pythonSdkIfReady(): Sdk? = findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
 
-/** [pythonSdkIfReady] for the module of this element, as `PythonSdkUtil.findPythonSdk(PsiElement)` found it. */
+/** [pythonSdkIfReady] for the module of this element. */
 internal fun PsiElement.pythonSdkIfReady(): Sdk? = ModuleUtilCore.findModuleForPsiElement(this)?.pythonSdkIfReady()
 
 /** Whether the file of [element] is in the skeletons of the interpreter of its module, see [pythonSdkIfReady]. */

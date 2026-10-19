@@ -23,18 +23,6 @@ suspend fun Module.readPythonSdkForConfiguration(): Sdk? =
   PyModuleService.getInstance(getProject()).findPythonSdkWaitingForProjectModel(this)
 
 /**
- * The Python SDK configured for this module.
- *
- * **Startup caveat:** the getter may return `null` when a Python SDK *is* configured but hasn't
- * resolved yet (e.g., the SDK table is still loading from a stale workspace model cache).
- * Prefer the interpreter of the Python project, `PyProject.getInterpreter`, in coroutine contexts.
- */
-@Deprecated("Use the interpreter of the Python project: `PyProject.getInterpreter`, or the snapshot of `EvoPyProjectModel` when the caller cannot wait")
-val Module.pythonSdk: Sdk?
-  @Suppress("DEPRECATION")
-  get() = PythonSdkUtil.findPythonSdk(this)
-
-/**
  * Sets [sdk] on this module, for a test whose SDK cannot become a `PythonInterpreter`, such as a mock SDK, or whose
  * module is not a Python project. Every other caller uses `PyProject.setPythonInterpreter`, which is the one way to set
  * an interpreter.
@@ -55,8 +43,7 @@ fun Module.setPythonSdkForTests(sdk: Sdk?): Unit = writePythonSdk(sdk)
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 fun Module.writePythonSdk(newSdk: Sdk?) {
-  @Suppress("DEPRECATION")
-  val prevSdk = pythonSdk
+  val prevSdk = PythonSdkUtil.readStoredPythonSdk(this)
   thisLogger.info("Setting PythonSDK $newSdk to module $this")
   newSdk?.pythonInterpreter(forceRefresh = true)
   // The daemon restarts when the snapshot holds the new interpreter. See EvoPyProjectModel.
