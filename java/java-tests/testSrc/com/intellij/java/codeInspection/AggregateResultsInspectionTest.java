@@ -2,6 +2,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.AggregateResultsInspection;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
@@ -94,6 +96,7 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
     for (InspectionToolWrapper<?, ?> t : getTools()) {
       profile.enableTool(t.getShortName(), getProject());
     }
+    profile.setErrorLevel(HighlightDisplayKey.find("MockInspection"), HighlightDisplayLevel.ERROR, getProject());
 
     context.setExternalProfile(profile);
 
@@ -107,7 +110,7 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
     assertEquals("TestAggregator.xml", resultFile.getFileName().toString());
     Element aggregatorResult = InspectionResultExportTest.loadFile(resultFile);
     Map<Integer, String> expectedProblemClassByLine = Map.of(
-      3, "MockInspection", 4, "TestAggregator"
+      3, "MockInspection:ERROR", 4, "TestAggregator:WEAK WARNING"
     );
     verifyProblemClassId(aggregatorResult, expectedProblemClassByLine);
   }
@@ -117,8 +120,8 @@ public class AggregateResultsInspectionTest extends LightJava9ModulesCodeInsight
     Map<Integer, String> problemClassByLine = new HashMap<>();
     for (Element problem : problems) {
       String line = problem.getChild("line").getContent(0).getValue();
-      String problemClassId = problem.getChild("problem_class").getAttributeValue("id");
-      problemClassByLine.put(Integer.valueOf(line), problemClassId);
+      Element problemClass = problem.getChild("problem_class");
+      problemClassByLine.put(Integer.valueOf(line), problemClass.getAttributeValue("id") + ":" + problemClass.getAttributeValue("severity"));
     }
     assertEquals(expectedProblemClassByLine, problemClassByLine);
   }
