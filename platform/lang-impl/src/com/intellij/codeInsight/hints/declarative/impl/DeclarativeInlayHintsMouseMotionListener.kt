@@ -72,7 +72,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
         (e.editor as? EditorEx)?.setCustomCursor(DeclarativeInlayHintsMouseMotionListener::class.java, null)
       }
 
-      inlayUnderCursor?.get()?.update()
+      inlayUnderCursor?.get()?.takeIf { it.isValid }?.update()
       inlay?.update()
 
       areaUnderCursor = mouseArea
