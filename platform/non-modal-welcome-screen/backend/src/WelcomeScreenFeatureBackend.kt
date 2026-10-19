@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.backend
 
+import com.intellij.ide.actions.WELCOME_NEW_FILE_EXTENSION
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.ActionManager
@@ -79,6 +80,13 @@ abstract class WelcomeScreenToolwindowFeatureBackend : WelcomeScreenFeatureBacke
 abstract class WelcomeScreenNewFileFeatureBackend : WelcomeScreenFeatureBackend() {
   protected abstract val languageId: String
 
+  /**
+   * The extension of the new file when the language is not available.
+   * For example, the language plugin is disabled.
+   * When it is null, the click does nothing without the language.
+   */
+  protected open val fileExtension: String? = null
+
   private fun getLanguage(): Language? {
     val language = Language.findLanguageByID(languageId)
     if (language != null) {
@@ -90,10 +98,15 @@ abstract class WelcomeScreenNewFileFeatureBackend : WelcomeScreenFeatureBackend(
   }
 
   final override fun onClick(project: Project) {
-    val language = getLanguage() ?: return
+    val language = getLanguage()
+    val extension = if (language == null) fileExtension ?: return else null
 
     invokeWelcomeScreenAction(project, "WelcomeNewEmptyFile") {
-      SimpleDataContext.builder().setParent(it).add(CommonDataKeys.LANGUAGE, language).build()
+      SimpleDataContext.builder()
+        .setParent(it)
+        .add(CommonDataKeys.LANGUAGE, language)
+        .add(WELCOME_NEW_FILE_EXTENSION, extension)
+        .build()
     }
   }
 }
