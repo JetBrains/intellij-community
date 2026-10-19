@@ -939,14 +939,10 @@ c:com.intellij.execution.target.value.DeferredTargetValue
 - getLocalValue():org.jetbrains.concurrency.Promise
 - getTargetValue():org.jetbrains.concurrency.Promise
 f:com.intellij.execution.target.value.TargetEnvironmentFunctions
-- sf:andThenJoinToString(java.util.function.Function,java.lang.CharSequence):java.util.function.Function
-- sf:andThenJoinToString(java.util.function.Function,java.lang.CharSequence,kotlin.jvm.functions.Function1):java.util.function.Function
-- bs:andThenJoinToString$default(java.util.function.Function,java.lang.CharSequence,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.function.Function
 - sf:downloadFromTarget(com.intellij.execution.target.TargetEnvironment,java.nio.file.Path,com.intellij.openapi.progress.ProgressIndicator):V
 - sf:getRelativeTargetPath(java.util.function.Function,java.lang.String):java.util.function.Function
 - sf:getTargetDownloadPath(com.intellij.execution.target.TargetEnvironment$DownloadRoot):java.util.function.Function
 - sf:getTargetEnvironmentValue(com.intellij.execution.target.TargetEnvironment$TargetPortBinding):java.util.function.Function
-- sf:getTargetEnvironmentValueForLocalPath(java.nio.file.Path):java.util.function.Function
 - sf:getUploadRootForLocalPath(com.intellij.execution.target.TargetEnvironmentRequest,java.lang.String):kotlin.Pair
 - sf:getUploadRootForLocalPath(com.intellij.execution.target.TargetEnvironmentRequest,java.nio.file.Path):kotlin.Pair
 - sf:joinToStringFunction(java.lang.Iterable,java.lang.CharSequence):java.util.function.Function

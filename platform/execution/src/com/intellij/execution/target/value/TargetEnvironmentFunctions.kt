@@ -13,6 +13,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.provider.asEelPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
@@ -108,6 +109,7 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
  * @see joinToString
  */
 @JvmOverloads
+@ApiStatus.Internal
 fun <T> TargetEnvironmentFunction<out Iterable<T>>.andThenJoinToString(separator: CharSequence,
                                                                        transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
   AndThenJoinToStringTargetEnvironmentFunction(function = this, separator = separator, transform = transform)
@@ -118,10 +120,11 @@ fun <T> TargetEnvironmentFunction<out Iterable<T>>.andThenJoinToString(separator
  * Consider using [targetPath] function, which does not throw an exception if [localPath] cannot be mapped to a target path during the
  * resolution against [TargetEnvironment].
  */
+@ApiStatus.Internal
 fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<FullPathOnTarget> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
     when (targetEnvironment) {
-      is LocalTargetEnvironment -> localPath.toString()
+      is LocalTargetEnvironment -> localPath.asEelPath().toString()
       else -> targetEnvironment.resolveLocalPath(localPath)
     }
   }
