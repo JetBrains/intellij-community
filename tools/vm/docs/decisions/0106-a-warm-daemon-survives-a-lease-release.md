@@ -18,6 +18,11 @@ Accepted. Describes `lease release` in `//plugins/air/tests/integration/vm-lane`
 
 Superseded in part on 2026-10-13: [a run marks its worker and holds the lock at its ends](2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends.md) replaces [the section on the lifecycle lock](#the-lifecycle-lock-already-excludes-a-live-iteration).
 
+The daemon of this record is the lane daemon of the guest agent since 2026-10-19. The JVM daemon of ADR 0104 is gone,
+and the slot probe never reads a leftover one as parked. The decision holds for the lane daemon.
+[The lane daemon is the only runner of the Air UI lanes](2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes.md)
+records the change.
+
 ## Context
 
 A worker lease is the mutual exclusion between agents sharing one worker pool, and `lease release` is a gate
