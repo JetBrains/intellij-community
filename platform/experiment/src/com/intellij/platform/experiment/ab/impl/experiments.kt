@@ -71,13 +71,13 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
   //  controlBuckets = (128 until 256).toSet(),
   //  majorVersion = "2025.2"
   //),
-  ExperimentAssignment(
-    experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
-    experimentBuckets = (256 until 768).toSet(),
-    controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
-    majorVersion = "2026.2",
-    products = EnumSet.of(IntelliJPlatformProduct.CLION),
-  ),
+  //ExperimentAssignment(
+  //  experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
+  //  experimentBuckets = (256 until 768).toSet(),
+  //  controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
+  //  majorVersion = "2026.2",
+  //  products = EnumSet.of(IntelliJPlatformProduct.CLION),
+  //),
   ExperimentAssignment(
     experiment = ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING,
     experimentBuckets = (0 until 512).toSet(),
