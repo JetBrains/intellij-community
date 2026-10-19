@@ -9,6 +9,14 @@ class JcefOffScreenViewComponent(data: ComponentData) : UiComponent(data) {
 
   val htmlSource: String
     get() = browser.getSource()
+
+  /**
+   * Whether the view shows a Mermaid diagram that `@jupyterlab/mermaid` rendered: a `jp-RenderedMermaid` element with an SVG.
+   * A failed render adds `jp-mod-warning`.
+   */
+  fun hasRenderedMermaid(): Boolean = htmlSource.let {
+    it.contains("jp-RenderedMermaid") && (it.contains("<svg") || it.contains("image/svg+xml")) && !it.contains("jp-mod-warning")
+  }
 }
 
 @Remote("com.intellij.jupyter.core.jupyter.editor.outputs.webOutputs.component.JcefOffScreenViewComponent",
