@@ -102,6 +102,7 @@ private val IGNORED_FIELDS = setOf(
   "com.intellij.testFramework.HeavyPlatformTestCase.myProject",
 
   "com.intellij.testFramework.junit5.showcase.JUnit5ModuleFixtureTest.seenModule", // can be disposed
+  "com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightModuleFixtureTest.previousModule",
 
   // cached value
   "com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge.modelValue",
