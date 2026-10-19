@@ -18,6 +18,7 @@ import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.tools.ide.util.common.logOutput
 import java.nio.file.Path
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -27,10 +28,10 @@ import kotlin.time.Duration.Companion.seconds
  * The match has to be unambiguous, not the count: a baseline may hold several projects, and [reopenProjects]
  * awaits each in turn while the earlier ones are already open.
  */
-internal fun Driver.waitForOpenedProject(projectPath: String, rdTarget: RdTarget): Project {
+internal fun Driver.waitForOpenedProject(projectPath: String, rdTarget: RdTarget, timeout: Duration = PROJECT_OPEN_TIMEOUT): Project {
   return waitForOne(
     message = "Configured project is open: $projectPath",
-    timeout = PROJECT_OPEN_TIMEOUT,
+    timeout = timeout,
     getter = { getOpenProjects(rdTarget) },
     checker = { project -> matchesConfiguredProject(project, projectPath, rdTarget) },
     errorMessage = { "Actual opened projects are: ${it.joinToString(", ")}" },
@@ -240,5 +241,7 @@ private interface RecentProjectsManagerBase {
 
 private val INDEXES_TIMEOUT = 5.minutes
 private val PROJECT_OPEN_TIMEOUT = 30.seconds
+/** A fresh IDE also starts up, and a split frontend must connect to the backend before it holds the project. */
+internal val INITIAL_PROJECT_OPEN_TIMEOUT = 2.minutes
 // The frontend close saves the project and can run a modal progress, so it needs more time than the open wait.
 private val PROJECT_CLOSE_TIMEOUT = 1.minutes

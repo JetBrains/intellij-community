@@ -266,9 +266,9 @@ internal class IdeStateRecovery(
     return bgRun.driver.step("Ensure configured project is open") {
       val projectPath = testContext.resolvedProjectHome.toAbsolutePath().toString()
       if (bgRun is RemoteDevBackgroundRun) {
-        bgRun.driver.waitForOpenedProject(projectPath, RdTarget.FRONTEND)
+        bgRun.driver.waitForOpenedProject(projectPath, RdTarget.FRONTEND, INITIAL_PROJECT_OPEN_TIMEOUT)
       }
-      arrayOf(bgRun.driver.waitForOpenedProject(projectPath, RdTarget.BACKEND))
+      arrayOf(bgRun.driver.waitForOpenedProject(projectPath, RdTarget.BACKEND, INITIAL_PROJECT_OPEN_TIMEOUT))
     }
   }
 
