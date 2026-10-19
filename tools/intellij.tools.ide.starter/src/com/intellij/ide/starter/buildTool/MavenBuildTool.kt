@@ -3,21 +3,18 @@ package com.intellij.ide.starter.buildTool
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.process.findAndKillProcessesByName
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
+import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.openapi.diagnostic.LogLevel
-import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.io.delete
 import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
-import java.io.BufferedInputStream
-import java.io.FileOutputStream
-import java.net.URL
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.createDirectories
-import kotlin.io.path.createFile
+import kotlin.io.path.fileSize
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
@@ -108,21 +105,14 @@ open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType
   }
 
   fun downloadArtifactFromMavenCentral(data: MavenArchetypeInfo, repoPath: Path) {
-    try {
-      listOf("pom", "jar").forEach {
-        val fileName = "${data.artefactId}-${data.version}.$it"
-        val filePath = "${data.groupId.replace('.', '/')}/${data.artefactId}/${data.version}"
-        val file = repoPath.resolve(filePath).findOrCreateDirectory().resolve(fileName).createFile()
-        val url = "https://repo1.maven.org/maven2/$filePath/$fileName"
-        BufferedInputStream(URL(url).openStream()).use { inputStream ->
-          FileOutputStream(file.toString()).use { outputStream ->
-            inputStream.copyTo(outputStream)
-          }
-        }
+    for (extension in listOf("pom", "jar")) {
+      val fileName = "${data.artefactId}-${data.version}.$extension"
+      val filePath = "${data.groupId.replace('.', '/')}/${data.artefactId}/${data.version}"
+      val file = repoPath.resolve(filePath).resolve(fileName)
+      val url = "https://cache-redirector.jetbrains.com/maven-central/$filePath/$fileName"
+      check(HttpClient.downloadIfMissing(url, file) && file.isRegularFile() && file.fileSize() > 0) {
+        "Failed to download $url to $file"
       }
-    }
-    catch (e: Exception) {
-      throw IllegalStateException("Error downloading artifact: ${e.message}")
     }
   }
 }
