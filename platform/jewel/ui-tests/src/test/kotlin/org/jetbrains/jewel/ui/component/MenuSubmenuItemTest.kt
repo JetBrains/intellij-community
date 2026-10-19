@@ -2,6 +2,7 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performSemanticsAction
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
@@ -124,6 +126,27 @@ class MenuSubmenuItemTest {
         rule.onNodeWithText("Parent").performKeyPress(Key.DirectionRight)
         rule.waitForIdle()
 
+        rule.onNode(hasText("Submenu").and(hasAnyAncestor(isPopup()))).assertIsDisplayed()
+    }
+
+    @Test
+    fun `clicking hovered submenu item in PopupMenu keeps submenu open`() {
+        rule.setContent {
+            IntUiTheme {
+                PopupMenu(onDismissRequest = { true }, horizontalAlignment = Alignment.Start) {
+                    submenu(submenu = { selectableItem(selected = false, onClick = {}) { Text("Submenu") } }) {
+                        Text("Parent")
+                    }
+                }
+            }
+        }
+
+        rule.onNodeWithText("Parent").performMouseInput { moveTo(center) }
+        rule.waitForIdle()
+        rule.onNode(hasText("Submenu").and(hasAnyAncestor(isPopup()))).assertIsDisplayed()
+
+        rule.onNodeWithText("Parent").performClick()
+        rule.waitForIdle()
         rule.onNode(hasText("Submenu").and(hasAnyAncestor(isPopup()))).assertIsDisplayed()
     }
 }

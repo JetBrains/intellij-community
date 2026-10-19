@@ -1074,7 +1074,7 @@ public fun MenuSubmenuItem(
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .clickable(
-                    onClick = { currentOnSelectedChange(!selected) },
+                    onClick = { currentOnSelectedChange(true) },
                     enabled = enabled,
                     interactionSource = interactionSource,
                     indication = null,
