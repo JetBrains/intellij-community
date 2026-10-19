@@ -137,8 +137,9 @@ class ReusedExtension : BeforeAllCallback,
       strategy = strategy,
       extensionContext = extensionContext,
       testContext = cachedTestContext.createCurrentTestContext(contextDirName).applyVMOptionsPatch {
-        // Recovery reopens the project before each test, and waits for the background post-startup activities.
+        // Recovery waits until the IDE loads the project and global model files, which by default starts 5 s late.
         addSystemProperty("ide.background.post.startup.activity.delay", 0)
+        addSystemProperty("ide.global.workspace.model.delayed.load.delay", 0)
       },
       runTimeout = ideRunTimeout(extensionContext.requiredTestClass),
       baseline = ReusedSessionBaseline.of(cachedTestContext),
