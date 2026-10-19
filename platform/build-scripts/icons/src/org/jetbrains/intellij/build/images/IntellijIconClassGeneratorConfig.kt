@@ -102,10 +102,14 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons/com/intellij/python/pro",
       )
 
-      "intellij.python.community.impl" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.python.community" -> IntellijIconClassGeneratorModuleConfig(
         className = "PythonIcons",
         packageName = "com.jetbrains.python.icons",
         iconDirectory = "icons/com/jetbrains/pythonCore",
+      )
+      "intellij.python.community.impl" -> IntellijIconClassGeneratorModuleConfig(
+        // packaging icons are loaded by com.jetbrains.python.packaging.toolwindow.PyPackageIcons
+        excludePackages = listOf("icons.com.jetbrains.python.packaging"),
       )
 
       "intellij.notebooks.jupyter.core" -> IntellijIconClassGeneratorModuleConfig(

@@ -452,8 +452,6 @@ jvm_library(
     resource_strip_prefix = "pluginResources",
     resources = glob(
         ["pluginResources/**/*"],
-        allow_empty = True,
-        exclude = ["pluginResources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     exports = [
