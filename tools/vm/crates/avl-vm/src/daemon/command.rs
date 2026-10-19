@@ -694,6 +694,9 @@ impl Host {
             DaemonVerb::Stop => {
                 with_lease_operation(ctx, &self.manager, &receipt, "cancel", async |current: Lease| {
                     let state = HostState::read(&self.settings, &current.worker);
+                    if self.manager.runs_nothing(ctx, &current.worker).await? {
+                        return self.forget_daemon_of_stopped_worker(&current.worker, state);
+                    }
                     self.stop_daemon(ctx, &current.worker, state.as_ref()).await?;
                     // `stop_daemon` refuses and keeps the record while the recorded run still holds the slot, so
                     // this runs only once no record names a daemon: a daemon run in the slot is retired here, and
@@ -728,6 +731,28 @@ impl Host {
             }
             DaemonVerb::Warm => unreachable!("warm is answered before the receipt is read"),
         }
+    }
+
+    /// The answer of `daemon stop` on a worker that runs nothing
+    /// ([`Manager::runs_nothing`](crate::worker::worker::Manager::runs_nothing)).
+    ///
+    /// No process of the guest runs there, so no daemon outlived the stop of the worker. The stop forgets the record and
+    /// sends no guest command, as a release of such a worker does. The guest keeps the run slot of the ended run, the
+    /// state file of its daemon and the run secrets. The next daemon start retires that run and removes the state file.
+    /// A later `daemon stop` of the running worker removes the run secrets.
+    fn forget_daemon_of_stopped_worker(&self, worker: &str, state: Option<HostState>) -> Result<Outcome, Refusal> {
+        let stopped = state.map(|state| state.run_id);
+        if let Some(run_id) = &stopped {
+            self.reporter.note(
+                format!("{worker} is not running, so daemon run {run_id} ended with it; forgetting its record"),
+                Some(&Scope::worker(worker)),
+            );
+        }
+        HostState::remove(&self.settings, worker)?;
+        Ok(Outcome {
+            text: if stopped.is_some() { "stopped" } else { "no daemon to stop" }.to_owned(),
+            data: json!({ "worker": worker, "stopped": stopped, "workerWasStopped": true }),
+        })
     }
 
     /// Builds and stamps the host half of the lane, for no worker.

@@ -1378,6 +1378,10 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs
 
+- `daemon stop` of a worker that runs nothing sends no guest command. It forgets the daemon record and answers
+  `stopped`, or `no daemon to stop` without a record.
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs (`a_daemon_stop_of_a_stopped_worker_forgets_the_record_and_sends_no_guest_command`)
+
 - A guest command line resolves the Tart executable itself. So `daemon stop` and `daemon log` reach the guest
   without the Tart gate.
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs

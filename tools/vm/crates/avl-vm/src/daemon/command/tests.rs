@@ -262,6 +262,37 @@ async fn a_daemon_stop_that_cannot_retire_the_recorded_run_keeps_the_record() {
     );
 }
 
+// A worker that runs nothing holds no daemon, because the stop of a container ends every process of its guest. So
+// `daemon stop` forgets the record and sends no guest command, as a release of such a worker does. Before, the cancel
+// went into the stopped container, which answered exit 1 in plain text, and the stop refused `daemon_retire_failed`.
+#[tokio::test]
+async fn a_daemon_stop_of_a_stopped_worker_forgets_the_record_and_sends_no_guest_command() {
+    let stop = async |fixture: &Fixture| {
+        let receipt = fixture.lease_receipt();
+        fixture
+            .host
+            .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
+            .await
+            .unwrap_or_else(|refusal| panic!("{refusal:?}"))
+    };
+    let fixture = Fixture::docker().await;
+    let prep = fixture.prepared().await;
+    let state = fixture.seed_healthy_daemon(&prep);
+    let outcome = stop(&fixture).await;
+    assert_eq!(outcome.text, "stopped");
+    assert_eq!(outcome.data["stopped"], json!(state.run_id));
+    assert_eq!(outcome.data["workerWasStopped"], json!(true));
+    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
+    assert!(fixture.channel().lines().is_empty(), "{:#?}", fixture.channel().lines());
+    assert!(!fixture.daemon.saw_request("POST /shutdown"));
+
+    // Without a record, nothing is left to forget.
+    let outcome = stop(&fixture).await;
+    assert_eq!(outcome.text, "no daemon to stop");
+    assert_eq!(outcome.data["stopped"], Value::Null);
+    assert!(fixture.channel().lines().is_empty(), "{:#?}", fixture.channel().lines());
+}
+
 /// The fake's recorded `tart exec` calls into the first worker, joined by spaces.
 fn guest_execs(fixture: &Fixture) -> Vec<String> {
     fixture
@@ -279,10 +310,12 @@ fn assert_resolved_the_fake(fixture: &Fixture) {
 }
 
 // `daemon stop` never passes the Tart gate, and live it spawned `["", "exec", ...]`: an argv with no executable. Over
-// the production guest channel with no `TART_BIN`, its slot check reaches the guest through the pinned Tart.
+// the production guest channel with no `TART_BIN`, its slot check reaches the guest of a running worker through the
+// pinned Tart.
 #[tokio::test]
 async fn a_daemon_stop_reaches_the_guest_through_the_pinned_tart_without_a_record() {
     let fixture = Fixture::over_hypervisor().await;
+    fixture.read_as_running(&fixture.worker).await;
     let receipt = fixture.lease_receipt();
     fixture
         .tart
@@ -304,6 +337,7 @@ async fn a_daemon_stop_reaches_the_guest_through_the_pinned_tart_without_a_recor
 #[tokio::test]
 async fn a_daemon_stop_retires_a_recorded_daemon_through_the_pinned_tart() {
     let fixture = Fixture::over_hypervisor().await;
+    fixture.read_as_running(&fixture.worker).await;
     let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);

@@ -440,7 +440,7 @@ impl Manager {
     /// process of the slot. A worker that is stopped, or whose state cannot be read, gets no guest call. A refusal of
     /// the gc is a note.
     async fn stop_lane_ides(&self, ctx: &Ctx, worker: &str) {
-        if !matches!(self.stopped_for_release(ctx, worker).await, Ok(false)) {
+        if !matches!(self.runs_nothing(ctx, worker).await, Ok(false)) {
             return;
         }
         let channel = self.channel(worker);

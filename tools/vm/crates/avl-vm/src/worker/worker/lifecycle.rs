@@ -206,15 +206,16 @@ impl Manager {
         }
     }
 
-    /// Whether a lease release may skip the guest because the worker runs nothing: a Tart worker with no run process,
-    /// or a Docker container that does not run. A Parallels worker is resumed for the release instead, so it answers
-    /// false.
+    /// Whether the worker runs nothing, so that a command can skip its guest: a Tart worker with no run process, or a
+    /// Docker or testing-ui container that does not run. A lease release, `daemon stop` and the IDE stop of a recycle
+    /// ask it. A Parallels worker answers false, so those commands reach its guest.
     ///
-    /// A gate, not [`Machine::running`]: a standalone `lease release` passed no other gate, and the Docker question
-    /// needs the CLI that its engine gate resolves ([`Docker::stopped`]). Tart answers from its process identity.
+    /// A gate, not [`Machine::running`]: a standalone `lease release` or `daemon stop` passed no other gate, and the
+    /// Docker question needs the CLI that its engine gate resolves ([`Docker::stopped`]). Tart answers from its process
+    /// identity.
     ///
     /// [`Docker::stopped`]: crate::worker::docker::Docker::stopped
-    pub(crate) async fn stopped_for_release(&self, ctx: &Ctx, worker: &str) -> Result<bool, Refusal> {
+    pub(crate) async fn runs_nothing(&self, ctx: &Ctx, worker: &str) -> Result<bool, Refusal> {
         match self.machine.as_ref() {
             #[cfg(unix)]
             Machine::Tart(tart) => Ok(!tart.running(ctx, worker).await?),
