@@ -47,7 +47,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindowManager
@@ -116,11 +116,11 @@ open class IdeDocumentHistoryImpl(
 
   init {
     val connection = project.getMessageBus().connect(coroutineScope)
-    connection.subscribe<BulkFileListener>(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connection.subscribe<BulkFileListenerBackgroundable>(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFileDeleteEvent) {
-            removeInvalidFilesFromStacks()
+            ApplicationManager.getApplication().invokeLater({ removeInvalidFilesFromStacks() }, project.disposed)
             return
           }
         }
