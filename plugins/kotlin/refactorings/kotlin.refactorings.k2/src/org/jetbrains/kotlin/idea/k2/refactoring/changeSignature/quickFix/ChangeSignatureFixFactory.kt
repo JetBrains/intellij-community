@@ -296,8 +296,10 @@ object ChangeSignatureFixFactory {
         val ktCallableDeclaration = psiElement as? KtNamedDeclaration ?: return null
 
         val changeInfo = KotlinChangeInfo(KotlinMethodDescriptor(ktCallableDeclaration))
-        val index = input.idx + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
+        val receiverOffset = if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
+        val valueParameterOffset = receiverOffset + changeInfo.newParameters.count { it.isContextParameter }
         if (input.type == ChangeType.REMOVE) {
+            val index = input.idx + receiverOffset
             assert(index >= 0)
             changeInfo.removeParameter(index)
         } else {
@@ -322,7 +324,7 @@ object ChangeSignatureFixFactory {
             val currentArgument = psi.parentOfType<KtValueArgument>(true) ?: return null
             if (input.type == ChangeType.TYPE_MISMATCH) {
                 val parameterInfo = getNewParameterInfo(currentArgument) ?: return null
-                changeInfo.addParameter(parameterInfo, index)
+                changeInfo.addParameter(parameterInfo, input.idx + valueParameterOffset)
             } else {
                 val parameters = (ktCallableDeclaration as? KtCallableDeclaration)?.valueParameters ?: emptyList()
                 val arguments = callElement.valueArguments
@@ -342,7 +344,7 @@ object ChangeSignatureFixFactory {
                         val parameterType = substitutor.substitute(parameters[i].returnType)
 
                         if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
-                            changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
+                            changeInfo.newParameters[i + valueParameterOffset].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
                             )
                         }

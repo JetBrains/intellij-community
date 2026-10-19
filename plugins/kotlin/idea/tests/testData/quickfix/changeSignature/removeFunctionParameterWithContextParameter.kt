@@ -1,0 +1,12 @@
+// "Remove parameter 'b'" "true"
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(s: String)
+fun foo(a: Int, b: Int) {}
+
+context(s: String)
+fun test() {
+    foo(1<caret>)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory$ParameterQuickFix
