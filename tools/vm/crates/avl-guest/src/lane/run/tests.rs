@@ -219,6 +219,8 @@ fn an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name() {
     );
     assert!(unknown.contains("idea.test.runner.index and idea.test.runners.count"), "{unknown}");
     assert!(refusal(&["-Xmx2g"]).contains("the flag -Xmx2g is none"));
+    // Only the guest descriptor sets the screen flag. A direct lane never reads the screen of the developer.
+    assert!(refusal(&["-Dair.flow.trace.screen=on"]).contains("air.flow.trace.screen"));
     assert!(refusal(&["-D"]).contains("takes only a -D<name>=<value> property"));
     assert!(refusal(&["-Didea.test.runner.index=0"]).contains("needs both"));
     assert!(refusal(&["-Didea.test.runners.count=2"]).contains("needs both"));

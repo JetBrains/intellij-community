@@ -357,11 +357,12 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The recorder reads the screen itself only when the hello says `screen`. The Linux guest's lane targets set
   `-Dair.flow.trace.screen=on`, because the guest's `Xvfb` belongs to the lane. A direct lane on a
-  developer's machine records the IDE's paint and no screen video. It records the screen only when the person
-  running it passes the property or sets `AIR_TRACE_SCREEN=on`. Their screen shows everything else they have
-  open. On macOS, reading it asks for Screen Recording permission, and that prompt can take the focus from the
-  IDE.
+  developer's machine records the IDE's paint and no screen video, and it never reads the screen. `lane-run`
+  refuses the property as a JVM flag, so only the guest descriptor sets it. The screen of a developer shows
+  everything else they have open. On macOS, reading it asks for Screen Recording permission, and that prompt can
+  take the focus from the IDE.
   [@test] ../crates/avl-record/src/ladder/tests.rs (`the_ladder_reads_x_only_where_allowed_and_where_the_ide_draws_to_it`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name`)
   [@test] ../../../../plugins/air/tests/integration/ui_lane_ide.bzl
 
 - X11 is read only where the IDE draws to it, which is Linux. A Mac with XQuartz has a `DISPLAY` too, and its

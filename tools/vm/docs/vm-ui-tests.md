@@ -926,11 +926,10 @@ screen. The planner prints commands and never starts a run, because a run costs 
 
 **What each guest captures.** The Linux guest records X11 directly: real pixels, native popups, and an H.264 video.
 The recorder encodes that video itself, so the guest needs no package for it. A macOS host and the macOS guests take
-stills from the IDE's own paint route. A direct lane on your own machine never reads your screen unasked, because it
-shows everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario.
-Pass `--jvmopt=-Dair.flow.trace.screen=on`, or set `AIR_TRACE_SCREEN=on`, to let it: a Mac with `ffmpeg` on the path
-then records a video too, and a Linux host records X11. Every bundle's manifest names its capture source and, when a
-better one was missing, why.
+stills from the IDE's own paint route. A direct lane on your own machine never reads your screen, because it shows
+everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario. It
+takes the paint stills and records no video, and `lane-run` refuses `-Dair.flow.trace.screen=on` as a JVM flag. Every
+bundle's manifest names its capture source and, when a better one was missing, why.
 
 **What the IDE did.** A bundle also holds the OpenTelemetry spans that the IDE ended in the scenario, such as
 each `air.session.log.read`. The viewer shows each one as an `ide` row under the step it started in. The spans are

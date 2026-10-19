@@ -70,7 +70,8 @@ pub(crate) trait Videographer: Send {
     fn start(&self, dir: &Path, plan: &VideoPlan, first: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>>;
 }
 
-/// How a person running a lane on their own machine lets the recorder read its screen.
+/// The lane flag that lets the recorder read the screen. Only the descriptor of a Linux guest sets it, because the
+/// guest's display belongs to the lane. A direct lane on a developer's machine never gets it.
 pub(crate) const SCREEN_OPT_IN: &str = "-Dair.flow.trace.screen=on";
 
 /// How long a display that failed to open is not tried again, in milliseconds.
