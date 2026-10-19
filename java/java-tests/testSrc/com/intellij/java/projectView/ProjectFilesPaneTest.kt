@@ -8,12 +8,16 @@ import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import kotlin.test.assertNotEquals
 
 class ProjectFilesPaneTest : AbstractProjectViewTest() {
+  private val contentRootPresentation: String
+    get() = FileUtil.getLocationRelativeToUserHome(ModuleRootManager.getInstance(module).contentRoots[0].path)
+
   override fun setUp() {
     super.setUp()
     selectProjectFilesPane()
@@ -209,18 +213,18 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     val folder = createChildDirectory(parent, "folder")
 
     selectFile(folder)
-    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+    test.assertStructure(" -" + contentRootPresentation + "\n" +
                          "  -parent\n" +
                          "   folder\n")
 
     selectFile(createChildDirectory(folder, "child"))
-    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+    test.assertStructure(" -" + contentRootPresentation + "\n" +
                          "  -parent\n" +
                          "   -folder\n" +
                          "    child\n")
 
     selectFile(createChildDirectory(parent, "sibling"))
-    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+    test.assertStructure(" -" + contentRootPresentation + "\n" +
                          "  -parent\n" +
                          "   -folder\n" +
                          "    child\n" +
@@ -245,7 +249,7 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
 
     setFileNestingRules(".js" to ".js.map")
     selectFile(mapFile)
-    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+    test.assertStructure(" -" + contentRootPresentation + "\n" +
                          "  -com\n" +
                          "   -test.js\n" +
                          "    test.js.map\n")
@@ -253,7 +257,7 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     val structureBefore = test.toString()
     projectView.setUseFileNestingRules(false)
     selectFile(mapFile)
-    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+    test.assertStructure(" -" + contentRootPresentation + "\n" +
                          "  -com\n" +
                          "   test.js\n" +
                          "   test.js.map\n")

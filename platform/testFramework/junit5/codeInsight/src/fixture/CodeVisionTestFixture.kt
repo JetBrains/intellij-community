@@ -58,8 +58,10 @@ class CodeVisionTestFixture(
       writeIntentReadAction {
         val settings = CodeVisionSettings.getInstance()
         val file = requireNotNull(PsiManager.getInstance(project).findFile(virtualFile, context))
-        codeVisionHost.providers.map { it.groupId }.toSet().forEach {
-          settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))
+        codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
+          val wasEnabled = settings.isProviderEnabled(groupId)
+          Disposer.register(disposable) { settings.setProviderEnabled(groupId, wasEnabled) }
+          settings.setProviderEnabled(groupId, enabledProviderGroupIds.contains(groupId))
         }
         TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, disposable)
         codeVisionHost.providers.forEach {
@@ -111,8 +113,11 @@ fun codeVisionFixture(editorFixture: TestFixture<Editor>, fileFixture: TestFixtu
     val codeVisionFixture = CodeVisionTestFixture(editor, file.virtualFile, file.project, disposable)
 
     initialized(codeVisionFixture) {
-      // cleanup
-      Disposer.dispose(disposable)
+      withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+          Disposer.dispose(disposable)
+        }
+      }
     }
 
   }

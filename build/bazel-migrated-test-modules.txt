@@ -70,6 +70,7 @@ intellij.java.rareRefactorings.tests
 intellij.java.structuralSearch.tests
 intellij.java.terminal.tests
 intellij.java.testFramework.tests
+intellij.java.tests
 intellij.java.typeMigration.tests
 intellij.java.ui.tests
 intellij.javaFX.community.tests

@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -573,10 +574,10 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     PsiFile psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}");
     VirtualFile vFile = psiFile.getVirtualFile();
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(document);
 
-    WriteCommandAction.runWriteCommandAction(getProject(),
-                                             () -> FileDocumentManager.getInstance().getDocument(vFile)
-                                               .setText("import zoo.Zoo; class Foo1 {}"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("import zoo.Zoo; class Foo1 {}"));
     assertTrue(PsiDocumentManager.getInstance(getProject()).getUncommittedDocuments().length > 0);
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -586,12 +587,14 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     //noinspection UnusedAssignment
     psiFile = null;
 
-    GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile))
-      .ensureCollectedWithinTimeout(5_000, PlatformTestUtil::dispatchAllInvocationEventsInIdeEventQueue); // wait for document commit queue
+    var watcher = GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile));
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() ->
+      watcher.ensureCollectedWithinTimeout(5_000, PlatformTestUtil::dispatchAllInvocationEventsInIdeEventQueue));
     assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
     WriteAction.run(() -> VfsUtil.saveText(vFile, "class Foo3 {}"));
 
+    assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
     assertEquals(0, PsiDocumentManager.getInstance(getProject()).getUncommittedDocuments().length);
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo3", scope));

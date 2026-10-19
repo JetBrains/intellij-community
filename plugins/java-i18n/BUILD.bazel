@@ -3,6 +3,12 @@ load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin"
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 jps_test(
     name = "java-i18n-tests_test",
     timeout = "long",

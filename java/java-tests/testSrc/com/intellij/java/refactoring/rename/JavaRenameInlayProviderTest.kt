@@ -10,6 +10,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.util.Disposer
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
@@ -240,8 +241,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     val settings = CodeVisionSettings.getInstance()
     SuggestedRefactoringProviderImpl.getInstance(project)
     val codeVisionHost = project.service<CodeVisionHost>()
-    codeVisionHost.providers.map { it.groupId }.toSet().forEach {
-      settings.setProviderEnabled(it, it == "rename")
+    codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
+      val wasEnabled = settings.isProviderEnabled(groupId)
+      Disposer.register(testRootDisposable) { settings.setProviderEnabled(groupId, wasEnabled) }
+      settings.setProviderEnabled(groupId, groupId == "rename")
     }
   }
 

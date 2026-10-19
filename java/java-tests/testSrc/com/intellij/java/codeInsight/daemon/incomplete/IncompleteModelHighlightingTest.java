@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +17,14 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 
 public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTestCase {
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/incompleteHighlighting";
+
+  @Override
+  protected @NotNull Document configureFromFileText(@NotNull String fileName, @NotNull String fileText) {
+    if (SystemInfoRt.isMac) {
+      fileText = fileText.replace("Ctrl+Click, Ctrl+B", MacKeymapUtil.COMMAND + "Click, " + MacKeymapUtil.COMMAND + "B");
+    }
+    return super.configureFromFileText(fileName, fileText);
+  }
 
   private void doTest() {
     doTest(getTestName(false) + ".java");

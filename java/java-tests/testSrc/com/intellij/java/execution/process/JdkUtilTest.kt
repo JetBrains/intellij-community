@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -158,13 +159,14 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   private fun mapPath(p: String): String {
     val path = p.replace(File.separatorChar, '/')
     val tempDir = FileUtil.getTempDirectory().replace(File.separatorChar, '/')
+    val wrapperClass = JdkCommandLineSetup.commandLineWrapperClass(parameters)
     return when {
       path.matches("$tempDir/classpath\\d*.jar".toRegex()) -> "#classpath.jar#"
       path.matches("$tempDir/idea_classpath\\d*".toRegex()) -> "#classpath#"
       path.matches("$tempDir/idea_vm_params\\d*".toRegex()) -> "#vm_params#"
       path.matches("$tempDir/idea_app_params\\d*".toRegex()) -> "#app_params#"
       path.matches("@$tempDir/idea_arg_file\\d*".toRegex()) -> "#arg_file#"
-      path.contains("/production/intellij.java.rt/") || path.endsWith("/production/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
+      wrapperClass != null && FileUtil.pathsEqual(path, PathUtil.getJarPathForClass(wrapperClass)) -> "#idea_rt#"
       else -> path
     }
   }

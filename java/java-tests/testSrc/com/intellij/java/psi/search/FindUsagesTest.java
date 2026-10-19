@@ -424,7 +424,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
         ProgressManager.getInstance().runProcess(() -> {
           GlobalSearchScope scope = ReadAction.compute(() -> GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile()));
-          usages.set(ReadAction.computeBlocking(() -> ReferencesSearch.search(field, scope).findAll()));
+          usages.set(ReadAction.nonBlocking(() -> ReferencesSearch.search(field, scope).findAll()).executeSynchronously());
         }, new EmptyProgressIndicator())
       );
 

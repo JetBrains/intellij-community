@@ -96,9 +96,10 @@ fun assertContentEquals(expectedFile: File, actualFile: File) {
   assertEquals(VfsUtilCore.loadText(expectedVFile!!), VfsUtilCore.loadText(actualVFile!!))
 }
 
-fun createSourceDir(subDir: String) =
-  FileUtil
-    .createTempDirectory("unitTest", "_format")
-    .also { sourceDir ->
-      FileUtil.copyDir(File(BASE_PATH).resolve(subDir), sourceDir)
-    }
+fun createSourceDir(subDir: String): File {
+  val projectDir = FileUtil.createTempDirectory("unitTest", "_format")
+  check(projectDir.resolve(".idea").mkdir())
+  val sourceDir = projectDir.resolve("src")
+  FileUtil.copyDir(File(BASE_PATH).resolve(subDir), sourceDir)
+  return sourceDir
+}
