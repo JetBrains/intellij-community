@@ -21,7 +21,9 @@ import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
@@ -981,10 +983,14 @@ private data class LegacyProjectViewNode(
 
 private data class LegacyProjectViewNodeUserObject(
   val modelNode: Any,
-) : ProjectViewNodeUserObject {
+) : ProjectViewNodeUserObject, PathElementIdProvider {
   override fun getVirtualFile(): VirtualFile? {
     return (modelNode as? AbstractTreeNode<*>)?.getVirtualFileForNodeOrItsPSI()
   }
+
+  override fun getPathElementType(): String = TreeState.calcType(modelNode)
+
+  override fun getPathElementId(): String = TreeState.calcId(modelNode)
 }
 
 private enum class ChildrenState {

@@ -13,7 +13,9 @@ import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.ide.util.treeView.ValidateableNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -49,7 +51,7 @@ private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
   val isRoot: Boolean,
-) : TreeStructureProjectViewNode {
+) : TreeStructureProjectViewNode, PathElementIdProvider {
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canNavigate(): Boolean {
     return (elementDescriptor as? Navigatable)?.canNavigate() == true
@@ -83,6 +85,10 @@ private data class TreeStructureProjectViewNodeImpl(
   fun isSynthetic(): Boolean {
     return (elementDescriptor as? ProjectViewNode<*>)?.isSynthetic == true
   }
+
+  override fun getPathElementType(): String = TreeState.calcType(elementDescriptor)
+
+  override fun getPathElementId(): String = TreeState.calcId(elementDescriptor)
 }
 
 @ApiStatus.Experimental
