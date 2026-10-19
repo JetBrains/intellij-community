@@ -290,8 +290,7 @@ final class GenericsChecker {
     if (aClass != null && classes.add(aClass)) {
       VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
       if (vFile == null) return;
-      FileIndexFacade index = FileIndexFacade.getInstance(myVisitor.project());
-      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) return;
+      if (!myVisitor.isInSourceOrLibraryClasses(vFile)) return;
 
       PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
       String qualifiedName = aClass.getQualifiedName();
@@ -311,7 +310,7 @@ final class GenericsChecker {
 
       if (!checkSuperTypes) return;
 
-      boolean isInLibrary = !index.isInContent(vFile);
+      boolean isInLibrary = !FileIndexFacade.getInstance(myVisitor.project()).isInContent(vFile);
       for (PsiClassType superType : aClass.getSuperTypes()) {
         checkTypeAccessible(anchor, superType, classes, !isInLibrary, true, resolveScope, factory);
         if (myVisitor.hasErrorResults()) return;
