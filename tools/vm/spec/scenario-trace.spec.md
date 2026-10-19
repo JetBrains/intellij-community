@@ -329,8 +329,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-record/src/tests.rs
 
 - The lane daemon is a lane of the protocol. Its `hello` names the launcher `daemon` and the root
-  `<iterationDir>/air-traces`. Its transcript of a green scenario is held to a golden.
+  `<iterationDir>/air-traces`, and its transcript of a green scenario is held to a golden. Under a Bazel test,
+  `lane-run` names the launcher `bazel` and the root `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_bazel_test_roots_the_bundles_in_its_outputs_directory`)
 
 - The lane daemon writes one `call` for each bridge request, and one for each step of a chain after it.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)

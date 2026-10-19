@@ -478,7 +478,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
     let iteration = TempDir::new().unwrap();
     let trace = Trace::open(
         Box::new(recording.clone()),
-        Trace::hello(iteration.path(), "iter-golden", false, fake.recorder_bridge()),
+        Trace::hello(iteration.path(), None, "iter-golden", false, fake.recorder_bridge()),
     );
     let mut out = Vec::new();
     let counts = {

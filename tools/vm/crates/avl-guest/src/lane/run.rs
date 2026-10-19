@@ -210,7 +210,8 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     })?;
     let descriptor = runtime::parse_runtime_descriptor(&content, &args.descriptor, guest_platform())
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
-    let launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
+    let mut launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
+    launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
@@ -272,9 +273,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
             stream: stream_path.clone(),
             xml: xml_files(&root, variable),
             ide_root: daemon_args.ide_root,
-            report: variable(OUTPUTS_VARIABLE)
-                .filter(|directory| !directory.is_empty())
-                .map(|directory| PathBuf::from(directory).join(monitor::REPORT_FILE)),
+            report: bazel_outputs(variable).map(|directory| directory.join(monitor::REPORT_FILE)),
         },
         budget,
         budget.map(|budget| started + budget + KILL_GRACE),
@@ -496,6 +495,14 @@ pub(crate) fn refuse_shards(variable: &dyn Fn(&str) -> Option<String>) -> Result
         )),
         _ => Ok(()),
     }
+}
+
+/// The outputs directory of the Bazel test, `$TEST_UNDECLARED_OUTPUTS_DIR`, which Bazel keeps after the test. The trace
+/// bundles and the hang report go there. An empty value names no directory.
+pub(crate) fn bazel_outputs(variable: &dyn Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    variable(OUTPUTS_VARIABLE)
+        .filter(|directory| !directory.is_empty())
+        .map(PathBuf::from)
 }
 
 /// The run directory: `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then `$TEST_TMPDIR/air-lane`.

@@ -64,13 +64,17 @@ pub(crate) struct LaunchInputs {
     pub trace: TraceInputs,
 }
 
-/// The recorder of the scenario traces, as the flags of the descriptor name it.
+/// The recorder of the scenario traces, as the flags of the descriptor name it, and the root of its bundles.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct TraceInputs {
     /// The `air-trace-record` binary, or `None` when the descriptor names none or turns the trace off.
     pub recorder: Option<PathBuf>,
     /// The recorder may read the screen itself, because the display belongs to the lane.
     pub screen: bool,
+    /// The outputs directory of the Bazel test that runs `lane-run`, which Bazel keeps after the test. The bundles then
+    /// go to its `air-traces`. `None` keeps them in the directory of each iteration, where the trace pull of the
+    /// controller finds them.
+    pub bazel_outputs: Option<PathBuf>,
 }
 
 impl LaunchInputs {
@@ -167,6 +171,7 @@ fn trace_inputs(flags: &[String], runfiles_root: &Path) -> TraceInputs {
     TraceInputs {
         recorder,
         screen: flags.iter().any(|flag| flag == SCREEN_FLAG),
+        bazel_outputs: None,
     }
 }
 

@@ -2,7 +2,8 @@
 //! [`avl_trace::protocol`].
 //!
 //! The lane daemon starts the recorder once per iteration, with no argument, and roots its bundles at
-//! `<iterationDir>/air-traces`. It sends `hello`, then per scenario `scenario`, the spans, one
+//! `<iterationDir>/air-traces`. Under a Bazel test, `lane-run` roots them at `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`
+//! instead, so Bazel keeps them. It sends `hello`, then per scenario `scenario`, the spans, one
 //! `call` per bridge request, the snapshots, the attachments and `done`. Its standard input reaching EOF ends the
 //! session, so the recorder finishes a truncated bundle when the lane daemon dies.
 //!
@@ -405,12 +406,21 @@ impl Trace {
         trace
     }
 
-    /// The `hello` of the iteration directory `iteration_dir`, whose run id is `run_id`.
-    pub(crate) fn hello(iteration_dir: &Path, run_id: &str, screen: bool, bridge: Option<Bridge>) -> HelloCommand {
+    /// The `hello` of the iteration directory `iteration_dir`, whose run id is `run_id`. The root is the `air-traces` of
+    /// `bazel_outputs` with the launcher `bazel` when a Bazel test names its outputs directory, else the `air-traces` of
+    /// the iteration directory with the launcher `daemon`.
+    pub(crate) fn hello(
+        iteration_dir: &Path,
+        bazel_outputs: Option<&Path>,
+        run_id: &str,
+        screen: bool,
+        bridge: Option<Bridge>,
+    ) -> HelloCommand {
+        let (parent, launcher) = bazel_outputs.map_or((iteration_dir, Launcher::Daemon), |outputs| (outputs, Launcher::Bazel));
         HelloCommand {
-            root: iteration_dir.join(ROOT_DIR_NAME).display().to_string(),
+            root: parent.join(ROOT_DIR_NAME).display().to_string(),
             run_id: run_id.to_owned(),
-            launcher: Launcher::Daemon,
+            launcher,
             screen,
             bridge,
         }

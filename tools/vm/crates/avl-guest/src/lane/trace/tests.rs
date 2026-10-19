@@ -37,7 +37,7 @@ impl Transport for Recording {
 }
 
 fn hello() -> HelloCommand {
-    Trace::hello(Path::new("/vm/iterations/iter-1"), "iter-1", false, None)
+    Trace::hello(Path::new("/vm/iterations/iter-1"), None, "iter-1", false, None)
 }
 
 fn scenario(name: &str) -> ScenarioCommand {
@@ -187,7 +187,7 @@ fn only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session() {
 fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
     let root = tempfile::TempDir::new().unwrap();
     let recording = Recording::default();
-    let mut trace = Trace::open(Box::new(recording.clone()), Trace::hello(root.path(), "iter-1", false, None));
+    let mut trace = Trace::open(Box::new(recording.clone()), Trace::hello(root.path(), None, "iter-1", false, None));
     trace.open_scenario(scenario("attaches"));
     let span = trace.open_span(SpanKind::Action, "dump", "[action] dump", Some((None, Side::Host, 1_000)));
     assert!(trace.attach("IDE dump", "text/plain", b"threads", "txt"));
@@ -200,5 +200,22 @@ fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
             r#"{{"op":"attach","name":"IDE dump","mime":"text/plain","file":"{}","span":{span}}}"#,
             file.display()
         )
+    );
+}
+
+// The lane daemon roots the bundles of an iteration in its directory with the launcher `daemon`. Under a Bazel test,
+// lane-run roots them in the outputs directory with the launcher `bazel`, where Bazel keeps them.
+#[test]
+fn a_bazel_test_roots_the_bundles_in_its_outputs_directory() {
+    let iteration = Path::new("/state/iterations/iter-1");
+    let daemon = Trace::hello(iteration, None, "iter-1", false, None);
+    assert_eq!(
+        (daemon.root.as_str(), daemon.launcher),
+        ("/state/iterations/iter-1/air-traces", Launcher::Daemon)
+    );
+    let bazel = Trace::hello(iteration, Some(Path::new("/testlogs/outputs")), "iter-1", false, None);
+    assert_eq!(
+        (bazel.root.as_str(), bazel.launcher),
+        ("/testlogs/outputs/air-traces", Launcher::Bazel)
     );
 }

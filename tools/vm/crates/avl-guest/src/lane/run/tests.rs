@@ -349,3 +349,13 @@ fn a_run_that_its_budget_ended_is_a_teamcity_build_problem_with_the_case_and_the
         None
     );
 }
+
+// The outputs directory of a Bazel test is its `TEST_UNDECLARED_OUTPUTS_DIR`. lane-run roots the trace bundles and the
+// hang report there. An empty or absent value names no directory.
+#[test]
+fn the_outputs_directory_of_a_bazel_test_is_its_variable() {
+    let outputs = |value: Option<&str>| bazel_outputs(&|name| value.filter(|_| name == "TEST_UNDECLARED_OUTPUTS_DIR").map(str::to_owned));
+    assert_eq!(outputs(Some("/testlogs/outputs")), Some(PathBuf::from("/testlogs/outputs")));
+    assert_eq!(outputs(Some("")), None);
+    assert_eq!(outputs(None), None);
+}
