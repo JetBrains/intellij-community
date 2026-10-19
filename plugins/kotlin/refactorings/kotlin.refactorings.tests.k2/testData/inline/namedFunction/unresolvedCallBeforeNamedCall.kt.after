@@ -1,0 +1,6 @@
+fun second(p: Int, q: Int) = p - q
+
+fun test(): Int {
+    unknownFun(1)
+    return second(0, q = 2)
+}

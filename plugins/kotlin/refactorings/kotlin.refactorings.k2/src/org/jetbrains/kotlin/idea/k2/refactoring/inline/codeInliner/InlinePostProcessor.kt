@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentAfter
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
@@ -265,18 +266,15 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val replacementMap = mutableMapOf<KtValueArgument, KtValueArgument>()
         analyze(element) {
             for (callExpression in callsToProcess) {
-                val resolvedCall = callExpression.resolveSuccessfulCall() ?: return
-
-                val argumentsToMakeNamed = callExpression.valueArguments.dropWhile { it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) == null }
-                for (argument in argumentsToMakeNamed) {
+                val firstArgument = callExpression.valueArguments.firstOrNull { it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) != null }
+                    ?: continue
+                val argumentNames = NamedArgumentUtils.associateArgumentNamesStartingAt(callExpression, firstArgument) ?: continue
+                for ((argumentPointer, name) in argumentNames) {
+                    val argument = argumentPointer.element ?: continue
                     if (argument.isNamed()) continue
                     if (argument is KtLambdaArgument) continue
                     val argumentExpression = argument.getArgumentExpression() ?: continue
-                    val name = resolvedCall.valueArgumentMapping[argumentExpression]?.symbol?.let { symbol ->
-                        symbol.name.takeIf { symbol.psi is KtElement }
-                    }
-                    //TODO: not always correct for vararg's
-                    val newArgument = psiFactory.createArgument(argument.getArgumentExpression()!!, name, argument.getSpreadElement() != null)
+                    val newArgument = psiFactory.createArgument(argumentExpression, name, argument.getSpreadElement() != null)
 
                     if (argument.getCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY) != null) {
                         newArgument.putCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY, Unit)

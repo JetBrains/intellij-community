@@ -2459,9 +2459,34 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/nameConflictTwice2.kt");
             }
 
+            @TestMetadata("namedArgumentBeforeVararg.kt")
+            public void testNamedArgumentBeforeVararg() throws Exception {
+                runTest("testData/inline/namedFunction/namedArgumentBeforeVararg.kt");
+            }
+
+            @TestMetadata("namedArgumentToSingleVararg.kt")
+            public void testNamedArgumentToSingleVararg() throws Exception {
+                runTest("testData/inline/namedFunction/namedArgumentToSingleVararg.kt");
+            }
+
+            @TestMetadata("namedArgumentToVararg.kt")
+            public void testNamedArgumentToVararg() throws Exception {
+                runTest("testData/inline/namedFunction/namedArgumentToVararg.kt");
+            }
+
+            @TestMetadata("namedArgumentToVarargWithSpread.kt")
+            public void testNamedArgumentToVarargWithSpread() throws Exception {
+                runTest("testData/inline/namedFunction/namedArgumentToVarargWithSpread.kt");
+            }
+
             @TestMetadata("namedArguments.kt")
             public void testNamedArguments() throws Exception {
                 runTest("testData/inline/namedFunction/namedArguments.kt");
+            }
+
+            @TestMetadata("namedArgumentsInSeveralCalls.kt")
+            public void testNamedArgumentsInSeveralCalls() throws Exception {
+                runTest("testData/inline/namedFunction/namedArgumentsInSeveralCalls.kt");
             }
 
             @TestMetadata("nested.kt")
@@ -2737,6 +2762,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("UnitReturnType4.kt")
             public void testUnitReturnType4() throws Exception {
                 runTest("testData/inline/namedFunction/UnitReturnType4.kt");
+            }
+
+            @TestMetadata("unresolvedCallAfterNamedCall.kt")
+            public void testUnresolvedCallAfterNamedCall() throws Exception {
+                runTest("testData/inline/namedFunction/unresolvedCallAfterNamedCall.kt");
+            }
+
+            @TestMetadata("unresolvedCallBeforeNamedCall.kt")
+            public void testUnresolvedCallBeforeNamedCall() throws Exception {
+                runTest("testData/inline/namedFunction/unresolvedCallBeforeNamedCall.kt");
             }
 
             @TestMetadata("unresolvedReference.kt")

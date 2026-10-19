@@ -1,0 +1,9 @@
+fun test(cond: Boolean): List<String> {
+    return listOf(
+        when (cond) {
+            true -> "true"
+            false -> "false"
+        },
+        "second"
+    )
+}
