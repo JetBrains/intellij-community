@@ -458,7 +458,7 @@ fn lane_names_cover_every_lane_exactly_once() {
         names,
         [
             "fast", "property", "ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "headless", "all", "claude", "codex", "pi",
-            "junie", "acp"
+            "opencode", "junie", "acp"
         ]
     );
 }

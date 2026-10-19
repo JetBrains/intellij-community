@@ -730,8 +730,10 @@ fn the_help_names_the_wrapper_and_interpolates_the_lists_it_does_not_own() {
     // Each of these has exactly one owner; the help text reads it rather than restating it.
     let text = every_long_help().join("\n");
     for expected in [
-        "ui|ui-real|ui-live|ui-perf|gui-chat",
-        "explicit-only lane (ui-live, ui-perf)",
+        // 263 only: master's lane table makes `jcp` an integration lane with a test label and no catalog lane, so the
+        // help names it as a UI lane and as an explicit-only lane. See `plugins/air/BRANCH-263-DIVERGENCE.md` section 3.16.
+        "ui|ui-real|ui-live|ui-perf|jcp|gui-chat",
+        "explicit-only lane (ui-live, ui-perf, jcp)",
         "none|fresh-ide|daemon",
         "capped at 5",
         "default --reset fresh-ide",
