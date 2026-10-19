@@ -132,6 +132,10 @@ jvm_library(
         "//libraries/fastutil",
         "//platform/todo/plugin",
         "//platform/structure-view-impl/plugin",
+        "//xml/plugin",
+        "//java/plugin",
+        "//java/java-backend:backend",
+        "//aether-dependency-resolver/plugin",
     ],
 )
 
@@ -161,6 +165,10 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//java/plugin:plugin_test_lib",
+        "//java/java-backend:backend_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
