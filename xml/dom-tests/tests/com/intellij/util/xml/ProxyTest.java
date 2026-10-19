@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xml.ui.DomUIFactory;
@@ -8,12 +9,15 @@ import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ProxyTest {
 
@@ -193,6 +197,33 @@ public class ProxyTest {
     assert foo != null;
     assertEquals(42, proxy.foo("a"));
     assertEquals(42, foo.invoke(proxy, "a"));
+  }
+
+  @Test
+  public void testThreadCallbacksAreClearedWhenConstructorThrows() throws Exception {
+    // the first proxy is the prototype of the factory, the second one goes through the generated newInstance
+    ThrowingConstructorImpl prototype = AdvancedProxy.createProxy(ThrowingConstructorImpl.class);
+    ThrowingConstructorImpl.ourThrow = true;
+    try {
+      assertThrows(ProcessCanceledException.class, () -> AdvancedProxy.createProxy(ThrowingConstructorImpl.class));
+    }
+    finally {
+      ThrowingConstructorImpl.ourThrow = false;
+    }
+
+    Field threadCallbacks = prototype.getClass().getDeclaredField("CGLIB$THREAD_CALLBACKS");
+    threadCallbacks.setAccessible(true);
+    assertNull(((ThreadLocal<?>)threadCallbacks.get(null)).get());
+  }
+
+  public abstract static class ThrowingConstructorImpl implements BaseI {
+    static volatile boolean ourThrow;
+
+    public ThrowingConstructorImpl() {
+      if (ourThrow) {
+        throw new ProcessCanceledException();
+      }
+    }
   }
 
   interface GenericInterface<T> {
