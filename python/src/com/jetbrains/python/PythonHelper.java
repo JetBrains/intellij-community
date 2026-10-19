@@ -68,7 +68,6 @@ public enum PythonHelper implements HelperPackage {
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
-  DJANGO_PROJECT_CREATOR("pycharm", "_jb_django_project_creator"),
   MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
 
   APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
