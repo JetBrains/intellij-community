@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,7 +17,9 @@ import java.util.List;
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.SEALED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -73,10 +76,21 @@ public class DatabaseBlocksTest {
       try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
            var chunks = DatabaseChunks.open(databaseDirectory, metadata);
            var blocks = DatabaseBlocks.open(metadata, chunks)) {
-        var recoveredBlock = blocks.findBlock(allocatedBlockId);
-        assertNotNull(recoveredBlock);
-        assertEquals(BlocksStore.Block.LifecycleState.RETIRED, recoveredBlock.state());
-        assertTrue(blocks.blocks(storeId).contains(recoveredBlock), "Recovery must retain the discarded block for compaction");
+        assertNull(blocks.findBlock(allocatedBlockId), "The logical directory must hide the discarded block");
+        assertEquals(
+          List.of(),
+          blocks.blocks(storeId).stream().filter(block -> block.blockId() == allocatedBlockId).toList(),
+          "The logical directory must not list the discarded block"
+        );
+        var recoveredBlocks = chunks.chunks().stream()
+          .flatMap(chunk -> chunk.blocks().stream())
+          .filter(block -> block.blockId() == allocatedBlockId)
+          .toList();
+        assertEquals(attempt == 0 ? 1 : 0, recoveredBlocks.size(),
+                     "Opening must not retain a persisted retired block");
+        if (!recoveredBlocks.isEmpty()) {
+          assertEquals(BlocksStore.Block.LifecycleState.RETIRED, recoveredBlocks.getFirst().state());
+        }
         assertEquals(attempt + 1, blocks.metrics(true).total(), "Recovery must count each logical block once");
         assertEquals(1, blocks.metrics(true).retiredCurrent(), "Recovery must count the discarded block as retired");
         assertEquals(attempt == 0 ? 1 : 0, blocks.metrics(true).incompleteBlocksDiscarded(),
@@ -136,11 +150,17 @@ public class DatabaseBlocksTest {
       try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
            var chunks = DatabaseChunks.open(databaseDirectory, metadata);
            var blocks = DatabaseBlocks.open(metadata, chunks)) {
-        var droppedBlocks = blocks.blocks(droppedStoreId);
-        assertEquals(3, droppedBlocks.size(), "Recovery must retain all retired blocks for compaction");
+        var droppedBlocks = chunks.chunks().stream()
+          .flatMap(chunk -> chunk.blocks().stream())
+          .filter(block -> block.storeId() == droppedStoreId)
+          .toList();
+        var expectedBlockObjects = attempt == 0 ? (partiallyRetired ? 1 : 2) : 0;
+        assertEquals(expectedBlockObjects, droppedBlocks.size(),
+                     "Opening must retain only blocks that require recovery");
         for (var block : droppedBlocks) {
           assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state(), "Recovery must finish the recorded deletion");
         }
+        assertTrue(blocks.blocks(droppedStoreId).isEmpty(), "The logical directory must hide blocks of the dropped store");
         var expectedRepairs = attempt == 0 ? (partiallyRetired ? 1 : 2) : 0;
         assertEquals(expectedRepairs, blocks.metrics(true).droppedStoreBlocksRetired(),
                      "Recovery must report only blocks whose persisted state changed");
@@ -182,12 +202,9 @@ public class DatabaseBlocksTest {
       assertEquals(2, secondStore.storeId(), "A later store must use the next logical identifier");
       assertEquals(1, firstBlock.blockId(), "The first block must use the first positive logical identifier");
       assertEquals(2, secondBlock.blockId(), "A later block must use the next logical identifier");
-      assertEquals(
-        blocks.findBlock(firstBlock.blockId()).chunkId(),
-        blocks.findBlock(secondBlock.blockId()).chunkId(),
-        "Blocks of different stores can share one chunk"
-      );
-      assertEquals(List.of(firstBlock), blocks.blocks(firstStoreId));
+      assertEquals(firstBlock.chunkId(), secondBlock.chunkId(), "Blocks of different stores can share one chunk");
+      assertNull(blocks.findBlock(firstBlock.blockId()), "The logical directory must not find a retired block");
+      assertTrue(blocks.blocks(firstStoreId).isEmpty(), "The logical directory must not list a retired block");
       assertEquals(List.of(secondBlock), blocks.blocks(secondStoreId));
       assertNull(blocks.findBlock(3), "An unallocated identifier must not resolve to a block");
       chunks.flush();
@@ -199,18 +216,53 @@ public class DatabaseBlocksTest {
       var blocks = DatabaseBlocks.open(metadata, chunks);
       var firstStore = metadata.findStore("first");
       assertNotNull(firstStore);
-      var firstBlock = blocks.findBlock(1);
       var secondBlock = blocks.findBlock(2);
-      assertNotNull(firstBlock);
       assertNotNull(secondBlock);
-      assertEquals(42, firstBlock.contentSegment().get(ValueLayout.JAVA_BYTE, 0));
-      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, firstBlock.state(), "Recovery must retain retired blocks for compaction");
-      assertEquals(0, firstBlock.role(), "Role zero must remain a valid opaque tag");
+      assertNull(blocks.findBlock(1), "The logical directory must not find a recovered retired block");
+      var firstBlocks = chunks.chunks().stream()
+        .flatMap(chunk -> chunk.blocks().stream())
+        .filter(block -> block.blockId() == 1)
+        .toList();
+      assertTrue(firstBlocks.isEmpty(), "Opening must not retain a persisted retired block");
       assertEquals(0xFF, secondBlock.role(), "The complete unsigned byte range must remain available");
 
       var thirdBlock = blocks.allocateBlock(firstStore, 17, BLOCK_LENGTH);
       assertEquals(3, thirdBlock.blockId(), "Recovery must continue logical identifier allocation");
-      assertEquals(List.of(firstBlock, thirdBlock), blocks.blocks(firstStore.storeId()));
+      assertEquals(List.of(thirdBlock), blocks.blocks(firstStore.storeId()));
+    }
+  }
+
+  @Test
+  public void evacuationRemovesTheSourceCopyFromRuntimeCatalogs(@TempDir Path databaseDirectory) throws Exception {
+    try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(databaseDirectory.resolve("database.meta"), CHUNK_SIZE);
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata);
+         var blocks = DatabaseBlocks.open(metadata, chunks)) {
+      var storeId = metadata.nextStoreId();
+      metadata.registerNewStore(storeId, "store", 1);
+      var store = metadata.findStore("store");
+      assertNotNull(store);
+
+      var origin = blocks.allocateBlock(store, 17, BLOCK_LENGTH);
+      origin.activate();
+      var firstFiller = blocks.allocateBlock(store, 0, CHUNK_SIZE - ChunkHeaderLayout.HEADER_SIZE - BLOCK_LENGTH);
+      firstFiller.activate();
+      var secondFiller = blocks.allocateBlock(store, 0, CHUNK_SIZE - ChunkHeaderLayout.HEADER_SIZE);
+      secondFiller.activate();
+      var trigger = blocks.allocateBlock(store, 0, BLOCK_LENGTH);
+      trigger.activate();
+
+      var sourceChunk = chunks.chunks().getFirst();
+      assertEquals(SEALED, sourceChunk.state(), "The source chunk must be sealed before evacuation");
+      blocks.evacuateBlock(sourceChunk, origin);
+
+      var current = blocks.findBlock(origin.blockId());
+      assertNotNull(current);
+      assertNotSame(origin, current, "Evacuation must publish a new physical copy");
+      assertEquals(List.of(firstFiller), sourceChunk.blocks(), "The source chunk must not retain the retired copy");
+      assertFalse(storedBlocks(blocks, storeId).contains(origin), "The store catalog must not retain the retired copy");
+      assertTrue(storedBlocks(blocks, storeId).contains(current), "The store catalog must retain the current copy");
+      assertEquals(4, blocks.metrics(true).total(), "Evacuation must not change the logical block count");
+      assertEquals(1, blocks.metrics(true).evacuated(), "Evacuation must record the copied block once");
     }
   }
 
@@ -259,7 +311,13 @@ public class DatabaseBlocksTest {
       assertEquals(state, current.state());
       assertEquals(42, current.contentSegment().get(ValueLayout.JAVA_INT, 0));
 
-      var copies = blocks.blocks(storeId).stream()
+      assertEquals(
+        List.of(current),
+        blocks.blocks(storeId).stream().filter(block -> block.blockId() == blockId).toList(),
+        "The logical directory must expose only the current copy"
+      );
+      var copies = chunks.chunks().stream()
+        .flatMap(chunk -> chunk.blocks().stream())
         .filter(block -> block.blockId() == blockId)
         .toList();
       assertEquals(2, copies.size());
@@ -269,6 +327,14 @@ public class DatabaseBlocksTest {
       assertEquals(0, blocks.metrics(true).retiredCurrent(), "The stale retired copy must not affect current metrics");
       assertEquals(1, blocks.metrics(true).staleBlockCopiesRetired(), "Recovery must report the completed block evacuation");
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<DatabaseBlock> storedBlocks(DatabaseBlocks blocks, int storeId) throws ReflectiveOperationException {
+    var field = DatabaseBlocks.class.getDeclaredField("blocksByStoreId");
+    field.setAccessible(true);
+    var blocksByStoreId = (Int2ObjectMap<List<DatabaseBlock>>)field.get(blocks);
+    return blocksByStoreId.get(storeId);
   }
 
 }

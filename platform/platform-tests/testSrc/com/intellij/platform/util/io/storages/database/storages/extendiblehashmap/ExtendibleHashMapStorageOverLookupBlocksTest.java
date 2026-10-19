@@ -23,6 +23,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -125,9 +126,7 @@ class ExtendibleHashMapStorageOverLookupBlocksTest {
     try (var database = factory.open(databaseDirectory)) {
       var store = database.findStore("map");
       assertNotNull(store);
-      var recoveredBlock = store.findBlock(allocatedBlockId);
-      assertNotNull(recoveredBlock);
-      assertEquals(RETIRED, recoveredBlock.state());
+      assertNull(store.findBlock(allocatedBlockId), "The store must not find the discarded block");
 
       var lookupBlocks = lookupBlocks(store);
       assertTrue(lookupBlocks.blocks().isEmpty(), "The provider must not see the incomplete block");

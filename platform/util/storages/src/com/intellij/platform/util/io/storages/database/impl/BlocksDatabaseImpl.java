@@ -254,7 +254,7 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
-  /// Retires a sealed chunk that contains only retired blocks
+  /// Retires a sealed chunk that contains no live blocks
   void retireChunkIfUnused(@NotNull DatabaseChunk chunk,
                            @NotNull BooleanSupplier cancellationRequested) throws IOException {
     if (!cancellationRequested.getAsBoolean()) {
@@ -309,7 +309,7 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
         if (block.blockLength() > bytesBudget - evacuatedBytes) {
           continue;
         }
-        databaseBlocks.evacuateBlock(block);
+        databaseBlocks.evacuateBlock(sourceChunk, block);
         evacuatedBytes += block.blockLength();
         evacuatedBlocks++;
       }
@@ -320,14 +320,14 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
 
   record ChunkEvacuationResult(long evacuatedBytes, int evacuatedBlocks, boolean sourceChunkRetired) { }
 
-  /// Retires the chunk if it is sealed and contains only retired blocks.
+  /// Retires the chunk if it is sealed and contains no live blocks.
   /// Retirement hides the chunk and its blocks from the database API. The database keeps the chunk resources until close.
   ///
   /// @return true if the chunk is retired successfully, false if some preconditions for retirement are not met
   private boolean retireIfUnused(@NotNull DatabaseChunk chunk) throws IOException {
     synchronized (databaseLock) {
       ensureNotClosed();
-      if (!chunk.containsOnlyRetiredBlocks()) {
+      if (!chunk.hasNoLiveBlocks()) {
         return false;
       }
 
@@ -400,14 +400,16 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
-  /// @return all physical blocks of the current store, including retired blocks
+  /// @return a snapshot of current store blocks that are not `RETIRED` when selected.
+  /// (a returned block can become `RETIRED` before use)
   @NotNull List<DatabaseBlock> blocks(@NotNull BlocksStoreImpl store) {
     synchronized (databaseLock) {
       return databaseBlocks.blocks(requireCurrent(store).storeId());
     }
   }
 
-  /// Finds a block and rejects a block that belongs to another store
+  /// Finds a block that is not `RETIRED` when selected and rejects a block that belongs to another store.
+  /// (a returned block can become `RETIRED` before use)
   @Nullable DatabaseBlock findBlock(@NotNull BlocksStoreImpl store, int blockId) {
     synchronized (databaseLock) {
       var storeInfo = requireCurrent(store);
@@ -454,13 +456,13 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     databaseBlocks.recordBlockSealed();
   }
 
-  /// Resolves the same block instance without allowing access across store boundaries
+  /// @return same block instance, if it belongs to the store, throws exception otherwise
   private @NotNull DatabaseBlock requireOwnedBlock(@NotNull BlocksStoreImpl store, @NotNull DatabaseBlock block) {
-    var currentBlock = findBlock(store, block.blockId());
-    if (currentBlock != block) {
+    var storeInfo = requireCurrent(store);
+    if (block.storeId() != storeInfo.storeId() || !databaseBlocks.isCurrentBlock(block)) {
       throw new IllegalArgumentException("Unknown blockId(=" + block.blockId() + ")");
     }
-    return currentBlock;
+    return block;
   }
 
   /// Rejects stale handles after a drop or same-name replacement

@@ -150,12 +150,14 @@ public class DurableMapBlockCatalogTest {
       assertEquals(implementationTwoGenerationOneBlockId, implementationTwoGenerationOne.blocks().getFirst().id());
       assertEquals(21, implementationTwoGenerationOne.blocks().getFirst().payload().get(JAVA_INT, 0));
 
+      var retiredBlock = implementationOneGenerationOne.blocks().getFirst();
       implementationOneGenerationOne.retireAll();
 
       assertEquals(entriesBlockId, blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES).getFirst().id());
       assertEquals(ACTIVE, blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES).getFirst().state(),
                    "Retiring one lookup scope must preserve ENTRIES blocks");
-      assertEquals(RETIRED, implementationOneGenerationOne.blocks().getFirst().state());
+      assertEquals(RETIRED, retiredBlock.state(), "An existing handle must observe retirement");
+      assertTrue(implementationOneGenerationOne.blocks().isEmpty(), "The lookup scope must not list a retired block");
       assertEquals(ACTIVE, implementationOneGenerationTwo.blocks().getFirst().state(),
                    "Retiring one generation must preserve other generations");
       assertEquals(ACTIVE, implementationTwoGenerationOne.blocks().getFirst().state(),

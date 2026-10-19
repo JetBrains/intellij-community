@@ -39,14 +39,20 @@ public final class DurableMapBlockCatalog {
     return new DurableMapBlockCatalog(store, blocks, blocksByRole);
   }
 
-  /** @return all blocks known to the store, including retired blocks */
+  /// @return blocks that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   public synchronized @NotNull List<BlocksStore.Block> blocks() {
-    return List.copyOf(blocks);
+    return blocks.stream()
+      .filter(block -> block.state() != LifecycleState.RETIRED)
+      .toList();
   }
 
-  /** @return all blocks with the specified role, including retired blocks */
+  /// @return blocks with the specified role that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   public synchronized @NotNull List<BlocksStore.Block> blocks(@NotNull DurableMapBlockRole role) {
-    return List.copyOf(blocksByRole.get(role));
+    return blocksByRole.get(role).stream()
+      .filter(block -> block.state() != LifecycleState.RETIRED)
+      .toList();
   }
 
   /** Allocates a block and adds it to this catalog */
@@ -121,7 +127,9 @@ public final class DurableMapBlockCatalog {
 
     @Override
     public synchronized @NotNull List<LookupBlocks.Block> blocks() {
-      return List.copyOf(scopedBlocks);
+      return scopedBlocks.stream()
+        .filter(block -> block.state() != LifecycleState.RETIRED)
+        .toList();
     }
 
     @Override

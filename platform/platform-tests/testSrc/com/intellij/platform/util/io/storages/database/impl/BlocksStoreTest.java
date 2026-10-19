@@ -77,7 +77,13 @@ public class BlocksStoreTest {
       wordsBlock.seal();
       assertTrue(wordsBlock.content().isReadOnly(), "A sealed block must expose read-only content");
       wordsBlock.retire();
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, wordsBlock.state(), "An existing handle must observe retirement");
+      assertTrue(words.blocks().isEmpty(), "The store must not list a retired block");
+      assertNull(words.findBlock(retiredBlockId), "The store must not find a retired block");
       assertThrows(IllegalStateException.class, wordsBlock::content, "A retired block must reject content access");
+      var nextBlock = words.allocateBlock(3, BLOCK_CONTENT_LENGTH);
+      assertTrue(nextBlock.id() > retiredBlockId, "The store must not reuse the retired block identifier");
+      nextBlock.activate();
       database.flush();
     }
 
@@ -85,9 +91,7 @@ public class BlocksStoreTest {
       var words = database.findStore("words");
       assertNotNull(words);
       assertEquals(17, words.dataVersion());
-      var retiredBlock = words.findBlock(retiredBlockId);
-      assertNotNull(retiredBlock);
-      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, retiredBlock.state());
+      assertNull(words.findBlock(retiredBlockId), "A reopened store must not find a retired block");
     }
   }
 
@@ -127,11 +131,7 @@ public class BlocksStoreTest {
       assertThrows(IllegalStateException.class, oldBlock::seal, "A dropped store block must reject state changes");
 
       var replacement = database.openStore("store", 2);
-      assertThrows(
-        IllegalArgumentException.class,
-        () -> replacement.findBlock(oldBlockId),
-        "A replacement must not acquire blocks of the dropped store"
-      );
+      assertNull(replacement.findBlock(oldBlockId), "A replacement must not acquire retired blocks of the dropped store");
     }
   }
 

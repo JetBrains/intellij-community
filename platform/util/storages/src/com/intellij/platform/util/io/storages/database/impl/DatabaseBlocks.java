@@ -35,6 +35,11 @@ final class DatabaseBlocks implements Closeable {
 
   //@GuardedBy(lock)
   private int lastBlockId;
+
+  /// # of retired blocks that are not listed in [#blocksById] or [#blocksByStoreId]
+  ///GuardedBy(lock)
+  private int unlistedRetiredBlocksCurrent;
+
   //@GuardedBy(lock)
   private boolean closed;
 
@@ -64,26 +69,32 @@ final class DatabaseBlocks implements Closeable {
     for (var store : databaseCatalog.stores()) {
       currentStoreIds.add(store.storeId());
     }
+    Int2ObjectMap<DatabaseBlock> recoveredBlocksById = new Int2ObjectOpenHashMap<>();
     Int2ObjectMap<BlocksStore.Block.LifecycleState> recoveredStatesById = new Int2ObjectOpenHashMap<>();
-    for (var chunk : chunks.chunks()) {
-      for (var block : chunk.blocks()) {
-        //Recovery/clean up after possible crash:
-
-        var recoveredState = block.state();
-        if (recoveredState == ALLOCATED) {
-          //block is allocated, but requestor hasn't finished block initialization => discard
-          block.discard();
-          incompleteBlocksDiscarded++;
+    List<DatabaseBlock> allRecoveredBlocks = chunks.consumeRecoveredBlocks();
+    for (var block : allRecoveredBlocks) {
+      var recoveredState = block.state();
+      //Recovery/clean up after possible crash:
+      if (recoveredState == ALLOCATED) {
+        //block is allocated, but requestor hasn't finished block initialization => discard
+        block.discard();
+        incompleteBlocksDiscarded++;
+      }
+      if (!currentStoreIds.contains(block.storeId())) {
+        //active/sealed blocks belongs to removed store: normally, if the block is removed from the store, it must be
+        // RETIRED already; but if DB was crashed, some blocks could be left in active/sealed state => fix that:
+        var previousState = block.retireForStoreDrop();
+        if (previousState != RETIRED) {
+          droppedStoreBlocksRetired++;
         }
-        if (!currentStoreIds.contains(block.storeId())) {
-          //active/sealed blocks belongs to removed store: normally, if the block is removed from the store, it must be
-          // RETIRED already; but if DB was crashed, some blocks could be left in active/sealed state => fix that:
-          var previousState = block.retireForStoreDrop();
-          if (previousState != RETIRED) {
-            droppedStoreBlocksRetired++;
-          }
-        }
-        registerRecoveredBlock(block, recoveredState, recoveredStatesById);
+      }
+      registerRecoveredBlock(block, recoveredState, recoveredBlocksById, recoveredStatesById);
+    }
+    for (var block : recoveredBlocksById.values()) {
+      if (recoveredStatesById.get(block.blockId()) == RETIRED) {
+        chunks.recordUnlistedRetiredBlock(block.chunkId());
+        unlistedRetiredBlocksCurrent++;
+        updateCurrentBlocks(RETIRED, 1);
       }
     }
   }
@@ -118,27 +129,44 @@ final class DatabaseBlocks implements Closeable {
     }
   }
 
+  /// @return store blocks that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   @NotNull List<DatabaseBlock> blocks(int storeId) {
     synchronized (lock) {
       var blocks = blocksByStoreId.get(storeId);
-      return blocks == null ? List.of() : List.copyOf(blocks);
+      return blocks == null ? List.of() : blocks.stream()
+        .filter(block -> block.state() != RETIRED)
+        .toList();
     }
   }
 
+  /// @return the block, or `null` when it is absent or `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   @Nullable DatabaseBlock findBlock(int blockId) {
     synchronized (lock) {
-      return blocksById.get(blockId);
+      var block = blocksById.get(blockId);
+      return block == null || block.state() == RETIRED ? null : block;
+    }
+  }
+
+  /// @return true if the block is contained here
+  boolean isCurrentBlock(@NotNull DatabaseBlock block) {
+    synchronized (lock) {
+      return blocksById.get(block.blockId()) == block;
     }
   }
 
   /// Evacuates block: copies it into the newly allocated region, and retires the old copy afterward;
   /// Method replaces old copy with the new one in blocks catalog, but it DOES NOT replace external references to the old
   /// block -- its caller's responsibility to deal with such references, if any.
-  void evacuateBlock(@NotNull DatabaseBlock blockToEvacuate) throws IOException {
+  void evacuateBlock(@NotNull DatabaseChunk sourceChunk, @NotNull DatabaseBlock blockToEvacuate) throws IOException {
     synchronized (lock) {
       ensureNotClosed();
       if (blocksById.get(blockToEvacuate.blockId()) != blockToEvacuate) {
         throw new IllegalArgumentException("Block " + blockToEvacuate.blockId() + " is not the current physical copy");
+      }
+      if (sourceChunk.chunkId() != blockToEvacuate.chunkId()) {
+        throw new IllegalArgumentException("Block " + blockToEvacuate.blockId() + " does not belong to chunk " + sourceChunk.chunkId());
       }
       var targetChunk = chunks.chunkForAllocation(blockToEvacuate.blockLength());
       var evacuatedBlock = targetChunk.copyBlock(blockToEvacuate);
@@ -146,6 +174,12 @@ final class DatabaseBlocks implements Closeable {
       blocksById.put(evacuatedBlock.blockId(), evacuatedBlock);
       blocksByStoreId.computeIfAbsent(evacuatedBlock.storeId(), _ -> new ArrayList<>()).add(evacuatedBlock);
       blockToEvacuate.retireEvacuatedBlock();
+      sourceChunk.removeRetiredBlock(blockToEvacuate);
+      var storeBlocks = blocksByStoreId.get(blockToEvacuate.storeId());
+      if (storeBlocks == null || !storeBlocks.remove(blockToEvacuate)) {
+        throw new IllegalStateException("Block " + blockToEvacuate.blockId() + " is absent from storeId(=" +
+                                        blockToEvacuate.storeId() + ")");
+      }
       blocksEvacuated++;
     }
   }
@@ -165,6 +199,9 @@ final class DatabaseBlocks implements Closeable {
           blocksByStoreId.remove(block.storeId());
         }
       }
+      var retiredBlocksWithoutObjects = chunk.retiredBlocksUnlisted();
+      unlistedRetiredBlocksCurrent -= retiredBlocksWithoutObjects;
+      updateCurrentBlocks(RETIRED, -retiredBlocksWithoutObjects);
     }
   }
 
@@ -230,30 +267,39 @@ final class DatabaseBlocks implements Closeable {
 
   private void registerRecoveredBlock(@NotNull DatabaseBlock block,
                                       @NotNull BlocksStore.Block.LifecycleState recoveredState,
+                                      @NotNull Int2ObjectMap<DatabaseBlock> recoveredBlocksById,
                                       @NotNull Int2ObjectMap<BlocksStore.Block.LifecycleState> recoveredStatesById) throws CorruptedException {
     synchronized (lock) {
       var blockId = block.blockId();
       var previous = blocksById.get(blockId);
-      BlocksStore.Block.LifecycleState previousState = null;
-      if (previous != null) {
+      var previousRecoveredBlock = recoveredBlocksById.get(blockId);
+      if (previousRecoveredBlock != null) {
         //likely, the block was evacuated, but old remnants remains => check is it true
         var previousRecoveredState = recoveredStatesById.get(blockId);
         if (previousRecoveredState == null) {
           throw new IllegalStateException("Missing recovered state for block " + blockId);
         }
-        validateEvacuatedCopy(previous, previousRecoveredState, block, recoveredState);
-        previousState = previous.retireEvacuatedBlock(); //if not yet retired (e.g. crash interrupts evacuation) => fix it
+        validateEvacuatedCopy(previousRecoveredBlock, previousRecoveredState, block, recoveredState);
+        if (previous != null) {
+          var previousState = previous.retireEvacuatedBlock(); //if not yet retired (e.g. crash interrupts evacuation) => fix it
+          updateCurrentBlocks(previousState, -1);
+        }
         if (previousRecoveredState != RETIRED) {
           staleBlockCopiesRetired++;
         }
       }
-      blocksById.put(blockId, block);
-      if (previousState != null) {
-        updateCurrentBlocks(previousState, -1);
+      if (recoveredState == RETIRED) {
+        //could be only if old copy was evacuated (=retired), and new copy is retired, but due to crash old copy's state
+        // wasn't persisted
+        blocksById.remove(blockId);
       }
-      updateCurrentBlocks(block.state(), 1);
+      else {
+        blocksById.put(blockId, block);
+        updateCurrentBlocks(block.state(), 1);
+        blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
+      }
+      recoveredBlocksById.put(blockId, block);
       recoveredStatesById.put(blockId, recoveredState);
-      blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
       lastBlockId = Math.max(lastBlockId, blockId);
     }
   }
@@ -308,7 +354,7 @@ final class DatabaseBlocks implements Closeable {
     // TODO RC: implement weakly-consistent metrics without locking
     synchronized (lock) {
       return new DatabaseMetrics.BlocksMetrics(
-        blocksById.size(),
+        blocksById.size() + unlistedRetiredBlocksCurrent,
         allocatedBlocksCurrent.get(), activeBlocksCurrent.get(), sealedBlocksCurrent.get(), retiredBlocksCurrent.get(),
         blocksAllocated, blocksActivated.get(), blocksDiscarded.get(), blocksSealed.get(), blocksRetired.get(),
         blocksEvacuated,
@@ -326,6 +372,7 @@ final class DatabaseBlocks implements Closeable {
       activeBlocksCurrent.set(0);
       sealedBlocksCurrent.set(0);
       retiredBlocksCurrent.set(0);
+      unlistedRetiredBlocksCurrent = 0;
       closed = true;
     }
   }

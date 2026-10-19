@@ -21,6 +21,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -57,6 +58,12 @@ final class DatabaseChunks implements Closeable, Flushable {
   /// All active chunks, oldest first.
   /// GuardedBy(lock)
   private final ArrayDeque<DatabaseChunk> activeChunks = new ArrayDeque<>();
+
+  /// All the blocks recovered from the chunks, including retired blocks.
+  /// A temporary collection: to be consumed and cleared during DB initialization, so at the end no references to the retired
+  /// blocks should remain.
+  /// GuardedBy(lock)
+  private final List<DatabaseBlock> allRecoveredBlocks = new ArrayList<>();
 
   /// Retired chunks awaiting resource deallocation, by chunkId.
   /// These chunks have `state=RETIRED` and are removed from [#chunksById] -- i.e., the database API does not expose them.
@@ -159,6 +166,29 @@ final class DatabaseChunks implements Closeable, Flushable {
       return chunksById.values().stream()
         .sorted(Comparator.comparingInt(DatabaseChunk::chunkId))
         .toList();
+    }
+  }
+
+  /// @return all the blocks collected over currently alive chunks, including retired blocks
+  ///         the collection is cleared after the call, so 2nd call always returns empty collection
+  @NotNull List<DatabaseBlock> consumeRecoveredBlocks() {
+    synchronized (lock) {
+      try {
+        return List.copyOf(allRecoveredBlocks);
+      }
+      finally {
+        allRecoveredBlocks.clear();
+      }
+    }
+  }
+
+  void recordUnlistedRetiredBlock(int chunkId) {
+    synchronized (lock) {
+      var chunk = chunksById.get(chunkId);
+      if (chunk == null) {
+        throw new IllegalStateException("Unknown chunkId(=" + chunkId + ")");
+      }
+      chunk.recordUnlistedRetiredBlock();
     }
   }
 
@@ -267,23 +297,23 @@ final class DatabaseChunks implements Closeable, Flushable {
           throw new CorruptedException("[" + chunkPath + "]: the catalog references a missing chunk file");
         }
 
-        var openResult = DatabaseChunk.openWithRecovery(
+        var chunkOpenResult = DatabaseChunk.openWithRecovery(
           chunkPath,
           databaseCatalog.databaseId(),
           chunkInfo.chunkId(),
           databaseCatalog.chunkSize(),
           fsyncOnFlush
         );
-        var chunk = openResult.chunk();
-        if (openResult.tailBytesRolledBack() > 0) {
+        var chunk = chunkOpenResult.chunk();
+        if (chunkOpenResult.tailBytesRolledBack() > 0) {
           chunkTailsRolledBack++;
-          chunkTailBytesRolledBack += openResult.tailBytesRolledBack();
+          chunkTailBytesRolledBack += chunkOpenResult.tailBytesRolledBack();
         }
         chunksOpened++;
         chunksById.put(chunkInfo.chunkId(), chunk);
 
         //We do a (limited) recovery/reconciliation here, on DB opening -- but afterward, during normal DB operation,
-        // we assume that no inconsistency could happen. Hence, we do not look for recovery/reconciliation anywhere
+        // we assume that _no inconsistency could happen_. Hence, we do not look for recovery/reconciliation anywhere
         // else, but on DB opening. This is intentional design choice that simplifies the code.
         reconcileChunkState(chunkInfo, chunk);
         if (chunk.state() == RETIRED) {
@@ -291,11 +321,12 @@ final class DatabaseChunks implements Closeable, Flushable {
           chunksById.remove(chunkInfo.chunkId(), chunk);
         }
         else {
+          allRecoveredBlocks.addAll(chunkOpenResult.recoveredBlocks());
           if (chunk.state() == ACTIVE) {
             activeChunks.addLast(chunk);
           }
           LOG.info("Opened chunk #" + chunkInfo.chunkId() + " (" + chunk.state() + "), " +
-                   chunk.blocks().size() + " blocks, [" + chunkPath + "]");
+                   chunkOpenResult.recoveredBlocks().size() + " blocks, [" + chunkPath + "]");
         }
       }
       if (activeChunks.size() > MAX_ACTIVE_CHUNKS) {
@@ -522,6 +553,7 @@ final class DatabaseChunks implements Closeable, Flushable {
         IOUtil.closeAllSafely(chunks);
       }
       finally {
+        allRecoveredBlocks.clear();
         chunksById.clear();
         chunksPendingForRelease.clear();
         closed = true;

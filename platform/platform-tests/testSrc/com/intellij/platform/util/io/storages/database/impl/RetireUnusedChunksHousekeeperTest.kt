@@ -16,6 +16,36 @@ import java.nio.file.Path
 @Suppress("SuspiciousPackagePrivateAccess")
 class RetireUnusedChunksHousekeeperTest {
   @Test
+  fun `housekeeping retires a sealed chunk with only persisted retired blocks`(@TempDir directory: Path) {
+    val firstChunkPath = DatabaseChunks.chunkPath(directory, 1)
+    var retiredBlockId = 0
+    BlocksDatabaseImpl.open(directory, CHUNK_SIZE, true, false).use { database ->
+      val store = database.openStore("store", 1)
+      val retiredBlock = store.allocateBlock(1, MAX_BLOCK_CONTENT_SIZE).also { it.activate() }
+      retiredBlock.seal()
+      retiredBlock.retire()
+      retiredBlockId = retiredBlock.id()
+      store.allocateBlock(1, MAX_BLOCK_CONTENT_SIZE).activate()
+      store.allocateBlock(1, MAX_BLOCK_CONTENT_SIZE).activate()
+      database.flush()
+    }
+
+    BlocksDatabaseImpl.open(directory, CHUNK_SIZE, true, false).use { database ->
+      val store = requireNotNull(database.findStore("store"))
+      assertNull(store.findBlock(retiredBlockId), "The store must not retain the persisted retired block")
+      val retiredOnlyChunk = database.sealedChunks().single { it.chunkId() == 1 }
+      assertTrue(retiredOnlyChunk.blocks().isEmpty(), "The chunk must not retain the persisted retired block")
+      assertEquals(1, database.metrics(true).blocks().retiredCurrent(), "Metrics must include the persisted retired block")
+
+      RetireUnusedChunksHousekeeper(database).runHousekeeping { false }
+
+      assertTrue(database.sealedChunks().none { it.chunkId() == 1 }, "Housekeeping must retire the chunk without live blocks")
+      assertEquals(0, database.metrics(true).blocks().retiredCurrent(), "Chunk retirement must remove the physical block metric")
+      assertTrue(Files.exists(firstChunkPath), "Regular housekeeping must keep the retired chunk file")
+    }
+  }
+
+  @Test
   fun `housekeeping keeps an active chunk with only retired blocks`(@TempDir directory: Path) {
     val firstChunkPath = DatabaseChunks.chunkPath(directory, 1)
     val secondChunkPath = DatabaseChunks.chunkPath(directory, 2)
@@ -31,7 +61,7 @@ class RetireUnusedChunksHousekeeperTest {
         RetireUnusedChunksHousekeeper(blocksDatabase).runHousekeeping { false }
 
         assertTrue(Files.exists(firstChunkPath), "Housekeeping must keep an active chunk")
-        assertEquals(retiredBlock.id(), store.findBlock(retiredBlock.id())?.id())
+        assertNull(store.findBlock(retiredBlock.id()), "The store must not find a retired block")
 
         val nextBlock = store.allocateBlock(1, 1)
         nextBlock.activate()
@@ -68,7 +98,7 @@ class RetireUnusedChunksHousekeeperTest {
 
         RetireUnusedChunksHousekeeper(blocksDatabase).runHousekeeping { true }
         assertTrue(Files.exists(firstChunkPath), "Cancellation before the run must prevent chunk retirement")
-        assertEquals(retiredBlock.id(), store.findBlock(retiredBlock.id())?.id(), "Cancellation must keep the block catalog")
+        assertNull(store.findBlock(retiredBlock.id()), "The store must hide a retired block before chunk retirement")
 
         RetireUnusedChunksHousekeeper(blocksDatabase).runHousekeeping { false }
 
@@ -116,19 +146,20 @@ class RetireUnusedChunksHousekeeperTest {
         val housekeeper = RetireUnusedChunksHousekeeper(blocksDatabase)
 
         housekeeper.runHousekeeping { false }
-        assertNull(store.findBlock(firstRetiredBlock.id()), "The first round must retire the first chunk")
+        assertTrue(blocksDatabase.sealedChunks().none { it.chunkId() == 1 }, "The first round must retire the first chunk")
         assertTrue(Files.exists(chunkPaths.getValue(3)), "The first round must not inspect another chunk")
 
         housekeeper.runHousekeeping { false }
         assertTrue(Files.exists(chunkPaths.getValue(3)), "The second round must inspect the second chunk")
 
         housekeeper.runHousekeeping { false }
-        assertNull(store.findBlock(thirdRetiredBlock.id()), "The third round must retire the third chunk")
+        assertTrue(blocksDatabase.sealedChunks().none { it.chunkId() == 3 }, "The third round must retire the third chunk")
 
         secondLiveBlock.seal()
         secondLiveBlock.retire()
         housekeeper.runHousekeeping { false }
-        assertNull(store.findBlock(secondLiveBlock.id()), "After wrapping, the fourth round must inspect the smallest candidate chunk id")
+        assertTrue(blocksDatabase.sealedChunks().none { it.chunkId() == 2 },
+                   "After wrapping, the fourth round must inspect the smallest candidate chunk id")
         assertTrue(chunkPaths.values.all { Files.exists(it) }, "Regular housekeeping must not delete chunk files")
       }
     }

@@ -49,6 +49,9 @@ final class DatabaseChunk implements Closeable, Flushable {
   private final transient @NotNull Object lock = new Object();
   /// GuardedBy(lock)
   private final List<DatabaseBlock> blocks;
+  /// # of retired blocks that are in this chunk, but not listed in [#blocks]
+  /// GuardedBy(lock)
+  private int retiredBlocksUnlisted;
 
   private DatabaseChunk(@NotNull MMappedFileStorage storage,
                         @NotNull MemorySegment chunkSegment,
@@ -137,19 +140,25 @@ final class DatabaseChunk implements Closeable, Flushable {
       }
       var allocatedTail = ChunkHeaderLayout.readAllocatedTail(mapping);
       var committedTail = ChunkHeaderLayout.readCommittedTail(mapping);
-      var blocks = recoverBlocks(storagePath, mapping, chunkId.chunkId(), committedTail);
+      var recoveredBlocks = recoverBlocks(storagePath, mapping, chunkId.chunkId(), committedTail);
+
+      var aliveBlocks = new ArrayList<>(recoveredBlocks);
+      aliveBlocks.removeIf(block -> block.state() == RETIRED);
       var tailBytesRolledBack = allocatedTail - committedTail;
+      var chunk = new DatabaseChunk(storage, mapping, chunkId, aliveBlocks, expectedChunkSize);
       return new OpenChunkResult(
-        new DatabaseChunk(storage, mapping, chunkId, blocks, expectedChunkSize),
-        tailBytesRolledBack
+        chunk,
+        tailBytesRolledBack,
+        List.copyOf(recoveredBlocks)
       );
     });
   }
 
-  /// The chunk and the recovery result from chunk-open operation
-  /// (Should be a chunk's metrics/counter field, but I don't want to create the only counter in the chunk just
-  /// for a constant value needed only on the open phase)
-  record OpenChunkResult(@NotNull DatabaseChunk chunk, long tailBytesRolledBack) { }
+  /// The chunk and validated block data needed during database opening
+  record OpenChunkResult(@NotNull DatabaseChunk chunk,
+                         long tailBytesRolledBack,
+                         // all the blocks, including retired
+                         @NotNull List<DatabaseBlock> recoveredBlocks) { }
 
   @NotNull DatabaseBlock allocateBlock(int blockId, int storeId, int blockRole, int blockLength) throws IOException {
     synchronized (lock) {
@@ -240,17 +249,39 @@ final class DatabaseChunk implements Closeable, Flushable {
     }
   }
 
-  boolean containsOnlyRetiredBlocks() {
+  void removeRetiredBlock(@NotNull DatabaseBlock block) {
     synchronized (lock) {
-      if (blocks.isEmpty()) {
-        return false;
+      if (block.chunkId() != chunkId.chunkId() || block.state() != RETIRED) {
+        throw new IllegalArgumentException("Block #" + block.blockId() + " is not a retired block of chunk #" + chunkId.chunkId());
       }
+
+      boolean removed = blocks.remove(block);
+      if (!removed) {
+        throw new IllegalStateException("Block #" + block.blockId() + " in chunk[#" + chunkId + "] blocks");
+      }
+    }
+  }
+
+  boolean hasNoLiveBlocks() {
+    synchronized (lock) {
       for (var block : blocks) {
         if (block.state() != RETIRED) {
           return false;
         }
       }
       return true;
+    }
+  }
+
+  void recordUnlistedRetiredBlock() {
+    synchronized (lock) {
+      retiredBlocksUnlisted++;
+    }
+  }
+
+  int retiredBlocksUnlisted() {
+    synchronized (lock) {
+      return retiredBlocksUnlisted;
     }
   }
 

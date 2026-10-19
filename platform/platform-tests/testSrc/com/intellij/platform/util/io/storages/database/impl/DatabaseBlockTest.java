@@ -67,6 +67,26 @@ public class DatabaseBlockTest {
     }
   }
 
+  @Test
+  public void openingDoesNotRetainRetiredBlock(@TempDir Path directory) throws Exception {
+    var chunkPath = directory.resolve("chunk.dat");
+    try (var chunk = DatabaseChunk.create(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE)) {
+      var block = chunk.allocateBlock(BLOCK_ID, STORE_ID, VALUE_ROLE, BLOCK_LENGTH);
+      block.activate();
+      block.seal();
+      block.retire();
+      chunk.flush();
+    }
+
+    var openResult = DatabaseChunk.openWithRecovery(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true);
+    try (var chunk = openResult.chunk()) {
+      assertEquals(0, chunk.blocks().size(), "The chunk must not retain a persisted retired block");
+      var recoveredBlock = openResult.recoveredBlocks().getFirst();
+      assertEquals(BLOCK_ID, recoveredBlock.blockId(), "Recovery must read the retired block identifier");
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, recoveredBlock.state());
+    }
+  }
+
   @ParameterizedTest
   @EnumSource(value = BlocksStore.Block.LifecycleState.class, names = {"ACTIVE", "SEALED"})
   public void copyBlockPreservesIdentityContentAndState(BlocksStore.Block.LifecycleState state,
@@ -145,9 +165,10 @@ public class DatabaseBlockTest {
       chunk.flush();
     }
 
-    try (var chunk = DatabaseChunk.open(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true)) {
-      var block = chunk.blocks().getFirst();
-      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state());
+    var openResult = DatabaseChunk.openWithRecovery(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true);
+    try (var chunk = openResult.chunk()) {
+      assertEquals(0, chunk.blocks().size(), "Opening must not retain the retired block");
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, openResult.recoveredBlocks().getFirst().state());
     }
   }
 
@@ -245,8 +266,10 @@ public class DatabaseBlockTest {
       assertThrows(IllegalStateException.class, block::seal, "Dropping a store must not allow a block to become live again");
       chunk.flush();
     }
-    try (var chunk = DatabaseChunk.open(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true)) {
-      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, chunk.blocks().getFirst().state());
+    var openResult = DatabaseChunk.openWithRecovery(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true);
+    try (var chunk = openResult.chunk()) {
+      assertEquals(0, chunk.blocks().size(), "Opening must not retain the retired block");
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, openResult.recoveredBlocks().getFirst().state());
     }
   }
 

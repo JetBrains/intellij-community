@@ -13,7 +13,8 @@ import java.util.List;
 /// (e.g. hides allocation of non-LOOKUP blocks, or dropping the owning store)
 @ApiStatus.Internal
 public interface LookupBlocks {
-  /// @return lookup blocks available in this scope
+  /// @return lookup blocks that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before the caller uses it.
   @NotNull List<Block> blocks();
 
   /// Allocates a lookup block, initializes its common header, and adds it to this scope.

@@ -49,7 +49,8 @@ final class BlocksStoreImpl implements BlocksStore {
     return wrap(database.allocateBlock(this, role, minimumContentLength));
   }
 
-  /** @return all physical blocks of this store, including retired blocks */
+  /// @return a snapshot of blocks that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   @Override
   public @NotNull List<Block> blocks() {
     var blocks = database.blocks(this);
@@ -60,7 +61,8 @@ final class BlocksStoreImpl implements BlocksStore {
     return List.copyOf(handles);
   }
 
-  /** Finds one owned block without exposing blocks of another store */
+  /// Finds one owned block that is not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before use.
   @Override
   public @Nullable Block findBlock(int blockId) {
     var block = database.findBlock(this, blockId);

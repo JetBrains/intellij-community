@@ -210,8 +210,10 @@ class DatabaseStartupHousekeepingTest {
     factory.open(directory).use { database ->
       val implementation = database as BlocksDatabaseImpl
       val sourceChunk = implementation.sealedChunks().single { it.chunkId() == 1 }
-      assertEquals(1, sourceChunk.blocks().count { it.state() != LifecycleState.RETIRED },
-                   "The first run must leave one live block in the source chunk")
+      assertEquals(1, sourceChunk.blocks().size,
+                   "The first run must remove the evacuated copy and leave one block in the source chunk")
+      assertEquals(LifecycleState.ACTIVE, sourceChunk.blocks().single().state(),
+                   "The remaining source block must stay active")
       assertEquals(1, implementation.metrics(true).blocks().evacuated(),
                    "The first run must use the one-block budget")
       val store = requireNotNull(database.findStore("store"))
@@ -224,6 +226,17 @@ class DatabaseStartupHousekeepingTest {
       val implementation = database as BlocksDatabaseImpl
       assertTrue(implementation.sealedChunks().none { it.chunkId() == 1 },
                  "The second run must finish and retire the source chunk")
+      val store = requireNotNull(database.findStore("store"))
+      for (blockId in listOf(firstBlockId, secondBlockId)) {
+        assertEquals(LifecycleState.ACTIVE, requireNotNull(store.findBlock(blockId)).state(),
+                     "The second run must keep both evacuated blocks active")
+        assertEquals(1, store.blocks().count { it.id() == blockId },
+                     "The second run must expose one current copy of each block")
+      }
+      val blockMetrics = implementation.metrics(true).blocks()
+      assertEquals(store.blocks().size + blockMetrics.retiredCurrent(), blockMetrics.total(),
+                   "Current block metrics must include each logical block once")
+      assertEquals(1, blockMetrics.evacuated(), "The second run must use the one-block budget")
       assertEquals(1, implementation.metrics(true).chunks().released(),
                    "Startup drop must release the source chunk after the second run")
       assertTrue(object : WaitFor(10_000) {

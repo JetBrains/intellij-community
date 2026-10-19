@@ -30,10 +30,12 @@ public interface BlocksStore {
   /// Replaces the opaque store metadata in the database metadata journal
   void updateStoreMetadata(@NotNull StoreMetadata storeMetadata) throws IOException;
 
-  /// @return all blocks that belong to this store, including retired ones
+  /// @return a snapshot of blocks that are not `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before the caller uses it.
   @NotNull List<Block> blocks();
 
-  /// @return the owned block, or `null` when the block does not exist
+  /// @return the owned block, or `null` when the block does not exist or is `RETIRED` when selected.
+  /// A returned block can become `RETIRED` before the caller uses it.
   @Nullable Block findBlock(int blockId);
 
   /// Allocates one block with at least the specified number of content bytes.
