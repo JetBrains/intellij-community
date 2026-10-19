@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -11,11 +12,18 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal const val SPLIT_MODE_API_USAGE_SHORT_NAME: String = "SplitModeApiUsage"
 
+/**
+ * Debug log of the split-mode inspections: the PSI elements that one inspection pass visits and the problems it reports.
+ *
+ * It is off by default.
+ * To turn it on, add `#org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionLogging` to `idea.log.debug.categories`.
+ */
 internal object SplitModeInspectionLogging {
   fun createRun(
     inspectionShortName: String,
     file: PsiFile,
   ): SplitModeInspectionLogRun? {
+    if (!LOG.isDebugEnabled) return null
     return SplitModeInspectionLogRun(inspectionShortName, file)
   }
 }
@@ -38,10 +46,10 @@ internal class SplitModeInspectionLogRun(
   }
 
   fun logSummary() {
-    LOG.warn(
+    LOG.debug {
       "Split mode inspection summary: inspection=$inspectionShortName, file=${file.presentablePath()}, " +
       "visitedPsiElements=${visitedElements.size}, reportedProblems=${reportedProblems.get()}"
-    )
+    }
   }
 }
 
