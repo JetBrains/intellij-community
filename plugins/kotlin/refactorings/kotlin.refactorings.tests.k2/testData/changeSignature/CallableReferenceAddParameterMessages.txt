@@ -1,0 +1,1 @@
+Callable reference '::foo' will no longer match the expected function type

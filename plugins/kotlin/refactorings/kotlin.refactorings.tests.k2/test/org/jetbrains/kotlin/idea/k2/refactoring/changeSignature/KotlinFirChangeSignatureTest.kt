@@ -67,12 +67,17 @@ class KotlinFirChangeSignatureTest :
         }
     }
 
-    override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo = KotlinTypeInfo(type, ktElement as KtElement)
+    override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo =
+        KotlinTypeInfo(type, ktElement as KtElement)
 
     override fun createChangeInfo(): KotlinChangeInfo {
         val element = findTargetElement()?.unwrapped as KtElement
         val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor) as KtNamedDeclaration
-        val superMethod = (checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).last() as KtNamedDeclaration).takeIf { !file.name.contains("OverriderOnly") } ?: targetElement
+        val superMethod = (checkSuperMethods(
+            targetElement,
+            emptyList(),
+            RefactoringBundle.message("to.refactor")
+        ).last() as KtNamedDeclaration).takeIf { !file.name.contains("OverriderOnly") } ?: targetElement
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
@@ -128,11 +133,17 @@ class KotlinFirChangeSignatureTest :
     }
 
     fun testInterface() {
-        doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+        doTestConflict(
+            "interface <caret>A {}",
+            "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored."
+        )
     }
 
     fun testLocalVariable() {
-        doTestConflict("fun main() { val <caret>x = 42 }", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+        doTestConflict(
+            "fun main() { val <caret>x = 42 }",
+            "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored."
+        )
     }
 
     fun testEnumGetEntriesFromJava() {
@@ -225,16 +236,20 @@ class KotlinFirChangeSignatureTest :
     }
 
     fun testAddContextParameter() = doTest {
-        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
-                                                       defaultValueAsDefaultParameter = true)
+        val newIntParameter = createKotlinIntParameter(
+            defaultValueForCall = kotlinDefaultIntValue,
+            defaultValueAsDefaultParameter = true
+        )
         newIntParameter.isContextParameter = true
         addParameter(newIntParameter)
     }
 
     fun testAddMultipleContextParameters() = doTest {
         val psiFactory = KtPsiFactory(project)
-        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
-                                                       defaultValueAsDefaultParameter = true)
+        val newIntParameter = createKotlinIntParameter(
+            defaultValueForCall = kotlinDefaultIntValue,
+            defaultValueAsDefaultParameter = true
+        )
         newIntParameter.isContextParameter = true
         val newStringParameter = createKotlinStringParameter("s", defaultValueForCall = psiFactory.createExpression("\"ctx\""))
         newStringParameter.isContextParameter = true
@@ -317,19 +332,19 @@ class KotlinFirChangeSignatureTest :
     }
 
     fun testContextParameterInDeepHierarchy() = doTest {
-      newParameters[0].isContextParameter = false
+        newParameters[0].isContextParameter = false
     }
 
     fun testFromContextParameterCalledInAnonymousContext() = doTest {
-      newParameters[0].isContextParameter = false
+        newParameters[0].isContextParameter = false
     }
 
     fun testFromContextParameterPreserveAnnotations() = doTest {
-      newParameters[0].isContextParameter = false
+        newParameters[0].isContextParameter = false
     }
 
     fun testConvertToContextParameterInDeepHierarchy() = doTest {
-      newParameters[1].isContextParameter = true
+        newParameters[1].isContextParameter = true
     }
 
     fun testFromContextParameterNormalParameterConflict() = doTest {
@@ -344,5 +359,46 @@ class KotlinFirChangeSignatureTest :
 
     fun testContextParameterAndNewParameter() = doTest {
         addParameter(createKotlinIntParameter())
+    }
+
+    //-------------------- callable references --------------------
+    private fun KotlinChangeInfo.receiver(): KotlinParameterInfo =
+        requireNotNull(receiverParameterInfo) { "Test data must declare an extension receiver" }
+
+    fun testCallableReferenceAddParameter() = doTestConflict {
+        addParameter(createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue))
+    }
+
+    fun testCallableReferenceRemoveParameter() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testCallableReferenceReorderParameters() = doTestConflict {
+        swapParameters(0, 1)
+    }
+
+    fun testCallableReferenceRetypeParameter() = doTestConflict {
+        newParameters[0].setType("String")
+    }
+
+    fun testCallableReferenceChangeReturnType() = doTestConflict {
+        setType("Any")
+    }
+
+    fun testCallableReferenceRewriteAndRetypeParameter() = doTestConflict {
+        receiverParameterInfo = newParameters[0]
+        newParameters[1].setType("String")
+    }
+
+    fun testCallableReferenceRetypeObjectBoundReceiver() = doTestConflict {
+        receiver().setType("CharSequence")
+    }
+
+    fun testCallableReferenceRetypeUnboundReceiver() = doTest {
+        receiver().setType("CharSequence")
+    }
+
+    fun testCallableReferenceRenameParameter() = doTest {
+        newParameters[0].name = "renamed"
     }
 }

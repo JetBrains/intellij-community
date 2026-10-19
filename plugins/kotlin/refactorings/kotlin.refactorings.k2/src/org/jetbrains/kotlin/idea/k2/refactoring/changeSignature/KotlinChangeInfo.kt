@@ -42,6 +42,12 @@ class KotlinChangeInfo(
         return parametersToRemove.drop(receiverShift).any { it }
     }
 
+    override fun isValueParameterRetyped(): Boolean = newParameters.any {
+        !it.isNewParameter && !it.isContextParameter && !it.wasContextParameter &&
+                it != receiverParameterInfo && it != oldReceiverInfo &&
+                it.currentType.text != it.originalType.text
+    }
+
     private val newParameters = parameterInfos.toMutableList()
     override fun addParameter(
         parameterInfo: KotlinParameterInfo,

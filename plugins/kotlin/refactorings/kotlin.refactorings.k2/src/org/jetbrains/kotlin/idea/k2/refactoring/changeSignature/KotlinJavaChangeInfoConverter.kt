@@ -315,6 +315,13 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
                 }
             }
 
+            override fun isValueParameterRetyped(): Boolean {
+                val oldTypes = changeInfo.oldParameterTypes
+                return changeInfo.newParameters.any {
+                    it.oldIndex >= 0 && it.typeText != oldTypes[it.oldIndex]
+                }
+            }
+
             override fun getNewParameters(): Array<out KotlinParameterInfo> {
                 return kotlinParameterInfos            }
 

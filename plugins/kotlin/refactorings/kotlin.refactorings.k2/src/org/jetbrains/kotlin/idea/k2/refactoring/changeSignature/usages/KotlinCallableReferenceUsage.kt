@@ -109,6 +109,8 @@ private enum class ParamConversion {
     PARAMETERS_ADDED,
     PARAMETERS_REORDERED,
     PARAMETERS_REMOVED,
+    PARAMETERS_RETYPED,
+    RETURN_TYPE_CHANGED,
 }
 
 private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConversion> {
@@ -140,6 +142,8 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
         .map { it.oldIndex }
         .let { indexes -> indexes != indexes.sorted() }
     val parametersRemoved = changeInfo.isValueParameterRemoved()
+    val parametersRetyped = changeInfo.isValueParameterRetyped()
+    val returnTypeChanged = changeInfo.isReturnTypeChanged
     return listOfNotNull(
         ParamConversion.VALUE_TO_CONTEXT.takeIf { valueToContext },
         ParamConversion.CONTEXT_TO_VALUE.takeIf { contextToValue },
@@ -153,6 +157,8 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
         ParamConversion.PARAMETERS_ADDED.takeIf { parametersAdded },
         ParamConversion.PARAMETERS_REORDERED.takeIf { parametersReordered },
         ParamConversion.PARAMETERS_REMOVED.takeIf { parametersRemoved },
+        ParamConversion.PARAMETERS_RETYPED.takeIf { parametersRetyped },
+        ParamConversion.RETURN_TYPE_CHANGED.takeIf { returnTypeChanged },
     )
 }
 
@@ -211,8 +217,11 @@ private fun classifyConversion(
             else -> None
         }
 
-        ParamConversion.RECEIVER_RETYPED ->
-            if (isUnboundTypeQualifier(expression)) receiverTypeQualifier(expression, changeInfo) else None
+        ParamConversion.RECEIVER_RETYPED -> when {
+            isUnboundTypeQualifier(expression) -> receiverTypeQualifier(expression, changeInfo)
+            qualified || isResolvable(expression) -> conflictFix(expression, TYPE_CHANGE_CONFLICT)
+            else -> None
+        }
 
         ParamConversion.VALUE_TO_CONTEXT ->
             conflictFix(expression, PARAMETER_TO_CONTEXT_CONFLICT, convertedToContextParameterName(changeInfo))
@@ -220,7 +229,8 @@ private fun classifyConversion(
         ParamConversion.CONTEXT_TO_VALUE ->
             if (isResolvable(expression)) conflictFix(expression, TYPE_CHANGE_CONFLICT) else None
 
-        ParamConversion.PARAMETERS_ADDED, ParamConversion.PARAMETERS_REORDERED, ParamConversion.PARAMETERS_REMOVED ->
+        ParamConversion.PARAMETERS_ADDED, ParamConversion.PARAMETERS_REORDERED, ParamConversion.PARAMETERS_REMOVED,
+        ParamConversion.PARAMETERS_RETYPED, ParamConversion.RETURN_TYPE_CHANGED ->
             if (isResolvable(expression)) conflictFix(expression, TYPE_CHANGE_CONFLICT) else None
     }
 }
