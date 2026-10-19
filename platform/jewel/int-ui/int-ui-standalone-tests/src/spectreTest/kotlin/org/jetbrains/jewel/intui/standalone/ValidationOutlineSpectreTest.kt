@@ -118,30 +118,33 @@ private fun ValidationOutlineScreen() {
 private class ValidationOutlineApplication(private val isDark: Boolean) {
     private val exitApplication = AtomicReference<(() -> Unit)?>(null)
     private val window = AtomicReference<ComposeWindow?>(null)
+    private val appThread = AtomicReference<Thread?>(null)
 
     fun start() {
-        thread(name = "spectre-validation-outline-window", isDaemon = true) {
-            application(exitProcessOnExit = false) {
-                exitApplication.set(::exitApplication)
-                JewelWindow(
-                    onCloseRequest = ::exitApplication,
-                    state = rememberWindowState(size = DpSize(520.dp, 220.dp)),
-                    title = "Jewel Spectre validation outline ${if (isDark) "dark" else "light"}",
-                    alwaysOnTop = true,
-                ) {
-                    this@ValidationOutlineApplication.window.compareAndSet(null, window)
-                    IntUiTheme(isDark = isDark) {
-                        Box(Modifier.fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
-                            ValidationOutlineScreen()
+        val startedThread =
+            thread(name = "spectre-validation-outline-window", isDaemon = true) {
+                application(exitProcessOnExit = false) {
+                    exitApplication.set(::exitApplication)
+                    JewelWindow(
+                        onCloseRequest = ::exitApplication,
+                        state = rememberWindowState(size = DpSize(520.dp, 220.dp)),
+                        title = "Jewel Spectre validation outline ${if (isDark) "dark" else "light"}",
+                        alwaysOnTop = true,
+                    ) {
+                        this@ValidationOutlineApplication.window.compareAndSet(null, window)
+                        IntUiTheme(isDark = isDark) {
+                            Box(Modifier.fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
+                                ValidationOutlineScreen()
+                            }
                         }
                     }
                 }
             }
-        }
+        appThread.set(startedThread)
     }
 
     fun stop() {
-        exitApplication.get()?.invoke()
+        stopApplicationWindow(exitApplication, window, appThread)
     }
 
     suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
