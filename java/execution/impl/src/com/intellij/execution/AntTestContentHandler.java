@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
@@ -233,7 +234,7 @@ public class AntTestContentHandler extends DefaultHandler {
     }
 
     var suiteStarted = new TestSuiteStartedEvent(myCurrentTest, myLocation);
-    suiteStarted.setRetrySuite(true);
+    suiteStarted.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
     myProcessor.onSuiteStarted(suiteStarted);
 
     boolean passed = primary.isEmpty() && retries.stream().anyMatch(problem -> problem.kind.impliesSuccess);

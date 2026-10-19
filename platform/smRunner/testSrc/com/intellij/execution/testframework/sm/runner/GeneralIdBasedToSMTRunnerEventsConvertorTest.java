@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
@@ -53,7 +54,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
       processor.onStartTesting();
       var treeEvent = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
                                                 null, null, null, null, false);
-      treeEvent.setRetrySuite(true);
+      treeEvent.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
       processor.onSuiteStarted(treeEvent);
       var started = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
                                               null, null, null, null, true);
@@ -68,7 +69,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
       processor.onSuiteFinished(new TestSuiteFinishedEvent("retry", "1"));
       processor.onFinishTesting();
 
-      assertTrue(root.getChildren().getFirst().isRetrySuite());
+      assertEquals(SuiteResultPolicy.LAST_CHILD, root.getChildren().getFirst().getSuiteResultPolicy());
       assertTrue(root.getChildren().getFirst().isPassed());
       assertTrue(root.isPassed());
     }

@@ -4,6 +4,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -55,7 +56,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     var parent = createSuiteProxy("parent", mySuite);
     parent.setSuiteStarted();
     var retry = createSuiteProxy("retry", parent);
-    retry.setRetrySuite(true);
+    retry.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
     retry.setSuiteStarted();
     var first = createTestProxy("first", retry);
     first.setStarted();
@@ -82,7 +83,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
   @Test
   public void testRetrySuiteUsesFinalAttemptError() {
-    mySuite.setRetrySuite(true);
+    mySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
     mySuite.setSuiteStarted();
     mySuite.addChild(mySimpleTest);
     mySimpleTest.setStarted();
@@ -97,7 +98,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
   @Test
   public void testRetrySuitePreservesTermination() {
-    mySuite.setRetrySuite(true);
+    mySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
     mySuite.setSuiteStarted();
     mySuite.addChild(mySimpleTest);
     mySimpleTest.setStarted();

@@ -15,22 +15,24 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
-  private boolean myRetrySuite;
+  private @Nullable SuiteResultPolicy mySuiteResultPolicy;
 
+  /** Returns the policy, or null when this event does not specify one. */
   @ApiStatus.Internal
-  public boolean isRetrySuite() {
-    return myRetrySuite;
+  public @Nullable SuiteResultPolicy getSuiteResultPolicy() {
+    return mySuiteResultPolicy;
   }
 
   @ApiStatus.Internal
-  public void setRetrySuite(boolean retrySuite) {
-    myRetrySuite = retrySuite;
+  public void setSuiteResultPolicy(@NotNull SuiteResultPolicy suiteResultPolicy) {
+    mySuiteResultPolicy = suiteResultPolicy;
   }
 
   public TestSuiteStartedEvent(@Nullable String name,

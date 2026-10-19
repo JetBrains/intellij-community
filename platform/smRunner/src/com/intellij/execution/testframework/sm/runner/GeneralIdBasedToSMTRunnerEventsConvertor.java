@@ -134,8 +134,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node node = findNode(startedNodeEvent, false);
     if (node != null) {
       SMTestProxy testProxy = node.getProxy();
-      if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent && suiteStartedEvent.isRetrySuite()) {
-        testProxy.setRetrySuite(true);
+      if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent && suiteStartedEvent.getSuiteResultPolicy() != null) {
+        testProxy.setSuiteResultPolicy(suiteStartedEvent.getSuiteResultPolicy());
       }
       final String metainfo = startedNodeEvent.getMetainfo();
       if (metainfo != null) {
@@ -171,8 +171,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
-    if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent) {
-      childProxy.setRetrySuite(suiteStartedEvent.isRetrySuite());
+    if (startedNodeEvent instanceof TestSuiteStartedEvent suiteStartedEvent && suiteStartedEvent.getSuiteResultPolicy() != null) {
+      childProxy.setSuiteResultPolicy(suiteStartedEvent.getSuiteResultPolicy());
     }
     childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
     childProxy.setTreeBuildBeforeStart();

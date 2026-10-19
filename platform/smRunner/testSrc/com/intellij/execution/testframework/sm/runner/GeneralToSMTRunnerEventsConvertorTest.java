@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -798,7 +799,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   @Test
-  public void testRetrySuiteFlagSurvivesNodeReuse() {
+  public void testSuiteResultPolicySurvivesNodeReuse() {
     var root = new SMTestProxy.SMRootTestProxy();
     var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
     try {
@@ -807,14 +808,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       processor.onSuiteTreeEnded("retry");
       processor.onBuildTreeEnded();
       var started = new TestSuiteStartedEvent("retry", "java:test://Tests/retry");
-      started.setRetrySuite(true);
+      started.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
       processor.onSuiteStarted(started);
       processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
       processor.onSuiteStarted(new TestSuiteStartedEvent("retry", "java:test://Tests/retry"));
 
       assertEquals(1, root.getChildren().size());
-      assertTrue(processor.getCurrentSuite().isRetrySuite());
+      assertEquals(SuiteResultPolicy.LAST_CHILD, processor.getCurrentSuite().getSuiteResultPolicy());
 
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      started.setSuiteResultPolicy(SuiteResultPolicy.ALL_CHILDREN);
+      processor.onSuiteStarted(started);
+      assertEquals(SuiteResultPolicy.ALL_CHILDREN, processor.getCurrentSuite().getSuiteResultPolicy());
       processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
       processor.onFinishTesting();
     }
@@ -825,10 +830,10 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   @Test
-  public void testRetrySuiteSurvivesHistoryRoundTrip() throws Exception {
+  public void testSuiteResultPolicySurvivesHistoryRoundTrip() throws Exception {
     mySuite.setSuiteStarted();
     var retrySuite = createSuiteProxy("retry", mySuite);
-    retrySuite.setRetrySuite(true);
+    retrySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
     retrySuite.setSuiteStarted();
     retrySuite.addChild(mySimpleTest);
     mySimpleTest.setStarted();
@@ -840,6 +845,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySuite.setFinished();
 
     String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(savedText.contains("resultPolicy=\"lastChild\""));
+    assertSuiteResultPolicyAfterImport(savedText, SuiteResultPolicy.LAST_CHILD);
+    assertSuiteResultPolicyAfterImport(savedText.replace(" resultPolicy=\"lastChild\"", ""), SuiteResultPolicy.ALL_CHILDREN);
+    assertSuiteResultPolicyAfterImport(savedText.replace("lastChild", "unknown"), SuiteResultPolicy.ALL_CHILDREN);
+  }
+
+  private void assertSuiteResultPolicyAfterImport(String savedText, SuiteResultPolicy expectedPolicy) throws Exception {
     var root = new SMTestProxy.SMRootTestProxy();
     var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
     try {
@@ -848,11 +860,11 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       processor.onFinishTesting();
 
       SMTestProxy retry = root.getChildren().getFirst();
-      assertTrue(retry.isRetrySuite());
-      assertTrue(retry.isPassed());
+      assertEquals(expectedPolicy, retry.getSuiteResultPolicy());
+      assertEquals(expectedPolicy == SuiteResultPolicy.LAST_CHILD, retry.isPassed());
       assertTrue(retry.getChildren().getFirst().isDefect());
       assertTrue(retry.getChildren().getLast().isPassed());
-      assertTrue(root.isPassed());
+      assertEquals(expectedPolicy == SuiteResultPolicy.LAST_CHILD, root.isPassed());
     }
     finally {
       Disposer.dispose(processor);

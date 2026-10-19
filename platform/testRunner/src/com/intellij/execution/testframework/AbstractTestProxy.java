@@ -49,10 +49,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract boolean isConfig();
 
-  /** Returns whether the final child defines the result of this suite. */
   @ApiStatus.Internal
-  public boolean isRetrySuite() {
-    return false;
+  public enum SuiteResultPolicy {
+    ALL_CHILDREN,
+    LAST_CHILD
+  }
+
+  /** Returns how this suite derives its result from its children. */
+  @ApiStatus.Internal
+  public @NotNull SuiteResultPolicy getSuiteResultPolicy() {
+    return SuiteResultPolicy.ALL_CHILDREN;
   }
 
   public abstract Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope);
