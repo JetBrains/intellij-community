@@ -61,6 +61,7 @@ import com.intellij.openapi.fileEditor.EditorOpenFuture
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -518,6 +519,14 @@ open class FileEditorManagerImpl(
 
     @JvmStatic
     fun forbidSplitFor(file: VirtualFile): Boolean = file.getUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT) == true
+
+    /**
+     * A file with [FileEditorManagerKeys.FORBID_TAB_SPLIT] has one editor.
+     * The right split is not available for such a file while it is open.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isRightSplitAvailable(manager: FileEditorManager, file: VirtualFile): Boolean = !forbidSplitFor(file) || !manager.isFileOpen(file)
 
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
@@ -1372,6 +1381,13 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     options: FileEditorOpenOptions,
   ): FileEditorComposite? {
+    if (!isRightSplitAvailable(this, file)) {
+      // the file has one editor, so the open editor is selected in its window
+      val openWindow = windows.firstOrNull { it.isFileOpen(file) }
+      if (openWindow != null) {
+        return openFileImpl(window = openWindow, _file = file, entry = null, options = options)
+      }
+    }
     val window = splitters.currentWindow ?: return null
     if (window.inSplitter()) {
       val composite = window.siblings().lastOrNull()?.composites()?.firstOrNull { it.file == file }

@@ -227,39 +227,21 @@ private suspend fun navigate(project: Project, requests: Collection<NavigationRe
 }
 
 /**
- * Tracks the right split which the first splittable file of a navigation batch creates.
- * Later splittable files in the batch reuse the same window.
- * A file which stays out of the split opens in its own window.
- * When the batch has a splittable file, that file keeps the selection and the focus.
+ * Tracks the right split which the first splittable file of a batch requests.
+ * Every later splittable file of the same batch opens in the window of that split.
+ * The batch skips a file without an available right split when it has a splittable file.
  *
  * @param hasSplittableFile whether the batch contains a file that can open in the split
  */
 private class RightSplitBatch(val hasSplittableFile: Boolean) {
   var splitRequested: Boolean = false
   var window: EditorWindow? = null
-
-  fun optionsForNextRequest(options: NavigationOptions.Impl): NavigationOptions.Impl {
-    return if (splitRequested) options.openInRightSplit(false) as NavigationOptions.Impl else options
-  }
-
-  fun windowFor(canSplit: Boolean, requestNewSplit: Boolean): EditorWindow? {
-    return window?.takeIf { canSplit && !requestNewSplit && !it.isDisposed }
-  }
-}
-
-/**
- * A file with [com.intellij.openapi.fileEditor.FileEditorManagerKeys.FORBID_TAB_SPLIT]
- * can be open in one editor window only.
- * An open file stays in its window. A closed file can open in the split.
- */
-private fun FileEditorManagerEx.staysOutOfSplit(file: VirtualFile): Boolean {
-  return FileEditorManagerImpl.forbidSplitFor(file) && isFileOpen(file)
 }
 
 private fun FileEditorManagerEx.canOpenInSplit(request: NavigationRequest): Boolean {
   val file = (request as? SourceNavigationRequest)?.file ?: return false
   val hostFile = (file as? VirtualFileWindow)?.delegate ?: file
-  return !staysOutOfSplit(hostFile)
+  return FileEditorManagerImpl.isRightSplitAvailable(this, hostFile)
 }
 
 /**
@@ -282,7 +264,7 @@ private suspend fun doNavigate(project: Project, requests: Collection<Navigation
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
       break
     }
-    val requestOptions = rightSplitBatch?.optionsForNextRequest(options) ?: options
+    val requestOptions = if (rightSplitBatch?.splitRequested == true) options.openInRightSplit(false) as NavigationOptions.Impl else options
     if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions,
                             rightSplitBatch = rightSplitBatch)) {
       navigatedSourcesCounter++
@@ -520,27 +502,27 @@ private suspend fun openFile(
     originalFile.delegate
   } else originalFile
 
-  val isSplitForbidden = fileEditorManager.staysOutOfSplit(file)
-  val shouldOpenInRightSplit = options.openInRightSplit && !isSplitForbidden
-  if (shouldOpenInRightSplit) {
+  val isRightSplitAvailable = FileEditorManagerImpl.isRightSplitAvailable(fileEditorManager, file)
+  if (!isRightSplitAvailable && rightSplitBatch?.hasSplittableFile == true) {
+    // the file stays in its window, and the split of the other files keeps the selection
+    return true
+  }
+  val requestsRightSplit = options.openInRightSplit && isRightSplitAvailable
+  if (requestsRightSplit) {
     rightSplitBatch?.splitRequested = true
   }
-  // the batch reuses the split it created instead of requesting another one
-  val existingSplitWindow = rightSplitBatch?.windowFor(
-    canSplit = !isSplitForbidden,
-    requestNewSplit = options.openInRightSplit,
-  )
-  val shouldOpenWithoutSelection = isSplitForbidden && rightSplitBatch?.hasSplittableFile == true
+  // the split is already there, so the request states it explicitly instead of asking for another one
+  val targetWindow = rightSplitBatch?.window?.takeIf { !it.isDisposed && !options.openInRightSplit }
   val composite = fileEditorManager.openFile(
     file = file,
     options = FileEditorOpenOptions(
-      selectAsCurrent = !shouldOpenWithoutSelection,
       // an open editor of the same file must not win over the split the batch opens into
-      reuseOpen = existingSplitWindow == null && !request.useCurrentWindow,
+      reuseOpen = targetWindow == null && !request.useCurrentWindow,
       usePreviewTab = request.usePreviewTab,
-      requestFocus = options.requestFocus && !shouldOpenWithoutSelection,
-      openMode = if (shouldOpenInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
-      window = existingSplitWindow,
+      requestFocus = options.requestFocus,
+      // the manager selects a file without an available right split in its window
+      openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
+      window = targetWindow,
       forceFocus = options.forceFocus,
       forcePreviewTab = options.forcePreviewTab,
     ),
@@ -562,7 +544,7 @@ private suspend fun openFile(
     }
 
     editorComposite?.coroutineScope?.ensureActive()
-    if (rightSplitBatch != null && shouldOpenInRightSplit) {
+    if (rightSplitBatch != null && requestsRightSplit) {
       rightSplitBatch.window = withContext(Dispatchers.EDT) {
         fileEditorManager.windows.firstOrNull { it.getComposite(file) === composite }
       }
