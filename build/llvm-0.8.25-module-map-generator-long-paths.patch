@@ -11,7 +11,7 @@ On Windows, build the absolute `\\?\` path, or `\\?\UNC\` for a UNC path, and re
 adds the prefix in its file APIs.
 --- a/tools/internal/module_map_generator.c
 +++ b/tools/internal/module_map_generator.c
-@@ -15,21 +15,53 @@
+@@ -17,21 +17,53 @@
  #include <sys/stat.h>
  
  #if defined(_WIN32)

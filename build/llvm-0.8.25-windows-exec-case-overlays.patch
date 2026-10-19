@@ -88,7 +88,7 @@ diff --git a/toolchain/declare_toolchains.bzl b/toolchain/declare_toolchains.bzl
  def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
      """Declares the configured LLVM toolchains.
  
-@@ -40,11 +44,11 @@
+@@ -43,11 +47,11 @@
                  "@llvm//platforms/config:windows_x86_64_msvc": [
                      "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
                      "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
@@ -116,7 +116,7 @@ diff --git a/toolchain/bootstrap/declare_toolchains.bzl b/toolchain/bootstrap/de
  
  def _validate_static_library_tool(prefix):
      if not bazel_features.cc.supports_starlarkified_toolchains:
-@@ -544,11 +548,11 @@
+@@ -577,11 +581,11 @@
                      "@llvm//platforms/config:windows_x86_64_msvc": [
                          "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
                          "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
