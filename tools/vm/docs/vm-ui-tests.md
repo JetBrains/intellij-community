@@ -58,7 +58,7 @@ runs in it.
 | image | a Dockerfile from a digest-pinned `ubuntu:26.04`, pulled from the JetBrains registry by its content tag, built when the pull fails | a sealed Packer golden | one pre-existing VM | the skill's image, which its `start` builds |
 | session | `Xvfb :88` and fluxbox, from the image's entrypoint | Aqua | Aqua | the skill's `Xvnc :1`, with noVNC |
 | root disk and memory | on Apple `container` a VM of its own, 8 GiB; on the engine of the host environment the engine's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
-| `pool stop` | stops the container and never an engine, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and the staged runtime with it, keeps nothing warm |
+| `pool stop` | stops the container and never an engine, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and its guest-local state with it, keeps nothing warm |
 | Robot screenshot | a real frame | black, see ADR 0113 | a real frame | a real frame |
 | Peekaboo | no | no | yes | no |
 | provenance | the base digest and the image tag | a seal receipt per worker | none | none |
@@ -233,7 +233,7 @@ container id that differs from the recorded id. `pool start <worker>` and `pool 
 is recreated for any caller.
 
 The guest-local state is the named volume `air-<worker>-data` at `/home/admin/WorkerData`, so a
-recreate keeps the staged runtime. `pool stop` stops the container and never suspends. `pool recycle`
+recreate keeps it. `pool stop` stops the container and never suspends. `pool recycle`
 removes the container and its volume. `pool gc` removes stopped, unleased containers and keeps their
 volumes. `vnc`, `peekaboo` and `image validate|build` have no meaning here, and they refuse with
 `unsupported_backend_operation` (exit 2).
@@ -303,7 +303,7 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   workers of 8 GiB has 4 slots, and a host of 64 GiB has 2. `AIR_VM_MAX_WORKERS` sets the count
   ([the Apple container pool follows the host memory, and the builder stops after a build](decisions/2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)).
 - **The idle stop.** A release keeps the warm daemon for an hour. Then the unleased worker stops, and it gives its
-  memory back. The next run starts it again with a cold daemon, and the volume keeps the staged runtime.
+  memory back. The next run starts it again with a cold daemon, and the volume keeps the guest-local state.
   `AIR_VM_IDLE_STOP` sets the grace in seconds, `off` keeps the worker running, and `0` stops it at the release
   ([an idle Apple container worker stops itself](decisions/2026-10-10-an-idle-container-worker-stops-itself.md)).
 - **The pool commands.** `pool stop` stops the containers only. `pool recycle all` deletes the builder too. `status`
@@ -417,7 +417,7 @@ the path table and the digest of each staged runfile, so the host predicts the r
 predicted one is `guest_runfiles_mismatch`, and a bad reply is `guest_runfiles_protocol`. The verb keeps that tree
 and the newest other one.
 
-The lane daemon gets `--home <generation>/home`, a directory of its staged generation, and its IDE root on the
+The lane daemon gets `--home $AIR_VM_DATA/daemon/home`, a directory in its state directory, and its IDE root on the
 guest disk. The boot of the verb makes both, so no path of the lane daemon derives from a checkout. The IDE
 distribution itself is read, not written, and the IDE writes its data into its context under `$AIR_VM_DATA/ide`.
 
@@ -448,10 +448,10 @@ the lane's: one test before a lane build cost 11.6 s of analysis on 2026-10-10. 
 the lane builds no runfile links: the controller reads the MANIFEST of the runtime descriptor on every host.
 
 A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the daemon and
-in a standalone lane run. The daemon runs on the same JBR, but not from the share. The guest agent's `stage` copies
-`jbr/` of the distribution into the generation of the daemon. The `jbr` section of the runtime descriptor names that
-directory below the distribution home. A distribution without it is a refusal that names the path, on the host
-before the build is stamped and on the guest before the copy. No lane target and no descriptor carries a JBR archive.
+in a standalone lane run. The lane daemon is a verb of the guest agent and runs no JVM, so a daemon start copies no
+JBR to the guest. The `jbr` section of the runtime descriptor names that directory below the distribution home. A
+distribution without it is a refusal on the host before the build is stamped, and the refusal names the path. No lane
+target and no descriptor carries a JBR archive.
 
 **Remounting is a correctness requirement, not hygiene.** A VirtioFS guest keeps a dead node for any
 file the host rewrites after the mount. `stat` then still answers from the cache, while `open` fails
@@ -478,8 +478,8 @@ Everything a worker writes lives under `$AIR_VM_DATA`, in eight directories and 
 | `ide` | one context for each launch key of the lane IDE: its `config`, `system`, `plugins`, `log`, `project`, `home` and `bin` directories, its argument file `ide-jvm.args`, its launch record `launch.json`, and the run directories of its supervisor slot |
 | `tmp` | temporary files |
 | `build-download` | the persistent build-dependency cache |
-| `daemon` | the daemon's own state and each iteration's results |
-| `daemon-runtime` | content-addressed stable-tier and JBR generations |
+| `daemon` | the daemon's own state, the `home` that the lane IDE gets as `idea.dev.project.root`, and each iteration's results. The run of the lane daemon starts in this directory |
+| `daemon-runtime` | the stable-tier and JBR generations of an older controller. A daemon start writes nothing there |
 | `state` | the supervisor run roots, the SSH host-key fingerprint, and the guest agent binary itself |
 
 `state` is where the controller's own
@@ -495,10 +495,10 @@ lane build. Why a daemon is kept,
 now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
 The runtime descriptor still declares the two classpath tiers of the retired JVM daemon. The **stable** tier is the
-JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty, and the
-guest still stages it. The **hot** tier is the jars built from `plugins/air`: the jars of the suite and lane
-documents. Nothing reads it, and the controller pushes no hot jar. The test code of a run reaches the lane IDE as the
-context plugin files and the lane inputs, which the controller pushes by digest.
+JUnit launcher libraries and the tests bootstrap with their dependencies, which keep it from being empty. Only the
+runtime digest reads it, and nothing stages it. The **hot** tier is the jars built from `plugins/air`: the jars of
+the suite and lane documents. Nothing reads it, and the controller pushes no hot jar. The test code of a run reaches
+the lane IDE as the context plugin files and the lane inputs, which the controller pushes by digest.
 
 Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
 `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` is "owner contains `//plugins/air/` and
@@ -584,8 +584,8 @@ multi-gigabyte tree. The stamp folds into the lane config key of the guest agent
 relaunch is the host's own key-change path rather than a new mechanism. The launch record of each IDE
 context names the product digest, which is how a restart knows which IDE it may keep.
 
-Nothing the lane daemon holds open lives on the share. It runs from the installed guest agent and its
-staged generation, so the daemon can outlive a remount, and there are two remount windows:
+Nothing the lane daemon holds open lives on the share. It runs from the installed guest agent, in its state
+directory on the guest disk, so the daemon can outlive a remount, and there are two remount windows:
 
 - **With the daemon alive**, for a product change. `POST /ide/stop` makes the daemon quit its IDE, and it
   answers `409 busy` if a run is in flight. `ide-gc --stop-all` then cancels every other IDE run of the
@@ -993,7 +993,7 @@ every guest-side verb:
 Each verb's name is declared once, as `avl_wire::verb::AgentVerb`, and the agent and the controller both spell
 it from there. The list exists so that a log line or a refusal that names a verb is recognizable. It is not an
 interface to drive. The controller sends the verbs, and an operator does not. An agent invoked by hand
-is how a run slot or a staged generation stops matching what the host believes.
+is how a run slot stops matching what the host believes.
 
 ## What is intentionally absent
 

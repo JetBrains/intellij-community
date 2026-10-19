@@ -22,7 +22,6 @@ use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_n
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::session_logs;
-use crate::daemon::stage::short;
 use crate::daemon::state::HostState;
 use crate::daemon::traces::TraceSync;
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
@@ -166,8 +165,8 @@ pub(crate) enum DaemonAction {
 /// daemon compares the digest of each context plugin directory itself, and it reloads the bridge plugin when only that
 /// directory changed. A lane daemon whose guest agent was reinstalled under it is restarted instead, so the code of the daemon is the code of the install.
 /// Any other daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot
-/// say whether the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's
-/// product. A start without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
+/// say which input of the daemon changed. A restart keeps the IDE of the build's product. A start without a healthy
+/// daemon keeps no IDE, because no daemon can show that the IDE still answers.
 ///
 /// A lane daemon whose start agent is not the agent of the build is restarted, and that restart keeps no IDE. The
 /// context writer is part of the guest agent, so the new daemon makes a fresh context and writes its files.
@@ -466,11 +465,11 @@ impl Host {
         let (mut state, ide_action) = self.prepare_daemon(ctx, lease, prep, fresh_ide, recreated, &scope).await?;
         attempt.ide_action = ide_action;
 
-        // A worker that never needed a restart would otherwise run unbounded until a lane died of `ENOSPC`
-        // mid-staging: the free-space check is reached through the stager, which only a start calls. One `df`
-        // against a 200 s lane is free, and this is also where per-iteration retention lands - before the run,
-        // never after it, because the evidence pull below reads out of exactly these trees and the current launch is
-        // the newest thing in them.
+        // A worker that never needed a restart would otherwise run unbounded until a lane died of `ENOSPC`. The
+        // `free-space` phase of a start is the only other free-space check, and a warm iteration starts no daemon.
+        // One `df` against a 200 s lane is free, and this is also where per-iteration retention lands - before the
+        // run, never after it, because the evidence pull below reads out of exactly these trees and the current
+        // launch is the newest thing in them.
         let channel = self.channel(worker);
         self.require_guest_free_space(&self.guest(ctx, channel.as_ref()), Some(&scope))
             .await?;
@@ -956,4 +955,9 @@ pub(crate) fn evidence_name(guest_path: &str) -> String {
             }
         })
         .collect()
+}
+
+/// The first twelve characters of a digest, the way notes name a guest agent.
+fn short(digest: &str) -> &str {
+    digest.get(..12).unwrap_or(digest)
 }

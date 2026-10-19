@@ -430,7 +430,7 @@ async fn command_daemon_start_reports_the_endpoint_and_phases() {
     let fixture = Fixture::new().await;
     let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
     fixture.mark_ready().await;
     let outcome = fixture
@@ -1076,7 +1076,7 @@ async fn a_self_leased_run_whose_daemon_never_answers_gives_its_lease_back() {
     let fixture = Fixture::with_environment(&[("USER", "suite-user")]).await;
     fixture.on("df", answer_text(PLENTIFUL_DF));
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.install_slot_double(None);
     // No daemon is recorded, so the iteration starts one, and a start asks the readiness gate first.
     fixture.mark_ready().await;

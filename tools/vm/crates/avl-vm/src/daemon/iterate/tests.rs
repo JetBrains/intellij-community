@@ -519,7 +519,7 @@ async fn a_mount_digest_mismatch_on_docker_settles_without_a_remount_script() {
 async fn a_warm_iteration_on_docker_recreates_a_container_of_another_declaration() {
     let (fixture, prep, _state) = iteration_fixture_over(Fixture::docker().await, "it-12d").await;
     // The new container needs a daemon start: the guest and the daemon double answer one.
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
     let record_path = fixture.settings.docker_create_record_path(&fixture.worker);
     let mut record: serde_json::Value = serde_json::from_slice(&std::fs::read(&record_path).unwrap()).unwrap();
@@ -655,7 +655,7 @@ async fn fresh_ide_stops_a_running_ide() {
 async fn no_healthy_daemon_restarts_the_daemon() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
     fixture.script_run(passing_run_lines("it-13"));
     // Readiness needs a live run process and a provisioned layout; both are the suite's to arrange.
@@ -683,7 +683,7 @@ async fn no_healthy_daemon_restarts_the_daemon() {
 async fn a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     let state = fixture.seed_healthy_daemon(&prep);
     let path = HostState::path(&fixture.settings, &fixture.worker);
     let mut record: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
@@ -713,7 +713,7 @@ async fn a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started() {
 #[tokio::test]
 async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     let (fixture, prep, _) = iteration_fixture_over(Fixture::docker().await, "it-16d").await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     // The recorded daemon answers for another launch of the same runtime and product, so the iteration restarts it.
     let mut recorded_state = fixture.daemon.host_state("run-ui-daemon-stale", "launch-stale");
     recorded_state.runtime_digest = prep.runtime_digest.clone();

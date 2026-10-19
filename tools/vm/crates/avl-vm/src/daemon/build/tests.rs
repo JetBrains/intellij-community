@@ -140,7 +140,7 @@ async fn pushed_file_drift_reports_a_file_that_is_gone() {
 async fn the_launch_digest_is_composed_of_the_runtime_the_boot_settings_and_the_environment() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100, &prep.runtime_digest);
+    let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100);
     assert_eq!(
         prep.launch_digest,
         launch_digest(&prep.runtime_digest, &boot, &prep.daemon_environment)
@@ -365,7 +365,7 @@ async fn the_daemon_port_enters_the_launch_digest() {
     let fixture = Fixture::with_environment(&[("AIR_VM_DAEMON_PORT", "27101")]).await;
     let prep = fixture.prepared().await;
     let launched_on = |port| {
-        let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, port, &prep.runtime_digest);
+        let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, port);
         launch_digest(&prep.runtime_digest, &boot, &prep.daemon_environment)
     };
     assert_eq!(prep.launch_digest, launched_on(27_101));
@@ -382,7 +382,7 @@ async fn the_daemon_environment_enters_the_launch_digest() {
         !prep.daemon_environment.is_empty(),
         "the daemon environment is empty, so this test guards nothing"
     );
-    let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100, &prep.runtime_digest);
+    let boot = controller_boot_digest(&fixture.settings, &prep.guest_runfiles_root, 27_100);
     let other = BTreeMap::from([("NODE_BIN".to_owned(), "/other/node".to_owned())]);
     assert_ne!(
         prep.launch_digest,

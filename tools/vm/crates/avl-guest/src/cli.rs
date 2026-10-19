@@ -288,7 +288,7 @@ pub(crate) struct LaneDaemonArgs {
     /// The parent of every context of the lane IDE.
     #[arg(long, value_name = "DIR", value_parser = absolute_path)]
     pub ide_root: PathBuf,
-    /// The empty home of the staged generation, which the IDE gets as idea.dev.project.root.
+    /// The empty home that the IDE gets as idea.dev.project.root. The controller passes a directory in the state directory.
     #[arg(long, value_name = "DIR", value_parser = absolute_path)]
     pub home: PathBuf,
 }

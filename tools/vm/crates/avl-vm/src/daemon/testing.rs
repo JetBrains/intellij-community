@@ -35,7 +35,6 @@ use avl_host_testkit::{
 };
 use avl_wire::daemon::{self as wire, Route};
 use avl_wire::progress::{Kind, Record, Verdict};
-use avl_wire::stage::RuntimeResult;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -933,9 +932,9 @@ impl DaemonFixture {
         self.daemon.script().requests.clear();
     }
 
-    /// Forgets the host records of the first worker: its daemon record, its staged runtime and everything else in its
-    /// private directory. So the next case of a test that shares this fixture starts from a worker as fresh as
-    /// [`DaemonFixture::build`] left it.
+    /// Forgets the host records of the first worker: its daemon record and everything else in its private directory.
+    /// So the next case of a test that shares this fixture starts from a worker as fresh as [`DaemonFixture::build`]
+    /// left it.
     pub(crate) fn forget_worker_records(&self) {
         let directory = self.settings.worker_dir(&self.worker);
         std::fs::remove_dir_all(&directory).unwrap_or_else(|error| panic!("remove {}: {error}", directory.display()));
@@ -955,10 +954,8 @@ impl DaemonFixture {
         guests.channel(worker)
     }
 
-    /// Scripts every guest verb one full start needs, aimed at the fixture's HTTP double. `prep` supplies the
-    /// runtime digest the stager's reply must be inside.
-    pub(crate) fn install_happy_guest(&self, prep: &PreparedBuild) {
-        let generation = format!("/vm/data/daemon-runtime/generations/{}", prep.runtime_digest);
+    /// Scripts every guest verb one full start needs, aimed at the fixture's HTTP double.
+    pub(crate) fn install_happy_guest(&self) {
         self.on("df", answer_text(PLENTIFUL_DF));
         self.on("active", handler(|_, _| Ok(active_reply(None))));
         // A worker with no lane IDE: the gc of a start stops and keeps nothing.
@@ -969,15 +966,6 @@ impl DaemonFixture {
                 handler(move |argv, _| Ok(agent_reply(verb, &run_state(argv_value(argv, "--run"), phase)))),
             );
         }
-        let result = RuntimeResult {
-            root: generation.clone(),
-            java_binary: format!("{generation}/jbr/bin/java"),
-            classpath: vec![format!("{generation}/classpath/000.jar"), format!("{generation}/classpath/001.jar")],
-            classpath_file: format!("{generation}/classpath.txt"),
-            reused: false,
-        };
-        let staged = serde_json::to_string(&result).expect("a stage result encodes");
-        self.on("stage", answer_text(staged));
         // The runfiles-tree double names the root the guest would build: the digest of the request it was sent.
         self.on(
             "runfiles-tree",

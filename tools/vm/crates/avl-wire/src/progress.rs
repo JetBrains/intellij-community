@@ -65,7 +65,7 @@ vocabulary! {
         Prepare = "prepare",
         /// Taking a worker. A worker that is not warm is cloned, booted and provisioned here.
         Lease = "lease",
-        /// Staging the guest runtime and starting the daemon and its IDE.
+        /// Checking the guest and starting the daemon and its IDE.
         DaemonStart = "daemon-start",
         /// The daemon running the selected tests.
         Iteration = "iteration",

@@ -63,7 +63,6 @@ pub(crate) struct PreparedBuild {
     /// The root of [`Self::guest_tree`], as the guest opens it. Every path the guest gets under the tree is joined onto
     /// this one.
     pub guest_runfiles_root: String,
-    pub descriptor: RuntimeDescriptor,
     /// The files of the context plugins, in descriptor order: pushed by digest, and installed by the daemon into the
     /// plugin directory of the IDE context.
     pub plugin_files: Vec<PluginFile>,
@@ -210,7 +209,7 @@ struct StaticLaunch<'a> {
 pub(crate) struct ControllerBoot<'a> {
     pub(crate) runfiles_root: &'a str,
     pub(crate) daemon_port: u16,
-    /// The home of the daemon JVM, an empty directory of the staged generation.
+    /// The home of the lane daemon in its state directory, which the lane IDE gets as `idea.dev.project.root`.
     pub(crate) guest_home: &'a str,
     pub(crate) vm_data: &'a str,
     pub(crate) vm_download_cache: &'a str,
@@ -226,12 +225,12 @@ fn literal_digest(literal: &impl Serialize) -> String {
     digest::sha256_text(&text)
 }
 
-/// The `@controller-boot` digest for one guest runfiles root, port and runtime generation.
+/// The `@controller-boot` digest for one guest runfiles root and port.
 ///
 /// Over the values the guest gets, not over the host paths: the runfiles root is the tree the guest builds, and the
-/// home is the directory of the generation that the JVM is told.
-pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &str, daemon_port: u16, runtime_digest: &str) -> String {
-    let guest_home = crate::daemon::stage::guest_home(settings, runtime_digest);
+/// home is the directory that the lane daemon is told.
+pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &str, daemon_port: u16) -> String {
+    let guest_home = crate::daemon::state::guest_home(settings);
     literal_digest(&ControllerBoot {
         runfiles_root: guest_runfiles_root,
         daemon_port,
@@ -516,7 +515,7 @@ impl Host {
         let tree_inputs = GuestTreeInputs::of(&self.settings)?;
         let stamped = {
             let _one_sweep = self.stamping.lock().await;
-            let (descriptor, runfiles, cache) = (descriptor.clone(), runfiles.clone(), scope.digest_cache.clone());
+            let (runfiles, cache) = (runfiles.clone(), scope.digest_cache.clone());
             tokio::task::spawn_blocking(move || stamp(&descriptor, &runfiles, &cache, &tree_inputs))
                 .await
                 .or_refuse("internal_error", Exit::FAILURE, || "the digest sweep failed".to_owned())??
@@ -538,19 +537,13 @@ impl Host {
         ));
 
         let guest_runfiles_root = stamped.guest_tree.root.clone();
-        let boot = controller_boot_digest(
-            &self.settings,
-            &guest_runfiles_root,
-            self.settings.daemon.port,
-            &stamped.runtime_digest,
-        );
+        let boot = controller_boot_digest(&self.settings, &guest_runfiles_root, self.settings.daemon.port);
         let daemon_environment = crate::lane::daemon_environment(&self.settings);
         let launch_digest = launch_digest(&stamped.runtime_digest, &boot, &daemon_environment);
         Ok(PreparedBuild {
             label,
             guest_tree: stamped.guest_tree,
             guest_runfiles_root,
-            descriptor,
             plugins_digest: plugins_digest(&stamped.plugin_files),
             plugin_directories: plugin_directories(&stamped.plugin_files),
             plugin_files: stamped.plugin_files,

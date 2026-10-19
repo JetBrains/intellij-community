@@ -95,7 +95,7 @@ const REACHABLE_WAIT: Duration = Duration::from_secs(5);
 const IDEA_PROPERTIES_FILE: &str = "idea.properties.file";
 
 /// The property of a dev distribution that names the checkout. The guest has none, so it names the empty home of the
-/// staged generation.
+/// launch inputs.
 const DEV_PROJECT_ROOT: &str = "idea.dev.project.root";
 
 /// The properties of the bridge: its port, its launch, and the project it drives, `AIR_UI_TEST_*_PROPERTY`.

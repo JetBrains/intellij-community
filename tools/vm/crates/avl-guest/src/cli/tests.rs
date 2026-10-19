@@ -301,7 +301,7 @@ fn the_lane_daemon_takes_the_arguments_that_the_controller_passes() {
         "--ide-root",
         "/vm/data/ide",
         "--home",
-        "/vm/data/daemon-runtime/generations/g/home",
+        "/vm/data/daemon/home",
     ];
     let Verb::LaneDaemon(args) = parsed(&argv) else {
         panic!("lane-daemon parsed as another verb");

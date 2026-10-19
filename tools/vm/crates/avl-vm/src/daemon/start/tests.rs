@@ -10,6 +10,7 @@ use serde_json::json;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
+use crate::daemon::testing::df_with_free_kib;
 
 /// The remount script *executions* the scripted guest saw: writing and chmodding the script name it too, and they
 /// are not remounts.
@@ -60,7 +61,7 @@ async fn start_ready_with(extra: &[(&str, &str)]) -> (Fixture, PreparedBuild) {
 /// Scripts `fixture` to the point where a start reaches its boot poll.
 async fn ready(fixture: Fixture) -> (Fixture, PreparedBuild) {
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
     (fixture, prep)
 }
@@ -70,7 +71,7 @@ async fn ready(fixture: Fixture) -> (Fixture, PreparedBuild) {
 fn ready_again(fixture: &Fixture, prep: &PreparedBuild) {
     fixture.forget_calls();
     fixture.forget_worker_records();
-    fixture.install_happy_guest(prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
 }
 
@@ -475,8 +476,8 @@ async fn an_interrupted_start_is_daemon_start_interrupted() {
     assert!(cancels(&fixture).is_empty());
 }
 
-// The full start: agent installed, runtime staged, supervisor started, state file read, health proven, state
-// recorded, old generations collected - with the phase table naming each step.
+// The full start: agent installed, free space checked, state directory made, supervisor started, state file read,
+// health proven, state recorded - with the phase table naming each step.
 #[tokio::test]
 async fn a_full_start_boots_polls_and_records_its_state() {
     let (fixture, prep) = start_ready().await;
@@ -511,37 +512,45 @@ async fn a_full_start_boots_polls_and_records_its_state() {
 
     let channel = fixture.channel();
     // The supervisor start runs the lane-daemon verb of the installed agent under /usr/bin/env with the run environment.
-    // The verb gets the home of the generation and the IDE root, and its boot makes them. No guest call of the
-    // controller prepares the launch or removes the state file of the previous daemon.
+    // The run starts in the state directory. The verb gets the home in the state directory and the IDE root, and its
+    // boot makes them. No guest call of the controller prepares the launch or removes the state file of the previous
+    // daemon.
     let starts = channel.calls_containing("vm-guest-agent start");
     assert_eq!(starts.len(), 1, "{starts:?}");
-    let generation = format!("/vm/data/daemon-runtime/generations/{}", prep.runtime_digest);
     for fragment in [
-        " lane-daemon --state-dir /vm/data/daemon ".to_owned(),
-        "SELF_LOCATION=".to_owned(),
-        format!(" --home {generation}/home"),
-        " --ide-root /vm/data/ide ".to_owned(),
+        " --cwd /vm/data/daemon -- ",
+        " lane-daemon --state-dir /vm/data/daemon ",
+        "SELF_LOCATION=",
+        " --home /vm/data/daemon/home",
+        " --ide-root /vm/data/ide ",
     ] {
-        assert!(starts[0].contains(&fragment), "{fragment} missing from {}", starts[0]);
+        assert!(starts[0].contains(fragment), "{fragment} missing from {}", starts[0]);
     }
     for retired in ["vm-guest-agent launch-prep", "/bin/rm -f"] {
         assert!(channel.calls_containing(retired).is_empty(), "{retired}");
     }
+    // The start stages no runtime generation and collects none. So no guest call names a verb of the stager.
+    for retired in ["vm-guest-agent stage", "vm-guest-agent gc "] {
+        assert!(channel.calls_containing(retired).is_empty(), "{retired}");
+    }
+    // The start checks the free space of the guest once. Then it makes the state directory, which is the working
+    // directory of the run, and the directory of the agent, before the supervisor starts the run.
+    let calls = channel.calls();
+    let at = |fragment: &str| {
+        calls
+            .iter()
+            .position(|call| call.line().contains(fragment))
+            .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
+    };
+    assert_eq!(channel.calls_containing("/bin/df").len(), 1);
+    let directories = at("/bin/mkdir -p /vm/data/daemon /vm/data/state");
+    assert!(at("/bin/df") < directories && directories < at("vm-guest-agent start"));
     // No argument names the checkout: the guest has none.
     assert!(
         !starts[0].contains(&fixture.root().display().to_string()),
         "the start names the checkout {}: {}",
         fixture.root().display(),
         starts[0]
-    );
-
-    // Old generations are collected keeping the current digest; the previous state had none.
-    let collections = channel.calls_containing("vm-guest-agent gc");
-    assert_eq!(collections.len(), 1);
-    assert!(
-        collections[0].ends_with(&format!("gc /vm/data/daemon-runtime {}", prep.runtime_digest)),
-        "{}",
-        collections[0]
     );
 
     // A start with no record of the daemon keeps no lane IDE.
@@ -558,18 +567,17 @@ async fn a_full_start_boots_polls_and_records_its_state() {
 }
 
 /// The phase table of a green start, in order.
-const PHASES: [&str; 11] = [
+const PHASES: [&str; 10] = [
     "install-agent",
     "stop-daemon",
     "ide-gc",
     "reject-active-run",
     "remount",
     "parity-probe",
-    "stage-runtime",
+    "free-space",
     "supervisor-start",
     "boot-poll",
     "health-poll",
-    "gc-runtimes",
 ];
 
 /// An `ide-gc` double that keeps one IDE when it is asked to keep a product, and stops one otherwise.
@@ -645,7 +653,7 @@ async fn a_start_on_docker_keeps_the_ides_of_its_product_without_a_record() {
 }
 
 // An IDE that the gc could not stop holds the shares and the slot root of its context, so the start refuses before it
-// remounts or stages anything.
+// remounts or starts anything.
 #[tokio::test]
 async fn a_failed_ide_gc_refuses_the_start() {
     let (fixture, prep) = start_ready().await;
@@ -653,20 +661,39 @@ async fn a_failed_ide_gc_refuses_the_start() {
     let failure = refusal(start(&fixture, &prep).await);
     assert_eq!(failure.code, "guest_agent_failed");
     assert_eq!(remounts(&fixture), 0);
-    assert!(fixture.channel().calls_containing("vm-guest-agent stage").is_empty());
+    assert!(fixture.channel().calls_containing("vm-guest-agent start").is_empty());
 }
 
-// A parity layout that does not show the descriptor refuses before anything is staged, at 65.
+// A parity layout that does not show the descriptor refuses before the supervisor start, at 65.
 #[tokio::test]
-async fn a_stale_parity_layout_refuses_before_staging() {
+async fn a_stale_parity_layout_refuses_before_the_supervisor_start() {
     let (fixture, prep) = start_ready().await;
     fixture.on("test", answer_exit(1));
     let failure = refusal(start(&fixture, &prep).await);
     assert_eq!((failure.code.as_ref(), failure.exit), ("guest_runtime_unreachable", Exit::DATA_ERR));
     assert!(
-        fixture.channel().calls_containing("vm-guest-agent stage").is_empty(),
-        "nothing may be staged over a stale layout"
+        fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
+        "nothing may start over a stale layout"
     );
+}
+
+// A guest whose disk stays full after the retention refuses the start in the `free-space` phase. The refusal comes
+// before the supervisor start, so no daemon writes into a full disk.
+#[tokio::test]
+async fn a_full_guest_disk_refuses_the_start_before_the_supervisor_start() {
+    let (fixture, prep) = start_ready().await;
+    // 1 GiB free, before and after the retention: below the floor of 5 GiB.
+    fixture.on("df", answer_text(df_with_free_kib("1048576")));
+    let timeline = Timeline::collecting();
+    let ctx = Ctx::background().with_timeline(timeline.clone());
+    let failure = refusal(fixture.host.start_daemon(&ctx, &fixture.worker, &prep).await);
+    assert_eq!((failure.code.as_ref(), failure.exit), ("guest_disk_full", Exit::UNAVAILABLE));
+    let channel = fixture.channel();
+    for retired in ["vm-guest-agent start", "/bin/mkdir -p /vm/data/daemon"] {
+        assert!(channel.calls_containing(retired).is_empty(), "{retired}");
+    }
+    let names: Vec<String> = timeline.take().into_iter().map(|timing| timing.name).collect();
+    assert_eq!(names.last().map(String::as_str), Some("free-space"), "{names:?}");
 }
 
 // With no state a stop is a no-op: no HTTP and no guest command.
@@ -794,9 +821,9 @@ async fn a_start_over_a_record_whose_run_will_not_finish_refuses_and_launches_no
     );
 }
 
-/// The guest builds its own tree inside the parity probe phase, before the probe and before the stage, at the root the
-/// launch already names. The first request carries no bytes; a guest without the tree refuses it, and the second
-/// request carries the bytes of every staged runfile after the request line.
+/// The guest builds its own tree inside the parity probe phase, before the probe and before the supervisor start, at
+/// the root the launch already names. The first request carries no bytes; a guest without the tree refuses it, and the
+/// second request carries the bytes of every staged runfile after the request line.
 #[tokio::test]
 async fn the_guest_builds_its_tree_before_the_probe_and_gets_the_bytes_when_it_has_none() {
     let (fixture, prep) = start_ready().await;
@@ -836,7 +863,7 @@ async fn the_guest_builds_its_tree_before_the_probe_and_gets_the_bytes_when_it_h
             .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
     };
     assert!(trees[1] < at(&format!("/bin/test -f {}", self_location(&prep))));
-    assert!(trees[1] < at(" stage "));
+    assert!(trees[1] < at("vm-guest-agent start"));
     let stdin = |index: usize| calls[index].options.stdin.clone().unwrap();
     let first = stdin(trees[0]);
     let (line, bytes) = avl_wire::runfiles::split_request_stdin(&first);
@@ -899,12 +926,11 @@ async fn a_container_linux_launch_binds_every_interface_of_the_container() {
 }
 
 // The run slot holds the `lane-daemon` verb of the installed guest agent. It gets the state directory, the port, the
-// launch digest, the runtime descriptor, the runfiles root, the IDE root and the home of the generation.
+// launch digest, the runtime descriptor, the runfiles root, the IDE root and the home in the state directory.
 #[tokio::test]
 async fn the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent() {
     let (fixture, prep) = start_ready().await;
     let settings = &fixture.settings;
-    let home = format!("/vm/data/daemon-runtime/generations/{}/home", prep.runtime_digest);
     assert_eq!(
         daemon_command(settings, &prep, "/vm/data/daemon", "/runfiles/_main/ui_daemon.runtime.json"),
         [
@@ -923,7 +949,7 @@ async fn the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent() 
             "--ide-root",
             "/vm/data/ide",
             "--home",
-            &home,
+            "/vm/data/daemon/home",
         ]
     );
 }

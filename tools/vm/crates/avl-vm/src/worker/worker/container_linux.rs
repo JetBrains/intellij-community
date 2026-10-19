@@ -140,7 +140,7 @@ impl Manager {
     // --- stop ------------------------------------------------------------------------------------------------
 
     /// Stops a container-linux worker: the script's `stop` removes the container and the files of its control port. The
-    /// data directory is on the container's disk, so a stop discards the staged runtime and the next start stages it
+    /// data directory is on the container's disk, so a stop discards the guest-local state and the next start makes it
     /// again.
     pub(super) async fn stop_container_linux(
         &self,
@@ -191,7 +191,7 @@ impl Manager {
     }
 
     /// Stops the unleased container of a container-linux pool. The container is what an idle slot holds. The data directory
-    /// is on the container's disk, so a stop discards the staged runtime and the next start stages it again.
+    /// is on the container's disk, so a stop discards the guest-local state and the next start makes it again.
     ///
     /// The state is read under the slot's lifecycle lock, after the lease check, as on Docker: a start that ends
     /// between an earlier read and the lock would otherwise be stopped under a lease.
@@ -214,7 +214,7 @@ impl Manager {
     // --- pool recycle ----------------------------------------------------------------------------------------
 
     /// Stops the container and empties the host directory of the slot. The data directory is on the container's disk,
-    /// so a stop discards the staged runtime and the next start stages it again.
+    /// so a stop discards the guest-local state and the next start makes it again.
     pub(super) async fn unmake_container_linux_worker(
         &self,
         ctx: &Ctx,

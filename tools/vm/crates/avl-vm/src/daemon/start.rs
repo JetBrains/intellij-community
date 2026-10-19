@@ -16,8 +16,7 @@ use serde_json::{Value, json};
 use crate::daemon::build::PreparedBuild;
 use crate::daemon::host::Host;
 use crate::daemon::http::{StatusProbe, protocol_refusal, require_supported_protocol};
-use crate::daemon::stage::{guest_home, short};
-use crate::daemon::state::{HostState, guest_state_dir};
+use crate::daemon::state::{HostState, guest_home, guest_state_dir};
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, guest_ide_root};
 use avl_base::RefusalExt;
 use avl_wire::ide::IdeGcResult;
@@ -94,8 +93,8 @@ impl Host {
     ///
     /// Two digests rather than one. The mount digest is the share-backed data and the product identity; the launch
     /// digest is added because a start can be reached *because* the build moved, and a new build means new Bazel
-    /// outputs the guest is about to read through the same share to stage them. It subsumes the runtime digest, so
-    /// the stable classpath and the JBR are covered by comparing it alone.
+    /// outputs that the guest is about to read through the same share. It subsumes the runtime digest, so the inputs
+    /// of the runtime digest are covered by comparing it alone.
     ///
     /// No prior state means refresh. A fresh daemon's worker may have been rebuilt against by another controller,
     /// may have rebooted since its mount was made, or may be one whose `daemon stop` deleted the only record of what
@@ -276,7 +275,7 @@ impl Host {
     ) -> Result<(HostState, IdeGcResult), Refusal> {
         let phase = self.reporter.start_phase(
             Phase::DaemonStart,
-            "stage the guest runtime, then launch the daemon",
+            "check the guest, then launch the daemon",
             Some(&Scope::worker(worker)),
         );
         let started = self.boot_daemon(ctx, worker, prep, retention).await;
@@ -361,29 +360,22 @@ impl Host {
                 ),
             ));
         }
-        let staged = {
-            let (step, _phase) = ctx.begin("stage-runtime");
-            self.ensure_guest_runtime(&self.guest(&step, channel), prep).await?
-        };
+        {
+            // This is the free-space check of a start. It comes before the lane daemon and its IDE write anything.
+            let (step, _phase) = ctx.begin("free-space");
+            self.require_guest_free_space(&self.guest(&step, channel), Some(&Scope::worker(worker)))
+                .await?;
+        }
 
         let run_id = wire::run_id(&avl_base::new_id());
         let state_dir = guest_state_dir(settings);
-
-        let provenance = if staged.reused { "cached" } else { "new" };
-        self.reporter.note(
-            format!(
-                "starting the daemon from {provenance} guest runtime {}",
-                short(&prep.runtime_digest)
-            ),
-            Some(&Scope::worker(worker)),
-        );
         let mut arguments = words([
             "--root",
             &settings.vm_runs_root,
             "--run",
             &run_id,
             "--cwd",
-            &staged.root,
+            &state_dir,
             "--",
             "/usr/bin/env",
         ]);
@@ -397,7 +389,18 @@ impl Host {
         arguments.extend(daemon_command(settings, prep, &state_dir, &location));
         let started = {
             let (step, _phase) = ctx.begin("supervisor-start");
-            self.guest(&step, channel)
+            let guest = self.guest(&step, channel);
+            // The state directory is the working directory of the run, so it must exist before the supervisor starts
+            // the run. The mkdir also makes `<vmData>/state`, where the agent lives. A worker without that directory
+            // is a worker that nothing else here can reach either.
+            let agent_state = guest_join(&settings.vm_data, "state");
+            guest
+                .as_user(
+                    &words(["/bin/mkdir", "-p", &state_dir, &agent_state]),
+                    &SpawnOptions::within(GUEST_COMMAND_TIMEOUT),
+                )
+                .await?;
+            guest
                 .supervisor_run_state_reply(
                     Command::Start,
                     &arguments,
@@ -430,14 +433,6 @@ impl Host {
                 return Err(self.retire_failed_boot(ctx, worker, &run_id, refusal).await);
             }
         };
-        {
-            let (step, _phase) = ctx.begin("gc-runtimes");
-            let mut keep = vec![prep.runtime_digest.clone()];
-            if let Some(previous) = previous.filter(|previous| !previous.runtime_digest.is_empty()) {
-                keep.push(previous.runtime_digest);
-            }
-            self.gc_guest_runtimes(&self.guest(&step, channel), &keep).await;
-        }
         self.reporter.note(
             format!("daemon is up on {worker} port {} (run {run_id})", state.port),
             Some(&Scope::worker(worker)),
@@ -657,8 +652,8 @@ impl Host {
 /// agent.
 ///
 /// The verb reads the runtime descriptor at `location` itself, and the lane IDE inputs from it. Its arguments name the
-/// state directory, the port, the launch digest, the IDE root and the home of the generation, which the IDE gets as
-/// `idea.dev.project.root`. The boot of the verb makes those directories and removes the state file of the previous
+/// state directory, the port, the launch digest, the IDE root and the home in the state directory, which the IDE gets
+/// as `idea.dev.project.root`. The boot of the verb makes those directories and removes the state file of the previous
 /// daemon.
 pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir: &str, location: &str) -> Vec<String> {
     let mut command = words([
@@ -677,7 +672,7 @@ pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir:
         "--ide-root",
         &guest_ide_root(settings),
         "--home",
-        &guest_home(settings, &prep.runtime_digest),
+        &guest_home(settings),
     ]);
     if settings.backend == Backend::ContainerLinux {
         // A published port forwards to the address of the container, not to its loopback.

@@ -19,16 +19,16 @@ mod tests;
 
 const GIB: u64 = 1024 * 1024 * 1024;
 
-/// Below this much free space the run is refused: no staging, no iteration, nothing that writes.
+/// Below this much free space the run is refused: no daemon start, no iteration, nothing that writes.
 pub(crate) const GUEST_FREE_SPACE_FLOOR_BYTES: u64 = 5 * GIB;
 
 /// Below this much free space retention runs before the iteration does, and says so.
 ///
-/// The floor alone was never a floor for what it guarded. The observed failure was `ENOSPC` *during* staging, with
-/// several gigabytes free when the check passed and none left by the time the copy finished - so the question is
-/// not "is there space right now" but "is there room for what this run is about to write". Twenty gigabytes is
-/// roughly a staged generation plus a lane's artifacts, and the cost of being wrong on the high side is deleting
-/// run artifacts nobody was going to read.
+/// The floor alone was never a floor for what it guarded. The observed failure was `ENOSPC` *during* the staging of
+/// a runtime generation, with several gigabytes free when the check passed and none left by the time the copy
+/// finished. So the question is not "is there space right now" but "is there room for what this run is about to
+/// write". A start stages no runtime generation now. Twenty gigabytes was roughly a staged generation plus a lane's
+/// artifacts, and the cost of being wrong on the high side is deleting run artifacts nobody was going to read.
 pub(crate) const GUEST_FREE_SPACE_SOFT_BYTES: u64 = 20 * GIB;
 
 /// How many of the most recent launch directories survive a retention pass under each reclaimable tree.
@@ -125,7 +125,7 @@ impl Host {
 
     /// Fails before writing rather than part-way through, and bounds what the last runs left.
     ///
-    /// A full guest surfaces as `ENOSPC` from a copy deep inside the stager, and from there even `exec` stops
+    /// A full guest surfaces as `ENOSPC` from a copy deep inside a guest verb, and from there even `exec` stops
     /// working, because it writes a script into the guest before it can run anything. Two thresholds, because the
     /// failure that motivated this happened with the floor intact: below [`GUEST_FREE_SPACE_SOFT_BYTES`] retention
     /// runs eagerly, and only below [`GUEST_FREE_SPACE_FLOOR_BYTES`] is the run refused. Above the soft threshold

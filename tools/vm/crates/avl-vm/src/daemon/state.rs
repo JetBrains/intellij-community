@@ -83,3 +83,12 @@ impl HostState {
 pub(crate) fn guest_state_dir(settings: &Config) -> String {
     guest_join(&settings.vm_data, "daemon")
 }
+
+/// The home of the lane daemon: a directory in its state directory. The lane IDE gets it as `idea.dev.project.root`,
+/// and the boot of the lane daemon makes it.
+///
+/// It is not below the IDE root, because `ide-gc` and the controller read each directory there as a context of the
+/// lane IDE.
+pub(crate) fn guest_home(settings: &Config) -> String {
+    guest_join(&guest_state_dir(settings), "home")
+}

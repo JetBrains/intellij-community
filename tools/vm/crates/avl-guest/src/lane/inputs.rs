@@ -43,7 +43,7 @@ const HOME_PATH_KEY: &str = "home.path";
 pub(crate) struct LaunchInputs {
     /// The parent of every context of the lane IDE.
     pub ide_root: PathBuf,
-    /// The empty home of the staged generation, which the IDE gets as `idea.dev.project.root`.
+    /// The empty home that the IDE gets as `idea.dev.project.root`. The boot makes it.
     pub home: PathBuf,
     /// The home of the distribution, which the `DevIdeConfig` file names.
     pub dist_home: PathBuf,

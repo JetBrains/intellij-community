@@ -111,8 +111,6 @@ targets:
   - ../crates/avl-vm/src/daemon/slot/tests.rs
   - ../crates/avl-vm/src/daemon/space.rs
   - ../crates/avl-vm/src/daemon/space/tests.rs
-  - ../crates/avl-vm/src/daemon/stage.rs
-  - ../crates/avl-vm/src/daemon/stage/tests.rs
   - ../crates/avl-vm/src/daemon/start.rs
   - ../crates/avl-vm/src/daemon/start/tests.rs
   - ../crates/avl-vm/src/daemon/verdict.rs
@@ -437,16 +435,11 @@ The rest of the scenario matrix is in
   the IDE contexts. It names no JVM, because the IDE runs on the JBR of its distribution.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
-- The daemon JVM runs on a copy of the JBR of the distribution in its staged generation, and never on the share. The
-  `jbr` section of the runtime descriptor names the directory of the JBR below the distribution home. The guest
-  agent's `stage` copies that directory with its modes and its links. A distribution without it is a refusal that
-  names the path, on the host and on the guest. The tree digest of the JBR is part of the runtime digest, so only a
-  change of the JBR restages it.
+- The lane daemon runs no JVM, and a daemon start copies no JBR to the guest. The `jbr` section of the runtime
+  descriptor names the directory of the JBR below the distribution home. A distribution without it is a refusal on
+  the host, and the refusal names the path. The tree digest of the JBR is part of the runtime digest.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_jbr_of_the_distribution_changes_the_runtime_digest`)
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_distribution_without_its_jbr_refuses_with_the_path`)
-  [@test] ../crates/avl-vm/src/daemon/stage/tests.rs (`a_guest_that_cannot_answer_stage_check_falls_through_to_a_full_stage`)
-  [@test] ../crates/avl-guest/src/stage/tests.rs (`the_stage_copies_the_jbr_of_the_distribution_into_the_generation`)
-  [@test] ../crates/avl-guest/src/stage/tests.rs (`a_distribution_without_its_jbr_is_refused_with_the_path`)
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`the_jbr_section_keys_are_the_ones_the_reader_reads`)
 
 - The guest reads no checkout. A worker has one share, the Bazel output user root, read-only, on every backend. A
@@ -473,10 +466,19 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_runfile_in_the_checkout_is_staged_with_its_digest`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
-- The home of the lane daemon is a directory of its staged generation, and its IDE root is on the guest disk. Each
-  one has its own flag, so no path derives from a checkout. The boot of the verb makes both.
+- The home of the lane daemon is the directory `home` in its state directory, and its IDE root is on the guest disk.
+  Each one has its own flag, so no path derives from a checkout. The boot of the verb makes both.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_boot_makes_the_directories_of_the_run_readable_only_by_its_account`)
+
+- A daemon start stages no runtime generation and removes none. It checks the free space of the guest in the phase
+  `free-space`, before the supervisor start. A full guest refuses the start with `guest_disk_full`.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_guest_disk_refuses_the_start_before_the_supervisor_start`)
+
+- The run of the lane daemon starts in its state directory. Before the supervisor start, the daemon start makes that
+  directory and the directory of the guest agent.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
 
 - A run that rules out each of its classes is not a run that matched no class. The controller gives the
   reason of each class, and does not tell the person to look at the selector.
@@ -971,11 +973,6 @@ The daemon's half and the IDE's half of supervision are in
   it reports the second result.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
-- The controller prepares the guest for one daemon in one call. The guest assembles the argument file of
-  that daemon from the classpath which the guest staged itself.
-  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
-  [@test] ../crates/avl-guest/src/stage/tests.rs
-
 - A daemon start that fails after the supervisor started its run cancels that run. A start that read the state
   file keeps the daemon record, so `daemon log` still works.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
@@ -1069,11 +1066,6 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/lane/observe/status/tests.rs
   [@test] ../crates/avl-host-sys/src/guest/parity/tests.rs
   [@test] ../crates/avl-host-sys/src/guest/tests.rs
-
-- The controller sends the flags, the properties and the main class with the digest of the bytes that it
-  expects. The controller refuses a reply whose digest, path or count of entries does not agree.
-  [@test] ../crates/avl-vm/src/daemon/start/tests.rs
-  [@test] ../crates/avl-wire/src/stage/tests.rs
 
 - A phase reports its most expensive guest call. That report holds no element which carries a value,
   because a guest command line can hold a secret.
@@ -1438,7 +1430,7 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
 
-- A daemon start whose stop of the lane IDEs fails refuses. It remounts nothing and stages nothing.
+- A daemon start whose stop of the lane IDEs fails refuses. It remounts nothing and starts no daemon.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
 - A remount stops every lane IDE first. The daemon quits its IDE through `/ide/stop`, and `ide-gc --stop-all` cancels
@@ -1511,7 +1503,7 @@ The daemon's half and the IDE's half of supervision are in
 The run slot of a worker holds the `lane-daemon` verb of the installed guest agent, for every lane.
 
 - The run slot holds the verb. It gets the state directory, the port, the launch digest, the runtime descriptor, the
-  runfiles root, the IDE root and the home of the generation.
+  runfiles root, the IDE root and the home. The home is in the state directory.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent`)
 
 - The controller has no `--runner` option any more. A command line that still names it is a usage refusal.

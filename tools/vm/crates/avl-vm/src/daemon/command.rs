@@ -176,7 +176,7 @@ pub(crate) struct DaemonWarmData {
 /// The `daemon` verbs.
 #[derive(clap::Subcommand, Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum DaemonVerb {
-    /// Stages the runtime and boots the daemon, replacing any running one.
+    /// Boots the daemon, replacing any running one.
     Start,
     /// The same as start.
     Restart,
