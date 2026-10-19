@@ -1,0 +1,4 @@
+class Record(val number: Int)
+
+val factory = { number: Int -> Record(number) }
+val mapped = listOf(1, 2).map { Record(it) }

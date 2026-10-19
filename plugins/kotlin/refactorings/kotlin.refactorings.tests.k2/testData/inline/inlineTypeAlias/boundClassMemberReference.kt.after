@@ -1,0 +1,6 @@
+class Record(val number: Int) {
+    fun read() = number
+}
+
+val unbound = Record::read
+val bound = Record(1)::read

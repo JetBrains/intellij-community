@@ -119,9 +119,24 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("boundClassMemberReference.kt")
+        public void testBoundClassMemberReference() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/boundClassMemberReference.kt");
+        }
+
+        @TestMetadata("classMemberReference.kt")
+        public void testClassMemberReference() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/classMemberReference.kt");
+        }
+
         @TestMetadata("companionMemberAccess.kt")
         public void testCompanionMemberAccess() throws Exception {
             runTest("testData/inline/inlineTypeAlias/companionMemberAccess.kt");
+        }
+
+        @TestMetadata("constructorReference.kt")
+        public void testConstructorReference() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/constructorReference.kt");
         }
 
         @TestMetadata("extensionFunctionTypeToFunctionType.kt")
@@ -142,6 +157,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("functionTypeToNullableType.kt")
         public void testFunctionTypeToNullableType() throws Exception {
             runTest("testData/inline/inlineTypeAlias/functionTypeToNullableType.kt");
+        }
+
+        @TestMetadata("genericClassMemberReference.kt")
+        public void testGenericClassMemberReference() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/genericClassMemberReference.kt");
         }
 
         @TestMetadata("innerClassConstructorGeneric.kt")

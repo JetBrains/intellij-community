@@ -11,12 +11,15 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
@@ -30,6 +33,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
@@ -113,6 +117,26 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
     }
 
     fun inlineIntoCall(usage: KtReferenceExpression): KtElement? {
+        val callableReference = usage.parent as? KtCallableReferenceExpression
+        if (callableReference != null) {
+            val (fqName, expandedClassPsi) = analyze(typeAlias) {
+                val expandedClass = typeAlias.symbol.expandedType.expandedSymbol ?: return null
+                (expandedClass.importableFqName ?: return null) to expandedClass.psi
+            }
+            if (callableReference.callableReference == usage) {
+                return (usage.mainReference as KtSimpleNameReference)
+                    .bindToFqName(fqName, targetElement = expandedClassPsi) as? KtElement
+            }
+            val receiverTypeText = analyze(callableReference) {
+                (callableReference.expressionType as? KaClassType)
+                    ?.typeArguments?.firstOrNull()
+                    ?.type?.fullyExpandedType?.takeIf { it.expandedSymbol?.importableFqName == fqName }
+                    ?.render(expandAliasRenderer(), position = Variance.INVARIANT)
+            } ?: fqName.asString()
+            val replacement = KtPsiFactory(typeAlias.project)
+                .createExpression("$receiverTypeText::${callableReference.callableReference.text}")
+            return callableReference.replaced(replacement).apply { shortenReferences(this) }
+        }
         analyze(usage) {
             val importDirective = usage.getStrictParentOfType<KtImportDirective>()
             if (importDirective != null) {
@@ -130,9 +154,7 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
             val callElement = usage.parent as? KtCallExpression ?: usage
             val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
             if (callElement is KtCallExpression) {
-                val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
-                }, position = Variance.INVARIANT)
+                val expandedTypeText = expandedType.render(expandAliasRenderer(), position = Variance.INVARIANT)
                 val typeArgumentsIndex = expandedTypeText.indexOf("<")
                 if (typeArgumentsIndex >= 0) {
                     val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
@@ -173,9 +195,7 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
     private fun inlineIntoType(usage: KtUserType): KtElement? {
         analyze(usage) {
             val expandedType = usage.getParentOfType<KtTypeReference>(true)?.type?.fullyExpandedType ?: return null
-            val expandedTypeText = expandedType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
-            }, position = Variance.INVARIANT)
+            val expandedTypeText = expandedType.render(expandAliasRenderer(), position = Variance.INVARIANT)
             val isFunctionType = expandedType.isFunctionType || expandedType.isSuspendFunctionType
             val nullableType = usage.parent as? KtNullableType
             val typeReference = usage.parent as? KtTypeReference
@@ -190,5 +210,9 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
                 shortenReferences(this)
             }
         }
+    }
+
+    private fun expandAliasRenderer(): KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+        expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
     }
 }
