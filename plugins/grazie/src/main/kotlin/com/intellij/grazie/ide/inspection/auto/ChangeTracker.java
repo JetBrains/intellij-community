@@ -144,7 +144,7 @@ public final class ChangeTracker implements Disposable {
     private static final long TRACKING_INTERVAL = TimeUnit.MINUTES.toNanos(1);
 
     boolean isRelevant(long now) {
-      return marker.isValid() && !marker.getTextRange().isEmpty() && now - time <= TRACKING_INTERVAL;
+      return now - time <= TRACKING_INTERVAL && marker.isValid() && !marker.getTextRange().isEmpty();
     }
   }
 }
