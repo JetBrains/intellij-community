@@ -87,6 +87,9 @@ public final class FileSetTestUtil {
    * Returns one dynamic test for each file of {@link #collectTestFiles(String)}.
    * The name of each test is the file name. The tests use the default charset and the {@code ---} delimiter.
    * Return the result from a {@code @TestFactory} method.
+   * <p>
+   * The test log names each test after the {@code @TestFactory} method.
+   * {@code FileSetTestCase} named each test {@code FileSetTestCase$ActualTest}, so compare the count and the status of the tests.
    */
   public static @NotNull List<DynamicTest> dynamicTests(@NotNull String path, @NotNull Transformer transformer) throws IOException {
     return dynamicTests(path, null, DEFAULT_DELIMITER, transformer);

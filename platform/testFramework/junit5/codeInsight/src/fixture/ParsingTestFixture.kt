@@ -53,6 +53,9 @@ import java.nio.file.Paths
  * The fixture parses the files in the project of the project fixture, with the parser definitions of the test application.
  * Each function that reads PSI runs in a read action, and each function that changes PSI runs in a write action.
  * A caller can call them from any thread, but not in a read action.
+ *
+ * The parsed files are physical. A PSI change in the test body, outside these functions, needs a write action,
+ * for example `WriteAction.runAndWait`. `ParsingTestCase` did not check the write access.
  */
 @TestOnly
 class ParsingTestFixture internal constructor(
@@ -78,6 +81,9 @@ class ParsingTestFixture internal constructor(
 ) {
   /**
    * The language of the parsed files. [configureFromParserDefinition] sets it.
+   *
+   * The first parser definition can have the file node type of another language, for example `XHTMLParserDefinition`.
+   * Then the parse fails with "View provider ... refused to parse text". Set the language in `@BeforeEach`.
    */
   var language: Language
     get() = checkNotNull(myLanguage) { "The language is not set. Call configureFromParserDefinition." }
