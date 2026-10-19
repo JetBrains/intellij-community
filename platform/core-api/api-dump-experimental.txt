@@ -2,6 +2,7 @@
 *:com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
 - java.util.EventListener
 - a:contextsChanged():V
+- contextsChanged(java.util.Set):V
 *:com.intellij.codeInsight.multiverse.CodeInsightContextManager
 - *sf:Companion:com.intellij.codeInsight.multiverse.CodeInsightContextManager$Companion
 - a:getChangeFlow():kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@
 - hashCode():I
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator
 - a:requestInvalidation():V
+- a:requestInvalidation(java.util.Collection):V
 *f:com.intellij.codeInsight.multiverse.CodeInsightContexts
 - sf:anyContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 - sf:defaultContext():com.intellij.codeInsight.multiverse.CodeInsightContext

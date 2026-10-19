@@ -77,6 +77,13 @@ interface CodeInsightContextManager {
  * Synchronous listener notifying about changes in the codeinsight-context model
  */
 interface CodeInsightContextChangeListener : EventListener {
+  /** The contexts of every file changed. */
   @RequiresWriteLock
   fun contextsChanged()
+
+  /** Only the contexts of [files] changed. The default handles it as a change of every file. */
+  @RequiresWriteLock
+  fun contextsChanged(files: Set<VirtualFile>) {
+    contextsChanged()
+  }
 }

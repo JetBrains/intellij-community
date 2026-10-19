@@ -7,8 +7,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -32,6 +34,15 @@ internal class EditorContextManagerImpl(
       override fun contextsChanged() {
         log.info("Dropping all editor contexts")
         currentContextCache.invalidate()
+      }
+
+      // The next request infers the selection again from the preferred context.
+      override fun contextsChanged(files: Set<VirtualFile>) {
+        log.info("Dropping the editor contexts of ${files.size} file(s)")
+        val fileDocumentManager = FileDocumentManager.getInstance()
+        val editors = EditorFactory.getInstance().allEditors.filter { fileDocumentManager.getFile(it.document) in files }
+        currentContextCache.remove(editors)
+        log.trace { "dropped the editor contexts of ${editors.joinToString()}" }
       }
     })
   }

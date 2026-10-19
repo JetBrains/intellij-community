@@ -10,7 +10,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInsight.multiverse.EditorContextManager
@@ -30,6 +32,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.multiverse.LibraryContextImpl
 import com.intellij.multiverse.ModuleContextImpl
 import com.intellij.multiverse.SdkContextImpl
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -38,6 +41,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -339,6 +343,73 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertEquals(first, getPreferredContext())
   }
 
+  fun testPerFileDropKeepsTheEditorContextOfAnotherFile() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val second = FakeContext("second")
+    val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
+    // The test provider does not claim it, so it carries the platform module context.
+    val otherFile = createOtherJavaFile()
+    val editorFactory = EditorFactory.getInstance()
+    val otherEditor = editorFactory.createEditor(FileDocumentManager.getInstance().getDocument(otherFile)!!, project)
+    try {
+      val editorContextManager = EditorContextManager.getInstance(project)
+      editorContextManager.getEditorContexts(editor)
+      val otherContext = editorContextManager.getEditorContexts(otherEditor).mainContext
+      val changes = recordPerFileChanges()
+
+      val third = FakeContext("third")
+      provider.answer = Answer.Contexts(listOf(first, second, third))
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+
+      assertEquals(listOf(setOf(virtualFile)), changes)
+      assertEquals(listOf(first, second, third), getRawContexts())
+      assertNull("the editor of the dropped file infers its context again", editorContextManager.getCachedEditorContexts(editor))
+      assertEquals(otherContext, editorContextManager.getCachedEditorContexts(otherEditor)?.mainContext)
+    }
+    finally {
+      editorFactory.releaseEditor(otherEditor)
+    }
+  }
+
+  fun testPerFileDropKeepsTheCachedAnswerOfAnotherFile() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
+    val otherFile = createOtherJavaFile()
+    val otherFirst = FakeContext("other first")
+    val otherProvider = registerOwningProvider(otherFile, Answer.Contexts(listOf(otherFirst)))
+    val manager = CodeInsightContextManager.getInstance(project)
+    getRawContexts()
+    assertEquals(listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
+
+    // The request names only the first file, so only a dropped answer can show this.
+    otherProvider.answer = Answer.Contexts(listOf(FakeContext("other second")))
+    val second = FakeContext("second")
+    provider.answer = Answer.Contexts(listOf(second))
+    CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
+
+    assertEquals(listOf(second), getRawContexts())
+    assertEquals("the other file keeps its cached answer", listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
+  }
+
+  private fun recordPerFileChanges(): List<Set<VirtualFile>> {
+    val changes = ArrayList<Set<VirtualFile>>()
+    project.messageBus.connect(testRootDisposable).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
+      override fun contextsChanged() {}
+
+      override fun contextsChanged(files: Set<VirtualFile>) {
+        changes.add(files)
+      }
+    })
+    return changes
+  }
+
+  private fun createOtherJavaFile(): VirtualFile = runWriteAction {
+    val file = virtualFile.parent.createChildData(this, "D.java")
+    VfsUtil.saveText(file, "class D {}")
+    file
+  }
+
   private fun getRawContexts(): List<CodeInsightContext> =
     CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile)
 
@@ -349,9 +420,10 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     targetFile: VirtualFile,
     answer: Answer,
     preferred: CodeInsightContext? = null,
-  ) {
-    CodeInsightContextManager.getInstance(project)
-      .registerTestOnlyCodeInsightContextProvider(OwningTestContextProvider(targetFile, answer, preferred), testRootDisposable)
+  ): OwningTestContextProvider {
+    val provider = OwningTestContextProvider(targetFile, answer, preferred)
+    CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(provider, testRootDisposable)
+    return provider
   }
 
   private fun getContexts(): List<ModuleContext> {
@@ -367,11 +439,11 @@ private class FakeContext(private val name: String) : CodeInsightContext {
   override fun toString(): String = "FakeContext($name)"
 }
 
-// Gives [answer] for [targetFile] and nominates [preferred], claiming no other file.
+// Gives [answer] for [targetFile] and nominates [preferred], claiming no other file. A test can change both.
 private class OwningTestContextProvider(
   private val targetFile: VirtualFile,
-  private val answer: Answer,
-  private val preferred: CodeInsightContext? = null,
+  var answer: Answer,
+  var preferred: CodeInsightContext? = null,
 ) : CodeInsightContextProvider {
   override fun isOwnerOf(context: CodeInsightContext): Boolean = context is FakeContext
 

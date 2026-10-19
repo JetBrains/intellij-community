@@ -53,9 +53,13 @@ interface CodeInsightContextProvider {
   fun getContextResetAction(file: VirtualFile, project: Project): ContextResetAction? = null
 
   @ApiStatus.NonExtendable
-  fun interface Invalidator {
+  interface Invalidator {
+    /** Drops the cached contexts of every file. */
     @RequiresWriteLock
     fun requestInvalidation()
+
+    /** Drops the cached contexts of [files]. Any thread, no lock. */
+    fun requestInvalidation(files: Collection<VirtualFile>)
   }
 
   /** What [getContexts] returns for a file. */

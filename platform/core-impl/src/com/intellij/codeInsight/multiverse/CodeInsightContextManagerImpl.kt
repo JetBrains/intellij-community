@@ -60,6 +60,22 @@ class CodeInsightContextManagerImpl(
   // The buffer lets tryEmit succeed when subscribers are present. A zero-capacity flow rejects tryEmit and drops the invalidation event.
   private val _changeFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  private val invalidator = object : CodeInsightContextProvider.Invalidator {
+    override fun requestInvalidation() {
+      invalidateAllContexts()
+    }
+
+    override fun requestInvalidation(files: Collection<VirtualFile>) {
+      if (files.isEmpty()) return
+      val requested = files.toSet()
+      cs.launch {
+        backgroundWriteAction {
+          invalidateContexts(requested)
+        }
+      }
+    }
+  }
+
   init {
     EP_NAME.addChangeListener(cs) {
       cs.launch {
@@ -74,7 +90,6 @@ class CodeInsightContextManagerImpl(
   }
 
   private fun subscribeToChanges() {
-    val invalidator = { invalidateAllContexts() }
     EP_NAME.forEachExtensionSafe { provider ->
       provider.subscribeToChanges(project, invalidator)
     }
@@ -89,6 +104,20 @@ class CodeInsightContextManagerImpl(
     log.assertTrue(emitted, "failed to emit a context invalidation event, subscribers are not notified")
     log.debug { "[ctx-diag] all contexts invalidated" }
     log.trace { "all contexts are invalidated" }
+  }
+
+  private fun invalidateContexts(files: Set<VirtualFile>) {
+    assertWriteAccess()
+    preferredContext.remove(files)
+    allContexts.remove(files)
+    project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged(files)
+    log.trace { "contexts of ${files.size} file(s) are invalidated: ${files.joinToString { it.path }}" }
+  }
+
+  /** Does what [CodeInsightContextProvider.Invalidator.requestInvalidation] does for [files], at once, on the calling thread. */
+  @TestOnly
+  fun requestInvalidationNow(files: Set<VirtualFile>) {
+    runWriteAction { invalidateContexts(files) }
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
