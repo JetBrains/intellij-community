@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -75,6 +76,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.zip.ZipException;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -216,7 +218,7 @@ public final class FSRecordsImpl implements Closeable {
 
       PersistentFSConnection connection = initializationResult.connection;
 
-      Supplier<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(connection.records());
+      InvertedNameIndexLazy invertedNameIndexLazy = asyncFillInvertedNameIndex(connection.records());
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts, " +
@@ -293,7 +295,7 @@ public final class FSRecordsImpl implements Closeable {
    * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
    * as String, which is less available inside PersistentFSConnection.
    */
-  private final @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy;
+  private final @NotNull InvertedNameIndexLazy invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
   /** Statistics: how many times {@link #processFilesWithNames(Set, IntPredicate)} was called */
   private final AtomicLong invertedNameIndexRequestsServed = new AtomicLong();
@@ -350,7 +352,7 @@ public final class FSRecordsImpl implements Closeable {
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
                         @NotNull PersistentFSRecordAccessor recordAccessor,
-                        @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy,
+                        @NotNull InvertedNameIndexLazy invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
                         @NotNull VFSInitializationResult initializationResult) {
@@ -1172,7 +1174,7 @@ public final class FSRecordsImpl implements Closeable {
         }
       }
       invertedNameIndexRequestsServed.incrementAndGet();
-      return invertedNameIndexLazy.get().forEachFileIds(nameIds, processor);
+      return invertedNameIndexLazy.getWithCheckCanceled().forEachFileIds(nameIds, processor);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1898,7 +1900,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @VisibleForTesting
-  public static @NotNull Supplier<@NotNull InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
+  static @NotNull InvertedNameIndexLazy asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
     CompletableFuture<InvertedNameIndex> fillUpInvertedNameIndexTask = PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
       InvertedNameIndex invertedNameIndex = new DefaultInMemoryInvertedNameIndex();
       // fill up nameId->fileId index:
@@ -1913,17 +1915,48 @@ public final class FSRecordsImpl implements Closeable {
       LOG.info("VFS scanned: file-by-name index was populated");
       return invertedNameIndex;
     });
+    return new InvertedNameIndexLazy(fillUpInvertedNameIndexTask);
+  }
 
-    // We don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
-    // So _there could be_ a race, but only a benign race.
-    return () -> {
+  /**
+   * File-name index that the VFS fills in the background after it connects.
+   * Write paths wait with {@link #get()}, which ignores cancellation; read paths wait with {@link #getWithCheckCanceled()}.
+   */
+  static final class InvertedNameIndexLazy implements Supplier<InvertedNameIndex> {
+    private final @NotNull CompletableFuture<InvertedNameIndex> fillTask;
+
+    @VisibleForTesting
+    InvertedNameIndexLazy(@NotNull CompletableFuture<InvertedNameIndex> fillTask) {
+      this.fillTask = fillTask;
+    }
+
+    @Override
+    public @NotNull InvertedNameIndex get() {
       try {
-        return fillUpInvertedNameIndexTask.join();
+        return fillTask.join();
       }
       catch (Throwable e) {
         throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
       }
-    };
+    }
+
+    /**
+     * Same as {@link #get()}, but throws {@link ProcessCanceledException} when the caller is canceled before the fill completes.
+     */
+    public @NotNull InvertedNameIndex getWithCheckCanceled() {
+      if (!fillTask.isDone()) {
+        try {
+          ProgressIndicatorUtils.awaitWithCheckCanceled(fillTask);
+        }
+        catch (Throwable e) {
+          // get() reports a failed or canceled fill
+          if (!fillTask.isCompletedExceptionally()) {
+            rethrowControlFlowException(e);
+          }
+        }
+      }
+      return get();
+    }
   }
 
   public interface ErrorHandler {
