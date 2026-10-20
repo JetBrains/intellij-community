@@ -29,7 +29,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -386,13 +386,13 @@ fun parameterHintContextMenuGroup(inlay: Inlay<*>): ActionGroup? {
 
   val editor = inlay.editor
   val project = editor.project ?: return base
-  val language = ReadAction.computeBlocking<Language?, Throwable> {
+  val language = runReadActionBlocking {
     PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)?.language
   }?.let { getLanguageForSettingKey(it) } ?: return base
 
-  val key = ReadAction.computeBlocking<ParameterHintsInlayVisibilityKey?, Throwable> {
-    val psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) ?: return@computeBlocking null
-    val optionInfo = getHintInfoFromProvider(inlay.offset, psiFile, editor) as? HintInfo.OptionInfo ?: return@computeBlocking null
+  val key = runReadActionBlocking {
+    val psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) ?: return@runReadActionBlocking null
+    val optionInfo = getHintInfoFromProvider(inlay.offset, psiFile, editor) as? HintInfo.OptionInfo ?: return@runReadActionBlocking null
     ParameterHintsInlayVisibilityKey(language = language, optionId = optionInfo.optionId)
   } ?: return base
 

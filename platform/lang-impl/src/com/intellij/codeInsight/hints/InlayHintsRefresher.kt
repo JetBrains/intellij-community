@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -44,7 +44,7 @@ object InlayHintsRefresher {
     editor.project?.let {
       it.service<CodeVisionHost>()
         .invalidateProvider(CodeVisionHost.LensInvalidateSignal(editor))
-      val psiFile = ReadAction.computeBlocking<PsiFile?, Throwable> {
+      val psiFile = runReadActionBlocking {
         PsiDocumentManager.getInstance(it).getPsiFile(editor.document)
       }
       restartDaemon(psiFile, it, reason)
