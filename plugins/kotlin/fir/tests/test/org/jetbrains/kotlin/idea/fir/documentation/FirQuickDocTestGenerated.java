@@ -385,6 +385,16 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
         }
 
+        @TestMetadata("OnFunctionDeclarationWithHtmlBlock.kt")
+        public void testOnFunctionDeclarationWithHtmlBlock() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithHtmlBlock.kt");
+        }
+
+        @TestMetadata("OnFunctionDeclarationWithInlineHtml.kt")
+        public void testOnFunctionDeclarationWithInlineHtml() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithInlineHtml.kt");
+        }
+
         @TestMetadata("OnFunctionDeclarationWithPackage.kt")
         public void testOnFunctionDeclarationWithPackage() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithPackage.kt");

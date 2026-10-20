@@ -345,8 +345,10 @@ object KDocRenderer {
         val markdownTree = MarkdownParser(GFMFlavourDescriptor()).buildMarkdownTreeFromString(comment.getContent())
         val markdownNode = MarkdownNode(markdownTree, null, comment)
 
-        // Avoid wrapping the entire converted contents in a <p> tag if it's just a single paragraph
+        // Avoid wrapping the entire converted contents in a <p> tag if it's just a single paragraph.
+        // An HTML block keeps its line breaks, so it is not joined into a single line.
         val maybeSingleParagraph = markdownNode.children.singleOrNull { it.type != MarkdownTokenTypes.EOL }
+            ?.takeIf { it.type != MarkdownElementTypes.HTML_BLOCK }
 
         val firstParagraphOmitted = when {
             maybeSingleParagraph != null && !allowSingleParagraph -> {
@@ -508,6 +510,11 @@ object KDocRenderer {
 
                 MarkdownTokenTypes.EOL -> {
                     sb.append(" ")
+                }
+
+                MarkdownTokenTypes.HTML_TAG,
+                MarkdownElementTypes.HTML_BLOCK -> {
+                    sb.append(KDocHtmlSanitizer.sanitize(nodeText))
                 }
 
                 MarkdownTokenTypes.GT -> sb.append("&gt;")
