@@ -488,6 +488,21 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - The Linux guest installs no video encoder. The recorder carries its own, so a Linux worker records video.
   [@test] ../crates/avl-vm/src/worker/docker/tests.rs
 
+- One bundle of a zip packs into a zip of its own, with the bundle at the top. Its entries are inflated and written
+  as a pack writes them, so a video that Bazel deflated is stored again. An entry name with `..` refuses the pack.
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`one_bundle_of_a_zip_is_packed_with_its_media_stored`)
+
+- `air-trace teamcity-publish` is the step after `bazel test` on TeamCity. It reads each `test.xml` under the
+  testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
+  becomes `<lane>/<runId>/<TestClass>/<scenario>.zip`, where the lane is the Bazel target with its shard directory.
+  The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the
+  test: the trace, the video, and the last picture of a failed scenario. The test name is `<classname>.<name>` of
+  the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize to one file get
+  `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. A bundle that cannot be packed is a line on stderr,
+  and the exit stays 0.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)
+
 ### The server
 
 - `air-trace serve` listens on `127.0.0.1:7357` unless told otherwise. It answers only requests addressed to
@@ -497,6 +512,26 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - By default it looks in the Air lanes' `bazel-testlogs` and in the controller's pulled
   zips. `--root` adds a place, and `--no-default-roots` drops the defaults.
   [@test] ../crates/air-trace/src/serve/tests.rs
+
+- A zip entry that ends in `.zip` and lies outside every bundle is an inner zip. Discovery extracts it once into
+  the cache and reads it as a zip, one level deep. Its bundles name the container `<outer>!/<entry>`, and the
+  server serves them from the extraction. A planner without a cache extracts into a temporary directory. An inner
+  zip over 1 GiB, or longer than its declared size, is refused. An inner zip that does not read is a problem of its
+  root, and it leaves no extraction behind.
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip`)
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing`)
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`a_zip_inside_a_bundle_is_not_opened`)
+  [@test] ../crates/air-trace/src/serve/tests.rs (`a_zip_inside_a_zip_is_served_from_its_extraction`)
+
+- `--teamcity <build id or URL>` resolves a build through the REST API, a composite build to the builds that ran
+  under it. It downloads the `bazel.logs.zip` of each once into the cache, as `tc-<server hash>-<build id>/`. Each zip
+  is a root with an `origin`: the name of the build configuration, the build id and the page. Each bundle and run of
+  the listing carries it. A build that does not resolve or download is a root with its error, and the other builds
+  still serve. `TEAMCITY_TOKEN` goes to the server of `--teamcity-url` only, through `curl`. For another server, or
+  without the token, the TeamCity CLI signs the request. A server is `https`, or `http` on a loopback host.
+  `--teamcity` refuses `--detach`.
+  [@test] ../crates/air-trace/src/serve/teamcity/tests.rs
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_origin_of_a_root_is_on_each_of_its_bundles`)
 
 - The controller's pulled zips are the iteration zips under `workers/*/reports/*/traces/` and the scenario zips
   under `runs/*/traces/*/`. A scenario zip has the bundle id that the controller's `traceReady` names, and a

@@ -907,6 +907,27 @@ It looks in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the jou
 each run under `<runtime root>/runs`. It serves zips by byte range without unpacking them, and it tells the page
 when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--root DIR` adds a place to look.
 `pnpm dev` in `plugins/air/docs` proxies `/__air` to it, so the viewer under development reads the same runs.
+A root can be a zip that holds zips: discovery extracts an inner zip once into `out/air-traces-cache`. So
+`--root bazel.logs.zip` works for a TeamCity artifact, and so does a local `outputs.zip`.
+
+**A CI run.** `--teamcity` opens the traces of a TeamCity build:
+
+```bash
+./community/tools/trace.cmd serve --port 0 --teamcity https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTestsAggregator/1100229901
+```
+
+The value is a build id or the URL of a build page, and it repeats. A composite build, such as the aggregator, stands
+for the shard builds that ran under it. The server downloads the `bazel.logs.zip` of each shard once into
+`out/air-traces-cache/tc-<server hash>-<build id>/`. The listing names the shard and the build of each run, and a
+shard that failed to download is a root with its error. For the server of `--teamcity-url`, the token is
+`TEAMCITY_TOKEN`. For another server, or without the token, the server asks the TeamCity CLI, `teamcity api`, which
+uses the login of `teamcity auth login`. A server is `https`, or `http` on a loopback host. `--teamcity` does not go
+with `--detach`, so pick a free `--port` when a detached server runs.
+
+**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
+zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip`, publishes the zips
+as artifacts, and gives each test of the Tests tab its trace, its video and, for a failed scenario, its last picture.
+No Air build configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
