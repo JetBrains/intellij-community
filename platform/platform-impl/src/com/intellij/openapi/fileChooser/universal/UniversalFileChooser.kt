@@ -308,8 +308,15 @@ object UniversalFileChooser {
       tabbedPane = JBTabbedPane()
       val projectContrib = projectContributor(project, contributors)
       val localContrib = localContributor(contributors)
+      val rootOwners = rootOwnerContributors(NioFileChooserUtil.getNioRoots(descriptor), contributors)
       val restrictedContributors: Set<UniversalFileChooserContributor>
-      effectiveContributors = if (descriptor.isEnvironmentRestricted) {
+      effectiveContributors = if (rootOwners.isNotEmpty()) {
+        // The descriptor names the roots to show. The tree shows only these roots, so a tab that owns
+        // none of them has nothing to show.
+        restrictedContributors = emptySet()
+        rootOwners
+      }
+      else if (descriptor.isEnvironmentRestricted) {
         val restricted = projectContrib ?: localContrib
         val primary = restricted?.let { listOf(it) } ?: contributors
         if (descriptor.isLocalFileSystem && localContrib != null && localContrib !in primary) {
@@ -1620,6 +1627,22 @@ object UniversalFileChooser {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
   }
 
+}
+
+/**
+ * Returns the contributors that own at least one path in [descriptorRoots].
+ *
+ * The result is empty when [descriptorRoots] is empty, or when no contributor owns a root. The caller
+ * then keeps every contributor.
+ */
+internal fun rootOwnerContributors(
+  descriptorRoots: Collection<Path>,
+  contributors: Collection<UniversalFileChooserContributor>,
+): List<UniversalFileChooserContributor> {
+  if (descriptorRoots.isEmpty()) return emptyList()
+  return contributors.filter { contributor ->
+    descriptorRoots.any { root -> runCatching { contributor.ownsPath(root) }.getOrDefault(false) }
+  }
 }
 
 @ApiStatus.Experimental
