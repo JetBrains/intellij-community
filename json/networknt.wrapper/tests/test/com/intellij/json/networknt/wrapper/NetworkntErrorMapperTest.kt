@@ -775,4 +775,184 @@ class NetworkntErrorMapperTest : BasePlatformTestCase() {
     // The unrelated `name: 42` type error must still come through.
     assertThat(mapped.values.map { it.fixableIssueKind }).contains(FixableIssueKind.ProhibitedType)
   }
+
+  fun `test oneOf composition error is suppressed when the only branch error was unevaluatedProperties`() {
+    @Language("JSON") val schema = """
+      {
+        "properties": {
+          "resp": {
+            "oneOf": [
+              {"type": "object", "properties": {"/pet": {"type": "string"}}, "unevaluatedProperties": false},
+              {"type": "object", "unevaluatedProperties": false}
+            ]
+          }
+        }
+      }
+    """.trimIndent()
+    @Language("JSON") val instance = """{"resp": {"/pet": 123}}"""
+
+    val mapped = validateAndMap(schema, instance)
+
+    val fallbacks = mapped.values.filter { it.message.contains("match any") }
+    assertThat(fallbacks)
+      .withFailMessage("The oneOf composition error should be suppressed together with its branch error; got: ${mapped.values.map { it.message }}")
+      .isEmpty()
+
+    val typeErrors = mapped.values.filter { it.fixableIssueKind == FixableIssueKind.ProhibitedType }
+    assertThat(typeErrors)
+      .withFailMessage("Expected the deeper type error on /pet=123 to survive; got: ${mapped.values.map { it.message }}")
+      .isNotEmpty
+  }
+
+  fun `test redundant unevaluatedItems error is suppressed when item has a specific nested error`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "allOf": [
+          {
+            "prefixItems": [
+              {"type": "object", "properties": {"a": {"type": "string"}}}
+            ]
+          }
+        ],
+        "unevaluatedItems": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """[{"a": 123}]""")
+
+    assertThat(mapped.values).hasSize(1)
+    assertThat(mapped.values.single().fixableIssueKind).isEqualTo(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test genuine unevaluatedItems error is retained`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "prefixItems": [
+          {"type": "object", "properties": {"a": {"type": "string"}}}
+        ],
+        "unevaluatedItems": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """[{"a": "x"}, "extra"]""")
+
+    assertThat(mapped.values).hasSize(1)
+    assertThat(mapped.values.single().fixableIssueKind).isEqualTo(FixableIssueKind.None)
+  }
+
+  fun `test redundant unevaluated property error is suppressed when property has a specific nested error`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^/": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"}
+            },
+            "required": ["description"]
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """{"/pet": {"description": 123}}""")
+
+    assertThat(mapped.values).hasSize(1)
+    assertThat(mapped.values.single().fixableIssueKind)
+      .isEqualTo(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test redundant unevaluated property error is suppressed when nested error is also unevaluatedProperties`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^/": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"}
+            },
+            "unevaluatedProperties": false
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """{"/pet": {"description": "ok", "unknown": 123}}""")
+
+    assertThat(mapped.values).hasSize(1)
+    val error = mapped.values.single()
+    assertThat(error.fixableIssueKind).isEqualTo(FixableIssueKind.ProhibitedProperty)
+    assertThat(error.message).contains("unknown")
+  }
+
+  fun `test genuine unevaluated property error is retained`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^/": {"type": "string"}
+        },
+        "unevaluatedProperties": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """{"other": 123}""")
+
+    assertThat(mapped.values).hasSize(1)
+    assertThat(mapped.values.single().fixableIssueKind)
+      .isEqualTo(FixableIssueKind.ProhibitedProperty)
+  }
+
+  fun `test property outside pattern is not treated as nested schema error`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^/": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"}
+            },
+            "required": ["description"]
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """{"pet": {"description": 123}}""")
+
+    assertThat(mapped.values).hasSize(1)
+    assertThat(mapped.values.single().fixableIssueKind)
+      .isEqualTo(FixableIssueKind.ProhibitedProperty)
+  }
+
+  fun `test genuine unevaluated property is retained next to nested specific error`() {
+    @Language("JSON") val schema = $$"""
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^/": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"}
+            },
+            "required": ["description"]
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    """.trimIndent()
+    val mapped = validateAndMap(schema, """{"/pet": {"description": 123}, "other": {"description": 123}}""")
+
+    assertThat(mapped.values.map { it.fixableIssueKind })
+      .containsExactlyInAnyOrder(FixableIssueKind.ProhibitedType, FixableIssueKind.ProhibitedProperty)
+  }
 }
