@@ -74,15 +74,25 @@ abstract class VersionDownloadManager(
 
   protected open suspend fun assertSafeToInstall(project: Project, version: SemVer, targetDir: Path) {}
 
-  protected abstract suspend fun getLatestVersion(): SemVer
+  /**
+   * Get the latest AVAILABLE for downloading version
+   * @param stable non-stable RC/EAP/similar version strings
+   * which resolve with more than MAJOR.MINOR.PATCH will be skipped
+   */
+  abstract suspend fun getLatestVersion(stable: Boolean): SemVer
 
+  /**
+   * Get versions AVAILABLE for download.
+   */
   abstract suspend fun getAvailableVersions(): List<SemVer>
 
   /**
+   * @param stable non-stable RC/EAP/similar version strings
+   * which resolve with more than MAJOR.MINOR.PATCH will be skipped
    * @throws VersionDownloadManagerError on issues with installation
    */
-  suspend fun downloadLatest(project: Project): SemVer {
-    val latest = getLatestVersion()
+  suspend fun downloadLatest(project: Project, stable: Boolean): SemVer {
+    val latest = getLatestVersion(stable)
     downloadItem(project, latest)
     return latest
   }

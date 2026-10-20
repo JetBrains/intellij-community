@@ -42,7 +42,7 @@ private class FakeVersionDownloadManager(
 
   override suspend fun prepareTargetDir(targetDir: Path) {}
 
-  override suspend fun getLatestVersion(): SemVer = SemVer("1.0.0", 1, 0, 0)
+  override suspend fun getLatestVersion(stable: Boolean): SemVer = SemVer("1.0.0", 1, 0, 0)
 
   override suspend fun getAvailableVersions(): List<SemVer> = listOf(SemVer("1.0.0", 1, 0, 0))
 }
