@@ -3,7 +3,6 @@ package com.intellij.execution.impl
 
 
 import com.intellij.execution.impl.EditorHyperlinkUsageCollector.HyperlinkFollowedPlace
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -17,20 +16,27 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.Font
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
+/**
+ * Applies the hover and follow effects to the hyperlinks of [editor]
+ * and shows the popup of an invisible hyperlink.
+ *
+ * The popup and its editor listener are removed when [coroutineScope] is cancelled.
+ */
 @ApiStatus.Internal
 class EditorHyperlinkInteraction(
   private val editor: EditorEx,
   private val effectSupplier: EditorHyperlinkEffectSupplier,
-  parentDisposable: Disposable,
+  coroutineScope: CoroutineScope,
 ) {
 
-  private val hintManager: InvisibleHyperlinkHintManager = InvisibleHyperlinkHintManager(editor, parentDisposable)
+  private val hintManager: InvisibleHyperlinkHintManager = InvisibleHyperlinkHintManager(editor, coroutineScope)
   private var followedLinkWrapper: ChangedAttrsLinkWrapper? = null
   private var hoveredLinkWrapper: ChangedAttrsLinkWrapper? = null
 

@@ -7,6 +7,8 @@ import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.process.ConsoleHighlighter
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -31,6 +33,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.test.assertFalse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -575,6 +580,23 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
 
     checkNotNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0))).run()
     assertEquals(listOf<HyperlinkInfo>(MyHyperlinkFilter.MyHyperlinkInfo(linkText)), activatedLinks)
+  }
+
+  @Test
+  fun `test EditorHyperlinkSupport#get completes on a background thread while a write action is running`() {
+    // The test ensures the EditorHyperlinkSupport constructor doesn't acquire a read action.
+    val created = runWriteAction {
+      val future = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+        EditorHyperlinkSupport.get(editor, trackDocumentChangesManually)
+      })
+      try {
+        future.get(10, TimeUnit.SECONDS)
+      }
+      catch (e: TimeoutException) {
+        throw AssertionError("EditorHyperlinkSupport.get waits for the write action to end", e)
+      }
+    }
+    assertSame(created, hyperlinkSupport)
   }
 
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {

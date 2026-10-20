@@ -6,14 +6,12 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.execution.impl.EditorHyperlinkUsageCollector.HyperlinkFollowedPlace
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -28,13 +26,12 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.eel.isMac
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.HintHint
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.cancelOnDispose
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
@@ -45,7 +42,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -60,9 +56,12 @@ import javax.swing.event.HyperlinkListener
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentDisposable: Disposable) {
+internal class InvisibleHyperlinkHintManager(
+  private val editor: Editor,
+  parentCoroutineScope: CoroutineScope,
+) {
 
-  private val coroutineScope: CoroutineScope = createCoroutineScope(editor, parentDisposable)
+  private val coroutineScope: CoroutineScope = parentCoroutineScope.childScope(InvisibleHyperlinkHintManager::class.java.name)
 
   private var hintInfoDeferred: Deferred<HintInfo>? = null
 
@@ -85,7 +84,7 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
           lastMousePressTime = event.mouseEvent.`when`
         }
       }
-    }, parentDisposable)
+    }, coroutineScope.asDisposable())
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       editor.contentComponent.launchOnShow(InvisibleHyperlinkHintManager::class.simpleName + ": cancel popup on hiding") {
         try {
@@ -252,13 +251,5 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
 
   companion object {
     private val LOG: Logger = logger<InvisibleHyperlinkHintManager>()
-
-    private fun createCoroutineScope(editor: Editor, parentDisposable: Disposable): CoroutineScope {
-      val baseScope = editor.project?.service<CoreUiCoroutineScopeHolder>()?.coroutineScope
-                      ?: service<CoreUiCoroutineScopeHolder>().coroutineScope
-      return baseScope.childScope(InvisibleHyperlinkHintManager::class.java.name).also {
-        it.coroutineContext.job.cancelOnDispose(parentDisposable)
-      }
-    }
   }
 }

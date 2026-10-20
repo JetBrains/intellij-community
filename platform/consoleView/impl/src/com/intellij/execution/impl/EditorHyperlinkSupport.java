@@ -4,13 +4,11 @@ package com.intellij.execution.impl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -22,7 +20,6 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -106,9 +103,7 @@ public final class EditorHyperlinkSupport {
     myEditor = (EditorEx)editor;
     myProject = project;
     myHyperlinkListeners = new CopyOnWriteArrayList<>();
-    Disposable editorDisposable = Disposer.newDisposable(project);
-    EditorUtil.disposeWithEditor(editor, editorDisposable);
-    myLinkInteraction = new EditorHyperlinkInteraction(myEditor, new MyEffectSupplier(), editorDisposable);
+    myLinkInteraction = new EditorHyperlinkInteraction(myEditor, new MyEffectSupplier(), editor.getCoroutineScope());
     myFilterRunner = new AsyncFilterRunner(this, myEditor, trackChangesManually);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
@@ -196,22 +191,20 @@ public final class EditorHyperlinkSupport {
     @NotNull Project project,
     boolean trackDocumentChangesManually
   ) {
-    EditorHyperlinkSupport cached = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
-    if (cached != null) {
-      return cached;
-    }
-    return EditorThreading.compute(() -> {
-      // acquire the read action before `LOCK` to avoid deadlocks
+    EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+    if (instance == null) {
+      // Acquire LOCK to ensure that only a single instance is created per editor.
+      // Because the EditorHyperlinkSupport constructor adds hyperlink interaction listeners.
       synchronized (LOCK) {
-        EditorHyperlinkSupport created = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
-        if (created == null) {
-          assert project != null;
-          created = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
-          editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, created);
+        // All editors share LOCK, so the constructor must not block or take a read action.
+        instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+        if (instance == null) {
+          instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
+          editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
         }
-        return created;
       }
-    });
+    }
+    return instance;
   }
 
   public void clearHyperlinks() {

@@ -626,7 +626,7 @@ class TerminalViewImpl(
 
     // Should be created before the mouse reporting is configured in "setupMouseEventsHandling".
     // To make mouse events first handled by hyperlinks logic and only then reported to the process.
-    val decorationApplier = createEditorTextDecorationApplier(editor, parentDisposable) {
+    val decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope) {
       consumeOnlyOnCtrlClick = true
     }
 

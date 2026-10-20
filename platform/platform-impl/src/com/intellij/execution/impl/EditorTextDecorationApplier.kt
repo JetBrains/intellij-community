@@ -2,7 +2,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -19,6 +18,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SlowOperations
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
@@ -66,14 +67,14 @@ sealed interface EditorTextDecorationApplier {
 /**
  * Creates a new decoration applier for the given editor.
  *
- * A parent disposable ensures that the applier unsubscribes from the editor listeners.
+ * The applier removes its editor listeners when [coroutineScope] is cancelled.
  */
 @ApiStatus.Experimental
 fun createEditorTextDecorationApplier(
   editor: EditorEx,
-  parentDisposable: Disposable,
+  coroutineScope: CoroutineScope,
   builder: (EditorTextDecorationApplierBuilder.() -> Unit)? = null,
-): EditorTextDecorationApplier = EditorTextDecorationApplierBuilderImpl(editor, parentDisposable).run {
+): EditorTextDecorationApplier = EditorTextDecorationApplierBuilderImpl(editor, coroutineScope).run {
   builder?.invoke(this)
   build()
 }
@@ -96,12 +97,12 @@ sealed interface EditorTextDecorationApplierBuilder {
 
 private class EditorTextDecorationApplierBuilderImpl(
   private val editor: EditorEx,
-  private val parentDisposable: Disposable,
+  private val coroutineScope: CoroutineScope,
 ) : EditorTextDecorationApplierBuilder {
   override var consumeOnlyOnCtrlClick: Boolean = false
 
   fun build(): EditorTextDecorationApplier {
-    return EditorTextDecorationApplierImpl(editor, parentDisposable, consumeOnlyOnCtrlClick)
+    return EditorTextDecorationApplierImpl(editor, coroutineScope, consumeOnlyOnCtrlClick)
   }
 }
 
@@ -357,18 +358,19 @@ private data class InlayDecorationImpl(
 
 private class EditorTextDecorationApplierImpl(
   private val editor: EditorEx,
-  parentDisposable: Disposable,
+  coroutineScope: CoroutineScope,
   private val consumeOnlyOnCtrlClick: Boolean,
 ) : EditorTextDecorationApplier {
   private val highlightersById = hashMapOf<EditorTextDecorationId, RangeHighlighterEx>()
   private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
-  private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier(), parentDisposable)
+  private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier(), coroutineScope)
   private var hoveredHyperlink: HyperlinkDecoration? = null
   private var lastMouseMovedEvent: EditorMouseEvent? = null
 
   init {
-    editor.addEditorMouseListener(MyMouseListener(), parentDisposable)
-    editor.addEditorMouseMotionListener(MyMouseMotionListener(), parentDisposable)
+    val disposable = coroutineScope.asDisposable()
+    editor.addEditorMouseListener(MyMouseListener(), disposable)
+    editor.addEditorMouseMotionListener(MyMouseMotionListener(), disposable)
   }
 
   override fun addDecorations(decorations: Collection<EditorTextDecoration>) {

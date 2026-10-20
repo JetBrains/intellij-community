@@ -31,7 +31,6 @@ import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -117,7 +116,7 @@ internal abstract class TerminalHyperlinksProcessingTestBase : BasePlatformTestC
       it.component.setSize(800, 600)
     }
 
-    private val decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable()) { consumeOnlyOnCtrlClick = true }
+    private val decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope) { consumeOnlyOnCtrlClick = true }
 
     private val hyperlinkFacade = installHyperlinksProcessing(
       project = project,
