@@ -9,7 +9,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
@@ -42,7 +42,7 @@ abstract class JsonSchemaVersionTestBase : BasePlatformTestCase() {
                                        completionType: CompletionType,
                                        vararg expectedCompletionItems: String) {
     val testedFileName = "test.${testDataLanguage.extension}"
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, schemaText, "json") { true }
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, schemaText, "json") { true }
     myFixture.configureByText(testedFileName, fileTextBefore)
     Assert.assertTrue("Provided schema must be among schemas available for tested file",
                       JsonSchemaService.Impl.get(myFixture.project)

@@ -40,7 +40,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Cod
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixtureKt.jsonSchemaHeavyFixture;
-import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema;
+import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture.registerJsonSchema;
 
 @PerformanceUnitTest
 @TestApplication

@@ -4,7 +4,7 @@ package com.jetbrains.jsonSchema.intentions
 import com.intellij.json.JsonBundle
 import com.intellij.json.JsonTestCase
 import com.intellij.psi.PsiFile
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture.Companion.registerJsonSchema
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import org.intellij.lang.annotations.Language
 import org.junit.Assert

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CoroutineScope
@@ -137,7 +137,7 @@ class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
     highlights.filter { it.inspectionToolId == "JsonSchemaCompliance" }
 
   private fun registerSchema(schemaText: String) {
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, schemaText, "json") { true }
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, schemaText, "json") { true }
   }
 
   // endregion

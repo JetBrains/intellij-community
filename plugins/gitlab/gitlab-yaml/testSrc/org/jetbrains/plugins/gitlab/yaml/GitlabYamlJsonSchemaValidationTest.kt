@@ -3,14 +3,14 @@ package org.jetbrains.plugins.gitlab.yaml
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection
 
 internal class GitlabYamlJsonSchemaValidationTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(YamlJsonSchemaHighlightingInspection::class.java)
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, """
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, """
       {
         "${"$"}schema": "http://json-schema.org/draft-07/schema#",
         "properties": {

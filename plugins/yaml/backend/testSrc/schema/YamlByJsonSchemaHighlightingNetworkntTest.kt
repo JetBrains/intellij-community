@@ -3,22 +3,28 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.json.networknt.wrapper.NetworkntValidationBridgeImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.jetbrains.jsonSchema.impl.NetworkntValidationBridge
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Runs ALL tests from [YamlByJsonSchemaHighlightingTest] with the networknt validation engine enabled.
  */
+@TestApplication
 open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlightingTest() {
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("json.schema.use.networknt.validation").setValue(true, testRootDisposable)
-    project.replaceService(NetworkntValidationBridge::class.java, NetworkntValidationBridgeImpl(project), testRootDisposable)
+  @BeforeEach
+  fun useNetworknt() {
+    Registry.get("json.schema.use.networknt.validation").setValue(true, myFixture.testRootDisposable)
+    val project = myFixture.project
+    project.replaceService(NetworkntValidationBridge::class.java, NetworkntValidationBridgeImpl(project), myFixture.testRootDisposable)
   }
 
   // === Overrides for tests where networknt correctly produces different/additional warnings ===
 
+  @Test
   override fun testAcceptSchemaWithoutType() {
     // networknt correctly detects oneOf multi-match: `localhost` matches `format:hostname` and
     // vacuously matches the unknown `format:ip4` (non-standard, treated as annotation-only), so both
@@ -34,9 +40,10 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
           }
         }
       }"""
-    doTest(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
+    mySchemaFixture.doTest(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
   }
 
+  @Test
   override fun testDoNotMarkOneOfThatDiffersWithFormat() {
     // Same as testAcceptSchemaWithoutType but with an explicit `type: string` on the property —
     // networknt still detects the multi-match between `hostname` and the unknown `ip4` format.
@@ -52,9 +59,10 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
           }
         }
       }"""
-    doTest(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
+    mySchemaFixture.doTest(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
   }
 
+  @Test
   override fun testEnum() {
     // networknt respects spec-level type distinction: unquoted YAML `18` parses as integer 18,
     // which is NOT in the enum `[1, 2, 3, "18"]` — only the string "18" is. The legacy validator
@@ -67,12 +75,13 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
           }
         }
       }"""
-    doTest(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">18</warning>""")
-    doTest(schema, "prop: 2")
-    doTest(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">6</warning>""")
+    mySchemaFixture.doTest(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">18</warning>""")
+    mySchemaFixture.doTest(schema, "prop: 2")
+    mySchemaFixture.doTest(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">6</warning>""")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test uppercase YAML boolean is preserved by networknt conversion`() {
     val schema = """
       {
@@ -81,10 +90,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: TRUE")
+    mySchemaFixture.doTest(schema, "value: TRUE")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test hexadecimal YAML integer is preserved by networknt conversion`() {
     val schema = """
       {
@@ -93,10 +103,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: 0x10")
+    mySchemaFixture.doTest(schema, "value: 0x10")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test signed hexadecimal YAML integer is preserved by networknt conversion`() {
     val schema = """
       {
@@ -105,10 +116,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: -0x10")
+    mySchemaFixture.doTest(schema, "value: -0x10")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test binary YAML integer is preserved by networknt conversion`() {
     val schema = """
       {
@@ -117,10 +129,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: 0b10000")
+    mySchemaFixture.doTest(schema, "value: 0b10000")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test underscored YAML integer is preserved by networknt conversion`() {
     val schema = """
       {
@@ -129,10 +142,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: 1_000")
+    mySchemaFixture.doTest(schema, "value: 1_000")
   }
 
   // https://yaml.org/spec/1.2.2/#732-single-quoted-style
+  @Test
   fun `test YAML single quoted apostrophe is preserved by networknt conversion`() {
     val schema = """
       {
@@ -141,10 +155,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: 'it''s'")
+    mySchemaFixture.doTest(schema, "value: 'it''s'")
   }
 
   // https://yaml.org/spec/1.2.2/#81-block-scalar-styles
+  @Test
   fun `test YAML block scalar remains string in networknt conversion`() {
     val schema = """
       {
@@ -153,10 +168,11 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: |-\n  1")
+    mySchemaFixture.doTest(schema, "value: |-\n  1")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test YAML infinity is not replaced with a finite number`() {
     val schema = """
       {
@@ -165,12 +181,13 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: .inf")
-    doTest(schema, "value: -.inf")
-    doTest(schema, "value: !!float .inf")
+    mySchemaFixture.doTest(schema, "value: .inf")
+    mySchemaFixture.doTest(schema, "value: -.inf")
+    mySchemaFixture.doTest(schema, "value: !!float .inf")
   }
 
   // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  @Test
   fun `test YAML NaN is not replaced with a finite number`() {
     val schema = """
       {
@@ -179,11 +196,12 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         }
       }
     """.trimIndent()
-    doTest(schema, "value: .nan")
-    doTest(schema, "value: +.nan")
-    doTest(schema, "value: !!float .nan")
+    mySchemaFixture.doTest(schema, "value: .nan")
+    mySchemaFixture.doTest(schema, "value: +.nan")
+    mySchemaFixture.doTest(schema, "value: !!float .nan")
   }
 
+  @Test
   override fun testAllOfProperties() {
     // networknt is spec-correct: `additionalProperties:false` at the top level does NOT "see through"
     // allOf branches. Properties declared inside allOf branches are treated as additional (forbidden)
@@ -196,17 +214,18 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
         ],
         "additionalProperties": false
       }"""
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       <warning descr="Schema validation: Property 'first' is not allowed">first</warning>: true
       <warning descr="Schema validation: Property 'second' is not allowed">second</warning>: 44
       <warning descr="Schema validation: Property 'other' is not allowed">other</warning>: 15
     """.trimIndent())
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       <warning descr="Schema validation: Property 'first' is not allowed">first</warning>: true
       <warning descr="Schema validation: Property 'second' is not allowed">second</warning>: <warning descr="Schema validation: Value should be one of: 33, 44">12</warning>
     """.trimIndent())
   }
 
+  @Test
   override fun testPropertyValueAlsoHighlightedIfPatternIsInvalid() {
     // UX regression vs legacy, but networknt is spec-compliant. JSON Schema spec recommends
     // ECMA-262 regex semantics, where `[]` is a valid (empty) character class matching nothing —
@@ -222,9 +241,10 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
           }
         }
       }"""
-    doTest(schema, """withPattern: <warning descr="Schema validation: String violates the pattern: '^[]${'$'}'">(124)555-4216</warning>""")
+    mySchemaFixture.doTest(schema, """withPattern: <warning descr="Schema validation: String violates the pattern: '^[]${'$'}'">(124)555-4216</warning>""")
   }
 
+  @Test
   override fun testNumberOfSameNamedPropertiesCorrectlyChecked() {
     // The legacy test fed a YAML mapping with a duplicate `a` key and expected both occurrences
     // to be flagged individually. networknt validates the merged object (YAML 1.2 treats duplicate
@@ -247,7 +267,7 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
           }
         }
       }"""
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       size:
        a: <warning descr="Schema validation: Incompatible types.
        Required: boolean. Actual: integer.">1</warning>
@@ -255,11 +275,12 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
     """.trimIndent())
   }
 
+  @Test
   override fun testRefRefInvalid() {
     // networknt reports the precise actual type — `integer` — where the legacy validator generalized
     // to `number`. Integer is a subtype of number in JSON Schema; the more specific label is better UX.
     // networknt also omits the leading padding before "Required:" that the legacy formatter injected.
-    doTest(SCHEMA_FOR_REFS, """
+    mySchemaFixture.doTest(SCHEMA_FOR_REFS, """
       x: &b <warning descr="Schema validation: Incompatible types.
        Required: array. Actual: integer.">7</warning>
       

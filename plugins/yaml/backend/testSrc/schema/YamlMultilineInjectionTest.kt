@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture.Companion.registerJsonSchema
 import junit.framework.TestCase
 import kotlinx.coroutines.job
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction

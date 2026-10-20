@@ -62,7 +62,7 @@ class JsonSchemaPerformanceNetworkntTest : JsonSchemaPerformanceTest() {
   override fun testAzureRehighlightAfterTyping() {
     myFixture.enableInspections(JsonSchemaComplianceInspection::class.java)
     val schemaText = FileUtil.loadFile(File(myFixture.testDataPath + "/azure-schema.json"))
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, schemaText, "json") { true }
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, schemaText, "json") { true }
     myFixture.configureByFile("/azure-file.json")
 
     // warmup
@@ -87,7 +87,7 @@ class JsonSchemaPerformanceNetworkntTest : JsonSchemaPerformanceTest() {
       myFixture.enableInspections(JsonSchemaRefReferenceInspection::class.java)
       myFixture.enableInspections(JsonSchemaDeprecationInspection::class.java)
       val schemaText = FileUtil.loadFile(File(myFixture.testDataPath + "/azure-schema.json"))
-      JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, schemaText, "json") { true }
+      JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, schemaText, "json") { true }
       myFixture.configureByFile("/azure-file.json")
       val highlights = myFixture.doHighlighting()
       val warnings = highlights.filter { it.severity.name == "WARNING" }
