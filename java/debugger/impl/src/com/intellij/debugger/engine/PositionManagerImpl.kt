@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
+import com.intellij.debugger.BytecodeInspector
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.PositionManagerAsync
@@ -63,7 +64,6 @@ import com.sun.jdi.ReferenceType
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.org.objectweb.asm.Opcodes
 import java.util.function.Consumer
 import kotlin.math.max
 import kotlin.math.min
@@ -573,26 +573,21 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
     @ApiStatus.Internal
     @JvmStatic
     suspend fun adjustPositionForConditionalReturnAsync(location: Location, file: PsiFile, lineNumber: Int): SourcePosition? {
-      if (!location.virtualMachine().canGetBytecodes()) return null
       val returnPointer = readAction {
         if (!file.isValid) return@readAction null
         JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber)?.let {
           SmartPointerManager.createPointer(it)
         }
       } ?: return null
-      val method = DebuggerUtilsEx.getMethod(location) ?: return null
-      val bytecodes = method.bytecodes()
-      val bytecodeOffset = Math.toIntExact(location.codeIndex())
-      // The final implicit return must not be treated as a conditional return.
-      if (bytecodeOffset in 0 until bytecodes.size - 1) {
-        val opcode = bytecodes[bytecodeOffset].toInt() and 0xFF
-        if (opcode in Opcodes.IRETURN..Opcodes.RETURN) {
-          return readAction {
-            returnPointer.element?.let { SourcePosition.createFromOffset(it.containingFile, it.textOffset) }
-          }
-        }
+
+      val bytecodeInspector = BytecodeInspector.getInstance(location.virtualMachine()) ?: return null
+      if (!bytecodeInspector.isConditionalReturnLocation(location)) {
+        return null
       }
-      return null
+
+      return readAction {
+        returnPointer.element?.let { SourcePosition.createFromOffset(it.containingFile, it.textOffset) }
+      }
     }
 
     @RequiresReadLock

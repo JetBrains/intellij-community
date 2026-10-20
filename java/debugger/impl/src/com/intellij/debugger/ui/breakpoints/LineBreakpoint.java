@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.BytecodeInspector;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.JvmDebuggerUtils;
@@ -13,12 +14,11 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.InstrumentationBreakpointState;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.debugger.source.DebuggerSourceFileResolver;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +60,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -74,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
   private final boolean myIgnoreSameLineLocations;
@@ -154,12 +156,14 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
 
         if (getProperties() instanceof JavaLineBreakpointProperties props && props.isConditionalReturn()) {
-          if (DebuggerUtils.isAndroidVM(classType.virtualMachine())) {
+          VirtualMachine vm = classType.virtualMachine();
+          BytecodeInspector bytecodeInspector = BytecodeInspector.getInstance(vm);
+          if (bytecodeInspector == null) {
             XDebuggerManagerImpl.getNotificationGroup()
-              .createNotification(JavaDebuggerBundle.message("message.conditional.return.breakpoint.on.android"), MessageType.INFO)
+              .createNotification(JavaDebuggerBundle.message("message.conditional.return.breakpoint.not.supported", vm.name()), MessageType.INFO)
               .notify(debugProcess.getProject());
           }
-          else if (classType.virtualMachine().canGetBytecodes() && classType.virtualMachine().canGetConstantPool()) {
+          else {
             locations = locations.stream()
               .map(l -> l.method())
               .distinct()

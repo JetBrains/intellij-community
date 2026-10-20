@@ -320,7 +320,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  protected static Stream<Location> collectInlineConditionalReturnLocations(@NotNull Method method, int lineNumber) {
+  public static Stream<Location> collectInlineConditionalReturnLocations(@NotNull Method method, int lineNumber) {
     assert lineNumber > 0;
     class Visitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
       final SmartList<Integer> returnOffsets = new SmartList<>();
