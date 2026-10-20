@@ -5,16 +5,20 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
 import com.jetbrains.python.inspections.dependencies.DependenciesInspection
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
+import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Light counterpart of [com.intellij.python.junit5Tests.env.packaging.DependenciesPsiProviderTest], which needs a real
@@ -119,6 +123,31 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
                  highlights.single().description)
   }
 
+  // A reload invalidates the declared-dependencies cache. The inspection stays available.
+  @TestFor(issues = ["PY-93327"])
+  fun testAnOutdatedRequirementIsStillReportedAfterAPackageReload() {
+    val provider = TestPackageManagerProvider()
+      .withPackageInstalled(PythonPackage("mypy", "1.0", false))
+      .withOutdatedPackages(PythonOutdatedPackage("mypy", "1.0", "2.0"))
+    highlight(provider, "mypy\n")
+
+    reloadPackages()
+
+    assertThat(myFixture.doHighlighting().single().description)
+      .isEqualTo(PyBundle.message("python.sdk.inspection.message.version.outdated.latest", "mypy", "1.0", "2.0"))
+  }
+
+  // The gate of the test above, asserted on its own. The installed-version hints read the same snapshot.
+  @TestFor(issues = ["PY-93329"])
+  fun testTheDependencyFileIsStillTrackedAfterAPackageReload() {
+    highlight(TestPackageManagerProvider(), "mypy\n")
+    val dependencyFile = myFixture.file
+
+    reloadPackages()
+
+    assertThat(packageManager().tracksDependencyFile(dependencyFile)).isTrue()
+  }
+
   fun testEmptyFileIsReportedWithAnExportFix() {
     val highlights = highlight(TestPackageManagerProvider(), "")
 
@@ -151,6 +180,19 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
                                configuredFile = "dev-requirements.txt")
 
     assertEmpty(highlights)
+  }
+
+  private fun packageManager(): PythonPackageManager =
+    PythonPackageManager.forPythonInterpreter(myFixture.project, findPythonInterpreterForTests(myFixture.module)!!)
+
+  /** The same reload a package operation and a background SDK update perform. */
+  private fun reloadPackages() {
+    val manager = packageManager()
+    // the reload runs read actions, which a plain `runBlocking` on the EDT would deadlock against a
+    // pending background write action
+    runWithModalProgressBlocking(myFixture.project, "Reloading the test packages") {
+      manager.reloadPackages()
+    }
   }
 
   private fun intentionsAt(text: String): List<String> {
