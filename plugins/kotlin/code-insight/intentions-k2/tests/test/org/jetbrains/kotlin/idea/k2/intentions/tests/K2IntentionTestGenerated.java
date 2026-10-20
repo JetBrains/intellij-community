@@ -13897,6 +13897,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/disabledFeatureFlag.kt");
         }
 
+        @TestMetadata("enumEntryMember.kt")
+        public void testEnumEntryMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/enumEntryMember.kt");
+        }
+
         @TestMetadata("existingCompanionBlock.kt")
         public void testExistingCompanionBlock() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/existingCompanionBlock.kt");
@@ -14048,6 +14053,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("disabledFeatureFlag.kt")
         public void testDisabledFeatureFlag() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/disabledFeatureFlag.kt");
+        }
+
+        @TestMetadata("enumEntryMember.kt")
+        public void testEnumEntryMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/enumEntryMember.kt");
         }
 
         @TestMetadata("existingCompanionBlock.kt")
@@ -14236,6 +14246,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/enumEntry.kt");
+        }
+
+        @TestMetadata("enumEntryMember.kt")
+        public void testEnumEntryMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/enumEntryMember.kt");
         }
 
         @TestMetadata("expectClass.kt")
