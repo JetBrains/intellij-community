@@ -19428,7 +19428,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "python-community-impl-completion-ranking-python-with-full-line",
+    name = "python-code_insight-completion-ranking-python-with-full-line",
     jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
     source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1-sources_http//file",
     visibility = ["//visibility:public"],
@@ -19443,7 +19443,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "python-community-impl-ml-completion-prev-exprs-models",
+    name = "python-code_insight-ml-completion-prev-exprs-models",
     jar = "@completion_ml_python_features-ml-completion-prev-exprs-models-1_11_http//file",
     visibility = ["//visibility:public"],
 )

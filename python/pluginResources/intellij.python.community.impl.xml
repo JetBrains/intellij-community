@@ -464,12 +464,7 @@
     <usageTargetProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralUsageTargetProvider"/>
     <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
 
-    <completion.ml.contextFeatures language="Python"
-                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
-    <completion.ml.elementFeatures language="Python"
-                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatureProvider"/>
     <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
-    <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="first, before completionAutoPopup"/>
 

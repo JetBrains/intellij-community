@@ -3,7 +3,14 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.python.codeInsight` start
-content_module_jar(module = ":codeInsight")
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:python-code_insight-ml-completion-prev-exprs-models",
+        "@lib//:python-code_insight-completion-ranking-python-with-full-line",
+    ],
+    module = ":codeInsight",
+)
 ### auto-generated section `dev intellij.python.codeInsight` end
 
 ### auto-generated section `build intellij.python.codeInsight` start
@@ -33,9 +40,13 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/fastutil",
+        "//libraries/gson",
         "//libraries/guava",
         "//libraries/jetbrains/annotations",
         "//libraries/jsoup",
+        "//libraries/jspecify",
+        "//libraries/kotlinx/coroutines/core",
         "//libraries/stream",
         "//platform/analysis-api:analysis",
         "//platform/analysis-impl",
@@ -50,6 +61,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/internal",
         "//platform/indexing-api:indexing",
         "//platform/lang-api:lang",
         "//platform/lang-core",
@@ -64,12 +76,16 @@ jvm_library(
         "//RegExpSupport:regexp",
         "//xml/xml-psi-impl:psi-impl",
         "//python/python-ast:ast",
+        "//python/openapi:community",
         "//python/python-parser:parser",
         "//python/python-psi-api:psi",
         "//python/python-psi-impl:psi-impl",
+        "//python/python-pyproject:pyproject",
         "//python/python-sdk/backend",
         "//python/python-syntax:syntax",
         "//python/python-syntax-core:syntax-core",
+        "@lib//:python-code_insight-ml-completion-prev-exprs-models",
+        "@lib//:python-code_insight-completion-ranking-python-with-full-line",
     ],
 )
 
@@ -86,9 +102,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":codeInsight",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/gson:gson_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
+        "//libraries/jspecify:jspecify_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/stream:stream_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
@@ -103,6 +123,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-core:lang-core_test_lib",
@@ -117,9 +138,11 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//xml/xml-psi-impl:psi-impl_test_lib",
         "//python/python-ast:ast_test_lib",
+        "//python/openapi:community_test_lib",
         "//python/python-parser:parser_test_lib",
         "//python/python-psi-api:psi_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//python/python-syntax:syntax_test_lib",
         "//python/python-syntax-core:syntax-core_test_lib",

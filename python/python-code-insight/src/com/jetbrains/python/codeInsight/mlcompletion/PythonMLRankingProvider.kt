@@ -3,10 +3,10 @@ package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 
 class PythonMLRankingProvider :
-  CatBoostJarCompletionModelProvider(PyBundle.message("settings.completion.ml.python.display.name"), "python_features_full_line_exp", "python_model_full_line_exp") {
+  CatBoostJarCompletionModelProvider(PyCodeInsightBundle.message("settings.completion.ml.python.display.name"), "python_features_full_line_exp", "python_model_full_line_exp") {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("python", ignoreCase = true) == 0
 

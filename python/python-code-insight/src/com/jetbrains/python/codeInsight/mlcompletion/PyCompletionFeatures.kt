@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,8 +17,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyConditionalStatementPart
@@ -91,11 +93,11 @@ object PyCompletionFeatures {
     val containingFile = psiElement.containingFile
     if (psiElement is PsiDirectory) {
       vFile = psiElement.virtualFile
-      sdk = findModuleSdkIfReady(ModuleUtilCore.findModuleForPsiElement(psiElement))
+      sdk = findModuleSdk(ModuleUtilCore.findModuleForPsiElement(psiElement))
     }
     else if (containingFile != null) {
       vFile = containingFile.virtualFile
-      sdk = findModuleSdkIfReady(ModuleUtilCore.findModuleForPsiElement(containingFile))
+      sdk = findModuleSdk(ModuleUtilCore.findModuleForPsiElement(containingFile))
     }
     if (vFile != null) {
       val isFromStdLib = PySkeletonUtil.isStdLib(vFile, sdk)
@@ -227,4 +229,10 @@ object PyCompletionFeatures {
 
   private fun isOriginalElementsTheSame(a: PsiElement, b: PsiElement) =
     CompletionUtil.getOriginalElement(a) == CompletionUtil.getOriginalElement(b)
+
+  /** The SDK of the interpreter of the Python project on [module], read from the snapshot. */
+  private fun findModuleSdk(module: Module?): Sdk? {
+    @Suppress("DEPRECATION") // The features still take an SDK.
+    return module?.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+  }
 }

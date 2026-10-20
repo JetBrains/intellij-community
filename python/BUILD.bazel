@@ -4,14 +4,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.python.community.impl` start
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
-        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
-    ],
-    module = ":python-community-impl",
-)
+content_module_jar(module = ":python-community-impl")
 ### auto-generated section `dev intellij.python.community.impl` end
 
 ### auto-generated section `dev intellij.python.pydev` start
@@ -536,7 +529,6 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//libraries/stream",
         "//platform/statistics",
-        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
         "//platform/util",
         "//libraries/netty/buffer",
         "//platform/core-ui",
@@ -561,7 +553,6 @@ jvm_library(
         "//python/python-psi-api:psi",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
-        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
         "//platform/backend/observation",
         "//platform/ml-api:ml",
         "//platform/util/coroutines",

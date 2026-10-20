@@ -160,21 +160,27 @@
             "module": "intellij.python.community"
         },
         {
-            "destination": "lib/modules/intellij.python.community.impl.jar",
+            "module": "intellij.python.community.impl"
+        },
+        {
+            "module": "intellij.python.refactoring"
+        },
+        {
+            "destination": "lib/modules/intellij.python.codeInsight.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "intellij.python.community.impl",
+                        "input": "intellij.python.codeInsight",
                         "kind": "module",
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+                        "input": "@lib//:python-code_insight-ml-completion-prev-exprs-models",
                         "kind": "library",
                         "filter": "library-v1"
                     },
                     {
-                        "input": "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+                        "input": "@lib//:python-code_insight-completion-ranking-python-with-full-line",
                         "kind": "library",
                         "filter": "library-v1"
                     }
@@ -183,12 +189,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "module": "intellij.python.refactoring"
-        },
-        {
-            "module": "intellij.python.codeInsight"
         },
         {
             "module": "intellij.python.django.common"

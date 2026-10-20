@@ -1,9 +1,13 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.jspecify"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
@@ -18,6 +22,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
@@ -27,9 +32,11 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.python.ast"/>
+    <module name="intellij.python.community"/>
     <module name="intellij.python.parser"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.syntax.core"/>
@@ -183,6 +190,12 @@
                         implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
+
+    <completion.ml.contextFeatures language="Python"
+                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="Python"
+                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatureProvider"/>
+    <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
