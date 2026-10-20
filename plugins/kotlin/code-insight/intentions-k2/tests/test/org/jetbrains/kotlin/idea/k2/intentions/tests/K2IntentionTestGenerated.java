@@ -14047,6 +14047,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/redeclarationConflictProperty.kt");
         }
 
+        @TestMetadata("superCallInFunction.kt")
+        public void testSuperCallInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/superCallInFunction.kt");
+        }
+
+        @TestMetadata("superCallInObjectLiteral.kt")
+        public void testSuperCallInObjectLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/superCallInObjectLiteral.kt");
+        }
+
+        @TestMetadata("superCallInProperty.kt")
+        public void testSuperCallInProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/superCallInProperty.kt");
+        }
+
         @TestMetadata("updateUsages.kt")
         public void testUpdateUsages() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/updateUsages.kt");
@@ -14198,6 +14213,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("protectedFun.kt")
         public void testProtectedFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/protectedFun.kt");
+        }
+
+        @TestMetadata("superCallInFunction.kt")
+        public void testSuperCallInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/superCallInFunction.kt");
         }
     }
 
@@ -14396,6 +14416,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("restrictedInstanceName.kt")
         public void testRestrictedInstanceName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/restrictedInstanceName.kt");
+        }
+
+        @TestMetadata("superCallInFunction.kt")
+        public void testSuperCallInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/superCallInFunction.kt");
         }
 
         @TestMetadata("topLevelFunction.kt")
