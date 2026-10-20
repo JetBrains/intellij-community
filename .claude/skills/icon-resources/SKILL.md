@@ -19,9 +19,13 @@ Use this skill when adding, renaming, moving, deleting, or referencing icons und
 
 1. Prefer running the IDE run configuration `Icons processing | Generate icon classes` when available.
 2. If the run configuration is unavailable, run the icon-class test and apply the exact generated diff it prints for the affected class:
-   `./tests.cmd --module intellij.platform.images.build.tests --test org.jetbrains.intellij.build.images.CommunityIconClassesTest`
+   `bt.cmd --module intellij.platform.images.build.tests --filter org.jetbrains.intellij.build.images.CommunityIconClassesTest`
 3. After applying the generated output, rerun the same test to confirm there are no stale generated icon classes.
 4. Also run the affected module tests or compilation for production call-site changes; the icon-class test validates generated files but does not necessarily compile every icon consumer.
+5. A new or renamed field in a generated icon class changes the public API. Update the API dumps of each module with a changed icon class. In the monorepo, use the `api-dump` skill to run `ApiCheckTest`. For `AllIcons`, update these modules:
+   - `intellij.platform.util.ui` for `AllIcons`
+   - `intellij.platform.icons` for `AllIconDescriptors`
+   - `intellij.platform.jewel.ui` for `AllIconsKeys`
 
 ## Bazel Status
 
@@ -29,4 +33,4 @@ As of this guide, icon class generation is not exposed as a Bazel runnable targe
 
 `bazel query 'kind(".*binary.*", @community//platform/build-scripts/icons:all)'`
 
-Use Bazel-backed `tests.cmd` for verification. If a generator binary target is added later, prefer that documented Bazel target over the IDE run configuration.
+Use `bt.cmd` for verification. If a generator binary target is added later, prefer that documented Bazel target over the IDE run configuration.
