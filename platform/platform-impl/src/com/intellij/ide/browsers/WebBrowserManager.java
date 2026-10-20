@@ -45,8 +45,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
   private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
   private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
-  private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
   private static final UUID PREDEFINED_OLD_EDGE_ID = UUID.fromString("B2A9DCA7-9D0B-4E1E-98A8-AFB19C1328D2");
+  private static final UUID PREDEFINED_OLD_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
   private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
 
   private static final UUID[] PREDEFINED_BROWSER_IDS = new UUID[]{
@@ -54,7 +54,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     PREDEFINED_FIREFOX_ID,
     PREDEFINED_SAFARI_ID,
     PREDEFINED_OPERA_ID,
-    PREDEFINED_EXPLORER_ID,
     PREDEFINED_EDGE_ID
   };
 
@@ -81,9 +80,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
                                  BrowserFamily.SAFARI.getExecutionPath(), SystemInfo.isMac,
                                  BrowserFamily.SAFARI.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false, null),
-      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER, BrowserFamily.EXPLORER.getName(),
-                                 BrowserFamily.EXPLORER.getExecutionPath(), false,
-                                 BrowserFamily.EXPLORER.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.CHROME, "Edge",
                                  getEdgeExecutionPath(), SystemInfo.isWindows,
                                  BrowserFamily.CHROME.createBrowserSpecificSettings())
@@ -234,7 +230,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       UUID id;
       switch (family) {
         case CHROME -> id = PREDEFINED_CHROME_ID;
-        case EXPLORER -> id = PREDEFINED_EXPLORER_ID;
         case FIREFOX -> id = PREDEFINED_FIREFOX_ID;
         case SAFARI -> id = PREDEFINED_SAFARI_ID;
         default -> {
@@ -287,13 +282,17 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     List<ConfigurableWebBrowser> list = new ArrayList<>();
     for (Element child : element.getChildren("browser")) {
       String familyValue = child.getAttributeValue("family");
+      if ("EXPLORER".equals(familyValue)) {
+        // Internet Explorer is no longer supported, so a custom browser of this family keeps no family
+        familyValue = null;
+      }
       BrowserFamily family = familyValue == null ? null : readFamily(familyValue);
       if (familyValue != null && family == null) {
         continue;
       }
 
       UUID id = readId(child.getAttributeValue("id"), family, list);
-      if (id == null || PREDEFINED_OLD_EDGE_ID.equals(id)) {
+      if (id == null || PREDEFINED_OLD_EDGE_ID.equals(id) || PREDEFINED_OLD_EXPLORER_ID.equals(id)) {
         continue;
       }
 
