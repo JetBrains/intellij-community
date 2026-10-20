@@ -47,19 +47,26 @@ internal class DocumentCoreImpl private constructor(
   override fun frozen(): FrozenDocument {
     val snapshot = this.snapshot
     val frozen = this.frozen
-    if (frozen != null && frozen.snapshot === snapshot) {
+    if (frozen != null && isFrozenFrom(frozen, snapshot)) {
       return frozen
     }
     synchronized(this) {
       val snapshot = this.snapshot
       var frozen = this.frozen
-      if (frozen != null && frozen.snapshot === snapshot) {
+      if (frozen != null && isFrozenFrom(frozen, snapshot)) {
         return frozen
       }
-      frozen = FrozenDocument(snapshot)
+      frozen = FrozenDocument(snapshot.text(), snapshot.modState().stamp())
       this.frozen = frozen
       return frozen
     }
+  }
+
+  /**
+   * Whether [frozen] has the text and the modification stamp of [snapshot]. A frozen document holds nothing else.
+   */
+  private fun isFrozenFrom(frozen: FrozenDocument, snapshot: DocumentSnapshot): Boolean {
+    return frozen.docText === snapshot.text() && frozen.modificationStamp == snapshot.modState().stamp()
   }
 
   private inner class LiveCharSequence : CharSequence {

@@ -46,7 +46,7 @@ interface DocumentCore {
   fun settings(): DocumentSettings
 
   /**
-   * Returns frozen document based on current [snapshot].
+   * Returns a frozen document with the text and the modification stamp of the current [snapshot].
    *
    * It is a bridge between internal [DocumentSnapshot] and public [DocumentEx]
    */

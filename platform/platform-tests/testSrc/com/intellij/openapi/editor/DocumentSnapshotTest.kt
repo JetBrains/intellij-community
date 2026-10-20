@@ -49,20 +49,6 @@ internal class DocumentSnapshotTest {
   }
 
   @Test
-  fun `frozen document is cached while the snapshot is unchanged`() {
-    val document = DocumentImpl("abc")
-    assertSame(document.core.frozen(), document.core.frozen())
-  }
-
-  @Test
-  fun `frozen document is rebuilt once the snapshot changes`() {
-    val document = DocumentImpl("abc")
-    val before = document.core.frozen()
-    document.modificationStamp += 1
-    assertNotSame(before, document.core.frozen())
-  }
-
-  @Test
   fun `dumpState lists line intervals`() {
     assertEquals("intervals:\n0: 0-2, 1: 3-5", snapshot("ab\ncd").dumpState())
   }

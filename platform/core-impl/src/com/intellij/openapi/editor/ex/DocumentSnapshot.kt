@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Contract
  *
  * [applyOp] returns `this` when it changes nothing, and callers depend on that: a no-op update leaves
  * the core's snapshot field pointing at the same instance, and caches keyed by snapshot identity, such as the
- * frozen document of [DocumentCore.frozen], keep hitting.
+ * range marker roots, keep hitting.
  *
  * @see DocumentCore.snapshot
  */
