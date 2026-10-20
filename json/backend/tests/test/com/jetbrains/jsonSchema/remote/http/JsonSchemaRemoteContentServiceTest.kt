@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -15,7 +16,9 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +29,14 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
@@ -37,32 +48,35 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.hours
 
-class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
-  // The tests wait for downloads. A sync VFS refresh of a download needs the EDT, so a test must not block it.
-  override fun runInDispatchThread(): Boolean = false
+@TestApplication
+class JsonSchemaRemoteContentServiceTest {
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
+
+  private val project: Project get() = projectFixture.get()
 
   private lateinit var scope: CoroutineScope
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     setRemoteSchemaAccessAllowed(true, testRootDisposable)
     clearRemoteSchemaCache()
   }
 
-  override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     try {
-      scope.cancel()
-      clearRemoteSchemaCache()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
+      if (::scope.isInitialized) {
+        scope.cancel()
+      }
     }
     finally {
-      super.tearDown()
+      clearRemoteSchemaCache()
     }
   }
 
+  @Test
   fun testCacheHitDoesNotIssueHttp() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("cached".toByteArray())))
     val transport = FakeTransport()
@@ -72,6 +86,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testCacheMissReturnsImmediatelyAndDownloads() {
     val cache = FakeCache()
     val transport = FakeTransport()
@@ -83,6 +98,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertTrue(cache.written.await(5, TimeUnit.SECONDS))
   }
 
+  @Test
   fun testStaleCacheIsReturnedAndRefreshed() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("stale".toByteArray()), isStale = true))
     val transport = FakeTransport()
@@ -93,6 +109,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(1, transport.calls.get())
   }
 
+  @Test
   fun testStaleCacheWithValidatorsRefreshesTimestampAfterNotModifiedResponse() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("stale".toByteArray()), etag = "etag", isStale = true))
     val transport = NotModifiedTransport()
@@ -104,6 +121,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.downloads.get())
   }
 
+  @Test
   fun testNotModifiedDoesNotNotifyListeners() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("stale".toByteArray()), etag = "etag", isStale = true))
     val transport = NotModifiedTransport()
@@ -115,11 +133,12 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertNotNull(service.getCachedFile(URL))
     assertTrue(cache.refreshed.await(5, TimeUnit.SECONDS))
     assertEquals(1, transport.refreshes.get())
-    assertFalse("a 304 must not reset schema consumers", notified.get())
+    assertFalse(notified.get(), "a 304 must not reset schema consumers")
     Disposer.dispose(disposable)
   }
 
-  fun testNotModifiedNotifiesWhenTheLoadChangesTheMemory() = timeoutRunBlocking {
+  @Test
+  fun testNotModifiedNotifiesWhenTheLoadChangesTheMemory(): Unit = timeoutRunBlocking {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("stale".toByteArray()), etag = "etag", isStale = true))
     cache.answerLookupWith(null)
     cache.loadChangesMemory = true
@@ -130,19 +149,21 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     subscribeToDownloads(disposable) { notified.countDown() }
 
     assertNull(readAction { service.getCachedFile(URL) })
-    assertTrue("stale disk + VFS miss + 304 must adopt and notify", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "stale disk + VFS miss + 304 must adopt and notify")
     assertEquals(1, transport.refreshes.get())
     assertEquals(0, transport.downloads.get())
     Disposer.dispose(disposable)
   }
 
-  fun testUntrustedProjectReadsNeitherCacheNorNetwork() = assertDeniedDoesNoWork {
+  @Test
+  fun testUntrustedProjectReadsNeitherCacheNorNetwork(): Unit = assertDeniedDoesNoWork {
     TrustedProjectsTestUtil.enableTrustedProjectsCheck(testRootDisposable)
     TrustedProjects.setProjectTrusted(project, false)
     Disposer.register(testRootDisposable) { TrustedProjects.setProjectTrusted(project, true) }
   }
 
-  fun testRemotePreferenceDisabledReadsNeitherCacheNorNetwork() = assertDeniedDoesNoWork {
+  @Test
+  fun testRemotePreferenceDisabledReadsNeitherCacheNorNetwork(): Unit = assertDeniedDoesNoWork {
     val configuration = JsonSchemaCatalogProjectConfiguration.getInstance(project)
     val catalogEnabled = configuration.isCatalogEnabled
     val preferRemoteSchemas = configuration.isPreferRemoteSchemas
@@ -153,14 +174,17 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     }
   }
 
-  fun testRegistryDisabledReadsNeitherCacheNorNetwork() = assertDeniedDoesNoWork {
+  @Test
+  fun testRegistryDisabledReadsNeitherCacheNorNetwork(): Unit = assertDeniedDoesNoWork {
     Registry.get("json.schema.networknt.resolve.remote.refs").setValue(false, testRootDisposable)
   }
 
-  fun testUnitTestModeWithoutTheTestModeFlagReadsNeitherCacheNorNetwork() = assertDeniedDoesNoWork {
+  @Test
+  fun testUnitTestModeWithoutTheTestModeFlagReadsNeitherCacheNorNetwork(): Unit = assertDeniedDoesNoWork {
     setRemoteSchemaAccessAllowed(false, testRootDisposable)
   }
 
+  @Test
   fun testConcurrentMissesShareOneRequest() {
     val gate = CompletableDeferred<Unit>()
     val cache = FakeCache()
@@ -174,7 +198,8 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertTrue(cache.written.await(5, TimeUnit.SECONDS))
   }
 
-  fun testAccessRevokedWhileQueuedPerformsNoWork() = timeoutRunBlocking {
+  @Test
+  fun testAccessRevokedWhileQueuedPerformsNoWork(): Unit = timeoutRunBlocking {
     val gate = CompletableDeferred<Unit>()
     val cache = FakeCache()
     val transport = FakeTransport(gate)
@@ -194,13 +219,14 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     gate.complete(Unit)
 
     waitUntil("the queued download must complete") { !service.hasInFlight(queued) }
-    assertEquals("the queued URL must not be fetched after access is revoked", 1L, transport.thirtyThreeStarted.count)
-    assertFalse("the queued URL must not be cached", cache.writtenUrls().contains(queued))
-    assertFalse("the queued URL must not be published", notified.contains(queued))
+    assertEquals(1L, transport.thirtyThreeStarted.count, "the queued URL must not be fetched after access is revoked")
+    assertFalse(cache.writtenUrls().contains(queued), "the queued URL must not be cached")
+    assertFalse(notified.contains(queued), "the queued URL must not be published")
     Disposer.dispose(disposable)
   }
 
-  fun testAccessRevokedDuringTheRequestDiscardsTheResponse() = timeoutRunBlocking {
+  @Test
+  fun testAccessRevokedDuringTheRequestDiscardsTheResponse(): Unit = timeoutRunBlocking {
     val gate = CompletableDeferred<Unit>()
     val cache = FakeCache()
     val transport = FakeTransport(gate)
@@ -215,12 +241,13 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     gate.complete(Unit)
 
     waitUntil("the download must complete after access is revoked") { !service.hasInFlight(URL) }
-    assertFalse("a response fetched before access is revoked must not be cached", cache.writtenUrls().contains(URL))
-    assertFalse("a response fetched before access is revoked must not be published", notified.contains(URL))
+    assertFalse(cache.writtenUrls().contains(URL), "a response fetched before access is revoked must not be cached")
+    assertFalse(notified.contains(URL), "a response fetched before access is revoked must not be published")
     Disposer.dispose(disposable)
   }
 
-  fun testCancelledScopeDoesNotLeaveAnInFlightEntry() = timeoutRunBlocking {
+  @Test
+  fun testCancelledScopeDoesNotLeaveAnInFlightEntry(): Unit = timeoutRunBlocking {
     val service = service(FakeCache(), FakeTransport())
     scope.cancel()
     scope.coroutineContext.job.join()
@@ -228,9 +255,10 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     service.prefetch(URL)
     service.prefetch(URL)
 
-    assertFalse("a cancelled scope must not pin the URL in inFlight", service.hasInFlight(URL))
+    assertFalse(service.hasInFlight(URL), "a cancelled scope must not pin the URL in inFlight")
   }
 
+  @Test
   fun testAtMostThirtyTwoDownloadsRunConcurrently() {
     val gate = CompletableDeferred<Unit>()
     val transport = FakeTransport(gate)
@@ -242,6 +270,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     gate.complete(Unit)
   }
 
+  @Test
   fun testDisposedProjectCancelsDownloads() {
     val gate = CompletableDeferred<Unit>()
     val transport = FakeTransport(gate)
@@ -254,6 +283,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertTrue(transport.cancelled.await(5, TimeUnit.SECONDS))
   }
 
+  @Test
   fun testSuccessfulDownloadNotifiesListenerOnce() {
     val cache = FakeCache()
     val service = service(cache, FakeTransport())
@@ -271,12 +301,14 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testGetCachedFileStringOverloadReturnsNullOnMalformedUrl() {
     val service = service(FakeCache(), FakeTransport())
 
     assertNull(service.getCachedFile("not a url"))
   }
 
+  @Test
   fun testNotFoundDownloadIsCachedAndPreventsFurtherDownloadAttempts() {
     val cache = FakeCache()
     val transport = NotFoundTransport()
@@ -291,6 +323,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(1, transport.calls.get())
   }
 
+  @Test
   fun testErrorDownloadNotifiesListenersAndCachesUnavailable() {
     val cache = FakeCache()
     val service = service(cache, NotFoundTransport())
@@ -299,12 +332,13 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     subscribeToDownloads(disposable) { notified.countDown() }
 
     assertNull(service.downloadAndWaitForTest(URL))
-    assertTrue("terminal Error must refresh widget/annotator", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "terminal Error must refresh widget/annotator")
     assertTrue(service.isUnavailable(URL))
     assertNull(service.lastFailure(URL))
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testGetCachedReturnsNullOnMissWithoutTriggeringDownload() {
     val cache = FakeCache()
     val transport = FakeTransport()
@@ -315,6 +349,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testGetCachedReturnsNullForCachedNotFound() {
     val cache = FakeCache(CachedSchema.Unavailable(404, "Not Found"))
     val transport = FakeTransport()
@@ -324,6 +359,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testDownloadListenerNotInvokedOnFreshCacheHit() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("cached".toByteArray())))
     val service = service(cache, FakeTransport())
@@ -338,6 +374,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testGetCachedFileTriggersPrefetchOnMiss() {
     val cache = FakeCache()
     val transport = FakeTransport()
@@ -348,6 +385,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(1, transport.calls.get())
   }
 
+  @Test
   fun testGetCachedFileDoesNotCallTransportForFreshCacheHit() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("cached".toByteArray())))
     val transport = FakeTransport()
@@ -359,16 +397,18 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testFileLookupDoesNotReadSchemaContent() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("cached".toByteArray())))
     val service = service(cache, FakeTransport())
 
     assertNotNull(service.getCachedFile(URL))
 
-    assertEquals("file lookup must not read the schema bytes", 0, cache.readCalls.get())
+    assertEquals(0, cache.readCalls.get(), "file lookup must not read the schema bytes")
     assertEquals(1, cache.lookupFileCalls.get())
   }
 
+  @Test
   fun testCachedUnavailableDoesNotScheduleADownload() {
     val cache = FakeCache()
     cache.answerLookupWith(CachedFile.Unavailable(404, "Not Found"))
@@ -377,11 +417,12 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
 
     assertNull(service.getCachedFile(URL))
 
-    assertFalse("a cached 404 must not schedule a request", transport.started.await(100, TimeUnit.MILLISECONDS))
-    assertEquals("a cached 404 must not be re-requested", 0, transport.calls.get())
+    assertFalse(transport.started.await(100, TimeUnit.MILLISECONDS), "a cached 404 must not schedule a request")
+    assertEquals(0, transport.calls.get(), "a cached 404 must not be re-requested")
   }
 
-  fun testDownloadStartsWhenTheContentIsGone() = timeoutRunBlocking {
+  @Test
+  fun testDownloadStartsWhenTheContentIsGone(): Unit = timeoutRunBlocking {
     val root = JsonSchemaFileCache.rootForTest()
     val cache = ApplicationManager.getApplication().service<SchemaContentCache>()
     val transport = FakeTransport()
@@ -393,10 +434,11 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
 
     service.downloadAndWaitForTest(URL)
 
-    assertEquals("a half-written pair must fall through to a download", 1, transport.calls.get())
+    assertEquals(1, transport.calls.get(), "a half-written pair must fall through to a download")
   }
 
-  fun testDiskEntryMissingInMemoryIsLoadedWithoutADownload() = timeoutRunBlocking {
+  @Test
+  fun testDiskEntryMissingInMemoryIsLoadedWithoutADownload(): Unit = timeoutRunBlocking {
     val cache = ApplicationManager.getApplication().service<SchemaContentCache>() as JsonSchemaFileCache
     cache.write(URL, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, URL.value))
     cache.clearMemoryForTest()
@@ -406,14 +448,15 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     val notified = CountDownLatch(1)
     subscribeToDownloads(disposable) { notified.countDown() }
 
-    assertNull("a memory miss must not read the disk", readAction { service.getCachedFile(URL) })
-    assertTrue("the background load must notify the listeners", notified.await(5, TimeUnit.SECONDS))
+    assertNull(readAction { service.getCachedFile(URL) }, "a memory miss must not read the disk")
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "the background load must notify the listeners")
     assertNotNull(readAction { service.getCachedFile(URL) })
     assertEquals(0, transport.calls.get())
     Disposer.dispose(disposable)
   }
 
-  fun testSuccessfulDownloadAdoptsFileBeforeListenersObserveIt() = timeoutRunBlocking {
+  @Test
+  fun testSuccessfulDownloadAdoptsFileBeforeListenersObserveIt(): Unit = timeoutRunBlocking {
     val transport = FakeTransport()
     val service = service(transport = transport)
     val adoptedInListener = AtomicReference<VirtualFile?>()
@@ -426,13 +469,14 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     waitUntil("the listener must observe the adopted file") { adoptedInListener.get() != null }
 
     val file = adoptedInListener.get()
-    assertNotNull("listeners must observe an adopted local file", file)
+    assertNotNull(file, "listeners must observe an adopted local file")
     assertEquals(URL.value, file!!.getUserData(SchemaOrigin.URL_KEY))
     assertEquals(URL.value, String(file.contentsToByteArray()))
     Disposer.dispose(disposable)
   }
 
-  fun testFreshDiskCachePublishesWhenTheLoadChangesTheMemory() = timeoutRunBlocking {
+  @Test
+  fun testFreshDiskCachePublishesWhenTheLoadChangesTheMemory(): Unit = timeoutRunBlocking {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("{}".toByteArray())))
     cache.answerLookupWith(null)
     cache.loadChangesMemory = true
@@ -443,12 +487,13 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     subscribeToDownloads(disposable) { notified.countDown() }
 
     assertNull(readAction { service.getCachedFile(URL) })
-    assertTrue("a fresh cache must publish after VFS adoption", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "a fresh cache must publish after VFS adoption")
     assertEquals(0, transport.calls.get())
     Disposer.dispose(disposable)
   }
 
-  fun testRepeatedAdoptionKeepsTheLocalFile() = timeoutRunBlocking {
+  @Test
+  fun testRepeatedAdoptionKeepsTheLocalFile(): Unit = timeoutRunBlocking {
     val service = service(transport = FakeTransport())
 
     assertNull(service.getCachedFile(URL))
@@ -467,7 +512,8 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(first!!.path, second.path)
   }
 
-  fun testRevalidatedContentReachesTheAdoptedFile() = timeoutRunBlocking {
+  @Test
+  fun testRevalidatedContentReachesTheAdoptedFile(): Unit = timeoutRunBlocking {
     val transport = VersionedTransport("{\"v\":1}")
     val service = service(transport = transport)
 
@@ -478,13 +524,14 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
 
     ageRemoteSchemaCache(5.hours)
     transport.content = "{\"v\":2}"
-    assertNull("the aging clears the memory, so the next lookup is a miss", service.getCachedFile(URL))
+    assertNull(service.getCachedFile(URL), "the aging clears the memory, so the next lookup is a miss")
 
     waitUntil("the adopted file must show the downloaded content") { String(file.contentsToByteArray()) == "{\"v\":2}" }
     assertEquals(2, transport.calls.get())
   }
 
-  fun testConcurrentLookupUnderReadActionDoesNotDeleteValidContentWhileWriterAdopts() = timeoutRunBlocking {
+  @Test
+  fun testConcurrentLookupUnderReadActionDoesNotDeleteValidContentWhileWriterAdopts(): Unit = timeoutRunBlocking {
     val root = JsonSchemaFileCache.rootForTest()
     val cache = ApplicationManager.getApplication().service<SchemaContentCache>()
     val gate = CompletableDeferred<Unit>()
@@ -507,11 +554,12 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
       lookup.cancelAndJoin()
     }
 
-    assertEquals("valid nio content/meta must survive concurrent Group A lookups", 2, Files.list(root).use { it.count() })
+    assertEquals(2, Files.list(root).use { it.count() }, "valid nio content/meta must survive concurrent Group A lookups")
     val adopted = readAction { service.getCachedFile(URL) }
     assertNotNull(adopted)
   }
 
+  @Test
   fun testGetCachedFileDoesNotPrefetchAfterFailed() {
     val transport = FailingTransport()
     val service = service(FakeCache(), transport)
@@ -522,6 +570,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertFalse(service.hasInFlight(URL))
   }
 
+  @Test
   fun testGetCachedFileDoesNotPrefetchAfterRejected() {
     val transport = RejectedTransport()
     val service = service(FakeCache(), transport)
@@ -532,6 +581,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertFalse(service.hasInFlight(URL))
   }
 
+  @Test
   fun testFailedDownloadNotifiesListenersWithoutCaching() {
     val cache = FakeCache()
     val service = service(cache, FailingTransport())
@@ -540,12 +590,13 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     subscribeToDownloads(disposable) { notified.countDown() }
 
     assertNull(service.downloadAndWaitForTest(URL))
-    assertTrue("terminal Failed must refresh widget/annotator", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "terminal Failed must refresh widget/annotator")
     assertEquals(RemoteDownloadFailure.Failed, service.lastFailure(URL))
     assertTrue(cache.writtenUrls().isEmpty())
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testRejectedDownloadNotifiesListenersWithoutCaching() {
     val cache = FakeCache()
     val service = service(cache, RejectedTransport())
@@ -560,6 +611,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testSuccessClearsLastFailure() {
     val cache = FakeCache()
     val failing = service(cache, FailingTransport())
@@ -571,6 +623,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertNull(ok.lastFailure(URL))
   }
 
+  @Test
   fun testPrefetchDoesNotDownloadAgainAfterFailed() {
     val transport = FailingTransport()
     val service = service(FakeCache(), transport)
@@ -578,16 +631,18 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(1, transport.calls.get())
 
     assertTrue(service.prefetch(URL))
-    assertFalse("a failed URL must wait for an explicit retry", service.hasInFlight(URL))
+    assertFalse(service.hasInFlight(URL), "a failed URL must wait for an explicit retry")
     Thread.sleep(200)
     assertEquals(1, transport.calls.get())
   }
 
+  @Test
   fun testUnexpectedTransportExceptionIsRecordedAsFailure() {
     val transport = ThrowingTransport()
     assertUnexpectedExceptionIsRecorded(service(FakeCache(), transport)) { transport.calls.get() }
   }
 
+  @Test
   fun testUnexpectedCacheWriteExceptionIsRecordedAsFailure() {
     val transport = FakeTransport()
     assertUnexpectedExceptionIsRecorded(service(ThrowingWriteCache(), transport)) { transport.calls.get() }
@@ -600,12 +655,13 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertNull(service.downloadAndWaitForTest(URL))
 
     assertEquals(RemoteDownloadFailure.Failed, service.lastFailure(URL))
-    assertTrue("an unexpected exception must refresh the widget and the annotator", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "an unexpected exception must refresh the widget and the annotator")
     assertTrue(service.prefetch(URL))
-    assertFalse("a failed URL must not start a new download on each prefetch", service.hasInFlight(URL))
+    assertFalse(service.hasInFlight(URL), "a failed URL must not start a new download on each prefetch")
     assertEquals(1, calls())
   }
 
+  @Test
   fun testRetryDownloadClearsFailureAndDownloadsAgain() {
     val cache = FakeCache()
     val transport = FailingTransport()
@@ -626,6 +682,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
+  @Test
   fun testRetryDownloadSkipsTheCachedError() {
     val cache = FakeCache(CachedSchema.Unavailable(403, "Forbidden"))
     val transport = FakeTransport()
@@ -633,11 +690,12 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
 
     service.retryDownload(URL)
 
-    assertTrue("an explicit retry must not wait for the error TTL", cache.written.await(5, TimeUnit.SECONDS))
+    assertTrue(cache.written.await(5, TimeUnit.SECONDS), "an explicit retry must not wait for the error TTL")
     assertEquals(1, transport.calls.get())
     assertFalse(service.isUnavailable(URL))
   }
 
+  @Test
   fun testRetryDownloadRevalidatesFreshContent() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("fresh".toByteArray()), etag = "etag"))
     val transport = NotModifiedTransport()
@@ -650,7 +708,8 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.downloads.get())
   }
 
-  fun testPrefetchDoesNotSkipTheCachedError() = timeoutRunBlocking {
+  @Test
+  fun testPrefetchDoesNotSkipTheCachedError(): Unit = timeoutRunBlocking {
     val cache = FakeCache(CachedSchema.Unavailable(403, "Forbidden"))
     val transport = FakeTransport()
     val service = service(cache, transport)
@@ -663,6 +722,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testRetryDownloadDoesNothingWhenNotAllowed() {
     val transport = FakeTransport()
     val service = service(FakeCache(), transport)
@@ -674,6 +734,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertEquals(0, transport.calls.get())
   }
 
+  @Test
   fun testPeekCachedFileDoesNotPrefetchOnMiss() {
     val cache = FakeCache()
     val transport = FakeTransport()
@@ -684,6 +745,7 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
     assertFalse(service.hasInFlight(URL))
   }
 
+  @Test
   fun testPeekCachedFileReturnsAvailableWithoutRefresh() {
     val cache = FakeCache(CachedSchema.Content(SchemaContent("cached".toByteArray())))
     val transport = FakeTransport()
@@ -889,6 +951,8 @@ class JsonSchemaRemoteContentServiceTest : BasePlatformTestCase() {
   }
 
   companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     private val URL = SchemaUrl.parse("https://example.com/schema.json")
   }
 }

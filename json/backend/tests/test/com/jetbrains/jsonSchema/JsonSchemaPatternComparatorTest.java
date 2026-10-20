@@ -15,54 +15,66 @@
  */
 package com.jetbrains.jsonSchema;
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaPatternComparator;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
-public class JsonSchemaPatternComparatorTest extends BasePlatformTestCase {
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class JsonSchemaPatternComparatorTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  @Test
   public void testPatterns() {
-    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("tes*")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("tes*"), p("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("*est")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("testwords"), p("test*words")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("testwords"), p("*test*words")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(p("*.abc"), p("*.cde")));
-    Assert.assertEquals(ThreeState.UNSURE, comparator.isSimilar(p("*.abc"), p("start.*")));
-    Assert.assertEquals(ThreeState.UNSURE, comparator.isSimilar(p("two*words"), p("circus")));
+    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(projectFixture.get());
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("tes*")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("tes*"), p("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("*est")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("testwords"), p("test*words")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(p("testwords"), p("*test*words")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(p("*.abc"), p("*.cde")));
+    assertEquals(ThreeState.UNSURE, comparator.isSimilar(p("*.abc"), p("start.*")));
+    assertEquals(ThreeState.UNSURE, comparator.isSimilar(p("two*words"), p("circus")));
   }
 
+  @Test
   public void test2Files() {
-    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("test"), f("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("./test"), f("test")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(f("../test"), f("test")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(f("other"), f("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(f("one/../one/two"), f("one/two")));
+    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(projectFixture.get());
+    assertEquals(ThreeState.YES, comparator.isSimilar(f("test"), f("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(f("./test"), f("test")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(f("../test"), f("test")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(f("other"), f("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(f("one/../one/two"), f("one/two")));
   }
 
+  @Test
   public void test2Dirs() {
-    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), d("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("./test"), d("test")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("../test"), d("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d(".."), d("test")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("another"), d("test")));
+    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(projectFixture.get());
+    assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), d("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d("./test"), d("test")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(d("../test"), d("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d(".."), d("test")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(d("another"), d("test")));
 
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test/child"), d("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d("test/child"), d("test")));
   }
 
+  @Test
   public void testDirAndFile() {
-    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("test"), f("test")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), f("test/lower")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), f("./test/lower")));
-    Assert.assertEquals(ThreeState.YES, comparator.isSimilar(d(".."), f("test/lower")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test/lower")));
-    Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test")));
+    final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(projectFixture.get());
+    assertEquals(ThreeState.NO, comparator.isSimilar(d("test"), f("test")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), f("test/lower")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d("test"), f("./test/lower")));
+    assertEquals(ThreeState.YES, comparator.isSimilar(d(".."), f("test/lower")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test/lower")));
+    assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test")));
   }
 
   private static UserDefinedJsonSchemaConfiguration.Item p(@NotNull final String p) {

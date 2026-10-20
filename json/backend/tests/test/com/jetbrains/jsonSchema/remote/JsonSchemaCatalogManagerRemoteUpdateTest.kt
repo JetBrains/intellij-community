@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.openapi.Disposable
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.remote.http.CachedSchema
 import com.jetbrains.jsonSchema.remote.http.DownloadResult
@@ -16,29 +19,38 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-class JsonSchemaCatalogManagerRemoteUpdateTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaCatalogManagerRemoteUpdateTest {
+  private val project get() = projectFixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private lateinit var scope: CoroutineScope
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   }
 
-  override fun tearDown() {
-    try {
-      scope.cancel()
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    if (::scope.isInitialized) scope.cancel()
   }
 
+  @Test
   fun testRegisterCatalogUpdateCallbackFiresOnlyForCatalogUrl() {
     installService(RecordingCache(), RecordingTransport())
     val catalogManager = JsonSchemaService.Impl.get(project).catalogManager
@@ -49,14 +61,15 @@ class JsonSchemaCatalogManagerRemoteUpdateTest : BasePlatformTestCase() {
 
     val service = JsonSchemaRemoteContentService.getInstance(project)
     assertTrue(service.prefetch(SchemaUrl.parse(OTHER_URL)))
-    assertFalse("callback must not fire for an unrelated schema url", notified.await(500, TimeUnit.MILLISECONDS))
+    assertFalse(notified.await(500, TimeUnit.MILLISECONDS), "callback must not fire for an unrelated schema url")
 
     assertTrue(service.prefetch(SchemaUrl.parse(CATALOG_URL)))
-    assertTrue("callback must fire once the catalog url downloads", notified.await(5, TimeUnit.SECONDS))
+    assertTrue(notified.await(5, TimeUnit.SECONDS), "callback must fire once the catalog url downloads")
 
     catalogManager.unregisterCatalogUpdateCallback(callback)
   }
 
+  @Test
   fun testUnregisterCatalogUpdateCallbackStopsNotifications() {
     val cache = RecordingCache()
     installService(cache, RecordingTransport())
@@ -73,6 +86,7 @@ class JsonSchemaCatalogManagerRemoteUpdateTest : BasePlatformTestCase() {
     assertEquals(0, notifications.get())
   }
 
+  @Test
   fun testTriggerUpdateCatalogPrefetchesCatalogUrl() {
     val transport = RecordingTransport()
     installService(RecordingCache(), transport)
@@ -85,8 +99,8 @@ class JsonSchemaCatalogManagerRemoteUpdateTest : BasePlatformTestCase() {
   }
 
   private fun installService(cache: SchemaContentCache, transport: SchemaHttpTransport) {
-    setRemoteSchemaAccessAllowed(true, testRootDisposable)
-    replaceRemoteSchemaServices(project, scope, testRootDisposable, cache, transport)
+    setRemoteSchemaAccessAllowed(true, disposable)
+    replaceRemoteSchemaServices(project, scope, disposable, cache, transport)
   }
 
   private class RecordingCache : SchemaContentCache {
@@ -113,6 +127,8 @@ class JsonSchemaCatalogManagerRemoteUpdateTest : BasePlatformTestCase() {
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     const val OTHER_URL = "https://example.com/other-schema.json"
 
     // Mirrors the package-private JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS, not visible from this test module.

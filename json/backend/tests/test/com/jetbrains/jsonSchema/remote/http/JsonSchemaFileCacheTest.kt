@@ -4,7 +4,15 @@ package com.jetbrains.jsonSchema.remote.http
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,28 +25,21 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 
-class JsonSchemaFileCacheTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaFileCacheTest {
   private lateinit var root: java.nio.file.Path
 
-  override fun runInDispatchThread(): Boolean = false
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     root = clearRemoteSchemaCache()
   }
 
-  override fun tearDown() {
-    try {
-      clearRemoteSchemaCache()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    clearRemoteSchemaCache()
   }
 
+  @Test
   fun testRoundTripUsesNormalizedUrlKey() {
     val cache = JsonSchemaFileCache()
     val writtenUrl = SchemaUrl.parse("HTTPS://Example.COM:443/a/../schema.json#definition")
@@ -50,6 +51,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(2, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testNormalizesUnsafeSchemaStoreUrls() {
     assertEquals(
       SchemaUrl.parse("https://schemastore.azurewebsites.net/schemas/json/example.json"),
@@ -57,15 +59,18 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testKeepsPercentEscapes() {
     assertEquals("https://example.com/a%20b/schema.json?x=%2F", SchemaUrl.parse("HTTPS://Example.com:443/a%20b/schema.json?x=%2F#frag").value)
     assertEquals("https://u%40v@example.com:8443/schema.json", SchemaUrl.parse("https://u%40v@example.com:8443/schema.json").value)
   }
 
+  @Test
   fun testEncodesNonAsciiPath() {
     assertEquals("https://example.com/%C3%A4.json", SchemaUrl.parse("https://example.com/ä.json").value)
   }
 
+  @Test
   fun testMetadataUrlMismatchIsRejected() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -77,6 +82,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testCorruptMetadataDeletesContentPair() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -88,6 +94,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testWritePublishesContentAndMetadataAtomically() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -98,6 +105,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertFalse(Files.list(root).use { files -> files.anyMatch { it.fileName.toString().endsWith(".tmp") } })
   }
 
+  @Test
   fun testCachedErrorExpiresAfterFourHours() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/missing.json")
@@ -110,6 +118,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testStaleContentRemainsAvailableForRefreshFallback() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -122,6 +131,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("schema", String(cached.content.bytes))
   }
 
+  @Test
   fun testNotModifiedRefreshUpdatesTimestampWithoutReplacingContent() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -132,7 +142,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
 
     aged.refreshTimestamp(url)
 
-    assertFalse("the memory must see the refresh", (aged.read(url) as CachedSchema.Content).isStale)
+    assertFalse((aged.read(url) as CachedSchema.Content).isStale, "the memory must see the refresh")
     val cached = reloaded(url).read(url) as CachedSchema.Content
     assertFalse(cached.isStale)
     assertEquals("schema", String(cached.content.bytes))
@@ -140,6 +150,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("yesterday", cached.lastModified)
   }
 
+  @Test
   fun testRetrievalUrlSurvivesTimestampRefresh() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/root.json")
@@ -152,6 +163,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(SchemaUrl.parse("https://cdn.example.com/schemas/root.yaml").value, reloaded(url).getRetrievalUrl(url))
   }
 
+  @Test
   fun testAdoptedFileKeepsRequestAndRetrievalUrls() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("HTTPS://Example.com:443/root.json")
@@ -168,11 +180,13 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("https://example.com/root.json", reloadedFile.getUserData(SchemaOrigin.REQUEST_URL_KEY))
   }
 
+  @Test
   fun testReadReturnsNullForUnknownUrl() {
     val cache = JsonSchemaFileCache()
     assertNull(cache.read(SchemaUrl.parse("https://example.com/unknown.json")))
   }
 
+  @Test
   fun testLookupFileReturnsTheFileAndStaleness() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -184,6 +198,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("{}", String(found.file.contentsToByteArray()))
   }
 
+  @Test
   fun testColdCacheMissesWithoutTouchingTheDiskUntilLoad() {
     val url = SchemaUrl.parse("https://example.com/schema.json")
     JsonSchemaFileCache().write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), "etag", null, url.value))
@@ -194,10 +209,10 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
       assertNull(cold.readStatus(url))
       assertNull(cold.lookupFile(url))
     }
-    assertEquals("a memory miss must not change the disk", 2, Files.list(root).use { it.count() })
+    assertEquals(2, Files.list(root).use { it.count() }, "a memory miss must not change the disk")
 
     assertTrue(cold.load(url))
-    assertFalse("a second load of the same entry must not change the memory", cold.load(url))
+    assertFalse(cold.load(url), "a second load of the same entry must not change the memory")
     runReadActionBlocking {
       assertEquals("schema", String((cold.read(url) as CachedSchema.Content).content.bytes))
       assertEquals("etag", (cold.readStatus(url) as CachedStatus.Available).etag)
@@ -205,6 +220,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testDiskOperationsRequireNoReadAccess() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -216,6 +232,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testLookupFileMissesAfterTheAdoptedFileBecomesInvalid() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -230,6 +247,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertNull(cache.read(url))
   }
 
+  @Test
   fun testExtensionFollowsTheRetrievalUrlNotTheRequestUrl() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
@@ -237,11 +255,12 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
                                             "https://cdn.example.com/schemas/config.yaml"))
 
     val content = Files.list(root).use { files -> files.toList().single { !it.fileName.toString().endsWith(".meta") } }
-    assertTrue("cached YAML must keep a YAML extension, was ${content.fileName}",
-               content.fileName.toString().endsWith(".yaml"))
+    assertTrue(content.fileName.toString().endsWith(".yaml"),
+               "cached YAML must keep a YAML extension, was ${content.fileName}")
     assertEquals("type: object", String((cache.read(url) as CachedSchema.Content).content.bytes))
   }
 
+  @Test
   fun testJsonRetrievalUrlKeepsJsonExtension() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config.json")
@@ -251,6 +270,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertTrue(content.fileName.toString().endsWith(".json"))
   }
 
+  @Test
   fun testExtensionlessRetrievalUrlFallsBackToJson() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
@@ -260,6 +280,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertTrue(content.fileName.toString().endsWith(".json"))
   }
 
+  @Test
   fun testLegacyEntryWithoutARetrievalUrlIsRejectedEvenWhenTheNameStillMatches() {
     val url = SchemaUrl.parse("https://example.com/schemas/root.json")
     val key = sha256Hex(url.value)
@@ -269,10 +290,11 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     val cache = JsonSchemaFileCache()
 
     assertFalse(cache.load(url))
-    assertNull("an OK entry with no retrieval URL predates the identity fix and must be refetched", cache.lookupFile(url))
-    assertEquals("no legacy file may be left behind", 0, Files.list(root).use { it.count() })
+    assertNull(cache.lookupFile(url), "an OK entry with no retrieval URL predates the identity fix and must be refetched")
+    assertEquals(0, Files.list(root).use { it.count() }, "no legacy file may be left behind")
   }
 
+  @Test
   fun testChangingExtensionOnRefreshLeavesNoOrphan() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
@@ -282,12 +304,13 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
                                             "https://cdn.example.com/schemas/config.yaml"))
 
     val key = sha256Hex(url.value)
-    assertTrue("the new YAML content file must remain", Files.isRegularFile(root.resolve("$key.yaml")))
-    assertFalse("the old JSON content file must be removed", Files.exists(root.resolve("$key.json")))
-    assertEquals("exactly one content file and one sidecar must remain", 2, Files.list(root).use { it.count() })
+    assertTrue(Files.isRegularFile(root.resolve("$key.yaml")), "the new YAML content file must remain")
+    assertFalse(Files.exists(root.resolve("$key.json")), "the old JSON content file must be removed")
+    assertEquals(2, Files.list(root).use { it.count() }, "exactly one content file and one sidecar must remain")
     assertEquals("type: object", String((cache.read(url) as CachedSchema.Content).content.bytes))
   }
 
+  @Test
   fun testOriginalUrlIsRecoveredFromSidecar() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config.yaml")
@@ -298,10 +321,11 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     file.putUserData(SchemaOrigin.URL_KEY, null)
 
     assertEquals("https://cdn.example.com/schemas/config.yaml", runReadActionBlocking { cache.getOriginalUrl(file) })
-    assertEquals("the disk fallback must give the same URL",
-                 "https://cdn.example.com/schemas/config.yaml", JsonSchemaFileCache().getOriginalUrl(file))
+    assertEquals("https://cdn.example.com/schemas/config.yaml", JsonSchemaFileCache().getOriginalUrl(file),
+                 "the disk fallback must give the same URL")
   }
 
+  @Test
   fun testLookupFileReportsStaleAfterTtl() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -312,6 +336,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertTrue((reloaded(url).lookupFile(url) as CachedFile.Available).isStale)
   }
 
+  @Test
   fun testLookupFileDistinguishesAnUnavailableEntryFromAMiss() {
     val cache = JsonSchemaFileCache()
     val cached = SchemaUrl.parse("https://example.com/gone.json")
@@ -322,6 +347,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertNull(cache.lookupFile(never))
   }
 
+  @Test
   fun testLookupFileRejectsAndReportsAMissWhenTheContentIsGone() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -329,11 +355,12 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     val content = Files.list(root).use { files -> files.toList().single { !it.fileName.toString().endsWith(".meta") } }
     Files.delete(content)
 
-    assertTrue("the load must drop the memory entry", cache.load(url))
-    assertNull("a half-written pair must be a miss, not a fresh hit", cache.lookupFile(url))
-    assertEquals("the orphan metadata must be cleaned up", 0, Files.list(root).use { it.count() })
+    assertTrue(cache.load(url), "the load must drop the memory entry")
+    assertNull(cache.lookupFile(url), "a half-written pair must be a miss, not a fresh hit")
+    assertEquals(0, Files.list(root).use { it.count() }, "the orphan metadata must be cleaned up")
   }
 
+  @Test
   fun testReadStatusReportsValidators() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -345,6 +372,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("yesterday", status.lastModified)
   }
 
+  @Test
   fun testMissingContentFileWithValidMetadataIsRejectedAndCleaned() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -357,6 +385,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
+  @Test
   fun testDifferentUrlsProduceIndependentCacheEntries() {
     val cache = JsonSchemaFileCache()
     val url1 = SchemaUrl.parse("https://example.com/alpha.json")
@@ -368,6 +397,7 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     assertEquals("beta", String((cache.read(url2) as CachedSchema.Content).content.bytes))
   }
 
+  @Test
   fun testConcurrentWritesToSameUrlNeverExposeTornContent() {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
@@ -396,8 +426,8 @@ class JsonSchemaFileCacheTest : BasePlatformTestCase() {
     }
     assertEquals(0, torn.get())
     val content = Files.list(root).use { files -> files.toList().single { !it.fileName.toString().endsWith(".meta") } }
-    assertEquals("the metadata on the disk must match the content on the disk",
-                 Files.readString(content), (reloaded(url).readStatus(url) as CachedStatus.Available).etag)
+    assertEquals(Files.readString(content), (reloaded(url).readStatus(url) as CachedStatus.Available).etag,
+                 "the metadata on the disk must match the content on the disk")
   }
 
   /** Builds a new cache with an empty memory and loads [url] from the disk, as after a restart. */

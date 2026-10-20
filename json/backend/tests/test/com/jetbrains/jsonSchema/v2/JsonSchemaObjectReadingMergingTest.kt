@@ -8,18 +8,20 @@ import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.ex.PathManagerEx.TestDataLookupStrategy
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.impl.IfThenElse
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
@@ -30,7 +32,12 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest
 import org.intellij.lang.annotations.Language
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KCallable
@@ -43,7 +50,19 @@ private val myTestLogger by lazy {
 }
 
 @Deprecated("Test exists only until JsonSchemaObjectImpl is removed")
-internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
+@TestApplication
+internal class JsonSchemaObjectReadingMergingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+  private val project get() = projectFixture.get()
+
+  @BeforeEach
+  fun setUp() {
+    myFixture.testDataPath = testDataPath
+  }
 
   private enum class Mode {
     OLD, NEW, OLD_OBJECT_NEW_MERGE
@@ -91,7 +110,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
         "New object is not null for inspected element: '$inspectedText', but it is OK since old implementation tends to lose schema data")
     }
     else {
-      Assert.fail("Nullability:   Old is $old and New is $new for inspected element: '$inspectedText'")
+      fail("Nullability:   Old is $old and New is $new for inspected element: '$inspectedText'")
     }
   }
 
@@ -127,26 +146,25 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     val assertionMessage = "Function: ${inspectedFunctionName} at \n\told pointer `${oldPointer}`, \n\tnew pointer `${newPointer}`:\n\t\t"
     when {
       oldResult is JsonSchemaType -> {
-        Assert.assertEquals(assertionMessage, oldResult, newResult)
+        assertEquals(oldResult, newResult, assertionMessage)
       }
       oldResult is Map<*, *> -> {
         val newKeys = newResult.asSafely<Map<*, *>>()?.keys
         val oldKeys = oldResult.keys
         if (newKeys != null) {
-          UsefulTestCase.assertSameElements(
-            assertionMessage, oldKeys, newKeys)
+          assertEquals(oldKeys.toSet(), newKeys.toSet(), assertionMessage)
         }
         val newSize = newResult.asSafely<Map<*, *>>()?.size
         val oldSize = oldResult.size
-        Assert.assertEquals(assertionMessage, oldSize, newSize)
+        assertEquals(oldSize, newSize, assertionMessage)
       }
       oldResult is Collection<*> -> {
         val newSize = newResult.asSafely<Collection<*>>()?.size
         val oldSize = oldResult.size
-        Assert.assertEquals(assertionMessage, oldSize, newSize)
+        assertEquals(oldSize, newSize, assertionMessage)
       }
       oldResult is String || oldResult is Number || oldResult is Boolean -> {
-        Assert.assertEquals(assertionMessage, oldResult, newResult)
+        assertEquals(oldResult, newResult, assertionMessage)
       }
       oldResult == null && newResult == null -> {
         myTestLogger.info("OK IGNORING result of $assertionMessage that returned null in both implementations")
@@ -191,14 +209,14 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
         .filter { !it.startsWith("$") && it !in setOf("unevaluatedProperties", "dependentSchemas") }
         .map { name ->
           val definitionByName = newSchema.getDefinitionByName(name)
-          Assert.assertNotNull("Name = $name, but OLD definition schema is null", definitionByName)
+          assertNotNull(definitionByName, "Name = $name, but OLD definition schema is null")
           name to definitionByName!!
         }.toMap()
       val newDefs = newSchema.definitionNames.asSequence()
         .filter { !it.startsWith("$") && it !in setOf("unevaluatedProperties", "dependentSchemas") }
         .map { name ->
           val definitionByName = newSchema.getDefinitionByName(name)
-          Assert.assertNotNull("Name = $name, but NEW definition schema is null", definitionByName)
+          assertNotNull(definitionByName, "Name = $name, but NEW definition schema is null")
           name to definitionByName!!
         }.toMap()
       bothMapsNullOrYield(oldSchema.pointer, "definitions", oldDefs, newDefs)
@@ -224,8 +242,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     pointer: String,
     oldIfThenElse: List<IfThenElse>?,
     newIfThenElse: List<IfThenElse>?) {
-    Assert.assertEquals("ifthenelse sizes should be equal at ${pointer}", oldIfThenElse?.size,
-                        newIfThenElse?.size)
+    assertEquals(oldIfThenElse?.size, newIfThenElse?.size, "ifthenelse sizes should be equal at ${pointer}")
     if (oldIfThenElse != null && newIfThenElse != null) {
       for (index in oldIfThenElse.indices) {
         bothValuesAreNullOrYield(oldIfThenElse[index].`if`, newIfThenElse[index].`if`)
@@ -242,16 +259,16 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     if (old == null && new == null) return
     if (old == null && new != null) return
     if (new == null) {
-      Assert.fail("The new map is null, but the old one is not")
+      fail("The new map is null, but the old one is not")
     }
 
-    Assert.assertTrue(
-      "$debugName map sizes are not equal at `${pointer}`. Old size is ${old?.size}, new size is ${new?.size}; Old contents: $old; New contents: $new",
-      old!!.size <= new!!.size)
+    assertTrue(
+      old!!.size <= new.size,
+      "$debugName map sizes are not equal at `${pointer}`. Old size is ${old.size}, new size is ${new.size}; Old contents: $old; New contents: $new")
 
     for (oldProperty in old) {
-      Assert.assertTrue("Property with name `${oldProperty.key}` is not present at ${pointer}",
-                        new[oldProperty.key] != null)
+      assertTrue(new[oldProperty.key] != null,
+                 "Property with name `${oldProperty.key}` is not present at ${pointer}")
       val sameNameNewProperty = new[oldProperty.key]!!
       yieldAll(iterateOldAndNewSchemaNodes(oldProperty.value, sameNameNewProperty))
     }
@@ -261,9 +278,9 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
                                                                                                    debugName: String,
                                                                                                    old: List<JsonSchemaObject>?,
                                                                                                    new: List<JsonSchemaObject>?) {
-    Assert.assertEquals(
-      "$debugName sizes are not equal at `${pointer}`. Old size is ${old?.size}, new size is ${new?.size}",
-      old?.size, new?.size)
+    assertEquals(
+      old?.size, new?.size,
+      "$debugName sizes are not equal at `${pointer}`. Old size is ${old?.size}, new size is ${new?.size}")
 
     if (old != null && new != null) {
       for (index in old.indices) {
@@ -286,7 +303,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
         return
       }
       old != null && new == null -> {
-        Assert.fail("Old is not null at ${old.pointer}, but new is null")
+        fail("Old is not null at ${old.pointer}, but new is null")
       }
       else -> {
         yield(old!! to new!!)
@@ -297,17 +314,19 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
 
   private fun doTestReading(@Language("json") schemaText: String) {
     val schema = schema(schemaText)
-    val nodes = iterateOldAndNewSchemaNodes(
-      schema.parseObject(Mode.OLD),
-      schema.parseObject(Mode.NEW)
-    )
-      .toList()
-    myTestLogger.warn("Found ${nodes.size} json schema nodes to check")
+    runReadActionBlocking {
+      val nodes = iterateOldAndNewSchemaNodes(
+        schema.parseObject(Mode.OLD),
+        schema.parseObject(Mode.NEW)
+      )
+        .toList()
+      myTestLogger.warn("Found ${nodes.size} json schema nodes to check")
 
-    recordTotalProcessedNodesNumber { count ->
-      nodes.forEach { (oldSchemaNode, newSchemaNode) ->
-        count()
-        compareReading(oldSchemaNode, newSchemaNode)
+      recordTotalProcessedNodesNumber { count ->
+        nodes.forEach { (oldSchemaNode, newSchemaNode) ->
+          count()
+          compareReading(oldSchemaNode, newSchemaNode)
+        }
       }
     }
   }
@@ -339,18 +358,20 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
 
     val schema = schema(schemaText)
 
-    val oldRootSchema = computeRootSchemaInMode(schema, oldMode)
-    val newRootSchema = computeRootSchemaInMode(schema, newMode)
+    val oldRootSchema = runReadActionBlocking { computeRootSchemaInMode(schema, oldMode) }
+    val newRootSchema = runReadActionBlocking { computeRootSchemaInMode(schema, newMode) }
     val jsonFile = file(jsonText)
 
-    jsonFile.accept(object : PsiRecursiveElementVisitor() {
-      override fun visitElement(element: PsiElement) {
-        super.visitElement(element)
-        if (element is JsonStringLiteral) {
-          doCompareResolvedJsonObjectAtCaret(element, oldMode, newMode, oldRootSchema, newRootSchema)
+    runReadActionBlocking {
+      jsonFile.accept(object : PsiRecursiveElementVisitor() {
+        override fun visitElement(element: PsiElement) {
+          super.visitElement(element)
+          if (element is JsonStringLiteral) {
+            doCompareResolvedJsonObjectAtCaret(element, oldMode, newMode, oldRootSchema, newRootSchema)
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   private fun doCompareResolvedJsonObjectAtCaret(inspectedElement: JsonStringLiteral,
@@ -396,13 +417,14 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     return File(path).readText()
   }
 
-  override fun getTestDataPath(): String {
-    val strategy = PathManagerEx.guessTestDataLookupStrategy()
-    if (strategy == TestDataLookupStrategy.COMMUNITY) {
-      return PathManager.getHomePath() + "/json/backend/tests/testData/jsonSchema/v2"
+  private val testDataPath: String
+    get() {
+      val strategy = PathManagerEx.guessTestDataLookupStrategy()
+      if (strategy == TestDataLookupStrategy.COMMUNITY) {
+        return PathManager.getHomePath() + "/json/backend/tests/testData/jsonSchema/v2"
+      }
+      return PathManager.getHomePath() + "/community/json/backend/tests/testData/jsonSchema/v2"
     }
-    return PathManager.getHomePath() + "/community/json/backend/tests/testData/jsonSchema/v2"
-  }
 
   private fun propertyDependencySchema(): String {
     return readResourceAsString("$testDataPath/propertyDependencySchema.json")
@@ -441,6 +463,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     return readResourceAsString("$testDataPath/specs/petstore30cut.json")
   }
 
+  @Test
   fun `test equal reading results`() {
     doTestReading(propertyDependencySchema())
     doTestReading(schemaDependencySchema())
@@ -470,6 +493,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   @PerformanceUnitTest
   fun `test measure performance here`() {
     myFixture.configureByText("openapi.yaml", yamlspec8k())

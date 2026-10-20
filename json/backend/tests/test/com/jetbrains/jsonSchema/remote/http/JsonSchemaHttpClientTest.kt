@@ -2,7 +2,7 @@
 package com.jetbrains.jsonSchema.remote.http
 
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.net.ProxyConfiguration
 import com.intellij.util.net.ProxySettings
 import com.sun.net.httpserver.HttpServer
@@ -11,6 +11,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -19,31 +26,28 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val MAX_SCHEMA_BYTES_KEY = "json.schema.remote.http.max.schema.bytes"
 private const val MAX_REDIRECTS_KEY = "json.schema.remote.http.max.redirects"
 
-class JsonSchemaHttpClientTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaHttpClientTest {
   private lateinit var server: HttpServer
   private lateinit var baseUrl: String
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     server.executor = null
     server.start()
     baseUrl = "http://127.0.0.1:${server.address.port}"
   }
 
-  override fun tearDown() {
-    try {
+  @AfterEach
+  fun tearDown() {
+    if (::server.isInitialized) {
       server.stop(0)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
     }
   }
 
-  fun testDownloadsHttpSchema() = runBlocking {
+  @Test
+  fun testDownloadsHttpSchema(): Unit = runBlocking {
     server.createContext("/schema") { exchange ->
       val bytes = "schema".toByteArray()
       exchange.sendResponseHeaders(200, bytes.size.toLong())
@@ -55,7 +59,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testFailsForSuccessfulStatusOtherThan200() = runBlocking {
+  @Test
+  fun testFailsForSuccessfulStatusOtherThan200(): Unit = runBlocking {
     server.createContext("/created") { exchange ->
       exchange.sendResponseHeaders(201, -1)
       exchange.close()
@@ -67,7 +72,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testConditionalRefreshSendsValidatorsAndAcceptsNotModified() = runBlocking {
+  @Test
+  fun testConditionalRefreshSendsValidatorsAndAcceptsNotModified(): Unit = runBlocking {
     server.createContext("/schema") { exchange ->
       assertEquals("etag", exchange.requestHeaders.getFirst("If-None-Match"))
       assertEquals("yesterday", exchange.requestHeaders.getFirst("If-Modified-Since"))
@@ -82,14 +88,16 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testRejectsNonHttpSchemes() = runBlocking {
+  @Test
+  fun testRejectsNonHttpSchemes(): Unit = runBlocking {
     JsonSchemaHttpClient().use { client ->
       assertTrue(client.download(SchemaUrl.parse("file:///tmp/schema.json")) is DownloadResult.Rejected)
       assertTrue(client.download(SchemaUrl.parse("https://user@example.com/schema.json")) is DownloadResult.Rejected)
     }
   }
 
-  fun testRedirectToFileIsCacheableError() = runBlocking {
+  @Test
+  fun testRedirectToFileIsCacheableError(): Unit = runBlocking {
     server.createContext("/redirect") { exchange ->
       exchange.responseHeaders.add("Location", "file:///tmp/schema.json")
       exchange.sendResponseHeaders(302, -1)
@@ -103,7 +111,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testRedirectWithMalformedLocationIsCacheableError() = runBlocking {
+  @Test
+  fun testRedirectWithMalformedLocationIsCacheableError(): Unit = runBlocking {
     server.createContext("/bad-redirect") { exchange ->
       exchange.responseHeaders.add("Location", "http://example.com/inva lid path")
       exchange.sendResponseHeaders(302, -1)
@@ -117,7 +126,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testStopsAfterConfiguredRedirectLimit() = runBlocking {
+  @Test
+  fun testStopsAfterConfiguredRedirectLimit(): Unit = runBlocking {
     repeat(7) { index ->
       server.createContext("/redirect$index") { exchange ->
         exchange.responseHeaders.add("Location", "$baseUrl/redirect${index + 1}")
@@ -135,7 +145,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testResponseOverConfiguredLimitIsRejected() = runBlocking {
+  @Test
+  fun testResponseOverConfiguredLimitIsRejected(): Unit = runBlocking {
     withRegistryValues(MAX_SCHEMA_BYTES_KEY to 1) {
       server.createContext("/large") { exchange ->
         val size = 2
@@ -151,7 +162,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testChunkedResponseOverConfiguredLimitIsRejected() = runBlocking {
+  @Test
+  fun testChunkedResponseOverConfiguredLimitIsRejected(): Unit = runBlocking {
     withRegistryValues(MAX_SCHEMA_BYTES_KEY to 1) {
       server.createContext("/large-chunked") { exchange ->
         exchange.sendResponseHeaders(200, 0)
@@ -166,7 +178,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testRequestTimesOut() = runBlocking {
+  @Test
+  fun testRequestTimesOut(): Unit = runBlocking {
     server.createContext("/slow") { exchange ->
       Thread.sleep(1_000)
       exchange.sendResponseHeaders(200, 0)
@@ -182,7 +195,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testDownloadCapturesEtagAndLastModifiedHeaders() = runBlocking {
+  @Test
+  fun testDownloadCapturesEtagAndLastModifiedHeaders(): Unit = runBlocking {
     server.createContext("/schema") { exchange ->
       exchange.responseHeaders.add("ETag", "\"v1\"")
       exchange.responseHeaders.add("Last-Modified", "Mon, 01 Jan 2024 00:00:00 GMT")
@@ -197,7 +211,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testDownloadWithoutCacheHeadersReturnsNullEtagAndLastModified() = runBlocking {
+  @Test
+  fun testDownloadWithoutCacheHeadersReturnsNullEtagAndLastModified(): Unit = runBlocking {
     server.createContext("/schema") { exchange ->
       val bytes = "schema".toByteArray()
       exchange.sendResponseHeaders(200, bytes.size.toLong())
@@ -210,7 +225,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testDownload404ReturnsCacheableError() = runBlocking {
+  @Test
+  fun testDownload404ReturnsCacheableError(): Unit = runBlocking {
     server.createContext("/missing") { exchange ->
       exchange.sendResponseHeaders(404, -1)
       exchange.close()
@@ -223,7 +239,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testClientErrorStatusIsCacheableError() = runBlocking {
+  @Test
+  fun testClientErrorStatusIsCacheableError(): Unit = runBlocking {
     server.createContext("/forbidden") { exchange ->
       exchange.sendResponseHeaders(403, -1)
       exchange.close()
@@ -236,7 +253,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testRetriesUpToConfiguredAttemptsOn500ThenFails() = runBlocking {
+  @Test
+  fun testRetriesUpToConfiguredAttemptsOn500ThenFails(): Unit = runBlocking {
     val callCount = AtomicInteger()
     server.createContext("/flaky") { exchange ->
       callCount.incrementAndGet()
@@ -254,7 +272,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     assertEquals(3, callCount.get())
   }
 
-  fun testConditionalRefreshReturnsFreshContentWhenServerReturns200() = runBlocking {
+  @Test
+  fun testConditionalRefreshReturnsFreshContentWhenServerReturns200(): Unit = runBlocking {
     server.createContext("/schema") { exchange ->
       val bytes = "updated".toByteArray()
       exchange.sendResponseHeaders(200, bytes.size.toLong())
@@ -267,7 +286,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testUnreachableHostReturnsFailed() = runBlocking {
+  @Test
+  fun testUnreachableHostReturnsFailed(): Unit = runBlocking {
     withRegistryValues("json.schema.remote.http.max.retries" to 1) {
       JsonSchemaHttpClient().use { client ->
         assertTrue(client.download(SchemaUrl.parse("http://127.0.0.1:1/schema.json")) is DownloadResult.Failed)
@@ -275,7 +295,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testUnresolvedHostReturnsFailed() = runBlocking {
+  @Test
+  fun testUnresolvedHostReturnsFailed(): Unit = runBlocking {
     withRegistryValues("json.schema.remote.http.max.retries" to 1) {
       JsonSchemaHttpClient().use { client ->
         // The .invalid top-level domain never resolves (RFC 2606).
@@ -284,7 +305,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testDownloadUsesTheIdeProxy() = runBlocking {
+  @Test
+  fun testDownloadUsesTheIdeProxy(): Unit = runBlocking {
     val requestedUri = AtomicReference<String>()
     server.createContext("/") { exchange ->
       requestedUri.set(exchange.requestURI.toString())
@@ -304,10 +326,11 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     finally {
       settings.setProxyConfiguration(previous)
     }
-    assertEquals("the request must go through the configured proxy", "http://schema.example.test/proxied.json", requestedUri.get())
+    assertEquals("http://schema.example.test/proxied.json", requestedUri.get(), "the request must go through the configured proxy")
   }
 
-  fun testDownloadPreservesBinaryContent() = runBlocking {
+  @Test
+  fun testDownloadPreservesBinaryContent(): Unit = runBlocking {
     val binary = byteArrayOf(0x00, 0x01, 0xFF.toByte(), 0x7F, 0x80.toByte(), 0x0A, 0x0D)
     server.createContext("/binary") { exchange ->
       exchange.sendResponseHeaders(200, binary.size.toLong())
@@ -319,7 +342,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testSuccessReportsTheFinalUrlAfterRedirect() = runBlocking {
+  @Test
+  fun testSuccessReportsTheFinalUrlAfterRedirect(): Unit = runBlocking {
     server.createContext("/root.json") { exchange ->
       exchange.responseHeaders.add("Location", "$baseUrl/schemas/root.yaml")
       exchange.sendResponseHeaders(302, -1)
@@ -336,7 +360,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testSuccessWithoutRedirectReportsTheRequestedUrl() = runBlocking {
+  @Test
+  fun testSuccessWithoutRedirectReportsTheRequestedUrl(): Unit = runBlocking {
     server.createContext("/root.json") { exchange ->
       val bytes = "{}".toByteArray()
       exchange.sendResponseHeaders(200, bytes.size.toLong())
@@ -348,7 +373,8 @@ class JsonSchemaHttpClientTest : BasePlatformTestCase() {
     }
   }
 
-  fun testCancellationStopsRead() = runBlocking {
+  @Test
+  fun testCancellationStopsRead(): Unit = runBlocking {
     val started = AtomicInteger()
     server.createContext("/stream") { exchange ->
       exchange.use {
