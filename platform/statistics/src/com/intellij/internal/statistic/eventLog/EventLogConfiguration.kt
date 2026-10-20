@@ -133,6 +133,8 @@ class EventLogConfiguration {
       configurations[recorderId]?.let { return it }
     }
 
+    // Keep the provider lookup outside the lock.
+    // The lookup can create the provider service and the logger provider extensions, and that code can call getOrCreate.
     val effectiveAlternativeRecorderId = alternativeRecorderId ?: FUS_RECORDER.takeIf {
       StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).useDefaultRecorderId
     }
