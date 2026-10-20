@@ -24,6 +24,7 @@ use serde_json::{Value, json};
 
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
+use super::evidence;
 use super::ide::{ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
@@ -34,7 +35,7 @@ use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::stream::Stream;
-use super::trace::{RecorderProcess, Trace};
+use super::trace::{MAX_LOOSE_BYTES, RecorderProcess, Trace};
 use super::watchdog::{self, DISMISS_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, WATCHDOG_THREAD, Watch};
 use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
@@ -636,13 +637,15 @@ fn execute_selection(
 }
 
 /// The trace of the iteration: the recorder of `inputs`, or a quiet session when there is none or it does not start. A
-/// recorder that does not start is a failure of the session, which the runner says on the stream.
+/// recorder that does not start is a failure of the session, which the runner says on the stream. Under a Bazel test the
+/// attachments outside a recorded scenario go to the outputs directory of the test.
 fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, bridge: Option<protocol::Bridge>) -> Trace {
+    let loose = inputs.bazel_outputs.as_deref().map(evidence::attachments_dir);
     let Some(recorder) = &inputs.recorder else {
         log("no recorder is named, so the iteration records no trace");
-        return Trace::off();
+        return Trace::off().keep_loose_attachments_in(loose, MAX_LOOSE_BYTES);
     };
-    match RecorderProcess::start(recorder) {
+    let trace = match RecorderProcess::start(recorder) {
         Ok(process) => Trace::open(
             Box::new(process),
             Trace::hello(iteration_dir, inputs.bazel_outputs.as_deref(), iteration_id, inputs.screen, bridge),
@@ -652,7 +655,8 @@ fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, b
             log(&reason);
             Trace::failed(reason)
         }
-    }
+    };
+    trace.keep_loose_attachments_in(loose, MAX_LOOSE_BYTES)
 }
 
 /// The lane of the daemon: its IDE owner, its bridge and its lane services.

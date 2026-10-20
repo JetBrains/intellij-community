@@ -811,9 +811,10 @@ them into `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR` for a run that is not green, 
 | the standard output and error of the IDE process of each such launch, `run.log`, and its `supervisor.log`. An IDE that dies before its logger starts leaves its reason only there | `ide/<launchKey>/<launchName>/run/` |
 | the slow-step dumps and the authored artifacts | `iterations/<iterationId>/slow-steps/`, `iterations/<iterationId>/authored-artifacts/` |
 | what the copy kept, and each file that its caps of 32 MiB per file and 256 MiB in all cut or left out | `evidence.txt` |
+| a trace attachment that came outside a recorded scenario, such as the dump of a slow launch, in any run | `attachments/<n>-<name>.<ext>` |
 
-A green run copies nothing. Three properties of the guest paths are worth stating. Each IDE launch writes its own log
-directory, so iterations never overwrite each other.
+A green run copies nothing, so only `attachments/` can hold files then. Three properties of the guest paths are worth
+stating. Each IDE launch writes its own log directory, so iterations never overwrite each other.
 The first launch of a context is `start-<stamp>`. Under the lane daemon, a relaunch for `restart-ide` is
 `restart-N` and a relaunch after a reset that did not hold is `recycle-N`. So list the `log` directory rather than
 assuming the path. The guest agent keeps the newest five log directories of each

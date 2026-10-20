@@ -203,6 +203,75 @@ fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
     );
 }
 
+// Outside a recorded scenario an attachment goes to the loose directory that lane-run names, before a scenario opens and
+// with the trace off alike. The command does not go out, and the session without the directory drops the attachment.
+#[test]
+fn an_attachment_outside_a_recorded_scenario_goes_to_the_loose_directory() {
+    let root = tempfile::TempDir::new().unwrap();
+    let loose = root.path().join("outputs/lane/attachments");
+    let recording = Recording::default();
+    let mut trace = Trace::open(Box::new(recording.clone()), Trace::hello(root.path(), None, "iter-1", false, None))
+        .keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
+
+    assert!(!trace.attach("IDE dump of the slow step lane launch", "text/plain", b"threads", "txt"));
+    trace.open_scenario(scenario("attaches"));
+    assert!(trace.attach("IDE dump", "text/plain", b"in the scenario", "txt"));
+    trace.finish_scenario(None);
+    let mut off = Trace::off().keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
+    assert!(!off.attach("Codex daemon ledger.json", "application/json", b"{}", "json"));
+    assert!(!Trace::off().attach("dropped", "text/plain", b"nowhere", "txt"));
+
+    let mut files: Vec<String> = fs::read_dir(&loose)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    files.sort();
+    assert_eq!(
+        files,
+        ["001-codex-daemon-ledger-json.json", "001-ide-dump-of-the-slow-step-lane-launch.txt"]
+    );
+    assert_eq!(
+        fs::read_to_string(loose.join("001-ide-dump-of-the-slow-step-lane-launch.txt")).unwrap(),
+        "threads"
+    );
+    assert!(
+        recording
+            .lines
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|line| line.starts_with(r#"{"op":"attach""#))
+            .count()
+            == 1,
+        "only the attachment in the scenario went to the recorder"
+    );
+    assert_eq!(
+        fs::read_to_string(root.path().join(ROOT_DIR_NAME).join("iter-1/attach/2.txt")).unwrap(),
+        "in the scenario"
+    );
+}
+
+// The loose attachments stop at their cap. The first attachment past it is dropped, and so is every later one, also one
+// that fits in what the cap leaves. That latch is what lets the drop give only one line of the log, which the test
+// cannot read.
+#[test]
+fn the_loose_attachments_stop_at_their_cap() {
+    let root = tempfile::TempDir::new().unwrap();
+    let loose = root.path().join("outputs/lane/attachments");
+    let mut trace = Trace::off().keep_loose_attachments_in(Some(loose.clone()), 10);
+
+    assert!(!trace.attach("first", "text/plain", b"123456", "txt"));
+    assert!(!trace.attach("second", "text/plain", b"123456", "txt"));
+    assert!(!trace.attach("third", "text/plain", b"1", "txt"));
+
+    let files: Vec<String> = fs::read_dir(&loose)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(files, ["001-first.txt"]);
+    assert_eq!(fs::read(loose.join("001-first.txt")).unwrap(), b"123456");
+}
+
 // The lane daemon roots the bundles of an iteration in its directory with the launcher `daemon`. Under a Bazel test,
 // lane-run roots them in the outputs directory with the launcher `bazel`, where Bazel keeps them.
 #[test]

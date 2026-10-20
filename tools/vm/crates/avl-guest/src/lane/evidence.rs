@@ -11,6 +11,9 @@
 //! - `iterations/<iterationId>/slow-steps/` and `iterations/<iterationId>/authored-artifacts/`.
 //! - `evidence.txt`: when the copy ran, what it kept, and each file that it cut or left out, with the reason.
 //!
+//! `attachments/` beside them is no copy: the trace writes the attachments outside a recorded scenario there during the
+//! run, whatever its verdict.
+//!
 //! A launch is affected when it ran during a scenario that did not pass, at a watchdog expiry, at the failure of a class
 //! or of the run, or at the hard stop. A run that is not green and has no affected launch keeps every launch. A green
 //! run keeps nothing. The lane daemon of a worker never copies, because the controller pulls its iterations.
@@ -45,6 +48,8 @@ const RUN_DIR: &str = "run";
 const IDEA_LOG_FILE: &str = "idea.log";
 /// The file that says what the copy kept and what it cut, in [`DIR`].
 pub(crate) const MANIFEST_FILE: &str = "evidence.txt";
+/// The directory of the trace attachments that came outside a recorded scenario, in [`DIR`].
+pub(crate) const ATTACHMENTS_DIR: &str = "attachments";
 
 /// The caps of one copy, in bytes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -103,6 +108,12 @@ impl Evidence {
             destination: outputs.join(DIR),
         }
     }
+}
+
+/// The directory of the trace attachments outside a recorded scenario, for the outputs directory `outputs` of a Bazel
+/// test. The trace writes them during the run, whatever its verdict.
+pub(crate) fn attachments_dir(outputs: &Path) -> PathBuf {
+    outputs.join(DIR).join(ATTACHMENTS_DIR)
 }
 
 /// One IDE launch of a run, as its `ideLaunched` record names it.

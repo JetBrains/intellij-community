@@ -28,6 +28,7 @@ use avl_trace::protocol::{
 };
 
 use super::channel::log;
+use super::watchdog::slug;
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -63,6 +64,8 @@ const EXIT_GRACE: Duration = Duration::from_secs(30);
 
 /// The directory of the files that the lane hands to the recorder, below `<root>/<runId>`.
 const ATTACH_DIR_NAME: &str = "attach";
+/// What the attachments outside a recorded scenario may take of the loose directory of `lane-run`, in bytes.
+pub(crate) const MAX_LOOSE_BYTES: u64 = 64 << 20;
 
 /// The recorder's answer to one acked line.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -333,6 +336,11 @@ pub(crate) struct Trace {
     bounds: AckBounds,
     attach_dir: Option<PathBuf>,
     attach_count: u32,
+    /// Where an attachment outside a recorded scenario goes, or `None` to drop it. See [`Trace::keep_loose_attachments_in`].
+    loose_dir: Option<PathBuf>,
+    /// What the attachments in the loose directory may take, in bytes.
+    loose_cap: u64,
+    loose_bytes: u64,
     /// Whether the session met a failure that loses a trace, so a later one stays in the log only.
     failed: bool,
     /// The first such failure, until [`Trace::take_failure`] takes it for the stream.
@@ -351,6 +359,9 @@ impl Trace {
             bounds: AckBounds::FRESH,
             attach_dir: None,
             attach_count: 0,
+            loose_dir: None,
+            loose_cap: 0,
+            loose_bytes: 0,
             failed: false,
             unreported: None,
         }
@@ -361,6 +372,16 @@ impl Trace {
         let mut trace = Self::off();
         trace.fail(reason);
         trace
+    }
+
+    /// The session with `directory` for the attachments outside a recorded scenario: before a scenario opens, after the
+    /// recorder refused one, after the recorder went away, and with the trace off. The attachments there take at most
+    /// `cap` bytes. `lane-run` names `$TEST_UNDECLARED_OUTPUTS_DIR/lane/attachments` with [`MAX_LOOSE_BYTES`], so Bazel
+    /// keeps them. The lane daemon of a worker names no directory, so it drops them.
+    pub(crate) fn keep_loose_attachments_in(mut self, directory: Option<PathBuf>, cap: u64) -> Self {
+        self.loose_dir = directory;
+        self.loose_cap = cap;
+        self
     }
 
     /// Answers, once, the first failure that lost a trace: a recorder that did not start, refused the hello or a
@@ -553,8 +574,11 @@ impl Trace {
 
     /// Writes `bytes` to `<root>/<runId>/attach/<n>.<extension>` and hands the file to the recorder as an attachment of
     /// the innermost open span. Answers whether the command went out; only then does the file belong to the recorder.
+    /// Outside a recorded scenario the bytes go to `<n>-<name>.<extension>` of the loose directory instead, within the
+    /// loose cap.
     pub(crate) fn attach(&mut self, name: &str, mime: &str, bytes: &[u8], extension: &str) -> bool {
         if !self.recording() {
+            self.keep_loose(name, bytes, extension);
             return false;
         }
         let Some(directory) = self.attach_dir.clone() else { return false };
@@ -571,6 +595,31 @@ impl Trace {
             span: self.open_spans.last().copied().unwrap_or(0),
         }));
         self.transport.is_some()
+    }
+
+    /// Writes one attachment outside a recorded scenario into the loose directory, while the attachments there stay within
+    /// the loose cap. A failed write and the first attachment past the cap are a line of the log.
+    fn keep_loose(&mut self, name: &str, bytes: &[u8], extension: &str) {
+        let Some(directory) = &self.loose_dir else { return };
+        let size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        let cap = self.loose_cap;
+        if self.loose_bytes.saturating_add(size) > cap {
+            if self.loose_bytes < cap {
+                log(&format!(
+                    "the attachment {name} outside a recorded scenario is dropped, and so is every later one: the \
+                     attachments in {} reached the cap of {cap} bytes",
+                    directory.display()
+                ));
+                self.loose_bytes = cap;
+            }
+            return;
+        }
+        self.attach_count += 1;
+        let file = directory.join(format!("{:03}-{}.{extension}", self.attach_count, slug(name)));
+        match fs::create_dir_all(directory).and_then(|()| fs::write(&file, bytes)) {
+            Ok(()) => self.loose_bytes += size,
+            Err(error) => log(&format!("the attachment {name} cannot be written to {}: {error}", file.display())),
+        }
     }
 
     /// Ends the scenario: each span still open is aborted, then `done` with the status, message and trace of `failure`.
