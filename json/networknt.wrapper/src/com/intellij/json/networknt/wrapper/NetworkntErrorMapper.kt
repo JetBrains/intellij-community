@@ -78,8 +78,10 @@ class NetworkntErrorMapper(
       structuralBranchSuppressions.isEmpty() -> typeBranchSuppressions
       else -> typeBranchSuppressions + structuralBranchSuppressions
     }
-    val effectiveErrors = if (branchSuppressions.isEmpty()) effectiveErrorsRaw
-                          else effectiveErrorsRaw.filter { it !in branchSuppressions }
+    val branchFilteredErrors = if (branchSuppressions.isEmpty()) effectiveErrorsRaw
+                               else effectiveErrorsRaw.filter { it !in branchSuppressions }
+    // [computeBranchStructuralErrorSuppressions] needs the branch unevaluatedProperties error to suppress the parent composition error.
+    val effectiveErrors = filterUnevaluatedPropertiesErrors(branchFilteredErrors)
 
     val preGrouped = preGroupErrors(effectiveErrors)
 
@@ -149,6 +151,48 @@ class NetworkntErrorMapper(
       val keyword = error.keyword
       keyword == "oneOf" || keyword == "anyOf" || keyword == "allOf"
       || !isInsideComposition(error)
+    }
+  }
+
+  /**
+   * Networknt drops subschema annotations when a subschema fails, so ancestor `unevaluatedProperties`
+   * and `unevaluatedItems` validators report cascade errors in addition to the descendant error.
+   * This filter handles non-composition applicators such as `patternProperties`, `allOf`, and `$ref`.
+   * [computeBranchStructuralErrorSuppressions] handles sibling branches in `oneOf` and `anyOf` and suppresses the parent composition error.
+   */
+  private fun filterUnevaluatedPropertiesErrors(errors: Collection<Error>): Collection<Error> {
+    val specificErrorAncestorPrefixes = mutableSetOf<String>()
+    for (error in errors) {
+      val location = error.instanceLocation?.toString() ?: continue
+      addAncestorPrefixes(location, specificErrorAncestorPrefixes)
+    }
+
+    if (specificErrorAncestorPrefixes.isEmpty()) return errors
+
+    return errors.filter { error ->
+      val rejectedPath = rejectedUnevaluatedPath(error) ?: return@filter true
+      rejectedPath !in specificErrorAncestorPrefixes
+    }
+  }
+
+  private fun rejectedUnevaluatedPath(error: Error): String? {
+    val rejectedSegment = when (error.keyword) {
+      "unevaluatedProperties" -> error.property
+      "unevaluatedItems" -> error.arguments?.getOrNull(0)?.toString()
+      else -> null
+    } ?: return null
+    val parentPath = error.instanceLocation ?: return null
+    return parentPath.append(rejectedSegment).toString()
+  }
+
+  private fun addAncestorPrefixes(location: String, target: MutableSet<String>) {
+    if (!target.add(location)) return
+    var searchFrom = 0
+    while (true) {
+      val slashIndex = location.indexOf('/', searchFrom + 1)
+      if (slashIndex == -1) return
+      target.add(location.substring(0, slashIndex))
+      searchFrom = slashIndex
     }
   }
 
@@ -1063,11 +1107,10 @@ class NetworkntErrorMapper(
    * misleading UX (the user clearly intended the sibling branch and has a deeper mistake —
    * e.g. a typo'd property name). See `testWithWaySelection`.
    *
-   * Branch-level `additionalProperties` / `unevaluatedProperties` errors are suppressed under a
-   * SHARPER condition than `required`/`enum`: only when a sibling branch under the same
-   * composition root has a value-scoped error on the SAME property the rejection targets
-   * (i.e. its instanceLocation equals `rootLoc + "/" + rejectedProperty`). Suppressing them
-   * unconditionally would hide legitimate "extra property" diagnostics on unrelated keys.
+   * Branch-level `additionalProperties`, `unevaluatedProperties`, and `unevaluatedItems` errors
+   * are suppressed under a SHARPER condition than `required`/`enum`: only when a sibling branch
+   * under the same composition root has a value-scoped error at or below the rejected path.
+   * Suppressing them unconditionally would hide legitimate "extra property" diagnostics on unrelated keys.
    * Mirrors the swagger 2.0 `oneOf:[response, jsonReference]` UX: when the user typo'd a value
    * inside `response`, the sibling `jsonReference` branch's "Property X is not allowed"
    * complaint is misleading because the user clearly meant the `response` branch.
@@ -1114,10 +1157,13 @@ class NetworkntErrorMapper(
       // Collect all instance locations strictly deeper than rootLoc — used both as a flag
       // for required/enum blanket suppression and as a per-property check for
       // additionalProperties/unevaluatedProperties.
-      val deeperInstanceLocs = branchErrors
-        .mapNotNull { it.instanceLocation?.toString() }
-        .filter { it.length > rootLoc.length && it.startsWith(rootLocPrefix) }
-        .toSet()
+      val deeperInstanceLocs = mutableSetOf<String>()
+      for (err in branchErrors) {
+        val loc = err.instanceLocation?.toString() ?: continue
+        if (loc.length > rootLoc.length && loc.startsWith(rootLocPrefix)) {
+          addAncestorPrefixes(loc, deeperInstanceLocs)
+        }
+      }
       if (deeperInstanceLocs.isEmpty()) continue
       var anySuppressed = false
       for (err in branchErrors) {
@@ -1128,13 +1174,11 @@ class NetworkntErrorMapper(
             toSuppress.add(err)
             anySuppressed = true
           }
-          "additionalProperties", "unevaluatedProperties" -> {
-            val rejected = err.property ?: continue
-            // Build the rejected property's instance location and only suppress if some
-            // sibling branch reports a value-scoped error at exactly that path. This keeps
-            // unrelated extra-property diagnostics intact while squashing the misleading
-            // composition-root rejection on a property that the chosen sibling actually has.
-            val rejectedLoc = rootLocPrefix + rejected
+          "additionalProperties", "unevaluatedProperties", "unevaluatedItems" -> {
+            val rejectedLoc = when (err.keyword) {
+              "additionalProperties" -> err.property?.let { err.instanceLocation?.append(it)?.toString() }
+              else -> rejectedUnevaluatedPath(err)
+            } ?: continue
             if (rejectedLoc in deeperInstanceLocs) {
               toSuppress.add(err)
               anySuppressed = true
