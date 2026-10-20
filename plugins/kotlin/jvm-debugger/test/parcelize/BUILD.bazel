@@ -25,7 +25,15 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//xml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/vcs/plugin",
+    ],
 )
 
 jvm_library(
@@ -45,6 +53,11 @@ jvm_library(
         # do not sort,
         ":parcelize",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

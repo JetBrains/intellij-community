@@ -50,6 +50,13 @@ jvm_library(
         "//platform/core-api:core",
         "//plugins/kotlin/gradle/gradle",
         "//java/java-impl/testFramework",
+        "//xml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/vcs/plugin",
+        "//plugins/gradle/plugin",
+        "//plugins/gradle/java/plugin",
     ],
 )
 
@@ -75,6 +82,13 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//java/java-impl/testFramework:testFramework_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//plugins/gradle/plugin:plugin_test_lib",
+        "//plugins/gradle/java/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
