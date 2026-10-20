@@ -234,13 +234,21 @@ class NioFileTreeModel(
 
     override fun toString(): String = descriptor.title
 
-    companion object {
-      fun isValid(path: Path?): Boolean = path != null && Files.exists(path)
+    /**
+     * Whether [path] can be a root of this tree. The check asks the contributor for ownership
+     * and does not touch the file system. An existence check such as [Files.exists] reads the
+     * path, and on Windows a read of a `\\wsl.localhost\<distro>\` root starts the WSL machine
+     * of a stopped distribution (IJPL-258774).
+     */
+    private fun isValid(path: Path?): Boolean {
+      if (path == null) return false
+      val contributor = model.contributor ?: return Files.exists(path)
+      return runCatching { contributor.ownsPath(path) }.getOrDefault(false)
+    }
 
-      fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
-        val list = NioFileChooserUtil.getNioRoots(descriptor).filter { isValid(it) }
-        return if (list.isEmpty() && descriptor.isShowFileSystemRoots) null else list
-      }
+    private fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
+      val list = NioFileChooserUtil.getNioRoots(descriptor).filter { isValid(it) }
+      return if (list.isEmpty() && descriptor.isShowFileSystemRoots) null else list
     }
   }
 
