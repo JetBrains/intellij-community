@@ -148,7 +148,7 @@ internal class RangeModState private constructor(
 
   /**
    * The state with the lines of [op] cleared, as [ModifiedLineSet.clearModificationFlags] checks and
-   * clears them. An except line keeps its flag.
+   * clears them. An except line keeps its flag. A clear that changes no flag returns this state.
    */
   private fun applyUnmodifiedLines(op: DocumentOp.UnmodifiedLines): DocumentModState {
     val positions = when (edits) {
@@ -156,11 +156,18 @@ internal class RangeModState private constructor(
       is Edits.Some -> edits.positions
     }
     val lines = lineText()
+    val clearedLines = clearedLines(lines, op.startLine(), op.endLine())
+    val exceptLines = op.exceptLines()
+    if (clearsNoFlag(positions, lines, clearedLines, exceptLines)) {
+      return this
+    }
     val lineCount = lines.lineCount()
-    val keptLines = op.exceptLines().filter { line ->
+    val keptLines = exceptLines.filter { line ->
       line in 0 until lineCount && isModified(positions, lines, line)
     }
-    var cleared = cleared(positions, lines, op.startLine(), op.endLine())
+    val from = lines.lineStartOffset(clearedLines.first)
+    val to = lines.lineEndOffset(clearedLines.last)
+    var cleared = positions.fill(from, to, modified = false)
     for (line in keptLines) {
       cleared = cleared.fill(lines.lineStartOffset(line), lines.lineEndOffset(line), modified = true)
     }
@@ -173,29 +180,59 @@ internal class RangeModState private constructor(
     )
   }
 
-  private fun cleared(
-    positions: ModifiedPositions,
-    lines: DocumentText,
-    startLine: Int,
-    endLine: Int,
-  ): ModifiedPositions {
+  /**
+   * The lines that a clear from [startLine] to [endLine] covers. Fails for a range that [lines] does not
+   * hold, as [ModifiedLineSet.clearModificationFlags] does.
+   */
+  private fun clearedLines(lines: DocumentText, startLine: Int, endLine: Int): IntRange {
     val lineCount = lines.lineCount()
     require(startLine <= endLine) {
       "endLine < startLine: $endLine < $startLine; lineCount: $lineCount"
     }
     val isWholeEmptyText = endLine == 0 || endLine == Int.MAX_VALUE
     if (lineCount == 0 && startLine == 0 && isWholeEmptyText) {
-      return positions
+      return IntRange.EMPTY
     }
     checkLine(lines, startLine)
     val clearedEnd = if (endLine == Int.MAX_VALUE) lineCount else endLine
     checkLine(lines, clearedEnd - 1)
-    if (startLine >= clearedEnd) {
-      return positions
+    return startLine until clearedEnd
+  }
+
+  /**
+   * Whether a clear of [clearedLines] keeps every flag, because each modified line among them is one of
+   * [exceptLines]. It reads the positions that the clear sets clean, so it never misses a change.
+   */
+  private fun clearsNoFlag(
+    positions: ModifiedPositions,
+    lines: DocumentText,
+    clearedLines: IntRange,
+    exceptLines: IntArray,
+  ): Boolean {
+    val exceptLinesInRange = exceptLines.filter { line -> line in clearedLines }.distinct().sorted()
+    var gapStart = clearedLines.first
+    for (exceptLine in exceptLinesInRange) {
+      if (gapStart < exceptLine && hasModifiedLines(positions, lines, gapStart, exceptLine - 1)) {
+        return false
+      }
+      gapStart = exceptLine + 1
     }
-    val from = lines.lineStartOffset(startLine)
-    val to = lines.lineEndOffset(clearedEnd - 1)
-    return positions.fill(from, to, modified = false)
+    if (gapStart > clearedLines.last) {
+      return true
+    }
+    return !hasModifiedLines(positions, lines, gapStart, clearedLines.last)
+  }
+
+  /**
+   * Whether a position from the start of [firstLine] to the separator of [lastLine] is modified.
+   */
+  private fun hasModifiedLines(
+    positions: ModifiedPositions,
+    lines: DocumentText,
+    firstLine: Int,
+    lastLine: Int,
+  ): Boolean {
+    return positions.hasModified(lines.lineStartOffset(firstLine), lines.lineEndOffset(lastLine))
   }
 
   /**

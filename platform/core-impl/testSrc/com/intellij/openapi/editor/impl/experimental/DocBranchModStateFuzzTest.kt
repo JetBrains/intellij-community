@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.experimental.Agent
 import com.intellij.openapi.editor.ex.experimental.DocBranch
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.Random
 
@@ -22,6 +23,7 @@ internal class DocBranchModStateFuzzTest {
 
   @Test
   fun `a branch keeps the mod state of a snapshot`() {
+    var keptClears = 0
     repeat(SEEDS) { seed ->
       val random = Random(seed.toLong())
       // Both start from one stamp, so the stamps compare too.
@@ -31,10 +33,32 @@ internal class DocBranchModStateFuzzTest {
       var branch = DocBranch.createBranch(TEXT, Agent.createAgent("user")).applyOp(startStamp)
       repeat(STEPS) { step ->
         val op = randomOp(snapshot.text(), random)
+        val before = branch
+        val keepsExceptLine = keepsModifiedExceptLine(snapshot, op)
         snapshot = snapshot.applyOp(op)
         branch = branch.applyOp(op)
         assertSameModState(snapshot, branch, "seed $seed, step $step, $op")
+        if (keepsExceptLine && branch === before) {
+          keptClears++
+        }
       }
+    }
+    // A clear that changes no flag keeps the exact positions of a modified except line. The ops after
+    // such a clear must still match the snapshot, so the fuzz must reach it often.
+    assertTrue(keptClears > MIN_KEPT_CLEARS) { "only $keptClears clears keep a modified except line" }
+  }
+
+  /**
+   * Whether [op] is a clear with an except line in its range that is modified in [snapshot].
+   */
+  private fun keepsModifiedExceptLine(snapshot: DocumentSnapshot, op: DocumentOp): Boolean {
+    if (op !is DocumentOp.UnmodifiedLines) {
+      return false
+    }
+    val lineCount = snapshot.text().lineCount()
+    val clearedEnd = if (op.endLine() == Int.MAX_VALUE) lineCount else op.endLine()
+    return op.exceptLines().any { line ->
+      line >= op.startLine() && line < clearedEnd && snapshot.modState().isLineModified(line)
     }
   }
 
@@ -107,6 +131,7 @@ internal class DocBranchModStateFuzzTest {
     const val TEXT = "one\ntwo\nthree\n"
     const val SEEDS = 200
     const val STEPS = 300
+    const val MIN_KEPT_CLEARS = 300
     val FRAGMENTS = listOf("x", "yz", "\n", "a\nb", "\r", "\r\n", "c\r", "\nd", "e\r\nf\n")
   }
 }

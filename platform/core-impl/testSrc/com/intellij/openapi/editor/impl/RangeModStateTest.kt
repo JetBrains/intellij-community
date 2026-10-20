@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -113,6 +114,46 @@ internal class RangeModStateTest {
     assertTrue(edited.modState.isLineModified(2))
   }
 
+  @Test
+  fun `a clear that changes no flag keeps the instance`() {
+    // The line 1 of "a\nxb\nc" is modified.
+    val edited = assertSameAsLineSet("a\nb\nc", insertOp(2, "x"))
+    val clears = listOf(
+      unmodifiedLinesOp(2, 3, IntArray(0)),
+      unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+      unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1, 0, 1)),
+      unmodifiedLinesOp(1, 1, IntArray(0)),
+      // The except lines lie outside the range or the text, next to the modified line.
+      unmodifiedLinesOp(2, 3, intArrayOf(-1, 0, 3)),
+    )
+    for (clear in clears) {
+      assertSame(edited.modState, edited.apply(clear)) { "$clear" }
+    }
+    val cleared = Edited(edited.text, edited.apply(unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))))
+    assertSame(cleared.modState, cleared.apply(unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))))
+  }
+
+  @Test
+  fun `a clear that changes a flag gives a new state`() {
+    // Each case modifies one line of "a\nb\nc" and clears it. The line is the last line of the range,
+    // or it lies before an except line.
+    val start = "a\nb\nc"
+    val lastLine = ModifiedLine(insertOp(5, "y"), 2)
+    val firstLine = ModifiedLine(insertOp(0, "z"), 0)
+    val cases = listOf(
+      lastLine to unmodifiedLinesOp(1, 3, IntArray(0)),
+      lastLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+      lastLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(0, 1)),
+      firstLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+    )
+    for ((case, clear) in cases) {
+      val edited = assertSameAsLineSet(start, case.edit)
+      val cleared = assertSameAsLineSet(start, case.edit, clear)
+      assertNotSame(edited.modState, edited.apply(clear)) { "$clear" }
+      assertFalse(cleared.modState.isLineModified(case.line)) { "$clear" }
+    }
+  }
+
   /**
    * Applies [ops] to a new [RangeModState] and to a new [DocumentModStateImpl], and checks that both
    * mark the same lines.
@@ -144,6 +185,11 @@ internal class RangeModStateTest {
     val modState = RangeModState.create(start).applyOp(start, text, insert)
     return Edited(text, modState)
   }
+
+  /**
+   * An [edit] that modifies the [line].
+   */
+  private class ModifiedLine(val edit: DocumentOp, val line: Int)
 
   /**
    * A text and its mod state after some ops.
