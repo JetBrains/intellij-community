@@ -159,8 +159,7 @@ class KotlinChangeSignatureConflictSearcher(
         }
         if (function.hasModifier(KtTokens.COMPANION_KEYWORD) &&
             originalReceiverInfo != null &&
-            newReceiverInfo != null &&
-            newReceiverInfo != originalReceiverInfo
+            newReceiverInfo != null
         ) {
             fun hasCompanionExtensionRelevantUsages() = refUsages.get().any { usage ->
                 when (usage) {
@@ -168,11 +167,24 @@ class KotlinChangeSignatureConflictSearcher(
                     is KotlinImplicitThisToParameterUsage -> usage.parameterInfo == originalReceiverInfo
                     is KotlinFunctionCallUsage, is KotlinPropertyCallUsage, is KotlinByConventionCallUsage,
                     is KotlinCallableReferenceUsage, is MethodCallUsageInfo, is KotlinOverrideUsageInfo, is OverriderUsageInfo -> true
+
                     else -> false
                 }
             }
-            if (hasCompanionExtensionRelevantUsages()) {
-                result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
+
+            if (newReceiverInfo.oldIndex != originalReceiverInfo.oldIndex) {
+                if (hasCompanionExtensionRelevantUsages()) {
+                    result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
+                }
+            } else {
+                val originalReceiverType = originalReceiverInfo.originalType.text
+                val newReceiverType = newReceiverInfo.currentType.text
+                if (originalReceiverType != null && newReceiverType != null &&
+                    !areTypesTheSame(originalReceiverType, newReceiverType, function) &&
+                    hasCompanionExtensionRelevantUsages()
+                ) {
+                    result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.changed.receiver.type"))
+                }
             }
         }
         if (newReceiverInfo != originalReceiverInfo) {

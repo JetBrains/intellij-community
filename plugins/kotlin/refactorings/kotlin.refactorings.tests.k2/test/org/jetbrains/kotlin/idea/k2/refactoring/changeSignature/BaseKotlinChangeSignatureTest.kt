@@ -958,6 +958,9 @@ public @interface NotNull {
         newParameters[2].name = "renamed"
     }
 
+    fun testCompanionExtensionChangeReceiverType() = doTestConflict { receiverParameterInfo!!.setType("OtherHost") }
+    fun testCompanionExtensionChangeReceiverTypeUnused() = doTest { receiverParameterInfo!!.setType("OtherHost") }
+
     fun testParameterToReceiverExplicitReceiver() = doTest { receiverParameterInfo = newParameters[0] }
 
     fun testParameterToReceiverImplicitReceivers() = doTest { receiverParameterInfo = newParameters[0] }

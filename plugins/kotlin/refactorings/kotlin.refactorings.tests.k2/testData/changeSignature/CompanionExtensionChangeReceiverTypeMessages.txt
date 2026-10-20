@@ -1,0 +1,1 @@
+Changing the receiver type of a companion extension can break its calls
