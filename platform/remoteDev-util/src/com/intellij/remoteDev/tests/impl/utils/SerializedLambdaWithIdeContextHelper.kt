@@ -29,12 +29,10 @@ class SerializedLambdaWithIdeContextHelper: SerializedLambdaHelper() {
 
     val persistedLambda = serialize(obj)
     // Reloaded through the loader that *defined* the lambda, not through this helper's own. They are the same
-    // loader whenever the test classpath is flat, which is why the default held for so long — but a harness that
-    // loads test code in a child classloader (the AIR UI-test daemon puts every test class in a hot child tier so
-    // an iteration needs no reassembly) defines the lambda somewhere this class's loader cannot see, and the
-    // check below then fails with `ClassNotFoundException` for a lambda that is perfectly serializable. The
-    // point of the round trip is to prove the lambda can be reloaded at all; the loader that owns it is the only
-    // one that can answer that.
+    // loader whenever the test classpath is flat, which is why the default held for so long. A harness that loads
+    // test code in a child classloader defines the lambda somewhere this class's loader cannot see. The check
+    // below then fails with `ClassNotFoundException` for a lambda that is perfectly serializable. The point of the
+    // round trip is to prove that the lambda can be reloaded at all. Only the loader that owns it can answer that.
     val reloadedLambda = getSuspendingSerializableConsumer<T, R>(persistedLambda, obj.javaClass.classLoader)
     require(reloadedLambda.javaClass == obj.javaClass) {
       "The reloaded lambda should have the same type as the original one. " +
