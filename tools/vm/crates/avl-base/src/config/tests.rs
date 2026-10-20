@@ -110,12 +110,7 @@ fn the_linux_defaults_are_the_documented_ones() {
         ("vm user", config.vm_user.as_str(), "admin"),
         ("vm home", &config.vm_home, "/home/admin"),
         ("vm data", &config.vm_data, "/home/admin/WorkerData"),
-        ("vm out", &config.vm_out, "/home/admin/WorkerData/out"),
-        (
-            "vm download cache",
-            &config.vm_download_cache,
-            "/home/admin/WorkerData/build-download",
-        ),
+        ("vm tmp", &config.vm_tmp, "/home/admin/WorkerData/tmp"),
         ("vm node", &config.vm_node, "/usr/local/bin/node"),
         ("vm uid", &config.vm_uid, "1000"),
         ("guest display", &config.guest_display, ":88"),
@@ -1298,7 +1293,7 @@ fn the_container_linux_defaults_are_the_skills_container() {
         ),
         ("ubuntu", "1000", "/home/ubuntu", "/home/ubuntu/WorkerData")
     );
-    assert_eq!(config.vm_out, "/home/ubuntu/WorkerData/out");
+    assert_eq!(config.vm_tmp, "/home/ubuntu/WorkerData/tmp");
     assert_eq!(config.vm_runs_root, "/home/ubuntu/WorkerData/state/ui-runs");
     assert_eq!(config.vm_agent, "/home/ubuntu/WorkerData/state/vm-guest-agent");
     assert_eq!(config.guest_display, ":1");

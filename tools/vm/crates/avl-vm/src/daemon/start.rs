@@ -382,13 +382,7 @@ impl Host {
             "--",
             "/usr/bin/env",
         ]);
-        arguments.extend(crate::lane::guest_run_environment(
-            settings,
-            &prep.daemon_environment,
-            &run_id,
-            &prep.guest_runfiles_root,
-            &location,
-        ));
+        arguments.extend(crate::lane::guest_run_environment(settings, &prep.daemon_environment));
         arguments.extend(daemon_command(settings, prep, &state_dir, &location));
         let started = {
             let (step, _phase) = ctx.begin("supervisor-start");

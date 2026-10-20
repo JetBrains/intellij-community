@@ -210,7 +210,6 @@ pub(crate) struct ControllerBoot<'a> {
     /// The home of the lane daemon in its state directory, which the lane IDE gets as `idea.dev.project.root`.
     pub(crate) guest_home: &'a str,
     pub(crate) vm_data: &'a str,
-    pub(crate) vm_download_cache: &'a str,
     pub(crate) vm_home: &'a str,
     pub(crate) vm_node: &'a str,
     pub(crate) vm_tmp: &'a str,
@@ -234,7 +233,6 @@ pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &st
         daemon_port,
         guest_home: &guest_home,
         vm_data: &settings.vm_data,
-        vm_download_cache: &settings.vm_download_cache,
         vm_home: &settings.vm_home,
         vm_node: &settings.vm_node,
         vm_tmp: &settings.vm_tmp,

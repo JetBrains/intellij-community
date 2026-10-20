@@ -481,11 +481,11 @@ Everything a worker writes lives under `$AIR_VM_DATA`, in eight directories and 
 
 | directory | holds |
 | --- | --- |
-| `out` | the output tree of an older controller. The parity step still makes the directory, and no lane writes into it |
+| `out` | the output tree of an older controller. No step makes the directory now, and no lane writes into it |
 | `runfiles` | the runfiles trees the guest builds from the MANIFEST, with the copies of the staged runfiles |
 | `ide` | one context for each launch key of the lane IDE: its `config`, `system`, `plugins`, `log`, `project`, `home` and `bin` directories, its argument file `ide-jvm.args`, its launch record `launch.json`, and the run directories of its supervisor slot |
 | `tmp` | temporary files |
-| `build-download` | the persistent build-dependency cache |
+| `build-download` | the build-dependency cache of an older controller. No step makes the directory now, and nothing reads it |
 | `daemon` | the daemon's own state, the `home` that the lane IDE gets as `idea.dev.project.root`, and each iteration's results. The run of the lane daemon starts in this directory |
 | `daemon-runtime` | the stable-tier and JBR generations of an older controller. Each daemon start removes the directory before its free-space check |
 | `state` | the supervisor run roots, the SSH host-key fingerprint, and the guest agent binary itself |

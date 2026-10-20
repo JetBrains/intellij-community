@@ -516,11 +516,21 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     for fragment in [
         " --cwd /vm/data/daemon -- ",
         " lane-daemon --state-dir /vm/data/daemon ",
-        "SELF_LOCATION=",
+        " LANG=C.UTF-8 ",
         " --home /vm/data/daemon/home",
         " --ide-root /vm/data/ide ",
     ] {
         assert!(starts[0].contains(fragment), "{fragment} missing from {}", starts[0]);
+    }
+    // The lane daemon is no Bazel test, so the start sets no variable of one.
+    for bazel in [
+        "TEST_TMPDIR=",
+        "TEST_UNDECLARED_OUTPUTS_DIR=",
+        "XML_OUTPUT_FILE=",
+        "RUNFILES_DIR=",
+        "SELF_LOCATION=",
+    ] {
+        assert!(!starts[0].contains(bazel), "{bazel} in {}", starts[0]);
     }
     assert!(channel.calls_containing("vm-guest-agent launch-prep").is_empty());
     // The start stages no runtime generation and collects none. The agent has no verb for either, and no guest call

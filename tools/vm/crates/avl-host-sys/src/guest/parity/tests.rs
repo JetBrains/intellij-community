@@ -55,7 +55,7 @@ fn the_parity_script_of_a_windows_host_names_only_guest_paths() {
     .unwrap();
     settings.set_host_paths(r"C:\Users\air\idea", r"C:\ProgramData\_bazel").unwrap();
     let script = parity_script(&settings, "air-docker-1", "/mnt/AirVmShares/bazel").unwrap();
-    let owned = "'/data' '/data/state/ui-runs' '/data/out' '/data/tmp' '/data/build-download'";
+    let owned = "'/data' '/data/state/ui-runs' '/data/tmp'";
     let golden = [
         "#!/bin/sh",
         "set -eu",
@@ -106,7 +106,7 @@ fn the_parity_script_builds_its_layout_and_leaves_the_checkout_path_alone() {
         &root.join("scripts"),
     )
     .unwrap();
-    assert_eq!(settings.vm_out, format!("{data_text}/out"));
+    assert_eq!(settings.vm_tmp, format!("{data_text}/tmp"));
     settings.set_host_paths(&repo, &bazel).unwrap();
     let script = parity_script(&settings, worker, &mount.join("bazel").to_string_lossy()).unwrap();
     // The chown needs root; what is under test is the layout, so it is a no-op here.
@@ -116,7 +116,11 @@ fn the_parity_script_builds_its_layout_and_leaves_the_checkout_path_alone() {
     let built = run();
     assert!(built.status.success(), "{built:?}");
     assert_eq!(std::fs::read_link(&bazel).unwrap(), mount.join("bazel"));
-    assert!(data.join("out").is_dir() && data.join("tmp").is_dir());
+    assert!(data.join("tmp").is_dir());
+    assert!(
+        !data.join("out").exists() && !data.join("build-download").exists(),
+        "the layout made a retired root"
+    );
     assert_eq!(
         std::fs::read_to_string(data.join(PARITY_MARKER)).unwrap(),
         parity_marker_content(&settings, worker)
@@ -244,9 +248,7 @@ async fn ensure_parity_ready_probes_as_the_worker_user() {
         channel.lines(),
         [
             format!("{as_user} -f {}/{PARITY_MARKER}", settings.vm_data),
-            format!("{as_user} -w {}", settings.vm_out),
             format!("{as_user} -w {}", settings.vm_tmp),
-            format!("{as_user} -w {}", settings.vm_download_cache),
             format!("{as_user} -d {}", paths.bazel_user_root()),
         ]
     );
@@ -261,13 +263,7 @@ async fn shares_at_their_host_paths_need_no_layout_and_no_marker() {
     let settings = &host.settings;
     let channel = FakeChannel::new("container-linux-1");
     host.guest(&channel).provision_worker(ShareMount::Bind).await.unwrap();
-    assert_eq!(
-        channel.lines(),
-        [format!(
-            "/bin/mkdir -p {} {} {}",
-            settings.vm_out, settings.vm_tmp, settings.vm_download_cache
-        )]
-    );
+    assert_eq!(channel.lines(), [format!("/bin/mkdir -p {}", settings.vm_tmp)]);
     assert!(init_receipt_path(settings, "container-linux-1").exists());
     let probes = FakeChannel::new("container-linux-1");
     host.guest(&probes).ensure_parity_ready().await.unwrap();
@@ -275,9 +271,7 @@ async fn shares_at_their_host_paths_need_no_layout_and_no_marker() {
     assert_eq!(
         probes.lines(),
         [
-            format!("/bin/test -w {}", settings.vm_out),
             format!("/bin/test -w {}", settings.vm_tmp),
-            format!("/bin/test -w {}", settings.vm_download_cache),
             format!("/bin/test -d {}", paths.bazel_user_root()),
         ]
     );

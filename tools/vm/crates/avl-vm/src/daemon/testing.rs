@@ -788,7 +788,6 @@ impl DaemonFixture {
             ("AIR_VM_HOME", "/vm/home"),
             ("AIR_VM_DATA", "/vm/data"),
             ("AIR_VM_TMP", "/vm/tmp"),
-            ("AIR_VM_DOWNLOAD_CACHE", "/vm/cache"),
             ("AIR_VM_NODE", "/vm/node"),
         ]
         .iter()

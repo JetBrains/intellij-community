@@ -71,18 +71,12 @@ fn only_a_macos_guest_is_searched_in_homebrew() {
 #[test]
 fn the_guest_path_is_the_guests_node_then_the_platform() {
     let settings = docker();
-    let test_env = BTreeMap::from([
+    let daemon_environment = BTreeMap::from([
         ("AIR_FLOW_UI_REAL".to_owned(), "true".to_owned()),
         // A value that looks like a resolved binary still contributes no directory.
         ("SOME_BIN".to_owned(), "/opt/some/bin/some".to_owned()),
     ]);
-    let environment = environment_of(&guest_run_environment(
-        &settings,
-        &test_env,
-        "run-ui-daemon-7",
-        "/share/out/ui_daemon.runtime.json.runfiles",
-        "/share/self/ui_daemon.runtime.json",
-    ));
+    let environment = environment_of(&guest_run_environment(&settings, &daemon_environment));
 
     // The image's Node is in `/usr/local/bin`, the first platform directory, so the PATH names it once.
     assert_eq!(settings.vm_node, "/usr/local/bin/node");
@@ -90,7 +84,7 @@ fn the_guest_path_is_the_guests_node_then_the_platform() {
     // An operator's Node in its own directory comes first, because the agent CLIs a lane drives are Node programs.
     let mut own_node = docker();
     own_node.vm_node = "/opt/air-node/bin/node".to_owned();
-    let first = environment_of(&guest_run_environment(&own_node, &BTreeMap::new(), "run-ui-daemon-7", "/d", "/s"));
+    let first = environment_of(&guest_run_environment(&own_node, &BTreeMap::new()));
     let wanted: Vec<&str> = std::iter::once("/opt/air-node/bin")
         .chain(guest_platform_path_entries(GuestOs::Linux))
         .collect();
@@ -100,61 +94,35 @@ fn the_guest_path_is_the_guests_node_then_the_platform() {
     // The dedup moves a platform directory to the front when the Node is there.
     let mut on_platform_path = docker();
     on_platform_path.vm_node = "/usr/bin/node".to_owned();
-    let shared = environment_of(&guest_run_environment(
-        &on_platform_path,
-        &BTreeMap::new(),
-        "run-ui-daemon-7",
-        "/d",
-        "/s",
-    ));
+    let shared = environment_of(&guest_run_environment(&on_platform_path, &BTreeMap::new()));
     assert_eq!(shared["PATH"], "/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin");
 }
 
-/// A run's scratch, its runfiles view, and the classpath-root comparison JUnit5BazelRunner makes.
+/// The lane daemon is no Bazel test, so its run environment is the account, the PATH and the daemon environment, and no
+/// variable of a Bazel test. The lane IDE gets only the variables of its context policy, and `lane-run` reads the Bazel
+/// variables that a real Bazel test sets.
 #[test]
-fn the_run_environment_names_the_runfiles_tree_and_the_runs_own_scratch() {
+fn the_run_environment_is_the_account_the_path_and_the_daemon_environment() {
     let settings = tart(GuestOs::Macos);
-    let pairs = guest_run_environment(
-        &settings,
-        &BTreeMap::new(),
-        "run-ui-daemon-7",
-        "/share/out/ui_daemon.runtime.json.runfiles",
-        "/share/runfiles-copy/ui_daemon.runtime.json",
-    );
+    let daemon_environment = daemon_environment(&settings);
+    let pairs = guest_run_environment(&settings, &daemon_environment);
     let environment = environment_of(&pairs);
-    let runfiles = "/share/out/ui_daemon.runtime.json.runfiles";
-    for name in ["RUNFILES_DIR", "JAVA_RUNFILES", "TEST_SRCDIR"] {
-        assert_eq!(environment[name], runfiles, "{name}");
-    }
-    // The runfiles-tree copy, not the bazel-out original: the runner string-compares jar parents against this.
-    assert_eq!(environment["SELF_LOCATION"], "/share/runfiles-copy/ui_daemon.runtime.json");
-    let run_tmp = format!("{}/run-ui-daemon-7", settings.vm_tmp);
-    assert_eq!(environment["TEST_TMPDIR"], run_tmp);
-    assert_eq!(environment["XML_OUTPUT_FILE"], format!("{run_tmp}/test.xml"));
-    assert_eq!(environment["TEST_UNDECLARED_OUTPUTS_DIR"], format!("{run_tmp}/outputs"));
-    assert_eq!(environment["JB_TEST_SANDBOX"], "False");
-    assert_eq!(environment["TEST_WORKSPACE"], "_main");
+    let names: Vec<&str> = environment.keys().map(String::as_str).collect();
+    assert_eq!(names, ["AIR_VM_RUN_SECRETS", "HOME", "LANG", "LOGNAME", "NODE_BIN", "PATH", "USER"]);
+    assert_eq!(environment["HOME"], settings.vm_home);
     assert_eq!(environment["USER"], settings.vm_user);
     assert_eq!(environment["LOGNAME"], settings.vm_user);
-    // The locale is part of the daemon environment, which is digested, and not of the run environment.
-    assert!(!environment.contains_key("LANG"));
     // In name order, because nothing downstream reads position and a reproducible rendering is a chosen one.
     let mut sorted = pairs.clone();
     sorted.sort();
     assert_eq!(pairs, sorted);
 }
 
-/// A lane value wins over a name this function also sets. `HOME` is the case that matters: a lane that pinned it
-/// would otherwise be silently overruled by the guest's own.
+/// A value of the daemon environment wins over a name this function also sets. `HOME` is the case that matters: a value
+/// that pinned it would otherwise be silently overruled by the guest's own.
 #[test]
-fn a_lane_value_overrides_the_run_environment() {
-    let pairs = guest_run_environment(
-        &docker(),
-        &BTreeMap::from([("HOME".to_owned(), "/tmp/lane-home".to_owned())]),
-        "run-ui-daemon-7",
-        "/d",
-        "/s",
-    );
+fn a_daemon_environment_value_overrides_the_run_environment() {
+    let pairs = guest_run_environment(&docker(), &BTreeMap::from([("HOME".to_owned(), "/tmp/lane-home".to_owned())]));
     assert_eq!(environment_of(&pairs)["HOME"], "/tmp/lane-home");
     assert_eq!(pairs.iter().filter(|pair| pair.starts_with("HOME=")).count(), 1);
 }
