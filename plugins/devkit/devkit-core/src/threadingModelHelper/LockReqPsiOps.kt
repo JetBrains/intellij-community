@@ -14,6 +14,12 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 private object LockReqPsiOpsProvider : LanguageExtension<LockReqPsiOps>("DevKit.lang.LockReqPsiOps")
 
 /**
+ * A call of [method] in the body of the analyzed method.
+ * The [callSite] is the element that the stack trace frame points to, for example the identifier of the called method.
+ */
+data class MethodCallee(val method: PsiMethod, val callSite: PsiElement)
+
+/**
  * Language-aware interface that provides extraction for different JVM languages used in application code
  */
 interface LockReqPsiOps {
@@ -25,9 +31,10 @@ interface LockReqPsiOps {
 
   /**
    * @param timer the implementation measures the reference resolve as [LockReqPhaseTimer.Phase.REFERENCE_RESOLVE]
+   * @return one [MethodCallee] for each called method, with the first call site of the method
    */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer = LockReqPhaseTimer.DISABLED): List<PsiMethod>
+  fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer = LockReqPhaseTimer.DISABLED): List<MethodCallee>
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit)

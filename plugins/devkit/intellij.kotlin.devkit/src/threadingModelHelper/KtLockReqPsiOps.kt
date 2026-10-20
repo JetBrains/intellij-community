@@ -17,12 +17,14 @@ import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodCallee
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.tryResolve
@@ -34,8 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger
 class KtLockReqPsiOps : LockReqPsiOps {
 
 
-  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
-    return resolveCalleesWithUast(method, timer).distinct()
+  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<MethodCallee> {
+    return resolveCalleesWithUast(method, timer)
   }
 
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit) {
@@ -116,8 +118,8 @@ class KtLockReqPsiOps : LockReqPsiOps {
 
   private val rules: LockReqRules = BaseLockReqRules()
 
-  private fun resolveCalleesWithUast(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
-    val set = LinkedHashSet<PsiMethod>()
+  private fun resolveCalleesWithUast(method: PsiMethod, timer: LockReqPhaseTimer): List<MethodCallee> {
+    val callSites = LinkedHashMap<PsiMethod, PsiElement>()
     val uMethod = method.toUElement(UMethod::class.java) ?: return emptyList()
     uMethod.accept(object : AbstractUastVisitor() {
 
@@ -126,21 +128,36 @@ class KtLockReqPsiOps : LockReqPsiOps {
           if (resolved !is PsiMethod) {
             return@let
           }
-          set.add(resolved)
+          val callSite = callSite(node) ?: method
+          callSites.putIfAbsent(resolved, callSite)
           val qName = resolved.containingClass?.qualifiedName
           if (node is UCallExpression && qName == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
-            timer.measure(Phase.REFERENCE_RESOLVE) { disposeTargets(node) }.forEach { set.add(it) }
+            timer.measure(Phase.REFERENCE_RESOLVE) { disposeTargets(node) }.forEach { callSites.putIfAbsent(it, callSite) }
           }
         }
         return super.visitExpression(node)
       }
 
       override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
-        (timer.measure(Phase.REFERENCE_RESOLVE) { node.resolve() } as? PsiMethod)?.let { set.add(it) }
+        (timer.measure(Phase.REFERENCE_RESOLVE) { node.resolve() } as? PsiMethod)?.let {
+          callSites.putIfAbsent(it, node.sourcePsi ?: method)
+        }
         return super.visitCallableReferenceExpression(node)
       }
     })
-    return set.toList()
+    return callSites.map { (callee, callSite) -> MethodCallee(callee, callSite) }
+  }
+
+  /**
+   * The element of the [node] with the name of the called method.
+   * A qualified expression starts with the receiver, which can be on an earlier line.
+   */
+  private fun callSite(node: UExpression): PsiElement? {
+    return when (node) {
+      is UQualifiedReferenceExpression -> callSite(node.selector)
+      is UCallExpression -> node.methodIdentifier?.sourcePsi ?: node.sourcePsi
+      else -> node.sourcePsi
+    }
   }
 
   private fun disposeTargets(node: UCallExpression): List<PsiMethod> {

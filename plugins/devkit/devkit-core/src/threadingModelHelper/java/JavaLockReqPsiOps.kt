@@ -24,6 +24,7 @@ import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodCallee
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,33 +37,40 @@ class JavaLockReqPsiOps : LockReqPsiOps {
 
   private val rules: LockReqRules = BaseLockReqRules()
 
-  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
-    val callees = mutableListOf<PsiMethod>()
+  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<MethodCallee> {
+    val callees = mutableListOf<MethodCallee>()
 
     method.body?.accept(object : JavaRecursiveElementVisitor() {
       override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
         super.visitMethodCallExpression(expression)
         timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolveMethod() }?.let { resolved ->
-          callees.add(resolved)
+          val callSite = expression.methodExpression.referenceNameElement ?: expression
+          callees.add(MethodCallee(resolved, callSite))
           val qualifierClass = resolved.containingClass?.qualifiedName
           if (qualifierClass == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
-            timer.measure(Phase.REFERENCE_RESOLVE) { collectDisposeTargets(expression) }?.let { targets -> callees.addAll(targets) }
+            timer.measure(Phase.REFERENCE_RESOLVE) { collectDisposeTargets(expression) }?.let { targets ->
+              targets.mapTo(callees) { MethodCallee(it, callSite) }
+            }
           }
         }
       }
 
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
         super.visitMethodReferenceExpression(expression)
-        (timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolve() } as? PsiMethod)?.let { callees.add(it) }
+        (timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolve() } as? PsiMethod)?.let {
+          callees.add(MethodCallee(it, expression.referenceNameElement ?: expression))
+        }
       }
 
       override fun visitNewExpression(expression: PsiNewExpression) {
         super.visitNewExpression(expression)
-        timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolveMethod() }?.let { callees.add(it) }
+        timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolveMethod() }?.let {
+          callees.add(MethodCallee(it, expression.classOrAnonymousClassReference ?: expression))
+        }
       }
     })
 
-    return callees.distinct()
+    return callees.distinctBy { it.method }
   }
 
   private fun collectDisposeTargets(call: PsiMethodCallExpression): List<PsiMethod>? {

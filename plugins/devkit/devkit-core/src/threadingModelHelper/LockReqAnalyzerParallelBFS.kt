@@ -253,16 +253,18 @@ class LockReqAnalyzerParallelBFS {
           val method = timer.measure(Phase.SMART_POINTERS) { methodPointer.element } ?: return@timedSmartReadAction emptyList()
           val ops = LockReqPsiOps.forLanguage(method.language)
           val callees = timer.measure(Phase.TREE_WALK) { ops.getMethodCallees(method, timer) }
-          timer.measure(Phase.SMART_POINTERS) { callees.map { SmartPointerManager.createPointer(it) } }
+          val callSiteLocations = callees.map { it.callSite.location() }
+          val pointers = timer.measure(Phase.SMART_POINTERS) { callees.map { SmartPointerManager.createPointer(it.method) } }
+          pointers.zip(callSiteLocations)
         }
         node.calleeCount = callees.size
 
-        callees.forEach {
+        callees.forEach { (pointer, callSiteLocation) ->
           timedSmartReadAction(project, timer) {
-            val callee = timer.measure(Phase.SMART_POINTERS) { it.element } ?: return@timedSmartReadAction
+            val callee = timer.measure(Phase.SMART_POINTERS) { pointer.element } ?: return@timedSmartReadAction
             val ops = LockReqPsiOps.forLanguage(callee.language)
             context(ops, config) {
-              processCallee(payload, callee, currentPath, node.id, timer)
+              processCallee(payload, callee, currentPath.withCallSite(callSiteLocation), node.id, timer)
             }
           }
         }
@@ -322,6 +324,9 @@ class LockReqAnalyzerParallelBFS {
     rawReporter.details(DevKitBundle.message("progress.details.analyzing.method.during.lock.requirement.search", qualifiedName))
   }
 
+  /**
+   * @param currentPath the chain to the caller of [method]. The last frame points to the call of [method].
+   */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules)
   private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {

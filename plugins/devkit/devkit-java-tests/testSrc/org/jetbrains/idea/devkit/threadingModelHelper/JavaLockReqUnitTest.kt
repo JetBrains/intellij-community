@@ -96,6 +96,18 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testCallSiteLocations() {
+    val result = doTest("DifferentClassesMethods", "DifferentClassesMethods.java")
+    // each frame points to the call of the next frame, the last frame points to the access, and an annotated method points to its declaration
+    val expectedPaths = listOf("DifferentClassesMethods.java:7 -> DifferentClassesMethods.java:13 -> DifferentClassesMethods.java:20 => EDT.ANNOTATION",
+                               "DifferentClassesMethods.java:7 -> DifferentClassesMethods.java:14 => WRITE.ASSERTION")
+    val actualPaths = result.paths.map { path ->
+      val chain = path.methodChain.joinToString(" -> ") { it.sourceLocation }
+      "$chain => ${path.lockRequirement.constraintType.name}.${path.lockRequirement.requirementReason.name}"
+    }
+    assertEquals(expectedPaths.sorted(), actualPaths.sorted())
+  }
+
   fun testMultipleAssertionsInMethod() {
     val result = doTest("MultipleAssertionsInMethod")
     val expectedPaths = listOf("MultipleAssertionsInMethod.testMethod => READ.ASSERTION")
@@ -248,8 +260,7 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     }
   }
 
-  private fun doTest(className: String): AnalysisResult {
-    val fileName = "${getTestName(false)}.java"
+  private fun doTest(className: String, fileName: String = "${getTestName(false)}.java"): AnalysisResult {
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetMethod = findTestMethod(psiJavaFile, className)
     return runBlocking {

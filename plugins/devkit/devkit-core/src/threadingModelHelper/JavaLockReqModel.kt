@@ -33,7 +33,10 @@ data class MethodCall(
   val methodName: String,
   val containingClassName: String?,
   /**
-   * Navigatable coordinates of this call
+   * Navigatable coordinates of this call in the stack trace format `File.java:line`.
+   * The line number is 1-based.
+   * In an [ExecutionPath], the line is the call of the next frame, or the access that causes the [LockRequirement].
+   * If the analysis did not go into the method body, the line is the method declaration.
    */
   val sourceLocation: String,
   val isPolymorphic: Boolean = false,
@@ -46,11 +49,18 @@ data class MethodCall(
   }
 }
 
-internal fun PsiMethod.location(): String {
+internal fun PsiElement.location(): String {
   val containingDocument = containingFile.fileDocument
   val containingFile = containingFile.virtualFile?.name ?: "<unknown>"
-  val methodLocation = textRange?.startOffset?.let { containingDocument.getLineNumber(it) } ?: -1
-  return "$containingFile:$methodLocation"
+  val elementLocation = textOffset.takeIf { it >= 0 }?.let { containingDocument.getLineNumber(it) + 1 } ?: -1
+  return "$containingFile:$elementLocation"
+}
+
+/**
+ * The chain with the line of the last frame moved to [callSiteLocation].
+ */
+internal fun List<MethodCall>.withCallSite(callSiteLocation: String): List<MethodCall> {
+  return dropLast(1) + last().copy(sourceLocation = callSiteLocation)
 }
 
 data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false)
