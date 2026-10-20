@@ -129,6 +129,10 @@ The doc harvest also fails on a record without a known status or a known topic. 
 site runs these checks and its own checks. Then it runs the script tests of the site and of the kernel. Air does not run `specRefs` and `vocabulary`. `AirSpecReferencesTest` owns the Air spec
 references.
 
+The doc harvest runs the decision, diagram, prose, and vocabulary checks too. It takes them from a check run of
+`scripts/checkRun.ts`, which runs each check at most once. The check of the build site gives its run to the harvest,
+so no check runs twice there.
+
 ### The gate protocol
 
 A JUnit test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. The gate follows one

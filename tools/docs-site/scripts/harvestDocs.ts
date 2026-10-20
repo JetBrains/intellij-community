@@ -3,22 +3,21 @@
 // (`docs` of siteConfig.ts). The site model resolves each reference (modelProvider.ts), so this file knows no
 // language and no build system.
 //
-// The harvest also runs the decision check (adrFiles.ts), the diagram check (diagramFiles.ts), and the prose check
-// (proseLint.ts), in this order, so a prose finding hides no reference error.
+// The harvest also runs the decision check (adrFiles.ts), the diagram check (diagramFiles.ts), the prose check
+// (proseLint.ts), and the vocabulary check (vocabulary.ts), in this order, so a prose finding hides no reference error.
+// It takes them from a check run (checkRun.ts), so a check that the caller ran already does not run again.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { checkDecisionRecords } from './adrFiles.ts'
+import { assertRunOf, type CheckRun, createCheckRun } from './checkRun.ts'
 import { addCodeSpanPaths } from './codeSpans.ts'
 import { type AirDiagram, DIAGRAM_FILE_SUFFIX, type HarvestedDiagram, type HarvestedDiagramNode, type HarvestedDiagramStep } from './diagram.ts'
-import { checkDiagramFiles } from './diagramFiles.ts'
+import type { DiagramFiles } from './diagramFiles.ts'
 import { collectPictureReferences } from './docAssets.ts'
 import { adrDisplayTitle, type AdrMeta, type GuideGroup, isLabeledId, isNoteState, NOTE_STATES, type NoteState, parseAdrMeta } from './docMeta.ts'
 import { type ExplainerChapter, splitExplainerChapters } from './explainerDoc.ts'
 import type { ModelProvider, SourceLocation } from './modelProvider.ts'
 import { contentDir, repoRoot } from './paths.ts'
-import { checkProse } from './proseLint.ts'
-import { checkVocabulary } from './vocabulary.ts'
 import type { SiteConfig } from './siteConfig.ts'
 
 export { slugify } from './explainerDoc.ts'
@@ -71,6 +70,8 @@ export interface DocHarvestOptions {
   root?: string
   /** Called with each harvested doc and its source. The Air harvest reads the air-view fences there. */
   onDoc?: (path: string, source: string) => void
+  /** The run of the kernel checks of the same config and root. Without it, the harvest makes its own. */
+  checks?: CheckRun
 }
 
 /** The 1-based line of `offset` in `source`. */
@@ -151,6 +152,8 @@ function markdownEntries(content: string, folder: string): string[] {
  */
 export function harvestDocs(config: SiteConfig, provider: ModelProvider, options: DocHarvestOptions = {}): DocHarvest {
   const root = options.root ?? repoRoot
+  const checks = options.checks ?? createCheckRun(config, root)
+  assertRunOf(checks, config, root)
   const content = contentDir(config, root)
   const docs: HarvestedDoc[] = []
   const bodies = new Map<string, string>()
@@ -238,14 +241,14 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
     harvestDoc(extra, 'readme')
   }
   // the record files and the references to them, shared with the gate and the check script (adrFiles.ts)
-  checkDecisionRecords(config, root)
+  checks.decisions()
 
-  const diagrams = harvestDiagrams(config, provider, docs, root)
+  const diagrams = harvestDiagrams(config, provider, docs, checks.diagramFiles())
   // the prose of the explainers and the diagram cards, shared with the gate and the check script (proseLint.ts).
   // It runs after the diagram references resolved, so a prose finding hides no reference error.
-  checkProse(config, root)
+  checks.prose()
   // the terms of the site vocabulary, shared with the gate and the check script (vocabulary.ts)
-  checkVocabulary(config, undefined, root)
+  checks.vocabulary()
   return { docs, bodies, pictures, diagrams, codeSpanPaths }
 }
 
@@ -253,14 +256,14 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
  * The diagrams of the site with each reference resolved against the provider and the harvested decision records.
  * The grammar, the grid, and the fence cross-check are the shared check (diagramFiles.ts).
  */
-function harvestDiagrams(config: SiteConfig, provider: ModelProvider, docs: readonly HarvestedDoc[], root: string): HarvestedDiagram[] {
+function harvestDiagrams(config: SiteConfig, provider: ModelProvider, docs: readonly HarvestedDoc[], diagramFiles: DiagramFiles): HarvestedDiagram[] {
   // a diagram names a record by its number, or by its file name without `.md` (a dated record has no number)
   const adrTitles = new Map(docs.flatMap(doc => doc.adr
     ? [[doc.path.slice(doc.path.lastIndexOf('/') + 1, -'.md'.length), doc] as const, ...(doc.adr.number === null ? [] : [[doc.adr.number, doc] as const])]
     : []))
   const diagrams: HarvestedDiagram[] = []
   const linkedFiles: string[] = []
-  for (const diagram of checkDiagramFiles(config, root).diagrams.values()) {
+  for (const diagram of diagramFiles.diagrams.values()) {
     const file = `harvest: ${config.docs.diagrams}/${diagram.id}${DIAGRAM_FILE_SUFFIX}`
     const where = (node: string): string => `${file}: node '${node}'`
     for (const column of diagram.columns) {
