@@ -43,8 +43,9 @@ class CreatedFileEditorSink : AbstractCoroutineContextElement(Key) {
   }
 
   /**
-   * Suspends until [claim] is called. The sink owns the editors until the composite claims them.
-   * The caller must serialize model handling and cleanup to prevent disposal during adoption.
+   * Suspends until [claim] is called. The collector of the model flow is not necessarily the composite - the startup path shares
+   * the flow, so the model can sit in a replay cache with no owner - and until someone claims the editors, this sink is still the
+   * only thing that can release them.
    */
   @ApiStatus.Internal
   suspend fun awaitClaimed() {
