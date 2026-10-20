@@ -24,7 +24,7 @@ enum class TerminalEmulatorType {
   companion object {
     /**
      * The emulator used when not specified explicitly: chosen by the `terminal.use.ghostty.emulator`
-     * registry key, whose default is `false` — [JediTerm].
+     * registry key, whose default is `true` — [Ghostty].
      */
     val default: TerminalEmulatorType
       get() = if (Registry.`is`("terminal.use.ghostty.emulator")) Ghostty else JediTerm
