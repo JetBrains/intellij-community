@@ -17,7 +17,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.navigation.PyNavigationBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,8 +117,8 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
         @Override
         public void configureLabelComponent(final @NonNls @NotNull SimpleColoredComponent coloredComponent) {
           coloredComponent.append(element instanceof PsiDirectory
-                                  ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
-                                  : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));
+                                  ? PyNavigationBundle.message("python.find.module.usages.dialog.label.prefix.package")
+                                  : PyNavigationBundle.message("python.find.module.usages.dialog.label.prefix.module"));
           coloredComponent.append(" ");
           coloredComponent.append(element.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }

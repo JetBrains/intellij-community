@@ -194,6 +194,9 @@
             "module": "intellij.python.sourceRoots"
         },
         {
+            "module": "intellij.python.navigation"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

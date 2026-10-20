@@ -1943,6 +1943,7 @@ python/python-lsp-core/frontend
 python/python-lsp-impl/frontend
 python/python-markdown
 python/python-minimap
+python/python-navigation
 python/python-packaging
 python/python-parser
 python/python-pixi/backend
