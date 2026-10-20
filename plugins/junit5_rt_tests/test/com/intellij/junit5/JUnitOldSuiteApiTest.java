@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
@@ -45,7 +44,7 @@ public class JUnitOldSuiteApiTest extends AbstractTestFrameworkCompilingIntegrat
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/oldSuiteApi");
+    return VfsUtilCore.pathToUrl(JUnitTestData.getTestDataPath() + "/integration/oldSuiteApi");
   }
 
   @Override

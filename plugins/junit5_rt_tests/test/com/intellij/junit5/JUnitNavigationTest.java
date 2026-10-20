@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -37,7 +36,7 @@ public class JUnitNavigationTest extends AbstractTestFrameworkCompilingIntegrati
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/navigation");
+    return VfsUtilCore.pathToUrl(JUnitTestData.getTestDataPath() + "/integration/navigation");
   }
 
   @Override

@@ -11,7 +11,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -50,7 +49,7 @@ public class JUnitSuiteApiTest extends AbstractTestFrameworkCompilingIntegration
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/suiteApi");
+    return VfsUtilCore.pathToUrl(JUnitTestData.getTestDataPath() + "/integration/suiteApi");
   }
 
   @Override

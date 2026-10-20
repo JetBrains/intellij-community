@@ -54,7 +54,7 @@ public class JUnitEventsTest extends AbstractTestFrameworkCompilingIntegrationTe
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/events");
+    return VfsUtilCore.pathToUrl(JUnitTestData.getTestDataPath() + "/integration/events");
   }
 
   @Override

@@ -80,6 +80,7 @@ intellij.javaee.appServers.weblogic.jps.tests
 intellij.json.networknt.wrapper.tests
 intellij.json.tests
 intellij.jsonpath.tests
+intellij.junit.v5.rt.tests
 intellij.jvm.analysis.java.tests
 intellij.kotlin.gradle.tooling.impl.tests
 intellij.kotlin.jvm.debugger.eval4j.tests

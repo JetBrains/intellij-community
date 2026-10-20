@@ -19,7 +19,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
@@ -36,9 +35,7 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(
-      PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/versionSwitching"
-    );
+    return VfsUtilCore.pathToUrl(JUnitTestData.getTestDataPath() + "/integration/versionSwitching");
   }
 
   @Override

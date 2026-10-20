@@ -1,5 +1,28 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+jps_test(
+    name = "junit-v5-rt-tests_test",
+    timeout = "long",
+    data = [
+        "@community//plugins/junit5_rt_tests:testData",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["junit-5-tests"],
+    runtime_deps = [":junit-v5-rt-tests_test_lib"],
+)
+### skip generation section `test intellij.junit.v5.rt.tests`
 
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
 jvm_library(
@@ -15,6 +38,8 @@ jvm_library(
         "//plugins/junit5_rt:junit-v5-rt",
         "//platform/smRunner",
         "//platform/testRunner/plugin",
+        "//plugins/junit6_rt:junit-v6-rt",
+        "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     ],
 )
 
@@ -41,6 +66,8 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
+        "//plugins/junit6_rt:junit-v6-rt_test_lib",
+        "//plugins/ui-designer/jps-plugin:java-guiForms-jps_test_lib",
     ],
     deps = [
         # do not sort,
@@ -118,6 +145,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.v5.rt.tests` end
@@ -130,10 +159,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.junit.v5.rt.tests` end
-
-### auto-generated section `test intellij.junit.v5.rt.tests` start
-jps_test(
-    name = "junit-v5-rt-tests_test",
-    runtime_deps = [":junit-v5-rt-tests_test_lib"],
-)
-### auto-generated section `test intellij.junit.v5.rt.tests` end
