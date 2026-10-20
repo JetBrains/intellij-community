@@ -15,7 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
@@ -81,9 +81,9 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
 
 
 
-  protected boolean inClass(PyClass clazz, Project project, Editor editor, @PropertyKey(resourceBundle = PyBundle.BUNDLE) String errorMessageId) {
+  protected boolean inClass(PyClass clazz, Project project, Editor editor, @PropertyKey(resourceBundle = PyRefactoringBundle.BUNDLE) String errorMessageId) {
     if (clazz == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message(errorMessageId), getTitle(), getHelpId());
+      CommonRefactoringUtil.showErrorHint(project, editor, PyRefactoringBundle.message(errorMessageId), getTitle(), getHelpId());
       return false;
     }
     return true;

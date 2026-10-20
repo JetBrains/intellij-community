@@ -7,7 +7,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public class MembersConflictDialog extends ConflictsDialog {
     }
 
     for (final PyMemberInfo<?> memberUnderConflict : dependenciesConflicts) {
-      result.putValue(memberUnderConflict.getMember(), PyBundle.message(
+      result.putValue(memberUnderConflict.getMember(), PyRefactoringBundle.message(
                         "refactoring.will.not.be.accessible",
                         RefactoringUIUtil.getDescription(memberUnderConflict.getMember(), false)
                       )

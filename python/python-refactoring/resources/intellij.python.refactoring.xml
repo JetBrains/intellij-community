@@ -52,6 +52,9 @@
     <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
 
+    <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
+                                                            implementationClass="com.jetbrains.python.refactoring.classes.PyMembersRefactoringSupport"/>
+
     <refactoring.changeSignatureUsageProcessor
       implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
 
