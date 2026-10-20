@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.gradleJava
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectCoordinates
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinProjectModuleId
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
-import org.junit.Assert.assertEquals
-import kotlin.test.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 @OptIn(UnsafeApi::class)
 @Suppress("DEPRECATION")

@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.execution
 
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 /**
  * Checks that the init scripts of the Kotlin run configurations support Isolated Projects.
@@ -31,8 +31,8 @@ class KotlinGradleInitScriptTest {
 
         assertNoCrossProjectAccess(script)
         assertTrue(
-            "The script must register the task through GradleLifecycleUtil:\n$script",
-            script.contains("GradleLifecycleUtil.afterProject(gradle) { Project project ->")
+            script.contains("GradleLifecycleUtil.afterProject(gradle) { Project project ->"),
+            "The script must register the task through GradleLifecycleUtil:\n$script"
         )
     }
 
@@ -42,23 +42,23 @@ class KotlinGradleInitScriptTest {
 
         assertNoCrossProjectAccess(script)
         assertTrue(
-            "The script must set the main class through GradleLifecycleUtil:\n$script",
-            script.contains("GradleLifecycleUtil.afterProject(gradle) { Project project ->")
+            script.contains("GradleLifecycleUtil.afterProject(gradle) { Project project ->"),
+            "The script must set the main class through GradleLifecycleUtil:\n$script"
         )
     }
 
     private fun assertNoCrossProjectAccess(script: String) {
         assertTrue(
-            "The script must import GradleLifecycleUtil:\n$script",
-            script.contains("import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil")
+            script.contains("import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil"),
+            "The script must import GradleLifecycleUtil:\n$script"
         )
         assertFalse(
-            "Isolated Projects rejects 'allprojects' in an init script:\n$script",
-            script.contains("allprojects")
+            script.contains("allprojects"),
+            "Isolated Projects rejects 'allprojects' in an init script:\n$script"
         )
         assertFalse(
-            "Isolated Projects rejects 'afterEvaluate' on another project:\n$script",
-            script.contains("afterEvaluate")
+            script.contains("afterEvaluate"),
+            "Isolated Projects rejects 'afterEvaluate' on another project:\n$script"
         )
     }
 }

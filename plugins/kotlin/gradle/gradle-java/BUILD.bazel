@@ -293,10 +293,8 @@ jvm_library(
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests` end

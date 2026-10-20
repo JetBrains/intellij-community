@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMppGradleTestLocator.TestLocationPath
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import kotlin.test.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 internal class KotlinMppGradleTestLocatorTest {
 
@@ -40,9 +40,9 @@ internal class KotlinMppGradleTestLocatorTest {
 
         for ((sourcePath, isTestProtocol, expected) in testCases) {
             assertEquals(
-                sourcePath,
                 expected,
                 TestLocationPath.parse(sourcePath, isTestProtocol),
+                sourcePath,
             )
         }
     }
@@ -65,9 +65,9 @@ internal class KotlinMppGradleTestLocatorTest {
             val qualifiedClassName = "a.b.$className"
             val sourcePath = "$qualifiedClassName/testGreeting[$targetSuffix]"
             assertEquals(
-                sourcePath,
                 TestLocationPath(qualifiedClassName, "testGreeting", "[$targetSuffix]"),
                 TestLocationPath.parse(sourcePath, isTestProtocol = true),
+                sourcePath,
             )
         }
     }
@@ -82,7 +82,7 @@ internal class KotlinMppGradleTestLocatorTest {
         )
 
         for (sourcePath in invalidPaths) {
-            assertNull(sourcePath, TestLocationPath.parse(sourcePath, isTestProtocol = true))
+            assertNull(TestLocationPath.parse(sourcePath, isTestProtocol = true), sourcePath)
         }
     }
 
