@@ -1087,6 +1087,27 @@ fn the_tool_applies_the_replacements() {
     assert_eq!(tool.product_info()["versionSuffix"], "EAP");
 }
 
+/// A release product without a release date takes the pinned build date, as an EAP product does. A release build
+/// takes the date from a system property, and a dev distribution sets none.
+#[test]
+fn the_tool_accepts_a_release_without_a_release_date() {
+    let tool = ToolRun::new();
+    let xml = read_text(testdata("application-info/idea.xml")).replace(r#"eap="true""#, r#"eap="false""#);
+    let mut args = tool.base_args();
+    args.extend([
+        format!("--application-info={}", tool.write("idea.xml", &xml)),
+        format!("--build-number={}", testdata("build.txt").display()),
+        format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
+    ]);
+    let result = run_tool(&args);
+    assert_eq!(result.code, 0, "{}", result.errors);
+    let info = tool.product_info();
+    assert_eq!(
+        (&info["versionSuffix"], &info["majorVersionReleaseDate"]),
+        (&Value::Null, &Value::from("20260101"))
+    );
+}
+
 /// A render error of the application info exits with code 1 and names the file.
 #[test]
 fn the_tool_refuses_an_application_info_it_cannot_read() {
@@ -1096,11 +1117,6 @@ fn the_tool_refuses_an_application_info_it_cannot_read() {
             "pattern",
             idea.replace(r#"minor="3""#, r#"minor="3" full="{0}'{1}'""#),
             r#"the version pattern "{0}'{1}'" is not literal text with the elements {0} to {3}"#,
-        ),
-        (
-            "release",
-            idea.replace(r#"eap="true""#, r#"eap="false""#),
-            "majorReleaseDate may be omitted only for EAP",
         ),
         (
             "date",

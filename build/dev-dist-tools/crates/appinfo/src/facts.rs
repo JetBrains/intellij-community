@@ -34,7 +34,7 @@ pub struct ApplicationInfo {
     pub svg_icon: Option<String>,
     /// `shortCompanyName` (line 130).
     pub short_company_name: String,
-    /// `majorReleaseDate` (lines 101-123), as `yyyyMMdd`.
+    /// `majorReleaseDate` (lines 101-123), as `yyyyMMdd`. No date or a `__` marker gives the pinned build date.
     pub major_release_date: String,
 }
 
@@ -174,16 +174,14 @@ fn read_facts(content: &str, file: &Path, host: Option<&HostOverride>, pinned_bu
         .filter(|edition| !edition.is_empty())
         .map(str::to_owned);
 
-    // Lines 101-123.
+    // Lines 101-123. The release check of lines 117-119 is left out. A release build takes the date from a system
+    // property, and a dev distribution sets none, so a product without a date takes the pinned build date.
     let build = required_child("build")?;
     let raw_release_date = match host.and_then(|host| host.major_release_date.clone()) {
         Some(value) => Some(value),
         None => attribute(build, "majorReleaseDate", file)?.map(str::to_owned),
     }
     .filter(|value| !value.is_empty());
-    if !is_eap && raw_release_date.as_ref().is_none_or(|value| value.starts_with("__")) {
-        bail!("majorReleaseDate may be omitted only for EAP: {}", file.display());
-    }
     let major_release_date =
         format_major_release_date(raw_release_date.as_deref(), pinned_build_date_seconds).with_context(|| file.display().to_string())?;
 

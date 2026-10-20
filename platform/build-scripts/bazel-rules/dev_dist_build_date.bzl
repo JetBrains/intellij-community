@@ -9,6 +9,6 @@
 # chosen to outrun that period makes every dev IDE start expired, because a build date over a day ahead of the wall
 # clock is expired too.
 #
-# The product files action and `dev_dist_plugin_descriptor` pass the same date to their tools. An EAP product without a
-# `majorReleaseDate` takes it as its release date.
+# The product files action and `dev_dist_plugin_descriptor` pass the same date to their tools. A product without a
+# `majorReleaseDate` takes it as its release date, also a release product.
 DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS = "1767225600"  # 2026-01-01T00:00:00Z

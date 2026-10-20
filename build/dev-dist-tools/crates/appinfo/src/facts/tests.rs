@@ -140,17 +140,19 @@ fn the_suffix_follows_the_eap_flag() {
     }
 }
 
-/// Lines 101-123: only an EAP product can omit the release date, and it then takes the pinned build date.
+/// Lines 101-123 without the release check of lines 117-119: a product without a release date takes the pinned build
+/// date, also a release product.
 #[test]
-fn the_release_date_of_a_release_is_required() {
-    for build in ["", r#"majorReleaseDate="""#, r#"majorReleaseDate="__MAJOR_RELEASE_DATE__""#] {
-        let error = read_error(&xml(r#"major="2026" eap="false""#, NAMES, build));
-        assert_eq!(error, "majorReleaseDate may be omitted only for EAP: test.xml", "{build}");
-        let eap = read(&xml(r#"major="2026" eap="true""#, NAMES, build));
-        assert_eq!(eap.major_release_date, "20260101", "{build}");
+fn a_product_without_a_release_date_takes_the_build_date() {
+    for eap in ["true", "false"] {
+        let version = format!(r#"major="2026" eap="{eap}""#);
+        for build in ["", r#"majorReleaseDate="""#, r#"majorReleaseDate="__MAJOR_RELEASE_DATE__""#] {
+            let info = read(&xml(&version, NAMES, build));
+            assert_eq!(info.major_release_date, "20260101", "{version} {build}");
+        }
+        let stated = read(&xml(&version, NAMES, RELEASE));
+        assert_eq!(stated.major_release_date, "20260915", "{version}");
     }
-    let stated = read(&xml(r#"major="2026" eap="true""#, NAMES, RELEASE));
-    assert_eq!(stated.major_release_date, "20260915");
 }
 
 /// Lines 304-319: `yyyyMMdd` stays, `yyyyMMddHHmm` loses the time, and the build date is UTC.
