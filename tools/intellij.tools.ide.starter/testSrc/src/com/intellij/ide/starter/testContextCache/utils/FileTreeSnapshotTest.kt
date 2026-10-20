@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.testContextCache.utils
 
+import com.intellij.openapi.util.io.NioFiles
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -86,6 +87,31 @@ class FileTreeSnapshotTest {
         assertFalse(snapshot.hasChanges())
       }
     }
+  }
+
+  @Test
+  fun `a restore deletes and replaces read-only files`() {
+    createDirectoryWithFile("tracked")
+    NioFiles.setReadOnly(root.resolve("tracked/file.txt"), true)
+
+    val snapshotDir = FileTreeSnapshot.capture(root, shouldTrackDirectory = { true }).use { snapshot ->
+      NioFiles.setReadOnly(root.resolve("tracked/file.txt"), false)
+      root.resolve("tracked/file.txt").writeText("left by a test")
+      NioFiles.setReadOnly(root.resolve("tracked/file.txt"), true)
+      createDirectoryWithFile("new")
+      NioFiles.setReadOnly(root.resolve("new/file.txt"), true)
+      root.resolve("tracked/new.txt").writeText("new")
+      NioFiles.setReadOnly(root.resolve("tracked/new.txt"), true)
+
+      snapshot.restoreTracked(root, snapshot.changes())
+
+      assertEquals("tracked", root.resolve("tracked/file.txt").readText())
+      assertFalse(root.resolve("new").exists())
+      assertFalse(root.resolve("tracked/new.txt").exists())
+      assertFalse(snapshot.hasChanges())
+      snapshot.snapshotDir
+    }
+    assertFalse(snapshotDir.exists())
   }
 
   private fun createDirectoryWithFile(name: String) {

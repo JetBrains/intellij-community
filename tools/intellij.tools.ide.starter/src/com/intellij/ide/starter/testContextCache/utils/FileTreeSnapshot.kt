@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.testContextCache.utils
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.io.sha256Hex
 import org.jetbrains.annotations.ApiStatus
@@ -11,15 +12,12 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.relativeTo
 
-@OptIn(ExperimentalPathApi::class)
 @ApiStatus.Internal
 class FileTreeSnapshot private constructor(
   private val root: Path,
@@ -102,6 +100,8 @@ class FileTreeSnapshot private constructor(
     val entry = snapshotEntries[relativePath] ?: error("Snapshot file is not tracked: ${relativePath.invariantSeparatorsPathString}")
     val targetPath = targetRoot.resolve(relativePath)
     targetPath.parent?.createDirectories()
+    // On Windows, REPLACE_EXISTING fails on a read-only target, such as a Git object. NioFiles deletes it.
+    NioFiles.deleteRecursively(targetPath)
     // COPY_ATTRIBUTES preserves file modification times, so mtime-sensitive tests (e.g. Project View
     // "Sort by Modification Time") behave the same on a restored file as on a fresh unpack.
     Files.copy(entry.snapshotPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
@@ -123,12 +123,12 @@ class FileTreeSnapshot private constructor(
 
     val normalizedTargetRoot = targetRoot.toAbsolutePath().normalize()
     changes.newFiles.forEach { relativePath ->
-      Files.deleteIfExists(normalizedTargetRoot.resolve(relativePath))
+      NioFiles.deleteRecursively(normalizedTargetRoot.resolve(relativePath))
     }
     changes.newDirectories
       .sortedByDescending { it.nameCount }
       .forEach { relativePath ->
-        normalizedTargetRoot.resolve(relativePath).deleteRecursively()
+        NioFiles.deleteRecursively(normalizedTargetRoot.resolve(relativePath))
       }
     changes.modifiedFiles.forEach { relativePath ->
       restoreFile(relativePath, normalizedTargetRoot)
@@ -144,7 +144,7 @@ class FileTreeSnapshot private constructor(
   /** Rebuilds [targetRoot] from the snapshot. An entry can live in the base snapshot, so each file comes from its entry. */
   fun restoreAll(targetRoot: Path = root) {
     val normalizedTargetRoot = targetRoot.toAbsolutePath().normalize()
-    normalizedTargetRoot.deleteRecursively()
+    NioFiles.deleteRecursively(normalizedTargetRoot)
     if (!rootExisted) {
       return
     }
@@ -159,7 +159,7 @@ class FileTreeSnapshot private constructor(
 
   /** Deletes the copies of this snapshot. It leaves the files that it shares with its base snapshot. */
   override fun close() {
-    snapshotDir.deleteRecursively()
+    NioFiles.deleteRecursively(snapshotDir)
   }
 
   /**
