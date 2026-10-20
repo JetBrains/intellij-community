@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.settings.DISCOVERY_DOCUMENTATION_URL
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsConfigurable
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -39,7 +39,7 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 /**
- * Marks a `@KotlinScript` class in the gutter.
+ * Marks a `@KotlinScript` class or object in the gutter.
  *
  * The icon fades while no marker file declares the class, so the user sees the state without a click.
  * A script file carries no marker here, because [KotlinScriptDefinitionCodeVisionProvider] already
@@ -52,16 +52,16 @@ class KotlinScriptDefinitionLineMarkerProvider : LineMarkerProviderDescriptor() 
     override fun getIcon(): Icon = KotlinIcons.SCRIPT
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-        val klass = element.parent as? KtClass ?: return null
-        if (klass.nameIdentifier !== element) return null
-        if (!hasKotlinScriptAnnotation(klass)) return null
+        val classOrObject = element.parent as? KtClassOrObject ?: return null
+        if (classOrObject.nameIdentifier !== element) return null
+        if (!hasKotlinScriptAnnotation(classOrObject)) return null
 
-        val fqName = klass.fqName?.asString() ?: return null
-        val module = ModuleUtilCore.findModuleForPsiElement(klass)
+        val fqName = classOrObject.fqName?.asString() ?: return null
+        val module = ModuleUtilCore.findModuleForPsiElement(classOrObject)
         val markerFile = module?.let { findScriptTemplateMarkerFile(it, fqName) }
         val markerStep = MarkerStep.of(markerFile)
         // A marker file anywhere on the classpath makes the definition discoverable.
-        val discovered = markerFile != null || isScriptTemplateInDependency(klass.project, fqName)
+        val discovered = markerFile != null || isScriptTemplateInDependency(classOrObject.project, fqName)
 
         return LineMarkerInfo(
             element,
