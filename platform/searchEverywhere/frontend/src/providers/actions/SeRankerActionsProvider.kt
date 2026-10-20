@@ -2,12 +2,26 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType
+import com.intellij.ide.util.gotoByName.MatchMode
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
+import com.intellij.platform.util.coroutines.mapNotNullConcurrent
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -25,12 +39,17 @@ private val RANKER_TIMEOUT: Duration = 3.seconds
  * When the ranker fails or times out, this provider returns no items.
  *
  * The provider uses [actionsProvider] for the item selection, the extended action and the item data.
+ * It takes the actions and their presentations from [actionModel], the model of the [actionsProvider] contributor.
  */
 @Internal
 class SeRankerActionsProvider(
   private val actionsProvider: SeActionsAdaptedProvider,
+  private val actionModel: GotoActionModel,
   private val ranker: SeActionsRanker,
 ) : SeItemsProvider by actionsProvider, SeExtendedInfoProvider {
+  private val allCandidatesMutex = Mutex()
+  private var allCandidates: List<Candidate>? = null
+
   override val id: String get() = SeProviderIdUtils.RANKER_ACTIONS_ID
   override val displayName: @Nls String get() = actionsProvider.displayName
 
@@ -38,7 +57,7 @@ class SeRankerActionsProvider(
     val query = params.inputQuery.trim().take(MAX_QUERY_LENGTH)
     if (query.isEmpty()) return
 
-    val candidates = selectCandidates()
+    val candidates = selectCandidates(SeActionsFilter.from(params.filter).includeDisabled)
     if (candidates.isEmpty()) return
 
     // Do not use withTimeout: SeLocalItemDataProvider retries a search that throws CancellationException.
@@ -49,19 +68,58 @@ class SeRankerActionsProvider(
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }
     for ((index, rankedId) in rankedIds.withIndex()) {
       val candidate = candidatesById[rankedId] ?: continue
-      if (!collector.put(createItem(candidate.matchedValue, rankedIds.size - index, params.inputQuery))) return
+      if (!collector.put(createItem(candidate.actionWrapper, rankedIds.size - index, params.inputQuery))) return
     }
   }
 
   /**
-   * Selects a short list of actions to send to the ranker.
+   * Selects the actions to send to the ranker: the actions that are enabled and visible in the current context.
+   * When [includeDisabled] is `true`, it also selects the other actions, as the standard actions search does.
    */
-  private fun selectCandidates(): List<Candidate> {
-    // TODO IJPL-259050: select the candidates from the actions of the contributor model
-    return emptyList()
+  private suspend fun selectCandidates(includeDisabled: Boolean): List<Candidate> {
+    return getAllCandidates().filter { includeDisabled || it.actionWrapper.isAvailable }
   }
 
-  private fun createItem(matchedValue: MatchedValue, weight: Int, searchText: String): SeActionItem {
+  /**
+   * Returns all searchable actions that have a name, with their presentations in the current context.
+   *
+   * The provider collects the list on the first query and reuses it, because the context does not change while the popup is open.
+   * When the first query is cancelled, the next query collects the list again.
+   */
+  private suspend fun getAllCandidates(): List<Candidate> = allCandidatesMutex.withLock {
+    allCandidates ?: collectAllCandidates().also { allCandidates = it }
+  }
+
+  private suspend fun collectAllCandidates(): List<Candidate> = coroutineScope {
+    actionModel.buildGroupMappings()
+    val actionManager = serviceAsync<ActionManager>()
+
+    runUpdateSessionForActionSearch(actionModel.updateSession) { presentationProvider ->
+      actionManager.getActionIdList("")
+        .mapNotNullConcurrent { actionId -> createCandidate(actionManager, actionId, presentationProvider) }
+        .sortedBy { it.rankerCandidate.id }
+    }.await()
+  }
+
+  private suspend fun createCandidate(
+    actionManager: ActionManager,
+    actionId: String,
+    presentationProvider: suspend (AnAction) -> Presentation,
+  ): Candidate? {
+    val action = actionManager.getAction(actionId) ?: return null
+    if (action is ActionGroup && !action.isSearchable) return null
+
+    val groupMapping = actionModel.getGroupMapping(action)
+    groupMapping?.updateBeforeShowSuspend(presentationProvider)
+    val presentation = presentationProvider(action)
+    val name = presentation.text?.takeIf { it.isNotBlank() } ?: return null
+
+    return Candidate(SeActionsRankerCandidate(actionId, name, presentation.description),
+                     ActionWrapper(action, groupMapping, MatchMode.NAME, presentation))
+  }
+
+  private fun createItem(actionWrapper: ActionWrapper, weight: Int, searchText: String): SeActionItem {
+    val matchedValue = MatchedValue(actionWrapper, searchText, MatchedValueType.ACTION)
     val contributor = actionsProvider.contributor
     return SeActionItem(matchedValue,
                         weight,
@@ -72,5 +130,5 @@ class SeRankerActionsProvider(
                         SearchEverywhereSpellCheckResult.NoCorrection)
   }
 
-  private class Candidate(val rankerCandidate: SeActionsRankerCandidate, val matchedValue: MatchedValue)
+  private class Candidate(val rankerCandidate: SeActionsRankerCandidate, val actionWrapper: ActionWrapper)
 }

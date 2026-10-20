@@ -2,10 +2,12 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -16,6 +18,7 @@ import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrappe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Component
 
 /**
  * Creates [SeRankerActionsProvider] when the `search.everywhere.actions.ranker` registry key selects a [SeActionsRanker].
@@ -28,12 +31,24 @@ class SeRankerActionsProviderFactory : SeItemsProviderFactory, SeFrontendOnlyIte
     val ranker = SeActionsRanker.findSelected() ?: return null
 
     val contributor = withContext(Dispatchers.EDT) {
-      ActionSearchEverywhereContributor(project,
-                                        dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
-                                        dataContext.getData(CommonDataKeys.EDITOR),
-                                        dataContext)
+      SeRankerActionsContributor(project,
+                                 dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
+                                 dataContext.getData(CommonDataKeys.EDITOR),
+                                 dataContext)
     }
 
-    return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)), ranker)
+    return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)), contributor.actionModel, ranker)
   }
+}
+
+/**
+ * The actions contributor that gives [SeRankerActionsProvider] access to its action model.
+ */
+private class SeRankerActionsContributor(
+  project: Project?,
+  contextComponent: Component?,
+  editor: Editor?,
+  dataContext: DataContext,
+) : ActionSearchEverywhereContributor(project, contextComponent, editor, dataContext) {
+  val actionModel: GotoActionModel get() = model
 }
