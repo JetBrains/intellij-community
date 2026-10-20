@@ -66,7 +66,7 @@ fi
 
 # Only the two directories a worker actually owns. The guest holds no checkout and runs no Bazel, so
 # there is nothing to store beyond `state` and what the parity layout creates under $worker_root
-# (out, tmp, build-download).
+# (tmp and state/ui-runs).
 #
 # The sealed golden still carries the previous copy of this script at
 # /usr/local/sbin/air-init-worker-storage, so workers cloned before the next `image build` keep three
