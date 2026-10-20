@@ -95,10 +95,10 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     val passProviders = if (enabledGlobally) {
       getSuitableToFileProviders(psiFile)
         .filter {
-          (declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault) &&
           InlayHintSettingsOverrider.isEnabledByOverriders(
             InlayHintSettingsRequest(psiFile.project, editor,
-                                     DeclarativeInlayHintSettingsKey(it.providerId, null))) != false
+                                     DeclarativeInlayHintSettingsKey(it.providerId, null)))
+          ?: (declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault)
         }
         .map {
           val optionsToEnabled = HashMap<String, Boolean>()

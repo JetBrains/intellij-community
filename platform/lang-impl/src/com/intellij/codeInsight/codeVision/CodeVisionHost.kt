@@ -351,9 +351,10 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.getInstance()
     for (provider in providers) {
-      if (!settings.isProviderEnabled(provider.groupId)) continue
-      if (InlayHintSettingsOverrider.isEnabledByOverriders(
-          InlayHintSettingsRequest(project, editor, CodeVisionInlayHintSettingsKey(provider.groupId))) == false) continue
+      if (!(InlayHintSettingsOverrider.isEnabledByOverriders(
+          InlayHintSettingsRequest(project, editor,
+                                   CodeVisionInlayHintSettingsKey(provider.groupId)))
+            ?: settings.isProviderEnabled(provider.groupId))) continue
       if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
@@ -539,10 +540,10 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       for (p in providers) {
         val provider = p as CodeVisionProvider<Any?>
         val providerId = provider.id
-        val isGroupEnabled = !lifeSettingModel.disabledCodeVisionProviderIds.contains(provider.groupId) &&
-                             InlayHintSettingsOverrider.isEnabledByOverriders(InlayHintSettingsRequest(
-                               project = project, editor = editor,
-                               settingsKey = CodeVisionInlayHintSettingsKey(provider.groupId))) != false
+        val isGroupEnabled = InlayHintSettingsOverrider
+                               .isEnabledByOverriders(InlayHintSettingsRequest(project = project, editor = editor,
+                                                                               settingsKey = CodeVisionInlayHintSettingsKey(provider.groupId)))
+                             ?: !lifeSettingModel.disabledCodeVisionProviderIds.contains(provider.groupId)
 
         if (isGroupEnabled && !isEditorInsideSettingsPanel) {
           val shouldRecompute = shouldRecomputeForEditor(editor, provider, precalculatedUiThings)

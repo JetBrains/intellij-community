@@ -6,11 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Holds a per-thread override of the parameter hint options for one run of `ParameterHintsPass`.
  *
- * An [InlayHintSettingsOverrider] can hide a parameter hint option in one editor without changing the user settings.
+ * An [InlayHintSettingsOverrider] can hide or enable a parameter hint option in one editor without changing the user settings.
  * `ParameterHintsPass` collects the overrider results into the map and calls [run].
  * [Option.get] reads this map while traversal collects the hints.
- *
- * The override can only hide the option. A `false` value hides the option, `true` or non-existing value keeps the user setting.
  */
 @ApiStatus.Internal
 object ParameterHintsPassContext {

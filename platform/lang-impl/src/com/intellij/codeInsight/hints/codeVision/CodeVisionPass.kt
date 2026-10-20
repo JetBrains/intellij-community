@@ -132,10 +132,10 @@ class CodeVisionPass(
     if (!CodeVisionProjectSettings.getInstance(myProject).isEnabledForProject()) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter { provider ->
-        settings.isProviderEnabled(provider.groupId) &&
-        (InlayHintSettingsOverrider.isEnabledByOverriders(
+        InlayHintSettingsOverrider.isEnabledByOverriders(
           InlayHintSettingsRequest(project = project, editor = editor,
-                                   settingsKey = CodeVisionInlayHintSettingsKey(groupId = provider.groupId))) != false)
+                                   settingsKey = CodeVisionInlayHintSettingsKey(groupId = provider.groupId)))
+        ?: settings.isProviderEnabled(provider.groupId)
       }
     if (providers.isEmpty()) return
     collect(editor, myFile, providerIdToLenses, providers)

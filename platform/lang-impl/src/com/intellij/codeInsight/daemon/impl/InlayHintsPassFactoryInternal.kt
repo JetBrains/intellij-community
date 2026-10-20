@@ -121,9 +121,10 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
     DumbService.getInstance(project).isUsableInCurrentContext(it.provider) &&
     // to avoid cases when old and new code vision UI are shown
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
-    ((settings.hintsShouldBeShown(it.provider.key, language) && InlayHintSettingsOverrider
-        .isEnabledByOverriders(InlayHintSettingsRequest(project, editor,
-                                                        LegacyInlayHintSettingsKey(language, it.provider.key.id))) != false) ||
+    ((settings.hintsEnabledGlobally() && settings.hintsEnabled(language) &&
+      (InlayHintSettingsOverrider.isEnabledByOverriders(
+        InlayHintSettingsRequest(project, editor, LegacyInlayHintSettingsKey(language, it.provider.key.id)))
+       ?: settings.hintsEnabled(it.provider.key, language))) ||
      isProviderAlwaysEnabledForEditor(editor, it.provider.key))
   }
 }

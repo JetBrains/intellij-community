@@ -69,10 +69,10 @@ class DeclarativeInlayHintsPass(
       val optionToEnabled =
         if (!overridersActive) providerInfo.optionToEnabled
         else providerInfo.optionToEnabled.mapValues { (optionId, enabled) ->
-          enabled &&
-          (InlayHintSettingsOverrider.isEnabledByOverriders(
+          InlayHintSettingsOverrider.isEnabledByOverriders(
             InlayHintSettingsRequest(myProject, myEditor,
-                                     DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId))) != false)
+                                     DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId)))
+          ?: enabled
         }
 
       val providerClass = provider.javaClass

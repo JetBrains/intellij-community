@@ -45,11 +45,9 @@ interface InlayHintSettingsOverrider {
    * The result overrides the existing settings for the inlay hint.
    *
    * Possible options:
-   * - `null` - when there is no option defined, the caller uses the platform setting
+   * - `null` - defers to the platform or to other overriders
    * - `false` - disables the inlay hint
    * - `true` - enables the inlay hint
-   *
-   * The overrider cannot enable a hint which was disabled in the platform settings
    */
   fun isEnabled(request: InlayHintSettingsRequest): Boolean?
 
@@ -60,6 +58,13 @@ interface InlayHintSettingsOverrider {
 
     @JvmStatic fun isActive(): Boolean = EP_NAME.hasAnyExtensions()
 
+    /**
+     * Combines the results of all overriders.
+     *
+     * - `false` if at least one overrider disables the inlay hint.
+     * - `true` if no overrider disables the inlay hint and at least one enables it.
+     * - `null` if no overrider has a result for the inlay hint.
+     */
     @JvmStatic fun isEnabledByOverriders(request: InlayHintSettingsRequest): Boolean? {
       val results = EP_NAME.extensionList.map { it.isEnabled(request) }
       if (results.contains(false)) return false
