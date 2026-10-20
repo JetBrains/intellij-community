@@ -2,36 +2,36 @@
 package org.jetbrains.kotlin.util.graph
 
 import org.jetbrains.kotlin.util.graph.DirectedGraph.Edge
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class SortTopologicallyTest {
     @Test
-    fun testCyclicWithIncomingVertices() = assertEquals(
+    fun testCyclicWithIncomingVertices(): Unit = assertEquals(
         null,
         DirectedGraph(setOf(Edge(1, 2), Edge(2, 1), Edge(3, 1))).sortTopologically()
     )
 
     @Test
-    fun testCyclicWithNoIncomingVertices() = assertEquals(
+    fun testCyclicWithNoIncomingVertices(): Unit = assertEquals(
         null,
         DirectedGraph(setOf(Edge(1, 2), Edge(2, 1))).sortTopologically()
     )
 
     @Test
-    fun testLinear() = assertEquals(
+    fun testLinear(): Unit = assertEquals(
         listOf(setOf(1), setOf(2), setOf(3)),
         DirectedGraph(setOf(Edge(2, 3), Edge(1, 2))).sortTopologically()
     )
 
     @Test
-    fun testGraph() = assertEquals(
+    fun testGraph(): Unit = assertEquals(
         listOf(setOf(1, 2), setOf(3, 4), setOf(5), setOf(6)),
         DirectedGraph(setOf(Edge(1, 3), Edge(3, 5), Edge(2, 5), Edge(2, 4), Edge(4, 6), Edge(5, 6))).sortTopologically()
     )
 
     @Test
-    fun testTree() = assertEquals(
+    fun testTree(): Unit = assertEquals(
         listOf(setOf(1, 2, 3), setOf(4), setOf(5), setOf(6)),
         DirectedGraph(setOf(Edge(1, 4), Edge(2, 4), Edge(4, 5), Edge(3, 5), Edge(5, 6))).sortTopologically()
     )
