@@ -84,7 +84,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
-import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.Alarm;
@@ -1215,11 +1214,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull @SystemDependent String getCommunityPath() {
-    var homePath = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy());
-    if (Files.isDirectory(homePath.resolve("community/.idea"))) {
-      homePath = homePath.resolve("community");
-    }
-    return homePath.toString();
+    return PathManager.getCommunityHomePath();
   }
 
   public static @NotNull @SystemIndependent String getPlatformTestDataPath() {
