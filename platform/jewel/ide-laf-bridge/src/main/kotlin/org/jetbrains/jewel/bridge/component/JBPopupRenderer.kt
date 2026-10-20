@@ -12,14 +12,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
@@ -62,6 +71,7 @@ import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.KeyEvent as AWTKeyEvent
 import java.awt.event.KeyEvent.KEY_LOCATION_STANDARD
 import java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
@@ -69,12 +79,23 @@ import java.awt.event.KeyEvent.KEY_RELEASED
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.SwingUtilities
 import kotlin.coroutines.cancellation.CancellationException
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.ui.component.PopupRenderer
+
+internal val LocalRootPopupOwner = staticCompositionLocalOf<Component?> { null }
+
+private class FocusablePopupKeyEntry(
+    val rootOwner: Component,
+    @Volatile var isActive: () -> Boolean = { false },
+    @Volatile var handleKeyEvent: (AWTKeyEvent) -> Boolean = { false },
+)
+
+private val focusablePopupKeyRoutingOrder = CopyOnWriteArrayList<FocusablePopupKeyEntry>()
 
 internal object JBPopupRenderer : PopupRenderer {
     @Suppress("OVERRIDE_DEPRECATION")
@@ -140,6 +161,7 @@ private fun JBPopup(
     val currentProperties by rememberUpdatedState(properties)
 
     val owner = LocalComponent.current
+    val rootOwner = LocalRootPopupOwner.current ?: owner
     val compositionLocalContext = currentCompositionLocalContext
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
@@ -158,21 +180,81 @@ private fun JBPopup(
             GraphicsEnvironment.isHeadless() && !java.lang.Boolean.getBoolean("compose.swing.render.on.graphics")
         )
     }
+    var dispatchedToPopupScene by remember { mutableStateOf(false) }
+    var unconsumedByPopupScene by remember { mutableStateOf(false) }
+
+    val jewelComposePanelWrapper = remember {
+        compose(
+            focusOnClickInside = false,
+            config = {
+                // Initial placeholder dimensions before pre-measurement updates preferredSize.
+                preferredSize = Dimension(1, 1)
+            },
+            content = {
+                val parentBounds = parentBoundsInRoot.value ?: return@compose
+                if (useHostLayoutFallback) return@compose
+
+                Layout(
+                    modifier =
+                        Modifier.semantics { popup() }
+                            .onPreviewKeyEvent {
+                                dispatchedToPopupScene = true
+                                unconsumedByPopupScene = false
+                                false
+                            }
+                            .onKeyEvent {
+                                unconsumedByPopupScene = true
+                                false
+                            },
+                    content = {
+                        ProvideValuesFromOtherContext(compositionLocalContext) {
+                            CompositionLocalProvider(LocalRootPopupOwner provides rootOwner) { currentContent.value() }
+                        }
+                    },
+                    measurePolicy =
+                        remember(currentPopupPositionProvider, parentBounds) {
+                            JBPopupMeasurePolicy(
+                                popupPositionProvider = currentPopupPositionProvider,
+                                screenSize = IntSize.fromScreenSize(owner),
+                                parentBoundsInWindow = parentBounds,
+                                onMeasure = { position, size ->
+                                    popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                                },
+                            )
+                        },
+                )
+            },
+        )
+            as JewelComposePanelWrapper
+    }
+
     val currentParentBounds = parentBoundsInRoot.value
     Layout(
         content = {
             if (useHostLayoutFallback && currentParentBounds != null) {
-                ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() }
+                ProvideValuesFromOtherContext(compositionLocalContext) {
+                    CompositionLocalProvider(
+                        LocalComponent provides jewelComposePanelWrapper.composePanel,
+                        LocalRootPopupOwner provides rootOwner,
+                    ) {
+                        currentContent.value()
+                    }
+                }
             }
         },
         modifier =
-            Modifier.onGloballyPositioned { childCoordinates ->
-                childCoordinates.parentCoordinates?.let {
-                    if (owner.isShowing) {
-                        parentBoundsInRoot.value = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(owner)
-                    }
+            Modifier.focusProperties {
+                    canFocus = false
+                    onEnter = { cancelFocusChange() }
                 }
-            },
+                .focusTarget()
+                .onGloballyPositioned { childCoordinates ->
+                    childCoordinates.parentCoordinates?.let {
+                        if (owner.isShowing) {
+                            parentBoundsInRoot.value = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(owner)
+                        }
+                    }
+                },
         measurePolicy =
             remember(useHostLayoutFallback, currentPopupPositionProvider, currentParentBounds, owner) {
                 if (!useHostLayoutFallback || currentParentBounds == null) {
@@ -191,40 +273,70 @@ private fun JBPopup(
             },
     )
 
-    val jewelComposePanelWrapper = remember {
-        compose(
-            config = {
-                // Initial placeholder dimensions before pre-measurement updates preferredSize.
-                preferredSize = Dimension(1, 1)
-            },
-            content = {
-                val parentBounds = parentBoundsInRoot.value ?: return@compose
+    val handleOwnKeyEvent: (AWTKeyEvent) -> Boolean = { event ->
+        val composeEvent = event.toComposeKeyEvent()
+        val consumedByPreviewCallback = currentOnPreviewKeyEvent?.invoke(composeEvent) == true
+        val keyEventTarget = jewelComposePanelWrapper.composePanel.findPopupKeyEventTarget()
+        val needsTargetRouting = event.component !== keyEventTarget || composeEvent.isDismissRequest()
+        val consumedByTarget =
+            if (!consumedByPreviewCallback && currentProperties.focusable && needsTargetRouting) {
+                dispatchedToPopupScene = false
+                unconsumedByPopupScene = false
+                val routedEvent =
+                    AWTKeyEvent(
+                        keyEventTarget,
+                        event.id,
+                        event.`when`,
+                        event.modifiersEx,
+                        event.keyCode,
+                        event.keyChar,
+                        event.keyLocation,
+                    )
+                keyEventTarget.dispatchPopupKeyEventToTargetListeners(routedEvent)
+                if (composeEvent.key == Key.Escape) {
+                    // ComposeSceneMediator's BackNavigationEventInput consumes every Escape KeyDown
+                    // even when nothing in the popup's ComposeScene handled the event.
+                    dispatchedToPopupScene && !unconsumedByPopupScene
+                } else {
+                    routedEvent.isConsumed
+                }
+            } else {
+                false
+            }
+        val consumedByKeyCallback =
+            !consumedByPreviewCallback && !consumedByTarget && currentOnKeyEvent?.invoke(composeEvent) == true
+        val consumed = consumedByPreviewCallback || consumedByTarget || consumedByKeyCallback
+        // Whether Escape dismisses is the popup's declared policy, not something inferred from the shape
+        // of its callbacks. A null callback means we have no way to dismiss, so we must not claim the key.
+        val dismissed =
+            !consumed &&
+                composeEvent.isDismissRequest() &&
+                currentProperties.dismissOnBackPress &&
+                currentOnDismissRequest != null
 
-                Layout(
-                    modifier = Modifier.semantics { popup() },
-                    content = { ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() } },
-                    measurePolicy =
-                        remember(currentPopupPositionProvider, parentBounds) {
-                            JBPopupMeasurePolicy(
-                                popupPositionProvider = currentPopupPositionProvider,
-                                screenSize = IntSize.fromScreenSize(owner),
-                                parentBoundsInWindow = parentBounds,
-                                onMeasure = { position, size ->
-                                    popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
-                                },
-                            )
-                        },
-                )
-            },
-        )
-            as JewelComposePanelWrapper
+        if (dismissed) {
+            dismissedWith = InputMode.Keyboard
+            isVisible = false
+        }
+        // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+        // non-focusable one must let a key it did not act on reach whatever owns it.
+        val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+        consumed || dismissed || claimsDismissRequest
     }
+
+    val currentHandleOwnKeyEvent by rememberUpdatedState(handleOwnKeyEvent)
+    val focusableKeyEntry = remember(rootOwner) { FocusablePopupKeyEntry(rootOwner = rootOwner) }
 
     val popup: JBPopup = remember {
         JBPopupFactory.getInstance()
             .createComponentPopupBuilder(jewelComposePanelWrapper, jewelComposePanelWrapper.composePanel)
             .setFocusable(currentProperties.focusable)
-            .setRequestFocus(currentProperties.focusable)
+            // Keep native AWT focus on the owner window/component so showing or clicking the popup never
+            // deactivates the parent window or steals focus from anchor components (such as MenuComboBox).
+            // Registering the owner focus chain allows StackingPopupDispatcherImpl.getFocusedPopup() to
+            // continue routing keyboard events to focusable popups while the owner holds AWT focus.
+            .setRequestFocus(false)
+            .setFocusOwners(if (currentProperties.focusable) ownerFocusChain(owner, rootOwner) else emptyArray())
             .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
             .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
             .setLocateWithinScreenBounds(false)
@@ -232,26 +344,19 @@ private fun JBPopup(
             // close the popup behind Compose's back and leave the two out of sync. Take sole ownership instead.
             .setCancelKeyEnabled(false)
             .setKeyEventHandler { event ->
-                val composeEvent = event.toComposeKeyEvent()
-                val consumed =
-                    currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
-                        currentOnKeyEvent?.invoke(composeEvent) == true
-                // Whether Escape dismisses is the popup's declared policy, not something inferred from the shape
-                // of its callbacks. A null callback means we have no way to dismiss, so we must not claim the key.
-                val dismissed =
-                    !consumed &&
-                        composeEvent.isDismissRequest() &&
-                        currentProperties.dismissOnBackPress &&
-                        currentOnDismissRequest != null
-
-                if (dismissed) {
-                    dismissedWith = InputMode.Keyboard
-                    isVisible = false
+                val topEntry =
+                    if (currentProperties.focusable) {
+                        focusablePopupKeyRoutingOrder.lastOrNull { entry ->
+                            entry.rootOwner === rootOwner && entry.isActive()
+                        }
+                    } else {
+                        null
+                    }
+                if (topEntry != null && topEntry !== focusableKeyEntry) {
+                    topEntry.handleKeyEvent(event)
+                } else {
+                    currentHandleOwnKeyEvent(event)
                 }
-                // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
-                // non-focusable one must let a key it did not act on reach whatever owns it.
-                val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
-                consumed || dismissed || claimsDismissRequest
             }
             .addListener(
                 object : JBPopupListener {
@@ -267,6 +372,10 @@ private fun JBPopup(
             )
             .createPopup()
     }
+    focusableKeyEntry.isActive = {
+        currentProperties.focusable && isPopupShown && isVisible != false && !popup.isDisposed
+    }
+    focusableKeyEntry.handleKeyEvent = { event -> currentHandleOwnKeyEvent(event) }
 
     // The builder above only captures the properties as they were on first composition. AbstractPopup reads these
     // flags live on every event, so pushing changes keeps a popup whose properties vary (a ComboBox suppressing
@@ -275,6 +384,7 @@ private fun JBPopup(
         val abstractPopup = popup as? AbstractPopup ?: return@LaunchedEffect
         abstractPopup.setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
         abstractPopup.setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
+        abstractPopup.popupWindow?.configureNonFocusablePopupWindow()
     }
 
     val rectValue = popupRectangle.value
@@ -296,11 +406,15 @@ private fun JBPopup(
         if (!isPopupShown) {
             isPopupShown = true
             popup.showInScreenCoordinates(owner, globalLocation)
+            (popup as? AbstractPopup)?.popupWindow?.configureNonFocusablePopupWindow()
         }
     }
 
     DisposableEffect(popup) {
+        focusablePopupKeyRoutingOrder.remove(focusableKeyEntry)
+        focusablePopupKeyRoutingOrder.add(focusableKeyEntry)
         onDispose {
+            focusablePopupKeyRoutingOrder.remove(focusableKeyEntry)
             popup.cancel()
             if (!jewelComposePanelWrapper.composePanel.isDisplayable) {
                 jewelComposePanelWrapper.composePanel.dispose()
@@ -308,6 +422,29 @@ private fun JBPopup(
         }
     }
 }
+
+private fun Window.configureNonFocusablePopupWindow() {
+    focusableWindowState = false
+    isFocusable = false
+    isAutoRequestFocus = false
+}
+
+internal fun ownerFocusChain(owner: Component, rootOwner: Component = owner): Array<Component> =
+    buildList {
+            fun addWithWindowAncestors(component: Component) {
+                if (!contains(component)) add(component)
+                var window: Window? = SwingUtilities.getWindowAncestor(component) ?: (component as? Window)
+                while (window != null) {
+                    if (!contains(window)) add(window)
+                    window = window.owner
+                }
+            }
+            addWithWindowAncestors(owner)
+            if (rootOwner !== owner) {
+                addWithWindowAncestors(rootOwner)
+            }
+        }
+        .toTypedArray()
 
 private class JBPopupMeasurePolicy(
     private val popupPositionProvider: PopupPositionProvider,
@@ -434,13 +571,56 @@ private fun Component.locationOnDisplay(): Point {
     return Point(relativeX, relativeY)
 }
 
-private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key == Key.Escape
+internal fun Component.findPopupKeyEventTarget(): Component = findPopupKeyEventTargetOrNull() ?: this
 
-private val java.awt.event.KeyEvent.keyLocationForCompose
+internal fun Component.dispatchPopupKeyEventToTargetListeners(event: AWTKeyEvent) {
+    keyListeners.forEach { listener ->
+        if (!isPopupKeyListenerReady(listener)) return@forEach
+        when (event.id) {
+            AWTKeyEvent.KEY_PRESSED -> listener.keyPressed(event)
+            AWTKeyEvent.KEY_RELEASED -> listener.keyReleased(event)
+            AWTKeyEvent.KEY_TYPED -> listener.keyTyped(event)
+        }
+    }
+}
+
+private fun Component.findPopupKeyEventTargetOrNull(): Component? {
+    if (keyListeners.any { isPopupKeyListenerReady(it) }) return this
+    if (this is Container) {
+        components.forEach { child ->
+            val target = child.findPopupKeyEventTargetOrNull()
+            if (target != null) return target
+        }
+    }
+    return null
+}
+
+// preMeasureComposePanel creates ComposeContainer before the ComposePanel is attached to a window, which registers
+// ComposeSceneMediator's KeyListener before ComposeContainer.addNotify() attaches BackNavigationEventInput to its
+// NavigationEventDispatcher. Skip scene key listeners until the component is displayable.
+private fun Component.isPopupKeyListenerReady(listener: java.awt.event.KeyListener): Boolean =
+    isDisplayable || !listener.javaClass.name.startsWith("androidx.compose.ui.scene.")
+
+internal fun isDismissRequestKey(type: KeyEventType, key: Key, hasModifier: Boolean = false): Boolean =
+    type == KeyEventType.KeyDown && key == Key.Escape && !hasModifier
+
+internal fun isModifiedDismissRequestKey(type: KeyEventType, key: Key, hasModifier: Boolean): Boolean =
+    type == KeyEventType.KeyDown && key == Key.Escape && hasModifier
+
+internal fun KeyEvent.hasDismissKeyModifier(): Boolean =
+    isMetaPressed || isCtrlPressed || isAltPressed || isShiftPressed
+
+internal fun KeyEvent.isDismissRequest(): Boolean =
+    isDismissRequestKey(type = type, key = key, hasModifier = hasDismissKeyModifier())
+
+internal fun KeyEvent.isModifiedDismissRequest(): Boolean =
+    isModifiedDismissRequestKey(type = type, key = key, hasModifier = hasDismissKeyModifier())
+
+private val AWTKeyEvent.keyLocationForCompose
     get() = if (keyLocation == KEY_LOCATION_UNKNOWN) KEY_LOCATION_STANDARD else keyLocation
 
 @OptIn(InternalComposeUiApi::class)
-private fun java.awt.event.KeyEvent.toComposeKeyEvent(): KeyEvent =
+internal fun AWTKeyEvent.toComposeKeyEvent(): KeyEvent =
     KeyEvent(
         key = Key(nativeKeyCode = keyCode, nativeKeyLocation = keyLocationForCompose),
         type =
