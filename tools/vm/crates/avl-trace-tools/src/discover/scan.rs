@@ -26,6 +26,9 @@ pub struct Options {
     /// so in the root's problems. A trace root holds a few hundred entries per run; the bound is for a directory
     /// someone names without knowing whether it is one, such as the checkout.
     pub max_entries: Option<usize>,
+    /// Where the inner zips of a zip are extracted to be read. `None` extracts them into a private temporary
+    /// directory, which the scanner removes when it is dropped.
+    pub nested_dir: Option<PathBuf>,
     /// The clock.
     pub now: Box<dyn Fn() -> SystemTime + Send + Sync>,
 }
@@ -35,6 +38,7 @@ impl Default for Options {
         Self {
             stale_after: Duration::from_mins(5),
             max_entries: None,
+            nested_dir: None,
             now: Box::new(SystemTime::now),
         }
     }
@@ -102,8 +106,8 @@ const SKIPPED_DIRS: &[&str] = &[".git", "node_modules"];
 impl Scanner {
     pub fn new(options: Options) -> Self {
         Self {
+            zips: ZipCache::new(options.nested_dir.clone()),
             options,
-            zips: ZipCache::default(),
             state: Mutex::default(),
         }
     }
@@ -285,6 +289,10 @@ impl Scanner {
                 if let Some(error) = index.error() {
                     found.problem(format!("{}: {error}", zip.display()));
                 }
+                for error in index.inner_errors() {
+                    found.problem(format!("{}!/{error}", zip.display()));
+                }
+                seen.zips.extend(index.inner().iter().map(|inner| inner.index.path.clone()));
                 found.bundles.extend(index.bundles(&zip.to_string_lossy()));
             }
             Err(error) => found.problem(format!("{}: {error}", zip.display())),

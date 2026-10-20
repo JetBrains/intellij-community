@@ -558,6 +558,42 @@ async fn a_deflated_zip_entry_is_served_whole_and_in_ranges_through_the_cache() 
     assert_eq!(cached(), 1, "a ranged read leaves the zip's one cache directory");
 }
 
+/// TeamCity's `bazel.logs.zip` holds Bazel's `outputs.zip`, deflated. The inner zip is extracted into the cache once,
+/// and its entries are served from there: a stored one in place, a deflated one through the inflate cache.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_zip_inside_a_zip_is_served_from_its_extraction() {
+    let fixture = new_fixture();
+    let outer = fixture.scratch.dir().join("bazel.logs.zip");
+    let mut writer = zip::ZipWriter::new(File::create(&outer).expect("create the outer zip"));
+    let inner_entry = "abc/execroot/_main/bazel-out/k8-fastbuild/testlogs/ui/ui_lane_test/test.outputs/outputs.zip";
+    writer
+        .start_file(inner_entry, zip::write::SimpleFileOptions::default())
+        .expect("start the inner zip");
+    io::copy(&mut File::open(&fixture.zip_path).expect("open outputs.zip"), &mut writer).expect("copy outputs.zip");
+    writer.finish().expect("finish the outer zip");
+    let settings = test_settings(&fixture.scratch, vec![Root::new(RootKind::Flag, &outer)]);
+    let cache = settings.cache_dir.clone();
+    let served = start_server(settings).await;
+
+    let listed = served.list_runs().await;
+    let scenario = scenario_by(&listed, is_zip);
+    assert_eq!(
+        scenario["source"]["path"],
+        format!("{}!/{inner_entry}", real(&outer).to_string_lossy())
+    );
+    assert_eq!(fs::read_dir(&cache).map_or(0, Iterator::count), 1, "the extraction is in the cache");
+    let base = str_of(&scenario["url"]).to_owned();
+    let original = example_file(&snap_image_path(1));
+    let image = served
+        .get(&format!("{base}{}", snap_image_path(1)), &[("range", "bytes=0-11")])
+        .await;
+    assert_eq!(image.status, StatusCode::PARTIAL_CONTENT, "{}", image.text());
+    assert_eq!(image.body, original[..12]);
+    let logs = served.get(&format!("{base}{LOGS_FILE}"), &[("range", "bytes=10-19")]).await;
+    assert_eq!(logs.status, StatusCode::PARTIAL_CONTENT, "{}", logs.text());
+    assert_eq!(logs.body, example_file(LOGS_FILE)[10..20]);
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn a_directory_bundle_file_is_served() {
     let fixture = new_fixture();

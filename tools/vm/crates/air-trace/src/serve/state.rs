@@ -45,7 +45,8 @@ pub(crate) struct Settings {
     /// The checkout, which the planner needs; `None` for a server started outside one.
     pub repo_root: Option<PathBuf>,
     pub site_dir: Option<PathBuf>,
-    /// The inflate cache: one directory for each version of a zip whose deflated entries were asked for in ranges.
+    /// The inflate cache: one directory for each version of a zip whose deflated entries were asked for in ranges,
+    /// and one for each inner zip that discovery extracted.
     pub cache_dir: PathBuf,
     pub roots: Vec<Root>,
     /// The controller's runs, `<runtime root>/runs`, each with its journal; `None` for none.
@@ -149,6 +150,7 @@ impl Server {
         prune_cache(&settings.cache_dir, SystemTime::now() - CACHE_RETENTION);
         let scanner = Scanner::new(Options {
             stale_after: settings.stale_after,
+            nested_dir: Some(settings.cache_dir.clone()),
             ..Options::default()
         });
         let journals = Journals::new(settings.runs_dir.clone());
@@ -247,7 +249,7 @@ impl Server {
 }
 
 /// Removes the inflate cache's directories for zips not read since `before`. Each directory is one version of one
-/// zip, so a zip rewritten by every Bazel run would otherwise leave one behind per run.
+/// zip or one extracted inner zip, so a zip rewritten by every Bazel run would otherwise leave one behind per run.
 fn prune_cache(cache_dir: &Path, before: SystemTime) {
     let Ok(entries) = fs::read_dir(cache_dir) else {
         return;
