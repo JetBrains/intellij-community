@@ -3,44 +3,50 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil
 import com.intellij.json.psi.JsonProperty
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.asSafely
-import com.jetbrains.jsonSchema.newerFormats.JsonSchemaVersionTestBase
 import com.jetbrains.jsonSchema.newerFormats.TestDataLanguage
+import com.jetbrains.jsonSchema.newerFormats.jsonSchemaVersionFixture
 import org.jetbrains.yaml.psi.YAMLKeyValue
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-internal class YamlJsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(YamlJsonSchemaHighlightingInspection::class.java)
+@TestApplication
+internal class YamlJsonSchema2020FeaturesTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  override val testDataLanguage: TestDataLanguage
-    get() = TestDataLanguage.YAML
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  private val versionFixture by jsonSchemaVersionFixture(codeInsightFixture, TestDataLanguage.YAML,
+                                                         "org/jetbrains/yaml/schema/data/newerFormats")
 
-  override fun loadSchemaTextFromResources(schemaName: String): String {
-    val resource = this.javaClass.classLoader.getResource("org/jetbrains/yaml/schema/data/newerFormats/$schemaName")
-    Assert.assertNotNull(resource)
-    return resource!!.readText()
+  @BeforeEach
+  fun setUp() {
+    versionFixture.fixture.enableInspections(YamlJsonSchemaHighlightingInspection::class.java)
   }
 
   private fun getResolvedElementText(elementAtCaret: PsiElement): String {
     val leafElementAtCaret = elementAtCaret.asSafely<YAMLKeyValue>()?.key
-    Assert.assertTrue(leafElementAtCaret is LeafPsiElement)
+    Assertions.assertTrue(leafElementAtCaret is LeafPsiElement)
     val target = GotoDeclarationUtil.findTargetElementsFromProviders(leafElementAtCaret,
-                                                                     myFixture.elementAtCaret.textOffset,
-                                                                     myFixture.editor)
-    Assert.assertNotNull(target)
-    Assert.assertEquals(1, target!!.size)
+                                                                     versionFixture.fixture.elementAtCaret.textOffset,
+                                                                     versionFixture.fixture.editor)
+    Assertions.assertNotNull(target)
+    Assertions.assertEquals(1, target!!.size)
     val singleTargetParent = target.single().parent
-    Assert.assertTrue(singleTargetParent is JsonProperty)
+    Assertions.assertTrue(singleTargetParent is JsonProperty)
     return singleTargetParent.text
   }
 
+  @Test
   fun `test if-then-else validation with inlined branch schemas`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       $$"""
         {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -88,9 +94,10 @@ internal class YamlJsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test gtd from yaml to top level if-then-else branch`() {
-    doTestGtdWithSingleTarget(
-      loadSchemaTextFromResources("IfElseSchemaWithDepth1.json"),
+    versionFixture.doTestGtdWithSingleTarget(
+      versionFixture.loadSchemaTextFromResources("IfElseSchemaWithDepth1.json"),
 
       """
           buz:
@@ -120,9 +127,10 @@ internal class YamlJsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     }
   }
 
+  @Test
   fun `test gtd from yaml to nested if-then-else branch`() {
-    doTestGtdWithSingleTarget(
-      loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
+    versionFixture.doTestGtdWithSingleTarget(
+      versionFixture.loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
 
       """
         buz:
@@ -175,9 +183,10 @@ internal class YamlJsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     }
   }
 
+  @Test
   fun `test validate yaml against schema with nested if-then-else expressions`() {
-    doTestSchemaValidation(
-      loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
+    versionFixture.doTestSchemaValidation(
+      versionFixture.loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
       """
         test: "1) Empty buz validates to false in both branches -> expected one is bar_b"
         buz:

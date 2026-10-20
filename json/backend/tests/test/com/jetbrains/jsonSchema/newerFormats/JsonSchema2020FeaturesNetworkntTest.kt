@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.newerFormats
 
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.RegistryKey
+import org.junit.jupiter.api.Test
 
 /**
  * Overrides for [JsonSchema2020FeaturesTest] where networknt produces different but correct behavior.
@@ -11,13 +12,8 @@ import com.intellij.openapi.util.registry.Registry
  *
  * See ADR-013 in `community/json/networknt.wrapper/docs/DECISIONS.md` for the subclass strategy rationale.
  */
+@RegistryKey(key = "json.schema.use.networknt.validation", value = "true")
 internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("json.schema.use.networknt.validation").setValue(true, testRootDisposable)
-  }
-
   /**
    * Override: networknt includes the property name in the error message.
    *
@@ -28,8 +24,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * the full `"test2": true` key-value pair. Both behaviors are correct; networknt's is
    * more precise since the key is what the schema disallows.
    */
+  @Test
   override fun `test unevaluatedProperties constant support`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -66,8 +63,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * Additionally, networknt highlights only the property key (`"bar"`) rather than
    * the full `"bar": "bar"` key-value pair.
    */
+  @Test
   override fun `test unevaluatedProperties with pattern`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -102,8 +100,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * networknt's message is more informative — it names the specific index that caused the failure.
    * The different highlighting range (container vs. first element) is a known behavior difference.
    */
+  @Test
   override fun `test array items validation against always invalid schema`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -137,8 +136,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * Additionally, networknt highlights only the property key (`"baz"`) rather than
    * the full `"baz": "baz"` key-value pair.
    */
+  @Test
   override fun `test unevaluatedProperties with adjacent nested properties`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -181,8 +181,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * networknt's message is more informative — it identifies which item was unevaluated.
    * The highlighted element (`"foo"`) is the same in both cases.
    */
+  @Test
   override fun `test unevaluatedItems constant schema validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -209,8 +210,9 @@ internal class JsonSchema2020FeaturesNetworkntTest : JsonSchema2020FeaturesTest(
    * expects index 1 (`"bar"`) to be highlighted. Both indicate the same constraint violation;
    * networknt reports from the first item that triggers the unevaluated check.
    */
+  @Test
   override fun `test unevaluatedItems and prefixItems compound validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",

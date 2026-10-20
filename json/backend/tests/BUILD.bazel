@@ -145,8 +145,6 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//json/networknt.wrapper",
         "//json/networknt.wrapper:networknt.wrapper_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],
