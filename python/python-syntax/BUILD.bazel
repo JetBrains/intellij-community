@@ -58,6 +58,8 @@ jvm_library(
 exports_files(
     [
         "intellij.python.syntax.iml",
+        "resources/colorSchemes/PythonDarcula.xml",
+        "resources/colorSchemes/PythonDefault.xml",
         "resources/intellij.python.syntax.xml",
     ],
     visibility = ["//visibility:public"],

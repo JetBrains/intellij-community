@@ -145,7 +145,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_TYPE_PARAMETER = TextAttributesKey.createTextAttributesKey("PY.TYPE_PARAMETER", PARAMETER);
 
   /**
-   * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
+   * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactoryBase caches such instances per level.
    */
   public PyHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;

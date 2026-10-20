@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.highlighting;
 
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -55,7 +55,15 @@ public class PySyntaxHighlighterFactoryBase extends SyntaxHighlighterFactory {
            LanguageLevel.getDefault();
   }
 
-  protected boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+  private static boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+    if (project == null || virtualFile == null) {
+      return false;
+    }
+    for (PyConsoleLexerDetector detector : PyConsoleLexerDetector.EP_NAME.getExtensionList()) {
+      if (detector.isConsoleFile(project, virtualFile)) {
+        return true;
+      }
+    }
     return false;
   }
 }

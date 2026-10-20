@@ -23,7 +23,15 @@
     <module name="intellij.python.syntax.core"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.consoleLexerDetector"
+                    interface="com.jetbrains.python.highlighting.PyConsoleLexerDetector"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactoryBase"/>
+    <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
     <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>

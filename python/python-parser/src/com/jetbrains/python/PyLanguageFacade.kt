@@ -1,7 +1,7 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -16,9 +16,22 @@ abstract class PyLanguageFacade {
   abstract fun setEffectiveLanguageLevel(virtualFile: VirtualFile, languageLevel: LanguageLevel?)
 
   companion object {
+    /**
+     * The registered facade, or a default facade when no Python PSI is loaded.
+     * JetBrains Light before the smart mode is such a process.
+     */
     @JvmStatic
     val INSTANCE: PyLanguageFacade
-      get() = ApplicationManager.getApplication().service<PyLanguageFacade>()
+      get() = ApplicationManager.getApplication().serviceOrNull<PyLanguageFacade>() ?: PyDefaultLanguageFacade
+  }
+}
+
+private object PyDefaultLanguageFacade : PyLanguageFacade() {
+  override fun getEffectiveLanguageLevel(psiElement: PsiElement): LanguageLevel = LanguageLevel.getDefault()
+
+  override fun getEffectiveLanguageLevel(project: Project, virtualFile: VirtualFile): LanguageLevel = LanguageLevel.getDefault()
+
+  override fun setEffectiveLanguageLevel(virtualFile: VirtualFile, languageLevel: LanguageLevel?) {
   }
 }
 

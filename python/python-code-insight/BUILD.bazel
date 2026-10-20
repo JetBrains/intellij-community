@@ -103,8 +103,6 @@ jvm_library(
 exports_files(
     [
         "intellij.python.codeInsight.iml",
-        "resources/colorSchemes/PythonDarcula.xml",
-        "resources/colorSchemes/PythonDefault.xml",
         "resources/intellij.python.codeInsight.xml",
         "resources/liveTemplates/Python.xml",
     ],
