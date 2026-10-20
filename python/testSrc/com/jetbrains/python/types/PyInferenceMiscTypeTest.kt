@@ -8,11 +8,14 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyAssignmentExpressionImpl
 import com.jetbrains.python.psi.impl.PyBinaryExpressionImpl
 import com.jetbrains.python.psi.impl.PyConditionalExpressionImpl
 import com.jetbrains.python.psi.impl.PyKeywordArgumentImpl
 import com.jetbrains.python.psi.impl.PyReprExpressionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -3170,6 +3173,34 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       expr = `a`
       #      ^^^ ERROR Python version 3.15 does not support backquotes, use repr() instead
       #      └ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTargetExpressionImpl::class])
+    fun `assignment expression without a value`() = test("""
+      def f():
+          if root :=
+      #      │      └ ERROR Expression expected
+      #      └ TYPE Unknown
+              pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyAssignmentExpressionImpl::class])
+    fun `assignment expression without a name target`() = test("""
+      def f(w):
+          expr = (w[0] := 1)
+      #          │    └ ERROR Identifier expected
+      #          └ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypeInferenceCspFactory::class])
+    fun `list literal with an unclosed parenthesis`() = test("""
+      expr = [1, (]
+      #│          │└ ERROR ')' expected
+      #│          └ ERROR Unexpected expression syntax
+      #└ TYPE list[int | Unknown]
       """.trimIndent())
   }
 }

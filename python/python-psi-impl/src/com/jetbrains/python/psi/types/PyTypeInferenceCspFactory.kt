@@ -220,7 +220,8 @@ object PyTypeInferenceCspFactory {
     if (nestedReturnType is PyUnpackedTupleType && expression !is PyTupleExpression) {
       return PyUnionType.unionOrUnknown(nestedReturnType.elementTypes)
     }
-    return nestedReturnType
+    // An element without an expression to type, such as `(` with no body in incomplete code
+    return nestedReturnType ?: PyAnyType.unknown
   }
 
   /**

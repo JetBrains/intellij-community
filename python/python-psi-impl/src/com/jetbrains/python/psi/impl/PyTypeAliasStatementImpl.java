@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyTypeParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -95,7 +96,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
     if (typeAliasTypeClass != null) {
       return new PyClassTypeImpl(typeAliasTypeClass, false);
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyKeyValuePattern
 import com.jetbrains.python.psi.PyMappingPattern
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
@@ -77,7 +78,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
   }
 
   private fun wrapInMappingType(keyType: PyType?, valueType: PyType?): PyType? {
-    val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Mapping", this) ?: return null
+    val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Mapping", this) ?: return PyAnyType.unknown
     return PyCollectionTypeImpl(sequence, false, listOf(keyType, valueType).map { PyTypeUtil.widenLiteralAndNumeric(it) })
   }
 }
