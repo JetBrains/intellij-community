@@ -8,7 +8,7 @@
 #
 # The archives are the static CLI tarballs of `download.docker.com/mac/static/stable/<arch>/`, byte-identical,
 # on the Space file mirror. The cache redirector does not serve `download.docker.com`, and
-# `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the redirector. The tarball holds the
+# the URL below reaches the Space mirror through the redirector. The tarball holds the
 # CLI only. The pinned CLI drives the engine of the host environment, which `DOCKER_HOST` names. A Mac of macOS 26 or
 # newer runs Apple `container` instead, with its own CLI of `container.MODULE.bazel`.
 #
