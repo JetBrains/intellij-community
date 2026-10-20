@@ -53,6 +53,9 @@ class PyreflyLspClientDescriptor(
     override val foldingRangeCustomizer: LspFoldingRangeCustomizer = LspFoldingRangeDisabled
 
     override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
+      override val showSourceAndCode: Boolean
+        get() = !runsBundledPyrefly
+
       override fun createAnnotation(
         holder: AnnotationHolder,
         diagnostic: Diagnostic,

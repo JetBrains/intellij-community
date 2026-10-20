@@ -868,18 +868,22 @@ open class PyLspToolCustomization(
 
   open inner class PyLspToolDiagnosticsSupport : LspDiagnosticsSupport() {
 
+    protected open val showSourceAndCode: Boolean = true
+
     override fun getMessage(diagnostic: Diagnostic): String {
       val messageLines = super.getMessage(diagnostic).split("\n")
-      // source is nullable
-      val firstLine =
-        messageLines[0] + "  ${diagnostic.source.orEmpty()}" + diagnostic.presentableCode?.let { "($it)" }.orEmpty() // NON-NLS
+      val suffix = if (showSourceAndCode) {
+        "  ${diagnostic.source.orEmpty()}" + diagnostic.presentableCode?.let { "($it)" }.orEmpty() // NON-NLS
+      }
+      else ""
+      val firstLine = messageLines[0] + suffix
       if (messageLines.size == 1) return firstLine
       return firstLine + "\n" + messageLines.drop(1).joinToString("\n", prefix = "\n") // NON-NLS
     }
 
     override fun getTooltip(diagnostic: Diagnostic): String {
-      val code = diagnostic.presentableCode
-      val source = diagnostic.source
+      val code = diagnostic.presentableCode.takeIf { showSourceAndCode }
+      val source = diagnostic.source.takeIf { showSourceAndCode }
       val style = "color: gray"
       // workaround for IJPL-196845
       val codeLink = when {
