@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.jsonpath.ui
+package com.intellij.jsonpath.scratch
 
 import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.jsonpath.JsonPathBundle
-import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
+import com.intellij.jsonpath.ui.JSON_PATH_EVALUATE_RESULT_KEY
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -22,14 +22,14 @@ internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-    val scratchesRoot = ScratchUtil.findScratchesRootType() ?: return
 
     if (editor.getUserData(JSON_PATH_EVALUATE_RESULT_KEY) != true) return
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       Runnable {
         WriteCommandAction.runWriteCommandAction(project, JsonPathBundle.message("jsonpath.evaluate.export.result"), null, Runnable {
-          val file = scratchesRoot.findFile(project, "jsonpath-result.json", ScratchFileService.Option.create_new_always)
+          val file = ScratchRootType.getInstance()
+            .findFile(project, "jsonpath-result.json", ScratchFileService.Option.create_new_always)
 
           VfsUtil.saveText(file, editor.document.text)
 
@@ -44,7 +44,6 @@ internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR)
 
-    e.presentation.isEnabledAndVisible = editor != null && editor.getUserData(JSON_PATH_EVALUATE_RESULT_KEY) == true &&
-                                         ScratchUtil.findScratchesRootType() != null
+    e.presentation.isEnabledAndVisible = editor != null && editor.getUserData(JSON_PATH_EVALUATE_RESULT_KEY) == true
   }
 }

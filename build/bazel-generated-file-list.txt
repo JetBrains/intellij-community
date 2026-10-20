@@ -1438,6 +1438,7 @@ plugins/jshell/execution
 plugins/jshell/frontend
 plugins/jshell/protocol
 plugins/jsonpath
+plugins/jsonpath/scratch
 plugins/junit
 plugins/junit/dashboard
 plugins/junit/groovy-tests

@@ -24,6 +24,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier
 
+/** Marks the editor that shows a JSONPath evaluation result. The optional scratch module exports it. */
+@ApiStatus.Internal
+val JSON_PATH_EVALUATE_RESULT_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_RESULT")
+
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 internal class JsonPathEvaluateManager internal constructor(private val project: Project, private val cs: CoroutineScope) {
@@ -137,9 +141,6 @@ internal class JsonPathEvaluateManager internal constructor(private val project:
     @ApiStatus.Internal
     @JvmField
     val JSON_PATH_EVALUATE_SOURCE_KEY: Key<Supplier<JsonFile?>> = Key.create("JSON_PATH_EVALUATE_SOURCE")
-
-    @JvmField
-    internal val JSON_PATH_EVALUATE_RESULT_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_RESULT")
 
     @JvmStatic
     fun getInstance(project: Project): JsonPathEvaluateManager {

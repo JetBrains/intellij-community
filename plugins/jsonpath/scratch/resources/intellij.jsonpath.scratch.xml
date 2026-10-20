@@ -1,0 +1,22 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.jsonpath"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.scratch"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.JsonPathBundle">
+    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.scratch.JsonPathExportEvaluateResultAction"
+            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
+      <add-to-group group-id="EditorContextBarMenu"/>
+    </action>
+  </actions>
+</idea-plugin>

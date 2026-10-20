@@ -13,7 +13,6 @@ import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_HISTORY
-import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_SOURCE_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager

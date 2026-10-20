@@ -31,7 +31,9 @@
     <module name="intellij.spellchecker"/>
     <!-- endregion -->
   </dependencies>
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <module name="intellij.jsonpath.scratch"/>
+  </content>
 
   <resource-bundle>messages.JsonPathBundle</resource-bundle>
 
@@ -81,11 +83,6 @@
     <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
       <add-to-group group-id="FindMenuGroup" anchor="last"/>
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-    </action>
-
-    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
-            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
-      <add-to-group group-id="EditorContextBarMenu"/>
     </action>
   </actions>
 </idea-plugin>

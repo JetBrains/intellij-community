@@ -1,0 +1,75 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.jsonpath.scratch` start
+content_module_jar(module = ":scratch")
+### auto-generated section `dev intellij.jsonpath.scratch` end
+
+### auto-generated section `build intellij.jsonpath.scratch` start
+jvm_library(
+    name = "scratch",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsonpath.scratch",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/jsonpath",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/scratch",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "scratch_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jsonpath.scratch",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scratch",
+        "//plugins/jsonpath:jsonpath_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/scratch:scratch_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.jsonpath.scratch` end
+
+### auto-generated section `iml intellij.jsonpath.scratch` start
+exports_files(
+    [
+        "intellij.jsonpath.scratch.iml",
+        "resources/intellij.jsonpath.scratch.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.jsonpath.scratch` end
