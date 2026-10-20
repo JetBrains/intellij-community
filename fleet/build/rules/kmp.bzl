@@ -1,37 +1,37 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v35"
+_RESOLUTION_FACTS_VERSION = "resolution.v36"
 
-_RESOLVER_VERSION = "0.0.25"
+_RESOLVER_VERSION = "0.1.2"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "9707b7da63db7dc952a7ba98ddb110e7cf8442eb5c709c60fc594fd7d1ff7cac",
+        sha256 = "1fba17ee4cfb35c62f2227e2d7cf238633d4199482225fb3b7373ad89e2b1885",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "759ae7d675cd3aa091b73c269a1aaa1558ff9798c2f57dda9a6d3b8018001ef7",
+        sha256 = "5e5604236d87719684615e77bf21bfc0044f78f01438af658c314f5c4d082b8b",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "5cd0bbcfd162b0a853058f5566fabd13b472ec45047f582d303da3e1ce7c4028",
+        sha256 = "4e10fa5a1c846542f20f753e1261356d2cfe1b73e97fb66b8f07f3164331b934",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "d24c155f02552cc936a338db34e0ed77dacb583c27606c1a5a22143013b4023f",
+        sha256 = "202e5b46e945229a7b801af83fbce309cb7a34dfae466a5998a13e892311bb35",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "89fa7bbc18356bee53ec5ee20a43c26642ccb4f6af2e78b94a9548df7cc2093e",
+        sha256 = "af86f048542d3bb1f8dc637fddacd3227ff9fb8eee45e8f59633fedbe3d83919",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "89fa7bbc18356bee53ec5ee20a43c26642ccb4f6af2e78b94a9548df7cc2093e",
+        sha256 = "af86f048542d3bb1f8dc637fddacd3227ff9fb8eee45e8f59633fedbe3d83919",
     ),
 }
 
@@ -566,6 +566,8 @@ def _resolve_fresh(module_ctx, config):
         node_tooling.node,
         "--npm-cli-js",
         node_tooling.npm_cli_js,
+        "--platform",
+        "wasmjs",  # Only the wasmJs variants are materialized (see `_wasmjs_variant`); the resolver also supports `jvm` but we are not using it yet.
     ]
     for dep in config.deps:
         args.extend(["--coordinate", dep])
