@@ -44,7 +44,7 @@ interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
   ): FileEditor {
     val builder = readAction { createEditorAsync(project = project, file = file) }
     return withContext(Dispatchers.EDT) {
-      builder.build().also { registerCreatedFileEditor(it) }
+      builder.build()
     }
   }
 

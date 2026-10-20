@@ -9,7 +9,6 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -29,7 +28,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.CreatedFileEditorSink
 import com.intellij.openapi.fileEditor.FileEditor
@@ -69,8 +67,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.FileEntryTab
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
@@ -91,14 +87,11 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -176,11 +169,6 @@ open class EditorComposite internal constructor(
 ) : FileEditorComposite, Disposable {
   internal val clientId: ClientId = ClientId.current
 
-  /** Scope cancellation alone doesn't mean disposed was triggered */
-  @Volatile
-  internal var isDisposeStarted: Boolean = false
-    private set
-
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
   private val focusWatcher: FocusWatcher = FocusWatcher().also {
@@ -220,20 +208,8 @@ open class EditorComposite internal constructor(
   @Internal
   val initDeferred: CompletableDeferred<Unit> = CompletableDeferred()
 
-  /** Tab restoration shall not appear */
-  internal var preparationVisibleInStatusBar: Boolean = true
-
   private val _isPreviewFlow = MutableStateFlow(false)
   internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
-
-  private suspend fun collectModel(compositeModel: Flow<EditorCompositeModel>) {
-    compositeModel.collect { newModel ->
-      val representation = newModel.fileEditorAndProviderList.map { it.fileEditor.name }
-      span("model change: $representation") {
-        handleModel(newModel)
-      }
-    }
-  }
 
   init {
     EDT.assertIsEdt()
@@ -260,21 +236,14 @@ open class EditorComposite internal constructor(
       coroutineScope.launch(ModalityState.any()
                               .asContextElement() + clientId.asContextElement() + tracer.rootSpan("EditorComposite model flow",
                                                                                                   arrayOf("file", file.name))) {
-        // Let's wait until EDT has created a tab in FileManagerImpl and then show progress
-        val visibleInStatusBar = span("waiting initDeferred", Dispatchers.EDT) {
+        span("waiting initDeferred") {
           initDeferred.await()
-          preparationVisibleInStatusBar
         }
-        try {
-          withBackgroundProgress(project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
-            suspender = null,
-            visibleInStatusBar = visibleInStatusBar,
-          ) {
-            collectModel(model)
+        model.collect { newModel ->
+          val representation = newModel.fileEditorAndProviderList.map { it.fileEditor.name }
+          span("model change: $representation") {
+            handleModel(newModel)
           }
-        }
-        finally {
-          closeTabIfUnavailable()
         }
       }
     }
@@ -283,28 +252,6 @@ open class EditorComposite internal constructor(
       // listen for preview status change to update file tooltip, skip the first value as it is the initial value
       isPreviewFlow.drop(1).collect {
         FileEditorManagerEx.getInstanceEx(project).updateFileName(file)
-      }
-    }
-  }
-
-  /**
-   * Closes the tab when the loading ends before the editors are published: the preparation was cancelled or failed.
-   */
-  private suspend fun closeTabIfUnavailable() {
-    if (isAvailable()) {
-      return
-    }
-    withContext(NonCancellable + Dispatchers.EDT) {
-      if (isAvailable() || isDisposed() || project.isDisposed) {
-        return@withContext
-      }
-      if (clientId.isLocal) {
-        val manager = FileEditorManagerEx.getInstanceEx(project)
-        val window = manager.windows.firstOrNull { it.getComposite(file) === this@EditorComposite } ?: return@withContext
-        manager.closeFile(file, window)
-      }
-      else {
-        ClientFileEditorManager.getCurrentInstance(project).removeComposite(this@EditorComposite)
       }
     }
   }
@@ -397,44 +344,26 @@ open class EditorComposite internal constructor(
         )
         // from here on the editors are listed by this composite, so `dispose` is what releases them
         model.createdEditors?.claim()
+        afterFileOpen(this, model)
+        shownDeferred.complete(Unit)
 
-        suspend fun finishOpening(scope: CoroutineScope) {
-          scope.ensureActive()
-          afterFileOpen(scope, model)
-          shownDeferred.complete(Unit)
-
-          writeIntentReadAction {
-            goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
-            @Suppress("DEPRECATION")
-            deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
-          }
-
-          triggerStatOpen(
-            project = project,
-            file = file,
-            start = startTime,
-            composite = this@EditorComposite,
-            coroutineScope = coroutineScope,
-          )
-
-          span("fileOpened event executing", Dispatchers.EDT) {
-            deprecatedPublisher.fileOpened(fileEditorManager, file)
-          }
+        writeIntentReadAction {
+          goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+          @Suppress("DEPRECATION")
+          deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
         }
-        // Before the claim, the editors have no owner: the sink disposes them,
-        // and the composite closes its own tab.
-        // After the claim, the tab is preserved, remaining work shall be continued
-        if (model.createdEditors != null) {
-          this@EditorComposite.coroutineScope.async(
-            Dispatchers.EDT + ModalityState.any().asContextElement() + clientId.asContextElement(),
-            start = CoroutineStart.UNDISPATCHED,
-          ) {
-            finishOpening(this)
-          }.await()
-        }
-        else {
-          finishOpening(this)
-        }
+      }
+
+      triggerStatOpen(
+        project = project,
+        file = file,
+        start = startTime,
+        composite = this@EditorComposite,
+        coroutineScope = coroutineScope,
+      )
+
+      span("fileOpened event executing", Dispatchers.EDT) {
+        deprecatedPublisher.fileOpened(fileEditorManager, file)
       }
     }
   }
@@ -949,7 +878,6 @@ open class EditorComposite internal constructor(
     get() = allEditorsWithProviders.any { it.fileEditor.isModified }
 
   override fun dispose() {
-    isDisposeStarted = true
     try {
       coroutineScope.cancel("disposed")
     }
