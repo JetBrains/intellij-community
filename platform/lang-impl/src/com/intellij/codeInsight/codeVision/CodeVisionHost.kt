@@ -9,10 +9,10 @@ import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
+import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayVisibilityPolicy
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
@@ -66,7 +66,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.application
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.DebouncedUpdates
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -353,8 +352,8 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     val settings = CodeVisionSettings.getInstance()
     for (provider in providers) {
       if (!settings.isProviderEnabled(provider.groupId)) continue
-      if (InlayVisibilityPolicy.isVisible(
-          InlayVisibilityRequest(project, editor, CodeVisionInlayVisibilityKey(provider.groupId))) == false) continue
+      if (InlayHintSettingsOverrider.isEnabledByOverriders(
+          InlayHintSettingsRequest(project, editor, CodeVisionInlayHintSettingsKey(provider.groupId))) == false) continue
       if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
@@ -541,9 +540,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
         val provider = p as CodeVisionProvider<Any?>
         val providerId = provider.id
         val isGroupEnabled = !lifeSettingModel.disabledCodeVisionProviderIds.contains(provider.groupId) &&
-                             InlayVisibilityPolicy.isVisible(InlayVisibilityRequest(
+                             InlayHintSettingsOverrider.isEnabledByOverriders(InlayHintSettingsRequest(
                                project = project, editor = editor,
-                               visibilityKey = CodeVisionInlayVisibilityKey(provider.groupId))) != false
+                               settingsKey = CodeVisionInlayHintSettingsKey(provider.groupId))) != false
 
         if (isGroupEnabled && !isEditorInsideSettingsPanel) {
           val shouldRecompute = shouldRecomputeForEditor(editor, provider, precalculatedUiThings)

@@ -8,56 +8,60 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface InlayVisibilityKey
+sealed interface InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class LegacyInlayHintVisibilityKey(
+data class LegacyInlayHintSettingsKey(
   val language: Language?,
   val providerId: String
-) : InlayVisibilityKey
+) : InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class DeclarativeInlayHintVisibilityKey(
+data class DeclarativeInlayHintSettingsKey(
   val providerId: String,
   val optionId: String?
-) : InlayVisibilityKey
+) : InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class CodeVisionInlayVisibilityKey(val groupId: String) : InlayVisibilityKey
+data class CodeVisionInlayHintSettingsKey(val groupId: String) : InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class ParameterHintsInlayVisibilityKey(
+data class ParameterHintSettingsKey(
   val language: Language,
   val optionId: String?
-) : InlayVisibilityKey
+) : InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class InlayVisibilityRequest(
+data class InlayHintSettingsRequest(
   val project: Project,
   val editor: Editor?,
-  val visibilityKey: InlayVisibilityKey
+  val settingsKey: InlayHintSettingsKey
 )
 
 @ApiStatus.Internal
-interface InlayVisibilityPolicy {
+interface InlayHintSettingsOverrider {
 
   /**
+   * The result overrides the existing settings for the inlay hint.
+   *
    * Possible options:
    * - `null` - when there is no option defined, the caller uses the platform setting
-   * - `false` - hides the inlay
-   * - `true` - the inlay can be shown
+   * - `false` - disables the inlay hint
+   * - `true` - enables the inlay hint
+   *
+   * The overrider cannot enable a hint which was disabled in the platform settings
    */
-  fun accepts(request: InlayVisibilityRequest): Boolean?
+  fun isEnabled(request: InlayHintSettingsRequest): Boolean?
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<InlayVisibilityPolicy> =
-      ExtensionPointName.create("com.intellij.codeInsight.inlayVisibilityPolicy")
+    val EP_NAME: ExtensionPointName<InlayHintSettingsOverrider> =
+      ExtensionPointName.create("com.intellij.codeInsight.inlayHintSettingsOverrider")
 
     @JvmStatic fun isActive(): Boolean = EP_NAME.hasAnyExtensions()
 
-    @JvmStatic fun isVisible(request: InlayVisibilityRequest): Boolean? {
-      val results = EP_NAME.extensionList.map { it.accepts(request) }
+    @JvmStatic fun isEnabledByOverriders(request: InlayHintSettingsRequest): Boolean? {
+      val results = EP_NAME.extensionList.map { it.isEnabled(request) }
       if (results.contains(false)) return false
       if (results.contains(true)) return true
       return null

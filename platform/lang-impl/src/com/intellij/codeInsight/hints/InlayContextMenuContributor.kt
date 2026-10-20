@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface InlayContextMenuContributor {
-  fun contribute(key: InlayVisibilityKey): ActionGroup?
+  fun contribute(key: InlayHintSettingsKey): ActionGroup?
 
   companion object {
     val EP_NAME: ExtensionPointName<InlayContextMenuContributor> = ExtensionPointName("com.intellij.codeInsight.inlayContextMenuContributor")

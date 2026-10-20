@@ -8,9 +8,9 @@ import com.intellij.codeInsight.hints.HintInfoFilter
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.Option
-import com.intellij.codeInsight.hints.ParameterHintsInlayVisibilityKey
+import com.intellij.codeInsight.hints.ParameterHintSettingsKey
 import com.intellij.codeInsight.hints.ParameterHintsPass
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.getLanguageForSettingKey
@@ -148,8 +148,8 @@ class ParameterInlayProviderSettingsModel(
     }
   }
 
-  override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
-    return InlayVisibilityRequest(project, null,
-                                  ParameterHintsInlayVisibilityKey(getLanguageForSettingKey(language), case?.id))
+  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
+    return InlayHintSettingsRequest(project, null,
+                                    ParameterHintSettingsKey(getLanguageForSettingKey(language), case?.id))
   }
 }

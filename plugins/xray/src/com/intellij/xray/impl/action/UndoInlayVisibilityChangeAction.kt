@@ -1,6 +1,6 @@
 package com.intellij.xray.impl.action
 
-import com.intellij.codeInsight.hints.InlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -11,7 +11,7 @@ import com.intellij.xray.impl.service.XRayStageStore
 internal class UndoInlayVisibilityChangeAction(
   document: Document,
   val project: Project,
-  val key: InlayVisibilityKey,
+  val key: InlayHintSettingsKey,
   val stage: InlayHintStage,
   val previousStage: InlayHintStage,
 ) :

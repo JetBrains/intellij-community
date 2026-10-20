@@ -9,8 +9,8 @@ import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintsSinkImpl
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
-import com.intellij.codeInsight.hints.LegacyInlayHintVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
+import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ProviderWithSettings
 import com.intellij.codeInsight.hints.addStrikeout
 import com.intellij.codeInsight.hints.getActualSettings
@@ -127,9 +127,9 @@ internal class NewInlayProviderSettingsModel<T : Any>(
     isEnabled = config.hintsEnabled(providerWithSettings.provider.key, providerWithSettings.language)
   }
 
-  override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest? {
+  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest? {
     if (case != null) return null
-    return InlayVisibilityRequest(project, null, LegacyInlayHintVisibilityKey(language, id))
+    return InlayHintSettingsRequest(project, null, LegacyInlayHintSettingsKey(language, id))
   }
 }
 

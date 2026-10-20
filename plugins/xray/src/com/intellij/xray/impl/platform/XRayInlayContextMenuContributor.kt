@@ -2,12 +2,12 @@
 package com.intellij.xray.impl.platform
 
 import com.intellij.codeInsight.hints.InlayContextMenuContributor
-import com.intellij.codeInsight.hints.InlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.xray.impl.action.XRayHintVisibilityGroup
 
 internal class XRayInlayContextMenuContributor : InlayContextMenuContributor {
-  override fun contribute(key: InlayVisibilityKey): ActionGroup {
+  override fun contribute(key: InlayHintSettingsKey): ActionGroup {
     return XRayHintVisibilityGroup(key)
   }
 }

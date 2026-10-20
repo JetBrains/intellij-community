@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xray.impl.action
 
-import com.intellij.codeInsight.hints.InlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -43,7 +43,7 @@ internal fun stageVisibilitySummary(stage: InlayHintStage): @Nls String = when (
 
 internal fun applyStageChange(
   editor: Editor,
-  key: InlayVisibilityKey,
+  key: InlayHintSettingsKey,
   stage: InlayHintStage,
   previousStage: InlayHintStage,
   inlaySettingsDisplay: () -> Boolean,

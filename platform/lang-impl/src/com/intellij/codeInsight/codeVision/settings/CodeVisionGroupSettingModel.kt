@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
-import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
+import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
@@ -38,7 +38,7 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
     get() = emptyList()
 
   @ApiStatus.Internal
-  final override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
-    return InlayVisibilityRequest(project, null, CodeVisionInlayVisibilityKey(id))
+  final override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
+    return InlayHintSettingsRequest(project, null, CodeVisionInlayHintSettingsKey(id))
   }
 }

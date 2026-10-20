@@ -79,13 +79,13 @@ fun setShowParameterHintsForLanguage(value: Boolean, language: Language) {
   ParameterNameHintsSettings.getInstance().setIsEnabledForLanguage(value, getLanguageForSettingKey(language))
 }
 
-fun isParameterHintsVisibleForLanguage(language: Language, project: Project): Boolean {
+fun isParameterHintsEnabledForLanguage(language: Language, project: Project): Boolean {
   @Suppress("DEPRECATION")
   if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
   return ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language)) &&
-         (InlayVisibilityPolicy.isVisible(
-           InlayVisibilityRequest(project, null,
-                                  ParameterHintsInlayVisibilityKey(getLanguageForSettingKey(language), null))) != false)
+         (InlayHintSettingsOverrider.isEnabledByOverriders(
+           InlayHintSettingsRequest(project, null,
+                                    ParameterHintSettingsKey(getLanguageForSettingKey(language), null))) != false)
 }
 
 internal fun refreshParameterHintsOnNextPass() {

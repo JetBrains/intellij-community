@@ -8,7 +8,7 @@ import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.InlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
@@ -75,7 +75,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, fillx"))
   private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
-  private val pendingStages = HashMap<InlayVisibilityKey, InlayHintStage>()
+  private val pendingStages = HashMap<InlayHintSettingsKey, InlayHintStage>()
 
   @ApiStatus.Internal
   companion object {
@@ -248,12 +248,12 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
           addDescription(item.description)
         }
 
-        val request = if (item.isMergedNode) null else item.visibilityRequest(project, null)
+        val request = if (item.isMergedNode) null else item.settingsRequest(project, null)
         val store = XRayStageStore.getInstanceOrNull()
         if (request != null && store != null) {
           addStageControl(treeNode,
-                          { pendingStages[request.visibilityKey] ?: store.getStage(request.visibilityKey) },
-                          { stage -> pendingStages[request.visibilityKey] = stage },
+                          { pendingStages[request.settingsKey] ?: store.getStage(request.settingsKey) },
+                          { stage -> pendingStages[request.settingsKey] = stage },
                           { item.onChangeListener?.settingsChanged() })
         }
 
@@ -274,12 +274,12 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         val model = parent.userObject as InlayProviderSettingsModel
         addDescription(model.getCaseDescription(item))
 
-        val request = model.visibilityRequest(project, item)
+        val request = model.settingsRequest(project, item)
         val store = XRayStageStore.getInstanceOrNull()
         if (request != null && store != null) {
           addStageControl(treeNode,
-                          { pendingStages[request.visibilityKey] ?: store.getStage(request.visibilityKey) },
-                          { stage -> pendingStages[request.visibilityKey] = stage },
+                          { pendingStages[request.settingsKey] ?: store.getStage(request.settingsKey) },
+                          { stage -> pendingStages[request.settingsKey] = stage },
                           { model.onChangeListener?.settingsChanged() })
         }
 
@@ -535,15 +535,15 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         // the combo already wrote the fine stage; the checkbox only forces DISABLED / promotes a stale DISABLED
         val parent = node.parent as CheckedTreeNode
         val model = parent.userObject as InlayProviderSettingsModel
-        val request = model.visibilityRequest(project, item)
+        val request = model.settingsRequest(project, item)
         request?.let {
           val store = XRayStageStore.getInstanceOrNull()
           store?.let {
             if (!node.isChecked) {
-              store.setStage(request.visibilityKey, InlayHintStage.DISABLED)
+              store.setStage(request.settingsKey, InlayHintStage.DISABLED)
             }
-            else if (store.getStage(request.visibilityKey) == InlayHintStage.DISABLED) {
-              store.setStage(request.visibilityKey, InlayHintStage.ALWAYS)
+            else if (store.getStage(request.settingsKey) == InlayHintStage.DISABLED) {
+              store.setStage(request.settingsKey, InlayHintStage.ALWAYS)
             }
           }
           if (node.isChecked) {

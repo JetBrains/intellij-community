@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xray.impl.service
 
-import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
-import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
-import com.intellij.codeInsight.hints.InlayVisibilityKey
-import com.intellij.codeInsight.hints.LegacyInlayHintVisibilityKey
-import com.intellij.codeInsight.hints.ParameterHintsInlayVisibilityKey
+import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
+import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
+import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
+import com.intellij.codeInsight.hints.ParameterHintSettingsKey
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
@@ -55,23 +55,23 @@ internal class XRayStageStore : SimplePersistentStateComponent<XRayStageStore.St
     var stages: MutableMap<String, InlayHintStage> by map()
   }
 
-  fun getStage(key: InlayVisibilityKey): InlayHintStage {
+  fun getStage(key: InlayHintSettingsKey): InlayHintStage {
     val k = keyOf(key)
     return state.stages[k] ?: defaultStages[k] ?: InlayHintStage.ALWAYS
   }
 
-  fun setStage(key: InlayVisibilityKey, stage: InlayHintStage) {
+  fun setStage(key: InlayHintSettingsKey, stage: InlayHintStage) {
     state.stages[keyOf(key)] = stage
     state.intIncrementModificationCount()
   }
 
-  fun findStage(key: InlayVisibilityKey): InlayHintStage? {
+  fun findStage(key: InlayHintSettingsKey): InlayHintStage? {
     val k = keyOf(key)
     return state.stages[k] ?: defaultStages[k]
   }
 
   /**
-   * Generates a key from the [InlayVisibilityKey]
+   * Generates a key from the [InlayHintSettingsKey]
    *
    * Key generation follows the format:
    * - CodeVision inlay hints: "CODE_VISION|<GROUP_ID>"
@@ -79,12 +79,12 @@ internal class XRayStageStore : SimplePersistentStateComponent<XRayStageStore.St
    * - Declarative inlay hints: "DECLARATIVE|<PROVIDER_ID>|<OPTION_ID>"
    * - Parameter inlay hints: "PARAMETER_HINT|<LANGUAGE>|<OPTION_ID>"
    */
-  private fun keyOf(key: InlayVisibilityKey): String {
+  private fun keyOf(key: InlayHintSettingsKey): String {
     return when (key) {
-      is CodeVisionInlayVisibilityKey -> "CODE_VISION|${key.groupId}"
-      is LegacyInlayHintVisibilityKey -> "LEGACY|${key.language?.id.orEmpty()}|${key.providerId}"
-      is DeclarativeInlayHintVisibilityKey -> "DECLARATIVE|${key.providerId}|${key.optionId.orEmpty()}"
-      is ParameterHintsInlayVisibilityKey -> "PARAMETER_HINT|${key.language.id}|${key.optionId.orEmpty()}"
+      is CodeVisionInlayHintSettingsKey -> "CODE_VISION|${key.groupId}"
+      is LegacyInlayHintSettingsKey -> "LEGACY|${key.language?.id.orEmpty()}|${key.providerId}"
+      is DeclarativeInlayHintSettingsKey -> "DECLARATIVE|${key.providerId}|${key.optionId.orEmpty()}"
+      is ParameterHintSettingsKey -> "PARAMETER_HINT|${key.language.id}|${key.optionId.orEmpty()}"
     }
   }
 

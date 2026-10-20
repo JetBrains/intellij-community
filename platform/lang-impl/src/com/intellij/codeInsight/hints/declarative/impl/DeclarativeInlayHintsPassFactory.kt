@@ -6,10 +6,10 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
-import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
+import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsSettings
-import com.intellij.codeInsight.hints.InlayVisibilityPolicy
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
@@ -96,9 +96,9 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       getSuitableToFileProviders(psiFile)
         .filter {
           (declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault) &&
-          InlayVisibilityPolicy.isVisible(
-            InlayVisibilityRequest(psiFile.project, editor,
-                                   DeclarativeInlayHintVisibilityKey(it.providerId, null))) != false
+          InlayHintSettingsOverrider.isEnabledByOverriders(
+            InlayHintSettingsRequest(psiFile.project, editor,
+                                     DeclarativeInlayHintSettingsKey(it.providerId, null))) != false
         }
         .map {
           val optionsToEnabled = HashMap<String, Boolean>()

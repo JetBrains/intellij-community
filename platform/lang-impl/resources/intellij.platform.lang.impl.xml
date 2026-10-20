@@ -297,8 +297,8 @@
                     interface="com.intellij.refactoring.RefactoringCodeVisionSupport"
                     dynamic="true" />
 
-    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayVisibilityPolicy"
-                    interface="com.intellij.codeInsight.hints.InlayVisibilityPolicy" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayHintSettingsOverrider"
+                    interface="com.intellij.codeInsight.hints.InlayHintSettingsOverrider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayContextMenuContributor"
                     interface="com.intellij.codeInsight.hints.InlayContextMenuContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeVision.codeVisionEntryExtraActionContributor"

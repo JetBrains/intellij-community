@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
+import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProvider
@@ -243,9 +243,9 @@ class DeclarativeHintsProviderSettingsModel(
     override fun persistSettings(project: Project, settings: Unit, language: Language) {}
   }
 
-  override fun visibilityRequest(project: Project, case: ImmediateConfigurable.Case?): InlayVisibilityRequest {
-    return InlayVisibilityRequest(project, null,
-                                  DeclarativeInlayHintVisibilityKey(id, case?.id))
+  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
+    return InlayHintSettingsRequest(project, null,
+                                    DeclarativeInlayHintSettingsKey(id, case?.id))
   }
 }
 

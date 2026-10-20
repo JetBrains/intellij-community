@@ -50,7 +50,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final HintInfoFilter myHintInfoFilter;
   private final boolean myForceImmediateUpdate;
 
-  private final boolean myApplyVisibilityPolicy;
+  private final boolean myApplySettingsOverriders;
 
   public ParameterHintsPass(@NotNull PsiElement element,
                             @NotNull Editor editor,
@@ -64,12 +64,12 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
                             @NotNull Editor editor,
                             @NotNull HintInfoFilter hintsFilter,
                             boolean forceImmediateUpdate,
-                            boolean applyVisibilityPolicy) {
+                            boolean applySettingsOverriders) {
     super(editor, element.getContainingFile(), true);
     myRootElement = element;
     myHintInfoFilter = hintsFilter;
     myForceImmediateUpdate = forceImmediateUpdate;
-    myApplyVisibilityPolicy = applyVisibilityPolicy;
+    myApplySettingsOverriders = applySettingsOverriders;
   }
 
   /**
@@ -123,17 +123,17 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
 
     PluginExceptionUtil.computeOrLogPluginException(provider.getClass(), () -> {
       Runnable traversal = () -> provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
-      if (myApplyVisibilityPolicy && InlayVisibilityPolicy.isActive()) {
-        Map<String, Boolean> visibilityMap = new HashMap<>();
+      if (myApplySettingsOverriders && InlayHintSettingsOverrider.isActive()) {
+        Map<String, Boolean> optionOverrides = new HashMap<>();
         Language settingsLanguage = HintUtilsKt.getLanguageForSettingKey(language);
         for (Option option : provider.getSupportedOptions()) {
-          Boolean isVisible = InlayVisibilityPolicy.isVisible(
-            new InlayVisibilityRequest(myProject, myEditor, new ParameterHintsInlayVisibilityKey(settingsLanguage, option.getId())));
-          if (isVisible != null) {
-            visibilityMap.put(option.getId(), isVisible);
+          Boolean isEnabled = InlayHintSettingsOverrider.isEnabledByOverriders(
+            new InlayHintSettingsRequest(myProject, myEditor, new ParameterHintSettingsKey(settingsLanguage, option.getId())));
+          if (isEnabled != null) {
+            optionOverrides.put(option.getId(), isEnabled);
           }
         }
-        ParameterHintsPassContext.run(visibilityMap, traversal);
+        ParameterHintsPassContext.run(optionOverrides, traversal);
       }
       else {
         traversal.run();
@@ -143,10 +143,10 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   private boolean isEnabled(Language language) {
-    if (!myApplyVisibilityPolicy) {
+    if (!myApplySettingsOverriders) {
       return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
     }
-    return HintUtilsKt.isParameterHintsVisibleForLanguage(language, myFile.getProject());
+    return HintUtilsKt.isParameterHintsEnabledForLanguage(language, myFile.getProject());
   }
 
   private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {

@@ -3,7 +3,7 @@ package com.intellij.xray.impl.platform
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor
-import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
+import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.xray.api.InlayHintStage
@@ -30,7 +30,7 @@ internal class XRayCodeVisionEntryExtraActionContributor : CodeVisionEntryExtraA
     val store = XRayStageStore.getInstanceOrNull() ?: return emptyList()
 
     val current =
-      store.getStage(CodeVisionInlayVisibilityKey(groupId = groupId))
+      store.getStage(CodeVisionInlayHintSettingsKey(groupId = groupId))
     val children = xrayStageChoices(current).map {
       CodeVisionEntryExtraActionModel(it.title, "$XRAY_STAGE_PREFIX${it.stage.name}")
     }.toMutableList()
@@ -47,7 +47,7 @@ internal class XRayCodeVisionEntryExtraActionContributor : CodeVisionEntryExtraA
 
     val project = editor.project ?: return false
     val store = XRayStageStore.getInstanceOrNull() ?: return false
-    val key = CodeVisionInlayVisibilityKey(groupId = groupId)
+    val key = CodeVisionInlayHintSettingsKey(groupId = groupId)
 
     if (actionId.startsWith(XRAY_STAGE_PREFIX)) {
       val stage = InlayHintStage.valueOf(actionId.removePrefix(XRAY_STAGE_PREFIX))
@@ -69,6 +69,6 @@ internal class XRayCodeVisionEntryExtraActionContributor : CodeVisionEntryExtraA
   override fun adText(project: Project, groupId: String): @Nls String {
     val store = XRayStageStore.getInstanceOrNull() ?: return ""
     return stageVisibilitySummary(
-      store.getStage(CodeVisionInlayVisibilityKey(groupId = groupId)))
+      store.getStage(CodeVisionInlayHintSettingsKey(groupId = groupId)))
   }
 }

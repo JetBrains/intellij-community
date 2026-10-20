@@ -177,7 +177,7 @@ object InlayHintsUtils {
       ConfigureInlayHintsProviderAction(providerKey)
     )
     val extra = InlayContextMenuContributor.EP_NAME.extensionList.firstNotNullOfOrNull {
-      it.contribute(LegacyInlayHintVisibilityKey(null, providerKey.id))
+      it.contribute(LegacyInlayHintSettingsKey(null, providerKey.id))
     } ?: return base
     return listOf(extra, Separator.getInstance()) + base
   }

@@ -393,7 +393,7 @@ fun parameterHintContextMenuGroup(inlay: Inlay<*>): ActionGroup? {
   val key = runReadActionBlocking {
     val psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) ?: return@runReadActionBlocking null
     val optionInfo = getHintInfoFromProvider(inlay.offset, psiFile, editor) as? HintInfo.OptionInfo ?: return@runReadActionBlocking null
-    ParameterHintsInlayVisibilityKey(language = language, optionId = optionInfo.optionId)
+    ParameterHintSettingsKey(language = language, optionId = optionInfo.optionId)
   } ?: return base
 
   val extra = InlayContextMenuContributor.EP_NAME.extensionList.firstNotNullOfOrNull { it.contribute(key) } ?: return base

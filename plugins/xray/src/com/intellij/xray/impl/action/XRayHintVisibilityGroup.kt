@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xray.impl.action
 
-import com.intellij.codeInsight.hints.CodeVisionInlayVisibilityKey
-import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
+import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
+import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayVisibilityKey
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
-import com.intellij.codeInsight.hints.LegacyInlayHintVisibilityKey
-import com.intellij.codeInsight.hints.ParameterHintsInlayVisibilityKey
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
+import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
+import com.intellij.codeInsight.hints.ParameterHintSettingsKey
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.OPTION_ID
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.PROVIDER_ID
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
@@ -31,26 +31,26 @@ import com.intellij.xray.api.XRayBundle
 import com.intellij.xray.impl.service.XRayModeService
 import com.intellij.xray.impl.service.XRayStageStore
 
-internal fun showSettingsFor(project: Project, key: InlayVisibilityKey): Boolean = when (key) {
-  is ParameterHintsInlayVisibilityKey ->
+internal fun showSettingsFor(project: Project, key: InlayHintSettingsKey): Boolean = when (key) {
+  is ParameterHintSettingsKey ->
     showInlaySettings(project, key.language) { it.id == ParameterInlayProviderSettingsModel.ID }
-  is LegacyInlayHintVisibilityKey ->
+  is LegacyInlayHintSettingsKey ->
     key.language?.let { lang ->
       showInlaySettings(project, lang) { it.id == key.providerId }
     } ?: false
-  is DeclarativeInlayHintVisibilityKey -> {
+  is DeclarativeInlayHintSettingsKey -> {
     val language = InlayHintsProviderExtensionBean.EP.extensionList
       .firstOrNull { it.requiredProviderId() == key.providerId }
       ?.language?.let { Language.findLanguageByID(it) }
     language?.let { showInlaySettings(project, it) { m -> m.id == key.providerId } } ?: false
   }
-  is CodeVisionInlayVisibilityKey -> showInlaySettings(project, Language.ANY) {
+  is CodeVisionInlayHintSettingsKey -> showInlaySettings(project, Language.ANY) {
     it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == key.groupId
   }
 }
 
 internal class XRayHintVisibilityGroup(
-  private val key: InlayVisibilityKey? = null
+  private val key: InlayHintSettingsKey? = null
 ) : ActionGroup(), DumbAware {
 
   init {
@@ -61,7 +61,7 @@ internal class XRayHintVisibilityGroup(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private class XRaySetHintStageAction(
-    private val key: InlayVisibilityKey,
+    private val key: InlayHintSettingsKey,
     private val stage: InlayHintStage,
     @NlsActions.ActionText title: String,
   ) : DumbAwareAction(title) {
@@ -87,10 +87,10 @@ internal class XRayHintVisibilityGroup(
       }
     }
 
-    constructor(key: InlayVisibilityKey, choice: XRayStageChoice) : this(key, choice.stage, choice.title)
+    constructor(key: InlayHintSettingsKey, choice: XRayStageChoice) : this(key, choice.stage, choice.title)
   }
 
-  private fun resolveRequest(e: AnActionEvent?): InlayVisibilityRequest? {
+  private fun resolveRequest(e: AnActionEvent?): InlayHintSettingsRequest? {
     val event = e ?: return null
     val project = event.project ?: return null
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
@@ -99,24 +99,24 @@ internal class XRayHintVisibilityGroup(
     val resolved = when (key) {
       null -> {
         val providerId = event.getData(PROVIDER_ID) ?: return null
-        DeclarativeInlayHintVisibilityKey(providerId, event.getData(OPTION_ID))
+        DeclarativeInlayHintSettingsKey(providerId, event.getData(OPTION_ID))
       }
-      is DeclarativeInlayHintVisibilityKey -> key
-      is LegacyInlayHintVisibilityKey -> key.copy(language = key.language ?: language)
-      is CodeVisionInlayVisibilityKey -> key
-      is ParameterHintsInlayVisibilityKey -> if (key.optionId == null) return null else key
+      is DeclarativeInlayHintSettingsKey -> key
+      is LegacyInlayHintSettingsKey -> key.copy(language = key.language ?: language)
+      is CodeVisionInlayHintSettingsKey -> key
+      is ParameterHintSettingsKey -> if (key.optionId == null) return null else key
     }
 
-    return InlayVisibilityRequest(project, editor, resolved)
+    return InlayHintSettingsRequest(project, editor, resolved)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
     val request = resolveRequest(e) ?: return emptyArray()
     val store = XRayStageStore.getInstanceOrNull() ?: return emptyArray()
-    val currentStage = store.getStage(request.visibilityKey)
+    val currentStage = store.getStage(request.settingsKey)
     // InlayHintStage.entries runs most-visible (ALWAYS) to least-visible (DISABLED), matching the menu order.
     val actions = xrayStageChoices(currentStage)
-      .map { XRaySetHintStageAction(request.visibilityKey, it) }
+      .map { XRaySetHintStageAction(request.settingsKey, it) }
       .toMutableList<AnAction>()
     actions.add(Separator.getInstance())
     actions.add(XRayNavigateToSettingsAction(request))
@@ -129,7 +129,7 @@ internal class XRayHintVisibilityGroup(
     if (request != null) {
       e.presentation.isEnabledAndVisible = true
       e.presentation.text = XRayBundle.message("xray.inlay.menu.change")
-      e.presentation.putClientProperty(ActionUtil.POPUP_AD_TEXT, stageVisibilitySummary(store.getStage(request.visibilityKey)))
+      e.presentation.putClientProperty(ActionUtil.POPUP_AD_TEXT, stageVisibilitySummary(store.getStage(request.settingsKey)))
     }
     else {
       e.presentation.isEnabledAndVisible = false

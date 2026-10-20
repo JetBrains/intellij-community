@@ -18,7 +18,7 @@
     <notificationGroup displayType="BALLOON" id="X-Ray Inlay Visibility" bundle="messages.XRayBundle" key="xray.inlay.notification.group"/>
 
     <!-- Platform EPs -->
-    <codeInsight.inlayVisibilityPolicy implementation="com.intellij.xray.impl.platform.XRayInlayVisibilityPolicy"/>
+    <codeInsight.inlayHintSettingsOverrider implementation="com.intellij.xray.impl.platform.XRayInlayHintSettingsOverrider"/>
     <codeInsight.inlayContextMenuContributor implementation="com.intellij.xray.impl.platform.XRayInlayContextMenuContributor"/>
     <codeVision.codeVisionEntryExtraActionContributor implementation="com.intellij.xray.impl.platform.XRayCodeVisionEntryExtraActionContributor"/>
 

@@ -63,7 +63,6 @@ class InlayTreeSinkImpl(
     }
     if (!isInPreview) {
       if (!isEnabled) return
-      if (!isVisible(optionId)) return
     }
     val wasNotEnabledEarlier = activeOptions.put(optionId, isEnabled) != null
     try {
@@ -74,10 +73,6 @@ class InlayTreeSinkImpl(
         activeOptions.remove(optionId)
       }
     }
-  }
-
-  private fun isVisible(optionId: String?): Boolean {
-    return optionId == null || enabledOptions[optionId] ?: true
   }
 
   fun finish(): List<InlayData> {

@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
-import com.intellij.codeInsight.hints.DeclarativeInlayHintVisibilityKey
+import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsUtils
-import com.intellij.codeInsight.hints.InlayVisibilityPolicy
-import com.intellij.codeInsight.hints.InlayVisibilityRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
+import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
@@ -57,7 +57,7 @@ class DeclarativeInlayHintsPass(
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
     val sinks = ArrayList<InlayTreeSinkImpl>()
     val ignoredProviderIds = mutableSetOf<String>()
-    val policyActive = InlayVisibilityPolicy.isActive()
+    val overridersActive = InlayHintSettingsOverrider.isActive()
 
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
@@ -66,13 +66,13 @@ class DeclarativeInlayHintsPass(
         continue
       }
 
-      val optionVisibility =
-        if (!policyActive) providerInfo.optionToEnabled
+      val optionToEnabled =
+        if (!overridersActive) providerInfo.optionToEnabled
         else providerInfo.optionToEnabled.mapValues { (optionId, enabled) ->
           enabled &&
-          (InlayVisibilityPolicy.isVisible(
-            InlayVisibilityRequest(myProject, myEditor,
-                                   DeclarativeInlayHintVisibilityKey(providerInfo.providerId, optionId))) != false)
+          (InlayHintSettingsOverrider.isEnabledByOverriders(
+            InlayHintSettingsRequest(myProject, myEditor,
+                                     DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId))) != false)
         }
 
       val providerClass = provider.javaClass
@@ -83,7 +83,7 @@ class DeclarativeInlayHintsPass(
         continue
       }
 
-      val sink = InlayTreeSinkImpl(providerInfo.providerId, optionVisibility, isPreview,
+      val sink = InlayTreeSinkImpl(providerInfo.providerId, optionToEnabled, isPreview,
                                    isProviderDisabled, providerClass, passSourceId)
       sinks.add(sink)
       when (val collector = collector) {
