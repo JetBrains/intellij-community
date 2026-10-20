@@ -94,7 +94,7 @@ class KotlinMultiPlatformProjectDescriptor(
             fun javaSourceRoot(): VirtualFile? = findRoot(javaSourceRoot)
 
             override fun additionalModuleConfiguration(descriptor: KotlinMultiPlatformProjectDescriptor, module: Module, model: ModifiableRootModel) {
-                val sourceRoot = descriptor.createSourceRoot(module, javaSourceRoot)
+                val sourceRoot = descriptor.createSourceRoot(javaSourceRoot)
                 model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
             }
 
@@ -271,7 +271,7 @@ class KotlinMultiPlatformProjectDescriptor(
 
     private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.HIGHEST
-        val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
+        val sourceRoot = createSourceRoot(descriptor.sourceRootName)
         model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
 
         setUpSdk(model, descriptor)

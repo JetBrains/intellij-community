@@ -83,9 +83,9 @@ public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends L
         ModuleRootModificationUtil.updateModel(depModule, model -> {
           model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
           model.setSdk(getSdk());
-          mySourceRoot = createSourceRoot(depModule, DEP_MODULE_SOURCE_ROOT);
+          mySourceRoot = createSourceRoot(DEP_MODULE_SOURCE_ROOT);
           model.addContentEntry(mySourceRoot).addSourceFolder(mySourceRoot, JavaSourceRootType.SOURCE);
-          myTestSourceRoot = createSourceRoot(depModule, "depTests");
+          myTestSourceRoot = createSourceRoot("depTests");
           model.addContentEntry(myTestSourceRoot).addSourceFolder(myTestSourceRoot, JavaSourceRootType.TEST_SOURCE);
         });
         ModuleRootModificationUtil.addDependency(mainModule, depModule);

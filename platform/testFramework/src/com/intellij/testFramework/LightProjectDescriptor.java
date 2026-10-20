@@ -17,8 +17,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Defines requirements for a light test's project environment (SDK, module, libraries, ...).
@@ -73,15 +74,15 @@ public class LightProjectDescriptor {
     }
   }
 
-  public @NotNull Module createMainModule(@NotNull Project project) {
+  public final @NotNull Module createMainModule(@NotNull Project project) {
     return createModule(project, Paths.get(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
   }
 
-  protected final Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+  protected final @NotNull Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
     return createModule(project, Paths.get(moduleFilePath));
   }
 
-  protected Module createModule(@NotNull Project project, @NotNull Path moduleFile) {
+  protected @NotNull Module createModule(@NotNull Project project, @NotNull Path moduleFile) {
     try {
       // temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
       Files.deleteIfExists(moduleFile);
@@ -109,7 +110,7 @@ public class LightProjectDescriptor {
    * @see #markDirForSourcesAsSourceRoot()
    */
   public @Nullable VirtualFile createDirForSources(@NotNull Module module) {
-    return createSourceRoot(module, "src");
+    return createSourceRoot("src");
   }
 
   /**
@@ -121,14 +122,14 @@ public class LightProjectDescriptor {
     return true;
   }
 
-  protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
-    VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    assert dummyRoot != null;
-    dummyRoot.refresh(false, false);
+  @RequiresWriteLock
+  protected final @NotNull VirtualFile createSourceRoot(@NotNull String srcPath) {
+    VirtualFile dummyRoot = Objects.requireNonNull(TempFileSystem.getInstance().refreshAndFindFileByPath("/"), "temp:/// root not found");
     return doCreateSourceRoot(dummyRoot, srcPath);
   }
 
-  protected VirtualFile doCreateSourceRoot(VirtualFile root, String srcPath) {
+  @RequiresWriteLock
+  private @NotNull VirtualFile doCreateSourceRoot(@NotNull VirtualFile root, @NotNull String srcPath) {
     VirtualFile srcRoot;
     try {
       srcRoot = root.createChildDirectory(this, srcPath);
@@ -141,7 +142,7 @@ public class LightProjectDescriptor {
     return srcRoot;
   }
 
-  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+  protected final void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {

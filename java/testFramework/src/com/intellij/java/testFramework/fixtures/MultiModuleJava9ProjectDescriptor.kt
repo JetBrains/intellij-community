@@ -136,15 +136,15 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       model.sdk = sdk
     }
     if (descriptor.sourceRootName != null) {
-      val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
+      val sourceRoot = createSourceRoot(descriptor.sourceRootName)
       model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
     }
     if (descriptor.testRootName != null) {
-      val testRoot = createSourceRoot(module, descriptor.testRootName)
+      val testRoot = createSourceRoot(descriptor.testRootName)
       model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
     }
     if (descriptor.resourceRootName != null) {
-      val resourceRoot = createSourceRoot(module, descriptor.resourceRootName)
+      val resourceRoot = createSourceRoot(descriptor.resourceRootName)
       model.addContentEntry(resourceRoot).addSourceFolder(resourceRoot, JavaResourceRootType.RESOURCE)
     }
   }

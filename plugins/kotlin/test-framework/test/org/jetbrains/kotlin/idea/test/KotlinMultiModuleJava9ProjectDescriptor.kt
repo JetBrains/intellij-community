@@ -83,7 +83,7 @@ object KotlinMultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor()
     private fun makeModule(project: Project, descriptor: ModuleDescriptor): Module {
         val path = FileUtil.join(FileUtil.getTempDirectory(), "${descriptor.moduleName}.iml")
         val module = createModule(project, path)
-        val sourceRoot = createSourceRoot(module, descriptor.rootName)
+        val sourceRoot = createSourceRoot(descriptor.rootName)
         createContentEntry(module, sourceRoot)
         return module
     }
@@ -91,7 +91,7 @@ object KotlinMultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor()
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
         model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
         if (module.name == TEST_MODULE_NAME) {
-            val testRoot = createSourceRoot(module, "test_src")
+            val testRoot = createSourceRoot("test_src")
             model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
         }
     }
