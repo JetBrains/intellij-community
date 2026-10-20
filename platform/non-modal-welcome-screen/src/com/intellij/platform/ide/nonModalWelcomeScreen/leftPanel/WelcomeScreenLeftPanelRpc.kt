@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
 import com.intellij.ide.rpc.ComponentDirectTransferId
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -13,8 +14,13 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface WelcomeScreenLeftPanelRpc : RemoteApi<Unit> {
   companion object {
+    /**
+     * Returns the api of this session. A light session has no backend, so it gets an api that builds the panel in this process.
+     */
     suspend fun getInstance(): WelcomeScreenLeftPanelRpc {
-      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<WelcomeScreenLeftPanelRpc>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<WelcomeScreenLeftPanelRpc>()) {
+        WelcomeScreenLeftPanelRpcImpl()
+      }
     }
   }
 

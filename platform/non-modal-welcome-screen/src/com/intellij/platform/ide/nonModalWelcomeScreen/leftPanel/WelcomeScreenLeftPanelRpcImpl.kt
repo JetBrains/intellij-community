@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(AwaitCancellationAndInvoke::class)
 
-package com.intellij.platform.ide.nonModalWelcomeScreen.backend
+package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
 import com.intellij.icons.AllIcons.Actions.Search
 import com.intellij.ide.dnd.DnDEvent
@@ -24,13 +24,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFi
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WELCOME_SCREEN_IS_SHOWN
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelRpc
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SearchTextField
@@ -45,10 +41,10 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -58,31 +54,28 @@ import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-internal class WelcomeScreenLeftPanelRpcProvider : RemoteApiProvider {
-  override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<WelcomeScreenLeftPanelRpc>()) {
-      WelcomeScreenLeftPanelRpcImpl()
-    }
-  }
-}
-
-internal class WelcomeScreenLeftPanelRpcImpl : WelcomeScreenLeftPanelRpc {
+/**
+ * Builds the left panel of the welcome project in this process.
+ * The backend serves it over RPC. A light session without a backend calls it directly.
+ */
+@ApiStatus.Internal
+class WelcomeScreenLeftPanelRpcImpl : WelcomeScreenLeftPanelRpc {
   override suspend fun getComponentId(projectId: ProjectId): ComponentDirectTransferId {
     return withContext(Dispatchers.UI) {
-      BackendWelcomeScreenLeftPanelService.getInstance(projectId.findProject()).createPanel()
+      WelcomeScreenLeftPanelTransferService.getInstance(projectId.findProject()).createPanel()
     }
   }
 }
 
 @Service(Level.PROJECT)
-internal class BackendWelcomeScreenLeftPanelService(private val project: Project, private val scope: CoroutineScope) {
+private class WelcomeScreenLeftPanelTransferService(private val project: Project, private val scope: CoroutineScope) {
   companion object {
-    fun getInstance(project: Project): BackendWelcomeScreenLeftPanelService = project.service()
+    fun getInstance(project: Project): WelcomeScreenLeftPanelTransferService = project.service()
   }
 
   @RequiresEdt
   fun createPanel(): ComponentDirectTransferId {
-    val disposable = Disposer.newDisposable("BackendWelcomeScreenLeftPanelService.createPanel")
+    val disposable = Disposer.newDisposable("WelcomeScreenLeftPanelTransferService.createPanel")
     scope.awaitCancellationAndInvoke {
       withContext(Dispatchers.UI) {
         Disposer.dispose(disposable)
@@ -91,11 +84,11 @@ internal class BackendWelcomeScreenLeftPanelService(private val project: Project
     // The panel is not in a component hierarchy yet, so Lux would pick the first visible frame as the owner.
     // That frame can belong to another project, and its close disposes this panel (IJPL-256315).
     val owner = WindowManager.getInstance().getFrame(project)
-    return BackendWelcomeScreenLeftPanel(project, scope).createComponent().setupTransfer(disposable, owner)
+    return WelcomeScreenLeftPanelContent(project, scope).createComponent().setupTransfer(disposable, owner)
   }
 }
 
-internal class BackendWelcomeScreenLeftPanel(
+private class WelcomeScreenLeftPanelContent(
   private val project: Project,
   private val scope: CoroutineScope,
 ) {
