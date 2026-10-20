@@ -10,7 +10,7 @@ import com.intellij.ui.content.ContentFactory
 internal class LockReqsToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    val content = contentFactory.createContent(LockReqsToolWindowPanel(project), null, false)
+    val content = contentFactory.createContent(LockReqsToolWindowPanel(project, toolWindow.disposable), null, false)
     toolWindow.contentManager.addContent(content)
   }
 }

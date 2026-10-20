@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.compose" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
   </component>
 </module>

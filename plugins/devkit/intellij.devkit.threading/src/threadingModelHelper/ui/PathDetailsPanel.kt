@@ -2,16 +2,19 @@
 package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import com.intellij.devkit.threading.DevkitThreadingBundle
+import com.intellij.execution.impl.AnalyzeStacktraceConsoleUtil
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -25,15 +28,14 @@ private const val DETAILS_CARD = "details"
 
 /**
  * Shows the method chain and the lock requirement of the selected [ExecutionPath].
+ * The method chain is a stack trace in a console, so each frame is a hyperlink to the source.
  */
-internal class PathDetailsPanel(private val project: Project) : JPanel(CardLayout()) {
+internal class PathDetailsPanel(private val project: Project, parentDisposable: Disposable) : JPanel(CardLayout()) {
 
   private var path: ExecutionPath? = null
 
-  private val chainArea = JBTextArea().apply {
-    isEditable = false
-    font = EditorFontType.getGlobalPlainFont()
-    border = JBUI.Borders.empty(8)
+  private val chainConsole: ConsoleView = AnalyzeStacktraceConsoleUtil.createConsole(project).also {
+    Disposer.register(parentDisposable, it)
   }
 
   private val requirementLabel = JBLabel()
@@ -45,7 +47,7 @@ internal class PathDetailsPanel(private val project: Project) : JPanel(CardLayou
         label(DevkitThreadingBundle.message("details.title")).bold()
       }
       row {
-        scrollCell(chainArea).align(Align.FILL)
+        cell(chainConsole.component).align(Align.FILL)
       }.resizableRow()
       row {
         cell(requirementLabel)
@@ -67,8 +69,8 @@ internal class PathDetailsPanel(private val project: Project) : JPanel(CardLayou
   fun showPath(path: ExecutionPath?) {
     this.path = path
     if (path != null) {
-      chainArea.text = path.methodChain.withIndex().joinToString("\n") { (index, call) -> "${index + 1}. ${fullCallText(call)}" }
-      chainArea.caretPosition = 0
+      val stackTrace = path.methodChain.asReversed().joinToString("\n") { stackFrameText(it) }
+      AnalyzeStacktraceConsoleUtil.printStacktrace(chainConsole, stackTrace, ConsoleViewContentType.NORMAL_OUTPUT)
       requirementLabel.icon = requirementIcon(path.lockRequirement)
       requirementLabel.text = requirementDescription(path)
     }

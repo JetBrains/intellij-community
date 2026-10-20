@@ -3,6 +3,7 @@ package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import com.intellij.devkit.threading.DevkitThreadingBundle
 import com.intellij.devkit.threading.threadingModelHelper.LockReqsService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionListModel
@@ -27,7 +28,7 @@ private const val RESULT_CARD = "result"
  * The content of the lock requirements tool window.
  * It shows the latest [AnalysisResult] of [LockReqsService] as a filterable list of paths and the details of the selected path.
  */
-internal class LockReqsToolWindowPanel(project: Project) : JPanel(CardLayout()) {
+internal class LockReqsToolWindowPanel(project: Project, parentDisposable: Disposable) : JPanel(CardLayout()) {
 
   private var state = LockReqsViewState()
   private var shownResult: AnalysisResult? = null
@@ -39,7 +40,7 @@ internal class LockReqsToolWindowPanel(project: Project) : JPanel(CardLayout()) 
     cellRenderer = createPathListRenderer()
   }
 
-  private val details = PathDetailsPanel(project)
+  private val details = PathDetailsPanel(project, parentDisposable)
 
   private val header = LockReqsHeader(
     onQueryChanged = { query -> updateState(state.copy(query = query)) },

@@ -93,6 +93,16 @@ internal fun fullCallText(call: MethodCall): @NlsSafe String {
 }
 
 /**
+ * The [call] as a JVM stack frame line, for example `\tat com.example.Foo.bar(Foo.java:42)`.
+ * The console filters of the IDE make this line a hyperlink to the source.
+ */
+internal fun stackFrameText(call: MethodCall): @NlsSafe String {
+  val cls = call.containingClassName ?: DevkitThreadingBundle.message("details.unknown.class")
+  val methodName = if (call.methodName == cls.substringAfterLast('.')) "<init>" else call.methodName
+  return "\tat $cls.$methodName(${call.sourceLocation})"
+}
+
+/**
  * The plain-text form of the [path] for the clipboard.
  */
 internal fun pathClipboardText(path: ExecutionPath): @NlsSafe String {
