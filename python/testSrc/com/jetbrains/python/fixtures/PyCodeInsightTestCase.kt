@@ -12,6 +12,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
@@ -275,8 +276,27 @@ abstract class PyCodeInsightTestCase {
   private lateinit var myTestInspections: TestInspections
   private lateinit var myTestCaseOptions: TestCaseOptions
 
+  /**
+   * Creates and sets up the fixture for [testCaseOptions]. The default is a light project with a mock SDK of
+   * [TestCaseOptions.languageLevel].
+   */
+  protected open fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
+    val factory = IdeaTestFixtureFactory.getFixtureFactory()
+    val projectDescriptor = PyLightProjectDescriptor(testCaseOptions.languageLevel)
+    val builder = factory.createLightFixtureBuilder(projectDescriptor, testClassName)
+    val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
+    fixture.testDataPath = PythonTestUtil.getTestDataPath()
+    fixture.setUp()
+    return fixture
+  }
+
+  /** Tears down a [fixture] of [createFixture]. */
+  protected open fun disposeFixture(fixture: CodeInsightTestFixture) {
+    fixture.tearDown()
+  }
+
   companion object {
-    private data class CachedFixture(val options: TestCaseOptions, val fixture: CodeInsightTestFixture)
+    private data class CachedFixture(val options: TestCaseOptions, val fixture: CodeInsightTestFixture, val dispose: () -> Unit)
 
     private lateinit var testClassName: String
     private var cachedFixture: CachedFixture? = null
@@ -300,12 +320,18 @@ abstract class PyCodeInsightTestCase {
       testClassName = testClass.simpleName
     }
 
-    private fun ensureFixture(testCaseOptions: TestCaseOptions) {
+    private fun ensureFixture(testCase: PyCodeInsightTestCase, testCaseOptions: TestCaseOptions) {
       if (!isAffectingFixture(testCaseOptions)) return
 
-      cachedFixture?.fixture?.tearDown()
-      val fixture = createFixture(testCaseOptions)
-      cachedFixture = CachedFixture(testCaseOptions, fixture)
+      cachedFixture?.dispose?.invoke()
+      cachedFixture = null
+      val fixture = testCase.createFixture(testCaseOptions)
+      cachedFixture = CachedFixture(testCaseOptions, fixture) { testCase.disposeFixture(fixture) }
+      // The setup registers a new SDK, and the Python project structure follows it in the background. A test that
+      // highlights before that lands sees the old structure, and the restart that follows cancels its highlighting.
+      awaitPythonInterpreters(fixture.project)
+      InspectionProfileImpl.INIT_INSPECTIONS = true
+      Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
     }
 
     private fun isAffectingFixture(testCaseOptions: TestCaseOptions): Boolean {
@@ -316,21 +342,6 @@ abstract class PyCodeInsightTestCase {
              || cachedTestOptions.assertSdkRootsNotParsed != testCaseOptions.assertSdkRootsNotParsed
     }
 
-    private fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
-      val factory = IdeaTestFixtureFactory.getFixtureFactory()
-      val projectDescriptor = PyLightProjectDescriptor(testCaseOptions.languageLevel)
-      val builder = factory.createLightFixtureBuilder(projectDescriptor, testClassName)
-      val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
-      fixture.testDataPath = PythonTestUtil.getTestDataPath()
-      fixture.setUp()
-      // The setup registers a new SDK, and the Python project structure follows it in the background. A test that
-      // highlights before that lands sees the old structure, and the restart that follows cancels its highlighting.
-      awaitPythonInterpreters(fixture.project)
-      InspectionProfileImpl.INIT_INSPECTIONS = true
-      Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
-      return fixture
-    }
-
     @AfterAll
     @JvmStatic
     fun tearDownFixture() {
@@ -338,7 +349,7 @@ abstract class PyCodeInsightTestCase {
         { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
         { Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault() },
         { InspectionProfileImpl.INIT_INSPECTIONS = false },
-        { cachedFixture?.fixture?.tearDown() },
+        { cachedFixture?.dispose?.invoke() },
         { cachedFixture = null },
       )
     }
@@ -350,7 +361,7 @@ abstract class PyCodeInsightTestCase {
     testCallCount = 0
     myTestInspections = findTestInspections(testInfo.testMethod.orNull())
     myTestCaseOptions = testInfo.testMethod.orNull()?.getAnnotation(TestCaseOptions::class.java) ?: TestCaseOptions()
-    ensureFixture(myTestCaseOptions)
+    ensureFixture(this, myTestCaseOptions)
   }
 
   private fun findTestInspections(testMethod: Method?): TestInspections {
@@ -371,6 +382,7 @@ abstract class PyCodeInsightTestCase {
           // close any open editors
           val fem = FileEditorManager.getInstance(myFixture.project)
           fem.openFiles.forEach { fem.closeFile(it) }
+          EditorHistoryManager.getInstance(myFixture.project).removeAllFiles()
           // wipe temp dir
           WriteAction.runAndWait<RuntimeException> {
             myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
@@ -545,7 +557,7 @@ abstract class PyCodeInsightTestCase {
   /** Creates or overwrites each of [otherFiles] in the source root. A file name can include folders, such as `pkg/mod.py`. */
   private fun createOtherFiles(otherFiles: Array<out Pair<String, String>>) {
     val sourceRoot = myFixture.tempDirFixture.getFile(".") ?: error("No source root")
-    for ((filename, content) in otherFiles) {
+    for ([filename, content] in otherFiles) {
       VfsTestUtil.createFile(sourceRoot, filename, content.trimIndent())
     }
   }
@@ -611,7 +623,7 @@ abstract class PyCodeInsightTestCase {
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
 
-    val (highlights, duration) = measureTimedValue {
+    val [highlights, duration] = measureTimedValue {
       myFixture.doHighlighting()
     }
     val actualAssertions = computeAssertions(document, highlights, expectedAssertions)
@@ -637,8 +649,8 @@ abstract class PyCodeInsightTestCase {
     actualAssertions: List<PyTestAssertion>,
   ): String? {
     val counterparts = findCounterparts(expectedAssertions, actualAssertions)
-    val (actual, expected) = counterparts.entries
-                               .filter { (actual, expected) -> actual.content != expected.content }
+    val [actual, expected] = counterparts.entries
+                               .filter { [actual, expected] -> actual.content != expected.content }
                                .singleOrNull() ?: return null
     if (expected.content.isBlank()) return null
     val idx = expectedText.indexOf(expected.content, expected.assertionOffsetStart)
@@ -1144,7 +1156,7 @@ private object PyTestAssertionInliner {
 
     removeAssertions(text, listOf(expectedAssertion))
     val endOfLineOffset = findLineEndOffset(text, actualAssertion)
-    val (inlineText, _) = actualAssertion.asInlineAssertion().asText()
+    val [inlineText, _] = actualAssertion.asInlineAssertion().asText()
     text.insert(endOfLineOffset, inlineText)
   }
 
@@ -1165,7 +1177,7 @@ private object PyTestAssertionInliner {
 
     var serializedAssertions = emptyList<String>()
     for (actualAssertion in sortedActualAssertions) {
-      val (newAssertion, serializedAssertionsUpdated) = actualAssertion.asText(serializedAssertions)
+      val [newAssertion, serializedAssertionsUpdated] = actualAssertion.asText(serializedAssertions)
       serializedAssertions = serializedAssertionsUpdated + newAssertion
     }
 
