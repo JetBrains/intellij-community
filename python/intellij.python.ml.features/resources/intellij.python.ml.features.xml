@@ -15,7 +15,9 @@
     <module name="intellij.platform.ml.logs"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
-    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.codeInsight"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pyproject"/>
   </dependencies>

@@ -6,7 +6,7 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 
 class PyAutoImportOptions : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
@@ -14,18 +14,18 @@ class PyAutoImportOptions : UiDslUnnamedConfigurable.Simple(), AutoImportOptions
   override fun Panel.createContent() {
     val settings = PyCodeInsightSettings.getInstance()
 
-    group(PyBundle.message("form.auto.import.python")) {
+    group(PyCodeInsightBundle.message("form.auto.import.python")) {
       row {
-        checkBox(PyBundle.message("form.auto.import.auto.import.show.popup"))
+        checkBox(PyCodeInsightBundle.message("form.auto.import.auto.import.show.popup"))
           .bindSelected(settings::SHOW_IMPORT_POPUP)
       }
 
-      buttonsGroup(PyBundle.message("form.auto.import.preferred.import.style")) {
+      buttonsGroup(PyCodeInsightBundle.message("form.auto.import.preferred.import.style")) {
         row {
-          radioButton(PyBundle.message("form.auto.import.from.module.import.name"), true)
+          radioButton(PyCodeInsightBundle.message("form.auto.import.from.module.import.name"), true)
         }
         row {
-          radioButton(PyBundle.message("form.auto.import.import.module.name"), false)
+          radioButton(PyCodeInsightBundle.message("form.auto.import.import.module.name"), false)
         }
       }.bind(settings::PREFER_FROM_IMPORT)
     }

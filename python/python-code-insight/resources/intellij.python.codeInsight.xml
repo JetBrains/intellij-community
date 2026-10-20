@@ -6,6 +6,8 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -13,16 +15,20 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.ast"/>
     <module name="intellij.python.parser"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.syntax.core"/>
+    <module name="intellij.xml.psi.impl"/>
   </dependencies>
   <!-- endregion -->
 
@@ -104,5 +110,28 @@
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.jetbrains.python.codeInsight.codeVision.PyReferencesCodeVisionProvider"/>
     <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
                  description="Show type hints for all parameters in parameter info window"/>
+
+    <defaultLiveTemplates file="liveTemplates/Python.xml"/>
+    <liveTemplateContext contextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
+    <liveTemplateContext contextId="Python_Class" baseContextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
+    <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplatePreprocessor implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDecoratorTemplatePreprocessor"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyVerSpecificSuperSignatureMacro"/>
+    <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="Python"
+                                 implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>
+    <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory"
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" open="true"
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
   </extensions>
 </idea-plugin>

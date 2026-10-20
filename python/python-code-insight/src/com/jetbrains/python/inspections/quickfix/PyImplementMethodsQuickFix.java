@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.psi.PyClass;
@@ -29,7 +29,7 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public @NotNull String getText() {
-    return PyBundle.message("QFIX.NAME.implement.methods");
+    return PyCodeInsightBundle.message("QFIX.NAME.implement.methods");
   }
 
   @Override

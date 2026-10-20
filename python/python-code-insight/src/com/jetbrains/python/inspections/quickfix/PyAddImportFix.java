@@ -6,7 +6,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -29,7 +29,7 @@ public class PyAddImportFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   public @NotNull String getFamilyName() {
-    return PyBundle.message("QFIX.add.import.add.import", myImportToAdd);
+    return PyCodeInsightBundle.message("QFIX.add.import.add.import", myImportToAdd);
   }
 
   @Override

@@ -800,7 +800,6 @@ exports_files(
         "pluginResources/colorSchemes/PythonDarcula.xml",
         "pluginResources/colorSchemes/PythonDefault.xml",
         "pluginResources/intellij.python.community.impl.xml",
-        "pluginResources/liveTemplates/Python.xml",
     ],
     visibility = ["//visibility:public"],
 )

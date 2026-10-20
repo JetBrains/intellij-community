@@ -12,9 +12,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
@@ -90,7 +90,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
 
   public static final class Class extends PythonTemplateContextType {
     public Class() {
-      super(PyBundle.message("live.template.context.class"));
+      super(PyCodeInsightBundle.message("live.template.context.class"));
     }
 
     @Override
@@ -101,7 +101,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
 
   public static final class TopLevel extends PythonTemplateContextType {
     public TopLevel() {
-      super(PyBundle.message("live.template.context.top.level"));
+      super(PyCodeInsightBundle.message("live.template.context.top.level"));
     }
 
     @Override

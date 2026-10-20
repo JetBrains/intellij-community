@@ -1,6 +1,6 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.core"/>
@@ -8,9 +8,10 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.python.codeInsight"/>
     <module name="intellij.python.community.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="com.intellij.python.langInjection.PyLanguageInjectionSupport"/>
     <injectionConfig config="resources/pyInjections.xml"/>
