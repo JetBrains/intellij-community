@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -18,6 +19,7 @@ internal class MoveMemberToCompanionExtensionIntention: MoveMemberToCompanionBlo
         if (!element.kaModule(null).languageVersionSettings.supportsFeature(LanguageFeature.CompanionExtensions)) {
             return null
         }
+        if (element.hasModifier(KtTokens.PROTECTED_KEYWORD)) return null
         return super.applicabilityRange(element)
     }
 

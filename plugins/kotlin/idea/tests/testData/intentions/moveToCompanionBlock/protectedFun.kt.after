@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+open class A {
+    companion {
+        protected fun foo() = 1
+    }
+}
