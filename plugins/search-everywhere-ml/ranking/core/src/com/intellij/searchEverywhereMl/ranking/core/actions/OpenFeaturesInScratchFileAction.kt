@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.scratch.ScratchFileCreationHelper
+import com.intellij.ide.scratch.ScratchFileCreator
 import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -47,6 +48,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
     // Disable in Search, as otherwise we cannot run it because the session is over. See IDEA-321125
     if (e.place == ActionPlaces.ACTION_SEARCH) return false
+    if (ScratchUtil.findScratchesRootType() == null) return false
 
     val seManager = SearchEverywhereManager.getInstance(e.project)
     val session = SearchEverywhereMlFacade.activeSession
@@ -123,7 +125,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   private fun createNewJsonScratchFile(project: Project, context: ScratchFileCreationHelper.Context): VirtualFile {
     val fileName = "search-everywhere-features.${context.fileExtension}"
-    return ScratchRootType.getInstance().createScratchFile(project, fileName, context.language, context.text, context.createOption)!!
+    return ScratchFileCreator.createScratchFile(project, fileName, context.language, context.text, context.createOption)!!
   }
 
   private fun openScratchFile(file: VirtualFile, project: Project) {

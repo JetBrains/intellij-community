@@ -60,7 +60,6 @@ jvm_library(
         "//libraries/fastutil",
         "//libraries/guava",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//platform/scratch",
     ],
 )
 
@@ -93,7 +92,6 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/scratch:scratch_test_lib",
     ],
 )
 

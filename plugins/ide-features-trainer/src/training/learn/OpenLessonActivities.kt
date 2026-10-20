@@ -2,7 +2,7 @@
 package training.learn
 
 import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -415,7 +415,8 @@ internal object OpenLessonActivities {
     val languageId = lesson.languageId ?: error("Scratch lesson ${lesson.id} should define language")
     val languageByID = findLanguageByID(languageId)
 
-    val vf = ScratchFileService.getInstance().findFile(ScratchRootType.getInstance(), filename, ScratchFileService.Option.create_if_missing)
+    val scratchesRoot = ScratchUtil.findScratchesRootType() ?: error("Scratch lesson ${lesson.id} needs the scratch plugin")
+    val vf = ScratchFileService.getInstance().findFile(scratchesRoot, filename, ScratchFileService.Option.create_if_missing)
             ?: error("Cannot create scratch file $filename for $languageByID language ID in ${project.name}")
     ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
     FileEditorManager.getInstance(project).closeFile(vf)
