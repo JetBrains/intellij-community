@@ -38,7 +38,7 @@ public final class CaptureSettingsProvider {
   }
 
   private static List<AgentPoint> getAnnotationPoints(@Nullable Project project) {
-    return CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
+    return CaptureConfigurableKt.processCaptureAnnotations(project, (capture, e, annotation) -> {
       PsiMethod method;
       KeyProvider keyProvider;
       if (e instanceof PsiMethod psiMethod) {
