@@ -1,0 +1,65 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.libraries.compose.foundation.desktop"/>
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.libraries.skiko"/>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.icons.api"/>
+    <module name="intellij.platform.icons.api.rendering"/>
+    <module name="intellij.platform.icons.impl"/>
+    <module name="intellij.platform.icons.impl.intellij"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.DevkitIconsInspectorBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Icon Inspector"
+                factoryClass="com.intellij.devkit.icons.inspector.IconInspectorToolWindowFactory"
+                anchor="right"
+                canCloseContents="false"
+                doNotActivateOnStart="true"
+                icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.devkit.icons.inspector.IconInspectorToolWindowListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.DevkitIconsInspectorBundle">
+    <action id="IconInspector.Pick"
+            class="com.intellij.devkit.icons.inspector.PickIconAction"
+            internal="true">
+      <add-to-group group-id="Internal.UI" anchor="last"/>
+    </action>
+    <!-- Picks the icon under the mouse in any window, incl. modal dialogs (an IdeEventQueue dispatcher, see GlobalPickGesture).
+         Ctrl+Alt+Click is the UI Inspector; the editor text area is excluded (rectangular selection uses the same gesture). -->
+    <action id="IconInspector.PickAtPoint"
+            class="com.intellij.devkit.icons.inspector.picker.PickIconAtPointAction"
+            internal="true">
+      <mouse-shortcut keymap="$default" keystroke="control alt shift button1"/>
+      <add-to-group group-id="Internal.UI" anchor="last"/>
+    </action>
+    <!-- Switch between the tool window and one separate window (see IconInspectorWindows). Detach is a title action of the tool window. -->
+    <action id="IconInspector.Detach"
+            class="com.intellij.devkit.icons.inspector.DetachIconInspectorAction"
+            icon="AllIcons.Actions.MoveToWindow"
+            internal="true"/>
+    <action id="IconInspector.Dock"
+            class="com.intellij.devkit.icons.inspector.DockIconInspectorAction"
+            internal="true"/>
+  </actions>
+</idea-plugin>

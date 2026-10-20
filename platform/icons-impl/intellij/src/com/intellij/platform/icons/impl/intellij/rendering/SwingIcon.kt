@@ -5,6 +5,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
+import com.intellij.platform.icons.impl.rendering.debug.SwingPaintInfo
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.impl.rendering.resolve
 import com.intellij.platform.icons.scale.FactorScale
@@ -92,7 +94,14 @@ class SwingIcon(
         0,
         scaling = scaling.context
       )
-      renderer.render(swingApi)
+      if (IconRenderDebugger.isActive) {
+        val finalSize = scaling.finalDimensions
+        val info = SwingPaintInfo(c?.javaClass?.name, x, y, scaling.context.displayDensity, scale?.toString(), finalSize.width, finalSize.height)
+        IconRenderDebugger.traceSwingPaint(renderer, iconDescriptor, c, info) { renderer.render(swingApi) }
+      }
+      else {
+        renderer.render(swingApi)
+      }
     }
   }
 

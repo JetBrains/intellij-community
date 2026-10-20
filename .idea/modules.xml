@@ -463,6 +463,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.tooling/intellij.devkit.gradle.tooling.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.tooling/intellij.devkit.gradle.tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.icons.inspector/intellij.devkit.icons.inspector.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.icons.inspector/intellij.devkit.icons.inspector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.icons.inspector/intellij.devkit.icons.inspector.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.icons.inspector/intellij.devkit.icons.inspector.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.intelliLang/intellij.devkit.intelliLang.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.intelliLang/intellij.devkit.intelliLang.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/jps-plugin/intellij.devkit.jps.iml" filepath="$PROJECT_DIR$/plugins/devkit/jps-plugin/intellij.devkit.jps.iml" />
