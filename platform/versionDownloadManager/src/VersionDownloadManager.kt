@@ -12,6 +12,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.text.SemVer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -98,6 +99,35 @@ abstract class VersionDownloadManager(
   }
 
   /**
+   * Deletes local version directories except for the latest installed stable version and the latest installed version.
+   */
+  suspend fun purgeNonLatest(project: Project) {
+    withBackgroundProgress(project, IdeBundle.message("external.download.cleaning", id)) {
+      versionsAccessMutex.withLock {
+        withContext(Dispatchers.IO) {
+          val root = resourceKeepDir
+
+          if (!safeIsDirectory(root)) return@withContext
+
+          val installedVersions = getInstalledVersions()
+          val latest = installedVersions.firstOrNull()
+          val latestStable = installedVersions.firstOrNull { it.preRelease == null }
+          val versionsToKeep = setOfNotNull(latest, latestStable)
+
+          Files.newDirectoryStream(root, "$id-*").use { dirs ->
+            for (dir in dirs) {
+              ensureActive()
+              if (!safeIsDirectory(dir)) continue
+              val version = SemVer.parseFromText(dir.fileName.toString().removePrefix("$id-")) ?: continue
+              if (version !in versionsToKeep) deleteInstallation(dir)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * [project] is used not for installing versions per project but to make use of [Project] available APIs
    * for the installation. The downloaded resources will be available at Application-level.
    *
@@ -135,7 +165,7 @@ abstract class VersionDownloadManager(
   fun getVersion(version: SemVer): Path? = versionPath(version).takeIf { isFullyInstalled(it) }
 
   fun getInstalledVersions(): List<SemVer> {
-    if (!Files.isDirectory(resourceKeepDir, LinkOption.NOFOLLOW_LINKS)) return emptyList()
+    if (!safeIsDirectory(resourceKeepDir)) return emptyList()
     return Files.newDirectoryStream(resourceKeepDir, "$id-*").use { dirs ->
       dirs.filter { isFullyInstalled(it) }
         .mapNotNull { SemVer.parseFromText(it.fileName.toString().removePrefix("$id-")) }
@@ -150,8 +180,12 @@ abstract class VersionDownloadManager(
     return dir
   }
 
+  private fun safeIsDirectory(path: Path): Boolean {
+    return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)
+  }
+
   private fun isFullyInstalled(dir: Path): Boolean =
-    Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS) &&
+    safeIsDirectory(dir) &&
     Files.isRegularFile(dir.resolve(ATOMIC_ENSURER_FILE_NAME), LinkOption.NOFOLLOW_LINKS)
 
   private fun addFullyInstalledMarker(dir: Path) {
