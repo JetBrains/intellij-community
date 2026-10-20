@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-build-tools-api" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-api:2.5.20-dev-1532">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.20-dev-1532/kotlin-build-tools-api-2.5.20-dev-1532.jar">
-          <sha256sum>f3e5d11bd80a713b6da405132a786f9dbae5f69a2936d2cf21963f2497b7f479</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-build-tools-api">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.20-dev-1532/kotlin-build-tools-api-2.5.20-dev-1532.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.255-dev-255/kotlin-build-tools-api-2.5.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.20-dev-1532/kotlin-build-tools-api-2.5.20-dev-1532-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.255-dev-255/kotlin-build-tools-api-2.5.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
