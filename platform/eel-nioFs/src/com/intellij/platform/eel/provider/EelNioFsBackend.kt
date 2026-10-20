@@ -19,6 +19,8 @@ import java.util.ServiceLoader
 @VisibleToClasses(
   "com.intellij.platform.eel.nioFs.impl.EelNioFsBackendImpl",
   "com.jetbrains.performancePlugin.ProjectLoadedKt",
+  "com.jetbrains.php.config.interpreters.eel.PhpFakeEelEnvironment",
+  "com.jetbrains.php.config.interpreters.eel.PhpFakeEelEnvironmentTest",
 )
 interface EelNioFsBackend {
   companion object {

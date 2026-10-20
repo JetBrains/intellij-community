@@ -60,6 +60,7 @@ fun Project.getEelMachine(): EelMachine {
 @VisibleToClasses(
   "com.intellij.execution.eel.EelProjectPreInit",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.jetbrains.php.config.interpreters.eel.PhpFakeEelEnvironment",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
 )
 fun Project.setEelMachine(machine: EelMachine) {
@@ -108,6 +109,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
   "com.intellij.draft.customization.DraftProjectEelPreInit",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
   "com.intellij.rustrover.solana.runconfig.anchor.AnchorTestCommandLineStateTest",
+  "com.jetbrains.php.config.interpreters.eel.PhpFakeEelEnvironment",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
 )
 fun Project.setEelDescriptor(descriptor: EelDescriptor) {
