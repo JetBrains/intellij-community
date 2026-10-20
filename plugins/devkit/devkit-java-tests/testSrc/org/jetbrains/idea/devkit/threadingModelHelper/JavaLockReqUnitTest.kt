@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
@@ -8,7 +9,10 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import java.nio.file.Files
 import java.util.EnumSet
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
@@ -115,6 +119,52 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     )
     val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
+  fun testStatisticsReport() {
+    myFixture.configureByFile("AnnotationInChain.java")
+    val targetMethod = findTestMethod(myFixture.file as PsiJavaFile, "AnnotationInChain")
+    val statisticsDir = Files.createTempDirectory("lockReqStatistics")
+    try {
+      runBlocking {
+        analyzerBFS.analyzeMethodStreaming(SmartPointerManager.createPointer(targetMethod),
+                                           AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java)),
+                                           project,
+                                           object : LockReqConsumer {},
+                                           statisticsDir)
+      }
+      val reports = statisticsDir.listDirectoryEntries()
+      assertEquals(1, reports.size)
+      val report = reports.single().readText()
+      assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))
+      assertTrue(report, report.contains("Status: COMPLETED"))
+      assertTrue(report, report.contains("Processed nodes: 3 "))
+
+      // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
+      val treeRows = tableRows(report, "Traversal tree")
+        .associate { it[6] to listOf(it[1], it[2], it[3], it[4]) }
+      assertEquals(mapOf(
+        "AnnotationInChain.testMethod()" to listOf("1", "1", "3", "3"),
+        "AnnotationInChain.intermediateMethod()" to listOf("2", "1", "2", "2"),
+        "AnnotationInChain.targetMethod()" to listOf("3", "0", "1", "1"),
+      ), treeRows)
+    }
+    finally {
+      NioFiles.deleteRecursively(statisticsDir)
+    }
+  }
+
+  /**
+   * Splits the rows of the report table below the [title] line into columns.
+   */
+  private fun tableRows(report: String, title: String): List<List<String>> {
+    return report.lineSequence()
+      .dropWhile { !it.startsWith(title) }
+      .dropWhile { !it.trimStart().startsWith("time ") }
+      .drop(1)
+      .takeWhile { it.isNotBlank() }
+      .map { it.trim().split(Regex("\\s+")) }
+      .toList()
   }
 
   private fun doTest(className: String): AnalysisResult {

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.concurrency.virtualThreads.inVirtualThread
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
@@ -15,15 +16,21 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
+import java.io.IOException
+import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.measureTime
 
 /**
@@ -37,6 +44,11 @@ class LockReqAnalyzerParallelBFS {
 
   companion object {
     private val LOG: Logger = Logger.getInstance(LockReqAnalyzerParallelBFS::class.java)
+
+    /**
+     * The default directory for the traversal statistics reports.
+     */
+    fun defaultStatisticsDir(): Path = PathManager.getLogDir().resolve("lock-req-analysis")
   }
 
   private data class TraversalContext(
@@ -45,6 +57,7 @@ class LockReqAnalyzerParallelBFS {
     val paths: MutableSet<ExecutionPath> = ConcurrentHashMap.newKeySet(),
     val messageBusTopics: MutableSet<PsiClass> = ConcurrentHashMap.newKeySet(),
     val swingComponents: MutableSet<MethodSignature> = ConcurrentHashMap.newKeySet(),
+    val statistics: LockReqAnalysisStatistics = LockReqAnalysisStatistics(),
   )
 
   context(context: TraversalContext)
@@ -57,11 +70,39 @@ class LockReqAnalyzerParallelBFS {
 
   data class QueuePayload(val queue: PriorityBlockingQueue<QueueEntry>, val counter: AtomicInteger, val globalCounter: AtomicInteger)
 
-  suspend fun analyzeMethodStreaming(methodPointer: SmartPsiElementPointer<PsiMethod>, config: AnalysisConfig, project: Project, consumer: LockReqConsumer): AnalysisResult {
+  /**
+   * @param statisticsDir the directory for the traversal statistics report.
+   * The analysis writes the report when it stops, also on cancellation or failure.
+   * If the value is `null`, the analysis does not write the report.
+   */
+  suspend fun analyzeMethodStreaming(
+    methodPointer: SmartPsiElementPointer<PsiMethod>,
+    config: AnalysisConfig,
+    project: Project,
+    consumer: LockReqConsumer,
+    statisticsDir: Path? = defaultStatisticsDir(),
+  ): AnalysisResult {
     consumer.onStart(methodPointer)
     val context = TraversalContext(config)
-    context(context, consumer, project) {
-      traverseMethod(methodPointer)
+    val startNanos = System.nanoTime()
+    var status = LockReqAnalysisStatistics.Status.FAILED
+    try {
+      context(context, consumer, project) {
+        traverseMethod(methodPointer)
+      }
+      status = LockReqAnalysisStatistics.Status.COMPLETED
+    }
+    catch (e: CancellationException) {
+      status = LockReqAnalysisStatistics.Status.CANCELLED
+      throw e
+    }
+    finally {
+      if (statisticsDir != null) {
+        val wallClockTime = (System.nanoTime() - startNanos).nanoseconds
+        withContext(NonCancellable + Dispatchers.IO) {
+          writeStatistics(context, statisticsDir, status, wallClockTime)
+        }
+      }
     }
 
     val result = AnalysisResult(methodPointer, context.paths, context.messageBusTopics, context.swingComponents)
@@ -69,7 +110,26 @@ class LockReqAnalyzerParallelBFS {
     return result
   }
 
-  data class QueueEntry(val method: SmartPsiElementPointer<PsiMethod>, val signature: MethodSignature, val path: List<MethodCall>) : Comparable<QueueEntry> {
+  private fun writeStatistics(context: TraversalContext, statisticsDir: Path, status: LockReqAnalysisStatistics.Status, wallClockTime: Duration) {
+    try {
+      val file = context.statistics.writeReport(statisticsDir, context.config, status, wallClockTime)
+      LOG.info("Lock analysis statistics are written to $file")
+    }
+    catch (e: IOException) {
+      LOG.warn("Cannot write lock analysis statistics to $statisticsDir", e)
+    }
+  }
+
+  /**
+   * @param parentId the id of the traversal node that put this entry into the queue,
+   * or [LockReqAnalysisStatistics.NO_PARENT] for the root entry.
+   */
+  data class QueueEntry(
+    val method: SmartPsiElementPointer<PsiMethod>,
+    val signature: MethodSignature,
+    val path: List<MethodCall>,
+    val parentId: Int = LockReqAnalysisStatistics.NO_PARENT,
+  ) : Comparable<QueueEntry> {
     override fun compareTo(other: QueueEntry): Int {
       return compareValuesBy(this, other) {
         it.path.size
@@ -84,6 +144,8 @@ class LockReqAnalyzerParallelBFS {
     smartReadAction(project) {
       val method = root.element ?: return@smartReadAction
       val sig = LockReqPsiOps.forLanguage(method.language).extractSignature(method)
+      context.statistics.rootSignature = sig
+      context.statistics.onEnqueued()
       queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName, method.location()))))
       sig
     }
@@ -126,10 +188,12 @@ class LockReqAnalyzerParallelBFS {
       if (peekQueue == null) {
         continue
       }
+      var statisticsNode: LockReqAnalysisStatistics.Node? = null
       try {
         val (methodPointer, key, currentPath) = peekQueue
         val newValue = currentPath.size
         if (newValue >= config.maxDepth) {
+          context.statistics.onSkippedByMaxDepth()
           continue
         }
         while (true) {
@@ -138,6 +202,7 @@ class LockReqAnalyzerParallelBFS {
             break
           }
           if (existing <= newValue) {
+            context.statistics.onSkippedAsVisited()
             continue@outerLoop // we have a shorter path already processed
           }
           if (context.visited.replace(key, existing, newValue)) {
@@ -146,6 +211,8 @@ class LockReqAnalyzerParallelBFS {
           }
           // otherwise, someone sneaked their computation; let's try again
         }
+        val node = context.statistics.startNode(peekQueue.parentId, key, newValue)
+        statisticsNode = node
         payload.globalCounter.incrementAndGet()
         reporter.fraction(payload.globalCounter.get().toDouble() / (payload.globalCounter.get() + payload.counter.get()))
         reportingHolder.add(key)
@@ -176,13 +243,14 @@ class LockReqAnalyzerParallelBFS {
           val ops = LockReqPsiOps.forLanguage(method.language)
           ops.getMethodCallees(method).map { SmartPointerManager.createPointer(it) }
         }
+        node.calleeCount = callees.size
 
         callees.forEach {
           smartReadAction(project) {
             val callee = it.element ?: return@smartReadAction
             val ops = LockReqPsiOps.forLanguage(callee.language)
             context(ops, config) {
-              processCallee(payload, callee, currentPath)
+              processCallee(payload, callee, currentPath, node.id)
             }
           }
         }
@@ -194,6 +262,7 @@ class LockReqAnalyzerParallelBFS {
         throw e
       }
       finally {
+        statisticsNode?.let { context.statistics.finishNode(it) }
         val result = totalSize.decrementAndGet()
         reportingHolder.removeIf { it == peekQueue.signature }
         reportCurrentlyProcessedMethod(reportingHolder, reporter)
@@ -230,7 +299,7 @@ class LockReqAnalyzerParallelBFS {
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules)
-  private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
+  private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
 
     val requirements = LockReqDetector.findBodyRequirements(method)
     for (requirement in requirements) {
@@ -246,22 +315,22 @@ class LockReqAnalyzerParallelBFS {
     }
     if (LockReqDetector.isAsyncDispatch(method)) return
     when {
-      LockReqDetector.isMessageBusCall(method) -> handleMessageBusCall(payload, method, currentPath)
-      context.config.includePolymorphic && !LockReqDetector.isCommonMethod(method) -> handlePolymorphic(payload, method, currentPath)
-      else -> addToQueueIfNotVisited(payload, method, currentPath)
+      LockReqDetector.isMessageBusCall(method) -> handleMessageBusCall(payload, method, currentPath, parentId)
+      context.config.includePolymorphic && !LockReqDetector.isCommonMethod(method) -> handlePolymorphic(payload, method, currentPath, parentId)
+      else -> addToQueueIfNotVisited(payload, method, currentPath, parentId)
     }
   }
 
   context(ops: LockReqPsiOps, context: TraversalContext, rules: LockReqRules)
-  private fun handlePolymorphic(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
+  private fun handlePolymorphic(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
     ops.findInheritors(method, context.config.scope, context.config.maxImplementations) { inheritor ->
-      addToQueueIfNotVisited(payload, inheritor, currentPath)
+      addToQueueIfNotVisited(payload, inheritor, currentPath, parentId)
     }
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, lockReqRules: LockReqRules)
-  private fun handleMessageBusCall(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
+  private fun handleMessageBusCall(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
     ProgressManager.checkCanceled()
     val topicClass = LockReqDetector.extractMessageBusTopic(method)
     if (topicClass != null) {
@@ -269,14 +338,14 @@ class LockReqAnalyzerParallelBFS {
       consumer.onMessageBusTopic(topicClass)
       ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { listener ->
         listener.methods.forEach { listenerMethod ->
-          addToQueueIfNotVisited(payload, listenerMethod, currentPath)
+          addToQueueIfNotVisited(payload, listenerMethod, currentPath, parentId)
         }
       }
     }
   }
 
   context(context: TraversalContext, rules: LockReqRules)
-  private fun addToQueueIfNotVisited(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
+  private fun addToQueueIfNotVisited(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
     if (context(config) {
         LockReqDetector.shouldBeSkipped(method)
       }) {
@@ -285,6 +354,7 @@ class LockReqAnalyzerParallelBFS {
     val newPath = currentPath + MethodCall.fromMethod(method)
     payload.counter.incrementAndGet()
     val signature = MethodSignature.fromMethod(method)
-    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), signature, newPath))
+    context.statistics.onEnqueued()
+    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), signature, newPath, parentId))
   }
 }
