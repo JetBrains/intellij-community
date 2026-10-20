@@ -463,12 +463,9 @@ impl Host {
 
         // A worker that never needed a restart would otherwise run unbounded until a lane died of `ENOSPC`. The
         // `free-space` phase of a start is the only other free-space check, and a warm iteration starts no daemon.
-        // One `df` against a 200 s lane is free, and this is also where per-iteration retention lands - before the
-        // run, never after it, because the evidence pull below reads out of exactly these trees and the current
-        // launch is the newest thing in them.
+        // One `df` against a 200 s lane is free.
         let channel = self.channel(worker);
-        self.require_guest_free_space(&self.guest(ctx, channel.as_ref()), Some(&scope))
-            .await?;
+        self.require_guest_free_space(&self.guest(ctx, channel.as_ref())).await?;
 
         // The lane daemon decides about its IDE itself, and its `decision` record reaches the journal as one.
         let packed = session_logs::pack(&self.environment, &self.settings.runtime_root)?;

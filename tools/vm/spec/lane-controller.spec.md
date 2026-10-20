@@ -474,13 +474,15 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_boot_makes_the_directories_of_the_run_readable_only_by_its_account`)
 
-- A daemon start stages no runtime generation. In the phase `free-space`, the start first removes the directory
-  `daemon-runtime` of the guest data with one `rm -rf`. An older controller staged its runtime generations there. A
-  missing directory is no error, and a failed removal is a note. Then the start checks the free space of the guest,
-  before the supervisor start. A full guest refuses the start with `guest_disk_full`.
+- A daemon start stages no runtime generation. In the phase `free-space`, the start first removes the retired roots
+  `daemon-runtime`, `out` and `build-download` of the guest data with one `rm -rf`. An older controller wrote them,
+  and nothing reads them now. A missing directory is no error, and a failed removal is a note. Then the start checks
+  the free space of the guest, before the supervisor start. A guest below the floor refuses the start with
+  `guest_disk_full`. The check deletes nothing.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_start_boots_polls_and_records_its_state`)
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`a_full_guest_disk_refuses_the_start_before_the_supervisor_start`)
-  [@test] ../crates/avl-vm/src/daemon/space/tests.rs (`the_retired_runtime_generations_go_with_one_rm_and_a_failure_is_a_note`)
+  [@test] ../crates/avl-vm/src/daemon/space/tests.rs (`the_retired_roots_go_with_one_rm_and_a_failure_is_a_note`)
+  [@test] ../crates/avl-vm/src/daemon/space/tests.rs (`below_the_floor_the_run_is_refused_with_the_command_that_finds_the_culprit`)
 
 - The run of the lane daemon starts in its state directory. Before the supervisor start, the daemon start makes that
   directory and the directory of the guest agent. Then it removes the state file of the previous daemon.

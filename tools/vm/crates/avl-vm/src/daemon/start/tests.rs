@@ -556,12 +556,12 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     assert_eq!(state_file_removals.len(), 1, "{state_file_removals:?}");
     let state_file_removal = at("/bin/rm -f /vm/data/daemon/daemon.json");
     assert!(directories < state_file_removal && state_file_removal < at("vm-guest-agent start"));
-    // Before the free-space check the start removes the retired runtime generations once, so the check counts their
-    // space.
+    // Before the free-space check the start removes the retired roots once, so the check counts their space.
+    let retired = "/bin/rm -rf /vm/data/daemon-runtime /vm/data/out /vm/data/build-download";
     let removals = channel.calls_containing("/bin/rm -rf");
     assert_eq!(removals.len(), 1, "{removals:?}");
-    assert!(removals[0].ends_with("/bin/rm -rf /vm/data/daemon-runtime"), "{}", removals[0]);
-    assert!(at("/bin/rm -rf /vm/data/daemon-runtime") < at("/bin/df"));
+    assert!(removals[0].ends_with(retired), "{}", removals[0]);
+    assert!(at(retired) < at("/bin/df"));
     // No argument names the checkout: the guest has none.
     assert!(
         !starts[0].contains(&fixture.root().display().to_string()),
@@ -817,13 +817,13 @@ async fn a_stale_parity_layout_refuses_before_the_supervisor_start() {
     );
 }
 
-// A guest whose disk stays full after the retention refuses the start in the `free-space` phase. The refusal comes
-// before the supervisor start, so no daemon writes into a full disk. A removal of the retired runtime generations that
+// A guest whose disk is full after the removal of the retired roots refuses the start in the `free-space` phase. The
+// refusal comes before the supervisor start, so no daemon writes into a full disk. A removal of the retired roots that
 // fails is a note, and the free-space check still decides.
 #[tokio::test]
 async fn a_full_guest_disk_refuses_the_start_before_the_supervisor_start() {
     let (fixture, prep) = start_ready().await;
-    // 1 GiB free, before and after the retention: below the floor of 5 GiB.
+    // 1 GiB free: below the floor of 5 GiB.
     fixture.on("df", answer_text(df_with_free_kib("1048576")));
     fixture.on("rm", answer_exit(1));
     let timeline = Timeline::collecting();
@@ -834,7 +834,7 @@ async fn a_full_guest_disk_refuses_the_start_before_the_supervisor_start() {
         fixture
             .stderr
             .text()
-            .contains("keeps the retired runtime generations in /vm/data/daemon-runtime"),
+            .contains("keeps the retired roots /vm/data/daemon-runtime, /vm/data/out, /vm/data/build-download"),
         "{}",
         fixture.stderr.text()
     );
