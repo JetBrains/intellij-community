@@ -1,0 +1,112 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.codeInsight` start
+content_module_jar(module = ":codeInsight")
+### auto-generated section `dev intellij.python.codeInsight` end
+
+### auto-generated section `build intellij.python.codeInsight` start
+create_kotlinc_options(
+    name = "custom_codeInsight",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "codeInsight",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_codeInsight",
+    module_name = "intellij.python.codeInsight",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/guava",
+        "//libraries/jetbrains/annotations",
+        "//libraries/stream",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/indexing-api:indexing",
+        "//platform/lang-api:lang",
+        "//platform/lang-core",
+        "//platform/lang-impl",
+        "//platform/statistics",
+        "//platform/util",
+        "//platform/util-rt",
+        "//platform/util:util-ui",
+        "//python/python-ast:ast",
+        "//python/python-parser:parser",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-impl:psi-impl",
+    ],
+)
+
+jvm_library(
+    name = "codeInsight_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_codeInsight",
+    module_name = "intellij.python.codeInsight",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":codeInsight",
+        "//libraries/guava:guava_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/stream:stream_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//python/python-ast:ast_test_lib",
+        "//python/python-parser:parser_test_lib",
+        "//python/python-psi-api:psi_test_lib",
+        "//python/python-psi-impl:psi-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.codeInsight` end
+
+### auto-generated section `iml intellij.python.codeInsight` start
+exports_files(
+    [
+        "intellij.python.codeInsight.iml",
+        "resources/intellij.python.codeInsight.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.codeInsight` end

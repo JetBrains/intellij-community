@@ -45,6 +45,7 @@
     <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />

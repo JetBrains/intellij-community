@@ -2122,6 +2122,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-black/frontend/intellij.python.black.frontend.iml" filepath="$PROJECT_DIR$/python/python-black/frontend/intellij.python.black.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-black/tests/intellij.python.black.tests.iml" filepath="$PROJECT_DIR$/python/python-black/tests/intellij.python.black.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.bundledPyiStubs.iml" filepath="$PROJECT_DIR$/python/intellij.python.bundledPyiStubs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-code-insight/intellij.python.codeInsight.iml" filepath="$PROJECT_DIR$/python/python-code-insight/intellij.python.codeInsight.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.commonTests.iml" filepath="$PROJECT_DIR$/python/intellij.python.commonTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/intellij.python.community.iml" filepath="$PROJECT_DIR$/python/openapi/intellij.python.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/aliasProvider/intellij.python.community.aliasProvider.iml" filepath="$PROJECT_DIR$/python/aliasProvider/intellij.python.community.aliasProvider.iml" />

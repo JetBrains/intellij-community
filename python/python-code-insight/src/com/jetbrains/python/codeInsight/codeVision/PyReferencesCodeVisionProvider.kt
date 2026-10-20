@@ -18,8 +18,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.ast.impl.PyUtilCore
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -135,10 +135,10 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
     if (result == 0 && dynamicResult == 0) return null
     val hasMoreUsages = isTruncated.get()
     if (dynamicResult == 0 || hasMoreUsages) {
-      return CodeVisionInfo(PyBundle.message("inlay.hints.usages.text", min(result, maxUsagesToCount), if (hasMoreUsages) 1 else 0),
+      return CodeVisionInfo(PyCodeInsightBundle.message("inlay.hints.usages.text", min(result, maxUsagesToCount), if (hasMoreUsages) 1 else 0),
                             result, !hasMoreUsages)
     }
-    return CodeVisionInfo(PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), result)
+    return CodeVisionInfo(PyCodeInsightBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), result)
   }
 
   private fun countUsages(

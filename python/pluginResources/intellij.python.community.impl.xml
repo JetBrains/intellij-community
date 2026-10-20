@@ -95,6 +95,7 @@
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.platform.workspace.storage"/>
     <module name="intellij.platform.wsl.impl"/>
+    <module name="intellij.python.codeInsight"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>
@@ -186,66 +187,6 @@
       implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
     <psi.referenceContributor language="Requirements"
                               implementation="com.jetbrains.python.requirements.RequirementsReferenceContributor"/>
-
-    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
-                                          bundle="messages.PyPsiBundle"
-                                          implementationClass="com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Python"
-                                          nameKey="INLAY.type.hints"
-                                          providerId="python.type.inlays">
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type"
-              optionId="python.type.inlays.reveal_type"/>
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return"
-              optionId="python.type.inlays.function.return"/>
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.variance.description" enabledByDefault="true" nameKey="INLAY.variance"
-              optionId="python.type.inlays.variance"/>
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.parameter.type.annotations" enabledByDefault="true"
-              nameKey="INLAY.parameter.type.annotations"
-              optionId="python.type.inlays.parameter.annotation"/>
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.class.description" enabledByDefault="true"
-              nameKey="INLAY.solved.type.parameters.class"
-              optionId="python.type.inlays.solved.type.parameters.class"/>
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.function.description" enabledByDefault="false"
-              nameKey="INLAY.solved.type.parameters.function"
-              optionId="python.type.inlays.solved.type.parameters.function"/>
-    </codeInsight.declarativeInlayProvider>
-
-    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
-                                          bundle="messages.PyPsiBundle"
-                                          implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Python"
-                                          nameKey="INLAY.positional.args.patterns"
-                                          providerId="python.pseudo.keyword.pattern.inlays"/>
-
-    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
-                                          bundle="messages.PyPsiBundle"
-                                          implementationClass="com.jetbrains.python.inlayHints.PyNumericPromotionInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Python"
-                                          nameKey="INLAY.numeric.promotion"
-                                          providerId="python.numeric.promotion.inlays"/>
-
-    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
-                                          bundle="messages.PyPsiBundle"
-                                          implementationClass="com.jetbrains.python.inlayHints.PyEnumAutoValueInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Python"
-                                          nameKey="INLAY.enum.auto.value"
-                                          descriptionKey="INLAY.enum.auto.value.description"
-                                          providerId="python.enum.auto.value.inlays"/>
-
-    <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
-                                          bundle="messages.PyPsiBundle"
-                                          implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
-                                          isEnabledByDefault="true"
-                                          language="Python"
-                                          nameKey="INLAY.pytest.parametrize.tuple"
-                                          providerId="python.pytest.parametrize.inlays"/>
-
-    <codeInsight.inlayActionHandler implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayActionHandler"
-                                    handlerId="py.pseudo.keyword.pattern"/>
 
     <localInspection language="" shortName="DependenciesInspection" suppressId="Dependencies" bundle="messages.PyBundle"
                      key="INSP.dependencies.name" groupKey="INSP.GROUP.dependencies" enabledByDefault="true" level="WARNING"
@@ -355,10 +296,6 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
-    <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
-    <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
-    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyTypeParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
     <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
@@ -409,8 +346,6 @@
     <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
-    <codeInsight.parameterNameHints language="Python"
-                                    implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
     <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
@@ -428,7 +363,6 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
     <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.pytest.show_summary" default="false" groupKey="group.advanced.settings.python"/>
-    <advancedSetting id="python.code.vision.usages.limit" default="500" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.debugger.attach.timeout" default="20000" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.type.ignore.suppress.include.code" default="true" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.type.ignore.suppress.pycharm.namespace" default="false" groupKey="group.advanced.settings.python"/>
@@ -447,10 +381,6 @@
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <callHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.call.PyCallHierarchyProvider"/>
-    <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
-    <heavyBracesHighlighter implementation="com.jetbrains.python.codeInsight.highlighting.PyControlFlowKeywordBraceHighlighter"/>
-    <codeBlockSupportHandler language="Python"
-                             implementationClass="com.jetbrains.python.codeInsight.highlighting.PyControlFlowKeywordCodeBlockSupportHandler"/>
 
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
@@ -786,7 +716,6 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector"/>
     <statistics.validation.customValidationRule
@@ -888,7 +817,6 @@
 
     <!--  Code vision -->
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
-    <codeInsight.daemonBoundCodeVisionProvider implementation="com.jetbrains.python.codeInsight.codeVision.PyReferencesCodeVisionProvider"/>
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
 
@@ -901,8 +829,6 @@
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
 
     <!-- Parameter Info -->
-    <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
-                 description="Show type hints for all parameters in parameter info window"/>
 
     <registryKey key="disable.python.cache.update"
                  defaultValue="false"

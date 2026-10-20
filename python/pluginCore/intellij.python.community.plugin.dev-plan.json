@@ -188,6 +188,9 @@
             "module": "intellij.python.refactoring"
         },
         {
+            "module": "intellij.python.codeInsight"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

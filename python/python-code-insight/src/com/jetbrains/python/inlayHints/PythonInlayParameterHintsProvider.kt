@@ -10,7 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
@@ -34,12 +34,12 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   object Helper {
     val showForClassConstructorCalls: Option = Option("python.show.class.constructor.call.parameter.names",
-                                                      PyBundle.messagePointer(
+                                                      PyCodeInsightBundle.messagePointer(
                                                         "inlay.parameters.python.show.class.constructor.call.parameter.names"),
                                                       true)
 
     val showForNonLiteralArguments: Option = Option("python.show.hints.for.non-literal.arguments",
-                                                    PyBundle.messagePointer(
+                                                    PyCodeInsightBundle.messagePointer(
                                                       "inlay.parameters.python.show.hints.for.non-literal.arguments"),
                                                     false)
   }
@@ -164,7 +164,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
           "typing.*")
 
   override fun getBlacklistExplanationHTML(): String {
-    return PyBundle.message("inlay.parameters.python.hints.blacklist.explanation",
+    return PyCodeInsightBundle.message("inlay.parameters.python.hints.blacklist.explanation",
                             KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
   }
 

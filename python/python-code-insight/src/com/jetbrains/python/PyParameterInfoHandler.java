@@ -21,6 +21,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -222,10 +223,10 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   private @Nls String getActionLinkText(int numOfOverloads) {
     return hideOverloads
-           ? PyBundle.message("param.info.show.more.n.overloads",
+           ? PyCodeInsightBundle.message("param.info.show.more.n.overloads",
                               numOfOverloads,
                               numOfOverloads > 1 ? 0 : 1)
-           : PyBundle.message("param.info.show.less");
+           : PyCodeInsightBundle.message("param.info.show.less");
   }
 
   private static int getNumOfSignatures(Object[] objectsToShow) {

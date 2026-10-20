@@ -1,0 +1,108 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.ast"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.PyCodeInsightBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.type.hints"
+                                          providerId="python.type.inlays">
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type"
+              optionId="python.type.inlays.reveal_type"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return"
+              optionId="python.type.inlays.function.return"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.variance.description" enabledByDefault="true" nameKey="INLAY.variance"
+              optionId="python.type.inlays.variance"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.parameter.type.annotations" enabledByDefault="true"
+              nameKey="INLAY.parameter.type.annotations"
+              optionId="python.type.inlays.parameter.annotation"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.class.description" enabledByDefault="true"
+              nameKey="INLAY.solved.type.parameters.class"
+              optionId="python.type.inlays.solved.type.parameters.class"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.function.description" enabledByDefault="false"
+              nameKey="INLAY.solved.type.parameters.function"
+              optionId="python.type.inlays.solved.type.parameters.function"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.positional.args.patterns"
+                                          providerId="python.pseudo.keyword.pattern.inlays"/>
+
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyNumericPromotionInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.numeric.promotion"
+                                          providerId="python.numeric.promotion.inlays"/>
+
+    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyEnumAutoValueInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.enum.auto.value"
+                                          descriptionKey="INLAY.enum.auto.value.description"
+                                          providerId="python.enum.auto.value.inlays"/>
+
+    <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.pytest.parametrize.tuple"
+                                          providerId="python.pytest.parametrize.inlays"/>
+
+    <codeInsight.inlayActionHandler implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayActionHandler"
+                                    handlerId="py.pseudo.keyword.pattern"/>
+
+    <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
+    <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
+    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyTypeParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
+    <codeInsight.parameterNameHints language="Python"
+                                    implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
+    <advancedSetting id="python.code.vision.usages.limit" default="500" groupKey="group.advanced.settings.python"/>
+    <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
+    <heavyBracesHighlighter implementation="com.jetbrains.python.codeInsight.highlighting.PyControlFlowKeywordBraceHighlighter"/>
+    <codeBlockSupportHandler language="Python"
+                             implementationClass="com.jetbrains.python.codeInsight.highlighting.PyControlFlowKeywordCodeBlockSupportHandler"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.jetbrains.python.codeInsight.codeVision.PyReferencesCodeVisionProvider"/>
+    <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
+                 description="Show type hints for all parameters in parameter info window"/>
+  </extensions>
+</idea-plugin>

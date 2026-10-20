@@ -1919,6 +1919,7 @@ python/python-black
 python/python-black/common
 python/python-black/frontend
 python/python-black/tests
+python/python-code-insight
 python/python-copyright
 python/python-core-impl
 python/python-exec-service
