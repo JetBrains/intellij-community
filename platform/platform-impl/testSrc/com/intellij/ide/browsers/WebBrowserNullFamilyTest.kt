@@ -18,11 +18,11 @@ class WebBrowserNullFamilyTest {
     val id = UUID.randomUUID()
     manager.addBrowser(id, null, "Brave", "/usr/bin/brave", true, null)
 
-    val entry = manager.state!!.getChildren("browser").single { it.getAttributeValue("id") == id.toString() }
+    val entry = manager.state.getChild("browsers")!!.getChildren("browser").single { it.getAttributeValue("id") == id.toString() }
     assertNull(entry.getAttributeValue("family"))
 
     val reloaded = WebBrowserManager()
-    reloaded.loadState(manager.state!!)
+    reloaded.loadState(manager.state)
     val browser = reloaded.browsers.single { it.id == id }
     assertNull(browser.family)
     assertEquals("Brave", browser.name)

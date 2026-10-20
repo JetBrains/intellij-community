@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,9 +27,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @State(name = "WebBrowsersConfiguration",
@@ -60,6 +66,22 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public static final ReloadMode BROWSER_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
   public static final ReloadMode PREVIEW_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
 
+  private static final String BROWSER_TAG = "browser";
+  private static final String BROWSERS_TAG = "browsers";
+  private static final String ACTIVE_TAG = "active";
+  private static final String INACTIVE_TAG = "inactive";
+
+  /**
+   * The order of the inactive browsers: the predefined browsers in their default order, then the custom browsers by name.
+   */
+  private static final Comparator<ConfigurableWebBrowser> INACTIVE_ORDER =
+    Comparator.comparingInt((ConfigurableWebBrowser browser) -> {
+        int index = ArrayUtil.indexOf(PREDEFINED_BROWSER_IDS, browser.getId());
+        return index < 0 ? Integer.MAX_VALUE : index;
+      })
+      .thenComparing(ConfigurableWebBrowser::getName, String.CASE_INSENSITIVE_ORDER)
+      .thenComparing(browser -> browser.getId().toString());
+
   private static @NotNull String getEdgeExecutionPath() {
     if (SystemInfo.isWindows) {
       return "msedge";
@@ -79,7 +101,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI, BrowserFamily.SAFARI.getName(),
                                  BrowserFamily.SAFARI.getExecutionPath(), SystemInfo.isMac,
                                  BrowserFamily.SAFARI.createBrowserSpecificSettings()),
-      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false, null),
+      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false,
+                                 BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.CHROME, "Edge",
                                  getEdgeExecutionPath(), SystemInfo.isWindows,
                                  BrowserFamily.CHROME.createBrowserSpecificSettings())
@@ -153,7 +176,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
       state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
@@ -171,37 +194,111 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       state.setAttribute("showHoverXml", "true");
     }
 
-    if (!browsers.equals(getPredefinedBrowsers())) {
-      for (ConfigurableWebBrowser browser : browsers) {
-        Element entry = new Element("browser");
-        entry.setAttribute("id", browser.getId().toString());
-        entry.setAttribute("name", browser.getName());
-        BrowserFamily family = browser.getFamily();
-        if (family != null) {
-          entry.setAttribute("family", family.name());
-        }
+    writeBrowsers(state);
+    return state;
+  }
 
-        String path = browser.getPath();
-        if (path != null && (family == null || !path.equals(family.getExecutionPath()))) {
-          entry.setAttribute("path", path);
-        }
+  /**
+   * Writes only the differences from the predefined browsers.
+   * {@code active} is the ordered list of active browsers, written only when it differs from the default.
+   * {@code inactive} lists the predefined browsers that are active by default but the user turned off.
+   * {@code browsers} holds the custom browsers and the changed attributes of the predefined browsers.
+   */
+  private void writeBrowsers(@NotNull Element state) {
+    List<ConfigurableWebBrowser> predefinedBrowsers = getPredefinedBrowsers();
+    Map<UUID, ConfigurableWebBrowser> idToPredefined = ContainerUtil.newMapFromValues(predefinedBrowsers.iterator(), it -> it.getId());
 
-        if (!browser.isActive()) {
-          entry.setAttribute("active", "false");
+    List<UUID> activeIds = new ArrayList<>();
+    List<UUID> inactiveIds = new ArrayList<>();
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.isActive()) {
+        activeIds.add(browser.getId());
+      }
+      else {
+        ConfigurableWebBrowser predefined = idToPredefined.get(browser.getId());
+        if (predefined != null && predefined.isActive()) {
+          inactiveIds.add(browser.getId());
         }
-
-        BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
-        if (specificSettings != null) {
-          Element settingsElement = new Element("settings");
-          XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
-          if (!JDOMUtil.isEmpty(settingsElement)) {
-            entry.addContent(settingsElement);
-          }
-        }
-        state.addContent(entry);
       }
     }
-    return state;
+
+    if (!activeIds.equals(getDefaultActiveIds(predefinedBrowsers, inactiveIds))) {
+      state.addContent(writeIds(ACTIVE_TAG, activeIds));
+    }
+    if (!inactiveIds.isEmpty()) {
+      inactiveIds.sort(Comparator.comparing(UUID::toString));
+      state.addContent(writeIds(INACTIVE_TAG, inactiveIds));
+    }
+
+    Element definitions = new Element(BROWSERS_TAG);
+    List<ConfigurableWebBrowser> sortedBrowsers = new ArrayList<>(browsers);
+    sortedBrowsers.sort(INACTIVE_ORDER);
+    for (ConfigurableWebBrowser browser : sortedBrowsers) {
+      Element entry = writeBrowser(browser, idToPredefined.get(browser.getId()));
+      if (entry != null) {
+        definitions.addContent(entry);
+      }
+    }
+    if (!definitions.getChildren().isEmpty()) {
+      state.addContent(definitions);
+    }
+  }
+
+  private static @NotNull List<UUID> getDefaultActiveIds(@NotNull List<ConfigurableWebBrowser> predefinedBrowsers,
+                                                         @NotNull Collection<UUID> inactiveIds) {
+    List<UUID> result = new ArrayList<>();
+    for (ConfigurableWebBrowser browser : predefinedBrowsers) {
+      if (browser.isActive() && !inactiveIds.contains(browser.getId())) {
+        result.add(browser.getId());
+      }
+    }
+    return result;
+  }
+
+  private static @NotNull Element writeIds(@NotNull String tagName, @NotNull List<UUID> ids) {
+    Element element = new Element(tagName);
+    for (UUID id : ids) {
+      element.addContent(new Element(BROWSER_TAG).setAttribute("id", id.toString()));
+    }
+    return element;
+  }
+
+  /**
+   * @return the full entry for a custom browser, or only the changed attributes for a predefined browser,
+   * or {@code null} if the predefined browser has no changes
+   */
+  private static @Nullable Element writeBrowser(@NotNull ConfigurableWebBrowser browser, @Nullable ConfigurableWebBrowser predefined) {
+    Element entry = new Element(BROWSER_TAG);
+    entry.setAttribute("id", browser.getId().toString());
+    if (predefined == null) {
+      entry.setAttribute("name", browser.getName());
+      if (browser.getFamily() != null) {
+        entry.setAttribute("family", browser.getFamily().name());
+      }
+      if (browser.getPath() != null) {
+        entry.setAttribute("path", browser.getPath());
+      }
+    }
+    else {
+      if (!browser.getName().equals(predefined.getName())) {
+        entry.setAttribute("name", browser.getName());
+      }
+      if (!Objects.equals(browser.getPath(), predefined.getPath())) {
+        // an empty path means that the user cleared the predefined path
+        entry.setAttribute("path", StringUtil.notNullize(browser.getPath()));
+      }
+    }
+
+    BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
+    if (specificSettings != null) {
+      Element settingsElement = new Element("settings");
+      XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
+      if (!JDOMUtil.isEmpty(settingsElement)) {
+        entry.addContent(settingsElement);
+      }
+    }
+
+    return predefined == null || entry.getAttributes().size() > 1 || !entry.getChildren().isEmpty() ? entry : null;
   }
 
   private static @Nullable BrowserFamily readFamily(String value) {
@@ -279,8 +376,125 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     showBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
     showBrowserHoverXml = "true".equals(element.getAttributeValue("showHoverXml"));
 
+    setList(element.getChildren(BROWSER_TAG).isEmpty() ? readBrowsers(element) : readLegacyBrowsers(element));
+  }
+
+  private static @NotNull List<ConfigurableWebBrowser> readBrowsers(@NotNull Element element) {
+    List<ConfigurableWebBrowser> predefinedBrowsers = getPredefinedBrowsers();
+    Map<UUID, ConfigurableWebBrowser> idToBrowser = new LinkedHashMap<>();
+    for (ConfigurableWebBrowser browser : predefinedBrowsers) {
+      idToBrowser.put(browser.getId(), browser);
+    }
+
+    Element definitions = element.getChild(BROWSERS_TAG);
+    if (definitions != null) {
+      for (Element child : definitions.getChildren(BROWSER_TAG)) {
+        UUID id = parseUuid(StringUtil.notNullize(child.getAttributeValue("id")));
+        if (id == null || PREDEFINED_OLD_EDGE_ID.equals(id)) {
+          continue;
+        }
+
+        ConfigurableWebBrowser browser = idToBrowser.get(id);
+        if (browser == null) {
+          ContainerUtil.putIfNotNull(id, readCustomBrowser(id, child), idToBrowser);
+        }
+        else if (ArrayUtil.contains(id, PREDEFINED_BROWSER_IDS)) {
+          readPredefinedBrowser(browser, child);
+        }
+      }
+    }
+
+    List<UUID> inactiveIds = readIds(element.getChild(INACTIVE_TAG));
+    Element activeElement = element.getChild(ACTIVE_TAG);
+    Set<UUID> activeIds = new LinkedHashSet<>(activeElement == null ? List.of() : readIds(activeElement));
+    // a predefined browser that is active by default and is in neither list goes to the end of the active list
+    activeIds.addAll(getDefaultActiveIds(predefinedBrowsers, inactiveIds));
+
+    List<ConfigurableWebBrowser> result = new ArrayList<>(idToBrowser.size());
+    for (UUID id : activeIds) {
+      ConfigurableWebBrowser browser = idToBrowser.remove(id);
+      if (browser != null) {
+        browser.setActive(true);
+        result.add(browser);
+      }
+    }
+    for (ConfigurableWebBrowser browser : idToBrowser.values()) {
+      browser.setActive(false);
+      result.add(browser);
+    }
+    return result;
+  }
+
+  private static @NotNull List<UUID> readIds(@Nullable Element element) {
+    if (element == null) {
+      return List.of();
+    }
+
+    List<UUID> result = new ArrayList<>();
+    for (Element child : element.getChildren(BROWSER_TAG)) {
+      UUID id = parseUuid(StringUtil.notNullize(child.getAttributeValue("id")));
+      if (id != null) {
+        result.add(id);
+      }
+    }
+    return result;
+  }
+
+  private static void readPredefinedBrowser(@NotNull ConfigurableWebBrowser browser, @NotNull Element element) {
+    String name = StringUtil.nullize(element.getAttributeValue("name"), true);
+    if (name != null) {
+      browser.setName(name);
+    }
+    String path = element.getAttributeValue("path");
+    if (path != null) {
+      browser.setPath(path);
+    }
+    BrowserSpecificSettings specificSettings = readSpecificSettings(browser.getFamily(), element);
+    if (specificSettings != null) {
+      browser.setSpecificSettings(specificSettings);
+    }
+  }
+
+  private static @Nullable ConfigurableWebBrowser readCustomBrowser(@NotNull UUID id, @NotNull Element element) {
+    String familyValue = element.getAttributeValue("family");
+    BrowserFamily family = familyValue == null ? null : readFamily(familyValue);
+    if (familyValue != null && family == null) {
+      return null;
+    }
+
+    BrowserSpecificSettings specificSettings = readSpecificSettings(family, element);
+    return new ConfigurableWebBrowser(id,
+                                      family,
+                                      StringUtil.notNullize(element.getAttributeValue("name"), family == null ? "" : family.getName()),
+                                      StringUtil.nullize(element.getAttributeValue("path"), true),
+                                      false,
+                                      specificSettings == null && family != null ? family.createBrowserSpecificSettings() : specificSettings);
+  }
+
+  private static @Nullable BrowserSpecificSettings readSpecificSettings(@Nullable BrowserFamily family, @NotNull Element element) {
+    Element settingsElement = element.getChild("settings");
+    if (family == null || settingsElement == null) {
+      return null;
+    }
+
+    BrowserSpecificSettings specificSettings = family.createBrowserSpecificSettings();
+    if (specificSettings != null) {
+      try {
+        XmlSerializer.deserializeInto(specificSettings, settingsElement);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
+    return specificSettings;
+  }
+
+  /**
+   * Reads the format where each browser is a direct child of the state and has an {@code active} attribute.
+   */
+  private static @NotNull List<ConfigurableWebBrowser> readLegacyBrowsers(@NotNull Element element) {
     List<ConfigurableWebBrowser> list = new ArrayList<>();
-    for (Element child : element.getChildren("browser")) {
+    for (Element child : element.getChildren(BROWSER_TAG)) {
       String familyValue = child.getAttributeValue("family");
       if ("EXPLORER".equals(familyValue)) {
         // Internet Explorer is no longer supported, so a custom browser of this family keeps no family
@@ -338,7 +552,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       list.add(idToBrowser.get(predefinedBrowserId));
     }
 
-    setList(list);
+    return list;
   }
 
   public @NotNull List<WebBrowser> getBrowsers() {
@@ -350,8 +564,18 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return browsers;
   }
 
+  /**
+   * Puts the active browsers first, in their order, and the inactive browsers after them, in {@link #INACTIVE_ORDER}.
+   */
   void setList(@NotNull List<ConfigurableWebBrowser> value) {
-    browsers = value;
+    List<ConfigurableWebBrowser> list = new ArrayList<>(value.size());
+    List<ConfigurableWebBrowser> inactive = new ArrayList<>();
+    for (ConfigurableWebBrowser browser : value) {
+      (browser.isActive() ? list : inactive).add(browser);
+    }
+    inactive.sort(INACTIVE_ORDER);
+    list.addAll(inactive);
+    browsers = list;
     incModificationCount();
   }
 
