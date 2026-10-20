@@ -6,7 +6,7 @@ import com.intellij.ide.starter.path.FrontendIDEDataPaths
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.runner.IDEDataPathsProvider
-import com.intellij.ide.starter.runner.Starter.newTestContainer
+import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.runner.targets.TargetResolver
 import com.intellij.openapi.diagnostic.Logger
@@ -70,24 +70,12 @@ object TestContextCache {
     return cachedTestContextOf(testContext)?.consumeProjectFilesVfsRefresh() ?: false
   }
 
-  fun getOrCreate(configuration: CachedProjectConfiguration): CachedTestContext {
-    return getOrCreate(configuration, contextDiscriminator = null) { contextName, _ ->
-      newTestContainer().newContext(
-        testName = contextName,
-        testCase = configuration.testCase,
-        preserveSystemDir = false,
-        projectHome = configuration.testCase.projectInfo.downloadAndUnpackProject(),
-        ideDataPathsProvider = cachedContextDataPathsProvider(),
-      ).let {
-        configuration.setup(it)
-      }
-    }
-  }
-
   fun getOrCreate(
     configuration: CachedProjectConfiguration,
-    contextDiscriminator: Any?,
-    createTestContext: (contextName: String, configuration: CachedProjectConfiguration) -> IDETestContext,
+    contextDiscriminator: Any? = null,
+    createTestContext: (contextName: String, configuration: CachedProjectConfiguration) -> IDETestContext = { contextName, _ ->
+      Starter.newPreparedContext(contextName, configuration)
+    },
   ): CachedTestContext {
     val target = TargetResolver.instance.current
     val targetKey = target.cacheKey()

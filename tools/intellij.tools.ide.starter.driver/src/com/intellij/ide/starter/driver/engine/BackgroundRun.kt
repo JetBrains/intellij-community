@@ -240,7 +240,7 @@ open class BackgroundRun(
 }
 
 /**
- * Refreshes the VFS when a restore of [com.intellij.ide.starter.testContextCache.CachedProjectConfiguration.createTestContext] still owes one, and takes that need.
+ * Refreshes the VFS when a restore of [com.intellij.ide.starter.testContextCache.newTestContextFromCache] still owes one, and takes that need.
  *
  * `ProjectFilesRestorer` rewinds the project directory with plain file-system calls, so the IDE does not see them.
  * The restore runs before the test starts an IDE, so the cache entry carries the need across.

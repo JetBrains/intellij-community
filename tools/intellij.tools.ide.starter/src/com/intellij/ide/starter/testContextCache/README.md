@@ -5,7 +5,7 @@ over it. The KDoc of each class describes its own contract. This page describes 
 
 There are two ways to use a prepared context:
 
-- **A test that starts its own IDE.** It calls `CachedProjectConfiguration.createTestContext()`. This page describes it.
+- **A test that starts its own IDE.** It calls `Starter.newTestContextFromCache(configuration)`. This page describes it.
 - **A `@ReusedRun` class.** One IDE serves all tests of the class. See
   [Reused IDE Runs](../../../../../../../intellij.tools.ide.starter.driver/src/com/intellij/ide/starter/driver/reused/README.md).
 
@@ -18,7 +18,7 @@ val myProject = CachedProjectConfiguration(MyProjectCase)
 
 @Test
 fun myTest() {
-  myProject.createTestContext()
+  Starter.newTestContextFromCache(myProject)
     .runIdeWithDriver()
     .useDriverAndCloseIde { /* ... */ }
 }
@@ -43,7 +43,7 @@ change that one test makes to them does not go into the next test. Its directory
 The cache entry captures the prepared state right after `setup`, before any IDE start. It holds the whole project,
 the build roots included. It lives as long as the process.
 
-`createTestContext()` rewinds the project directory to the prepared state before each test. So each test starts from
+`Starter.newTestContextFromCache()` rewinds the project directory to the prepared state before each test. So each test starts from
 the state that `setup` left, whatever the test before it did. This also applies to `.idea`, `workspace.xml` included,
 and to a test that failed. The build roots `build`, `target`, `.gradle`, and `.kotlin` are restored too, so each test
 compiles from the prepared state:
