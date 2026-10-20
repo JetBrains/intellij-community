@@ -40,6 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.python.community.testFramework.PyFixmeKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterSdks;
@@ -48,7 +49,6 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -742,38 +742,14 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
+  /**
+   * See {@link PyFixmeKt#fixme(String, Class, String, Runnable)}.
+   */
   public static void fixme(@NotNull String comment,
                            @NotNull Class<? extends Throwable> expectedErrorClass,
                            @NotNull String anticipatedMessage,
                            @NotNull Runnable test) {
-    try {
-      test.run();
-    }
-    catch (Throwable failedError) {
-      if (
-        expectedErrorClass.isInstance(failedError)
-        || failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError
-           && expectedErrorClass.isInstance(testLoggerError.getCause())
-      ) {
-        if (failedError.getMessage().contains(anticipatedMessage)) {
-          // fix-me tests are supposed to fail
-          return;
-        }
-        throw new AssertionError(
-          "Test " +
-          comment +
-          " expected the incorrect error message '" +
-          anticipatedMessage +
-          "' was not found in actual message '" +
-          failedError.getMessage() +
-          "'",
-          failedError
-        );
-      }
-      throw failedError;
-    }
-    // the fix-me test passed -> the bug/feature was fixed!
-    fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
+    PyFixmeKt.fixme(comment, expectedErrorClass, anticipatedMessage, test);
   }
 
   protected static void withNewAnyTypeEnabled(@NotNull Runnable test) {
