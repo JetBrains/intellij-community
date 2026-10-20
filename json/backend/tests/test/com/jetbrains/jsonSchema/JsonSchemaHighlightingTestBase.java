@@ -56,7 +56,7 @@ public abstract class JsonSchemaHighlightingTestBase extends BasePlatformTestCas
                                          @NotNull String schemaExt,
                                          Predicate<VirtualFile> predicate) {
     String path = "json_schema_test/schema." + schemaExt;
-    VirtualFile tempFile = fixture.findFileInTempDir(path);
+    VirtualFile tempFile = fixture.getTempDirFixture().getFile(path);
     if (tempFile != null) return;
     PsiFile file = fixture.addFileToProject(path, schemaText);
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(file.getVirtualFile(), predicate));

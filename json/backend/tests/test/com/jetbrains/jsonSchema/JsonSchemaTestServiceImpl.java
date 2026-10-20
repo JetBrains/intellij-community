@@ -54,7 +54,7 @@ public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
     @NotNull
     @Override
     public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
-      return providers;
+      return providers != null ? providers : Collections.emptyList();
     }
   }
 }
