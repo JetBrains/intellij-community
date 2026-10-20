@@ -305,7 +305,9 @@ internal class DocumentBranchImpl private constructor(
   }
 
   override fun toString(): String {
-    return "DocumentBranch(agent=$agent, events=${graph.size()}, length=${text.length()})"
+    val id = Integer.toHexString(System.identityHashCode(this))
+    val content = "agent=$agent, events=${graph.size()}, length=${text.length()}, modState=$modState"
+    return "DocumentBranch@$id{$content}"
   }
 
   companion object {

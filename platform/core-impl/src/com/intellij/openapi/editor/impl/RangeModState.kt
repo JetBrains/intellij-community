@@ -216,6 +216,11 @@ internal class RangeModState private constructor(
     return positions.hasModified(text.lineStartOffset(firstLine), text.lineEndOffset(lastLine))
   }
 
+  override fun toString(): String {
+    val runs = positions?.runCount() ?: 0
+    return "RangeModState{stamp=$stamp, sequence=$sequence, runs=$runs}"
+  }
+
   /**
    * A replace of the old positions from [start] to [end] by [length] new characters.
    */

@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.experimental.Agent
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import kotlin.concurrent.Volatile
 
@@ -15,7 +15,7 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  @Volatile private var snapshot: DocumentSnapshot,
+  @Volatile private var snapshot: DocumentBranch,
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
 ) : DocumentCore {
@@ -24,7 +24,7 @@ internal class DocumentCoreImpl private constructor(
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
 
-  override fun snapshot(): DocumentSnapshot {
+  override fun snapshot(): DocumentBranch {
     return snapshot
   }
 
@@ -65,7 +65,7 @@ internal class DocumentCoreImpl private constructor(
   /**
    * Whether [frozen] has the text and the modification stamp of [snapshot]. A frozen document holds nothing else.
    */
-  private fun isFrozenFrom(frozen: FrozenDocument, snapshot: DocumentSnapshot): Boolean {
+  private fun isFrozenFrom(frozen: FrozenDocument, snapshot: DocumentBranch): Boolean {
     return frozen.docText === snapshot.text() && frozen.modificationStamp == snapshot.modState().stamp()
   }
 
@@ -87,19 +87,19 @@ internal class DocumentCoreImpl private constructor(
   }
 
   private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, snapshotMarkerStores) {
-    override fun getSnapshot(): DocumentSnapshot {
+    override fun getSnapshot(): DocumentBranch {
       return this@DocumentCoreImpl.snapshot
     }
 
     override fun updateAndGet(
-      initialSnapshot: DocumentSnapshot?,
+      initialSnapshot: DocumentBranch?,
       patch: DocumentPatch?,
-      update: (DocumentSnapshot) -> DocumentSnapshot,
-    ): DocumentSnapshot {
+      update: (DocumentBranch) -> DocumentBranch,
+    ): DocumentBranch {
       while (true) {
         val expected = this@DocumentCoreImpl.snapshot
         val before = if (initialSnapshot == null || expected.text() === initialSnapshot.text()) expected else initialSnapshot
-        val after = update(before)
+        val after = trimmed(update(before))
         if (snapshotMarkerStores.tryCommit(
             before,
             after,
@@ -114,12 +114,24 @@ internal class DocumentCoreImpl private constructor(
   }
 
   companion object {
+    /**
+     * The agent that every document core edits under. The lineage of each branch keeps two documents apart.
+     */
+    private val MAIN_AGENT: Agent = Agent.createAgent("main")
+
     @JvmStatic
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settings = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val dispatcher = DocumentEventDispatcherImpl(settings)
-      val snapshot = DocumentSnapshotImpl(DocumentText.createText(chars))
-      return DocumentCoreImpl(snapshot, settings, dispatcher)
+      val branch = DocumentBranch.createBranch(chars, MAIN_AGENT)
+      return DocumentCoreImpl(branch, settings, dispatcher)
+    }
+
+    /**
+     * [branch] trimmed to its version. The core keeps no history, so it publishes only branches with no events.
+     */
+    private fun trimmed(branch: DocumentBranch): DocumentBranch {
+      return branch.trimmedTo(branch.version())
     }
   }
 }

@@ -21,6 +21,10 @@ internal sealed interface BranchModState {
     override fun resolved(): DocumentModState {
       return modState
     }
+
+    override fun toString(): String {
+      return modState.toString()
+    }
   }
 
   /**
@@ -37,6 +41,13 @@ internal sealed interface BranchModState {
 
     override fun resolved(): DocumentModState {
       return folded
+    }
+
+    /**
+     * Shows no mod state, because a print must not run the fold.
+     */
+    override fun toString(): String {
+      return "deferred"
     }
   }
 
