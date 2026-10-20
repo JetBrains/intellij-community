@@ -262,15 +262,13 @@ fn failure_class(failure: &ReportFailure) -> Option<&str> {
 }
 
 /// The trace of a failure's scenario. A bundle names its class by the simple name and the report by the FQN, so
-/// the simple names are compared. The JVM daemon names a dynamic test as the JUnit reporter does, which can add an
-/// index or parentheses, so the test name must contain the scenario.
+/// the simple names are compared. The lane daemon names a case and its bundle by the same scenario name, so the test
+/// name must equal the scenario, as the report matches a case to its bundle.
 fn trace_of(failure: &ReportFailure, bundles: &[TraceBundle]) -> Option<TraceRef> {
     let class = simple_name(failure.class_name.as_deref()?);
     bundles
         .iter()
-        .find(|bundle| {
-            simple_name(&bundle.test_class) == class && !bundle.scenario.is_empty() && failure.test_name.contains(&bundle.scenario)
-        })
+        .find(|bundle| simple_name(&bundle.test_class) == class && !bundle.scenario.is_empty() && failure.test_name == bundle.scenario)
         .map(trace_ref)
 }
 

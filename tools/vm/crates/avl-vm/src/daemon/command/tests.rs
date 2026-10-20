@@ -886,7 +886,7 @@ fn report_failure(class_name: Option<&str>, test_name: &str, message: &str) -> R
 }
 
 // A failure carries the trace of its scenario. The bundle names the class by the simple name and the report by the
-// FQN, and the JVM daemon names a dynamic test as the JUnit reporter does.
+// FQN, and the test name equals the scenario of the bundle.
 #[test]
 fn a_failure_carries_the_trace_of_its_scenario() {
     let class = Some("com.example.AirTest");
@@ -895,19 +895,22 @@ fn a_failure_carries_the_trace_of_its_scenario() {
         &[
             report_failure(class, "renames", "boom\nstack"),
             report_failure(class, "[2] opens", ""),
+            report_failure(class, "opens-twice", ""),
             report_failure(class, "closes", ""),
         ],
         &bundles,
     );
-    assert_eq!(failures[0].trace.as_ref().map(|trace| trace.bundle_id.as_str()), Some("b"));
+    let traces: Vec<Option<&str>> = failures
+        .iter()
+        .map(|failure| failure.trace.as_ref().map(|trace| trace.bundle_id.as_str()))
+        .collect();
     assert_eq!(failures[0].message.as_deref(), Some("boom"));
     assert_eq!(failures[0].class, "com.example.AirTest");
     assert_eq!(
-        failures[1].trace.as_ref().map(|trace| trace.bundle_id.as_str()),
-        Some("a"),
-        "an XML name with an index finds its trace"
+        traces,
+        [Some("b"), None, None, None],
+        "only the name of the scenario itself finds its trace, not a name that holds it or starts with it"
     );
-    assert_eq!(failures[2].trace, None);
 }
 
 // The verdict says whether the tree the build read was clean.
