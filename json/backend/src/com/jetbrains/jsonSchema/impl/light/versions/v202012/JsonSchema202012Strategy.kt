@@ -10,12 +10,12 @@ import com.jetbrains.jsonSchema.impl.light.DEPENDENT_REQUIRED
 import com.jetbrains.jsonSchema.impl.light.DEPENDENT_SCHEMAS
 import com.jetbrains.jsonSchema.impl.light.DYNAMIC_ANCHOR
 import com.jetbrains.jsonSchema.impl.light.DYNAMIC_REF
+import com.jetbrains.jsonSchema.impl.light.ExternalSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.InFileSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
-import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
-import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.PREFIX_ITEMS
-import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
 import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_ITEMS
 import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_PROPERTIES
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
@@ -40,8 +40,8 @@ internal data object JsonSchema202012Strategy : JsonSchemaInterpretationStrategy
   override val propertyDependenciesKeyword: String = DEPENDENT_REQUIRED
   override val unevaluatedItemsKeyword: String = UNEVALUATED_ITEMS
   override val unevaluatedPropertiesKeyword: String = UNEVALUATED_PROPERTIES
-  override val referenceResolvers: Sequence<JsonSchemaReferenceResolver> =
-    sequenceOf(LocalSchemaReferenceResolver, RemoteSchemaReferenceResolver, Vocabulary2020Resolver)
+  override val refLoaders: Sequence<JsonSchemaRefLoader> =
+    sequenceOf(InFileSchemaRefLoader, ExternalSchemaRefLoader, Vocabulary2020RefLoader)
 
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return sequence {

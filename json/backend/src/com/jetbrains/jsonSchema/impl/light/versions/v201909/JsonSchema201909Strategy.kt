@@ -9,13 +9,13 @@ import com.jetbrains.jsonSchema.impl.light.ADDITIONAL_ITEMS
 import com.jetbrains.jsonSchema.impl.light.DEFS
 import com.jetbrains.jsonSchema.impl.light.DEPENDENT_REQUIRED
 import com.jetbrains.jsonSchema.impl.light.DEPENDENT_SCHEMAS
+import com.jetbrains.jsonSchema.impl.light.ExternalSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.InFileSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
-import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
-import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.RECURSIVE_ANCHOR
 import com.jetbrains.jsonSchema.impl.light.RECURSIVE_REF
-import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
 import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_ITEMS
 import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_PROPERTIES
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
@@ -32,8 +32,8 @@ internal data object JsonSchema201909Strategy : JsonSchemaInterpretationStrategy
   override val propertyDependenciesKeyword: String = DEPENDENT_REQUIRED
   override val unevaluatedItemsKeyword: String = UNEVALUATED_ITEMS
   override val unevaluatedPropertiesKeyword: String = UNEVALUATED_PROPERTIES
-  override val referenceResolvers: Sequence<JsonSchemaReferenceResolver> =
-    sequenceOf(RecursiveRefResolver, LocalSchemaReferenceResolver, RemoteSchemaReferenceResolver, Vocabulary2019Resolver)
+  override val refLoaders: Sequence<JsonSchemaRefLoader> =
+    sequenceOf(RecursiveSchemaRefLoader, InFileSchemaRefLoader, ExternalSchemaRefLoader, Vocabulary2019RefLoader)
 
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return getSchema7AndEarlierValidations(schemaNode, type, value)

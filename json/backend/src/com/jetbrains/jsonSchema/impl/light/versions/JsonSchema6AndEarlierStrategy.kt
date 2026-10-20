@@ -7,12 +7,12 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.ADDITIONAL_ITEMS
 import com.jetbrains.jsonSchema.impl.light.DEPENDENCIES
+import com.jetbrains.jsonSchema.impl.light.ExternalSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.InFileSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.JSON_DEFINITIONS
 import com.jetbrains.jsonSchema.impl.light.JSON_ID
-import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
-import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
-import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.validations.getSchema7AndEarlierValidations
 
 internal data object JsonSchema6AndEarlierStrategy : JsonSchemaInterpretationStrategy {
@@ -27,8 +27,8 @@ internal data object JsonSchema6AndEarlierStrategy : JsonSchemaInterpretationStr
   override val unevaluatedItemsKeyword: String? = null
   override val unevaluatedPropertiesKeyword: String? = null
 
-  override val referenceResolvers: Sequence<JsonSchemaReferenceResolver> =
-    sequenceOf(LocalSchemaReferenceResolver, RemoteSchemaReferenceResolver)
+  override val refLoaders: Sequence<JsonSchemaRefLoader> =
+    sequenceOf(InFileSchemaRefLoader, ExternalSchemaRefLoader)
 
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return getSchema7AndEarlierValidations(schemaNode, type, value)

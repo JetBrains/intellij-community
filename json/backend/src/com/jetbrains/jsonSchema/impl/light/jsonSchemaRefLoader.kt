@@ -13,12 +13,12 @@ import com.jetbrains.jsonSchema.remote.JsonFileResolver
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface JsonSchemaReferenceResolver {
-  fun resolve(reference: String, referenceOwner: JsonSchemaObjectBackedByJacksonBase, service: JsonSchemaService): JsonSchemaObject?
+interface JsonSchemaRefLoader {
+  fun load(reference: String, referenceOwner: JsonSchemaObjectBackedByJacksonBase, service: JsonSchemaService): JsonSchemaObject?
 }
 
-internal data object LocalSchemaReferenceResolver : JsonSchemaReferenceResolver {
-  override fun resolve(
+internal data object InFileSchemaRefLoader : JsonSchemaRefLoader {
+  override fun load(
     reference: String,
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,
@@ -27,8 +27,8 @@ internal data object LocalSchemaReferenceResolver : JsonSchemaReferenceResolver 
   }
 }
 
-internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver {
-  override fun resolve(
+internal data object ExternalSchemaRefLoader : JsonSchemaRefLoader {
+  override fun load(
     reference: String,
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,
@@ -46,8 +46,8 @@ internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver
   }
 }
 
-internal abstract class VocabularySchemaReferenceResolver(private val bundledVocabularies: List<StandardJsonSchemaVocabulary.Bundled>) : JsonSchemaReferenceResolver {
-  override fun resolve(
+internal abstract class VocabularySchemaRefLoader(private val bundledVocabularies: List<StandardJsonSchemaVocabulary.Bundled>) : JsonSchemaRefLoader {
+  override fun load(
     reference: String,
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,

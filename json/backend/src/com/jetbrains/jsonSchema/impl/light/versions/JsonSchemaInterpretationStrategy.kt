@@ -25,7 +25,7 @@ import com.jetbrains.jsonSchema.impl.light.FORMAT
 import com.jetbrains.jsonSchema.impl.light.IF
 import com.jetbrains.jsonSchema.impl.light.ITEMS
 import com.jetbrains.jsonSchema.impl.light.JSON_PROPERTIES
-import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaRefLoader
 import com.jetbrains.jsonSchema.impl.light.MAXIMUM
 import com.jetbrains.jsonSchema.impl.light.MAX_ITEMS
 import com.jetbrains.jsonSchema.impl.light.MAX_LENGTH
@@ -67,7 +67,7 @@ internal fun computeJsonSchemaVersion(schemaFieldValue: String?): JsonSchemaInte
  * The property returns the keyword value or null if the keyword is not supported by a particular schema version.
  *
  * Different behavior patterns might be represented by custom interfaces with several available implementations,
- * e.g., there might be several reference resolvers or node validators.
+ * e.g., there might be several reference loaders or node validators.
  *
  * IMPORTANT: This class is intentionally marked as internal,
  * thus it might be easily changed and adapted to the new json schema releases without breaking the public API.
@@ -123,7 +123,7 @@ interface JsonSchemaInterpretationStrategy {
   val dynamicAnchorKeyword: String?
   val unevaluatedItemsKeyword: String?
   val unevaluatedPropertiesKeyword: String?
-  val referenceResolvers: Sequence<JsonSchemaReferenceResolver>
+  val refLoaders: Sequence<JsonSchemaRefLoader>
 
   fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation>
 

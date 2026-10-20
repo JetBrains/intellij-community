@@ -38,7 +38,7 @@ public final class JsonSchemaObjectReadingUtils {
 
 
   /**
-   * @deprecated Use {@link  com.jetbrains.jsonSchema.impl.light.JsonSchemaRefResolverKt#resolveRefSchema}
+   * @deprecated Use {@link JsonSchemaObject#resolveRefSchema}
    */
   @Deprecated(forRemoval = true)
   public static @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaObject schemaNode, @NotNull JsonSchemaService service) {

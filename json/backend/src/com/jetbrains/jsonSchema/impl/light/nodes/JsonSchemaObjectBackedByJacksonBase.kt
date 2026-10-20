@@ -540,8 +540,8 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
 
   override fun resolveRefSchema(service: JsonSchemaService): JsonSchemaObject? {
     val effectiveReference = ref ?: return null
-    return getSchemaInterpretationStrategy().referenceResolvers
-      .firstNotNullOfOrNull { resolver -> resolver.resolve(effectiveReference, this, service) }
+    return getSchemaInterpretationStrategy().refLoaders
+      .firstNotNullOfOrNull { loader -> loader.load(effectiveReference, this, service) }
       ?.takeIf { it !is MissingJsonSchemaObject }
   }
 }

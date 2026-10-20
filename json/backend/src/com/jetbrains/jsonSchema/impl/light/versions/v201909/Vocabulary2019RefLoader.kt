@@ -2,9 +2,9 @@
 package com.jetbrains.jsonSchema.impl.light.versions.v201909
 
 import com.jetbrains.jsonSchema.impl.light.StandardJsonSchemaVocabulary
-import com.jetbrains.jsonSchema.impl.light.VocabularySchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.VocabularySchemaRefLoader
 
-internal data object Vocabulary2019Resolver : VocabularySchemaReferenceResolver(
+internal data object Vocabulary2019RefLoader : VocabularySchemaRefLoader(
   listOf(
     StandardJsonSchemaVocabulary.Bundled("https://json-schema.org/draft/2019-09/vocab/core",
                                          "https://json-schema.org/draft/2019-09/meta/core",
