@@ -97,7 +97,7 @@ data class RemoteArchiveProjectInfo(
   }
 
   private fun String.transformUrlToZipName(): String {
-    val spaceVcsArchiveMirrorPrefix = "https://packages.jetbrains.team/files/p/ij/space-vcs-archive-mirror/"
+    val spaceVcsArchiveMirrorPrefix = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/space-vcs-archive-mirror/"
     return when {
       projectURL.contains("https://github.com") -> {
         this.removePrefix("https://github.com/").split("/").joinToString("_", postfix = ".zip")
