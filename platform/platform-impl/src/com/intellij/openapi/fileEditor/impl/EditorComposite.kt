@@ -230,9 +230,30 @@ open class EditorComposite internal constructor(
   /** Tab restoration shall not appear */
   internal var preparationVisibleInStatusBar: Boolean = true
 
-  /** Shows a cancellable task until the editors are published. Set on EDT before initialization starts. */
+  /** Controls the preparation task. Set on EDT before initialization starts. */
   @Internal
-  var showPreparationProgress: Boolean = true
+  var preparationProgress: PreparationProgress = PreparationProgress.UNTIL_OPENING_FINISHED
+
+  @Internal
+  enum class PreparationProgress {
+    /**
+     * Cancellation stops the preparation.
+     * Used by a local composite.
+     */
+    UNTIL_OPENING_FINISHED,
+
+    /**
+     * If cancelled before the editors are published, closes the tab.
+     * Used by a frontend composite in split mode.
+     */
+    UNTIL_EDITORS_PUBLISHED,
+
+    /**
+     * Does not create a preparation task.
+     * Used by a backend composite and by a replacement composite of the light mode migration.
+     */
+    HIDDEN,
+  }
 
   private val _isPreviewFlow = MutableStateFlow(false)
   internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
@@ -272,16 +293,20 @@ open class EditorComposite internal constructor(
                               .asContextElement() + clientId.asContextElement() + tracer.rootSpan("EditorComposite model flow",
                                                                                                   arrayOf("file", file.name))) {
         // Let's wait until EDT has created a tab in FileManagerImpl and then show progress
-        val (visibleInStatusBar, showProgress) = span("waiting initDeferred", Dispatchers.EDT) {
+        val (visibleInStatusBar, progress) = span("waiting initDeferred", Dispatchers.EDT) {
           initDeferred.await()
-          preparationVisibleInStatusBar to showPreparationProgress
+          preparationVisibleInStatusBar to preparationProgress
         }
         try {
-          if (showProgress) {
-            collectModelUntilEditorsPublished(model, visibleInStatusBar)
-          }
-          else {
-            collectModel(model)
+          when (progress) {
+            PreparationProgress.HIDDEN -> collectModel(model)
+            PreparationProgress.UNTIL_EDITORS_PUBLISHED -> collectModelUntilEditorsPublished(model, visibleInStatusBar)
+            PreparationProgress.UNTIL_OPENING_FINISHED -> withBackgroundProgress(
+              project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
+              suspender = null, visibleInStatusBar = visibleInStatusBar,
+            ) {
+              collectModel(model)
+            }
           }
         }
         finally {
