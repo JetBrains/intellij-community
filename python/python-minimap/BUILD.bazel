@@ -31,6 +31,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/structure-view-impl:structureView",
         "//python:python-community-impl",
+        "//python/python-navigation:navigation",
         "//python/python-parser:parser",
     ],
 )
@@ -53,6 +54,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/structure-view-impl:structureView_test_lib",
         "//python:python-community-impl_test_lib",
+        "//python/python-navigation:navigation_test_lib",
         "//python/python-parser:parser_test_lib",
     ],
 )

@@ -265,7 +265,6 @@
                  key="django.enable.pyi.stubs"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
 
-    <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
 
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
@@ -428,8 +427,6 @@
 
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
 
-    <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
-
     <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyConsoleOptionsConfigurable.display.name"/>
@@ -510,8 +507,6 @@
     <registryKey defaultValue="64"
                  description="Minimum scroll-bar distance (px) from the bottom that triggers loading the next page of search results in the Install Package dialog."
                  restartRequired="false" key="python.packaging.install.dialog.results.list.load.more.threshold.px"/>
-
-    <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
 
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
 

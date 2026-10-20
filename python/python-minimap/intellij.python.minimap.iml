@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.structureView" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
+    <orderEntry type="module" module-name="intellij.python.navigation" />
     <orderEntry type="module" module-name="intellij.python.parser" />
   </component>
 </module>

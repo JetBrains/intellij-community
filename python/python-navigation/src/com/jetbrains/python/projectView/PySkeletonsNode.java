@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.navigation.PyNavigationBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public final class PySkeletonsNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(@NotNull PresentationData data) {
-    data.setPresentableText(PyBundle.message("python.project.view.py.skeletons"));
+    data.setPresentableText(PyNavigationBundle.message("python.project.view.py.skeletons"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 

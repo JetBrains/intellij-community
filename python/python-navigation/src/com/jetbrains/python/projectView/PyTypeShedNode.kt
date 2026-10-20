@@ -25,8 +25,8 @@ import com.intellij.openapi.roots.OrderRootType.CLASSES
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PlatformIcons
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.navigation.PyNavigationBundle
 
 class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : ProjectViewNode<Sdk>(project, sdk, viewSettings) {
   companion object {
@@ -51,7 +51,7 @@ class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : 
   override fun contains(file: VirtualFile): Boolean = PyTypeShed.isInside(file)
 
   override fun update(presentation: PresentationData) {
-    presentation.presentableText = PyBundle.message("python.project.view.typeshed.stubs")
+    presentation.presentableText = PyNavigationBundle.message("python.project.view.typeshed.stubs")
     presentation.setIcon(PlatformIcons.LIBRARY_ICON)
   }
 }

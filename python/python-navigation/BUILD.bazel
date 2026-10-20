@@ -49,6 +49,8 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
+        "//platform/remote-core",
+        "//platform/structure-view-impl:structureView",
         "//platform/ui.tree",
         "//platform/usageView",
         "//platform/usageView-impl",
@@ -57,6 +59,7 @@ jvm_library(
         "//python/python-ast:ast",
         "//python/python-psi-api:psi",
         "//python/python-psi-impl:psi-impl",
+        "//python/python-sdk/backend",
     ],
 )
 
@@ -89,6 +92,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring:refactoring_test_lib",
+        "//platform/remote-core:remote-core_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/ui.tree:ui.tree_test_lib",
         "//platform/usageView:usageView_test_lib",
         "//platform/usageView-impl:usageView-impl_test_lib",
@@ -97,6 +102,7 @@ jvm_library(
         "//python/python-ast:ast_test_lib",
         "//python/python-psi-api:psi_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.navigation` end

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.navigation.PyNavigationBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(@NotNull PresentationData data) {
-    data.setPresentableText(PyBundle.message("python.project.view.remote.libraries"));
+    data.setPresentableText(PyNavigationBundle.message("python.project.view.remote.libraries"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
