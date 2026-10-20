@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
 import com.intellij.platform.workspace.storage.EntityChange
@@ -29,6 +30,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.SmartList
@@ -62,7 +64,8 @@ internal suspend fun initWorkspaceFileIndexData(
 
   @Suppress("UnsafeOpenServiceCast")
   val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal
-  val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
+  val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+  val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, virtualFileUrlManager)
 
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
@@ -71,7 +74,9 @@ internal suspend fun initWorkspaceFileIndexData(
 
   val coroutineTracer = CoroutineTracerShim.coroutineTracer
   coroutineTracer.span("register main entities") {
-    val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val registrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    )
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for ((entityClass, contributors) in contributors) {
         coroutineTracer.span("register file sets by ${entityClass.name.substringAfterLast('.')}") {
@@ -84,7 +89,9 @@ internal suspend fun initWorkspaceFileIndexData(
     }
   }
   coroutineTracer.span("register unloaded entities") {
-    val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val registrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    )
     registerAllEntities(
       registrar = registrar,
       storage = workspaceModel.currentSnapshotOfUnloadedEntities,
@@ -124,7 +131,8 @@ internal fun blockingInitWorkspaceFileIndexData(
 
   @Suppress("UnsafeOpenServiceCast")
   val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelInternal
-  val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
+  val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+  val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, virtualFileUrlManager)
 
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
@@ -132,12 +140,16 @@ internal fun blockingInitWorkspaceFileIndexData(
   val start = Nanoseconds.now()
 
   registerAllEntities(
-    registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix),
+    registrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    ),
     storage = workspaceModel.currentSnapshot,
     contributorMap = contributors,
   )
   registerAllEntities(
-    registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix),
+    registrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    ),
     storage = workspaceModel.currentSnapshotOfUnloadedEntities,
     contributorMap = getContributors(contributorList, EntityStorageKind.UNLOADED),
   )
@@ -527,8 +539,11 @@ internal class WorkspaceFileIndexDataImpl(
     storageKind: EntityStorageKind,
   ) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
+    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
-    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    )
     contributorList.filter { it.storageKind == storageKind }.forEachLoggingErrors(logger) {
       processChangesByContributor(it, event, storeRegistrar, removeRegistrar)
     }
@@ -580,9 +595,13 @@ internal class WorkspaceFileIndexDataImpl(
         dirtyEntities.add(it.entityPointer)
       }
     }
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
+    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
     val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
-    val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(
+      virtualFileUrlManager, EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix,
+    )
     val dirty = dirtyEntities.mapNotNull { reference ->
       val entity = reference.resolve(storage) ?: return@mapNotNull null
       val entityContributors = contributors[entity.getEntityInterface()] ?: return@mapNotNull null
@@ -907,6 +926,7 @@ internal fun WorkspaceFileKind.toMask(): Int {
 }
 
 private class StoreFileSetsRegistrarImpl(
+  private val virtualFileUrlManager: VirtualFileUrlManager,
   private val storageKind: EntityStorageKind,
   private val nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry,
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
@@ -964,6 +984,7 @@ private class StoreFileSetsRegistrarImpl(
   }
 
   override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+    virtualFileUrlManager.storeAndGet(root)
     registerFileSet(root = root, kind = kind, entity = entity, customData = customData, recursive = true)
   }
 

@@ -11,14 +11,21 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.workspaceModel.update
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceExcludeFileSet
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -29,6 +36,46 @@ internal class WorkspaceFileSetsAtUrlTest {
   private val projectModel: ProjectModelExtension = ProjectModelExtension()
 
   private val disposable get() = projectModel.disposableRule.disposable
+
+  @Test
+  fun `virtual file registration stores the root URL`(): Unit = timeoutRunBlocking {
+    val project = projectModel.project
+    val workspaceModel = project.workspaceModel
+    val urlManager = workspaceModel.getVirtualFileUrlManager()
+    val root = LightVirtualFile("root")
+    assertNull(urlManager.get(root.url))
+    val contributor = object : WorkspaceFileIndexContributor<IndexingTestEntity> {
+      override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
+
+      override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+        registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null)
+      }
+    }
+    edtWriteAction {
+      WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(contributor, disposable)
+    }
+    val index = WorkspaceFileIndexEx.getInstance(project)
+    workspaceModel.update { storage ->
+      storage.addEntity(IndexingTestEntity(emptyList(), emptyList(), NonPersistentEntitySource))
+    }
+    assertNotNull(urlManager.get(root.url))
+    readAction {
+      assertNotEquals(0, index.indexData.getFileSetsAt(root).mask)
+    }
+    edtWriteAction {
+      index.reset()
+    }
+    index.initialize()
+    readAction {
+      assertNotEquals(0, index.indexData.getFileSetsAt(root).mask)
+    }
+    workspaceModel.update { storage ->
+      storage.removeEntity(storage.entities(IndexingTestEntity::class.java).single())
+    }
+    readAction {
+      assertEquals(0, index.indexData.getFileSetsAt(root).mask)
+    }
+  }
 
   @Test
   fun `missing URL lookup refreshes policy exclusions`(): Unit = runBlocking {
