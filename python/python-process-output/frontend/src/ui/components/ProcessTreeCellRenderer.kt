@@ -1,5 +1,6 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.python.processOutput.common.ProcessWeightDto
@@ -29,6 +30,8 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
   private val component = JPanel()
   private val title = JBLabel()
   private val eastLabel = JBLabel()
+  private val errorIcons = Caffeine.newBuilder().maximumSize(ICON_CACHE_SIZE).build<Icon, Icon>()
+  private val scaledErrorSubicons = Caffeine.newBuilder().maximumSize(ICON_CACHE_SIZE).build<Icon, Icon>()
 
   init {
     title.iconTextGap = JBUI.scale(Styling.ICON_TEXT_GAP)
@@ -99,13 +102,13 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
     title.icon = processIcon(treeNode)
     title.foreground =
       when (treeNode) {
-        is ProcessTreeNode.Context -> null
+        is ProcessTreeNode.Context -> JBUI.CurrentTheme.Label.foreground()
         is ProcessTreeNode.Process ->
           if (treeNode.isCriticalError) {
             Styling.CRITICAL_ERROR_COLOR
           }
           else {
-            null
+            JBUI.CurrentTheme.Label.foreground()
           }
 
       }
@@ -147,35 +150,39 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
     }
 
   private fun errorIcon(parentIcon: Icon) =
-    object : IconWithOverlay(parentIcon, scaledErrorSubicon(parentIcon)) {
-      override fun getOverlayShape(x: Int, y: Int): Shape {
-        val radius = Styling.ERROR_CUTOUT_RADIUS
-        val centerX = parentIcon.iconWidth.toFloat() - Styling.ERROR_CUTOUT_OFFSET
-        val centerY = parentIcon.iconHeight.toFloat() - Styling.ERROR_CUTOUT_OFFSET
-        return Ellipse2D.Float(centerX - radius, centerY - radius, radius * 2f, radius * 2f)
+    errorIcons.get(parentIcon) {
+      object : IconWithOverlay(parentIcon, scaledErrorSubicon(parentIcon)) {
+        override fun getOverlayShape(x: Int, y: Int): Shape {
+          val radius = Styling.ERROR_CUTOUT_RADIUS
+          val centerX = parentIcon.iconWidth.toFloat() - Styling.ERROR_CUTOUT_OFFSET
+          val centerY = parentIcon.iconHeight.toFloat() - Styling.ERROR_CUTOUT_OFFSET
+          return Ellipse2D.Float(centerX - radius, centerY - radius, radius * 2f, radius * 2f)
+        }
       }
     }
 
   private fun scaledErrorSubicon(parentIcon: Icon) =
-    object : Icon {
-      private val scaledSubicon =
-        IconUtil.scale(
-          Styling.ERROR_ICON,
-          null,
-          Styling.ERROR_ICON_SIZE.toFloat() / Styling.ERROR_ICON.iconWidth.toFloat(),
-        )
+    scaledErrorSubicons.get(parentIcon) {
+      object : Icon {
+        private val scaledSubicon =
+          IconUtil.scale(
+            Styling.ERROR_ICON,
+            null,
+            Styling.ERROR_ICON_SIZE.toFloat() / Styling.ERROR_ICON.iconWidth.toFloat(),
+          )
 
-      override fun paintIcon(component: Component?, graphics: Graphics?, x: Int, y: Int) {
-        val dx = parentIcon.iconWidth - scaledSubicon.iconWidth + Styling.ERROR_ICON_OFFSET
-        val dy = parentIcon.iconHeight - scaledSubicon.iconHeight + Styling.ERROR_ICON_OFFSET
-        scaledSubicon.paintIcon(component, graphics, x + dx, y + dy)
+        override fun paintIcon(component: Component?, graphics: Graphics?, x: Int, y: Int) {
+          val dx = parentIcon.iconWidth - scaledSubicon.iconWidth + Styling.ERROR_ICON_OFFSET
+          val dy = parentIcon.iconHeight - scaledSubicon.iconHeight + Styling.ERROR_ICON_OFFSET
+          scaledSubicon.paintIcon(component, graphics, x + dx, y + dy)
+        }
+
+        override fun getIconWidth(): Int =
+          parentIcon.iconWidth + Styling.ERROR_ICON_OFFSET
+
+        override fun getIconHeight(): Int =
+          parentIcon.iconHeight + Styling.ERROR_ICON_OFFSET
       }
-
-      override fun getIconWidth(): Int =
-        parentIcon.iconWidth + Styling.ERROR_ICON_OFFSET
-
-      override fun getIconHeight(): Int =
-        parentIcon.iconHeight + Styling.ERROR_ICON_OFFSET
     }
 
   private object Styling {
@@ -194,6 +201,10 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
     val CRITICAL_ERROR_ICON = PythonProcessOutputFrontendIcons.ResultIncorrect
     val TIME_COLOR = JBColor.namedColor("Component.infoForeground")
     val CRITICAL_ERROR_COLOR = JBColor.namedColor("Label.errorForeground")
+  }
+  
+  companion object {
+    private const val ICON_CACHE_SIZE = 120L
   }
 }
 
