@@ -76,6 +76,26 @@ private class JsonSchemaUpdater(project: Project, scope: CoroutineScope) : Dispo
         }
       }
     }
+
+    // Subscribe once for each project. A test can construct many JsonSchemaServiceImpl instances for one project.
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(RemoteSchemaDownloadListener.TOPIC, RemoteSchemaDownloadListener(::onSchemaDownloaded))
+    connection.subscribe<BulkFileListenerBackgroundable>(
+      VirtualFileManager.VFS_CHANGES_BG,
+      BulkVirtualFileListenerAdapterBackgroundable(object : VirtualFileContentsChangedAdapter() {
+        override fun onFileChange(schemaFile: VirtualFile) {
+          this@JsonSchemaUpdater.onFileChange(schemaFile)
+        }
+
+        override fun onBeforeFileChange(schemaFile: VirtualFile) {
+          this@JsonSchemaUpdater.onFileChange(schemaFile)
+        }
+      }))
+    PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeAnyChangeAbstractAdapter() {
+      override fun onChange(file: PsiFile?) {
+        if (file != null) this@JsonSchemaUpdater.onFileChange(file.getViewProvider().getVirtualFile())
+      }
+    }, this)
   }
 
   private suspend fun consumeDirtySchemas(project: Project) {
@@ -209,23 +229,5 @@ val JSON_SCHEMA_CHANGED: Topic<Runnable> =
 val JSON_DEPS_CHANGED: Topic<Runnable> = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable::class.java)
 
 internal fun startListening(project: Project) {
-  val updater = project.service<JsonSchemaUpdater>()
-  val connection = project.messageBus.connect(updater)
-  connection.subscribe(RemoteSchemaDownloadListener.TOPIC, RemoteSchemaDownloadListener(updater::onSchemaDownloaded))
-  connection.subscribe<BulkFileListenerBackgroundable>(
-    VirtualFileManager.VFS_CHANGES_BG,
-    BulkVirtualFileListenerAdapterBackgroundable(object : VirtualFileContentsChangedAdapter() {
-      override fun onFileChange(schemaFile: VirtualFile) {
-        updater.onFileChange(schemaFile)
-      }
-
-      override fun onBeforeFileChange(schemaFile: VirtualFile) {
-        updater.onFileChange(schemaFile)
-      }
-    }))
-  PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeAnyChangeAbstractAdapter() {
-    override fun onChange(file: PsiFile?) {
-      if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile())
-    }
-  }, updater)
+  project.service<JsonSchemaUpdater>()
 }
