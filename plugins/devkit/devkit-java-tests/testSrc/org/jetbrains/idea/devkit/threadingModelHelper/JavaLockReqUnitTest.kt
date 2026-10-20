@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -119,11 +120,15 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
   private fun doTest(className: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
-    val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
-    val targetMethod = targetClass.methods.find { it.name == TEST_METHOD_NAME } ?: error("Could not find method $TEST_METHOD_NAME")
+    val targetMethod = findTestMethod(psiJavaFile, className)
     return runBlocking {
       analyzerBFS.analyzeMethod(SmartPointerManager.createPointer(targetMethod), AnalysisConfig.forProject(psiJavaFile.project, EnumSet.allOf(ConstraintType::class.java)))
     }
+  }
+
+  private fun findTestMethod(psiJavaFile: PsiJavaFile, className: String): PsiMethod {
+    val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
+    return targetClass.methods.find { it.name == TEST_METHOD_NAME } ?: error("Could not find method $TEST_METHOD_NAME")
   }
 
   private fun formatResult(result: AnalysisResult): List<String> {
