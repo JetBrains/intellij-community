@@ -206,6 +206,24 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testLoggerCall() {
+    myFixture.addFileToProject("com/intellij/openapi/diagnostic/Logger.java", """
+      package com.intellij.openapi.diagnostic;
+      import com.intellij.util.concurrency.annotations.RequiresReadLock;
+      public abstract class Logger {
+        public abstract void info(String message);
+        public void error(String message) { read(); }
+        @RequiresReadLock
+        private static void read() { }
+      }
+      """.trimIndent())
+    val result = doTest("LoggerCall")
+    // the analysis does not go into Logger.error and the implementations of Logger.info, so their read requirements are not found
+    val expectedPaths = listOf("LoggerCall.testMethod -> LoggerCall.helper => READ.ANNOTATION")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testUserDataHolderCall() {
     myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolder.java", """
       package com.intellij.openapi.util;

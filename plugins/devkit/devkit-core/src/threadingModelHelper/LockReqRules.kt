@@ -127,6 +127,7 @@ class BaseLockReqRules : LockReqRules {
     "com.intellij.openapi.util.UserDataHolder",
     "com.intellij.openapi.util.UserDataHolderEx",
     "com.intellij.openapi.util.UserDataHolderBase",
+    "com.intellij.openapi.diagnostic.Logger",
   )
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(
