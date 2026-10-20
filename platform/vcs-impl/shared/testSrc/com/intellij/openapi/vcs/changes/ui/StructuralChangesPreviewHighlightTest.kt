@@ -1,0 +1,225 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes.ui
+
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.markup.CustomHighlighterOrder
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import java.awt.Color
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.image.BufferedImage
+
+@TestApplication
+internal class StructuralChangesPreviewHighlightTest {
+  @Test
+  fun `dim removes only its own markup`(): Unit = timeoutRunBlocking {
+    withEditor("before\nselected {\n  body\n}\nafter") { editor ->
+      val range = TextRange(7, editor.document.text.indexOf("\nafter"))
+      val unrelated = editor.markupModel.addRangeHighlighter(0, 6, HighlighterLayer.WARNING, TextAttributes(), HighlighterTargetArea.EXACT_RANGE)
+      val handle = checkNotNull(highlightStructuralPreview(editor, range))
+      val highlighter = editor.markupModel.allHighlighters.single { it !== unrelated }
+      assertTrue(highlighter.customRenderer != null)
+
+      Disposer.dispose(handle)
+
+      assertFalse(highlighter.isValid)
+      assertEquals(listOf(unrelated), editor.markupModel.allHighlighters.toList())
+      unrelated.dispose()
+    }
+  }
+
+  @Test
+  fun `highlight stays in one editor and preserves the caret and selection`(): Unit = timeoutRunBlocking {
+    withEditor("before selected after") { editor ->
+      val factory = EditorFactory.getInstance()
+      val otherEditor = factory.createEditor(editor.document, projectFixture.get())
+      try {
+        editor.caretModel.moveToOffset(2)
+        editor.selectionModel.setSelection(1, 4)
+        val scheme = editor.colorsScheme
+        val handle = checkNotNull(highlightStructuralPreview(editor, TextRange(7, 15)))
+        assertTrue(otherEditor.markupModel.allHighlighters.isEmpty())
+        assertEquals(2, editor.caretModel.offset)
+        assertEquals(1, editor.selectionModel.selectionStart)
+        assertEquals(4, editor.selectionModel.selectionEnd)
+        assertSame(scheme, editor.colorsScheme)
+        Disposer.dispose(handle)
+        assertTrue(editor.markupModel.allHighlighters.isEmpty())
+      }
+      finally {
+        factory.releaseEditor(otherEditor)
+      }
+    }
+  }
+
+  @Test
+  fun `empty and stale ranges do not add markup`(): Unit = timeoutRunBlocking {
+    withEditor("selected") { editor ->
+      assertNull(highlightStructuralPreview(editor, TextRange.EMPTY_RANGE))
+      assertNull(highlightStructuralPreview(editor, TextRange(0, editor.document.textLength + 1)))
+      assertTrue(editor.markupModel.allHighlighters.isEmpty())
+    }
+  }
+
+  @Test
+  fun `dim preserves the selected text and fades both same-line neighbours`(): Unit = timeoutRunBlocking {
+    withEditor("before selected after") { editor ->
+      val range = TextRange(7, 15)
+      val image = renderDim(editor, range)
+      assertClear(image, editor.characterPoint(range.startOffset))
+      assertClear(image, editor.characterPoint(range.endOffset - 1))
+      assertDimmed(image, editor.characterPoint(0))
+      assertDimmed(image, editor.characterPoint(range.endOffset + 1))
+    }
+  }
+
+  @Test
+  fun `dim skips bidirectional boundary lines`(): Unit = timeoutRunBlocking {
+    val hebrewValue = "\u05E9\u05DC\u05D5\u05DD"
+    val cases = listOf(
+      "key=$hebrewValue" to "key=$hebrewValue",
+      "$hebrewValue key=value" to "key=value",
+      "key=value $hebrewValue" to "key=value",
+      "key=\n$hebrewValue" to "key=\n$hebrewValue",
+    )
+    for ((text, selectedText) in cases) {
+      withEditor(text) { editor ->
+        val range = TextRange.from(text.indexOf(selectedText), selectedText.length)
+        assertNull(highlightStructuralPreview(editor, range))
+        assertTrue(editor.markupModel.allHighlighters.isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun `dim follows soft wraps and exclusive range edges`(): Unit = timeoutRunBlocking {
+    val text = "before " + "selected ".repeat(12) + "after"
+    withEditor(text) { editor ->
+      assertTrue(EditorTestUtil.configureSoftWraps(editor, 24))
+      val wraps = editor.softWrapModel.getSoftWrapsForRange(0, text.length)
+      assertTrue(wraps.size >= 2)
+      val ranges = listOf(TextRange(7, text.length - 5), TextRange(wraps.first().start, wraps.last().start))
+      for (range in ranges) {
+        val image = renderDim(editor, range)
+        for (offset in range.startOffset until range.endOffset) {
+          if (!text[offset].isWhitespace()) assertClear(image, editor.characterPoint(offset))
+        }
+        assertDimmed(image, editor.characterPoint(0))
+        assertDimmed(image, editor.characterPoint(text.lastIndex))
+      }
+    }
+  }
+
+  @Test
+  fun `dim keeps a folded element visible`(): Unit = timeoutRunBlocking {
+    val text = "before selected {\n  body\n} after"
+    withEditor(text) { editor ->
+      val foldStart = text.indexOf('{')
+      val foldEnd = text.indexOf('}') + 1
+      editor.foldingModel.runBatchFoldingOperation {
+        checkNotNull(editor.foldingModel.addFoldRegion(foldStart, foldEnd, "{...}")).isExpanded = false
+      }
+      for (range in listOf(TextRange(7, foldEnd), TextRange(text.indexOf("body"), text.indexOf("body") + 4))) {
+        val image = renderDim(editor, range)
+        assertClear(image, editor.characterPoint(foldStart))
+        assertDimmed(image, editor.characterPoint(0))
+        assertDimmed(image, editor.characterPoint(text.lastIndex))
+      }
+    }
+  }
+
+  @Test
+  fun `dim clips a long element to a scrolled viewport`(): Unit = timeoutRunBlocking {
+    val text = "before\n" + "  selected line\n".repeat(300) + "after"
+    withEditor(text) { editor ->
+      val range = TextRange(7, text.indexOf("after"))
+      val clip = Rectangle(40, editor.lineHeight * 150, 300, editor.lineHeight * 4)
+      val image = renderDim(editor, range, clip)
+      assertClear(image, Point(1, 1))
+      assertClear(image, Point(image.width - 1, image.height - 1))
+      val afterClip = Rectangle(0, editor.offsetToXY(range.endOffset).y, 300, editor.lineHeight)
+      val afterImage = renderDim(editor, range, afterClip)
+      assertDimmed(afterImage, Point(2, editor.lineHeight / 2))
+    }
+  }
+
+  private suspend fun withEditor(text: String, test: (Editor) -> Unit) {
+    val project = projectFixture.get()
+    withContext(Dispatchers.EDT) {
+      val factory = EditorFactory.getInstance()
+      val highlighter = EditorHighlighterFactory.getInstance()
+        .createEditorHighlighter(PlainSyntaxHighlighter(), EditorColorsManager.getInstance().globalScheme)
+      val editor = factory.createEditor(factory.createDocument(text), project) as EditorEx
+      try {
+        editor.highlighter = highlighter
+        EditorTestUtil.setEditorVisibleSizeInPixels(editor, 640, 480)
+        test(editor)
+      }
+      finally {
+        factory.releaseEditor(editor)
+      }
+    }
+  }
+
+  private fun renderDim(editor: Editor, range: TextRange, clip: Rectangle? = null): BufferedImage {
+    val bounds = clip ?: Rectangle(0, 0, 640, editor.offsetToXY(editor.document.textLength).y + editor.lineHeight)
+    val image = BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
+    val handle = checkNotNull(highlightStructuralPreview(editor, range))
+    val highlighter = editor.markupModel.allHighlighters.single { it.customRenderer != null }
+    val renderer = checkNotNull(highlighter.customRenderer)
+    assertEquals(CustomHighlighterOrder.AFTER_TEXT, renderer.order)
+    val graphics = image.createGraphics()
+    try {
+      graphics.color = SOURCE_COLOR
+      graphics.fillRect(0, 0, image.width, image.height)
+      graphics.translate(-bounds.x, -bounds.y)
+      graphics.clip(bounds)
+      renderer.paint(editor, highlighter, graphics)
+    }
+    finally {
+      graphics.dispose()
+      Disposer.dispose(handle)
+    }
+    return image
+  }
+
+  private fun Editor.characterPoint(offset: Int): Point = offsetToXY(offset, true, false).apply {
+    translate(1, lineHeight / 2)
+  }
+
+  private fun assertClear(image: BufferedImage, point: Point) {
+    assertEquals(SOURCE_COLOR.rgb, image.getRGB(point.x, point.y), "Keep the selected element visible at $point")
+  }
+
+  private fun assertDimmed(image: BufferedImage, point: Point) {
+    assertNotEquals(SOURCE_COLOR.rgb, image.getRGB(point.x, point.y), "Dim the text outside the selected element at $point")
+  }
+
+  companion object {
+    private val projectFixture = projectFixture()
+    private val SOURCE_COLOR = Color.MAGENTA
+  }
+}
