@@ -123,7 +123,7 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
     ((settings.hintsEnabledGlobally() && settings.hintsEnabled(language) &&
       (InlayHintSettingsOverrider.isEnabledByOverriders(
-        InlayHintSettingsRequest(project, editor, LegacyInlayHintSettingsKey(language, it.provider.key.id)))
+        InlayHintSettingsRequest(project, LegacyInlayHintSettingsKey(language, it.provider.key.id)))
        ?: settings.hintsEnabled(it.provider.key, language))) ||
      isProviderAlwaysEnabledForEditor(editor, it.provider.key))
   }

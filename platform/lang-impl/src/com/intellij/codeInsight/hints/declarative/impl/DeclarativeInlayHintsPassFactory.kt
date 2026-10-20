@@ -96,7 +96,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       getSuitableToFileProviders(psiFile)
         .filter {
           InlayHintSettingsOverrider.isEnabledByOverriders(
-            InlayHintSettingsRequest(psiFile.project, editor,
+            InlayHintSettingsRequest(psiFile.project,
                                      DeclarativeInlayHintSettingsKey(it.providerId, null)))
           ?: (declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault)
         }

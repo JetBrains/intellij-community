@@ -133,7 +133,7 @@ class CodeVisionPass(
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter { provider ->
         InlayHintSettingsOverrider.isEnabledByOverriders(
-          InlayHintSettingsRequest(project = project, editor = editor,
+          InlayHintSettingsRequest(project = project,
                                    settingsKey = CodeVisionInlayHintSettingsKey(groupId = provider.groupId)))
         ?: settings.isProviderEnabled(provider.groupId)
       }

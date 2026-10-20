@@ -128,7 +128,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
         Language settingsLanguage = HintUtilsKt.getLanguageForSettingKey(language);
         for (Option option : provider.getSupportedOptions()) {
           Boolean isEnabled = InlayHintSettingsOverrider.isEnabledByOverriders(
-            new InlayHintSettingsRequest(myProject, myEditor, new ParameterHintSettingsKey(settingsLanguage, option.getId())));
+            new InlayHintSettingsRequest(myProject, new ParameterHintSettingsKey(settingsLanguage, option.getId())));
           if (isEnabled != null) {
             optionOverrides.put(option.getId(), isEnabled);
           }

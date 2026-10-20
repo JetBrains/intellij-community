@@ -70,7 +70,7 @@ class DeclarativeInlayHintsPass(
         if (!overridersActive) providerInfo.optionToEnabled
         else providerInfo.optionToEnabled.mapValues { (optionId, enabled) ->
           InlayHintSettingsOverrider.isEnabledByOverriders(
-            InlayHintSettingsRequest(myProject, myEditor,
+            InlayHintSettingsRequest(myProject,
                                      DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId)))
           ?: enabled
         }

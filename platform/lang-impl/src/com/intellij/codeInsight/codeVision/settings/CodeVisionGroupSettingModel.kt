@@ -39,6 +39,6 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
 
   @ApiStatus.Internal
   final override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project, null, CodeVisionInlayHintSettingsKey(id))
+    return InlayHintSettingsRequest(project, CodeVisionInlayHintSettingsKey(id))
   }
 }

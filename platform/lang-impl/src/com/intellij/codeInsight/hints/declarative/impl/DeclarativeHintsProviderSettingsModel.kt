@@ -244,7 +244,7 @@ class DeclarativeHintsProviderSettingsModel(
   }
 
   override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project, null,
+    return InlayHintSettingsRequest(project,
                                     DeclarativeInlayHintSettingsKey(id, case?.id))
   }
 }

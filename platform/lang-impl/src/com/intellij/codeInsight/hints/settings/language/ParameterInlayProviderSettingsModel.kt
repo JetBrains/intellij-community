@@ -149,7 +149,7 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project, null,
+    return InlayHintSettingsRequest(project,
                                     ParameterHintSettingsKey(getLanguageForSettingKey(language), case?.id))
   }
 }

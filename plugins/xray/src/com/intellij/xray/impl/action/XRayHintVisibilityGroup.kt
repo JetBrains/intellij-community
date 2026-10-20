@@ -93,7 +93,6 @@ internal class XRayHintVisibilityGroup(
   private fun resolveRequest(e: AnActionEvent?): InlayHintSettingsRequest? {
     val event = e ?: return null
     val project = event.project ?: return null
-    val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
     val language = e.getData(CommonDataKeys.PSI_FILE)?.language ?: return null
 
     val resolved = when (key) {
@@ -107,7 +106,7 @@ internal class XRayHintVisibilityGroup(
       is ParameterHintSettingsKey -> if (key.optionId == null) return null else key
     }
 
-    return InlayHintSettingsRequest(project, editor, resolved)
+    return InlayHintSettingsRequest(project, resolved)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {

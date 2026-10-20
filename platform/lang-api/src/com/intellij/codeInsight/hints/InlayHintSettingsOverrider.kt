@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +33,6 @@ data class ParameterHintSettingsKey(
 @ApiStatus.Internal
 data class InlayHintSettingsRequest(
   val project: Project,
-  val editor: Editor?,
   val settingsKey: InlayHintSettingsKey
 )
 

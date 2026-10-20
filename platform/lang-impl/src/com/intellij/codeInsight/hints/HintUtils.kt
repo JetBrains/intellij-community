@@ -83,7 +83,7 @@ fun isParameterHintsEnabledForLanguage(language: Language, project: Project): Bo
   @Suppress("DEPRECATION")
   if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
   return InlayHintSettingsOverrider.isEnabledByOverriders(
-    InlayHintSettingsRequest(project, null,
+    InlayHintSettingsRequest(project,
                              ParameterHintSettingsKey(getLanguageForSettingKey(language), null)))
          ?: ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
 }

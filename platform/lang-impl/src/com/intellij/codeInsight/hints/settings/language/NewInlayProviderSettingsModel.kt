@@ -129,7 +129,7 @@ internal class NewInlayProviderSettingsModel<T : Any>(
 
   override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest? {
     if (case != null) return null
-    return InlayHintSettingsRequest(project, null, LegacyInlayHintSettingsKey(language, id))
+    return InlayHintSettingsRequest(project, LegacyInlayHintSettingsKey(language, id))
   }
 }
 
