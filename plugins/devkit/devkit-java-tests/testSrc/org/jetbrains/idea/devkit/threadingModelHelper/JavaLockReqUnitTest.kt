@@ -164,6 +164,19 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
       assertEquals("8", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.READ_ACTION_WAIT)))
       assertTrue(report, report.contains("tree walk ") && report.contains("1x, longest "))
 
+      // intermediateMethod and targetMethod are searched once each, and each search finds only the searched method
+      assertTrue(report, report.contains("Inheritor searches: 2 (unique methods: 2, repeated searches: 0)"))
+      val inheritorRows = tableRows(report, "Slowest classes for the inheritor search")
+      // class columns: time, searches, methods, longest search, results, class
+      val classRow = inheritorRows.first()
+      assertEquals(listOf("2", "2", "2", "AnnotationInChain"), listOf(classRow[1], classRow[2], classRow[4], classRow[5]))
+      // method columns: time, searches, longest search, results, method
+      assertEquals(mapOf(
+        "intermediateMethod()" to listOf("1", "1"),
+        "targetMethod()" to listOf("1", "1"),
+      ), inheritorRows.drop(1).associate { it[4] to listOf(it[1], it[3]) })
+      assertEmpty(tableRows(report, "Slowest topic classes for the listener search"))
+
       // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
       val treeRows = tableRows(report, "Traversal tree")
         .associate { it[6] to listOf(it[1], it[2], it[3], it[4]) }

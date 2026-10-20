@@ -62,6 +62,12 @@ class LockReqPhaseTimer private constructor(@PublishedApi internal val isEnabled
    */
   private var nestedNanos = 0L
 
+  /**
+   * The exclusive time of the finished blocks of [phase] up to now.
+   * The [DISABLED] instance always returns `0`.
+   */
+  fun measuredNanos(phase: Phase): Long = totalNanos[phase.ordinal]
+
   inline fun <T> measure(phase: Phase, block: () -> T): T {
     if (!isEnabled) {
       return block()

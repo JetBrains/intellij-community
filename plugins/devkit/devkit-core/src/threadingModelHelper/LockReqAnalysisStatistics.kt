@@ -66,11 +66,30 @@ internal class LockReqAnalysisStatistics {
     val children: List<SubtreeStatistics>,
   )
 
+  /**
+   * The statistics of the searches for one searched element.
+   *
+   * @property searches the number of the searches
+   * @property totalNanos the summed time of the searches. It does not include the enqueue of the results.
+   * @property maxNanos the time of the longest search
+   * @property results the summed number of the results that the searches gave to the handler
+   */
+  data class SearchStatistics(val searches: Int, val totalNanos: Long, val maxNanos: Long, val results: Int) {
+    operator fun plus(other: SearchStatistics): SearchStatistics = SearchStatistics(
+      searches = searches + other.searches,
+      totalNanos = totalNanos + other.totalNanos,
+      maxNanos = maxOf(maxNanos, other.maxNanos),
+      results = results + other.results,
+    )
+  }
+
   private val nextNodeId = AtomicInteger()
   private val nodes = ConcurrentHashMap<Int, Node>()
   private val enqueuedEntries = AtomicInteger()
   private val skippedAsVisited = AtomicInteger()
   private val skippedByMaxDepth = AtomicInteger()
+  private val inheritorSearches = ConcurrentHashMap<MethodSignature, SearchStatistics>()
+  private val listenerSearches = ConcurrentHashMap<String, SearchStatistics>()
 
   @Volatile
   var rootSignature: MethodSignature? = null
@@ -86,6 +105,30 @@ internal class LockReqAnalysisStatistics {
   fun onSkippedByMaxDepth() {
     skippedByMaxDepth.incrementAndGet()
   }
+
+  /**
+   * Records one search for the overriding methods of [method].
+   */
+  fun onInheritorSearch(method: MethodSignature, nanos: Long, results: Int) {
+    inheritorSearches.merge(method, SearchStatistics(1, nanos, nanos, results), SearchStatistics::plus)
+  }
+
+  /**
+   * Records one search for the listeners of the message bus topic [topicClassName].
+   */
+  fun onListenerSearch(topicClassName: String, nanos: Long, results: Int) {
+    listenerSearches.merge(topicClassName, SearchStatistics(1, nanos, nanos, results), SearchStatistics::plus)
+  }
+
+  /**
+   * The inheritor search statistics, grouped by the searched method.
+   */
+  fun inheritorSearchStatistics(): Map<MethodSignature, SearchStatistics> = HashMap(inheritorSearches)
+
+  /**
+   * The listener search statistics, grouped by the topic class name.
+   */
+  fun listenerSearchStatistics(): Map<String, SearchStatistics> = HashMap(listenerSearches)
 
   fun startNode(parentId: Int, signature: MethodSignature, depth: Int): Node {
     val node = Node(nextNodeId.getAndIncrement(), parentId, signature, depth, System.nanoTime())
@@ -149,6 +192,12 @@ internal class LockReqAnalysisStatistics {
       appendBreakdown(finishedNodes)
       appendLine()
 
+      appendInheritorSearches()
+      appendLine()
+
+      appendListenerSearches()
+      appendLine()
+
       appendLine("Slowest calls (top $SLOWEST_CALLS_LIMIT):")
       appendLine("The line below each call shows the phases of the call: the time, the share, the number of blocks and the longest block.")
       finishedNodes
@@ -201,6 +250,56 @@ internal class LockReqAnalysisStatistics {
   }
 
   /**
+   * Appends the classes with the slowest inheritor searches.
+   * The time of a class is the summed time of the searches for the overriding methods of its methods.
+   */
+  private fun StringBuilder.appendInheritorSearches() {
+    val byMethod = inheritorSearchStatistics()
+    val searches = byMethod.values.sumOf { it.searches }
+    appendLine("Inheritor searches: $searches (unique methods: ${byMethod.size}, repeated searches: ${searches - byMethod.size})")
+    appendLine("Slowest classes for the inheritor search (top $SLOWEST_CLASSES_LIMIT):")
+    appendLine("Time is the summed time of the searches for the overriding methods of the class methods. It does not include the enqueue of the results.")
+    appendLine("Results is the number of the methods that the searches found, including the searched method.")
+    appendLine("The lines below each class show its slowest methods (top $SLOWEST_METHODS_PER_CLASS_LIMIT).")
+    appendLine(String.format(Locale.ROOT, "%14s %9s %8s %15s %8s  %s", "time", "searches", "methods", "longest search", "results", "class"))
+    byMethod.entries
+      .groupBy { it.key.containingClassName }
+      .map { (className, methods) -> Triple(className, methods, methods.map { it.value }.reduce(SearchStatistics::plus)) }
+      .sortedWith(compareByDescending<Triple<String, *, SearchStatistics>> { it.third.totalNanos }.thenBy { it.first })
+      .take(SLOWEST_CLASSES_LIMIT)
+      .forEach { (className, methods, total) ->
+        appendLine(String.format(Locale.ROOT, "%14s %9d %8d %15s %8d  %s", total.totalNanos.nanoseconds.format(), total.searches, methods.size,
+                                 total.maxNanos.nanoseconds.format(), total.results, className))
+        methods
+          .sortedWith(compareByDescending<Map.Entry<MethodSignature, SearchStatistics>> { it.value.totalNanos }.thenBy { it.key.toPresentableString() })
+          .take(SLOWEST_METHODS_PER_CLASS_LIMIT)
+          .forEach { (signature, stats) ->
+            appendLine(String.format(Locale.ROOT, "%14s %9d %8s %15s %8d    %s", stats.totalNanos.nanoseconds.format(), stats.searches, "",
+                                     stats.maxNanos.nanoseconds.format(), stats.results,
+                                     "${signature.methodName}(${signature.parameterTypes.joinToString(", ")})"))
+          }
+      }
+  }
+
+  /**
+   * Appends the message bus topic classes with the slowest listener searches.
+   */
+  private fun StringBuilder.appendListenerSearches() {
+    val byTopic = listenerSearchStatistics()
+    appendLine("Slowest topic classes for the listener search (top $SLOWEST_CLASSES_LIMIT):")
+    appendLine("Time is the summed time of the searches for the listener classes. It does not include the enqueue of the results.")
+    appendLine("Results is the number of the listener classes that the searches found.")
+    appendLine(String.format(Locale.ROOT, "%14s %9s %15s %8s  %s", "time", "searches", "longest search", "results", "topic class"))
+    byTopic.entries
+      .sortedWith(compareByDescending<Map.Entry<String, SearchStatistics>> { it.value.totalNanos }.thenBy { it.key })
+      .take(SLOWEST_CLASSES_LIMIT)
+      .forEach { (topicClassName, stats) ->
+        appendLine(String.format(Locale.ROOT, "%14s %9d %15s %8d  %s", stats.totalNanos.nanoseconds.format(), stats.searches,
+                                 stats.maxNanos.nanoseconds.format(), stats.results, topicClassName))
+      }
+  }
+
+  /**
    * Writes the report to a new file in [directory].
    *
    * @return the path of the new file
@@ -217,6 +316,8 @@ internal class LockReqAnalysisStatistics {
   companion object {
     const val NO_PARENT: Int = -1
     private const val SLOWEST_CALLS_LIMIT = 50
+    private const val SLOWEST_CLASSES_LIMIT = 50
+    private const val SLOWEST_METHODS_PER_CLASS_LIMIT = 3
 
     private fun MethodSignature.toPresentableString(): String = "$containingClassName.$methodName(${parameterTypes.joinToString(", ")})"
 
