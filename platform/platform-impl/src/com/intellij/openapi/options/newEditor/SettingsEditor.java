@@ -574,6 +574,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return myResetAllAction;
   }
 
+  /** Checks the current page for changes at once. Without this call, the editor checks a page only after a delay. */
+  void checkCurrentModified() {
+    checkModified(filter.context.getCurrentConfigurable());
+  }
+
   private void reset() {
     checkModified(filter.context.getCurrentConfigurable());
     for (Configurable configurable : filter.context.getModified()) {
