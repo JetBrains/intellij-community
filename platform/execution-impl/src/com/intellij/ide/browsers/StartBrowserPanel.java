@@ -275,7 +275,7 @@ public final class StartBrowserPanel {
 
   // we don't allow starting debug session for the default && non-chromium browsers
   private static boolean isDebugAllowed(@Nullable WebBrowser browser) {
-    return browser != null && browser.getFamily().equals(BrowserFamily.CHROME);
+    return browser != null && browser.getFamily() == BrowserFamily.CHROME;
   }
 
   public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, final @NotNull Project project) {

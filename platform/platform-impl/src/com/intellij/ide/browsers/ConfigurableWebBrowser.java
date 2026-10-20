@@ -16,7 +16,7 @@ import java.util.UUID;
 
 final class ConfigurableWebBrowser extends WebBrowser {
   private final UUID id;
-  private @NotNull BrowserFamily family;
+  private @Nullable BrowserFamily family;
   private @NotNull String name;
   private boolean active;
   private String path;
@@ -25,7 +25,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
 
   @SuppressWarnings("UnusedDeclaration")
   ConfigurableWebBrowser() {
-    this(UUID.randomUUID(), BrowserFamily.CHROME);
+    this(UUID.randomUUID(), null, "", null, true, null);
   }
 
   ConfigurableWebBrowser(@NotNull UUID id, @NotNull BrowserFamily family) {
@@ -34,7 +34,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
 
   ConfigurableWebBrowser(
     @NotNull UUID id,
-    @NotNull BrowserFamily family,
+    @Nullable BrowserFamily family,
     @NotNull String name,
     @Nullable String path,
     boolean active,
@@ -52,7 +52,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
     name = value;
   }
 
-  public void setFamily(@NotNull BrowserFamily value) {
+  public void setFamily(@Nullable BrowserFamily value) {
     family = value;
   }
 
@@ -90,7 +90,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
       }
     }
 
-    return family.getIcon();
+    return family == null ? AllIcons.Nodes.PpWeb : family.getIcon();
   }
 
   private boolean checkNameAndPath(@NotNull String what) {
@@ -127,7 +127,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   public boolean equals(Object o) {
     return this == o || o instanceof ConfigurableWebBrowser browser && (
       getId().equals(browser.getId()) &&
-      family.equals(browser.family) &&
+      family == browser.family &&
       active == browser.active &&
       Comparing.strEqual(name, browser.name) &&
       Objects.equals(path, browser.path) &&
@@ -151,7 +151,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  public @NotNull BrowserFamily getFamily() {
+  public @Nullable BrowserFamily getFamily() {
     return family;
   }
 

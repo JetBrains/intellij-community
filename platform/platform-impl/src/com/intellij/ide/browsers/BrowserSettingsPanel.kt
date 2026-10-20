@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.ide.GeneralLocalSettings
@@ -11,22 +11,27 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Comparing
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.LocalPathCellEditor
-import com.intellij.util.ui.table.IconTableCellRenderer
 import com.intellij.util.ui.table.TableModelEditor
 import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
 import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
 import java.awt.event.ItemEvent
 import java.util.UUID
+import javax.swing.DefaultCellEditor
 import javax.swing.JComponent
+import javax.swing.JTable
 import javax.swing.event.TableModelEvent
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
@@ -99,7 +104,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
         private fun cloneSettings(browser: ConfigurableWebBrowser): BrowserSpecificSettings? {
           val settings = browser.specificSettings ?: return null
-          val newSettings = browser.family.createBrowserSpecificSettings()!!
+          val newSettings = browser.family?.createBrowserSpecificSettings() ?: return null
           TableModelEditor.cloneUsingXmlSerialization(settings, newSettings)
           return newSettings
         }
@@ -283,6 +288,18 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       }
     }
 
+    private val FAMILY_RENDERER = object : ColoredTableCellRenderer() {
+      override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+        if (value is BrowserFamily) {
+          icon = value.icon
+          append(value.getName())
+        }
+        else {
+          append(IdeBundle.message("settings.browsers.family.not.specified"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
+      }
+    }
+
     private val COLUMNS = arrayOf<ColumnInfo<*, *>>(
       ACTIVE_COLUMN_INFO,
       object : EditableColumnInfo<ConfigurableWebBrowser, String>(
@@ -295,23 +312,28 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
           item.name = value
         }
       },
-      object : ColumnInfo<ConfigurableWebBrowser, BrowserFamily>(
+      object : ColumnInfo<ConfigurableWebBrowser, BrowserFamily?>(
         IdeBundle.message("settings.browsers.column.family")) {
-        override fun getColumnClass(): Class<*> {
-          return BrowserFamily::class.java
-        }
-
-        override fun valueOf(item: ConfigurableWebBrowser): BrowserFamily {
+        override fun valueOf(item: ConfigurableWebBrowser): BrowserFamily? {
           return item.family
         }
 
-        override fun setValue(item: ConfigurableWebBrowser, value: BrowserFamily) {
+        override fun setValue(item: ConfigurableWebBrowser, value: BrowserFamily?) {
           item.family = value
-          item.specificSettings = value.createBrowserSpecificSettings()
+          item.specificSettings = value?.createBrowserSpecificSettings()
         }
 
         override fun getRenderer(item: ConfigurableWebBrowser): TableCellRenderer {
-          return IconTableCellRenderer.ICONABLE
+          return FAMILY_RENDERER
+        }
+
+        override fun getEditor(item: ConfigurableWebBrowser): TableCellEditor {
+          val comboBox = ComboBox(CollectionComboBoxModel(listOf(null) + BrowserFamily.entries))
+          comboBox.renderer = listCellRenderer(IdeBundle.message("settings.browsers.family.not.specified")) {
+            icon(value.icon)
+            text(value.getName())
+          }
+          return DefaultCellEditor(comboBox)
         }
 
         override fun isCellEditable(item: ConfigurableWebBrowser): Boolean {
