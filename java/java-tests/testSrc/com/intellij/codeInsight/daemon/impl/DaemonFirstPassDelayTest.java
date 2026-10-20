@@ -30,10 +30,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 /**
  * Tests that the first daemon pass of a project starts without the autoreparse delay and that later restarts honor it.
- * A pass over an embedded editor does not count as the first pass.
+ * A pass over an embedded editor does not count as the first pass, also when a stop cancels it.
  * A stop that cancels the unfinished first pass enables the delay, so a held key does not rerun the pass on every press.
  * The focus gain of the first editor itself keeps its unfinished first pass, because the pass still covers an active editor.
  * A focus move to another editor still cancels the unfinished pass.
@@ -103,6 +104,44 @@ public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
       int startsBefore = starts.get();
       configureByText(PlainTextFileType.INSTANCE, "text");
       waitUntil(() -> starts.get() > startsBefore, "The first pass of a file editor must start without the autoreparse delay");
+    });
+  }
+
+  public void testCancelOfEmbeddedEditorPassDoesNotEnableReparseDelay() {
+    TestDaemonCodeAnalyzerImpl.runWithReparseDelay(REPARSE_DELAY_MS, () -> {
+      List<FileEditor> started = new CopyOnWriteArrayList<>();
+      List<FileEditor> canceled = new CopyOnWriteArrayList<>();
+      getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+          started.addAll(fileEditors);
+        }
+
+        @Override
+        public void daemonCanceled(@NotNull String reason, @NotNull Collection<? extends FileEditor> fileEditors) {
+          canceled.addAll(fileEditors);
+        }
+      });
+      Editor embeddedEditor = createEmbeddedEditor();
+      AtomicInteger passEntries = new AtomicInteger();
+      AtomicBoolean passReleased = new AtomicBoolean();
+      registerPassThatRunsUntilCanceled(editor -> editor == embeddedEditor, passEntries, passReleased);
+      try {
+        // phase 1: like the Air empty-state editor in the split mode, a pass over an embedded editor keeps running
+        EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(embeddedEditor));
+        waitUntil(() -> passEntries.get() > 0, "The pass over the embedded editor must start");
+
+        // phase 2: a file editor opens and gains focus, and the stop cancels the running pass of the embedded editor
+        configureByText(PlainTextFileType.INSTANCE, "text");
+        EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(getEditor()));
+        waitUntil(() -> isForEditor(canceled, embeddedEditor), "The active editor change must cancel the pass of the embedded editor");
+
+        // phase 3: the first pass of the file editor still starts without the delay
+        waitUntil(() -> isForEditor(started, getEditor()), "The first pass of a file editor must start without the autoreparse delay");
+      }
+      finally {
+        passReleased.set(true);
+      }
     });
   }
 
@@ -231,8 +270,14 @@ public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   private void registerMainEditorPassThatRunsUntilCanceled(@NotNull AtomicInteger entries, @NotNull AtomicBoolean released) {
+    registerPassThatRunsUntilCanceled(editor -> editor == getEditor(), entries, released);
+  }
+
+  private void registerPassThatRunsUntilCanceled(@NotNull Predicate<? super Editor> isTarget,
+                                                 @NotNull AtomicInteger entries,
+                                                 @NotNull AtomicBoolean released) {
     TextEditorHighlightingPassFactory factory = (psiFile, editor) -> {
-      if (editor != getEditor()) {
+      if (!isTarget.test(editor)) {
         return null;
       }
       return new EditorBoundHighlightingPass(editor, psiFile, false) {

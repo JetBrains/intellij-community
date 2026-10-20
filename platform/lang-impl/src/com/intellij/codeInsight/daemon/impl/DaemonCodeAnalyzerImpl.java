@@ -174,8 +174,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   /**
    * The only possible transition: false -> true.
    * The first pass of the project runs without the autoreparse delay, because it has nothing to debounce.
-   * A pass that finished for an open file enables the delay. A stop that canceled a running pass enables it too,
+   * A pass that finished for an open file enables the delay. A stop that canceled a running pass of an open file enables it too,
    * because otherwise a held key reruns the unfinished pass on every key repeat.
+   * A pass of an embedded editor never enables the delay. See {@link #isPassOfOpenFile}.
    */
   private volatile boolean myAutoReparseDelayEnabled;
   private volatile boolean completeEssentialHighlightingRequested;
@@ -879,14 +880,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }
 
-  // return true if at least one running progress was canceled
+  // return true if at least one running progress of an open file was canceled, see isPassOfOpenFile
   synchronized boolean cancelAllUpdateProgresses(boolean toRestart, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDefault() || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
       return false;
     }
     boolean canceled = false;
-    for (DaemonProgressIndicator indicator : new ArrayList<>(myUpdateProgress.values())) {
-      canceled |= cancelIndicator(indicator, toRestart, null, reason);
+    for (var entry : new ArrayList<>(myUpdateProgress.entrySet())) {
+      boolean wasCancelledNow = cancelIndicator(entry.getValue(), toRestart, null, reason);
+      if (!canceled && wasCancelledNow && isPassOfOpenFile(entry.getKey())) {
+        canceled = true;
+      }
     }
     myUpdateProgress.clear();
     myPassExecutorService.cancelAll(false, reason);
@@ -1580,6 +1584,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return progress;
   }
 
+  /**
+   * Returns true when the pass belongs to a file that is open in the {@link FileEditorManager}, also by a remote client.
+   * A pass of an embedded editor, such as an {@code EditorTextField}, returns false.
+   * Only a pass of an open file enables {@link #myAutoReparseDelayEnabled}.
+   */
+  private boolean isPassOfOpenFile(@NotNull FileEditor fileEditor) {
+    VirtualFile file = fileEditor.getFile();
+    return file != null && getFileEditorManager().isFileOpenWithRemotes(file);
+  }
+
   private final class MyDaemonProgressIndicator extends DaemonProgressIndicator {
     private final FileEditor myFileEditor;
 
@@ -1595,8 +1609,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     @Override
     public void onStop() {
-      VirtualFile file = myFileEditor.getFile();
-      if (file != null && getFileEditorManager().isFileOpenWithRemotes(file)) {
+      if (isPassOfOpenFile(myFileEditor)) {
         myAutoReparseDelayEnabled = true;
       }
       removeIndicatorFromMap(myFileEditor, this);
