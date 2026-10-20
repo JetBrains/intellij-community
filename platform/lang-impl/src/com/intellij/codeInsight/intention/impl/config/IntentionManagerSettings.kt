@@ -6,6 +6,7 @@ package com.intellij.codeInsight.intention.impl.config
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.components.PersistentStateComponent
@@ -78,6 +79,12 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
       getFamilyName(action)
     }
     catch (ignored: ExtensionNotApplicableException) {
+      return false
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      // one intention whose class fails to load must not hide the other intentions
+      logger<IntentionManagerSettings>().error(e)
       return false
     }
     return !ignoredActions.contains(familyName)
