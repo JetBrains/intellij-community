@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WatchRoots
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +75,26 @@ class AnalysisIgnoreDefaultsFile(coroutineScope: CoroutineScope) {
     if (newLines == currentLines) return
     currentLines = newLines
     ApplicationManager.getApplication().messageBus.syncPublisher(AnalysisIgnoreDefaultsListener.TOPIC).linesChanged()
+  }
+
+  /**
+   * Returns the file at [path]. Writes the [template] there first when the file is absent. Returns `null` when the file system refuses.
+   */
+  @RequiresEdt
+  @Suppress("UseOptimizedEelFunctions") // The config directory is local.
+  fun findOrCreateFile(): VirtualFile? {
+    val path = path
+    try {
+      if (!Files.exists(path)) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, template())
+      }
+    }
+    catch (e: IOException) {
+      LOG.warn("Cannot create $path", e)
+      return null
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
   }
 
   /** Returns the text of a new file: a comment about the file and then the [built-in lines][AnalysisIgnoreDefaults.BUILT_IN_LINES]. */

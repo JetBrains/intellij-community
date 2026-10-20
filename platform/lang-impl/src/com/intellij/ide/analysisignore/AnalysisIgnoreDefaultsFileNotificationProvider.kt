@@ -5,7 +5,6 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -13,21 +12,18 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 /**
- * Tells the user that the default lines were written into a new `.analysisignore` file. The user edits or removes them in the file. A file
- * without these lines turns off the defaults of its project root.
+ * Tells the user that the [defaults file][AnalysisIgnoreDefaultsFile] holds the exclusions of every project root without a
+ * `.analysisignore` file. Thus a change of the file applies to each such root.
  */
-internal class AnalysisIgnoreDefaultLinesNotificationProvider : EditorNotificationProvider, DumbAware {
+internal class AnalysisIgnoreDefaultsFileNotificationProvider : EditorNotificationProvider, DumbAware {
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (!Registry.`is`(ANALYSIS_IGNORE_ENABLED_KEY, true)) return null
-    if (!file.isAnalysisIgnoreFile()) return null
-    val service = AnalysisIgnoreService.getInstance(project)
-    if (service.defaultLinesAddedTo(file) == null) return null
+    if (!AnalysisIgnoreDefaults.areEnabled()) return null
+    if (file.name != ANALYSIS_IGNORE_DEFAULTS_FILE_NAME || !AnalysisIgnoreDefaultsFile.getInstance().isDefaultsFile(file)) return null
 
     return Function { fileEditor ->
       EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
-        text = LangBundle.message("analysis.ignore.banner.default.lines.text")
-        setCloseAction { service.forgetDefaultLinesOf(file) }
+        text = LangBundle.message("analysis.ignore.banner.defaults.file.text", ANALYSIS_IGNORE_FILE_NAME)
       }
     }
   }

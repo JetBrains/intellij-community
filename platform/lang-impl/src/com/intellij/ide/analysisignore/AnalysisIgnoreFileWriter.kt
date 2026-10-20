@@ -2,6 +2,8 @@
 package com.intellij.ide.analysisignore
 
 import com.intellij.lang.LangBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -11,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -19,7 +20,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 /**
- * Writes the lines of a [`.analysisignore`][ANALYSIS_IGNORE_FILE_NAME] file that "Mark as Excluded" adds and "Cancel Exclusion" removes.
+ * Writes the lines of a [`.analysisignore`][ANALYSIS_IGNORE_FILE_NAME] file that "Mark as Excluded" adds, and the default lines of a new
+ * file.
  */
 @ApiStatus.Internal
 object AnalysisIgnoreFileWriter {
@@ -57,8 +59,8 @@ object AnalysisIgnoreFileWriter {
   /**
    * Adds [line] to the `.analysisignore` file of [baseDir]. Creates that file when there is none. In a new file, the
    * [default exclusions][AnalysisIgnoreDefaults.linesOfNewFileIn] come before [line], so that the file states every exclusion of its
-   * directory, and the editor banner of the file tells the user. A file that exists gets [line] alone. Returns the file, or `null` when the
-   * file system refuses.
+   * directory, and a balloon tells the user. A file that exists gets [line] alone. Returns the file, or `null` when the file system
+   * refuses.
    */
   @RequiresEdt
   fun appendLine(project: Project, baseDir: VirtualFile, line: String): VirtualFile? {
@@ -81,29 +83,8 @@ object AnalysisIgnoreFileWriter {
     }
     ignoreFile?.let {
       save(it)
-      AnalysisIgnoreService.getInstance(project).rememberDefaultLines(it, writtenDefaultLines)
+      if (writtenDefaultLines.isNotEmpty()) notifyDefaultLinesCopied(project)
     }
-    return ignoreFile
-  }
-
-  /**
-   * Creates the `.analysisignore` file of [baseDir] with [lines]. Does nothing when [baseDir] has that file. Returns the new file, or
-   * `null` when the file system refuses.
-   */
-  @RequiresEdt
-  fun createFile(project: Project, baseDir: VirtualFile, lines: List<String>): VirtualFile? {
-    if (baseDir.analysisIgnoreFile() != null) return null
-    var ignoreFile: VirtualFile? = null
-    runCommand(project, LangBundle.message("analysis.ignore.command.cancel.exclusion", ANALYSIS_IGNORE_FILE_NAME)) {
-      val file = createIgnoreFile(baseDir) ?: return@runCommand
-      val document = FileDocumentManager.getInstance().getDocument(file) ?: return@runCommand
-      if (lines.isNotEmpty()) {
-        document.insertString(0, lines.joinToString(separator = "\n", postfix = "\n"))
-      }
-      AnalysisIgnoreService.getInstance(project).applyInWriteAction(file)
-      ignoreFile = file
-    }
-    ignoreFile?.let { save(it) }
     return ignoreFile
   }
 
@@ -125,30 +106,6 @@ object AnalysisIgnoreFileWriter {
     }
     if (filled) save(ignoreFile)
     return filled
-  }
-
-  /**
-   * Removes every line of [ignoreFile] whose pattern is [source]. Returns `true` when a line went away.
-   */
-  @RequiresEdt
-  fun removeLines(project: Project, ignoreFile: VirtualFile, source: String): Boolean {
-    var removed = false
-    runCommand(project, LangBundle.message("analysis.ignore.command.cancel.exclusion", ANALYSIS_IGNORE_FILE_NAME)) {
-      val document = FileDocumentManager.getInstance().getDocument(ignoreFile) ?: return@runCommand
-      for (lineIndex in document.lineCount - 1 downTo 0) {
-        val start = document.getLineStartOffset(lineIndex)
-        val end = document.getLineEndOffset(lineIndex)
-        if (AnalysisIgnorePattern.patternSource(document.getText(TextRange(start, end))) != source) continue
-        // A document holds a `\n` alone between its lines. The last line may have none.
-        document.deleteString(start, minOf(end + 1, document.textLength))
-        removed = true
-      }
-      if (removed) {
-        AnalysisIgnoreService.getInstance(project).applyInWriteAction(ignoreFile)
-      }
-    }
-    if (removed) save(ignoreFile)
-    return removed
   }
 
   /**
@@ -189,3 +146,12 @@ object AnalysisIgnoreFileWriter {
 
   private val LOG = logger<AnalysisIgnoreFileWriter>()
 }
+
+/** Tells the user that a new `.analysisignore` file got the default lines. */
+internal fun notifyDefaultLinesCopied(project: Project) {
+  Notification(NOTIFICATION_GROUP_ID, LangBundle.message("analysis.ignore.notification.defaults.copied", ANALYSIS_IGNORE_FILE_NAME),
+               NotificationType.INFORMATION)
+    .notify(project)
+}
+
+private const val NOTIFICATION_GROUP_ID: String = "Analysis ignore"

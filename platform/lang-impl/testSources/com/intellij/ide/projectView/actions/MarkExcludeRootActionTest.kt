@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
+import com.intellij.ide.analysisignore.ANALYSIS_IGNORE_FILE_NAME
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
@@ -12,6 +13,8 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
@@ -23,6 +26,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.OptionalExclusionContributor
 import org.assertj.core.api.Assertions.assertThat
@@ -90,18 +94,31 @@ class MarkExcludeRootActionTest {
   }
 
   @Test
-  fun `unmark restores a file that was excluded via the action`() {
+  fun `unmark selects the line that excluded the file and keeps the file as it is`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/content/generated.bin")
     val fileIndex = ProjectFileIndex.getInstance(projectModel.project)
 
+    // The .analysisignore contributor takes the exclusion, and the file of the content root gets the line.
     invoke(MarkExcludeRootAction(), file)
     assertThat(runReadActionBlocking { fileIndex.isExcluded(file) }).isTrue()
+    val ignoreFile = requireNotNull(contentRoot.findChild(ANALYSIS_IGNORE_FILE_NAME)) {
+      "No $ANALYSIS_IGNORE_FILE_NAME in the content root"
+    }
+    assertThat(VfsUtilCore.loadText(ignoreFile)).isEqualTo("/generated.bin\n")
 
+    // Cancel Exclusion leaves the line to the user: it opens the file with the line selected.
     assertEnabled(UnmarkRootAction(), file)
     invoke(UnmarkRootAction(), file)
+    ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
 
-    assertThat(runReadActionBlocking { fileIndex.isExcluded(file) }).isFalse()
-    assertThat(runReadActionBlocking { fileIndex.isInContent(file) }).isTrue()
+    assertThat(runReadActionBlocking { fileIndex.isExcluded(file) }).isTrue()
+    assertThat(VfsUtilCore.loadText(ignoreFile)).isEqualTo("/generated.bin\n")
+    val editorManager = FileEditorManager.getInstance(projectModel.project)
+    ApplicationManager.getApplication().invokeAndWait {
+      val editor = (editorManager.getSelectedEditor(ignoreFile) as? TextEditor)?.editor
+      assertThat(editor?.selectionModel?.selectedText).isEqualTo("/generated.bin")
+      editorManager.closeFile(ignoreFile)
+    }
   }
 
   @Test

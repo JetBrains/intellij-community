@@ -4,6 +4,9 @@ package com.intellij.ide.analysisignore
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.projectView.actions.UnmarkRootAction
 import com.intellij.lang.LangBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,10 +17,12 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -25,6 +30,7 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.ide.OptionalExclusionUtil
@@ -66,7 +72,10 @@ class AnalysisIgnoreExclusionContributorTest {
   private lateinit var projectRoot: VirtualFile
 
   @BeforeEach
-  fun setUp() {
+  fun setUp(@TestDisposable disposable: Disposable) {
+    // "Cancel Exclusion" of a default line writes the defaults file. The test keeps it out of the config directory.
+    AnalysisIgnoreDefaultsFile.getInstance()
+      .setPathForTests(projectModel.baseProjectDir.rootPath.resolve("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME"), disposable)
     projectRoot = projectModel.baseProjectDir.newVirtualDirectory("projectRoot")
     module = projectModel.createModule()
     ModuleRootModificationUtil.addContentRoot(module, projectRoot)
@@ -164,35 +173,42 @@ class AnalysisIgnoreExclusionContributorTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
-  fun `cancel exclusion removes the line of the item and keeps the other lines`() = runBlocking {
+  fun `cancel exclusion selects the line of the item and keeps the file as it is`(@TestDisposable disposable: Disposable) = runBlocking {
     val buildDir = dir("projectRoot/build")
-    val outDir = dir("projectRoot/out")
-    discover(writeAnalysisIgnoreFile("projectRoot", "/build/", "/out/"))
+    val ignoreFile = writeAnalysisIgnoreFile("projectRoot", "/build/", "/out/")
+    discover(ignoreFile)
     assertFalse(isInContent(buildDir))
+    val notifications = collectNotifications(disposable)
 
     val presentation = presentationOf(UnmarkRootAction(), buildDir)
     assertTrue(presentation.isEnabledAndVisible)
     assertEquals(LangBundle.message("mark.as.unmark.excluded"), presentation.text)
 
     invoke(UnmarkRootAction(), buildDir)
+    dispatchEvents()
 
-    // The file had no line break after its last line, and the removal adds none.
-    assertEquals("/out/", textOfIgnoreFile("projectRoot"))
-    assertTrue(isInContent(buildDir))
-    assertFalse(isInContent(outDir))
+    assertEquals("/build/\n/out/", textOfIgnoreFile("projectRoot"))
+    assertFalse(isInContent(buildDir))
+    assertEquals("/build/", selectedTextIn(ignoreFile))
+    assertEquals(emptyList<Pair<String, String>>(), notifications)
+    closeEditorOf(ignoreFile)
   }
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
-  fun `cancel exclusion after mark as excluded restores the item`() = runBlocking {
+  fun `cancel exclusion after mark as excluded selects the new line`() = runBlocking {
     val buildDir = dir("projectRoot/build")
     invoke(MarkExcludeRootAction(), buildDir)
     assertFalse(isInContent(buildDir))
 
     invoke(UnmarkRootAction(), buildDir)
+    dispatchEvents()
 
-    assertEquals("", textOfIgnoreFile("projectRoot"))
-    assertTrue(isInContent(buildDir))
+    assertEquals("/build/\n", textOfIgnoreFile("projectRoot"))
+    assertFalse(isInContent(buildDir))
+    val ignoreFile = projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME)!!
+    assertEquals("/build/", selectedTextIn(ignoreFile))
+    closeEditorOf(ignoreFile)
   }
 
   @Test
@@ -205,13 +221,12 @@ class AnalysisIgnoreExclusionContributorTest {
 
     assertTrue(presentationOf(UnmarkRootAction(), innerDir).isEnabledAndVisible)
     invoke(UnmarkRootAction(), innerDir)
-    withContext(Dispatchers.EDT) { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+    dispatchEvents()
 
     assertEquals("# comment\n/build/", textOfIgnoreFile("projectRoot"))
     assertFalse(isInContent(innerDir))
-    val editorManager = FileEditorManager.getInstance(project)
-    assertTrue(editorManager.isFileOpen(ignoreFile), "The responsible file is open")
-    withContext(Dispatchers.EDT) { editorManager.closeFile(ignoreFile) }
+    assertEquals("/build/", selectedTextIn(ignoreFile))
+    closeEditorOf(ignoreFile)
   }
 
   @Test
@@ -339,13 +354,17 @@ class AnalysisIgnoreExclusionContributorTest {
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `marking a directory writes the default lines before the line of a new file`() = runBlocking {
+  fun `marking a directory writes the default lines before the line of a new file and tells the user`(
+    @TestDisposable disposable: Disposable,
+  ) = runBlocking {
     val buildDir = dir("projectRoot/build")
+    val notifications = collectNotifications(disposable)
 
     invoke(MarkExcludeRootAction(), buildDir)
 
     assertEquals("$ROOT_DEFAULTS/build/\n", textOfIgnoreFile("projectRoot"))
     assertFalse(isInContent(buildDir))
+    assertEquals(listOf("" to LangBundle.message("analysis.ignore.notification.defaults.copied", ANALYSIS_IGNORE_FILE_NAME)), notifications)
   }
 
   @Test
@@ -413,48 +432,58 @@ class AnalysisIgnoreExclusionContributorTest {
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `cancel exclusion after mark as excluded keeps the default lines`() = runBlocking {
+  fun `cancel exclusion after mark as excluded selects the line below the default lines`() = runBlocking {
     val buildDir = dir("projectRoot/build")
     invoke(MarkExcludeRootAction(), buildDir)
 
     invoke(UnmarkRootAction(), buildDir)
+    dispatchEvents()
 
-    // The user removes the default lines in the editor.
-    assertEquals(ROOT_DEFAULTS, textOfIgnoreFile("projectRoot"))
-    assertTrue(isInContent(buildDir))
+    assertEquals("$ROOT_DEFAULTS/build/\n", textOfIgnoreFile("projectRoot"))
+    assertFalse(isInContent(buildDir))
+    val ignoreFile = projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME)!!
+    assertEquals("/build/", selectedTextIn(ignoreFile))
+    closeEditorOf(ignoreFile)
   }
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `cancel exclusion of a name that the defaults exclude writes the other default lines`() = runBlocking {
+  fun `cancel exclusion of a name that the defaults exclude selects its line in the defaults file`(
+    @TestDisposable disposable: Disposable,
+  ) = runBlocking {
     val nodeModules = dir("projectRoot/node_modules")
-    val target = dir("projectRoot/target")
     assertFalse(isInContent(nodeModules))
     assertTrue(presentationOf(UnmarkRootAction(), nodeModules).isEnabledAndVisible)
+    val notifications = collectNotifications(disposable)
 
     invoke(UnmarkRootAction(), nodeModules)
+    dispatchEvents()
 
-    val expected = AnalysisIgnoreDefaults.BUILT_IN_LINES - "node_modules"
-    assertEquals(expected.joinToString("\n", postfix = "\n"), textOfIgnoreFile("projectRoot"))
-    assertEquals(expected, service.defaultLinesAddedTo(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME)!!))
-    assertTrue(isInContent(nodeModules))
-    assertFalse(isInContent(target))
+    assertNull(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME), "No file appears in the project root")
+    assertFalse(isInContent(nodeModules))
+    val defaultsFile = defaultsVirtualFile()
+    // The defaults file was absent, and thus it got its template.
+    assertEquals(AnalysisIgnoreDefaultsFile.getInstance().template(), VfsUtilCore.loadText(defaultsFile))
+    assertEquals("node_modules", selectedTextIn(defaultsFile))
+    assertEquals(emptyList<Pair<String, String>>(), notifications)
+    closeEditorOf(defaultsFile)
   }
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `cancel exclusion of a root directory that the defaults exclude drops its line alone`() = runBlocking {
+  fun `cancel exclusion of a root directory that the defaults exclude selects its anchored line`() = runBlocking {
     val target = dir("projectRoot/target")
-    val nodeModules = dir("projectRoot/node_modules")
 
     invoke(UnmarkRootAction(), target)
+    dispatchEvents()
 
-    val expected = AnalysisIgnoreDefaults.BUILT_IN_LINES - "/target/"
-    assertEquals(expected.joinToString("\n", postfix = "\n"), textOfIgnoreFile("projectRoot"))
-    assertTrue(isInContent(target))
-    assertFalse(isInContent(nodeModules))
+    assertNull(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME), "No file appears in the project root")
+    assertFalse(isInContent(target))
+    val defaultsFile = defaultsVirtualFile()
+    assertEquals("/target/", selectedTextIn(defaultsFile))
+    closeEditorOf(defaultsFile)
   }
 
   @Test
@@ -471,6 +500,34 @@ class AnalysisIgnoreExclusionContributorTest {
   // -----------------------------------------------------------------------------------------------------------------------------------
 
   /** Runs [action] on [files] as the project view does, and waits for the index. */
+  /** Returns the title and the content of each balloon of the project, in the order of the balloons, until [disposable] goes away. */
+  private fun collectNotifications(disposable: Disposable): List<Pair<String, String>> {
+    val notifications = ArrayList<Pair<String, String>>()
+    project.messageBus.connect(disposable).subscribe(Notifications.TOPIC, object : Notifications {
+      override fun notify(notification: Notification) {
+        notifications.add(notification.title to notification.content)
+      }
+    })
+    return notifications
+  }
+
+  /** Runs the events that the action queued after itself, as the line that "Cancel Exclusion" opens. */
+  private suspend fun dispatchEvents() {
+    withContext(Dispatchers.EDT) { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+  }
+
+  /** Returns the selected text of the editor of [file], or `null` while no text editor shows [file]. */
+  private suspend fun selectedTextIn(file: VirtualFile): String? = withContext(Dispatchers.EDT) {
+    (FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor)?.editor?.selectionModel?.selectedText
+  }
+
+  private suspend fun closeEditorOf(file: VirtualFile) {
+    withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).closeFile(file) }
+  }
+
+  private fun defaultsVirtualFile(): VirtualFile =
+    requireNotNull(LocalFileSystem.getInstance().findFileByNioFile(AnalysisIgnoreDefaultsFile.getInstance().path)) { "No defaults file" }
+
   private suspend fun invoke(action: AnAction, vararg files: VirtualFile) {
     withContext(Dispatchers.EDT) { action.actionPerformed(eventOf(action, files)) }
     IndexingTestUtil.suspendUntilIndexesAreReady(project)

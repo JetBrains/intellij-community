@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.analysisignore
 
+import com.intellij.lang.LangBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -33,7 +36,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -63,6 +65,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
 
   private lateinit var module: Module
   private lateinit var projectRoot: VirtualFile
+  private val notificationContents = ArrayList<String>()
 
   @BeforeEach
   fun setUp(@TestDisposable disposable: Disposable) {
@@ -73,6 +76,11 @@ class AnalysisIgnoreDefaultExclusionsTest {
     runBlocking { registerProjectRoot(project, urlOf(projectRoot)) }
     service.syncDefaultsBlocking()
     IndexingTestUtil.waitUntilIndexesAreReady(project)
+    project.messageBus.connect(disposable).subscribe(Notifications.TOPIC, object : Notifications {
+      override fun notify(notification: Notification) {
+        notificationContents.add(notification.content)
+      }
+    })
   }
 
   @Test
@@ -205,7 +213,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
 
     val expected = AnalysisIgnoreDefaults.BUILT_IN_LINES + "/build/"
     assertEquals(expected.joinToString("\n", postfix = "\n"), textOfIgnoreFile("projectRoot"))
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, service.defaultLinesAddedTo(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME)!!))
+    assertEquals(1, copiedNotificationCount())
     assertEquals(emptyMap<String, List<String>>(), defaultPatternsByRoot())
     assertFalse(isInContent(buildDir))
     assertFalse(isInContent(yarnBelow))
@@ -321,12 +329,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
     val targetAtRoot = dir("projectRoot/target")
 
     // As New File does. The VFS listener queues the new file.
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot")
+    writeAnalysisIgnoreFile("projectRoot")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES.joinToString("\n", postfix = "\n"), textOfIgnoreFile("projectRoot"))
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(1, copiedNotificationCount())
     // The file replaces the default entity with the same lines.
     assertEquals(emptyMap<String, List<String>>(), defaultPatternsByRoot())
     assertFalse(isInContent(yarnBelow))
@@ -339,12 +347,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
   fun `a new empty file below the root stays empty and keeps the defaults`() = runBlocking {
     val yarnBelow = dir("projectRoot/sub/.yarn")
 
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot/sub")
+    writeAnalysisIgnoreFile("projectRoot/sub")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals("", textOfIgnoreFile("projectRoot/sub"))
-    assertNull(service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(0, copiedNotificationCount())
     assertEquals(mapOf(projectRoot.url to AnalysisIgnoreDefaults.BUILT_IN_LINES), defaultPatternsByRoot())
     assertFalse(isInContent(yarnBelow))
   }
@@ -358,12 +366,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
     assertEquals(mapOf(projectRoot.url to AnalysisIgnoreDefaults.BUILT_IN_LINES), defaultPatternsByRoot())
     assertFalse(isInContent(yarnBelow))
 
-    val rootFile = writeAnalysisIgnoreFile("projectRoot")
+    writeAnalysisIgnoreFile("projectRoot")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES.joinToString("\n", postfix = "\n"), textOfIgnoreFile("projectRoot"))
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, service.defaultLinesAddedTo(rootFile))
+    assertEquals(1, copiedNotificationCount())
     assertFalse(isInContent(yarnBelow))
   }
 
@@ -371,12 +379,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
   fun `a new file with text gets no default lines`() = runBlocking {
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot", "/custom/")
+    writeAnalysisIgnoreFile("projectRoot", "/custom/")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals("/custom/", textOfIgnoreFile("projectRoot"))
-    assertNull(service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(0, copiedNotificationCount())
     assertEquals(emptyMap<String, List<String>>(), defaultPatternsByRoot())
   }
 
@@ -384,12 +392,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "false")
   fun `a new empty file stays empty while the defaults are off`() = runBlocking {
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot")
+    writeAnalysisIgnoreFile("projectRoot")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals("", textOfIgnoreFile("projectRoot"))
-    assertNull(service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(0, copiedNotificationCount())
   }
 
   @Test
@@ -401,12 +409,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
     // As a checkout does. The empty file in the repository turns off the defaults on purpose.
     val path = projectRoot.toNioPath().resolve(ANALYSIS_IGNORE_FILE_NAME)
     Files.createFile(path)
-    val ignoreFile = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path))
+    requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path))
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals("", textOfIgnoreFile("projectRoot"))
-    assertNull(service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(0, copiedNotificationCount())
     assertEquals(emptyMap<String, List<String>>(), defaultPatternsByRoot())
     assertTrue(isInContent(yarnBelow))
   }
@@ -428,20 +436,6 @@ class AnalysisIgnoreDefaultExclusionsTest {
     assertEquals(mapOf(projectRoot.url to AnalysisIgnoreDefaults.BUILT_IN_LINES), defaultPatternsByRoot())
     assertFalse(isInContent(nodeModules))
     assertFalse(isInContent(yarnBelow))
-  }
-
-  @Test
-  @RegistryKey(key = ENABLED, value = "true")
-  @RegistryKey(key = DEFAULTS, value = "true")
-  fun `deleting a filled file forgets its default lines`() = runBlocking {
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot")
-    service.awaitPendingFills()
-    service.processNow()
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, service.defaultLinesAddedTo(ignoreFile))
-
-    writeAction { ignoreFile.delete(this@AnalysisIgnoreDefaultExclusionsTest) }
-
-    assertNull(service.defaultLinesAddedTo(ignoreFile))
   }
 
   @Test
@@ -482,12 +476,12 @@ class AnalysisIgnoreDefaultExclusionsTest {
     writeDefaultsFile("/build/", "node_modules")
     service.processNow()
 
-    val ignoreFile = writeAnalysisIgnoreFile("projectRoot")
+    writeAnalysisIgnoreFile("projectRoot")
     service.awaitPendingFills()
     service.processNow()
 
     assertEquals("/build/\nnode_modules\n", textOfIgnoreFile("projectRoot"))
-    assertEquals(listOf("/build/", "node_modules"), service.defaultLinesAddedTo(ignoreFile))
+    assertEquals(1, copiedNotificationCount())
   }
 
   @Test
@@ -587,6 +581,10 @@ class AnalysisIgnoreDefaultExclusionsTest {
     assertTrue(EditAnalysisIgnoreDefaultsAction.AccessExtension().isWritable(file))
     assertFalse(EditAnalysisIgnoreDefaultsAction.AccessExtension().isWritable(otherFile))
   }
+
+  /** Returns the number of balloons that told the user about the default lines that a new file got. */
+  private fun copiedNotificationCount(): Int =
+    notificationContents.count { it == LangBundle.message("analysis.ignore.notification.defaults.copied", ANALYSIS_IGNORE_FILE_NAME) }
 
   /** The patterns of each [default entity][AnalysisIgnoreDefaultEntitySource], by the URL of its project root. */
   private fun defaultPatternsByRoot(): Map<String, List<String>> =

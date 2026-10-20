@@ -877,7 +877,7 @@
                                    implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreSyntaxHighlighterFactory"/>
     <lang.commenter language="AnalysisIgnore" implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreCommenter"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
-    <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultLinesNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultsFileNotificationProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction$AccessExtension"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ide.analysisignore.AnalysisIgnoreUsagesCollector"/>
     <workspaceModel.optionalExclusionContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreExclusionContributor"

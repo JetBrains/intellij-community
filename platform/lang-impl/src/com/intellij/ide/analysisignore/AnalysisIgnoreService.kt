@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -55,9 +54,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   // A new file while its fill with the default lines runs. The queue does not read such a file, see [fill].
   private val fillJobs = ConcurrentHashMap<VirtualFile, Job>()
 
-  // The default lines that a new file got, while the banner of that file tells the user about them.
-  private val defaultLinesByFile = ConcurrentHashMap<VirtualFile, List<String>>()
-
   private val requests = Channel<Unit>(capacity = Channel.CONFLATED)
 
   // A change of the default lines in the defaults file. The default entities then get the new lines, see [syncDefaultsOnChanges].
@@ -79,7 +75,7 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   /**
    * Adds every change of one batch to the queue. A file of [createdFiles] that is still empty gets the
    * [default lines][AnalysisIgnoreDefaults.linesOfNewFileIn] of its directory. So a new file in a project root directory keeps the defaults
-   * in effect, and the editor banner of the file tells the user.
+   * in effect, and a balloon tells the user.
    */
   fun scheduleChanges(
     files: Collection<VirtualFile> = emptyList(),
@@ -92,7 +88,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
     filesToRead.addAll(files)
     baseDirsToForget.addAll(baseDirUrls)
     subtreesToForget.addAll(subtreeUrls)
-    forgetDefaultLinesOfRemovedFiles(baseDirUrls, subtreeUrls)
     if (AnalysisIgnoreDefaults.areEnabled()) {
       for (file in createdFiles) {
         val job = coroutineScope.launch(Dispatchers.Default, start = CoroutineStart.LAZY) { fill(file) }
@@ -106,35 +101,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   @TestOnly
   suspend fun awaitPendingFills() {
     fillJobs.values.toList().joinAll()
-  }
-
-  /** Returns the default lines that the service wrote into [file], or `null` if it wrote none or the user dismissed the banner. */
-  fun defaultLinesAddedTo(file: VirtualFile): List<String>? = defaultLinesByFile[file]
-
-  /** Remembers that a new [file] got the default [lines], so that its editor banner tells the user. */
-  fun rememberDefaultLines(file: VirtualFile, lines: List<String>) {
-    if (lines.isEmpty()) return
-    defaultLinesByFile[file] = lines
-    EditorNotifications.getInstance(project).updateNotifications(file)
-  }
-
-  /** Forgets the default lines of [file], so that its banner goes away. */
-  fun forgetDefaultLinesOf(file: VirtualFile) {
-    if (defaultLinesByFile.remove(file) != null) {
-      EditorNotifications.getInstance(project).updateNotifications(file)
-    }
-  }
-
-  /** Forgets the default lines of each file that went away, or that is no longer a `.analysisignore` file in its directory. */
-  private fun forgetDefaultLinesOfRemovedFiles(baseDirUrls: Collection<String>, subtreeUrls: Collection<String>) {
-    if (defaultLinesByFile.isEmpty()) return
-    for (file in defaultLinesByFile.keys.toList()) {
-      val dirUrl = file.parent?.url
-      val removed = !file.isValid || dirUrl != null && (dirUrl in baseDirUrls || subtreeUrls.any { isUnderOrEqual(dirUrl, it) })
-      if (removed) {
-        defaultLinesByFile.remove(file)
-      }
-    }
   }
 
   /**
@@ -264,7 +230,7 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
     if (lines.isEmpty()) return false
     val filled = withContext(Dispatchers.EDT) { AnalysisIgnoreFileWriter.fillEmptyFile(project, file, lines) }
     if (filled) {
-      rememberDefaultLines(file, lines)
+      notifyDefaultLinesCopied(project)
     }
     return filled
   }
