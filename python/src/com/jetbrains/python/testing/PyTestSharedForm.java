@@ -181,7 +181,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
                                                            // if it is test-enabled or not
                                                            return true;
                                                          }
-                                                         return PyTestsSharedKt.isTestElement(element, testClassRequired, context);
+                                                         return PyTestElementsKt.isTestElement(element, testClassRequired, context);
                                                        }, () -> {
       final String workingDirectory = configuration.getWorkingDirectory();
       if (StringUtil.isEmpty(workingDirectory)) {

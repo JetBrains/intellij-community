@@ -1,12 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
-import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -112,22 +109,10 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
    * Test class is required if "unittest" is set as test runner
    */
   public static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(anchor);
-    if (module == null) {
-      return true;
-    }
-    var sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) {
-      return true;
-    }
-    var factory = TestRunnerService.getInstance(module).getSelectedFactory();
-    return factory.onlyClassesAreSupported(module.getProject(), sdk);
+    return PyModuleTestRunnerQuery.getInstance().isTestCaseClassRequired(anchor, ThreeState.UNSURE);
   }
 
   private static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor, final @NotNull ThreeState userProvidedValue) {
-    if (userProvidedValue != ThreeState.UNSURE) {
-      return userProvidedValue.toBoolean();
-    }
-    return isTestCaseClassRequired(anchor);
+    return PyModuleTestRunnerQuery.getInstance().isTestCaseClassRequired(anchor, userProvidedValue);
   }
 }

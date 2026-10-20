@@ -30,12 +30,10 @@ import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -93,7 +91,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Matcher
@@ -121,51 +118,6 @@ fun processTCMessage(text: String): String {
 }
 
 internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::additionalArguments
-
-/**
- * Checks if element could be test target
- * @param testCaseClassRequired see [PythonUnitTestDetectorsBasedOnSettings] docs
- */
-fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
-  is PyFile -> PythonUnitTestDetectorsBasedOnSettings.isTestFile(element, testCaseClassRequired, typeEvalContext)
-  is PsiDirectory -> isTestFolder(element, testCaseClassRequired, typeEvalContext)
-  is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
-                                                                         testCaseClassRequired, typeEvalContext)
-  is PyClass -> {
-    PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
-  }
-  else -> false
-}
-
-/**
- * If an element is a subelement of the folder explicitly marked as test root -- use it
- *
- * @param findSource if true, will also check if an element is a subelement of the source root, then use it as working dir
- */
-private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem, findSource: Boolean = false): VirtualFile? {
-  val vfDirectory = element.virtualFile
-  val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
-  val manager = ModuleRootManager.getInstance(module)
-  val findSourceByType = {type: JavaSourceRootType -> manager.getSourceRoots(type).firstOrNull { VfsUtil.isAncestor(it, vfDirectory, false) } }
-
-  findSourceByType(JavaSourceRootType.TEST_SOURCE)?.let { return it }
-  if (findSource) {
-    findSourceByType(JavaSourceRootType.SOURCE)?.let { return it }
-  }
-
-  return null
-}
-
-private fun isTestFolder(
-  element: PsiDirectory,
-  testCaseClassRequired: ThreeState,
-  typeEvalContext: TypeEvalContext,
-): Boolean {
-  return (getExplicitlyConfiguredTestRoot(element) != null) || element.name.contains("test", true) || element.children.any {
-    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
-  }
-}
-
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.

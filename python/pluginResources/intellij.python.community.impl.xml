@@ -470,6 +470,8 @@
 
     <!-- TestRunnerService -->
     <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
+    <applicationService serviceInterface="com.jetbrains.python.testing.PyModuleTestRunnerQuery"
+                        serviceImplementation="com.jetbrains.python.testing.PyModuleTestRunnerQueryImpl"/>
     <workspaceModel.customImlComponentNameContributor
       implementation="com.jetbrains.python.testing.TestRunnerServiceImlComponentNameContributor"/>
 

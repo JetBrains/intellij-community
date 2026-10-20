@@ -34,12 +34,8 @@ import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.stubs.PyTestFixtureDecoratorStub
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.testing.PyTestFactory
-import com.jetbrains.python.testing.TestRunnerService
-import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
+import com.jetbrains.python.testing.PyModuleTestRunnerQuery
 import com.jetbrains.python.testing.isTestElement
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
 
 private val PyFunction.asFixture: PyTestFixture?
   get() = decoratorList?.decorators?.firstOrNull { it.name in TEST_FIXTURE_DECORATOR_NAMES }?.let { createFixture(it) }
@@ -435,14 +431,4 @@ private fun getModuleFixtures(module: Module): List<PyTestFixture> {
   else emptyList()
 }
 
-internal fun isPyTestEnabled(module: Module): Boolean {
-  val factory = TestRunnerService.getInstance(module).selectedFactory
-  // Must be true even if SDK is not set
-  if (factory.id == PyTestFactory.id) return true
-
-  // Called from code insight, which cannot suspend, so it peeks at the snapshot.
-  @Suppress("DEPRECATION") // The factory takes an SDK.
-  val sdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI() ?: return false
-  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
-  return factoryId == PyTestFactory.id
-}
+internal fun isPyTestEnabled(module: Module): Boolean = PyModuleTestRunnerQuery.getInstance().isPyTestEnabled(module)
