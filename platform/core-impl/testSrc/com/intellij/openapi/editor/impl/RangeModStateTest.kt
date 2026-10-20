@@ -154,6 +154,16 @@ internal class RangeModStateTest {
     }
   }
 
+  @Test
+  fun `a clear of every line matches the line set`() {
+    val insert = insertOp(0, "x\n")
+    val clearAll = unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    for (start in listOf("", "a", "a\n", "a\r\nb\r\n", "\n\n")) {
+      val cleared = assertSameAsLineSet(start, insert, clearAll)
+      assertFalse(cleared.modState.isLineModified(0)) { start }
+    }
+  }
+
   /**
    * Applies [ops] to a new [RangeModState] and to a new [DocumentModStateImpl], and checks that both
    * mark the same lines.
