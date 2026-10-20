@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,6 +47,6 @@ public class PyChangeSignatureUsageViewDescriptor extends UsageViewDescriptorAda
 
   @Override
   public String getProcessedElementsHeader() {
-    return PyBundle.message("refactoring.change.signature.usage.view.declarations.header");
+    return PyRefactoringBundle.message("refactoring.change.signature.usage.view.declarations.header");
   }
 }

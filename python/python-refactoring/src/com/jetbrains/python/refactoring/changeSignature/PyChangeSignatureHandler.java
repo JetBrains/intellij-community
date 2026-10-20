@@ -14,7 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -88,21 +88,21 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   @Override
   public @Nullable String getTargetNotFoundMessage() {
-    return PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name");
+    return PyRefactoringBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name");
   }
 
   private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
     if (element instanceof PyLambdaExpression) {
-      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.lambda.call"));
+      showCannotRefactorErrorHint(project, editor, PyRefactoringBundle.message("refactoring.change.signature.error.lambda.call"));
       return;
     }
     if (!(element instanceof PyFunction function)) {
-      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
+      showCannotRefactorErrorHint(project, editor, PyRefactoringBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
       return;
     }
 
     if (PyPsiIndexUtil.isNotUnderSourceRoot(project, element.getContainingFile())) {
-      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.not.under.source.root"));
+      showCannotRefactorErrorHint(project, editor, PyRefactoringBundle.message("refactoring.change.signature.error.not.under.source.root"));
       return;
     }
 
@@ -120,7 +120,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     final PyParameter[] parameters = function.getParameterList().getParameters();
     for (PyParameter p : parameters) {
       if (p instanceof PyTupleParameter) {
-        showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.tuple.parameters"));
+        showCannotRefactorErrorHint(project, editor, PyRefactoringBundle.message("refactoring.change.signature.error.tuple.parameters"));
         return;
       }
     }
@@ -156,7 +156,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       if (cache.isBuiltin(baseClass)) {
         return function;
       }
-      final String message = PyBundle.message("refactoring.change.signature.find.usages.of.base.class",
+      final String message = PyRefactoringBundle.message("refactoring.change.signature.find.usages.of.base.class",
                                               function.getName(),
                                               containingClass.getName(),
                                               baseClassName);

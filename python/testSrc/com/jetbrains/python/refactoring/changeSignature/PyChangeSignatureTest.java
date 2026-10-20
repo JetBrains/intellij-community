@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -95,7 +95,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testRemoveDefaultFromParamWithoutReplacement() {
     final PyParameterInfo first = new PyParameterInfo(0, "arg", null, false);
     final PyParameterInfo second = new PyParameterInfo(NEW_PARAMETER, "vvv", "xxx", false);
-    doValidationTest(null, Arrays.asList(first, second), PyBundle.message("refactoring.change.signature.dialog.validation.default.missing"));
+    doValidationTest(null, Arrays.asList(first, second), PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.default.missing"));
   }
 
   public void testUpdateDocstring() {
@@ -233,7 +233,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "", "2", true)),
-                     PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
+                     PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
   }
 
   public void testDecorator() {
@@ -295,20 +295,20 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
     firstParam.setName("*foo");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "*bar", null, false)),
-                     PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
+                     PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
   }
 
   public void testMultipleDoubleStarredParameters() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "foo", null, false);
     firstParam.setName("**foo");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
-                     PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star"));
+                     PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star"));
   }
 
   public void testParameterNameWithMoreThanTwoStars() {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "**kwargs", null, false);
     firstParam.setName("***kwargs");
-    doValidationTest(null, Arrays.asList(firstParam), PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
+    doValidationTest(null, Arrays.asList(firstParam), PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
   }
 
   // PY-22971
@@ -531,7 +531,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                          new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                          new PyParameterInfo(2, "b", null, false),
                                          new PyParameterInfo(NEW_PARAMETER, PySingleStarParameter.TEXT, null, false)),
-                     PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
+                     PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
   }
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {

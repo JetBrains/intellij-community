@@ -17,7 +17,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping;
 import com.jetbrains.python.psi.PyElement;
@@ -134,7 +134,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public @NotNull String getFamilyName() {
-    return PyBundle.message("QFIX.NAME.change.signature");
+    return PyRefactoringBundle.message("QFIX.NAME.change.signature");
   }
 
   @Override
@@ -146,11 +146,11 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     List<PyParameterInfo> parameters = new PyMethodDescriptor(function).getParameters();
     final String params = StringUtil.join(
       parameters,
-      info -> info.isNew() ? PyBundle.message("QFIX.bold.html.text", info.getName()) : info.getName(),
+      info -> info.isNew() ? PyRefactoringBundle.message("QFIX.bold.html.text", info.getName()) : info.getName(),
       ", "
     );
 
-    final String message = PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
+    final String message = PyRefactoringBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
     return XmlStringUtil.wrapInHtml(message);
   }
 

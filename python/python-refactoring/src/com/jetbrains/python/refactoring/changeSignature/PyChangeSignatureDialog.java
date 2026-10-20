@@ -33,7 +33,7 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -115,10 +115,10 @@ public class PyChangeSignatureDialog extends
     if (!functionName.equals(myMethod.getName())) {
       final boolean defined = IntroduceValidator.isDefinedInScope(functionName, myMethod.getMethod());
       if (defined) {
-        return PyBundle.message("refactoring.change.signature.dialog.validation.name.defined");
+        return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.name.defined");
       }
       if (!isNameValid(functionName, myProject)) {
-        return PyBundle.message("refactoring.change.signature.dialog.validation.function.name");
+        return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.function.name");
       }
     }
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
@@ -148,7 +148,7 @@ public class PyChangeSignatureDialog extends
 
       if (name.equals(PyAstSingleStarParameter.TEXT)) {
         if (hadSingleStar) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
         }
         hadSingleStar = true;
         if (index == parametersLength - 1) {
@@ -175,10 +175,10 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }
         if (hadSingleStar || hadPositionalContainer) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
         }
         if (!isNameValid(name.substring(1), myProject)) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
         }
         hadPositionalContainer = true;
       }
@@ -187,16 +187,16 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
         if (hadKeywordContainer) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
         }
         if (!isNameValid(name.substring(2), myProject)) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
         }
         hadKeywordContainer = true;
       }
       else {
         if (!isNameValid(name, myProject)) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
+          return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
         }
         if (hadSingleStar) {
           hadParamsAfterSingleStar = true;
@@ -220,16 +220,16 @@ public class PyChangeSignatureDialog extends
       if (parameter.getOldIndex() < 0) {
         if (ParamHelper.couldHaveDefaultValue(name)) {
           if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText())) {
-            return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+            return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.default.missing");
           }
           if (StringUtil.isEmptyOrSpaces(name)) {
-            return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
+            return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
           }
         }
       }
       else if (myMethod.getParameters().get(parameter.getOldIndex()).getDefaultInSignature() &&
                StringUtil.isEmptyOrSpaces(parameter.getDefaultValue())) {
-        return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+        return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.default.missing");
       }
     }
 
@@ -322,7 +322,7 @@ public class PyChangeSignatureDialog extends
           private JPanel createDefaultValueCheckBox() {
             final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
 
-            final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
+            final JBLabel inSignatureLabel = new JBLabel(PyRefactoringBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
                                                          UIUtil.ComponentStyle.SMALL);
             defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
             myDefaultInSignature = new JCheckBox();
@@ -364,7 +364,7 @@ public class PyChangeSignatureDialog extends
           private JPanel createParameterPanel() {
             final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
-            final JBLabel nameLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.name.label"),
+            final JBLabel nameLabel = new JBLabel(PyRefactoringBundle.message("refactoring.change.signature.dialog.name.label"),
                                                   UIUtil.ComponentStyle.SMALL);
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
