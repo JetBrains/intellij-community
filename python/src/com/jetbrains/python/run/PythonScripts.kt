@@ -56,7 +56,7 @@ private val LOG = fileLogger()
 @ApiStatus.Internal
 fun PythonExecution.buildTargetedCommandLine(
   targetEnvironment: TargetEnvironment,
-  sdk: Sdk?,
+  sdk: Sdk,
   interpreterParameters: List<String>,
   isUsePty: Boolean = false,
   runTool: PyRunToolParameters? = null,
@@ -74,7 +74,7 @@ fun PythonExecution.buildTargetedCommandLine(
       }
     }
     else -> {
-      sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+      sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
       commandLineBuilder.addParameters(interpreterParameters)
     }
   }
@@ -101,16 +101,14 @@ fun PythonExecution.buildTargetedCommandLine(
       commandLineBuilder.addParameter(resolvedParameter)
     }
   }
-  val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  if (sdk != null) {
-    PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
-  }
+  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"

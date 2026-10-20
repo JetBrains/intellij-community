@@ -384,12 +384,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
 
     Sdk sdk = getSdk();
-    if (sdk != null) {
-      RunConfigurationTargetEnvironmentAdjuster adjuster =
-        RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
-      if (adjuster != null) {
-        adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
-      }
+    if (sdk == null) {
+      throw new ExecutionException(PyBundle.message("runcfg.unittest.no_valid_sdk"));
+    }
+    RunConfigurationTargetEnvironmentAdjuster adjuster =
+      RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
+    if (adjuster != null) {
+      adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
     }
 
     // The original Python script to be executed
@@ -416,7 +417,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         .toList();
 
     PyRunToolParameters runToolParameters = null;
-    if (sdk != null && getEnableRunTool()) {
+    if (getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
         // Resolved here rather than in the tool: only the configuration knows whether it runs a bare script.
