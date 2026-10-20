@@ -392,11 +392,6 @@ open class IDETestContext(
     addSystemProperty("idea.pkgs.disableLoading", true)
   }
 
-  fun disableAIAssistantToolwindowActivationOnStart(): IDETestContext = applyVMOptionsPatch {
-    addSystemProperty("llm.ai.assistant.toolwindow.activation.on.start", false)
-    addSystemProperty("llm.show.ai.promotion.window.on.start", false)
-  }
-
   fun disableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
     SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, false) }
   }

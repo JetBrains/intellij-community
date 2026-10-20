@@ -78,7 +78,6 @@ val lambdaTestAppConfiguration: CachedProjectConfiguration = CachedProjectConfig
 val lambdaUnitTestModeNoProjectConfiguration: CachedProjectConfiguration = CachedProjectConfiguration(
   testCase = testCaseWithProject(NoProject),
   setup = {
-    disableAIAssistantToolwindowActivationOnStart()
     applyVMOptionsPatch { inUnitTestMode() }
   },
 )
@@ -86,7 +85,6 @@ val lambdaUnitTestModeNoProjectConfiguration: CachedProjectConfiguration = Cache
 val lambdaNoHeadlessTestAppConfiguration: CachedProjectConfiguration = CachedProjectConfiguration(
   testCase = testCaseWithProject(TestAppProject),
   setup = {
-    disableAIAssistantToolwindowActivationOnStart()
     applyVMOptionsPatch { clearSystemProperty("java.awt.headless") }
   },
 )
