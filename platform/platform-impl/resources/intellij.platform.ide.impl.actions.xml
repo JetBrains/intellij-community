@@ -851,6 +851,6 @@
       <reference ref="AddBom"/>
     </group>
 
-    <action id="WelcomeReopenProjectAction" class="com.intellij.ide.welcomeScreen.WelcomeReopenProjectAction" icon="AllIcons.Nodes.HomeFolder"/>
+    <action id="WelcomeReopenProjectAction" class="com.intellij.ide.welcomeScreen.WelcomeReopenProjectAction" icon="AllIcons.General.Home"/>
   </actions>
 </idea-plugin>

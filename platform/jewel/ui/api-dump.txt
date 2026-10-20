@@ -3213,6 +3213,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:Hashtag:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HideToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:History:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Home:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ImplementingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IndentDetected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Information:org.jetbrains.jewel.ui.icon.IntelliJIconKey

@@ -585,6 +585,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Hashtag = load("expui/general/hashtag.svg", 859350157, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("expui/general/hide.svg", "general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
+    /** 16x16 */ public static final @NotNull Icon Home = load("expui/general/home.svg", -1189425360, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("expui/general/showToImplement.svg", "general/implementingMethod.svg", -286814761, 1);
     /** 16x16 */ public static final @NotNull Icon IndentDetected = load("expui/general/indentDetected.svg", 1513743707, 2);
     /** 16x16 */ public static final @NotNull Icon Information = load("expui/status/info.svg", "general/information.svg", 45152184, 0);
