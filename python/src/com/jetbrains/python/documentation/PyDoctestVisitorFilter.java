@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PyDoctestVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(final @NotNull Class visitorClass, final @NotNull PsiFile file) {
-    if (PyInjectedPythonCodeVisitors.disabledInspections.contains(visitorClass) ||
+    if (PyInjectedPythonCodeVisitors.isDisabledInspection(visitorClass) ||
         PyInjectedPythonCodeVisitors.disabledAnnotators.contains(visitorClass)) {
       return false;
     }

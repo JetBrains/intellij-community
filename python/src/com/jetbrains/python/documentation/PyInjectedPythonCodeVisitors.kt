@@ -7,16 +7,15 @@ import com.jetbrains.python.inspections.PyByteLiteralInspection
 import com.jetbrains.python.inspections.PyClassHasNoInitInspection
 import com.jetbrains.python.inspections.PyDocstringTypesInspection
 import com.jetbrains.python.inspections.PyIncorrectDocstringInspection
+import com.jetbrains.python.inspections.PyInspectionClassNames
 import com.jetbrains.python.inspections.PyMandatoryEncodingInspection
 import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection
 import com.jetbrains.python.inspections.PyNonAsciiCharInspection
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.inspections.PyPep8Inspection
 import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection
 import com.jetbrains.python.inspections.PyStatementEffectInspection
 import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.validation.PyDocStringHighlightingAnnotator
 import com.jetbrains.python.validation.PyFunctionHighlightingAnnotator
@@ -38,7 +37,6 @@ object PyInjectedPythonCodeVisitors {
 
   @JvmField
   val disabledInspections: Set<Class<*>> = setOf(
-    PyPackageRequirementsInspection::class.java,
     PyPep8Inspection::class.java,
     PyArgumentListInspection::class.java,
     PyIncorrectDocstringInspection::class.java,
@@ -55,12 +53,21 @@ object PyInjectedPythonCodeVisitors {
   )
 
   /**
+   * True when [visitorClass] is in [disabledInspections] or is the package requirements inspection.
+   * The package requirements inspection is matched by name, because it lives in another module.
+   */
+  @JvmStatic
+  fun isDisabledInspection(visitorClass: Class<*>): Boolean {
+    return visitorClass in disabledInspections || visitorClass.name == PyInspectionClassNames.PACKAGE_REQUIREMENTS
+  }
+
+  /**
    * True when [visitorClass] is the unresolved-reference inspection and the injected code
    * does not live in a real Python file. The inspection needs a real file for its reference index.
    */
   @JvmStatic
   fun isUnresolvedReferenceOutsideTopLevelFile(visitorClass: Class<*>, file: PsiFile): Boolean {
-    if (visitorClass != PyUnresolvedReferencesInspection::class.java) return false
+    if (visitorClass.name != PyInspectionClassNames.UNRESOLVED_REFERENCES) return false
     val topLevelFile = InjectedLanguageManager.getInstance(file.project).getTopLevelFile(file)
     return topLevelFile !is PyFile
   }
