@@ -490,7 +490,11 @@ open class K2MoveDeclarationsRefactoringProcessor(
         val outerInstanceParameterName = (originalDeclaration as? KtNamedDeclaration)?.computeOrGetOuterInstanceName()
         val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
         if (moveTargetType == DeclarationTargetType.COMPANION_BLOCK || moveTargetType == DeclarationTargetType.COMPANION_EXTENSION) {
-            (newDeclaration as? KtDeclaration)?.removeJvmStaticAnnotation()
+            (newDeclaration as? KtDeclaration)?.let { declaration ->
+                declaration.removeJvmStaticAnnotation()
+                declaration.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
+                declaration.removeModifierKeyword(KtTokens.FINAL_KEYWORD)
+            }
         }
         when (newDeclaration) {
             is KtClass -> {

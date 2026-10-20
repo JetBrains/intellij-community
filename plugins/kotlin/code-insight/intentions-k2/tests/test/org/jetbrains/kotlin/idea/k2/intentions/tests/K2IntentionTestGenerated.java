@@ -14007,6 +14007,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/ofOperator.kt");
         }
 
+        @TestMetadata("openFun.kt")
+        public void testOpenFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/openFun.kt");
+        }
+
+        @TestMetadata("openProperty.kt")
+        public void testOpenProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/openProperty.kt");
+        }
+
+        @TestMetadata("overriddenOpenFun.kt")
+        public void testOverriddenOpenFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/overriddenOpenFun.kt");
+        }
+
         @TestMetadata("plusOperator.kt")
         public void testPlusOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/plusOperator.kt");
@@ -14015,6 +14030,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("privateMemberVisibility.kt")
         public void testPrivateMemberVisibility() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/privateMemberVisibility.kt");
+        }
+
+        @TestMetadata("protectedFun.kt")
+        public void testProtectedFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/protectedFun.kt");
         }
 
         @TestMetadata("redeclarationConflictFunction.kt")
@@ -14185,6 +14205,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/ofOperator.kt");
         }
 
+        @TestMetadata("openFun.kt")
+        public void testOpenFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/openFun.kt");
+        }
+
+        @TestMetadata("overriddenOpenFun.kt")
+        public void testOverriddenOpenFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/overriddenOpenFun.kt");
+        }
+
         @TestMetadata("plusOperator.kt")
         public void testPlusOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/plusOperator.kt");
@@ -14208,6 +14238,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("privateTopLevelHelper.kt")
         public void testPrivateTopLevelHelper() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/privateTopLevelHelper.kt");
+        }
+
+        @TestMetadata("protectedFun.kt")
+        public void testProtectedFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/protectedFun.kt");
         }
     }
 

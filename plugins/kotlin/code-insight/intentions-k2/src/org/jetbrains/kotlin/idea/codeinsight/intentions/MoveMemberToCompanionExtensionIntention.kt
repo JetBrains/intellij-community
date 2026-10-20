@@ -21,6 +21,7 @@ internal class MoveMemberToCompanionExtensionIntention: MoveMemberToCompanionBlo
         if (!element.kaModule(null).languageVersionSettings.supportsFeature(LanguageFeature.CompanionExtensions)) {
             return null
         }
+        if (element.hasModifier(KtTokens.PROTECTED_KEYWORD)) return null
         val targetClass = getTargetClass(element) ?: return null
         if (generateSequence(targetClass as KtClassOrObject) {
                 it.containingClassOrObject
