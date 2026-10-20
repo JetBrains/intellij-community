@@ -16,38 +16,20 @@
 package com.jetbrains.python.refactoring.unwrap;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * User : ktisha
  */
-public class PyElIfUnwrapper extends PyUnwrapper {
-  public PyElIfUnwrapper() {
-    super(PyBundle.message("unwrap.elif"));
-  }
-
-  @Override
-  protected void doUnwrap(PsiElement element, Context context)
-    throws IncorrectOperationException {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PyStatementWithElse.class);
-    context.extractPart(element);
-    context.delete(parent);
-  }
-
-  @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
-    super.collectAffectedElements(e, toExtract);
-    return PsiTreeUtil.getParentOfType(e, PyStatementWithElse.class);
+public class PyElIfRemover extends PyUnwrapper {
+  public PyElIfRemover() {
+    super(PyCodeInsightBundle.message("remove.elif"));
   }
 
   @Override
@@ -58,5 +40,10 @@ public class PyElIfUnwrapper extends PyUnwrapper {
       return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
     }
     return false;
+  }
+
+  @Override
+  protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
+    context.delete(element);
   }
 }

@@ -17,7 +17,7 @@ package com.jetbrains.python.refactoring.unwrap;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyElement;
 
 /**
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.PyElement;
  */
 public class PyElseRemover extends PyElseUnwrapperBase {
   public PyElseRemover() {
-    super(PyBundle.message("remove.else"));
+    super(PyCodeInsightBundle.message("remove.else"));
   }
 
   @Override

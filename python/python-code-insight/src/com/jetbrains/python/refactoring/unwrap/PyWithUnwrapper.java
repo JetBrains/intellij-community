@@ -4,8 +4,8 @@ package com.jetbrains.python.refactoring.unwrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyWithUnwrapper extends PyUnwrapper {
   public PyWithUnwrapper() {
-    super(PyBundle.message("unwrap.with"));
+    super(PyCodeInsightBundle.message("unwrap.with"));
   }
 
   @Override

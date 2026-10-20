@@ -3,25 +3,25 @@ package com.jetbrains.python.refactoring.unwrap;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
+import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyWhileStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
-public class PyWhileUnwrapper extends PyUnwrapper {
-  public PyWhileUnwrapper() {
-    super(PyBundle.message("unwrap.while"));
+public class PyForUnwrapper extends PyUnwrapper {
+  public PyForUnwrapper() {
+    super(PyCodeInsightBundle.message("unwrap.for"));
   }
 
   @Override
   public boolean isApplicableTo(@NotNull PsiElement e) {
-    if (e instanceof PyWhileStatement whileStatement) {
-      final PyStatementList statementList = whileStatement.getWhilePart().getStatementList();
+    if (e instanceof PyForStatement forStatement) {
+      final PyStatementList statementList = forStatement.getForPart().getStatementList();
       final PyStatement[] statements = statementList.getStatements();
       return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
     }
@@ -30,10 +30,10 @@ public class PyWhileUnwrapper extends PyUnwrapper {
 
   @Override
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
-    final PyWhileStatement whileStatement = (PyWhileStatement)element;
-    context.extractPart(whileStatement);
-    context.extractPart(whileStatement.getElsePart());
-    context.delete(whileStatement);
+    final PyForStatement forStatement = (PyForStatement)element;
+    context.extractPart(forStatement);
+    context.extractPart(forStatement.getElsePart());
+    context.delete(forStatement);
   }
 }
 

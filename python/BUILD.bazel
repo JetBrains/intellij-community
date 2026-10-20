@@ -797,8 +797,6 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.iml",
-        "pluginResources/colorSchemes/PythonDarcula.xml",
-        "pluginResources/colorSchemes/PythonDefault.xml",
         "pluginResources/intellij.python.community.impl.xml",
     ],
     visibility = ["//visibility:public"],

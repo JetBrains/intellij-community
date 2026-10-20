@@ -18,21 +18,30 @@ package com.jetbrains.python.refactoring.unwrap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
+import com.jetbrains.python.psi.PyPassStatement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStatementWithElse;
+import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * User : ktisha
  */
-public class PyElseUnwrapper extends PyElseUnwrapperBase {
-  public PyElseUnwrapper() {
-    super(PyBundle.message("unwrap.else"));
+public class PyElIfUnwrapper extends PyUnwrapper {
+  public PyElIfUnwrapper() {
+    super(PyCodeInsightBundle.message("unwrap.elif"));
+  }
+
+  @Override
+  protected void doUnwrap(PsiElement element, Context context)
+    throws IncorrectOperationException {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PyStatementWithElse.class);
+    context.extractPart(element);
+    context.delete(parent);
   }
 
   @Override
@@ -42,19 +51,12 @@ public class PyElseUnwrapper extends PyElseUnwrapperBase {
   }
 
   @Override
-  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
-    PsiElement parent = element.getParent();
-
-    while (parent instanceof PyIfStatement) {
-      result.add(parent);
-      parent = parent.getParent();
+  public boolean isApplicableTo(@NotNull PsiElement e) {
+    if (e instanceof PyIfPartElifImpl ifPartElif) {
+      final PyStatementList statementList = ifPartElif.getStatementList();
+      final PyStatement[] statements = statementList.getStatements();
+      return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
     }
-  }
-
-  @Override
-  protected void unwrapElseBranch(PyElement branch, PsiElement parent, Context context) throws IncorrectOperationException {
-    parent = PsiTreeUtil.getParentOfType(branch, PyStatementWithElse.class);
-    context.extractPart(branch);
-    context.delete(parent);
+    return false;
   }
 }

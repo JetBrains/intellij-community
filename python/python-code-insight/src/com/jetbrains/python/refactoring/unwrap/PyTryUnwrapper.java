@@ -3,7 +3,7 @@ package com.jetbrains.python.refactoring.unwrap;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyTryUnwrapper extends PyUnwrapper {
   public PyTryUnwrapper() {
-    super(PyBundle.message("unwrap.try"));
+    super(PyCodeInsightBundle.message("unwrap.try"));
   }
 
   @Override
