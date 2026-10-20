@@ -31,7 +31,7 @@ internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyConda
   val targetEnvironmentConfiguration = fileSystem.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   val path = executable.pathHolder.getOr { return it }
-  return PyCondaCommand(fullCondaPathOnTarget = path.toStringForExecution(),
+  return PyCondaCommand(fullCondaPathOnTarget = path.toStringOnRemoteMachine(),
                         targetConfig = targetEnvironmentConfiguration).let { PyResult.success(it) }
 }
 
@@ -95,8 +95,8 @@ internal suspend fun PythonAddInterpreterModel<*>.createSdkFromCondaEnv(
 
   val workingDirectory =
     moduleOrProject.workingDirectory ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found"))
-  val pythonInterpreter = PyCondaCommand(fullCondaPathOnTarget = pathHolder.toStringForExecution(),
-                           targetConfig = fileSystem.targetEnvironmentConfiguration).createCondaSdkFromExistingEnvironment(
+  val pythonInterpreter = PyCondaCommand(fullCondaPathOnTarget = pathHolder.toStringOnRemoteMachine(),
+                                         targetConfig = fileSystem.targetEnvironmentConfiguration).createCondaSdkFromExistingEnvironment(
     moduleOrProject = moduleOrProject,
     condaIdentity = pyCondaEnv.envIdentity,
     workingDirectory = workingDirectory,

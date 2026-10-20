@@ -182,7 +182,7 @@ data class EelFileSystem(
         it.asEelPath()
       }
       else {
-        LOG.warn("Dropped the relative work directory '$it' of ${path.toStringForUI()}")
+        LOG.warn("Dropped the relative work directory '$it' of ${path.toStringPossiblyMRFS()}")
         null
       }
     }
@@ -604,7 +604,7 @@ internal data class TargetFileSystem(
 
     val (additionalData, customSdkSuggestedName) = run {
       val data = PyTargetAwareAdditionalData(sdkAdditionalData, targetEnvironmentConfiguration).also {
-        it.interpreterPath = pythonBinaryPath.toStringForExecution()
+        it.interpreterPath = pythonBinaryPath.toStringOnRemoteMachine()
         it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       }
       targetPanelExtension?.let {

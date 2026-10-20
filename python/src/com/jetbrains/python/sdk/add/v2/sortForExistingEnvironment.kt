@@ -97,7 +97,7 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
           }
         }
       }
-      return@groupBy if (it.homePath.toStringForUI().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
+      return@groupBy if (it.homePath.toStringPossiblyMRFS().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
     }
     if (LOG.isDebugEnabled) {
       LOG.debug(groupedPythons.map { (group, pythons) ->

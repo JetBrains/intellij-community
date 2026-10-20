@@ -36,7 +36,7 @@ sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSele
   abstract val homePath: P?
   abstract override val pythonInfo: PythonInfo
   override val ui: PyToolUIInfo? = null
-  override fun toString(): String = "PythonSelectableInterpreter(homePath='${homePath?.toStringForUI()}')"
+  override fun toString(): String = "PythonSelectableInterpreter(homePath='${homePath?.toStringPossiblyMRFS()}')"
 
   override fun compareTo(other: PythonSelectableInterpreter<*>): Int = comparator.compare(this, other)
 }
@@ -50,7 +50,7 @@ class ExistingSelectableInterpreter<P : PathHolder>(
     get() = pythonInterpreterWrapper.homePath
 
   override fun toString(): String {
-    return "ExistingSelectableInterpreter(sdk=${pythonInterpreterWrapper.pythonInterpreter}, pythonInfo=$pythonInfo, isSystemWide=$isSystemWide, homePath='${homePath.toStringForUI()}')"
+    return "ExistingSelectableInterpreter(sdk=${pythonInterpreterWrapper.pythonInterpreter}, pythonInfo=$pythonInfo, isSystemWide=$isSystemWide, homePath='${homePath.toStringPossiblyMRFS()}')"
   }
 }
 
@@ -60,7 +60,7 @@ class ManuallyAddedSelectableInterpreter<P : PathHolder>(
   override val isBase: Boolean,
 ) : PythonSelectableInterpreter<P>(), MaybeSystemPython, InterpreterWithPath<P> {
   override fun toString(): String {
-    return "ManuallyAddedSelectableInterpreter(homePath='${homePath.toStringForUI()}', pythonInfo=$pythonInfo)"
+    return "ManuallyAddedSelectableInterpreter(homePath='${homePath.toStringPossiblyMRFS()}', pythonInfo=$pythonInfo)"
   }
 }
 
@@ -82,6 +82,6 @@ class DetectedSelectableInterpreter<P : PathHolder>(
   override val ui: PyToolUIInfo? = null,
 ) : PythonSelectableInterpreter<P>(), MaybeSystemPython, InterpreterWithPath<P> {
   override fun toString(): String {
-    return "DetectedSelectableInterpreter(homePath='${homePath.toStringForUI()}', pythonInfo=$pythonInfo, isBase=$isBase, uiCustomization=$ui)"
+    return "DetectedSelectableInterpreter(homePath='${homePath.toStringPossiblyMRFS()}', pythonInfo=$pythonInfo, isBase=$isBase, uiCustomization=$ui)"
   }
 }

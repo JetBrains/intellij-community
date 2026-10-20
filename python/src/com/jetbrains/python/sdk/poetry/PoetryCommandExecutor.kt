@@ -92,7 +92,7 @@ private suspend fun <P : PathHolder> runPoetryWithSdk(
   val env = buildMap {
     put("POETRY_VIRTUALENVS_IN_PROJECT", "false")
     put("POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON", "true")
-    put("VIRTUAL_ENV", pythonHomePath.toStringForExecution())
+    put("VIRTUAL_ENV", pythonHomePath.toStringOnRemoteMachine())
   }
   return runPoetry(
     fileSystem = fileSystem,
@@ -171,7 +171,7 @@ internal suspend fun <P : PathHolder> setupPoetry(
   runPoetry(
     fileSystem = fileSystem,
     projectPath = projectPath,
-    "env", "use", basePythonBinaryPath.toStringForExecution(),
+    "env", "use", basePythonBinaryPath.toStringOnRemoteMachine(),
     poetryExecutable = poetryExecutable,
     inProjectEnv = inProjectEnv,
   ).getOr { return it }

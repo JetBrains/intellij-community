@@ -55,7 +55,7 @@ internal class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
   val fieldAccessor: TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> =
     object : TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> {
       override fun getText(component: ComboBox<PythonSelectableInterpreter<P>?>): @NlsSafe String? =
-        component.getItemAt(component.selectedIndex)?.homePath?.toStringForUI()
+        component.getItemAt(component.selectedIndex)?.homePath?.toStringPossiblyMRFS()
 
       override fun setText(component: ComboBox<PythonSelectableInterpreter<P>?>, text: @NlsSafe String) {
         onPathSelected(text)

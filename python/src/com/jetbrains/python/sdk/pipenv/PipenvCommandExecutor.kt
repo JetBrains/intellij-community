@@ -40,7 +40,7 @@ internal suspend fun <P : PathHolder> runPipEnv(
 ): PyResult<String> =
   PipEnvPyTool.getInstance().runTool(
     fileSystem = fileSystem,
-    pathFromSdk = pipenvExecutable?.toStringForExecution(),
+    pathFromSdk = pipenvExecutable?.toStringOnRemoteMachine(),
     dirPath = dirPath,
     args = args,
     env = baseEnv,
@@ -100,7 +100,7 @@ private suspend fun <P : PathHolder> runPipEnvWithSdk(
     fileSystem = fileSystem,
     dirPath = workingDirectory,
     args = args,
-    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringForExecution()),
+    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringOnRemoteMachine()),
     downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG.takeIf { args.firstOrNull() in PIPENV_PROJECT_MUTATING_COMMANDS },
   )
 }
@@ -127,7 +127,7 @@ internal suspend fun <P : PathHolder> setupPipEnvSdkWithProgressReport(
     installPackages = installPackages,
   ).getOr { return it }
   val pythonBinaryPath = fileSystem.resolvePythonBinary(pythonHomePath)
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringForUI()))
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringPossiblyMRFS()))
 
   return fileSystem.setupSdk(
     moduleOrProject = moduleOrProject,
@@ -178,7 +178,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringForExecution()).toTypedArray(),
+        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringOnRemoteMachine()).toTypedArray(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }
@@ -187,7 +187,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        "--python", basePythonBinaryPath.toStringForExecution(),
+        "--python", basePythonBinaryPath.toStringOnRemoteMachine(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }

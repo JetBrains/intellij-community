@@ -177,7 +177,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
 
       val pathHolder = validatedPath.pathHolder.successOrNull
       if (pathHolder != null) {
-        text = pathHolder.toStringForUI()
+        text = pathHolder.toStringPossiblyMRFS()
       }
       else {
         text = ""
@@ -233,7 +233,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         .map {
           if (it == null) return@map null
 
-          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.successOrNull?.toStringForUI() ?: "") != it) {
+          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.successOrNull?.toStringPossiblyMRFS() ?: "") != it) {
             editorMode.store(true)
             pathValidator.markDirty()
           }
