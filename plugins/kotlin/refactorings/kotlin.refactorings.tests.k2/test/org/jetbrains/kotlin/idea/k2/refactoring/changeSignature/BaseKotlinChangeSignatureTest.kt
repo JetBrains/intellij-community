@@ -950,6 +950,14 @@ public @interface NotNull {
         newParameters[0].name = "text"
     }
 
+    fun testCompanionExtensionParameterToReceiver() = doTestConflict { receiverParameterInfo = newParameters[1] }
+    fun testCompanionExtensionParameterToReceiverNoUsages() = doTest { receiverParameterInfo = newParameters[1] }
+    fun testCompanionExtensionParameterToReceiverUsageOfThis() = doTestConflict { receiverParameterInfo = newParameters[1] }
+    fun testCompanionExtensionParameterToReceiverWithRenamedParameter() = doTest {
+        receiverParameterInfo = newParameters[1]
+        newParameters[2].name = "renamed"
+    }
+
     fun testParameterToReceiverExplicitReceiver() = doTest { receiverParameterInfo = newParameters[0] }
 
     fun testParameterToReceiverImplicitReceivers() = doTest { receiverParameterInfo = newParameters[0] }

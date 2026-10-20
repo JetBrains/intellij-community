@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 internal class KotlinParameterUsage(
     element: KtElement,
-    private val parameterInfo: KotlinParameterInfo
+    val parameterInfo: KotlinParameterInfo
 ) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,

@@ -33,13 +33,16 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByC
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinCallableReferenceUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinImplicitThisToParameterUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinParameterUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
+import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -153,6 +156,24 @@ class KotlinChangeSignatureConflictSearcher(
         }
         if (function.hasModifier(KtTokens.COMPANION_KEYWORD) && newReceiverInfo == null) {
             result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
+        }
+        if (function.hasModifier(KtTokens.COMPANION_KEYWORD) &&
+            originalReceiverInfo != null &&
+            newReceiverInfo != null &&
+            newReceiverInfo != originalReceiverInfo
+        ) {
+            fun hasCompanionExtensionRelevantUsages() = refUsages.get().any { usage ->
+                when (usage) {
+                    is KotlinParameterUsage -> usage.parameterInfo == newReceiverInfo || usage.parameterInfo == originalReceiverInfo
+                    is KotlinImplicitThisToParameterUsage -> usage.parameterInfo == originalReceiverInfo
+                    is KotlinFunctionCallUsage, is KotlinPropertyCallUsage, is KotlinByConventionCallUsage,
+                    is KotlinCallableReferenceUsage, is MethodCallUsageInfo, is KotlinOverrideUsageInfo, is OverriderUsageInfo -> true
+                    else -> false
+                }
+            }
+            if (hasCompanionExtensionRelevantUsages()) {
+                result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
+            }
         }
         if (newReceiverInfo != originalReceiverInfo) {
             if (function.receiverTypeReference == null && newReceiverInfo != null && newReceiverInfo.isNewParameter) {

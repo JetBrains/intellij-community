@@ -1,0 +1,1 @@
+A companion extension cannot replace its class receiver with a value parameter
