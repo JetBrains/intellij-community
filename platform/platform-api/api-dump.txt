@@ -896,7 +896,6 @@ e:com.intellij.ide.browsers.BrowserFamily
 - java.lang.Enum
 - com.intellij.openapi.util.Iconable
 - sf:CHROME:com.intellij.ide.browsers.BrowserFamily
-- sf:EXPLORER:com.intellij.ide.browsers.BrowserFamily
 - sf:FIREFOX:com.intellij.ide.browsers.BrowserFamily
 - sf:SAFARI:com.intellij.ide.browsers.BrowserFamily
 - createBrowserSpecificSettings():com.intellij.ide.browsers.BrowserSpecificSettings

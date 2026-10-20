@@ -26,7 +26,6 @@ public enum BrowserFamily implements Iconable {
       return new FirefoxSettings();
     }
   },
-  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer),
   SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari);
 
   private final @Nls String myName;
