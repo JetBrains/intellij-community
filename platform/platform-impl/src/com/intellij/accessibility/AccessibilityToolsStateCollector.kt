@@ -51,8 +51,10 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
     when (OS.CURRENT) {
       OS.Windows -> {
         try {
-          ProcessHandle.allProcesses().forEach {
-            when (OSProcessUtil.processName(it).lowercase()) {
+          // ProcessHandle.Info is empty for processes with higher integrity level, such as assistive technologies (JBR-5053, JDK-8263139)
+          @Suppress("removal", "DEPRECATION")
+          for (process in OSProcessUtil.getProcessList()) {
+            when (process.executableName.lowercase()) {
               "nvda.exe" -> {
                 set.add(SCREEN_READER.metric(ScreenReader.NVDA))
               }
