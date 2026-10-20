@@ -1988,6 +1988,7 @@ python/python-sdk/common
 python/python-sdk/frontend
 python/python-sdk/tests
 python/python-source-roots
+python/python-spellchecker
 python/python-syntax
 python/python-syntax-core
 python/python-syntax/lambdaTests

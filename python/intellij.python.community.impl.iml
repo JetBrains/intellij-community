@@ -94,6 +94,7 @@
     <orderEntry type="module" module-name="intellij.python.codeInsight" />
     <orderEntry type="module" module-name="intellij.python.sourceRoots" />
     <orderEntry type="module" module-name="intellij.python.navigation" />
+    <orderEntry type="module" module-name="intellij.python.spellchecker" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />

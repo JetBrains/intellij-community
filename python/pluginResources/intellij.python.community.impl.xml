@@ -126,6 +126,7 @@
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.sourceRoots"/>
+    <module name="intellij.python.spellchecker"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>
@@ -984,11 +985,6 @@
     </group>
 
 
-    <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
-            internal="true">
-      <add-to-group group-id="Internal"/>
-    </action>
-
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
     </action>
@@ -1116,8 +1112,6 @@
     <pyprojectmanager implementation="com.jetbrains.python.sdk.impl.poetry.PoetryPyProjectManager"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
-    <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
     <dictionary.runtimeDictionaryProvider
       implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
   </extensions>

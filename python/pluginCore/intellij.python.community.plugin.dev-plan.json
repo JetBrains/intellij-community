@@ -197,6 +197,9 @@
             "module": "intellij.python.navigation"
         },
         {
+            "module": "intellij.python.spellchecker"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

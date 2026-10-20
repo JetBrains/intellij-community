@@ -10,8 +10,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -26,10 +29,13 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
     if (contentRoots.length == 0) {
       return;
     }
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) {
+    EvoPyProject pyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
+    PythonInterpreter interpreter = pyProject == null ? null : pyProject.getInterpreter();
+    if (interpreter == null) {
       return;
     }
+    //noinspection deprecation
+    Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
 
     final PythonSpellcheckerDictionaryGenerator generator = new PythonSpellcheckerDictionaryGenerator(module.getProject(),
                                                                                                       contentRoots[0].getPath() + "/dicts");

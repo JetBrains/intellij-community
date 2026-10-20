@@ -91,6 +91,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.codeInsight" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.sourceRoots" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.navigation" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.spellchecker" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.django.common" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.flask.common" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.fastapi.common" required-if-available="intellij.platform.backend"/>
