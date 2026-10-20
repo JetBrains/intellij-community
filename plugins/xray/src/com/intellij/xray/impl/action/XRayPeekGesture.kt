@@ -7,7 +7,6 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SingleAlarm
@@ -27,7 +26,6 @@ import java.awt.event.WindowEvent
  * - **Re-press X while peeking** flips the peek between BASIC and EXTENDED.
  */
 internal class XRayPeekGesture private constructor(
-  private val project: Project,
   private val editor: Editor,
   private val onFinished: () -> Unit,
 ) {
@@ -37,10 +35,10 @@ internal class XRayPeekGesture private constructor(
 
     /** Starts a peek gesture for [editor], unless one is already running there. */
     @RequiresEdt
-    fun startIfNoneActive(project: Project, editor: Editor) {
+    fun startIfNoneActive(editor: Editor) {
       ThreadingAssertions.assertEventDispatchThread()
       if (editor.getUserData(ACTIVE_GESTURE) != null) return
-      val gesture = XRayPeekGesture(project, editor) { editor.putUserData(ACTIVE_GESTURE, null) }
+      val gesture = XRayPeekGesture(editor) { editor.putUserData(ACTIVE_GESTURE, null) }
       editor.putUserData(ACTIVE_GESTURE, gesture)
       gesture.start()
     }
@@ -65,15 +63,11 @@ internal class XRayPeekGesture private constructor(
 
   private fun start() {
     ThreadingAssertions.assertEventDispatchThread()
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     Disposer.register(service, gestureDisposable)
     Disposer.register(gestureDisposable, Disposable { onTerminated() })
-    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
-      override fun dispatch(e: AWTEvent): Boolean {
-        return onEvent(e)
-      }
-    }, gestureDisposable)
+    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher { e -> onEvent(e) }, gestureDisposable)
     holdAlarm.request()
   }
 
@@ -121,7 +115,7 @@ internal class XRayPeekGesture private constructor(
   }
 
   private fun onHoldThresholdReached() {
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     if (state !is State.Listening) return
     val original = service.getXRayModeState()
@@ -146,7 +140,7 @@ internal class XRayPeekGesture private constructor(
     val current = state
     Disposer.dispose(gestureDisposable)
 
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
     when (current) {
       is State.Peeking -> revert(current.originalMode)
       State.Listening -> {
@@ -171,21 +165,21 @@ internal class XRayPeekGesture private constructor(
   }
 
   private fun revert(original: XRayMode) {
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     service.endPeek()
     setMode(original)
   }
 
   private fun setMode(mode: XRayMode) {
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     service.setXRayMode(mode, editor)
     refreshToolbars()
   }
 
   private fun flipMode() {
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     when (service.getXRayModeState()) {
       XRayMode.BASIC -> setMode(XRayMode.EXTENDED)

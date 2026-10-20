@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xray.api.XRayMode
 import com.intellij.xray.api.editorTracking.XRAY_CURRENT_LINE
@@ -19,12 +21,17 @@ import com.intellij.xray.api.editorTracking.XRayEditorUseMode
 
 private const val REFRESH_REASON = "X-Ray mode"
 
-@Service(Service.Level.PROJECT)
-internal class XRayModeService(private val project: Project) : Disposable {
+/**
+ * The main service for X-Ray Mode feature.
+ *
+ * The service is the parent disposable for the peek gestures. Therefore, we need to make it implement [Disposable].
+ */
+@Service(Service.Level.APP)
+internal class XRayModeService : Disposable {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): XRayModeService = project.service()
+    fun getInstance(): XRayModeService = application.service()
   }
 
   @Volatile
@@ -79,14 +86,12 @@ internal class XRayModeService(private val project: Project) : Disposable {
     }
   }
 
-  fun setDebuggingUseMode(debugging: Boolean) {
-
+  fun setDebuggingUseMode(project: Project, debugging: Boolean) {
     val mode = if (debugging) XRayEditorUseMode.DEBUGGING else XRayEditorUseMode.READING
-    for (textEditor in projectTextEditors()) {
+    for (textEditor in projectTextEditors(project)) {
       textEditor.editor.putUserData(XRAY_EDITOR_USE_MODE, mode)
     }
-
-    refreshAllHints()
+    refreshProjectHints(project)
   }
 
   @RequiresEdt
@@ -97,13 +102,21 @@ internal class XRayModeService(private val project: Project) : Disposable {
 
   @RequiresEdt
   fun refreshAllHints() {
-    for (textEditor in projectTextEditors()) {
+    for (project in ProjectManager.getInstance().openProjects) {
+      if (project.isDisposed) continue
+      refreshProjectHints(project)
+    }
+  }
+
+  @RequiresEdt
+  fun refreshProjectHints(project: Project) {
+    for (textEditor in projectTextEditors(project)) {
       textEditor.editor.putUserData(XRAY_EDITOR_MODE, xRayMode)
     }
     InlayHintsRefresher.refreshAll(project, REFRESH_REASON)
   }
 
-  private fun projectTextEditors(): List<TextEditor> =
+  private fun projectTextEditors(project: Project): List<TextEditor> =
     FileEditorManager.getInstance(project).allEditors.filterIsInstance<TextEditor>()
 
   override fun dispose() {}

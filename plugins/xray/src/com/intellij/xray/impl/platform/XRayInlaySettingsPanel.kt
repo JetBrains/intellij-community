@@ -508,8 +508,8 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     DeclarativeInlayHintsPassFactory.resetModificationStamp()
     InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlaySettingsPanel.apply()")
 
-    val service = XRayModeService.getInstance(project)
-    service.refreshAllHints()
+    val service = XRayModeService.getInstance()
+    service.refreshProjectHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {

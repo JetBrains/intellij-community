@@ -4,13 +4,12 @@ package com.intellij.xray.impl.editorTracking
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.project.Project
 import com.intellij.xray.impl.service.XRayModeService
 
-internal class XRaySelectionListener(private val project: Project) : FileEditorManagerListener {
+internal class XRaySelectionListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val editor = (event.newEditor as? TextEditor)?.editor ?: return
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
     service.refreshEditorIfStale(editor)
   }
 }

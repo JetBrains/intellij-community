@@ -15,7 +15,7 @@ internal class XRayDebuggerUseModeListener(private val project: Project) : XDebu
    * Updates the editor mode for the X-Ray service (`true` if debug is active, `false` otherwise).
    */
   override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-    val service = XRayModeService.getInstance(project)
-    service.setDebuggingUseMode(currentSession != null)
+    val service = XRayModeService.getInstance()
+    service.setDebuggingUseMode(project, currentSession != null)
   }
 }

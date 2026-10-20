@@ -20,16 +20,14 @@ internal class ToggleXRayModeAction : DumbAwareToggleAction() {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    val project = e.project ?: return false
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
     return service.isXRayModeEnabled()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     val newState = if (state) XRayMode.BASIC else XRayMode.DISABLED
     service.setXRayMode(newState, editor)
@@ -37,10 +35,9 @@ internal class ToggleXRayModeAction : DumbAwareToggleAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     val fromHeldShortcut = (e.inputEvent as? KeyEvent)?.let { it.isControlDown && it.isShiftDown } == true
     if (!fromHeldShortcut) {
@@ -49,6 +46,6 @@ internal class ToggleXRayModeAction : DumbAwareToggleAction() {
       return
     }
 
-    XRayPeekGesture.startIfNoneActive(project, editor)
+    XRayPeekGesture.startIfNoneActive(editor)
   }
 }

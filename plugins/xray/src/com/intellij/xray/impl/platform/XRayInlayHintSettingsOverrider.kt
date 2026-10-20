@@ -8,7 +8,7 @@ import com.intellij.xray.impl.service.XRayStageStore
 
 internal class XRayInlayHintSettingsOverrider : InlayHintSettingsOverrider {
   override fun isEnabled(request: InlayHintSettingsRequest): Boolean? {
-    val service = XRayModeService.getInstance(request.project)
+    val service = XRayModeService.getInstance()
     val store = XRayStageStore.getInstanceOrNull() ?: return null
 
     val storedStage = store.findStage(request.settingsKey)

@@ -42,7 +42,7 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
       override fun update(e: AnActionEvent) {
         super.update(e)
 
-        val service = XRayModeService.getInstance(project)
+        val service = XRayModeService.getInstance()
 
         if (isInlaySettingsEditor(editor)) {
           e.presentation.isEnabledAndVisible = false
@@ -57,20 +57,20 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
       }
 
       override fun isSelected(e: AnActionEvent): Boolean {
-        val service = XRayModeService.getInstance(project)
+        val service = XRayModeService.getInstance()
 
         return service.isXRayModeEnabled()
       }
 
       override fun setSelected(e: AnActionEvent, state: Boolean) {
-        val service = XRayModeService.getInstance(project)
+        val service = XRayModeService.getInstance()
 
         val newState = if (state) XRayMode.BASIC else XRayMode.DISABLED
         service.setXRayMode(newState, editor)
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        val service = XRayModeService.getInstance(project)
+        val service = XRayModeService.getInstance()
 
         service.cycleXRayMode(editor)
         ActionToolbarImpl.updateAllToolbarsImmediately(false)
@@ -81,7 +81,7 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
       override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
         return object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
           override fun updateToolTipText() {
-            val service = XRayModeService.getInstance(project)
+            val service = XRayModeService.getInstance()
             if (UISettings.isIdeHelpTooltipEnabled()) {
               HelpTooltip.dispose(this)
               val tooltipTitleKey = when (service.getXRayModeState()) {

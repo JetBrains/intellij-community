@@ -39,8 +39,7 @@ internal fun attachXRayTracker(editor: Editor) {
 
   // Caret listener for X-ray mode
   val caretRefreshTimer = Timer(XRayTimings.CARET_REFRESH_DELAY_MS) {
-    val project = editor.project ?: return@Timer
-    val service = XRayModeService.getInstance(project)
+    val service = XRayModeService.getInstance()
 
     if (service.isXRayModeEnabled() &&
         editor.getUserData(XRAY_EDITOR_USE_MODE) == XRayEditorUseMode.EDITING) {
@@ -52,8 +51,7 @@ internal fun attachXRayTracker(editor: Editor) {
     override fun caretPositionChanged(event: CaretEvent) {
       editor.putUserData(XRAY_CURRENT_LINE, event.newPosition.line)
       editor.putUserData(XRAY_CURRENT_LINE_POSITION, event.newPosition.column)
-      val project = editor.project ?: return
-      val service = XRayModeService.getInstance(project)
+      val service = XRayModeService.getInstance()
       if (service.isXRayModeEnabled()) {
         caretRefreshTimer.restart()
       }
@@ -66,7 +64,7 @@ internal fun attachXRayTracker(editor: Editor) {
     editor.putUserData(XRAY_EDITOR_USE_MODE, XRayEditorUseMode.READING)
     ActionToolbarImpl.updateAllToolbarsImmediately(false)
 
-    val service = XRayModeService.getInstance(editor.project ?: return@Timer)
+    val service = XRayModeService.getInstance()
     service.refreshActiveEditorHints(editor)
   }.also { it.isRepeats = false }
 
@@ -74,7 +72,7 @@ internal fun attachXRayTracker(editor: Editor) {
   val keyListener = object : KeyAdapter() {
     override fun keyReleased(e: KeyEvent?) {
 
-      val service = editor.project?.let { XRayModeService.getInstance(it) } ?: return
+      val service = XRayModeService.getInstance()
 
       if (!service.isXRayModeEnabled()) return
 
@@ -111,7 +109,7 @@ internal fun attachXRayTracker(editor: Editor) {
   // The implementation reflects the solution from JetBrains Scala plugin (ScalaEditorFactoryListener#editorMouseWheelListener)
   val editorMouseWheelListener = object : MouseWheelListener {
     override fun mouseWheelMoved(e: MouseWheelEvent) {
-      val service = editor.project?.let { XRayModeService.getInstance(it) } ?: return
+      val service = XRayModeService.getInstance()
 
       if (!service.isHoldActive()) return
 
