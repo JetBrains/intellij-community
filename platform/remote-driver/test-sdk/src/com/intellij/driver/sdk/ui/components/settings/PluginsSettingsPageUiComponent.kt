@@ -346,13 +346,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val enabledCheckBox: JCheckBoxUi = checkBox("State checkbox") { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
     val enabledControl: EnabledControlUiComponent =
       x(EnabledControlUiComponent::class.java, readableName = "Plugin state control") {
-        and(
-          or(byType(JCheckBox::class.java), byType("com.intellij.ui.components.OnOffButton")),
-          byAccessibleName("Enabled"),
-        )
+        (byType(JCheckBox::class.java) or byType("com.intellij.ui.components.OnOffButton")) and
+          byAccessibleName("Enabled")
       }
-    val ultimateTagLabel: UiComponent = x("'Ultimate' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
-    val proTagLabel: UiComponent = x("'Pro' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
+    val ultimateTagLabel: UiComponent = x("'Ultimate'/'Pro' label") {
+      (byType("com.intellij.ide.plugins.newui.TagComponent") or byType("com.intellij.ide.plugins.newui.LinkComponent")) and
+        (byAccessibleName("Ultimate") or byAccessibleName("Pro"))
+    }
     val errorNotice: JTextComponentUI = textComponent("Error notice") { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val unknownUpdateSourceWarning: UiComponent = x("Unknown update source warning") { byType("com.intellij.ui.components.JBTextArea") }
     val updatePluginButton: UiComponent = x("Update button") { byAccessibleName("Update") }
