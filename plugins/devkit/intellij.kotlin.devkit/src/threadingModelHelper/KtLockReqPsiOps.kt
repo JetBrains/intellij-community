@@ -13,6 +13,8 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
@@ -32,8 +34,8 @@ import java.util.concurrent.atomic.AtomicInteger
 class KtLockReqPsiOps : LockReqPsiOps {
 
 
-  override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
-    return resolveCalleesWithUast(method).distinct()
+  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
+    return resolveCalleesWithUast(method, timer).distinct()
   }
 
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit) {
@@ -114,27 +116,27 @@ class KtLockReqPsiOps : LockReqPsiOps {
 
   private val rules: LockReqRules = BaseLockReqRules()
 
-  private fun resolveCalleesWithUast(method: PsiMethod): List<PsiMethod> {
+  private fun resolveCalleesWithUast(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
     val set = LinkedHashSet<PsiMethod>()
     val uMethod = method.toUElement(UMethod::class.java) ?: return emptyList()
     uMethod.accept(object : AbstractUastVisitor() {
 
       override fun visitExpression(node: UExpression): Boolean {
-        node.tryResolve()?.let { resolved ->
+        timer.measure(Phase.REFERENCE_RESOLVE) { node.tryResolve() }?.let { resolved ->
           if (resolved !is PsiMethod) {
             return@let
           }
           set.add(resolved)
           val qName = resolved.containingClass?.qualifiedName
           if (node is UCallExpression && qName == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
-            disposeTargets(node).forEach { set.add(it) }
+            timer.measure(Phase.REFERENCE_RESOLVE) { disposeTargets(node) }.forEach { set.add(it) }
           }
         }
         return super.visitExpression(node)
       }
 
       override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
-        (node.resolve() as? PsiMethod)?.let { set.add(it) }
+        (timer.measure(Phase.REFERENCE_RESOLVE) { node.resolve() } as? PsiMethod)?.let { set.add(it) }
         return super.visitCallableReferenceExpression(node)
       }
     })

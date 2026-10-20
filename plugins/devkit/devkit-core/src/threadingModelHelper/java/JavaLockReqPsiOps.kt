@@ -20,6 +20,8 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
@@ -34,29 +36,29 @@ class JavaLockReqPsiOps : LockReqPsiOps {
 
   private val rules: LockReqRules = BaseLockReqRules()
 
-  override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
+  override fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer): List<PsiMethod> {
     val callees = mutableListOf<PsiMethod>()
 
     method.body?.accept(object : JavaRecursiveElementVisitor() {
       override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
         super.visitMethodCallExpression(expression)
-        expression.resolveMethod()?.let { resolved ->
+        timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolveMethod() }?.let { resolved ->
           callees.add(resolved)
           val qualifierClass = resolved.containingClass?.qualifiedName
           if (qualifierClass == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
-            collectDisposeTargets(expression)?.let { targets -> callees.addAll(targets) }
+            timer.measure(Phase.REFERENCE_RESOLVE) { collectDisposeTargets(expression) }?.let { targets -> callees.addAll(targets) }
           }
         }
       }
 
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
         super.visitMethodReferenceExpression(expression)
-        (expression.resolve() as? PsiMethod)?.let { callees.add(it) }
+        (timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolve() } as? PsiMethod)?.let { callees.add(it) }
       }
 
       override fun visitNewExpression(expression: PsiNewExpression) {
         super.visitNewExpression(expression)
-        expression.resolveMethod()?.let { callees.add(it) }
+        timer.measure(Phase.REFERENCE_RESOLVE) { expression.resolveMethod() }?.let { callees.add(it) }
       }
     })
 

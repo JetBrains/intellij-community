@@ -20,6 +20,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Collections
@@ -218,6 +219,7 @@ class LockReqAnalyzerParallelBFS {
         }
         val node = context.statistics.startNode(peekQueue.parentId, key, newValue)
         statisticsNode = node
+        val timer = node.timer
         payload.globalCounter.incrementAndGet()
         reporter.fraction(payload.globalCounter.get().toDouble() / (payload.globalCounter.get() + payload.counter.get()))
         reportingHolder.add(key)
@@ -227,11 +229,13 @@ class LockReqAnalyzerParallelBFS {
           "Running analysis on $key (path length: $newValue)"
         }
 
-        smartReadAction(project = project) {
-          val method = methodPointer.element ?: return@smartReadAction
+        timedSmartReadAction(project, timer) {
+          val method = timer.measure(Phase.SMART_POINTERS) { methodPointer.element } ?: return@timedSmartReadAction
 
-          val annotationRequirements = context(config) {
-            LockReqDetector.findAnnotationRequirements(method)
+          val annotationRequirements = timer.measure(Phase.ANNOTATION_CHECK) {
+            context(config) {
+              LockReqDetector.findAnnotationRequirements(method)
+            }
           }
           annotationRequirements.forEach { requirement ->
             val path = ExecutionPath(currentPath, requirement)
@@ -243,19 +247,20 @@ class LockReqAnalyzerParallelBFS {
           }
         }
 
-        val callees = smartReadAction(project) {
-          val method = methodPointer.element ?: return@smartReadAction emptyList()
+        val callees = timedSmartReadAction(project, timer) {
+          val method = timer.measure(Phase.SMART_POINTERS) { methodPointer.element } ?: return@timedSmartReadAction emptyList()
           val ops = LockReqPsiOps.forLanguage(method.language)
-          ops.getMethodCallees(method).map { SmartPointerManager.createPointer(it) }
+          val callees = timer.measure(Phase.TREE_WALK) { ops.getMethodCallees(method, timer) }
+          timer.measure(Phase.SMART_POINTERS) { callees.map { SmartPointerManager.createPointer(it) } }
         }
         node.calleeCount = callees.size
 
         callees.forEach {
-          smartReadAction(project) {
-            val callee = it.element ?: return@smartReadAction
+          timedSmartReadAction(project, timer) {
+            val callee = timer.measure(Phase.SMART_POINTERS) { it.element } ?: return@timedSmartReadAction
             val ops = LockReqPsiOps.forLanguage(callee.language)
             context(ops, config) {
-              processCallee(payload, callee, currentPath, node.id)
+              processCallee(payload, callee, currentPath, node.id, timer)
             }
           }
         }
@@ -288,6 +293,19 @@ class LockReqAnalyzerParallelBFS {
 
   }
 
+  /**
+   * Runs [action] in a smart read action.
+   * The wait for the read action counts for [Phase.READ_ACTION_WAIT].
+   * The part of [action] that no nested block measures counts for [Phase.OTHER].
+   */
+  private suspend fun <T> timedSmartReadAction(project: Project, timer: LockReqPhaseTimer, action: () -> T): T {
+    return timer.measure(Phase.READ_ACTION_WAIT) {
+      smartReadAction(project) {
+        timer.measure(Phase.OTHER, action)
+      }
+    }
+  }
+
   private fun reportProgressCounters(payload: QueuePayload, reporter: RawProgressReporter) {
     reporter.text(DevKitBundle.message("progress.text.processed.0.out.of.1.methods", payload.globalCounter.get(), payload.globalCounter.get() + payload.counter.get()))
   }
@@ -304,9 +322,9 @@ class LockReqAnalyzerParallelBFS {
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules)
-  private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
+  private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {
 
-    val requirements = LockReqDetector.findBodyRequirements(method)
+    val requirements = timer.measure(Phase.CALLEE_CHECK) { LockReqDetector.findBodyRequirements(method) }
     for (requirement in requirements) {
       val path = ExecutionPath(currentPath, requirement)
       context.paths.add(path)
@@ -320,46 +338,53 @@ class LockReqAnalyzerParallelBFS {
     }
     if (LockReqDetector.isAsyncDispatch(method)) return
     when {
-      LockReqDetector.isMessageBusCall(method) -> handleMessageBusCall(payload, method, currentPath, parentId)
-      context.config.includePolymorphic && !LockReqDetector.isCommonMethod(method) -> handlePolymorphic(payload, method, currentPath, parentId)
-      else -> addToQueueIfNotVisited(payload, method, currentPath, parentId)
+      LockReqDetector.isMessageBusCall(method) -> handleMessageBusCall(payload, method, currentPath, parentId, timer)
+      context.config.includePolymorphic && !LockReqDetector.isCommonMethod(method) -> handlePolymorphic(payload, method, currentPath, parentId, timer)
+      else -> addToQueueIfNotVisited(payload, method, currentPath, parentId, timer)
     }
   }
 
   context(ops: LockReqPsiOps, context: TraversalContext, rules: LockReqRules)
-  private fun handlePolymorphic(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
-    ops.findInheritors(method, context.config.scope, context.config.maxImplementations) { inheritor ->
-      addToQueueIfNotVisited(payload, inheritor, currentPath, parentId)
+  private fun handlePolymorphic(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {
+    timer.measure(Phase.INHERITOR_SEARCH) {
+      ops.findInheritors(method, context.config.scope, context.config.maxImplementations) { inheritor ->
+        addToQueueIfNotVisited(payload, inheritor, currentPath, parentId, timer)
+      }
     }
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, lockReqRules: LockReqRules)
-  private fun handleMessageBusCall(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
+  private fun handleMessageBusCall(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {
     ProgressManager.checkCanceled()
-    val topicClass = LockReqDetector.extractMessageBusTopic(method)
+    val topicClass = timer.measure(Phase.REFERENCE_RESOLVE) { LockReqDetector.extractMessageBusTopic(method) }
     if (topicClass != null) {
       context.messageBusTopics.add(topicClass)
       consumer.onMessageBusTopic(topicClass)
-      ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { listener ->
-        listener.methods.forEach { listenerMethod ->
-          addToQueueIfNotVisited(payload, listenerMethod, currentPath, parentId)
+      timer.measure(Phase.LISTENER_SEARCH) {
+        ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { listener ->
+          listener.methods.forEach { listenerMethod ->
+            addToQueueIfNotVisited(payload, listenerMethod, currentPath, parentId, timer)
+          }
         }
       }
     }
   }
 
   context(context: TraversalContext, rules: LockReqRules)
-  private fun addToQueueIfNotVisited(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int) {
-    if (context(config) {
-        LockReqDetector.shouldBeSkipped(method)
-      }) {
-      return
+  private fun addToQueueIfNotVisited(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {
+    timer.measure(Phase.ENQUEUE) {
+      if (context(config) {
+          LockReqDetector.shouldBeSkipped(method)
+        }) {
+        return
+      }
+      val newPath = currentPath + MethodCall.fromMethod(method)
+      payload.counter.incrementAndGet()
+      val signature = MethodSignature.fromMethod(method)
+      context.statistics.onEnqueued()
+      val pointer = timer.measure(Phase.SMART_POINTERS) { SmartPointerManager.createPointer(method) }
+      payload.queue.put(QueueEntry(pointer, signature, newPath, parentId))
     }
-    val newPath = currentPath + MethodCall.fromMethod(method)
-    payload.counter.incrementAndGet()
-    val signature = MethodSignature.fromMethod(method)
-    context.statistics.onEnqueued()
-    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), signature, newPath, parentId))
   }
 }

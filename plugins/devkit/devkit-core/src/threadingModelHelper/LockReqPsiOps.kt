@@ -23,8 +23,11 @@ interface LockReqPsiOps {
     fun forLanguageOrNull(language: Language): LockReqPsiOps? = LockReqPsiOpsProvider.forLanguage(language)
   }
 
+  /**
+   * @param timer the implementation measures the reference resolve as [LockReqPhaseTimer.Phase.REFERENCE_RESOLVE]
+   */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  fun getMethodCallees(method: PsiMethod): List<PsiMethod>
+  fun getMethodCallees(method: PsiMethod, timer: LockReqPhaseTimer = LockReqPhaseTimer.DISABLED): List<PsiMethod>
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit)

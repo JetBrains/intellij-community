@@ -14,6 +14,7 @@ import java.nio.file.Path
 import java.util.EnumSet
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
@@ -147,6 +148,22 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
       assertTrue(report, report.contains("Status: COMPLETED"))
       assertTrue(report, report.contains("Processed nodes: 3 "))
 
+      // columns: phase, time, share, blocks, longest block
+      val breakdownRows = report.lineSequence()
+        .dropWhile { !it.startsWith("phase ") }
+        .drop(1)
+        .takeWhile { it != "Phases:" }
+        .associate { line -> LockReqPhaseTimer.Phase.entries.first { line.startsWith(it.presentableName + " ") } to line }
+      assertEquals(LockReqPhaseTimer.Phase.entries.toSet(), breakdownRows.keys)
+      // testMethod and intermediateMethod resolve one call each
+      assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.REFERENCE_RESOLVE)))
+      assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.TREE_WALK)))
+      assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.ANNOTATION_CHECK)))
+      assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.CALLEE_CHECK)))
+      // 3 nodes do 2 read actions each, and 2 nodes do 1 more read action for the callee
+      assertEquals("8", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.READ_ACTION_WAIT)))
+      assertTrue(report, report.contains("tree walk ") && report.contains("1x, longest "))
+
       // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
       val treeRows = tableRows(report, "Traversal tree")
         .associate { it[6] to listOf(it[1], it[2], it[3], it[4]) }
@@ -161,6 +178,29 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     }
   }
 
+  fun testPhaseTimerExcludesNestedBlocks() {
+    val timer = LockReqPhaseTimer()
+    timer.measure(LockReqPhaseTimer.Phase.INHERITOR_SEARCH) {
+      Thread.sleep(20)
+      repeat(2) {
+        timer.measure(LockReqPhaseTimer.Phase.ENQUEUE) {
+          Thread.sleep(30)
+        }
+      }
+    }
+    val snapshot = timer.snapshot(0)
+    assertEquals(1, snapshot.count(LockReqPhaseTimer.Phase.INHERITOR_SEARCH))
+    assertEquals(2, snapshot.count(LockReqPhaseTimer.Phase.ENQUEUE))
+    assertTrue(snapshot.time(LockReqPhaseTimer.Phase.ENQUEUE) >= 60.milliseconds)
+    assertTrue(snapshot.maxTime(LockReqPhaseTimer.Phase.ENQUEUE) >= 30.milliseconds)
+    val searchTime = snapshot.time(LockReqPhaseTimer.Phase.INHERITOR_SEARCH)
+    assertTrue(searchTime.toString(), searchTime >= 20.milliseconds && searchTime < snapshot.time(LockReqPhaseTimer.Phase.ENQUEUE))
+    assertEquals(0L, snapshot.timeNanos(LockReqPhaseTimer.Phase.OTHER))
+
+    val total = snapshot.timeNanos(LockReqPhaseTimer.Phase.INHERITOR_SEARCH) + snapshot.timeNanos(LockReqPhaseTimer.Phase.ENQUEUE)
+    assertEquals(1_000L, timer.snapshot(total + 1_000).timeNanos(LockReqPhaseTimer.Phase.OTHER))
+  }
+
   /**
    * Splits the rows of the report table below the [title] line into columns.
    */
@@ -173,6 +213,8 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
       .map { it.trim().split(Regex("\\s+")) }
       .toList()
   }
+
+  private fun blockCount(breakdownRow: String): String = breakdownRow.trim().split(Regex("\\s+")).dropLast(1).last()
 
   private fun doTest(className: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"

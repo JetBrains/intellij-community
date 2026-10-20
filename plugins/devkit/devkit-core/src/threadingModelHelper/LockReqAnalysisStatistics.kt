@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPhaseTimer.Phase
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
@@ -36,6 +37,17 @@ internal class LockReqAnalysisStatistics {
 
     @Volatile
     var calleeCount: Int = 0
+
+    /**
+     * Measures the phases of the processing. Only the coroutine that processes this node can use it.
+     */
+    val timer: LockReqPhaseTimer = LockReqPhaseTimer()
+
+    /**
+     * The phase breakdown of [durationNanos], or `null` if the processing did not finish.
+     */
+    @Volatile
+    var phaseTimes: LockReqPhaseTimer.Snapshot? = null
   }
 
   /**
@@ -82,7 +94,9 @@ internal class LockReqAnalysisStatistics {
   }
 
   fun finishNode(node: Node) {
-    node.durationNanos = System.nanoTime() - node.startNanos
+    val durationNanos = System.nanoTime() - node.startNanos
+    node.phaseTimes = node.timer.snapshot(durationNanos)
+    node.durationNanos = durationNanos
   }
 
   /**
@@ -131,14 +145,19 @@ internal class LockReqAnalysisStatistics {
       appendLine("Max subtree depth: ${trees.maxOfOrNull { it.subtreeDepth } ?: 0}")
       appendLine()
 
+      val finishedNodes = allNodes.filter { it.durationNanos >= 0 }
+      appendBreakdown(finishedNodes)
+      appendLine()
+
       appendLine("Slowest calls (top $SLOWEST_CALLS_LIMIT):")
-      allNodes
-        .filter { it.durationNanos >= 0 }
+      appendLine("The line below each call shows the phases of the call: the time, the share, the number of blocks and the longest block.")
+      finishedNodes
         .sortedByDescending { it.durationNanos }
         .take(SLOWEST_CALLS_LIMIT)
         .forEach { node ->
           appendLine(String.format(Locale.ROOT, "%14s  depth=%-3d callees=%-5d %s",
                                    node.durationNanos.nanoseconds.format(), node.depth, node.calleeCount, node.signature.toPresentableString()))
+          node.phaseTimes?.let { appendLine("${" ".repeat(16)}${it.formatBreakdown(node.durationNanos)}") }
         }
       appendLine()
 
@@ -156,6 +175,29 @@ internal class LockReqAnalysisStatistics {
       }
       trees.forEach { appendTree(it, 0) }
     }
+  }
+
+  /**
+   * Appends the phase breakdown of the summed processing time of [finishedNodes].
+   */
+  private fun StringBuilder.appendBreakdown(finishedNodes: List<Node>) {
+    val snapshots = finishedNodes.mapNotNull { it.phaseTimes }
+    val totalNanos = finishedNodes.sumOf { it.durationNanos }
+    appendLine("Time breakdown by phase (the sum over all finished nodes, the nodes run in parallel):")
+    appendLine(String.format(Locale.ROOT, "%-20s %14s %7s %10s %14s", "phase", "time", "share", "blocks", "longest block"))
+    for (phase in Phase.entries) {
+      val phaseNanos = snapshots.sumOf { it.timeNanos(phase) }
+      val count = snapshots.sumOf { it.count(phase) }
+      val longest = snapshots.maxOfOrNull { it.maxTime(phase) } ?: Duration.ZERO
+      appendLine(String.format(Locale.ROOT, "%-20s %14s %7s %10s %14s", phase.presentableName, phaseNanos.nanoseconds.format(),
+                               share(phaseNanos, totalNanos), if (phase == Phase.OTHER) "-" else count.toString(),
+                               if (phase == Phase.OTHER) "-" else longest.format()))
+    }
+    appendLine("Phases:")
+    for (phase in Phase.entries) {
+      appendLine("  ${phase.presentableName}: ${phase.description}")
+    }
+    appendLine("A restarted read action repeats its phases, so the time of the restarted attempts counts for these phases too.")
   }
 
   /**
@@ -179,5 +221,23 @@ internal class LockReqAnalysisStatistics {
     private fun MethodSignature.toPresentableString(): String = "$containingClassName.$methodName(${parameterTypes.joinToString(", ")})"
 
     private fun Duration.format(): String = String.format(Locale.ROOT, "%.3fms", toDouble(DurationUnit.MILLISECONDS))
+
+    private fun share(partNanos: Long, totalNanos: Long): String {
+      return if (totalNanos <= 0) "-" else String.format(Locale.ROOT, "%.1f%%", partNanos * 100.0 / totalNanos)
+    }
+
+    /**
+     * Lists the phases with a non-zero time, the longest phase first.
+     */
+    private fun LockReqPhaseTimer.Snapshot.formatBreakdown(totalNanos: Long): String {
+      return Phase.entries
+        .filter { timeNanos(it) > 0 }
+        .sortedByDescending { timeNanos(it) }
+        .joinToString("; ") { phase ->
+          val details = if (phase == Phase.OTHER) share(timeNanos(phase), totalNanos)
+          else "${share(timeNanos(phase), totalNanos)}, ${count(phase)}x, longest ${maxTime(phase).format()}"
+          "${phase.presentableName} ${time(phase).format()} ($details)"
+        }
+    }
   }
 }
