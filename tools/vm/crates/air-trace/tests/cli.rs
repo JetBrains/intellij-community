@@ -35,7 +35,7 @@ fn the_usage_is_exit_2_on_stderr_and_help_is_exit_0_on_stdout() {
 
     let (exit, stdout, stderr) = answer(&["--help"]);
     assert_eq!((exit, stderr.as_str()), (Some(0), ""));
-    for subcommand in ["pack", "serve", "plan"] {
+    for subcommand in ["pack", "serve", "plan", "teamcity-publish"] {
         assert!(stdout.contains(subcommand), "{subcommand}: {stdout}");
     }
 }

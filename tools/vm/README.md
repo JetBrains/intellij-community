@@ -22,7 +22,7 @@ follows [`AGENTS.md`](AGENTS.md).
 | wrapper | label | crate | what it is |
 | --- | --- | --- | --- |
 | `./community/tools/vm.cmd` | `:vm` | `avl-vm` | the lane controller |
-| `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan` and `pack` |
+| `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan`, `pack` and `teamcity-publish` |
 | (none; `ui_lane_ide.bzl`) | `:air-trace-record` | `avl-record` | the scenario recorder that the lane daemon starts for each iteration |
 
 Each wrapper builds its binary on every call, so the binary is always built from the working copy. Both halves run
@@ -76,8 +76,8 @@ arguments after the program name and the streams it uses.
 
 A crate exists when two binaries share it, or when it is the frozen-bytes engine of one binary with its own goldens:
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
-controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`
-and `plan`.
+controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`,
+`plan` and `publish`.
 `build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
@@ -153,7 +153,7 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
 | suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
 | traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the lossless WebP stills, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
-| | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, and the docs site; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
+| | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, the bundles of a TeamCity build (`--teamcity`), and the docs site; `air-trace teamcity-publish`: after a Bazel test on TeamCity, one zip for each bundle and the messages that publish it and link it to its test, which `avl-report` writes; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
 | tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`, and the loopback HTTP server that stands in for the IDE's bridge (`src/http.rs`). On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
 | | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI and `docker-buildx` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |
 

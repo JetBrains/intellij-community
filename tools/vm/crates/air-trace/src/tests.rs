@@ -31,7 +31,7 @@ fn the_dispatcher_routes_every_declared_subcommand_and_refuses_the_rest() {
         .get_subcommands()
         .map(|subcommand| subcommand.get_name().to_owned())
         .collect();
-    assert_eq!(names, ["pack", "serve", "plan"]);
+    assert_eq!(names, ["pack", "serve", "plan", "teamcity-publish"]);
 
     // No subcommand: the usage, on stderr, as a usage error.
     let (error, text) = refused(&[]);

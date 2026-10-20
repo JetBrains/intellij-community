@@ -25,6 +25,7 @@ dependencies = [
  "avl-affected",
  "avl-base",
  "avl-host-sys",
+ "avl-report",
  "avl-testkit",
  "avl-trace",
  "avl-trace-tools",

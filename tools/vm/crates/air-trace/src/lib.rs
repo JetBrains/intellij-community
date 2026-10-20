@@ -5,8 +5,9 @@
 //! input covers and how to record new traces of it, and [serve] is the local server behind the trace viewer. Both
 //! read bundles with `avl_trace_tools::discover`, so a bundle is named the same way by the planner, the server and
 //! the controller's trace sync. The planner reads the UI lanes from `avl_affected::lanes`, the table the controller
-//! reads. `pack` is `avl_trace_tools::pack`. Each subcommand owns its runtime and its signals: the server shuts down,
-//! while `pack` and `plan` keep the default disposition.
+//! reads. `pack` is `avl_trace_tools::pack`. [publish] is the step after a Bazel test on TeamCity, which publishes
+//! each bundle as an artifact with the messages of `avl_report::teamcity`. Each subcommand owns its runtime and its
+//! signals: the server shuts down, while `pack` and `plan` keep the default disposition.
 //!
 //! No subcommand may exit with 78: `trace.cmd` reports its own failures with it, so that "the tool did not start"
 //! cannot be mistaken for an answer.
@@ -23,9 +24,11 @@ use avl_trace_tools::viewer::{DEFAULT_SERVE_PORT, runs_url};
 use clap::Parser;
 
 use crate::plan::{PLAN_ABOUT, PlanArgs, run_plan};
+use crate::publish::{PublishArgs, run_publish};
 use crate::serve::{ServeArgs, serve_main};
 
 mod plan;
+mod publish;
 mod serve;
 
 #[cfg(test)]
@@ -128,6 +131,9 @@ pub(crate) enum Command {
     /// The scenarios INPUT covers, their bundles on this machine, and what to run for new ones.
     #[command(long_about = PLAN_ABOUT)]
     Plan(PlanArgs),
+    /// After `bazel test` on TeamCity: zip each trace bundle under the testlogs, and print the service messages that
+    /// publish the zips and link each test to its trace.
+    TeamcityPublish(PublishArgs),
 }
 
 /// The paragraph under the top-level help: what INPUT is, and where `serve` answers.
@@ -177,6 +183,7 @@ pub fn run(args: impl IntoIterator<Item = OsString>, stdin: &mut dyn Read, stdou
         Command::Pack(args) => run_pack(&args, stdout, stderr),
         Command::Serve(args) => serve_main(args),
         Command::Plan(args) => run_plan(&args, stdin, stdout, stderr),
+        Command::TeamcityPublish(args) => run_publish(&args, stdout, stderr),
     }
 }
 
