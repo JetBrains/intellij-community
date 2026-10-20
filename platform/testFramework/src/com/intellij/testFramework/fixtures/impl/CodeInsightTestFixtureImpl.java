@@ -1915,8 +1915,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (editor == null) {
       throw new IllegalStateException("Fixture is not configured. Call something like configureByFile() or configureByText()");
     }
-    ExpectedHighlightingData data = new ExpectedHighlightingData(
-      editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
+    ExpectedHighlightingData data = ReadAction.computeBlocking(() -> new ExpectedHighlightingData(
+      editor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting));
     data.init();
     return collectAndCheckHighlighting(data);
   }
