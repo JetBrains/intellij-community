@@ -1168,7 +1168,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         }
       }
 
-      LOG.trace { "Removed children: $oldModels" }
+      LOG.trace { "Removed children: ${oldModels.filter { oldModelsByUserObject.containsKey(it.userObject) }}" }
 
       // Now oldModelsByUserObject contains only removed children. Remove them in descending index
       // order, so that the remaining (lower) indices stay valid as the list shrinks.
@@ -1178,7 +1178,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         }
       }
 
-      LOG.trace { "Remaining and new children: $oldModels" }
+      LOG.trace { "Remaining and new children: $newModels" }
 
       // Now establish the new order left to right. New children are inserted at their target index;
       // surviving children are moved to their target index (which also refreshes their model, and is a
