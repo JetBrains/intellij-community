@@ -255,16 +255,27 @@ private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, ca
 }
 
 internal fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
+  // Decide whether the class can be a named tuple at all before asking whether it declares `__init__`.
+  // All three conditions below are necessary and each is a pure predicate, so the order does not change the result,
+  // but `findInitOrNew` is far the most expensive of them: it walks the methods of the class, asks
+  // `PyiUtil.isOverload` about the ones whose name matches, and each of those rescans the import statements of the
+  // whole containing file (`PyKnownDecoratorUtil.computeKnownDecoratorsInFile`). This provider runs for every class
+  // type evaluation, so for a class that has nothing to do with `NamedTuple` - any `pandas` class, say - that walk
+  // was pure waste.
+  val isDirectInheritor = isTypingNamedTupleDirectInheritor(cls, context)
+  val namedTupleBase =
+    if (isDirectInheritor) null
+    else cls.getSuperClassTypes(context).filterIsInstance<PyNamedTupleType>().firstOrNull() ?: return null
+
   if (cls.findInitOrNew(false, context) != null) return null
 
   val name = cls.name ?: return null
 
-  return if (isTypingNamedTupleDirectInheritor(cls, context)) {
+  return if (isDirectInheritor) {
     PyNamedTupleType(cls, name, collectTypingNTInheritorFields(cls, context), true, true, cls)
   }
   else {
-    val base = cls.getSuperClassTypes(context).filterIsInstance<PyNamedTupleType>().firstOrNull() ?: return null
-    PyNamedTupleType(cls, name, LinkedHashMap(base.fields), true, true, cls)
+    PyNamedTupleType(cls, name, LinkedHashMap(namedTupleBase!!.fields), true, true, cls)
   }
 }
 
