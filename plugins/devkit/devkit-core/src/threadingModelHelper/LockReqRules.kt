@@ -121,6 +121,8 @@ class BaseLockReqRules : LockReqRules {
 
   override val opaqueClasses: Set<String> = setOf(
     "com.intellij.openapi.util.UserDataHolder",
+    "com.intellij.openapi.util.UserDataHolderEx",
+    "com.intellij.openapi.util.UserDataHolderBase",
   )
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(

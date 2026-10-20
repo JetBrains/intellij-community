@@ -156,8 +156,24 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
         Object getUserData(Object key);
       }
       """.trimIndent())
+    myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolderEx.java", """
+      package com.intellij.openapi.util;
+      public interface UserDataHolderEx extends UserDataHolder {
+        Object putUserDataIfAbsent(Object key, Object value);
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolderBase.java", """
+      package com.intellij.openapi.util;
+      public class UserDataHolderBase implements UserDataHolderEx {
+        @Override
+        public Object getUserData(Object key) { return null; }
+        @Override
+        public Object putUserDataIfAbsent(Object key, Object value) { return null; }
+      }
+      """.trimIndent())
     val result = doTest("UserDataHolderCall")
-    // the analysis does not go into the implementations of the UserDataHolder methods, so their read requirements are not found
+    // the analysis does not go into the implementations of the UserDataHolder, UserDataHolderEx and UserDataHolderBase methods,
+    // so their read requirements are not found
     val expectedPaths = listOf("UserDataHolderCall.testMethod -> UserDataHolderCall.helper => READ.ANNOTATION")
     val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
