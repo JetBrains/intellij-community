@@ -6,7 +6,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.runInEdtAndWait
@@ -19,7 +22,7 @@ import com.jetbrains.python.module.PySourceRootDetectionService
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyMarkDirectoryAsSourceRootQuickFixTest")
 @Subsystems.QuickFixes
 @Layers.Functional
-class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
+internal class PyMarkDirectoryAsSourceRootQuickFixTest:PyQuickFixTestCase() {
   override fun runInDispatchThread() = false
 
   @Throws(Exception::class)
@@ -42,8 +45,9 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
   private fun cleanupSourceRoots() {
     WriteAction.run<Throwable> {
       val moduleRootManager = ModuleRootManager.getInstance(myFixture.module)
+      val defaultRoot = LightPlatformTestCase.getSourceRoot()
       val sourceRootsToCleanUp = moduleRootManager.sourceRoots.filter {
-        it.path != DEFAULT_ROOT
+        it != defaultRoot
       }
 
       val model = ModuleRootManager.getInstance(myFixture.module).modifiableModel
@@ -132,7 +136,7 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
   private fun testSourceRoot(expectedSourceRootPaths: Set<String>) {
     val moduleRootManager = ModuleRootManager.getInstance(myFixture.module)
     val detectedSourceRoots = moduleRootManager.sourceRoots.map {
-      it.path
+      "/" + relativePath(it, LightPlatformTestCase.getSourceRoot().parent)
     }.toSet() - DEFAULT_ROOT
     assertEquals(expectedSourceRootPaths, detectedSourceRoots)
   }
@@ -167,10 +171,19 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
     }
     assertSize(1, intentionAction)
     myFixture.launchAction(intentionAction[0])
-    myFixture.checkResultByFile(myFixture.file.virtualFile.path.removePrefix("$DEFAULT_ROOT/").removeSuffix(".py") + "_after.py", true)
+    val filePathInSourceRoot = relativePath(myFixture.file.virtualFile, LightPlatformTestCase.getSourceRoot())
+    myFixture.checkResultByFile(filePathInSourceRoot.removeSuffix(".py") + "_after.py", true)
   }
 
+  /**
+   * The source root is in `temp:///` or in a temporary directory on the local file system.
+   * A path relative to it does not depend on this location.
+   */
+  private fun relativePath(file: VirtualFile, ancestor: VirtualFile): String =
+    requireNotNull(VfsUtilCore.getRelativePath(file, ancestor)) { "$file is not under $ancestor" }
+
   companion object {
+    // A path from the parent of the source root
     private const val DEFAULT_ROOT = "/src"
     // QFIX.add.source.root.for.unresolved.import.name
     private const val QUICK_FIX_NAME_BEGINNING = "Mark '"

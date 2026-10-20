@@ -41,6 +41,7 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
   }
 
   protected PyLightProjectDescriptor(@Nullable String name, @NotNull LanguageLevel level) {
+    super(true);
     myName = name;
     myLevel = level;
   }

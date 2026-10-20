@@ -2,12 +2,12 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -96,6 +96,11 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return assertResolveResult(element, aClass, name, null);
   }
 
+  /**
+   * @param containingFilePath the expected file that contains {@code element}, or {@code null} to skip this check.
+   *                           A value that starts with {@code /} is a path from the parent of the source root,
+   *                           for example, {@code /src/pkg/mod.py}. Any other value is a file name only.
+   */
   public static <T extends PsiElement> T assertResolveResult(PsiElement element,
                                                              Class<T> aClass,
                                                              String name,
@@ -104,15 +109,20 @@ public abstract class PyResolveTestCase extends PyTestCase {
     assertEquals(name, ((PsiNamedElement) element).getName());
     if (containingFilePath != null) {
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-      if (virtualFile.getFileSystem() instanceof TempFileSystem) {
-        assertEquals(containingFilePath, virtualFile.getPath());
+      if (containingFilePath.startsWith("/")) {
+        // The path starts at the parent of the source root: "temp:///" or a temporary directory on the local file system
+        VirtualFile sourceRoot = ProjectFileIndex.getInstance(element.getProject()).getSourceRootForFile(virtualFile);
+        assertNotNull("File is not under a source root: " + virtualFile, sourceRoot);
+        assertEquals(containingFilePath, "/" + VfsUtilCore.getRelativePath(virtualFile, sourceRoot.getParent()));
       }
       else {
         assertEquals(containingFilePath, virtualFile.getName());
       }
-
     }
-    return (T)element;
+    assert aClass.isInstance(element);
+    @SuppressWarnings("unchecked") // Just checked
+    T result = (T)element;
+    return result;
   }
 
   public static int findMarkerOffset(final PsiFile psiFile) {

@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
@@ -27,6 +28,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Objects;
 
@@ -50,6 +52,21 @@ public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
   public static final String TEST_MODULE_NAME = "light_idea_test_case";
+
+  private final boolean myUsePhysicalFs;
+
+  /**
+   * @param usePhysicalFs put the sources in a temporary directory on the local file system instead of {@code temp:///}.
+   *                      Use it when the code under test needs the NIO API, which {@code temp:///} does not support.
+   *                      A subclass must include this value in {@code equals()}, for example, through its class.
+   */
+  protected LightProjectDescriptor(boolean usePhysicalFs) {
+    myUsePhysicalFs = usePhysicalFs;
+  }
+
+  public LightProjectDescriptor() {
+    this(false);
+  }
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     WriteAction.run(() -> {
@@ -103,7 +120,8 @@ public class LightProjectDescriptor {
   }
 
   /**
-   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
+   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed
+   * (a temporary directory on the local file system if the descriptor uses the physical FS).
    * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
    * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
    *
@@ -124,7 +142,23 @@ public class LightProjectDescriptor {
 
   @RequiresWriteLock
   protected final @NotNull VirtualFile createSourceRoot(@NotNull String srcPath) {
-    VirtualFile dummyRoot = Objects.requireNonNull(TempFileSystem.getInstance().refreshAndFindFileByPath("/"), "temp:/// root not found");
+    VirtualFile dummyRoot;
+    if (myUsePhysicalFs) {
+      Path tempDir;
+      try {
+        tempDir = Files.createTempDirectory("Test" + hashCode());
+        //noinspection SSBasedInspection // We need to delete it after the tests
+        tempDir.toFile().deleteOnExit();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      dummyRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDir);
+    }
+    else {
+      dummyRoot = Objects.requireNonNull(TempFileSystem.getInstance().refreshAndFindFileByPath("/"), "temp:/// root not found");
+    }
+    assert dummyRoot != null;
     return doCreateSourceRoot(dummyRoot, srcPath);
   }
 
@@ -173,12 +207,15 @@ public class LightProjectDescriptor {
   }
 
   private void cleanSourceRoot(@NotNull VirtualFile contentRoot) throws IOException {
-    TempFileSystem tempFs = (TempFileSystem)contentRoot.getFileSystem();
-    for (VirtualFile child : contentRoot.getChildren()) {
-      if (!tempFs.exists(child)) {
-        tempFs.createChildFile(this, contentRoot, child.getName());
+    // On the physical FS, each call makes a new empty temp dir, so there is nothing to clean.
+    if (!myUsePhysicalFs) {
+      TempFileSystem tempFs = (TempFileSystem)contentRoot.getFileSystem();
+      for (VirtualFile child : contentRoot.getChildren()) {
+        if (!tempFs.exists(child)) {
+          tempFs.createChildFile(this, contentRoot, child.getName());
+        }
+        child.delete(this);
       }
-      child.delete(this);
     }
   }
 
