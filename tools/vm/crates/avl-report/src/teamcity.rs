@@ -9,6 +9,10 @@
 //!
 //! A case that started and never finished, and a class of the plan that the run never reached, fail as they fail in
 //! the XML, when the `summary` of their iteration arrives or the run ends.
+//!
+//! A step after a Bazel test publishes its traces with [`Messages::published`]: the test reported through its XML, so
+//! the step gives each trace the cases of the XML beside it and adds only artifacts and metadata. Those messages carry
+//! no flow, because no test of the step runs.
 
 use std::collections::BTreeSet;
 
@@ -34,6 +38,38 @@ pub const TRACES_ARTIFACT_DIR: &str = "air-traces";
 /// [`XML_OUTPUT_FILE`] is unset. A Bazel test reports through its XML, so the controller inside one writes no message.
 pub fn is_build_step(variable: impl Fn(&str) -> Option<String>) -> bool {
     variable(XML_OUTPUT_FILE).is_none() && is_team_city(variable)
+}
+
+/// The flow of the messages of [`Messages::published`]: none, so a message names no `flowId`.
+const NO_FLOW: &str = "";
+
+/// One trace that a step after the tests publishes.
+#[derive(Clone, Copy, Debug)]
+pub struct PublishedTrace<'a> {
+    /// The zip on this machine, which holds the bundle at its top.
+    pub zip: &'a str,
+    /// The artifact directory that the zip goes into.
+    pub target: &'a str,
+    pub test_class: &'a str,
+    pub scenario: &'a str,
+    /// The video inside the bundle, when it has one.
+    pub video: Option<&'a str>,
+    /// The picture of the failure inside the bundle, when the scenario failed.
+    pub still: Option<&'a str>,
+    /// The cases of the JUnit XML of the trace's own test target, as `(class, case)`, which TeamCity imported. Only
+    /// they name the trace's test, so a trace of one lane never names the test of another lane.
+    pub cases: &'a [(String, String)],
+}
+
+/// The test name of the scenario `scenario` of `test_class` among the cases `named`, as `(class, case)`: the last case
+/// of that name and of a class of the same simple name, else `<test_class>.<scenario>`. A recorder can name the class
+/// without its package, so the simple names are compared.
+fn test_name(named: &[(String, String)], test_class: &str, scenario: &str) -> String {
+    named
+        .iter()
+        .rev()
+        .find(|(class, name)| name == scenario && simple_class_name(class) == simple_class_name(test_class))
+        .map_or_else(|| format!("{test_class}.{scenario}"), |(class, name)| format!("{class}.{name}"))
 }
 
 /// The state of the messages of one run: what each flow has open, and which zips are published.
@@ -121,22 +157,27 @@ impl Messages {
         let flow = self.flow(flow);
         let name = flow.test_of(&trace.test_class, &trace.scenario);
         let bundle = format!("{target}/{zip_name}!/{}", trace.entry.trim_end_matches('/'));
-        let mut metadata = |label: &str, kind: &str, value: &str| {
-            out.push(message(
-                "testMetadata",
-                &[
-                    ("testName", &name),
-                    ("name", label),
-                    ("type", kind),
-                    ("value", value),
-                    ("flowId", &flow.id),
-                ],
-                None,
-            ));
-        };
-        metadata("trace", "artifact", &bundle);
+        flow.trace_metadata(&mut out, &name, "trace", "artifact", &bundle);
         if trace.has_video {
-            metadata("video", "video", &format!("{bundle}/{video_file}"));
+            flow.trace_metadata(&mut out, &name, "video", "video", &format!("{bundle}/{video_file}"));
+        }
+        out
+    }
+
+    /// The messages of a trace that a step after the tests publishes: the zip once, then the bundle, its video and its
+    /// failure picture as the metadata of its test. The zip holds the bundle at its top.
+    pub fn published(&mut self, trace: &PublishedTrace<'_>) -> Vec<String> {
+        let mut out = self.artifact(trace.zip, trace.target);
+        let zip_name = trace.zip.rsplit(['/', '\\']).next().unwrap_or(trace.zip);
+        let bundle = format!("{}/{zip_name}", trace.target);
+        let flow = self.flow(NO_FLOW);
+        let name = test_name(trace.cases, trace.test_class, trace.scenario);
+        flow.trace_metadata(&mut out, &name, "trace", "artifact", &bundle);
+        if let Some(video) = trace.video {
+            flow.trace_metadata(&mut out, &name, "video", "video", &format!("{bundle}!/{video}"));
+        }
+        if let Some(still) = trace.still {
+            flow.trace_metadata(&mut out, &name, "failure", "image", &format!("{bundle}!/{still}"));
         }
         out
     }
@@ -304,13 +345,18 @@ impl Flow {
         self.end_suite(out);
     }
 
+    /// One `testMetadata` of a trace file, with the flow when there is one.
+    fn trace_metadata(&self, out: &mut Vec<String>, test: &str, label: &str, kind: &str, value: &str) {
+        let mut attributes = vec![("testName", test), ("name", label), ("type", kind), ("value", value)];
+        if self.id != NO_FLOW {
+            attributes.push(("flowId", &self.id));
+        }
+        out.push(message("testMetadata", &attributes, None));
+    }
+
     /// The test name of the scenario `scenario` of `test_class`, as the flow named it. A recorder can name the class
     /// without its package, so the simple names are compared.
     fn test_of(&self, test_class: &str, scenario: &str) -> String {
-        self.named
-            .iter()
-            .rev()
-            .find(|(class, name)| name == scenario && simple_class_name(class) == simple_class_name(test_class))
-            .map_or_else(|| format!("{test_class}.{scenario}"), |(class, name)| format!("{class}.{name}"))
+        test_name(&self.named, test_class, scenario)
     }
 }

@@ -126,3 +126,59 @@ fn a_file_is_published_once_into_its_directory() {
     );
     assert_eq!(messages.artifact(file, "air-long-session/SMALL"), Vec::<String>::new());
 }
+
+/// A step after the tests names each trace by the case of its own XML, with the class's package, and adds the zip
+/// once, the bundle, its video and its failure picture, with no flow. Two lanes whose XMLs hold one test name in two
+/// packages name each trace by its own lane's case. A trace whose case its XML lacks keeps its own names.
+fn published_trace<'a>(scenario: &'a str, zip: &'a str, cases: &'a [(String, String)]) -> PublishedTrace<'a> {
+    PublishedTrace {
+        zip,
+        target: "air-traces/ui_lane_test/iter-1/AirComposerUiTest",
+        test_class: "AirComposerUiTest",
+        scenario,
+        video: None,
+        still: None,
+        cases,
+    }
+}
+
+#[test]
+fn a_published_trace_names_the_case_of_its_own_xml() {
+    let lane = |package: &str| {
+        vec![
+            (format!("{package}.AirComposerUiTest"), "sends a prompt".to_owned()),
+            (format!("{package}.AirComposerUiTest"), "attaches a file".to_owned()),
+        ]
+    };
+    let (ui, real) = (lane("com.example.ui"), lane("com.example.real"));
+    let published = published_trace;
+    let mut messages = Messages::default();
+    let mut lines = messages.published(&PublishedTrace {
+        video: Some("video.mp4"),
+        still: Some("snap/0012.webp"),
+        ..published(
+            "attaches a file",
+            "/out/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip",
+            &ui,
+        )
+    });
+    lines.extend(messages.published(&PublishedTrace {
+        target: "air-traces/ui-real_lane_test/iter-2/AirComposerUiTest",
+        ..published(
+            "attaches a file",
+            "/out/ui-real_lane_test/iter-2/AirComposerUiTest/attaches_a_file.zip",
+            &real,
+        )
+    }));
+    lines.extend(messages.published(&published(
+        "sends a prompt",
+        "/out/ui_lane_test/iter-1/AirComposerUiTest/sends_a_prompt.zip",
+        &ui,
+    )));
+    lines.extend(messages.published(&published(
+        "never ran",
+        "/out/ui_lane_test/iter-1/AirComposerUiTest/never_ran.zip",
+        &ui,
+    )));
+    expect_test::expect_file![testdata("published.teamcity.txt")].assert_eq(&(lines.join("\n") + "\n"));
+}
