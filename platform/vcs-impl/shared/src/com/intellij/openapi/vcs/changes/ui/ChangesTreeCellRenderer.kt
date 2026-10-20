@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
@@ -17,7 +16,7 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleStateSet
 import javax.accessibility.AccessibleValue
-import javax.swing.JLabel
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
@@ -25,7 +24,9 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
   private val updateScaleHelper: UpdateScaleHelper = UpdateScaleHelper()
 
   private val checkBox = ThreeStateCheckBox()
-  private val checkBoxPlaceholder = JLabel()
+  private val checkBoxPlaceholder = object : JComponent() {
+    override fun getPreferredSize(): Dimension = checkBox.preferredSize
+  }
 
   init {
     buildLayout()
@@ -85,10 +86,6 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
 
     updateScaleHelper.saveScaleAndUpdateUIIfChanged(checkBox)
     checkBoxPlaceholder.isVisible = tree.isShowCheckboxes && value is ChangesBrowserStructuralNode<*>
-    if (checkBoxPlaceholder.isVisible) {
-      val size = checkBox.preferredSize
-      checkBoxPlaceholder.icon = EmptyIcon.create(size.width, size.height)
-    }
 
     return this
   }
