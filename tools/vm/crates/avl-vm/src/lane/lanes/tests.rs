@@ -50,12 +50,13 @@ fn a_lane_selects_its_documents_by_its_name_and_has_no_filter() {
         Selection {
             label: "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test".to_owned(),
             lane: Some("gui-chat".to_owned()),
-            test_env: BTreeMap::new(),
+            selectors: Vec::new(),
+            junit5_filters: Vec::new(),
         }
     );
     let live = lane_selection("ui-live").unwrap();
     assert_eq!(live.label, "//plugins/air/tests/integration/ui-live:ui-live_lane_test");
-    assert_eq!(live.test_env, BTreeMap::new());
+    assert_eq!((live.selectors, live.junit5_filters), (Vec::new(), Vec::new()));
     // The live lane runs only in the lane daemon of a Linux guest, with the Central login piped in, so it declares no
     // host passthrough.
     assert!(
@@ -86,7 +87,7 @@ fn fixture_repo(repo: &Path) {
     .unwrap();
 }
 
-/// A class name resolves to the lane's own target, and its filter travels the way Bazel would send it.
+/// A class name resolves to the lane's own target, and its test filter becomes the selector of the run request.
 #[test]
 fn a_selector_inside_a_lane_resolves_to_its_filter() {
     let repo = tempfile::tempdir().unwrap();
@@ -101,10 +102,8 @@ fn a_selector_inside_a_lane_resolves_to_its_filter() {
         Selection {
             label: "//plugins/air/tests/integration/jcp:jcp_test".to_owned(),
             lane: None,
-            test_env: BTreeMap::from([(
-                "TESTBRIDGE_TEST_ONLY".to_owned(),
-                "com.intellij.air.integration.flow.AirFlowSmokeTest".to_owned()
-            )]),
+            selectors: vec!["com.intellij.air.integration.flow.AirFlowSmokeTest".to_owned()],
+            junit5_filters: Vec::new(),
         }
     );
 }
@@ -133,10 +132,8 @@ fn a_class_that_a_suite_document_names_resolves_to_its_lane_with_no_test_target(
         Selection {
             label: ui_lane("gui-chat").unwrap().label.to_owned(),
             lane: None,
-            test_env: BTreeMap::from([(
-                "TESTBRIDGE_TEST_ONLY".to_owned(),
-                "com.intellij.air.integration.acp.AirRenameSessionUiTest".to_owned()
-            )]),
+            selectors: vec!["com.intellij.air.integration.acp.AirRenameSessionUiTest".to_owned()],
+            junit5_filters: Vec::new(),
         }
     );
 }
@@ -175,5 +172,8 @@ fn the_lane_label_itself_is_accepted_as_a_selector() {
     let selection = resolve_selector_selection(&settings, label, &quiet()).unwrap();
 
     assert_eq!(selection.label, label);
-    assert!(selection.test_env.is_empty(), "{selection:?}");
+    assert!(
+        selection.selectors.is_empty() && selection.junit5_filters.is_empty(),
+        "{selection:?}"
+    );
 }

@@ -142,7 +142,7 @@ fn the_lane_classes_are_the_suite_documents_of_the_lane() {
 }
 
 fn filters_of(selection: &AffectedSelection) -> Vec<&str> {
-    selection.selection.test_env["JB_TEST_JUNIT5_FILTERS"].split(';').collect()
+    selection.selection.junit5_filters.iter().map(String::as_str).collect()
 }
 
 const PRESET: &str = "plugins/air/frontend/src/Preset.kt";

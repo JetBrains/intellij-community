@@ -216,7 +216,7 @@ pub(crate) struct RunSelection {
 /// A method reference or an FQN becomes a precise JUnit selector; a bare class name has no package to select by,
 /// so it travels as a class-name regex filter over a full hot-tier scan, mirroring `JUnit5BazelRunner`'s
 /// simple-name handling. [`simple_class_name_pattern`] owns that pattern.
-fn selector_to_run_request(filter: &str) -> (Vec<String>, Vec<String>) {
+pub(crate) fn selector_to_run_request(filter: &str) -> (Vec<String>, Vec<String>) {
     if filter.contains(['#', '.']) {
         return (vec![filter.to_owned()], Vec::new());
     }
@@ -252,13 +252,6 @@ pub(crate) struct LaneIteration {
     /// The lane's generated suite classes, in the answer's order; empty when `lane` is `None`.
     pub classes: Vec<String>,
     pub selection: RunSelection,
-}
-
-/// The lane's own filter list, `a;b`, with empty entries dropped.
-fn split_filters(joined: Option<&String>) -> Vec<String> {
-    joined
-        .map(|joined| joined.split(';').filter(|entry| !entry.is_empty()).map(str::to_owned).collect())
-        .unwrap_or_default()
 }
 
 /// How a `--filter`-narrowed selection names itself, so a false-green verdict says what excluded the tests.
@@ -365,7 +358,7 @@ impl Host {
             let iterations = lanes
                 .into_iter()
                 .map(|affected| {
-                    let mut junit5_filters = split_filters(affected.selection.test_env.get("JB_TEST_JUNIT5_FILTERS"));
+                    let mut junit5_filters = affected.selection.junit5_filters;
                     junit5_filters.extend(extra.iter().map(ToString::to_string));
                     LaneIteration {
                         selection: RunSelection {
@@ -396,10 +389,10 @@ impl Host {
             if !every_lane {
                 refuse_explicit_only(&selected.label, &self.reporter.program())?;
             }
-            let mut junit5_filters = split_filters(selected.test_env.get("JB_TEST_JUNIT5_FILTERS"));
+            let mut junit5_filters = selected.junit5_filters;
             junit5_filters.extend(extra.iter().map(ToString::to_string));
             return Ok(single(RunSelection {
-                selectors: Vec::new(),
+                selectors: selected.selectors,
                 junit5_filters,
                 description: describe_selection(format!("lane {lane}"), extra),
                 lane: Some(lane.to_owned()),
@@ -415,13 +408,10 @@ impl Host {
             refuse_explicit_only(&resolved.label, &self.reporter.program())?;
         }
         let description = describe_selection(selector.to_owned(), extra);
-        let (selectors, mut junit5_filters) = match resolved.test_env.get("TESTBRIDGE_TEST_ONLY").filter(|only| !only.is_empty()) {
-            Some(only) => selector_to_run_request(only),
-            None => (Vec::new(), split_filters(resolved.test_env.get("JB_TEST_JUNIT5_FILTERS"))),
-        };
+        let mut junit5_filters = resolved.junit5_filters;
         junit5_filters.extend(extra.iter().map(ToString::to_string));
         Ok(single(RunSelection {
-            selectors,
+            selectors: resolved.selectors,
             junit5_filters,
             description,
             lane: avl_affected::ui_lane_of_label(&resolved.label).map(|lane| lane.name.to_owned()),

@@ -18,7 +18,6 @@
 //! order, on the selected backend ([`Reached::every_lane`]). The VM keeps the physical input of a GUI-chat suite off
 //! the host, so every lane runs on every backend.
 
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use avl_affected::{affected_suites, air_area};
@@ -35,7 +34,7 @@ use avl_wire::daemon::LaneClass;
 use avl_wire::program::LANE_DOCUMENT_DIRECTORY;
 use avl_wire::program::lane::{LiveContext, parse_lane_document};
 
-use crate::lane::lanes::{JUNIT5_FILTERS, Selection, as_usage, lane_selection};
+use crate::lane::lanes::{Selection, as_usage, lane_selection};
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
 
@@ -86,7 +85,8 @@ pub(crate) fn select_suites(affected: Affected, requested_lane: Option<&str>, su
         selection: Selection {
             label: selected.label,
             lane: Some(lane.clone()),
-            test_env: BTreeMap::from([(JUNIT5_FILTERS.to_owned(), class_filters.join(";"))]),
+            selectors: Vec::new(),
+            junit5_filters: class_filters,
         },
         affected,
         lane,
