@@ -373,6 +373,7 @@ java/terminal/shared
 java/testFramework
 java/testFramework/backend
 java/testFramework/shared
+java/testFramework/tests
 java/typeMigration
 java/unscramble
 java/vcs

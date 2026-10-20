@@ -780,7 +780,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.iml" filepath="$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/backend/intellij.java.testFramework.backend.iml" filepath="$PROJECT_DIR$/java/testFramework/backend/intellij.java.testFramework.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/shared/intellij.java.testFramework.shared.iml" filepath="$PROJECT_DIR$/java/testFramework/shared/intellij.java.testFramework.shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.tests.iml" filepath="$PROJECT_DIR$/java/testFramework/intellij.java.testFramework.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/testFramework/tests/intellij.java.testFramework.tests.iml" filepath="$PROJECT_DIR$/java/testFramework/tests/intellij.java.testFramework.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/intellij.java.tests.iml" filepath="$PROJECT_DIR$/java/java-tests/intellij.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/intellij.java.tests.main.iml" filepath="$PROJECT_DIR$/java/java-tests/intellij.java.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-todo/intellij.java.todo.iml" filepath="$PROJECT_DIR$/java/java-todo/intellij.java.todo.iml" />
