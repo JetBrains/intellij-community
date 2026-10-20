@@ -1495,6 +1495,65 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
       "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
   }
 
+  public void testDeprecationFromMatchingAnyOfBranchOnly() {
+    myFixture.enableInspections(YamlJsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "steps": {
+                               "type": "array",
+                               "items": {
+                                 "type": "object",
+                                 "properties": {
+                                   "task": {
+                                     "anyOf": [
+                                       {
+                                         "enum": ["Docker@2"]
+                                       },
+                                       {
+                                         "deprecationMessage": "Deprecated task",
+                                         "enum": ["AzurePowerShell@5"]
+                                       }
+                                     ]
+                                   }
+                                 }
+                               }
+                             }
+                           }
+                         }""",
+                       """
+                         steps:
+                         - task: Docker@2
+                         - <weak_warning descr="Key 'task' is deprecated: Deprecated task">task</weak_warning>: AzurePowerShell@5
+                         """, "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testDeprecationFromAnyOfBranchForEmptyValue() {
+    myFixture.enableInspections(YamlJsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "task": {
+                               "anyOf": [
+                                 {
+                                   "enum": ["Docker@2"]
+                                 },
+                                 {
+                                   "deprecationMessage": "Deprecated task"
+                                 }
+                               ]
+                             }
+                           }
+                         }""",
+                       """
+                         <weak_warning descr="Key 'task' is deprecated: Deprecated task">task</weak_warning>:
+                         """, "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testPropertyNameSchema() {
     doTest(
       """

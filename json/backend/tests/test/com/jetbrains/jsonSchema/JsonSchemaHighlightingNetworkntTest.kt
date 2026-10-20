@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.replaceService
 import com.jetbrains.jsonSchema.impl.NetworkntValidationBridge
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaDeprecationInspection
 import java.io.File
 
 /**
@@ -216,6 +217,40 @@ open class JsonSchemaHighlightingNetworkntTest : JsonSchemaHighlightingTest() {
     val schemaText = FileUtil.loadFile(File(testDataPath + "/anyOnePropertySelectionSchema.json"))
     val inputText = FileUtil.loadFile(File(testDataPath + "/networknt/anyOnePropertySelection.json"))
     doTest(schemaText, inputText)
+  }
+
+  override fun testReferencedDeprecationWithSiblingAnyOf() {
+    // networknt reports the type mismatch from the $ref target as a plain `type:` failure ("Required: string"),
+    // not as a composition mismatch ("Required one of: string"). The deprecation warning is the same.
+    myFixture.enableInspections(JsonSchemaDeprecationInspection::class.java)
+    configureInitially("""
+      {
+        "type": "object",
+        "properties": {
+          "old": {
+            "${'$'}ref": "#/definitions/old",
+            "anyOf": [
+              {
+                "minLength": 1
+              },
+              {
+                "maxLength": 0
+              }
+            ]
+          }
+        },
+        "definitions": {
+          "old": {
+            "deprecationMessage": "Old property",
+            "type": "string"
+          }
+        }
+      }""", """
+      {
+        <weak_warning descr="Property 'old' is deprecated: Old property">"old"</weak_warning>: <warning descr="Incompatible types.
+ Required: string. Actual: boolean.">true</warning>
+      }""", "json")
+    myFixture.checkHighlighting(true, false, true)
   }
 
   // === Override for ECMA-262 regex: Joni handles ^[]$ correctly (Java regex can't) ===

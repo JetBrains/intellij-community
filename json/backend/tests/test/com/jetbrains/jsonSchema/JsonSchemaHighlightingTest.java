@@ -1177,6 +1177,193 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testDeprecationFromMatchingAnyOfBranchOnly() {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "steps": {
+                               "type": "array",
+                               "items": {
+                                 "type": "object",
+                                 "properties": {
+                                   "task": {
+                                     "anyOf": [
+                                       {
+                                         "enum": ["Docker@2"]
+                                       },
+                                       {
+                                         "deprecationMessage": "Deprecated task",
+                                         "enum": ["AzurePowerShell@5"]
+                                       }
+                                     ]
+                                   }
+                                 }
+                               }
+                             }
+                           }
+                         }""",
+                       """
+                         {
+                           "steps": [
+                             {
+                               "task": "Docker@2"
+                             },
+                             {
+                               <weak_warning descr="Property 'task' is deprecated: Deprecated task">"task"</weak_warning>: "AzurePowerShell@5"
+                             }
+                           ]
+                         }""", "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testDeprecationFromMatchingAnyOfBranchWithOwnerEnum() {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "steps": {
+                               "type": "array",
+                               "items": {
+                                 "type": "object",
+                                 "properties": {
+                                   "task": {
+                                     "enum": ["Docker@2", "AzurePowerShell@5"],
+                                     "anyOf": [
+                                       {
+                                         "enum": ["Docker@2"]
+                                       },
+                                       {
+                                         "deprecationMessage": "Deprecated task",
+                                         "enum": ["AzurePowerShell@5"]
+                                       }
+                                     ]
+                                   }
+                                 }
+                               }
+                             }
+                           }
+                         }""",
+                       """
+                         {
+                           "steps": [
+                             {
+                               "task": "Docker@2"
+                             },
+                             {
+                               <weak_warning descr="Property 'task' is deprecated: Deprecated task">"task"</weak_warning>: "AzurePowerShell@5"
+                             }
+                           ]
+                         }""", "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testDirectDeprecationUnderInheritedOneOf() {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "obj": {
+                               "type": "object",
+                               "properties": {
+                                 "old": {
+                                   "deprecationMessage": "Old property",
+                                   "type": "number"
+                                 }
+                               },
+                               "if": {},
+                               "then": {
+                                 "oneOf": [
+                                   {
+                                     "required": ["a"]
+                                   },
+                                   {
+                                     "not": {
+                                       "required": ["a"]
+                                     }
+                                   }
+                                 ]
+                               }
+                             }
+                           }
+                         }""",
+                       """
+                         {
+                           "obj": {
+                             <weak_warning descr="Property 'old' is deprecated: Old property">"old"</weak_warning>: <warning descr="Incompatible types.
+                          Required: number. Actual: string.">"foo"</warning>
+                           }
+                         }""", "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testDirectDeprecationWithAllOfAnyOf() {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "old": {
+                               "deprecationMessage": "Old property",
+                               "allOf": [
+                                 {
+                                   "anyOf": [
+                                     {
+                                       "type": "string"
+                                     },
+                                     {
+                                       "type": "number"
+                                     }
+                                   ]
+                                 }
+                               ]
+                             }
+                           }
+                         }""",
+                       """
+                         {
+                           <weak_warning descr="Property 'old' is deprecated: Old property">"old"</weak_warning>: <warning descr="Incompatible types.
+                          Required one of: number, string. Actual: boolean.">true</warning>
+                         }""", "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testReferencedDeprecationWithSiblingAnyOf() {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    configureInitially("""
+                         {
+                           "type": "object",
+                           "properties": {
+                             "old": {
+                               "$ref": "#/definitions/old",
+                               "anyOf": [
+                                 {
+                                   "minLength": 1
+                                 },
+                                 {
+                                   "maxLength": 0
+                                 }
+                               ]
+                             }
+                           },
+                           "definitions": {
+                             "old": {
+                               "deprecationMessage": "Old property",
+                               "type": "string"
+                             }
+                           }
+                         }""",
+                       """
+                         {
+                           <weak_warning descr="Property 'old' is deprecated: Old property">"old"</weak_warning>: <warning descr="Incompatible types.
+                          Required one of: string. Actual: boolean.">true</warning>
+                         }""", "json");
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testIfThenElseFlat() throws Exception {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/ifThenElseFlatSchema.json"));
     doTest(schemaText, """
