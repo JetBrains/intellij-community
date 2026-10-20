@@ -40,11 +40,15 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyOverloadType
+import com.jetbrains.python.psi.types.PyPositionalVariadicType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeVarTupleType
+import com.jetbrains.python.psi.types.PyTypeVarTupleTypeImpl
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -180,11 +184,6 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     // instance type here drops the base class and its members from the hierarchy.
     val isDefinition = tspType.isInstantiable()
     if (defNode == null || defNode.uri.isEmpty()) {
-      // Pyrefly emits a synthesized stub class with `typeArgs` for built-in generic instances
-      // such as `tuple[...]`. Recover the element types from `typeArgs`. An empty list is `tuple[()]`.
-      tspType.typeArgs?.let { typeArgs ->
-        buildPyTupleType(pyElement, typeArgs, isDefinition)?.let { return it }
-      }
       return buildBuiltinClassType(pyElement, declaration.name, isDefinition)
     }
     val target = findElement(defNode)
@@ -197,17 +196,19 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       // Pyrefly emits a sentinel `range=(0,0)` for builtin instances (e.g. `int` for the literal
       // default value `5`). The offset points to the start of `builtins.pyi`, so PSI gives us no
       // class — fall back to looking up the class by `declaration.name` in the builtin cache.
+      if (declaration.name == PyNames.TUPLE) {
+        tspType.typeArgs?.let { typeArgs ->
+          buildPyTupleType(pyElement, typeArgs, isDefinition)?.let { return it }
+        }
+      }
       return buildBuiltinClassType(pyElement, declaration.name, isDefinition)
     }
     val typeArgs = tspType.typeArgs
+    if (typeArgs != null && pyClass.qualifiedName == PyNames.FQN.TUPLE) {
+      buildPyTupleType(pyElement, typeArgs, isDefinition)?.let { return it }
+    }
     val instanceType: PyClassLikeType = if (!typeArgs.isNullOrEmpty()) {
-      val elementTypes = typeArgs.map { buildPyTypeOrAny(pyElement, it) }
-      if (pyClass.qualifiedName == PyNames.FQN.TUPLE) {
-        PyTupleType.create(pyElement, elementTypes) ?: PyClassTypeImpl(pyClass, false)
-      }
-      else {
-        PyCollectionTypeImpl(pyClass, false, elementTypes)
-      }
+      PyCollectionTypeImpl(pyClass, false, typeArgs.map { buildPyTypeOrAny(pyElement, it) })
     }
     else {
       PyClassTypeImpl(pyClass, false)
@@ -243,11 +244,32 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return Ref.create(type.asDefinitionIf(isDefinition))
   }
 
+  /**
+   * Builds `tuple[...]` from the TSP type arguments. `[]` is `tuple[()]`, and `[T, ellipsis]` is `tuple[T, ...]`.
+   * An argument with the `UNPACKED` flag is an unpacked part, such as `*Ts` in `tuple[int, *Ts, str]`.
+   */
   private fun buildPyTupleType(pyElement: PyTypedElement, typeArgs: List<PyreflyLsp4jServer.TspType>, isDefinition: Boolean): Ref<PyType?>? {
-    val elementTypes = typeArgs.map { buildPyTypeOrAny(pyElement, it) }
-    val tupleType = PyTupleType.create(pyElement, elementTypes) ?: return null
-    thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements (isDefinition=$isDefinition)")
+    val tupleType = if (typeArgs.size == 2 && typeArgs[1].isEllipsis()) {
+      PyTupleType.createHomogeneous(pyElement, buildPyTypeOrAny(pyElement, typeArgs[0]))
+    }
+    else {
+      PyTupleType.create(pyElement, typeArgs.map { buildPyTupleElementType(pyElement, it) })
+    }
+    if (tupleType == null) return null
+    thisLogger().info("Pyrefly TSP: built PyTupleType ${tupleType.name} (isDefinition=$isDefinition)")
     return Ref.create(tupleType.asDefinitionIf(isDefinition))
+  }
+
+  /** PyCharm models an `UNPACKED` tuple argument, such as `*Ts` or `*tuple[int, ...]`, as a [PyPositionalVariadicType]. */
+  private fun buildPyTupleElementType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): PyType? {
+    val type = buildPyTypeOrAny(pyElement, tspType)
+    if (!tspType.isUnpacked()) return type
+    return when (type) {
+      is PyPositionalVariadicType -> type
+      is PyTupleType -> type.asUnpackedTupleType()
+      is PyTypeVarType -> PyTypeVarTupleTypeImpl(type.name)
+      else -> PyUnpackedTupleTypeImpl.UNSPECIFIED
+    }
   }
 
   private fun buildPyFunctionType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
@@ -357,8 +379,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       val typeParameter = PsiTreeUtil.getParentOfType(target, PyTypeParameter::class.java, false)
       if (typeParameter != null) {
         val pep695Type = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, context)
-        if (pep695Type is PyTypeVarType) {
-          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTypeParameter at ${defNode.uri}:${defNode.range.start}")
+        if (pep695Type is PyTypeVarType || pep695Type is PyTypeVarTupleType) {
+          thisLogger().info("Pyrefly TSP: built ${pep695Type.javaClass.simpleName} for $name from PyTypeParameter at ${defNode.uri}:${defNode.range.start}")
           return Ref.create(pep695Type)
         }
       }
@@ -431,6 +453,13 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
   private fun PyreflyLsp4jServer.TspType.isCallable(): Boolean =
     flags != null && flags.and(PyreflyLsp4jServer.CALLABLE_FLAG) != 0
+
+  private fun PyreflyLsp4jServer.TspType.isUnpacked(): Boolean =
+    flags != null && flags.and(PyreflyLsp4jServer.UNPACKED_FLAG) != 0
+
+  /** Pyrefly sends the `...` of `tuple[int, ...]` as the builtin type `ellipsis`. */
+  private fun PyreflyLsp4jServer.TspType.isEllipsis(): Boolean =
+    kind == "0" && name == "ellipsis"
 
   private fun PyClassLikeType.asDefinitionIf(isDefinition: Boolean): PyClassLikeType =
     if (isDefinition && !this.isDefinition) toClass() else this

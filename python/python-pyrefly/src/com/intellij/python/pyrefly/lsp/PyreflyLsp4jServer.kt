@@ -76,12 +76,15 @@ interface PyreflyLsp4jServer : Lsp4jServer {
 
   companion object {
     /** Bit 0 of `TypeFlags`. Set when the type is a class object, not an instance. */
-    const val INSTANTIABLE_FLAG: Int = 0x1
+    const val INSTANTIABLE_FLAG: Int = 1 shl 0
 
     /** Bit 2 of `TypeFlags`. Set when the type is a callable, such as the result of `dataclass(slots=True)`. */
-    const val CALLABLE_FLAG: Int = 0x4
+    const val CALLABLE_FLAG: Int = 1 shl 2
 
     /** Bit 3 of `TypeFlags` — set when the type wraps a literal value. */
-    const val LITERAL_FLAG: Int = 0x8
+    const val LITERAL_FLAG: Int = 1 shl 3
+
+    /** Bit 7 of `TypeFlags`. Set on an unpacked tuple argument, such as `*Ts` in `tuple[int, *Ts, str]`. */
+    const val UNPACKED_FLAG: Int = 1 shl 7
   }
 }
