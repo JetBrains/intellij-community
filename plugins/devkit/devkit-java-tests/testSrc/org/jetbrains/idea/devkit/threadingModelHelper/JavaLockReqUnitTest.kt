@@ -149,6 +149,20 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testUserDataHolderCall() {
+    myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolder.java", """
+      package com.intellij.openapi.util;
+      public interface UserDataHolder {
+        Object getUserData(Object key);
+      }
+      """.trimIndent())
+    val result = doTest("UserDataHolderCall")
+    // the analysis does not go into the implementations of the UserDataHolder methods, so their read requirements are not found
+    val expectedPaths = listOf("UserDataHolderCall.testMethod -> UserDataHolderCall.helper => READ.ANNOTATION")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testStatisticsReport() {
     val report = analyzeWithReport("AnnotationInChain")
     assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))

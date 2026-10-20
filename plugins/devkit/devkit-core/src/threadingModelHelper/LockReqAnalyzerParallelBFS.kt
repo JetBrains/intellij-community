@@ -344,6 +344,7 @@ class LockReqAnalyzerParallelBFS {
       return // this is not interesting further
     }
     if (LockReqDetector.isAsyncDispatch(method)) return
+    if (LockReqDetector.isOpaqueMethod(method)) return
     when {
       LockReqDetector.isMessageBusCall(method) -> handleMessageBusCall(payload, method, currentPath, parentId, timer)
       context.config.includePolymorphic && !LockReqDetector.isCommonMethod(method) -> handlePolymorphic(payload, method, currentPath, parentId, timer)

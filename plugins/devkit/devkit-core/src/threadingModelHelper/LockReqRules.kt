@@ -25,6 +25,13 @@ interface LockReqRules {
   val readRequiredClasses: Set<String>
 
   /**
+   * The qualified names of the classes whose declared methods the analysis does not enter.
+   * A call to such a method gives no inheritor search, and the analysis does not go into its implementations.
+   * The method can still give a requirement from [assertionMethods] or [readRequiredClasses].
+   */
+  val opaqueClasses: Set<String>
+
+  /**
    * When analyzer configured to search for a subset of [ConstraintType] (via [AnalysisConfig.interestingConstraintTypes]),
    * and it meets a signature from [indifferent] that is matched with a subset of [AnalysisConfig.interestingConstraintTypes], this signature is ignored.
    * This is needed to save some performance on methods that guaranteedly won't have anything interesting inside them
@@ -110,6 +117,10 @@ class BaseLockReqRules : LockReqRules {
 
   override val readRequiredClasses: Set<String> = setOf(
     "com.intellij.psi.PsiElement",
+  )
+
+  override val opaqueClasses: Set<String> = setOf(
+    "com.intellij.openapi.util.UserDataHolder",
   )
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(

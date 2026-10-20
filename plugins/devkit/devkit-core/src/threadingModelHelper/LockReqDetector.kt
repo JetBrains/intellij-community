@@ -100,6 +100,15 @@ object LockReqDetector {
 
   }
 
+  /**
+   * Whether the analysis must not go into the implementations of [method].
+   * This is true if one of [LockReqRules.opaqueClasses] declares [method].
+   */
+  context(patterns: LockReqRules)
+  fun isOpaqueMethod(method: PsiMethod): Boolean {
+    return method.containingClass?.qualifiedName in patterns.opaqueClasses
+  }
+
   context(config: AnalysisConfig, patterns: LockReqRules)
   fun isCommonMethod(method: PsiMethod): Boolean {
     return (method.name == "compute" && method.containingClass?.qualifiedName == "com.intellij.openapi.util.ThrowableComputable") || method.name in patterns.commonMethods
