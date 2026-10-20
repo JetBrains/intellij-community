@@ -210,7 +210,6 @@
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyResolveCachesInvalidatorActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.debugger.PyDebuggerBackendToolWindowSetup"/>
 
-    <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
 
@@ -267,7 +266,6 @@
                  key="django.enable.pyi.stubs"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
-    <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
 
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
@@ -280,7 +278,6 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
-    <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
     <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
@@ -299,16 +296,6 @@
                         serviceImplementation="com.jetbrains.python.sdk.add.v2.FileSystemFactoryImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.psi.resolve.PackageAvailabilityService"
                         serviceImplementation="com.jetbrains.python.packaging.PackageAvailabilityServiceImpl"/>
-    <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
-
-    <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
-    <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>
-
-    <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
-                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
-
-    <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
-                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
     <workspaceModel.customImlComponentNameContributor implementation="com.jetbrains.python.ReSTServiceImlComponentNameContributor"/>
@@ -328,7 +315,6 @@
     <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
     <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
-    <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
     <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
@@ -357,10 +343,6 @@
     <toolWindow id="Python Console" anchor="right" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow"
                 canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
-    <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
-    <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
-    <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <callHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.call.PyCallHierarchyProvider"/>
@@ -454,9 +436,6 @@
                      groupBundle="messages.PyBundle"
                      implementationClass="com.intellij.commandInterface.commandLine.CommandLineInspection"/>
 
-    <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
-    <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
-
     <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralElementDescriptionProvider"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
@@ -478,17 +457,7 @@
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
-    <internalFileTemplate name="Python Stub"/>
-    <internalFileTemplate name="Python Unit Test"/>
     <internalFileTemplate name="Setup Script"/>
-
-    <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
-
-    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"
-                                 bundle="messages.PyBundle"
-                                 key="configurable.PySmartKeysOptions.display.name"/>
-    <codeCompletionConfigurable instance="com.jetbrains.python.codeInsight.completion.PythonCodeCompletionConfigurable"/>
-
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python"
                               order="before filePath"/>
@@ -542,19 +511,13 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDebuggerConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
 
-    <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
-
     <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
-    <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
-                        serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
 
     <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
                     serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
-
-    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
 
@@ -614,14 +577,6 @@
     <registryKey defaultValue="64"
                  description="Minimum scroll-bar distance (px) from the bottom that triggers loading the next page of search results in the Install Package dialog."
                  restartRequired="false" key="python.packaging.install.dialog.results.list.load.more.threshold.px"/>
-
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
-
-    <!--folding-->
-    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python"
-                                order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
-
-    <!-- postfix templates!-->
 
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
 
@@ -961,13 +916,7 @@
     <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockerFixtureTypeProvider"/>
     <typeCheckerExtension implementation="com.jetbrains.python.testing.pyMock.PyMockTypeCheckerExtension"/>
 
-    <!-- typing -->
-    <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
-
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
-
-    <!-- NumPy -->
-    <documentationLinkProvider implementation="com.jetbrains.python.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
     <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDoctestVisitorFilter"/>
@@ -1131,21 +1080,10 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
-    <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
-    </action>
-
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
             icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
-
-    <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
-    </action>
-
-    <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
-    <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
 
 
     <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>

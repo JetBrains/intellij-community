@@ -11,7 +11,6 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -43,7 +42,7 @@ public final class PyGotoSuperHandler implements CodeInsightActionHandler {
         }
         else {
           final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, psiFile);
-          navigateOrChoose(editor, psiFile, pyClass.getAncestorClasses(context), PyBundle.message("goto.superclass.choose"));
+          navigateOrChoose(editor, psiFile, pyClass.getAncestorClasses(context), PyCodeInsightBundle.message("goto.superclass.choose"));
         }
       }
     }
@@ -56,7 +55,7 @@ public final class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   private static void gotoSuperClassAttributes(Editor editor, PyTargetExpression attr, PyClass pyClass) {
     final Collection<PyTargetExpression> attrs = getAllSuperAttributesByName(attr, pyClass);
-    navigateOrChoose(editor, attr, attrs, PyBundle.message("code.insight.goto.superclass.attribute.chooser.title"));
+    navigateOrChoose(editor, attr, attrs, PyCodeInsightBundle.message("code.insight.goto.superclass.attribute.chooser.title"));
   }
 
   private static void navigateOrChoose(Editor editor,

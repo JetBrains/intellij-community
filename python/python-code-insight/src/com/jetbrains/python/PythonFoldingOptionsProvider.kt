@@ -8,22 +8,23 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import java.util.function.Function
 
 private val longStringLiterals: CheckboxDescriptor
-  get() = CheckboxDescriptor(PyBundle.message("python.long.string.literals"), PythonFoldingSettings.getInstance()::COLLAPSE_LONG_STRINGS)
+  get() = CheckboxDescriptor(PyCodeInsightBundle.message("python.long.string.literals"), PythonFoldingSettings.getInstance()::COLLAPSE_LONG_STRINGS)
 private val longCollectionLiterals: CheckboxDescriptor
-  get() = CheckboxDescriptor(PyBundle.message("python.long.collection.literals"), PythonFoldingSettings.getInstance()::COLLAPSE_LONG_COLLECTIONS)
+  get() = CheckboxDescriptor(PyCodeInsightBundle.message("python.long.collection.literals"), PythonFoldingSettings.getInstance()::COLLAPSE_LONG_COLLECTIONS)
 private val sequentialComments: CheckboxDescriptor
-  get() = CheckboxDescriptor(PyBundle.message("python.sequential.comments"), PythonFoldingSettings.getInstance()::COLLAPSE_SEQUENTIAL_COMMENTS)
+  get() = CheckboxDescriptor(PyCodeInsightBundle.message("python.sequential.comments"), PythonFoldingSettings.getInstance()::COLLAPSE_SEQUENTIAL_COMMENTS)
 private val typeAnnotations: CheckboxDescriptor
-  get() = CheckboxDescriptor(PyBundle.message("python.type.annotations"), PythonFoldingSettings.getInstance()::COLLAPSE_TYPE_ANNOTATIONS,
-                             comment = PyBundle.message("python.type.annotations.hint"))
+  get() = CheckboxDescriptor(PyCodeInsightBundle.message("python.type.annotations"), PythonFoldingSettings.getInstance()::COLLAPSE_TYPE_ANNOTATIONS,
+                             comment = PyCodeInsightBundle.message("python.type.annotations.hint"))
 
 class PythonFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFoldingOptionsProvider, ConfigurableWithOptionDescriptors {
 
   override fun Panel.createContent() {
-    group(PyBundle.message("python.folding.options.title")) {
+    group(PyCodeInsightBundle.message("python.folding.options.title")) {
       row {
         checkBox(longStringLiterals)
       }

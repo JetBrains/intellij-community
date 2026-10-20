@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -29,7 +29,7 @@ final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpres
 
   @Override
   public @NotNull String getErrorHint() {
-    return PyBundle.message("show.expression.type.no.expression.found");
+    return PyCodeInsightBundle.message("show.expression.type.no.expression.found");
   }
 
   @Override

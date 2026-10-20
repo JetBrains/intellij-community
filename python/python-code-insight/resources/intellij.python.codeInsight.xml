@@ -18,21 +18,26 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.foldings"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.python.ast"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.parser"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
@@ -196,10 +201,66 @@
     <completion.ml.elementFeatures language="Python"
                                    implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatureProvider"/>
     <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
+
+    <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
+    <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
+    <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
+    <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
+    <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
+    <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
+    <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
+    <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
+    <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
+    <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
+    <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
+    <internalFileTemplate name="Python Stub"/>
+    <internalFileTemplate name="Python Unit Test"/>
+    <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
+
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"
+                                 bundle="messages.PyCodeInsightBundle"
+                                 key="configurable.PySmartKeysOptions.display.name"/>
+    <codeCompletionConfigurable instance="com.jetbrains.python.codeInsight.completion.PythonCodeCompletionConfigurable"/>
+    <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
+                        serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
+    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
+
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
+
+    <!--folding-->
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python"
+                                order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
+    <!-- typing -->
+    <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
+    <!-- NumPy -->
+    <documentationLinkProvider implementation="com.jetbrains.python.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
   </extensions>
+
+  <actions resource-bundle="messages.PyCodeInsightBundle">
+    <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+
+    <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
+    </action>
+
+    <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
+    <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
+  </actions>
 </idea-plugin>

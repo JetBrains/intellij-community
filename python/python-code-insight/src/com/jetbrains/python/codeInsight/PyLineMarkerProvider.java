@@ -17,7 +17,6 @@ import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -61,7 +60,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     PsiElement parent = identifier.getParent();
     if (!(parent instanceof PyClass pyClass)) return null;
     final HtmlBuilder builder = new HtmlBuilder();
-    builder.append(PyBundle.message("line.markers.tooltip.header.is.subclassed.by"));
+    builder.append(PyCodeInsightBundle.message("line.markers.tooltip.header.is.subclassed.by"));
     final AtomicInteger count = new AtomicInteger();
     PyClassInheritorsSearch.search(pyClass, true).forEach(inheritor -> {
       String className = inheritor.getName();
@@ -73,14 +72,14 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
       return true;
     });
     boolean tooManySubclasses = count.get() >= INHERITORS_LIMIT;
-    return tooManySubclasses ? PyBundle.message("line.markers.tooltip.has.subclasses") : builder.wrapWithHtmlBody().toString();
+    return tooManySubclasses ? PyCodeInsightBundle.message("line.markers.tooltip.has.subclasses") : builder.wrapWithHtmlBody().toString();
   };
 
   private static final Function<PsiElement, @NlsContexts.Tooltip String> ourOverridingMethodTooltipProvider = element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PyFunction pyFunction)) return "";
     final HtmlBuilder builder = new HtmlBuilder();
-    builder.append(PyBundle.message("line.markers.tooltip.header.is.overridden.in"));
+    builder.append(PyCodeInsightBundle.message("line.markers.tooltip.header.is.overridden.in"));
     final AtomicInteger count = new AtomicInteger();
 
     PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(pyClass -> {
@@ -95,13 +94,13 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
       return true;
     });
     boolean tooManyOverrides = count.get() >= INHERITORS_LIMIT;
-    return tooManyOverrides ? PyBundle.message("line.markers.tooltip.has.overridden.methods") : builder.wrapWithHtmlBody().toString();
+    return tooManyOverrides ? PyCodeInsightBundle.message("line.markers.tooltip.has.overridden.methods") : builder.wrapWithHtmlBody().toString();
   };
 
   private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
-      return PyBundle.message("line.markers.popup.title.choose.super.method", ((PyFunction)nameIdentifier.getParent()).getName());
+      return PyCodeInsightBundle.message("line.markers.popup.title.choose.super.method", ((PyFunction)nameIdentifier.getParent()).getName());
     }
 
     @Override
@@ -114,7 +113,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
   private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
-      return PyBundle
+      return PyCodeInsightBundle
         .message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
     }
 
@@ -139,7 +138,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     @Override
     protected @PopupTitle String getTitle(final PsiElement elt) {
       PsiElement parent = elt.getParent();
-      return parent instanceof PyClass ? PyBundle.message("line.markers.popup.title.choose.subclass", ((PyClass)parent).getName()) : "";
+      return parent instanceof PyClass ? PyCodeInsightBundle.message("line.markers.popup.title.choose.subclass", ((PyClass)parent).getName()) : "";
     }
 
     @Override
@@ -154,7 +153,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     protected @PopupTitle String getTitle(PsiElement element) {
       PsiElement parent = element.getParent();
       if (parent instanceof PyFunction) {
-        return PyBundle.message("line.markers.popup.title.choose.overriding.method", ((PyFunction)parent).getName());
+        return PyCodeInsightBundle.message("line.markers.popup.title.choose.overriding.method", ((PyFunction)parent).getName());
       }
       return "";
     }
@@ -218,7 +217,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
       }
       // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
       return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                  superClass == null ? null : new TooltipProvider(PyBundle.message(
+                                  superClass == null ? null : new TooltipProvider(PyCodeInsightBundle.message(
                                     "line.markers.tooltip.overrides.method.in.class", superClass.getName())),
                                   SUPER_METHOD_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
     }
@@ -240,7 +239,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
         if (identifier != null) {
           return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
                                       new TooltipProvider(
-                                        PyBundle.message("line.markers.tooltip.overrides.attribute.in.class", ancestor.getName())), SUPER_ATTRIBUTE_NAVIGATOR,
+                                        PyCodeInsightBundle.message("line.markers.tooltip.overrides.attribute.in.class", ancestor.getName())), SUPER_ATTRIBUTE_NAVIGATOR,
                                       GutterIconRenderer.Alignment.RIGHT);
         }
       }

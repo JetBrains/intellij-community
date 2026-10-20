@@ -7,8 +7,8 @@ import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,22 +16,22 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 final class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware, NewFileActionWithCategory {
   CreatePythonFileAction() {
-    super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
+    super(PyCodeInsightBundle.messagePointer("action.create.python.file.title"), PyCodeInsightBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
 
   @Override
   protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
                              @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle(PyBundle.message("create.python.file.action.new.python.file"))
-      .addKind(PyBundle.message("create.python.file.action.python.file"), PythonFileType.INSTANCE.getIcon(), "Python Script")
-      .addKind(PyBundle.message("create.python.file.action.python.unit.test"), PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
-      .addKind(PyBundle.message("create.python.file.action.python.stub"), PyiFileType.INSTANCE.getIcon(), "Python Stub");
+      .setTitle(PyCodeInsightBundle.message("create.python.file.action.new.python.file"))
+      .addKind(PyCodeInsightBundle.message("create.python.file.action.python.file"), PythonFileType.INSTANCE.getIcon(), "Python Script")
+      .addKind(PyCodeInsightBundle.message("create.python.file.action.python.unit.test"), PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
+      .addKind(PyCodeInsightBundle.message("create.python.file.action.python.stub"), PyiFileType.INSTANCE.getIcon(), "Python Stub");
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return PyBundle.message("create.python.file.script.action", newName);
+    return PyCodeInsightBundle.message("create.python.file.script.action", newName);
   }
 
   @Override

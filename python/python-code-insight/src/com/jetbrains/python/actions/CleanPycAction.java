@@ -13,8 +13,8 @@ import com.intellij.platform.eel.fs.EelFileUtils;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ final class CleanPycAction extends AnAction {
       catch (IOException ex) {
         Logger.getInstance(CleanPycAction.class).warn(ex);
       }
-    }, PyBundle.message("action.CleanPyc.progress.title.cleaning.up.pyc.files"), false, e.getProject());
+    }, PyCodeInsightBundle.message("action.CleanPyc.progress.title.cleaning.up.pyc.files"), false, e.getProject());
   }
 
   @Override
