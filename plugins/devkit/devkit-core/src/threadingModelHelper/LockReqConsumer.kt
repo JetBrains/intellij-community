@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
+import java.nio.file.Path
 
 interface LockReqConsumer {
   fun onStart(method: SmartPsiElementPointer<PsiMethod>) {}
@@ -15,6 +16,12 @@ interface LockReqConsumer {
   fun onSwingComponent(signature: MethodSignature) {}
 
   fun onDone(result: AnalysisResult) {}
+
+  /**
+   * The analysis calls this method after it writes the traversal statistics report to [file].
+   * The analysis calls it also on cancellation or failure, so the implementation must not depend on [onDone].
+   */
+  fun onStatisticsReport(file: Path) {}
 }
 
 class DefaultLockReqConsumer(

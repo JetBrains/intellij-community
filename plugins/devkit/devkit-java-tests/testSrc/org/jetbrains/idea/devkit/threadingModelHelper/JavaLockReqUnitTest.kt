@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.EnumSet
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
@@ -125,16 +126,22 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     myFixture.configureByFile("AnnotationInChain.java")
     val targetMethod = findTestMethod(myFixture.file as PsiJavaFile, "AnnotationInChain")
     val statisticsDir = Files.createTempDirectory("lockReqStatistics")
+    val reportedFiles = mutableListOf<Path>()
     try {
       runBlocking {
         analyzerBFS.analyzeMethodStreaming(SmartPointerManager.createPointer(targetMethod),
                                            AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java)),
                                            project,
-                                           object : LockReqConsumer {},
+                                           object : LockReqConsumer {
+                                             override fun onStatisticsReport(file: Path) {
+                                               reportedFiles.add(file)
+                                             }
+                                           },
                                            statisticsDir)
       }
       val reports = statisticsDir.listDirectoryEntries()
       assertEquals(1, reports.size)
+      assertEquals(reports, reportedFiles)
       val report = reports.single().readText()
       assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))
       assertTrue(report, report.contains("Status: COMPLETED"))

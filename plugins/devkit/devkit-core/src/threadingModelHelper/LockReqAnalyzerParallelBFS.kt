@@ -99,8 +99,11 @@ class LockReqAnalyzerParallelBFS {
     finally {
       if (statisticsDir != null) {
         val wallClockTime = (System.nanoTime() - startNanos).nanoseconds
-        withContext(NonCancellable + Dispatchers.IO) {
+        val file = withContext(NonCancellable + Dispatchers.IO) {
           writeStatistics(context, statisticsDir, status, wallClockTime)
+        }
+        if (file != null) {
+          consumer.onStatisticsReport(file)
         }
       }
     }
@@ -110,13 +113,15 @@ class LockReqAnalyzerParallelBFS {
     return result
   }
 
-  private fun writeStatistics(context: TraversalContext, statisticsDir: Path, status: LockReqAnalysisStatistics.Status, wallClockTime: Duration) {
+  private fun writeStatistics(context: TraversalContext, statisticsDir: Path, status: LockReqAnalysisStatistics.Status, wallClockTime: Duration): Path? {
     try {
       val file = context.statistics.writeReport(statisticsDir, context.config, status, wallClockTime)
       LOG.info("Lock analysis statistics are written to $file")
+      return file
     }
     catch (e: IOException) {
       LOG.warn("Cannot write lock analysis statistics to $statisticsDir", e)
+      return null
     }
   }
 
