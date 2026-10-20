@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.python.console.PydevConsoleRunnerUtil;
+import com.jetbrains.python.PythonRuntimeService;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -19,7 +19,7 @@ public final class PySyntaxHighlighterFactory extends PySyntaxHighlighterFactory
     }
     return ReadAction.compute(() -> {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-      return psiFile != null && PydevConsoleRunnerUtil.isInPydevConsole(psiFile);
+      return psiFile != null && PythonRuntimeService.getInstance().isInPydevConsole(psiFile);
     });
   }
 }

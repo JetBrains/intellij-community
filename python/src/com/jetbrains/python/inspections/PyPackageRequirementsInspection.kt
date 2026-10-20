@@ -12,7 +12,9 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.inspections.requirement.PyRequirementVisitor
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PythonVisitorFilter
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 
@@ -53,5 +55,15 @@ class PyPackageRequirementsInspection : PyInspection() {
 
   companion object {
     private const val IGNORED_PACKAGES = "INSP.requirements.ignore.packages.label"
+  }
+}
+
+/**
+ * Disables [PyPackageRequirementsInspection] in type comments and type hints.
+ */
+@ApiStatus.Internal
+class PyPackageRequirementsVisitorFilter : PythonVisitorFilter {
+  override fun isSupported(visitorClass: Class<out PyElementVisitor?>, file: PsiFile): Boolean {
+    return visitorClass != PyPackageRequirementsInspection::class.java
   }
 }

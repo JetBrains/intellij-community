@@ -3,7 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.codeInspection.options.OptPane;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public final class PyPep8Inspection extends PyInspection implements ExternalAnno
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(OptPane.stringList("ignoredErrors", PyBundle.message("INSP.settings.pep8.ignore.errors.label")));
+    return pane(OptPane.stringList("ignoredErrors", PyPsiBundle.message("INSP.settings.pep8.ignore.errors.label")));
   }
 
   @Override

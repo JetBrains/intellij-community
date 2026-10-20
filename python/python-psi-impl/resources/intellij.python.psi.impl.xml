@@ -627,6 +627,11 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.code.style.issues"
                      key="INSP.NAME.pep8.naming" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
+    <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8"
+                     bundle="messages.PyPsiBundle" key="INSP.pep8.coding.style.violation"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins"
                      bundle="messages.PyPsiBundle"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
@@ -999,6 +1004,7 @@
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
     <projectSettings service="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
     <applicationSettings service="com.jetbrains.python.documentation.PythonDocumentationMap"/>
+    <internalFileTemplate name="Python Script"/>
   </extensions>
 
   <extensionPoints>

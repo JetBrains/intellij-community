@@ -18,7 +18,6 @@ public final class PyTypeAnnotationVisitorFilter implements PythonVisitorFilter 
              visitorClass == PyMandatoryEncodingInspection.class ||
              visitorClass == PyNonAsciiCharInspection.class ||
              visitorClass == PyPep8Inspection.class ||
-             visitorClass == PyCompatibilityInspection.class ||
-             visitorClass == PyPackageRequirementsInspection.class);
+             visitorClass == PyCompatibilityInspection.class);
   }
 }

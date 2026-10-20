@@ -495,11 +495,6 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.packaging"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
-    <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8"
-                     bundle="messages.PyPsiBundle" key="INSP.pep8.coding.style.violation"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.code.style.issues"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <editorNotificationProvider implementation="com.jetbrains.python.sdk.inspections.PyInterpreterNotificationProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.python.packaging.management.PyPackageManagerEditorBanner"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
@@ -610,7 +605,6 @@
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
-    <internalFileTemplate name="Python Script"/>
     <internalFileTemplate name="Python Stub"/>
     <internalFileTemplate name="Python Unit Test"/>
     <internalFileTemplate name="Setup Script"/>
@@ -1141,6 +1135,10 @@
                    implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
     <visitorFilter language="PyTypeHint"
                    implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="PyTypeHint"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
 
     <!-- PyExpressionCodeFragment -->
     <visitorFilter language="Python"
