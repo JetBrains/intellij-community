@@ -10,13 +10,19 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.text.TextWithMnemonic
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
+import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.WizardPopup
+import com.intellij.ui.popup.async.AsyncPopupStep
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertNotNull
@@ -28,6 +34,8 @@ import javax.swing.JLayeredPane
 import javax.swing.JRootPane
 import javax.swing.RootPaneContainer
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 @RunInEdt
 @TestApplication
@@ -101,6 +109,56 @@ class ActionPopupTest {
     assertNotNull(SpeedSearchComparator(false).matchingFragments("md", indexedString))
   }
 
+  @Test
+  fun testSubmenuForFilteredOutItemIsReported() {
+    val step = createStepWithSubmenus("Submenu")
+    val popup = FilterablePopup(step)
+    val item = step.values.single()
+    popup.list.setSelectedValue(item, false)
+    val subStep = step.onChosen(item, false)
+
+    popup.type("q")
+    assertEquals(0, popup.list.model.size)
+    // A submenu for an item that is not selected is a caller error, not an NPE
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      popup.handleNextStep(subStep, item)
+    }
+    assertEquals("Cannot open submenu for 'Submenu' item. The item is not selected", error.message)
+  }
+
+  @Test
+  fun testAsyncSubmenuForFilteredOutItemIsSkipped() {
+    val step = createStepWithSubmenus("Alpha", "Beta")
+    val popup = FilterablePopup(step)
+    val alpha = step.values[0]
+    popup.list.setSelectedValue(alpha, false)
+    @Suppress("UNCHECKED_CAST")
+    val subStep = step.onChosen(alpha, false) as PopupStep<PopupFactoryImpl.ActionItem>
+
+    val promise = AsyncPromise<PopupStep<PopupFactoryImpl.ActionItem>>()
+    popup.handleNextStep(AsyncPopupStep(promise), alpha)
+    // The typed letter hides 'Alpha' and moves 'Beta' into the selected row while the step of 'Alpha' loads
+    popup.type("b")
+    assertEquals(1, popup.list.model.size)
+    assertSame(step.values[1], popup.list.selectedValue)
+    promise.setResult(subStep)
+    assertNull(popup.child)
+  }
+
+  private fun createStepWithSubmenus(vararg names: String): ActionPopupStep {
+    val group = DefaultActionGroup()
+    for (name in names) {
+      val subGroup = DefaultActionGroup(name, true)
+      subGroup.add(DumbAction(TextWithMnemonic.fromPlainText("Child")))
+      group.add(subGroup)
+    }
+    return ActionPopupStep.createActionsStep(
+      null, group, SimpleDataContext.EMPTY_CONTEXT, ActionPlaces.PROJECT_WIDGET_POPUP,
+      PresentationFactory(), Supplier { SimpleDataContext.EMPTY_CONTEXT },
+      createOptions(false, false, false)
+    ) as ActionPopupStep
+  }
+
   private fun testActionPresentation(textWithMnemonic: TextWithMnemonic, expectedText: String, options: ActionPopupOptions) {
     val group = DefaultActionGroup()
     group.add(DumbAction(textWithMnemonic))
@@ -115,6 +173,20 @@ class ActionPopupTest {
 
     assertEquals(expectedText, text, "Options: ${options.showNumbers()}, ${options.useAlphaAsNumbers()}, ${options.honorActionMnemonics()}")
   }
+}
+
+/**
+ * An unshown popup has no search field, so [type] mirrors `SpeedSearch.update()` without the field updates.
+ */
+private class FilterablePopup(step: ActionPopupStep) : ListPopupImpl(null, step) {
+  val child: WizardPopup? get() = myChild
+
+  fun type(pattern: String) {
+    speedSearch.updatePattern(pattern)
+    onSpeedSearchPatternChanged()
+  }
+
+  override fun updateSpeedSearchColors(error: Boolean) {}
 }
 
 private class DumbAction(textWithMnemonic: TextWithMnemonic) : AnAction() {

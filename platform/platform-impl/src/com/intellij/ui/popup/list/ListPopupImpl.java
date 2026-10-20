@@ -472,6 +472,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList.getCellBounds(i, i);
   }
 
+  /**
+   * A submenu opens next to the selected item, so {@code parentValue} must be the selected item.
+   * For a {@link MultiSelectionListPopupStep} with several selected items, {@code parentValue} is null,
+   * because the submenu belongs to the whole selection.
+   */
+  private boolean canOpenSubmenuFor(@Nullable Object parentValue) {
+    return parentValue == null || Objects.equals(myList.getSelectedValue(), parentValue);
+  }
+
+  private void reportItemNotSelected(@Nullable Object parentValue) {
+    String valueText = parentValue == null ? null : getListStep().getTextFor(parentValue);
+    LOG.error(String.format("Cannot open submenu for '%s' item. The item is not selected", valueText));
+  }
+
   @Override
   public void disposeChildren() {
     setIndexForShowingChild(-1);
@@ -619,11 +633,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return true;
     }
     else if (nextStep instanceof AsyncPopupStep<?> async) {
-      Rectangle bounds = getCellBounds(getSelectedIndex());
+      Rectangle bounds = canOpenSubmenuFor(parentValue) ? getCellBounds(getSelectedIndex()) : null;
+      if (bounds == null) {
+        reportItemNotSelected(parentValue);
+        return false;
+      }
       // TODO: separator size calculation, see IDEA-327566
       RelativePoint point = new RelativePoint(getList(), new Point(bounds.width, bounds.y + bounds.height / 2));
       myAsyncPopupWaiter = new AsyncPopupWaiter(async, point, step -> {
-        handleNextStep(step, parentValue, e);
+        // The user can close the popup or change the selected item while the step loads
+        if (!isDisposed() && canOpenSubmenuFor(parentValue)) {
+          handleNextStep(step, parentValue, e);
+        }
         return Unit.INSTANCE;
       });
       return false;
@@ -647,7 +668,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       oo.setSubStepContextAdjuster(o.getSubStepContextAdjuster());
     }
 
-    Point point = myList.indexToLocation(myList.getSelectedIndex());
+    int index = myList.getSelectedIndex();
+    Point point = canOpenSubmenuFor(parentValue) ? myList.indexToLocation(index) : null;
+    if (point == null) {
+      reportItemNotSelected(parentValue);
+      return;
+    }
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
     if (ScreenReader.isActive()) myChild.setRequestFocus(true);
@@ -685,7 +711,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
       myChild.show(container, childLocation.x, childLocation.y, true);
     }
-    setIndexForShowingChild(myList.getSelectedIndex());
+    setIndexForShowingChild(index);
     myMouseMovementTracker.reset();
   }
 
@@ -827,7 +853,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         ClientId currentClientId = ClientId.getCurrent();
         myShowSubmenuTimer = new Timer(250, e -> {
           try (AccessToken ignore = ClientId.withClientId(currentClientId)) {
-            if (!isDisposed() && myLastSelectedIndex == forIndex) {
+            // The list can be refiltered or reselected while the timer runs
+            if (!isDisposed() && myLastSelectedIndex == forIndex &&
+                myList.getSelectedIndex() == forIndex && canOpenSubmenuFor(selectedValue)) {
               disposeChildren();
               showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
             }
