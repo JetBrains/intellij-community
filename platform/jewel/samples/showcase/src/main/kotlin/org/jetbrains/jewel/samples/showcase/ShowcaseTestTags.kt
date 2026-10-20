@@ -17,4 +17,9 @@ internal object ShowcaseTestTags {
      * scenarios depends on neither host. Change both together.
      */
     const val STRING_LIST_COMBO_BOX: String = "showcase.comboBox.stringList"
+    const val SIMPLE_MENU_COMBO_BOX: String = "showcase.comboBox.simpleMenu"
+    const val BASIC_MENU_BUTTON: String = "showcase.menu.basicButton"
+    const val BASIC_MENU_POPUP: String = "showcase.menu.basicPopup"
+    const val SUBMENU_MENU_BUTTON: String = "showcase.menu.submenuButton"
+    const val SUBMENU_MENU_POPUP: String = "showcase.menu.submenuPopup"
 }

@@ -15,8 +15,23 @@ public object ShowcaseE2eTags {
     /** The combo box a scenario opens. Must match `ShowcaseTestTags.STRING_LIST_COMBO_BOX`. */
     public const val COMBO_BOX: String = "showcase.comboBox.stringList"
 
+    /** The menu combo box with a selected item. Must match `ShowcaseTestTags.SIMPLE_MENU_COMBO_BOX`. */
+    public const val SIMPLE_MENU_COMBO_BOX: String = "showcase.comboBox.simpleMenu"
+
     /** The popup content a ComboBox shows, set by the component itself rather than by either sample. */
     public const val COMBO_BOX_POPUP: String = "Jewel.ComboBox.Popup"
+
+    /** The button that opens the basic popup menu. Must match `ShowcaseTestTags.BASIC_MENU_BUTTON`. */
+    public const val BASIC_MENU_BUTTON: String = "showcase.menu.basicButton"
+
+    /** The basic popup menu container. Must match `ShowcaseTestTags.BASIC_MENU_POPUP`. */
+    public const val BASIC_MENU_POPUP: String = "showcase.menu.basicPopup"
+
+    /** The button that opens the submenu popup menu. Must match `ShowcaseTestTags.SUBMENU_MENU_BUTTON`. */
+    public const val SUBMENU_MENU_BUTTON: String = "showcase.menu.submenuButton"
+
+    /** The submenu popup menu container. Must match `ShowcaseTestTags.SUBMENU_MENU_POPUP`. */
+    public const val SUBMENU_MENU_POPUP: String = "showcase.menu.submenuPopup"
 }
 
 /**
@@ -27,7 +42,7 @@ public object ShowcaseE2eTags {
  * report all the failures rather than stopping at the first.
  */
 public object PopupScenarios {
-    /** Opens the combo boxes view and runs every scenario of this group, each isolated from the next. */
+    /** Opens the combo boxes and menus views and runs every scenario of this group, each isolated from the next. */
     public suspend fun runAll(automator: ShowcaseAutomator, failures: MutableList<String>) {
         automator.clickByContentDescription("Show Combo Boxes")
         automator.waitForNode(ShowcaseE2eTags.COMBO_BOX)
@@ -43,6 +58,39 @@ public object PopupScenarios {
             ::closeLeftoverPopup,
             ::comboBoxPopupClosesCleanly,
         )
+        automator.runIsolated(
+            failures,
+            "Clicking an open ComboBox closes it without reopening",
+            ::closeLeftoverPopup,
+            ::clickingOpenComboBoxClosesWithoutReopening,
+        )
+        automator.runIsolated(
+            failures,
+            "A MenuComboBox with a selected item stays open and closes on click or Escape",
+            ::closeLeftoverMenuComboBoxPopup,
+            ::menuComboBoxWithSelectedItemStaysOpenAndCloses,
+        )
+
+        automator.clickByContentDescription("Show Menus")
+        automator.waitForNode(ShowcaseE2eTags.BASIC_MENU_BUTTON)
+        automator.runIsolated(
+            failures,
+            "Escape closes a basic PopupMenu",
+            ::closeLeftoverBasicMenuPopup,
+            ::basicPopupMenuOpensAndClosesWithEscape,
+        )
+        automator.runIsolated(
+            failures,
+            "Keyboard navigation selects an item and closes a basic PopupMenu",
+            ::closeLeftoverBasicMenuPopup,
+            ::basicPopupMenuKeyboardNavigationSelectsItem,
+        )
+        automator.runIsolated(
+            failures,
+            "Keyboard navigation opens and closes nested Submenus in PopupMenu",
+            ::closeLeftoverSubmenuPopup,
+            ::submenuPopupMenuRoutesKeysAndCloses,
+        )
     }
 
     /**
@@ -53,6 +101,27 @@ public object PopupScenarios {
         if (automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP)) {
             automator.click(ShowcaseE2eTags.COMBO_BOX)
             automator.waitUntilGone(ShowcaseE2eTags.COMBO_BOX_POPUP)
+        }
+    }
+
+    public suspend fun closeLeftoverMenuComboBoxPopup(automator: ShowcaseAutomator) {
+        if (automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP)) {
+            automator.click(ShowcaseE2eTags.SIMPLE_MENU_COMBO_BOX)
+            automator.waitUntilGone(ShowcaseE2eTags.COMBO_BOX_POPUP)
+        }
+    }
+
+    public suspend fun closeLeftoverBasicMenuPopup(automator: ShowcaseAutomator) {
+        if (automator.isPresent(ShowcaseE2eTags.BASIC_MENU_POPUP)) {
+            automator.clickByContentDescription("Show Menus")
+            automator.waitUntilGone(ShowcaseE2eTags.BASIC_MENU_POPUP)
+        }
+    }
+
+    public suspend fun closeLeftoverSubmenuPopup(automator: ShowcaseAutomator) {
+        if (automator.isPresent(ShowcaseE2eTags.SUBMENU_MENU_POPUP)) {
+            automator.clickByContentDescription("Show Menus")
+            automator.waitUntilGone(ShowcaseE2eTags.SUBMENU_MENU_POPUP)
         }
     }
 
@@ -98,5 +167,152 @@ public object PopupScenarios {
             !closedInTime -> "the popup did close, but took longer than the wait allows"
             else -> null
         }
+    }
+
+    /**
+     * Clicking an open ComboBox while it is hovered must close the popup without immediately reopening it.
+     */
+    public suspend fun clickingOpenComboBoxClosesWithoutReopening(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.COMBO_BOX)
+        automator.waitForNode(ShowcaseE2eTags.COMBO_BOX_POPUP)
+        automator.waitForIdle()
+
+        automator.click(ShowcaseE2eTags.COMBO_BOX)
+        val closedInTime = runCatching { automator.waitUntilGone(ShowcaseE2eTags.COMBO_BOX_POPUP) }.isSuccess
+        automator.waitForIdle()
+
+        return when {
+            automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP) ->
+                "clicking the open ComboBox left the popup open or reopened it"
+            !closedInTime -> "the ComboBox popup took longer than the wait budget to close on second click"
+            else -> null
+        }
+    }
+
+    /**
+     * A MenuComboBox whose menu has a selected item must stay open when clicked, accept keyboard navigation, close
+     * without reopening when clicked again, and close on Escape when reopened.
+     *
+     * When the selected menu item requests Compose focus during pre-measurement or popup show, stealing focus from the
+     * anchor ComboBox causes `ComboBox` to close its popup on the same click that opened it.
+     */
+    public suspend fun menuComboBoxWithSelectedItemStaysOpenAndCloses(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.SIMPLE_MENU_COMBO_BOX)
+        automator.waitForNode(ShowcaseE2eTags.COMBO_BOX_POPUP)
+        automator.waitForIdle()
+        if (!automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP)) {
+            return "the MenuComboBox popup closed itself immediately after opening"
+        }
+
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        if (!automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP)) {
+            return "the MenuComboBox popup closed when pressing Down arrow"
+        }
+
+        automator.click(ShowcaseE2eTags.SIMPLE_MENU_COMBO_BOX)
+        val closedOnSecondClick = runCatching { automator.waitUntilGone(ShowcaseE2eTags.COMBO_BOX_POPUP) }.isSuccess
+        automator.waitForIdle()
+        if (!closedOnSecondClick || automator.isPresent(ShowcaseE2eTags.COMBO_BOX_POPUP)) {
+            return "clicking the open MenuComboBox did not close its popup cleanly"
+        }
+
+        automator.click(ShowcaseE2eTags.SIMPLE_MENU_COMBO_BOX)
+        automator.waitForNode(ShowcaseE2eTags.COMBO_BOX_POPUP)
+        automator.waitForIdle()
+
+        automator.pressKey(KeyEvent.VK_ESCAPE)
+        return runCatching { automator.waitUntilGone(ShowcaseE2eTags.COMBO_BOX_POPUP) }
+            .fold(
+                onSuccess = { null },
+                onFailure = { "the MenuComboBox popup stayed open after Escape" },
+            )
+    }
+
+    /**
+     * A focusable PopupMenu must open on button click and close when Escape is pressed while the owner window holds
+     * native focus.
+     */
+    public suspend fun basicPopupMenuOpensAndClosesWithEscape(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.BASIC_MENU_BUTTON)
+        automator.waitForNode(ShowcaseE2eTags.BASIC_MENU_POPUP)
+        automator.waitForIdle()
+
+        automator.pressKey(KeyEvent.VK_ESCAPE)
+        return runCatching { automator.waitUntilGone(ShowcaseE2eTags.BASIC_MENU_POPUP) }
+            .fold(
+                onSuccess = { null },
+                onFailure = { "the basic PopupMenu stayed open after Escape" },
+            )
+    }
+
+    /**
+     * Pressing Down arrow and Space in a focusable PopupMenu must focus an item in the popup's own scene, activate it,
+     * and close the menu.
+     */
+    public suspend fun basicPopupMenuKeyboardNavigationSelectsItem(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.BASIC_MENU_BUTTON)
+        automator.waitForNode(ShowcaseE2eTags.BASIC_MENU_POPUP)
+        automator.waitForIdle()
+
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_SPACE)
+
+        return runCatching { automator.waitUntilGone(ShowcaseE2eTags.BASIC_MENU_POPUP) }
+            .fold(
+                onSuccess = { null },
+                onFailure = { "pressing Down and Space in the basic PopupMenu did not select an item and close it" },
+            )
+    }
+
+    /**
+     * Keyboard navigation in a PopupMenu with nested submenus must route keys to the innermost active submenu and close
+     * each level cleanly.
+     */
+    public suspend fun submenuPopupMenuRoutesKeysAndCloses(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.SUBMENU_MENU_BUTTON)
+        automator.waitForNode(ShowcaseE2eTags.SUBMENU_MENU_POPUP)
+        automator.waitForIdle()
+
+        // Navigate down to "More Options" and press Right to open the first-level submenu.
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_RIGHT)
+        automator.waitForIdle()
+
+        // Navigate down to "Nested Submenu" (3rd item in first submenu) and press Right to open the nested submenu.
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_RIGHT)
+        automator.waitForIdle()
+
+        // First Left closes only the nested submenu.
+        automator.pressKey(KeyEvent.VK_LEFT)
+        automator.waitForIdle()
+        if (!automator.isPresent(ShowcaseE2eTags.SUBMENU_MENU_POPUP)) {
+            return "pressing Left in a nested submenu closed the root PopupMenu"
+        }
+
+        // Second Left closes the first-level submenu, leaving the root PopupMenu open.
+        automator.pressKey(KeyEvent.VK_LEFT)
+        automator.waitForIdle()
+        if (!automator.isPresent(ShowcaseE2eTags.SUBMENU_MENU_POPUP)) {
+            return "pressing Left in the first submenu closed the root PopupMenu instead of only the submenu"
+        }
+
+        // Escape closes the root PopupMenu.
+        automator.pressKey(KeyEvent.VK_ESCAPE)
+        return runCatching { automator.waitUntilGone(ShowcaseE2eTags.SUBMENU_MENU_POPUP) }
+            .fold(
+                onSuccess = { null },
+                onFailure = { "the submenu PopupMenu stayed open after Escape" },
+            )
     }
 }

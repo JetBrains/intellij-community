@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
@@ -36,6 +38,13 @@ dependencies {
 val jdkLevel = project.property("jdk.level") as String
 
 tasks {
+    named<KotlinCompile>("compileTestKotlin") {
+        friendPaths.from(
+            project(":int-ui:int-ui-standalone").tasks.named("jar"),
+            project(":int-ui:int-ui-standalone").layout.buildDirectory.dir("classes/kotlin/main"),
+        )
+    }
+
     named<Test>("test") { useJUnitPlatform() }
 
     register<Test>("spectreTest") {
@@ -49,5 +58,6 @@ tasks {
         systemProperty("apple.awt.UIElement", "true")
         systemProperty("java.awt.headless", "false")
         systemProperty("jewel.customPopupRender", "true")
+        systemProperty("compose.interop.blending", "true")
     }
 }
