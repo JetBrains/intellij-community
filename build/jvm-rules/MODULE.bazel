@@ -405,14 +405,14 @@ http_file(
     name = "netty-buffer_http",
     downloaded_file_path = "netty-buffer-4.2.2.Final-20250508.062804-10.jar",
     sha256 = "35bc0d116ea829e028380a3b3722ad6d4bb852d62fcd30506ed3f39cc8be9396",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/io/netty/netty-buffer/4.2.2.Final-SNAPSHOT/netty-buffer-4.2.2.Final-20250508.062804-10.jar",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/io/netty/netty-buffer/4.2.2.Final-SNAPSHOT/netty-buffer-4.2.2.Final-20250508.062804-10.jar",
 )
 
 http_file(
     name = "netty-buffer-sources_http",
     downloaded_file_path = "netty-buffer-4.2.2.Final-20250508.062804-10-sources.jar",
     sha256 = "fa21f27635dabbfe9b1019056683398ac363ba231a609ddedc72a46204ae0424",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/io/netty/netty-buffer/4.2.2.Final-SNAPSHOT/netty-buffer-4.2.2.Final-20250508.062804-10-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/io/netty/netty-buffer/4.2.2.Final-SNAPSHOT/netty-buffer-4.2.2.Final-20250508.062804-10-sources.jar",
 )
 
 http_file(
@@ -426,14 +426,14 @@ http_file(
     name = "netty-common_http",
     downloaded_file_path = "netty-common-4.2.2.Final-20250508.062804-10.jar",
     sha256 = "6223a40b144cbfd8e89d9f957d1d36a72abb4f71a25e52c037bfab18a2face45",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/io/netty/netty-common/4.2.2.Final-SNAPSHOT/netty-common-4.2.2.Final-20250508.062804-10.jar",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/io/netty/netty-common/4.2.2.Final-SNAPSHOT/netty-common-4.2.2.Final-20250508.062804-10.jar",
 )
 
 http_file(
     name = "netty-common-sources_http",
     downloaded_file_path = "netty-common-4.2.2.Final-20250508.062804-10-sources.jar",
     sha256 = "b2e1649e4513fc00d042d3d4ef6c9dda7429cfca25968975889af1b606fb18c5",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/io/netty/netty-common/4.2.2.Final-SNAPSHOT/netty-common-4.2.2.Final-20250508.062804-10-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/io/netty/netty-common/4.2.2.Final-SNAPSHOT/netty-common-4.2.2.Final-20250508.062804-10-sources.jar",
 )
 
 http_file(

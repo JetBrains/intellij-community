@@ -100,7 +100,7 @@ data class RemoteArchiveProjectInfo(
     // The mirror is reached directly or through cache-redirector; both name the same archive.
     val spaceVcsArchiveMirrorPrefix = listOf(
       "https://packages.jetbrains.team/files/p/ij/space-vcs-archive-mirror/",
-      "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/space-vcs-archive-mirror/",
+      "https://cache-redirector.jetbrains.com/files/p/ij/space-vcs-archive-mirror/",
     ).firstOrNull { projectURL.startsWith(it) }
     return when {
       projectURL.contains("https://github.com") -> {

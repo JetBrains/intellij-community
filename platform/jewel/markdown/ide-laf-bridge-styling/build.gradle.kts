@@ -17,7 +17,7 @@ repositories {
     intellijPlatform {
         ivy {
             name = "PKGS IJ Snapshots"
-            url = URI("https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/kpm/public/idea/snapshots/")
+            url = URI("https://cache-redirector.jetbrains.com/files/p/kpm/public/idea/snapshots/")
             patternLayout {
                 artifact("[module]-[revision](-[classifier]).[ext]")
                 artifact("[module]-[revision](.[classifier]).[ext]")

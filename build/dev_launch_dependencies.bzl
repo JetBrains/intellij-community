@@ -136,14 +136,14 @@ def jcef_url(platform, jcef_build):
 
 # TerminalLibGhosttyVtDownloader.downloadUrl
 def lib_ghostty_vt_url(version):
-    return "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-%s.zip.zst" % version
+    return "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-%s.zip.zst" % version
 
 # CommunityRepositoryModules.jSerialCommDownloadUrl - the content hash is the version. Keep in lockstep with
 # `JSERIALCOMM_NATIVE_HASH` in CommunityRepositoryModules.kt.
 _JSERIALCOMM_NATIVE_HASH = "9a7813435b79aa2e23c7f2a78f1b66b48c0504c4"
 
 def jserialcomm_url():
-    return "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/%s/jSerialComm.zip" % _JSERIALCOMM_NATIVE_HASH
+    return "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/jSerialComm/%s/jSerialComm.zip" % _JSERIALCOMM_NATIVE_HASH
 
 # OsFamily.osName
 _PYREFLY_OS_NAMES = {

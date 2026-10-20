@@ -143,7 +143,7 @@ def _lib_ghostty_vt_url_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(
         env,
-        "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-abc123.zip.zst",
+        "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-abc123.zip.zst",
         lib_ghostty_vt_url("abc123"),
     )
     return unittest.end(env)

@@ -31,5 +31,5 @@ filegroup(
 )
 """,
     sha256 = "d531752c4dad5d4214ac7ff540cefc2647df1fca2338d413d3c01754f54b356b",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/tart/%s/tart.tar.gz" % AIR_TART_VERSION,
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/tart/%s/tart.tar.gz" % AIR_TART_VERSION,
 )
