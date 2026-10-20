@@ -8,7 +8,14 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.impl.JsonValidationError
 import com.jetbrains.jsonSchema.impl.JsonValidationError.FixableIssueKind
+import com.networknt.schema.Error
+import com.networknt.schema.InputFormat
+import com.networknt.schema.Schema
+import com.networknt.schema.SchemaRegistry
 import com.networknt.schema.SpecificationVersion
+import com.networknt.schema.resource.InputStreamSource
+import com.networknt.schema.resource.ResourceLoader
+import com.networknt.schema.resource.SchemaLoader
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 
@@ -23,16 +30,645 @@ class NetworkntErrorMapperTest : BasePlatformTestCase() {
     @Language("JSON") schema: String,
     @Language("JSON") instance: String,
   ): Map<PsiElement, JsonValidationError> {
+    val validator = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12)
+    return mapErrors(instance, validator.validate(schema, instance))
+  }
+
+  private fun mapErrors(instance: String, errors: List<Error>, schema: Schema? = null): Map<PsiElement, JsonValidationError> {
     val psiFile = myFixture.configureByText(JsonFileType.INSTANCE, instance) as JsonFile
     val rootElement = psiFile.topLevelValue!!
     val walker = JsonLikePsiWalker.getWalker(rootElement)!!
     val locationIndex = PsiLocationIndex.build(walker, rootElement)
 
-    val validator = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12)
-    val errors = validator.validate(schema, instance)
-
     val mapper = NetworkntErrorMapper(locationIndex)
-    return mapper.mapErrors(errors)
+    return if (schema == null) mapper.mapErrors(errors) else mapper.mapErrors(errors, schema)
+  }
+
+  private fun validateUnresolved(
+    @Language("JSON") schema: String,
+    @Language("JSON") instance: String,
+  ): Map<PsiElement, JsonValidationError> {
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    val unresolved = errors.filter { it.keyword == $$"$ref" }
+    assertThat(unresolved).isNotEmpty
+    assertThat(unresolved).allSatisfy { error ->
+      assertThat(error.evaluationPath).isNotNull()
+      assertThat(error.instanceLocation).isNotNull()
+    }
+    return mapErrors(instance, errors, compiled)
+  }
+
+  private fun repositorySchema(
+    composition: String = "anyOf",
+    localBranch: String = $$"""{"$ref": "#/definitions/local"}""",
+  ): String = $$"""
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "urn:test:repository",
+      "properties": {
+        "repos": {"items": {"$$composition": [
+          $$localBranch,
+          {"properties": {"repo": {"enum": ["meta"]}, "hooks": {"items": {"enum": ["meta-hook"]}}}}
+        ]}},
+        "outside": {"type": "string"}
+      },
+      "definitions": {
+        "local": {
+          "properties": {
+            "repo": {"enum": ["local"]},
+            "hooks": {"items": {
+              "properties": {"id": {"type": "string"}, "language": {"$ref": "urn:test:missing"}},
+              "required": ["id"]
+            }}
+          }
+        }
+      }
+    }
+  """.trimIndent()
+
+  fun `test nested unresolved ref suppresses alternative repo errors`() {
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val mapped = validateUnresolved(repositorySchema(), instance)
+    assertThat(mapped).isEmpty()
+  }
+
+  fun `test nested unresolved ref in oneOf suppresses alternative repo errors`() {
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val mapped = validateUnresolved(repositorySchema("oneOf"), instance)
+    assertThat(mapped).isEmpty()
+  }
+
+  fun `test unresolved ref preserves a real error in the same branch`() {
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": 123, "language": "python"}]}]}"""
+    val mapped = validateUnresolved(repositorySchema(), instance)
+    assertThat(mapped.entries.filter { it.key.text == "123" }.map { it.value.fixableIssueKind })
+      .containsExactly(FixableIssueKind.ProhibitedType)
+    assertThat(mapped.keys.map { it.text }).containsExactly("123")
+  }
+
+  fun `test unresolved ref preserves errors outside the composition`() {
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}], "outside": 42}"""
+    val mapped = validateUnresolved(repositorySchema(), instance)
+    assertThat(mapped.keys.map { it.text }).containsExactly("42")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test unresolved ref does not suppress another array item in either order`() {
+    val local = """{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}"""
+    val broken = """{"repo": "wrong", "hooks": []}"""
+    for (items in listOf("$local, $broken", "$broken, $local")) {
+      val mapped = validateUnresolved(repositorySchema(), """{"repos": [$items]}""")
+      assertThat(mapped.keys.map { it.text }).containsExactly("\"wrong\"")
+      assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+    }
+  }
+
+  fun `test unresolved ref does not suppress another nested array item`() {
+    val schema = """{"items": {"items": ${repositorySchema()}}}"""
+    val local = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val broken = """{"repos": [{"repo": "wrong", "hooks": []}]}"""
+    for (items in listOf("[$local], [$broken]", "[$broken], [$local]")) {
+      val mapped = validateUnresolved(schema, """[$items]""")
+      assertThat(mapped.keys.map { it.text }).containsExactly("\"wrong\"")
+    }
+  }
+
+  fun `test root unresolved ref does not hide a sibling enum error`() {
+    for (branch in listOf(
+      $$"""{"$ref": "urn:test:missing"}""",
+      $$"""{"allOf": [{"$ref": "urn:test:missing"}]}""",
+      $$"""{"if": {"const": {}}, "then": {}, "else": {"$ref": "urn:test:missing"}}""",
+    )) {
+      val mapped = validateUnresolved(repositorySchema(localBranch = branch), """{"repos": [{"repo": "wrong"}]}""")
+      assertThat(mapped.entries.filter { it.key.text == "\"wrong\"" }.map { it.value.fixableIssueKind })
+        .containsExactly(FixableIssueKind.NonEnumValue)
+    }
+  }
+
+  fun `test root unresolved ref blocks suppression from a nested ref in the same branch`() {
+    val branch = $$"""{"allOf": [{"$ref": "urn:test:missing"}, {"$ref": "#/definitions/local"}]}"""
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val mapped = validateUnresolved(repositorySchema(localBranch = branch), instance)
+    assertThat(mapped.values.map { it.fixableIssueKind }).contains(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test nested ref under a conditional does not suppress sibling errors`() {
+    val branch = $$"""{"if": {"const": {}}, "then": {}, "else": {"$ref": "#/definitions/local"}}"""
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val mapped = validateUnresolved(repositorySchema(localBranch = branch), instance)
+    assertThat(mapped.values.map { it.fixableIssueKind }).contains(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test unresolved ref does not hide two proven oneOf matches`() {
+    val schema = $$"""
+      {"oneOf": [
+        {"properties": {"language": {"$ref": "urn:test:missing"}}},
+        {"type": "object"},
+        {"required": ["language"]}
+      ]}
+    """.trimIndent()
+    val instance = """{"language": "python"}"""
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    assertThat(errors.map { it.messageKey }).contains("oneOf.indexes")
+    assertThat(mapErrors(instance, errors, compiled).values.map { it.message.toString() })
+      .containsExactly("Validates to more than one variant")
+  }
+
+  fun `test unresolved ref does not hide a nested oneOf multiple match`() {
+    val schema = $$"""
+      {"anyOf": [
+        {"properties": {"language": {"$ref": "urn:test:missing"}}},
+        {"properties": {"other": {"oneOf": [{"type": "integer"}, {"minimum": 0}]}}}
+      ]}
+    """.trimIndent()
+    val mapped = validateUnresolved(schema, """{"language": "python", "other": 1}""")
+    assertThat(mapped.keys.map { it.text }).contains("1")
+    assertThat(mapped.values.map { it.message.toString() }).contains("Validates to more than one variant")
+  }
+
+  fun `test escaped and keyword-like property names keep composition instances separate`() {
+    for (property in listOf("a/b~c", "anyOf", "properties", "items")) {
+      val schema = """{"properties": {"$property": ${repositorySchema()}}}"""
+      val mapped = validateUnresolved(schema, """{"$property": {"repos": [
+        {"repo": "local", "hooks": [{"id": "check", "language": "python"}]},
+        {"repo": "wrong", "hooks": []}
+      ]}}""")
+      assertThat(mapped.keys.map { it.text }).containsExactly("\"wrong\"")
+    }
+  }
+
+  fun `test unresolved ref does not suppress a sibling composition`() {
+    val schema = """{"allOf": [
+      ${repositorySchema()},
+      {"properties": {"outside": {"anyOf": [{"enum": ["a"]}, {"enum": ["b"]}]}}}
+    ]}"""
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}], "outside": "wrong"}"""
+    val mapped = validateUnresolved(schema, instance)
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"wrong\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test unresolved ref without evaluation context keeps sibling diagnostics`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local"]},
+                      "language": {"$ref": "urn:test:missing"}, "other": {"$ref": "#/missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}"""
+    val instance = """{"repo": "local", "language": "python", "other": true}"""
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    val unresolved = errors.filter { it.keyword == $$"$ref" }
+    assertThat(unresolved).hasSize(2)
+    assertThat(unresolved.filter { it.evaluationPath == null }).hasSize(1)
+    assertThat(unresolved.filter { it.evaluationPath != null }).hasSize(1)
+    assertThat(mapErrors(instance, errors.filter { it.evaluationPath != null }, compiled)).isEmpty()
+    val mapped = mapErrors(instance, errors, compiled)
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test unresolved ref follows property and array applicators`() {
+    val ref = $$"""{"$ref": "urn:test:missing"}"""
+    val schemas = listOf(
+      """{"properties": {"language": $ref}}""" to """{"language": "python"}""",
+      """{"patternProperties": {"^lang": $ref}}""" to """{"language": "python"}""",
+      """{"additionalProperties": $ref}""" to """{"language": "python"}""",
+      """{"unevaluatedProperties": $ref}""" to """{"language": "python"}""",
+      """{"items": $ref}""" to """["python"]""",
+      """{"prefixItems": [$ref]}""" to """["python"]""",
+      """{"prefixItems": [true], "items": $ref}""" to """["ignored", "python"]""",
+      """{"prefixItems": [true], "unevaluatedItems": $ref}""" to """["ignored", "python"]""",
+    )
+    for ((valuesSchema, values) in schemas) {
+      val schema = """{"anyOf": [
+        {"properties": {"id": {"enum": ["local"]}, "values": $valuesSchema}},
+        {"properties": {"id": {"enum": ["meta"]}}}
+      ]}"""
+      assertThat(validateUnresolved(schema, """{"id": "local", "values": $values}"""))
+        .describedAs(valuesSchema).isEmpty()
+    }
+  }
+
+  fun `test unresolved ref follows draft seven tuple applicators`() {
+    val ref = $$"""{"$ref": "urn:test:missing"}"""
+    for ((valuesSchema, values) in listOf(
+      """{"items": [$ref]}""" to """["python"]""",
+      """{"items": [true], "additionalItems": $ref}""" to """["ignored", "python"]""",
+    )) {
+      val schema = $$"""{
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "anyOf": [
+          {"properties": {"id": {"enum": ["local"]}, "values": $$valuesSchema}},
+          {"properties": {"id": {"enum": ["meta"]}}}
+        ]
+      }"""
+      assertThat(validateUnresolved(schema, """{"id": "local", "values": $values}"""))
+        .describedAs(valuesSchema).isEmpty()
+    }
+  }
+
+  fun `test unresolved ref does not bypass propertyNames validation`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"language": {"$ref": "urn:test:missing"}},
+       "propertyNames": {"$ref": "urn:test:missing"}},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "language": "python"}""")
+    assertThat(mapped.entries.filter { it.key.text == "\"local\"" }.map { it.value.fixableIssueKind })
+      .containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test unresolved ref does not bypass contains validation`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"language": {"$ref": "urn:test:missing"},
+                      "values": {"contains": {"$ref": "urn:test:missing"}}}},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "language": "python", "values": [1]}""")
+    assertThat(mapped.entries.filter { it.key.text == "\"local\"" }.map { it.value.fixableIssueKind })
+      .containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test nested ref without a matching discriminator keeps sibling diagnostics`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}}, "required": ["repo"]}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test mapper without schema context keeps alternative diagnostics`() {
+    val instance = """{"repos": [{"repo": "local", "hooks": [{"id": "check", "language": "python"}]}]}"""
+    val mapped = validateAndMap(repositorySchema(), instance)
+    assertThat(mapped.keys.map { it.text }).contains("\"local\"")
+  }
+
+  fun `test matched const preserves real errors and rejects a pattern alternative`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}, "id": {"type": "string"}}},
+      {"properties": {"repo": {"pattern": "^https://"}, "uri": {"type": "string"}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1, "id": 123, "uri": 42}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("123")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test matched selector keeps siblings without a selector rejection`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local"]}, "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"const": "meta"}, "uri": {"type": "string"}}},
+      {"properties": {"other": {"type": "integer"}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1, "uri": 42, "other": "wrong"}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"wrong\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test two matching sources retain their real errors`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local"]}, "first": {"$ref": "urn:test:missing"}, "id": {"type": "string"}}},
+      {"properties": {"repo": {"const": "local"}, "second": {"$ref": "urn:test:missing"}, "other": {"type": "integer"}}},
+      {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+    ]}"""
+    val instance = """{"repo": "local", "first": 1, "second": 2, "id": 123, "other": "wrong", "uri": 42}"""
+    val mapped = validateUnresolved(schema, instance)
+    assertThat(mapped.keys.map { it.text }).containsExactlyInAnyOrder("123", "\"wrong\"")
+    assertThat(mapped.values.map { it.fixableIssueKind })
+      .containsExactly(FixableIssueKind.ProhibitedType, FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test failed direct selector blocks a source`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local"]}, "kind": {"const": "expected"}, "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "kind": "wrong", "side": 1}""")
+    assertThat(mapped.keys.map { it.text }).contains("\"local\"", "\"wrong\"")
+  }
+
+  fun `test unsupported selector contexts keep alternative diagnostics`() {
+    for (context in listOf(
+      """"allOf": [{"properties": {"repo": {"const": "other"}}}]""",
+      """"dependentSchemas": {"side": {"properties": {"repo": {"const": "other"}}}}""",
+      """"if": {"required": ["side"]}, "then": {"properties": {"repo": {"const": "other"}}}""",
+      """"not": {"properties": {"repo": {"const": "local"}}}""",
+    )) {
+      val schema = $$"""{"anyOf": [
+        {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}, $$context},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]}"""
+      val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1}""")
+      assertThat(mapped.keys.map { it.text }).describedAs(context).contains("\"local\"")
+    }
+  }
+
+  fun `test selector in an unexecuted context does not select a source`() {
+    for (selector in listOf(
+      """"then": {"properties": {"repo": {"const": "local"}}}""",
+      """"else": {"properties": {"repo": {"enum": ["local"]}}}""",
+      """"anyOf": [{"properties": {"repo": {"const": "local"}}}, true]""",
+    )) {
+      val schema = $$"""{"anyOf": [
+        {"properties": {"side": {"$ref": "urn:test:missing"}}, $$selector},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]}"""
+      val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1}""")
+      assertThat(mapped.keys.map { it.text }).describedAs(selector).containsExactly("\"local\"")
+    }
+  }
+
+  fun `test selector match is case and type sensitive`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}"""
+    for (repo in listOf("\"LOCAL\"", "1", "true")) {
+      val mapped = validateUnresolved(schema, """{"repo": $repo, "side": 1}""")
+      assertThat(mapped.keys.map { it.text }).describedAs(repo).containsExactly(repo)
+    }
+  }
+
+  fun `test escaped and keyword-like selector names use their property role`() {
+    for (property in listOf("a/b~c", "anyOf", "items", "0")) {
+      val schema = $$"""{"anyOf": [
+        {"properties": {"$$property": {"enum": ["local"]}, "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"$$property": {"const": "meta"}}}
+      ]}"""
+      assertThat(validateUnresolved(schema, """{"$property": "local", "side": 1}"""))
+        .describedAs(property).isEmpty()
+    }
+  }
+
+  fun `test cached reference selection does not load schemas during mapping`() {
+    var loads = 0
+    val local = $$"""{"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}}"""
+    val loader = SchemaLoader(ResourceLoader { location ->
+      loads++
+      if (location.toString() == "urn:test:local") InputStreamSource { local.byteInputStream() } else null
+    })
+    val registry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12) { it.schemaLoader(loader) }
+    val compiled = registry.getSchema($$"""{"anyOf": [
+      {"$ref": "urn:test:local"},
+      {"properties": {"repo": {"enum": ["meta"]}}}
+    ]}""")
+    val instance = """{"repo": "local", "side": 1}"""
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    val loadsBeforeMapping = loads
+    assertThat(loadsBeforeMapping).isGreaterThan(0)
+    assertThat(errors.map { it.keyword }).contains($$"$ref")
+    assertThat(mapErrors(instance, errors, compiled)).isEmpty()
+    assertThat(loads).isEqualTo(loadsBeforeMapping)
+  }
+
+  fun `test inner selection does not satisfy an outer composition`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"value": {"anyOf": [
+        {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]}}},
+      {"properties": {"value": {"properties": {"repo": {"enum": ["outer"]}}}}}
+    ]}"""
+    val mapped = validateUnresolved(schema, """{"value": {"repo": "local", "side": 1}}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.single().message.toString()).contains("outer").doesNotContain("meta")
+  }
+
+  fun `test matched selector preserves parent unevaluatedProperties errors`() {
+    val schema = $$"""{
+      "properties": {"repo": true, "side": true},
+      "anyOf": [
+        {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ],
+      "unevaluatedProperties": false
+    }"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1, "extra": true}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"extra\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.ProhibitedProperty)
+  }
+
+  fun `test ignored draft seven ref sibling is not a selector source`() {
+    @Suppress("JsonSchemaRefReference")
+    val schema = $$"""{
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "anyOf": [
+        {"properties": {"repo": {"$ref": "urn:test:missing", "const": "local"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]
+    }"""
+    val mapped = validateUnresolved(schema, """{"repo": "local"}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test oneOf multiple matches survive beside an indeterminate array item`() {
+    val schema = $$"""{"items": {"oneOf": [
+      {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta", "multi"]}}},
+      {"properties": {"repo": {"const": "multi"}}}
+    ]}}"""
+    val local = """{"repo": "local", "side": 1}"""
+    val multi = """{"repo": "multi"}"""
+    for (items in listOf("$local, $multi", "$multi, $local")) {
+      val mapped = validateUnresolved(schema, """[$items]""")
+      assertThat(mapped.keys.map { it.text }).doesNotContain("\"local\"", local)
+      assertThat(mapped.values.map { it.message.toString() }).contains("Validates to more than one variant")
+    }
+  }
+
+  fun `test ignored draft four const is not a selector source`() {
+    @Suppress("JsonSchemaRefReference")
+    val schema = $$"""{
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "anyOf": [
+        {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]
+    }"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test draft four enum remains a selector source`() {
+    @Suppress("JsonSchemaRefReference")
+    val schema = $$"""{
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "anyOf": [
+        {"properties": {"repo": {"enum": ["local"]}, "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]
+    }"""
+    assertThat(validateUnresolved(schema, """{"repo": "local", "side": 1}""")).isEmpty()
+  }
+
+  fun `test cached reference uses target dialect for const selection`() {
+    val local = $$"""{
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}
+    }"""
+    val loader = SchemaLoader(ResourceLoader { location ->
+      if (location.toString() == "urn:test:local") InputStreamSource { local.byteInputStream() } else null
+    })
+    val registry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12) { it.schemaLoader(loader) }
+    val compiled = registry.getSchema($$"""{
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {"$ref": "urn:test:local"},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]
+    }""")
+    val instance = """{"repo": "local", "side": 1}"""
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    assertThat(errors.map { it.keyword }).contains($$"$ref")
+    val mapped = mapErrors(instance, errors, compiled)
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test selector with its own dialect stays conservative`() {
+    val schema = $$"""{
+      "anyOf": [
+        {"properties": {"repo": {"$schema": "http://json-schema.org/draft-04/schema#", "const": "local"},
+                        "side": {"$ref": "urn:test:missing"}}},
+        {"properties": {"repo": {"enum": ["meta"]}}}
+      ]
+    }"""
+    val mapped = validateUnresolved(schema, """{"repo": "local", "side": 1}""")
+    assertThat(mapped.keys.map { it.text }).containsExactly("\"local\"")
+    assertThat(mapped.values.map { it.fixableIssueKind }).containsExactly(FixableIssueKind.NonEnumValue)
+  }
+
+  fun `test raw error cap keeps conservative composition diagnostics`() {
+    val cap = NetworkntErrorMapper.getRawErrorCap()
+    val hooks = (0..cap).joinToString(",") { """{"id": "check", "language": "python"}""" }
+    val instance = """{"repos": [{"repo": "local", "hooks": [$hooks]}], "outside": 42}"""
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(repositorySchema("oneOf"))
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    assertThat(errors.size).isGreaterThan(cap)
+    val conservativeMessages = mapErrors(instance, errors).values.map { it.message.toString() }
+    assertThat(conservativeMessages).contains("Does not match any of the allowed schemas")
+    val mapped = mapErrors(instance, errors, compiled)
+    assertThat(mapped.values.map { it.message.toString() }).contains("Does not match any of the allowed schemas")
+    assertThat(mapped.entries.filter { it.key.text == "42" }.map { it.value.fixableIssueKind })
+      .containsExactly(FixableIssueKind.ProhibitedType)
+  }
+
+  private fun assertRepoRejectionKeepsAlternative(@Language("JSON") schema: String, keyword: String) {
+    val instance = """{"repo": "local", "side": 1, "uri": 42}"""
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    assertThat(errors.map { it.keyword }).contains($$"$ref")
+    assertThat(errors.filter {
+      it.keyword == keyword && (it.instanceLocation.toString() == "/repo" || it.property == "repo")
+    }).isNotEmpty
+    assertThat(errors.filter {
+      it.keyword == "enum" && it.evaluationPath.toString() == "/anyOf/1/properties/repo/enum"
+    }).hasSize(1)
+    val mapped = mapErrors(instance, errors, compiled)
+    assertThat(mapped.entries.filter { it.key.text == "42" }.map { it.value.fixableIssueKind })
+      .containsExactly(FixableIssueKind.ProhibitedType)
+  }
+
+  fun `test matching enum rejected by pattern keeps alternative diagnostics`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local", "local-v2"], "pattern": "^local-v2$"},
+                      "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+    ]}"""
+    assertRepoRejectionKeepsAlternative(schema, "pattern")
+  }
+
+  fun `test matching const rejected by minLength keeps alternative diagnostics`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"const": "local", "minLength": 10}, "side": {"$ref": "urn:test:missing"}}},
+      {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+    ]}"""
+    assertRepoRejectionKeepsAlternative(schema, "minLength")
+  }
+
+  fun `test matching selector rejected by propertyNames keeps alternative diagnostics`() {
+    val schema = $$"""{"anyOf": [
+      {"properties": {"repo": {"enum": ["local"]}, "side": {"$ref": "urn:test:missing"}},
+       "propertyNames": {"enum": ["side", "uri"]}},
+      {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+    ]}"""
+    assertRepoRejectionKeepsAlternative(schema, "propertyNames")
+  }
+
+  private fun assertModernRefSiblingKeepsAlternative(siblings: String, keyword: String) {
+    @Suppress("JsonSchemaRefReference")
+    val schema = $$"""{
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$defs": {
+        "local": {"properties": {"repo": {"const": "local"}, "side": {"$ref": "urn:test:missing"}}}
+      },
+      "anyOf": [
+        {"$ref": "#/$defs/local", $$siblings},
+        {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+      ]
+    }"""
+    assertRepoRejectionKeepsAlternative(schema, keyword)
+  }
+
+  fun `test modern ref sibling not rejection keeps alternative diagnostics`() {
+    assertModernRefSiblingKeepsAlternative(""""properties": {"repo": {"not": {"const": "local"}}}""", "not")
+  }
+
+  fun `test modern ref sibling additionalProperties rejection keeps alternative diagnostics`() {
+    assertModernRefSiblingKeepsAlternative(""""properties": {"side": {}, "uri": {}}, "additionalProperties": false""",
+                                          "additionalProperties")
+  }
+
+  fun `test draft seven ignored ref sibling does not block a source`() {
+    val schema = $$"""{
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "definitions": {
+        "local": {"properties": {"repo": {"enum": ["local"]}, "side": {"$ref": "urn:test:missing"}}}
+      },
+      "anyOf": [
+        {"$ref": "#/definitions/local", "not": {"type": "object"}},
+        {"properties": {"repo": {"enum": ["meta"]}, "uri": {"type": "string"}}}
+      ]
+    }"""
+    val instance = """{"repo": "local", "side": 1, "uri": 42}"""
+    val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+    val errors = compiled.validate(instance, InputFormat.JSON)
+    assertThat(errors.map { it.keyword }).contains($$"$ref").doesNotContain("not")
+    assertThat(mapErrors(instance, errors, compiled)).isEmpty()
+  }
+
+  private fun assertContainsAlternativeSuppressed(containsSchema: String, bounds: String, keyword: String) {
+    for (dialect in listOf("https://json-schema.org/draft/2019-09/schema", "https://json-schema.org/draft/2020-12/schema")) {
+      val schema = $$"""{
+        "$schema": "$$dialect",
+        "anyOf": [
+          {"properties": {"repo": {"const": "local"}, "hooks": {"items": {
+            "properties": {"language": {"$ref": "urn:test:missing"}}
+          }}}},
+          {"properties": {"repo": {"enum": ["meta"]}, "hooks": {"contains": $$containsSchema, $$bounds}}}
+        ]
+      }"""
+      val instance = """{"repo": "local", "hooks": [{"language": "python"}]}"""
+      val compiled = NetworkntSchemaValidator(SpecificationVersion.DRAFT_2020_12).getSchema(schema)
+      val errors = compiled.validate(instance, InputFormat.JSON)
+      assertThat(errors.map { it.keyword }).contains($$"$ref")
+      assertThat(errors.filter { it.keyword == keyword }).hasSize(1)
+      assertThat(errors.single { it.keyword == keyword }.evaluationPath.getElement(-1)).isEqualTo("contains")
+      assertThat(mapErrors(instance, errors, compiled)).describedAs(dialect).isEmpty()
+    }
+  }
+
+  fun `test minContains terminal alias does not block alternative suppression`() {
+    assertContainsAlternativeSuppressed("""{"enum": ["meta-hook"]}""", """"minContains": 1""", "minContains")
+  }
+
+  fun `test maxContains terminal alias does not block alternative suppression`() {
+    assertContainsAlternativeSuppressed("""{"type": "object"}""", """"minContains": 0, "maxContains": 0""", "maxContains")
   }
 
   fun `test valid instance produces no errors`() {
