@@ -10,7 +10,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.rename.naming.NameSuggester;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
@@ -38,7 +38,7 @@ public final class PyContainingFileRenamerFactory implements AutomaticRenamerFac
 
   @Override
   public String getOptionName() {
-    return PyBundle.message("refactoring.rename.containing.file");
+    return PyRefactoringBundle.message("refactoring.rename.containing.file");
   }
 
   @Override
@@ -67,17 +67,17 @@ public final class PyContainingFileRenamerFactory implements AutomaticRenamerFac
 
     @Override
     public String getDialogTitle() {
-      return PyBundle.message("refactoring.rename.containing.file.title");
+      return PyRefactoringBundle.message("refactoring.rename.containing.file.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return PyBundle.message("refactoring.rename.containing.file.with.the.following.name.to");
+      return PyRefactoringBundle.message("refactoring.rename.containing.file.with.the.following.name.to");
     }
 
     @Override
     public String entityName() {
-      return PyBundle.message("refactoring.rename.containing.file.entity.name");
+      return PyRefactoringBundle.message("refactoring.rename.containing.file.entity.name");
     }
 
     @Override

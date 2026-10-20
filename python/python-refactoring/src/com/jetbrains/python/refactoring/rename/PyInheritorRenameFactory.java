@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
@@ -22,7 +22,7 @@ public final class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return PyBundle.message("refactoring.rename.inheritors");
+    return PyRefactoringBundle.message("refactoring.rename.inheritors");
   }
 
   @Override
@@ -48,17 +48,17 @@ public final class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return PyBundle.message("refactoring.rename.inheritors.title");
+      return PyRefactoringBundle.message("refactoring.rename.inheritors.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return PyBundle.message("refactoring.rename.inheritor.classes.with.the.following.names.to");
+      return PyRefactoringBundle.message("refactoring.rename.inheritor.classes.with.the.following.names.to");
     }
 
     @Override
     public String entityName() {
-      return PyBundle.message("refactoring.rename.inheritor.class.entity.name");
+      return PyRefactoringBundle.message("refactoring.rename.inheritor.class.entity.name");
     }
   }
 }

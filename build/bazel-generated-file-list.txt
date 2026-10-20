@@ -1959,6 +1959,7 @@ python/python-pytools/backend
 python/python-pytools/common
 python/python-pytools/frontend
 python/python-pytools/tests
+python/python-refactoring
 python/python-requirements/backend
 python/python-requirements/common
 python/python-requirements/tests

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
@@ -66,12 +66,12 @@ public final class RenamePyFunctionProcessor extends RenamePyElementProcessor {
 
     final PyFunction deepestSuperMethod = PySuperMethodsSearch.findDeepestSuperMethod(function);
     if (!deepestSuperMethod.equals(function)) {
-      final String message = PyBundle.message("python.rename.processor.override.message",
+      final String message = PyRefactoringBundle.message("python.rename.processor.override.message",
                                               function.getName(),
                                               containingClass.getQualifiedName(),
                                               deepestSuperMethod.getContainingClass().getQualifiedName());
       final int rc =
-        Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
+        Messages.showYesNoCancelDialog(element.getProject(), message, PyRefactoringBundle.message("refactoring.rename"), Messages.getQuestionIcon());
       return switch (rc) {
         case Messages.YES -> deepestSuperMethod;
         case Messages.NO -> function;
@@ -88,7 +88,7 @@ public final class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         }
         final int rc =
           Messages.showYesNoCancelDialog(element.getProject(),
-                                         PyBundle.message("python.rename.processor.property", property.getName(), function.getName()), PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
+                                         PyRefactoringBundle.message("python.rename.processor.property", property.getName(), function.getName()), PyRefactoringBundle.message("refactoring.rename"), Messages.getQuestionIcon());
         return switch (rc) {
           case Messages.YES -> site;
           case Messages.NO -> function;

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -25,34 +25,34 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
     if (container instanceof PyFile pyFile) {
       PyClass conflictingClass = pyFile.findTopLevelClass(newName);
       if (conflictingClass != null) {
-        conflicts.putValue(conflictingClass, PyBundle.message("refactoring.rename.class.already.defined", newName, pyFile.getName()));
+        conflicts.putValue(conflictingClass, PyRefactoringBundle.message("refactoring.rename.class.already.defined", newName, pyFile.getName()));
       }
       PyFunction conflictingFunction = pyFile.findTopLevelFunction(newName);
       if (conflictingFunction != null) {
         conflicts.putValue(conflictingFunction,
-                           PyBundle.message("refactoring.rename.function.already.defined", newName, pyFile.getName()));
+                           PyRefactoringBundle.message("refactoring.rename.function.already.defined", newName, pyFile.getName()));
       }
       PyTargetExpression conflictingVariable = pyFile.findTopLevelAttribute(newName);
       if (conflictingVariable != null) {
         conflicts.putValue(conflictingVariable,
-                           PyBundle.message("refactoring.rename.variable.already.defined", newName, pyFile.getName()));
+                           PyRefactoringBundle.message("refactoring.rename.variable.already.defined", newName, pyFile.getName()));
       }
     }
     else if (container instanceof PyClass pyClass) {
       PyClass conflictingClass = pyClass.findNestedClass(newName, true);
       if (conflictingClass != null) {
         conflicts.putValue(conflictingClass,
-                           PyBundle.message("refactoring.rename.nested.class.already.defined", newName, pyClass.getName()));
+                           PyRefactoringBundle.message("refactoring.rename.nested.class.already.defined", newName, pyClass.getName()));
       }
       PyFunction conflictingFunction = pyClass.findMethodByName(newName, true, null);
       if (conflictingFunction != null) {
         conflicts.putValue(conflictingFunction,
-                           PyBundle.message("refactoring.rename.method.already.defined", newName, pyClass.getName()));
+                           PyRefactoringBundle.message("refactoring.rename.method.already.defined", newName, pyClass.getName()));
       }
       PyTargetExpression conflictingAttribute = pyClass.findClassAttribute(newName, true, null);
       if (conflictingAttribute != null) {
         conflicts.putValue(conflictingAttribute,
-                           PyBundle.message("refactoring.rename.class.attribute.already.defined", newName, pyClass.getName()));
+                           PyRefactoringBundle.message("refactoring.rename.class.attribute.already.defined", newName, pyClass.getName()));
       }
     }
   }

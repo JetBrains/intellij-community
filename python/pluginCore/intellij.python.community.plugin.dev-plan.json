@@ -185,6 +185,9 @@
             }
         },
         {
+            "module": "intellij.python.refactoring"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

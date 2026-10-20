@@ -16,7 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
@@ -92,7 +92,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
     final String packageName = pyPackage.getName();
     if (!isEmptyPackage(pyPackage)) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"),
-                                             PyBundle.message("refactoring.convert.package.to.module.error.not.empty.package", packageName),
+                                             PyRefactoringBundle.message("refactoring.convert.package.to.module.error.not.empty.package", packageName),
                                              ID, pyPackage.getProject());
       return;
     }

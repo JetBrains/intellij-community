@@ -87,6 +87,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.refactoring" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.django.common" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.flask.common" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.fastapi.common" required-if-available="intellij.platform.backend"/>

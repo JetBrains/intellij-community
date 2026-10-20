@@ -6,7 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -30,7 +30,7 @@ public final class PyParametersRenameFactory implements AutomaticRenamerFactory 
 
   @Override
   public String getOptionName() {
-    return PyBundle.message("refactoring.rename.parameters.in.hierarchy");
+    return PyRefactoringBundle.message("refactoring.rename.parameters.in.hierarchy");
   }
 
   @Override
@@ -67,17 +67,17 @@ public final class PyParametersRenameFactory implements AutomaticRenamerFactory 
 
     @Override
     public String getDialogTitle() {
-      return PyBundle.message("refactoring.rename.parameters.title");
+      return PyRefactoringBundle.message("refactoring.rename.parameters.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return PyBundle.message("refactoring.rename.parameter.in.hierarchy.to");
+      return PyRefactoringBundle.message("refactoring.rename.parameter.in.hierarchy.to");
     }
 
     @Override
     public String entityName() {
-      return PyBundle.message("refactoring.rename.parameter.entity.name");
+      return PyRefactoringBundle.message("refactoring.rename.parameter.entity.name");
     }
 
     @Override

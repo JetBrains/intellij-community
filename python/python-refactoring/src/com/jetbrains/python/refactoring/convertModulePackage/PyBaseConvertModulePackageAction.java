@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +31,10 @@ public abstract class PyBaseConvertModulePackageAction extends PyBaseRefactoring
   protected static void showFileExistsErrorMessage(@NotNull VirtualFile file, @NotNull String id, @NotNull Project project) {
     final String message;
     if (file.isDirectory()) {
-      message = PyBundle.message("refactoring.error.directory.exists", file.getName());
+      message = PyRefactoringBundle.message("refactoring.error.directory.exists", file.getName());
     }
     else {
-      message = PyBundle.message("refactoring.error.file.exists", file.getName());
+      message = PyRefactoringBundle.message("refactoring.error.file.exists", file.getName());
     }
     CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, id, project);
   }
