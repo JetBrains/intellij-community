@@ -663,20 +663,21 @@ async fn the_site_is_built_once_while_the_placeholder_says_so() {
     let served = start_server(settings).await;
     let building = tokio::spawn(Arc::clone(&served.server).build_site_once(CancellationToken::new()));
     let html = [("accept", "text/html")];
+    // The server is building before the build writes its first line, so a page that says so without that line is
+    // still early, and the poll goes on.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
-    loop {
+    let page = loop {
         let page = served.get("/air/runs", &html).await.text();
-        if page.contains("is building") {
-            assert!(page.contains("vite building for production"), "{page}");
-            assert!(page.contains(r#"http-equiv="refresh""#), "{page}");
-            break;
+        if page.contains("is building") && page.contains("vite building for production") {
+            break page;
         }
         assert!(
             tokio::time::Instant::now() < deadline,
-            "the placeholder never said the site is building: {page}"
+            "the placeholder never said the site is building with the first line of the build: {page}"
         );
         tokio::time::sleep(Duration::from_millis(20)).await;
-    }
+    };
+    assert!(page.contains(r#"http-equiv="refresh""#), "{page}");
     release.notify_one();
     building.await.expect("the build did not panic");
     let page = served.get("/air/runs", &html).await;
