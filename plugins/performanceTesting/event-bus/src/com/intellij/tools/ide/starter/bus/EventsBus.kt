@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.bus
 
-import com.intellij.tools.ide.starter.bus.EventsBus.unsubscribe
 import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.bus.local.LocalEventsFlow
+import com.intellij.tools.ide.starter.bus.logger.EventBusLogger
 import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.SharedEventsFlow
 import com.intellij.tools.ide.starter.bus.shared.client.LocalEventBusServerClient
@@ -13,9 +13,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 object EventsBus {
-  val LOG = EventBusLoggerFactory.getLogger(EventsBus::class.java)
-  val EVENTS_FLOW = LocalEventsFlow()
-  val SHARED_EVENTS_FLOW = SharedEventsFlow(LocalEventBusServerClient(LocalEventBusServer), EVENTS_FLOW)
+  private val LOG: EventBusLogger = EventBusLoggerFactory.getLogger(EventsBus::class.java)
+  val EVENTS_FLOW: LocalEventsFlow = LocalEventsFlow()
+  val SHARED_EVENTS_FLOW: SharedEventsFlow = SharedEventsFlow(LocalEventBusServerClient(LocalEventBusServer), EVENTS_FLOW)
 
   fun executeWithExceptionHandling(ignoreExceptions: Boolean = true, block: () -> Unit) {
     runCatching { block() }.onFailure { t ->

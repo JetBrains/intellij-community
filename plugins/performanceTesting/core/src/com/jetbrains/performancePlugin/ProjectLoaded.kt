@@ -205,7 +205,7 @@ private fun runOnProjectInit(project: Project) {
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
 
-  if (ApplicationManagerEx.isInIntegrationTest()) {
+  if (ApplicationManagerEx.isInIntegrationTest() && !java.lang.Boolean.getBoolean("ide.startup.no.profiler")) {
     project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       subscribeToStopProfile()
     }

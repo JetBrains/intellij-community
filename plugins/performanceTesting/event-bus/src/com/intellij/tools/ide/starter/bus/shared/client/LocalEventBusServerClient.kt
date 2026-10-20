@@ -19,7 +19,7 @@ import kotlin.time.Duration
 
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServerClient::class.java)
 
-class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServerClient {
+internal class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServerClient {
   private val objectMapper = jacksonObjectMapper()
   private val eventClasses = HashMap<String, String>()
   private val eventClassesLock = ReentrantReadWriteLock()

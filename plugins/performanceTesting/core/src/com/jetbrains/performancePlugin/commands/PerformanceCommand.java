@@ -13,10 +13,18 @@ import tools.jackson.databind.ObjectMapper;
 
 import static tools.jackson.module.kotlin.ExtensionsKt.jacksonObjectMapper;
 
+final class PerformanceCommandSerializer {
+  // make sure Jackson is loaded lazily in startup
+  private static final ObjectMapper myObjectMapper = jacksonObjectMapper();
+
+  static ObjectMapper getObjectMapper() {
+    return myObjectMapper;
+  }
+}
+
 public abstract class PerformanceCommand extends AbstractCommand {
 
   private static final String PREFIX = "%";
-  private final ObjectMapper myObjectMapper = jacksonObjectMapper();
   private final Tracer tracer = isWarmupMode() ? PerformanceTestSpan.WARMUP_TRACER : PerformanceTestSpan.TRACER;
 
   public PerformanceCommand(@NotNull String text, int line) {
@@ -55,7 +63,7 @@ public abstract class PerformanceCommand extends AbstractCommand {
 
   protected <T> T deserializeOptionsFromJson(String json, Class<T> clazz) {
     try {
-      return myObjectMapper.readValue(json, clazz);
+      return PerformanceCommandSerializer.getObjectMapper().readValue(json, clazz);
     }
     catch (JacksonException e) {
       throw new RuntimeException(e);
