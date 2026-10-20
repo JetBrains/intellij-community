@@ -140,5 +140,10 @@
                              implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <codeInsight.template.postfixTemplateProvider language="Python"
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
+
+    <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
+
+    <lang.smartEnterProcessor language="Python"
+                              implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
   </extensions>
 </idea-plugin>
