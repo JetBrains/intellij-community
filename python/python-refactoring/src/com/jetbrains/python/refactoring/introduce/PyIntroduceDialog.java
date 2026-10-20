@@ -16,7 +16,7 @@ import com.intellij.ui.StringComboboxEditor;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpression;
@@ -80,7 +80,7 @@ public class PyIntroduceDialog extends DialogWrapper {
                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                     null, 0, false));
       myNameLabel = new JLabel();
-      this.$$$loadLabelText$$$(myNameLabel, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.introduce.name"));
+      this.$$$loadLabelText$$$(myNameLabel, this.$$$getMessageFromBundle$$$("messages/PyRefactoringBundle", "form.introduce.name"));
       panel1.add(myNameLabel,
                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -283,7 +283,7 @@ public class PyIntroduceDialog extends DialogWrapper {
     if (myOccurrencesCount > 1) {
       myReplaceAll.setSelected(false);
       myReplaceAll.setEnabled(true);
-      myReplaceAll.setText(PyBundle.message("refactoring.occurrences.count", myReplaceAll.getText(), myOccurrencesCount));
+      myReplaceAll.setText(PyRefactoringBundle.message("refactoring.occurrences.count", myReplaceAll.getText(), myOccurrencesCount));
     }
     else {
       myReplaceAll.setSelected(false);

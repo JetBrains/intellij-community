@@ -19,7 +19,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -63,7 +63,7 @@ import java.util.function.Function;
 public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   public PyIntroduceFieldHandler() {
-    super(new IntroduceFieldValidator(), PyBundle.message("refactoring.introduce.attribute.title"));
+    super(new IntroduceFieldValidator(), PyRefactoringBundle.message("refactoring.introduce.attribute.title"));
   }
 
   @Override
@@ -109,7 +109,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   protected boolean checkEnabled(IntroduceOperation operation) {
     if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
       CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(),
-                                          PyBundle.message("refactoring.introduce.field.not.in.class"), myDialogTitle,
+                                          PyRefactoringBundle.message("refactoring.introduce.field.not.in.class"), myDialogTitle,
                                           getHelpId());
       return false;
     }
@@ -255,8 +255,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
     if (element != null && isInStaticMethod(element)) {
       CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
-                                          PyBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
-                                          PyBundle.message("refactoring.introduce.attribute.title"),
+                                          PyRefactoringBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
+                                          PyRefactoringBundle.message("refactoring.introduce.attribute.title"),
                                           "refactoring.extractMethod");
       return false;
     }
@@ -336,7 +336,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.attribute.title"),
+      super(target, operation.getEditor(), operation.getProject(), PyRefactoringBundle.message("refactoring.introduce.attribute.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myTargetSmartPointer = SmartPointerManager.createPointer(target);

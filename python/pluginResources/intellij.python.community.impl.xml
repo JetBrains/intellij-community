@@ -565,7 +565,6 @@
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Python"
                                  implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>
-    <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
     <lang.smartEnterProcessor language="Python"
@@ -811,8 +810,6 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" open="true"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
-    <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
-                        serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
                         serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 
@@ -1333,17 +1330,6 @@
     </group>
 
     <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction"/>
-
-    <action id="PyExtractFunction" class="com.jetbrains.python.refactoring.extractmethod.PyExtractFunctionAction"
-            use-shortcut-of="ExtractMethod">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
-      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
-    </action>
-
-    <action id="PyIntroduceAttribute" class="com.jetbrains.python.refactoring.introduce.field.PyIntroduceAttributeAction"
-            use-shortcut-of="IntroduceField">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
-    </action>
 
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction"
             icon="AllIcons.Debugger.StepIntoMyCode">

@@ -4,7 +4,7 @@ package com.jetbrains.python.refactoring.introduce.field;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 
 import javax.swing.BorderFactory;
@@ -38,7 +38,7 @@ public class PyIntroduceFieldPanel {
         BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0, 6, 0, 12), null, TitledBorder.DEFAULT_JUSTIFICATION,
                                          TitledBorder.DEFAULT_POSITION, null, new Color(-16777216)));
       final JBLabel jBLabel1 = new JBLabel();
-      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.introduce.field.initialize.in"));
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/PyRefactoringBundle", "form.introduce.field.initialize.in"));
       myRootPanel.add(jBLabel1, BorderLayout.WEST);
       myInitializerPlaceCombo = new JComboBox();
       final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
@@ -50,7 +50,7 @@ public class PyIntroduceFieldPanel {
     }
     KeyboardComboSwitcher.setupActions(myInitializerPlaceCombo, project);
     if (initPlaces.contains(IntroduceHandler.InitPlace.SET_UP)) {
-      ((DefaultComboBoxModel)myInitializerPlaceCombo.getModel()).addElement(PyBundle.message("refactoring.introduce.field.setup.method"));
+      ((DefaultComboBoxModel)myInitializerPlaceCombo.getModel()).addElement(PyRefactoringBundle.message("refactoring.introduce.field.setup.method"));
     }
   }
 

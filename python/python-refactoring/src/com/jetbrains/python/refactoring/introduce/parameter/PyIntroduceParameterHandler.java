@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -37,7 +37,7 @@ import java.util.List;
 
 public class PyIntroduceParameterHandler extends IntroduceHandler {
   public PyIntroduceParameterHandler() {
-    super(new VariableValidator(), PyBundle.message("refactoring.extract.parameter.dialog.title"));
+    super(new VariableValidator(), PyRefactoringBundle.message("refactoring.extract.parameter.dialog.title"));
   }
 
   @Override
@@ -149,7 +149,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     PyInplaceParameterIntroducer(PyNamedParameter target,
                                  IntroduceOperation operation,
                                  List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.parameter.dialog.title"),
+      super(target, operation.getEditor(), operation.getProject(), PyRefactoringBundle.message("refactoring.introduce.parameter.dialog.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }

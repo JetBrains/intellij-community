@@ -10,7 +10,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.util.AbstractParameterTablePanel.NameColumnInfo;
 import com.intellij.refactoring.util.AbstractParameterTablePanel.PassParameterColumnInfo;
 import com.intellij.util.ui.ColumnInfo;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodSettings;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
@@ -50,7 +49,7 @@ public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
     JPanel wrapper = new JPanel(new BorderLayout(0, 6));
     wrapper.add(original, BorderLayout.CENTER);
     boolean selected = PyExtractMethodUtil.getAddTypeAnnotations(myProject);
-    myAddTypeAnnotationsCheckbox = new JCheckBox(PyBundle.message(ADD_TYPE_ANNOTATIONS_MESSAGE_KEY), selected);
+    myAddTypeAnnotationsCheckbox = new JCheckBox(PyRefactoringBundle.message(ADD_TYPE_ANNOTATIONS_MESSAGE_KEY), selected);
     wrapper.add(myAddTypeAnnotationsCheckbox, BorderLayout.SOUTH);
     myAddTypeAnnotationsCheckbox.addChangeListener((changeEvent) -> updateSignature());
     return wrapper;
@@ -104,7 +103,7 @@ public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
     private final Predicate<? super String> myNameValidator = Predicates.alwaysTrue();
 
     public TypeColumnInfo() {
-      super(PyBundle.message(TYPES_MESSAGE_KEY));
+      super(PyRefactoringBundle.message(TYPES_MESSAGE_KEY));
     }
 
     @Override
