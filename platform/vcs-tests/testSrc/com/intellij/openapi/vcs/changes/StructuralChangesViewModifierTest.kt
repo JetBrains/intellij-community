@@ -17,10 +17,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
@@ -170,6 +172,28 @@ internal class StructuralChangesViewModifierTest {
     assertEquals(fileFixture.get(), preview.file)
     assertEquals(text.indexOf("second"), preview.offsetMarker?.startOffset)
     assertEquals(explicit.offset, preview.offsetMarker?.startOffset)
+    assertEquals(TextRange(text.indexOf("second"), text.length), node.getPreviewHighlightRange())
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `preview ranges reject document edits after the model is built`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val text = "first=1\nsecond=2"
+    val change = change(null, text)
+    val node = build(change).last()
+    assertEquals(TextRange(text.indexOf("second"), text.length), node.getPreviewHighlightRange())
+
+    val prefix = "inserted=0\n"
+    edtWriteAction {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        FileDocumentManager.getInstance().getDocument(fileFixture.get())!!.insertString(0, prefix)
+      }
+    }
+
+    assertNull(node.getPreviewHighlightRange())
+    val current = build(change).last()
+    assertEquals(TextRange(prefix.length + text.indexOf("second"), prefix.length + text.length), current.getPreviewHighlightRange())
   }
 
   @Test
@@ -183,6 +207,7 @@ internal class StructuralChangesViewModifierTest {
     assertEquals(listOf("changed", "added", "removed"), nodes.map { it.textPresentation })
     assertNull(nodes.last().getNavigatable())
     assertNull(readAction { nodes.last().getPreviewNavigationRequest() })
+    assertNull(nodes.last().getPreviewHighlightRange())
     assertEquals(after.indexOf("added"), (nodes[1].getNavigatable() as OpenFileDescriptor).offset)
   }
 
@@ -352,6 +377,7 @@ internal class StructuralChangesViewModifierTest {
     override fun getName(): String = line.substringBefore('=')
     override fun getText(): String = line
     override fun getTextOffset(): Int = offset
+    override fun getTextRange(): TextRange = TextRange.from(offset, line.length)
     override fun getLocationString(): String? = null
     override fun getIcon(open: Boolean): Icon? = icon
   }

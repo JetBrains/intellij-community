@@ -2,6 +2,7 @@
 package com.intellij.lang.properties
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.StructureChange
 import com.intellij.openapi.vcs.changes.StructureChangeCollector
@@ -39,6 +40,9 @@ internal class PropertiesStructureChangeCollectorTest {
     assertEquals(after.indexOf("changed="), changes.single { it.text == "changed=after" }.offset)
     assertEquals(after.indexOf("added="), changes.single { it.text == "added=value" }.offset)
     assertNull(changes.single { it.text == "removed=value" }.offset)
+    assertEquals(TextRange(0, "changed=after".length), changes.single { it.text == "changed=after" }.range)
+    assertEquals(TextRange.from(after.indexOf("added="), "added=value".length), changes.single { it.text == "added=value" }.range)
+    assertNull(changes.single { it.text == "removed=value" }.range)
   }
 
   @Test
@@ -65,7 +69,9 @@ internal class PropertiesStructureChangeCollectorTest {
   @Test
   fun `continued property values stay on one tree row`(): Unit = timeoutRunBlocking {
     val text = "continued=first\\\n  second"
-    assertEquals("continued=first\\\\n  second", collect(null, text).single().text)
+    val change = collect(null, text).single()
+    assertEquals("continued=first\\\\n  second", change.text)
+    assertEquals(TextRange(0, text.length), change.range)
   }
 
   @Test

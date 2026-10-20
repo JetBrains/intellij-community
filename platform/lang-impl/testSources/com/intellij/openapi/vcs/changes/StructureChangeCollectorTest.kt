@@ -10,6 +10,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
@@ -65,6 +66,10 @@ internal class StructureChangeCollectorTest {
     assertEquals(after.indexOf("added()"), changes.single { it.memberName == "added" }.offset)
     assertEquals(after.indexOf("field ="), changes.single { it.memberName == "field" }.offset)
     assertNull(changes.single { it.memberName == "removed" }.offset)
+    assertEquals(sourceRange(after, "int changed() { return 2; }"), changes.single { it.memberName == "changed" }.range)
+    assertEquals(sourceRange(after, "void added() {}"), changes.single { it.memberName == "added" }.range)
+    assertEquals(sourceRange(after, "int field = 2;"), changes.single { it.memberName == "field" }.range)
+    assertNull(changes.single { it.memberName == "removed" }.range)
   }
 
   @Test
@@ -86,6 +91,8 @@ internal class StructureChangeCollectorTest {
     assertEquals("nestedMethod", nested.children.single().memberName)
     assertTrue(flatten(changes).all { it.status == FileStatus.ADDED })
     assertTrue(flatten(changes).all { it.offset != null })
+    assertTrue(flatten(changes).all { it.range != null })
+    assertEquals(sourceRange(after, "void nestedMethod() {}"), nested.children.single().range)
   }
 
   @Test
@@ -145,6 +152,8 @@ internal class StructureChangeCollectorTest {
     assertEquals("value", method.memberName)
     assertEquals(FileStatus.MODIFIED, method.status)
     assertEquals(after.lastIndexOf("value()"), method.offset)
+    assertEquals(sourceRange(after, "class Second { int value() { return 3; } }"), nested.range)
+    assertEquals(sourceRange(after, "int value() { return 3; }"), method.range)
   }
 
   @Test
@@ -341,6 +350,8 @@ internal class StructureChangeCollectorTest {
       assertNull(removed.offset)
       assertEquals(FileStatus.DELETED, removed.children.single().status)
       assertNull(removed.children.single().offset)
+      assertNull(removed.range)
+      assertNull(removed.children.single().range)
       assertNotEquals(added.id, removed.id)
     }
   }
@@ -426,6 +437,8 @@ internal class StructureChangeCollectorTest {
 
   private val StructureChange.memberName: String
     get() = text.substringBefore('(').substringBefore(':').trim()
+
+  private fun sourceRange(text: String, fragment: String): TextRange = TextRange.from(text.indexOf(fragment), fragment.length)
 
   private fun flatten(changes: List<StructureChange>): List<StructureChange> =
     changes.flatMap { listOf(it) + flatten(it.children) }
