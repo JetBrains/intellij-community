@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.DumbAware
@@ -90,7 +91,7 @@ internal class EditorCompositeTabsTest {
 
   private suspend fun openComposite(vararg names: String): EditorComposite {
     for (name in names) {
-      FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(TestProvider(name), disposable)
+      FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(TestProvider(name)), disposable)
     }
     val manager = managerFixture.get()
     manager.openFile(file, false)

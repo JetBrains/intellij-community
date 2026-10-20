@@ -13,8 +13,8 @@ private const val FAILURE_MESSAGE = "file editor provider fails on purpose"
 
 class FileEditorProviderListFailureTest : HeavyPlatformTestCase() {
   fun testFailingProviderIsSkippedInsteadOfBreakingTheList() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(FailingProvider(), testRootDisposable)
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(AcceptingProvider(), testRootDisposable)
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(FailingProvider()), testRootDisposable)
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(AcceptingProvider()), testRootDisposable)
 
     var providers: List<FileEditorProvider> = emptyList()
     val error = LoggedErrorProcessor.executeAndReturnLoggedError {

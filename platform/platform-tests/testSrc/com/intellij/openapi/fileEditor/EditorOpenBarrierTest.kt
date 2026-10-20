@@ -551,7 +551,7 @@ class EditorOpenBarrierTest {
   }
 
   private fun registerProvider(provider: FileEditorProvider) {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(provider, disposable)
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(provider), disposable)
   }
 
   @Test

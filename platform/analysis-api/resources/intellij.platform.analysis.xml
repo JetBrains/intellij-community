@@ -15,9 +15,10 @@
   <xi:include href="/META-INF/Analysis.analyzer.xml"/>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.fileEditorProvider"
-                    interface="com.intellij.openapi.fileEditor.FileEditorProvider"
-                    hasAttributes="true"
-                    dynamic="true"/>
+                    beanClass="com.intellij.openapi.fileEditor.FileEditorProviderBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.fileEditor.FileEditorProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.vfs.local.fileOperationsHandler" interface="com.intellij.openapi.vfs.LocalFileOperationsHandler" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.refGraphAnnotator" interface="com.intellij.codeInspection.reference.RefGraphAnnotator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>

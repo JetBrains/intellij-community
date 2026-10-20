@@ -1460,7 +1460,7 @@ class FileEditorManagerTest {
     val providerDisposable = Disposer.newDisposable()
     Disposer.register(disposable, providerDisposable)
     providerDisposables.add(providerDisposable)
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(provider, providerDisposable)
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(provider), providerDisposable)
   }
 
   private fun registerPreCloseCheck(check: VirtualFilePreCloseCheck) {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
+ * Register an implementation as the {@code com.intellij.fileEditorProvider} extension.
  * <p>
  * Synchronous providers are queried and constructed on the UI thread, so {@link #accept(Project, VirtualFile)} and
  * {@link #createEditor(Project, VirtualFile)} must remain lightweight. If editor creation needs indexing, PSI, or other
@@ -37,7 +37,7 @@ public interface FileEditorProvider extends PossiblyDumbAware {
    * a given file
    */
   @Deprecated(forRemoval = true)
-  ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<>("com.intellij.fileEditorProvider");
+  ExtensionPointName<FileEditorProviderBean> EP_FILE_EDITOR_PROVIDER = FileEditorProviderBean.EP_NAME;
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   FileEditorProvider[] EMPTY_ARRAY = {};

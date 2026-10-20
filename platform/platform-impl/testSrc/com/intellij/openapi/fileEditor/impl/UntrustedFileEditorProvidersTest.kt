@@ -7,6 +7,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -53,7 +54,7 @@ class UntrustedFileEditorProvidersTest {
       override fun getEditorTypeId(): String = "test-untrusted-dummy"
       override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
     }
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(dummy, asDisposable())
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(dummy), asDisposable())
 
     val manager = FileEditorProviderManager.getInstance()
     // an unmarked outside file (an IDE-internal file) keeps the full provider list

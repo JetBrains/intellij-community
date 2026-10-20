@@ -7,7 +7,7 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -160,7 +160,7 @@ class ToolWindowEditorTabTransferControllerTest {
       rootDecorator.splitWithContent(movingContent, SwingConstants.RIGHT, -1)
       val sourceDecorator = findDecorator(movingContent)
       // Without a file editor provider the composite opens empty, and the editor manager closes it at once.
-      ExtensionTestUtil.maskExtensions(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, emptyList(), disposable)
+      ExtensionTestUtil.maskExtensions(FileEditorProviderBean.EP_NAME, emptyList(), disposable)
 
       assertThat(controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)).isFalse()
 
@@ -198,7 +198,7 @@ class ToolWindowEditorTabTransferControllerTest {
         }
       })
       // Without a file editor provider the composite opens empty, and the editor manager closes it at once.
-      ExtensionTestUtil.maskExtensions(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, emptyList(), disposable)
+      ExtensionTestUtil.maskExtensions(FileEditorProviderBean.EP_NAME, emptyList(), disposable)
 
       assertThat(controller.moveContentToEditor(toolWindow, content)).isFalse()
 

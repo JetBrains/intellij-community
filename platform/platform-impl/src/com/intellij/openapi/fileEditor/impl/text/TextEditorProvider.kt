@@ -20,11 +20,11 @@ import com.intellij.openapi.fileEditor.DocumentsEditor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.createdFileEditorSink
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
@@ -64,7 +64,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   companion object {
     @JvmStatic
     fun getInstance(): TextEditorProvider {
-      return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider::class.java)!!
+      return FileEditorProviderManager.getInstance().getProvider(TEXT_EDITOR_PROVIDER_TYPE_ID) as TextEditorProvider
     }
 
     @JvmStatic

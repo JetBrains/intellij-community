@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -60,10 +61,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         )
       }
     })
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(object : ExtensionPointListener<FileEditorProvider> {
-      override fun extensionRemoved(extension: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
+    FileEditorProviderBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<FileEditorProviderBean> {
+      override fun extensionRemoved(extension: FileEditorProviderBean, pluginDescriptor: PluginDescriptor) {
+        // a provider that was never created has no entry
+        val provider = extension.instanceIfCreated ?: return
         for (it in entries) {
-          it.onProviderRemoval(extension)
+          it.onProviderRemoval(provider)
         }
       }
     }, this)

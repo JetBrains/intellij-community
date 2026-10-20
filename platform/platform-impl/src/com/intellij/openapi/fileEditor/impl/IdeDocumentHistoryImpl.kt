@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
@@ -170,9 +171,10 @@ open class IdeDocumentHistoryImpl(
     multicaster.addDocumentListener(listener, this)
     multicaster.addCaretListener(listener, this)
 
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<FileEditorProvider> {
-      override fun extensionRemoved(provider: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
-        val editorTypeId = provider.getEditorTypeId()
+    FileEditorProviderBean.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<FileEditorProviderBean> {
+      override fun extensionRemoved(extension: FileEditorProviderBean, pluginDescriptor: PluginDescriptor) {
+        // a provider that was never created has no place
+        val editorTypeId = extension.instanceIfCreated?.editorTypeId ?: return
         val clearStatePredicate = Predicate { e: HistoryPlaceInfo -> editorTypeId == e.editorTypeId }
         if (changePlaces.removeIf(clearStatePredicate)) {
           currentIndex = changePlaces.size

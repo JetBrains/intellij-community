@@ -69,6 +69,7 @@ import com.intellij.openapi.fileEditor.FileEditorNavigatable
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.NavigatableFileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -532,11 +533,13 @@ open class FileEditorManagerImpl(
   }
 
   private fun closeFilesOnFileEditorRemoval() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(object : ExtensionPointListener<FileEditorProvider> {
-      override fun extensionRemoved(extension: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
+    FileEditorProviderBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<FileEditorProviderBean> {
+      override fun extensionRemoved(extension: FileEditorProviderBean, pluginDescriptor: PluginDescriptor) {
+        // a provider that was never created has no open editor
+        val removedProvider = extension.instanceIfCreated ?: return
         for (editor in openedComposites) {
           for ((_, provider) in editor.allEditorsWithProviders) {
-            if (provider == extension) {
+            if (provider == removedProvider) {
               closeFile(editor.file)
               break
             }

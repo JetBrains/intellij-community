@@ -3484,6 +3484,7 @@ a:com.intellij.serviceContainer.BaseKeyedLazyInstance
 - f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 a:com.intellij.serviceContainer.LazyExtensionInstance
 - p:<init>():V
+- f:getInstanceIfCreated():java.lang.Object
 @:com.intellij.serviceContainer.NonInjectable
 - java.lang.annotation.Annotation
 c:com.intellij.testFramework.BinaryLightVirtualFile

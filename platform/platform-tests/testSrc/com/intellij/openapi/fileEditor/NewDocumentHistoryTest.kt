@@ -25,8 +25,8 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
   }
 
   fun testBackNavigationBetweenEditors() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(MockFileEditorProvider(),
-                                                                        myFixture.testRootDisposable)
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(MockFileEditorProvider()),
+                                                           myFixture.testRootDisposable)
     val file = getFile("/src/1.txt")!!
     val manager = FileEditorManagerEx.getInstanceEx(project)
     val editors = manager.openFile(file = file, window = null, options = FileEditorOpenOptions(requestFocus = true)).allEditors

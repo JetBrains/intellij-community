@@ -4,7 +4,9 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.TrustedFiles
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.RoamingType
@@ -15,11 +17,11 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.LazyExtension
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -73,17 +75,17 @@ class FileEditorProviderManagerImpl
     val untrustedFile = !TrustedFiles.isTrusted(file, project)
 
     val fileType = file.fileType
-    for (item in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence()) {
+    for (bean in FileEditorProviderBean.EP_NAME.extensionList) {
       // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);
       // checked before instantiation, so suppressed provider classes are never loaded
-      if (untrustedFile && !item.isAllowedInUntrustedFiles) {
+      if (untrustedFile && !bean.allowedInUntrustedFiles) {
         continue
       }
-      if (!isAcceptedByFileType(item = item, fileType = fileType, file = file) || (item.isDocumentRequired && !hasDocument)) {
+      if (!isAcceptedByFileType(bean = bean, fileType = fileType, file = file) || (bean.isDocumentRequired && !hasDocument)) {
         continue
       }
 
-      val provider = item.instance ?: continue
+      val provider = bean.instanceOrLogError() ?: continue
       if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         continue
       }
@@ -99,7 +101,7 @@ class FileEditorProviderManagerImpl
         throw e
       }
       catch (e: Throwable) {
-        LOG.error(PluginException(e, item.pluginDescriptor.pluginId))
+        LOG.error(PluginException(e, bean.pluginDescriptor.pluginId))
         continue
       }
       if (accepted) {
@@ -141,29 +143,29 @@ class FileEditorProviderManagerImpl
 
       var hasDocument: Boolean? = null
 
-      FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().mapNotNull { item ->
-        if (excludeIds.contains(item.id)) {
+      FileEditorProviderBean.EP_NAME.extensionList.mapNotNull { bean ->
+        if (excludeIds.contains(bean.id)) {
           return@mapNotNull null
         }
         // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);
         // checked before instantiation, so suppressed provider classes are never loaded
-        if (untrustedFile && !item.isAllowedInUntrustedFiles) {
+        if (untrustedFile && !bean.allowedInUntrustedFiles) {
           return@mapNotNull null
         }
 
         async {
           if (dumUnawareOnly) {
-            val aClass = item.implementationClass
+            val aClass = bean.loadImplementationClass()
             if (aClass != null && DumbAware::class.java.isAssignableFrom(aClass)) {
               return@async null
             }
           }
 
-          if (!isAcceptedByFileType(item = item, fileType = fileType, file = file)) {
+          if (!isAcceptedByFileType(bean = bean, fileType = fileType, file = file)) {
             return@async null
           }
 
-          if (item.isDocumentRequired) {
+          if (bean.isDocumentRequired) {
             if (hasDocument == null) {
               val fileDocumentManager = serviceAsync<FileDocumentManager>()
               hasDocument = readAction { fileDocumentManager.canHaveDocument(file) }
@@ -176,7 +178,7 @@ class FileEditorProviderManagerImpl
 
           try {
             withTimeout(30.seconds) {
-              val provider = item.instance ?: return@withTimeout null
+              val provider = bean.instanceOrLogError() ?: return@withTimeout null
               if (excludeIds.contains(provider.editorTypeId)) {
                 return@withTimeout null
               }
@@ -186,12 +188,12 @@ class FileEditorProviderManagerImpl
                 project = project,
                 file = file,
                 suppressors = suppressors,
-                pluginDescriptor = item.pluginDescriptor,
+                pluginDescriptor = bean.pluginDescriptor,
               )?.takeIf { !dumUnawareOnly || !DumbService.isDumbAware(it) }
             }
           }
           catch (e: TimeoutCancellationException) {
-            LOG.error(PluginException("Cannot check provider ${item.implementationClassName}", e, item.pluginDescriptor.pluginId))
+            LOG.error(PluginException("Cannot check provider ${bean.implementation}", e, bean.pluginDescriptor.pluginId))
             null
           }
         }
@@ -222,7 +224,21 @@ class FileEditorProviderManagerImpl
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findByIdOrFromInstance(editorTypeId) { it.editorTypeId }
+    val beans = FileEditorProviderBean.EP_NAME.extensionList
+    beans.firstOrNull { it.id == editorTypeId }?.let {
+      return it.instance
+    }
+
+    // check only the declarations without an id
+    for (bean in beans) {
+      if (bean.id == null) {
+        val provider = bean.instance
+        if (provider.editorTypeId == editorTypeId) {
+          return provider
+        }
+      }
+    }
+    return null
   }
 
   fun providerSelected(composite: EditorComposite) {
@@ -336,17 +352,30 @@ private object MyComparator : Comparator<FileEditorProvider> {
   }
 }
 
-private val LazyExtension<FileEditorProvider>.isDocumentRequired
-  get() = getCustomAttribute("isDocumentRequired").toBoolean()
+private fun FileEditorProviderBean.instanceOrLogError(): FileEditorProvider? {
+  try {
+    return instance
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.error(PluginException("Cannot create file editor provider $implementation", e, pluginDescriptor.pluginId))
+    return null
+  }
+}
 
-private val LazyExtension<FileEditorProvider>.isAllowedInUntrustedFiles
-  get() = getCustomAttribute("allowedInUntrustedFiles").toBoolean()
+private fun FileEditorProviderBean.loadImplementationClass(): Class<*>? {
+  try {
+    return ApplicationManager.getApplication().loadClass<FileEditorProvider>(implementation, pluginDescriptor)
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.error(PluginException(e, pluginDescriptor.pluginId))
+    return null
+  }
+}
 
-private val LazyExtension<FileEditorProvider>.fileType
-  get() = getCustomAttribute("fileType")
-
-private suspend fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>, fileType: Deferred<FileType>, file: VirtualFile): Boolean {
-  val providerFileTypeName = item.fileType
+private suspend fun isAcceptedByFileType(bean: FileEditorProviderBean, fileType: Deferred<FileType>, file: VirtualFile): Boolean {
+  val providerFileTypeName = bean.fileType
   // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
   if (providerFileTypeName != null && fileType.await().name != providerFileTypeName) {
     val fileTypeRegistry = FileTypeRegistry.getInstance()
@@ -358,8 +387,8 @@ private suspend fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>
   return true
 }
 
-private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>, fileType: FileType, file: VirtualFile): Boolean {
-  val providerFileTypeName = item.fileType
+private fun isAcceptedByFileType(bean: FileEditorProviderBean, fileType: FileType, file: VirtualFile): Boolean {
+  val providerFileTypeName = bean.fileType
   // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
   if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
     val fileTypeRegistry = FileTypeRegistry.getInstance()

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
@@ -141,7 +142,7 @@ class DaemonCodeAnalyzerTest {
   @Test
   fun `non-highlightable editor does not restart daemon`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val virtualFile = nonAwtFile.get()
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(object : FileEditorProvider, DumbAware {
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(object : FileEditorProvider, DumbAware {
       override fun accept(project: Project, file: VirtualFile): Boolean = file == virtualFile
 
       override fun createEditor(project: Project, file: VirtualFile): FileEditor = NonHighlightableFileEditor(file)
@@ -149,7 +150,7 @@ class DaemonCodeAnalyzerTest {
       override fun getEditorTypeId(): String = "non-highlightable-editor"
 
       override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
-    }, disposable)
+    }), disposable)
 
     val analyzer = assertIs<DaemonCodeAnalyzerImpl>(DaemonCodeAnalyzer.getInstance(project.get()))
     val fileEditorManager = FileEditorManager.getInstance(project.get())

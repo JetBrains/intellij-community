@@ -39,6 +39,13 @@ public abstract class LazyExtensionInstance<T> {
     return result;
   }
 
+  /**
+   * @return the instance that {@link #getInstance} created, or {@code null} when no call created it yet
+   */
+  public final @Nullable T getInstanceIfCreated() {
+    return instance;
+  }
+
   public @NotNull T createInstance(@NotNull ComponentManager componentManager, @NotNull PluginDescriptor pluginDescriptor) {
     String className = getImplementationClassName();
     if (className == null) throw new PluginException("implementation class is not specified", pluginDescriptor.getPluginId());

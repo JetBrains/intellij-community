@@ -4,7 +4,7 @@ package com.intellij.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditorProviderBean;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -33,8 +33,8 @@ public class XmlParsingAdditionalTest extends BasePlatformTestCase {
 
   @PerformanceUnitTest
   public void testReparsePerformance() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new PsiAwareTextEditorProvider(),
-                                                                            getTestRootDisposable());
+    FileEditorProviderBean.EP_NAME.getPoint().registerExtension(new FileEditorProviderBean(new PsiAwareTextEditorProvider()),
+                                                                getTestRootDisposable());
 
     final Project project = getProject();
 
