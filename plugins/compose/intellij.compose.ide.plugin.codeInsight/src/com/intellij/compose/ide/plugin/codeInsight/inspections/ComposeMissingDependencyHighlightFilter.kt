@@ -8,8 +8,8 @@ import com.intellij.compose.ide.plugin.shared.inspections.ComposeModuleConfigura
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 /**
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 internal class ComposeMissingDependencyHighlightFilter : HighlightInfoFilter {
 
   override fun accept(highlightInfo: HighlightInfo, psiFile: PsiFile?): Boolean {
-    if (psiFile == null) return true
+    if (psiFile !is KtFile) return true
 
     val description = highlightInfo.description ?: return true
 
@@ -43,6 +43,6 @@ internal class ComposeMissingDependencyHighlightFilter : HighlightInfoFilter {
 }
 
 private val TARGET_DIAGNOSTIC_NAMES = listOf(
-  FirErrors.MISSING_DEPENDENCY_CLASS,
-  FirErrors.ARGUMENT_TYPE_MISMATCH,
-).map { it.name }
+  "MISSING_DEPENDENCY_CLASS", // FirErrors.MISSING_DEPENDENCY_CLASS
+  "ARGUMENT_TYPE_MISMATCH",   // FirErrors.ARGUMENT_TYPE_MISMATCH
+)

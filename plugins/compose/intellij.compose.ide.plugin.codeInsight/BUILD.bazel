@@ -14,11 +14,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
     lib = "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
 )
@@ -80,7 +75,6 @@ jvm_library(
         "//platform/monolith",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         ":libraries_kotlinc_libraries-kotlinc-compose-compiler-plugin_provided",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
     ],
 )
@@ -122,8 +116,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/gradle:gradle_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
-        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
