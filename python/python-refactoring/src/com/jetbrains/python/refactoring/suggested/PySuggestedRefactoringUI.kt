@@ -9,7 +9,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringUI
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.refactoring.PyRefactoringBundle
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.refactoring.changeSignature.PyExpressionCodeFragment
@@ -58,7 +58,7 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
     val shouldHaveDefaultValue = (data.additionalData as? ParameterData)?.shouldHaveDefaultValue
     return when {
       shouldHaveDefaultValue == null || !shouldHaveDefaultValue -> null
-      else -> ValidationInfo(PyBundle.message("refactoring.change.signature.dialog.validation.default.missing"), component)
+      else -> ValidationInfo(PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.default.missing"), component)
     }
   }
 
@@ -69,8 +69,8 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   private fun placeholderText(shouldHaveDefaultValue: Boolean): String {
-    return if (shouldHaveDefaultValue) PyBundle.message("refactoring.change.signature.suggested.callSite.value")
-    else PyBundle.message("refactoring.change.signature.suggested.callSite.value.optional")
+    return if (shouldHaveDefaultValue) PyRefactoringBundle.message("refactoring.change.signature.suggested.callSite.value")
+    else PyRefactoringBundle.message("refactoring.change.signature.suggested.callSite.value.optional")
   }
 
   private fun shouldHaveDefaultValue(newParameter: Parameter, oldParameter: Parameter?): Boolean {

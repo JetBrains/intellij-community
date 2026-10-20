@@ -611,8 +611,6 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
 
-    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
-
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
     <internalFileTemplate name="Python Script"/>
@@ -833,9 +831,6 @@
 
     <!-- Pipenv -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
-
-    <suggestedRefactoringSupport language="Python"
-                                 implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
 
     <!-- Targets API -->
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -207,7 +206,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   // PY-6637
   public void testLocalFunctionNonlocalReferenceToOuterScope() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
+                         () -> doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
   }
 
   // PY-6637
@@ -217,36 +216,36 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   // PY-6637
   public void testLocalFunctionReferenceToSelf() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.self.reads"));
   }
 
   public void testMethodNonlocalReferenceToOuterScope() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
+                         () -> doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
   }
 
   public void testMethodOuterScopeReads() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
   }
 
   public void testMethodOtherMethodCalls() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.method.calls"));
   }
 
   public void testMethodAttributeWrites() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
   }
 
   public void testMethodReadPrivateAttributes() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.private.attributes"));
   }
 
   public void testMethodSelfUsedAsOperand() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
   }
 
   public void testMethodOverriddenSelf() {
-    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
   }
 
   public void testMethodSingleAttributeRead() {
@@ -302,7 +301,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   public void testLocalFunctionNameCollision() {
-    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function", "nested"));
+    doTestFailure(PyRefactoringBundle.message("refactoring.move.error.destination.file.contains.function", "nested"));
   }
 
   public void testMethodInsertionPositionSameFileClassAndUsageNotTopLevel() {

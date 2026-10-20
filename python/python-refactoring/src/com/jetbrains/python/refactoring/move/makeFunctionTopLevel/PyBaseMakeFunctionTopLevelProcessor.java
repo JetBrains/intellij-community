@@ -17,7 +17,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -111,7 +111,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
-        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
+        PyRefactoringBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
     }
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());

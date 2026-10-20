@@ -9,7 +9,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -52,7 +52,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
 
   @Override
   protected @NotNull String getRefactoringName() {
-    return PyBundle.message("refactoring.make.method.top.level.dialog.title");
+    return PyRefactoringBundle.message("refactoring.make.method.top.level.dialog.title");
   }
 
   @Override
@@ -182,31 +182,31 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result =  analyseScope(owner);
       if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
       if (!result.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.self.reads"));
       }
       if (!result.readsFromEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
       }
       if (!result.writesToSelfParameter.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
       }
       myReadsOfSelfParam.addAll(result.readsOfSelfParameter);
       for (PsiElement usage : result.readsOfSelfParameter) {
         if (usage.getParent() instanceof PyTargetExpression) {
-          throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
+          throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
         }
         final PyReferenceExpression parentReference = as(usage.getParent(), PyReferenceExpression.class);
         if (parentReference != null) {
           final String attrName = parentReference.getName();
           if (attrName != null && PyUtil.isClassPrivateName(attrName)) {
-            throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
+            throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.private.attributes"));
           }
           if (parentReference.getParent() instanceof PyCallExpression) {
             if (!(Objects.equals(myFunction.getName(), parentReference.getName()))) {
-              throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+              throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.method.calls"));
             }
             else {
               // do not add method itself to its parameters
@@ -217,7 +217,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           myAttributeReferences.putValue(attrName, parentReference);
         }
         else {
-          throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+          throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
         }
       }
     }

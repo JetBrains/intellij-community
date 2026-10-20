@@ -50,12 +50,16 @@
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
 
     <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
+    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
 
     <refactoring.changeSignatureUsageProcessor
       implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
 
     <refactoring.invertBoolean language="Python"
                                implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+
+    <suggestedRefactoringSupport language="Python"
+                                 implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
   </extensions>
 
   <actions resource-bundle="messages.PyRefactoringBundle">

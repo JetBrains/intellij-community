@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyElement;
@@ -31,7 +31,7 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
 
   @Override
   protected @NotNull String getRefactoringName() {
-    return PyBundle.message("refactoring.make.local.function.top.level.dialog.title");
+    return PyRefactoringBundle.message("refactoring.make.local.function.top.level.dialog.title");
   }
 
   @Override
@@ -60,10 +60,10 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result = analyseScope(owner);
       if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
       if (!result.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
+        throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.make.function.top.level.error.self.reads"));
       }
       for (PsiElement element : result.readsFromEnclosingScope) {
         if (element instanceof PyElement) {

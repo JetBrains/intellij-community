@@ -2,7 +2,7 @@
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.move.PyBaseMoveDialog;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -21,12 +21,12 @@ public class PyMakeFunctionTopLevelDialog extends PyBaseMoveDialog {
     super(project, sourcePath, destinationPath);
     final String functionName = PyMoveRefactoringUtil.getPresentableName(function);
     if (function.getContainingClass() != null) {
-      setTitle(PyBundle.message("refactoring.make.method.top.level.dialog.title"));
-      myDescription.setText(PyBundle.message("refactoring.make.method.top.level.dialog.description", functionName));
+      setTitle(PyRefactoringBundle.message("refactoring.make.method.top.level.dialog.title"));
+      myDescription.setText(PyRefactoringBundle.message("refactoring.make.method.top.level.dialog.description", functionName));
     }
     else {
-      setTitle(PyBundle.message("refactoring.make.local.function.top.level.dialog.title"));
-      myDescription.setText(PyBundle.message("refactoring.make.local.function.top.level.dialog.description", functionName));
+      setTitle(PyRefactoringBundle.message("refactoring.make.local.function.top.level.dialog.title"));
+      myDescription.setText(PyRefactoringBundle.message("refactoring.make.local.function.top.level.dialog.description", functionName));
     }
     myExtraPanel.setVisible(false);
     init();

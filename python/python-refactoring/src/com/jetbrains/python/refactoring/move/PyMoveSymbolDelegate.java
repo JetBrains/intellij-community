@@ -22,7 +22,7 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -150,7 +150,7 @@ public final class PyMoveSymbolDelegate extends MoveHandlerDelegate {
 
   private static void showBadSelectionErrorHint(@NotNull Project project, @Nullable Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        PyBundle.message("refactoring.move.module.members.error.selection"),
+                                        PyRefactoringBundle.message("refactoring.move.module.members.error.selection"),
                                         RefactoringBundle.message("error.title"), null);
   }
 
