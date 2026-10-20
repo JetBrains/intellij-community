@@ -27,7 +27,7 @@
         </constraints>
         <properties>
           <labelFor value="29eaa"/>
-          <text resource-bundle="messages/PyBundle" key="form.documentation.entry.module.name"/>
+          <text resource-bundle="messages/PyCodeInsightBundle" key="form.documentation.entry.module.name"/>
         </properties>
       </component>
       <component id="7e3f5" class="javax.swing.JLabel">
@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value="63296"/>
-          <text resource-bundle="messages/PyBundle" key="form.documentation.entry.url.path.pattern"/>
+          <text resource-bundle="messages/PyCodeInsightBundle" key="form.documentation.entry.url.path.pattern"/>
         </properties>
       </component>
       <component id="63296" class="javax.swing.JTextField" binding="myURLPatternTextField" default-binding="true">
@@ -58,7 +58,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.documentation.entry.available.macros"/>
+        <border type="none" title-resource-bundle="messages/PyCodeInsightBundle" title-key="form.documentation.entry.available.macros"/>
         <children>
           <scrollpane id="f705b" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
@@ -98,7 +98,7 @@
             </constraints>
             <properties>
               <focusable value="false"/>
-              <text resource-bundle="messages/PyBundle" key="form.documentation.entry.insert"/>
+              <text resource-bundle="messages/PyCodeInsightBundle" key="form.documentation.entry.insert"/>
             </properties>
           </component>
         </children>

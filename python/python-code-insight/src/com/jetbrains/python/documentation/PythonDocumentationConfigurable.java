@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
 
   @Override
   public @Nls String getDisplayName() {
-    return PyBundle.message("external.documentation.configurable.name");
+    return PyCodeInsightBundle.message("external.documentation.configurable.name");
   }
 
   @Override
@@ -49,7 +49,7 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
   @Override
   public JComponent createComponent() {
     Border border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0));
-    JPanel panelWithDescription = JBUI.Panels.simplePanel(new JBLabel(PyBundle.message("external.documentation.description"))).withBorder(border);
+    JPanel panelWithDescription = JBUI.Panels.simplePanel(new JBLabel(PyCodeInsightBundle.message("external.documentation.description"))).withBorder(border);
 
     SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     myPanel.getTable().setShowGrid(false);
@@ -88,8 +88,8 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
     @Override
     public String getColumnName(int columnIndex) {
       return columnIndex == 0
-             ? PyBundle.message("external.documentation.column.name.module")
-             : PyBundle.message("external.documentation.column.name.url.path.pattern");
+             ? PyCodeInsightBundle.message("external.documentation.column.name.module")
+             : PyCodeInsightBundle.message("external.documentation.column.name.url.path.pattern");
     }
 
     @Override

@@ -9,8 +9,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import com.jetbrains.python.PyBundle;
 
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import javax.swing.AbstractButton;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -56,12 +56,12 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
                                                    new Dimension(150, -1), null, 0, false));
       final JLabel label1 = new JLabel();
-      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.documentation.entry.module.name"));
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/PyCodeInsightBundle", "form.documentation.entry.module.name"));
       myPanel.add(label1,
                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final JLabel label2 = new JLabel();
-      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.documentation.entry.url.path.pattern"));
+      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/PyCodeInsightBundle", "form.documentation.entry.url.path.pattern"));
       myPanel.add(label2,
                   new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -79,7 +79,7 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                               0, false));
       panel1.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null,
-                                                                                   this.$$$getMessageFromBundle$$$("messages/PyBundle",
+                                                                                   this.$$$getMessageFromBundle$$$("messages/PyCodeInsightBundle",
                                                                                                                    "form.documentation.entry.available.macros"),
                                                                                    TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                    TitledBorder.DEFAULT_POSITION, null, null));
@@ -108,7 +108,7 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
       jBScrollPane1.setViewportView(myMacroList);
       myInsertButton = new JButton();
       myInsertButton.setFocusable(false);
-      this.$$$loadButtonText$$$(myInsertButton, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.documentation.entry.insert"));
+      this.$$$loadButtonText$$$(myInsertButton, this.$$$getMessageFromBundle$$$("messages/PyCodeInsightBundle", "form.documentation.entry.insert"));
       panel1.add(myInsertButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -116,7 +116,7 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
       label2.setLabelFor(myURLPatternTextField);
     }
     init();
-    setTitle(PyBundle.message("external.documentation.edit.documentation.url"));
+    setTitle(PyCodeInsightBundle.message("external.documentation.edit.documentation.url"));
     myInsertButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

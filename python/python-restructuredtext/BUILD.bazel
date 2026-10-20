@@ -22,6 +22,11 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
+    name = "python_codeInsight_provided",
+    lib = "//python/python-code-insight:codeInsight",
+)
+
+jvm_provided_library(
     name = "platform_core-ui_provided",
     lib = "//platform/core-ui",
 )
@@ -71,6 +76,7 @@ jvm_library(
         ":platform_lang-impl_provided",
         ":platform_execution-impl_provided",
         ":python-community-impl_provided",
+        ":python_codeInsight_provided",
         ":platform_core-ui_provided",
     ],
 )
@@ -99,6 +105,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
+        "//python/python-code-insight:codeInsight",
+        "//python/python-code-insight:codeInsight_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/jsoup:jsoup_test_lib",

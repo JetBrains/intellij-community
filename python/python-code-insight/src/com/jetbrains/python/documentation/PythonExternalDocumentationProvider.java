@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
@@ -142,9 +142,9 @@ public final class PythonExternalDocumentationProvider extends PythonDocumentati
   private static void showNoExternalDocumentationDialog(Project project, QualifiedName qName) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final int rc = Messages.showOkCancelDialog(project,
-                                                 PyBundle.message("external.documentation.configure.description",
+                                                 PyCodeInsightBundle.message("external.documentation.configure.description",
                                                                   qName.getComponents().get(0)),
-                                                 PyBundle.message("external.documentation.title"),
+                                                 PyCodeInsightBundle.message("external.documentation.title"),
                                                  Messages.getQuestionIcon());
       if (rc == Messages.OK) {
         ShowSettingsUtilImpl.showSettingsDialog(project, DOCUMENTATION_CONFIGURABLE_ID , "");

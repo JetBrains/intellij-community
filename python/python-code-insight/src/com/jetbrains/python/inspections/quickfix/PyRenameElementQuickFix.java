@@ -14,7 +14,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -32,12 +32,12 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
 
   @Override
   public @NotNull String getFamilyName() {
-    return PyBundle.message("QFIX.FAMILY.NAME.rename.element");
+    return PyCodeInsightBundle.message("QFIX.FAMILY.NAME.rename.element");
   }
 
   @Override
   public @NotNull String getText() {
-    return PyBundle.message("QFIX.NAME.rename.element");
+    return PyCodeInsightBundle.message("QFIX.NAME.rename.element");
   }
 
   @Override

@@ -35,6 +35,7 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.python.ast"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.core.impl"/>
@@ -240,6 +241,52 @@
     <!--folding-->
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python"
                                 order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
+
+    <applicationSettings service="com.jetbrains.python.ReSTService$AppService"/>
+    <projectSettings service="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
+    <lang.documentationProvider language="Python"
+                                implementationClass="com.jetbrains.python.documentation.PythonExternalDocumentationProvider"
+                                order="before pythonDocumentationProvider"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
+    <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
+    <workspaceModel.customImlComponentNameContributor implementation="com.jetbrains.python.ReSTServiceImlComponentNameContributor"/>
+    <localInspection language="Python" shortName="PyTypeIgnoreWithoutCodeInspection" suppressId="PyTypeIgnoreWithoutCode"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.type.ignore.without.code"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.typeignore.PyTypeIgnoreWithoutCodeInspection"/>
+    <localInspection language="Python" shortName="PyUnknownIgnoreCodeInspection" suppressId="PyUnknownIgnoreCode"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.unknown.ignore.code"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.typeignore.PyUnknownIgnoreCodeInspection"/>
+    <completion.contributor language="Python" order="first"
+                            implementationClass="com.jetbrains.python.inspections.typeignore.PyIgnoreCodeCompletionContributor"/>
+    <typedHandler implementation="com.jetbrains.python.inspections.typeignore.PyIgnoreCodeTypedHandler"/>
+    <localInspection language="Python" shortName="PyPandasSeriesToListInspection" suppressId="PyPackages"
+                     bundle="messages.PyPsiBundle" key="INSP.pandas.series.values.replace.with.tolist"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection" groupKey="INSP.GROUP.pandas"/>
+    <localInspection language="Python" shortName="PyPandasTruthValueIsAmbiguousInspection" suppressId="PyPackages"
+                     bundle="messages.PyPsiBundle"
+                     key="INSP.pandas.truth.value.is.ambiguous.df" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPandasTruthValueIsAmbiguousInspection"
+                     groupKey="INSP.GROUP.pandas"/>
+    <applicationConfigurable groupId="python.group.settings"
+                             instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             key="external.documentation.configurable.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
+
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
+                        serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
+    <!-- # type: ignore -->
+    <lang.inspectionSuppressor language="Python"
+                               implementationClass="com.jetbrains.python.inspections.typeignore.TypeIgnoreInspectionSuppressor"/>
+    <notificationGroup id="Python Compatibility Inspection Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+                       bundle="messages.PyCodeInsightBundle" key="python.compatibility.inspection.advertiser.notifications.group.title"/>
+    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonCompatibilityInspectionAdvertiserIdsHolder"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -249,6 +296,19 @@
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <!-- NumPy -->
     <documentationLinkProvider implementation="com.jetbrains.python.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
+    <!-- PyDocstring -->
+    <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDoctestVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.documentation.PyDocstringCodeBlockVisitorFilter"/>
+    <!-- PyFunctionTypeAnnotation and PyTypeHint -->
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
+    <visitorFilter language="PyTypeHint"
+                   implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
+    <!-- PyExpressionCodeFragment -->
+    <visitorFilter language="Python"
+                   implementationClass="com.jetbrains.python.inspections.PyExpressionCodeFragmentVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyThirdPartyInspectionExtension"/>
   </extensions>
 
   <actions resource-bundle="messages.PyCodeInsightBundle">

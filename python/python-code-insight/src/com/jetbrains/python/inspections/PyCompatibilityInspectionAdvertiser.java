@@ -24,9 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.configuration.PyModuleInterpreterReader;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import one.util.streamex.StreamEx;
@@ -84,7 +85,8 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static boolean moduleUsesPythonSdk(@NotNull PyFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file.getVirtualFile(), file.getProject());
     if (module != null) {
-      return PyModuleInterpreterReader.findModuleInterpreterIfReady(module) != null;
+      EvoPyProject pyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
+      return pyProject != null && pyProject.getInterpreter() != null;
     }
     return false;
   }
@@ -100,12 +102,12 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
     final List<LanguageLevel> versionsToEnable = getVersionsNewerThan(latestConfiguredVersion);
     final String versionsList = StringUtil.join(versionsToEnable, ",&nbsp;");
     final String message =
-      PyBundle.message("python.compatibility.inspection.advertiser.version.stale.python3.version.warning.message",
+      PyCodeInsightBundle.message("python.compatibility.inspection.advertiser.version.stale.python3.version.warning.message",
                        latestConfiguredVersion,
                        versionsList);
     showSingletonNotification(
       project,
-      PyBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
+      PyCodeInsightBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
       message,
       STALE_PYTHON_VERSION,
       (notification, event) -> {
@@ -149,7 +151,7 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static void showSingletonNotification(@NotNull Project project, @NotificationContent String msg, @NotNull String displayId) {
     showSingletonNotification(
       project,
-      PyBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
+      PyCodeInsightBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
       msg,
       displayId,
       (notification, event) -> {
