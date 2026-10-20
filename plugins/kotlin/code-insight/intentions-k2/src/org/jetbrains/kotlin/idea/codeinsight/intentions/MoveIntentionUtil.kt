@@ -31,6 +31,7 @@ internal fun isApplicableForMoveMember(element: KtNamedDeclaration): Boolean {
     if (element.hasModifier(KtTokens.OPERATOR_KEYWORD)) return false
     val containingClass = element.containingClassOrObject ?: return false
     if (containingClass.isLocal) return false
+    if (containingClass is KtEnumEntry) return false
     if (containingClass is KtClass && containingClass.isInner()) return false
 
     return true
