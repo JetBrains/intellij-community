@@ -481,7 +481,7 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   a loopback name, and refuses a request the browser marks as cross-site.
   [@test] ../crates/air-trace/src/serve/tests.rs
 
-- By default it looks in `out/air-traces`, in the Air lanes' `bazel-testlogs`, and in the controller's pulled
+- By default it looks in the Air lanes' `bazel-testlogs` and in the controller's pulled
   zips. `--root` adds a place, and `--no-default-roots` drops the defaults.
   [@test] ../crates/air-trace/src/serve/tests.rs
 

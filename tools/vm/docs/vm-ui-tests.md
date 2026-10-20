@@ -880,7 +880,7 @@ site:
 ./community/tools/trace.cmd serve --detach  # one server for this machine, in the background
 ```
 
-It looks in `out/air-traces`, in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the journal of
+It looks in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the journal of
 each run under `<runtime root>/runs`. It serves zips by byte range without unpacking them, and it tells the page
 when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--root DIR` adds a place to look.
 `pnpm dev` in `plugins/air/docs` proxies `/__air` to it, so the viewer under development reads the same runs.

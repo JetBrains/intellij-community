@@ -85,8 +85,7 @@ pub(crate) struct ServeArgs {
     /// Another directory or zip to find bundles in; repeatable.
     #[arg(long = "root", value_name = "DIR")]
     pub roots: Vec<PathBuf>,
-    /// Look only in the --root values, not in out/air-traces, the AIR lanes' bazel-testlogs and the VM runs and
-    /// reports.
+    /// Look only in the --root values, not in the AIR lanes' bazel-testlogs and the VM runs and reports.
     #[arg(long)]
     pub no_default_roots: bool,
     /// Make sure a server answers on the port, starting one in the background when none does, then exit.
