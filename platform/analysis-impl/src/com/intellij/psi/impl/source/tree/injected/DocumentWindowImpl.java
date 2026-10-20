@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.ReadActionCache;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -771,8 +772,11 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
         if (change == null) continue;
         String prefix = myShreds.get(i).getPrefix();
         String suffix = myShreds.get(i).getSuffix();
-        assert change.startsWith(prefix) : change + "/" + prefix;
-        assert change.endsWith(suffix) : change + "/" + suffix;
+        if (!change.startsWith(prefix) || !change.endsWith(suffix)) {
+          throw new IncorrectOperationException(
+            "The change edits the prefix or the suffix of an injected fragment, which is not in the host text. " +
+            "Change: '" + change + "', prefix: '" + prefix + "', suffix: '" + suffix + "'");
+        }
         result[i] = StringUtil.trimEnd(StringUtil.trimStart(change, prefix), suffix);
       }
       return result;
@@ -812,7 +816,11 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
         String separator = suffix + prefix;
         if (!separator.isEmpty()) {
           int sep = newText.indexOf(separator);
-          assert sep != -1;
+          if (sep == -1) {
+            throw new IncorrectOperationException(
+              "The change edits the suffix and the prefix between two shreds of an injected fragment, which are not in the host text. " +
+              "Change: '" + newText + "', separator: '" + separator + "'");
+          }
           result[i] = newText.substring(0, sep + suffix.length());
           result[j] = newText.substring(sep + suffix.length() + prefix.length());
           return;
