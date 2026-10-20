@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.statistics
 
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 import org.ehcache.sizeof.SizeOf
 import org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinObjectSizeCalculator
 import kotlin.reflect.KClass
@@ -17,7 +18,7 @@ internal class K2IdeKotlinObjectSizeCalculator : KotlinObjectSizeCalculator {
     /**
      * The cache has a weak key to avoid potential class loader memory leaks.
      */
-    private val cache = ContainerUtil.createConcurrentWeakMap<KClass<*>, Long>()
+    private val cache: ConcurrentMap<KClass<*>, Long> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
     override fun shallowSize(value: Any): Long =
         cache.computeIfAbsent(value::class) { kClass ->

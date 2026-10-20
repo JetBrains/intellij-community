@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
@@ -148,7 +149,8 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
     final ConcurrentMap<RngElementDescriptor, CachedValue<XmlElementDescriptor>> descriptorMap =
       CachedValuesManager.getCachedValue(
-        childTag, () -> CachedValueProvider.Result.create(ContainerUtil.createConcurrentWeakMap(), ModificationTracker.NEVER_CHANGED));
+        childTag, () -> CachedValueProvider.Result.create(ConcurrentCollectionFactory.createConcurrentWeakMap(),
+                                                        ModificationTracker.NEVER_CHANGED));
     final XmlElementDescriptor value = descriptorMap.computeIfAbsent(this,  descr -> {
       return CachedValuesManager.getManager(childTag.getProject()).createCachedValue(() -> {
         final XmlElementDescriptor descriptor = descr.findElementDescriptor(childTag);

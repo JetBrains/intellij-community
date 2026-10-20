@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.testFramework
 
 import com.intellij.mock.MockComponentManager
 import com.intellij.openapi.application.Application
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 
 object MockComponentManagerCreationTracer {
-    private val creationTraceMap = ContainerUtil.createConcurrentWeakMap<MockComponentManager, Throwable>()
+    private val creationTraceMap: ConcurrentMap<MockComponentManager, Throwable> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
     @JvmStatic
     fun diagnoseDisposedButNotClearedApplication(app: Application) {

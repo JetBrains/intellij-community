@@ -40,7 +40,6 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.Processor
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.TestOnly
@@ -306,7 +305,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     private val cache: Lazy<ConcurrentMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>> =
         lazy(LazyThreadSafetyMode.PUBLICATION) {
-            ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>()
+            ConcurrentCollectionFactory.createConcurrentWeakMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>()
         }
 
     private val implicitPackagePrefixCache = ImplicitPackagePrefixCache(project)

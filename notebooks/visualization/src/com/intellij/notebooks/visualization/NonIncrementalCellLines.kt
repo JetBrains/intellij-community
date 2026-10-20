@@ -7,7 +7,8 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 
 /**
  * inspired by [org.jetbrains.plugins.notebooks.editor.NotebookCellLinesImpl],
@@ -132,7 +133,7 @@ class NonIncrementalCellLines private constructor(
   }
 
   companion object {
-    private val map = ContainerUtil.createConcurrentWeakMap<Document, NotebookCellLines>()
+    private val map: ConcurrentMap<Document, NotebookCellLines> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
     fun get(document: Document, intervalsGenerator: IntervalsGenerator): NotebookCellLines =
       map.computeIfAbsent(document) {

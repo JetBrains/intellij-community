@@ -19,7 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.impl.features.inlayHint.collectInlayHintItems
 import com.intellij.platform.lsp.impl.features.inlayHintColor.collectColorInlayItems
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,7 +60,7 @@ internal class LspInlayApplier(private val project: Project) {
 
   // Weak keys: the daemon schedules refreshes for every editor, including the in-memory files of diff viewers and
   // dialogs, which never reach [onFileClosed].
-  private val fileToCurrentGeneration = ContainerUtil.createConcurrentWeakMap<VirtualFile, AtomicLong>()
+  private val fileToCurrentGeneration: ConcurrentMap<VirtualFile, AtomicLong> = Java11Shim.INSTANCE.createConcurrentWeakMap()
   private val serializedDispatcher = Dispatchers.Default.limitedParallelism(1)
 
   /**

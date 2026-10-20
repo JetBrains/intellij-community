@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 import org.jetbrains.annotations.ApiStatus
@@ -30,7 +30,7 @@ abstract class LspTypeEvalContext(val psiFile: PsiFile) {
   private val isFullLoaded: AtomicBoolean = AtomicBoolean(false)
 
   /** Every highlighting thread reads and writes this map, so it must be concurrent. */
-  private val cacheElementToStringType: ConcurrentMap<PyTypedElement, String> = ContainerUtil.createConcurrentWeakMap()
+  private val cacheElementToStringType: ConcurrentMap<PyTypedElement, String> = Java11Shim.INSTANCE.createConcurrentWeakMap()
   private val cacheStringTypeToType: ConcurrentSkipListMap<String, Ref<PyType?>> = ConcurrentSkipListMap()
   private val unresolvedSet: ConcurrentSkipListSet<String> = ConcurrentSkipListSet()
 

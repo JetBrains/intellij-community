@@ -9,10 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
-import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
@@ -43,7 +39,7 @@ public final class JsonSchemaCatalogManager {
 
   private final @NotNull Project myProject;
   private @Nullable VirtualFile myCatalog = null;
-  private final @NotNull ConcurrentMap<VirtualFile, String> myResolvedMappings = ContainerUtil.createConcurrentSoftMap();
+  private final @NotNull ConcurrentMap<VirtualFile, String> myResolvedMappings = ConcurrentCollectionFactory.createConcurrentSoftMap();
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
   private VirtualFile myTestSchemaStoreFile;
 

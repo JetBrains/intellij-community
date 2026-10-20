@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.concurrent.ConcurrentMap
 
@@ -23,7 +23,7 @@ class CachedAnnotationNames(project: Project, private val annotationOptionPrefix
 
     private val cache: CachedValue<ConcurrentMap<Module, List<String>>> = cachedValue(project) {
         CachedValueProvider.Result.create(
-            ContainerUtil.createConcurrentWeakMap<Module, List<String>>(),
+            Java11Shim.INSTANCE.createConcurrentWeakMap(),
             ProjectRootModificationTracker.getInstance(project)
         )
     }

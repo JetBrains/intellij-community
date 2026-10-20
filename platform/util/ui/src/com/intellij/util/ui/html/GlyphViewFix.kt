@@ -4,9 +4,10 @@
 package com.intellij.util.ui.html
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBHtmlEditorKit
+import java.util.concurrent.ConcurrentMap
 import sun.swing.text.GlyphViewAccessor
 import java.text.BreakIterator
 import javax.swing.text.Element
@@ -21,7 +22,7 @@ internal object GlyphViewFix : GlyphViewAccessor() {
     setAccessor(this)
   }
 
-  private val cache = ContainerUtil.createConcurrentWeakMap<Element, BreakIteratorCache>()
+  private val cache: ConcurrentMap<Element, BreakIteratorCache> = Java11Shim.INSTANCE.createConcurrentWeakMap()
 
   override fun calcBreakSpots(view: GlyphView, breaker: BreakIterator): IntArray {
     EDT.assertIsEdt()

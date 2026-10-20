@@ -22,7 +22,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
@@ -236,8 +236,8 @@ class KtCompilerPluginsCache private constructor(
             }.get()
             return KtCompilerPluginsCache(
                 pluginsClassLoader = pluginsClassLoader,
-                registrarForSourceModule = ContainerUtil.createConcurrentWeakMap(),
-                registrarForScriptModule = SynchronizedClearableLazy { ContainerUtil.createConcurrentWeakMap() },
+                registrarForSourceModule = Java11Shim.INSTANCE.createConcurrentWeakMap(),
+                registrarForScriptModule = SynchronizedClearableLazy { Java11Shim.INSTANCE.createConcurrentWeakMap() },
                 onlyBundledPluginsEnabled = onlyBundledPluginsEnabled,
                 project = project
             )

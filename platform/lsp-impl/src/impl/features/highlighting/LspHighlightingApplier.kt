@@ -32,6 +32,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Java11Shim
+import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,7 +64,7 @@ internal class LspHighlightingApplier(private val project: Project) {
   // Weak keys: the daemon pass reports for every editor, including the in-memory files of diff viewers and dialogs,
   // which never get a file-closed event. Entries are not dropped on close either: a refresh still in flight would
   // then report a generation above the restarted counter, and the Wolf gate would drop the newer reports.
-  private val fileToCurrentGeneration = ContainerUtil.createConcurrentWeakMap<VirtualFile, AtomicLong>()
+  private val fileToCurrentGeneration: ConcurrentMap<VirtualFile, AtomicLong> = Java11Shim.INSTANCE.createConcurrentWeakMap()
   private val filesWithWolfReportedErrors = ContainerUtil.createWeakSet<VirtualFile>()
   private val fileToLastWolfWrittenGen = WeakHashMap<VirtualFile, Long>()
 

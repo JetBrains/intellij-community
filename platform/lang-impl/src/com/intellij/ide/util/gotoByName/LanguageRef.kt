@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.lang.DependentLanguage
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
@@ -11,9 +12,9 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.ConcurrentMap
 import javax.swing.Icon
 
 private val LOG = Logger.getInstance(LanguageRef::class.java)
@@ -29,7 +30,7 @@ class LanguageRef private constructor(
   constructor(id: String, displayName: @Nls String, icon: Icon?) : this(id, displayName, { icon })
 
   companion object {
-    private val cache = ContainerUtil.createConcurrentWeakMap<Language, LanguageRef>()
+    private val cache: ConcurrentMap<Language, LanguageRef> = ConcurrentCollectionFactory.createConcurrentWeakMap()
 
     @JvmStatic
     fun forLanguage(lang: Language): LanguageRef {
@@ -93,7 +94,7 @@ class FileTypeRef private constructor(
   constructor(name: @NonNls String, displayName: @Nls String, icon: Icon?) : this(name, displayName, { icon })
 
   companion object {
-    private val cache = ContainerUtil.createConcurrentWeakMap<FileType, FileTypeRef>()
+    private val cache: ConcurrentMap<FileType, FileTypeRef> = ConcurrentCollectionFactory.createConcurrentWeakMap()
 
     @JvmStatic
     fun forFileType(fileType: FileType): FileTypeRef =
