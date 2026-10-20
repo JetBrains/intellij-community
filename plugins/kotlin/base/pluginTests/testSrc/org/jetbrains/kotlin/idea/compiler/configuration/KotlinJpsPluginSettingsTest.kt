@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion.Companion.get
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.shouldImportKotlinJpsPluginVersionFromExternalBuildSystem
-import kotlin.text.ifEmpty
 
 class KotlinJpsPluginSettingsTest : BasePlatformTestCase() {
 
@@ -45,6 +45,45 @@ class KotlinJpsPluginSettingsTest : BasePlatformTestCase() {
             // Switch to another build system with the version downgrade
             importKotlinJpsVersionAndCheck("1.7.21", "Maven", "1.8.0", "Gradle")
         }
+    }
+
+    fun `test checkJpsVersion rejects Kotlin 2_6_0 and later without the Build Tools API`() {
+        setBuildToolsApiEnabled(false)
+        assertNull(KotlinJpsPluginSettings.checkJpsVersion("2.5.20", project))
+        for (version in listOf("2.6.0-dev-1234", "2.6.0-Beta1", "2.6.0", "2.7.0")) {
+            val error = KotlinJpsPluginSettings.checkJpsVersion(version, project)
+            assertTrue("$version: $error", error is NewCompilerVersion)
+            assertEquals(
+                "The project uses Kotlin '$version', but the legacy Kotlin JPS compiler supports only versions before '2.6.0'. " +
+                        "Turn on the 'kotlin.jps.use.build.tools.api' registry key to build with the Build Tools API",
+                error?.message,
+            )
+        }
+    }
+
+    fun `test checkJpsVersion accepts Kotlin 2_6_0 and later with the Build Tools API`() {
+        setBuildToolsApiEnabled(true)
+        for (version in listOf("2.5.20", "2.6.0-Beta1", "2.6.0", "2.7.0")) {
+            assertNull(version, KotlinJpsPluginSettings.checkJpsVersion(version, project))
+        }
+    }
+
+    fun `test the Build Tools API implementation is required from Kotlin 2_6_0`() {
+        setBuildToolsApiEnabled(false)
+        assertFalse(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0"))
+
+        setBuildToolsApiEnabled(true)
+        assertFalse(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.5.20"))
+        assertTrue(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0-Beta1"))
+        assertTrue(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0"))
+    }
+
+    private fun setBuildToolsApiEnabled(enabled: Boolean) {
+        // The test application does not register the Kotlin plugin keys,
+        // so `setValue(enabled, testRootDisposable)` fails to read the previous value
+        val registryValue = Registry.get("kotlin.jps.use.build.tools.api")
+        registryValue.setValue(enabled)
+        Disposer.register(testRootDisposable) { registryValue.resetToDefault() }
     }
 
     private fun importKotlinJpsVersionAndCheck(

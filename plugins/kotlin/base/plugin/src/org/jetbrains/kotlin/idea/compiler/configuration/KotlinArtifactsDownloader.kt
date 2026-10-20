@@ -54,7 +54,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("IO_FILE_USAGE")
 object KotlinArtifactsDownloader {
-    private const val USE_BUILD_TOOLS_API_REGISTRY_KEY: String = "kotlin.jps.use.build.tools.api"
+    internal const val USE_BUILD_TOOLS_API_REGISTRY_KEY: String = "kotlin.jps.use.build.tools.api"
 
     /**
      * @return whether JPS builds can use the Build Tools API.
@@ -69,6 +69,13 @@ object KotlinArtifactsDownloader {
      */
     fun isBuildToolsImplSupported(version: String): Boolean =
         IdeKotlinVersion.get(version).kotlinVersion >= MINIMUM_BUILD_TOOLS_IMPL_VERSION
+
+    internal val FIRST_VERSION_WITHOUT_LEGACY_COMPILER: KotlinVersion = KotlinVersion(2, 6, 0)
+
+    fun isLegacyCompilerSupported(version: KotlinVersion): Boolean = version < FIRST_VERSION_WITHOUT_LEGACY_COMPILER
+
+    fun isBuildToolsImplRequired(version: String): Boolean =
+        isBuildToolsApiEnabled() && !isLegacyCompilerSupported(IdeKotlinVersion.get(version).kotlinVersion)
 
     /**
      * @return the BTA implementation directory for Kotlin version [version]. The directory can be missing.
@@ -85,7 +92,7 @@ object KotlinArtifactsDownloader {
 
         // TODO The IDE bundles the Kotlin dist for its own compiler version, but not the implementation.
         // For a bundled dev version, the download usually fails, because Maven Central has no dev versions.
-        // JPS then uses the legacy compiler.
+        // JPS then uses the legacy compiler. From Kotlin 2.6.0, the build fails instead
         val context = DownloadContext(
             project,
             indicator,
@@ -101,7 +108,7 @@ object KotlinArtifactsDownloader {
         }
 
         if (directory == null) {
-            LOG.info("No $KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID for $version. Kotlin JPS uses the legacy compiler path.", failure)
+            LOG.info("No $KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID for $version", failure)
         }
         return directory
     }
@@ -135,7 +142,7 @@ object KotlinArtifactsDownloader {
 
     /**
      * @return **true** if all dependencies are ready.
-     * The Build Tools API implementation is optional, so it does not change the result.
+     * Unless [isBuildToolsImplRequired], the Build Tools API implementation is optional, so it does not change the result.
      * Without it, Kotlin JPS uses the legacy compiler path. Each call tries to download a missing implementation again.
      */
     @Synchronized // Avoid manipulations with the same files from different threads
@@ -158,7 +165,12 @@ object KotlinArtifactsDownloader {
             return false
         }
 
-        lazyDownloadBuildToolsImpl(project, jpsVersion, indicator)
+        val buildToolsImpl = lazyDownloadBuildToolsImpl(project, jpsVersion, indicator)
+        if (buildToolsImpl == null && isBuildToolsImplRequired(jpsVersion)) {
+            val artifactVersion = IdeKotlinVersion.get(jpsVersion).artifactVersion
+            onError(failedToDownloadUnbundledJpsMavenArtifact(project, KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID, artifactVersion))
+            return false
+        }
 
         return true
     }
@@ -342,8 +354,13 @@ object KotlinArtifactsDownloader {
         artifactId: String,
         version: String,
     ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-        require(artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID || artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) {
-            "$artifactId should be either $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID or $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID"
+        require(
+            artifactId == KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID ||
+                    artifactId == KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID ||
+                    artifactId == KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID
+        ) {
+            "$artifactId should be one of $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID, $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, " +
+                    KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID
         }
         val suggestions = listOf(KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide")) +
                 FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor.getAllContributors(project).mapNotNull { it.getSuggestion() }

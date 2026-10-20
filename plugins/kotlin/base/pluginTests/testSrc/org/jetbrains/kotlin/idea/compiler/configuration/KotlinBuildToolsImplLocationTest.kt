@@ -21,4 +21,10 @@ class KotlinBuildToolsImplLocationTest : TestCase() {
         assertTrue(KotlinArtifactsDownloader.isBuildToolsImplSupported("2.5.20"))
         assertTrue(KotlinArtifactsDownloader.isBuildToolsImplSupported("2.5.20-Beta1"))
     }
+
+    fun `test the legacy compiler is supported before Kotlin 2_6_0`() {
+        assertTrue(KotlinArtifactsDownloader.isLegacyCompilerSupported(IdeKotlinVersion.get("2.5.255").kotlinVersion))
+        assertFalse(KotlinArtifactsDownloader.isLegacyCompilerSupported(IdeKotlinVersion.get("2.6.0-dev-1234").kotlinVersion))
+        assertFalse(KotlinArtifactsDownloader.isLegacyCompilerSupported(IdeKotlinVersion.get("2.6.0").kotlinVersion))
+    }
 }

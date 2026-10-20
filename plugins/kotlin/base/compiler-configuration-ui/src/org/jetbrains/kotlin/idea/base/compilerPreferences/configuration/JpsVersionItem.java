@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
 
 import com.intellij.openapi.util.NlsSafe;
-import kotlin.KotlinVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +45,7 @@ class JpsVersionItem implements DescriptionAware {
             return KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.bundled.0.jps.version", myVersion);
         }
 
-        KotlinVersion kotlinVersion = myVersion.getKotlinVersion();
-        if (kotlinVersion.compareTo(KotlinJpsPluginSettings.getJpsMinimumSupportedVersion()) < 0 ||
-            kotlinVersion.compareTo(KotlinJpsPluginSettings.getJpsMaximumSupportedVersion()) > 0) {
+        if (!KotlinJpsPluginSettings.isJpsVersionSupported(myVersion.getKotlinVersion())) {
             return KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.0.unsupported.jps.version", myVersion);
         }
 

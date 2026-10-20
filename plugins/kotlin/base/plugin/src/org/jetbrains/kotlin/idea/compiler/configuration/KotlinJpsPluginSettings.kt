@@ -89,6 +89,17 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         @JvmStatic
         val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()
 
+        /**
+         * @return whether JPS can build with Kotlin [version] in the current IDE configuration.
+         * @see checkJpsVersion
+         */
+        @JvmStatic
+        fun isJpsVersionSupported(version: KotlinVersion): Boolean =
+            version in jpsMinimumSupportedVersion..jpsMaximumSupportedVersion && isCompilerAvailable(version)
+
+        private fun isCompilerAvailable(version: KotlinVersion): Boolean =
+            KotlinArtifactsDownloader.isBuildToolsApiEnabled() || KotlinArtifactsDownloader.isLegacyCompilerSupported(version)
+
         fun validateSettings(project: Project) {
             val jpsPluginSettings = getInstance(project)
 
@@ -147,6 +158,17 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                         "kotlin.jps.compiler.maximum.supported.version.not.satisfied",
                         jpsMaximumSupportedVersion,
                         jpsVersion,
+                    )
+                )
+            }
+
+            if (!isCompilerAvailable(parsedKotlinVersion)) {
+                return NewCompilerVersion(
+                    KotlinBasePluginBundle.message(
+                        "kotlin.jps.compiler.legacy.maximum.supported.version.not.satisfied",
+                        KotlinArtifactsDownloader.FIRST_VERSION_WITHOUT_LEGACY_COMPILER,
+                        jpsVersion,
+                        KotlinArtifactsDownloader.USE_BUILD_TOOLS_API_REGISTRY_KEY,
                     )
                 )
             }

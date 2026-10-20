@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloade
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.isDirectory
 
@@ -68,6 +70,13 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             }
         }
 
+        if (KotlinArtifactsDownloader.isBuildToolsImplRequired(version)) {
+            val buildToolsImpl = KotlinArtifactsDownloader.getBuildToolsImplDirectory(version)
+            if (!buildToolsImpl.isDirectory()) {
+                downloadOrThrow(version)
+            }
+        }
+
         return buildList {
             add(Pair("-Djps.kotlin.home=", kotlinDist))
             // The Kotlin dist does not contain the implementation, so the BTA impl is passed via [BTA_IMPL_HOME_PROPERTY]
@@ -114,6 +123,13 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             }
         })
 
-        future.get()
+        try {
+            future.get()
+        } catch (_: CancellationException) {
+            error("Unable to download required Kotlin JPS plugin version $version: the download was cancelled")
+        } catch (e: ExecutionException) {
+            val cause = e.cause
+            error("Unable to download required Kotlin JPS plugin version $version: ${cause?.message ?: "unknown error"}")
+        }
     }
 }
