@@ -21,8 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyGotoClassContributor
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateExpressionCondition.PyClassCondition.Companion.create
 import com.jetbrains.python.psi.PyClass
 import javax.swing.JComponent
@@ -53,13 +53,13 @@ class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) :
   }
 
   private inner class ChooseClassAction(private val projects: Array<Project>) : DumbAwareAction(
-    PyBundle.messagePointer("settings.postfix.choose.class.action.name")) {
+    PyCodeInsightBundle.messagePointer("settings.postfix.choose.class.action.name")) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val contributor = MultiProjectPyClassesContributor(projects)
       val model: GotoClassModel2 = object : GotoClassModel2(project) {
         override fun getPromptText(): String {
-          return PyBundle.message("settings.postfix.choose.class.prompt.text")
+          return PyCodeInsightBundle.message("settings.postfix.choose.class.prompt.text")
         }
 
         override fun getContributorList(): List<ChooseByNameContributor> {
@@ -134,11 +134,11 @@ class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) :
   }
 
   private inner class EnterClassAction : DumbAwareAction(
-    PyBundle.messagePointer("settings.postfix.enter.class.action.name")) {
+    PyCodeInsightBundle.messagePointer("settings.postfix.enter.class.action.name")) {
     override fun actionPerformed(e: AnActionEvent) {
       val name = Messages.showInputDialog(myEditTemplateAndConditionsPanel,
-                                          PyBundle.message("settings.postfix.enter.fully.qualified.class.name"),
-                                          PyBundle.message("settings.postfix.enter.class.dialog.name"), null)
+                                          PyCodeInsightBundle.message("settings.postfix.enter.fully.qualified.class.name"),
+                                          PyCodeInsightBundle.message("settings.postfix.enter.class.dialog.name"), null)
       if (name != null) {
         val condition = create(name)
         if (condition != null) {

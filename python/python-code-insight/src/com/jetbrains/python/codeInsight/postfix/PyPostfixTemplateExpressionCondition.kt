@@ -6,8 +6,8 @@ import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTempl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
@@ -44,7 +44,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyBooleanExpression : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.boolean.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.boolean.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -58,7 +58,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyNumberExpression : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.number.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.number.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -78,7 +78,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyStringExpression : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.string.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.string.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -97,7 +97,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyIterable : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.iterable.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.iterable.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -111,7 +111,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   abstract class PyCollectionTypeConditionBase(private val type: String, private val presentableNameKey: String) : PySimpleConditionBase(type) {
-    override fun getPresentableName(): @Nls String = PyBundle.message(presentableNameKey)
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message(presentableNameKey)
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -129,7 +129,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   class PyTuple : PyCollectionTypeConditionBase("tuple", "postfix.template.condition.tuple.name")
 
   class PyNonNoneExpression : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.non.none.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.non.none.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -143,7 +143,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyExceptionExpression : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.exception.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.exception.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
@@ -158,7 +158,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
   }
 
   class PyBuiltinLenApplicable : PySimpleConditionBase(ID) {
-    override fun getPresentableName(): @Nls String = PyBundle.message("postfix.template.condition.builtin.len.applicable.name")
+    override fun getPresentableName(): @Nls String = PyCodeInsightBundle.message("postfix.template.condition.builtin.len.applicable.name")
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)

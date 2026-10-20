@@ -133,5 +133,12 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" open="true"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
+
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
+    <codeInsight.template.postfixTemplateProvider language="Python"
+                                                  implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
   </extensions>
 </idea-plugin>

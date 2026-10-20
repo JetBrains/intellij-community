@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTempl
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +62,7 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
 
   @Override
   public @Nullable String getPresentableName() {
-    return PyBundle.message("postfix.template.provider.name");
+    return PyCodeInsightBundle.message("postfix.template.provider.name");
   }
 
   @Override
