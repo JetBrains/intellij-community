@@ -72,8 +72,6 @@ import com.intellij.platform.fileEditor.FileEntryTab
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
@@ -111,7 +109,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -148,10 +145,6 @@ data class EditorCompositeModel internal constructor(
   @Internal
   constructor(fileEditorAndProviderList: List<FileEditorWithProvider>)
     : this(fileEditorAndProviderList = fileEditorAndProviderList, state = null)
-
-  @Internal
-  constructor(fileEditorAndProviderList: List<FileEditorWithProvider>, createdEditors: CreatedFileEditorSink)
-    : this(fileEditorAndProviderList = fileEditorAndProviderList, state = null, createdEditors = createdEditors)
 }
 
 // workaround for remote dev, where we cannot yet implement correctly
@@ -230,31 +223,6 @@ open class EditorComposite internal constructor(
   /** Tab restoration shall not appear */
   internal var preparationVisibleInStatusBar: Boolean = true
 
-  /** Controls the preparation task. Set on EDT before initialization starts. */
-  @Internal
-  var preparationProgress: PreparationProgress = PreparationProgress.UNTIL_OPENING_FINISHED
-
-  @Internal
-  enum class PreparationProgress {
-    /**
-     * Cancellation stops the preparation.
-     * Used by a local composite.
-     */
-    UNTIL_OPENING_FINISHED,
-
-    /**
-     * If cancelled before the editors are published, closes the tab.
-     * Used by a frontend composite in split mode.
-     */
-    UNTIL_EDITORS_PUBLISHED,
-
-    /**
-     * Does not create a preparation task.
-     * Used by a backend composite and by a replacement composite of the light mode migration.
-     */
-    HIDDEN,
-  }
-
   private val _isPreviewFlow = MutableStateFlow(false)
   internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
 
@@ -293,20 +261,16 @@ open class EditorComposite internal constructor(
                               .asContextElement() + clientId.asContextElement() + tracer.rootSpan("EditorComposite model flow",
                                                                                                   arrayOf("file", file.name))) {
         // Let's wait until EDT has created a tab in FileManagerImpl and then show progress
-        val (visibleInStatusBar, progress) = span("waiting initDeferred", Dispatchers.EDT) {
+        val visibleInStatusBar = span("waiting initDeferred", Dispatchers.EDT) {
           initDeferred.await()
-          preparationVisibleInStatusBar to preparationProgress
+          preparationVisibleInStatusBar
         }
         try {
-          when (progress) {
-            PreparationProgress.HIDDEN -> collectModel(model)
-            PreparationProgress.UNTIL_EDITORS_PUBLISHED -> collectModelUntilEditorsPublished(model, visibleInStatusBar)
-            PreparationProgress.UNTIL_OPENING_FINISHED -> withBackgroundProgress(
-              project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
-              suspender = null, visibleInStatusBar = visibleInStatusBar,
-            ) {
-              collectModel(model)
-            }
+          withBackgroundProgress(project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
+            suspender = null,
+            visibleInStatusBar = visibleInStatusBar,
+          ) {
+            collectModel(model)
           }
         }
         finally {
@@ -320,43 +284,6 @@ open class EditorComposite internal constructor(
       isPreviewFlow.drop(1).collect {
         FileEditorManagerEx.getInstanceEx(project).updateFileName(file)
       }
-    }
-  }
-
-  private suspend fun collectModelUntilEditorsPublished(model: Flow<EditorCompositeModel>, visibleInStatusBar: Boolean) = supervisorScope {
-    val pipe = createProgressPipe()
-    val progress = launch {
-      try {
-        withBackgroundProgress(
-          project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
-          suspender = null, visibleInStatusBar = visibleInStatusBar,
-        ) {
-          reportRawProgress { reporter ->
-            val updates = launch {
-              pipe.progressUpdates().collect {
-                reporter.text(it.text)
-                reporter.details(it.details)
-                reporter.fraction(it.fraction)
-              }
-            }
-            try {
-              availableJob.join()
-            }
-            finally {
-              updates.cancel()
-            }
-          }
-        }
-      }
-      finally {
-        closeTabIfUnavailable()
-      }
-    }
-    try {
-      pipe.collectProgressUpdates { collectModel(model) }
-    }
-    finally {
-      progress.cancel()
     }
   }
 
