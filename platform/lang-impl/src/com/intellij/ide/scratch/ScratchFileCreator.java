@@ -4,16 +4,23 @@ package com.intellij.ide.scratch;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.project.Project;
@@ -24,8 +31,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
@@ -59,11 +69,8 @@ public final class ScratchFileCreator {
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project,
                                                      @NotNull ScratchFileCreationHelper.Context context,
                                                      @NotNull DataContext dataContext) {
-    RootType targetRootType = context.defaultRootType != null ? context.defaultRootType : ScratchUtil.findScratchesRootType();
-    if (targetRootType == null) {
-      LOG.warn("Cannot create a scratch file: no root type with id '" + ScratchUtil.SCRATCHES_ROOT_TYPE_ID + "' is registered");
-      return null;
-    }
+    RootType targetRootType = context.defaultRootType != null ? context.defaultRootType : findScratchesRootTypeOrWarn();
+    if (targetRootType == null) return null;
     context.defaultRootType = targetRootType;
 
     if (context.fileExtension == null && context.language != null) {
@@ -105,6 +112,102 @@ public final class ScratchFileCreator {
       context.ideView.selectElement(psiFile);
     }
     return psiFile;
+  }
+
+  /**
+   * Builds the context for a scratch file from the selection in {@code editor}: the selected text,
+   * the language at the caret and the IDE view of {@code dataContext}.
+   */
+  public static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull Project project,
+                                                                         @Nullable PsiFile file,
+                                                                         @Nullable Editor editor,
+                                                                         @NotNull DataContext dataContext) {
+    ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
+    context.text = StringUtil.notNullize(getSelectionText(editor));
+    context.sourceFile = file;
+    if (StringUtil.isNotEmpty(context.text)) {
+      initLanguageFromCaret(project, editor, file, context, dataContext);
+    }
+    context.ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
+    return context;
+  }
+
+  private static @Nullable String getSelectionText(@Nullable Editor editor) {
+    if (editor == null) return null;
+    return editor.getSelectionModel().getSelectedText(true);
+  }
+
+  private static void initLanguageFromCaret(@NotNull Project project,
+                                            @Nullable Editor editor,
+                                            @Nullable PsiFile psiFile,
+                                            @NotNull ScratchFileCreationHelper.Context context,
+                                            @NotNull DataContext dataContext) {
+    if (editor == null || psiFile == null) return;
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
+    context.selectionRange = caret.getSelectionRange();
+    int offset = caret.getOffset();
+    PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
+    PsiFile file = element != null ? element.getContainingFile() : psiFile;
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType fileType = getFileTypeFromName(file.getName(), fileTypeManager);
+    context.language = fileType instanceof LanguageFileType ? file.getLanguage() : null;
+    if (fileType != null) {
+      context.fileExtension = getFileTypeExtensions(fileType, true, fileTypeManager).first();
+    }
+    if (context.language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
+      context.language = StdLanguages.XML;
+    }
+    checkLanguageAndTryToFixText(project, context, dataContext);
+  }
+
+  private static void checkLanguageAndTryToFixText(@NotNull Project project,
+                                                   @NotNull ScratchFileCreationHelper.Context context,
+                                                   @NotNull DataContext dataContext) {
+    if (context.language == null) return;
+    ScratchFileCreationHelper handler = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
+    if (handler.prepareText(project, context, dataContext)) return;
+
+    PsiFile psiFile = ScratchFileCreationHelper.parseHeader(project, context.language, context.text);
+    PsiErrorElement firstError = SyntaxTraverser.psiTraverser(psiFile).traverse().filter(PsiErrorElement.class).first();
+    // heuristics: first error must not be right under the file PSI
+    // otherwise let the user choose the language manually
+    if (firstError != null && firstError.getParent() == psiFile) {
+      context.language = null;
+    }
+  }
+
+  /**
+   * Creates a file under the "Scratches" root with the {@link ScratchFileService.Option#create_new_always} option.
+   *
+   * @return the created file, or null when the scratch plugin is not loaded or the file cannot be created
+   */
+  public static @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                        @NotNull String fileName,
+                                                        @Nullable Language language,
+                                                        @NotNull String text) {
+    return createScratchFile(project, fileName, language, text, ScratchFileService.Option.create_new_always);
+  }
+
+  /**
+   * Creates a file under the "Scratches" root.
+   *
+   * @return the created file, or null when the scratch plugin is not loaded or the file cannot be created
+   */
+  public static @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                        @NotNull String fileName,
+                                                        @Nullable Language language,
+                                                        @NotNull String text,
+                                                        @NotNull ScratchFileService.Option option) {
+    RootType rootType = findScratchesRootTypeOrWarn();
+    return rootType == null ? null : createScratchFile(project, fileName, language, text, option, rootType);
+  }
+
+  private static @Nullable RootType findScratchesRootTypeOrWarn() {
+    RootType rootType = ScratchUtil.findScratchesRootType();
+    if (rootType == null) {
+      LOG.warn("Cannot create a scratch file: no root type with id '" + ScratchUtil.SCRATCHES_ROOT_TYPE_ID + "' is registered");
+    }
+    return rootType;
   }
 
   public static @Nullable VirtualFile createScratchFile(@Nullable Project project,

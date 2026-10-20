@@ -10,9 +10,6 @@ import com.intellij.ide.scratch.ScratchLanguageUtil.LanguageItem;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +19,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -31,10 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.ex.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -52,10 +45,8 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -166,7 +157,7 @@ public final class ScratchFileActions {
           context.text = "";
           context.caretOffset = 0;
         }
-        doCreateNewScratch(project, context);
+        ScratchFileCreator.doCreateNewScratch(project, context);
       };
       if (selectionItem != null && ApplicationManager.getApplication().isUnitTestMode()) {
         consumer.consume(selectionItem);
@@ -238,7 +229,7 @@ public final class ScratchFileActions {
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
       context.language = PlainTextLanguage.INSTANCE;
-      doCreateNewScratch(project, context);
+      ScratchFileCreator.doCreateNewScratch(project, context);
     }
   }
 
@@ -250,21 +241,7 @@ public final class ScratchFileActions {
       // see data provider in com.intellij.diff.tools.holders.TextEditorHolder
       file = EditorContextManager.getPsiFileForEditor(editor, project);
     }
-    return createContext(project, file, editor, e.getDataContext());
-  }
-
-  public static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull Project project,
-                                                                         @Nullable PsiFile file,
-                                                                         @Nullable Editor editor,
-                                                                         @NotNull DataContext dataContext) {
-    ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
-    context.text = StringUtil.notNullize(getSelectionText(editor));
-    context.sourceFile = file;
-    if (StringUtil.isNotEmpty(context.text)) {
-      initLanguageFromCaret(project, editor, file, context, dataContext);
-    }
-    context.ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
-    return context;
+    return ScratchFileCreator.createContext(project, file, editor, e.getDataContext());
   }
 
   /** @deprecated use {@link ScratchFileCreator#doCreateNewScratch(Project, ScratchFileCreationHelper.Context)} */
@@ -281,50 +258,6 @@ public final class ScratchFileActions {
                                                      @NotNull ScratchFileCreationHelper.Context context,
                                                      @NotNull DataContext dataContext) {
     return ScratchFileCreator.doCreateNewScratch(project, context, dataContext);
-  }
-
-  private static void checkLanguageAndTryToFixText(@NotNull Project project,
-                                                   @NotNull ScratchFileCreationHelper.Context context,
-                                                   @NotNull DataContext dataContext) {
-    if (context.language == null) return;
-    ScratchFileCreationHelper handler = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
-    if (handler.prepareText(project, context, dataContext)) return;
-
-    PsiFile psiFile = ScratchFileCreationHelper.parseHeader(project, context.language, context.text);
-    PsiErrorElement firstError = SyntaxTraverser.psiTraverser(psiFile).traverse().filter(PsiErrorElement.class).first();
-    // heuristics: first error must not be right under the file PSI
-    // otherwise let the user choose the language manually
-    if (firstError != null && firstError.getParent() == psiFile) {
-      context.language = null;
-    }
-  }
-
-  static @Nullable String getSelectionText(@Nullable Editor editor) {
-    if (editor == null) return null;
-    return editor.getSelectionModel().getSelectedText(true);
-  }
-
-  private static void initLanguageFromCaret(@NotNull Project project,
-                                            @Nullable Editor editor,
-                                            @Nullable PsiFile psiFile,
-                                            @NotNull ScratchFileCreationHelper.Context context,
-                                            @NotNull DataContext dataContext) {
-    if (editor == null || psiFile == null) return;
-    Caret caret = editor.getCaretModel().getPrimaryCaret();
-    context.selectionRange = caret.getSelectionRange();
-    int offset = caret.getOffset();
-    PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
-    PsiFile file = element != null ? element.getContainingFile() : psiFile;
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType fileType = ScratchFileCreator.getFileTypeFromName(file.getName(), fileTypeManager);
-    context.language = fileType instanceof LanguageFileType ? file.getLanguage() : null;
-    if (fileType != null) {
-      context.fileExtension = ScratchFileCreator.getFileTypeExtensions(fileType, true, fileTypeManager).first();
-    }
-    if (context.language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
-      context.language = StdLanguages.XML;
-    }
-    checkLanguageAndTryToFixText(project, context, dataContext);
   }
 
   static final class ShowFilesPopupAction extends DumbAwareAction {
@@ -415,7 +348,7 @@ public final class ScratchFileActions {
       ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
       context.text = text;
       context.fileExtension = PlainTextFileType.INSTANCE.getDefaultExtension();
-      doCreateNewScratch(project, context);
+      ScratchFileCreator.doCreateNewScratch(project, context);
     }
   }
 }

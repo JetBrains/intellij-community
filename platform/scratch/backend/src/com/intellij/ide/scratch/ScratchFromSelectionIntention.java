@@ -38,7 +38,7 @@ public final class ScratchFromSelectionIntention implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (editor == null || EditorUtil.getSelectionInAnyMode(editor).isEmpty()) return;
-    ScratchFileCreationHelper.Context context = ScratchFileActions.createContext(
+    ScratchFileCreationHelper.Context context = ScratchFileCreator.createContext(
       project, psiFile, editor, ((EditorEx)editor).getDataContext());
     doCreateNewScratch(project, context);
   }
