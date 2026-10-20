@@ -37,6 +37,8 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The "Copy project config" section of the New Worktree dialog: the additional-copier checkboxes, plus the
@@ -186,9 +188,7 @@ internal class GitWorktreeConfigCategoriesPanel(
     }
     previousWorktreeIncludeExists = worktreeIncludeExists
 
-    val canAddIdeaSettings = worktreeIncludeFile != null &&
-      !hasIdeaSettingsSectionSafely(worktreeIncludeFile) &&
-      !isIdeaConfigCommittedToGitBlocking(repository)
+    val canAddIdeaSettings = worktreeIncludeFile != null && canOfferIdeaSettingsBlocking(repository, worktreeIncludeFile)
     worktreeIncludeAddIdeaSettingsButton.visible(canAddIdeaSettings)
   }
 
@@ -204,16 +204,25 @@ internal class GitWorktreeConfigCategoriesPanel(
       projectConfigService.isIdeaConfigCommittedToGit(repository.root)
     }
 
+  /**
+   * Blocks the UI thread behind a modal progress to check whether [file] can still gain an idea-settings
+   * section: it lacks one yet, and [repository]'s idea config is not already committed to git.
+   */
+  private fun canOfferIdeaSettingsBlocking(repository: GitRepository, file: VirtualFile): Boolean =
+    runWithModalProgressBlocking(project, GitBundle.message("working.tree.dialog.worktree.include.checking.idea.config")) {
+      !hasIdeaSettingsSectionSafely(file) && !projectConfigService.isIdeaConfigCommittedToGit(repository.root)
+    }
+
   /** Returns `true` when [file] already has the idea-settings block, or `false` when [file] fails to read. */
-  private fun hasIdeaSettingsSectionSafely(file: VirtualFile): Boolean {
+  private suspend fun hasIdeaSettingsSectionSafely(file: VirtualFile): Boolean = withContext(Dispatchers.IO) {
     val content = try {
       VfsUtil.loadText(file)
     }
     catch (e: IOException) {
       LOG.warn("Failed to read $file while checking for the idea-settings section", e)
-      return false
+      return@withContext false
     }
-    return GitWorktreeIncludeFileService.hasIdeaSettingsSection(content)
+    GitWorktreeIncludeFileService.hasIdeaSettingsSection(content)
   }
 
   private fun notifyWorktreeIncludeFileWriteFailed(repository: GitRepository) {
