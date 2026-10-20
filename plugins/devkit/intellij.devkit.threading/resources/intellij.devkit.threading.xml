@@ -4,7 +4,6 @@
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.compose"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
