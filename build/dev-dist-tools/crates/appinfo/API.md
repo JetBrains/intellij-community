@@ -75,8 +75,9 @@ pub fn shorten_company_name(name: &str) -> &str;
   not state falls back to the frontend. The host text gets no marker replacement, as the override reads the raw file.
 - `ApplicationInfo::load` finds an element and an attribute by the local name, as `readXmlAsModel` does. It refuses
   an element with two attributes of one local name.
-- `ApplicationInfo::load` refuses a release product without a `majorReleaseDate`, and an application info without
-  `version`, `names`, `company`, a `major` version, a `product` name or a company `name`.
+- `ApplicationInfo::load` refuses an application info without `version`, `names`, `company`, a `major` version, a
+  `product` name or a company `name`. A product without a `majorReleaseDate` takes the build date, also a release
+  product: a dev distribution sets no system property that could state the date.
 - `format_version` accepts only literal text and the elements `{0}` to `{3}`. It refuses a quote and every other
   `{` or `}`.
 - `format_major_release_date` accepts `yyyyMMdd` and `yyyyMMddHHmm` of a valid date and time. No value or a `__`

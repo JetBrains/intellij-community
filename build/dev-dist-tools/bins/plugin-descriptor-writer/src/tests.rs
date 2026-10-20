@@ -681,19 +681,31 @@ fn a_bad_application_info_is_refused() {
         assert_eq!(run_request(dir, &request), code, "{options:?}");
         require_absent(&output);
     }
+}
 
-    // A release product without a release date fails at the reader, and the error names the file.
+/// A release product without a release date takes the pinned build date. A release build takes the date from a system
+/// property, and a dev distribution sets none.
+#[test]
+fn a_release_without_a_release_date_takes_the_build_date() {
     let dir = TempDir::new();
     let dir = dir.path();
     let source = dir.join("plugin.xml");
     let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
+    write_file(
+        &source,
+        r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
+    );
     let info = dir.join("dateless.xml");
     let release = read_text(Path::new(&testdata("plugin_descriptor/release.xml")));
     write_file(&info, release.replace(r#" majorReleaseDate="20261201""#, ""));
     let mut request = minimal_request(dir, &source, &output, "263.100.5");
     request.retain(|line| !line.starts_with("--application-info-source="));
     request.push(format!("--application-info-source={}", path_string(&info)));
-    assert_eq!(run_request(dir, &request), 1);
-    require_absent(&output);
+    request.push("--retain-product-descriptor=true".to_owned());
+    assert_eq!(run_request(dir, &request), 0);
+    let got = read_text(&output);
+    assert!(
+        got.contains(r#"<product-descriptor code="X" release-date="20260101" release-version="2026200" />"#),
+        "{got}"
+    );
 }

@@ -115,7 +115,7 @@ internal class ApplicationInfoPropertiesImpl(
             }
           }
         }
-        majorReleaseDate == null || majorReleaseDate.startsWith("__") -> {
+        !buildOptions.isDevDistribution && (majorReleaseDate == null || majorReleaseDate.startsWith("__")) -> {
           error("majorReleaseDate may be omitted only for EAP")
         }
       }
