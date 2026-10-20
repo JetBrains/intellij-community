@@ -230,10 +230,10 @@ fn the_context_of_the_ui_lane_is_the_golden() {
     expect_test::expect_file![testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
 }
 
-/// `ui-acp-json.dump` holds the `acp.json` lines of the lane `UI` from the launch dump of the JVM host, with its masks:
+/// `ui-acp-json.dump` holds the `acp.json` lines of the lane `UI` from a recorded launch dump, with its masks:
 /// `<ctx>` for the context, `<java>` for each command, `<key-derived>` for the control environment.
 #[test]
-fn acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values() {
+fn acp_json_equals_the_recorded_dump_except_the_key_derived_values() {
     let (prepared, _, _) = written(&document());
     let written = fs::read_to_string(Path::new(&prepared.paths.home_dir).join(ACP_JSON)).unwrap();
     let real = real_path(&prepared.context).unwrap().display().to_string();

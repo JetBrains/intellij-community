@@ -59,7 +59,7 @@ fn every_entry_has_the_time_zero_and_no_file_attributes() {
 }
 
 #[test]
-fn the_launcher_runs_the_staged_java_by_its_absolute_path() {
+fn the_launcher_runs_the_java_of_the_distribution_by_its_absolute_path() {
     expect![[r#"
         #!/bin/sh
         SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -69,7 +69,7 @@ fn the_launcher_runs_the_staged_java_by_its_absolute_path() {
 }
 
 #[test]
-fn the_manifest_command_is_the_launcher_or_java_exe_beside_the_staged_java() {
+fn the_manifest_command_is_the_launcher_or_the_java_exe_beside_that_java() {
     let packages = fixture_packages();
     assert_eq!(packages.command("linux-aarch64"), "./bin/acp-scenario-agent");
     assert_eq!(Packages::args("linux-aarch64"), Vec::<String>::new());

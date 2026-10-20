@@ -551,7 +551,7 @@ Before a launch, the lane daemon writes these files into the context:
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_option_templates_have_the_pinned_digest`)
 
 - `acp.json` equals the golden `testdata/lane-context/ui-acp-json.dump`, except the values that derive from the key.
-  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`acp_json_equals_the_launch_dump_of_the_jvm_host_except_the_key_derived_values`)
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`acp_json_equals_the_recorded_dump_except_the_key_derived_values`)
 
 - Only the account can enter `config/air-ui-test` and read its files. Each launcher is executable.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`the_private_files_and_the_launchers_get_their_modes`)
