@@ -8,14 +8,12 @@ import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.types.TypeEvalContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Fixture-based parameters should be skipped by inspection.
  * Fixture-based unresolved reference should be ignored by inspection.
  * @see PyTestUnpassedFixtureInspection
  */
-@ApiStatus.Internal
 internal class PyTestFixtureInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnused(local: PsiElement, evalContext: TypeEvalContext) =
     local is PyNamedParameter && local.isFixture(evalContext)

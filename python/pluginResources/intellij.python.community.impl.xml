@@ -128,6 +128,7 @@
     <module name="intellij.python.sourceRoots"/>
     <module name="intellij.python.spellchecker"/>
     <module name="intellij.python.syntax"/>
+    <module name="intellij.python.testing.codeInsight"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>
     <module name="intellij.python.venv"/>
@@ -271,8 +272,6 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
-    <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
     <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
                             implementationClass="com.jetbrains.python.console.completion.PythonConsoleCompletionBlockingContributor"/>
 
@@ -351,26 +350,6 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.unused.symbols"
                      enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.jetbrains.python.inspections.PyUnusedImportsInspection"/>
-    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
-                     bundle="messages.PyPsiBundle" key="INSP.NAME.pytest-parametrized"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
-    <localInspection language="Python" shortName="PyTestUnpassedFixtureInspection" suppressId="PyTestUnpassedFixture"
-                     bundle="messages.PyPsiBundle" key="INSP.NAME.pytest.unpassed.fixture"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestUnpassedFixtureInspection"/>
-    <localInspection language="Python" shortName="PyMockPatchArgumentCountInspection" suppressId="PyMockPatchArgumentCount"
-                     bundle="messages.PyPsiBundle"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
-                     key="INSP.NAME.mock-patch-argument-count" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection"/>
-    <localInspection language="Python" shortName="PyMockPatchTargetInspection" suppressId="PyMockPatchTarget"
-                     bundle="messages.PyPsiBundle" key="INSP.NAME.mock-patch-target"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.testing.pyMock.PyMockPatchTargetInspection"/>
     <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.requirements"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.packaging"
@@ -405,14 +384,6 @@
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python"
                               order="before filePath"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor"
-                              language="Python"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedContributor"
-                              language="Python"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMock.PyMockReferenceContributor"
-                              language="Python"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMonkeypatch.PyMonkeypatchReferenceContributor"
-                              language="Python"/>
 
     <applicationConfigurable groupId="reference.idesettings.debugger.python"
                              id="debugger.dataViews.python.type.renderers"
@@ -673,8 +644,6 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
                     interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension"
-                    interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"
                     interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider"
@@ -810,18 +779,6 @@
     <evoEnvironmentProvider id="PipEvoProvider"
                             order="after CondaEvoProvider"
                             implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
-
-    <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
-
-    <!--pytest fixture -->
-    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
-    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
-    <inspectionExtension implementation="com.jetbrains.python.testing.pyMock.PyMockInspectionExtension"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockerFixtureTypeProvider"/>
-    <typeCheckerExtension implementation="com.jetbrains.python.testing.pyMock.PyMockTypeCheckerExtension"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
 

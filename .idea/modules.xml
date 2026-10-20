@@ -2256,6 +2256,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-test-env/junit5/intellij.python.test.env.junit5.iml" filepath="$PROJECT_DIR$/python/python-test-env/junit5/intellij.python.test.env.junit5.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-test-env/plain/intellij.python.test.env.plain.iml" filepath="$PROJECT_DIR$/python/python-test-env/plain/intellij.python.test.env.plain.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-test-env/uv/intellij.python.test.env.uv.iml" filepath="$PROJECT_DIR$/python/python-test-env/uv/intellij.python.test.env.uv.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-testing-code-insight/intellij.python.testing.codeInsight.iml" filepath="$PROJECT_DIR$/python/python-testing-code-insight/intellij.python.testing.codeInsight.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/tools/intellij.python.tools.iml" filepath="$PROJECT_DIR$/python/tools/intellij.python.tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ty/intellij.python.ty.iml" filepath="$PROJECT_DIR$/python/python-ty/intellij.python.ty.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ty/common/intellij.python.ty.common.iml" filepath="$PROJECT_DIR$/python/python-ty/common/intellij.python.ty.common.iml" />

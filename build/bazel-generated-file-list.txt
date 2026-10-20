@@ -2000,6 +2000,7 @@ python/python-test-env/junit4
 python/python-test-env/junit5
 python/python-test-env/plain
 python/python-test-env/uv
+python/python-testing-code-insight
 python/python-ty
 python/python-ty/common
 python/python-ty/frontend

@@ -200,6 +200,9 @@
             "module": "intellij.python.spellchecker"
         },
         {
+            "module": "intellij.python.testing.codeInsight"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

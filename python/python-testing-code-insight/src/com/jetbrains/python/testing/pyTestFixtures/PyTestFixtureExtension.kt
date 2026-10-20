@@ -9,11 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 internal fun getCustomFixtures(context: TypeEvalContext, forWhat: PyFunction) =
   PyTestFixtureExtension.EP_NAME.extensions.map { it.getCustomFixtures(context, forWhat) }.flatten()
 
-@ApiStatus.Internal
 internal fun PyFunction.isSubjectForFixture() =
   PyTestFixtureExtension.EP_NAME.extensions.find { it.isSubjectForFixture(this) } != null
 
-@ApiStatus.Internal
 internal fun PyFunction.isCustomFixture() =
   PyTestFixtureExtension.EP_NAME.extensions.find { it.isCustomFixture(this) } != null
 
