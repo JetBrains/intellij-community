@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.LocalFilePath
@@ -35,8 +37,10 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.replaceService
 import com.intellij.ui.ClickListener
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -45,6 +49,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -176,6 +181,86 @@ internal class ChangesBrowserStructuralNodeTest {
     }
 
     assertEquals(listOf(false), navigation.focusRequests)
+  }
+
+  @Test
+  fun `test preview highlight follows structural selection and clears for a file`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val highlights = recordHighlights(disposable)
+      val file = LightVirtualFile("highlight.txt", "first\nsecond\n")
+      val fixture = createHighlightFixture(file)
+      try {
+        coroutineScope {
+          val previewScope = this
+          withContext(Dispatchers.EDT) {
+            fixture.view.previewShowing = true
+            fixture.view.previewFocus = true
+            StructuralChangesPreview(fixture.view, previewScope).install()
+            fixture.view.selectionPath = TreePath(fixture.first.path)
+          }
+          val first = highlights.receive()
+          assertSame(file, first.file)
+          assertEquals(TextRange(0, 5), first.range)
+
+          withContext(Dispatchers.EDT) {
+            fixture.view.selectionPath = TreePath(fixture.second.path)
+          }
+          first.disposed.await()
+          val second = highlights.receive()
+          assertEquals(TextRange(6, 12), second.range)
+
+          withContext(Dispatchers.EDT) {
+            fixture.view.selectionPath = TreePath(fixture.fileNode.path)
+          }
+          second.disposed.await()
+        }
+        assertTrue(highlights.tryReceive().isFailure)
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).closeFile(file)
+        }
+      }
+    }
+
+  @Test
+  fun `test preview highlight clears on escape and focus loss`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val highlights = recordHighlights(disposable)
+    val file = LightVirtualFile("highlight-cleanup.txt", "first\nsecond\n")
+    val fixture = createHighlightFixture(file)
+    try {
+      coroutineScope {
+        val previewScope = this
+        withContext(Dispatchers.EDT) {
+          fixture.view.previewShowing = true
+          fixture.view.previewFocus = true
+          StructuralChangesPreview(fixture.view, previewScope).install()
+          fixture.view.selectionPath = TreePath(fixture.first.path)
+        }
+        val first = highlights.receive()
+        withContext(Dispatchers.EDT) {
+          val escape = KeyEvent(fixture.view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE, '\u001b')
+          fixture.view.keyListeners.forEach { it.keyPressed(escape) }
+        }
+        first.disposed.await()
+
+        withContext(Dispatchers.EDT) {
+          fixture.view.selectionPath = TreePath(fixture.second.path)
+        }
+        val second = highlights.receive()
+        withContext(Dispatchers.EDT) {
+          fixture.view.previewFocus = false
+          val event = FocusEvent(fixture.view, FocusEvent.FOCUS_LOST)
+          fixture.view.focusListeners.forEach { it.focusLost(event) }
+        }
+        second.disposed.await()
+      }
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.EDT) {
+        FileEditorManager.getInstance(project).closeFile(file)
+      }
+    }
   }
 
   @Test
@@ -733,6 +818,25 @@ internal class ChangesBrowserStructuralNodeTest {
   private suspend fun createPreviewFixture(first: Navigatable, second: Navigatable = PreviewNavigatable()): Fixture =
     withContext(Dispatchers.EDT) { createFixture(StructuralNode("first", first), StructuralNode("second", second)) }
 
+  private suspend fun createHighlightFixture(file: VirtualFile): Fixture = withContext(Dispatchers.EDT) {
+    createFixture(
+      StructuralNode("first", OpenFileDescriptor(project, file, 0), highlightRange = TextRange(0, 5)),
+      StructuralNode("second", OpenFileDescriptor(project, file, 6), highlightRange = TextRange(6, 12)),
+    )
+  }
+
+  private fun recordHighlights(disposable: Disposable): Channel<HighlightRequest> {
+    val requests = Channel<HighlightRequest>(Channel.UNLIMITED)
+    project.replaceService(StructuralChangesPreviewHighlighter::class.java, object : StructuralChangesPreviewHighlighter {
+      override fun highlight(file: VirtualFile, range: TextRange, modificationStamp: Long): Disposable {
+        val request = HighlightRequest(file, range)
+        requests.trySend(request).getOrThrow()
+        return Disposable { request.disposed.complete(Unit) }
+      }
+    }, disposable)
+    return requests
+  }
+
   private suspend fun createFilePreviewFixture(file: VirtualFile, added: Boolean = false): Fixture = withContext(Dispatchers.EDT) {
     val path = filePath(file)
     createFixture(StructuralNode("first", OpenFileDescriptor(project, file, 0)),
@@ -854,12 +958,18 @@ internal class ChangesBrowserStructuralNodeTest {
     }
   }
 
-  private class StructuralNode(private val name: String, private val navigatable: Navigatable, preview: Navigatable? = null) :
-    ChangesBrowserStructuralNode<String>(name) {
+  private class StructuralNode(
+    private val name: String,
+    private val navigatable: Navigatable,
+    preview: Navigatable? = null,
+    private val highlightRange: TextRange? = null,
+  ) : ChangesBrowserStructuralNode<String>(name) {
     private val previewNavigatable = preview ?: navigatable
 
     override fun getTextPresentation(): String = name
     override fun getNavigatable(): Navigatable = navigatable
+    override fun getPreviewHighlightRange(): TextRange? = highlightRange
+    override fun getPreviewFile(): VirtualFile? = (previewNavigatable as? OpenFileDescriptor)?.file
     override fun getPreviewNavigationRequest(): NavigationRequest? {
       val target = previewNavigatable.takeIf { it.canNavigateToSource() } ?: return null
       return if (target is OpenFileDescriptor) NavigationRequest.sourceNavigationRequest(target.project, target.file, target.offset)
@@ -902,6 +1012,12 @@ internal class ChangesBrowserStructuralNodeTest {
     val selected: List<Change>,
     val exact: List<ChangesBrowserNode<*>>,
     val actionSelection: List<ChangesBrowserNode<*>>,
+  )
+
+  private data class HighlightRequest(
+    val file: VirtualFile,
+    val range: TextRange,
+    val disposed: CompletableDeferred<Unit> = CompletableDeferred(),
   )
 
   companion object {
