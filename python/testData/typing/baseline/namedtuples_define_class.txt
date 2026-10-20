@@ -8,7 +8,4 @@ unexpected 100: PyTypeCheckerInspection: Expected type 'Iterable[tuple[str, Any]
 unexpected 100: PyTypeCheckerInspection: Expected type 'str', got 'Literal[1]' instead
 unexpected 101: PyTypeCheckerInspection: Expected type 'tuple[int, int, str]', got 'PointWithName' instead
 missed 107
-unexpected 136: PyAssertTypeInspection: Expected type 'Property', got 'Property' instead
-unexpected 137: PyAssertTypeInspection: Expected type 'float | int', got 'T' instead
-unexpected 138: PyAssertTypeInspection: Expected type 'float | int', got 'T' instead
 missed 147
