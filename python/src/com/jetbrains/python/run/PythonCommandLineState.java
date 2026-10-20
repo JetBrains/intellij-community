@@ -296,6 +296,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * Python run configurations with "Run with Python Console" flag. It is more a workaround, so please annotate the overridden methods with
    * {@link NotNull} where possible.
    */
+  @RequiresBackgroundThread
   public @Nullable ExecutionResult execute(@NotNull Executor executor,
                                            @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(converter);

@@ -8,7 +8,6 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.plus
-import com.intellij.execution.target.value.targetPath
 import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -16,8 +15,8 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedScriptName
 import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
+import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.nio.file.Path
 
@@ -32,10 +31,10 @@ import java.nio.file.Path
  */
 
 @RequiresBackgroundThread
-fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
+internal fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
   val project = config.project
   val sdk = config.sdk
-  val pathMapper = sdk?.let{ getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)}
+  val pathMapper = sdk?.let { getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings) }
   return buildScriptFunctionWithConsoleRun(
     config,
     ::StringScriptBuilder,
@@ -55,13 +54,13 @@ fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
  *
  * @see buildScriptWithConsoleRun
  */
-@ApiStatus.Experimental
-fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnvironmentFunction<String> =
+@RequiresBackgroundThread
+internal fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnvironmentFunction<String> =
   buildScriptFunctionWithConsoleRun(
     config,
     ::TargetEnvironmentFunctionScriptBuilder,
     t = ::constant,
-    toTargetPath = { targetPath(Path.of(it)) },
+    toTargetPath = { getTargetPathForPythonConsoleExecution(config.project, config.sdk, null, Path.of(it)) },
     toStringLiteral = TargetEnvironmentFunction<String>::toStringLiteral
   )
 
@@ -72,11 +71,13 @@ fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnv
  * @param toTargetPath transforms the provided [String] local path to a [T] object defining corresponding path on the target
  * @param toStringLiteral transforms the provided [T] object to an escaped Python literal [T] object
  */
-private fun <T> buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration,
-                                                  stringBuilderConstructor: () -> ScriptBuilder<T>,
-                                                  t: (String) -> T,
-                                                  toTargetPath: (String) -> T,
-                                                  toStringLiteral: (T) -> T): T {
+private fun <T> buildScriptFunctionWithConsoleRun(
+  config: PythonRunConfiguration,
+  stringBuilderConstructor: () -> ScriptBuilder<T>,
+  t: (String) -> T,
+  toTargetPath: (String) -> T,
+  toStringLiteral: (T) -> T,
+): T {
   val scriptBuilder = stringBuilderConstructor()
   val configEnvs = config.envs
   configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED)
@@ -150,8 +151,8 @@ fun String.toStringLiteral() = "'${escape(this)}'"
 fun TargetEnvironmentFunction<String>.toStringLiteral(): TargetEnvironmentFunction<String> =
   StringLiteralTargetFunctionWrapper(this)
 
-private class StringLiteralTargetFunctionWrapper(private val s: TargetEnvironmentFunction<String>)
-  : TraceableTargetEnvironmentFunction<String>() {
+private class StringLiteralTargetFunctionWrapper(private val s: TargetEnvironmentFunction<String>) :
+  TraceableTargetEnvironmentFunction<String>() {
   override fun applyInner(t: TargetEnvironment): String = s.apply(t).toStringLiteral()
 
   override fun toString(): String {
