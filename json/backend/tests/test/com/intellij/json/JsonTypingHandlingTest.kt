@@ -3,9 +3,20 @@ package com.intellij.json
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.json.editor.JsonEditorOptions
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
 @Suppress("SameParameterValue")
-class JsonTypingHandlingTest : JsonTestCase() {
+@TestApplication
+class JsonTypingHandlingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private fun doTestEnter(before: String, expected: String) {
     doTypingTest('\n', before, expected, "json")
   }
@@ -61,6 +72,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
   }
 
   // JsonEnterHandler
+  @Test
   fun testEnterAfterProperty() {
     doTestEnter(
       """
@@ -75,6 +87,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testEnterMidProperty() {
     doTestEnter(
       """
@@ -87,6 +100,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testEnterMidObjectNoFollowing() {
     doTestEnter(
       """{"a": {<caret>}}""",
@@ -98,6 +112,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testEnterMidObjectWithFollowing() {
     doTestEnter(
       """
@@ -111,6 +126,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testEnterAfterObject() {
     doTestEnter(
       """
@@ -126,12 +142,14 @@ class JsonTypingHandlingTest : JsonTestCase() {
   }
 
   // JsonTypedHandler
+  @Test
   fun testAutoCommaAfterLBraceInArray() {
     doTestLBrace(
       """ [ <caret> {"a": 5} ]""",
       """ [ {}, {"a": 5} ]""")
   }
 
+  @Test
   fun testAutoCommaAfterLBracketInArray() {
     doTestLBracket(
       """ [ <caret> {"a": 5} ]""",
@@ -139,6 +157,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCommaAfterQuoteInArray() {
     doTestQuote(
       """ [ <caret> {"a": 5} ]""",
@@ -146,6 +165,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCommaAfterLBraceInObject() {
     doTestLBrace(
       """{ "x": <caret> "y": {"a": 5} }""",
@@ -153,6 +173,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCommaAfterLBracketInObject() {
     doTestLBracket(
       """{ "x": <caret> "y": {"a": 5} }""",
@@ -160,6 +181,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCommaAfterQuoteInObject() {
     doTestQuote(
       """{ "x": <caret> "y": {"a": 5} }""",
@@ -167,6 +189,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testNoAutoQuoteAfterEscapedQuote() {
     doTestQuote(
       """
@@ -182,6 +205,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testNoAutoSingleQuoteAfterEscapedSingleQuote() {
     doTestSingleQuote(
       """
@@ -198,6 +222,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
   }
 
 
+  @Test
   fun testAutoQuotesForPropName() {
     doTestColon(
       "{ x<caret>}",
@@ -208,6 +233,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
       """.trimIndent())
   }
 
+  @Test
   fun testAutoQuotesForPropNameMulticaret() {
     doTestColon(
       """
@@ -237,6 +263,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoQuotesForPropNameFalse1() {
     doTestColon(
       """{ "x"<caret>}""",
@@ -244,6 +271,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoQuotesForPropNameFalse2() {
     doTestColon(
       """{ "x<caret>"}""",
@@ -251,6 +279,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoQuotesAndWhitespaceFollowingNewline() {
     doTestColon("""
       {
@@ -268,6 +297,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testAutoWhitespaceErasure() {
     myFixture.configureByText("test.json", "{a<caret>}")
     myFixture.type(":")
@@ -279,10 +309,12 @@ class JsonTypingHandlingTest : JsonTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPairedSingleQuote() {
     doTypingTest('\'', "{<caret>}", "{'<caret>'}", "json")
   }
 
+  @Test
   fun testPairedSingleQuote2() {
     doTypingTest('\'', """
       {
@@ -301,6 +333,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     """.trimIndent(), "json")
   }
 
+  @Test
   fun testNoCommaInNextQuotes() {
     testWithPairQuotes(false) {
       doTypingTest(""""ccc": """",
@@ -310,6 +343,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testNoCommaAfterArray() {
     testWithPairQuotes(false) {
       doTypingTest('"', """
@@ -326,6 +360,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testAddCommaWithPairedQuotes() {
     testWithPairQuotes(true) {
       doTypingTest(""""ccc": """",
@@ -335,6 +370,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testNoCommaIfRBraceAndNoNewline() {
     doTestEnter("""
       {
@@ -348,6 +384,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testMoveColon() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COLON_MOVE_OUTSIDE_QUOTES
@@ -363,6 +400,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testMoveComma() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COMMA_MOVE_OUTSIDE_QUOTES
@@ -378,6 +416,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testMoveCommaForArray() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COMMA_MOVE_OUTSIDE_QUOTES
@@ -393,6 +432,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testDoNotMoveColonIfColon() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COLON_MOVE_OUTSIDE_QUOTES
@@ -408,6 +448,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testDoNotMoveColonIfDisabled() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COLON_MOVE_OUTSIDE_QUOTES
@@ -423,6 +464,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testDoNotMoveCommaIfComma() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COMMA_MOVE_OUTSIDE_QUOTES
@@ -438,6 +480,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testDoNotMoveCommaIfDisabled() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COMMA_MOVE_OUTSIDE_QUOTES
@@ -453,6 +496,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testDoNotMoveCommaForArrayIfComma() {
     val editorOptions = JsonEditorOptions.getInstance()
     val oldQuote = editorOptions.COMMA_MOVE_OUTSIDE_QUOTES
@@ -468,11 +512,13 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testQuotePairingNotInsideString01() {
     doTestQuote("""{"MyKey": "This \<caret>"}""",
                 """{"MyKey": "This \"<caret>"}""")
   }
 
+  @Test
   fun testQuotePairingNotInsideString02() {
     doTestSingleQuote(
       """{"MyKey": "This <caret> \"is\" my value"}""",
@@ -492,6 +538,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     }
   }
 
+  @Test
   fun testAutoCloseQuoteInJsonLines() {
     doTestJsonlQuote(
       """{"column1": ["c1.r2.i1", <caret>], "column2": "c2.r2"}""",
@@ -499,6 +546,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCloseQuoteSimpleJsonLines() {
     doTestJsonlQuote(
       """{<caret>}""",
@@ -506,6 +554,7 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
+  @Test
   fun testAutoCommaAfterQuoteInJsonLinesArray() {
     doTestJsonlQuote(
       """ [ <caret> {"a": 5} ]""",

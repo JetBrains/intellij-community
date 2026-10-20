@@ -25,28 +25,58 @@ import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.json.liveTemplates.JsonContextType;
 import com.intellij.json.liveTemplates.JsonInLiteralsContextType;
 import com.intellij.json.liveTemplates.JsonInPropertyKeysContextType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonLiveTemplateTest extends JsonTestCase {
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData")
+public class JsonLiveTemplateTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private CodeInsightTestFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+  }
 
   private boolean isApplicableContextUnderCaret(@NotNull String text, Class<? extends TemplateContextType> ...contextsToDisable) {
     myFixture.configureByText(JsonFileType.INSTANCE, text);
     final Template template = createJsonTemplate("foo", "foo", "[42]", contextsToDisable);
-    return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getCaretOffset(), (TemplateImpl)template);
+    return ReadAction.computeBlocking(() -> TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getCaretOffset(), (TemplateImpl)template));
   }
 
   @SuppressWarnings("SameParameterValue")
   @NotNull
   private Template createJsonTemplate(@NotNull String name, @NotNull String group, @NotNull String text, Class<? extends TemplateContextType> ...contextsToDisable) {
-    final TemplateManager templateManager = TemplateManager.getInstance(getProject());
+    final TemplateManager templateManager = TemplateManager.getInstance(myFixture.getProject());
     final Template template = templateManager.createTemplate(name, group, text);
 
     TemplateContextType context = TemplateContextTypes.getByClass(JsonContextType.class);
@@ -62,29 +92,35 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     return template;
   }
 
+  @Test
   public void testNotExpandableInsideStringLiteral() {
     assertFalse(isApplicableContextUnderCaret("{\"bar\": \"fo<caret>o\"}",
                                               JsonInLiteralsContextType.class));
   }
 
+  @Test
   public void testNotExpandableInsidePropertyKey() {
     assertFalse(isApplicableContextUnderCaret("{fo<caret>o: \"bar\"}",
                                               JsonInPropertyKeysContextType.class));
   }
 
+  @Test
   public void testNotExpandableInsidePropertyKeyWithWhitespace() {
     assertFalse(isApplicableContextUnderCaret("{fo<caret>o : \"bar\"}",
                                               JsonInPropertyKeysContextType.class));
   }
 
+  @Test
   public void testExpandableAtTopLevel() {
     assertTrue(isApplicableContextUnderCaret("fo<caret>o"));
   }
 
+  @Test
   public void testExpandableInObjectLiteral() {
     assertTrue(isApplicableContextUnderCaret("{fo<caret>o}"));
   }
 
+  @Test
   public void testCustomTemplateExpansion() {
     final String templateContent = """
       {
@@ -92,11 +128,13 @@ public class JsonLiveTemplateTest extends JsonTestCase {
       }""";
     createJsonTemplate("foo", "foo", templateContent);
     myFixture.configureByText(JsonFileType.INSTANCE, "foo<caret>");
-    final Editor editor = myFixture.getEditor();
-    new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    assertNotNull(lookup);
-    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final Editor editor = myFixture.getEditor();
+      new ListTemplatesAction().actionPerformedImpl(myFixture.getProject(), editor);
+      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      assertNotNull(lookup);
+      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    });
     myFixture.checkResult(templateContent.replaceAll("\\$.*?\\$", ""));
   }
 }

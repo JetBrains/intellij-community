@@ -6,36 +6,49 @@ import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonNumberLiteral;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author Mikhail Golubev
  */
-public class JsonLiteralApiTest extends JsonTestCase {
+@TestApplication
+public class JsonLiteralApiTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
   public static final String ALL_CHARACTER_ESCAPES = "\"\\/\b\f\n\r\t";
 
   @NotNull
-  private JsonStringLiteral createStringLiteralFromText(@NotNull String rawText) {
-    final JsonArray jsonArray = new JsonElementGenerator(getProject()).createValue("[\n" + rawText + "\n]");
+  private static JsonStringLiteral createStringLiteralFromText(@NotNull String rawText) {
+    final JsonArray jsonArray = new JsonElementGenerator(projectFixture.get()).createValue("[\n" + rawText + "\n]");
     assertEquals(1, jsonArray.getValueList().size());
     final JsonValue firstElement = jsonArray.getValueList().get(0);
-    assertInstanceOf(firstElement, JsonStringLiteral.class);
+    assertInstanceOf(JsonStringLiteral.class, firstElement);
     return ((JsonStringLiteral)firstElement);
   }
 
   @NotNull
-  private JsonStringLiteral createStringLiteralFromContent(@NotNull String unescapedContent) {
-    return new JsonElementGenerator(getProject()).createStringLiteral(unescapedContent);
+  private static JsonStringLiteral createStringLiteralFromContent(@NotNull String unescapedContent) {
+    return new JsonElementGenerator(projectFixture.get()).createStringLiteral(unescapedContent);
   }
 
-  private void checkFragments(@NotNull String rawStringLiteral, Pair<TextRange, String> @NotNull ... fragments) {
-    final List<Pair<TextRange, String>> actual = createStringLiteralFromText(rawStringLiteral).getTextFragments();
+  private static void checkFragments(@NotNull String rawStringLiteral, Pair<TextRange, String> @NotNull ... fragments) {
+    final List<Pair<TextRange, String>> actual = ReadAction.computeBlocking(() -> createStringLiteralFromText(rawStringLiteral).getTextFragments());
     final List<Pair<TextRange, String>> expected = Arrays.asList(fragments);
     assertEquals(expected, actual);
     for (Pair<TextRange, String> fragment : fragments) {
@@ -43,7 +56,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
       final String unescaped = range.substring(rawStringLiteral);
       if (!unescaped.contains("\\")) {
         final String escaped = fragment.getSecond();
-        assertEquals(String.format("Bad range %s: fragment without escaping differs after decoding", range), escaped, unescaped);
+        assertEquals(escaped, unescaped, String.format("Bad range %s: fragment without escaping differs after decoding", range));
       }
     }
   }
@@ -53,6 +66,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
     return Pair.create(new TextRange(start, end), chunk);
   }
 
+  @Test
   public void testFragmentSplittingSimpleEscapes() {
     checkFragments("\"\\b\\f\\n\\r\\t\\\\\\/\\\"\"",
 
@@ -66,6 +80,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
                    fragment(15, 17, "\""));
   }
 
+  @Test
   public void testFragmentSplittingIllegalEscapes() {
     checkFragments("\"\\q\\zz\\uBEE\\u\\ ",
 
@@ -77,6 +92,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
                    fragment(13, 15, "\\ "));
   }
 
+  @Test
   public void testFragmentSplittingUnicodeEscapes() {
     checkFragments("'foo\\uCAFEBABE\\u0027baz'",
 
@@ -87,30 +103,37 @@ public class JsonLiteralApiTest extends JsonTestCase {
                    fragment(20, 23, "baz"));
   }
 
+  @Test
   public void testStringLiteralValue() {
     checkStringContent("simple");
     checkStringContent(ALL_CHARACTER_ESCAPES);
     checkStringContent("\u043c\u0435\u0434\u0432\u0435\u0434\u044c");
   }
 
-  private void checkStringContent(@NotNull String content) {
-    assertEquals(content, createStringLiteralFromContent(content).getValue());
+  private static void checkStringContent(@NotNull String content) {
+    assertEquals(content, ReadAction.computeBlocking(() -> createStringLiteralFromContent(content).getValue()));
   }
 
+  @Test
   public void testBooleanLiteralValue() {
-    final JsonElementGenerator generator = new JsonElementGenerator(getProject());
-    assertTrue(generator.<JsonBooleanLiteral>createValue("true").getValue());
-    assertFalse(generator.<JsonBooleanLiteral>createValue("false").getValue());
+    ReadAction.runBlocking(() -> {
+      final JsonElementGenerator generator = new JsonElementGenerator(projectFixture.get());
+      assertTrue(generator.<JsonBooleanLiteral>createValue("true").getValue());
+      assertFalse(generator.<JsonBooleanLiteral>createValue("false").getValue());
+    });
   }
 
+  @Test
   public void testNumberLiteralValue() {
-    final JsonElementGenerator generator = new JsonElementGenerator(getProject());
-    assertEquals(123.0, generator.<JsonNumberLiteral>createValue("123.0").getValue(), 1e-5);
-    assertEquals(0.1, generator.<JsonNumberLiteral>createValue("0.1").getValue(), 1e-5);
-    assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1e3").getValue(), 1e-5);
-    assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1e+3").getValue(), 1e-5);
-    assertEquals(1e-3, generator.<JsonNumberLiteral>createValue("1e-3").getValue(), 1e-5);
-    assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1.00e3").getValue(), 1e-5);
-    assertEquals(1.23e-3, generator.<JsonNumberLiteral>createValue("1.23e-3").getValue(), 1e-5);
+    ReadAction.runBlocking(() -> {
+      final JsonElementGenerator generator = new JsonElementGenerator(projectFixture.get());
+      assertEquals(123.0, generator.<JsonNumberLiteral>createValue("123.0").getValue(), 1e-5);
+      assertEquals(0.1, generator.<JsonNumberLiteral>createValue("0.1").getValue(), 1e-5);
+      assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1e3").getValue(), 1e-5);
+      assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1e+3").getValue(), 1e-5);
+      assertEquals(1e-3, generator.<JsonNumberLiteral>createValue("1e-3").getValue(), 1e-5);
+      assertEquals(1e+3, generator.<JsonNumberLiteral>createValue("1.00e3").getValue(), 1e-5);
+      assertEquals(1.23e-3, generator.<JsonNumberLiteral>createValue("1.23e-3").getValue(), 1e-5);
+    });
   }
 }
