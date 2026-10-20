@@ -27,6 +27,14 @@ fun EvoPyProjectModel.Snapshot.modulesUsing(sdk: Sdk): List<Module> =
 @Suppress("DEPRECATION") // The updater works on an SDK.
 fun EvoPyProjectModel.Snapshot.sdks(): Set<Sdk> = interpreters.mapTo(LinkedHashSet()) { it.getSdkAPI() }
 
+/**
+ * Whether a Python project of [project] is known not to use [sdk]: the current snapshot holds no interpreter of it.
+ * `false` before the first snapshot, when nothing is known yet. Takes no lock and does not wait, so any thread can call it.
+ */
+@ApiStatus.Internal
+fun isKnownUnused(project: Project, sdk: Sdk): Boolean =
+  EvoPyProjectModel.getInstance(project).snapshotOrNull()?.usesSdk(sdk) == false
+
 /** The current snapshot of [project]. Waits for the first one, so it runs on a background thread outside a read action. */
 @ApiStatus.Internal
 @RequiresBackgroundThread

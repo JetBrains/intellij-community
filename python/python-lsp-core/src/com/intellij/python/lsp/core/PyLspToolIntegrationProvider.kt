@@ -274,7 +274,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    *
    * A new interpreter of a Python project reaches the project only through a new snapshot. The Project Structure
    * dialog, the SDK table and a set through the Python project all end in one. [fileOpened] builds no descriptor
-   * before the first snapshot, so the start here gives a server to a file that the user opened before it.
+   * before the first snapshot, so the start on the first snapshot gives a server to a file that the user opened before
+   * it. The start runs again only when the served Python projects change: a Python project that gets its first served
+   * interpreter has no client yet, while its files are already open. A later file opens with a snapshot in place, so
+   * [fileOpened] starts its server itself.
    *
    * The folder sets are checked here too, see [restartStaleClients]. The platform builds the server identity from the
    * root paths and never sends `didChangeWorkspaceFolders`, so a running server holds a stale folder set once a Python
@@ -282,9 +285,14 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    */
   private fun watchInterpreters(project: Project, interpreterChanged: PyToolChangeDebouncer, parentDisposable: Disposable) {
     val job = project.service<PyLspService>().cs.launch {
+      var servedModules: Set<Module>? = null
       EvoPyProjectModel.getInstance(project).snapshotFlow().collect { snapshot ->
         if (anyClientInterpreterChanged(project, snapshot)) interpreterChanged.schedule()
-        LspClientManager.getInstance(project).startClientsIfNeeded(this@PyLspToolIntegrationProvider::class.java)
+        val newServedModules = pyLspServedProjects(snapshot).mapTo(HashSet()) { it.residesOnModule }
+        if (newServedModules != servedModules) {
+          servedModules = newServedModules
+          LspClientManager.getInstance(project).startClientsIfNeeded(this@PyLspToolIntegrationProvider::class.java)
+        }
         restartStaleClients(project)
       }
     }
@@ -356,7 +364,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     val keys = pyLspRefreshServeKeys(project, pyTool)
     val served = pyLspServedProjects(project)
     val (stale, servesNothing) = readAction {
-      val keyOf = { pyProject: PyProject -> keys.keyOf(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
+      val keyOf = { pyProject: PyProject -> keys.getByModule(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
       pyLspFolderSetIsStale(descriptors, served, keyOf) to descriptors.any { pyLspServesNothing(it, served) }
     }
 
@@ -531,7 +539,7 @@ abstract class PyLspToolDescriptor(
    * and for a Python project that had none. For a callback of the running server, which must neither take a lock nor
    * wait.
    */
-  fun startedInterpreterOf(pyProject: PyProject): NativePythonInterpreter? = startedInterpreters?.keyOf(pyProject)
+  fun startedInterpreterOf(pyProject: PyProject): NativePythonInterpreter? = startedInterpreters?.getByModule(pyProject)
 
   /** The interpreter of [pyProject] in the current snapshot. Waits for the first snapshot, so call it off the EDT. */
   @RequiresBackgroundThread

@@ -6,13 +6,11 @@ package com.jetbrains.python.configuration
 import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.setAssociationToPath
@@ -50,20 +48,14 @@ data class PyLocalInterpreterHandle private constructor(
 /**
  * State and apply flow for [PyLocalInterpreterEditDialog].
  *
- * Two editable fields — [homePath] and [associated] — plus the persistence sequence that mirrors
- * the legacy [PythonLocalInterpreterConfigurable.apply]:
- *  1. Commit a new home path through [Sdk.sdkModificator].
- *  2. Set or clear the association through [Sdk.setAssociationToModule] / [Sdk.setAssociationToPath].
- *  3. Force-save project settings so `.idea/misc.xml` reflects the mutation on disk right away.
- *  4. Re-detect interpreter paths through [PythonSdkUpdater] when the home path changed.
+ * The binary of an interpreter does not change: an interpreter is the environment it names, so another binary is
+ * another interpreter. The dialog shows [binaryPath] and edits only [associated]. [apply] sets or clears the
+ * association through [Sdk.setAssociationToModule] / [Sdk.setAssociationToPath], then force-saves the project settings
+ * so `.idea/misc.xml` reflects the change on disk right away.
  *
- * The dialog binds [homePath] and [associated] via Kotlin UI DSL v2 property references
- * (`bindText(model::homePath)` / `bindSelected(model::associated)`), which require a
- * [kotlin.reflect.KMutableProperty] — hence the `var` declarations. Tests construct the model
- * directly, mutate the fields, invoke [apply], and assert on the resulting [Sdk] state.
- *
- * [initialHomePath] is read from [PythonEnvironment.pythonBinaryPath] via the [handle], which the
- * launcher validates upfront — the model never sees a null-path interpreter.
+ * The dialog binds [associated] via a Kotlin UI DSL v2 property reference (`bindSelected(model::associated)`), which
+ * requires a [kotlin.reflect.KMutableProperty], hence the `var`. Tests construct the model directly, change the field,
+ * invoke [apply], and assert on the resulting [Sdk] state.
  */
 @ApiStatus.Internal
 class PyLocalInterpreterEditModel(
@@ -73,15 +65,10 @@ class PyLocalInterpreterEditModel(
 ) {
   private val sdk: Sdk = handle.sdk
 
-  /**
-   * Kept as [Path] end-to-end — the platform bridges (`sdkModificator.homePath: String`, DSL
-   * `bindText` text fields) do their own `toString` / `Path.of` at the boundary, so the model
-   * itself never carries a raw path string.
-   */
-  val initialHomePath: Path = handle.binaryPath
+  /** The binary of the interpreter, which the launcher validates upfront, so it is never null here. */
+  val binaryPath: Path = handle.binaryPath
   val initialAssociated: Boolean = sdk.associatedModulePath?.isNotBlank() == true
 
-  var homePath: Path = initialHomePath
   var associated: Boolean = initialAssociated
 
   /**
@@ -91,19 +78,11 @@ class PyLocalInterpreterEditModel(
    */
   val canAssociate: Boolean get() = associationTarget != null || initialAssociated
 
-  /**
-   * Persists the two edits and returns `true` when at least one field changed.
-   *
-   * Home path and association commit as separate write actions — same behavior as the legacy
-   * apply — so a failure in one does not roll the other back.
-   */
+  /** Persists the association and returns `true` when it changed. */
   suspend fun apply(): Boolean {
-    val pathChanged = homePath != initialHomePath
-    val associationChanged = associated != initialAssociated
-    if (!pathChanged && !associationChanged) return false
+    if (associated == initialAssociated) return false
 
-    if (pathChanged) commitHomePath()
-    if (associationChanged) commitAssociation()
+    commitAssociation()
 
     // `commitChanges` updates the in-memory JDK table only. Force a save so a user inspecting
     // `.idea/misc.xml` right after OK sees the new state instead of the pre-Save one. The save
@@ -112,18 +91,7 @@ class PyLocalInterpreterEditModel(
       StoreUtil.saveDocumentsAndProjectSettings(project)
     }
 
-    if (pathChanged) {
-      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
-    }
     return true
-  }
-
-  private suspend fun commitHomePath() {
-    val modificator = sdk.sdkModificator
-    modificator.homePath = homePath.toString()
-    writeAction {
-      modificator.commitChanges()
-    }
   }
 
   private suspend fun commitAssociation() {

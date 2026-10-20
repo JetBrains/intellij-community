@@ -31,13 +31,9 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 /**
- * Covers the persistence sequence extracted from [PyLocalInterpreterEditDialog]:
- * the model exposes editable state (`homePath`, `associated`) plus an `apply` that mutates the SDK
- * through the shared [setAssociationToModule] helper and the standard [Sdk.sdkModificator] path.
- *
- * Path-change branches are exercised through the "no change → no `PythonSdkUpdater`" path only,
- * because a home-path mutation requires a valid mock venv structure that this test's mock SDK does
- * not carry — the launcher-level UI smoke covers the real path swap.
+ * Covers the persistence sequence extracted from [PyLocalInterpreterEditDialog]: the model edits only the association
+ * (`associated`), and its `apply` changes the SDK through the shared [setAssociationToModule] helper. The binary is
+ * read-only.
  */
 @Subsystems.Interpreters
 @Layers.Functional
@@ -81,7 +77,7 @@ class PyLocalInterpreterEditModelTest {
   @Test
   fun `initial state reflects the constructor arguments`(): Unit = runBlocking {
     val model = buildModel()
-    assertEquals(Path.of(sdk.homePath!!), model.initialHomePath)
+    assertEquals(Path.of(sdk.homePath!!), model.binaryPath)
     assertFalse(model.initialAssociated)
     assertTrue(model.canAssociate)
   }

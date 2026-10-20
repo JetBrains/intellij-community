@@ -62,6 +62,41 @@ internal class PythonSdkUpdaterInUseTest {
   }
 
   @Test
+  fun `a background update of an interpreter that no Python project uses is rejected`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      // The check reads the current snapshot, so it must hold the interpreter list first.
+      EvoPyProjectModel.getInstance(project).snapshot()
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isFalse()
+    }
+    finally {
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
+  }
+
+  @Test
+  fun `a background update of the interpreter of a Python project is accepted`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      pyProject.setPythonInterpreter(interpreter)
+      // Accepted, and in a unit test it then does nothing, see `PythonSdkUpdater.setEnabledInTests`.
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isTrue()
+    }
+    finally {
+      pyProject.setPythonInterpreter(null)
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
+  }
+
+  @Test
   fun `an interpreter stops being in use when the Python project moves to another one`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     val pyProject = pyProjectFixture.get()

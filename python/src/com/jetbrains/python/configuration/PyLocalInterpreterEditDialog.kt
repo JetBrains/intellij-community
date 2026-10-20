@@ -4,15 +4,13 @@ package com.jetbrains.python.configuration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkType
 import java.awt.Dimension
-import java.nio.file.Path
 import javax.swing.JComponent
 
 /** Minimum preferred width for the "Interpreter Settings" edit dialog — matches the Figma spec. */
@@ -47,13 +45,11 @@ internal class PyLocalInterpreterEditDialog(
 
   override fun createCenterPanel(): JComponent {
     dialogPanel = panel {
+      // Read-only: another binary is another interpreter, see [PyLocalInterpreterEditModel].
       row(PyBundle.message("form.edit.sdk.interpreter.path")) {
-        textFieldWithBrowseButton(
-          PythonSdkType.getInstance().homeChooserDescriptor
-            .withTitle(PyBundle.message("sdk.edit.dialog.specify.interpreter.path")),
-          project,
-        ) { it.name }
-          .bindText({ model.homePath.toString() }, { model.homePath = Path.of(it) })
+        textField()
+          .text(model.binaryPath.toString())
+          .applyToComponent { isEditable = false }
           .align(AlignX.FILL)
       }
       if (model.canAssociate) {

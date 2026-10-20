@@ -164,11 +164,18 @@ public final class PythonSdkUpdater {
   }
 
   /**
-   * @return whether the request was accepted. A background request for an interpreter that the project does not use is
-   * not accepted. A request that is accepted still does nothing in a unit test, unless a test enabled the update.
+   * @return whether the request was accepted. A background request for an interpreter that the current snapshot shows
+   * as unused is not accepted. Before the first snapshot it is accepted, and the task checks again, see
+   * {@link PyUpdateSdkTask#run}. A request that is accepted still does nothing in a unit test, unless a test enabled the
+   * update.
    */
   private static boolean scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
     if (project.isDisposed() || (sdk instanceof Disposable sdkDisposable && Disposer.isDisposed(sdkDisposable))) {
+      return false;
+    }
+
+    if (requestData.background && PySdkUsage.isKnownUnused(project, sdk)) {
+      LOG.info("Skipping the background update of '" + sdk.getName() + "': no Python project of '" + project.getName() + "' uses it");
       return false;
     }
 
@@ -206,7 +213,8 @@ public final class PythonSdkUpdater {
    * <p>
    * Such an update does nothing while no Python project of {@code project} uses {@code sdk}: the interpreter is
    * registered, but the project does not use it, and skeleton generation and a package scan would start it for nothing.
-   * The task checks this on its background thread, against the current snapshot. A user action and the creation of an
+   * The request is rejected when the current snapshot shows the interpreter as unused. Before the first snapshot, the
+   * task checks this on its background thread. A user action and the creation of an
    * interpreter call {@link #scheduleUpdate(Sdk, Project)} instead, because an interpreter that no module uses yet still
    * has to be set up. See PY-88315.
    *
@@ -431,14 +439,15 @@ public final class PythonSdkUpdater {
       HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
       nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
       pathsToTransfer.removeAll(nonTransferredModuleRoots);
-      // The owner gets the roots only while its Python project uses the SDK.
-      if (!PySdkUsage.modulesUsing(PySdkUsage.awaitSnapshot(ownerModule.getProject()), sdk).contains(ownerModule)) {
-        return;
-      }
       if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
-        PyTransferredSdkRootsKt.removeTransferredRoots(ownerModule, sdk);
+        // The owner gets the roots only while its Python project uses the SDK. The paths are recorded anyway: a new
+        // interpreter has its paths set up before the module gets it, and `PySdkTransferredRootsListener` transfers
+        // them then.
+        boolean ownerUsesSdk =
+          PySdkUsage.modulesUsing(PySdkUsage.awaitSnapshot(ownerModule.getProject()), sdk).contains(ownerModule);
+        if (ownerUsesSdk) PyTransferredSdkRootsKt.removeTransferredRoots(ownerModule, sdk);
         PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
-        PyTransferredSdkRootsKt.transferRoots(ownerModule, sdk);
+        if (ownerUsesSdk) PyTransferredSdkRootsKt.transferRoots(ownerModule, sdk);
       }
     }
   }

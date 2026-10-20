@@ -35,9 +35,9 @@ import kotlinx.coroutines.withContext
 
 internal class RestartLspServersListener(val project: Project) : PyLspListener, PythonPackageManagementListener {
   /**
-   * Follows the snapshots. The first snapshot sets the baseline: the servers start for it on their own. After it,
-   * the engine choice resets when the engine stops being supported, and the servers restart when the interpreter of
-   * a served Python project changes.
+   * Follows the snapshots. The engine choice resets when the engine is not supported: on the first snapshot, and on a
+   * change from supported to not supported. The servers start for the first snapshot on their own, so they restart only
+   * when the interpreter of a served Python project changes after it.
    */
   internal class SnapshotActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
@@ -50,11 +50,11 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
           .collect { input ->
             val before = previous
             previous = input
-            if (before == null) return@collect
-            if (before.isSupported && !input.isSupported) {
+            // A project saved with an external engine can open with no interpreter that the engine serves.
+            if ((before == null || before.isSupported) && !input.isSupported) {
               listener.updateModules()
             }
-            if (before.servedInterpreters != input.servedInterpreters) {
+            if (before != null && before.servedInterpreters != input.servedInterpreters) {
               listener.updateLspServers()
             }
           }

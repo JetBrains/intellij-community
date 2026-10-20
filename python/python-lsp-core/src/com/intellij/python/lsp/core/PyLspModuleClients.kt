@@ -85,7 +85,7 @@ fun pyLspProjectsToServeWith(pyProject: PyProject, pyTool: PyTool): List<PyProje
   // served, and the Python project serves alone. The first snapshot regroups the servers, see PY_LSP_SERVE_KEYS_CHANGED.
   val served = EvoPyProjectModel.getInstance(pyProject.project).snapshotOrNull()?.let(::pyLspServedProjects) ?: emptyList()
   val keys = pyLspServeKeys(pyProject.project, pyTool)
-  return pyLspServeGroupOf(pyProject, served) { keys.keyOf(it) ?: pyLspServeKeyWithoutVersion(it) }
+  return pyLspServeGroupOf(pyProject, served) { keys.getByModule(it) ?: pyLspServeKeyWithoutVersion(it) }
 }
 
 /**
@@ -124,7 +124,7 @@ suspend fun pyLspRefreshServeKeys(project: Project, pyTool: PyTool): Map<PyProje
 @ApiStatus.Internal
 class PyLspServeKeysView(val keys: Map<PyProject, PyLspServeKey>, val isFresh: Boolean) {
   /** The key of [pyProject], matched by module, see [isSamePyProject]. `null` when the keys do not name it. */
-  fun keyOf(pyProject: PyProject): PyLspServeKey? = keys.keyOf(pyProject)
+  fun keyOf(pyProject: PyProject): PyLspServeKey? = keys.getByModule(pyProject)
 }
 
 /**
@@ -143,7 +143,7 @@ fun Collection<PyProject>.holds(pyProject: PyProject): Boolean = any { it.isSame
 
 /** The value of [pyProject], matched by module, see [isSamePyProject]. */
 @ApiStatus.Internal
-fun <V> Map<PyProject, V>.keyOf(pyProject: PyProject): V? =
+fun <V> Map<PyProject, V>.getByModule(pyProject: PyProject): V? =
   get(pyProject) ?: entries.firstOrNull { it.key.isSamePyProject(pyProject) }?.value
 
 /** [pyLspServeKeys] together with whether the answer still fits the project. Never blocks. */

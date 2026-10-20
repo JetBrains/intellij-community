@@ -247,8 +247,8 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     }
 
     scope.launch {
-      // The client shows the Python tool windows only for a project with a Python project, see `SdkAwareToolWindowFactory`.
-      snapshotFlow().collect { sendPythonAvailableEvent(project, it.workspaces.isNotEmpty()) }
+      // The client shows the Python tool windows only for a project with an interpreter, see `SdkAwareToolWindowFactory`.
+      snapshotFlow().collect { sendPythonAvailableEvent(project, it.interpreters.isNotEmpty()) }
     }
 
     project.messageBus.connect(scope).subscribe(FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
