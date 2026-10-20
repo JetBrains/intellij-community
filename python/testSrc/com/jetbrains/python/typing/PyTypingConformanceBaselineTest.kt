@@ -3,9 +3,11 @@ package com.jetbrains.python.typing
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.util.PsiTreeUtil
@@ -109,6 +111,7 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
     var highlights: List<HighlightInfo> = emptyList()
     val collector = object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        if (t != null && t.isControlFlowException) return super.processError(category, message, details, t)
         exceptions += "exception logged: ${firstLine(t?.message ?: message)}"
         return Action.NONE
       }
@@ -119,6 +122,7 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
           highlights = myFixture.doHighlighting(HighlightSeverity.WARNING)
         }
         catch (e: Throwable) {
+          rethrowControlFlowException(e)
           exceptions += "exception ${e.javaClass.simpleName}: ${firstLine(e.message.orEmpty())}"
         }
       }
