@@ -36,7 +36,8 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
  * not the host root, so callers that need the host path can't use it directly — that's the
  * whole reason for this provider. On a monolith it falls back to [Project.guessProjectDir].
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
+@Deprecated("Temporary API for integrating remote development with Eel. Use with caution; see the function documentation.")
 fun Project.getRemoteProjectBaseNioPath(): Path? {
   // The backend-provided path is a string in the host's path syntax, so it must be parsed
   // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.
