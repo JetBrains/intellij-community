@@ -6,8 +6,8 @@
 # downloads it.
 #
 # The archive is the GitHub release `tart.tar.gz`, byte-identical, on the Space file mirror. The cache
-# redirector does not serve `github.com/cirruslabs/tart`, and `bazel_downloader.cfg` routes
-# `packages.jetbrains.team/files/` through the redirector.
+# redirector does not serve `github.com/cirruslabs/tart`, and the URL below reaches
+# the Space mirror through the redirector.
 #
 # To bump the pin:
 #   1. Download `tart.tar.gz` of the release and check it against `tart_<version>_checksums.txt`.
