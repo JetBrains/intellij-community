@@ -35,7 +35,9 @@ class DefaultTreeLayoutCacheTest {
   @BeforeEach
   fun setUp() {
     model = DefaultTreeModel(null)
-    sut = DefaultTreeLayoutCache(defaultRowHeight) { }
+    sut = DefaultTreeLayoutCache(defaultRowHeight) { }.also {
+      it.forceCheckInvariants = true
+    }
     heights = hashMapOf()
     sut.nodeDimensions = NodeDimensionsImpl(heights)
   }

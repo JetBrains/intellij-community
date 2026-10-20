@@ -9,6 +9,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.Enumeration
@@ -36,6 +37,9 @@ class DefaultTreeLayoutCache(
 
   @JvmField
   internal var isCachedSizeValid: Boolean = false
+
+  @TestOnly
+  var forceCheckInvariants: Boolean = false
 
   override fun setModel(newModel: TreeModel?) {
     @Suppress("UsePropertyAccessSyntax")
@@ -923,7 +927,7 @@ class DefaultTreeLayoutCache(
   }
 
   private fun checkInvariants(location: Location) {
-    if (!Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
+    if (!forceCheckInvariants && !Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
       return
     }
     InvariantChecker(location).checkInvariants()
