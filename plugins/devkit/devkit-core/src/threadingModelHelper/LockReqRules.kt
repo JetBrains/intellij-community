@@ -28,6 +28,7 @@ interface LockReqRules {
    * The qualified names of the classes whose declared methods the analysis does not enter.
    * A call to such a method gives no inheritor search, and the analysis does not go into its implementations.
    * The method can still give a requirement from [assertionMethods] or [readRequiredClasses].
+   * The analysis treats the methods of all JDK classes in the same way, so this set does not need to list them.
    */
   val opaqueClasses: Set<String>
 

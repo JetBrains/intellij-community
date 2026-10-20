@@ -5,8 +5,10 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import java.nio.file.Files
@@ -51,6 +53,11 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
   }
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
+
+  // only the JDK test needs a JDK, so the other tests keep the light project without it
+  override fun getProjectDescriptor(): LightProjectDescriptor? {
+    return if (getTestName(false) == "JdkMethodCall") LightJavaCodeInsightFixtureTestCase.JAVA_LATEST else super.getProjectDescriptor()
+  }
 
   fun testNoLockRequirements() {
     val result = doTest("NoLockRequirements")
@@ -175,6 +182,14 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     // the analysis does not go into the implementations of the UserDataHolder, UserDataHolderEx and UserDataHolderBase methods,
     // so their read requirements are not found
     val expectedPaths = listOf("UserDataHolderCall.testMethod -> UserDataHolderCall.helper => READ.ANNOTATION")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
+  fun testJdkMethodCall() {
+    val result = doTest("JdkMethodCall")
+    // the analysis does not go into the implementations of the List and Runnable methods, so their read requirements are not found
+    val expectedPaths = listOf("JdkMethodCall.testMethod -> JdkMethodCall.helper => READ.ANNOTATION")
     val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 
@@ -102,11 +104,17 @@ object LockReqDetector {
 
   /**
    * Whether the analysis must not go into the implementations of [method].
-   * This is true if one of [LockReqRules.opaqueClasses] declares [method].
+   * This is true if a JDK class or one of [LockReqRules.opaqueClasses] declares [method].
    */
   context(patterns: LockReqRules)
   fun isOpaqueMethod(method: PsiMethod): Boolean {
-    return method.containingClass?.qualifiedName in patterns.opaqueClasses
+    val containingClass = method.containingClass ?: return false
+    return containingClass.qualifiedName in patterns.opaqueClasses || isJdkClass(containingClass)
+  }
+
+  private fun isJdkClass(psiClass: PsiClass): Boolean {
+    val file = psiClass.containingFile?.virtualFile ?: return false
+    return ProjectFileIndex.getInstance(psiClass.project).getOrderEntriesForFile(file).any { it is JdkOrderEntry }
   }
 
   context(config: AnalysisConfig, patterns: LockReqRules)
