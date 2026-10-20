@@ -170,19 +170,11 @@
     <registryKey defaultValue="true"
                  description="Master switch for the new Python formatter defaults (PY-85946). When off, the feature is fully disabled: classic formatting everywhere, no migration, no balloon."
                  key="python.formatter.new.defaults.enabled" restartRequired="true"/>
-    <fileType name="PyTyped"
-              implementationClass="com.jetbrains.python.codeInsight.typing.PyTypedFileType"
-              fieldName="INSTANCE"
-              fileNamesCaseInsensitive="py.typed"/>
     <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.CondaRequirementsLanguageInjector"/>
     <platform.backend.documentation.psiTargetProvider
       implementation="com.jetbrains.python.requirements.RequirementsDocumentationProvider"/>
-    <platform.backend.documentation.lookupElementTargetProvider
-      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecDocumentationProvider"/>
-    <platform.backend.documentation.targetProvider
-      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecHoverDocumentationProvider"/>
     <platform.backend.documentation.linkHandler
       implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
     <psi.referenceContributor language="Requirements"
@@ -472,18 +464,6 @@
     <usageTargetProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralUsageTargetProvider"/>
     <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
 
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
-    <lang.parserDefinition language="PythonRegExp"
-                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
-    <lang.syntaxHighlighterFactory language="PythonRegExp"
-                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpSyntaxHighlighterFactory"/>
-    <lang.parserDefinition language="PythonVerboseRegExp"
-                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
-    <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
-                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
-    <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl"
-                        implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
-
     <completion.ml.contextFeatures language="Python"
                                    implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
     <completion.ml.elementFeatures language="Python"
@@ -639,9 +619,6 @@
     <registryKey defaultValue="64"
                  description="Minimum scroll-bar distance (px) from the bottom that triggers loading the next page of search results in the Install Package dialog."
                  restartRequired="false" key="python.packaging.install.dialog.results.list.load.more.threshold.px"/>
-
-    <!-- typing -->
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
 
@@ -978,10 +955,6 @@
                             implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
 
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
-
-    <!--stdlib-->
-    <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
-
 
     <!--pytest fixture -->
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>

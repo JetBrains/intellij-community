@@ -4,15 +4,15 @@ package com.jetbrains.python.codeInsight.typing
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import javax.swing.Icon
 
 internal object PyTypedFileType : LanguageFileType(PlainTextLanguage.INSTANCE, true) {
   override fun getName(): String = "PyTyped"
 
-  override fun getDescription(): String = PyBundle.message("filetype.py.typed.description")
+  override fun getDescription(): String = PyCodeInsightBundle.message("filetype.py.typed.description")
 
-  override fun getDisplayName(): String = PyBundle.message("filetype.py.typed.display.name")
+  override fun getDisplayName(): String = PyCodeInsightBundle.message("filetype.py.typed.display.name")
 
   override fun getDefaultExtension(): String = "typed"
 

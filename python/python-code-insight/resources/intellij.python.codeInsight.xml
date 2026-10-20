@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
@@ -29,8 +30,10 @@
     <module name="intellij.python.parser"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.syntax.core"/>
+    <module name="intellij.regexp"/>
     <module name="intellij.xml.psi.impl"/>
   </dependencies>
   <!-- endregion -->
@@ -158,5 +161,32 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
+
+    <fileType name="PyTyped"
+              implementationClass="com.jetbrains.python.codeInsight.typing.PyTypedFileType"
+              fieldName="INSTANCE"
+              fileNamesCaseInsensitive="py.typed"/>
+    <platform.backend.documentation.lookupElementTargetProvider
+      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecDocumentationProvider"/>
+    <platform.backend.documentation.targetProvider
+      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecHoverDocumentationProvider"/>
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
+    <lang.parserDefinition language="PythonRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="PythonVerboseRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
+    <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl"
+                        implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
+    <!-- typing -->
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <!--stdlib-->
+    <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
   </extensions>
 </idea-plugin>
