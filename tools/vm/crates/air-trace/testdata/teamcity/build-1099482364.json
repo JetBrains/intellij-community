@@ -1,0 +1,40 @@
+{
+  "id": 1099482364,
+  "number": "18619",
+  "status": "SUCCESS",
+  "state": "finished",
+  "composite": true,
+  "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTests/1099482364",
+  "buildType": {
+    "id": "ijplatform_master_AirPluginUiTests",
+    "name": "Air Plugin UI Tests"
+  },
+  "snapshot-dependencies": {
+    "build": [
+      {
+        "id": 1099482304,
+        "number": "16335",
+        "status": "SUCCESS",
+        "state": "finished",
+        "composite": false,
+        "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTests_1/1099482304",
+        "buildType": {
+          "id": "ijplatform_master_AirPluginUiTests_1",
+          "name": "Air Plugin UI Tests / 1"
+        }
+      },
+      {
+        "id": 1099482358,
+        "number": "15232",
+        "status": "SUCCESS",
+        "state": "finished",
+        "composite": false,
+        "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTests_2/1099482358",
+        "buildType": {
+          "id": "ijplatform_master_AirPluginUiTests_2",
+          "name": "Air Plugin UI Tests / 2"
+        }
+      }
+    ]
+  }
+}

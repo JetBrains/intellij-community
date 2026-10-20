@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
 use avl_base::sync::lock;
-use avl_trace_tools::discover::{Bundle, Options, Root, RootState, Scanner, Snapshot, Status, Summary};
+use avl_trace_tools::discover::{Bundle, Options, Origin, Root, RootState, Scanner, Snapshot, Status, Summary};
 use futures::future::BoxFuture;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -323,6 +323,9 @@ pub(crate) struct Run {
     pub started_at: Option<String>,
     /// The worst of its scenarios': running, failed, invalid, truncated, aborted, passed, in that order.
     pub status: Status,
+    /// The CI build that ran the run, as its first scenario with one names it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<Origin>,
     pub scenarios: Vec<Scenario>,
 }
 
@@ -368,6 +371,7 @@ pub(crate) fn runs_of(current: &Snap) -> Runs<'_> {
                 run_id: scenario.summary.run_id.clone(),
                 started_at: None,
                 status: Status::Passed,
+                origin: None,
                 scenarios: Vec::new(),
             });
             runs.len() - 1
@@ -380,6 +384,9 @@ pub(crate) fn runs_of(current: &Snap) -> Runs<'_> {
         }
         if rank_of(scenario.summary.status) < rank_of(run.status) {
             run.status = scenario.summary.status;
+        }
+        if run.origin.is_none() {
+            run.origin.clone_from(&scenario.summary.origin);
         }
         run.scenarios.push(scenario);
     }

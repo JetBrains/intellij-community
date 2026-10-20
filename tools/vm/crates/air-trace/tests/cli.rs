@@ -61,4 +61,15 @@ fn a_refusal_is_one_line_and_its_exit() {
         (exit, stdout.as_str(), stderr.as_str()),
         (Some(2), "", "air-trace serve: no roots to look in; pass --root DIR\n")
     );
+
+    let (exit, _, stderr) = answer(&["serve", "--teamcity", "1", "--detach"]);
+    assert_eq!(exit, Some(2), "{stderr}");
+    assert!(
+        stderr.starts_with("air-trace serve: --teamcity needs a server of its own"),
+        "{stderr}"
+    );
+
+    let (exit, _, stderr) = answer(&["serve", "--no-default-roots", "--port", "0", "--teamcity", "build-1"]);
+    assert_eq!(exit, Some(2), "{stderr}");
+    assert!(stderr.contains("air-trace serve: --teamcity build-1: not a build id"), "{stderr}");
 }

@@ -275,6 +275,32 @@ fn a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip() {
     scanner.close();
 }
 
+/// A root's origin, such as the TeamCity build of a downloaded `bazel.logs.zip`, is on the root and on each of its
+/// bundles; the bundle's id does not change with it.
+#[test]
+fn the_origin_of_a_root_is_on_each_of_its_bundles() {
+    let manifest = example_manifest();
+    let keep = tempfile::tempdir().unwrap();
+    let zip = packed_example(&manifest, &keep);
+    let origin = Origin {
+        name: "Air Plugin UI Tests / 1".to_owned(),
+        id: "1099482304".to_owned(),
+        url: None,
+    };
+    let scanner = Scanner::new(Options::default());
+    let plain = scanner.scan(&[Root::new(RootKind::Flag, &zip)]);
+    let found = scanner.scan(&[Root {
+        origin: Some(origin.clone()),
+        ..Root::new(RootKind::TeamCity, &zip)
+    }]);
+    assert_eq!(found.roots[0].origin.as_ref(), Some(&origin));
+    assert_eq!(found.bundles[0].origin.as_ref(), Some(&origin));
+    assert_eq!(
+        (plain.bundles[0].origin.as_ref(), &plain.bundles[0].id),
+        (None, &found.bundles[0].id)
+    );
+}
+
 /// A zip inside a bundle is one of its files, not a zip to open.
 #[test]
 fn a_zip_inside_a_bundle_is_not_opened() {

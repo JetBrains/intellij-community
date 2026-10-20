@@ -10,7 +10,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest};
 use serde::Serialize;
 
-use super::roots::{Root, RootKind, within};
+use super::roots::{Origin, Root, RootKind, within};
 use super::zips::ZipCache;
 use super::{
     Bundle, Location, Source, SourceKind, Status, Summary, apply_inference, apply_manifest, bundle_id, infer_from_logs, last_complete_line,
@@ -49,6 +49,8 @@ impl Default for Options {
 pub struct RootState {
     pub kind: RootKind,
     pub path: PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<Origin>,
     pub exists: bool,
     pub bundles: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -163,6 +165,7 @@ impl Scanner {
             state: RootState {
                 kind: configured.kind,
                 path: configured.path.clone(),
+                origin: configured.origin.clone(),
                 exists: false,
                 bundles: 0,
                 error: configured.error.clone(),
@@ -222,6 +225,11 @@ impl Scanner {
             self.add_zip(&mut found, &real, seen);
         } else if info.is_dir() {
             self.walk(state, &mut found, &real, now, seen);
+        }
+        if let Some(origin) = &configured.origin {
+            for bundle in &mut found.bundles {
+                bundle.summary.origin = Some(origin.clone());
+            }
         }
         found.state.bundles = found.bundles.len();
         found.real = Some(real);

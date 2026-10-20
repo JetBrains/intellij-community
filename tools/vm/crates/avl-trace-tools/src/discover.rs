@@ -22,7 +22,7 @@ use avl_trace::vocabulary;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-pub use roots::{Root, RootKind, VM_REPORTS_GLOB, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB, default_roots, within};
+pub use roots::{Origin, Root, RootKind, VM_REPORTS_GLOB, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB, default_roots, within};
 pub use scan::{Options, RootState, Scanner, Snapshot};
 pub use zips::{EntryMeta, InnerZip, ZipCache, ZipIndex, clean_bundle_path, read_zip, read_zip_reporting};
 
@@ -87,6 +87,9 @@ pub struct Summary {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumbnail: Option<String>,
     pub source: Source,
+    /// The CI build that ran the bundle, when its root names one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<Origin>,
     /// Why the manifest could not be read, when the status is [Status::Invalid].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
