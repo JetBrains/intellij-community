@@ -1,6 +1,6 @@
 Select the bootstrap Rust toolchain with a toolchain type, not with a build setting.
 
-Companion patch: rules_rs-0.0.112-bootstrap-toolchain-type.patch. Apply both, or neither.
+Companion patch: rules_rs-0.1.3-bootstrap-toolchain-type.patch. Apply both, or neither.
 
 # The problem
 
