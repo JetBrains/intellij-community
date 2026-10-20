@@ -13,6 +13,7 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -103,22 +104,40 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    LanguageLevel languageLevel = getLanguageLevel();
-    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
-      @Override
-      protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-          DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
-        }
-        else {
-          DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
-        }
-      }
-    };
+    return new JavaProjectDescriptor(getModuleTypeId(), getProjectJDK(), getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_8));
   }
 
   @Override
   protected @NotNull String getModuleTypeId() {
     return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
+  }
+
+  private static final class JavaProjectDescriptor extends SimpleLightProjectDescriptor {
+    private final boolean myWithTypeUseAnnotations;
+
+    private JavaProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk, boolean withTypeUseAnnotations) {
+      super(moduleTypeId, sdk);
+      myWithTypeUseAnnotations = withTypeUseAnnotations;
+    }
+
+    @Override
+    protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      if (myWithTypeUseAnnotations) {
+        DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
+      }
+      else {
+        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return super.equals(o) && myWithTypeUseAnnotations == ((JavaProjectDescriptor)o).myWithTypeUseAnnotations;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * super.hashCode() + Boolean.hashCode(myWithTypeUseAnnotations);
+    }
   }
 }
