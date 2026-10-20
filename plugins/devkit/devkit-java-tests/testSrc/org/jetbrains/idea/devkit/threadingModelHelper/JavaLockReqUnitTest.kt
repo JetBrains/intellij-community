@@ -206,6 +206,50 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testPsiSupportClassesCall() {
+    myFixture.addFileToProject("com/intellij/psi/PsiTypeParameterListOwner.java", """
+      package com.intellij.psi;
+      public interface PsiTypeParameterListOwner {
+        Object getTypeParameterList();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/psi/PsiReference.java", """
+      package com.intellij.psi;
+      public interface PsiReference {
+        Object resolve();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/psi/stubs/StubElement.java", """
+      package com.intellij.psi.stubs;
+      public interface StubElement {
+        Object getPsi();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/extapi/psi/ASTDelegatePsiElement.java", """
+      package com.intellij.extapi.psi;
+      public abstract class ASTDelegatePsiElement {
+        public Object getChildren() { return null; }
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/extapi/psi/ASTWrapperPsiElement.java", """
+      package com.intellij.extapi.psi;
+      public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
+        public Object getNode() { return null; }
+      }
+      """.trimIndent())
+    val result = doTest("PsiSupportClassesCall")
+    // each helper calls a method that one of the read-required classes declares
+    val expectedPaths = listOf(
+      "PsiSupportClassesCall.testMethod -> PsiSupportClassesCall.ownerHelper => READ.IMPLICIT",
+      "PsiSupportClassesCall.testMethod -> PsiSupportClassesCall.referenceHelper => READ.IMPLICIT",
+      "PsiSupportClassesCall.testMethod -> PsiSupportClassesCall.stubHelper => READ.IMPLICIT",
+      "PsiSupportClassesCall.testMethod -> PsiSupportClassesCall.delegateHelper => READ.IMPLICIT",
+      "PsiSupportClassesCall.testMethod -> PsiSupportClassesCall.wrapperHelper => READ.IMPLICIT",
+    )
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testLoggerCall() {
     myFixture.addFileToProject("com/intellij/openapi/diagnostic/Logger.java", """
       package com.intellij.openapi.diagnostic;

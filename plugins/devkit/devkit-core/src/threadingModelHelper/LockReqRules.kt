@@ -121,6 +121,11 @@ class BaseLockReqRules : LockReqRules {
     "com.intellij.psi.PsiMethod",
     "com.intellij.lang.ASTNode",
     "com.intellij.psi.impl.PsiElementBase",
+    "com.intellij.psi.PsiTypeParameterListOwner",
+    "com.intellij.psi.PsiReference",
+    "com.intellij.psi.stubs.StubElement",
+    "com.intellij.extapi.psi.ASTDelegatePsiElement",
+    "com.intellij.extapi.psi.ASTWrapperPsiElement",
   )
 
   override val opaqueClasses: Set<String> = setOf(
