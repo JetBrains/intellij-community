@@ -2,8 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.scratch
 
-import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -22,8 +21,7 @@ fun Logger.printDebugMessage(str: String) {
 }
 
 val VirtualFile.isKotlinScratch: Boolean
-    get() = KotlinParserDefinition.STD_SCRIPT_SUFFIX == this.extension &&
-        ScratchFileService.getInstance().getRootType(this) is ScratchRootType
+    get() = KotlinParserDefinition.STD_SCRIPT_SUFFIX == this.extension && ScratchUtil.isInScratchesRoot(this)
 
 @TestOnly
 fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): KotlinScratchFileEditorWithPreview? {
