@@ -580,10 +580,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
       var overloads = PyiUtil.getOverloads(function, context);
       if (!overloads.isEmpty()) {
-        return Ref.create(new PyOverloadType(
-          ContainerUtil.mapNotNull(overloads, overload -> (PyCallableType)context.getType(overload)),
-          PyiUtil.isOverload(function, context) ? null : Ref.create(context.getType(function))
-        ));
+        final List<PyCallableType> items = new ArrayList<>();
+        for (var overload : overloads) {
+          final PyType overloadType = context.getType(overload);
+          // A type engine gives an overload the type of the whole overloaded function
+          if (overloadType instanceof PyOverloadType overloadedType) {
+            return Ref.create(overloadedType);
+          }
+          if (overloadType instanceof PyCallableType callableType) {
+            items.add(callableType);
+          }
+        }
+        return Ref.create(new PyOverloadType(items, PyiUtil.isOverload(function, context) ? null : Ref.create(context.getType(function))));
       }
     }
     if (target instanceof PyTypedElement) {
