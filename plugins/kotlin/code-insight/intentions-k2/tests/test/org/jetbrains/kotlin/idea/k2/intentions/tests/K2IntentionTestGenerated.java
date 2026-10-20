@@ -14062,6 +14062,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/superCallInProperty.kt");
         }
 
+        @TestMetadata("typeParameterOfClassInFunction.kt")
+        public void testTypeParameterOfClassInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/typeParameterOfClassInFunction.kt");
+        }
+
+        @TestMetadata("typeParameterOfClassInProperty.kt")
+        public void testTypeParameterOfClassInProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/typeParameterOfClassInProperty.kt");
+        }
+
         @TestMetadata("updateUsages.kt")
         public void testUpdateUsages() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/updateUsages.kt");
@@ -14263,6 +14273,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("superCallInFunction.kt")
         public void testSuperCallInFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/superCallInFunction.kt");
+        }
+
+        @TestMetadata("typeParameterOfClassInFunction.kt")
+        public void testTypeParameterOfClassInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/typeParameterOfClassInFunction.kt");
+        }
+
+        @TestMetadata("typeParameterOfClassInProperty.kt")
+        public void testTypeParameterOfClassInProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/typeParameterOfClassInProperty.kt");
         }
     }
 

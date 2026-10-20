@@ -20,7 +20,10 @@ internal fun checkUsedTypeParameterFromParentClassConflict(
     declarationsToMove: Iterable<KtNamedDeclaration>,
     target: K2MoveTargetDescriptor.Declaration<*>?
 ): MultiMap<PsiElement, String> {
-    if (target !is ClassBody) return MultiMap.empty()
+    if (target !is ClassBody &&
+        target !is K2MoveTargetDescriptor.CompanionBlock &&
+        target !is K2MoveTargetDescriptor.CompanionExtension
+    ) return MultiMap.empty()
     val conflicts = MultiMap<PsiElement, String>()
 
     for (declarationToMove in declarationsToMove) {
