@@ -185,6 +185,27 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testPsiElementBaseCall() {
+    myFixture.addFileToProject("com/intellij/psi/PsiElement.java", """
+      package com.intellij.psi;
+      public interface PsiElement {
+        String getText();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/psi/impl/PsiElementBase.java", """
+      package com.intellij.psi.impl;
+      public abstract class PsiElementBase implements com.intellij.psi.PsiElement {
+        @Override
+        public String getText() { return null; }
+      }
+      """.trimIndent())
+    val result = doTest("PsiElementBaseCall")
+    // the call resolves to the override in PsiElementBase, which is a read-required class too
+    val expectedPaths = listOf("PsiElementBaseCall.testMethod -> PsiElementBaseCall.helper => READ.IMPLICIT")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testUserDataHolderCall() {
     myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolder.java", """
       package com.intellij.openapi.util;
