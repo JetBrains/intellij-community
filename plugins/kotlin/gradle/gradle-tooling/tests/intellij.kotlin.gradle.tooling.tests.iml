@@ -10,10 +10,9 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin.project.model" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" />
-    <orderEntry type="module" module-name="intellij.kotlin.common.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />

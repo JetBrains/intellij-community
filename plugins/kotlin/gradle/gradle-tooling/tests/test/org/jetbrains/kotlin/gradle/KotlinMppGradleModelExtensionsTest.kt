@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.gradleTooling.isDependsOn
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.gradleTooling.resolveDeclaredDependsOnSourceSets
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
