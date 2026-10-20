@@ -3,7 +3,6 @@ package com.jetbrains.python.hatch.sdk
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment

@@ -6,7 +6,6 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText

@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2.hatch
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VfsUtilCore
