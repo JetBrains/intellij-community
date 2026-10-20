@@ -154,7 +154,7 @@ mod lifecycle {
             .build();
         let backend = docker(&fixture);
         let tag = "air-ui-worker:3d61c9831be6";
-        let url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/air-ui-worker/3d61c9831be6-linux-arm64.tar";
+        let url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/air-ui-worker/3d61c9831be6-linux-arm64.tar";
         assert_eq!(backend.mirror_url(tag).as_deref(), Some(url));
         let curl = fixture.settings.host_curl.as_str();
         let archive = Path::new("/runtime/docker-context/3d61c9831be6/3d61c9831be6-linux-arm64.tar");
