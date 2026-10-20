@@ -14,6 +14,8 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError.MissingPropertyIssueDat
 import com.jetbrains.jsonSchema.impl.JsonValidationError.ProhibitedPropertyIssueData
 import com.jetbrains.jsonSchema.impl.JsonValidationError.TypeMismatchIssueData
 import com.networknt.schema.Error
+import com.networknt.schema.Schema
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.ArrayNode
@@ -67,8 +69,13 @@ class NetworkntErrorMapper(
    * priority-based intersection logic in createWarnings() selects the type error over branch-specific
    * errors. Pre-grouping would insert required errors first and block the type error via putIfAbsent.
    */
-  fun mapErrors(errors: Collection<Error>): Map<PsiElement, JsonValidationError> {
-    val withoutUnresolved = filterUnresolvedRefErrors(errors)
+  fun mapErrors(errors: Collection<Error>): Map<PsiElement, JsonValidationError> = mapErrorsWithSchema(errors, null)
+
+  @ApiStatus.Internal
+  fun mapErrors(errors: Collection<Error>, schema: Schema): Map<PsiElement, JsonValidationError> = mapErrorsWithSchema(errors, schema)
+
+  private fun mapErrorsWithSchema(errors: Collection<Error>, schema: Schema?): Map<PsiElement, JsonValidationError> {
+    val withoutUnresolved = filterUnresolvedRefErrors(errors, schema)
     val effectiveErrorsRaw = applyErrorCap(withoutUnresolved)
 
     val typeBranchSuppressions = computeBranchTypeErrorSuppressions(effectiveErrorsRaw)
@@ -127,18 +134,19 @@ class NetworkntErrorMapper(
   }
 
   /**
-   * Filters out unresolvable `$ref` errors — always, regardless of error count.
+   * Filters out unresolvable `$ref` errors and affected composition alternatives before the error cap.
    *
    * Per JSON Schema spec discussion ([json-schema-spec#1276](https://github.com/json-schema-org/json-schema-spec/issues/1276)),
    * an unresolvable `$ref` makes the validation result indeterminate (neither valid nor invalid).
    * Showing these as errors in the editor is misleading — the user cannot fix a broken external schema.
    * We log the count so the information is available for diagnostics.
    */
-  private fun filterUnresolvedRefErrors(errors: Collection<Error>): Collection<Error> {
-    val refErrors = errors.filter { it.keyword == "${'$'}ref" }
+  private fun filterUnresolvedRefErrors(errors: Collection<Error>, schema: Schema?): Collection<Error> {
+    val refErrors = errors.filter { it.keyword == $$"$ref" }
     if (refErrors.isEmpty()) return errors
-    LOG.debug("Filtered ${refErrors.size} unresolvable \$ref error(s) — schema references could not be resolved")
-    return errors.filter { it.keyword != "${'$'}ref" }
+    LOG.debug($$"Filtered $${refErrors.size} unresolvable $ref error(s) — schema references could not be resolved")
+    val filtered = if (schema == null) errors else filterIndeterminateCompositionErrors(errors, schema)
+    return filtered.filter { it.keyword != $$"$ref" }
   }
 
   /**

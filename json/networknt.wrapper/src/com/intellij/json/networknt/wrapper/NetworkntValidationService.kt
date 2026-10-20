@@ -114,7 +114,7 @@ class NetworkntValidationService(private val project: Project) {
         val errorMapper = NetworkntErrorMapper(locationIndex)
         val mapped = jsonSchemaTracer.spanBuilder("networknt.errorMapping").use {
           try {
-            errorMapper.mapErrors(errors)
+            errorMapper.mapErrors(errors, schema)
           } catch (e: CancellationException) {
             throw e
           } catch (e: Exception) {
@@ -209,7 +209,7 @@ class NetworkntValidationService(private val project: Project) {
         }
 
         val branchMapped = try {
-          NetworkntErrorMapper(branchIndex).mapErrors(branchErrors)
+          NetworkntErrorMapper(branchIndex).mapErrors(branchErrors, schema)
         } catch (e: CancellationException) {
           throw e
         } catch (e: Exception) {
