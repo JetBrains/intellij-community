@@ -23,10 +23,10 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.EmptyConsumer;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
     final CreateDirectoryOrPackageHandler newOrdinaryPackageHandler = getNewOrdinaryPackageHandler(project, directory, directoryPointer);
     final CreateDirectoryOrPackageHandler newNamespacePackageHandler = getNewNamespacePackageHandler(project, directory, directoryPointer, module);
 
-    builder.show(PyBundle.message("dialog.title.can.t.create.package"), ORDINARY_PACKAGE_TYPE,
+    builder.show(PySourceRootsBundle.message("dialog.title.can.t.create.package"), ORDINARY_PACKAGE_TYPE,
                  new CreateFileFromTemplateDialog.FileCreator<PsiDirectory>() {
                    @Override
                    public PsiDirectory createFile(@NotNull String name, @NotNull String templateName) {
@@ -90,7 +90,7 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
 
                    @Override
                    public @NotNull String getActionName(@NotNull String name, @NotNull String templateName) {
-                     return PyBundle.message("command.name.create.new.package", name);
+                     return PySourceRootsBundle.message("command.name.create.new.package", name);
                    }
                  }, EmptyConsumer.getInstance());
   }
@@ -150,7 +150,7 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
     }
     else {
       String errorMessage = createHandler.getErrorText(name);
-      Messages.showErrorDialog(errorMessage, PyBundle.message("dialog.title.can.t.create.package"));
+      Messages.showErrorDialog(errorMessage, PySourceRootsBundle.message("dialog.title.can.t.create.package"));
     }
   }
 
@@ -158,11 +158,11 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
   private static CreateFileFromTemplateDialog.Builder createDialogBuilder(@NotNull Project project) {
     CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
     builder
-      .setTitle(PyBundle.message("dialog.title.new.python.package"))
-      .addKind(PyBundle.message("new.package.list.item.ordinary.package"), AllIcons.Nodes.Package, ORDINARY_PACKAGE_TYPE);
+      .setTitle(PySourceRootsBundle.message("dialog.title.new.python.package"))
+      .addKind(PySourceRootsBundle.message("new.package.list.item.ordinary.package"), AllIcons.Nodes.Package, ORDINARY_PACKAGE_TYPE);
 
     if (PyNamespacePackagesService.isEnabled() && RegistryManager.getInstance().is("python.create.namespace.package.action")) {
-      builder.addKind(PyBundle.message("new.package.list.item.namespace.package"), AllIcons.Nodes.Package, NAMESPACE_PACKAGE_TYPE);
+      builder.addKind(PySourceRootsBundle.message("new.package.list.item.namespace.package"), AllIcons.Nodes.Package, NAMESPACE_PACKAGE_TYPE);
     }
 
     return builder;

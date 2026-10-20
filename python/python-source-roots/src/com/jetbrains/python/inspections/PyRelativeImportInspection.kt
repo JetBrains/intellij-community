@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
@@ -28,6 +27,7 @@ import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle
 
 class PyRelativeImportInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
@@ -88,7 +88,7 @@ class PyRelativeImportInspection : PyInspection() {
   }
 
   private class PyMarkAsNamespacePackageQuickFix(val module: Module, val directory: VirtualFile) : LocalQuickFix {
-    override fun getFamilyName(): String = PyBundle.message("QFIX.mark.as.namespace.package", directory.name)
+    override fun getFamilyName(): String = PySourceRootsBundle.message("QFIX.mark.as.namespace.package", directory.name)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val document = PsiDocumentManager.getInstance(project).getDocument(descriptor.psiElement.containingFile)
@@ -112,7 +112,7 @@ class PyRelativeImportInspection : PyInspection() {
   }
 
   private class PyChangeToSameDirectoryImportQuickFix : PsiUpdateModCommandQuickFix() {
-    override fun getFamilyName(): String = PyBundle.message("QFIX.change.to.same.directory.import")
+    override fun getFamilyName(): String = PySourceRootsBundle.message("QFIX.change.to.same.directory.import")
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
       val oldImport = element as? PyFromImportStatement ?: return

@@ -124,6 +124,7 @@
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
+    <module name="intellij.python.sourceRoots"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>
@@ -222,7 +223,6 @@
     <projectSettings service="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
     <applicationSettings service="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.add.v2.poetry.PoetryConfigService"/>
-    <projectSettings service="com.jetbrains.python.module.PySourceRootDetectionService"/>
     <applicationSettings service="com.jetbrains.python.packaging.repository.PyPackageRepositories"/>
     <projectSettings service="com.jetbrains.python.statistics.PyPackageUsageStatistics"/>
 
@@ -392,11 +392,6 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.codeInsight.stubs.PyStubPackagesAdvertiser"/>
-    <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages"
-                     bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import"
-                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
     <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="messages.CommandInterfaceBundle"
                      key="commandLine.inspection.name"
                      enabledByDefault="true" level="WARNING"
@@ -474,8 +469,6 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDebuggerConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
 
-    <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
-
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
 
@@ -505,10 +498,6 @@
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
     <workspaceModel.customImlComponentNameContributor
       implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
-
-    <!-- Namespace packages -->
-    <registryKey key="python.create.namespace.package.action" defaultValue="false"
-                 description="Possibility to create namespace packages from New | Python Package"/>
 
     <!-- asyncio REPL -->
     <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
@@ -566,7 +555,6 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector"/>
     <statistics.validation.customValidationRule
@@ -630,14 +618,6 @@
     <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.installation.notification.group"/>
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
-
-    <!-- Source root detection -->
-    <registryKey key="python.source.root.suggest.quickfix" defaultValue="true"
-                 description="Suggests to mark a detected source root via quick-fix for the red import"/>
-    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true"
-                 description="Automatically applies suggested source root quick-fix"/>
-    <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
-                       key="python.source.root.detection.confirm.notification.group"/>
 
     <toolWindow id="Python Packages" anchor="right" secondary="false"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
@@ -745,7 +725,6 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider"
                     interface="com.jetbrains.python.console.PyConsoleOptionsProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension"
                     interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider"
@@ -904,8 +883,6 @@
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
 
-    <customPackageIdentifier implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageCustomIdentifier"/>
-    <pyRootTypeProvider implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageRootProvider"/>
     <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
 
     <!-- Experimental packaging extensions-->
@@ -1026,12 +1003,6 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
-    <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
-            icon="AllIcons.Nodes.Package">
-      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
-
-
     <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
     <group id="PyPackagingMenu">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
@@ -1076,10 +1047,6 @@
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
-    </action>
-
-    <action id="MarkNamespacePackageDirectory" class="com.jetbrains.python.namespacePackages.PyMarkAsNamespacePackageAction">
-      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
     </action>
 
     <!--suppress PluginXmlI18n -->

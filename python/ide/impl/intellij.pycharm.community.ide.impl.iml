@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.python.codeInsight" />
+    <orderEntry type="module" module-name="intellij.python.sourceRoots" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />

@@ -1,0 +1,120 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.sourceRoots` start
+content_module_jar(module = ":sourceRoots")
+### auto-generated section `dev intellij.python.sourceRoots` end
+
+### auto-generated section `build intellij.python.sourceRoots` start
+create_kotlinc_options(
+    name = "custom_sourceRoots",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "sourceRoots",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_sourceRoots",
+    module_name = "intellij.python.sourceRoots",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/analysis-api:analysis",
+        "//platform/backend/workspace",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/extensions",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//jps/model-api:model",
+        "//platform/lang-api:lang",
+        "//platform/lang-core",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/statistics",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+        "//python/python-ast:ast",
+        "//python/python-parser:parser",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-impl:psi-impl",
+        "//python/python-pyproject:pyproject",
+        "//python/python-refactoring:refactoring",
+    ],
+)
+
+jvm_library(
+    name = "sourceRoots_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_sourceRoots",
+    module_name = "intellij.python.sourceRoots",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":sourceRoots",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//python/python-ast:ast_test_lib",
+        "//python/python-parser:parser_test_lib",
+        "//python/python-psi-api:psi_test_lib",
+        "//python/python-psi-impl:psi-impl_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//python/python-refactoring:refactoring_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.sourceRoots` end
+
+### auto-generated section `iml intellij.python.sourceRoots` start
+exports_files(
+    [
+        "intellij.python.sourceRoots.iml",
+        "resources/intellij.python.sourceRoots.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.sourceRoots` end

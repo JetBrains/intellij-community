@@ -2238,6 +2238,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" filepath="$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/tests/intellij.python.sdk.tests.iml" filepath="$PROJECT_DIR$/python/python-sdk/tests/intellij.python.sdk.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk-configurator/backend/intellij.python.sdkConfigurator.backend.iml" filepath="$PROJECT_DIR$/python/python-sdk-configurator/backend/intellij.python.sdkConfigurator.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-source-roots/intellij.python.sourceRoots.iml" filepath="$PROJECT_DIR$/python/python-source-roots/intellij.python.sourceRoots.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" filepath="$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" filepath="$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.iml" filepath="$PROJECT_DIR$/python/python-syntax/lambdaTests/intellij.python.syntax.lambdaTests.iml" />

@@ -1,0 +1,77 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.python.ast"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.refactoring"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.PySourceRootsBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectSettings service="com.jetbrains.python.module.PySourceRootDetectionService"/>
+    <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
+    <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
+
+    <!-- Namespace packages -->
+    <registryKey key="python.create.namespace.package.action" defaultValue="false"
+                 description="Possibility to create namespace packages from New | Python Package"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
+
+    <!-- Source root detection -->
+    <registryKey key="python.source.root.suggest.quickfix" defaultValue="true"
+                 description="Suggests to mark a detected source root via quick-fix for the red import"/>
+    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true"
+                 description="Automatically applies suggested source root quick-fix"/>
+    <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true"
+                       bundle="messages.PySourceRootsBundle"
+                       key="python.source.root.detection.confirm.notification.group"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <customPackageIdentifier implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageCustomIdentifier"/>
+    <pyRootTypeProvider implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageRootProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PySourceRootsBundle">
+    <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
+            icon="AllIcons.Nodes.Package">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+
+    <action id="MarkNamespacePackageDirectory" class="com.jetbrains.python.namespacePackages.PyMarkAsNamespacePackageAction">
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
+    </action>
+  </actions>
+</idea-plugin>

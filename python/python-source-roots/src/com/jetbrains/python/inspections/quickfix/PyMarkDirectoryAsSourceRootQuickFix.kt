@@ -14,10 +14,12 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.module.PySourceRootDetectionService
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import javax.swing.Icon
 
-internal class PyMarkDirectoryAsSourceRootQuickFix(
+@ApiStatus.Internal
+class PyMarkDirectoryAsSourceRootQuickFix(
   private val project: Project,
   private val sourceRoot: VirtualFile
 ) : LocalQuickFix, Iconable {

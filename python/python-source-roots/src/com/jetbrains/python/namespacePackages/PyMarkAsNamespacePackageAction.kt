@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyLanguageFacade
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle
 
 class PyMarkAsNamespacePackageAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -39,28 +39,28 @@ class PyMarkAsNamespacePackageAction : AnAction() {
       virtualFiles.all { service.canBeMarked(it) } -> {
         presentation.isEnabled = true
         presentation.text = if (PlatformUtils.isPyCharm()) {
-          PyBundle.message("python.namespace.package.folder")
+          PySourceRootsBundle.message("python.namespace.package.folder")
         }
         else {
-          PyBundle.message("python.python.namespace.package.folder")
+          PySourceRootsBundle.message("python.python.namespace.package.folder")
         }
       }
       virtualFiles.all { service.isMarked(it) } -> {
         presentation.isEnabled = true
         presentation.text = if (PlatformUtils.isPyCharm()) {
-          PyBundle.message("python.unmark.as.namespace.package")
+          PySourceRootsBundle.message("python.unmark.as.namespace.package")
         }
         else {
-          PyBundle.message("python.unmark.as.python.namespace.package")
+          PySourceRootsBundle.message("python.unmark.as.python.namespace.package")
         }
       }
       else -> {
         presentation.isEnabled = false
         presentation.text = if (PlatformUtils.isPyCharm()) {
-          PyBundle.message("python.namespace.package.folder")
+          PySourceRootsBundle.message("python.namespace.package.folder")
         }
         else {
-          PyBundle.message("python.python.namespace.package.folder")
+          PySourceRootsBundle.message("python.python.namespace.package.folder")
         }
       }
     }

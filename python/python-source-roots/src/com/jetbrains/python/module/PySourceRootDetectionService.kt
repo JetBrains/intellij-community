@@ -26,7 +26,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityChange
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +39,8 @@ import java.io.File
   name = "PySourceRootDetectionService",
   storages = [Storage(value = "pySourceRootDetection.xml", roamingType = RoamingType.DISABLED)]
 )
-internal class PySourceRootDetectionService(
+@ApiStatus.Internal
+class PySourceRootDetectionService(
   private val project: Project,
   private val cs: CoroutineScope
 ) : ModuleRootListener, SerializablePersistentStateComponent<PySourceRootDetectionService.HiddenSourcesState>(HiddenSourcesState()) {
@@ -133,7 +134,7 @@ internal class PySourceRootDetectionService(
   }
 
   private fun showNotification(sourceRoot: VirtualFile) {
-    val message = PyBundle.message("python.source.root.detection.confirm.notification.title", getSourceRootVisibleName(sourceRoot))
+    val message = PySourceRootsBundle.message("python.source.root.detection.confirm.notification.title", getSourceRootVisibleName(sourceRoot))
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Python source root detection")
     val notification = group.createNotification(message, NotificationType.INFORMATION)
 
@@ -156,7 +157,7 @@ internal class PySourceRootDetectionService(
   )
 
   private object OkAction : NotificationAction(
-    PyBundle.message("python.source.root.detection.confirm.notification.action.ok")
+    PySourceRootsBundle.message("python.source.root.detection.confirm.notification.action.ok")
   ) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       notification.expire()
@@ -164,7 +165,7 @@ internal class PySourceRootDetectionService(
   }
 
   private inner class RevertAction(private val sourceRoot: VirtualFile) : NotificationAction(
-    PyBundle.message("python.source.root.detection.confirm.notification.action.revert")
+    PySourceRootsBundle.message("python.source.root.detection.confirm.notification.action.revert")
   ) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       unmarkAsSourceRoot(sourceRoot)
@@ -173,7 +174,7 @@ internal class PySourceRootDetectionService(
   }
 
   private object MuteAction : NotificationAction(
-    PyBundle.message("python.source.root.detection.confirm.notification.action.mute")
+    PySourceRootsBundle.message("python.source.root.detection.confirm.notification.action.mute")
   ) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       Registry.get("python.source.root.suggest.quickfix.auto.apply").setValue(false)

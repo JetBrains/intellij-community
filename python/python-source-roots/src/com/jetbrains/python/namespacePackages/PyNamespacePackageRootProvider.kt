@@ -15,9 +15,9 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.JBColor
 import com.intellij.util.containers.MultiMap
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyContentEntriesEditor
 import com.jetbrains.python.module.PyRootTypeProvider
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle
 import java.awt.Color
 import javax.swing.Icon
 import javax.swing.JTree
@@ -61,11 +61,11 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
   }
 
   override fun getName(): String {
-    return PyBundle.message("python.namespace.packages.name")
+    return PySourceRootsBundle.message("python.namespace.packages.name")
   }
 
   override fun getDescription(): String {
-    return PyBundle.message("python.namespace.packages.description")
+    return PySourceRootsBundle.message("python.namespace.packages.description")
   }
 
   override fun getRootsGroupColor(): Color {

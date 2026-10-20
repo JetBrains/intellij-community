@@ -92,6 +92,7 @@
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.refactoring" />
     <orderEntry type="module" module-name="intellij.python.codeInsight" />
+    <orderEntry type="module" module-name="intellij.python.sourceRoots" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
