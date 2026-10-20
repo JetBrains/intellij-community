@@ -86,7 +86,10 @@ def _console_text_of(command):
         wire = wire.decode('utf-8')
     xml = unquote(wire.split('\t', 2)[2])
     io = re.search(r'<io s="(.*)" ctx="(\d)"/>', xml, re.DOTALL)
-    return unquote(unescape(io.group(1), {'&quot;': '"'})), io.group(2)
+    text = unquote(unescape(io.group(1), {'&quot;': '"'}))
+    if not isinstance(text, type(u'')):
+        text = text.decode('utf-8')
+    return text, io.group(2)
 
 
 def _assert_console_receives_whole(written, is_stderr):
@@ -112,7 +115,6 @@ def test_console_output_hook_sends_a_write_whole(length, is_stderr):
     _assert_console_receives_whole(written, is_stderr)
 
 
-@pytest.mark.python3
 def test_console_output_hook_sends_a_non_ascii_write_whole():
     _assert_console_receives_whole(u'\u0438' * 2000003, is_stderr=False)
 
