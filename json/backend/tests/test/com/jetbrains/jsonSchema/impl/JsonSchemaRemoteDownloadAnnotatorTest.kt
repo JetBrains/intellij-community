@@ -4,11 +4,11 @@ package com.jetbrains.jsonSchema.impl
 import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.WaitFor
 import com.jetbrains.jsonSchema.remote.http.CachedFile
 import com.jetbrains.jsonSchema.remote.http.CachedSchema
@@ -37,8 +37,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class JsonSchemaRemoteDownloadAnnotatorTest {
-  private val projectFixture = codeInsightProjectFixture()
-  private val myFixture by codeInsightFixture(projectFixture)
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
   private val project get() = projectFixture.get()
 
   @TestDisposable
