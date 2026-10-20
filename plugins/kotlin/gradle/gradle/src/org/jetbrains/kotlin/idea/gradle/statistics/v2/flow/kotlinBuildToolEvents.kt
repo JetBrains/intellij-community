@@ -172,7 +172,6 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.CLI_ALLOW_CONTRACTS_ON_MORE_FUNCTIONS,
             KotlinBuildToolFusMetricName.CLI_ALLOW_HOLDSIN_CONTRACT,
             KotlinBuildToolFusMetricName.CLI_ALLOW_KOTLIN_PACKAGE,
-            KotlinBuildToolFusMetricName.CLI_ALLOW_PRE_17_RUNTIME_JDK,
             KotlinBuildToolFusMetricName.CLI_ALLOW_REIFIED_TYPE_IN_CATCH,
             KotlinBuildToolFusMetricName.CLI_ALLOW_RETURNS_RESULT_OF,
             KotlinBuildToolFusMetricName.CLI_ANNOTATION_TARGET_ALL_ENABLED,

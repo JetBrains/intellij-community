@@ -159,7 +159,6 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.CLI_ALLOW_CONTRACTS_ON_MORE_FUNCTIONS,
             BooleanMetrics.CLI_ALLOW_HOLDSIN_CONTRACT,
             BooleanMetrics.CLI_ALLOW_KOTLIN_PACKAGE,
-            BooleanMetrics.CLI_ALLOW_PRE_17_RUNTIME_JDK,
             BooleanMetrics.CLI_ALLOW_REIFIED_TYPE_IN_CATCH,
             BooleanMetrics.CLI_ALLOW_RETURNS_RESULT_OF,
             BooleanMetrics.CLI_ANNOTATION_TARGET_ALL_ENABLED,
