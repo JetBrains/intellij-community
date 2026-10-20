@@ -350,7 +350,8 @@ private fun MenuComboBoxes() {
                         modifier = Modifier.padding(comboBoxStyle.metrics.contentPadding),
                     )
                 },
-                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                modifier =
+                    Modifier.widthIn(max = 200.dp).fillMaxWidth().testTag(ShowcaseTestTags.SIMPLE_MENU_COMBO_BOX),
                 content = {
                     stringItems.forEachIndexed { index, item ->
                         selectableItem(selected = index == selectedItem, onClick = { selectedItem = index }) {

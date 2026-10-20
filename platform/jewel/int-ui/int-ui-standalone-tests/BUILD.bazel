@@ -23,7 +23,11 @@ standalone_e2e_test(
         allow_empty = True,
     ),
     # The tests assert that JDialogRenderer, not the Compose popup, is the renderer under test.
-    jvm_flags = ["-Djewel.customPopupRender=true"],
+    # Linux requires compose.interop.blending=true because JBR rounded corners are unavailable there.
+    jvm_flags = [
+        "-Djewel.customPopupRender=true",
+        "-Dcompose.interop.blending=true",
+    ],
     kotlinc_opts = ":custom_jewel-intUi-standalone-e2e-tests",
     module_name = "intellij.platform.jewel.intUi.standalone.spectreTests",
     visibility = ["//visibility:public"],
@@ -82,8 +86,11 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    associates = [
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+    ],
     kotlinc_opts = ":custom_jewel-intUi-standalone-tests",
-    module_name = "intellij.platform.jewel.intUi.standalone.tests",
     resource_strip_prefix = "src/test/resources",
     resources = glob(
         ["src/test/resources/**/*"],
@@ -97,8 +104,6 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/kotlinx/coroutines/core",
