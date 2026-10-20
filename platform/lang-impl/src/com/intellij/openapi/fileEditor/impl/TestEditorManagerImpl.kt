@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import java.awt.Component
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -90,7 +91,7 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
 
   private val testEditorSplitter = TestEditorSplitter()
   private var counter = 0
-  private val virtualFileToEditor = HashMap<VirtualFile, Editor?>()
+  private val virtualFileToEditor = Collections.synchronizedMap(HashMap<VirtualFile, Editor?>())
   private var activeFile: VirtualFile? = null
 
   private class MyLightVirtualFile : LightVirtualFile("Dummy.java") {
@@ -496,7 +497,7 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
       if (!isCurrentlyUnderLocalId) {
         return (clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY).getAllFiles().toTypedArray()
       }
-      return VfsUtilCore.toVirtualFileArray(virtualFileToEditor.keys)
+      return synchronized(virtualFileToEditor) { VfsUtilCore.toVirtualFileArray(virtualFileToEditor.keys) }
     }
 
   fun getEditor(file: VirtualFile): Editor? = virtualFileToEditor.get(file)
@@ -505,7 +506,8 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
     get() {
       val result = ArrayList<FileEditor>()
 
-      result += virtualFileToEditor.keys.mapNotNull {
+      val files = synchronized(virtualFileToEditor) { virtualFileToEditor.keys.toList() }
+      result += files.mapNotNull {
         testEditorSplitter.getEditorAndProvider(it)?.first
       }
       for (clientManager in allClientFileEditorManagers) {
