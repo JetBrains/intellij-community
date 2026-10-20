@@ -1,0 +1,1 @@
+<a>http://localhost:8983/solr/select/?q=*:*&amp;facet=true&amp;fl=id,score&amp;facet.mincount=1&amp;facet.field=timestamp</a>

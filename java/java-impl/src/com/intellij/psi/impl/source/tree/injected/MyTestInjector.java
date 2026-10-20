@@ -139,7 +139,7 @@ public class MyTestInjector {
     final Language ql = Language.findLanguageByID("JPAQL");
     final Language js = Language.findLanguageByID("JavaScript");
     final Language html = Language.findLanguageByID("HTML");
-    if (ql == null || js == null) return;
+    if (js == null) return;
 
     InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
@@ -175,7 +175,7 @@ public class MyTestInjector {
         if (parent1 instanceof XmlAttribute) {
           @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
           if ("ql".equals(attrName)) {
-            inject(host, placesToInject, ql);
+            if (ql != null) inject(host, placesToInject, ql);
             return;
           }
           if ("js".equals(attrName)) {
@@ -194,7 +194,7 @@ public class MyTestInjector {
         XmlTag tag = xmlText.getParentTag();
         if (tag == null) return;
         if ("ql".equals(tag.getLocalName())) {
-          inject(host, placesToInject, ql);
+          if (ql != null) inject(host, placesToInject, ql);
           return;
         }
         if ("js".equals(tag.getLocalName())) {
@@ -263,7 +263,7 @@ public class MyTestInjector {
         PsiVariable variable = PsiTreeUtil.getParentOfType(host, PsiVariable.class);
         if (variable == null) return;
         if (host.getParent() instanceof PsiPolyadicExpression) return;
-        if ("ql".equals(variable.getName())) {
+        if ("ql".equals(variable.getName()) && ql != null) {
           placesToInject.addPlace(ql, textRangeToInject(host), null, null);
         }
         if ("xml".equals(variable.getName())) {

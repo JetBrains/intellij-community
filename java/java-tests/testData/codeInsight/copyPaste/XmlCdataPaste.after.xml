@@ -1,0 +1,4 @@
+<a><![CDATA[
+http://localhost:8983/solr/select/?q=*:*&facet=true&fl=id,score&facet.mincount=1&facet.field=timestamp
+]]></a>
+
