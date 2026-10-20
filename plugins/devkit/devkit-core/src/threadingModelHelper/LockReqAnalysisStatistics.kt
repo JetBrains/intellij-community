@@ -73,13 +73,15 @@ internal class LockReqAnalysisStatistics {
    * @property totalNanos the summed time of the searches. It does not include the enqueue of the results.
    * @property maxNanos the time of the longest search
    * @property results the summed number of the results that the searches gave to the handler
+   * @property cacheHits the number of the requests that got the results from [LockReqSearchCache] and did not run a search
    */
-  data class SearchStatistics(val searches: Int, val totalNanos: Long, val maxNanos: Long, val results: Int) {
+  data class SearchStatistics(val searches: Int, val totalNanos: Long, val maxNanos: Long, val results: Int, val cacheHits: Int = 0) {
     operator fun plus(other: SearchStatistics): SearchStatistics = SearchStatistics(
       searches = searches + other.searches,
       totalNanos = totalNanos + other.totalNanos,
       maxNanos = maxOf(maxNanos, other.maxNanos),
       results = results + other.results,
+      cacheHits = cacheHits + other.cacheHits,
     )
   }
 
@@ -114,10 +116,24 @@ internal class LockReqAnalysisStatistics {
   }
 
   /**
+   * Records one request for the overriding methods of [method] that got the results from the cache.
+   */
+  fun onInheritorCacheHit(method: MethodSignature) {
+    inheritorSearches.merge(method, CACHE_HIT, SearchStatistics::plus)
+  }
+
+  /**
    * Records one search for the listeners of the message bus topic [topicClassName].
    */
   fun onListenerSearch(topicClassName: String, nanos: Long, results: Int) {
     listenerSearches.merge(topicClassName, SearchStatistics(1, nanos, nanos, results), SearchStatistics::plus)
+  }
+
+  /**
+   * Records one request for the listeners of the message bus topic [topicClassName] that got the results from the cache.
+   */
+  fun onListenerCacheHit(topicClassName: String) {
+    listenerSearches.merge(topicClassName, CACHE_HIT, SearchStatistics::plus)
   }
 
   /**
@@ -255,27 +271,27 @@ internal class LockReqAnalysisStatistics {
    */
   private fun StringBuilder.appendInheritorSearches() {
     val byMethod = inheritorSearchStatistics()
-    val searches = byMethod.values.sumOf { it.searches }
-    appendLine("Inheritor searches: $searches (unique methods: ${byMethod.size}, repeated searches: ${searches - byMethod.size})")
+    appendSearchSummary("Inheritor searches", "unique methods", byMethod.values)
     appendLine("Slowest classes for the inheritor search (top $SLOWEST_CLASSES_LIMIT):")
     appendLine("Time is the summed time of the searches for the overriding methods of the class methods. It does not include the enqueue of the results.")
     appendLine("Results is the number of the methods that the searches found, including the searched method.")
+    appendLine("Cache hits is the number of the requests that got the results from the cache and did not run a search.")
     appendLine("The lines below each class show its slowest methods (top $SLOWEST_METHODS_PER_CLASS_LIMIT).")
-    appendLine(String.format(Locale.ROOT, "%14s %9s %8s %15s %8s  %s", "time", "searches", "methods", "longest search", "results", "class"))
+    appendLine(String.format(Locale.ROOT, "%14s %9s %11s %8s %15s %8s  %s", "time", "searches", "cache hits", "methods", "longest search", "results", "class"))
     byMethod.entries
       .groupBy { it.key.containingClassName }
       .map { (className, methods) -> Triple(className, methods, methods.map { it.value }.reduce(SearchStatistics::plus)) }
       .sortedWith(compareByDescending<Triple<String, *, SearchStatistics>> { it.third.totalNanos }.thenBy { it.first })
       .take(SLOWEST_CLASSES_LIMIT)
       .forEach { (className, methods, total) ->
-        appendLine(String.format(Locale.ROOT, "%14s %9d %8d %15s %8d  %s", total.totalNanos.nanoseconds.format(), total.searches, methods.size,
-                                 total.maxNanos.nanoseconds.format(), total.results, className))
+        appendLine(String.format(Locale.ROOT, "%14s %9d %11d %8d %15s %8d  %s", total.totalNanos.nanoseconds.format(), total.searches, total.cacheHits,
+                                 methods.size, total.maxNanos.nanoseconds.format(), total.results, className))
         methods
           .sortedWith(compareByDescending<Map.Entry<MethodSignature, SearchStatistics>> { it.value.totalNanos }.thenBy { it.key.toPresentableString() })
           .take(SLOWEST_METHODS_PER_CLASS_LIMIT)
           .forEach { (signature, stats) ->
-            appendLine(String.format(Locale.ROOT, "%14s %9d %8s %15s %8d    %s", stats.totalNanos.nanoseconds.format(), stats.searches, "",
-                                     stats.maxNanos.nanoseconds.format(), stats.results,
+            appendLine(String.format(Locale.ROOT, "%14s %9d %11d %8s %15s %8d    %s", stats.totalNanos.nanoseconds.format(), stats.searches,
+                                     stats.cacheHits, "", stats.maxNanos.nanoseconds.format(), stats.results,
                                      "${signature.methodName}(${signature.parameterTypes.joinToString(", ")})"))
           }
       }
@@ -286,17 +302,31 @@ internal class LockReqAnalysisStatistics {
    */
   private fun StringBuilder.appendListenerSearches() {
     val byTopic = listenerSearchStatistics()
+    appendSearchSummary("Listener searches", "unique topic classes", byTopic.values)
     appendLine("Slowest topic classes for the listener search (top $SLOWEST_CLASSES_LIMIT):")
     appendLine("Time is the summed time of the searches for the listener classes. It does not include the enqueue of the results.")
     appendLine("Results is the number of the listener classes that the searches found.")
-    appendLine(String.format(Locale.ROOT, "%14s %9s %15s %8s  %s", "time", "searches", "longest search", "results", "topic class"))
+    appendLine("Cache hits is the number of the requests that got the results from the cache and did not run a search.")
+    appendLine(String.format(Locale.ROOT, "%14s %9s %11s %15s %8s  %s", "time", "searches", "cache hits", "longest search", "results", "topic class"))
     byTopic.entries
       .sortedWith(compareByDescending<Map.Entry<String, SearchStatistics>> { it.value.totalNanos }.thenBy { it.key })
       .take(SLOWEST_CLASSES_LIMIT)
       .forEach { (topicClassName, stats) ->
-        appendLine(String.format(Locale.ROOT, "%14s %9d %15s %8d  %s", stats.totalNanos.nanoseconds.format(), stats.searches,
+        appendLine(String.format(Locale.ROOT, "%14s %9d %11d %15s %8d  %s", stats.totalNanos.nanoseconds.format(), stats.searches, stats.cacheHits,
                                  stats.maxNanos.nanoseconds.format(), stats.results, topicClassName))
       }
+  }
+
+  /**
+   * Appends the number of the searches and the cache hits.
+   * A repeated search is a search for an element that was searched before.
+   * It occurs when the cache does not keep the element, or when the cached results become invalid.
+   */
+  private fun StringBuilder.appendSearchSummary(title: String, uniqueTitle: String, statistics: Collection<SearchStatistics>) {
+    val searched = statistics.count { it.searches > 0 }
+    val searches = statistics.sumOf { it.searches }
+    val cacheHits = statistics.sumOf { it.cacheHits }
+    appendLine("$title: $searches ($uniqueTitle: $searched, repeated searches: ${searches - searched}, cache hits: $cacheHits)")
   }
 
   /**
@@ -318,6 +348,7 @@ internal class LockReqAnalysisStatistics {
     private const val SLOWEST_CALLS_LIMIT = 50
     private const val SLOWEST_CLASSES_LIMIT = 50
     private const val SLOWEST_METHODS_PER_CLASS_LIMIT = 3
+    private val CACHE_HIT = SearchStatistics(searches = 0, totalNanos = 0, maxNanos = 0, results = 0, cacheHits = 1)
 
     private fun MethodSignature.toPresentableString(): String = "$containingClassName.$methodName(${parameterTypes.joinToString(", ")})"
 

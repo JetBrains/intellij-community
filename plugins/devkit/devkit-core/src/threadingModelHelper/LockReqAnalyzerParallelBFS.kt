@@ -59,6 +59,8 @@ class LockReqAnalyzerParallelBFS {
     val messageBusTopics: MutableSet<PsiClass> = ConcurrentHashMap.newKeySet(),
     val swingComponents: MutableSet<MethodSignature> = ConcurrentHashMap.newKeySet(),
     val statistics: LockReqAnalysisStatistics = LockReqAnalysisStatistics(),
+    val inheritorCache: LockReqSearchCache<MethodSignature, PsiMethod> = LockReqSearchCache(),
+    val listenerCache: LockReqSearchCache<String, PsiClass> = LockReqSearchCache(),
   )
 
   context(context: TraversalContext)
@@ -346,15 +348,21 @@ class LockReqAnalyzerParallelBFS {
 
   context(ops: LockReqPsiOps, context: TraversalContext, rules: LockReqRules)
   private fun handlePolymorphic(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>, parentId: Int, timer: LockReqPhaseTimer) {
-    val startNanos = timer.measuredNanos(Phase.INHERITOR_SEARCH)
-    var results = 0
-    timer.measure(Phase.INHERITOR_SEARCH) {
-      ops.findInheritors(method, context.config.scope, context.config.maxImplementations) { inheritor ->
-        results++
-        addToQueueIfNotVisited(payload, inheritor, currentPath, parentId, timer)
+    val signature = MethodSignature.fromMethod(method)
+    // the signature of a method in a local or anonymous class does not identify the method
+    val cacheKey = signature.takeIf { method.containingClass?.qualifiedName != null }
+    val inheritors = context.inheritorCache.getOrSearch(cacheKey, timer, onCacheHit = { context.statistics.onInheritorCacheHit(signature) }) {
+      val startNanos = timer.measuredNanos(Phase.INHERITOR_SEARCH)
+      val found = ArrayList<PsiMethod>()
+      timer.measure(Phase.INHERITOR_SEARCH) {
+        ops.findInheritors(method, context.config.scope, context.config.maxImplementations) { found.add(it) }
       }
+      context.statistics.onInheritorSearch(signature, timer.measuredNanos(Phase.INHERITOR_SEARCH) - startNanos, found.size)
+      found
     }
-    context.statistics.onInheritorSearch(MethodSignature.fromMethod(method), timer.measuredNanos(Phase.INHERITOR_SEARCH) - startNanos, results)
+    for (inheritor in inheritors) {
+      addToQueueIfNotVisited(payload, inheritor, currentPath, parentId, timer)
+    }
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -365,18 +373,21 @@ class LockReqAnalyzerParallelBFS {
     if (topicClass != null) {
       context.messageBusTopics.add(topicClass)
       consumer.onMessageBusTopic(topicClass)
-      val startNanos = timer.measuredNanos(Phase.LISTENER_SEARCH)
-      var results = 0
-      timer.measure(Phase.LISTENER_SEARCH) {
-        ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { listener ->
-          results++
-          listener.methods.forEach { listenerMethod ->
-            addToQueueIfNotVisited(payload, listenerMethod, currentPath, parentId, timer)
-          }
+      val topicName = topicClass.qualifiedName ?: topicClass.name ?: "<anon>"
+      val listeners = context.listenerCache.getOrSearch(topicClass.qualifiedName, timer, onCacheHit = { context.statistics.onListenerCacheHit(topicName) }) {
+        val startNanos = timer.measuredNanos(Phase.LISTENER_SEARCH)
+        val found = ArrayList<PsiClass>()
+        timer.measure(Phase.LISTENER_SEARCH) {
+          ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { found.add(it) }
+        }
+        context.statistics.onListenerSearch(topicName, timer.measuredNanos(Phase.LISTENER_SEARCH) - startNanos, found.size)
+        found
+      }
+      for (listener in listeners) {
+        listener.methods.forEach { listenerMethod ->
+          addToQueueIfNotVisited(payload, listenerMethod, currentPath, parentId, timer)
         }
       }
-      val topicName = topicClass.qualifiedName ?: topicClass.name ?: "<anon>"
-      context.statistics.onListenerSearch(topicName, timer.measuredNanos(Phase.LISTENER_SEARCH) - startNanos, results)
     }
   }
 

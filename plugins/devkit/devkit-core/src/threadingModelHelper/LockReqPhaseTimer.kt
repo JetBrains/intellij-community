@@ -26,6 +26,7 @@ class LockReqPhaseTimer private constructor(@PublishedApi internal val isEnabled
     CALLEE_CHECK("callee check", "The check of the callees for assertions and Swing calls."),
     INHERITOR_SEARCH("inheritor search", "The search for the overriding methods of the callees."),
     LISTENER_SEARCH("listener search", "The search for the message bus listeners."),
+    SEARCH_CACHE_WAIT("search cache wait", "The wait for another thread that runs the same inheritor or listener search."),
     ENQUEUE("enqueue", "The creation of the queue entries for the callees."),
     OTHER("other", "The remaining time. It includes the progress report, the consumer calls and the scheduling."),
   }

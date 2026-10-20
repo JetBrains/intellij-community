@@ -146,16 +146,17 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertTrue(report, report.contains("tree walk ") && report.contains("1x, longest "))
 
     // intermediateMethod and targetMethod are searched once each, and each search finds only the searched method
-    assertTrue(report, report.contains("Inheritor searches: 2 (unique methods: 2, repeated searches: 0)"))
+    assertTrue(report, report.contains("Inheritor searches: 2 (unique methods: 2, repeated searches: 0, cache hits: 0)"))
     val inheritorRows = tableRows(report, "Slowest classes for the inheritor search")
-    // class columns: time, searches, methods, longest search, results, class
+    // class columns: time, searches, cache hits, methods, longest search, results, class
     val classRow = inheritorRows.first()
-    assertEquals(listOf("2", "2", "2", "AnnotationInChain"), listOf(classRow[1], classRow[2], classRow[4], classRow[5]))
-    // method columns: time, searches, longest search, results, method
+    assertEquals(listOf("2", "0", "2", "2", "AnnotationInChain"), listOf(classRow[1], classRow[2], classRow[3], classRow[5], classRow[6]))
+    // method columns: time, searches, cache hits, longest search, results, method
     assertEquals(mapOf(
-      "intermediateMethod()" to listOf("1", "1"),
-      "targetMethod()" to listOf("1", "1"),
-    ), inheritorRows.drop(1).associate { it[4] to listOf(it[1], it[3]) })
+      "intermediateMethod()" to listOf("1", "0", "1"),
+      "targetMethod()" to listOf("1", "0", "1"),
+    ), inheritorRows.drop(1).associate { it[5] to listOf(it[1], it[2], it[4]) })
+    assertTrue(report, report.contains("Listener searches: 0 (unique topic classes: 0, repeated searches: 0, cache hits: 0)"))
     assertEmpty(tableRows(report, "Slowest topic classes for the listener search"))
 
     // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
@@ -166,6 +167,17 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
       "AnnotationInChain.intermediateMethod()" to listOf("2", "1", "2", "2"),
       "AnnotationInChain.targetMethod()" to listOf("3", "0", "1", "1"),
     ), treeRows)
+  }
+
+  fun testInheritorSearchCache() {
+    val report = analyzeWithReport("RepeatedPolymorphicCall")
+    // first and second both call Worker.work, so the second request gets the results from the cache
+    assertTrue(report, report.contains("Inheritor searches: 3 (unique methods: 3, repeated searches: 0, cache hits: 1)"))
+    val workerRow = tableRows(report, "Slowest classes for the inheritor search").single { it.last() == "Worker" }
+    // class columns: time, searches, cache hits, methods, longest search, results, class
+    assertEquals(listOf("1", "1", "1", "1"), listOf(workerRow[1], workerRow[2], workerRow[3], workerRow[5]))
+    // the cached result is enqueued too: the root, first, second, and ReadWorker.work for each of first and second
+    assertTrue(report, report.contains("Enqueued entries: 5"))
   }
 
   fun testPhaseTimerExcludesNestedBlocks() {
