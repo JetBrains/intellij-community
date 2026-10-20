@@ -80,7 +80,7 @@ class EgWalkerConformanceTest {
     var graph = EventGraph.createGraph()
     for (txn in history.txns) {
       assertEquals(txn.start, graph.size()) { "the first lv of $txn" }
-      var seq = txn.seqStart
+      var seq = txn.seqStart.toLong()
       var parents = versionOf(txn.parents)
       for (op in txn.ops) {
         val event = if (op.deleted > 0) {

@@ -42,25 +42,33 @@ internal class StoredRun(
   /**
    * The first seq after the last unit.
    */
-  fun endSeq(): Int {
+  fun endSeq(): Long {
     return event.seq() + event.length()
   }
 
   /**
    * Whether this run holds the unit ([agent], [seq]).
    */
-  fun holdsUnit(agent: Agent, seq: Int): Boolean {
+  fun holdsUnit(agent: Agent, seq: Long): Boolean {
     return agent == event.agent() && seq in event.seq() until endSeq()
   }
 
   /**
    * The lv of the unit [seq], which this run must hold.
    */
-  fun lvOfSeq(seq: Int): LV {
+  fun lvOfSeq(seq: Long): LV {
+    return lvStart + unitIndexOfSeq(seq)
+  }
+
+  /**
+   * The index inside this run of the unit [seq], which this run must hold. The index is below the
+   * length of the run, so it fits an [Int].
+   */
+  private fun unitIndexOfSeq(seq: Long): Int {
     require(seq >= event.seq() && seq < endSeq()) {
       "The seq $seq is outside the run $this"
     }
-    return lvStart + (seq - event.seq())
+    return (seq - event.seq()).toInt()
   }
 
   /**
@@ -136,7 +144,7 @@ internal class StoredRun(
   /**
    * The seq that names the unit [lv].
    */
-  fun seqAt(lv: LV): Int {
+  fun seqAt(lv: LV): Long {
     return event.seq() + unitIndexOf(lv)
   }
 

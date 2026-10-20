@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.impl.isMovedTextApart
 
 internal class EventImpl(
     private val agent: Agent,
-    private val seq: Int,
+    private val seq: Long,
     private val op: DocumentOp.Text,
 ) : Event {
 
@@ -29,7 +29,7 @@ internal class EventImpl(
   }
 
   override fun agent(): Agent = agent
-  override fun seq(): Int = seq
+  override fun seq(): Long = seq
   override fun op(): DocumentOp.Text = op
   override fun length(): Int = op.length()
 
@@ -99,7 +99,7 @@ private fun checkKnownOp(op: DocumentOp.Text) {
   }
 }
 
-private fun checkNotNegative(seq: Int, offset: Int) {
+private fun checkNotNegative(seq: Long, offset: Int) {
   require(seq >= 0) {
     "Negative seq: $seq"
   }
@@ -117,8 +117,8 @@ private fun checkLength(length: Int) {
   }
 }
 
-private fun checkIdSpace(seq: Int, length: Int) {
-  require(length <= Int.MAX_VALUE - seq) {
+private fun checkIdSpace(seq: Long, length: Int) {
+  require(length <= Long.MAX_VALUE - seq) {
     "The seq space overflows: seq $seq + length $length"
   }
 }

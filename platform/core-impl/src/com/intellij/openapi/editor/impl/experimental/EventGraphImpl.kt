@@ -102,14 +102,14 @@ internal class EventGraphImpl private constructor(
   /**
    * The first seq of [agent] that this graph stores: 0, or the next seq of [agent] at the base version.
    */
-  fun startSeqOf(agent: Agent): Int {
+  fun startSeqOf(agent: Agent): Long {
     return agents.startSeq(agent)
   }
 
   /**
    * Whether a trim dropped the unit ([agent], [seq]). The seqs of an agent below its start are gone.
    */
-  fun hasTrimmed(agent: Agent, seq: Int): Boolean {
+  fun hasTrimmed(agent: Agent, seq: Long): Boolean {
     return seq < startSeqOf(agent)
   }
 
@@ -186,7 +186,7 @@ internal class EventGraphImpl private constructor(
    * The next free seq of [agent] in this graph. The tail is the newest run, and the seqs of
    * one agent ascend with the lvs, so a tail of [agent] holds its greatest seq.
    */
-  fun nextSeqFor(agent: Agent): Int {
+  fun nextSeqFor(agent: Agent): Long {
     val tail = tail
     if (tail != null && tail.event.agent() == agent) {
       return tail.endSeq()
@@ -204,7 +204,7 @@ internal class EventGraphImpl private constructor(
   /**
    * The lv of the unit ([agent], [seq]) in this graph, or [NO_UNIT] when it holds no such unit.
    */
-  fun lvOfUnit(agent: Agent, seq: Int): LV {
+  fun lvOfUnit(agent: Agent, seq: Long): LV {
     val tail = tail
     if (tail != null && tail.holdsUnit(agent, seq)) {
       return tail.lvOfSeq(seq)
@@ -425,7 +425,7 @@ internal class EventGraphImpl private constructor(
     require(closedStarts.contentEquals(IntArray(runs.size()) { runs.get(it).lvStart })) {
       "The agent index does not hold exactly the closed runs"
     }
-    val nextSeqs = HashMap<Agent, Int>()
+    val nextSeqs = HashMap<Agent, Long>()
     val childless = BitSet(size)
     var lvEnd = 0
     for ((index, run) in runList.withIndex()) {

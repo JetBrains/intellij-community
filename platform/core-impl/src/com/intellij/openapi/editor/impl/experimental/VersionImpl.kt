@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.ex.experimental.Version
  */
 internal class VersionImpl private constructor(
   private val agents: Array<Agent>,
-  private val seqs: IntArray,
+  private val seqs: LongArray,
 ) : Version {
 
   override fun isRoot(): Boolean {
@@ -110,7 +110,7 @@ internal class VersionImpl private constructor(
   }
 
   companion object {
-    val ROOT: VersionImpl = VersionImpl(emptyArray(), IntArray(0))
+    val ROOT: VersionImpl = VersionImpl(emptyArray(), LongArray(0))
 
     /**
      * The heads of [lvVersion], which belongs to [graph], as event ids. The empty lv version gives the
@@ -127,7 +127,7 @@ internal class VersionImpl private constructor(
       val agents = Array(lvs.size) { i ->
         runs[i].event.agent()
       }
-      val seqs = IntArray(lvs.size) { i ->
+      val seqs = LongArray(lvs.size) { i ->
         runs[i].seqAt(lvs[i])
       }
       if (lvs.size < 2) {
@@ -140,12 +140,12 @@ internal class VersionImpl private constructor(
      * The heads in the order of their event ids: by agent, then by seq. That is also the tie-break
      * order of concurrent inserts.
      */
-    private fun sortedById(agents: Array<Agent>, seqs: IntArray): VersionImpl {
+    private fun sortedById(agents: Array<Agent>, seqs: LongArray): VersionImpl {
       val order = agents.indices.sortedWith(compareBy({ agents[it] }, { seqs[it] }))
       val sortedAgents = Array(order.size) { i ->
         agents[order[i]]
       }
-      val sortedSeqs = IntArray(order.size) { i ->
+      val sortedSeqs = LongArray(order.size) { i ->
         seqs[order[i]]
       }
       return VersionImpl(sortedAgents, sortedSeqs)

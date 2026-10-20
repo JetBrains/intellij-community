@@ -139,7 +139,9 @@ internal class MergePlan(
    * The leading units of [event] that [dest] already holds.
    */
   private fun knownUnits(event: Event): Int {
-    return (summary.endSeq(event.agent()) - event.seq()).coerceIn(0, event.length())
+    val distance = summary.endSeq(event.agent()) - event.seq()
+    // The clamp comes first, so the count fits an Int for any two seqs.
+    return distance.coerceIn(0L, event.length().toLong()).toInt()
   }
 
   /**

@@ -411,7 +411,7 @@ class TipCoalescingTest {
   private class History(origin: EventGraph = EventGraph.createGraph()) {
     private var graph = origin
     private val text = StringBuilder()
-    private val nextSeqs = HashMap<Agent, Int>()
+    private val nextSeqs = HashMap<Agent, Long>()
     private val past = ArrayList<Pair<Version, String>>()
 
     fun graph(): EventGraph {
@@ -468,8 +468,8 @@ class TipCoalescingTest {
       }
     }
 
-    private fun takeSeqs(agent: Agent, count: Int): Int {
-      val seq = nextSeqs[agent] ?: 0
+    private fun takeSeqs(agent: Agent, count: Int): Long {
+      val seq = nextSeqs[agent] ?: 0L
       nextSeqs[agent] = seq + count
       return seq
     }

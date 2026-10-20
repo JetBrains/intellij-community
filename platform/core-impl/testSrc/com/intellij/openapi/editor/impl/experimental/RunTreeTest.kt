@@ -95,12 +95,12 @@ internal class RunTreeTest {
     var index = AgentIndex.EMPTY
     val runs = ArrayList<StoredRun>()
     var lv = 0
-    val nextSeqs = HashMap<Agent, Int>()
+    val nextSeqs = HashMap<Agent, Long>()
     // Two agents interleave, and some runs are long, so an agent's runs cover a leaf boundary.
     repeat(3 * RunTree.WIDTH) { i ->
       val agent = if (i % 3 == 0) V else U
       val length = 1 + i % 4
-      val seq = nextSeqs[agent] ?: 0
+      val seq = nextSeqs[agent] ?: 0L
       val run = StoredRun(EventImpl(agent, seq, DocumentOp.insertOp(0, "x".repeat(length))), lv, IntArray(0))
       index = index.appended(run)
       runs.add(run)
@@ -133,6 +133,38 @@ internal class RunTreeTest {
   }
 
   @Test
+  fun `the agent index finds no unit outside the runs of an agent`() {
+    // The start seq lies above 2^32, so no seq of the agent fits an Int.
+    val start = (1L shl 32) + 5
+    val first = StoredRun(EventImpl(U, start, DocumentOp.insertOp(0, "ab")), 0, IntArray(0))
+    val second = StoredRun(EventImpl(U, start + 2, DocumentOp.insertOp(0, "c")), 2, intArrayOf(1))
+    val trimmed = AgentIndex.startingAt(VersionSummary(mapOf(U to start)))
+    val index = trimmed.appended(first).appended(second)
+    assertEquals(0, index.lvOfSeq(U, start))
+    assertEquals(1, index.lvOfSeq(U, start + 1))
+    assertEquals(2, index.lvOfSeq(U, start + 2))
+    // Below the start seq, after the runs, and too far from the start seq for a tree key.
+    val outside = longArrayOf(0, start - 1, start + 3, start + Int.MAX_VALUE + 1, Long.MAX_VALUE)
+    for (seq in outside) {
+      assertEquals(-1, index.lvOfSeq(U, seq)) { "seq $seq" }
+    }
+    // A summary that knows a prefix of the agent gets the runs after it.
+    assertEquals(listOf(0, 2), index.newRunStarts(VersionSummary(mapOf(U to start + 1))).toList())
+    assertEquals(listOf(2), index.newRunStarts(VersionSummary(mapOf(U to start + 2))).toList())
+    assertEquals(emptyList<Int>(), index.newRunStarts(VersionSummary(mapOf(U to start + 3))).toList())
+  }
+
+  @Test
+  fun `an index ends at the last seq`() {
+    val start = Long.MAX_VALUE - 3
+    val run = StoredRun(EventImpl(U, start, DocumentOp.insertOp(0, "abc")), 0, IntArray(0))
+    val index = AgentIndex.startingAt(VersionSummary(mapOf(U to start))).appended(run)
+    assertEquals(Long.MAX_VALUE, index.nextSeq(U))
+    assertEquals(2, index.lvOfSeq(U, Long.MAX_VALUE - 1))
+    assertEquals(-1, index.lvOfSeq(U, Long.MAX_VALUE))
+  }
+
+  @Test
   fun `the agent summary takes the tail`() {
     val closed = StoredRun(EventImpl(U, 0, DocumentOp.insertOp(0, "ab")), 0, IntArray(0))
     val tail = StoredRun(EventImpl(U, 2, DocumentOp.insertOp(2, "cd")), 2, intArrayOf(1))
@@ -144,7 +176,7 @@ internal class RunTreeTest {
   @Test
   fun `a seq that does not continue its agent is rejected`() {
     val index = AgentIndex.EMPTY.appended(StoredRun(EventImpl(U, 0, DocumentOp.insertOp(0, "ab")), 0, IntArray(0)))
-    for (seq in intArrayOf(0, 1, 3)) {
+    for (seq in longArrayOf(0, 1, 3)) {
       assertThrows(IllegalArgumentException::class.java, {
         index.appended(StoredRun(EventImpl(U, seq, DocumentOp.insertOp(0, "c")), 2, intArrayOf(1)))
       }, "seq $seq")
@@ -221,7 +253,7 @@ internal class RunTreeTest {
   }
 
   private fun runAt(lvStart: LV, length: Int, seq: Int): StoredRun {
-    return StoredRun(EventImpl(U, seq, DocumentOp.insertOp(0, "x".repeat(length))), lvStart, IntArray(0))
+    return StoredRun(EventImpl(U, seq.toLong(), DocumentOp.insertOp(0, "x".repeat(length))), lvStart, IntArray(0))
   }
 
   private companion object {

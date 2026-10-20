@@ -283,14 +283,14 @@ class EventGraphTest {
   @Test
   fun `an overflowing event is rejected`() {
     val u = agent("u")
-    // The run's id range would wrap past Int.MAX_VALUE.
-    assertThrows(IllegalArgumentException::class.java) { Event.createInsert(u, Int.MAX_VALUE, 0, "ab") }
-    assertThrows(IllegalArgumentException::class.java) { Event.createDelete(u, Int.MAX_VALUE - 1, 0, 3) }
+    // The run's id range would wrap past Long.MAX_VALUE.
+    assertThrows(IllegalArgumentException::class.java) { Event.createInsert(u, Long.MAX_VALUE, 0, "ab") }
+    assertThrows(IllegalArgumentException::class.java) { Event.createDelete(u, Long.MAX_VALUE - 1, 0, 3) }
     // The run's position range would wrap past Int.MAX_VALUE.
     assertThrows(IllegalArgumentException::class.java) { Event.createInsert(u, 0, Int.MAX_VALUE, "ab") }
-    // The exact boundary stays legal: the last id is Int.MAX_VALUE - 1.
-    Event.createInsert(u, Int.MAX_VALUE - 2, 0, "xy")
-    Event.createDelete(u, Int.MAX_VALUE - 1, 0, 1)
+    // The exact boundary stays legal: the last id is Long.MAX_VALUE - 1.
+    Event.createInsert(u, Long.MAX_VALUE - 2, 0, "xy")
+    Event.createDelete(u, Long.MAX_VALUE - 1, 0, 1)
   }
 
   @Test
@@ -385,7 +385,7 @@ class EventGraphTest {
     val u = agent("u")
     var graph = ORIGIN.append(Event.createInsert(u, 0, 0, "abc"), Version.root())
     // A reused seq, a seq inside the stored range, and a gap are all rejected.
-    for (seq in intArrayOf(0, 1, 2, 4, 100)) {
+    for (seq in longArrayOf(0, 1, 2, 4, 100)) {
       assertThrows(
         IllegalArgumentException::class.java,
         { graph.append(Event.createInsert(u, seq, 3, "x"), graph.version()) },
@@ -436,8 +436,8 @@ class EventGraphTest {
     // The two agents alternate, so every run but the first has a parent of the OTHER agent.
     // Per-agent order alone would be u0, u1, u2, v0, v1, v2, which is not causal.
     for (step in 0 until 3) {
-      src = src.append(Event.createInsert(v, step, 1 + 2 * step, "B"), src.version())
-      src = src.append(Event.createInsert(u, 1 + step, 2 + 2 * step, "a"), src.version())
+      src = src.append(Event.createInsert(v, step.toLong(), 1 + 2 * step, "B"), src.version())
+      src = src.append(Event.createInsert(u, (1 + step).toLong(), 2 + 2 * step, "a"), src.version())
     }
     assertEquals(7, src.size())
     val expected = src.replay().string()
@@ -507,17 +507,17 @@ class EventGraphTest {
     val v = agent("v")
     var base = ORIGIN
     repeat(HALF) { i ->
-      base = base.append(Event.createInsert(u, i, 0, "a"), base.version())
+      base = base.append(Event.createInsert(u, i.toLong(), 0, "a"), base.version())
     }
     // The same agent doubles its history, so the destination knows an exact middle prefix.
     var ahead = base
     repeat(HALF) { i ->
-      ahead = ahead.append(Event.createInsert(u, HALF + i, 0, "b"), ahead.version())
+      ahead = ahead.append(Event.createInsert(u, HALF + i.toLong(), 0, "b"), ahead.version())
     }
     // A second agent forks off the middle prefix, so the merge also has to place its runs.
     var side = base
     repeat(20) { i ->
-      side = side.append(Event.createInsert(v, i, 0, "Z"), side.version())
+      side = side.append(Event.createInsert(v, i.toLong(), 0, "Z"), side.version())
     }
 
     // Catching up over the boundary: every run of the second half arrives, and no more.
@@ -552,8 +552,8 @@ class EventGraphTest {
     // Two agents interleave, so each agent's runs sit in its own tree while the runs themselves
     // arrive interleaved in lv order.
     repeat(10) { i ->
-      base = base.append(Event.createInsert(u, i, 2 * i, "a"), base.version())
-      base = base.append(Event.createInsert(v, i, 2 * i + 1, "B"), base.version())
+      base = base.append(Event.createInsert(u, i.toLong(), 2 * i, "a"), base.version())
+      base = base.append(Event.createInsert(v, i.toLong(), 2 * i + 1, "B"), base.version())
     }
     // Both appends close the newest run of base into their own trees, and both give the id
     // (u, 10) to a character of their own.
@@ -568,7 +568,7 @@ class EventGraphTest {
     // The index answers every question an append and a merge ask of it.
     assertEquals(23, second.append(Event.createInsert(u, 11, 22, "z"), second.version()).size())
     assertEquals(23, second.append(Event.createInsert(v, 10, 22, "C"), second.version()).size())
-    for (seq in intArrayOf(0, 5, 10)) {
+    for (seq in longArrayOf(0, 5, 10)) {
       assertThrows(
         IllegalArgumentException::class.java,
         { second.append(Event.createInsert(u, seq, 22, "z"), second.version()) },

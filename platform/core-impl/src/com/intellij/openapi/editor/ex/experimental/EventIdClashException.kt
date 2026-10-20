@@ -12,7 +12,7 @@ package com.intellij.openapi.editor.ex.experimental
  */
 class EventIdClashException internal constructor(
   private val agent: Agent,
-  private val seq: Int,
+  private val seq: Long,
   message: String,
 ) : IllegalArgumentException(message) {
 
@@ -24,5 +24,5 @@ class EventIdClashException internal constructor(
   /**
    * The seq of the id that names two operations.
    */
-  fun seq(): Int = seq
+  fun seq(): Long = seq
 }

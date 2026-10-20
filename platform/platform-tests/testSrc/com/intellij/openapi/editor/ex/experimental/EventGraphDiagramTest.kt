@@ -56,7 +56,7 @@ class EventGraphDiagramTest {
     val u1 = agent("user1")
     var graph = EventGraph.createGraph()
     for ((seq, char) in "abc".withIndex()) {
-      graph = graph.append(Event.createInsert(u1, seq, seq, char.toString()), graph.version())
+      graph = graph.append(Event.createInsert(u1, seq.toLong(), seq, char.toString()), graph.version())
     }
     graph = graph.append(Event.createInsert(agent("user2"), 0, 1, "Z"), Version.of(0))
     assertEquals(
@@ -366,7 +366,7 @@ class EventGraphDiagramTest {
     val u = agent("u")
     var graph = EventGraph.createGraph()
     // Every append inserts at the front, so no run extends the one before it.
-    for (seq in 0 until 45) {
+    for (seq in 0L until 45L) {
       graph = graph.append(Event.createInsert(u, seq, 0, "x"), graph.version())
     }
     assertEquals(45, graph.runCount())

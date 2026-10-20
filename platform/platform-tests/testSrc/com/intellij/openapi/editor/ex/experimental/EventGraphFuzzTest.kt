@@ -36,7 +36,7 @@ class EventGraphFuzzTest {
         val stopAfterPieces = random.nextInt(12)
         var pieceCount = 0
         val text = StringBuilder()
-        var seq = 0
+        var seq = 0L
 
         repeat(1 + random.nextInt(6)) {
           if (text.isEmpty() || random.nextBoolean()) {

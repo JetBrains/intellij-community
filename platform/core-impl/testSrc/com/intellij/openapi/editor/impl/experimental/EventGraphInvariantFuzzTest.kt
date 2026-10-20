@@ -144,7 +144,7 @@ internal class EventGraphInvariantFuzzTest {
   private fun randomEvent(
     random: Random,
     agent: Agent,
-    seq: Int,
+    seq: Long,
     text: String,
     caret: Int,
   ): Event {
