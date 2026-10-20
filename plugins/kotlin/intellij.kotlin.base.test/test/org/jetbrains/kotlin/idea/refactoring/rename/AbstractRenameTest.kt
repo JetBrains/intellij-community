@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
 import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -115,7 +116,18 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     open fun doTest(path: String) {
         val testFile = File(path)
         val renameObject = loadTestConfiguration(testFile)
+        val options = renameObject.getNullableString("options")
+        if (options != null) {
+            withCustomCompilerOptions("// COMPILER_ARGUMENTS: $options", project, module) {
+                doTest(testFile, renameObject)
+            }
+        }
+        else {
+            doTest(testFile, renameObject)
+        }
+    }
 
+    private fun doTest(testFile: File, renameObject: JsonObject) {
         val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean ?: true
 
         val result = runCatching {

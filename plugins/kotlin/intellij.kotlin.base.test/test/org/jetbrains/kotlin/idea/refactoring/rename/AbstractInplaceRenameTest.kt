@@ -93,6 +93,7 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
                         afterFile = dataFile("$fileName.after")
                     }
                     myFixture.checkResultByFile(afterFile)
+                    checkAfterRename(file)
                 } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
                     val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
                     TestCase.assertEquals(expectedMessage, e.messages.joinToString())
@@ -104,7 +105,9 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    protected open fun getAfterFileNameSuffix(): String? = null
+    protected open fun getAfterFileNameSuffix(): String? = ".k2"
+
+    protected open fun checkAfterRename(file: PsiFile) = Unit
 
     private fun doImplicitLambdaParameterTest(
         file: PsiFile,

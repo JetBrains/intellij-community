@@ -1,0 +1,13 @@
+// NEW_NAME: existing7
+// RENAME: member
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+package test
+
+class Example {
+    fun existing7(): Int = 8 // DECL: 2
+}
+
+companion fun Example.<caret>original5(): Int = 4 // DECL: 1
+
+fun useOriginal(): Int = Example.original5() // REF: 1
+fun useExisting(): Int = Example().existing7() // REF: 2

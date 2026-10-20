@@ -9,12 +9,14 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.test.Diagnostic
@@ -33,11 +35,21 @@ class KotlinFirChangeSignatureTest :
         return "k2"
     }
 
-    override fun checkErrorsAfter(): Boolean {
-        return true
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = { ktFile ->
+        allowAnalysisOnEdt {
+            analyze(ktFile) {
+                ktFile.diagnostics().map { diagnostic ->
+                    val severity = when (diagnostic.severity) {
+                        KaSeverity.ERROR -> Severity.ERROR
+                        KaSeverity.WARNING -> Severity.WARNING
+                        KaSeverity.INFO -> Severity.INFO
+                    }
+                    Diagnostic(diagnostic.factoryName, severity)
+                }.toList()
+            }
+        }
     }
-
-    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = { emptyList() }
 
     override fun doTestInvokePosition(code: String) {
         doTestTargetElement<KtNamedFunction>(code)

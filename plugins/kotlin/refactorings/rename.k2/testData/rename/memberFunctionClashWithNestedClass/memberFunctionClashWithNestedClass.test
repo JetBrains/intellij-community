@@ -1,0 +1,7 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test.kt",
+  "newName": "Nested",
+  "hint": "Constructor 'Nested' is already declared in class 'Nested'",
+  "enabledInK2": true
+}

@@ -121,11 +121,12 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractUsageHighlightingTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameConflictTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2HeadlessRenameProcessorTest
-import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.idea.k2.resolve.AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
 import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
+import org.jetbrains.kotlin.idea.refactoring.rename.AbstractInplaceRenameTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
@@ -630,8 +631,11 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
         testClass<AbstractFirRenameTest> {
             model("rename", pattern = TEST, flatten = true)
         }
-        testClass<AbstractK2InplaceRenameTest> {
+        testClass<AbstractInplaceRenameTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.refactoring.rename.K2InplaceRenameTestGenerated") {
             model("rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
+        }
+        testClass<AbstractK2InplaceRenameConflictTest> {
+            model("rename/companionConflicts", pattern = Patterns.KT_OR_JAVA, flatten = true)
         }
         testClass<AbstractFirMultiModuleRenameTest> {
             model("renameMultiModule", pattern = TEST, flatten = true)

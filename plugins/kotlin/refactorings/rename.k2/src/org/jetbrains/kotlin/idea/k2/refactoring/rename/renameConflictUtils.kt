@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 fun checkClassNameShadowing(
     declaration: KtClassLikeDeclaration,
@@ -244,7 +243,7 @@ fun checkCallableShadowing(
         processedDeclarations.addAll(externalDeclarations)
         processedDeclarations.addAll(shadowedElements)
         retargetExternalDeclarations(declaration, newName) {
-            val callableDeclaration = it.psi as? KtNamedDeclaration
+            val callableDeclaration = it.psi
             if (callableDeclaration != null && processedDeclarations.add(callableDeclaration)) {
                 retargetExternalDeclaration(callableDeclaration)
             }
@@ -323,7 +322,14 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         val qualifierText = when (receiver) {
-            is KaImplicitReceiverValue -> runUnless(singleCall?.symbol?.isCompanion == true) { getThisQualifier(receiver) }
+            is KaImplicitReceiverValue -> {
+                val symbol = singleCall?.symbol
+                if (symbol?.isCompanion == true) {
+                    (symbol.containingDeclaration as? KaClassSymbol)?.classId?.asSingleFqName()?.quoteIfNeeded()?.asString()
+                } else {
+                    getThisQualifier(receiver)
+                }
+            }
 
             is KaExplicitReceiverValue -> {
                 getExplicitQualifier(receiver) ?: return QualifiedState(null, true)

@@ -16,10 +16,16 @@ import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix
@@ -63,11 +69,30 @@ class KotlinChangeSignatureConflictSearcher(
         if (function !is KtCallableDeclaration) return result
         if (originalInfo.isNameChanged || originalInfo.isParameterSetOrOrderChanged || originalInfo.isParameterTypesChanged) {
             val unresolvableCollisions = mutableListOf<UsageInfo>()
-            analyze(function) {
-                registerRetargetJobOnPotentialCandidates(function, originalInfo.newName, {
-                    filterCandidates(function, it)
-                }) {
-                    registerAlreadyDeclaredConflict(it, unresolvableCollisions)
+            val nameOnlyChange = originalInfo.isNameChanged &&
+                    !originalInfo.isParameterSetOrOrderChanged &&
+                    !originalInfo.isReturnTypeChanged &&
+                    !originalInfo.isReceiverTypeChanged() &&
+                    originalInfo.newParameters.all {
+                        !it.isNewParameter && it.name == it.oldName && it.currentType.text == it.originalType.text
+                    }
+            if (nameOnlyChange) {
+                checkRedeclarationConflicts(function, originalInfo.newName, unresolvableCollisions)
+            }
+            else {
+                analyze(function) {
+                    registerRetargetJobOnPotentialCandidates(function, originalInfo.newName, {
+                        filterCandidates(function, it)
+                    }) { candidate ->
+                        val classContainer = if (function.isFromCompanionBlock && (candidate as? KaCallableSymbol)?.receiverType != null) {
+                            function.containingClassOrObject
+                        } else null
+                        if (classContainer != null) {
+                            registerAlreadyDeclaredConflict(candidate, classContainer, unresolvableCollisions)
+                        } else {
+                            registerAlreadyDeclaredConflict(candidate, unresolvableCollisions)
+                        }
+                    }
                 }
             }
             for (info in unresolvableCollisions) {
@@ -172,37 +197,57 @@ class KotlinChangeSignatureConflictSearcher(
     }
 
     context(_: KaSession)
-    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
-        if (candidateSymbol !is KaFunctionSymbol) return false
+    private fun filterCandidates(
+        function: KtCallableDeclaration,
+        candidateSymbol: KaDeclarationSymbol
+    ): Boolean {
+        val functionSymbol = function.symbol as? KaCallableSymbol ?: return false
 
-        val newReceiverTypeText = originalInfo.receiverParameterInfo?.currentType?.text
-        val candidateReceiverTypeText =
-            candidateSymbol.receiverType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+        if (!(candidateSymbol is KaPropertySymbol && functionSymbol is KaPropertySymbol ||
+                    candidateSymbol is KaFunctionSymbol && functionSymbol is KaFunctionSymbol)) return false
 
-        // Check if receiver types match
-        if ((newReceiverTypeText == null) != (candidateReceiverTypeText == null)) return false
-        if (newReceiverTypeText != null && candidateReceiverTypeText != null && !areTypesTheSame(
-                newReceiverTypeText,
-                candidateReceiverTypeText,
-                function
-            )
-        ) return false
+        if (functionSymbol.isCompanion != candidateSymbol.isCompanion) return false
+        if (((candidateSymbol.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) !=
+                ((functionSymbol.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT)) return false
 
-        // Check if parameters' types match
-        val newParameterTypeTexts = originalInfo.getNonReceiverParameters().mapNotNull { it.currentType.text }
-        val candidateParameterTypeTexts =
-            candidateSymbol.valueParameters.map { it.returnType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT) }
-        if (newParameterTypeTexts.size != candidateParameterTypeTexts.size) return false
-        if (!newParameterTypeTexts.zip(candidateParameterTypeTexts)
-                .all { (newTypeText, candidateTypeText) -> areTypesTheSame(newTypeText, candidateTypeText, function) }
-        ) return false
+        val functionClass = functionSymbol.containingSymbol as? KaClassSymbol
+        val candidateClass = candidateSymbol.containingSymbol as? KaClassSymbol
+        val includeClassReceiver = functionClass == null || candidateClass == null
+        val newReceiverTypes = buildList {
+            if (includeClassReceiver) {
+                functionClass?.defaultType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+            }
+            originalInfo.receiverParameterInfo?.currentType?.text?.let(::add)
+        }
+        val candidateReceiverTypes = buildList {
+            if (includeClassReceiver) {
+                candidateClass?.defaultType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+            }
+            candidateSymbol.receiverType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+        }
+        if (newReceiverTypes.size != candidateReceiverTypes.size) return false
+        if (!newReceiverTypes.zip(candidateReceiverTypes).all { (newType, candidateType) ->
+                areTypesTheSame(newType, candidateType, function)
+            }) return false
 
         // Check if context receivers match
-        val functionContextReceivers = (function.symbol as? KaFunctionSymbol)?.contextReceivers ?: emptyList()
+        val functionContextReceivers = functionSymbol.contextReceivers
         val candidateContextReceivers = candidateSymbol.contextReceivers
         if (functionContextReceivers.size != candidateContextReceivers.size) return false
         if (!functionContextReceivers.zip(candidateContextReceivers)
                 .all { (functionReceiver, candidateReceiver) -> functionReceiver.type.semanticallyEquals(candidateReceiver.type) }
+        ) return false
+
+        if (candidateSymbol is KaPropertySymbol) return true
+        val functionCandidate = candidateSymbol as? KaFunctionSymbol ?: return false
+
+        // Check if parameters' types match
+        val newParameterTypeTexts = originalInfo.getNonReceiverParameters().mapNotNull { it.currentType.text }
+        val candidateParameterTypeTexts =
+            functionCandidate.valueParameters.map { it.returnType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT) }
+        if (newParameterTypeTexts.size != candidateParameterTypeTexts.size) return false
+        if (!newParameterTypeTexts.zip(candidateParameterTypeTexts)
+                .all { (newTypeText, candidateTypeText) -> areTypesTheSame(newTypeText, candidateTypeText, function) }
         ) return false
 
         return true

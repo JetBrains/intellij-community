@@ -128,6 +128,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("testData/rename/backingField/backingField.test");
     }
 
+    @TestMetadata("blockExtensionFunctionPropertyNoClash/blockExtensionFunctionPropertyNoClash.test")
+    public void testBlockExtensionFunctionPropertyNoClash_BlockExtensionFunctionPropertyNoClash() throws Exception {
+        runTest("testData/rename/blockExtensionFunctionPropertyNoClash/blockExtensionFunctionPropertyNoClash.test");
+    }
+
+    @TestMetadata("blockMemberNoClashWithCompanionExtension/blockMemberNoClashWithCompanionExtension.test")
+    public void testBlockMemberNoClashWithCompanionExtension_BlockMemberNoClashWithCompanionExtension() throws Exception {
+        runTest("testData/rename/blockMemberNoClashWithCompanionExtension/blockMemberNoClashWithCompanionExtension.test");
+    }
+
     @TestMetadata("bodyVariableConflictsWithForParameter/bodyVariableConflictsWithForParameter.test")
     public void testBodyVariableConflictsWithForParameter_BodyVariableConflictsWithForParameter() throws Exception {
         runTest("testData/rename/bodyVariableConflictsWithForParameter/bodyVariableConflictsWithForParameter.test");
@@ -188,14 +198,54 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("testData/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
     }
 
+    @TestMetadata("companionBlockFunctionClash/companionBlockFunctionClash.test")
+    public void testCompanionBlockFunctionClash_CompanionBlockFunctionClash() throws Exception {
+        runTest("testData/rename/companionBlockFunctionClash/companionBlockFunctionClash.test");
+    }
+
+    @TestMetadata("companionBlockFunctionShadowedByNestedClassMember/companionBlockFunctionShadowedByNestedClassMember.test")
+    public void testCompanionBlockFunctionShadowedByNestedClassMember_CompanionBlockFunctionShadowedByNestedClassMember() throws Exception {
+        runTest("testData/rename/companionBlockFunctionShadowedByNestedClassMember/companionBlockFunctionShadowedByNestedClassMember.test");
+    }
+
+    @TestMetadata("companionBlockNoPropertyClash/companionBlockNoPropertyClash.test")
+    public void testCompanionBlockNoPropertyClash_CompanionBlockNoPropertyClash() throws Exception {
+        runTest("testData/rename/companionBlockNoPropertyClash/companionBlockNoPropertyClash.test");
+    }
+
+    @TestMetadata("companionBlockPropertyClash/companionBlockPropertyClash.test")
+    public void testCompanionBlockPropertyClash_CompanionBlockPropertyClash() throws Exception {
+        runTest("testData/rename/companionBlockPropertyClash/companionBlockPropertyClash.test");
+    }
+
+    @TestMetadata("companionBlockPropertyShadowedByInstanceProperty/companionBlockPropertyShadowedByInstanceProperty.test")
+    public void testCompanionBlockPropertyShadowedByInstanceProperty_CompanionBlockPropertyShadowedByInstanceProperty() throws Exception {
+        runTest("testData/rename/companionBlockPropertyShadowedByInstanceProperty/companionBlockPropertyShadowedByInstanceProperty.test");
+    }
+
     @TestMetadata("companionExplicitRefSameName/companionExplicitRefSameName.test")
     public void testCompanionExplicitRefSameName_CompanionExplicitRefSameName() throws Exception {
         runTest("testData/rename/companionExplicitRefSameName/companionExplicitRefSameName.test");
     }
 
+    @TestMetadata("companionExtensionNoClashWithBlock/companionExtensionNoClashWithBlock.test")
+    public void testCompanionExtensionNoClashWithBlock_CompanionExtensionNoClashWithBlock() throws Exception {
+        runTest("testData/rename/companionExtensionNoClashWithBlock/companionExtensionNoClashWithBlock.test");
+    }
+
     @TestMetadata("companionFullRef/companionFullRef.test")
     public void testCompanionFullRef_CompanionFullRef() throws Exception {
         runTest("testData/rename/companionFullRef/companionFullRef.test");
+    }
+
+    @TestMetadata("companionObjectNoClashFromInstanceMember/companionObjectNoClashFromInstanceMember.test")
+    public void testCompanionObjectNoClashFromInstanceMember_CompanionObjectNoClashFromInstanceMember() throws Exception {
+        runTest("testData/rename/companionObjectNoClashFromInstanceMember/companionObjectNoClashFromInstanceMember.test");
+    }
+
+    @TestMetadata("companionObjectNoPropertyClashFromInstanceMember/companionObjectNoPropertyClashFromInstanceMember.test")
+    public void testCompanionObjectNoPropertyClashFromInstanceMember_CompanionObjectNoPropertyClashFromInstanceMember() throws Exception {
+        runTest("testData/rename/companionObjectNoPropertyClashFromInstanceMember/companionObjectNoPropertyClashFromInstanceMember.test");
     }
 
     @TestMetadata("companionObjectWithDefaultName/companionObject.test")
@@ -256,6 +306,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
     public void testEnumGetEntriesFromJava_EnumValueOf() throws Exception {
         runTest("testData/rename/enumGetEntriesFromJava/enumValueOf.test");
+    }
+
+    @TestMetadata("enumMemberFunctionWithEntryName/enumMemberFunctionWithEntryName.test")
+    public void testEnumMemberFunctionWithEntryName_EnumMemberFunctionWithEntryName() throws Exception {
+        runTest("testData/rename/enumMemberFunctionWithEntryName/enumMemberFunctionWithEntryName.test");
     }
 
     @TestMetadata("enumValueOfFromJava/enumValueOf.test")
@@ -438,9 +493,29 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("testData/rename/localVariableNoConflictWithWhenSubject/localVariableNoConflictWithWhenSubject.test");
     }
 
+    @TestMetadata("memberFunctionClashWithNestedClass/memberFunctionClashWithNestedClass.test")
+    public void testMemberFunctionClashWithNestedClass_MemberFunctionClashWithNestedClass() throws Exception {
+        runTest("testData/rename/memberFunctionClashWithNestedClass/memberFunctionClashWithNestedClass.test");
+    }
+
     @TestMetadata("memberFunctionRedeclaration/memberFunctionRedeclaration.test")
     public void testMemberFunctionRedeclaration_MemberFunctionRedeclaration() throws Exception {
         runTest("testData/rename/memberFunctionRedeclaration/memberFunctionRedeclaration.test");
+    }
+
+    @TestMetadata("memberFunctionShadowsInheritedJavaStatic/memberFunctionShadowsInheritedJavaStatic.test")
+    public void testMemberFunctionShadowsInheritedJavaStatic_MemberFunctionShadowsInheritedJavaStatic() throws Exception {
+        runTest("testData/rename/memberFunctionShadowsInheritedJavaStatic/memberFunctionShadowsInheritedJavaStatic.test");
+    }
+
+    @TestMetadata("memberFunctionShadowsNestedClassConstructor/memberFunctionShadowsNestedClassConstructor.test")
+    public void testMemberFunctionShadowsNestedClassConstructor_MemberFunctionShadowsNestedClassConstructor() throws Exception {
+        runTest("testData/rename/memberFunctionShadowsNestedClassConstructor/memberFunctionShadowsNestedClassConstructor.test");
+    }
+
+    @TestMetadata("memberFunctionWithInheritedJavaStaticName/memberFunctionWithInheritedJavaStaticName.test")
+    public void testMemberFunctionWithInheritedJavaStaticName_MemberFunctionWithInheritedJavaStaticName() throws Exception {
+        runTest("testData/rename/memberFunctionWithInheritedJavaStaticName/memberFunctionWithInheritedJavaStaticName.test");
     }
 
     @TestMetadata("memberPropertyRedeclaration/memberPropertyRedeclaration.test")
@@ -506,6 +581,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("objectPropertyImportAliasByRef/objectPropertyImportAliasByRef.test")
     public void testObjectPropertyImportAliasByRef_ObjectPropertyImportAliasByRef() throws Exception {
         runTest("testData/rename/objectPropertyImportAliasByRef/objectPropertyImportAliasByRef.test");
+    }
+
+    @TestMetadata("outerCompanionBlockShadowing/outerCompanionBlockShadowing.test")
+    public void testOuterCompanionBlockShadowing_OuterCompanionBlockShadowing() throws Exception {
+        runTest("testData/rename/outerCompanionBlockShadowing/outerCompanionBlockShadowing.test");
     }
 
     @TestMetadata("overloadsWithDifferentOrigins/overloadsWithDifferentOrigins.test")

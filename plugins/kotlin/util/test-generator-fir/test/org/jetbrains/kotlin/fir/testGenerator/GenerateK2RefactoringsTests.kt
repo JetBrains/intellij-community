@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToElementTest
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.AbstractK2ChangeSignatureRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2CopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2MultiModuleCopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractInlineTestWithSomeDescriptors
@@ -47,6 +48,10 @@ import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING) {
+        testClass<AbstractK2ChangeSignatureRenameTest> {
+            model("../../rename.k2/testData/rename/companionConflicts", pattern = Patterns.KT_OR_JAVA, flatten = true)
+        }
+
         testClass<AbstractK2SafeDeleteTest> {
             model("safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
             //todo secondary constructor

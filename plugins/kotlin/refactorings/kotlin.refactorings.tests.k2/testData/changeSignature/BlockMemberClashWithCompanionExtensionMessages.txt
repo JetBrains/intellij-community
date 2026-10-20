@@ -1,0 +1,1 @@
+Function 'fromExtension' is already declared in class 'Example'

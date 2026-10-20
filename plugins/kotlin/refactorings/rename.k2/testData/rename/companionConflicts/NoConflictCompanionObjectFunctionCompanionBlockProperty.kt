@@ -1,0 +1,17 @@
+// NEW_NAME: existing0
+// RENAME: member
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+package test
+
+class Example {
+    companion object {
+        fun <caret>original3(): Int = 6 // DECL: 1
+    }
+
+    companion {
+        val existing0: () -> Int = { 1 } // DECL: 2
+    }
+}
+
+fun useOriginal(): Int = Example.Companion.original3() // REF: 1
+fun useExisting(): Int = Example.existing0() // REF: 2
