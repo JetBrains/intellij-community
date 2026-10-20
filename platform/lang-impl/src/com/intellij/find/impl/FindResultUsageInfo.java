@@ -115,7 +115,7 @@ public final class FindResultUsageInfo extends UsageInfo {
       }
     } while (result.getStartOffset() < segment.getStartOffset());
 
-    boolean ret = segment.getStartOffset() == result.getStartOffset() && segment.getEndOffset() == result.getEndOffset();
+    boolean ret = TextRange.areSegmentsEqual(segment, result);
     myCachedResult = ret;
     return ret;
   }

@@ -33,7 +33,7 @@ public record ModHighlight(@NotNull VirtualFile file, @NotNull List<@NotNull Hig
      * @return the same info but with updated range
      */
     public @NotNull HighlightInfo withRange(@NotNull TextRange range) {
-      if (range.getStartOffset() == range().getStartOffset() && range.getEndOffset() == range().getEndOffset()) {
+      if (TextRange.areSegmentsEqual(range, range())) {
         return this;
       }
       return new HighlightInfo(range, attributesKey, hideByTextChange);

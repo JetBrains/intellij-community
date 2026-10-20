@@ -50,8 +50,7 @@ public final class SmartTodoItemPointer {
       return false;
     }
     if (!(myTodoItem.getFile().equals(pointer.myTodoItem.getFile())&&
-          myRangeMarker.getStartOffset()==pointer.myRangeMarker.getStartOffset()&&
-          myRangeMarker.getEndOffset()==pointer.myRangeMarker.getEndOffset()&&
+          TextRange.areSegmentsEqual(myRangeMarker, pointer.myRangeMarker) &&
           Objects.equals(myTodoItem.getPattern(), pointer.myTodoItem.getPattern()) &&
           myAdditionalRangeMarkers.size() == pointer.myAdditionalRangeMarkers.size())) {
       return false;

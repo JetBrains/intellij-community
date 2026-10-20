@@ -280,11 +280,9 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
                 TextRange range = identifier.getTextRange();
                 RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
                 for (RangeHighlighter highlighter : highlighters) {
-                    if (highlighter.getStartOffset() == range.getStartOffset()) {
-                        if (highlighter.getEndOffset() == range.getEndOffset()) {
-                            greedyToRight.set(highlighter.isGreedyToRight());
-                            highlighter.setGreedyToRight(false);
-                        }
+                    if (TextRange.areSegmentsEqual(highlighter, range)) {
+                        greedyToRight.set(highlighter.isGreedyToRight());
+                        highlighter.setGreedyToRight(false);
                     }
                 }
             }
@@ -304,10 +302,8 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
                 TextRange range = identifier.getTextRange();
                 RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
                 for (RangeHighlighter highlighter : highlighters) {
-                    if (highlighter.getStartOffset() == range.getStartOffset()) {
-                        if (highlighter.getEndOffset() == range.getEndOffset()) {
-                            highlighter.setGreedyToRight(greedyToRight.get());
-                        }
+                    if (TextRange.areSegmentsEqual(highlighter, range)) {
+                        highlighter.setGreedyToRight(greedyToRight.get());
                     }
                 }
             }
