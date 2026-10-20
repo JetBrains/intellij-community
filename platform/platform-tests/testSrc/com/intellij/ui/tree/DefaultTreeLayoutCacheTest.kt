@@ -899,6 +899,31 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `row height - a node starts with the estimated height (node-level interface)`() {
+    testSizes(
+      initOps = {
+        setModelStructure(
+          """
+          |r1
+          | a1
+          | a2
+          """.trimMargin(),
+          estimates = mapOf(
+            "a1" to 10
+          )
+        )
+        sut.isRootVisible = true
+        heights["a1"] = 10
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10) // nothing measured the rows yet
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        assertHeight(defaultRowHeight * 2 + 10)
+      },
+    )
+  }
+
+  @Test
   fun `row height - a changed node returns to the estimated height until it is measured again`() {
     testSizes(
       initOps = {
@@ -1067,13 +1092,20 @@ class DefaultTreeLayoutCacheTest {
     })
   }
 
-  private fun setModelStructure(s: String) {
+  private fun setModelStructure(s: String, estimates: Map<String, Int> = emptyMap()) {
     val rows = s.split("\n")
     val stack = ArrayDeque<Node>()
     var level = -1
     for (row in rows) {
       val rowLevel = row.indexOfFirst { !it.isWhitespace() }
-      val node = Node(row.substring(rowLevel until row.length))
+      val nodeName = row.substring(rowLevel until row.length)
+      val estimate = estimates[nodeName]
+      val node = if (estimate == null) {
+        Node(nodeName)
+      }
+      else {
+        EstimatedNode(nodeName, estimate)
+      }
       if (rowLevel > level) {
         assertThat(rowLevel).isEqualTo(level + 1) // can't have a child deeper than one level below
         val parent = stack.lastOrNull()
@@ -1270,7 +1302,7 @@ class DefaultTreeLayoutCacheTest {
       }
   }
 
-  private class Node(userObject: String) : DefaultMutableTreeNode(userObject) {
+  private open class Node(userObject: String) : DefaultMutableTreeNode(userObject) {
 
     private var isLeaf: Boolean? = null
 
@@ -1291,6 +1323,10 @@ class DefaultTreeLayoutCacheTest {
 
     override fun hashCode() = userObject.hashCode()
 
+  }
+
+  private class EstimatedNode(userObject: String, height: Int) : Node(userObject), TreeRowHeightEstimateProvider {
+    override val rowHeightEstimate: Int = height
   }
 
   /** A user object with the text [name] that estimates the height of its row as [height]. */

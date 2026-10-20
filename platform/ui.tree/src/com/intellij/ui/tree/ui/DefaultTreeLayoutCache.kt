@@ -383,7 +383,9 @@ class DefaultTreeLayoutCache(
     if (rowHeight > 0) {
       return 0
     }
-    val height = TreeUtil.getUserObject(TreeRowHeightEstimateProvider::class.java, value)?.rowHeightEstimate ?: 0
+    val estimateProvider = value as? TreeRowHeightEstimateProvider
+                           ?: TreeUtil.getUserObject(TreeRowHeightEstimateProvider::class.java, value)
+    val height = estimateProvider?.rowHeightEstimate ?: 0
     return if (height > 0) height - defaultRowHeight else 0
   }
 
