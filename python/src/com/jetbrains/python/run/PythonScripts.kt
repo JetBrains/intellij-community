@@ -41,6 +41,7 @@ import com.jetbrains.python.run.target.PathMapping
 import com.jetbrains.python.run.target.PathPythonHelpersMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.targetAdditionalData
@@ -121,20 +122,28 @@ fun PythonExecution.buildTargetedCommandLine(
 }
 
 
-@ApiStatus.Internal
-fun applyRunToolAsync(
+private fun applyRunToolAsync(
   commandLineBuilder: TargetedCommandLineBuilder,
   runTool: PyRunToolParameters,
 ) = commandLineBuilder.exePath.localValue
+  // GeneralCommandLine starts the run tool from the MRFS path, but the run tool gets the original exe as an argument,
+  // so on an eel this argument must be the path on the remote machine.
+  .then { originalExe: String? ->
+    when (runTool.exe) {
+      is PathHolder.Eel -> originalExe?.let { PathHolder.Eel(Path.of(it)).toStringOnRemoteMachine() }
+      is PathHolder.Target -> originalExe
+    }
+  }
   .onSuccess { originalExe: String? ->
-    commandLineBuilder.exePath = TargetValue.fixed(runTool.exe)
+    commandLineBuilder.exePath = TargetValue.fixed(runTool.exe.toStringPossiblyMRFS())
     commandLineBuilder.addFixedParametersAt(0, runTool.args)
     if (originalExe != null && runTool.includeOriginalExe) {
       commandLineBuilder.addParameterAt(runTool.args.size, originalExe)
     }
   }
   .onError {
-    throw ExecutionException(PyBundle.message("dialog.message.failed.to.resolve.original.executable.for.run.tool", runTool.exe))
+    throw ExecutionException(PyBundle.message("dialog.message.failed.to.resolve.original.executable.for.run.tool",
+                                              runTool.exe.toStringPossiblyMRFS()))
   }
 
 @ApiStatus.Internal

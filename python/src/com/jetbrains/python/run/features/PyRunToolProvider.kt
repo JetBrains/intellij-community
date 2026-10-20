@@ -63,10 +63,10 @@ data class PyRunToolData(
  */
 @ApiStatus.Internal
 data class PyRunToolParameters(
-  val exe: String,
-  val args: List<String>,
-  val envs: Map<String, String>,
-  val includeOriginalExe: Boolean = true,
+  internal val exe: PathHolder,
+  internal val args: List<String>,
+  internal val envs: Map<String, String>,
+  internal val includeOriginalExe: Boolean = true,
 )
 
 /**
@@ -129,6 +129,7 @@ abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
   override suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters {
     val additionalData = sdk.pySdkAdditionalData
     val fileSystem = sdk.toFileSystem()
+
     @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
     val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>
     return getRunToolParameters(requireNotNull(sdk.homePath), flavorAndData.data, fileSystem, inlineScriptTarget)
