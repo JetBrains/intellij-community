@@ -24,6 +24,8 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>

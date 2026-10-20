@@ -27,6 +27,8 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
