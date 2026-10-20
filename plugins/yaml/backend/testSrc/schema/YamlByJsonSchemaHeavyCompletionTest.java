@@ -1,43 +1,40 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/completion")
 public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTest {
-  @NotNull
-  @Override
-  public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/completion";
-  }
-
-  @Override
-  protected String getBasePath() {
-    return ""; // unused
-  }
-
   @Override
   protected String getExtensionWithoutDot() {
     return "yml";
   }
 
+  @Test
   @Override
-  public void testEditingSchemaAffectsCompletion() throws Exception {
-    baseTest(getTestName(true), "testEditing", () -> {
-      complete();
+  public void testEditingSchemaAffectsCompletion() {
+    mySchemaFixture.baseTest(mySchemaFixture.getTestName(true), "testEditing", () -> {
+      mySchemaFixture.complete();
       assertContains("preserve", "react", "react-native");
-      final PsiFile schema = myFixture.getFile().getParent().findFile("Schema.json");
-      CommandProcessor.getInstance().runUndoTransparentAction(
+      final PsiFile schema = ReadAction.computeBlocking(() -> myFixture.getFile().getParent().findFile("Schema.json"));
+      EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().runUndoTransparentAction(
         () -> WriteAction.run(
           () -> {
             try {
@@ -60,76 +57,90 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
             }
           }
         )
-      );
+      ));
       VfsUtil.markDirtyAndRefresh(false, false, true, schema.getVirtualFile());
       schema.getVirtualFile().refresh(false, false);
-      complete();
+      mySchemaFixture.complete();
       assertContains("completelyChanged", "preserve", "react");
     });
   }
 
+  @Test
   @Override
-  public void testOneOfWithNotFilledPropertyValue() throws Exception {
-    baseTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", () -> {
-      complete();
+  public void testOneOfWithNotFilledPropertyValue() {
+    mySchemaFixture.baseTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", () -> {
+      mySchemaFixture.complete();
       assertContains("business", "home");
     });
   }
 
+  @Test
   @Override
-  public void testObjectLiteral() throws Exception {
-    baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
-    complete();
-    assertStringItems("insideTopObject1", "insideTopObject2");
+  public void testObjectLiteral() {
+    mySchemaFixture.baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
+    mySchemaFixture.complete();
+    mySchemaFixture.assertStringItems("insideTopObject1", "insideTopObject2");
   }
 
+  @Test
   @Override
   public void testRequiredPropsFirst() {
     // do nothing
   }
 
+  @Test
   @Override
   public void testRequiredPropsLast() {
     // do nothing
   }
 
+  @Test
   @Override
   public void testWhitespaceAfterColon() {
     // do nothing
   }
 
-  public void testInsertArrayItemNested() throws Exception {
-    baseInsertTest("insertArrayItemNested", "test");
+  @Test
+  public void testInsertArrayItemNested() {
+    mySchemaFixture.baseInsertTest("insertArrayItemNested", "test");
   }
 
-  public void testInsertColonAfterPropName() throws Exception {
-    baseInsertTest("insertColonAfterPropName", "test");
+  @Test
+  public void testInsertColonAfterPropName() {
+    mySchemaFixture.baseInsertTest("insertColonAfterPropName", "test");
   }
 
   protected void assertContains(String... strings) {
-    assertNotNull(myItems);
-    List<String> actual = ContainerUtil.map(myItems, element -> element.getLookupString());
-    assertContainsOrdered(actual, strings);
+    LookupElement[] items = mySchemaFixture.getItems();
+    Assertions.assertNotNull(items);
+    List<String> expected = List.of(strings);
+    List<String> actual = ContainerUtil.filter(ContainerUtil.map(items, element -> element.getLookupString()), expected::contains);
+    Assertions.assertEquals(expected, actual);
   }
 
-  public void testPreserveColonWs() throws Exception {
-    baseReplaceTest("preserveColon", "testReplaceStringAndWhitespace");
+  @Test
+  public void testPreserveColonWs() {
+    mySchemaFixture.baseReplaceTest("preserveColon", "testReplaceStringAndWhitespace");
   }
 
-  public void testPreserveColonInsertWsString() throws Exception {
-    baseInsertTest("preserveColon", "testInsertStringAndWhitespace");
+  @Test
+  public void testPreserveColonInsertWsString() {
+    mySchemaFixture.baseInsertTest("preserveColon", "testInsertStringAndWhitespace");
   }
 
-  public void testPreserveColonInsertWsNonString() throws Exception {
-    baseInsertTest("preserveColon", "testInsertNonStringAndWhitespace");
+  @Test
+  public void testPreserveColonInsertWsNonString() {
+    mySchemaFixture.baseInsertTest("preserveColon", "testInsertNonStringAndWhitespace");
   }
 
-  public void testInsertNumericValue() throws Exception {
-    baseInsertTest("insertNumericValue", "testInsertNumericValue");
+  @Test
+  public void testInsertNumericValue() {
+    mySchemaFixture.baseInsertTest("insertNumericValue", "testInsertNumericValue");
   }
 
+  @Test
   @Override
-  public void testEnumOrderSensitive() throws Exception {
-    baseCompletionTest(getTestName(true), "testValue", "c", "b", "a");
+  public void testEnumOrderSensitive() {
+    mySchemaFixture.baseCompletionTest(mySchemaFixture.getTestName(true), "testValue", "c", "b", "a");
   }
 }

@@ -1,16 +1,45 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.Disposable
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
 import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthand
 import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthandAndCustomization
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.jsonSchemaHeavyFixture
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBase() {
-  fun `test nested completion into property that does not exist yet`() {
+@TestApplication
+class JsonBySchemaHeavyNestedCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  private val myFixture by codeInsightFixture
+  private val schemaFixture by jsonSchemaHeavyFixture(codeInsightFixture)
+
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
+
+  @TempDir
+  lateinit var workingFolder: File
+
+  @BeforeEach
+  fun setUp() {
+    myFixture.testDataPath = workingFolder.path
+  }
+
+  @Test
+  fun `testnested completion into property that does not exist yet`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
         {
@@ -30,7 +59,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion from empty file`() {
+  @Test
+  fun `testnested completion from empty file`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
         {
@@ -48,7 +78,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion between properties`() {
+  @Test
+  fun `testnested completion between properties`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
        {
@@ -76,7 +107,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion into existing property`() {
+  @Test
+  fun `testnested completion into existing property`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
         {
@@ -100,7 +132,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion into property already exists with sub-property that does not exist yet`() {
+  @Test
+  fun `testnested completion into property already exists with sub-property that does not exist yet`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
         {
@@ -122,7 +155,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test array item completion into existing property`() {
+  @Test
+  fun `testarray item completion into existing property`() {
     assertThatSchema("""
       {
         "properties": {
@@ -159,7 +193,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested array item completion into existing property`() {
+  @Test
+  fun `testnested array item completion into existing property`() {
     assertThatSchema("""
       {
         "properties": {
@@ -204,7 +239,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test array item completion into existing property while inside a property`() {
+  @Test
+  fun `testarray item completion into existing property while inside a property`() {
     assertThatSchema("""
       {
         "properties": {
@@ -251,7 +287,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test that completing while being below the destination, inserts the completion at the bottom`() {
+  @Test
+  fun `testthat completing while being below the destination, inserts the completion at the bottom`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""
         {
@@ -349,7 +386,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion leads to expanding - single level nestedness`() {
+  @Test
+  fun `testnested completion leads to expanding - single level nestedness`() {
     addShorthandValueHandlerForEnabledField(testRootDisposable)
 
     settingWithEnabledShorthand
@@ -369,7 +407,8 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
-  fun `test nested completion leads to expanding - multiple level nestedness`() {
+  @Test
+  fun `testnested completion leads to expanding - multiple level nestedness`() {
     addShorthandValueHandlerForEnabledField(testRootDisposable)
 
     settingWithEnabledShorthandAndCustomization
@@ -396,37 +435,12 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       workingFolder.resolve("test.json").createTemporarilyWithContent(json) {
         workingFolder.resolve("test_after.json").createTemporarilyWithContent(expectedResult) {
           testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
-            baseInsertTest(".", "test")
+            schemaFixture.baseInsertTest(".", "test")
           }
         }
       }
     }
   }
-
-  override fun getTestDataPath(): String = PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/completion/temp"
-  override fun getBasePath(): String = throw IllegalStateException("Use getTestDataPath instead")
-
-  private val workingFolder get() = File(testDataPath)
-
-  override fun setUp() {
-    super.setUp()
-    workingFolder.mkdirs()
-  }
-
-  override fun getExtensionWithoutDot(): String = "json"
-
-  override fun tearDown() {
-    try {
-      workingFolder.delete()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
 }
 
 

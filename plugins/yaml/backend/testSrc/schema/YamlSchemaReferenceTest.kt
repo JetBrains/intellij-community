@@ -2,18 +2,31 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixture
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
+import com.jetbrains.jsonSchema.jsonSchemaHeavyFixture
+import org.junit.jupiter.api.Test
 
-class YamlSchemaReferenceTest : JsonSchemaHeavyAbstractTest() {
-  override fun getBasePath(): String = "" // unused
+@TestApplication
+class YamlSchemaReferenceTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  private val myFixture by codeInsightFixture
+  private val schemaFixture by jsonSchemaHeavyFixture(codeInsightFixture)
+
+  @Test
   fun testReferencingSchemaInYaml() {
     lateinit var schema: VirtualFile
-    skeleton(object : Callback {
+    schemaFixture.skeleton(object : JsonSchemaHeavyTestFixture.Callback {
       override fun doCheck() {
-        assertStringItems("city")
+        schemaFixture.assertStringItems("city")
       }
 
       override fun configureFiles() {
@@ -37,7 +50,7 @@ class YamlSchemaReferenceTest : JsonSchemaHeavyAbstractTest() {
       }
 
       override fun registerSchemes() {
-        addSchema(UserDefinedJsonSchemaConfiguration("my-schema", JsonSchemaVersion.SCHEMA_7, schema.url, false, emptyList()))
+        schemaFixture.addSchema(UserDefinedJsonSchemaConfiguration("my-schema", JsonSchemaVersion.SCHEMA_7, schema.url, false, emptyList()))
       }
     })
   }

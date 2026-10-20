@@ -7,7 +7,7 @@ import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
-import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
+import com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixture;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/");
+    return JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/");
   }
 
   public void testPackageJson() {
@@ -76,7 +76,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
   @NotNull
   private JsonSchemaCatalogManager configureCatalog() {
     JsonSchemaCatalogManager catalogManager = JsonSchemaService.Impl.get(getProject()).getCatalogManager();
-    String path = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/catalog.json");
+    String path = JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/catalog.json");
     VirtualFile catalogFile = StandardFileSystems.local().findFileByPath(path);
     Assert.assertNotNull(catalogFile);
     catalogManager.registerTestSchemaStoreFile(catalogFile, getTestRootDisposable());

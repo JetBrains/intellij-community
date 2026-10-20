@@ -13,7 +13,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration
-import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest
+import com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixture
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import java.beans.PropertyChangeListener
@@ -45,7 +45,7 @@ class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
     }
   }
 
-  override fun getTestDataPath(): String = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/")
+  override fun getTestDataPath(): String = JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/")
 
   fun testMatchingCatalogSchemaIsSuggestedInsteadOfApplied() {
     val file = addSchemaStoreOnlyFile()
@@ -126,7 +126,7 @@ class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
 
   private fun configureCatalog(): JsonSchemaCatalogManager {
     val manager = JsonSchemaService.Impl.get(project).catalogManager
-    val path = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/catalog.json")
+    val path = JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/catalog.json")
     val catalogFile = StandardFileSystems.local().findFileByPath(path)
     assertNotNull(catalogFile)
     manager.registerTestSchemaStoreFile(catalogFile!!, testRootDisposable)
