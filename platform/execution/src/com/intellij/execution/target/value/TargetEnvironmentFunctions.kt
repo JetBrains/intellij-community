@@ -135,7 +135,7 @@ fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFun
  *
  * If there are no suitable mappings found, the function returns a string representation of [localPath] local path.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 fun targetPath(localPath: Path): TargetEnvironmentFunction<String> = TargetPathFunction(localPath)
 
 private fun TargetEnvironment.resolveLocalPath(localPath: Path): String {
