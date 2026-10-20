@@ -111,7 +111,7 @@ fun UsefulTestCase.enableIdempotenceChecksOnEveryCache() {
   Registry.get("platform.random.idempotence.check.rate").setValue(1, testRootDisposable)
 }
 
-fun <T> noAutoComplete(code: () -> T): T {
+inline fun <T> noAutoComplete(code: () -> T): T {
   val old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
   CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
   try {
