@@ -14,6 +14,7 @@ import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeSeparateTabOnlyItemsProviderFactory
+import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.DataContextWithRpcId
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,11 +31,13 @@ class SeRankerActionsProviderFactory : SeItemsProviderFactory, SeFrontendOnlyIte
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? {
     val ranker = SeActionsRanker.findSelected() ?: return null
 
+    // The action updater runs all updates on EDT when the data context is not async. DataContextWithRpcId is not async.
+    val actionDataContext = (dataContext as? DataContextWithRpcId)?.dataContext ?: dataContext
     val contributor = withContext(Dispatchers.EDT) {
       SeRankerActionsContributor(project,
-                                 dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
-                                 dataContext.getData(CommonDataKeys.EDITOR),
-                                 dataContext)
+                                 actionDataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
+                                 actionDataContext.getData(CommonDataKeys.EDITOR),
+                                 actionDataContext)
     }
 
     return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)), contributor.actionModel, ranker)
