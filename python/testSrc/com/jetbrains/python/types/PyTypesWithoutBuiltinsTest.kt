@@ -194,7 +194,6 @@ class PyTypesWithoutBuiltinsTest : PyCodeInsightTestCase() {
   @TestFor(classes = [PyTypeAliasStatementImpl::class])
   fun `type alias statement`() = test("""
     type Alias = int
-    #            ^^^ WARNING Invalid type annotation
     expr = Alias
     #      └ TYPE Unknown
     """.trimIndent())
