@@ -200,8 +200,13 @@ final class SettingsHelper {
     }
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required", "--disable-component-update");
-    if (SystemInfoRt.isLinux && !StringUtil.isEmptyOrSpaces(System.getenv("DISPLAY"))) {
-      args = ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
+    if (SystemInfoRt.isLinux) {
+      if (StringUtil.isEmptyOrSpaces(System.getenv("DISPLAY"))) {
+        args = ArrayUtil.mergeArrays(args, "--disable-features=WaylandFractionalScaleV1");
+      }
+      else {
+        args = ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
+      }
     }
 
     if (!SKIP_CHROMIUM_SPECIAL_ARGS) {
