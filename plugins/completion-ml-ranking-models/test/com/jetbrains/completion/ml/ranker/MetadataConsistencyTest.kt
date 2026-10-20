@@ -1,57 +1,57 @@
 // Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.completion.ml.ranker
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class MetadataConsistencyTest {
   @Test
-  fun testKotlinMetadata() = ExperimentKotlinMLRankingProvider().assertModelMetadataConsistent()
+  fun testKotlinMetadata(): Unit = ExperimentKotlinMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testScalaMetadata() = ExperimentScalaMLRankingProvider().assertModelMetadataConsistent()
+  fun testScalaMetadata(): Unit = ExperimentScalaMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testJavaMetadata() = ExperimentJavaMLRankingProvider().assertModelMetadataConsistent()
+  fun testJavaMetadata(): Unit = ExperimentJavaMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testJavaWithRecommendersMetadata() = ExperimentJavaRecommendersMLRankingProvider().assertModelMetadataConsistent()
+  fun testJavaWithRecommendersMetadata(): Unit = ExperimentJavaRecommendersMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testRustMetadata() = ExperimentRustMLRankingProvider().assertModelMetadataConsistent()
+  fun testRustMetadata(): Unit = ExperimentRustMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testPythonMetadata() = ExperimentPythonMLRankingProvider().assertModelMetadataConsistent()
+  fun testPythonMetadata(): Unit = ExperimentPythonMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testPHPMetadata() = ExperimentPhpMLRankingProvider().assertModelMetadataConsistent()
+  fun testPHPMetadata(): Unit = ExperimentPhpMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testRubyMetadata() = ExperimentRubyMLRankingProvider().assertModelMetadataConsistent()
+  fun testRubyMetadata(): Unit = ExperimentRubyMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testGoMetadata() = ExperimentGoMLRankingProvider().assertModelMetadataConsistent()
+  fun testGoMetadata(): Unit = ExperimentGoMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testJSMetadata() = ExperimentJSMLRankingProvider().assertModelMetadataConsistent()
+  fun testJSMetadata(): Unit = ExperimentJSMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testTypeScriptMetadata() = ExperimentTypeScriptMLRankingProvider().assertModelMetadataConsistent()
+  fun testTypeScriptMetadata(): Unit = ExperimentTypeScriptMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testDartMetadata() = ExperimentDartMLRankingProvider().assertModelMetadataConsistent()
+  fun testDartMetadata(): Unit = ExperimentDartMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testSwiftMetadata() = ExperimentSwiftMLRankingProvider().assertModelMetadataConsistent()
+  fun testSwiftMetadata(): Unit = ExperimentSwiftMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testCidrMetadata() = ExperimentCidrMLRankingProvider().assertModelMetadataConsistent()
+  fun testCidrMetadata(): Unit = ExperimentCidrMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testHTMLMetadata() = ExperimentalHTMLMLRankingProvider().assertModelMetadataConsistent()
+  fun testHTMLMetadata(): Unit = ExperimentalHTMLMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testCSSMetadata() = ExperimentalCSSMLRankingProvider().assertModelMetadataConsistent()
+  fun testCSSMetadata(): Unit = ExperimentalCSSMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testShMetadata() = ExperimentalShMLRankingProvider().assertModelMetadataConsistent()
+  fun testShMetadata(): Unit = ExperimentalShMLRankingProvider().assertModelMetadataConsistent()
 }
