@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyPrefixExpressionImpl
 import com.jetbrains.python.psi.impl.PyYieldExpressionImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -1303,6 +1304,18 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           c = C()
           expr = await c
       #   └ TYPE Literal[0]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyPrefixExpressionImpl::class])
+    fun `await an object whose __await__ returns no generator`() = test("""
+      class C:
+          def __await__(self):
+              pass
+
+      async def foo():
+          expr = await C()
+      #   └ TYPE Unknown
       """.trimIndent())
 
     @Test

@@ -89,7 +89,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
       .map(callableType -> callableType.getCallType(context, this, ContainerUtil.emptyList()))
-      .map(callType -> isAwait ? Ref.deref(getGeneratorReturnType(callType)) : callType)
+      .map(callType -> {
+        if (!isAwait) return callType;
+        final Ref<PyType> returnType = getGeneratorReturnType(callType);
+        return returnType != null ? returnType.get() : PyAnyType.getUnknown();
+      })
       .collect(PyTypeUtil.toUnion());
   }
 
