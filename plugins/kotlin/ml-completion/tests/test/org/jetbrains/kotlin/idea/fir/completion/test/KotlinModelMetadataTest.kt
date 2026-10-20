@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.completion.test
 
 import org.jetbrains.kotlin.idea.mlCompletion.KotlinMLRankingProvider
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class KotlinModelMetadataTest {
     @Test
