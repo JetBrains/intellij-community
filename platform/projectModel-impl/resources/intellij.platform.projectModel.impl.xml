@@ -157,8 +157,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.workspaceFileIndexContributorEnforcer" interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributorEnforcer"
-                    dynamic="true"/>
   </extensionPoints>
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"

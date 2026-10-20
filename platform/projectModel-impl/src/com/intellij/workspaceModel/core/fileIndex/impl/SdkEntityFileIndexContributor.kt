@@ -9,9 +9,7 @@ import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributorEnforcer
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import org.jetbrains.annotations.ApiStatus
@@ -28,22 +26,11 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity> {
     get() = SdkEntity::class.java
 
   override fun registerFileSets(entity: SdkEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val compiledRootsData: WorkspaceFileSetData
-    val sourceRootFileSetData: WorkspaceFileSetData
-
-    if (storage.isProjectSdk(entity)) {
-      compiledRootsData = SdkRootFileSetData(entity.symbolicId)
-      sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
+    if (!storage.isProjectSdk(entity) && !storage.hasReferrers(entity.symbolicId)) {
+      return
     }
-    else {
-      val enforced = WorkspaceFileIndexContributorEnforcer.EP_NAME
-        .extensionsIfPointIsRegistered.any { it.shouldContribute(entity, storage) }
-      if (!enforced && !storage.hasReferrers(entity.symbolicId)) {
-        return
-      }
-      compiledRootsData = SdkRootFileSetData(entity.symbolicId)
-      sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
-    }
+    val compiledRootsData = SdkRootFileSetData(entity.symbolicId)
+    val sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
 
     for (root in entity.roots) {
       when (root.type) {
