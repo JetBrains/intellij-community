@@ -14,7 +14,7 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
@@ -56,7 +56,7 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
 
     assert !elements.isEmpty();
     final PsiNamedElement firstElement = elements.get(0);
-    setTitle(PyBundle.message("refactoring.move.module.members.dialog.title"));
+    setTitle(PyRefactoringBundle.message("refactoring.move.module.members.dialog.title"));
 
     final PyFile pyFile = (PyFile)firstElement.getContainingFile();
     myModuleMemberModel = new PyModuleMemberInfoModel(pyFile);
@@ -81,24 +81,24 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     if (!tableIsVisible && elements.size() == 1) {
       final String name = PyMoveRefactoringUtil.getPresentableName(firstElement);
       if (firstElement instanceof PyFunction) {
-        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function", name);
+        description =  PyRefactoringBundle.message("refactoring.move.module.members.dialog.description.function", name);
       }
       else if (firstElement instanceof PyClass) {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.class", name);
+        description = PyRefactoringBundle.message("refactoring.move.module.members.dialog.description.class", name);
       }
       else {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable", name);
+        description = PyRefactoringBundle.message("refactoring.move.module.members.dialog.description.variable", name);
       }
     }
     else {
-      description = PyBundle.message("refactoring.move.module.members.dialog.description.selection");
+      description = PyRefactoringBundle.message("refactoring.move.module.members.dialog.description.selection");
     }
     myDescription.setText(description);
-    final HideableDecorator decorator = new HideableDecorator(myExtraPanel, PyBundle.message("refactoring.move.module.members.dialog.table.title"), true) {
+    final HideableDecorator decorator = new HideableDecorator(myExtraPanel, PyRefactoringBundle.message("refactoring.move.module.members.dialog.table.title"), true) {
       @Override
       protected void on() {
         super.on();
-        myDescription.setText(PyBundle.message("refactoring.move.module.members.dialog.description.selection"));
+        myDescription.setText(PyRefactoringBundle.message("refactoring.move.module.members.dialog.description.selection"));
         PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, true);
       }
 
@@ -130,7 +130,7 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   @Override
   protected ValidationInfo doValidate() {
     if (!areButtonsValid()) {
-      return new ValidationInfo(PyBundle.message("refactoring.move.module.members.error.selection.empty"));
+      return new ValidationInfo(PyRefactoringBundle.message("refactoring.move.module.members.error.selection.empty"));
     }
     return super.doValidate();
   }

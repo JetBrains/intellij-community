@@ -11,7 +11,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
       myCenterPanel.setLayout(new GridLayoutManager(4, 2, new Insets(5, 5, 5, 5), -1, -1));
       myCenterPanel.putClientProperty("BorderFactoryClass", "");
       myDescription = new JBLabel();
-      this.$$$loadLabelText$$$(myDescription, this.$$$getMessageFromBundle$$$("messages/PyBundle",
+      this.$$$loadLabelText$$$(myDescription, this.$$$getMessageFromBundle$$$("messages/PyRefactoringBundle",
                                                                               "refactoring.move.module.members.dialog.description.selection"));
       myCenterPanel.add(myDescription, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                                            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
@@ -64,12 +64,12 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                           null, null, 0, false));
       final JBLabel jBLabel1 = new JBLabel();
-      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.move.module.members.to"));
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/PyRefactoringBundle", "form.move.module.members.to"));
       myCenterPanel.add(jBLabel1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
                                                       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
                                                       0, false));
       final JBLabel jBLabel2 = new JBLabel();
-      this.$$$loadLabelText$$$(jBLabel2, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.move.module.members.from"));
+      this.$$$loadLabelText$$$(jBLabel2, this.$$$getMessageFromBundle$$$("messages/PyRefactoringBundle", "form.move.module.members.from"));
       myCenterPanel.add(jBLabel2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
                                                       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
                                                       0, false));
@@ -82,7 +82,7 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
     mySourcePathField.setText(sourcePath);
     myBrowseFieldWithButton.setText(destinationPath);
     var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withTitle(PyBundle.message("refactoring.move.choose.destination.file.title"))
+      .withTitle(PyRefactoringBundle.message("refactoring.move.choose.destination.file.title"))
       .withRoots(ProjectRootManager.getInstance(project).getContentRoots())
       .withTreeRootVisible(true);
     myBrowseFieldWithButton.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);

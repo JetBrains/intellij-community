@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -10,7 +15,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
@@ -29,6 +35,8 @@ import java.util.Optional;
  * @author Mikhail Golubev
  */
 public final class PyMoveRefactoringUtil {
+  private static final Logger LOG = Logger.getInstance(PyMoveRefactoringUtil.class);
+
   private PyMoveRefactoringUtil() {
   }
 
@@ -42,7 +50,7 @@ public final class PyMoveRefactoringUtil {
   public static void checkValidImportableFile(@NotNull PsiElement anchor, @NotNull VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyPsiRefactoringUtil.isValidQualifiedName(qName)) {
-      throw new IncorrectOperationException(PyBundle.message("refactoring.move.error.cannot.use.module.name", file.getName()));
+      throw new IncorrectOperationException(PyRefactoringBundle.message("refactoring.move.error.cannot.use.module.name", file.getName()));
     }
   }
 
@@ -98,5 +106,32 @@ public final class PyMoveRefactoringUtil {
       .filter(element -> ScopeUtil.getScopeOwner(element) == destination)
       .filter(element -> PyImportStatementNavigator.getImportStatementByElement(element) == null)
       .min(PsiUtilCore::compareElementsByPosition);
+  }
+
+  public static void createInitPyInHierarchy(@NotNull PsiDirectory created, @NotNull PsiDirectory ancestor) {
+    if (created.equals(ancestor)) {
+      createInitPy(created);
+      return;
+    }
+    do {
+      createInitPy(created);
+      created = created.getParent();
+    }
+    while (created != null && !created.equals(ancestor));
+  }
+
+  private static void createInitPy(@NotNull PsiDirectory directory) {
+    final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(directory.getProject());
+    final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
+      return;
+    }
+
+    try {
+      FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }

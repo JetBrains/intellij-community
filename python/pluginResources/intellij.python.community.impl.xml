@@ -611,7 +611,6 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
 
-    <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>

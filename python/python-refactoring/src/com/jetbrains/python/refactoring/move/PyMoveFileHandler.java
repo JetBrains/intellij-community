@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -74,7 +73,7 @@ public final class PyMoveFileHandler extends MoveFileHandler {
       }
       final boolean searchForReferences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE;
       if (moveDestination != root && root != null && searchForReferences && !probablyNamespacePackage(file, moveDestination, root)) {
-        CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
+        PyMoveRefactoringUtil.createInitPyInHierarchy(moveDestination, root);
       }
     }
   }

@@ -19,7 +19,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -107,15 +107,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         }
         if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.class", name));
+            PyRefactoringBundle.message("refactoring.move.error.destination.file.contains.class", name));
         }
         if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.function", name));
+            PyRefactoringBundle.message("refactoring.move.error.destination.file.contains.function", name));
         }
         if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable", name));
+            PyRefactoringBundle.message("refactoring.move.error.destination.file.contains.global.variable", name));
         }
         final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
         final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
@@ -168,6 +168,6 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public static @Nls String getRefactoringName() {
-    return PyBundle.message("refactoring.move.module.members");
+    return PyRefactoringBundle.message("refactoring.move.module.members");
   }
 }

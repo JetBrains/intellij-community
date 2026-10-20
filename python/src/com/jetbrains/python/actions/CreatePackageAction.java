@@ -6,16 +6,12 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.NewFileActionWithCategory;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -28,9 +24,9 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.EmptyConsumer;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +35,6 @@ import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class CreatePackageAction extends DumbAwareAction implements NewFileActionWithCategory {
-  private static final Logger LOG = Logger.getInstance(CreatePackageAction.class);
-
   private static final @NonNls String NAMESPACE_PACKAGE_TYPE = "Namespace Package";
   private static final @NonNls String ORDINARY_PACKAGE_TYPE = "Package";
 
@@ -116,7 +110,7 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
         PsiFileSystemItem element = getCreatedElement();
         final PsiDirectory restoredDirectory = directoryPointer.getElement();
         if (element instanceof PsiDirectory && restoredDirectory != null) {
-          createInitPyInHierarchy((PsiDirectory)element, restoredDirectory);
+          PyMoveRefactoringUtil.createInitPyInHierarchy((PsiDirectory)element, restoredDirectory);
         }
       }
     };
@@ -172,34 +166,6 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
     }
 
     return builder;
-  }
-
-
-  public static void createInitPyInHierarchy(@NotNull PsiDirectory created, @NotNull PsiDirectory ancestor) {
-    if (created.equals(ancestor)) {
-      createInitPy(created);
-      return;
-    }
-    do {
-      createInitPy(created);
-      created = created.getParent();
-    }
-    while (created != null && !created.equals(ancestor));
-  }
-
-  private static void createInitPy(@NotNull PsiDirectory directory) {
-    final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(directory.getProject());
-    final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
-    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
-      return;
-    }
-
-    try {
-      FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   @Override
