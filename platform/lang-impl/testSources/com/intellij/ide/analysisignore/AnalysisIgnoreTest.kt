@@ -624,7 +624,8 @@ class AnalysisIgnoreTest {
     discover(excludeFile)
     assertFalse(isInContent(buildDir))
 
-    applyVfsEvents(VFileDeleteEvent(this@AnalysisIgnoreTest, excludeFile))
+    // A real removal, as the scan after the update would otherwise find the file on disk and put its entity back.
+    writeAction { excludeFile.delete(this@AnalysisIgnoreTest) }
     service.processNow()
 
     // The exclusions of a file sit on the directory that holds it, and the entity of that file owns them there. Once that entity is gone the
@@ -1111,7 +1112,8 @@ class AnalysisIgnoreTest {
     discover(excludeFile)
     assertFalse(isInContent(buildDir))
 
-    applyVfsEvents(VFileDeleteEvent(this@AnalysisIgnoreTest, excludeFile))
+    // A real removal, as the scan after the update would otherwise find the file on disk and put its entity back.
+    writeAction { excludeFile.delete(this@AnalysisIgnoreTest) }
     service.processNow()
 
     assertEquals(emptyMap<String, List<String>>(), patternsByFile())
@@ -1129,7 +1131,7 @@ class AnalysisIgnoreTest {
 
     // The VFS reports one event for the directory and none for the file below it. A listener that only matched the name would keep the
     // exclusion of a file that no longer exists.
-    applyVfsEvents(VFileDeleteEvent(this@AnalysisIgnoreTest, subDir))
+    writeAction { subDir.delete(this@AnalysisIgnoreTest) }
     service.processNow()
 
     assertEquals(emptyMap<String, List<String>>(), patternsByFile())
@@ -1143,9 +1145,8 @@ class AnalysisIgnoreTest {
     discover(excludeFile)
     assertFalse(isInContent(buildDir))
 
-    applyVfsEvents(
-      VFilePropertyChangeEvent(this@AnalysisIgnoreTest, excludeFile, VirtualFile.PROP_NAME, ANALYSIS_IGNORE_FILE_NAME, "notes.txt")
-    )
+    // A real rename, as the scan after the update would otherwise find the file under its old name and put its entity back.
+    writeAction { excludeFile.rename(this@AnalysisIgnoreTest, "notes.txt") }
     service.processNow()
 
     assertEquals(emptyMap<String, List<String>>(), patternsByFile())
