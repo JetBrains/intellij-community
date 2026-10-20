@@ -16,20 +16,4 @@ import com.intellij.ide.starter.models.TestCase
 open class CachedProjectConfiguration(
   val testCase: TestCase<*>,
   val setup: IDETestContext.() -> IDETestContext = { this },
-) {
-  /**
-   * Creates a separate configuration for the same [testCase] whose [setup] runs this configuration setup first
-   * and then [additionalSetup].
-   *
-   * The returned instance is a separate cache entry.
-   */
-  fun withAdditionalSetup(additionalSetup: IDETestContext.() -> IDETestContext): CachedProjectConfiguration {
-    val baseSetup = setup
-    return CachedProjectConfiguration(
-      testCase = testCase,
-      setup = {
-        additionalSetup(baseSetup(this))
-      },
-    )
-  }
-}
+)

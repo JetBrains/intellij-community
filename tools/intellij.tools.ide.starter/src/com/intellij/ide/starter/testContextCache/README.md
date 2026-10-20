@@ -25,8 +25,8 @@ fun myTest() {
 ```
 
 The cache key is the `CachedProjectConfiguration` instance, the target, and the IDE run mode. So one configuration in
-the monolith and the split mode has two cache entries. A new instance, also one from `withAdditionalSetup()`, is a new
-cache entry, which prepares and indexes the project again. Share one instance when tests must share one prepared
+the monolith and the split mode has two cache entries. A new instance is a new cache entry, which
+prepares and indexes the project again. Share one instance when tests must share one prepared
 context.
 
 `CachedProjectConfiguration.setup` runs once, when the cache entry is created. It prepares the config, the plugins,

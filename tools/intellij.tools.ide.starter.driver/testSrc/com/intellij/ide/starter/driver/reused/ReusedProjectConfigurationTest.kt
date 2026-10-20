@@ -88,10 +88,12 @@ private class CustomCompanionReusedIdeTest : CompanionReusedIdeTestBase() {
   companion object {
     @delegate:ReusedProject
     val project: CachedProjectConfiguration by lazy {
-      CompanionReusedIdeTestBase.project.withAdditionalSetup {
-        HookTracker.localSetupCalls += 1
-        HookTracker.events += "localSetup"
-        this
+      val base = CompanionReusedIdeTestBase.project
+      CachedProjectConfiguration(base.testCase) {
+        base.setup(this).apply {
+          HookTracker.localSetupCalls += 1
+          HookTracker.events += "localSetup"
+        }
       }
     }
   }
@@ -102,10 +104,12 @@ private class PrivateCompanionReusedIdeTest : CompanionReusedIdeTestBase() {
   private companion object {
     @delegate:ReusedProject
     private val project: CachedProjectConfiguration by lazy {
-      CompanionReusedIdeTestBase.project.withAdditionalSetup {
-        HookTracker.localSetupCalls += 1
-        HookTracker.events += "privateSetup"
-        this
+      val base = CompanionReusedIdeTestBase.project
+      CachedProjectConfiguration(base.testCase) {
+        base.setup(this).apply {
+          HookTracker.localSetupCalls += 1
+          HookTracker.events += "privateSetup"
+        }
       }
     }
   }
