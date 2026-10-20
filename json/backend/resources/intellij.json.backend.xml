@@ -50,7 +50,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
-  
+
   <actions resource-bundle="messages.JsonBundle">
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
@@ -69,7 +69,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileCustomDataProvider implementation="com.intellij.json.split.JsonCodeStyleSettingsCustomDataSynchronizer"/>
 
-    <registryKey key="json.schema.object.v2.enable.nested.remote.schema.resolve" defaultValue="false" description="Try loading remote schema parts on the fly"/>
+    <registryKey key="json.schema.object.v2.enable.nested.remote.schema.resolve" defaultValue="true" description="Try loading remote schema parts on the fly"/>
     <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
     <registryKey key="json.schema.use.networknt.validation" defaultValue="true" description="Use networknt validator as primary JSON Schema validation engine"/>
 
