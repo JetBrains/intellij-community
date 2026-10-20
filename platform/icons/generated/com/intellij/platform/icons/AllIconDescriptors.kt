@@ -570,6 +570,7 @@ object AllIconDescriptors {
     /** 16x16 */ @JvmStatic val Hashtag: IconDescriptor = imageIconDescriptor("expui/general/hashtag.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val HideToolWindow: IconDescriptor = imageIconDescriptor("expui/general/hide.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val History: IconDescriptor = imageIconDescriptor("expui/general/history.svg", AllIconDescriptors::class.java.classLoader)
+    /** 16x16 */ @JvmStatic val Home: IconDescriptor = imageIconDescriptor("expui/general/home.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val ImplementingMethod: IconDescriptor = imageIconDescriptor("expui/general/showToImplement.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val IndentDetected: IconDescriptor = imageIconDescriptor("expui/general/indentDetected.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val Information: IconDescriptor = imageIconDescriptor("expui/status/info.svg", AllIconDescriptors::class.java.classLoader)

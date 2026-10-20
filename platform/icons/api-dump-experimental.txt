@@ -547,6 +547,7 @@
 - sf:getHashtag():com.intellij.platform.icons.IconDescriptor
 - sf:getHideToolWindow():com.intellij.platform.icons.IconDescriptor
 - sf:getHistory():com.intellij.platform.icons.IconDescriptor
+- sf:getHome():com.intellij.platform.icons.IconDescriptor
 - sf:getImplementingMethod():com.intellij.platform.icons.IconDescriptor
 - sf:getIndentDetected():com.intellij.platform.icons.IconDescriptor
 - sf:getInformation():com.intellij.platform.icons.IconDescriptor

@@ -1636,6 +1636,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey History = new IntelliJIconKey("expui/general/history.svg", "expui/general/history.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Home = new IntelliJIconKey("expui/general/home.svg", "expui/general/home.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ImplementingMethod = new IntelliJIconKey("general/implementingMethod.svg", "expui/general/showToImplement.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
