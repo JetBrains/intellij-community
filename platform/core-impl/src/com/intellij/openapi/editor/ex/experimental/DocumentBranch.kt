@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex.experimental
 
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.experimental.DocumentBranchImpl
 
@@ -28,17 +29,17 @@ import com.intellij.openapi.editor.impl.experimental.DocumentBranchImpl
  *   concurrent with it. Otherwise both directions throw [TrimmedHistoryException], even for a merge
  *   with an ancestor.
  */
-interface DocumentBranch {
+interface DocumentBranch : DocumentSnapshot {
   /**
    * The document at this branch's version.
    */
-  fun text(): DocumentText
+  override fun text(): DocumentText
 
   /**
    * The modification state of [text]. It belongs to this branch, and a merge never takes the one of
    * the other branch. Only a [DocumentOp.ModStamp] changes the stamp.
    */
-  fun modState(): DocumentModState
+  override fun modState(): DocumentModState
 
   /**
    * The version of [text]. Under the agent contract, it stays valid in every branch that merges
@@ -54,7 +55,7 @@ interface DocumentBranch {
    *
    * Only a text op records an event.
    */
-  fun applyOp(op: DocumentOp): DocumentBranch
+  override fun applyOp(op: DocumentOp): DocumentBranch
 
   /**
    * The identity this branch edits under.
@@ -110,12 +111,12 @@ interface DocumentBranch {
    * A branch with the same text, mod state, agent and history. It is never `===` to this branch.
    * Edit only one of the two, because they share the agent.
    */
-  fun newInstance(): DocumentBranch
+  override fun newInstance(): DocumentBranch
 
   /**
    * A list of the line ranges of [text], for diagnostics only.
    */
-  fun dumpState(): String
+  override fun dumpState(): String
 
   companion object {
     /**
