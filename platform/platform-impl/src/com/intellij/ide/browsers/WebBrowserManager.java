@@ -106,7 +106,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   public static boolean isYandexBrowser(@NotNull WebBrowser browser) {
-    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Yandex", browser);
+    return browser.getFamily() == BrowserFamily.CHROME && checkNameAndPath("Yandex", browser);
   }
 
   public static boolean isEdge(@NotNull WebBrowser browser) {
@@ -180,10 +180,13 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
         Element entry = new Element("browser");
         entry.setAttribute("id", browser.getId().toString());
         entry.setAttribute("name", browser.getName());
-        entry.setAttribute("family", browser.getFamily().name());
+        BrowserFamily family = browser.getFamily();
+        if (family != null) {
+          entry.setAttribute("family", family.name());
+        }
 
         String path = browser.getPath();
-        if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
+        if (path != null && (family == null || !path.equals(family.getExecutionPath()))) {
           entry.setAttribute("path", path);
         }
 
@@ -222,8 +225,12 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
   }
 
-  private static @Nullable UUID readId(String value, @NotNull BrowserFamily family, @NotNull List<ConfigurableWebBrowser> existingBrowsers) {
+  private static @Nullable UUID readId(String value, @Nullable BrowserFamily family, @NotNull List<ConfigurableWebBrowser> existingBrowsers) {
     if (StringUtil.isEmpty(value)) {
+      if (family == null) {
+        return null;
+      }
+
       UUID id;
       switch (family) {
         case CHROME -> id = PREDEFINED_CHROME_ID;
@@ -279,8 +286,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
     List<ConfigurableWebBrowser> list = new ArrayList<>();
     for (Element child : element.getChildren("browser")) {
-      BrowserFamily family = readFamily(child.getAttributeValue("family"));
-      if (family == null) {
+      String familyValue = child.getAttributeValue("family");
+      BrowserFamily family = familyValue == null ? null : readFamily(familyValue);
+      if (familyValue != null && family == null) {
         continue;
       }
 
@@ -290,7 +298,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       }
 
       Element settingsElement = child.getChild("settings");
-      BrowserSpecificSettings specificSettings = family.createBrowserSpecificSettings();
+      BrowserSpecificSettings specificSettings = family == null ? null : family.createBrowserSpecificSettings();
       if (specificSettings != null && settingsElement != null) {
         try {
           XmlSerializer.deserializeInto(specificSettings, settingsElement);
@@ -303,13 +311,13 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       String activeValue = child.getAttributeValue("active");
 
       String path = StringUtil.nullize(child.getAttributeValue("path"), true);
-      if (path == null) {
+      if (path == null && family != null) {
         path = family.getExecutionPath();
       }
 
       list.add(new ConfigurableWebBrowser(id,
                                           family,
-                                          StringUtil.notNullize(child.getAttributeValue("name"), family.getName()),
+                                          StringUtil.notNullize(child.getAttributeValue("name"), family == null ? "" : family.getName()),
                                           path,
                                           activeValue == null || Boolean.parseBoolean(activeValue),
                                           specificSettings));
@@ -377,7 +385,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   public WebBrowser addBrowser(final @NotNull UUID id,
-                               final @NotNull BrowserFamily family,
+                               final @Nullable BrowserFamily family,
                                final @NotNull String name,
                                final @Nullable String path,
                                final boolean active,
@@ -412,8 +420,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     UUID id = parseUuid(idOrFamilyName);
     if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getFamily().name().equalsIgnoreCase(idOrFamilyName) ||
-            browser.getFamily().getName().equalsIgnoreCase(idOrFamilyName)) {
+        BrowserFamily family = browser.getFamily();
+        if (family != null && (family.name().equalsIgnoreCase(idOrFamilyName) || family.getName().equalsIgnoreCase(idOrFamilyName))) {
           return browser;
         }
       }
