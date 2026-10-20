@@ -83,7 +83,8 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
   }
 
   override fun prepareCalleeTypeForCall(type: PyType?, callee: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-    return if (type is PyNamedTupleType) Ref.create(type) else null
+    if (type !is PyNamedTupleType) return null
+    return Ref.create(generateGenericConstructorType(type, context) ?: type)
   }
 
   override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypeMember>? {
@@ -169,6 +170,20 @@ internal fun parameterizeNamedTupleType(
     { fieldType -> if (fieldType.hasGenerics(context)) PyTypeChecker.substitute(fieldType, substitutions, context) else fieldType },
     { classTypeArguments },
   )
+}
+
+/**
+ * The constructor signature of the generic named tuple class [type]: the fields as parameters, and the named tuple
+ * parameterized with its own type parameters as the return type. The generic call then binds the type parameters,
+ * as for a dataclass, so `Base(42)` of `class Base[T](NamedTuple)` with the field `foo: T` gives `Base[int]`.
+ *
+ * Returns `null` when [type] is not the definition of a typed generic named tuple, or is already parameterized.
+ */
+private fun generateGenericConstructorType(type: PyNamedTupleType, context: TypeEvalContext): PyCallableType? {
+  if (!type.isDefinition || !type.isTyped || type.typeArguments.isNotEmpty()) return null
+  val typeParameters = PyTypeChecker.findGenericDefinitionType(type.pyClass, context)?.typeArguments ?: return null
+  val returnType = parameterizeNamedTupleType(type.toInstance(), typeParameters, context) ?: return null
+  return PyCallableTypeImpl(type.getParameters(context), returnType)
 }
 
 private fun getNamedTupleReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {

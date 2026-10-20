@@ -608,6 +608,54 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-92092"])
+    fun `generic named tuple specialized through constructor argument`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          foo: T
+          bar: str
+      inst = Base(42, "foo")
+      # └ TYPE Base[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `generic named tuple specialized through constructor keyword argument`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      T = TypeVar("T")
+      class Base(NamedTuple, Generic[T]):
+          foo: T
+          bar: str
+      inst = Base(bar="foo", foo=[1])
+      #└ TYPE Base[list[int]]
+      expr = inst.foo
+      #└ TYPE list[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `generic named tuple constructor result is checked by its type argument`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          foo: T
+      inst = Base(42)
+      other: Base[str] = inst # WARNING Expected type 'Base[str]', got 'Base[int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `generic named tuple replace() call result keeps the original type argument`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          foo: T
+          bar: str
+      inst: Base[int]
+      replaced = inst._replace(foo="a")
+      # │                      ^^^^^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      # └ TYPE Base[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
     @TestInspections(disableInspections = [PyVarianceInspection::class])
     fun `parameterized generic named tuple with a covariant type parameter`() = test("""
       from typing import Generic, NamedTuple, TypeVar
