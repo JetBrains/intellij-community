@@ -748,6 +748,8 @@ object PyCallExpressionHelper {
     arguments: List<PyCallableArgument>,
     context: TypeEvalContext,
   ): CallType {
+    // An overloaded function whose overloads have no callable type yet, e.g. while a type engine starts
+    if (types.isEmpty()) return CallType(PyAnyType.unknown, false)
     val matchingOverloads = selectMatchingOverloads(types, arguments, context)
     return matchingOverloads.ifEmpty { types }
       .map { it.getCallType(context, callSite, arguments).convertNoReturnToNever() }
