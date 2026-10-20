@@ -156,6 +156,35 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testPsiMethodAndAstNodeCall() {
+    myFixture.addFileToProject("com/intellij/psi/PsiElement.java", """
+      package com.intellij.psi;
+      public interface PsiElement {
+        String getText();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/psi/PsiMethod.java", """
+      package com.intellij.psi;
+      public interface PsiMethod extends PsiElement {
+        Object getBody();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/lang/ASTNode.java", """
+      package com.intellij.lang;
+      public interface ASTNode {
+        Object getElementType();
+      }
+      """.trimIndent())
+    val result = doTest("PsiMethodAndAstNodeCall")
+    // PsiMethod.getBody and ASTNode.getElementType are declared in the read-required classes
+    val expectedPaths = listOf(
+      "PsiMethodAndAstNodeCall.testMethod -> PsiMethodAndAstNodeCall.methodHelper => READ.IMPLICIT",
+      "PsiMethodAndAstNodeCall.testMethod -> PsiMethodAndAstNodeCall.nodeHelper => READ.IMPLICIT",
+    )
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testUserDataHolderCall() {
     myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolder.java", """
       package com.intellij.openapi.util;

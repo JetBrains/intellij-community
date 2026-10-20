@@ -118,6 +118,8 @@ class BaseLockReqRules : LockReqRules {
 
   override val readRequiredClasses: Set<String> = setOf(
     "com.intellij.psi.PsiElement",
+    "com.intellij.psi.PsiMethod",
+    "com.intellij.lang.ASTNode",
   )
 
   override val opaqueClasses: Set<String> = setOf(
