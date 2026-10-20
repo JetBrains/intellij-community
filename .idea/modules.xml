@@ -2171,6 +2171,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/services/system-python/intellij.python.community.services.systemPython.tests.iml" filepath="$PROJECT_DIR$/python/services/system-python/intellij.python.community.services.systemPython.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" filepath="$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-console/intellij.python.console.iml" filepath="$PROJECT_DIR$/python/python-console/intellij.python.console.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" filepath="$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/dbt/common/intellij.python.dbt.common.iml" filepath="$PROJECT_DIR$/python/dbt/common/intellij.python.dbt.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/django/common/intellij.python.django.common.iml" filepath="$PROJECT_DIR$/python/django/common/intellij.python.django.common.iml" />

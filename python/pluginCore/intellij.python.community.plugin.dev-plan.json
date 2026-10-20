@@ -203,6 +203,9 @@
             "module": "intellij.python.testing.codeInsight"
         },
         {
+            "module": "intellij.python.console"
+        },
+        {
             "module": "intellij.python.django.common"
         },
         {

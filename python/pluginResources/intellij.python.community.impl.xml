@@ -111,6 +111,7 @@
     <module name="intellij.python.community.impl.poetry.backend"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.console"/>
     <module name="intellij.python.externalIndex"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.hatch.common"/>
