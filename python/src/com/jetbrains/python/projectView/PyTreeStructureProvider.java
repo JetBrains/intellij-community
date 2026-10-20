@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.util.Ref;
@@ -28,7 +27,6 @@ import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,8 +86,7 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
         final LibraryOrSdkOrderEntry entry = value.getOrderEntry();
         if (entry instanceof JdkOrderEntry) {
           final Sdk sdk = ((JdkOrderEntry)entry).getJdk();
-          final SdkTypeId type = sdk == null ? null : sdk.getSdkType();
-          if (type instanceof PythonSdkType) {
+          if (sdk != null && PythonSdkUtil.isPythonSdk(sdk, true)) {
             return sdk;
           }
         }
