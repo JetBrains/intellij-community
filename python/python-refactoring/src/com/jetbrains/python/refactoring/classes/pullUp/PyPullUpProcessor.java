@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -24,12 +24,12 @@ public final class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return PyBundle.message("refactoring.pull.up.dialog.move.members.to.class");
+    return PyRefactoringBundle.message("refactoring.pull.up.dialog.move.members.to.class");
   }
 
   @Override
   public @NotNull String getCodeReferencesText(final int usagesCount, final int filesCount) {
-    return PyBundle.message("refactoring.pull.up.dialog.members.to.be.moved");
+    return PyRefactoringBundle.message("refactoring.pull.up.dialog.members.to.be.moved");
   }
 
   @Override

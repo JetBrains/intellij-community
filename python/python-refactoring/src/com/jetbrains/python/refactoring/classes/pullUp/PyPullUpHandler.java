@@ -3,7 +3,7 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
@@ -54,6 +54,6 @@ public final class PyPullUpHandler extends PyClassRefactoringHandler {
   }
 
   public static @Nls String getRefactoringName() {
-    return PyBundle.message("refactoring.pull.up.dialog.title");
+    return PyRefactoringBundle.message("refactoring.pull.up.dialog.title");
   }
 }

@@ -15,7 +15,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -53,7 +53,7 @@ public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresente
     super.validateView();
     final Project project = myClassUnderRefactoring.getProject();
     if (!myNamesValidator.isIdentifier(myView.getSuperClassName(), project)) {
-      throw new BadDataException(PyBundle.message("refactoring.extract.super.name.0.must.be.ident", myView.getSuperClassName()));
+      throw new BadDataException(PyRefactoringBundle.message("refactoring.extract.super.name.0.must.be.ident", myView.getSuperClassName()));
     }
     boolean rootFound = false;
     final File moduleFile = new File(myView.getModuleFile());
@@ -69,7 +69,7 @@ public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresente
     catch (final IOException ignore) {
     }
     if (!rootFound) {
-      throw new BadDataException(PyBundle.message("refactoring.extract.super.target.path.outside.roots"));
+      throw new BadDataException(PyRefactoringBundle.message("refactoring.extract.super.target.path.outside.roots"));
     }
 
     // TODO: Cover with test. It can't be done for now, because testFixture reports root path incorrectly
@@ -80,7 +80,7 @@ public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresente
       final PyFile pyFile = getPyFile(project, moduleVirtualFile);
       if (pyFile != null) {
         if (pyFile.findTopLevelClass(myView.getSuperClassName()) != null) {
-          throw new BadDataException(PyBundle.message("refactoring.extract.super.target.class.already.exists", myView.getSuperClassName()));
+          throw new BadDataException(PyRefactoringBundle.message("refactoring.extract.super.target.class.already.exists", myView.getSuperClassName()));
         }
       }
     }

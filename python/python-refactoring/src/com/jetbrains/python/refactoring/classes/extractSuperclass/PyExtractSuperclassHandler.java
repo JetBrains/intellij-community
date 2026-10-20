@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
@@ -26,7 +26,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
                                 final @NotNull Editor editor) {
     //TODO: Move to presenter
     if (PyMembersUtil.filterOutObject(infoStorage.getClassMemberInfos(classUnderRefactoring)).isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle
+      CommonRefactoringUtil.showErrorHint(project, editor, PyRefactoringBundle
         .message("refactoring.extract.super.class.no.members.allowed"), RefactoringBundle.message("extract.superclass.elements.header"),
                                           null);
       return;

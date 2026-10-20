@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ class PyPullUpNothingToRefactorMessage {
    * Display message
    */
   void showNothingToRefactor() {
-    CommonRefactoringUtil.showErrorHint(myProject, myEditor, PyBundle
+    CommonRefactoringUtil.showErrorHint(myProject, myEditor, PyRefactoringBundle
                                           .message("refactoring.pull.up.error.cannot.perform.refactoring.no.base.classes",
                                                    myClassUnderRefactoring.getName()), RefactoringBundle.message("pull.members.up.title"),
                                         "members.pull.up"
