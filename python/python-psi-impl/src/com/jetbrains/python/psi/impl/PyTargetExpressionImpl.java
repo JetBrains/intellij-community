@@ -248,7 +248,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     if (parent instanceof PyAssignmentExpression) {
       final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();
-      return assignedValue == null ? null : context.getType(assignedValue);
+      return assignedValue == null ? PyAnyType.getUnknown() : context.getType(assignedValue);
     }
     if (parent instanceof PyImportElement importElement) {
       final PyReferenceExpression importedRef = importElement.getImportReferenceExpression();

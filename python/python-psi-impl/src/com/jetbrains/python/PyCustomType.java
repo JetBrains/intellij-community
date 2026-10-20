@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -178,7 +179,7 @@ public final class PyCustomType implements PyClassLikeType {
 
   @Override
   public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
-    return myInstanceType ? null : toInstance();
+    return myInstanceType ? PyAnyType.getUnknown() : toInstance();
   }
 
   @Override

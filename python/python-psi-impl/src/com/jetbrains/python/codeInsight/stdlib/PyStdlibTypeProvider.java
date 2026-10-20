@@ -145,22 +145,22 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       final String name = qualifiedNameOwner.getQualifiedName();
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
         var nameType = getEnumNameType(referenceTarget, context, anchor);
-        return Ref.create(nameType != null ? nameType : PyBuiltinCache.getInstance(referenceTarget).getStrType());
+        return Ref.create(nameType != null ? nameType : ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(referenceTarget).getStrType(), PyAnyType.getUnknown()));
       }
       else if ((PyNames.TYPE_ENUM_FLAG + ".name").equals(name)) {
-        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
+        return Ref.create(ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(referenceTarget).getStrType(), PyAnyType.getUnknown()));
       }
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
-        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getIntType());
+        return Ref.create(memberValueType != null ? memberValueType : ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(referenceTarget).getIntType(), PyAnyType.getUnknown()));
       }
       else if ("enum.StrEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
-        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getStrType());
+        return Ref.create(memberValueType != null ? memberValueType : ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(referenceTarget).getStrType(), PyAnyType.getUnknown()));
       }
       else if ((PyNames.TYPE_ENUM_FLAG + ".value").equals(name) && anchor instanceof PyReferenceExpression) {
         PyType memberValueType = getEnumValueTypeFromQualifier(anchor, context);
-        return Ref.create(memberValueType != null ? memberValueType : PyBuiltinCache.getInstance(referenceTarget).getIntType());
+        return Ref.create(memberValueType != null ? memberValueType : ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(referenceTarget).getIntType(), PyAnyType.getUnknown()));
       }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression) {
         // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted

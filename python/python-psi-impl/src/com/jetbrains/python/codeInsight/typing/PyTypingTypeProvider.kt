@@ -1689,7 +1689,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null) {
             if (indexExpr.resolvesToQualifiedNames(context.typeContext, ANY)) {
-              return Ref(PyBuiltinCache.getInstance(resolved).typeType)
+              return Ref(PyBuiltinCache.getInstance(resolved).typeType ?: PyAnyType.unknown)
             }
             return indexExpr.getAsClassObjectType(context)
           }
@@ -1698,7 +1698,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
       }
       else if (TYPE == resolved.getQualifiedName()) {
-        return Ref(PyBuiltinCache.getInstance(resolved).typeType)
+        return Ref(PyBuiltinCache.getInstance(resolved).typeType ?: PyAnyType.unknown)
       }
       return null
     }
@@ -1810,7 +1810,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private fun getLiteralStringType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PyTargetExpression) {
         if (resolved.resolvesToQualifiedNames(context.typeContext, LITERALSTRING, LITERALSTRING_EXT)) {
-          return Ref(create(resolved))
+          return Ref(create(resolved) ?: PyAnyType.unknown)
         }
       }
 

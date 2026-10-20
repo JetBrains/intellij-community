@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +22,7 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyTargetExpression target = getTarget();
-    return target == null ? null : context.getType(target);
+    return target == null ? PyAnyType.getUnknown() : context.getType(target);
   }
 
   @Override
