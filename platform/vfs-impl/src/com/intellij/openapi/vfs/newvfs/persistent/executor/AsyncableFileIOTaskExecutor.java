@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.executor;
 
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.IntRef;
@@ -18,12 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+import static com.intellij.openapi.diagnostic.ControlFlowExceptionKt.isControlFlowException;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -436,10 +438,28 @@ public final class AsyncableFileIOTaskExecutor<T extends FileIOTaskExecutor.File
         pendingTask.task.execute(onBackground);
       }
       catch (Throwable t) {
-        if (!(t instanceof ControlFlowException)) {
-          LOG.warn(pendingTask.task + " execution failed", t);
+        if (!onBackground) {
+          // It is better to rethrow control-flow exceptions immediately, not collect them: control-flow exceptions, by definition,
+          // are not good for being rethrown outside their initiating stack (=caller's context).
+          // E.g. CannotReadException: it should be only possible to see it inside a ReadAction, and it should be consumed
+          // by that RA (and used as a sign to retry). Collecting it and rethrowing it later, in a different thread, outside
+          // initiating RA -- is confusing, at min.
+          // Still, for background tasks there is no better option but to collect the exceptions and rethrow them on synchronous
+          // flush later, because how else to indicate that/why the task has failed? Also, since background tasks are running
+          // on an executor, outside RA => it should be no issues with e.g. CannotReadException.
+          // But for foreground tasks -- rethrow the CF exceptions immediately:
+          rethrowControlFlowException(t);
         }
-        failureInTask = t;
+
+        if (!isControlFlowException(t)) {
+          LOG.warn(pendingTask.task + " execution failed", t);
+          failureInTask = t;
+        }
+        else {
+          // wrap CF exceptions so they are rethrown not as CF (which is only useful in the original context), but just as an
+          // indication of task failure:
+          failureInTask = new ExecutionException("Background task failed: " + pendingTask, t);
+        }
       }
       return true; //task is finished, regardless of success/failure of it's execution
     }
