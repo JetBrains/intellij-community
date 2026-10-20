@@ -8,4 +8,8 @@ data class Subscriber<T : Event>(val subscriberName: Any,
                                  val timeout: Duration,
                                  val executeOnce: Boolean = false,
                                  val sequential: Boolean = false,
-                                 val callback: suspend (event: T) -> Unit)
+                                 val callback: suspend (event: T) -> Unit) {
+  // Leaves out `callback`: the rendering of a lambda loads kotlin-reflect.
+  override fun toString(): String =
+    "Subscriber(subscriberName=$subscriberName, timeout=$timeout, executeOnce=$executeOnce, sequential=$sequential)"
+}
