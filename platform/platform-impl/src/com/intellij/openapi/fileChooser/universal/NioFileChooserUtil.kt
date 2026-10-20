@@ -5,6 +5,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -59,6 +60,16 @@ internal object NioFileChooserUtil {
     catch (_: UnsupportedOperationException) {
       null
     }
+  }
+
+  /**
+   * Returns the roots of the [descriptor] as NIO paths, without duplicates.
+   * The result joins [FileChooserDescriptor.getPathRoots] with the
+   * [FileChooserDescriptor.getRoots] entries that map to a path.
+   */
+  fun getNioRoots(descriptor: FileChooserDescriptor): List<Path> {
+    val fromVirtualFiles = descriptor.roots.mapNotNull { toNioPathSafe(it) }
+    return (descriptor.pathRoots + fromVirtualFiles).distinct()
   }
 
   /** A child of a listed directory. The [name] is the file name of the child. */

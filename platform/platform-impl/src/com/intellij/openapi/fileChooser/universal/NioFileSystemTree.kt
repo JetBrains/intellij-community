@@ -442,8 +442,8 @@ class NioFileSystemTree(
   fun getNewFileParent(): Path? {
     val selected = getSelectedFile()
     if (selected != null) return selected
-    val descriptorRoot = descriptor.roots.takeIf({it.size == 1})?.first()
-    return descriptorRoot?.toNioPath()
+    val descriptorRoot = NioFileChooserUtil.getNioRoots(descriptor).takeIf({it.size == 1})?.first()
+    return descriptorRoot
   }
 
   fun <T> getData(key: DataKey<T>): T? = descriptor.getUserData(key)
@@ -468,11 +468,9 @@ class NioFileSystemTree(
   }
 
   fun isUnderRoots(file: VirtualFile): Boolean {
-    val roots = descriptor.roots
-    if (roots.isEmpty()) return true
+    if (descriptor.roots.isEmpty() && descriptor.pathRoots.isEmpty()) return true
     val filePath = toNioPathSafe(file) ?: return false
-    for (root in roots) {
-      val rootPath = toNioPathSafe(root) ?: continue
+    for (rootPath in NioFileChooserUtil.getNioRoots(descriptor)) {
       if (filePath.startsWith(rootPath)) return true
     }
     return false
