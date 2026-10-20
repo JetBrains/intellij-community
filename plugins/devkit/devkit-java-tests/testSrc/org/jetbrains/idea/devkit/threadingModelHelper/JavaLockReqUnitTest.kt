@@ -124,71 +124,48 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
   }
 
   fun testStatisticsReport() {
-    myFixture.configureByFile("AnnotationInChain.java")
-    val targetMethod = findTestMethod(myFixture.file as PsiJavaFile, "AnnotationInChain")
-    val statisticsDir = Files.createTempDirectory("lockReqStatistics")
-    val reportedFiles = mutableListOf<Path>()
-    try {
-      runBlocking {
-        analyzerBFS.analyzeMethodStreaming(SmartPointerManager.createPointer(targetMethod),
-                                           AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java)),
-                                           project,
-                                           object : LockReqConsumer {
-                                             override fun onStatisticsReport(file: Path) {
-                                               reportedFiles.add(file)
-                                             }
-                                           },
-                                           statisticsDir)
-      }
-      val reports = statisticsDir.listDirectoryEntries()
-      assertEquals(1, reports.size)
-      assertEquals(reports, reportedFiles)
-      val report = reports.single().readText()
-      assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))
-      assertTrue(report, report.contains("Status: COMPLETED"))
-      assertTrue(report, report.contains("Processed nodes: 3 "))
+    val report = analyzeWithReport("AnnotationInChain")
+    assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))
+    assertTrue(report, report.contains("Status: COMPLETED"))
+    assertTrue(report, report.contains("Processed nodes: 3 "))
 
-      // columns: phase, time, share, blocks, longest block
-      val breakdownRows = report.lineSequence()
-        .dropWhile { !it.startsWith("phase ") }
-        .drop(1)
-        .takeWhile { it != "Phases:" }
-        .associate { line -> LockReqPhaseTimer.Phase.entries.first { line.startsWith(it.presentableName + " ") } to line }
-      assertEquals(LockReqPhaseTimer.Phase.entries.toSet(), breakdownRows.keys)
-      // testMethod and intermediateMethod resolve one call each
-      assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.REFERENCE_RESOLVE)))
-      assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.TREE_WALK)))
-      assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.ANNOTATION_CHECK)))
-      assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.CALLEE_CHECK)))
-      // 3 nodes do 2 read actions each, and 2 nodes do 1 more read action for the callee
-      assertEquals("8", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.READ_ACTION_WAIT)))
-      assertTrue(report, report.contains("tree walk ") && report.contains("1x, longest "))
+    // columns: phase, time, share, blocks, longest block
+    val breakdownRows = report.lineSequence()
+      .dropWhile { !it.startsWith("phase ") }
+      .drop(1)
+      .takeWhile { it != "Phases:" }
+      .associate { line -> LockReqPhaseTimer.Phase.entries.first { line.startsWith(it.presentableName + " ") } to line }
+    assertEquals(LockReqPhaseTimer.Phase.entries.toSet(), breakdownRows.keys)
+    // testMethod and intermediateMethod resolve one call each
+    assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.REFERENCE_RESOLVE)))
+    assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.TREE_WALK)))
+    assertEquals("3", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.ANNOTATION_CHECK)))
+    assertEquals("2", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.CALLEE_CHECK)))
+    // 3 nodes do 2 read actions each, and 2 nodes do 1 more read action for the callee
+    assertEquals("8", blockCount(breakdownRows.getValue(LockReqPhaseTimer.Phase.READ_ACTION_WAIT)))
+    assertTrue(report, report.contains("tree walk ") && report.contains("1x, longest "))
 
-      // intermediateMethod and targetMethod are searched once each, and each search finds only the searched method
-      assertTrue(report, report.contains("Inheritor searches: 2 (unique methods: 2, repeated searches: 0)"))
-      val inheritorRows = tableRows(report, "Slowest classes for the inheritor search")
-      // class columns: time, searches, methods, longest search, results, class
-      val classRow = inheritorRows.first()
-      assertEquals(listOf("2", "2", "2", "AnnotationInChain"), listOf(classRow[1], classRow[2], classRow[4], classRow[5]))
-      // method columns: time, searches, longest search, results, method
-      assertEquals(mapOf(
-        "intermediateMethod()" to listOf("1", "1"),
-        "targetMethod()" to listOf("1", "1"),
-      ), inheritorRows.drop(1).associate { it[4] to listOf(it[1], it[3]) })
-      assertEmpty(tableRows(report, "Slowest topic classes for the listener search"))
+    // intermediateMethod and targetMethod are searched once each, and each search finds only the searched method
+    assertTrue(report, report.contains("Inheritor searches: 2 (unique methods: 2, repeated searches: 0)"))
+    val inheritorRows = tableRows(report, "Slowest classes for the inheritor search")
+    // class columns: time, searches, methods, longest search, results, class
+    val classRow = inheritorRows.first()
+    assertEquals(listOf("2", "2", "2", "AnnotationInChain"), listOf(classRow[1], classRow[2], classRow[4], classRow[5]))
+    // method columns: time, searches, longest search, results, method
+    assertEquals(mapOf(
+      "intermediateMethod()" to listOf("1", "1"),
+      "targetMethod()" to listOf("1", "1"),
+    ), inheritorRows.drop(1).associate { it[4] to listOf(it[1], it[3]) })
+    assertEmpty(tableRows(report, "Slowest topic classes for the listener search"))
 
-      // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
-      val treeRows = tableRows(report, "Traversal tree")
-        .associate { it[6] to listOf(it[1], it[2], it[3], it[4]) }
-      assertEquals(mapOf(
-        "AnnotationInChain.testMethod()" to listOf("1", "1", "3", "3"),
-        "AnnotationInChain.intermediateMethod()" to listOf("2", "1", "2", "2"),
-        "AnnotationInChain.targetMethod()" to listOf("3", "0", "1", "1"),
-      ), treeRows)
-    }
-    finally {
-      NioFiles.deleteRecursively(statisticsDir)
-    }
+    // columns: time, depth, callees, subtreeDepth, subtreeNodes, subtreeTime, method
+    val treeRows = tableRows(report, "Traversal tree")
+      .associate { it[6] to listOf(it[1], it[2], it[3], it[4]) }
+    assertEquals(mapOf(
+      "AnnotationInChain.testMethod()" to listOf("1", "1", "3", "3"),
+      "AnnotationInChain.intermediateMethod()" to listOf("2", "1", "2", "2"),
+      "AnnotationInChain.targetMethod()" to listOf("3", "0", "1", "1"),
+    ), treeRows)
   }
 
   fun testPhaseTimerExcludesNestedBlocks() {
@@ -228,6 +205,36 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
   }
 
   private fun blockCount(breakdownRow: String): String = breakdownRow.trim().split(Regex("\\s+")).dropLast(1).last()
+
+  /**
+   * Analyzes `testMethod` of [className] and gives the text of the statistics report.
+   */
+  private fun analyzeWithReport(className: String): String {
+    myFixture.configureByFile("$className.java")
+    val targetMethod = findTestMethod(myFixture.file as PsiJavaFile, className)
+    val statisticsDir = Files.createTempDirectory("lockReqStatistics")
+    val reportedFiles = mutableListOf<Path>()
+    try {
+      runBlocking {
+        analyzerBFS.analyzeMethodStreaming(SmartPointerManager.createPointer(targetMethod),
+                                           AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java)),
+                                           project,
+                                           object : LockReqConsumer {
+                                             override fun onStatisticsReport(file: Path) {
+                                               reportedFiles.add(file)
+                                             }
+                                           },
+                                           statisticsDir)
+      }
+      val reports = statisticsDir.listDirectoryEntries()
+      assertEquals(1, reports.size)
+      assertEquals(reports, reportedFiles)
+      return reports.single().readText()
+    }
+    finally {
+      NioFiles.deleteRecursively(statisticsDir)
+    }
+  }
 
   private fun doTest(className: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"
