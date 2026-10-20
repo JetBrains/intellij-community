@@ -216,7 +216,6 @@ class DefaultTreeLayoutCache(
 
   override fun invalidateSizes() {
     root?.invalidateSizeRecursively()
-    variableHeight?.updateSums() // We're resetting them all, so no point to update one-by-one.
   }
 
   override fun invalidatePathBounds(path: TreePath?) {
@@ -594,13 +593,23 @@ class DefaultTreeLayoutCache(
     }
 
     fun invalidateSizeRecursively() {
+      check(parent == null) { "Can only be called on the root node, as it rebuilds the entire tree, but called on $this" }
+      // Step 1: actually invalidate the sizes (Xs and widths are lost, heights are reset to the defaults or estimates).
+      doInvalidateSizeRecursively()
+      // Step 2: rebuild the deltas (Fenwick tree), if using variable heights.
+      variableHeight?.updateSums()
+    }
+
+    private fun doInvalidateSizeRecursively() {
       doInvalidateSize()
-      children?.forEach { it.invalidateSizeRecursively() }
+      children?.forEach { it.doInvalidateSizeRecursively() }
     }
 
     fun invalidateSize() {
       val oldHeightDelta = heightDelta
+      // Step 1: actually invalidate the size (X and width are lost, height is reset to the default or estimate).
       doInvalidateSize()
+      // Step 2: update the Fenwick tree node, if using variable heights, to match the new height.
       variableHeight?.updateHeightDelta(row, oldHeightDelta, heightDelta)
     }
 
