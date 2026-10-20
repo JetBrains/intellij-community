@@ -180,19 +180,21 @@ object TestKotlinArtifacts {
         if (!baseDir.exists()) {
             baseDir.mkdirs()
         }
-        val prebuilt = "kotlin-native-prebuilt-$platform-$version"
-        val archiveName =  if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
+        val downloadFileName = "kotlin-native-prebuilt-$version-$platform"
+        val tarDirectoryRoot = "kotlin-native-prebuilt-$platform-$version"
+        val archiveName = if (HostManager.hostIsMingw) "$downloadFileName.zip" else "$downloadFileName.tar.gz"
         val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
-        val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
+        val downloadUrl = "$cdnUrl/$version/$archiveName"
         val downloadOut = "${baseDir.absolutePath}/$archiveName"
-        val libPath = "${baseDir.absolutePath}/$prebuilt/$prebuilt/$library"
+        val expandedDir = "${baseDir.absolutePath}/$tarDirectoryRoot"
+        val libPath = "$expandedDir/$tarDirectoryRoot/$library"
         val libFile = File(libPath)
 
         if (!libFile.exists()) {
             val archiveFilePath = Paths.get(downloadOut)
             Files.deleteIfExists(archiveFilePath)
             downloadFile(downloadUrl, archiveFilePath)
-            unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
+            unpackPrebuildArchive(archiveFilePath, Paths.get(expandedDir))
             Files.deleteIfExists(archiveFilePath)
         }
         return if (libFile.exists()) libFile else
