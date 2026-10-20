@@ -1926,7 +1926,7 @@ pub const DOCKER_REGISTRY_OFF: &str = "off";
 
 /// The file mirror the Apple `container` engine pulls the worker image archive from unless `AIR_VM_IMAGE_MIRROR` says
 /// otherwise. Anonymous download works there, so a lane host needs no token; an upload needs one.
-pub const IMAGE_MIRROR_DEFAULT: &str = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies";
+pub const IMAGE_MIRROR_DEFAULT: &str = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies";
 
 /// The `AIR_VM_IMAGE_MIRROR` value that turns the mirror pull and the mirror publish off.
 pub const IMAGE_MIRROR_OFF: &str = "off";
