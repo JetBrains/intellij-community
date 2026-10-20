@@ -2,6 +2,7 @@
 package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.ui.awt.ComposeWindow
+import java.awt.Container
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import kotlin.time.Duration
@@ -53,8 +54,29 @@ internal fun stopApplicationWindow(
 }
 
 private fun ComposeWindow.isShowingOnEdt(): Boolean {
-    if (SwingUtilities.isEventDispatchThread()) return isShowing
+    if (SwingUtilities.isEventDispatchThread()) {
+        if (isShowing) disableInvisibleComponentFocus(this)
+        return isShowing
+    }
     var showing = false
-    SwingUtilities.invokeAndWait { showing = isShowing }
+    SwingUtilities.invokeAndWait {
+        showing = isShowing
+        if (showing) disableInvisibleComponentFocus(this)
+    }
     return showing
+}
+
+/**
+ * Stops `ComposeSceneMediator.InvisibleComponent` from taking AWT focus during `resetFocus()` on Windows. That
+ * component has no `KeyListener`, so `RobotDriver.synthetic` drops keys while it holds focus.
+ */
+private fun disableInvisibleComponentFocus(container: Container) {
+    for (component in container.components) {
+        if (component.javaClass.name.endsWith("InvisibleComponent")) {
+            component.isFocusable = false
+        }
+        if (component is Container) {
+            disableInvisibleComponentFocus(component)
+        }
+    }
 }
