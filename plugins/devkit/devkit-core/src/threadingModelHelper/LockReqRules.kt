@@ -19,6 +19,12 @@ interface LockReqRules {
   val disposeMethodNames: Set<String>
 
   /**
+   * The qualified names of the classes whose declared methods all require read access.
+   * A call to such a method gives a [ConstraintType.READ] requirement with [RequirementReason.IMPLICIT].
+   */
+  val readRequiredClasses: Set<String>
+
+  /**
    * When analyzer configured to search for a subset of [ConstraintType] (via [AnalysisConfig.interestingConstraintTypes]),
    * and it meets a signature from [indifferent] that is matched with a subset of [AnalysisConfig.interestingConstraintTypes], this signature is ignored.
    * This is needed to save some performance on methods that guaranteedly won't have anything interesting inside them
@@ -101,6 +107,10 @@ class BaseLockReqRules : LockReqRules {
   override val disposerUtilityClassFqn: String = "com.intellij.openapi.util.Disposer"
   override val disposableInterfaceFqn: String = "com.intellij.openapi.Disposable"
   override val disposeMethodNames: Set<String> = setOf("dispose")
+
+  override val readRequiredClasses: Set<String> = setOf(
+    "com.intellij.psi.PsiElement",
+  )
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(
     THREAD_REQUIREMENTS to Signature("com.intellij.openapi.application.impl.ServerNonBlockingReadAction", "submit"),

@@ -135,6 +135,20 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testPsiElementMethodCall() {
+    myFixture.addFileToProject("com/intellij/psi/PsiElement.java", """
+      package com.intellij.psi;
+      public interface PsiElement {
+        String getText();
+      }
+      """.trimIndent())
+    val result = doTest("PsiElementMethodCall")
+    // PsiNamed.getName is declared outside PsiElement, so only the inherited PsiElement.getText requires read access
+    val expectedPaths = listOf("PsiElementMethodCall.testMethod -> PsiElementMethodCall.helper => READ.IMPLICIT")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testStatisticsReport() {
     val report = analyzeWithReport("AnnotationInChain")
     assertTrue(report, report.contains("Root method: AnnotationInChain.testMethod()"))

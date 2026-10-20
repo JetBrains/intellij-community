@@ -31,6 +31,10 @@ object LockReqDetector {
       }
     }
 
+    if (ConstraintType.READ in config.interestingConstraintTypes && className in patterns.readRequiredClasses) {
+      requirements.add(LockRequirement(method, ConstraintType.READ, RequirementReason.IMPLICIT))
+    }
+
     if (config.interestingConstraintTypes.contains(ConstraintType.EDT) && isSwingMethod(method)) {
       requirements.add(LockRequirement(method, ConstraintType.EDT, RequirementReason.SWING_COMPONENT))
     }
