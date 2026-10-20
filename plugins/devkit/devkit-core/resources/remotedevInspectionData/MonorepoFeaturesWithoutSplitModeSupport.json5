@@ -67,7 +67,7 @@
     "intellij.database.completionMlRanking",
     "intellij.database.completionMlRanking.tests",
     "intellij.database.connectivity",
-    "intellij.database.connectivity.ex",
+    "intellij.database.connectivity.artifacts",
     "intellij.database.connectivity.tests",
     "intellij.database.core.impl",
     "intellij.database.crossQueries",
