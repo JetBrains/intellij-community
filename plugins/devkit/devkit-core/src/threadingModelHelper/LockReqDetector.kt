@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.InheritanceUtil
 
 object LockReqDetector {
 
@@ -105,11 +106,19 @@ object LockReqDetector {
   /**
    * Whether the analysis must not go into the implementations of [method].
    * This is true if a JDK class or one of [LockReqRules.opaqueClasses] declares [method].
+   * This is also true for `Disposable.dispose` and all its overrides.
    */
   context(patterns: LockReqRules)
   fun isOpaqueMethod(method: PsiMethod): Boolean {
     val containingClass = method.containingClass ?: return false
-    return containingClass.qualifiedName in patterns.opaqueClasses || isJdkClass(containingClass)
+    return containingClass.qualifiedName in patterns.opaqueClasses || isJdkClass(containingClass) || isDisposeMethod(method, containingClass)
+  }
+
+  context(patterns: LockReqRules)
+  private fun isDisposeMethod(method: PsiMethod, containingClass: PsiClass): Boolean {
+    return method.name in patterns.disposeMethodNames &&
+           method.parameterList.parametersCount == 0 &&
+           InheritanceUtil.isInheritor(containingClass, patterns.disposableInterfaceFqn)
   }
 
   private fun isJdkClass(psiClass: PsiClass): Boolean {

@@ -268,6 +268,27 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
+  fun testDisposableCall() {
+    myFixture.addFileToProject("com/intellij/openapi/Disposable.java", """
+      package com.intellij.openapi;
+      public interface Disposable {
+        void dispose();
+      }
+      """.trimIndent())
+    myFixture.addFileToProject("com/intellij/openapi/util/Disposer.java", """
+      package com.intellij.openapi.util;
+      public final class Disposer {
+        public static void dispose(com.intellij.openapi.Disposable disposable) { }
+      }
+      """.trimIndent())
+    val result = doTest("DisposableCall")
+    // the analysis does not search for the overrides of Disposable.dispose and does not go into them,
+    // also for a direct call of an override and for a dispose target of Disposer.dispose
+    val expectedPaths = listOf("DisposableCall.testMethod -> DisposableCall.helper => READ.ANNOTATION")
+    val actualPathsBFS = formatResult(result)
+    assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
+  }
+
   fun testUserDataHolderCall() {
     myFixture.addFileToProject("com/intellij/openapi/util/UserDataHolder.java", """
       package com.intellij.openapi.util;
