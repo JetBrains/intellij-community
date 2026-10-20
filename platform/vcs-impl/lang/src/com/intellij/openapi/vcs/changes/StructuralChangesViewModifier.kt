@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -56,6 +57,7 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
           if (DumbService.isDumb(project) || !file.isValid) return@Callable emptyList()
           val document = FileDocumentManager.getInstance().getDocument(file) ?: return@Callable emptyList()
           val afterText = document.immutableCharSequence.toString()
+          val documentModificationStamp = document.modificationStamp
           if (afterText.length > MAX_CONTENT_LENGTH) return@Callable emptyList()
           val baseline = baseText?.let { TextPresentationTransformers.fromPersistent(it, file).toString() }
           val beforeText = getBeforeContent(change, baseline)
@@ -63,7 +65,7 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
           val original = PsiManager.getInstance(project).findFile(file) ?: return@Callable emptyList()
           val before = beforeText?.let { StructureChangeCollector.createSnapshot(original, it) ?: return@Callable emptyList() }
           val after = StructureChangeCollector.createSnapshot(original, afterText) ?: return@Callable emptyList()
-          StructureChangeCollector.collect(before, after).map { createNode(file, it) }
+          StructureChangeCollector.collect(before, after).map { createNode(file, it, documentModificationStamp) }
         }).expireWith(project).executeSynchronously()
         for (element in elements) {
           node.add(element)
@@ -87,10 +89,10 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     return baseText
   }
 
-  private fun createNode(file: VirtualFile, element: StructureChange): ChangesBrowserNode<*> {
-    val node = StructuralChangeNode(project, file, element)
+  private fun createNode(file: VirtualFile, element: StructureChange, documentModificationStamp: Long): ChangesBrowserNode<*> {
+    val node = StructuralChangeNode(project, file, element, documentModificationStamp)
     for (child in element.children) {
-      node.add(createNode(file, child))
+      node.add(createNode(file, child, documentModificationStamp))
     }
     return node
   }
@@ -102,16 +104,23 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
 
 private class StructuralChangeNode(
   project: Project,
-  file: VirtualFile,
+  private val file: VirtualFile,
   private val element: StructureChange,
+  private val documentModificationStamp: Long,
 ) : ChangesBrowserStructuralNode<String>(element.id) {
   private val navigatable = element.offset?.let { OpenFileDescriptor(project, file, it) }
 
   override fun getNavigatable(): Navigatable? = navigatable
 
+  override fun getPreviewFile(): VirtualFile? = navigatable?.file
+
   override fun getPreviewNavigationRequest(): NavigationRequest? {
     val descriptor = navigatable ?: return null
     return NavigationRequest.sourceNavigationRequest(descriptor.project, descriptor.file, descriptor.offset)
+  }
+
+  override fun getPreviewHighlightRange(): TextRange? = element.range?.takeIf {
+    FileDocumentManager.getInstance().getCachedDocument(file)?.modificationStamp == documentModificationStamp
   }
 
   override fun getTextPresentation(): String = element.text

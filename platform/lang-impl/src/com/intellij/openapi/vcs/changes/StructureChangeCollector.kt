@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.psi.PsiElement
@@ -28,7 +29,7 @@ import java.util.Collections
 import java.util.IdentityHashMap
 import javax.swing.Icon
 
-/** A structure element with no retained PSI. The offset refers to the current file. */
+/** A structure element with no retained PSI. The offset and range refer to the current file. */
 @ApiStatus.Internal
 data class StructureChange(
   val id: String,
@@ -36,6 +37,7 @@ data class StructureChange(
   val icon: Icon?,
   val status: FileStatus,
   val offset: Int?,
+  val range: TextRange?,
   val children: List<StructureChange>,
 )
 
@@ -193,11 +195,12 @@ object StructureChangeCollector {
         status = FileStatus.NOT_CHANGED
       }
       if (status != FileStatus.NOT_CHANGED || children.isNotEmpty()) {
-        result.add(StructureChange(node.id, node.displayText, snapshotIcon(node.icon), status, node.element.textOffset, children))
+        result.add(StructureChange(node.id, node.displayText, snapshotIcon(node.icon), status, node.element.textOffset,
+                                   node.comparisonElement.textRange, children))
       }
     }
     for (node in previous.values) {
-      result.add(StructureChange(node.id, node.displayText, snapshotIcon(node.icon), FileStatus.DELETED, null,
+      result.add(StructureChange(node.id, node.displayText, snapshotIcon(node.icon), FileStatus.DELETED, null, null,
                                  merge(node.children, emptyList(), statuses)))
     }
     return java.util.List.copyOf(result)
