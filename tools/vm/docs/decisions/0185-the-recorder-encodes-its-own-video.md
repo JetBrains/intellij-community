@@ -16,7 +16,9 @@ recorder is `plugins/air/tests/integration/vm-lane/crates/avl-record`. The opera
 Decision 4 is superseded since 2026-10-19. Only the descriptor of a Linux guest lets the recorder read the screen, and
 `lane-run` refuses `-Dair.flow.trace.screen=on`. So no lane records the screen of a Mac.
 [The lane daemon is the only runner of the Air UI lanes](2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes.md)
-records the change.
+records the change. Since 2026-10-20, `lane-run` also lets the recorder read the screen of a TeamCity build on Linux,
+as [A TeamCity lane run records video and keeps its evidence](2026-10-20-a-teamcity-lane-run-records-video-and-keeps-its-evidence.md)
+records.
 
 ## Context
 
