@@ -146,7 +146,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val length = JBUI.getInt("RecentProject.MainToolbarGradient.width", 700)
   val height = JBUI.getInt("RecentProject.MainToolbarGradient.height", 200)
 
-  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
+  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null).coerceAtLeast(0)
   val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
@@ -200,7 +200,7 @@ private fun doGradientPaintLegacy(frame: IdeFrame, mainColor: Color, project: Pr
   val length = JBUI.getInt("RecentProject.MainToolbarGradient.width", 700)
   val height = JBUI.getInt("RecentProject.MainToolbarGradient.height", 200)
 
-  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
+  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null).coerceAtLeast(0)
   val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
@@ -214,8 +214,6 @@ private fun doGradientPaintLegacy(frame: IdeFrame, mainColor: Color, project: Pr
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
   val blendedColor = cache.getBlendedColor(mainColor, centerColor)
 
-  val leftGradientTexture = cache.left.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
-  val rightGradientTexture = cache.right.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
   val initialComposite = g.composite
   val islandsInactiveFrameGraphics2D = g as? IslandsInactiveFrameGraphics2D
 
@@ -238,13 +236,13 @@ private fun doGradientPaintLegacy(frame: IdeFrame, mainColor: Color, project: Pr
 
   val leftBounds = bounds.intersection(Rectangle(leftWidth, height))
   if (!leftBounds.isEmpty) {
-    g.paint = leftGradientTexture
+    g.paint = cache.left.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
     g.fillRect(leftBounds.x, leftBounds.y, leftBounds.width, leftBounds.height)
   }
 
   val rightBounds = bounds.intersection(Rectangle(leftWidth, 0, rightWidth, height))
   if (!rightBounds.isEmpty) {
-    g.paint = rightGradientTexture
+    g.paint = cache.right.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
     g.fillRect(rightBounds.x, rightBounds.y, rightBounds.width, rightBounds.height)
   }
 
