@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -21,7 +21,7 @@ internal class EgWalkerReplayTest {
    */
   @Test
   fun `a merge into a branch whose own units sit above the new units is rejected`() {
-    val base = DocBranch.createBranch("abcdef", Agent.createAgent("a"))
+    val base = DocumentBranch.createBranch("abcdef", Agent.createAgent("a"))
     val a = base.applyOp(DocumentOp.deleteOp(0, 1))
     val b = base.fork(Agent.createAgent("b")).applyOp(DocumentOp.deleteOp(5, 1))
     val merged = EventGraphImpl.implOf(a.graph()).mergeFromImpl(EventGraphImpl.implOf(b.graph())).graph()

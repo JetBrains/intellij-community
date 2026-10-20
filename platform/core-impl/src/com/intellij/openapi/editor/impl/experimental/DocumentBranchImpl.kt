@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.DocMerge
 import com.intellij.openapi.editor.ex.experimental.EventGraph
 import com.intellij.openapi.editor.ex.experimental.Version
@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.impl.isMovedTextApart
 import java.util.Collections
 
 /**
- * See [DocBranch].
+ * See [DocumentBranch].
  *
  * The value holds the [graph] that records the history, the [agent] that authors new events, the
  * [text] that holds the materialized text, and the [modState] of that text. [text] returns the
@@ -34,12 +34,12 @@ import java.util.Collections
  * - A keystroke extends the newest run when it continues it (see [EventGraph.append]), but a
  *   backspace never does. Each backspace therefore still costs a run of its own.
  */
-internal class DocBranchImpl private constructor(
+internal class DocumentBranchImpl private constructor(
   private val text: DocumentText,
   private val modState: BranchModState,
   private val agent: Agent,
   private val graph: EventGraphImpl,
-) : DocBranch {
+) : DocumentBranch {
 
   init {
     // A foreign agent would pass until the first edit, and fail there.
@@ -58,7 +58,7 @@ internal class DocBranchImpl private constructor(
     return graph.version()
   }
 
-  override fun applyOp(op: DocumentOp): DocBranch {
+  override fun applyOp(op: DocumentOp): DocumentBranch {
     return when (op) {
       is DocumentOp.Insert -> applyInsert(op)
       is DocumentOp.Delete -> applyDelete(op)
@@ -75,8 +75,8 @@ internal class DocBranchImpl private constructor(
     return graph
   }
 
-  override fun fork(agent: Agent): DocBranch {
-    return DocBranchImpl(
+  override fun fork(agent: Agent): DocumentBranch {
+    return DocumentBranchImpl(
       text = text,
       modState = modState,
       agent = agent,
@@ -84,11 +84,11 @@ internal class DocBranchImpl private constructor(
     )
   }
 
-  override fun merge(other: DocBranch): DocBranch {
+  override fun merge(other: DocumentBranch): DocumentBranch {
     return mergeWithOps(other).branch()
   }
 
-  override fun mergeWithOps(other: DocBranch): DocMerge {
+  override fun mergeWithOps(other: DocumentBranch): DocMerge {
     val otherImpl = implOf(other)
     val result = graph.mergeFromImpl(otherImpl.graph)
     if (result.addsNothing()) {
@@ -104,7 +104,7 @@ internal class DocBranchImpl private constructor(
     val sink = replayOnto(merged, text)
     val ops = sink.ops()
     val mergedModState = BranchModState.foldModState(text, modState(), ops)
-    val branch = DocBranchImpl(
+    val branch = DocumentBranchImpl(
       text = sink.result(),
       modState = BranchModState.ready(mergedModState),
       agent = agent,
@@ -117,12 +117,12 @@ internal class DocBranchImpl private constructor(
    * The text of this branch is the document at its version, so a trim to that version takes it as
    * the base text. A deferred mod state keeps the old graph alive until its first read.
    */
-  override fun trimmedTo(safepoint: Version): DocBranch {
+  override fun trimmedTo(safepoint: Version): DocumentBranch {
     val trimmed = graph.trimmedTo(graph.lvVersionOf(safepoint), text)
     if (trimmed === graph) {
       return this
     }
-    return DocBranchImpl(
+    return DocumentBranchImpl(
       text = text,
       modState = modState,
       agent = agent,
@@ -130,8 +130,8 @@ internal class DocBranchImpl private constructor(
     )
   }
 
-  override fun newInstance(): DocBranch {
-    return DocBranchImpl(text, modState, agent, graph)
+  override fun newInstance(): DocumentBranch {
+    return DocumentBranchImpl(text, modState, agent, graph)
   }
 
   override fun dumpState(): String {
@@ -167,7 +167,7 @@ internal class DocBranchImpl private constructor(
     val mergedModState = BranchModState.deferred(text, modState()) {
       replay.ops
     }
-    val branch = DocBranchImpl(
+    val branch = DocumentBranchImpl(
       text = mergedText,
       modState = mergedModState,
       agent = agent,
@@ -179,7 +179,7 @@ internal class DocBranchImpl private constructor(
     }
   }
 
-  private fun applyInsert(op: DocumentOp.Insert): DocBranch {
+  private fun applyInsert(op: DocumentOp.Insert): DocumentBranch {
     val fragment = op.fragment()
     if (fragment.isEmpty()) {
       return this
@@ -188,7 +188,7 @@ internal class DocBranchImpl private constructor(
     val newDocText = text.applyOp(op)
     val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedInsert(op, newDocText)
-    return DocBranchImpl(
+    return DocumentBranchImpl(
       text = newDocText,
       modState = BranchModState.ready(newModState),
       agent = agent,
@@ -196,7 +196,7 @@ internal class DocBranchImpl private constructor(
     )
   }
 
-  private fun applyDelete(op: DocumentOp.Delete): DocBranch {
+  private fun applyDelete(op: DocumentOp.Delete): DocumentBranch {
     val length = op.length()
     if (length == 0) {
       return this
@@ -204,7 +204,7 @@ internal class DocBranchImpl private constructor(
     val newDocText = text.applyOp(op)
     val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedDelete(op)
-    return DocBranchImpl(
+    return DocumentBranchImpl(
       text = newDocText,
       modState = BranchModState.ready(newModState),
       agent = agent,
@@ -215,13 +215,13 @@ internal class DocBranchImpl private constructor(
   /**
    * [op] changes only the mod state, so the text and the graph keep their instances.
    */
-  private fun applyMetadata(op: DocumentOp): DocBranch {
+  private fun applyMetadata(op: DocumentOp): DocumentBranch {
     val current = modState()
     val newModState = current.applyOp(text, text, op)
     if (newModState === current) {
       return this
     }
-    return DocBranchImpl(
+    return DocumentBranchImpl(
       text = text,
       modState = BranchModState.ready(newModState),
       agent = agent,
@@ -305,7 +305,7 @@ internal class DocBranchImpl private constructor(
   }
 
   override fun toString(): String {
-    return "DocBranch(agent=$agent, events=${graph.size()}, length=${text.length()})"
+    return "DocumentBranch(agent=$agent, events=${graph.size()}, length=${text.length()})"
   }
 
   companion object {
@@ -313,9 +313,9 @@ internal class DocBranchImpl private constructor(
      * A branch at the root of a new graph. The base text of the graph has the characters of the
      * branch text, and the two share them.
      */
-    fun create(chars: CharSequence, agent: Agent): DocBranchImpl {
+    fun create(chars: CharSequence, agent: Agent): DocumentBranchImpl {
       val text = DocumentText.createText(chars)
-      return DocBranchImpl(
+      return DocumentBranchImpl(
         text = text,
         modState = BranchModState.ready(RangeModState.create(text)),
         agent = agent,
@@ -323,9 +323,9 @@ internal class DocBranchImpl private constructor(
       )
     }
 
-    private fun implOf(branch: DocBranch): DocBranchImpl {
-      require(branch is DocBranchImpl) {
-        "Foreign DocBranch implementation: ${branch.javaClass.name}"
+    private fun implOf(branch: DocumentBranch): DocumentBranchImpl {
+      require(branch is DocumentBranchImpl) {
+        "Foreign DocumentBranch implementation: ${branch.javaClass.name}"
       }
       return branch
     }

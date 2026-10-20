@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl.experimental
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.Event
 import com.intellij.openapi.editor.ex.experimental.EventGraph
 import com.intellij.openapi.editor.ex.experimental.Version
@@ -76,7 +76,7 @@ internal class ReplayWalkerMoveTest {
 
   @Test
   fun `a part of a move run reports a plain insert`() {
-    val moved = DocBranch.createBranch("0123", A).move(0, 2, 4)
+    val moved = DocumentBranch.createBranch("0123", A).move(0, 2, 4)
     val graph = EventGraphImpl.implOf(moved.graph())
     // The version ends at the first unit of the move insert.
     val firstUnitOfMove = LvVersion(intArrayOf(0))
@@ -125,7 +125,7 @@ internal class ReplayWalkerMoveTest {
   /**
    * The reports of a merge of [other] into [receiver].
    */
-  private fun reportsOfMerge(receiver: DocBranch, other: DocBranch): List<String> {
+  private fun reportsOfMerge(receiver: DocumentBranch, other: DocumentBranch): List<String> {
     val merged = EventGraphImpl.implOf(receiver.merge(other).graph())
     val receiverVersion = EventGraphImpl.implOf(receiver.graph()).lvVersion()
     val sink = ReportSink()
@@ -146,7 +146,7 @@ internal class ReplayWalkerMoveTest {
   /**
    * A text move as `DocumentEx.moveText` makes it: an insert of the copy, then a delete of the source.
    */
-  private fun DocBranch.move(srcStart: Int, srcEnd: Int, dst: Int): DocBranch {
+  private fun DocumentBranch.move(srcStart: Int, srcEnd: Int, dst: Int): DocumentBranch {
     val fragment = text().chars().subSequence(srcStart, srcEnd)
     var sourceStart = srcStart
     if (dst < srcStart) {
@@ -184,6 +184,6 @@ internal class ReplayWalkerMoveTest {
   private companion object {
     val A: Agent = Agent.createAgent("a")
     val B: Agent = Agent.createAgent("b")
-    val BASE: DocBranch = DocBranch.createBranch("0123456789", Agent.createAgent("base"))
+    val BASE: DocumentBranch = DocumentBranch.createBranch("0123456789", Agent.createAgent("base"))
   }
 }

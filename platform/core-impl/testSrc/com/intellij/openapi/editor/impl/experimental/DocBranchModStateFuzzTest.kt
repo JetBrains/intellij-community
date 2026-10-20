@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * Checks that a [DocBranch] keeps the mod state that a [DocumentSnapshot] keeps for the same ops.
+ * Checks that a [DocumentBranch] keeps the mod state that a [DocumentSnapshot] keeps for the same ops.
  */
 internal class DocBranchModStateFuzzTest {
 
@@ -30,7 +30,7 @@ internal class DocBranchModStateFuzzTest {
       val startStamp = modStampOp(1, false)
       val text = DocumentText.createText(TEXT)
       var snapshot: DocumentSnapshot = DocumentSnapshotImpl(text).applyOp(startStamp)
-      var branch = DocBranch.createBranch(TEXT, Agent.createAgent("user")).applyOp(startStamp)
+      var branch = DocumentBranch.createBranch(TEXT, Agent.createAgent("user")).applyOp(startStamp)
       repeat(STEPS) { step ->
         val op = randomOp(snapshot.text(), random)
         val before = branch
@@ -62,7 +62,7 @@ internal class DocBranchModStateFuzzTest {
     }
   }
 
-  private fun assertSameModState(snapshot: DocumentSnapshot, branch: DocBranch, message: String) {
+  private fun assertSameModState(snapshot: DocumentSnapshot, branch: DocumentBranch, message: String) {
     val expected = snapshot.modState()
     val actual = branch.modState()
     assertEquals(expected.stamp(), actual.stamp(), message)

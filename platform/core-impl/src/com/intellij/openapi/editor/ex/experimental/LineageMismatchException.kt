@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.ex.experimental
 
 /**
  * A merge throws this when the two graphs do not grow from one [EventGraph.createGraph] or
- * [DocBranch.createBranch] call. Each such call starts a LINEAGE, and only graphs of one lineage
+ * [DocumentBranch.createBranch] call. Each such call starts a LINEAGE, and only graphs of one lineage
  * merge, because only there one event id names one event.
  *
  * The merge changes nothing.

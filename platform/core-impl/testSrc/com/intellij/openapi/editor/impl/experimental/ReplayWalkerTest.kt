@@ -2,9 +2,8 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,7 +23,7 @@ internal class ReplayWalkerTest {
 
   @Test
   fun `a history of edits at random places replays to its text`() {
-    val branch = randomEdits(Random(20261001L), DocBranch.createBranch("", U), OPS)
+    val branch = randomEdits(Random(20261001L), DocumentBranch.createBranch("", U), OPS)
     val walker = replayInFull(branch)
     assertTrue(walker.itemTreeDepth() >= 2, "the item tree has fewer than two inner levels")
     // A linear history never looks an item up by unit.
@@ -34,7 +33,7 @@ internal class ReplayWalkerTest {
   @Test
   fun `a past version of a long linear history replays to its text`() {
     val random = Random(20261004L)
-    val half = randomEdits(random, DocBranch.createBranch("", U), OPS / 2)
+    val half = randomEdits(random, DocumentBranch.createBranch("", U), OPS / 2)
     val full = randomEdits(random, half, OPS / 2)
     val graph = EventGraphImpl.implOf(full.graph())
     val walker = ReplayWalker(graph, placeholderCount = 0)
@@ -52,7 +51,7 @@ internal class ReplayWalkerTest {
   fun `typing with backspaces at a caret replays to its text`() {
     // One long run of typing in the middle of a text. A run of inserts at the end of a leaf moves
     // no older item when the leaf splits, so this checks the leaves that the run fills.
-    var branch = DocBranch.createBranch("[" + "o".repeat(OPS) + "]", U)
+    var branch = DocumentBranch.createBranch("[" + "o".repeat(OPS) + "]", U)
     val random = Random(20261002L)
     var caret = 1 + OPS / 2
     repeat(OPS) {
@@ -72,7 +71,7 @@ internal class ReplayWalkerTest {
   @Test
   fun `a history that overtypes replays to its text`() {
     // Each pair of ops leaves one deleted item at the place of the next pair.
-    var branch = DocBranch.createBranch("o".repeat(OPS), U)
+    var branch = DocumentBranch.createBranch("o".repeat(OPS), U)
     for (offset in 0 until OPS) {
       branch = branch.applyOp(DocumentOp.deleteOp(offset, 1))
       branch = branch.applyOp(DocumentOp.insertOp(offset, "x"))
@@ -87,7 +86,7 @@ internal class ReplayWalkerTest {
   fun `many concurrent inserts at one place come out in the order of their agents`() {
     // Each run lands among the runs of every agent before it, so the Fugue scan steps through
     // hundreds of items that the prepare version has not applied.
-    val base = DocBranch.createBranch("[]", U)
+    val base = DocumentBranch.createBranch("[]", U)
     var merged = base
     for (i in 0 until AGENTS) {
       val typed = base.fork(Agent.createAgent("a$i")).applyOp(DocumentOp.insertOp(1, "<$i>"))
@@ -107,7 +106,7 @@ internal class ReplayWalkerTest {
   @Test
   fun `two long concurrent histories merge to the text of a full replay`() {
     val random = Random(20261003L)
-    val base = randomEdits(random, DocBranch.createBranch("", U), OPS / 10)
+    val base = randomEdits(random, DocumentBranch.createBranch("", U), OPS / 10)
     val left = randomEdits(random, base.fork(V), OPS / 2)
     val right = randomEdits(random, base.fork(W), OPS / 2)
     val forward = left.merge(right)
@@ -124,7 +123,7 @@ internal class ReplayWalkerTest {
    * Replays the whole graph of [branch] with a fresh walker, checks its text against the text of
    * [branch], checks the item tree, and returns the walker.
    */
-  private fun replayInFull(branch: DocBranch): ReplayWalker {
+  private fun replayInFull(branch: DocumentBranch): ReplayWalker {
     val graph = EventGraphImpl.implOf(branch.graph())
     val baseText = graph.baseText()
     val walker = ReplayWalker(graph, placeholderCount = baseText.length())
@@ -139,7 +138,7 @@ internal class ReplayWalkerTest {
    * [ops] edits of [start] at random places. Seven of ten insert one or two characters, and the
    * rest delete one.
    */
-  private fun randomEdits(random: Random, start: DocBranch, ops: Int): DocBranch {
+  private fun randomEdits(random: Random, start: DocumentBranch, ops: Int): DocumentBranch {
     var branch = start
     repeat(ops) {
       val length = branch.text().length()

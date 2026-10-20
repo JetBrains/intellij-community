@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.ex.experimental
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.impl.experimental.DocBranchImpl
+import com.intellij.openapi.editor.impl.experimental.DocumentBranchImpl
 
 /**
  * An immutable document that records its edit history in an Eg-walker [EventGraph]
@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.impl.experimental.DocBranchImpl
  *   concurrent with it. Otherwise both directions throw [TrimmedHistoryException], even for a merge
  *   with an ancestor.
  */
-interface DocBranch {
+interface DocumentBranch {
   /**
    * The document at this branch's version.
    */
@@ -54,7 +54,7 @@ interface DocBranch {
    *
    * Only a text op records an event.
    */
-  fun applyOp(op: DocumentOp): DocBranch
+  fun applyOp(op: DocumentOp): DocumentBranch
 
   /**
    * The identity this branch edits under.
@@ -69,7 +69,7 @@ interface DocBranch {
   /**
    * A branch with the same text, mod state and history that edits under [agent].
    */
-  fun fork(agent: Agent): DocBranch
+  fun fork(agent: Agent): DocumentBranch
 
   /**
    * A branch that contains the histories of both this branch and [other].
@@ -83,14 +83,14 @@ interface DocBranch {
    *
    * The result is the branch of [mergeWithOps] for the same two branches.
    */
-  fun merge(other: DocBranch): DocBranch
+  fun merge(other: DocumentBranch): DocumentBranch
 
   /**
    * The same merge as [merge], plus the ops that turn the [text] of this branch into the merged
    * text. An editor needs them to apply a merge to its document. See [DocMerge] for their order
    * and their cost.
    */
-  fun mergeWithOps(other: DocBranch): DocMerge
+  fun mergeWithOps(other: DocumentBranch): DocMerge
 
   /**
    * A branch with the same text, mod state, agent and version, whose graph drops every event at or
@@ -104,13 +104,13 @@ interface DocBranch {
    * Today [safepoint] must be [version] or the base version. A trim to the base version returns
    * this branch. A trim costs one entry per agent and per head, not the size of the history.
    */
-  fun trimmedTo(safepoint: Version): DocBranch
+  fun trimmedTo(safepoint: Version): DocumentBranch
 
   /**
    * A branch with the same text, mod state, agent and history. It is never `===` to this branch.
    * Edit only one of the two, because they share the agent.
    */
-  fun newInstance(): DocBranch
+  fun newInstance(): DocumentBranch
 
   /**
    * A list of the line ranges of [text], for diagnostics only.
@@ -123,8 +123,8 @@ interface DocBranch {
      * [version] is [Version.root], and the replay of that version returns [chars].
      */
     @JvmStatic
-    fun createBranch(chars: CharSequence, agent: Agent): DocBranch {
-      return DocBranchImpl.create(chars, agent)
+    fun createBranch(chars: CharSequence, agent: Agent): DocumentBranch {
+      return DocumentBranchImpl.create(chars, agent)
     }
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -20,7 +20,7 @@ import java.util.Random
 
 /**
  * A differential fuzz of the mod state against the ops that a document core sends. A [DocumentSnapshot]
- * is the reference, because the core uses it today. A [DocBranch] gets the same ops, and after each op
+ * is the reference, because the core uses it today. A [DocumentBranch] gets the same ops, and after each op
  * it must give the same text, stamp, sequence, and line flags.
  *
  * A step is one of these:
@@ -91,7 +91,7 @@ internal class DocBranchSnapshotParityFuzzTest {
    */
   private class Sides(start: String, private val coverage: Coverage) {
     private var snapshot: DocumentSnapshot = DocumentSnapshotImpl(DocumentText.createText(start)).applyOp(START_STAMP)
-    private var branch: DocBranch = DocBranch.createBranch(start, Agent.createAgent("user")).applyOp(START_STAMP)
+    private var branch: DocumentBranch = DocumentBranch.createBranch(start, Agent.createAgent("user")).applyOp(START_STAMP)
 
     fun step(random: Random) {
       when (random.nextInt(20)) {

@@ -11,21 +11,21 @@ import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * Tests [DocBranch.modState]. Each op folds into it, and a merge folds its ops into the mod state of
+ * Tests [DocumentBranch.modState]. Each op folds into it, and a merge folds its ops into the mod state of
  * the receiver.
  */
 class DocBranchModStateTest {
 
   @Test
   fun `a new branch has no modified lines`() {
-    val modState = DocBranch.createBranch(TEXT, agent("a")).modState()
+    val modState = DocumentBranch.createBranch(TEXT, agent("a")).modState()
     assertEquals(0, modState.sequence())
     assertFalse(modState.isLineModified(0))
   }
 
   @Test
   fun `an insert keeps the stamp and marks its line`() {
-    val base = DocBranch.createBranch(TEXT, agent("a"))
+    val base = DocumentBranch.createBranch(TEXT, agent("a"))
     val modState = base.applyOp(insertOp(4, "2")).modState()
     assertEquals(base.modState().stamp(), modState.stamp())
     assertEquals(1, modState.sequence())
@@ -36,7 +36,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a replace counts its delete and its insert`() {
-    val base = DocBranch.createBranch(TEXT, agent("a"))
+    val base = DocumentBranch.createBranch(TEXT, agent("a"))
     val replaced = base.applyOp(deleteOp(8, 5)).applyOp(insertOp(8, "THREE"))
     val modState = replaced.modState()
     assertEquals(2, modState.sequence())
@@ -46,7 +46,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a stamp op changes only the mod state`() {
-    val base = DocBranch.createBranch(TEXT, agent("a"))
+    val base = DocumentBranch.createBranch(TEXT, agent("a"))
     val stamped = base.applyOp(modStampOp(42, true))
     assertEquals(42, stamped.modState().stamp())
     assertEquals(1, stamped.modState().sequence())
@@ -56,7 +56,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `an unmodified lines op clears the marks and keeps the text`() {
-    val edited = DocBranch.createBranch(TEXT, agent("a")).applyOp(insertOp(0, "1"))
+    val edited = DocumentBranch.createBranch(TEXT, agent("a")).applyOp(insertOp(0, "1"))
     val clearAll = unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
     val cleared = edited.applyOp(clearAll)
     assertFalse(cleared.modState().isLineModified(0))
@@ -67,7 +67,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a fork shares the mod state and edits its own`() {
-    val base = DocBranch.createBranch(TEXT, agent("a")).applyOp(insertOp(0, "1"))
+    val base = DocumentBranch.createBranch(TEXT, agent("a")).applyOp(insertOp(0, "1"))
     val fork = base.fork(agent("b"))
     assertSame(base.modState(), fork.modState())
     val forkEdited = fork.applyOp(insertOp(5, "2"))
@@ -77,7 +77,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `each side of a merge keeps its own mod state`() {
-    val base = DocBranch.createBranch(TEXT, agent("base"))
+    val base = DocumentBranch.createBranch(TEXT, agent("base"))
     val a = base.fork(agent("a"))
       .applyOp(insertOp(0, "1"))
       .applyOp(modStampOp(10, false))
@@ -98,7 +98,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a fast-forward folds its ops into the mod state of the receiver`() {
-    val base = DocBranch.createBranch(TEXT, agent("base"))
+    val base = DocumentBranch.createBranch(TEXT, agent("base"))
     val edited = base.fork(agent("a")).applyOp(insertOp(4, "2"))
     val forward = base.mergeWithOps(edited)
     val modState = forward.branch().modState()
@@ -112,7 +112,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `an op on a fast-forward folds into its mod state`() {
-    val base = DocBranch.createBranch(TEXT, agent("base"))
+    val base = DocumentBranch.createBranch(TEXT, agent("base"))
     val edited = base.fork(agent("a")).applyOp(insertOp(4, "2"))
     val forward = base.merge(edited)
     val sameStamp = modStampOp(forward.modState().stamp(), false)
@@ -126,7 +126,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a merged move folds as the same move applied locally`() {
-    val base = DocBranch.createBranch(TEXT, agent("base"))
+    val base = DocumentBranch.createBranch(TEXT, agent("base"))
     // The first line moves after the second one.
     val moved = base.fork(agent("a")).moveText(0, 4, 8)
     val merge = base.mergeWithOps(moved)
@@ -137,7 +137,7 @@ class DocBranchModStateTest {
 
   @Test
   fun `a long chain of fast-forwards resolves its mod state`() {
-    val base = DocBranch.createBranch(TEXT, agent("base"))
+    val base = DocumentBranch.createBranch(TEXT, agent("base"))
     var writer = base.fork(agent("writer"))
     var reader = base
     repeat(CHAIN_LENGTH) {
@@ -151,7 +151,7 @@ class DocBranchModStateTest {
   fun `a merge gives the mod state of its ops applied to the receiver`() {
     repeat(SEEDS) { seed ->
       val random = Random(seed.toLong())
-      val base = DocBranch.createBranch(TEXT, agent("base"))
+      val base = DocumentBranch.createBranch(TEXT, agent("base"))
       val a = randomEdits(base.fork(agent("a")), random)
       val b = randomEdits(base.fork(agent("b")), random)
       assertMergeFoldsOps(a, b, "seed $seed, a concurrent merge")
@@ -165,7 +165,7 @@ class DocBranchModStateTest {
    * Checks that the merge of [other] into [receiver] gives the mod state that the ops of the merge give
    * when they apply to [receiver] one by one.
    */
-  private fun assertMergeFoldsOps(receiver: DocBranch, other: DocBranch, message: String) {
+  private fun assertMergeFoldsOps(receiver: DocumentBranch, other: DocumentBranch, message: String) {
     val merge = receiver.mergeWithOps(other)
     var expected = receiver
     for (op in merge.ops()) {
@@ -174,7 +174,7 @@ class DocBranchModStateTest {
     assertSameModState(expected, merge.branch(), message)
   }
 
-  private fun assertSameModState(expected: DocBranch, actual: DocBranch, message: String) {
+  private fun assertSameModState(expected: DocumentBranch, actual: DocumentBranch, message: String) {
     val expectedModState = expected.modState()
     val actualModState = actual.modState()
     assertEquals(expectedModState.stamp(), actualModState.stamp(), message)
@@ -185,7 +185,7 @@ class DocBranchModStateTest {
     }
   }
 
-  private fun randomEdits(branch: DocBranch, random: Random): DocBranch {
+  private fun randomEdits(branch: DocumentBranch, random: Random): DocumentBranch {
     var edited = branch
     repeat(1 + random.nextInt(MAX_EDITS)) {
       edited = edited.applyOp(randomOp(edited.text(), random))

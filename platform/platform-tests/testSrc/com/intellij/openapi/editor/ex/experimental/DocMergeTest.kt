@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * Tests [DocBranch.mergeWithOps] and the op stream of [DocMerge]: the ops of each merge outcome,
+ * Tests [DocumentBranch.mergeWithOps] and the op stream of [DocMerge]: the ops of each merge outcome,
  * the joins that keep the stream short, and the rule that the ops fold the text of the receiver
  * into the merged text. [DocBranchGossipFuzzTest] checks that rule for every random merge.
  */
@@ -21,7 +21,7 @@ class DocMergeTest {
 
   @Test
   fun `a merge that brings nothing has no ops`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     val merged = a.merge(b)
@@ -35,7 +35,7 @@ class DocMergeTest {
   @Test
   fun `a merge whose new units change no text has no ops`() {
     // Both sides delete the same character, so the delete of the other side finds it gone.
-    val base = DocBranch.createBranch("abc", agent("base"))
+    val base = DocumentBranch.createBranch("abc", agent("base"))
     val a = base.fork(agent("a")).applyOp(deleteOp(1, 1))
     val b = base.fork(agent("b")).applyOp(deleteOp(1, 1))
     val merge = a.mergeWithOps(b)
@@ -46,7 +46,7 @@ class DocMergeTest {
 
   @Test
   fun `a fast-forward gives the edits of the descendant`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val descendant = base.fork(agent("b")).applyOp(insertOp(3, "def")).applyOp(deleteOp(0, 1))
     val merge = base.mergeWithOps(descendant)
     // The text needs no replay: it is the text of the descendant.
@@ -57,7 +57,7 @@ class DocMergeTest {
 
   @Test
   fun `a fast-forward of an empty branch inserts the whole text`() {
-    val empty = DocBranch.createBranch("", agent("a"))
+    val empty = DocumentBranch.createBranch("", agent("a"))
     val typed = empty.fork(agent("b")).applyOp(insertOp(0, "xy")).applyOp(insertOp(2, "z"))
     assertEquals(listOf(DocumentOp.insertOp(0, "xyz")), empty.mergeWithOps(typed).ops())
     assertEquals(emptyList<DocumentOp.Text>(), typed.mergeWithOps(empty).ops())
@@ -65,7 +65,7 @@ class DocMergeTest {
 
   @Test
   fun `concurrent inserts give one op to each side`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     // Each side gets the edit of the other, at its place in the text of the receiver.
@@ -75,7 +75,7 @@ class DocMergeTest {
 
   @Test
   fun `a concurrent paste arrives as one op`() {
-    val base = DocBranch.createBranch("base\n", agent("base"))
+    val base = DocumentBranch.createBranch("base\n", agent("base"))
     val left = base.fork(agent("aaa")).applyOp(insertOp(5, "L".repeat(PASTE)))
     val right = base.fork(agent("bbb")).applyOp(insertOp(5, "R".repeat(PASTE)))
     // The agent order puts the paste of "aaa" first.
@@ -90,7 +90,7 @@ class DocMergeTest {
   @Test
   fun `text that the other side typed and deleted brings no op`() {
     // The other side typed "xyz" and took it back with three backspaces.
-    val base = DocBranch.createBranch("ab", agent("base"))
+    val base = DocumentBranch.createBranch("ab", agent("base"))
     val a = base.fork(agent("a")).applyOp(insertOp(0, "1"))
     var b = base.fork(agent("b")).applyOp(insertOp(2, "xyz"))
     for (offset in 4 downTo 2) {
@@ -104,7 +104,7 @@ class DocMergeTest {
 
   @Test
   fun `backspaces over old text arrive as one delete`() {
-    val base = DocBranch.createBranch("abcdef", agent("base"))
+    val base = DocumentBranch.createBranch("abcdef", agent("base"))
     val a = base.fork(agent("a")).applyOp(insertOp(6, "!"))
     var b = base.fork(agent("b"))
     for (offset in 3 downTo 1) {
@@ -117,7 +117,7 @@ class DocMergeTest {
   @Test
   fun `a surrogate pair arrives whole in one op`() {
     val face = "😀"
-    val base = DocBranch.createBranch("ab", agent("base"))
+    val base = DocumentBranch.createBranch("ab", agent("base"))
     val a = base.fork(agent("a")).applyOp(insertOp(1, face))
     val b = base.fork(agent("b")).applyOp(insertOp(1, "x"))
     val op = b.mergeWithOps(a).ops().single() as DocumentOp.Insert
@@ -128,7 +128,7 @@ class DocMergeTest {
 
   @Test
   fun `branches with no common event fold into their merged text`() {
-    val base = DocBranch.createBranch("", agent("base"))
+    val base = DocumentBranch.createBranch("", agent("base"))
     val a = base.fork(agent("a")).applyOp(insertOp(0, "xy"))
     val b = base.fork(agent("b")).applyOp(insertOp(0, "pq"))
     for ((receiver, other) in listOf(a to b, b to a)) {
@@ -141,7 +141,7 @@ class DocMergeTest {
   fun `a merge that changes no text can still have ops`() {
     // The other side typed at both ends and took both back, so the text ends where it started.
     // The two inserts do not meet, so no join cancels them.
-    val base = DocBranch.createBranch("hello", agent("base"))
+    val base = DocumentBranch.createBranch("hello", agent("base"))
     val b = base.fork(agent("b"))
       .applyOp(insertOp(0, "X")).applyOp(insertOp(6, "Y"))
       .applyOp(deleteOp(0, 1)).applyOp(deleteOp(5, 1))
@@ -163,7 +163,7 @@ class DocMergeTest {
    */
   @Test
   fun `the ops of a fast-forward fail when a missed clash breaks the fold`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val x = base.fork(agent("b")).applyOp(insertOp(0, "X")).applyOp(insertOp(4, "M")).applyOp(insertOp(0, "Z"))
     val y = base.fork(agent("b")).applyOp(insertOp(0, "X")).applyOp(insertOp(1, "N")).applyOp(insertOp(0, "Z"))
     val merge = x.mergeWithOps(y.fork(agent("c")).applyOp(insertOp(0, "W")))
@@ -174,7 +174,7 @@ class DocMergeTest {
 
   @Test
   fun `a merge returns the branch of mergeWithOps`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(deleteOp(1, 1))
     for ((receiver, other) in listOf(a to b, b to a, base to b)) {
@@ -189,7 +189,7 @@ class DocMergeTest {
 
   @Test
   fun `a clash fails the same way with ops`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val x = base.applyOp(insertOp(0, "X"))
     val y = base.applyOp(insertOp(0, "Y"))
     assertThrows(EventIdClashException::class.java) { x.mergeWithOps(y) }
@@ -197,7 +197,7 @@ class DocMergeTest {
 
   @Test
   fun `the ops of every outcome cannot change`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     // A partial replay, a fast-forward, and a merge that brings nothing.
@@ -216,7 +216,7 @@ class DocMergeTest {
   @Test
   fun `threads that read the ops of one fast-forward agree`() {
     val random = Random(20261001)
-    val base = DocBranch.createBranch("0123456789".repeat(20), agent("base"))
+    val base = DocumentBranch.createBranch("0123456789".repeat(20), agent("base"))
     var descendant = base.fork(agent("b"))
     repeat(200) {
       val length = descendant.length()

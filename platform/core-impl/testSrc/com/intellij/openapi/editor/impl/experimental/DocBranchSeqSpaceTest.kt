@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.EventIdClashException
 import com.intellij.openapi.editor.ex.experimental.TrimmedHistoryException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -106,7 +106,7 @@ internal class DocBranchSeqSpaceTest {
      * deletes take turns, so each op closes the run before it. The third op spans [INT_SEQ_LIMIT],
      * and the next seq ends at `INT_SEQ_LIMIT + 14`.
      */
-    fun crossingSteps(): List<DocBranch> {
+    fun crossingSteps(): List<DocumentBranch> {
       val steps = arrayListOf(NEAR_LIMIT_BRANCH)
       repeat(7) { step ->
         val op = if (step % 2 == 0) {
@@ -122,7 +122,7 @@ internal class DocBranchSeqSpaceTest {
     /**
      * The last of [crossingSteps], trimmed to its version. Its next seq is `INT_SEQ_LIMIT + 14`.
      */
-    fun aboveLimit(): DocBranch {
+    fun aboveLimit(): DocumentBranch {
       val last = crossingSteps().last()
       return last.trimmedTo(last.version())
     }

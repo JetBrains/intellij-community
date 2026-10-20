@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl.experimental
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.DocMerge
 import com.intellij.openapi.editor.ex.experimental.TrimmedHistoryException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * A differential fuzz of [DocBranch.trimmedTo]. Every replica has a SHADOW: the same branch with the
+ * A differential fuzz of [DocumentBranch.trimmedTo]. Every replica has a SHADOW: the same branch with the
  * same ops and no trim of its own. A merge of two replicas must succeed exactly when the base version
  * of each one is a critical version of the history of the other. Both directions must agree. A merge
  * that succeeds must give the text of the merge of the two shadows.
@@ -26,7 +26,7 @@ internal class DocBranchTrimFuzzTest {
   @Test
   fun `merges of trimmed branches match their shadows in both directions`() {
     val start = { random: Random ->
-      DocBranch.createBranch(randomText(random), Agent.createAgent("start"))
+      DocumentBranch.createBranch(randomText(random), Agent.createAgent("start"))
     }
     fuzz(ROUNDS, SEED, start)
   }
@@ -53,7 +53,7 @@ internal class DocBranchTrimFuzzTest {
   private fun fuzz(
     rounds: Int,
     seed: Long,
-    start: (Random) -> DocBranch,
+    start: (Random) -> DocumentBranch,
     afterRound: (Replicas) -> Unit = {},
   ) {
     var merges = 0
@@ -88,9 +88,9 @@ internal class DocBranchTrimFuzzTest {
   /**
    * The replicas of one round. Each one is a branch and its shadow. The first replica is [start].
    */
-  private class Replicas(private val random: Random, start: DocBranch) {
-    private val actuals = ArrayList<DocBranch>()
-    private val shadows = ArrayList<DocBranch>()
+  private class Replicas(private val random: Random, start: DocumentBranch) {
+    private val actuals = ArrayList<DocumentBranch>()
+    private val shadows = ArrayList<DocumentBranch>()
 
     init {
       actuals.add(start)
@@ -198,7 +198,7 @@ internal class DocBranchTrimFuzzTest {
     /**
      * The merge of [other] into [receiver], or `null` when it throws [TrimmedHistoryException].
      */
-    fun mergeOrNull(receiver: DocBranch, other: DocBranch): DocMerge? {
+    fun mergeOrNull(receiver: DocumentBranch, other: DocumentBranch): DocMerge? {
       return try {
         receiver.mergeWithOps(other)
       } catch (_: TrimmedHistoryException) {

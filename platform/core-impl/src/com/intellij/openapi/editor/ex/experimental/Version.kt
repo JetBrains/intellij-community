@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
  * A version identifies a document state: `Events(V)` is the set of all events at or before it,
  * and a replay of that set is the document at this version.
  *
- * A version names its heads by event id. Under the agent contract of [DocBranch], one event id
+ * A version names its heads by event id. Under the agent contract of [DocumentBranch], one event id
  * names one event in every graph of one lineage. [LineageMismatchException] says what a lineage is.
  * So a version means the same in every graph of its lineage that holds its heads. For example, it
  * means the same in a graph that merged the one that made it. A graph checks only that it holds the

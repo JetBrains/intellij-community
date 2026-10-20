@@ -34,8 +34,8 @@ class DocBranchGossipFuzzTest {
     repeat(ROUNDS) { round ->
       fuzzRound(20260828L, round) { random ->
         val replicaCount = 2 + random.nextInt(4)
-        val base = DocBranch.createBranch(randomText(random), agent("base"))
-        val replicas = ArrayList<DocBranch>()
+        val base = DocumentBranch.createBranch(randomText(random), agent("base"))
+        val replicas = ArrayList<DocumentBranch>()
         for (i in 0 until replicaCount) {
           replicas.add(base.fork(agent("agent$i")))
         }
@@ -137,7 +137,7 @@ class DocBranchGossipFuzzTest {
    * empty, and every move pair among them is valid. A fold through an op outside its text throws on
    * its own.
    */
-  private fun checkOps(receiver: DocBranch, merge: DocMerge, where: () -> String) {
+  private fun checkOps(receiver: DocumentBranch, merge: DocMerge, where: () -> String) {
     val ops = merge.ops()
     for (op in ops) {
       assertTrue(op.length() > 0, where)

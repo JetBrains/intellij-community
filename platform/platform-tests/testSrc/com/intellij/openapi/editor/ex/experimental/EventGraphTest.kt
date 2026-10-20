@@ -658,7 +658,7 @@ class EventGraphTest {
       override fun compareTo(other: Agent): Int = 0
     }
     assertThrows(IllegalArgumentException::class.java) { Event.createInsert(foreign, 0, 0, "x") }
-    assertThrows(IllegalArgumentException::class.java) { DocBranch.createBranch("", foreign) }
+    assertThrows(IllegalArgumentException::class.java) { DocumentBranch.createBranch("", foreign) }
   }
 
   @Test
@@ -798,7 +798,7 @@ class EventGraphTest {
 
   @Test
   fun `the base text takes its share of the unit space`() {
-    val base = DocBranch.createBranch("ab", agent("a")).graph()
+    val base = DocumentBranch.createBranch("ab", agent("a")).graph()
     // A delete holds no content, so one run can take all the space that the base text leaves.
     val longest = Int.MAX_VALUE - 2
     val huge = base.append(Event.createDelete(agent("u"), 0, 0, longest), Version.root())

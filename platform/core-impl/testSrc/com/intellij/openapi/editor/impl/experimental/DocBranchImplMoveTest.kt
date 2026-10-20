@@ -3,12 +3,12 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 /**
- * Tests how [DocBranchImpl] records a move op. A valid move keeps its move offset, and any other move
+ * Tests how [DocumentBranchImpl] records a move op. A valid move keeps its move offset, and any other move
  * records as a plain op, so a faulty move offset from a caller never fails an edit.
  */
 internal class DocBranchImplMoveTest {
@@ -47,7 +47,7 @@ internal class DocBranchImplMoveTest {
   @Test
   fun `a move that overlaps its own text records as a plain op`() {
     // The text at the move offset is the moved text, but it overlaps the text that the op changes.
-    val base = DocBranch.createBranch("aaaa", Agent.createAgent("base"))
+    val base = DocumentBranch.createBranch("aaaa", Agent.createAgent("base"))
     val insert = base.fork(A).applyOp(DocumentOp.insertOp(1, "aa", 2))
     assertEquals(listOf(DocumentOp.insertOp(1, "aa")), recordedOps(base, insert))
     val delete = base.fork(A).applyOp(DocumentOp.deleteOp(0, 2, 1))
@@ -57,7 +57,7 @@ internal class DocBranchImplMoveTest {
   /**
    * The ops that [branch] recorded after the history of [base], one per run.
    */
-  private fun recordedOps(base: DocBranch, branch: DocBranch): List<DocumentOp.Text> {
+  private fun recordedOps(base: DocumentBranch, branch: DocumentBranch): List<DocumentOp.Text> {
     val graph = EventGraphImpl.implOf(branch.graph())
     val ops = ArrayList<DocumentOp.Text>()
     var lv = base.graph().size()
@@ -71,11 +71,11 @@ internal class DocBranchImplMoveTest {
 
   private companion object {
     val A: Agent = Agent.createAgent("a")
-    val BASE: DocBranch = DocBranch.createBranch("0123456789", Agent.createAgent("base"))
+    val BASE: DocumentBranch = DocumentBranch.createBranch("0123456789", Agent.createAgent("base"))
 
     /**
      * A fork of [BASE] under another agent, so that no op of a test extends the run of [BASE].
      */
-    val EDITOR: DocBranch = BASE.fork(A)
+    val EDITOR: DocumentBranch = BASE.fork(A)
   }
 }

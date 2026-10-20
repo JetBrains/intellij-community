@@ -9,14 +9,14 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 /**
- * Tests [DocBranch.trimmedTo] and the merges of a trimmed branch. A merge that the safepoint rule
+ * Tests [DocumentBranch.trimmedTo] and the merges of a trimmed branch. A merge that the safepoint rule
  * allows must give the text of the same merge without the trim, and every other merge must throw.
  */
 class DocBranchTrimTest {
 
   @Test
   fun `a trim keeps the text, the mod state, the agent and the version`() {
-    val branch = DocBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
+    val branch = DocumentBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
     val trimmed = branch.trimmedTo(branch.version())
     assertSame(branch.text(), trimmed.text())
     assertSame(branch.modState(), trimmed.modState())
@@ -30,7 +30,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a trim to the base version keeps the branch`() {
-    val branch = DocBranch.createBranch("abc", agent("main"))
+    val branch = DocumentBranch.createBranch("abc", agent("main"))
     assertSame(branch, branch.trimmedTo(branch.version()))
     val edited = branch.applyOp(insertOp(3, "d"))
     val trimmed = edited.trimmedTo(edited.version())
@@ -39,7 +39,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a trim below the version is not supported yet`() {
-    val older = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val older = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val branch = older.applyOp(insertOp(3, "d"))
     val failure = assertThrows(IllegalArgumentException::class.java) {
       branch.trimmedTo(older.version())
@@ -49,7 +49,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a version below the base version neither replays nor takes an append`() {
-    val older = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val older = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val branch = older.applyOp(insertOp(3, "d"))
     val graph = branch.trimmedTo(branch.version()).graph()
     assertEquals("abcd", graph.replay(branch.version()).string())
@@ -66,7 +66,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `edits after a trim merge with a fork made at the safepoint`() {
-    val main = DocBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
+    val main = DocumentBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
     val fork = main.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val trimmed = main.trimmedTo(main.version()).applyOp(insertOp(4, "M"))
     val forward = trimmed.merge(fork)
@@ -79,7 +79,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a trimmed branch with no events fast-forwards to a fork`() {
-    val main = DocBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
+    val main = DocumentBranch.createBranch("abc", agent("main")).applyOp(insertOp(3, "d"))
     val fork = main.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val trimmed = main.trimmedTo(main.version())
     val merge = trimmed.mergeWithOps(fork)
@@ -89,7 +89,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a fork of a trimmed branch merges back`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val trimmed = main.trimmedTo(main.version())
     val fork = trimmed.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val edited = trimmed.applyOp(deleteOp(1, 1))
@@ -104,7 +104,7 @@ class DocBranchTrimTest {
    */
   @Test
   fun `a stale fork merges in neither direction`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val stale = main.fork(agent("stale"))
     val ahead = main.applyOp(insertOp(3, "d"))
     val untrimmed = ahead.applyOp(insertOp(0, "e"))
@@ -142,7 +142,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a fork that edited before the safepoint merges in neither direction`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val fork = main.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val ahead = main.applyOp(insertOp(3, "d"))
     val trimmed = ahead.trimmedTo(ahead.version())
@@ -162,7 +162,7 @@ class DocBranchTrimTest {
    */
   @Test
   fun `a fork that merged the safepoint after an older edit merges in neither direction`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val fork = main.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val ahead = main.applyOp(insertOp(3, "d"))
     val holdsSafepoint = fork.merge(ahead)
@@ -195,7 +195,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a run that follows one head of a two-head base version merges in neither direction`() {
-    val start = DocBranch.createBranch("ab", agent("start"))
+    val start = DocumentBranch.createBranch("ab", agent("start"))
     val left = start.fork(agent("left")).applyOp(insertOp(0, "L"))
     val right = start.fork(agent("right")).applyOp(insertOp(2, "R"))
     val joined = left.merge(right)
@@ -215,7 +215,7 @@ class DocBranchTrimTest {
    */
   @Test
   fun `the id check reads the parents of a trimmed graph as its base version`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val fork = main.fork(agent("fork"))
     val trimmed = main.trimmedTo(main.version()).applyOp(insertOp(3, "d"))
     val caughtUp = fork.merge(trimmed).applyOp(insertOp(0, "F"))
@@ -228,7 +228,7 @@ class DocBranchTrimTest {
    */
   @Test
   fun `a run that crosses the base version of the receiver merges its suffix`() {
-    val typed = DocBranch.createBranch("", agent("main"))
+    val typed = DocumentBranch.createBranch("", agent("main"))
       .applyOp(insertOp(0, "a"))
       .applyOp(insertOp(1, "b"))
     val fork = typed.fork(agent("fork"))
@@ -245,7 +245,7 @@ class DocBranchTrimTest {
    */
   @Test
   fun `the id check finds a clash after a trim`() {
-    val main = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val main = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val trimmed = main.trimmedTo(main.version())
     val x = trimmed.applyOp(insertOp(0, "x"))
     // Another character under the same id.
@@ -265,7 +265,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `two trims in a row merge with a fork made between them`() {
-    val first = DocBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
+    val first = DocumentBranch.createBranch("ab", agent("main")).applyOp(insertOp(2, "c"))
     val once = first.trimmedTo(first.version()).applyOp(insertOp(3, "d"))
     val fork = once.fork(agent("fork")).applyOp(insertOp(0, "F"))
     val twice = once.trimmedTo(once.version()).applyOp(insertOp(4, "e"))
@@ -275,7 +275,7 @@ class DocBranchTrimTest {
 
   @Test
   fun `a trim keeps the mod state of a fast-forward`() {
-    val base = DocBranch.createBranch("ab", agent("base"))
+    val base = DocumentBranch.createBranch("ab", agent("base"))
     val descendant = base.fork(agent("fork")).applyOp(insertOp(2, "c"))
     val forwarded = base.merge(descendant)
     val trimmed = forwarded.trimmedTo(forwarded.version())
@@ -285,8 +285,8 @@ class DocBranchTrimTest {
   /**
    * Two forks that typed at the start of "ab", merged: a branch whose version has two heads.
    */
-  private fun joinedBranch(): DocBranch {
-    val start = DocBranch.createBranch("ab", agent("start"))
+  private fun joinedBranch(): DocumentBranch {
+    val start = DocumentBranch.createBranch("ab", agent("start"))
     val left = start.fork(agent("left")).applyOp(insertOp(0, "L"))
     val right = start.fork(agent("right")).applyOp(insertOp(2, "R"))
     return left.merge(right)

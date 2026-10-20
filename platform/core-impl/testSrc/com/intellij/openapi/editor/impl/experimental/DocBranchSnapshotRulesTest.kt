@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * The rules that `DocumentSnapshotTest` states for a [DocumentSnapshot], checked on a snapshot and on a
- * [DocBranch] side by side.
+ * [DocumentBranch] side by side.
  */
 internal class DocBranchSnapshotRulesTest {
 
@@ -132,7 +132,7 @@ internal class DocBranchSnapshotRulesTest {
     }
   }
 
-  private class BranchValue(private val branch: DocBranch) : Value {
+  private class BranchValue(private val branch: DocumentBranch) : Value {
     override val kind: String = "branch"
 
     override fun applyOp(op: DocumentOp): Value {
@@ -162,7 +162,7 @@ internal class DocBranchSnapshotRulesTest {
      */
     fun values(text: String): List<Value> {
       val snapshot = SnapshotValue(DocumentSnapshotImpl(DocumentText.createText(text)))
-      val branch = BranchValue(DocBranch.createBranch(text, Agent.createAgent("user")))
+      val branch = BranchValue(DocumentBranch.createBranch(text, Agent.createAgent("user")))
       return listOf(snapshot, branch)
     }
 

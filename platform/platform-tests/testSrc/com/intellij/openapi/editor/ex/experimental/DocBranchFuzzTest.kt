@@ -14,11 +14,11 @@ class DocBranchFuzzTest {
   fun `replicas converge after a full sync`() {
     repeat(ROUNDS) { round ->
       fuzzRound(20260827L, round) { random ->
-        val base = DocBranch.createBranch(randomText(random), agent("base"))
+        val base = DocumentBranch.createBranch(randomText(random), agent("base"))
         val baseVersion = base.graph().version()
 
         // Every replica forks from the base and edits under its own agent.
-        val replicas = ArrayList<DocBranch>()
+        val replicas = ArrayList<DocumentBranch>()
         val replicaCount = 2 + random.nextInt(2)
         for (i in 0 until replicaCount) {
           var replica = base.fork(agent("agent$i"))

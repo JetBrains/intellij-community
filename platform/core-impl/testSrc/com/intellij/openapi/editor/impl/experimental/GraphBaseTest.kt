@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.LineageMismatchException
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
@@ -17,7 +17,7 @@ internal class GraphBaseTest {
 
   @Test
   fun `the base text of a new branch shares the characters of the branch text`() {
-    val branch = DocBranch.createBranch("abc", Agent.createAgent("a"))
+    val branch = DocumentBranch.createBranch("abc", Agent.createAgent("a"))
     val graph = EventGraphImpl.implOf(branch.graph())
     assertSame(branch.text().chars(), graph.baseText().chars())
     // The base text is a value of its own, so it keeps none of the line data of the branch text.

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * Tests text moves in [DocBranch]: how a local move op records, and the move offsets in [DocMerge.ops].
+ * Tests text moves in [DocumentBranch]: how a local move op records, and the move offsets in [DocMerge.ops].
  */
 @TestApplication
 class DocBranchMoveTest {
@@ -45,7 +45,7 @@ class DocBranchMoveTest {
   @Test
   fun `a move op that overlaps its own text applies and merges as a plain edit`() {
     // The text at the move offset is the moved text, but it overlaps the text that the op changes.
-    val base = DocBranch.createBranch("aaaa", agent("base"))
+    val base = DocumentBranch.createBranch("aaaa", agent("base"))
     val insert = base.fork(agent("a")).applyOp(DocumentOp.insertOp(1, "aa", 2))
     assertEquals("aaaaaa", insert.string())
     assertEquals(listOf(insertOp(1, "aa")), opsOfMerge(base, insert))
@@ -263,7 +263,7 @@ class DocBranchMoveTest {
 
   @Test
   fun `a half of a move without its other half arrives as a plain op`() {
-    val base = DocBranch.createBranch("0123", agent("base"))
+    val base = DocumentBranch.createBranch("0123", agent("base"))
     val moveInsert = DocumentOp.insertOp(4, "01", 0)
     val moveDelete = DocumentOp.deleteOp(0, 2, 4)
     val copied = base.fork(agent("a")).applyOp(moveInsert)
@@ -323,7 +323,7 @@ class DocBranchMoveTest {
     assertEquals(localMarkers.map { rangeOf(it) }, mergedMarkers.map { rangeOf(it) })
   }
 
-  private fun opsOfMerge(receiver: DocBranch, other: DocBranch): List<DocumentOp.Text> {
+  private fun opsOfMerge(receiver: DocumentBranch, other: DocumentBranch): List<DocumentOp.Text> {
     return receiver.mergeWithOps(other).ops()
   }
 
@@ -383,6 +383,6 @@ class DocBranchMoveTest {
     const val ROUNDS = 500
     const val STEPS = 20
 
-    val BASE: DocBranch = DocBranch.createBranch("0123456789", agent("base"))
+    val BASE: DocumentBranch = DocumentBranch.createBranch("0123456789", agent("base"))
   }
 }

@@ -76,7 +76,7 @@ class DocBranchPerformanceTest {
     val random = Random(20260827)
     val recorded = ArrayList<DocumentOp.Text>()
     val batchEnds = IntArray(SINGLE_USER_BATCHES)
-    val user = User(DocBranch.createBranch(text, agent("user")))
+    val user = User(DocumentBranch.createBranch(text, agent("user")))
     user.recorder = recorded
     for (batch in 0 until SINGLE_USER_BATCHES) {
       repeat(SINGLE_USER_ACTIONS_PER_BATCH) {
@@ -106,7 +106,7 @@ class DocBranchPerformanceTest {
 
     val firstEnd = batchEnds[FLAT_COST_BATCHES - 1]
     val lastStart = batchEnds[SINGLE_USER_BATCHES - FLAT_COST_BATCHES - 1]
-    lateinit var start: DocBranch
+    lateinit var start: DocumentBranch
     benchmarkSubtest("the first $FLAT_COST_BATCHES batches", setup = { start = freshBranch(text) }) {
       applied(start, recorded, 0, firstEnd).length()
     }
@@ -119,9 +119,9 @@ class DocBranchPerformanceTest {
   /**
    * The collaborative scenario over [text]. Every session forks, edits, and merges back.
    */
-  private fun runScenario(text: String): DocBranch {
+  private fun runScenario(text: String): DocumentBranch {
     val random = Random(20260827)
-    var base = DocBranch.createBranch(text, agent("base"))
+    var base = DocumentBranch.createBranch(text, agent("base"))
     for (level in CONCURRENCY_LEVELS) {
       // `level` users fork from the current base and edit concurrently.
       val users = List(level) { i -> User(base.fork(agent("user$i"))) }
@@ -137,19 +137,19 @@ class DocBranchPerformanceTest {
     return base
   }
 
-  private fun freshBranch(text: String): DocBranch {
-    return DocBranch.createBranch(text, agent("user"))
+  private fun freshBranch(text: String): DocumentBranch {
+    return DocumentBranch.createBranch(text, agent("user"))
   }
 
   /**
    * [branch] with the ops `[from, until)` of [ops] applied.
    */
   private fun applied(
-      branch: DocBranch,
-      ops: List<DocumentOp.Text>,
-      from: Int,
-      until: Int,
-  ): DocBranch {
+    branch: DocumentBranch,
+    ops: List<DocumentOp.Text>,
+    from: Int,
+    until: Int,
+  ): DocumentBranch {
     var result = branch
     for (i in from until until) {
       result = result.applyOp(ops[i])
@@ -161,7 +161,7 @@ class DocBranchPerformanceTest {
    * [branch] with every op of [ops] applied, and a trim to the version after each one. That is the
    * history of a document when nothing holds an older version.
    */
-  private fun appliedWithTrims(branch: DocBranch, ops: List<DocumentOp.Text>): DocBranch {
+  private fun appliedWithTrims(branch: DocumentBranch, ops: List<DocumentOp.Text>): DocumentBranch {
     var result = branch
     for (op in ops) {
       val edited = result.applyOp(op)
@@ -180,7 +180,7 @@ class DocBranchPerformanceTest {
 
   // ---------------------------------------------------------------------------- the user model
 
-  private class User(var branch: DocBranch) {
+  private class User(var branch: DocumentBranch) {
     var caret = 0
     var recorder: ArrayList<DocumentOp.Text>? = null
 
@@ -262,7 +262,7 @@ class DocBranchPerformanceTest {
    * not one per keystroke. The heap number is a hint only (see [heapInUse]), but it gives the
    * order of the retained size.
    */
-  private fun reportHistory(branch: DocBranch) {
+  private fun reportHistory(branch: DocumentBranch) {
     val graph = branch.graph()
     val perRun = graph.size().toDouble() / maxOf(1, graph.runCount())
     val usedMb = heapInUse() / (1024 * 1024)

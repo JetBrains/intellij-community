@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.impl.experimental.EventGraphImpl
  *
  * A graph starts from a BASE TEXT at a BASE VERSION, and its first events edit that text. A new
  * graph starts at [Version.root]. A graph from [createGraph] has an empty base text. The graph of a
- * new [DocBranch] has the text of the branch as its base text. [DocBranch.trimmedTo] moves the base
+ * new [DocumentBranch] has the text of the branch as its base text. [DocumentBranch.trimmedTo] moves the base
  * to a later version and drops the events at or below it. An append and a merge keep the base.
  */
 interface EventGraph {
@@ -57,8 +57,8 @@ interface EventGraph {
    * The cost is the size of the change, not the size of the history that the two graphs share.
    *
    * Throws [LineageMismatchException] when the two graphs do not grow from one [createGraph] or
-   * [DocBranch.createBranch] call. Throws [TrimmedHistoryException] when the base version of one
-   * graph is not a critical version of the other. See [DocBranch] for that rule. Throws
+   * [DocumentBranch.createBranch] call. Throws [TrimmedHistoryException] when the base version of one
+   * graph is not a critical version of the other. See [DocumentBranch] for that rule. Throws
    * [EventIdClashException] when the two graphs give one id to two operations. `a.mergeFrom(b)`
    * throws exactly when `b.mergeFrom(a)` throws.
    */

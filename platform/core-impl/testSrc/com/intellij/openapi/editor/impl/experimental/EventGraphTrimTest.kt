@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.TrimmedHistoryException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -103,7 +103,7 @@ internal class EventGraphTrimTest {
 
   @Test
   fun `a trim below the version is not supported yet`() {
-    val start = DocBranch.createBranch("ab", L).applyOp(DocumentOp.insertOp(2, "c"))
+    val start = DocumentBranch.createBranch("ab", L).applyOp(DocumentOp.insertOp(2, "c"))
     val branch = start.applyOp(DocumentOp.insertOp(3, "d"))
     val graph = impl(branch)
     val failure = assertThrows(IllegalArgumentException::class.java) {
@@ -115,14 +115,14 @@ internal class EventGraphTrimTest {
   /**
    * Two forks that typed at the start of "ab", merged: a graph whose version has two heads.
    */
-  private fun joinedBranch(): DocBranch {
-    val start = DocBranch.createBranch("ab", Agent.createAgent("start"))
+  private fun joinedBranch(): DocumentBranch {
+    val start = DocumentBranch.createBranch("ab", Agent.createAgent("start"))
     val left = start.fork(L).applyOp(DocumentOp.insertOp(0, "L"))
     val right = start.fork(R).applyOp(DocumentOp.insertOp(2, "R"))
     return left.merge(right)
   }
 
-  private fun impl(branch: DocBranch): EventGraphImpl {
+  private fun impl(branch: DocumentBranch): EventGraphImpl {
     return EventGraphImpl.implOf(branch.graph())
   }
 
