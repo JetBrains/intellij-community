@@ -2577,6 +2577,27 @@ open class FileEditorManagerImpl(
     return tabs
   }
 
+  /**
+   * Reads the restored state of [provider] for [composite] before the composite publishes its editors.
+   *
+   * A lazy composite of an unselected restored tab builds its editors only at its first show. Until then, the manager
+   * keeps the saved state of the tab. This method parses that state through [FileEditorProvider.readState], as the build
+   * of the composite does. It does not start the initialization of the composite, and it creates no editor.
+   *
+   * @return `null` when the composite is available, when the restore did not open it, or when
+   * [EditorComposite.readSavedEditorState] reads no state for [provider].
+   */
+  @Internal
+  fun readDelayedEditorState(composite: EditorComposite, provider: FileEditorProvider): FileEditorState? {
+    if (composite.isAvailable()) {
+      return null
+    }
+    // TODO: Move the delayed state into EditorComposite, so this read becomes a composite method.
+    //  Then the manager keeps no delayed state for its composite entries.
+    val fileEntry = openedCompositeEntries.firstOrNull { it.composite === composite }?.delayedState ?: return null
+    return composite.readSavedEditorState(provider, fileEntry)
+  }
+
   @Internal
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openTabsOnStartup(

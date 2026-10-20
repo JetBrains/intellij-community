@@ -59,6 +59,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -67,6 +68,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.createProgressPipe
@@ -86,6 +88,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
@@ -108,6 +111,7 @@ import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -195,6 +199,82 @@ class FileEditorManagerTest {
     val (repeatedEditorComponent, consumedEditorState) = fileEditorManager.init()
     assertThat(repeatedEditorComponent).isSameAs(editorComponent)
     assertThat(consumedEditorState).isNull()
+  }
+
+  @Test
+  @SystemProperty(propertyKey = "idea.delayed.editor.composite", propertyValue = "true")
+  fun testDelayedEditorStateIsReadBeforeTheEditorsArePublished(): Unit = timeoutRunBlocking {
+    val release = CompletableDeferred<Unit>()
+    val selectedFile = LightVirtualFile("selected.txt", PlainTextFileType.INSTANCE, "text")
+    val delayedFile = LightVirtualFile("delayed.txt", PlainTextFileType.INSTANCE, "text")
+    val provider = object : MockFileEditorProvider(editorTypeId = "delayed", policy = FileEditorPolicy.HIDE_DEFAULT_EDITOR),
+                            AsyncFileEditorProvider {
+      override fun accept(project: Project, file: VirtualFile): Boolean = file === delayedFile
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        release.await()
+        return createEditor(project, file)
+      }
+
+      override fun readState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState {
+        return DelayedEditorState(sourceElement.getAttributeValue("value"))
+      }
+    }
+    registerProvider(provider)
+    val state = createRestoreState(selectedFile, delayedFile) { file ->
+      if (file === delayedFile) """<provider selected="true" editor-type-id="delayed"><state value="saved" /></provider>""" else ""
+    }
+    try {
+      manager.mainSplitters.createTestEditors(state)
+      val composite = withContext(Dispatchers.EDT) {
+        assertThatNotNull(manager.windows.firstNotNullOfOrNull { it.getComposite(delayedFile) })
+      }
+      withContext(Dispatchers.EDT) {
+        assertThat(composite.isAvailable()).isFalse()
+        assertThat(manager.readDelayedEditorState(composite, provider)).isEqualTo(DelayedEditorState("saved"))
+        assertThat(composite.allEditors).isEmpty()
+      }
+
+      release.complete(Unit)
+      composite.waitForAvailable()
+
+      withContext(Dispatchers.EDT) {
+        assertThat(manager.readDelayedEditorState(composite, provider)).describedAs("the state after the editors").isNull()
+      }
+    }
+    finally {
+      release.complete(Unit)
+      withContext(Dispatchers.EDT) {
+        manager.closeFile(delayedFile)
+        manager.closeFile(selectedFile)
+      }
+    }
+  }
+
+  private data class DelayedEditorState(val value: String?) : FileEditorState {
+    override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean = false
+  }
+
+  /**
+   * Restores [files] as the project open restores a saved editor layout. The first file is the selected tab.
+   * [entryContent] gives the saved provider states of each file.
+   */
+  private fun createRestoreState(vararg files: VirtualFile, entryContent: (VirtualFile) -> String = { "" }): EditorSplitterState {
+    val adapter = FileIdAdapter.getInstance()
+    ApplicationManager.getApplication().replaceService(FileIdAdapter::class.java, object : FileIdAdapter by adapter {
+      override fun getFile(fileEntry: FileEntry, virtualFileManager: VirtualFileManager, project: Project): VirtualFile? {
+        return files.firstOrNull { it.url == fileEntry.url } ?: adapter.getFile(fileEntry, virtualFileManager, project)
+      }
+    }, disposable)
+    val entries = files.mapIndexed { index, file ->
+      """<file current-in-tab="${index == 0}"><entry file="${file.url}">${entryContent(file)}</entry></file>"""
+    }.joinToString("")
+    return EditorSplitterState(JDOMUtil.load("<component><leaf>$entries</leaf></component>"))
   }
 
   @Test

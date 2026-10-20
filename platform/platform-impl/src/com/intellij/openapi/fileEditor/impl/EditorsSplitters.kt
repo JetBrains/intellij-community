@@ -675,6 +675,13 @@ open class EditorsSplitters internal constructor(
     }
   }
 
+  /** Restores [state] as the project open does, so an unselected tab gets a lazy composite. */
+  @Internal
+  @TestOnly
+  suspend fun createTestEditors(state: EditorSplitterState) {
+    createEditors(state)
+  }
+
   internal suspend fun createEditors(state: EditorSplitterState) {
     if (shouldDelayEmptyStatePresentation(state)) {
       withContext(Dispatchers.EDT) {

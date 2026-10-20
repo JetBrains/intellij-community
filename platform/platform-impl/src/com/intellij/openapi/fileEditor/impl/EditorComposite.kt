@@ -568,14 +568,24 @@ open class EditorComposite internal constructor(
     }
   }
 
+  /**
+   * Reads the state of [provider] that [fileEntry] saved for the file of this composite.
+   *
+   * @return `null` when [fileEntry] has no state for [provider], when the provider fails, or when it reads
+   * [FileEditorState.NO_STATE]. A failure of the provider is logged.
+   */
+  internal fun readSavedEditorState(provider: FileEditorProvider, fileEntry: FileEntry): FileEditorState? {
+    return fileEntry.providers.get(provider.editorTypeId)?.let {
+      computeOrLogException(
+        lambda = { provider.readState(it, project, lazyOf(file)) },
+        errorMessage = { "failed to read editor state" },
+      )
+    }?.takeIf { it !== FileEditorState.NO_STATE }
+  }
+
   private suspend fun getEditorState(provider: FileEditorProvider, state: FileEntry?): FileEditorState? {
     return if (state != null) {
-      state.providers.get(provider.editorTypeId)?.let {
-        computeOrLogException(
-          lambda = { provider.readState(it, project, lazyOf(file)) },
-          errorMessage = { "failed to read editor state" },
-        )
-      }?.takeIf { it !== FileEditorState.NO_STATE }
+      readSavedEditorState(provider, state)
     }
     else {
       // We have to try to get state from the history only in case of the editor is not opened.
