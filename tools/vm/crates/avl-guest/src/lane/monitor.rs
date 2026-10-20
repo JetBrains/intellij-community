@@ -13,7 +13,8 @@
 //! ended the run at the end of the budget, so a run that is still there then waits on something other than the IDE.
 //! The monitor then ends the run itself. It writes the JUnit XML of the records so far, with the open scenario
 //! unfinished and each planned scenario that never ran skipped. It cancels each IDE run that the stream launched and
-//! did not end, and it kills each recorder. It writes the hang report and one line, and the process exits 1. Each
+//! did not end, and it kills each recorder. Under a Bazel test it then keeps the evidence of the run, as
+//! [`super::evidence`] states. It writes the hang report and one line, and the process exits 1. Each
 //! write on the standard error waits a bounded time, so a standard error that blocks cannot hold the hard stop.
 
 use std::collections::HashSet;
@@ -30,6 +31,7 @@ use nix::sys::signal::{Signal, kill};
 use nix::unistd::Pid;
 
 use super::channel::Daemon;
+use super::evidence::{self, Evidence, Kept, Limits, Moment};
 use super::watchdog::RunSnapshot;
 use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
@@ -59,6 +61,8 @@ pub(crate) struct MonitorPaths {
     pub ide_root: PathBuf,
     /// Where the hard stop writes the hang report, when a Bazel test names an outputs directory.
     pub report: Option<PathBuf>,
+    /// The evidence that the hard stop keeps, when a Bazel test names an outputs directory.
+    pub evidence: Option<Evidence>,
 }
 
 /// What the hard stop does to the processes of the run. The live one cancels the IDE runs through the supervisor and
@@ -141,6 +145,8 @@ pub(crate) struct HardStop {
     pub line: String,
     /// The TeamCity build problem of the hard stop, on a TeamCity agent.
     pub build_problem: Option<String>,
+    /// The evidence that the hard stop kept, when a Bazel test names an outputs directory.
+    pub kept: Option<Kept>,
 }
 
 impl<'a> Monitor<'a> {
@@ -253,15 +259,25 @@ impl<'a> Monitor<'a> {
         for pid in &killed_recorders {
             effects.kill_recorder(*pid);
         }
+        // After the cancels, so the thread dumps of the killed IDE runs are in their log directories.
+        let kept = self
+            .paths
+            .evidence
+            .as_ref()
+            .map(|evidence| (evidence, evidence::keep(evidence, &events, Moment::HardStop, Limits::LANE)));
         let snapshot = self.daemon.watch().map(|watch| watch.snapshot()).unwrap_or_default();
         let written = cases.map_or_else(
             || "the run thread writes the JUnit XML".to_owned(),
             |cases| format!("the JUnit XML holds {cases} case(s)"),
         );
+        let evidence = kept
+            .as_ref()
+            .map(|(evidence, kept)| format!("; {}", kept.describe(&evidence.destination)))
+            .unwrap_or_default();
         let line = format!(
             "lane-run: the hard stop ended the run: the lane budget of {budget} and the kill grace of the watchdog \
              passed, and the run thread did not return. {}. {written}; {} IDE run(s) canceled, {} recorder(s) \
-             killed; exit 1",
+             killed{evidence}; exit 1",
             describe_run(&snapshot),
             canceled.len(),
             killed_recorders.len()
@@ -273,6 +289,7 @@ impl<'a> Monitor<'a> {
             killed_recorders,
             line,
             build_problem,
+            kept: kept.map(|(_, kept)| kept),
         }
     }
 }

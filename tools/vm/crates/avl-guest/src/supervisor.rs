@@ -57,6 +57,13 @@ pub(crate) const FINISH_TIMEOUT: Duration = Duration::from_secs(10);
 /// final fsync and rename after its own grace and process-group deadlines expire.
 pub(crate) const CANCEL_HANDOFF_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// The logs of the run `run_id` in the run slot `root`: `run.log`, the standard output and error of its process, and
+/// `supervisor.log`, the log of its supervisor.
+pub(crate) fn run_logs(root: &Path, run_id: &str) -> [PathBuf; 2] {
+    let paths = RunPaths::new(root, run_id);
+    [paths.log, paths.supervisor_log]
+}
+
 /// The processes and the clock the supervisor observes, as one seam, so the reconciler's branches are tested
 /// against a scripted world instead of real processes and real sleeps.
 pub(crate) trait System {

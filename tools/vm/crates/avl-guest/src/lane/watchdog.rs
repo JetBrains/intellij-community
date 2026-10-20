@@ -66,7 +66,7 @@ pub(crate) const KILL_GRACE: Duration = Duration::from_mins(1);
 pub(crate) const SLOW_STEPS_DIR: &str = "slow-steps";
 /// The directory of the screenshots in the log directory of the IDE. With `ide.performance.screenshot=heartbeat` the
 /// IDE writes a set into `<NNN>_heartbeat` there each minute, with one PNG for each window.
-const SCREENSHOTS_DIR: &str = "screenshots";
+pub(crate) const SCREENSHOTS_DIR: &str = "screenshots";
 const MAX_SLUG_CHARS: usize = 40;
 
 /// What the watchdog asks of the IDE. Every answer may be "nothing": a probe never fails a run by itself.

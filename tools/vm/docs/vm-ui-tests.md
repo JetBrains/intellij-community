@@ -700,7 +700,9 @@ left alive.
 deadline, and its end is `run_budget_timeout`. A monitor thread writes a hang report every 3 minutes. One minute
 after the end of the budget, the monitor stops the run hard. It writes the partial JUnit XML, cancels each live IDE
 run with a thread dump, kills each recorder, writes `lane-hang-report.txt` and exits 1. On TeamCity, the end of the
-budget and the hard stop each write a build problem with the identity `lane-run-budget`.
+budget and the hard stop each write a build problem with the identity `lane-run-budget`. Under a Bazel test, the end
+of a run that is not green and the hard stop also keep its evidence in `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR`, as
+the next section states.
 
 **The versioned JSON report is the contract, and the run stream is its one source.** The report, the
 JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
@@ -800,8 +802,18 @@ Normal execution requires neither Peekaboo nor guest Screen Recording or Accessi
 | the thread dump of an IDE that the watchdog or a stop killed | `threadDump-before-kill-<millis>.txt` in that same directory |
 | the standard output and error of one IDE launch, and its supervisor log | `$AIR_VM_DATA/ide/<launchKey>/run-ide-<launchName>/` |
 
-Three properties of those paths are worth stating. Each IDE launch writes its own log directory, so
-iterations never overwrite each other, and `TEST_UNDECLARED_OUTPUTS_DIR` stays empty for that reason.
+Under a Bazel test the same files stay below `TEST_TMPDIR`, which Bazel deletes after the test. So `lane-run` copies
+them into `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR` for a run that is not green, and Bazel keeps them in `test.outputs/`:
+
+| what | where in `lane/` |
+| --- | --- |
+| the log directory of each IDE launch that ran a failed scenario, an expiry or the hard stop: each `idea.log`, the kill dump, the other IDE logs and the heartbeat screenshots | `ide/<launchKey>/<launchName>/` |
+| the standard output and error of the IDE process of each such launch, `run.log`, and its `supervisor.log`. An IDE that dies before its logger starts leaves its reason only there | `ide/<launchKey>/<launchName>/run/` |
+| the slow-step dumps and the authored artifacts | `iterations/<iterationId>/slow-steps/`, `iterations/<iterationId>/authored-artifacts/` |
+| what the copy kept, and each file that its caps of 32 MiB per file and 256 MiB in all cut or left out | `evidence.txt` |
+
+A green run copies nothing. Three properties of the guest paths are worth stating. Each IDE launch writes its own log
+directory, so iterations never overwrite each other.
 The first launch of a context is `start-<stamp>`. Under the lane daemon, a relaunch for `restart-ide` is
 `restart-N` and a relaunch after a reset that did not hold is `recycle-N`. So list the `log` directory rather than
 assuming the path. The guest agent keeps the newest five log directories of each
@@ -848,7 +860,7 @@ that could not be pulled leaves a green run green.
 | launcher | where the bundles land | who cleans up |
 | --- | --- | --- |
 | the lane daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
-| a Bazel test, host `bt.cmd` included | `air-traces/` inside the target's `bazel-testlogs/.../test.outputs/outputs.zip` | Bazel |
+| a Bazel test, host `bt.cmd` included | `air-traces/` in the target's `bazel-testlogs/.../test.outputs/`, with `lane/` beside it for a run that is not green. A local Bazel packs them into `outputs.zip` there, and the TeamCity build keeps them as files in `bazel.logs.zip` | Bazel |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
 `<scenario>.2`. The controller pulls each finished bundle after the test that finished it, so a failed

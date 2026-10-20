@@ -41,7 +41,7 @@ pub(crate) enum CaseStatus {
 }
 
 impl CaseStatus {
-    const fn wire(self) -> &'static str {
+    pub(crate) const fn wire(self) -> &'static str {
         match self {
             Self::Successful => "SUCCESSFUL",
             Self::Failed => "FAILED",

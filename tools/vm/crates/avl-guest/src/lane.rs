@@ -7,6 +7,7 @@
 
 pub(crate) mod channel;
 pub(crate) mod context;
+pub(crate) mod evidence;
 pub(crate) mod host_ids;
 pub(crate) mod ide;
 pub(crate) mod identity;

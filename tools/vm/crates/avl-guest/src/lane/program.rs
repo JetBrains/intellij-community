@@ -119,6 +119,8 @@ const JUNIE_AGENT_ID: &str = "junie";
 const ADOPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
+/// Where the runner moves the artifacts of the authored parts in the directory of an iteration.
+pub(crate) const ITERATION_ARTIFACTS_DIR: &str = "authored-artifacts";
 
 /// The metrics file of a performance body in the artifacts of its part, `AIR_PERFORMANCE_FILE` of the bridge: one JSON
 /// object of numbers, which the body rewrites after each metric.
@@ -1376,7 +1378,7 @@ impl<'r, 's> Runner<'r, 's> {
         }
         let target = self
             .iteration_dir
-            .join("authored-artifacts")
+            .join(ITERATION_ARTIFACTS_DIR)
             .join(&suite)
             .join(&scenario)
             .join(&part);

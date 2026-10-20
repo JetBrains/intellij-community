@@ -1666,6 +1666,34 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_recorder`)
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped`)
 
+- Under a Bazel test, `lane-run` keeps the evidence of a run that is not green in `$TEST_UNDECLARED_OUTPUTS_DIR/lane`,
+  because Bazel deletes `$TEST_TMPDIR`. The run end does it, and the hard stop does it after its cancels. A green run
+  keeps nothing, and the lane daemon of a worker keeps nothing, because the controller pulls its iterations. The copy
+  holds `ide/<launchKey>/<launchName>/`, the log directory of each affected IDE launch. That directory holds each
+  `idea.log`, the thread dump of a kill, the other IDE logs and the heartbeat screenshots. Its `run/` holds `run.log`
+  and `supervisor.log` of the IDE process, also when the log directory is gone. The copy also holds
+  `iterations/<iterationId>/slow-steps/` and `iterations/<iterationId>/authored-artifacts/`.
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_copy_keeps_the_logs_of_the_affected_launches_and_the_files_of_the_iterations`)
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_process_output_is_kept_when_the_log_directory_is_gone`)
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_keeps_the_evidence_of_the_ide_run_that_it_canceled`)
+
+- A launch is affected when it ran during a scenario that did not pass. A launch that runs at a watchdog expiry, a
+  failed class, a failed run or the hard stop is affected too. A failure when no launch runs affects the newest
+  launch. A run that is not green and has no affected launch keeps every launch.
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`a_failed_scenario_affects_each_launch_that_ran_during_it`)
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`an_expiry_a_failed_class_and_the_hard_stop_affect_the_running_launch_or_else_the_newest`)
+
+- The copy takes at most 32 MiB of a file and 256 MiB in all. A log or a text above the cap per file keeps its tail,
+  and any other file above it is left out. The kill dumps go first, then each `idea.log` and the output of each IDE
+  process. The rotated `idea.<n>.log` files follow, the newest first. The slow steps come next, then the other IDE
+  logs, the screenshots newest first, and the authored artifacts last. In each kind, the newest launch comes first.
+  A file that does not fit in what is left of the total is left out. `evidence.txt` names each file that was cut or
+  left out.
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_caps_keep_the_tail_of_a_large_log_and_leave_out_the_files_of_least_worth`)
+
+- When `evidence.txt` cannot be written, the line of the copy names the reason instead of the file.
+  [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`a_manifest_that_cannot_be_written_is_named_in_the_line`)
+
 - On a TeamCity agent, `lane-run` also writes a `buildProblem` with the identity `lane-run-budget` on standard output.
   It does so when the budget ends the run, naming the case and the budget, and at the hard stop, naming its line.
   TeamCity mutes a failed case but not a build problem, so a cut-off run cannot leave the build green.

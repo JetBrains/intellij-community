@@ -330,7 +330,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The lane daemon is a lane of the protocol. Its `hello` names the launcher `daemon` and the root
   `<iterationDir>/air-traces`, and its transcript of a green scenario is held to a golden. Under a Bazel test,
-  `lane-run` names the launcher `bazel` and the root `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`.
+  `lane-run` names the launcher `bazel` and the root `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`. A bundle does
+  not hold the full `idea.log`. That log and the other evidence of a run that is not green go to
+  `$TEST_UNDECLARED_OUTPUTS_DIR/lane`, as [the controller spec](lane-controller.spec.md) states under `lane-run`.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
   [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_bazel_test_roots_the_bundles_in_its_outputs_directory`)
 

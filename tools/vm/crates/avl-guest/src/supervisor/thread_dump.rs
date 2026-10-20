@@ -23,7 +23,7 @@ mod tests;
 /// How long `jcmd` has to write the dump. A JVM that does not answer `jcmd` in this time is the JVM the cancel is for.
 pub(crate) const TIMEOUT: Duration = Duration::from_secs(30);
 /// The start of the file name of a dump. The millisecond of the capture and `.txt` follow it.
-const FILE_PREFIX: &str = "threadDump-before-kill-";
+pub(crate) const FILE_PREFIX: &str = "threadDump-before-kill-";
 
 /// The directory of the dump of `run_id` in the run slot `root`.
 pub(crate) fn directory(root: &Path, run_id: &str) -> PathBuf {

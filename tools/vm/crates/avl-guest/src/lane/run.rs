@@ -5,7 +5,8 @@
 //! `bt --lane` and a TeamCity agent. It reads the runtime descriptor, stores the lane inputs and the context plugins of
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
-//! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green.
+//! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green. Under a Bazel test,
+//! a run that is not green keeps its evidence in the outputs directory of the test, as [`super::evidence`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -25,6 +26,7 @@ use avl_wire::session_log;
 use serde::Serialize;
 
 use super::channel::{self, BOOT_CODE, log};
+use super::evidence::{self, Evidence, Limits, Moment};
 use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
 use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
@@ -59,8 +61,8 @@ const TOTAL_SHARDS_VARIABLE: &str = "TEST_TOTAL_SHARDS";
 const TEST_TIMEOUT_VARIABLE: &str = "TEST_TIMEOUT";
 /// The variable of the outputs directory of a Bazel test, which Bazel keeps after the test.
 const OUTPUTS_VARIABLE: &str = "TEST_UNDECLARED_OUTPUTS_DIR";
-/// What the budget of a run leaves for its end: the kill grace of the watchdog, the hard stop with its JUnit XML and the
-/// cancel of the IDE with a thread dump, and the kill delay of Bazel.
+/// What the budget of a run leaves for its end: the kill grace of the watchdog, the hard stop with its JUnit XML, the
+/// cancel of the IDE with a thread dump and the copy of the evidence, and the kill delay of Bazel.
 pub(crate) const TEARDOWN_RESERVE: Duration = Duration::from_mins(3);
 /// The refusal code of a budget that a run cannot keep.
 pub(crate) const BUDGET_CODE: &str = "lane_run_budget";
@@ -265,6 +267,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
             .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the plan: {error}")))?;
         return Ok(0);
     }
+    let evidence = bazel_outputs(variable).map(|outputs| Evidence::new(&daemon_args.state_dir, &daemon_args.ide_root, &outputs));
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot create {}: {error}", stream_path.display())))?;
@@ -275,6 +278,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
             xml: xml_files(&root, variable),
             ide_root: daemon_args.ide_root,
             report: bazel_outputs(variable).map(|directory| directory.join(monitor::REPORT_FILE)),
+            evidence: evidence.clone(),
         },
         budget,
         budget.map(|budget| started + budget + KILL_GRACE),
@@ -302,10 +306,15 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     }
     let stream = fs::read(&stream_path)
         .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", stream_path.display())))?;
-    if let Some(problem) = budget_problem(&monitor::decode_stream(&stream), budget, variable) {
+    let events = monitor::decode_stream(&stream);
+    if let Some(problem) = budget_problem(&events, budget, variable) {
         println!("{problem}");
     }
     let green = is_green(&stream) && finished.is_ok();
+    if !green && let Some(evidence) = &evidence {
+        let kept = evidence::keep(evidence, &events, Moment::RunEnd, Limits::LANE);
+        log(&kept.describe(&evidence.destination));
+    }
     written?;
     Ok(u8::from(!green))
 }
