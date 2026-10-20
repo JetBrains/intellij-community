@@ -21,6 +21,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.junit5.RunInEdt;
+import com.intellij.testFramework.junit5.StressTestApplication;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -32,16 +34,15 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Cod
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
+@RunInEdt
 @PerformanceUnitTest
+@StressTestApplication
 @TestApplication
 public class EditorMultiCaretPerformanceTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
-
   private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
-
   private EditorModelFixture myFixture;
-
 
   @BeforeEach
   void setUp() {
@@ -49,57 +50,51 @@ public class EditorMultiCaretPerformanceTest {
   }
 
   @Test
-  public void testTyping() {
-    myFixture.runTest(() -> {
-      int caretCount = 1000;
-      int charactersToType = 100;
-      String initialText = StringUtil.repeat("<caret>\n", caretCount);
-      myFixture.initText(initialText);
-      Benchmark.newBenchmark("Typing with large number of carets", () -> {
-        for (int i = 0; i < charactersToType; i++) {
-          myFixture.type('a');
-        }
-      }).warmupIterations(0).attempts(1).start();
-      myFixture.checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
-    });
+  void testTyping() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    String initialText = StringUtil.repeat("<caret>\n", caretCount);
+    myFixture.initText(initialText);
+    Benchmark.newBenchmark("Typing with large number of carets", () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        myFixture.type('a');
+      }
+    }).warmupIterations(0).attempts(1).start();
+    myFixture.checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
   }
 
   @Test
-  public void testTypingWithManyFoldRegions() {
-    myFixture.runTest(() -> {
-      int caretCount = 1000;
-      int charactersToType = 100;
-      String initialText = StringUtil.repeat(" <caret> \n", caretCount);
-      myFixture.initText(initialText);
-      myFixture.getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
-        for (int i = 0; i < caretCount; i++) {
-          Document document = myFixture.getEditor().getDocument();
-          myFixture.addFoldRegion(document.getLineStartOffset(i), document.getLineEndOffset(i), "...");
-        }
-      });
-      Benchmark.newBenchmark("Typing with large number of carets with a lot of fold regions", () -> {
-        for (int i = 0; i < charactersToType; i++) {
-          myFixture.type('a');
-        }
-      }).warmupIterations(0).attempts(1).start();
-      myFixture.checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
+  void testTypingWithManyFoldRegions() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    String initialText = StringUtil.repeat(" <caret> \n", caretCount);
+    myFixture.initText(initialText);
+    myFixture.getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
+      for (int i = 0; i < caretCount; i++) {
+        Document document = myFixture.getEditor().getDocument();
+        myFixture.addFoldRegion(document.getLineStartOffset(i), document.getLineEndOffset(i), "...");
+      }
     });
+    Benchmark.newBenchmark("Typing with large number of carets with a lot of fold regions", () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        myFixture.type('a');
+      }
+    }).warmupIterations(0).attempts(1).start();
+    myFixture.checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
   }
 
   @Test
-  public void testTypingInXml() {
-    myFixture.runTest(() -> {
-      int caretCount = 1000;
-      int charactersToType = 100;
-      String initialText = "<root>\n" + StringUtil.repeat("  <node><caret></node>\n", caretCount) + "</root>";
-      myFixture.init(initialText, StdFileTypes.XML);
-      Benchmark.newBenchmark("Typing in XML with large number of carets", () -> {
-        for (int i = 0; i < charactersToType; i++) {
-          myFixture.type('a');
-        }
-      }).warmupIterations(0).attempts(1).start();
-      myFixture.checkResultByText("<root>\n" + StringUtil.repeat("  <node>" + StringUtil.repeat("a", charactersToType) + "<caret></node>\n", caretCount)
-                        + "</root>");
-    });
+  void testTypingInXml() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    String initialText = "<root>\n" + StringUtil.repeat("  <node><caret></node>\n", caretCount) + "</root>";
+    myFixture.init(initialText, StdFileTypes.XML);
+    Benchmark.newBenchmark("Typing in XML with large number of carets", () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        myFixture.type('a');
+      }
+    }).warmupIterations(0).attempts(1).start();
+    myFixture.checkResultByText("<root>\n" + StringUtil.repeat("  <node>" + StringUtil.repeat("a", charactersToType) + "<caret></node>\n", caretCount)
+                      + "</root>");
   }
 }
