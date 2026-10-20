@@ -48,6 +48,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -97,6 +98,8 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     private fun canUseCoroutinesForDocumentCommit(): Boolean {
       return useBackgroundWriteAction && Registry.`is`("document.async.commit.with.coroutines")
     }
+    private val LOG: Logger = logger<DocumentCommitThread>()
+    private val CANCEL_PREVIOUS_JOB: CancellationException = java.util.concurrent.CancellationException("Previous job canceled")
   }
 
   override fun dispose() {
@@ -175,7 +178,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
     val existingJob = service.publishedDocumentCommitRequests.put(document, job)
     // following the logic of NBRA, we retain only the latest request to commit
-    existingJob?.cancel()
+    existingJob?.cancel(CANCEL_PREVIOUS_JOB)
     job.start()
   }
 
@@ -589,4 +592,3 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
   }
 }
-private val LOG: Logger = logger<DocumentCommitThread>()
