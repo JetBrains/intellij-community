@@ -11,6 +11,7 @@ use avl_trace_tools::viewer::RUNS_ROUTE;
 use avl_wire::progress::{
     Event as Progress, IterationReported, Phase, PhaseChange, PhaseState, Record, RunFinished, RunStarted, TraceReady,
 };
+use notify::event::{CreateKind, EventKind, Flag};
 
 use super::super::journals::STOPPED_AFTER;
 use super::super::service::{
@@ -247,8 +248,10 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
     }
 }
 
-/// A record appended to a running run's journal is announced by the watcher, and the counts it changes reach the
-/// listing.
+/// The platform's watcher alone announces a record appended to a running run's journal, and a run that appears under
+/// the runs directory. The poll is off, so a lost event fails the test. The new run arrives as one directory entry,
+/// its directory moved in with its journal: [a_run_directory_seen_before_its_journal_is_watched] covers the order of
+/// a directory and its journal.
 #[tokio::test(flavor = "multi_thread")]
 async fn run_appended_is_sent_when_a_journal_grows() {
     let scratch = Scratch::default();
@@ -256,8 +259,8 @@ async fn run_appended_is_sent_when_a_journal_grows() {
     let journal = write_journal(&runs_dir, "run-1", &[run_started("run-1", "run", &[])]);
     let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
     settings.runs_dir = Some(runs_dir.clone());
-    // The new run's directory at the end has only the platform's watcher to announce it.
     settings.watch = native_watch();
+    settings.tail_interval = Duration::from_hours(1);
     let served = start_server(settings).await;
     served.list_runs().await;
     let mut events = served.subscribe().await;
@@ -266,7 +269,8 @@ async fn run_appended_is_sent_when_a_journal_grows() {
         &journal,
         journal_line(&trace_ready("iter-1", "one"), jiff::Timestamp::now()).as_bytes(),
     );
-    // The two come in either order: a scan that was due anyway can read the record before the watcher reports it.
+    // The two come in either order: a scan that an earlier event asked for can read the record before the event of
+    // the append arrives.
     let mut seen = BTreeSet::new();
     while seen.len() < 2 {
         let event = events.wait_for(&["run-appended", "runs-changed"]).await;
@@ -275,26 +279,146 @@ async fn run_appended_is_sent_when_a_journal_grows() {
         }
         seen.insert(event.name);
     }
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
-    loop {
-        let runs = served.list_runs().await;
-        if runs["controllerRuns"].as_array().map(Vec::len) == Some(1) && runs["controllerRuns"][0]["traces"] == 1 {
-            break;
-        }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "the listing never counted the trace: {runs}"
-        );
-        tokio::time::sleep(Duration::from_millis(100)).await;
+    // Only the record changes the listing, so `runs-changed` came from the scan that counted the trace.
+    let runs = served.list_runs().await;
+    assert_eq!(
+        (
+            runs["controllerRuns"].as_array().map(Vec::len),
+            &runs["controllerRuns"][0]["traces"]
+        ),
+        (Some(1), &json!(1)),
+        "the listing counts the trace: {runs}"
+    );
+
+    let staged = scratch.dir();
+    write_journal(&staged, "run-2", &[run_started("run-2", "run", &[])]);
+    fs::rename(staged.join("run-2"), runs_dir.join("run-2")).expect("move the run into the runs directory");
+    events.wait_for_run("run-2").await;
+}
+
+/// The settings of a server over one runs directory whose watcher the test drives, with no poll and no periodic
+/// scan: only an event that the test sends can make the server read the runs directory again.
+fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+    let mut settings = test_settings(scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
+    settings.runs_dir = Some(runs_dir.to_path_buf());
+    settings.watch = driven.watch();
+    settings.tail_interval = Duration::from_hours(1);
+    settings
+}
+
+/// The controller creates a run's directory before its journal, so a scan can see the directory alone. The directory
+/// is then watched: the creation of the journal raises an event, and the run is announced.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_run_directory_seen_before_its_journal_is_watched() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let mut events = served.subscribe().await;
+
+    fs::create_dir_all(runs_dir.join("run-2")).expect("create the run's directory");
+    served.scan().await;
+    served.settle().await;
+    let journal = write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::File)).add_path(journal)),
+        "the run's directory without a journal is not watched"
+    );
+    events.wait_for_run("run-2").await;
+}
+
+/// A watcher that dropped events sends a rescan notice, which names no path. The notice starts a scan, and the scan
+/// announces a run whose own event was lost.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let mut events = served.subscribe().await;
+
+    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    assert!(driven.send(notify::Event::new(EventKind::Other).set_flag(Flag::Rescan)));
+    events.wait_for_run("run-2").await;
+}
+
+/// With no file event at all, the poll announces a new run: one whose journal comes with its directory, and one whose
+/// directory a scan saw before its journal.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_new_run_is_announced_without_a_file_event() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
+    settings.runs_dir = Some(runs_dir.clone());
+    let served = start_server(settings).await;
+    let mut events = served.subscribe().await;
+
+    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    events.wait_for_run("run-2").await;
+
+    fs::create_dir_all(runs_dir.join("run-3")).expect("create the run's directory");
+    served.scan().await;
+    served.settle().await;
+    write_journal(&runs_dir, "run-3", &[run_started("run-3", "run", &[])]);
+    events.wait_for_run("run-3").await;
+}
+
+/// A file watcher that the test drives. It keeps the directories that the server watches, and it delivers an event
+/// the way a platform watcher that is not recursive does: only for a path in a watched directory.
+#[derive(Clone, Default)]
+struct DrivenWatch {
+    events: Arc<Mutex<Option<state::WatchEvents>>>,
+    watched: Arc<Mutex<BTreeSet<PathBuf>>>,
+}
+
+impl DrivenWatch {
+    fn watch(&self) -> state::Watch {
+        let driven = self.clone();
+        Arc::new(move |events| {
+            *driven.events.lock().expect("the events lock") = Some(events);
+            Ok(Box::new(DrivenWatcher(Arc::clone(&driven.watched))))
+        })
     }
 
-    // A new run's directory appears under the watched runs directory.
-    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
-    loop {
-        let event = events.wait_for(&["run-appended"]).await;
-        if event.data == r#"{"runId":"run-2"}"# {
-            return;
+    /// Delivers an event and answers true, or answers false when a path of the event is in no watched directory. A
+    /// rescan notice names no path, so it is always delivered.
+    fn send(&self, event: notify::Event) -> bool {
+        let covered = {
+            let watched = self.watched.lock().expect("the watched lock");
+            event
+                .paths
+                .iter()
+                .all(|path| path.parent().is_some_and(|parent| watched.contains(parent)))
+        };
+        if covered {
+            let events = self.events.lock().expect("the events lock");
+            let events = events.as_ref().expect("the server started its watcher");
+            events.send(Ok(event)).expect("the watch loop receives");
         }
+        covered
+    }
+}
+
+/// The watcher that [DrivenWatch] hands to the server.
+struct DrivenWatcher(Arc<Mutex<BTreeSet<PathBuf>>>);
+
+impl notify::Watcher for DrivenWatcher {
+    fn new<F: notify::EventHandler>(_: F, _: notify::Config) -> notify::Result<Self> {
+        Err(notify::Error::generic("a driven watcher is made by its test"))
+    }
+
+    fn watch(&mut self, path: &Path, _: notify::RecursiveMode) -> notify::Result<()> {
+        self.0.lock().expect("the watched lock").insert(path.to_path_buf());
+        Ok(())
+    }
+
+    fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
+        self.0.lock().expect("the watched lock").remove(path);
+        Ok(())
+    }
+
+    fn kind() -> notify::WatcherKind {
+        notify::WatcherKind::NullWatcher
     }
 }
 

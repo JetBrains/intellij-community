@@ -512,10 +512,16 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   `bundle-append` event names its bundle and its file, and carries complete lines only.
   [@test] ../crates/air-trace/src/serve/tests.rs
 
-- `GET /__air/events` sends `run-appended` with `{runId}` when a run's journal grows. The watcher follows the
-  runs directory and the directory of each running run. A record that changes a count also changes the
-  listing, and `runs-changed` follows.
+- `GET /__air/events` sends `run-appended` with `{runId}` when a run's journal grows, and when a new run appears.
+  The watcher follows the runs directory, the directory of each running run, and each run directory without a
+  journal. A record that changes a count also changes the listing, and `runs-changed` follows.
   [@test] ../crates/air-trace/src/serve/tests/service.rs (`run_appended_is_sent_when_a_journal_grows`)
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_run_directory_seen_before_its_journal_is_watched`)
+
+- A file event can come late or not at all. The server reads the runs directory every second, so a new run is
+  announced without its event. A watcher that dropped events sends a rescan notice, and the notice starts a scan.
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_new_run_is_announced_without_a_file_event`)
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_rescan_notice_of_the_watcher_starts_a_scan`)
 
 - `POST /__air/plan` answers the planner's result for `{text}`, or for a dropped file whose bytes are the body
   and whose name is `?fileName=`. It adds the bundles of the server's listing for the scenarios the plan names,

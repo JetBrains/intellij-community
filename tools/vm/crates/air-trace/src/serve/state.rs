@@ -58,7 +58,8 @@ pub(crate) struct Settings {
     /// The scan the watcher runs regardless, for what it cannot see: a watch it had to skip, a staleness that is
     /// only the clock moving.
     pub rescan_interval: Duration,
-    /// How often a running bundle's JSON Lines and the running runs' journals are checked, besides on events.
+    /// How often a running bundle's JSON Lines, the running runs' journals and the runs directory are checked,
+    /// besides on events.
     pub tail_interval: Duration,
     /// Bounds the directories watched; a kqueue or inotify watcher holds a descriptor or a watch for each.
     pub max_watches: usize,
@@ -238,7 +239,7 @@ impl Server {
         for run in &next.controller_runs {
             self.announce_journal(&run.run_id);
         }
-        // The running runs' directories come first, so a cap on the watches never drops them.
+        // The runs' directories come first, so a cap on the watches never drops them.
         let wanted: Vec<PathBuf> = run_watch.into_iter().chain(next.found.watch.iter().cloned()).collect();
         self.request_watches(wanted);
         next
