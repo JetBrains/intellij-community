@@ -40,5 +40,5 @@ air_container_archive(
     name = "air_container_darwin_arm64",
     build_file_content = _AIR_CONTAINER_BUILD_FILE,
     sha256 = "f7459d9f9fd5604259713d44da75f172828103ae3ec377ea2f1e78ccba84ef63",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/container/{v}/container-{v}-darwin-arm64.tar.gz".format(v = AIR_CONTAINER_VERSION),
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/files/p/ij/intellij-build-dependencies/container/{v}/container-{v}-darwin-arm64.tar.gz".format(v = AIR_CONTAINER_VERSION),
 )
