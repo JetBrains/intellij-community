@@ -69,7 +69,7 @@ pub(crate) struct LaunchInputs {
 pub(crate) struct TraceInputs {
     /// The `air-trace-record` binary, or `None` when the descriptor names none or turns the trace off.
     pub recorder: Option<PathBuf>,
-    /// The recorder may read the screen itself, because the display belongs to the lane.
+    /// The recorder may read the screen itself, because the display belongs to the lane or to a TeamCity build.
     pub screen: bool,
     /// The outputs directory of the Bazel test that runs `lane-run`, which Bazel keeps after the test. The bundles then
     /// go to its `air-traces`. `None` keeps them in the directory of each iteration, where the trace pull of the

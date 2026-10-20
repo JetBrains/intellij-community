@@ -212,6 +212,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
     let mut launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
     launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
+    launch_inputs.trace.screen |= build_owns_screen(variable, cfg!(target_os = "linux"));
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
@@ -342,6 +343,13 @@ pub(crate) fn budget_problem(events: &[RunEvent], budget: Option<Duration>, vari
 /// daemon of the worker proves the shared objects of its distribution at its own boot. So a run there pays nothing.
 pub(crate) fn host_probe_applies(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
     linux && !args.plan_only && variable(RUN_SECRETS_VARIABLE).is_none_or(|value| value.trim().is_empty())
+}
+
+/// Whether the recorder may read the screen of a run whose descriptor does not let it: a TeamCity build on Linux with
+/// an X display. A TeamCity agent runs one build at a time, and no person works on its display, so it shows nothing of a
+/// person. A host of a developer is no TeamCity build, so lane-run never reads the screen of a person.
+pub(crate) fn build_owns_screen(variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
+    linux && teamcity::is_team_city(variable) && variable("DISPLAY").is_some_and(|display| !display.trim().is_empty())
 }
 
 /// The X display of the host, `DISPLAY`, refused by name when it is unset, because the lane IDE opens its windows on it.

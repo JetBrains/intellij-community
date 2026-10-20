@@ -197,11 +197,12 @@ pub struct HelloCommand {
     /// Lets the recorder read the screen itself: the X server's root window, and on a Mac the screen ffmpeg
     /// records. Without it the recorder asks the IDE to paint its own windows and records no video.
     ///
-    /// The lane sets it only where the display belongs to the lane, which is the Linux guest's `Xvfb`. Its descriptor
-    /// carries `-Dair.flow.trace.screen=on`, and a direct lane never sets it. A developer's own screen shows
-    /// everything else they have open, and on macOS reading it needs the Screen Recording permission, whose prompt
-    /// can take the keyboard focus from the IDE under test in the middle of a scenario. Evidence must not decide a
-    /// verdict, so neither happens unasked.
+    /// The lane sets it only where the display belongs to the lane or to a build. The descriptor of the Linux guest,
+    /// whose `Xvfb` is the lane's own, carries `-Dair.flow.trace.screen=on`. `lane-run` sets it on a TeamCity build on
+    /// Linux, because no person works on the display of a TeamCity agent. A direct lane on a developer's machine never
+    /// sets it. A developer's own screen shows everything else they have open, and on macOS reading it needs the Screen
+    /// Recording permission, whose prompt can take the keyboard focus from the IDE under test in the middle of a
+    /// scenario. Evidence must not decide a verdict, so neither happens unasked.
     #[serde(default, skip_serializing_if = "is_false")]
     pub screen: bool,
     /// Absent when the lane has no published endpoint yet. The recorder then captures pixels only, and says so in
