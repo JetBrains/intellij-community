@@ -15,7 +15,9 @@ import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import kotlin.reflect.KMutableProperty1
 
 abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
@@ -65,7 +67,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     private val refactoringName get() = KotlinBundle.message("text.inline.0", StringUtil.capitalizeWords(kind, true))
 
     init {
-        myInvokedOnReference = reference != null
+        myInvokedOnReference = reference != null && reference.element.getStrictParentOfType<KtImportDirective>() == null
         title = refactoringName
     }
 

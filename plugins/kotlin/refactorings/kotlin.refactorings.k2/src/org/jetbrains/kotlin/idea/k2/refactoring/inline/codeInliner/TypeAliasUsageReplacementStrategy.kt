@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
-import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -48,9 +47,7 @@ import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageReplacementStrategy {
@@ -138,17 +135,6 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
             return callableReference.replaced(replacement).apply { shortenReferences(this) }
         }
         analyze(usage) {
-            val importDirective = usage.getStrictParentOfType<KtImportDirective>()
-            if (importDirective != null) {
-                val reference = usage.getQualifiedElementSelector()?.mainReference
-                if (reference != null && reference.multiResolve(false).size <= 1) {
-                    importDirective.delete()
-                }
-
-                return null
-            }
-
-
             val psiFactory = KtPsiFactory(typeAlias.project)
 
             val callElement = usage.parent as? KtCallExpression ?: usage
