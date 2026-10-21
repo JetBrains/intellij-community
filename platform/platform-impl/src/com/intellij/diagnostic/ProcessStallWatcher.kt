@@ -73,7 +73,8 @@ internal class ProcessStallWatcher(
 
     if (lateInTickNs >= reportThresholdNs) {
       val lateMs = TimeUnit.NANOSECONDS.toMillis(lateInTickNs)
-      warn("Process stall: the watcher thread woke up $lateMs ms late in the last ${sliceMs * slicesPerTick} ms " +
+      warn("Process stall: the watcher thread woke up $lateMs ms late " +
+           "over the last ${sliceMs * slicesPerTick} ms of requested sleep " +
            "(GC time: $gcDeltaMs ms, system load average: ${systemLoadAverage()})")
     }
   }
