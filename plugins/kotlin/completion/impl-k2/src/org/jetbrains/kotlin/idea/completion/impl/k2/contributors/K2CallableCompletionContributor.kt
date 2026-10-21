@@ -938,10 +938,16 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         if (valueParameters.size > 1) return false
         val firstParameter = valueParameters.firstOrNull()
 
-        // Only overloads of the supported functions that take only compile time types (or none) qualify.
-        val firstParameterCompileTimeType = firstParameter?.let { COMPILE_TIME_TYPES[it.returnType.classId] ?: return false }
+        // Only overloads of the supported functions that take at most one compile-time type can be used.
+        val firstParameterCompileTimeType = firstParameter?.let {
+            // A parameter that is not a compile time type cannot be used compile-time constants.
+            COMPILE_TIME_TYPES[it.returnType.classId] ?: return false
+        }
         val receiverClassId = (containingSymbol as? KaClassSymbol)?.classId ?: receiverType?.classId
         val receiverCompileTimeType = COMPILE_TIME_TYPES[receiverClassId]
+
+        // This function is the Kotlin compiler's internal way of checking whether the callable can be
+        // used in a compile-time constant.
         return canEvalOp(callableId, receiverCompileTimeType, firstParameterCompileTimeType)
     }
 
