@@ -15,42 +15,50 @@ exec '/runtimes/node/bin/node' '/runtimes/pi/it'"'"'s/cli.js' "$@"
     {
       "agentKey": "workflow-source",
       "token": "c2c0b7fae149d0ea913203ff5a4d554d",
-      "terminalLogin": false
+      "terminalLogin": false,
+      "listsSessions": false
     },
     {
       "agentKey": "workflow-source-terminal-login",
       "token": "5aa535600aa063c4ee8dd331a8391772",
-      "terminalLogin": true
+      "terminalLogin": true,
+      "listsSessions": false
     },
     {
       "agentKey": "session-window-first",
       "token": "0eeca33c74a5b4c15e0b4ae9ae6f20df",
-      "terminalLogin": false
+      "terminalLogin": false,
+      "listsSessions": false
     },
     {
       "agentKey": "session-window-first-terminal-login",
       "token": "697bd1424e297a23093938e0e95e0c83",
-      "terminalLogin": true
+      "terminalLogin": true,
+      "listsSessions": false
     },
     {
       "agentKey": "session-window-second",
       "token": "c3a8db0ae6930384905a4e87ee6b365e",
-      "terminalLogin": false
+      "terminalLogin": false,
+      "listsSessions": false
     },
     {
       "agentKey": "session-window-second-terminal-login",
       "token": "6153c9f4c910aca9b9d98b39c618d97e",
-      "terminalLogin": true
+      "terminalLogin": true,
+      "listsSessions": false
     },
     {
       "agentKey": "genui-agent",
       "token": "e384305ce0b052f4813b79999c599509",
-      "terminalLogin": false
+      "terminalLogin": false,
+      "listsSessions": false
     },
     {
       "agentKey": "genui-agent-terminal-login",
       "token": "e70d6c5d7f7308d0cb06ab03affae984",
-      "terminalLogin": true
+      "terminalLogin": true,
+      "listsSessions": false
     }
   ]
 }

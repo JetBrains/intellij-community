@@ -168,6 +168,21 @@ fn a_control_owner_is_stated_exactly_for_a_controlled_agent() {
     assert!(parse(&unknown).unwrap_err().contains("GUEST"));
 }
 
+// The control server in the IDE answers the list of a controlled agent. A deterministic agent has no such answer.
+#[test]
+fn only_a_controlled_agent_lists_sessions() {
+    assert!(!parse(&document()).unwrap().agents[1].lists_sessions);
+    let mut listing = document();
+    listing["agents"][1]["listsSessions"] = json!(true);
+    assert!(parse(&listing).unwrap().agents[1].lists_sessions);
+    let mut deterministic = document();
+    deterministic["agents"][0]["listsSessions"] = json!(true);
+    assert_eq!(
+        parse(&deterministic).unwrap_err(),
+        "the agent 'run' lists sessions, and only a controlled agent lists sessions"
+    );
+}
+
 #[test]
 fn a_document_that_does_not_fit_itself_names_each_mismatch() {
     let mut broken = document();

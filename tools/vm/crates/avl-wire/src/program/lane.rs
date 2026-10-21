@@ -165,6 +165,10 @@ pub struct LaneAgent {
     /// The process that serves the control channel of a controlled agent.
     #[serde(default, deserialize_with = "crate::json::non_null")]
     pub control_owner: Option<ControlOwner>,
+    /// A controlled agent lists the sessions that a body gives it, `listsSessions` of `flowFixtures.ts`. The launch file
+    /// of the control server carries it, so the first `initialize` answer of the agent advertises the list.
+    #[serde(default)]
+    pub lists_sessions: bool,
     /// What a deterministic agent answers.
     #[serde(default, deserialize_with = "crate::json::non_null")]
     pub deterministic: Option<DeterministicAnswer>,
@@ -388,6 +392,11 @@ impl LaneAgent {
         if self.controlled != self.control_owner.is_some() {
             refusals.push(format!(
                 "the agent '{key}' must state a control owner exactly when it is controlled"
+            ));
+        }
+        if self.lists_sessions && !self.controlled {
+            refusals.push(format!(
+                "the agent '{key}' lists sessions, and only a controlled agent lists sessions"
             ));
         }
         let local = self.delivery == Delivery::Local;

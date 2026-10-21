@@ -319,7 +319,14 @@ fn a_second_write_keeps_the_general_settings_and_the_next_start_file_and_drops_a
 
 #[test]
 fn the_files_carry_the_values_of_the_identity() {
-    let (prepared, identity, ports) = written(&document());
+    // One controlled agent lists sessions, so its credential states it, and the one of its terminal sign-in does not.
+    let mut listing = document();
+    listing
+        .agents
+        .iter_mut()
+        .filter(|agent| agent.key == IDE_OWNED_AGENT)
+        .for_each(|agent| agent.lists_sessions = true);
+    let (prepared, identity, ports) = written(&listing);
     let bridge = Path::new(&prepared.paths.config_dir).join(BRIDGE_DIR);
     let read = |name: &str| serde_json::from_str::<Value>(&fs::read_to_string(bridge.join(name)).unwrap()).unwrap();
     assert_eq!(
@@ -339,15 +346,20 @@ fn the_files_carry_the_values_of_the_identity() {
     );
     let control = read(CONTROL_FILE);
     assert_eq!(control["port"], Value::from(identity.control_port()));
-    let expected: Vec<Value> = document()
+    let expected: Vec<Value> = listing
         .agents
         .iter()
         .filter(|agent| agent.controlled)
         .flat_map(|agent| {
             let login = terminal_login_key(&agent.key);
             [
-                serde_json::json!({ "agentKey": agent.key, "token": identity.secret(&agent.key), "terminalLogin": false }),
-                serde_json::json!({ "agentKey": login, "token": identity.secret(&login), "terminalLogin": true }),
+                serde_json::json!({
+                    "agentKey": agent.key,
+                    "token": identity.secret(&agent.key),
+                    "terminalLogin": false,
+                    "listsSessions": agent.key == IDE_OWNED_AGENT,
+                }),
+                serde_json::json!({ "agentKey": login, "token": identity.secret(&login), "terminalLogin": true, "listsSessions": false }),
             ]
         })
         .collect();
@@ -375,6 +387,7 @@ fn document_with_a_cloud_agent() -> LaneDocument {
         display_name: "Cloud".to_owned(),
         controlled: true,
         control_owner: Some(ControlOwner::Ide),
+        lists_sessions: false,
         deterministic: None,
         required_executable: None,
         acp_json: None,

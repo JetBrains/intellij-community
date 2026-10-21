@@ -197,6 +197,8 @@ struct Credential {
     agent_key: String,
     token: String,
     terminal_login: bool,
+    /// The agent lists sessions, [`LaneAgent::lists_sessions`]. A terminal sign-in lists no session.
+    lists_sessions: bool,
 }
 
 /// The inputs of the context files of one lane IDE.
@@ -342,6 +344,7 @@ impl LaneContext<'_> {
                     token: self.identity.secret(&key),
                     agent_key: key,
                     terminal_login,
+                    lists_sessions: agent.lists_sessions && !terminal_login,
                 })
             })
             .collect();
