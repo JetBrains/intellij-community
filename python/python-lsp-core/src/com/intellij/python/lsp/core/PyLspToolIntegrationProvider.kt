@@ -387,7 +387,23 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     if (!stale) return false
 
     thisLogger().info("The workspace folders of ${pyTool.lspServerName} changed. Restarting its clients.")
-    lspClientManager.stopAndRestartClientsIfNeeded(providerClass)
+    // The fresh groups of every Python project that a stopped server served. `startClientsIfNeeded` alone cannot bring
+    // them back: it skips a file that lies under the root of a running server, and a stale server can hold the root of a
+    // nested Python project that now needs a server of its own.
+    val freshDescriptors = readAction {
+      val keyOf = { pyProject: PyProject -> keys.getByModule(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
+      descriptors.asSequence()
+        .flatMap { it.servedProjects }
+        .mapNotNull { stopped -> served.firstOrNull { it.isSamePyProject(stopped) } }
+        .map { pyLspServeGroupOf(it, served, keyOf) }
+        .distinctBy { group -> group.mapTo(HashSet()) { it.residesOnModule } }
+        .map { group -> getDescriptor(group.first()).also(::attach) }
+        .filter { it.hasExecutable() }
+        .toList()
+    }
+    lspClientManager.stopClients(providerClass)
+    freshDescriptors.forEach { lspClientManager.ensureClientStarted(providerClass, it) }
+    lspClientManager.startClientsIfNeeded(providerClass)
     return true
   }
 
