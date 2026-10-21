@@ -1,0 +1,20 @@
+META-INF/LICENSE
+  aalto-xml
+  failureaccess
+  guava
+  oro
+  stax2-api
+META-INF/LICENSE.txt
+  commons-codec
+  commons-compress
+  commons-io
+  commons-lang3
+  jaxen
+META-INF/NOTICE.txt
+  commons-codec
+  commons-compress
+  commons-io
+  commons-lang3
+org/apache/log4j/Level.class
+  //platform/util:util
+  log4j-over-slf4j

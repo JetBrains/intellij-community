@@ -1,6 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_binary", "java_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load(":classpath.bzl", "standalone_classpath")
+load(":classpath.bzl", "standalone_classpath", "standalone_jars")
 
 LAYERS = {
     "platform-api": ("//standalone-analysis/platform-api:standaloneAnalysis-platform", []),
@@ -55,16 +55,49 @@ LAYERS = {
     for layer in LAYERS
 ]
 
+[
+    standalone_jars(
+        name = layer + "_jars",
+        testonly = True,
+        layer = target,
+        lower_layers = lower_layers,
+    )
+    for layer, (target, lower_layers) in LAYERS.items()
+]
+
+[
+    java_test(
+        name = layer + "_duplicates_test",
+        size = "small",
+        args = [
+            "$(rootpath :" + layer + "_jars)",
+            "$(rootpath :" + layer + "-duplicates.txt)",
+        ],
+        data = [
+            ":" + layer + "_jars",
+            layer + "-duplicates.txt",
+        ],
+        main_class = "org.jetbrains.intellij.standalone.StandaloneDuplicatesTestKt",
+        tags = ["community-aggregator"],
+        use_testrunner = False,
+        runtime_deps = [":test_runner"],
+    )
+    for layer in LAYERS
+]
+
 test_suite(
     name = "tests",
-    tests = [layer + "_test" for layer in LAYERS],
+    tests = [layer + "_test" for layer in LAYERS] + [layer + "_duplicates_test" for layer in LAYERS],
     visibility = ["//visibility:public"],
 )
 
 jvm_library(
     name = "test_runner",
     testonly = True,
-    srcs = ["StandaloneClasspathTest.kt"],
+    srcs = [
+        "StandaloneClasspathTest.kt",
+        "StandaloneDuplicatesTest.kt",
+    ],
     deps = ["@lib//:kotlin-stdlib"],
 )
 

@@ -1,0 +1,3 @@
+com/intellij/codeInsight/multiverse/package-info.class
+  //platform/core-api:core
+  //platform/core-impl:core-impl
