@@ -43,6 +43,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import org.intellij.plugins.markdown.publishSpecsAndWait
 import java.awt.Rectangle
 import java.awt.Color
 import java.awt.Font
@@ -108,7 +109,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val editor = myFixture.editor
     editor.scrollingModel.scrollVertically(0)
 
-    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecsAndWait(specs)
 
     assertTrue("The heading must be taller than a line", headingFolds().single().heightInPixels > editor.lineHeight)
     assertEquals(0, editor.scrollingModel.verticalScrollOffset)
@@ -123,7 +124,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     editor.scrollingModel.scrollVertically(editor.visualLineToY(caretLine - 3))
     val caretScreenY = editor.visualLineToY(caretLine) - editor.scrollingModel.verticalScrollOffset
 
-    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecsAndWait(specs)
 
     assertTrue("The heading must be taller than a line", headingFolds().single().heightInPixels > editor.lineHeight)
     assertEquals(caretScreenY, editor.visualLineToY(caretLine) - editor.scrollingModel.verticalScrollOffset)
@@ -250,7 +251,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.doHighlighting()
     waitForCurrentSpecs()
     assertSame(renderer, headingFolds().single().renderer)
-    MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.publishSpecs(stale)
+    MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.publishSpecsAndWait(stale)
     assertSame(renderer, headingFolds().single().renderer)
     assertTrue(MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.hasCurrentSpecs())
   }
@@ -281,7 +282,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       }
     }, testRootDisposable)
 
-    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecsAndWait(specs)
 
     assertTrue("Heading spacers must use batch inlay updates", batchModeStarted)
     assertEmpty(headingFolds())
@@ -1666,7 +1667,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val rule = thematicBreakHighlighters().single()
     val image = imageInlays().single()
 
-    reconciler.publishSpecs(null)
+    reconciler.publishSpecsAndWait(null)
 
     assertEmpty(concealed())
     assertEmpty(checkboxInlays())
@@ -1677,7 +1678,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertFalse(rule.isValid)
     assertFalse(image.isValid)
 
-    reconciler.publishSpecs(specs)
+    reconciler.publishSpecsAndWait(specs)
     assertEquals(4, concealed().size)
     assertEquals(1, checkboxInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
@@ -1699,7 +1700,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val specs = computeLivePreviewSpecs(myFixture.file, editor)
 
     Disposer.dispose(reconciler)
-    reconciler.publishSpecs(specs)
+    reconciler.publishSpecsAndWait(specs)
     reconciler.reconcileNow()
     moveCaretTo(0)
 
@@ -1716,7 +1717,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val diffEditor = EditorFactory.getInstance().createEditor(document, project, myFixture.file.virtualFile, false, EditorKind.DIFF)
     try {
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(diffEditor)!!
-      reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+      reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
       assertEmpty("A diff editor must show the raw source", concealed(diffEditor))
     }
     finally {
@@ -1731,7 +1732,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     try {
       assertFalse(mainEditor.isLivePreviewEnabled())
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(mainEditor)!!
-      reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+      reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
       assertEmpty("A main editor without live preview must show the raw source", concealed(mainEditor))
     }
     finally {
@@ -1774,20 +1775,20 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   fun testSpecsFromAnOlderDocumentAreDeclined() {
-    myFixture.configureByText("test.md", "Some **bold** text")
+    configure("Some **bold** text")
     val editor = myFixture.editor
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
-    val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
+    val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
+    reconciler.publishSpecsAndWait(null)
     val elements = computeLivePreviewSpecs(myFixture.file, editor).elements
     val oldVersion = MarkdownLivePreviewDocumentVersion.capture(editor.document, project)
     (editor.document as DocumentEx).setModificationStamp(editor.document.modificationStamp + 1)
 
-    reconciler.publishSpecs(
+    reconciler.publishSpecsAndWait(
       MarkdownLivePreviewSpecSet(oldVersion, elements)
     )
     assertEmpty("Specs computed from an older document must be declined", concealed())
 
-    reconciler.publishSpecs(
+    reconciler.publishSpecsAndWait(
       MarkdownLivePreviewSpecSet(MarkdownLivePreviewDocumentVersion.capture(editor.document, project), elements)
     )
     assertEquals(listOf("**", "**"), concealed())
@@ -1801,7 +1802,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val specSet = computeLivePreviewSpecs(myFixture.file, editor)
 
     DocumentUtil.executeInBulk(editor.document, true) {
-      reconciler.publishSpecs(specSet)
+      reconciler.publishSpecsAndWait(specSet)
       assertEmpty("A bulk update must delay reconciliation", concealed())
     }
 
@@ -1877,7 +1878,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure(content)
     val editor = myFixture.editor
     val specs = computeLivePreviewSpecs(myFixture.file, editor)
-    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(null)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecsAndWait(null)
     EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
     moveCaretTo(caretOffset)
     assertEmpty(headingFolds())

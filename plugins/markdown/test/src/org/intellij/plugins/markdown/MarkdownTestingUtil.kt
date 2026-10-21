@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -9,6 +10,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.paint.use
 import com.intellij.util.PathUtil
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
@@ -41,4 +46,9 @@ internal object MarkdownTestingUtil {
   }
 
   private fun newGraphics() = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+internal fun MarkdownLivePreviewReconciler.publishSpecsAndWait(specSet: MarkdownLivePreviewSpecSet?) {
+  PlatformTestUtil.waitForFuture(GlobalScope.future { publishSpecs(specSet) })
 }

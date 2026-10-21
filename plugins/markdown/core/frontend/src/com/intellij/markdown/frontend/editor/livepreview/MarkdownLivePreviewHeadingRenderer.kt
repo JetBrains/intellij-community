@@ -49,6 +49,7 @@ import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
+import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import javax.swing.text.AttributeSet
 import javax.swing.text.Element
@@ -176,10 +177,21 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       return foldingModel.addCustomLinesFolding(line, line, painter())
     }
 
+    override fun prepare(): Supplier<Runnable>? {
+      val region = editor.foldingModel.getFoldRegion(range.startOffset, range.endOffset)
+      if (region != null && isSame(region)) return null
+      val look = look()
+      val width = wrapWidth(editor)
+      return Supplier<Runnable> {
+        val headingPainter = HeadingPainter(editor, look, width)
+        Runnable { painter = headingPainter }
+      }
+    }
+
     /** The painter for the current look. A reveal and a refold in one presentation reuse it. */
     fun painter(): HeadingPainter {
       val look = look()
-      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look).also { painter = it }
+      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor)).also { painter = it }
     }
 
     /** The look of the JCEF preview: bold, the default foreground, and the info foreground for h6. */
@@ -205,13 +217,17 @@ private data class HeadingLook(
   val highlightBackground: Color?,
 )
 
-/** Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width. */
-private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook) : CustomFoldRegionRenderer {
+/**
+ * Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width.
+ * The constructor lays out the pane at [width]. It needs no EDT, so a background thread can create the painter.
+ */
+private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer {
   private val pane = createPane()
-  private var laidOut = false
   private var layoutWidth: Int? = null
 
-  fun needsLayout(): Boolean = !laidOut || layoutWidth != wrapWidth(editor)
+  init { layout(width) }
+
+  fun needsLayout(): Boolean = layoutWidth != wrapWidth(editor)
 
   fun height(): Int = maxOf(editor.lineHeight, layout().height)
 
@@ -260,15 +276,15 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
   }
 
   private fun layout(): Dimension {
-    if (needsLayout()) {
-      val width = wrapWidth(editor)
-      pane.setSize(width ?: 10_000_000, 10_000_000)
-      val preferred = pane.preferredSize
-      pane.setSize(width ?: preferred.width.coerceAtLeast(1), preferred.height)
-      layoutWidth = width
-      laidOut = true
-    }
+    if (needsLayout()) layout(wrapWidth(editor))
     return pane.size
+  }
+
+  private fun layout(width: Int?) {
+    pane.setSize(width ?: 10_000_000, 10_000_000)
+    val preferred = pane.preferredSize
+    pane.setSize(width ?: preferred.width.coerceAtLeast(1), preferred.height)
+    layoutWidth = width
   }
 
   private fun paneY(regionHeight: Int): Int = ((regionHeight - pane.height) / 2).coerceAtLeast(0)

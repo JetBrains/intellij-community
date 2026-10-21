@@ -18,6 +18,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 @Suppress("MarkdownIncorrectTableFormatting")
@@ -87,7 +88,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     myFixture.editor.caretModel.moveToOffset(content.length)
 
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
-    reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+    reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
     val bar = requireNotNull(getInlay())
     paintInlay(bar)
     val hiddenWidth = bar.widthInPixels

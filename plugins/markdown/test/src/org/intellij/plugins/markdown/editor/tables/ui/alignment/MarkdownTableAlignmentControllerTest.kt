@@ -10,6 +10,7 @@ import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
+import org.intellij.plugins.markdown.publishSpecsAndWait
 
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() {
@@ -57,7 +58,7 @@ class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() 
     editor.caretModel.moveToOffset(content.length)
 
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(editor))
-    reconciler.publishSpecs(computeLivePreviewSpecs(file, editor))
+    reconciler.publishSpecsAndWait(computeLivePreviewSpecs(file, editor))
     awaitPads()
     assertBordersAligned()
 
