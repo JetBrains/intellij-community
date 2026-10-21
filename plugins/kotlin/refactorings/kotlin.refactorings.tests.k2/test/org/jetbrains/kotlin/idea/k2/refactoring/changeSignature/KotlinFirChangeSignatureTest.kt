@@ -401,4 +401,17 @@ class KotlinFirChangeSignatureTest :
     fun testCallableReferenceRenameParameter() = doTest {
         newParameters[0].name = "renamed"
     }
+
+    fun testCallableReferenceRenameFunction() = doTest {
+        newName = "renamed"
+    }
+
+    fun testCallableReferenceRenameFunctionQualified() = doTest {
+        newName = "renamed"
+    }
+
+    fun testCallableReferenceRenameFunctionBoundReceiver() = doTest {
+        newName = "renamed"
+    }
+
 }
