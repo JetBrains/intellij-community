@@ -274,6 +274,7 @@ internal class SnapshotFoldingRegionStorage(
   private fun invalidateDuplicate(region: SnapshotFoldRegion) {
     rootStore.updateRoot(currentSnapshot()) { it.remove(region.id) }
     if (regionsById.remove(region.id, region)) {
+      region.markDisposed()
       model.snapshotFoldRegionInvalidated(region)
     }
   }
@@ -286,6 +287,7 @@ internal class SnapshotFoldingRegionStorage(
       val markerId = markerIds.getLong(index)
       val region = regionsById.get(markerId) ?: continue
       if (regionsById.remove(markerId, region)) {
+        region.markDisposed()
         model.snapshotFoldRegionInvalidated(region)
       }
     }

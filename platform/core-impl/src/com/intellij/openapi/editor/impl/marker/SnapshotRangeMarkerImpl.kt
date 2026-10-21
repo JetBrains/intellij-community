@@ -57,10 +57,9 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var disposalState: Int = ACTIVE
 
-  internal val disposed: Boolean
-    get() = disposalState == DISPOSED
+  fun isDisposed(): Boolean = disposalState == DISPOSED
 
-  internal fun markDisposed() {
+  fun markDisposed() {
     disposalState = DISPOSED
   }
 
@@ -90,7 +89,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   override fun getTextRange(): TextRange = currentResolution()
 
   override fun isValid(): Boolean {
-    return !disposed && isValidResolution(currentResolution()) && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
+    return !isDisposed() && isValidResolution(currentResolution()) && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
   }
 
   protected open fun isValidResolution(resolution: PMarkerResolution): Boolean = resolution.isValid
@@ -138,13 +137,13 @@ open class SnapshotRangeMarkerImpl private constructor(
    */
   private fun updateSpec(transform: (MarkerSpec) -> MarkerSpec) {
     synchronized(this) {
-      if (disposed) return
+      if (isDisposed()) return
 
       val oldSpec = spec
       val newSpec = transform(oldSpec)
       if (newSpec == oldSpec) return
 
-      if (!updateCurrentRoot { root -> if (disposed) root else root.updateSpec(markerId, newSpec) }) return
+      if (!updateCurrentRoot { root -> if (isDisposed()) root else root.updateSpec(markerId, newSpec) }) return
       spec = newSpec
     }
   }
@@ -168,7 +167,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     if (cached != null && cached.cacheIdentity === cacheIdentity) {
       return cached.resolution
     }
-    val advanced = if (cached != null && !disposed) {
+    val advanced = if (cached != null && !isDisposed()) {
       (root as? PMarkerRootImpl)?.advanceResolution(cached.cacheIdentity, cached.resolution)
     }
     else {
@@ -188,7 +187,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   fun currentRootReference(): AtomicReference<PMarkerRoot> = rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
-                                    (if (disposed) ", disposed" else "") +
+                                    (if (isDisposed()) ", disposed" else "") +
                                     ")"
 
   private companion object {

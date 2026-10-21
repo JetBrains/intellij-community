@@ -125,7 +125,7 @@ abstract class FoldRegionsCache {
     List<FoldRegion> topLevel = new ArrayList<>(visibleRegions.length/2);
 
     for (FoldRegion region : visibleRegions) {
-      if (!region.isValid()) {
+      if (((FoldRegionMarker)region).isDisposed()) {
         if (fromRebuild) {
           throw new RuntimeExceptionWithAttachments("FoldRegionsTree.rebuild() failed",
                                                     new Attachment("visibleRegions.txt", Arrays.toString(visibleRegions)));

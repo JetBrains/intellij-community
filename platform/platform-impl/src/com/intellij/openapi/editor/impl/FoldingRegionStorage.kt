@@ -20,6 +20,8 @@ interface FoldRegionMarker : FoldRegion, RangeMarkerEx {
 
   fun markDocumentRegionChanged()
 
+  fun isDisposed(): Boolean
+
   fun resetDocumentRegionChanged()
 }
 

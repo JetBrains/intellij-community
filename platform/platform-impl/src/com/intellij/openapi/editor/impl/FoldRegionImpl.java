@@ -220,4 +220,9 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegionMarker 
     return "FoldRegion " + (myIsExpanded ? "-" : "+") + "(" + getStartOffset() + ":" + getEndOffset() + ")"
            + (isValid() ? "" : "(invalid)") + ", placeholder='" + myPlaceholderText + "'";
   }
+
+  @Override
+  public boolean isDisposed() {
+    return !isValid();
+  }
 }

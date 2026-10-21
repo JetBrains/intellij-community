@@ -235,7 +235,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
         markerIds.add(entry.markerId)
         return true
       }
-      return marker.disposed || processor.process(marker)
+      return marker.isDisposed() || processor.process(marker)
     }
 
     override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean = process(entry)
@@ -249,7 +249,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   @ApiStatus.Internal
   fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): PMarkerResolution {
     val resolution = root.resolve(marker.markerId, marker.initialRange)
-    return if (marker.disposed) {
+    return if (marker.isDisposed()) {
       PMarkerResolution.Invalid(DISPOSED_REASON, resolution.startOffset, resolution.endOffset)
     }
     else {
