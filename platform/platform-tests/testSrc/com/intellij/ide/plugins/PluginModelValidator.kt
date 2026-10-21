@@ -99,6 +99,12 @@ data class PluginValidationOptions(
   val extensionsToIgnore: Map<String, Set<String>> = emptyMap(),
 
   /**
+   * Existing descriptors with a `package` attribute, grouped by JPS module name.
+   * The paths are relative to the project home. Remove an entry when you remove its attribute.
+   */
+  val existingPackageAttributes: Map<String, Set<String>> = emptyMap(),
+
+  /**
    * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
    * to be registered as `open`.
    */
@@ -182,7 +188,7 @@ class PluginValidationResult internal constructor(
 }
 
 /**
- * Performs checks of plugin and module descriptors in the source code of [project].
+ * Checks plugin and module descriptors in [sourceCodeBasedPluginModel].
  * The checks don't depend on the layout of plugins and don't require all modules to be compiled.
  * There is [com.intellij.platform.buildScripts.testFramework.pluginModel.PluginDependenciesValidator] which checks dependencies of plugin
  * modules.
@@ -203,6 +209,7 @@ internal class PluginModelValidator(
   }
 
   suspend fun validate(): PluginValidationResult {
+    checkPackageAttributes()
     val descriptorFileInfos = sourceCodeBasedPluginModel.descriptorFileInfos
     val moduleNameToInfo = sourceCodeBasedPluginModel.moduleNameToInfo
     val allMainModulesOfPlugins = sourceCodeBasedPluginModel.allMainModulesOfPlugins
@@ -355,6 +362,32 @@ internal class PluginModelValidator(
     }
 
     return PluginValidationResult(_errors, pluginIdToInfo)
+  }
+
+  private suspend fun checkPackageAttributes() {
+    val descriptorsWithPackageAttribute = HashMap<String, MutableSet<String>>()
+    for (descriptorFileInfo in sourceCodeBasedPluginModel.descriptorFileInfos) {
+      currentCoroutineContext().ensureActive()
+      if (descriptorFileInfo.inTests || descriptorFileInfo.descriptor.`package` == null) continue
+      val module = descriptorFileInfo.sourceModule
+      val path = projectHomePath.relativize(descriptorFileInfo.descriptorFile).invariantSeparatorsPathString
+      descriptorsWithPackageAttribute.getOrPut(module.name) { HashSet() }.add(path)
+      val existing = validationOptions.existingPackageAttributes[module.name].orEmpty()
+      if (path !in existing) {
+        reportError(
+          "New 'package' attribute usages are forbidden in plugin and module descriptors. " +
+          "Remove the 'package' attribute so the module gets packed into a separate jar and its classes are loaded only by this module " +
+          "(additional changes may be required if the plugin has custom build logic, ask in #ij-plugin-model if you need help).",
+          module,
+          mapOf("descriptorFile" to descriptorFileInfo.descriptorFile),
+        )
+      }
+    }
+    for ((moduleName, existing) in validationOptions.existingPackageAttributes) {
+      for (path in existing - descriptorsWithPackageAttribute[moduleName].orEmpty()) {
+        println("Obsolete entry for module $moduleName in existingPackageAttributes: $path")
+      }
+    }
   }
 
   /**

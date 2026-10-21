@@ -52,6 +52,7 @@ sealed interface DescriptorFileInfo {
   val sourceModule: JpsModule
   val descriptorFile: Path
   val descriptor: RawPluginDescriptor
+  val inTests: Boolean
 }
 
 internal data class ContentModuleDescriptorFileInfo(
@@ -59,13 +60,14 @@ internal data class ContentModuleDescriptorFileInfo(
   override val sourceModule: JpsModule,
   override val descriptorFile: Path,
   override val descriptor: RawPluginDescriptor,
+  override val inTests: Boolean,
 ) : DescriptorFileInfo
 
 internal data class PluginDescriptorFileInfo(
   override val sourceModule: JpsModule,
   override val descriptorFile: Path,
   override val descriptor: RawPluginDescriptor,
-  val inTests: Boolean,
+  override val inTests: Boolean,
 ) : DescriptorFileInfo
 
 data class SourceCodeBasedPluginModelBuilderError(
@@ -248,7 +250,7 @@ class SourceCodeBasedPluginModelBuilder(
       pluginIdToInfo,
       pluginAliases,
       contentModuleDescriptorsIncludedViaXiInclude,
-      errors
+      errors,
     )
   }
 
@@ -314,6 +316,7 @@ class SourceCodeBasedPluginModelBuilder(
             sourceModule = module,
             descriptorFile = moduleDescriptorFile,
             descriptor = descriptor,
+            inTests = sourceRoot.rootType.isForTests,
           )
         }
     }

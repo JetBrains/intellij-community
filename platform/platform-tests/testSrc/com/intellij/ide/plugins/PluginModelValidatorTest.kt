@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.ClassRule
@@ -28,6 +28,14 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val testSnapshotDir = Path.of(getCommunityPath(), "platform/platform-tests/testSnapshots/plugin-validator")
 
 private const val TEST_PLUGIN_ID = "plugin"
+
+private val testExistingPackageAttributes = mapOf(
+  "intellij.dependency" to setOf("dependency/META-INF/plugin.xml"),
+  "intellij.dependent" to setOf("dependent/META-INF/plugin.xml"),
+  "intellij.plugin" to setOf("plugin/META-INF/plugin.xml"),
+  "intellij.plugin.module" to setOf("intellij.plugin.module/intellij.plugin.module.xml"),
+  "intellij.angularJs" to setOf("intellij.angularJs/intellij.angularJs.diagram.xml"),
+)
 
 @TestDataPath($$"$CONTENT_ROOT/testSnapshots/plugin-validator")
 class PluginModelValidatorTest {
@@ -142,7 +150,9 @@ class PluginModelValidatorTest {
     assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-java.xml"))).isTrue()
   }
 
-  private suspend fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(project, root)
+  private suspend fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(
+    project, root, PluginValidationOptions(existingPackageAttributes = testExistingPackageAttributes),
+  )
 
   private fun producePluginWithContentModuleInTheSameSourceModule(): JpsProject {
     val project = JpsElementFactory.getInstance().createModel().project
@@ -179,6 +189,7 @@ class PluginModelValidatorTest {
       it.replace("</dependencies>", "</dependencies><depends>com.intellij.modules.lang</depends>")
     }
     val result = validatePluginModel(project, root, PluginValidationOptions(
+      existingPackageAttributes = testExistingPackageAttributes,
       referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
     ))
     assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
@@ -204,6 +215,7 @@ class PluginModelValidatorTest {
       """)
     }
     val result = validatePluginModel(project, root, PluginValidationOptions(
+      existingPackageAttributes = testExistingPackageAttributes,
       referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
     ))
     val messages = result.errors.map { it.message!!.lineSequence().first() }
@@ -293,7 +305,7 @@ private fun createModuleWithXml(
 ) {
   writeIdeaPluginXml(file = sourceRoot.resolve("$path.xml"), content = content, mutator = mutator)
   val module = project.addModule(name, JpsJavaModuleType.INSTANCE)
-  module.addSourceRoot(JpsPathUtil.pathToUrl(sourceRoot.invariantSeparatorsPathString), JavaSourceRootType.SOURCE)
+  module.addSourceRoot(JpsPathUtil.pathToUrl(sourceRoot.invariantSeparatorsPathString), JavaResourceRootType.RESOURCE)
 }
 
 private fun PluginValidationResult.errorsAsString(): CharSequence {

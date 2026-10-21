@@ -54,6 +54,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.additionalLibraryRootsProvider" to existingAdditionalLibraryRootsProvidersInCommunity,
     "com.intellij.directoryIndexExcludePolicy" to existingDirectoryIndexExcludePoliciesInCommunity,
   ),
+  existingPackageAttributes = existingPackageAttributesInCommunity,
 )
 
 class CommunityPluginModelTest {
