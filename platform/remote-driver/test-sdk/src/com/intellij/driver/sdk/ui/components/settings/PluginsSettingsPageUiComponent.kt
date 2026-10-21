@@ -20,6 +20,7 @@ import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextComponentUI
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
@@ -49,6 +50,7 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.JToggleButton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -146,6 +148,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     return this
   }
 
+  fun Finder.openFilteringPopup(): PluginsFilteringPopup {
+    step("Open filtering popup") {
+      unifiedFilterButton.click()
+    }
+    return driver.ui.filteringPopup().waitFound()
+  }
+
   fun openGearSettingsPopup(): GearSettingsPopup {
     step("Click on Gear icon and open settings popup") {
       gearButton.click()
@@ -181,6 +190,15 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     return this
   }
 
+  //don't use real typing (real typing is check in PluginsSearchUiTest.kt)
+  fun searchFor(searchText: String): PluginsSettingsPageUiComponent {
+    step("Search for '$searchText'") {
+      searchPluginTextField.click()
+      searchPluginTextField.text = searchText
+    }
+    return this
+  }
+
   @Suppress("OPT_IN_USAGE")
   fun clearPluginsSearchField(): PluginsSettingsPageUiComponent {
     step("Click on 'Clear all' button") {
@@ -205,6 +223,32 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
 
   fun unifiedSortButton(sortOption: String): JButtonUiComponent =
     button("Unified Plugins sort button") { byAccessibleName("Sort Marketplace results: $sortOption") }
+
+  fun unifiedSortButton(sort: PluginsSort): JButtonUiComponent =
+    button("Unified Plugins sort button") { byAccessibleName("Sort Marketplace results: ${sort.title}") }
+
+  fun openSortingPopup(currentSort: PluginsSort): PluginsSortingPopup {
+    step("Open sorting popup") {
+      unifiedSortButton(currentSort).click()
+    }
+    return driver.ui.sortingPopup().waitFound()
+  }
+
+  fun selectUnifiedFilter(filter: PluginsFilter): PluginsSettingsPageUiComponent {
+    check(isUnifiedPage) { "Search filters are unavailable on the legacy Plugins page" }
+    step("Select '${filter.title}' in the Plugins filter popup") {
+      openFilteringPopup().clickFilter(filter).close()
+    }
+    return this
+  }
+
+  fun selectUnifiedSort(currentSort: PluginsSort, newSort: PluginsSort): PluginsSettingsPageUiComponent {
+    check(isUnifiedPage) { "Marketplace sorting is unavailable on the legacy Plugins page" }
+    step("Change Marketplace sorting from '${currentSort.title}' to '${newSort.title}'") {
+      openSortingPopup(currentSort).changeSort(newSort)
+    }
+    return this
+  }
 
   fun selectUnifiedFilter(filter: String): PluginsSettingsPageUiComponent {
     check(isUnifiedPage) { "Unified search filters are unavailable on the legacy Plugins page" }
@@ -298,6 +342,94 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     action: ListPluginComponent.() -> Unit = {},
   ): ListPluginComponent = getPluginFromUnifiedSection("Marketplace", pluginName, action)
 
+  fun getSection(sectionName: PluginsSections): UnifiedPluginsSectionUiComponent =
+    x(UnifiedPluginsSectionUiComponent::class.java, readableName = "'$sectionName' plugins section") {
+      and(byType(JLabel::class.java), byAccessibleName(sectionName.title))
+    }
+
+  /**
+   * Returns the row of the plugin in the section
+   * The row is not pinned to one component instance. Each search finds the row again,
+   * so the row still works after a state change.
+   */
+  private fun pluginRowInSection(
+    sectionTitle: String,
+    pluginName: String,
+    timeout: Duration?,
+    action: ListPluginComponent.() -> Unit,
+  ): ListPluginComponent {
+    val row = x(
+      xQuery { and(byType(JPanel::class.java), byAccessibleName(sectionTitle)) } +
+      xQuery { and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName)) },
+      ListPluginComponent::class.java,
+      readableName = "Plugin '$pluginName' in the '$sectionTitle' section",
+    )
+    if (timeout != null) {
+      step("Wait for plugin '$pluginName' in the '$sectionTitle' section") {
+        row.waitFound(timeout)
+      }
+    }
+    return row.apply(action)
+  }
+
+  /**
+   * Returns the row of the plugin in the certain section.
+   * @param timeout the time to wait for the row.
+   * Pass a value to wait now, and to wait longer. Use it after a slow action, such as an installation.
+   */
+  fun getPluginFromSection(
+    section: PluginsSections,
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = pluginRowInSection(section.title, pluginName, timeout, action)
+
+  //use pluginRowInSection directly bc every custom section has url in the title
+  fun getPluginFromCustomRepositorySection(
+    repositoryUrl: String,
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = pluginRowInSection(repositoryUrl, pluginName, timeout, action)
+
+  fun getInstalledPluginFromSection(
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromSection(PluginsSections.INSTALLED, pluginName, timeout, action)
+
+  fun getBundledPluginFromSection(
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromSection(PluginsSections.BUNDLED, pluginName, timeout, action)
+
+  fun getSuggestedPluginFromSection(
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromSection(PluginsSections.SUGGESTED, pluginName, timeout, action)
+
+  fun getMarketplacePluginFromSection(
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromSection(PluginsSections.MARKETPLACE, pluginName, timeout, action)
+
+  //I hope we'll remove this section in the future
+  fun getInstallingPluginFromSection(
+    pluginName: String,
+    timeout: Duration? = null,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent = getPluginFromSection(PluginsSections.INSTALLING, pluginName, timeout, action)
+
+  fun getAllPluginsFromSection(sectionName: PluginsSections): List<ListPluginComponent> =
+    xx(
+      "//[@javaclass='javax.swing.JPanel' and @accessiblename='${sectionName.title}']" +
+      "//[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']",
+      ListPluginComponent::class.java
+    ).list()
+
   fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java, readableName = "Plugin '$pluginName' in a list") {
       and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
@@ -305,6 +437,9 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
 
   fun isPluginPresentInList(pluginName: String): Boolean =
     getPluginFromList(pluginName).present()
+
+  fun isPluginPresentInInstalled(pluginName: String): Boolean =
+    getInstalledPluginFromSection(pluginName).present()
 
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java, "Plugins description page") { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
@@ -349,10 +484,12 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         (byType(JCheckBox::class.java) or byType("com.intellij.ui.components.OnOffButton")) and
           byAccessibleName("Enabled")
       }
+    val enabledToggler: JCheckBoxUi = checkBox("State toggler") { and(byType(JToggleButton::class.java), byAccessibleName("Enabled")) }
     val ultimateTagLabel: UiComponent = x("'Ultimate'/'Pro' label") {
       (byType("com.intellij.ide.plugins.newui.TagComponent") or byType("com.intellij.ide.plugins.newui.LinkComponent")) and
         (byAccessibleName("Ultimate") or byAccessibleName("Pro"))
     }
+    val proTagLabel: UiComponent = x("'Pro' label") { and(byType("com.intellij.ui.components.labels.LinkLabel"), byAccessibleName("Pro")) }
     val errorNotice: JTextComponentUI = textComponent("Error notice") { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val unknownUpdateSourceWarning: UiComponent = x("Unknown update source warning") { byType("com.intellij.ui.components.JBTextArea") }
     val updatePluginButton: UiComponent = x("Update button") { byAccessibleName("Update") }
@@ -501,6 +638,10 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val optionButton: OptionButtonUiComponent = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
     val installButton: UiComponent = x("Install button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
     val installOptionButton: UiComponent = x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
+    val uninstalledOptionButton: UiComponent = x("Uninstalled btn in plugin description") {
+      and(byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton"),
+          byAccessibleName("Uninstalled"))
+    }
     val restartButtonDesc: UiComponent = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
     val uninstallButton: UiComponent = x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
     val installedButton: UiComponent = x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
@@ -562,6 +703,14 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
           and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName(name))
         } ?: swingTabs.tab(name)
       }
+    }
+
+    fun installPlugin(): PluginDetailsPage {
+      step("Click on 'Install' button in the plugin description") {
+        installOptionButton.click()
+      }
+      waitLoaded(20.seconds)
+      return this
     }
 
     fun updatePlugin(): PluginDetailsPage {
@@ -642,6 +791,77 @@ fun PluginsSettingsPageUiComponent.installationErrorDialog(action: DialogUiCompo
   x(DialogUiComponent::class.java, readableName = "Installation error dialog") {
     contains(byAccessibleName("download or installation failed"))
   }.apply(action)
+
+enum class PluginsSections(val title: String) {
+  SUGGESTED("Suggested"),
+  BUNDLED("Bundled"),
+  MARKETPLACE("Marketplace"),
+  INSTALLED("Installed"),
+  INSTALLING("Installing")
+}
+
+enum class PluginsFilter(val title: String, val query: String) {
+  UPDATE_AVAILABLE("Update available", "/outdated"),
+  ENABLED("Enabled", "/enabled"),
+  DISABLED("Disabled", "/disabled"),
+  INVALID("Invalid", "/invalid"),
+  UPDATED_BUNDLED("Updated bundled", "/updatedBundled"),
+}
+
+//this popup is a separate component, not a part of settings window
+fun Finder.filteringPopup(action: PluginsFilteringPopup.() -> Unit = {}): PluginsFilteringPopup =
+  x(PluginsFilteringPopup::class.java, readableName = "Plugin filtering popup") {
+    componentWithChild(byClass("HeavyWeightWindow"), byType(JList::class.java))
+  }.apply(action)
+
+class PluginsFilteringPopup(data: ComponentData) : PopupUiComponent(data) {
+  val actions: JListUiComponent = list()
+
+  fun clickFilter(filter: PluginsFilter): PluginsFilteringPopup {
+    step("Click filter ${filter.title}") {
+      actions.clickItem(filter.title)
+    }
+    return this
+  }
+}
+
+//this popup is a separate component, not a part of settings window
+fun Finder.sortingPopup(action: PluginsSortingPopup.() -> Unit = {}): PluginsSortingPopup =
+  x(PluginsSortingPopup::class.java, readableName = "Plugins sorting popup") {
+    componentWithChild(byClass("HeavyWeightWindow"), byType(JList::class.java))
+  }.apply(action)
+
+
+enum class PluginsSort(val title: String, val query: String) {
+  RELEVANCE("Relevance", ""),
+  DOWNLOADS("Downloads", "/sortBy:downloads"),
+  NAME("Name", "/sortBy:name"),
+  UPDATED("Updated", "/sortBy:updated")
+}
+
+class PluginsSortingPopup(data: ComponentData) : PopupUiComponent(data) {
+  val actions: JListUiComponent = list()
+
+  /** Returns the index in the popup, or fails if the popup does not show it. */
+  fun indexOf(sort: PluginsSort): Int {
+    val index = actions.rawItems.indexOf(sort.title)
+    check(index >= 0) { "Sort action '${sort.title}' not found; available actions: ${actions.rawItems}" }
+    return index
+  }
+
+  fun clickOnSort(sort: PluginsSort): PluginsSortingPopup {
+    val index = indexOf(sort)
+    step("Click the '${sort.title}' sort item at index $index") {
+      actions.clickItemAtIndex(index)
+    }
+    return this
+  }
+
+  fun changeSort(newSort: PluginsSort) {
+    actions.clickItemAtIndex(indexOf(newSort))
+    close()
+  }
+}
 
 
 //this dialog is a separate component, not a part of settings window

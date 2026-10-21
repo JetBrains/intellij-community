@@ -4,8 +4,8 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.OnDispatcher
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun Driver.getPlugin(id: String): PluginDescriptor? {
   return utility<PluginManagerCore>().getPlugin(utility(PluginId::class).getId(id))
@@ -79,6 +79,26 @@ fun Driver.getPluginHomepageUrl(pluginId: String): String? =
 @Remote("com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService")
 interface MarketplaceCustomizationService {
   fun getPluginHomepageUrl(pluginId: PluginId): String?
+}
+
+fun Driver.getCustomPluginRepositoryHosts(): List<String> = utility<RepositoryHelper>().getCustomPluginRepositoryHosts()
+
+@Remote("com.intellij.ide.plugins.RepositoryHelper")
+interface RepositoryHelper {
+  fun getCustomPluginRepositoryHosts(): List<String>
+}
+
+fun Driver.recalculatePluginUpdates() {
+  service(PluginUpdatesService::class).recalculateUpdates()
+}
+
+fun Driver.hasPluginUpdate(id: String): Boolean =
+  utility<PluginUpdatesService>().isNeedUpdate(utility<PluginId>().getId(id))
+
+@Remote("com.intellij.ide.plugins.newui.PluginUpdatesService")
+interface PluginUpdatesService {
+  fun recalculateUpdates()
+  fun isNeedUpdate(pluginId: PluginId): Boolean
 }
 
 @Remote("com.intellij.ide.plugins.CountIcon")
