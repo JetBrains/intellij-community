@@ -20,12 +20,14 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentFo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.prepareMultiDollarConversionInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.simplifyDollarEntries
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 class CanConvertToMultiDollarStringInspection :
-    KotlinApplicableInspectionBase.Simple<KtStringTemplateExpression, MultiDollarConversionInfo>() {
+    KotlinApplicableInspectionBase.Simple<KtStringTemplateExpression, MultiDollarConversionInfo>(), MigrationFix {
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
         element.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation) &&
@@ -78,5 +80,11 @@ class CanConvertToMultiDollarStringInspection :
                 simplifyDollarEntries(multiDollarVersion)
             }
         }
+    }
+
+    override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
+        val sinceVersion = LanguageFeature.MultiDollarInterpolation.sinceVersion ?: return false
+        return migrationInfo.oldLanguageVersion < sinceVersion &&
+                migrationInfo.newLanguageVersion >= sinceVersion
     }
 }
