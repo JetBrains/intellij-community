@@ -2,9 +2,12 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -195,6 +198,59 @@ class EditorSettingsLockFreeCreationTest {
     assertTrue(state.isOverridden(state::tabSize))
     assertEquals(explicit, state.tabSize)
     assertEquals(explicit, settings.getTabSize(project))
+  }
+
+  /**
+   * An editor that `EditorFactory` builds has no `EditorHighlighterUpdater`, so only the state sees a file type change.
+   * The test changes the code style without an event, so only the file type change can bring the new value.
+   */
+  @Test
+  fun testFileTypeChangeReachesAnEditorWithoutAHighlighterUpdater(): Unit = fixture.runTest {
+    initText("abc")
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editor.document, project)
+    try {
+      val state = (created.settings as SettingsImpl).getState()
+      val changed = state.tabSize + 3
+      val manager = CodeStyleSettingsManager.getInstance(project)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+      temporary.indentOptions.TAB_SIZE = changed
+
+      CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+        ApplicationManager.getApplication().runWriteAction {
+          FileTypeManagerEx.getInstanceEx().makeFileTypesChange("test", EmptyRunnable.getInstance())
+        }
+        assertEquals(changed, state.tabSize)
+      })
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
+  }
+
+  /**
+   * A viewer takes its tab size from the file type, so a change of the viewer flag computes the tab size again.
+   */
+  @Test
+  fun testViewerChangeComputesTheTabSizeAgain(): Unit = fixture.runTest {
+    initText("abc")
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editor.document, project) as EditorImpl
+    try {
+      val state = (created.settings as SettingsImpl).getState()
+      val changed = state.tabSize + 3
+      val manager = CodeStyleSettingsManager.getInstance(project)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+      temporary.indentOptions.TAB_SIZE = changed
+
+      CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+        created.isViewer = true
+        assertEquals(changed, state.tabSize)
+      })
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
   }
 
   /**

@@ -20,6 +20,9 @@ import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.editor.state.StateProperty
 import com.intellij.openapi.editor.state.SyncDefaultValueCalculator
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
@@ -336,6 +339,16 @@ class EditorSettingsState(
           }
         },
       )
+      // An editor in a text editor also gets this change through `EditorHighlighterUpdater` and a new highlighter.
+      // Other editors get it only here.
+      connection?.subscribe(
+        FileTypeManager.TOPIC,
+        object : FileTypeListener {
+          override fun fileTypesChanged(event: FileTypeEvent) {
+            fileIndentInput.recalculate()
+          }
+        },
+      )
       (editor.state as? ObservableState)?.addPropertyChangeListener(
         object : ObservableStateListener {
           override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
@@ -343,6 +356,10 @@ class EditorSettingsState(
               EditorState::isColumnMode.name -> {
                 refresh(::myIsVirtualSpace)
                 refresh(::myIsCaretInsideTabs)
+              }
+              // A viewer takes its tab size from the file type, and it stores no options on the document.
+              EditorState::isViewer.name, EditorState::isRendererMode.name -> {
+                fileIndentInput.recalculate()
               }
             }
           }
