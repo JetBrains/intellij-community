@@ -32,8 +32,8 @@ private fun Throwable.acquisitionSite(): String? =
 
 /**
  * An editor can be built on `Dispatchers.UI`, which forbids the RW lock. So the platform must take no lock
- * while the editor is built. See IJPL-243574. `SettingsImpl` answers for the tab character from a background
- * read action instead, so these tests also cover where that value comes from.
+ * while the editor is built. See IJPL-243574. `EditorSettingsState` computes the tab size and the tab character
+ * in a background read action instead, so these tests also cover where these values come from.
  */
 @TestApplication
 class EditorSettingsLockFreeCreationTest {
@@ -82,13 +82,13 @@ class EditorSettingsLockFreeCreationTest {
   /**
    * A code-style change must reach the tab character.
    *
-   * The event is what makes this work, and not only through the cache: `computeValue` prefers the
+   * The event is what makes this work, and not only through the cache: the computation prefers the
    * `CODE_STYLE_SETTINGS` user data of the editor over the project settings, and
    * `EditorImpl.codeStyleSettingsChanged` is what refreshes that user data and calls
    * `SettingsImpl.reinitSettings`. Without the event the pinned settings hide the new ones.
    *
-   * This does not cover the *cache* invalidation. `CacheableBackgroundComputable.getDefaultAndCompute`
-   * keeps no cache in unit-test mode, so there is no cached value here to invalidate.
+   * This does not cover the *cache* invalidation. `EditorSettingsState.currentUseTabCharacter` reads no cache
+   * in unit-test mode, so there is no cached value here to invalidate.
    */
   @Test
   fun testCodeStyleChangeReachesTheTabCharacter(): Unit = fixture.runTest {
@@ -110,8 +110,7 @@ class EditorSettingsLockFreeCreationTest {
 
   /**
    * The state property carries the value to the Remote Development frontend, which computes none of its own.
-   * Its default must therefore be the project setting, and not the global one. `SettingsImpl` seeds its own
-   * computable from the same expression, so the two sides open on one value.
+   * Its default must therefore be the project setting, and not the global one.
    */
   @Test
   fun testTheTabCharacterStateDefaultIsTheProjectSetting(): Unit = fixture.runTest {
@@ -130,6 +129,91 @@ class EditorSettingsLockFreeCreationTest {
       finally {
         editorFactory.releaseEditor(created)
       }
+    })
+  }
+
+  /**
+   * The tab size follows the same rule as the tab character in [testTheTabCharacterStateDefaultIsTheProjectSetting].
+   */
+  @Test
+  fun testTheTabSizeStateDefaultIsTheProjectSetting(): Unit = fixture.runTest {
+    initText("abc")
+    val projectValue = CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE + 3
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    temporary.indentOptions.TAB_SIZE = projectValue
+
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      val editorFactory = EditorFactory.getInstance()
+      val created = editorFactory.createEditor(editor.document, project)
+      try {
+        assertEquals(projectValue, (created.settings as SettingsImpl).getState().tabSize)
+      }
+      finally {
+        editorFactory.releaseEditor(created)
+      }
+    })
+  }
+
+  /**
+   * A code-style change must reach the state property, because the state property is what the backend sends to
+   * the Remote Development frontend.
+   */
+  @Test
+  fun testCodeStyleChangeReachesTheTabSizeState(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val original = settings.getTabSize(project)
+    val changed = original + 3
+
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    temporary.indentOptions.TAB_SIZE = changed
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      manager.fireCodeStyleSettingsChanged()
+      assertEquals(changed, settings.getState().tabSize)
+      assertEquals(changed, settings.getTabSize(project))
+    })
+
+    manager.fireCodeStyleSettingsChanged()
+    assertEquals(original, settings.getState().tabSize)
+  }
+
+  /**
+   * An explicit tab size overrides the computed one, so a code-style change must not replace it.
+   */
+  @Test
+  fun testAnExplicitTabSizeSurvivesCodeStyleChange(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val explicit = settings.getTabSize(project) + 5
+    settings.setTabSize(explicit)
+
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged()
+
+    val state = settings.getState()
+    assertTrue(state.isOverridden(state::tabSize))
+    assertEquals(explicit, state.tabSize)
+    assertEquals(explicit, settings.getTabSize(project))
+  }
+
+  /**
+   * Settings without an editor take the tab size from the project of the caller, and an explicit tab size overrides it.
+   */
+  @Test
+  fun testSettingsWithoutAnEditorUseTheProjectOfTheCaller(): Unit = fixture.runTest {
+    val projectValue = CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE + 3
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    temporary.indentOptions.TAB_SIZE = projectValue
+
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      val settings = SettingsImpl()
+      assertEquals(projectValue, settings.getTabSize(project))
+
+      val explicit = projectValue + 5
+      settings.setTabSize(explicit)
+      assertEquals(explicit, settings.getTabSize(project))
     })
   }
 }

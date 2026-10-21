@@ -3,35 +3,18 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.math.max
 
@@ -52,62 +35,6 @@ class SettingsImpl internal constructor(
 
   @get:Deprecated("use {@link EditorKind}")
   val softWrapAppliancePlace: SoftWrapAppliancePlaces
-  private val computableSettings: ArrayList<CacheableBackgroundComputable<*>> = ArrayList()
-
-  private var indentOptionsUpdateJob: Job? = null
-  private val tabSize: CacheableBackgroundComputable<Int> = object : CacheableBackgroundComputable<Int>(
-    CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE) {
-    override fun computeValue(project: Project?): Int {
-      val tabSize = if (project == null) {
-        CodeStyle.getDefaultSettings().getTabSize(null)
-      }
-      else {
-        val file = getVirtualFile()
-        if (editor != null && editor.isViewer) {
-          val fileType = file?.fileType
-          CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE
-        }
-        else {
-          if (file != null) {
-            val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
-            settings.getIndentOptionsByFile(project, file, null).TAB_SIZE
-          }
-          else {
-            CodeStyle.getSettings(project).getTabSize(null)
-          }
-        }
-      }
-      return max(1, tabSize)
-    }
-
-    override fun fireValueChanged(newValue: Int) {
-      getState().tabSize = newValue
-    }
-  }
-
-  // `getIndentOptionsByFile` needs the PSI, and therefore the RW lock. An editor can be built on
-  // `Dispatchers.UI`, which forbids that lock (IJPL-243574), so this must not run on the calling thread.
-  // `CacheableBackgroundComputable` answers with a seed and computes the value in a background read action.
-  //
-  // The seed is the project setting, not the global default. This value decides which character an indent
-  // writes, so a wrong seed reaches the document, and `DiffUtil` and the review gutters copy it into a
-  // satellite editor permanently. The project setting is right for every file that no
-  // `FileIndentOptionsProvider` overrides.
-  private val useTabCharacter: CacheableBackgroundComputable<Boolean> = object : CacheableBackgroundComputable<Boolean>(
-    CodeStyle.getProjectOrDefaultSettings(project).indentOptions.USE_TAB_CHARACTER) {
-    override fun computeValue(project: Project?): Boolean {
-      val file = getVirtualFile()
-      if (project == null || file == null) {
-        return CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
-      }
-      val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
-      return settings.getIndentOptionsByFile(project, file, null).USE_TAB_CHARACTER
-    }
-
-    override fun fireValueChanged(newValue: Boolean) {
-      getState().myUseTabCharacter = newValue
-    }
-  }
 
   constructor() : this(null, null, null)
 
@@ -157,12 +84,15 @@ class SettingsImpl internal constructor(
             propertyName != state::myWrapWhenTypingReachesRightMargin.name &&
             propertyName != state::myShowIntentionBulb.name &&
             propertyName != state::myLineNumeration.name &&
-            // `tabSize` and `myUseTabCharacter` are managed by logic located in SettingsImpl. That logic
-            // already fires its own refresh, so a second one here rebuilds the editor for nothing.
+            // `tabSize` refreshes the editor below. `myUseTabCharacter` does not change the view, so it needs no refresh.
             propertyName != state::tabSize.name &&
             propertyName != state::myUseTabCharacter.name
         ) {
           fireEditorRefresh()
+        }
+        if (!doNotRefreshEditorFlag && propertyName == state::tabSize.name) {
+          // A reinit of the settings computes the indent values again, and a tab size change does not need that.
+          fireEditorRefresh(reinitSettings = false)
         }
         if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsSmoothCaretMovement.name) {
           editor?.updateCaretCursor()
@@ -334,7 +264,7 @@ class SettingsImpl internal constructor(
       }
       return isUseTabCharacterForForeignProject(project)
     }
-    return useTabCharacter.getValue(project)
+    return state.currentUseTabCharacter()
   }
   private fun isUseTabCharacterForForeignProject(project: Project): Boolean {
     val file = getVirtualFile()
@@ -347,60 +277,26 @@ class SettingsImpl internal constructor(
   }
 
   override fun setUseTabCharacter(`val`: Boolean) {
-    useTabCharacter.setValue(`val`)
+    state.myUseTabCharacter = `val`
   }
 
   fun reinitSettings() {
-    for (setting in computableSettings) {
-      setting.resetCache()
-    }
     state.refreshAll()
-    // Recompute the tab character at once, instead of waiting for the next reader.
+    // Recompute the indent values at once, instead of waiting for the next reader.
     //
-    // `tabSize` needs no such line, because every repaint reads it, so its next reader is immediate. Nothing
-    // reads the tab character until the user indents, and the Remote Development frontend never reads it at
+    // Nothing reads the tab character until the user indents, and the Remote Development frontend never reads it at
     // all: it takes the value the backend pushed. A backend that waited for a local reader would leave that
-    // frontend indenting with the previous code style.
-    useTabCharacter.getValue(state.project)
-    reinitDocumentIndentOptions()
-  }
-
-  private fun reinitDocumentIndentOptions() {
-    if (editor == null || editor.isViewer) {
-      return
-    }
-
-    val project = editor.project ?: return
-    if (project.isDisposed) {
-      return
-    }
-
-    val document = editor.document
-    val file = getVirtualFile() ?: return
-    LOG.debug { "reinitDocumentIndentOptions, file ${file.name}" }
-    val app = ApplicationManager.getApplication()
-    val editorCodeStyleSettings = editor.getUserData(CODE_STYLE_SETTINGS)
-    if (app.isUnitTestMode) {
-      app.runReadAction {
-        computeIndentOptions(project, file, editorCodeStyleSettings).associateWithDocument(document)
-      }
-    }
-    else {
-      val job = editor.coroutineScope.launch {
-        val result = readAction {
-          computeIndentOptions(project, file, editorCodeStyleSettings)
-        }
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          result.associateWithDocument(document)
-        }
-      }
-      indentOptionsUpdateJob?.cancel()
-      indentOptionsUpdateJob = job
-    }
+    // frontend indenting with the previous code style. The same computation refreshes the indent options of the document.
+    state.recalculateFileIndent()
   }
 
   override fun getTabSize(project: Project?): Int {
-    return tabSize.getValue(project)
+    // Settings without an editor have no file, so the project of the caller gives the value, and no lock is needed.
+    // The settings of an editor give the value of that editor, for any project of the caller.
+    if (editor == null && project != null && !state.isOverridden(state::tabSize)) {
+      return max(1, CodeStyle.getSettings(project).getTabSize(null))
+    }
+    return state.currentTabSize()
   }
 
   private fun getVirtualFile(): VirtualFile? {
@@ -408,7 +304,7 @@ class SettingsImpl internal constructor(
   }
 
   override fun setTabSize(tabSize: Int) {
-    this.tabSize.setValue(tabSize)
+    state.tabSize = tabSize
   }
 
   override fun isSmartHome(): Boolean {
@@ -741,99 +637,4 @@ class SettingsImpl internal constructor(
   fun getState(): EditorSettingsState {
     return state
   }
-
-  private abstract inner class CacheableBackgroundComputable<T>(defaultValue: T) {
-    private var overwrittenValue: T? = null
-    private var cachedValue: T? = null
-    private var defaultValue: T
-    private val currentReadActionRef: AtomicReference<Job?> = AtomicReference()
-
-    init {
-      @Suppress("LeakingThis")
-      computableSettings.add(this)
-      this.defaultValue = defaultValue
-    }
-
-    fun setValue(overwrittenValue: T?) {
-      val oldGetValueResult: T
-      val newGetValueResult: T
-
-      synchronized(VALUE_LOCK) {
-        if (this.overwrittenValue == overwrittenValue) {
-          return
-        }
-        oldGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
-        this.overwrittenValue = overwrittenValue
-        newGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
-      }
-      fireEditorRefresh()
-
-      if (newGetValueResult != oldGetValueResult) {
-        fireValueChanged(newGetValueResult)
-      }
-    }
-
-    fun getValue(project: Project?): T {
-      synchronized(VALUE_LOCK) {
-        overwrittenValue?.let {
-          return it
-        }
-        return cachedValue ?: getDefaultAndCompute(project)
-      }
-    }
-
-    fun resetCache() {
-      synchronized(VALUE_LOCK) { cachedValue = null }
-    }
-
-    protected abstract fun computeValue(project: Project?): T
-
-    protected abstract fun fireValueChanged(newValue: T)
-
-    private fun getDefaultAndCompute(project: Project?): T {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        return runCatching {
-          computeValue(project)
-        }.getOrLogException(LOG) ?: defaultValue
-      }
-      if (currentReadActionRef.get() == null) {
-        val readJob = EditorCoroutineScopes.settingsScope(editor, project).launch(start = CoroutineStart.LAZY) {
-          val result = readAction {
-            computeValue(project)
-          }
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            currentReadActionRef.set(null)
-            val oldGetValueResult: T
-            val newGetValueResult: T
-            synchronized(VALUE_LOCK) {
-              oldGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
-              cachedValue = result
-              defaultValue = result
-              newGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
-            }
-            writeIntentReadAction {
-              fireEditorRefresh(false)
-              if (oldGetValueResult != newGetValueResult) {
-                fireValueChanged(newGetValueResult)
-              }
-            }
-          }
-        }
-        if (currentReadActionRef.compareAndSet(null, readJob)) {
-          readJob.start()
-        } else {
-          // A lazy job that never starts also never completes, and its parent keeps it until the parent is cancelled.
-          readJob.cancel()
-        }
-      }
-      return defaultValue
-    }
-  }
-}
-
-private val VALUE_LOCK: Any = Any()
-
-private fun computeIndentOptions(project: Project, file: VirtualFile, editorSettings: CodeStyleSettings?): CommonCodeStyleSettings.IndentOptions {
-  val settings = editorSettings ?: CodeStyle.getSettings(project, file)
-  return settings.getIndentOptionsByFile(project, file, null, true, null)
 }

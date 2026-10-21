@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -29,12 +30,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentListener
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.util.PatternUtil
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +48,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 
 /**
  * The basic purposes of this class is:
@@ -86,19 +92,26 @@ class EditorSettingsState(
   var myAutoCodeFoldingEnabled: Boolean by property(true)
   var myAreLineNumbersAfterIcons: Boolean by property { false }
 
-  // [SettingsImpl] manages this property directly, like [tabSize]. The per-file value needs the PSI, and
-  // therefore the RW lock, so it must not run here. An editor can be built on `Dispatchers.UI`, which
-  // forbids that lock (IJPL-243574). [SettingsImpl] computes the per-file value in a background read action
-  // and then assigns it here, which overrides this default.
-  //
-  // The default is the project setting, and not the global one. It is what the Remote Development frontend
-  // reads until the backend pushes the computed value, and this value selects the character an indent writes.
-  // The project setting needs no lock, and it is right for every file that no `FileIndentOptionsProvider`
-  // overrides. [SettingsImpl] seeds its own computable from the same expression.
-  var myUseTabCharacter: Boolean by codeStyleProperty {
-    CodeStyle.getProjectOrDefaultSettings(project).indentOptions.USE_TAB_CHARACTER
-  }
+  /**
+   * The indent values that the code style gives the editor file. [myUseTabCharacter] and [tabSize] calculate their
+   * defaults from it.
+   *
+   * The per-file value needs the PSI, and therefore the RW lock, so a calculator must not compute it. An editor can be
+   * built on `Dispatchers.UI`, which forbids that lock (IJPL-243574). [recalculateFileIndent] computes the value in a
+   * background read action, and then refreshes the two properties.
+   *
+   * The seed is the project setting, and not the global one. It is what the Remote Development frontend reads until the
+   * backend pushes the computed value, and this value selects the character an indent writes. The project setting needs
+   * no lock, and it is right for every file that no `FileIndentOptionsProvider` overrides.
+   *
+   * The field comes before the two properties, because their calculators read it while the state is constructed.
+   */
+  private var fileIndent: FileIndent = projectFileIndent()
+
   // These come from CodeStyleSettings.
+  // [SettingsImpl] reads the next two through [currentUseTabCharacter] and [currentTabSize].
+  var myUseTabCharacter: Boolean by codeStyleProperty { fileIndent.useTabCharacter }
+  var tabSize: Int by codeStyleProperty { fileIndent.tabSize }
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty {
     val settings = if (editor == null) {
       CodeStyle.getDefaultSettings()
@@ -125,11 +138,6 @@ class EditorSettingsState(
     }
     settings.getRightMargin(language)
   }
-  // todo: I don't know how to listen to changes for the result of `file?.fileType`. Also seems like there is no way to provide
-  //   `language ` directly and it has to be calculated indirectly, so it has to be in background, but the current infrastructure is not ready
-  //    for such things to be easily implemented...
-  // for now this property is managed directly by SettingsImpl, this is done for consistency
-  var tabSize: Int by property(CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE)
 
   // These come from EditorSettingsExternalizable defaults.
   var myIsVirtualSpace: Boolean by property(
@@ -236,6 +244,8 @@ class EditorSettingsState(
     }
   private val calcLangReadActionRef: AtomicReference<Job?> = AtomicReference()
   private var language: Language? = null
+  private val fileIndentRequested: AtomicBoolean = AtomicBoolean()
+  private val fileIndentJobRef: AtomicReference<Job?> = AtomicReference()
 
   init {
     if (editor != null) {
@@ -392,6 +402,156 @@ class EditorSettingsState(
     refresh(::myWrapWhenTypingReachesRightMargin)
   }
 
+  /**
+   * The tab size that the editor uses.
+   *
+   * The first call starts the computation of [fileIndent], and every call returns [tabSize].
+   *
+   * Unit-test mode keeps no cached value, and a call starts no computation. A call returns the override, or it computes
+   * the value on the calling thread. A test can change the code style without an event, and the editor must see the new
+   * value at once.
+   */
+  internal fun currentTabSize(): Int {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (isOverridden(::tabSize)) {
+        return tabSize
+      }
+      return computeFileIndentForTest().tabSize
+    }
+    requestFileIndent()
+    return tabSize
+  }
+
+  /**
+   * The tab character setting that the editor uses. The rules of [currentTabSize] apply.
+   */
+  internal fun currentUseTabCharacter(): Boolean {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (isOverridden(::myUseTabCharacter)) {
+        return myUseTabCharacter
+      }
+      return computeFileIndentForTest().useTabCharacter
+    }
+    requestFileIndent()
+    return myUseTabCharacter
+  }
+
+  /**
+   * Computes [fileIndent] again, and then refreshes [tabSize] and [myUseTabCharacter].
+   *
+   * [SettingsImpl.reinitSettings] calls this after each event that can change the value. These events are a code style
+   * change, a new file, and a new highlighter. `EditorHighlighterUpdater` sets a new highlighter when the file type
+   * changes or the file gets a new name.
+   *
+   * A new computation cancels the previous one, because the previous one can have read the inputs before they changed.
+   * Unit-test mode computes the value at once, on the calling thread.
+   */
+  internal fun recalculateFileIndent() {
+    fileIndentRequested.set(true)
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) {
+      val result = runCatching {
+        application.runReadAction(Computable { computeFileIndent(ignoreDocOptions = true) })
+      }.getOrLogException(LOG)
+      if (result != null) {
+        updateFileIndent(result)
+      }
+      return
+    }
+    val job = EditorCoroutineScopes.settingsScope(editor, project)
+      .launch(start = CoroutineStart.LAZY, context = ClientId.coroutineContext()) {
+        val result = readAction {
+          computeFileIndent(ignoreDocOptions = true)
+        }
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + ClientId.coroutineContext()) {
+          writeIntentReadAction {
+            updateFileIndent(result)
+          }
+        }
+      }
+    fileIndentJobRef.getAndSet(job)?.cancel()
+    job.start()
+  }
+
+  private fun requestFileIndent() {
+    // Almost every call finds the flag set, and a plain read is cheaper than a compare-and-set.
+    if (!fileIndentRequested.get() && fileIndentRequested.compareAndSet(false, true)) {
+      recalculateFileIndent()
+    }
+  }
+
+  /**
+   * Computes the value for a getter in unit-test mode.
+   *
+   * The options stored on the document answer first, because a call to the providers can have side effects. For example,
+   * `DetectableIndentOptionsProvider` stores new options after an edit, and it runs the detection at once in unit-test
+   * mode.
+   */
+  private fun computeFileIndentForTest(): FileIndent {
+    val result = runCatching {
+      computeFileIndent(ignoreDocOptions = false)
+    }.getOrLogException(LOG)
+    return result ?: projectFileIndent()
+  }
+
+  /**
+   * Stores [newFileIndent], and refreshes the two properties that read it. An editor that is not a viewer also stores
+   * the per-file options on its document.
+   */
+  private fun updateFileIndent(newFileIndent: FileIndent) {
+    val fileOptions = newFileIndent.fileOptions
+    if (editor != null && !editor.isViewer && fileOptions != null) {
+      fileOptions.associateWithDocument(editor.document)
+    }
+    fileIndent = newFileIndent
+    // The tab size event refreshes the editor, so the tab character must have its new value before that event.
+    refresh(::myUseTabCharacter)
+    refresh(::tabSize)
+  }
+
+  /**
+   * Computes the [FileIndent] of the editor file.
+   *
+   * The per-file options need the PSI, so the caller must have read access. [ignoreDocOptions] skips the options stored
+   * on the document. A recompute sets it, because its result replaces those options.
+   */
+  private fun computeFileIndent(ignoreDocOptions: Boolean): FileIndent {
+    if (editor == null || project == null) {
+      return projectFileIndent()
+    }
+    val file = editor.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document)
+    if (file == null) {
+      return projectFileIndent()
+    }
+    val settings = editor.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
+    val fileOptions = ProjectLocator.withPreferredProject(file, project).use {
+      settings.getIndentOptionsByFile(project, file, null, ignoreDocOptions, null)
+    }
+    // A viewer takes its tab size from the file type.
+    val tabSize = if (editor.isViewer) {
+      CodeStyle.getSettings(project).getIndentOptions(file.fileType).TAB_SIZE
+    } else {
+      fileOptions.TAB_SIZE
+    }
+    return FileIndent(
+      tabSize = max(1, tabSize),
+      useTabCharacter = fileOptions.USE_TAB_CHARACTER,
+      fileOptions = fileOptions,
+    )
+  }
+
+  /**
+   * The [FileIndent] that the project setting gives. It needs no lock.
+   */
+  private fun projectFileIndent(): FileIndent {
+    val options = CodeStyle.getProjectOrDefaultSettings(project).indentOptions
+    return FileIndent(
+      tabSize = max(1, options.TAB_SIZE),
+      useTabCharacter = options.USE_TAB_CHARACTER,
+      fileOptions = null,
+    )
+  }
+
   private fun fileNameMatches(fileName: String, globPatterns: String): Boolean {
     return globPatterns.splitToSequence(';')
       .map { it.trim() }
@@ -421,6 +581,15 @@ class EditorSettingsState(
       alwaysTransfer = true,
     )
   }
+
+  /**
+   * The indent values that the code style gives the editor file.
+   */
+  private class FileIndent(
+    val tabSize: Int, // In a viewer, this value comes from the file type, and not from [fileOptions].
+    val useTabCharacter: Boolean,
+    val fileOptions: IndentOptions?, // The per-file options, or `null` when the editor has no file or no project.
+  )
 
   companion object {
     private val LOG: Logger = logger<EditorSettingsState>()

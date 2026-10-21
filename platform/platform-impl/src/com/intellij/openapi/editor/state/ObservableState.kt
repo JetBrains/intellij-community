@@ -140,6 +140,12 @@ abstract class ObservableState {
     properties.find { it.name == property.name }?.clearOverriding(this)
   }
 
+  fun isOverridden(property: KProperty<*>): Boolean {
+    // fixme O(n)
+    val stateProperty = properties.find { it.name == property.name }
+    return stateProperty is ObjectStateProperty<*> && stateProperty.isValueOverridden
+  }
+
   fun refresh(property: KProperty<*>) {
     // fixme O(n)
     properties.find { it.name == property.name }?.recalculate(this)
