@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -497,6 +498,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       }
     }
     RecentProjectsManager.getInstance().updateLastProjectPath()
+    WelcomeFrame.showIfNoProjectOpened()
   }
 
 
