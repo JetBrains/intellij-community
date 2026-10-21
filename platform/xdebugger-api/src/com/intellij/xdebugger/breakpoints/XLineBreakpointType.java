@@ -177,7 +177,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * When this returns {@code false}, inter-line creation is disabled.
    * The actual placement of a created breakpoint is stored on the breakpoint entity itself.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public boolean supportsInterLinePlacement() {
     return false;
   }
