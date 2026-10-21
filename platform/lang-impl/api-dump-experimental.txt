@@ -682,6 +682,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.openapi.actionSystem.UiDataProvider
 - *:selectFirstItem():V
 f:com.intellij.ide.fileTemplates.FileTemplateUtil
+- *s:computeUnderModalProgress(com.intellij.openapi.project.Project,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *s:createFromPreparedTemplate(com.intellij.ide.fileTemplates.PreparedFileTemplate):com.intellij.psi.PsiElement
 - *s:prepareFromTemplate(com.intellij.ide.fileTemplates.FileTemplate,java.lang.String,java.util.Properties,com.intellij.psi.PsiDirectory):com.intellij.ide.fileTemplates.PreparedFileTemplate
 *f:com.intellij.ide.fileTemplates.PreparedFileTemplate

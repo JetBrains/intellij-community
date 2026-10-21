@@ -5,15 +5,19 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
@@ -52,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -365,9 +371,39 @@ public final class FileTemplateUtil {
   }
 
   /**
-   * Creates the file of a template merged by {@link #prepareFromTemplate}.
+   * Computes {@code computable} in a non-blocking read action under a modal progress that cannot be canceled,
+   * with the alternative resolve of the caller.
    *
-   * <p>Runs the handler in a write command unless the directory skips the event system. Records the template as recently used.
+   * <p>A write action restarts {@code computable}, so it must be idempotent.
+   * On a background thread or inside a write action, it runs in a blocking read action in place.
+   */
+  @ApiStatus.Experimental
+  public static <T, E extends Exception> T computeUnderModalProgress(@NotNull Project project,
+                                                                     @NotNull ThrowableComputable<T, E> computable) throws E {
+    if (!EDT.isCurrentThreadEdt() || ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      return ReadAction.computeBlocking(computable);
+    }
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean alternativeResolve = dumbService.isAlternativeResolveEnabled();
+    try {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.nonBlocking(() -> alternativeResolve ? dumbService.computeWithAlternativeResolveEnabled(computable)
+                                                              : computable.compute())
+          .executeSynchronously(),
+        IdeBundle.message("progress.title.preparing.file.from.template"), false, project);
+    }
+    catch (Exception e) {
+      // executeSynchronously throws a checked exception wrapped in an undeclared ExecutionException
+      if (e instanceof ExecutionException && e.getCause() instanceof Exception cause) {
+        @SuppressWarnings("unchecked") E checked = (E)cause;
+        throw checked;
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Creates the file of a template merged by {@link #prepareFromTemplate} and records the template as recently used.
    * Call it on the EDT.
    *
    * @return usually a {@link com.intellij.psi.PsiFile}

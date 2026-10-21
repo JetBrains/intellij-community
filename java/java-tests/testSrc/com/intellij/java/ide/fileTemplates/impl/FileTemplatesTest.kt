@@ -2,30 +2,38 @@
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.JavaTestUtil
+import com.intellij.ide.actions.CreateFileFromTemplateAction
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
+import com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.fileTemplates.JavaTemplateUtil
+import com.intellij.ide.fileTemplates.actions.AttributesDefaults
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.ide.fileTemplates.impl.FTManager
 import com.intellij.ide.fileTemplates.impl.FileTemplateBase
+import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.JavaProjectTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.registerExtension
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
+import com.intellij.util.ui.EDT
 import org.assertj.core.api.Assertions
 import java.io.File
 import java.io.FileReader
@@ -188,6 +196,75 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val directory = PsiManager.getInstance(project).findDirectory(tempDir)
     val element = FileTemplateUtil.createFromTemplate(template, "foo.txt", Properties(), directory!!)
     assertEquals("foo.txt", element.text)
+  }
+
+  fun testCreateFileFromTemplateRunsPropertiesProvidersOffEdt() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val template = addTxtTemplate()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val file = CreateFileFromTemplateAction.createFileFromTemplate("foo", template, directory, null, false)
+    assertEquals("foo.txt", file!!.text)
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
+  }
+
+  fun testCreateFromTemplateDialogRunsPropertiesProvidersOffEdt() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val template = addTxtTemplate()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val element = CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    assertNotNull(element)
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false),
+                                                         ProviderCall(onEdt = false, writeAccess = false))
+  }
+
+  fun testCreateFromTemplateDialogCreatesChildFileBeforeMergingMainTemplate() {
+    val template = addTxtTemplate() as FileTemplateBase
+    val child = CustomFileTemplate(template.getChildName(0), "txt")
+    child.fileName = "child"
+    child.text = "child"
+    template.addChild(child)
+    val filesSeenByProviders = ContainerUtil.createConcurrentList<List<String>>()
+    val provider = DefaultTemplatePropertiesProvider { directory, _ -> filesSeenByProviders.add(directory.files.map { it.name }) }
+    ApplicationManager.getApplication().registerExtension(DefaultTemplatePropertiesProvider.EP_NAME, provider, testRootDisposable)
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val element = CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    assertNotNull(element)
+    Assertions.assertThat(filesSeenByProviders).containsExactly(emptyList(), emptyList(), listOf("child.txt"))
+  }
+
+  fun testCreateFileFromTemplateInWriteActionRunsPropertiesProvidersInPlace() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val template = addTxtTemplate()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val file = WriteAction.compute<PsiFile?, Throwable> {
+      CreateFileFromTemplateAction.createFileFromTemplate("foo", template, directory, null, false)
+    }
+    assertEquals("foo.txt", file!!.text)
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = true, writeAccess = true))
+  }
+
+  fun testComputeUnderModalProgressRethrowsCheckedException() {
+    Assertions.assertThatThrownBy {
+      FileTemplateUtil.computeUnderModalProgress<Unit, IOException>(project) { throw IOException("template error") }
+    }.isExactlyInstanceOf(IOException::class.java).hasMessage("template error")
+  }
+
+  private data class ProviderCall(val onEdt: Boolean, val writeAccess: Boolean)
+
+  private fun recordPropertiesProviderCalls(): List<ProviderCall> {
+    val calls = ContainerUtil.createConcurrentList<ProviderCall>()
+    val provider = DefaultTemplatePropertiesProvider { _, _ ->
+      calls.add(ProviderCall(EDT.isCurrentThreadEdt(), ApplicationManager.getApplication().isWriteAccessAllowed))
+    }
+    ApplicationManager.getApplication().registerExtension(DefaultTemplatePropertiesProvider.EP_NAME, provider, testRootDisposable)
+    return calls
+  }
+
+  private fun addTxtTemplate(): FileTemplate {
+    val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
+    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    template.text = "\${FILE_NAME}"
+    return template
   }
 
   private fun addTestTemplate(name: String, text: String): CustomFileTemplate {

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.PreparedFileTemplate;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
@@ -26,6 +27,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAction<PsiFile> {
 
@@ -83,8 +86,11 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       Properties templateProperties = FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties();
       templateProperties.putAll(extraTemplateProperties);
 
-      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, templateProperties, dir)
-        .getContainingFile();
+      String fileName = name;
+      PsiDirectory directory = dir;
+      PreparedFileTemplate prepared = FileTemplateUtil.computeUnderModalProgress(
+        project, () -> FileTemplateUtil.prepareFromTemplate(template, fileName, templateProperties, directory));
+      PsiFile psiFile = FileTemplateUtil.createFromPreparedTemplate(prepared).getContainingFile();
       SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiFile);
 
       VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -112,6 +118,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       throw e;
     }
     catch (Exception e) {
+      rethrowControlFlowException(e);
       Logger.getInstance(CreateFileFromTemplateAction.class).error(e);
     }
 

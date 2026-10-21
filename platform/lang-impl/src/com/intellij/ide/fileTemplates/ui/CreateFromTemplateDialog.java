@@ -9,6 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateParseException;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.PreparedFileTemplate;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +38,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Properties;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 public class CreateFromTemplateDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(CreateFromTemplateDialog.class);
   private final @NotNull PsiDirectory myDirectory;
@@ -58,8 +61,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    myDefaultProperties = FileTemplateManager.getInstance(project).getDefaultProperties();
-    FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
+    myDefaultProperties = FileTemplateUtil.computeUnderModalProgress(project, () -> {
+      Properties templateDefaults = FileTemplateManager.getInstance(project).getDefaultProperties();
+      FileTemplateUtil.fillDefaultProperties(templateDefaults, directory);
+      return templateDefaults;
+    });
     if (defaultProperties != null) {
       myDefaultProperties.putAll(defaultProperties);
     }
@@ -157,6 +163,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       }
     }
     catch (Exception e) {
+      rethrowControlFlowException(e);
       showErrorDialog(e);
     }
   }
@@ -167,9 +174,21 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (fileName != null) {
       String newName = FileTemplateUtil.mergeTemplate(properties, fileName, false);
       CreateFileAction.MkDirs mkDirs = WriteAction.compute(() -> new CreateFileAction.MkDirs(newName, myDirectory));
-      return FileTemplateUtil.createFromTemplate(template, mkDirs.newName, properties, mkDirs.directory);
+      return createFromTemplate(template, mkDirs.newName, properties, mkDirs.directory);
     }
-    return FileTemplateUtil.createFromTemplate(template, null, properties, myDirectory);
+    return createFromTemplate(template, null, properties, myDirectory);
+  }
+
+  /**
+   * Merges the template under modal progress and creates its file, so the next template sees the file.
+   */
+  private @NotNull PsiElement createFromTemplate(@NotNull FileTemplate template,
+                                                 @Nullable String fileName,
+                                                 @NotNull Properties properties,
+                                                 @NotNull PsiDirectory directory) throws Exception {
+    PreparedFileTemplate prepared = FileTemplateUtil.computeUnderModalProgress(
+      myProject, () -> FileTemplateUtil.prepareFromTemplate(template, fileName, properties, directory));
+    return FileTemplateUtil.createFromPreparedTemplate(prepared);
   }
 
   public Properties getEnteredProperties() {
