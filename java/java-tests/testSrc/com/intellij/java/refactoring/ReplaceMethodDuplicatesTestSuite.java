@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
+import com.intellij.testFramework.TestFrameworkUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.junit.Ignore;
@@ -20,6 +21,6 @@ public final class ReplaceMethodDuplicatesTestSuite {
     testSuite.addTestSuite(FindMethodDuplicatesTest.class);
     testSuite.addTestSuite(SuggestedParamTypesTest.class);
     testSuite.addTestSuite(SuggestedReturnTypesTest.class);
-    return testSuite;
+    return TestFrameworkUtil.flattenSuite(testSuite);
   }
 }
