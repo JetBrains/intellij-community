@@ -4,12 +4,9 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.execution.RunConfigurationConverter
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
@@ -61,9 +58,7 @@ internal class RunConfigurationSchemeManager(
       element = element.getChild("configuration") ?: throw RuntimeException("Unexpected element: " + JDOMUtil.write(element))
     }
 
-    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance<RunConfigurationConverter>().any {
-      LOG.runAndLogException { it.convertRunConfigurationOnDemand(element) } ?: false
-    }
+    convertRunConfigurationOnDemand(element)
 
     try {
       settings.readExternal(element, isShared)
