@@ -8,6 +8,7 @@ import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentNavigation
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
@@ -21,7 +22,6 @@ import com.intellij.collaboration.ui.codereview.editor.asLst
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
-import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
@@ -48,8 +48,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val project: Project,
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
+  private val commentNavigation: CodeReviewCommentNavigation,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
@@ -198,7 +198,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     else unmappedLine
     val line = lineOrNull ?: return
 
-    showEditor(change, line)
+    commentNavigation.navigate(change, line)
     fileVm.requestThreadFocus(threadId)
   }
 
