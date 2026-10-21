@@ -223,6 +223,7 @@ internal class IdeStateRecovery(
     startedRuns.add(bgRun)
     try {
       waitUntilReadyForTest(bgRun)
+      bgRun.driver.waitForStartupWorkFinished()
       if (projectFilesRestored) {
         bgRun.syncVfsWithRestoredProjectFiles()
       }
