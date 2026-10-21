@@ -9,6 +9,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.createTestOpenProjectOptions
@@ -27,10 +28,15 @@ import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.initRepo
 import git4idea.test.registerRepo
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
@@ -60,6 +66,42 @@ internal class GitDeleteCurrentProjectWorktreeTest {
 
       assertThat(worktreeRoot).describedAs("The current worktree must be gone from disk").doesNotExist()
       assertSuccessfulNotification(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", currentWorktree.path.name))
+    }
+  }
+
+  @Test
+  fun `test welcome frame is shown when the closed worktree project was the only open project`(): Unit = with(context) {
+    val mainRoot = testNioRoot.resolve("standalone")
+    val worktreeRoot = testNioRoot.resolve("standaloneTree")
+    createStandaloneRepoWithWorktree(mainRoot, worktreeRoot)
+
+    val welcomeFrameShown = AtomicBoolean(false)
+    mockkObject(WelcomeFrame.Companion)
+    try {
+      every { WelcomeFrame.showIfNoProjectOpened() } answers { welcomeFrameShown.set(true) }
+
+      withAppNotifications { notifications ->
+        withWorktreeProject(worktreeRoot) { worktreeProject ->
+          val currentWorktree = currentWorktreeOf(worktreeProject)
+          GitWorkingTreesService.getInstance(worktreeProject).deleteCurrentProjectWorktree()
+
+          timeoutRunBlocking {
+            waitUntil("the worktree project closes, the Welcome Frame is shown, and the worktree is deleted") {
+              worktreeProject.isDisposed && welcomeFrameShown.get() && notifications.isNotEmpty()
+            }
+          }
+
+          assertThat(worktreeRoot).describedAs("The current worktree must be gone from disk").doesNotExist()
+          val notification = notifications.single()
+          assertThat(notification.displayId).isEqualTo(GitNotificationIdsHolder.WORKING_TREE_DELETED)
+          assertThat(notification.content)
+            .isEqualTo(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", currentWorktree.path.name))
+          verify { WelcomeFrame.showIfNoProjectOpened() }
+        }
+      }
+    }
+    finally {
+      unmockkObject(WelcomeFrame.Companion)
     }
   }
 
