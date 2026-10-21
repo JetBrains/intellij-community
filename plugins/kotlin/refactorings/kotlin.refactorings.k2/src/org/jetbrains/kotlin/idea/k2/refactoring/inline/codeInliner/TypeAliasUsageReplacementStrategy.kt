@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.KaSessionProvider
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -26,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
@@ -113,6 +116,7 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
         }
     }
 
+    @OptIn(KaImplementationDetail::class)
     fun inlineIntoCall(usage: KtReferenceExpression): KtElement? {
         val callableReference = usage.parent as? KtCallableReferenceExpression
         if (callableReference != null) {
@@ -139,37 +143,39 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
 
             val callElement = usage.parent as? KtCallExpression ?: usage
             val expandedType = callElement.expressionType?.fullyExpandedType ?: return null
-            if (callElement is KtCallExpression) {
-                val expandedTypeText = expandedType.render(expandAliasRenderer(), position = Variance.INVARIANT)
-                val typeArgumentsIndex = expandedTypeText.indexOf("<")
-                if (typeArgumentsIndex >= 0) {
-                    val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeText.substring(typeArgumentsIndex))
-
-                    val originalTypeArgumentList = callElement.typeArgumentList
-                    if (originalTypeArgumentList != null) {
-                        shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-                    } else {
-                        shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+            val expandedTypeArgumentsText = if (callElement is KtCallExpression && expandedType is KaClassType) {
+                val aliasTypeRenderer = expandAliasRenderer()
+                val session = KaSessionProvider.getInstance(callElement.project).getAnalysisSession(callElement)
+                expandedType.typeArguments
+                    .takeIf { it.isNotEmpty() }
+                    ?.joinToString(prefix = "<", postfix = ">") {
+                        val printer = PrettyPrinter()
+                        aliasTypeRenderer.typeProjectionRenderer
+                            .renderTypeProjection(session, it, aliasTypeRenderer, printer)
+                        printer.toString()
                     }
-                }
+            } else {
+                null
             }
-
             val expandedClassSymbol = expandedType.expandedSymbol
             if (expandedClassSymbol is KaNamedClassSymbol && expandedClassSymbol.isInner) {
                 val innerClassName = expandedClassSymbol.name.asString()
                 val qualifiedCall = callElement.getQualifiedExpressionForSelector()
                 if (qualifiedCall != null || shortNameResolvesTo(usage, expandedClassSymbol)) {
+                    specifyTypeArguments(callElement, psiFactory, expandedTypeArgumentsText)
                     usage.replaced(psiFactory.createSimpleName(innerClassName))
                     return callElement
                 }
 
                 val receiverQualifier = innerReceiverQualifier(usage, expandedClassSymbol)
                 if (receiverQualifier != null) {
+                    specifyTypeArguments(callElement, psiFactory, expandedTypeArgumentsText)
                     usage.replaced(psiFactory.createSimpleName(innerClassName))
                     return callElement.replaced(psiFactory.createExpression("$receiverQualifier.${callElement.text}"))
                 }
             }
             val expandedTypeFqName = expandedClassSymbol?.importableFqName ?: return null
+            specifyTypeArguments(callElement, psiFactory, expandedTypeArgumentsText)
             val newCallElement = ((usage.mainReference as KtSimpleNameReference).bindToFqName(
                 expandedTypeFqName
             ) as KtExpression).getNonStrictParentOfType<KtCallElement>()
@@ -177,6 +183,21 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
         }
     }
 
+    private fun specifyTypeArguments(
+        callElement: KtElement,
+        psiFactory: KtPsiFactory,
+        expandedTypeArgumentsText: String?
+    ) {
+        if (callElement is KtCallExpression && expandedTypeArgumentsText != null) {
+            val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeArgumentsText)
+            val originalTypeArgumentList = callElement.typeArgumentList
+            if (originalTypeArgumentList != null) {
+                shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+            } else {
+                shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+            }
+        }
+    }
 
     private fun inlineIntoType(usage: KtUserType): KtElement? {
         analyze(usage) {

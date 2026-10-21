@@ -1,0 +1,12 @@
+class Outer<T>(val value: T) {
+    inner class Inner<U>(val other: U)
+
+    fun create() = Inner<Int>(1)
+}
+
+fun use(outer: Outer<String>) {
+    outer.Inner<Int>(2)
+    outer.Inner<Int>(3)
+    val typed: Outer<String>.Inner<Int> = outer.Inner<Int>(4)
+    println(typed)
+}

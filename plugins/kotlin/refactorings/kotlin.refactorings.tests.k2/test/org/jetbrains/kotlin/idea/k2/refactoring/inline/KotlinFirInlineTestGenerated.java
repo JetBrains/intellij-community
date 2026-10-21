@@ -169,6 +169,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/innerClassConstructorGeneric.kt");
         }
 
+        @TestMetadata("innerClassConstructorGenericOuter.kt")
+        public void testInnerClassConstructorGenericOuter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorGenericOuter.kt");
+        }
+
         @TestMetadata("innerClassConstructorHiddenReceiver.kt")
         public void testInnerClassConstructorHiddenReceiver() throws Exception {
             runTest("testData/inline/inlineTypeAlias/innerClassConstructorHiddenReceiver.kt");
