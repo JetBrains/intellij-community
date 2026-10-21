@@ -9,8 +9,6 @@ import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -43,6 +41,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
+import java.lang.ref.Reference
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG: Logger
@@ -60,10 +59,7 @@ fun createEditorCompositeModel(
     coroutineScope {
       val file = fileProvider()
       val document = async {
-        val fileDocumentManager = serviceAsync<FileDocumentManager>()
-        readAction {
-          fileDocumentManager.getDocument(file)
-        }
+        serviceAsync<FileDocumentManager>().getOrLoadDocumentUnderProgress(file)
       }
 
       val deferredProviders = computeFileEditorProviders(
@@ -156,11 +152,9 @@ internal class EditorCompositeModelManager(
                 }
                 else {
                   withContext(Dispatchers.EDT) {
-                    writeIntentReadAction {
-                      val editor = provider.createEditor(project, file)
-                      createdEditors.register(editor)
-                      FileEditorWithProvider(editor, provider)
-                    }
+                    val editor = provider.createEditor(project, file)
+                    createdEditors.register(editor)
+                    FileEditorWithProvider(editor, provider)
                   }
                 }
               }
@@ -183,9 +177,6 @@ internal class EditorCompositeModelManager(
         state = state,
         createdEditors = createdEditors,
       ))
-      // The collector is not necessarily the composite: the startup path shares this flow, so `emit` can merely put the model into a
-      // replay cache and return, leaving the editors with no owner. Stay around until a composite actually adopts them, so that a
-      // scope cancelled in between (the tab is closed before it is ever shown) still runs the cleanup below.
       createdEditors.awaitClaimed()
     }
     catch (e: Throwable) {
@@ -196,6 +187,9 @@ internal class EditorCompositeModelManager(
         disposeAbandonedFileEditor(editor)
       }
       throw e
+    }
+    finally {
+      Reference.reachabilityFence(document)
     }
   }
 
@@ -223,11 +217,9 @@ internal class EditorCompositeModelManager(
 @ApiStatus.Internal
 suspend fun disposeAbandonedFileEditor(editor: FileEditor) {
   withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    writeIntentReadAction {
-      @Suppress("DEPRECATION")
-      if (!Disposer.isDisposed(editor)) {
-        Disposer.dispose(editor)
-      }
+    @Suppress("DEPRECATION")
+    if (!Disposer.isDisposed(editor)) {
+      Disposer.dispose(editor)
     }
   }
 }
