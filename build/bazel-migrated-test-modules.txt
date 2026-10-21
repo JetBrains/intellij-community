@@ -29,6 +29,7 @@ intellij.execution.process.mediator.client.tests
 intellij.execution.process.mediator.common.tests
 intellij.featuresTrainer.tests
 intellij.findUsagesMl.tests
+intellij.golsp.performanceTests
 intellij.gradle.backend.tests
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
