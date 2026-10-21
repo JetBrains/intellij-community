@@ -4,39 +4,21 @@ package com.intellij.diagnostic
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.concurrent.TimeUnit
 
 /**
- * Exercises [ProcessStallWatcher.tick] with a fake clock, so the test spends no time in real sleeps.
+ * Exercises [ProcessStallWatcher.tick] with a [FakeClock], so the test spends no time in real sleeps.
  */
 internal class ProcessStallWatcherTest {
   private val sliceMs = 250L
   private val slicesPerTick = 4
   private val reportThresholdMs = 1000L
 
-  /**
-   * A fake clock where `sleep(ms)` advances the time by `ms` plus the next scripted lateness.
-   * A lateness above zero models a thread that did not get CPU time on schedule and therefore overslept.
-   */
-  private class FakeClock(vararg lateMsPerSleep: Long) {
-    private val lateness = lateMsPerSleep.toMutableList()
-
-    var nowNs: Long = 0
-      private set
-
-    fun sleep(ms: Long) {
-      val lateMs = if (lateness.isEmpty()) 0 else lateness.removeFirst()
-      nowNs += TimeUnit.MILLISECONDS.toNanos(ms + lateMs)
-    }
-  }
-
   private fun newWatcher(clock: FakeClock, warnings: MutableList<String>, thresholdMs: Long = reportThresholdMs): ProcessStallWatcher {
     return ProcessStallWatcher(
       sliceMs = sliceMs,
       slicesPerTick = slicesPerTick,
       reportThresholdMs = thresholdMs,
-      nanoTime = { clock.nowNs },
-      sleep = clock::sleep,
+      clock = clock,
       warn = warnings::add,
     )
   }
@@ -53,15 +35,17 @@ internal class ProcessStallWatcherTest {
   }
 
   @Test
-  fun `one slice that wakes up 1200 ms late warns once`() {
+  fun `one slice that wakes up 1200 ms late warns once with the GC delta`() {
     val clock = FakeClock(0, 1200, 0, 0)
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings)
 
+    clock.gcTime = 350
     watcher.tick()
 
     assertEquals(1, warnings.size, "expected exactly one warning, got $warnings")
     assertTrue("1200 ms" in warnings.single(), "expected the warning to report the lateness: ${warnings.single()}")
+    assertTrue("GC time: 350 ms" in warnings.single(), "expected the warning to report the GC delta: ${warnings.single()}")
     assertTrue(warnings.single().startsWith("Process stall:"), "unexpected warning text: ${warnings.single()}")
   }
 

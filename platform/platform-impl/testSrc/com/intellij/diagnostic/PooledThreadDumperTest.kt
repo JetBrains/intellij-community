@@ -5,29 +5,19 @@ import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.concurrent.TimeUnit
 
 /**
- * Exercises [PooledThreadDumper.dumpThreadsIfNeeded] with a fake clock:
+ * Exercises [PooledThreadDumper.dumpThreadsIfNeeded] with a [FakeClock]:
  * a process stall saves no dump, a real pool exhaustion saves one and reports the measured time.
  */
 internal class PooledThreadDumperTest {
   private val thresholdMs = 2000
 
-  private class FakeClock {
-    var nowNs: Long = 0
-      private set
-
-    fun advanceMs(ms: Long) {
-      nowNs += TimeUnit.MILLISECONDS.toNanos(ms)
-    }
-  }
-
   private fun newDumper(clock: FakeClock, warnings: MutableList<String>, dumps: MutableList<Unit>): PooledThreadDumper {
     return PooledThreadDumper(
       dispatcher = Dispatchers.Default,
       getUnresponsiveIntervalMs = { thresholdMs },
-      nanoTime = { clock.nowNs },
+      clock = clock,
       maxDumps = { 10 },
       dumpThreads = { dumps.add(Unit); null },
       warn = warnings::add,

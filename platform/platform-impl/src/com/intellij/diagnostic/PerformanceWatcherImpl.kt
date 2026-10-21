@@ -734,7 +734,7 @@ private class CoroutineDispatcherWatcher(
 }
 
 /**
- * @param nanoTime the clock used to measure unresponsiveness; tests replace it to simulate a stall
+ * @param clock the time sources used to measure unresponsiveness; tests replace it with a fake clock to simulate a stall
  * @param maxDumps reads the dump limit; tests replace it to avoid the registry
  * @param dumpThreads saves a thread dump and returns its path; tests replace it to record the call
  * @param warn writes the exhaustion warning; tests replace it to capture the message
@@ -742,20 +742,20 @@ private class CoroutineDispatcherWatcher(
 internal class PooledThreadDumper(
   private val dispatcher: CoroutineDispatcher,
   private val getUnresponsiveIntervalMs: (dumpCount: Int) -> Int,
-  private val nanoTime: () -> Long = { System.nanoTime() },
+  private val clock: ProcessClock = SystemClock,
   private val maxDumps: () -> Int = { Registry.intValue("performance.watcher.pooled.maximum.dumps", 10) },
   private val dumpThreads: () -> Path? = { PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true) },
   private val warn: (String) -> Unit = { LOG.warn(it) },
 ) {
   private var reportedDumpsCount = 0
-  private var lastReportedNs = nanoTime()
+  private var lastReportedNs = clock.nanoTime()
 
   fun dumpThreadsIfNeeded(lastSampleNs: Long, oversleptMs: Long) {
     // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
     val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount) + oversleptMs
-    val unresponsiveMs = TimeUnit.NANOSECONDS.toMillis(nanoTime() - lastSampleNs)
+    val unresponsiveMs = TimeUnit.NANOSECONDS.toMillis(clock.nanoTime() - lastSampleNs)
     if (unresponsiveMs <= unresponsiveIntervalMs ||
-        TimeUnit.NANOSECONDS.toMillis(nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
+        TimeUnit.NANOSECONDS.toMillis(clock.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
       return
     }
 
@@ -769,7 +769,7 @@ internal class PooledThreadDumper(
       warn(message)
     }
 
-    lastReportedNs = nanoTime()
+    lastReportedNs = clock.nanoTime()
     reportedDumpsCount++
   }
 }
@@ -858,15 +858,13 @@ internal interface CompensatablePool {
  * This reuses the existing health check coroutine managed by [CoroutineDispatcherWatcher] instead of submitting
  * a separate probe coroutine.
  * @param unresponsiveIntervalMs the interval, in milliseconds, after which the pool is considered unresponsive
- * @param nanoTime the clock used to measure the wait; tests replace it to simulate a stall
- * @param sleep blocks the current thread for the given number of milliseconds; tests replace it to avoid real waits
+ * @param clock the time sources used to measure the wait; tests replace it with a fake clock to simulate a stall
  */
 internal class DefaultCompensatablePool(
   private val dispatcher: CoroutineDispatcher,
   private val getLastSampleNs: () -> Long,
   private val unresponsiveIntervalMs: Long,
-  private val nanoTime: () -> Long = { System.nanoTime() },
-  private val sleep: (Long) -> Unit = { Thread.sleep(it) },
+  private val clock: ProcessClock = SystemClock,
 ) : CompensatablePool {
   override fun waitForStatus(timeMs: Long): Boolean {
     // This function checks the pool's health using `getLastSampleNs`. The health check coroutine is managed by
@@ -876,9 +874,9 @@ internal class DefaultCompensatablePool(
     // Cancelling a coroutine before it starts does not remove it from the queue; it is removed only when a worker dequeues it.
     // When the pool is starved, no worker is available to drain these canceled probes.
 
-    val beforeSleep = nanoTime()
-    sleep(timeMs)
-    val now = nanoTime()
+    val beforeSleep = clock.nanoTime()
+    clock.sleep(timeMs)
+    val now = clock.nanoTime()
     val overslept = TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs
     // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
     return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept

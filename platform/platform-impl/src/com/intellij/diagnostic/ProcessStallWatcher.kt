@@ -20,21 +20,19 @@ private val LOG = logger<ProcessStallWatcher>()
  * @param sliceMs the duration of one sleep in milliseconds
  * @param slicesPerTick the number of sleeps in one tick
  * @param reportThresholdMs the summed lateness in one tick, in milliseconds, that triggers the warning
- * @param nanoTime the clock used to measure how long each sleep took; tests replace it to simulate a stall
- * @param sleep blocks the current thread for the given number of milliseconds; tests replace it to avoid real waits
+ * @param clock the time sources; tests replace it with a fake clock to simulate a stall
  * @param warn writes the process stall warning; tests replace it to capture the message
  */
 internal class ProcessStallWatcher(
   private val sliceMs: Long = 250,
   private val slicesPerTick: Int = 4,
   reportThresholdMs: Long = 1000,
-  private val nanoTime: () -> Long = { System.nanoTime() },
-  private val sleep: (Long) -> Unit = { Thread.sleep(it) },
+  private val clock: ProcessClock = SystemClock,
   private val warn: (String) -> Unit = { LOG.warn(it) },
 ) {
   private val reportThresholdNs = TimeUnit.MILLISECONDS.toNanos(reportThresholdMs)
 
-  private var lastGcTimeMs = currentGcTime()
+  private var lastGcTimeMs = clock.gcTimeMs()
 
   private val executor = ConcurrencyUtil.newSingleThreadExecutor("Process stall watcher")
 
@@ -63,13 +61,13 @@ internal class ProcessStallWatcher(
   internal fun tick() {
     var lateInTickNs = 0L
     repeat(slicesPerTick) {
-      val start = nanoTime()
-      sleep(sliceMs)
-      val lateNs = nanoTime() - start - TimeUnit.MILLISECONDS.toNanos(sliceMs)
+      val start = clock.nanoTime()
+      clock.sleep(sliceMs)
+      val lateNs = clock.nanoTime() - start - TimeUnit.MILLISECONDS.toNanos(sliceMs)
       lateInTickNs += lateNs.coerceAtLeast(0)
     }
 
-    val gcTimeMs = currentGcTime()
+    val gcTimeMs = clock.gcTimeMs()
     val gcDeltaMs = gcTimeMs - lastGcTimeMs
     lastGcTimeMs = gcTimeMs
 
