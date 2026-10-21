@@ -131,6 +131,9 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testSynchronizationAfterChange() {
+    // The global refresh below can also bring changes that other tests left, and a created file starts the dumb mode.
+    StandardFileSystems.local().refresh(false);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     ApplicationManager.getApplication().runWriteAction(() -> {
       FileDocumentManager.getInstance().saveAllDocuments();
       PsiClass psiClass = myJavaFacade.findClass("p.A");
