@@ -840,6 +840,11 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
       override fun extensionAdded(extension: ConfigurationType, pluginDescriptor: PluginDescriptor) {
         idToType.drop()
 
+        // Do not reload run configurations for JetBrains Client, they are loaded from the backend (see runConfigurationFirstLoaded)
+        if (PlatformUtils.isJetBrainsClient()) {
+          return
+        }
+
         val task = suspend {
           semaphore.withPermit {
             project.stateStore.reloadState(RunManagerImpl::class.java)
