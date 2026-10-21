@@ -7,6 +7,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -173,7 +174,7 @@ object FUSProjectHotStartUpMeasurer {
    * Might happen before [getStartUpContextElementIntoIdeStarter]
    */
   fun splashBecameVisible() {
-    channel.trySend(Event.SplashBecameVisibleEvent())
+    sendEvent(Event.SplashBecameVisibleEvent())
   }
 
   fun isReopenAndWelcomeScreenStatEnabled(): Boolean =
@@ -194,7 +195,7 @@ object FUSProjectHotStartUpMeasurer {
       WelcomeScreenCollector.shouldNotStart()
       return null
     }
-    channel.trySend(Event.IdeStarterStartedEvent)
+    sendEvent(Event.IdeStarterStartedEvent)
     return MyMarker
   }
 
@@ -245,7 +246,7 @@ object FUSProjectHotStartUpMeasurer {
       thisLogger().error("Use `openingMultipleProjects()` instead")
     }
     else {
-      channel.trySend(Event.ViolationEvent(violation))
+      sendEvent(Event.ViolationEvent(violation))
       channel.close()
     }
   }
@@ -256,7 +257,7 @@ object FUSProjectHotStartUpMeasurer {
    * This event shouldn't be used for performance investigations for (non-)modal Welcome Screen.
    */
   fun reportWelcomeScreenIsGoingToBeShown() {
-    channel.trySend(Event.WelcomeScreenEvent())
+    sendEvent(Event.WelcomeScreenEvent())
   }
 
   fun reportModalWelcomeScreenBecameVisible() {
@@ -284,7 +285,7 @@ object FUSProjectHotStartUpMeasurer {
   fun reportProjectType(projectsType: ProjectsType) {
     if (!currentThreadContext().isProperContext()) return
     //too early for project distinction
-    channel.trySend(Event.ProjectTypeReportEvent(projectsType))
+    sendEvent(Event.ProjectTypeReportEvent(projectsType))
   }
 
   /**
@@ -316,7 +317,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
-    channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))
+    sendEvent(Event.ProjectPathReportEvent(projectId, hasSettings))
     WelcomeScreenCollector.projectIsOpening(projectId, isWelcomeScreenProject)
     return withContext(MyProjectMarker(projectId)) {
       block.invoke()
@@ -338,7 +339,7 @@ object FUSProjectHotStartUpMeasurer {
 
   fun openingMultipleProjects(reopening: Boolean, numberOfProjects: Int, hasLightEditProjects: Boolean) {
     if (!currentThreadContext().isProperContext()) return
-    channel.trySend(Event.MultipleProjectsEvent(reopening, numberOfProjects, hasLightEditProjects))
+    sendEvent(Event.MultipleProjectsEvent(reopening, numberOfProjects, hasLightEditProjects))
   }
 
   fun reportAlreadyOpenedProject() {
@@ -366,25 +367,25 @@ object FUSProjectHotStartUpMeasurer {
 
   fun frameBecameVisible() {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FrameBecameVisibleEvent(projectId))
+      sendEvent(Event.FrameBecameVisibleEvent(projectId))
       WelcomeScreenCollector.frameBecameVisible(projectId)
     }
   }
 
   fun reportFrameBecameInteractive() {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FrameBecameInteractiveEvent(projectId))
+      sendEvent(Event.FrameBecameInteractiveEvent(projectId))
       WelcomeScreenCollector.frameBecameInteractive(projectId)
     }
   }
 
   fun markupRestored(recipe: SpawnRecipe, type: MarkupType) {
-    channel.trySend(Event.MarkupRestoredEvent(recipe.fileId, type))
+    sendEvent(Event.MarkupRestoredEvent(recipe.fileId, type))
   }
 
   fun firstOpenedEditor(file: VirtualFile, project: Project, fileEditor: FileEditor) {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime(), projectId))
+      sendEvent(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime(), projectId))
       if (ApplicationManagerEx.isInIntegrationTest()) {
         checkEditorHasBasicHighlight(file, project, fileEditor)
       }
@@ -422,7 +423,7 @@ object FUSProjectHotStartUpMeasurer {
 
   fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime, projectId))
+      sendEvent(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime, projectId))
       if (ApplicationManagerEx.isInIntegrationTest()) {
         val openProjects = ProjectManager.getInstance().openProjects
         if (openProjects.size == 0) {
@@ -440,7 +441,7 @@ object FUSProjectHotStartUpMeasurer {
 
   fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime, projectId))
+      sendEvent(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime, projectId))
       // Do not check highlights here, because the readme file is opened in preview-only mode with
       // `readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)`,
       // see the caller
@@ -449,8 +450,23 @@ object FUSProjectHotStartUpMeasurer {
 
   fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
     withRequiredProjectMarker { projectId ->
-      channel.trySend(Event.NoMoreEditorsEvent(nanoTime, projectId))
+      sendEvent(Event.NoMoreEditorsEvent(nanoTime, projectId))
     }
+  }
+
+  private fun sendEvent(event: Event) {
+    logInTest { "Registered event: ${event.javaClass.simpleName}" }
+    channel.trySend(event)
+  }
+
+  private fun logInTest(messageProvider: () -> String) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      thisLogger().debug(messageProvider.invoke())
+    }
+  }
+
+  private fun logFusEvent(eventId: BaseEventId) {
+    logInTest { "Logging FUS event ${eventId.eventId}" }
   }
 
   private data class LastHandledEvent(val event: Event.FUSReportableEvent, val durationReportedToFUS: Duration)
@@ -464,8 +480,10 @@ object FUSProjectHotStartUpMeasurer {
     val duration = getDurationFromStart(time, reportedFirstUiShownEvent)
     if ((reportedFirstUiShownEvent == null || reportedFirstUiShownEvent.event is Event.SplashBecameVisibleEvent) && (ideStarterStartedEvent != null)) {
       if (reportedFirstUiShownEvent == null) {
+        logFusEvent(FIRST_UI_SHOWN_EVENT)
         FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame)
       }
+      logFusEvent(FRAME_BECAME_VISIBLE_EVENT)
       FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), VIOLATION.with(violation))
     }
     return duration
@@ -488,6 +506,7 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private suspend fun startWritingReopenProjectStatistics() {
+    logInTest { "Started handling stat events" }
     try {
       //ensures non-thread-safe structures work correctly on different threads
       Mutex().withLock {
@@ -497,6 +516,7 @@ object FUSProjectHotStartUpMeasurer {
     finally {
       statsIsWritten = true
       channel.close()
+      logInTest { "Finished handling stat events" }
     }
   }
 
@@ -542,6 +562,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     for (event in channel) {
+      logInTest { "Handling event ${event.javaClass.simpleName}" }
       yield()
       when (event) {
         is Event.IdeStarterStartedEvent -> ideStarterStartedEvent = event
@@ -579,6 +600,9 @@ object FUSProjectHotStartUpMeasurer {
           }
           if (multipleProjectsOpenedEvent.hasLightEditProjects) {
             for (value in 1..multipleProjectsOpenedEvent.numberOfProjects) {
+              logFusEvent(
+                MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT
+              )
               MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT.log(
                 DURATION.with(duration),
                 VIOLATION.with(Violation.MightBeLightEditProject),
@@ -592,34 +616,44 @@ object FUSProjectHotStartUpMeasurer {
         is Event.FirstEditorEvent -> firstEditorEventMap.putIfAbsent(event)
         is Event.NoMoreEditorsEvent -> noEditorEventMap.putIfAbsent(event)
       }
+      logInTest { "Finished dispatching event ${event.javaClass.simpleName}" }
 
       while (true) {
+        logInTest { "Started reporting events if possible after event ${event.javaClass.simpleName}" }
         if (reportedFirstUiShownEvent == null) {
           if (splashBecameVisibleEvent != null) {
             val durationFromStart = getDurationFromStart(splashBecameVisibleEvent.time, null)
+            logFusEvent(FIRST_UI_SHOWN_EVENT)
             FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Splash)
             reportedFirstUiShownEvent = LastHandledEvent(splashBecameVisibleEvent, durationFromStart)
           }
           else if (multipleProjectsOpenedEvent == null && !frameBecameVisibleEventMap.isEmpty()) {
             val frameBecameVisibleEvent = frameBecameVisibleEventMap.values.first()
             val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, null)
+            logFusEvent(FIRST_UI_SHOWN_EVENT)
             FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Frame)
             reportedFirstUiShownEvent = LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
           }
           else {
+            logInTest { "Break: waiting to report the first UI shown event" }
             break
           }
         }
 
         if (multipleProjectsOpenedEvent != null && projectPathReportEvents.isEmpty()) {
+          logInTest { "Break: waiting for a project path event for multiple projects" }
           break
         }
 
         if (multipleProjectsOpenedEvent == null && reportedFrameBecameVisibleEventMap.isEmpty() && frameBecameVisibleEventMap.isEmpty()) {
+          logInTest { "Break: waiting to report frame visible event" }
           break
         }
         else if (frameBecameVisibleEventMap.size > reportedFrameBecameVisibleEventMap.size) {
-          if (ideStarterStartedEvent == null) throw CancellationException()
+          if (ideStarterStartedEvent == null) {
+            logInTest { "Cancel the reporting: invalid scenario, the IDE starter event is missing" }
+            throw CancellationException()
+          }
           if (multipleProjectsOpenedEvent == null) {
             thisLogger().assertTrue(frameBecameVisibleEventMap.size == 1, "There are more than one frame became visible")
           }
@@ -636,10 +670,12 @@ object FUSProjectHotStartUpMeasurer {
             }
 
             if (multipleProjectsOpenedEvent == null) {
+              logFusEvent(FRAME_BECAME_VISIBLE_EVENT)
               FRAME_BECAME_VISIBLE_EVENT.log(data)
             }
             else {
               addMultipleProjectSpecificFields(data, projectId, multipleProjectsOpenedEvent)
+              logFusEvent(MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT)
               MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT.log(data)
             }
             reportedFrameBecameVisibleEventMap[projectId] = LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
@@ -647,6 +683,7 @@ object FUSProjectHotStartUpMeasurer {
         }
 
         if (multipleProjectsOpenedEvent == null && reportedFrameBecameInteractiveEvenMap.isEmpty() && frameBecameInteractiveEventMap.isEmpty()) {
+          logInTest { "Break: waiting to report frame became interactive event" }
           break
         }
         else if (frameBecameInteractiveEventMap.size > reportedFrameBecameInteractiveEvenMap.size) {
@@ -656,9 +693,11 @@ object FUSProjectHotStartUpMeasurer {
             val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastReportedEvent)
 
             if (multipleProjectsOpenedEvent == null) {
+              logFusEvent(FRAME_BECAME_INTERACTIVE_EVENT)
               FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart)
             }
             else {
+              logFusEvent(MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT)
               MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart,
                                                                   projectId.projectOrder,
                                                                   multipleProjectsOpenedEvent.numberOfProjects)
@@ -704,10 +743,12 @@ object FUSProjectHotStartUpMeasurer {
             }
 
             if (multipleProjectsOpenedEvent == null) {
+              logFusEvent(CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT)
               CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
             }
             else {
               addMultipleProjectSpecificFields(data, projectId, multipleProjectsOpenedEvent)
+              logFusEvent(MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT)
               MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
             }
             reportedFirstEditorEvenMap[projectId] = lastHandledEvent
@@ -715,9 +756,11 @@ object FUSProjectHotStartUpMeasurer {
         }
 
         if (projectPathReportEvents.size > reportedFirstEditorEvenMap.size) {
+          logInTest { "Break: waiting for events to report first editor event" }
           break
         }
         else {
+          logInTest { "Cancel the reporting: all required events are reported" }
           throw CancellationException()
         }
       }
