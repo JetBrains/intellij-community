@@ -33,7 +33,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use avl_bridge::lifecycle::Reader;
 use avl_bridge::{Client, url};
-use avl_wire::daemon::{IdeExited, IdeLaunched as IdeLaunchedRecord, Output, RunEventKind};
+use avl_wire::daemon::{IdeExited, IdeLaunched as IdeLaunchedRecord, IdeReady, Output, RunEventKind};
 use avl_wire::ide::{self as wire_ide, IdeContext, IdeLaunch, IdePrepared, LaunchRecord, ProjectSource};
 use avl_wire::program::lane::{Delivery, LaneDocument, LaunchHost};
 use avl_wire::progress::{Decision, Subject};
@@ -44,7 +44,7 @@ use super::context::{LaneContext, ServicePorts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity};
 use super::inputs::LaunchInputs;
 use super::package::Packages;
-use super::readiness::{self, Bridge};
+use super::readiness::{self, Bridge, Ready};
 use super::reload::{self, PluginChange};
 use super::services::Service;
 use super::services::cloud::{self, Cloud, Organization};
@@ -52,6 +52,7 @@ use super::services::codex::{self, Codex};
 use super::services::feedback::{self, Feedback};
 use super::services::registry::{self, Registry, RegistryAgent};
 use crate::cli::{CancelArgs, IdeGcArgs, RootArgs, RunArgs};
+use crate::clock::now_stamp;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::supervisor::{self, Launcher, LiveSystem};
 
@@ -487,10 +488,24 @@ impl IdeOwner {
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+        let ready = readiness::await_lifecycle_ready(&bridge, &key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
         })?;
+        self.emit_ready(ready, records);
+        readiness::ping(&bridge)?;
         Ok(decision)
+    }
+
+    /// The `ideReady` record of the held IDE, which got `ready`.
+    pub(super) fn emit_ready(&self, ready: Ready, records: &mut Records<'_>) {
+        let Some(held) = &self.held else { return };
+        records.emit(RunEventKind::IdeReady(IdeReady {
+            timestamp: now_stamp(),
+            pid: ready.pid,
+            launch_name: held.launch_name.clone(),
+            launch_key: held.key.clone(),
+            ready_after_ms: i64::try_from(ready.after.as_millis()).unwrap_or(i64::MAX),
+        }));
     }
 
     /// Reloads the bridge plugin of the held IDE from the context plugins of `launch`, and waits until the new copy is
@@ -505,10 +520,13 @@ impl IdeOwner {
             .map_err(|error| error.to_string())
             .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
             .and_then(|()| {
-                readiness::await_ready(bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+                let not_ready = |refusal: AgentRefusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message);
+                let ready = readiness::await_lifecycle_ready(bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
                     records.note(text);
                 })
-                .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))
+                .map_err(not_ready)?;
+                self.emit_ready(ready, records);
+                readiness::ping(bridge).map_err(not_ready)
             });
         match &reloaded {
             Ok(()) => records.note(format!(
@@ -723,6 +741,7 @@ impl IdeOwner {
         )?;
         held.pid = launched.run.pid;
         records.emit(RunEventKind::IdeLaunched(IdeLaunchedRecord {
+            timestamp: Some(now_stamp()),
             pid: i64::from(held.pid.unwrap_or_default()),
             launch_name: held.launch_name.clone(),
             launch_key: held.key.clone(),
@@ -828,9 +847,11 @@ impl IdeOwner {
             readiness::READY_TIMEOUT.as_secs()
         ));
         let bridge = Bridge::new(BRIDGE_PORT, &token)?;
-        readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+        let ready = readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
-        })
+        })?;
+        self.emit_ready(ready, records);
+        Ok(())
     }
 
     /// The check of a readiness wait on the held IDE run: how the run ended, once it did. A run that the owner does not
@@ -998,9 +1019,11 @@ fn before_relaunch(cause: Relaunch, config: &Path, records: &mut Records<'_>) ->
     Ok(())
 }
 
-/// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named.
+/// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named. An earlier daemon
+/// launched it, so the record has no time.
 fn emit_launched(held: &HeldIde, records: &mut Records<'_>) {
     records.emit(RunEventKind::IdeLaunched(IdeLaunchedRecord {
+        timestamp: None,
         pid: i64::from(held.pid.unwrap_or_default()),
         launch_name: held.launch_name.clone(),
         launch_key: held.key.clone(),
@@ -1015,6 +1038,7 @@ fn emit_launched(held: &HeldIde, records: &mut Records<'_>) {
 /// The `ideExited` record of the ended run `state`.
 fn exited(held: &HeldIde, state: &RunState) -> RunEventKind {
     RunEventKind::IdeExited(IdeExited {
+        timestamp: Some(now_stamp()),
         pid: i64::from(state.pid.or(held.pid).unwrap_or_default()),
         exit_code: state.exit_code.unwrap_or(-1),
         signal: state.signal.clone().flatten(),

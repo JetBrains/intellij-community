@@ -5,7 +5,8 @@
 //! `bt --lane` and a TeamCity agent. It reads the runtime descriptor, stores the lane inputs and the context plugins of
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
-//! directory and to the XML file of a Bazel test. It writes the IJ Perf files of the run, as [`super::performance`]
+//! directory and to the XML file of a Bazel test. After the summary, the stream gets one `timing` record for each step of
+//! its end. It writes the IJ Perf files of the run, as [`super::performance`]
 //! states, and the result of the run, as [`super::run_result`] states. It quits the IDE, and exits 0 when the run is
 //! green. Under a Bazel test, a run that is not green keeps its evidence in the outputs directory of the test, as
 //! [`super::evidence`] states. On a TeamCity build that names a build log file, the run shows in the build log while it
@@ -24,7 +25,9 @@ use std::time::{Duration, Instant};
 use avl_junit::cases::simple_class_name;
 use avl_junit::performance::{Plan, rfc_1123};
 use avl_junit::teamcity;
-use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEvent, RunEventKind, RunRequest, SessionLog, decode_run_event};
+use avl_wire::daemon::{
+    IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEvent, RunEventKind, RunRequest, SessionLog, TimedStep, decode_run_event,
+};
 use avl_wire::runtime::{self, RuntimeFile};
 use avl_wire::session_log;
 use serde::Serialize;
@@ -312,7 +315,12 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         teamcity::is_team_city(variable),
         Some(&end),
     );
-    let (written, finished) = std::thread::scope(|scope| {
+    let mut tee = Tee {
+        file: stream,
+        out: io::stdout(),
+        build_log: BuildLog::open(variable, &args.lane, bazel_outputs(variable).as_deref()),
+    };
+    let green = std::thread::scope(|scope| {
         // Named, so a hang report tells the monitor from the run thread.
         if let Err(error) = std::thread::Builder::new()
             .name(MONITOR_THREAD.to_owned())
@@ -322,44 +330,135 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
                 "cannot start the monitor, so the run has no hang report and no hard stop: {error}"
             ));
         }
-        let mut tee = Tee {
-            file: stream,
-            out: io::stdout(),
-            build_log: BuildLog::open(variable, &args.lane, bazel_outputs(variable).as_deref()),
-        };
         let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut tee);
         monitor.run_returned();
-        let written = write_xml(&root, &xml, variable);
-        let finished = daemon.finish();
-        monitor.end();
-        (written, finished)
-    });
-    if let Err(refusal) = &finished {
-        log(&format!("the IDE did not quit: {}: {}", refusal.code, refusal.message));
-    }
-    let stream = fs::read(&stream_path)
-        .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", stream_path.display())))?;
-    let events = monitor::decode_stream(&stream);
-    if let Some(problem) = budget_problem(&events, budget, variable) {
-        println!("{problem}");
-    }
-    let green = is_green(&stream) && finished.is_ok();
-    let ended = end.write(&events, green, &|id| daemon.iteration_dir(id), &rfc_1123(&jiff::Zoned::now()));
-    if !ended.messages.is_empty() {
-        let mut out = io::stdout().lock();
-        if let Err(error) = writeln!(out, "{}", ended.messages.join("\n")).and_then(|()| out.flush()) {
-            log(&format!("cannot write the publishArtifacts lines of the IJ Perf files: {error}"));
-        }
-    }
-    for line in &ended.lines {
-        log(line);
-    }
-    if !green && let Some(evidence) = &evidence {
-        let kept = evidence::keep(evidence, &events, Moment::RunEnd, Limits::LANE);
-        log(&kept.describe(&evidence.destination));
+        let mut ending = LaneRunEnding {
+            daemon: &daemon,
+            monitor: &monitor,
+            root: &root,
+            xml,
+            stream_path: &stream_path,
+            budget,
+            end: &end,
+            evidence: evidence.as_ref(),
+            variable,
+            events: Vec::new(),
+        };
+        finish(&mut tee, &mut ending)
+    })?;
+    Ok(u8::from(!green))
+}
+
+/// The steps of `lane-run` after its iteration, which [`finish`] runs in their order.
+pub(crate) trait Ending {
+    /// Writes the JUnit XML of the iteration.
+    fn write_xml(&mut self) -> Result<(), AgentRefusal>;
+
+    /// Quits the lane IDE and stops the lane services.
+    fn quit(&mut self) -> Result<(), AgentRefusal>;
+
+    /// Reads the run stream back, writes the IJ Perf files and the result of the run, and answers whether the run is
+    /// green. `quit` is the outcome of [`Ending::quit`].
+    fn end(&mut self, quit: &Result<(), AgentRefusal>) -> Result<bool, AgentRefusal>;
+
+    /// Keeps the evidence of a run that is not green.
+    fn keep_evidence(&mut self);
+}
+
+/// Runs the steps of `ending` in order, and writes the `timing` record of each into `out` after it: `lane-run-xml`,
+/// `lane-run-quit`, `lane-run-end` and, for a run that is not green, `lane-run-evidence`. It answers whether the run is
+/// green, and a JUnit XML that it could not write is its refusal.
+pub(crate) fn finish(out: &mut impl Write, ending: &mut dyn Ending) -> Result<bool, AgentRefusal> {
+    let written = timed(out, TimedStep::LaneRunXml, || ending.write_xml());
+    let quit = timed(out, TimedStep::LaneRunQuit, || ending.quit());
+    let green = timed(out, TimedStep::LaneRunEnd, || ending.end(&quit))?;
+    if !green {
+        timed(out, TimedStep::LaneRunEvidence, || ending.keep_evidence());
     }
     written?;
-    Ok(u8::from(!green))
+    Ok(green)
+}
+
+/// Runs `work` as the step `step`, and writes its `timing` record into `out`, where the run stream goes. A write that
+/// fails is a line of the log.
+fn timed<T>(out: &mut impl Write, step: TimedStep, work: impl FnOnce() -> T) -> T {
+    let started = Instant::now();
+    let outcome = work();
+    let record = super::stream::timing(step, started, None);
+    let written = serde_json::to_vec(&record)
+        .map_err(io::Error::from)
+        .and_then(|mut line| {
+            line.push(b'\n');
+            out.write_all(&line)
+        })
+        .and_then(|()| out.flush());
+    if let Err(error) = written {
+        log(&format!("cannot write the {} record of the run stream: {error}", step.as_str()));
+    }
+    outcome
+}
+
+/// The end of a real run: the daemon, the monitor, the run directory and the files of the run.
+struct LaneRunEnding<'a> {
+    daemon: &'a channel::Daemon,
+    monitor: &'a Monitor<'a>,
+    root: &'a Path,
+    xml: String,
+    stream_path: &'a Path,
+    budget: Option<Duration>,
+    end: &'a RunEnd,
+    evidence: Option<&'a Evidence>,
+    variable: &'a dyn Fn(&str) -> Option<String>,
+    /// The records of the run stream, which [`Ending::end`] reads back.
+    events: Vec<RunEvent>,
+}
+
+impl Ending for LaneRunEnding<'_> {
+    fn write_xml(&mut self) -> Result<(), AgentRefusal> {
+        write_xml(self.root, &self.xml, self.variable)
+    }
+
+    fn quit(&mut self) -> Result<(), AgentRefusal> {
+        let finished = self.daemon.finish();
+        self.monitor.end();
+        if let Err(refusal) = &finished {
+            log(&format!("the IDE did not quit: {}: {}", refusal.code, refusal.message));
+        }
+        finished
+    }
+
+    fn end(&mut self, quit: &Result<(), AgentRefusal>) -> Result<bool, AgentRefusal> {
+        let stream = fs::read(self.stream_path)
+            .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot read {}: {error}", self.stream_path.display())))?;
+        self.events = monitor::decode_stream(&stream);
+        if let Some(problem) = budget_problem(&self.events, self.budget, self.variable) {
+            println!("{problem}");
+        }
+        let green = is_green(&stream) && quit.is_ok();
+        let ended = self.end.write(
+            &self.events,
+            green,
+            &|id| self.daemon.iteration_dir(id),
+            &rfc_1123(&jiff::Zoned::now()),
+        );
+        if !ended.messages.is_empty() {
+            let mut out = io::stdout().lock();
+            if let Err(error) = writeln!(out, "{}", ended.messages.join("\n")).and_then(|()| out.flush()) {
+                log(&format!("cannot write the publishArtifacts lines of the IJ Perf files: {error}"));
+            }
+        }
+        for line in &ended.lines {
+            log(line);
+        }
+        Ok(green)
+    }
+
+    fn keep_evidence(&mut self) {
+        if let Some(evidence) = self.evidence {
+            let kept = evidence::keep(evidence, &self.events, Moment::RunEnd, Limits::LANE);
+            log(&kept.describe(&evidence.destination));
+        }
+    }
 }
 
 /// What the end of the run of `request` writes: the IJ Perf files of `plan` and the result of the run. A plan gets the

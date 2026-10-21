@@ -36,7 +36,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
-use avl_wire::daemon::TypedFailure;
+use avl_wire::daemon::{TimedStep, TypedFailure};
 use avl_wire::ide::SYSTEM_DIR;
 use avl_wire::program::lane::{Delivery, LIVE_LANE, LaneAgent, LaneDocument};
 use avl_wire::program::{
@@ -731,7 +731,12 @@ impl<'r, 's> Runner<'r, 's> {
             aborted: failure.aborted || expired,
             ..failure
         });
+        let recorded = self.trace().recording();
+        let closing = Instant::now();
         self.trace().finish_scenario(failure.as_ref().map(Failure::trace).as_ref());
+        if recorded {
+            self.stream.timing(TimedStep::RecorderClose, closing, Some(&case.name));
+        }
         self.report_trace_failure();
         let status = match &failure {
             None => CaseStatus::Successful,
@@ -757,9 +762,11 @@ impl<'r, 's> Runner<'r, 's> {
         }
         self.bare.set(true);
         self.watch.quiet(|| {
+            let started = Instant::now();
             let launched = self
                 .watch
                 .step(&format!("{} bare launch", program.suite), || self.lane.launch_bare(&launch.key));
+            self.stream.timing(TimedStep::BareLaunch, started, Some(&program.suite));
             if let Err(error) = launched {
                 let failure = Failure::runner(
                     kind::LAUNCH,
@@ -797,6 +804,7 @@ impl<'r, 's> Runner<'r, 's> {
         self.stream.started(&case);
         self.watch.execution_started(self.stream, case.execution());
         let verdict = self.body(suite, profile, &SuiteFixture::default());
+        self.stream.timing(TimedStep::BareProgram, started, Some(&profile.name));
         // A bare IDE runs on a fresh context, so its log holds its launch alone. The slice starts at its first byte and
         // holds what the IDE wrote during the program, the start-up included.
         let mut command = scenario_command(suite, profile, raw, self.lane.recorder_bridge());
@@ -862,6 +870,7 @@ impl<'r, 's> Runner<'r, 's> {
             Err(failure) => failures.push(describe(&name, &failure.message)),
         }
         let services = self.lane.services();
+        let started = Instant::now();
         for (what, cleared) in [
             ("resetting the registry distribution fault", services.registry_clear()),
             ("clearing captured feedback", services.feedback_clear()),
@@ -871,6 +880,7 @@ impl<'r, 's> Runner<'r, 's> {
                 failures.push(describe(what, &error));
             }
         }
+        self.stream.timing(TimedStep::ServicesReset, started, Some(scenario));
         if failures.is_empty() { Ok(()) } else { Err(failures.join("\n")) }
     }
 

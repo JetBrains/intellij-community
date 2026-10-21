@@ -90,7 +90,8 @@ fn fake_ide_in(phase: &'static str, vocabulary: Option<&'static str>, robot: &'s
 fn ready(server: &FakeHttp) -> (Result<(), AgentRefusal>, Vec<String>) {
     let bridge = Bridge::at(server.url(), TOKEN).unwrap();
     let mut notes = Vec::new();
-    let result = await_ready(&bridge, LAUNCH, DIGEST, &mut || None, &mut |note| notes.push(note));
+    // The whole gate: the lifecycle, then the robot and ping chain.
+    let result = await_lifecycle_ready(&bridge, LAUNCH, DIGEST, &mut || None, &mut |note| notes.push(note)).and_then(|_| ping(&bridge));
     (result, notes)
 }
 

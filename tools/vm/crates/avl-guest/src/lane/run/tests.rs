@@ -112,6 +112,83 @@ fn only_a_summary_without_failures_is_green() {
     assert!(!is_green(format!("{note}\nnot a record\n{}\n", summary(false)).as_bytes()));
 }
 
+/// The steps of an end, which each say that they ran. The end answers `green`, and the XML write fails on `refuse_xml`.
+struct FakeEnding {
+    ran: Vec<&'static str>,
+    green: bool,
+    refuse_xml: bool,
+}
+
+impl Ending for FakeEnding {
+    fn write_xml(&mut self) -> Result<(), AgentRefusal> {
+        self.ran.push("xml");
+        if self.refuse_xml {
+            return Err(AgentRefusal::failure(BOOT_CODE, "cannot write the JUnit XML"));
+        }
+        Ok(())
+    }
+
+    fn quit(&mut self) -> Result<(), AgentRefusal> {
+        self.ran.push("quit");
+        Ok(())
+    }
+
+    fn end(&mut self, quit: &Result<(), AgentRefusal>) -> Result<bool, AgentRefusal> {
+        self.ran.push("end");
+        Ok(self.green && quit.is_ok())
+    }
+
+    fn keep_evidence(&mut self) {
+        self.ran.push("evidence");
+    }
+}
+
+// After the summary of its iteration, lane-run runs its own steps in order and writes the `timing` record of each after
+// it: the XML, the quit, the end, and the evidence of a run that is not green. Each record has no subject, and a stream
+// with them is still green. A JUnit XML that cannot be written is the refusal of the run, after every step ran.
+#[test]
+fn the_steps_after_the_iteration_are_timing_records_after_the_summary() {
+    let steps = |green: bool, refuse_xml: bool| {
+        let mut stream = format!("{}\n", summary(false)).into_bytes();
+        let mut ending = FakeEnding {
+            ran: Vec::new(),
+            green,
+            refuse_xml,
+        };
+        let outcome = finish(&mut stream, &mut ending);
+        let text = String::from_utf8(stream.clone()).unwrap();
+        let timed: Vec<String> = text
+            .lines()
+            .skip(1)
+            .map(|line| match decode_run_event(line.as_bytes()).unwrap().kind {
+                RunEventKind::Timing(timing) if timing.subject.is_none() => timing.step,
+                other => panic!("{other:?}"),
+            })
+            .collect();
+        assert!(is_green(&stream), "{text}");
+        (outcome.map_err(|refusal| refusal.code.into_owned()), ending.ran, timed)
+    };
+    assert_eq!(
+        steps(true, false),
+        (
+            Ok(true),
+            vec!["xml", "quit", "end"],
+            vec!["lane-run-xml".to_owned(), "lane-run-quit".to_owned(), "lane-run-end".to_owned()]
+        )
+    );
+    let red = ["lane-run-xml", "lane-run-quit", "lane-run-end", "lane-run-evidence"]
+        .map(str::to_owned)
+        .to_vec();
+    assert_eq!(
+        steps(false, false),
+        (Ok(false), vec!["xml", "quit", "end", "evidence"], red.clone())
+    );
+    assert_eq!(
+        steps(false, true),
+        (Err(BOOT_CODE.to_owned()), vec!["xml", "quit", "end", "evidence"], red)
+    );
+}
+
 // The JUnit XML goes into the run directory, and to the file of a Bazel test: $JB_XML_OUTPUT_FILE before
 // $XML_OUTPUT_FILE.
 #[test]

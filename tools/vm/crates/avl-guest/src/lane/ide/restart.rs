@@ -190,11 +190,12 @@ impl IdeOwner {
         cleared?;
         timed(parts, RelaunchPart::Launch, || self.launch_again(previous, launch, cause, records))?;
         let bridge = Bridge::new(BRIDGE_PORT, &launch.identity.secret(BRIDGE_TOKEN_PURPOSE))?;
-        timed(parts, RelaunchPart::Ready, || {
+        let ready = timed(parts, RelaunchPart::Ready, || {
             readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
                 records.note(text);
             })
         })?;
+        self.emit_ready(ready, records);
         timed(parts, RelaunchPart::Ping, || readiness::ping(&bridge))?;
         down
     }

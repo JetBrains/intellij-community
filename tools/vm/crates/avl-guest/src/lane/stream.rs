@@ -15,10 +15,11 @@
 
 use std::io::Write;
 use std::sync::{Mutex, MutexGuard, PoisonError};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use avl_wire::daemon::{
-    ContainerFailed, ExecutionIdentity, Output, RunEvent, RunEventKind, Skipped, TestFinished, TestStarted, TraceFailed, TypedFailure,
+    ContainerFailed, ExecutionIdentity, Output, RunEvent, RunEventKind, Skipped, TestFinished, TestStarted, TimedStep, Timing, TraceFailed,
+    TypedFailure,
 };
 use avl_wire::report::ScenarioReport;
 
@@ -165,6 +166,11 @@ impl<'a> Stream<'a> {
         }));
     }
 
+    /// The `timing` record of `step`, which began at `started` and ends now. `subject` is its suite or its scenario.
+    pub(crate) fn timing(&self, step: TimedStep, started: Instant, subject: Option<&str>) {
+        self.emit(&timing(step, started, subject));
+    }
+
     /// The `testStarted` record of a scenario.
     pub(crate) fn started(&self, case: &CaseIdentity) {
         self.lock().counts.started += 1;
@@ -241,4 +247,14 @@ impl<'a> Stream<'a> {
     pub(crate) fn junit_xml(&self) -> String {
         avl_junit::render([self.lock().kept.as_slice()])
     }
+}
+
+/// The `timing` record of `step`, which began at `started` and ends now.
+pub(crate) fn timing(step: TimedStep, started: Instant, subject: Option<&str>) -> RunEventKind {
+    RunEventKind::Timing(Timing {
+        timestamp: now_stamp(),
+        step: step.as_str().to_owned(),
+        duration_ms: i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX),
+        subject: subject.map(str::to_owned),
+    })
 }

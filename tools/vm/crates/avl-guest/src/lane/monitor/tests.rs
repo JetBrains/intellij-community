@@ -120,6 +120,7 @@ fn cut_off_run() -> Vec<RunEventKind> {
             ],
         }),
         RunEventKind::IdeLaunched(IdeLaunched {
+            timestamp: None,
             pid: 100,
             launch_name: "start-mve37si6".to_owned(),
             launch_key: "air-gui_chat-fa2b".to_owned(),
@@ -130,11 +131,13 @@ fn cut_off_run() -> Vec<RunEventKind> {
             execution: execution(class, "restore-loaded"),
         }),
         RunEventKind::IdeExited(IdeExited {
+            timestamp: None,
             pid: 100,
             exit_code: 0,
             signal: None,
         }),
         RunEventKind::IdeLaunched(IdeLaunched {
+            timestamp: None,
             pid: 101,
             launch_name: "restart-1-mve37si7".to_owned(),
             launch_key: "air-gui_chat-fa2b".to_owned(),

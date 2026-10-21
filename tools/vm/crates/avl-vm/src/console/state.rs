@@ -657,6 +657,8 @@ impl State {
             | RunEventKind::Output(_)
             | RunEventKind::IdeLaunched(_)
             | RunEventKind::IdeExited(_)
+            | RunEventKind::IdeReady(_)
+            | RunEventKind::Timing(_)
             | RunEventKind::Decision(_) => {}
         }
     }

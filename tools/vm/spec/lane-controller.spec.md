@@ -797,8 +797,26 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The run journal holds the life of the lane IDE. An `ideLaunched` record names the pid, the launch name, the
-  launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal.
+  launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal. Each record
+  names its time. The one exception is the `ideLaunched` record of an IDE that outlived the previous daemon.
   [@test] ../crates/avl-wire/src/daemon/tests.rs
+
+- An `ideReady` record follows each wait for `READY` that holds: after a launch, on a reused IDE, and after a reload of
+  the bridge plugin. It names the launch, the pid that the bridge answers with, and `readyAfterMs`, the time of the
+  wait.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_ide_life_records_carry_their_time_and_the_ready_record_its_wait`)
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`the_ready_record_names_the_launch_the_pid_and_the_wait`)
+
+- A `timing` record holds the time of a step that no trace bundle holds: its `step`, its `durationMs` and its end.
+  The steps are `bare-launch` and `bare-program` of a suite of a bare IDE, the `services-reset` of each reset, and
+  the `recorder-close` of each recorded scenario. Its `subject` names the suite or the scenario. After the summary
+  of its iteration, `lane-run` writes `lane-run-xml`, `lane-run-quit`, `lane-run-end` and, for a run that is not
+  green, `lane-run-evidence`. The JUnit XML and the TeamCity messages ignore every `timing` and `ideReady` record.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_timing_record_names_its_step_its_duration_and_its_subject`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_steps_after_the_iteration_are_timing_records_after_the_summary`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
 
 - The run journal holds each line that the daemon writes to its error stream during a run. Each line is an `output`
   record. An example is the line that names a recycle of the lane IDE. The text has no stamp of the daemon, and the

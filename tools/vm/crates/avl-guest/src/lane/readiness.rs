@@ -61,6 +61,13 @@ pub(crate) fn request(name: &str, fields: Value) -> Value {
     Value::Object(request)
 }
 
+/// What a wait for readiness found: the pid that the bridge answers with, and how long the wait took.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Ready {
+    pub pid: i64,
+    pub after: Duration,
+}
+
 /// The bridge of one lane IDE, on its fixed port with the token of its launch.
 pub(crate) struct Bridge {
     client: Client,
@@ -103,19 +110,6 @@ impl Bridge {
     }
 }
 
-/// Waits until the IDE of `launch` is ready, and drives it to the state a scenario expects. `vocabulary_digest` is the
-/// digest of the vocabulary file of the run. `note` gets each fact a person reads in the log.
-pub(crate) fn await_ready(
-    bridge: &Bridge,
-    launch: &str,
-    vocabulary_digest: &str,
-    ended: &mut dyn FnMut() -> Option<String>,
-    note: &mut dyn FnMut(String),
-) -> Result<(), AgentRefusal> {
-    await_lifecycle_ready(bridge, launch, vocabulary_digest, ended, note)?;
-    ping(bridge)
-}
-
 /// Waits until the lifecycle of the IDE of `launch` reports `READY`, and holds the bridge to `vocabulary_digest`, the
 /// digest of the vocabulary file of the run. It sends no request of the bridge, because the resident plugin serves the lifecycle
 /// route: the readiness of a bare IDE ends here. `ended` answers how the process of the IDE ended, once it did, so a
@@ -126,16 +120,17 @@ pub(crate) fn await_lifecycle_ready(
     vocabulary_digest: &str,
     ended: &mut dyn FnMut() -> Option<String>,
     note: &mut dyn FnMut(String),
-) -> Result<(), AgentRefusal> {
+) -> Result<Ready, AgentRefusal> {
     let started = Instant::now();
     let state = bridge
         .reader(launch)
         .await_ready_while(Duration::ZERO, READY_TIMEOUT, ended)
         .map_err(|error| not_ready(launch, &error))?;
+    let after = started.elapsed();
     note(format!(
         "the IDE of '{launch}' is ready as pid {} after {} ms",
         state.pid,
-        started.elapsed().as_millis()
+        after.as_millis()
     ));
     check_vocabulary(
         launch,
@@ -143,7 +138,8 @@ pub(crate) fn await_lifecycle_ready(
         vocabulary_digest,
         &MISSING_DIGEST_NOTED,
         note,
-    )
+    )?;
+    Ok(Ready { pid: state.pid, after })
 }
 
 /// Proves that the bridge answers and drives gestures through the input-events robot: one chain of `InputRobot` and a

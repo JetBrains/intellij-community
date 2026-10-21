@@ -383,6 +383,8 @@ vocabulary! {
         IdeLaunched = "ideLaunched",
         /// The lane IDE process ended.
         IdeExited = "ideExited",
+        /// The lifecycle of the lane IDE answered `READY`, and its bridge serves the vocabulary of the run.
+        IdeReady = "ideReady",
         /// A relaunch, a reset or a readiness gate of the lane was open past its budget, and the daemon wrote its
         /// dumps.
         SlowStep = "slowStep",
@@ -393,6 +395,34 @@ vocabulary! {
         /// refused the hello or a scenario, or it went away. The controller makes the first reason the report's
         /// `tracesError`.
         TraceFailed = "traceFailed",
+        /// The time of one step of a run that no trace bundle holds, see [`TimedStep`].
+        Timing = "timing",
+    }
+}
+
+vocabulary! {
+    /// The `step` of a `timing` record: a step of a run that no trace bundle holds.
+    pub enum TimedStep {
+        /// The launch of the IDE of a suite of the launch profile `bare`: the quit of the lane IDE, the stop of every
+        /// other IDE run, the fresh context, the start and the wait for `READY`. Its subject is the suite.
+        BareLaunch = "bare-launch",
+        /// The program of a scenario of a bare IDE, which runs before the trace of the scenario opens. Its subject is
+        /// the scenario.
+        BareProgram = "bare-program",
+        /// The reset of the lane services after the `Reset` request of a scenario: the registry fault, the captured
+        /// feedback and the cloud record. Its subject is the scenario.
+        ServicesReset = "services-reset",
+        /// The close of the bundle of a scenario by the recorder: the wait of the lane for the ack of `done`. Its
+        /// subject is the scenario.
+        RecorderClose = "recorder-close",
+        /// The write of the JUnit XML by `lane-run` after its iteration.
+        LaneRunXml = "lane-run-xml",
+        /// The quit of the lane IDE by `lane-run` after its iteration, and the stop of the lane services.
+        LaneRunQuit = "lane-run-quit",
+        /// The IJ Perf files and the result of the run, which `lane-run` writes after the quit.
+        LaneRunEnd = "lane-run-end",
+        /// The copy of the evidence of a run that is not green into the outputs of the Bazel test.
+        LaneRunEvidence = "lane-run-evidence",
     }
 }
 
@@ -574,6 +604,9 @@ pub struct Output {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeLaunched {
+    /// When the launch returned. Absent for an IDE that outlived the previous daemon, and in a stream of an older daemon.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<String>,
     pub pid: i64,
     pub launch_name: String,
     pub launch_key: String,
@@ -586,10 +619,40 @@ pub struct IdeLaunched {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeExited {
+    /// When the daemon saw the end of the run. Absent in a stream of an older daemon.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<String>,
     pub pid: i64,
     pub exit_code: i32,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub signal: Option<String>,
+}
+
+/// The lane IDE of a launch got ready: its lifecycle answered `READY` with the vocabulary of the run. A ready IDE that
+/// the daemon reuses gets the record too.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IdeReady {
+    pub timestamp: String,
+    /// The pid that the bridge answers with.
+    pub pid: i64,
+    pub launch_name: String,
+    pub launch_key: String,
+    /// The milliseconds of the wait for `READY`.
+    pub ready_after_ms: i64,
+}
+
+/// The time of one step of a run that no trace bundle holds, written at the end of the step.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Timing {
+    pub timestamp: String,
+    /// A word of [`TimedStep`].
+    pub step: String,
+    pub duration_ms: i64,
+    /// The suite or the scenario of the step, as [`TimedStep`] states. Absent for a step of the whole run.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub subject: Option<String>,
 }
 
 /// A step of the lane open past its budget, and the dumps the daemon wrote then. `path` names every open phase,
@@ -644,9 +707,11 @@ pub enum RunEventKind {
     Output(Output),
     IdeLaunched(IdeLaunched),
     IdeExited(IdeExited),
+    IdeReady(IdeReady),
     SlowStep(SlowStep),
     Decision(crate::progress::Decision),
     TraceFailed(TraceFailed),
+    Timing(Timing),
 }
 
 /// One decoded record: what the daemon sent, and the reading of it.
@@ -696,9 +761,11 @@ impl RunEvent {
             RunEventKind::Output(_) => Event::Output,
             RunEventKind::IdeLaunched(_) => Event::IdeLaunched,
             RunEventKind::IdeExited(_) => Event::IdeExited,
+            RunEventKind::IdeReady(_) => Event::IdeReady,
             RunEventKind::SlowStep(_) => Event::SlowStep,
             RunEventKind::Decision(_) => Event::Decision,
             RunEventKind::TraceFailed(_) => Event::TraceFailed,
+            RunEventKind::Timing(_) => Event::Timing,
         }
     }
 
@@ -819,9 +886,11 @@ pub fn decode_run_event(line: &[u8]) -> Result<RunEvent, DecodeError> {
         Event::Output => RunEventKind::Output(record(event, body)?),
         Event::IdeLaunched => RunEventKind::IdeLaunched(record(event, body)?),
         Event::IdeExited => RunEventKind::IdeExited(record(event, body)?),
+        Event::IdeReady => RunEventKind::IdeReady(record(event, body)?),
         Event::SlowStep => RunEventKind::SlowStep(record(event, body)?),
         Event::Decision => RunEventKind::Decision(record(event, body)?),
         Event::TraceFailed => RunEventKind::TraceFailed(record(event, body)?),
+        Event::Timing => RunEventKind::Timing(record(event, body)?),
     };
     Ok(RunEvent { raw: Some(raw), kind })
 }

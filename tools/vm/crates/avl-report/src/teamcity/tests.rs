@@ -39,10 +39,10 @@ fn started(id: &str, class: &str) -> RunEvent {
 fn the_recorded_stream_renders_its_golden() {
     let mut messages = Messages::default();
     let mut lines = Vec::new();
-    for (index, event) in run_stream().iter().enumerate() {
+    for event in &run_stream() {
         lines.extend(messages.record(WORKER, event));
         // The trace of the failed scenario arrives while the next record streams.
-        if index == 5 {
+        if matches!(&event.kind, RunEventKind::TestFinished(finished) if finished.execution.display_name == "attach-file") {
             lines.extend(messages.trace(
                 WORKER,
                 &trace("attach-file", "/runs/run-1/traces/it-boot1-1/001.zip", true),

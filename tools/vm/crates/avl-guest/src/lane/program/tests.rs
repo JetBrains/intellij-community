@@ -454,6 +454,20 @@ impl Ran {
     fn events(&self, event: &str) -> Vec<&Value> {
         self.records.iter().filter(|record| record["event"] == event).collect()
     }
+
+    /// The step and the subject of each `timing` record, in stream order. Each record also states its time.
+    fn timings(&self) -> Vec<(String, String)> {
+        self.events("timing")
+            .iter()
+            .map(|record| {
+                assert!(record["durationMs"].is_i64() && record["timestamp"].is_string(), "{record}");
+                (
+                    record["step"].as_str().unwrap().to_owned(),
+                    record["subject"].as_str().unwrap_or_default().to_owned(),
+                )
+            })
+            .collect()
+    }
 }
 
 fn lane_document() -> LaneDocument {
@@ -731,6 +745,12 @@ fn a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript() {
         "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest"
     );
     assert_eq!(finished[0]["methodName"], "generatedFlowScenarios");
+    let scenario = |step: &str| (step.to_owned(), "rename-closed-project-session".to_owned());
+    assert_eq!(
+        ran.timings(),
+        [scenario("services-reset"), scenario("services-reset"), scenario("recorder-close")],
+        "the reset of the lane services on each side, then the close of the bundle"
+    );
     expect_file![avl_testkit::crate_path!("testdata/lane-daemon/transcript.ndjson")].assert_eq(&without_clock(&ran.trace));
 }
 
@@ -1528,6 +1548,19 @@ fn a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction(
     assert!(bare_trace[0].starts_with(r#"{"op":"scenario""#), "{bare_trace:?}");
     // The slice of a bare IDE starts at the first byte of its fresh log, so it holds the start-up records.
     assert!(bare_trace[0].ends_with(r#","logFrom":0}"#), "{bare_trace:?}");
+    let timed = |step: &str, subject: &str| (step.to_owned(), subject.to_owned());
+    let bare = "Air loads no more classes than its budget while a project opens";
+    assert_eq!(
+        ran.timings(),
+        [
+            timed("services-reset", "renames"),
+            timed("services-reset", "renames"),
+            timed("recorder-close", "renames"),
+            timed("bare-launch", "startup-class-loading"),
+            timed("bare-program", bare),
+            timed("recorder-close", bare),
+        ]
+    );
     let shared = ran
         .trace
         .iter()

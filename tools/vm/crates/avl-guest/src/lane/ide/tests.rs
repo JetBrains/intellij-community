@@ -350,3 +350,34 @@ fn the_kill_target_is_the_run_of_the_last_launch_and_a_quit_clears_it() {
     owner.publish_target();
     assert_eq!(run_of(&target), Some((context, "run-ide-restart-1-mve37si7".to_owned())));
 }
+
+// The `ideReady` record names the launch of the held IDE, the pid that its bridge answers with, and the wait for
+// `READY`, and an owner that holds no IDE writes none.
+#[test]
+fn the_ready_record_names_the_launch_the_pid_and_the_wait() {
+    let root = TempDir::new().unwrap();
+    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    let ready = Ready {
+        pid: 4242,
+        after: Duration::from_millis(6949),
+    };
+    let mut records = Vec::new();
+    owner.emit_ready(ready, &mut Records(&mut |record| records.push(record)));
+    assert_eq!(records, Vec::new(), "an owner with no IDE");
+
+    owner.held = Some(held_ide(&root.path().join("ide/air-ui-lane"), "restart-1-mvic2833"));
+    owner.emit_ready(ready, &mut Records(&mut |record| records.push(record)));
+    let [RunEventKind::IdeReady(record)] = records.as_slice() else {
+        panic!("{records:?}");
+    };
+    assert_eq!(
+        (
+            record.pid,
+            record.launch_name.as_str(),
+            record.launch_key.as_str(),
+            record.ready_after_ms
+        ),
+        (4242, "restart-1-mvic2833", "air-ui-lane", 6949)
+    );
+    assert!(crate::clock::parse_stamp(&record.timestamp).is_some(), "{}", record.timestamp);
+}

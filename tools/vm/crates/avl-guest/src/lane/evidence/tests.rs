@@ -21,6 +21,7 @@ fn execution(scenario: &str) -> ExecutionIdentity {
 
 fn launched(pid: i64, name: &str, root: &Path) -> RunEventKind {
     RunEventKind::IdeLaunched(IdeLaunched {
+        timestamp: None,
         pid,
         launch_name: name.to_owned(),
         launch_key: "air-ui-fa2b".to_owned(),
@@ -30,6 +31,7 @@ fn launched(pid: i64, name: &str, root: &Path) -> RunEventKind {
 
 fn exited(pid: i64) -> RunEventKind {
     RunEventKind::IdeExited(IdeExited {
+        timestamp: None,
         pid,
         exit_code: 0,
         signal: None,

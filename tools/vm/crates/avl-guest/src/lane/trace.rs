@@ -650,7 +650,8 @@ impl Trace {
         }
     }
 
-    const fn recording(&self) -> bool {
+    /// Whether a scenario is recorded now: the recorder runs, and it took the open scenario.
+    pub(crate) const fn recording(&self) -> bool {
         self.transport.is_some() && self.scenario_open
     }
 
