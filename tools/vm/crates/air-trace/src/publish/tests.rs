@@ -1,9 +1,11 @@
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
 use avl_testkit::traces::{copy_tree, example_bundle, example_file};
 use avl_trace::bundle::{MANIFEST_FILE, VIDEO_INDEX_FILE, bundle_file, decode_manifest};
+use avl_trace_tools::artifacts::FAILED_DIR;
 use avl_trace_tools::pack::{PackOptions, pack};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -540,14 +542,6 @@ fn the_output_holds_the_files_of_this_run_only() {
     assert!(stderr.contains(&refused), "{stderr}");
     assert_eq!(fs::read_to_string(&kept).unwrap(), "mine");
     assert_eq!(fs::read_dir(foreign.path()).unwrap().count(), 1);
-}
-
-#[test]
-fn a_lane_is_the_target_and_its_shard() {
-    assert_eq!(lane_of(Path::new("plugins/air/tests/integration/ui/ui_lane_test")), "ui_lane_test");
-    assert_eq!(lane_of(Path::new("a/ui_lane_test/shard_2_of_4")), "ui_lane_test/shard_2_of_4");
-    assert_eq!(lane_of(Path::new("a/ui_lane_test/run_1_of_3")), "ui_lane_test/run_1_of_3");
-    assert_eq!(lane_of(Path::new("")), "tests");
 }
 
 /// Under `bazel run`, a relative path of the command line is taken from the directory where the command ran. It is not

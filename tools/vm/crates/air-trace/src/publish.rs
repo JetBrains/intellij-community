@@ -32,7 +32,7 @@
 //! On TeamCity the step publishes only the tests of this build ([teamcity::Build::start]). It also empties its output
 //! first. So a test or a zip of an earlier build on the agent does not publish again.
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -40,6 +40,7 @@ use std::time::SystemTime;
 
 use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, warning};
 use avl_trace::bundle::{PARTIAL_SUFFIX, ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
+use avl_trace_tools::artifacts::{Stems, failed_target, failure_picture, testlogs_lane};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
 };
@@ -137,10 +138,6 @@ const LISTING_GENERATION: u64 = 1;
 const OUT_MARKER: &str = ".air-traces-publish";
 /// The one archive artifact of the traces, at the top of the artifacts and of the output.
 pub(crate) const ARCHIVE: &str = "air-traces.zip";
-/// The artifact directory of the loose files of the failed scenarios, which the Tests tab of TeamCity shows inline.
-const FAILED_DIR: &str = "air-traces-failed";
-/// The name of the failure picture of a failed scenario in [FAILED_DIR], before its extension.
-const FAILURE_STEM: &str = "failure";
 
 /// What one publish reads and where it writes.
 pub(crate) struct Publish<'a> {
@@ -341,7 +338,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 state.problems.push(problem);
             }
             if !bundles.is_empty() {
-                let lane = lane_of(dir.strip_prefix(root).unwrap_or(dir));
+                let lane = testlogs_lane(dir.strip_prefix(root).unwrap_or(dir));
                 tests.push(Beside {
                     root: index,
                     xml,
@@ -395,7 +392,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     };
 
     let mut messages = Messages::default();
-    let mut written = BTreeSet::new();
+    let mut stems = Stems::default();
     let mut scenarios = Vec::new();
     let mut zips = Vec::new();
     let mut packed_dirs = Vec::new();
@@ -433,14 +430,9 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 .chain(class_dir.split('/'))
                 .fold(staging.clone(), |path, segment| path.join(segment));
             // Two names can sanitize to one file name; the later bundle takes the next free `<scenario>.<n>.zip`.
-            let mut stem = scenario.to_owned();
-            let mut attempt = 1;
-            while written.contains(&dir.join(format!("{stem}.zip"))) {
-                attempt += 1;
-                stem = format!("{scenario}.{attempt}");
-            }
+            let stem = stems.take(lane, class_dir, scenario);
             let zip = dir.join(format!("{stem}.zip"));
-            if attempt > 1 {
+            if stem != scenario {
                 say(
                     stderr,
                     &format!(
@@ -450,7 +442,6 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 )
                 .map_err(write_failed)?;
             }
-            written.insert(zip.clone());
             let packed = match &bundle.location {
                 Location::Dir(dir) => pack(dir, &zip, &PackOptions::default()),
                 Location::Zip { path, prefix } => pack_zip_bundle(path, prefix, &zip),
@@ -468,15 +459,13 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
             let relative = format!("{lane}/{class_dir}/{stem}.zip");
             let mut lines = Vec::new();
             let failure = if matches!(bundle.status, Status::Failed | Status::Aborted) {
+                let target = failed_target(lane, class_dir, &stem);
                 let loose = Loose {
-                    dir: out.join(FAILED_DIR).join(format!("{lane}/{class_dir}/{stem}")),
-                    target: format!("{FAILED_DIR}/{lane}/{class_dir}/{stem}"),
+                    dir: out.join(&target),
+                    target,
                 };
                 let video = bundle.has_video.then_some((VIDEO_FILE, VIDEO_FILE.to_owned()));
-                let still = bundle.thumbnail.as_deref().map(|still| {
-                    let extension = still.rsplit_once('.').map_or("webp", |(_, extension)| extension);
-                    (still, format!("{FAILURE_STEM}.{extension}"))
-                });
+                let still = bundle.thumbnail.as_deref().map(|still| (still, failure_picture(still)));
                 let mut published = |entry: Option<(&str, String)>| -> io::Result<Option<String>> {
                     let Some((entry, name)) = entry else {
                         return Ok(None);
@@ -847,20 +836,6 @@ fn bundles_beside(scanner: &Scanner, dir: &Path) -> (Vec<Bundle>, Vec<String>) {
         })
         .collect();
     (bundles, unread)
-}
-
-/// The lane of a `test.xml` directory, relative to its testlogs: the Bazel target's name, and a shard or run
-/// directory below it with the target's name in front.
-fn lane_of(relative: &Path) -> String {
-    let segments: Vec<String> = relative
-        .components()
-        .map(|component| component.as_os_str().to_string_lossy().into_owned())
-        .collect();
-    match segments.as_slice() {
-        [] => "tests".to_owned(),
-        [.., target, last] if last.starts_with("shard_") || last.starts_with("run_") => format!("{target}/{last}"),
-        [.., last] => last.clone(),
-    }
 }
 
 #[cfg(test)]
