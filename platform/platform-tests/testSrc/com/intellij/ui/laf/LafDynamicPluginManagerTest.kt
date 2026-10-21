@@ -80,7 +80,7 @@ internal class LafDynamicPluginManagerTest {
       }
     })
 
-    val extensions = Disposer.newDisposable("plugin extensions")
+    val extensions = Disposer.newDisposable(disposable, "plugin extensions")
     try {
       loadPlugins { registerBundledColorScheme(extensions) }
 
@@ -118,7 +118,7 @@ internal class LafDynamicPluginManagerTest {
     createColorsManager(configPath, disposable)
     val reloadCount = countSchemeReloads(disposable)
 
-    val extensions = Disposer.newDisposable("plugin extensions")
+    val extensions = Disposer.newDisposable(disposable, "plugin extensions")
     try {
       loadPlugins { registerTheme(extensions) }
       assertThat(reloadCount.get()).isEqualTo(1)
@@ -136,7 +136,7 @@ internal class LafDynamicPluginManagerTest {
     createColorsManager(configPath, disposable)
     val reloadCount = countSchemeReloads(disposable)
 
-    val extensions = Disposer.newDisposable("plugin extensions")
+    val extensions = Disposer.newDisposable(disposable, "plugin extensions")
     try {
       loadPlugins {
         registerTheme(extensions)
