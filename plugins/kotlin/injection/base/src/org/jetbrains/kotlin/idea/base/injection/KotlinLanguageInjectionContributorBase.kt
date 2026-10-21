@@ -63,10 +63,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -475,11 +475,13 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return callee as? KtSimpleNameExpression
     }
 
-    private fun getArgument(host: KtElement): KtValueArgument? = when (val parent = host.parent) {
-        is KtValueArgument -> parent
-        is KtCollectionLiteralExpression, is KtCallElement -> parent.parent as? KtValueArgument
-        else -> null
-    }
+    private fun getArgument(host: KtElement): KtValueArgument? =
+        PsiTreeUtil.getParentOfType(
+            /* element = */ host,
+            /* aClass = */ KtValueArgument::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtBlockExpression::class.java
+        )
 
     private tailrec fun injectInAnnotationCall(host: KtElement, configuration: Configuration): InjectionInfo? {
         val argument = getArgument(host) ?: return null
