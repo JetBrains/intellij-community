@@ -230,7 +230,7 @@ class TreeStructureProjectViewNodeProvider(
     return when (structure.getLeafState(validNode)) {
       LeafState.ALWAYS -> true
       LeafState.NEVER -> false
-      else -> structure.getChildren(validNode).isEmpty()
+      else -> !structure.hasChildren(validNode)
     }
   }
 
@@ -287,6 +287,12 @@ private class TypesafeTreeStructure(
         isRoot = false,
       )
     }
+  }
+
+  fun hasChildren(parent: TreeStructureProjectViewNodeImpl): Boolean {
+    ThreadingAssertions.assertReadAccess()
+    val validParent = parent.takeIf { isValid(it) } ?: return false
+    return structure.getChildElements(validParent.element).isNotEmpty()
   }
 
   fun isValid(node: TreeStructureProjectViewNodeImpl): Boolean {
