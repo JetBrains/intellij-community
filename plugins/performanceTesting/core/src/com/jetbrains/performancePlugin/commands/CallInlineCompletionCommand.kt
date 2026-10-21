@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -102,9 +103,7 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
     }
     try {
       handler.addEventListener(listener)
-      withContext(Dispatchers.EDT) {
-        handler.invoke(InlineCompletionEvent.DirectCall(editor, editor.caretModel.currentCaret))
-      }
+      invokeDirectCall(editor, handler)
       actionCallback.await()
     }
     finally {
@@ -146,14 +145,26 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
     }
     try {
       handler.addEventListener(listener)
-      withContext(Dispatchers.EDT) {
-        handler.invokeEvent(InlineCompletionEvent.DirectCall(editor, editor.caretModel.currentCaret))
-      }
+      invokeDirectCall(editor, handler)
       withTimeoutOrNull(WARMUP_ATTEMPT_TIMEOUT) { completed.await() }
     }
     finally {
       handler.removeEventListener(listener)
     }
     return isShown
+  }
+
+  /**
+   * The handler ignores the event without any inline completion event when no provider is enabled for it.
+   * In this case, the command fails at once instead of a wait for `onCompletion` that never comes.
+   */
+  private suspend fun invokeDirectCall(editor: Editor, handler: InlineCompletionHandler) {
+    withContext(Dispatchers.EDT) {
+      handler.invokeEvent(InlineCompletionEvent.DirectCall(editor, editor.caretModel.currentCaret))
+      if (InlineCompletionSession.getOrNull(editor) == null) {
+        error("Inline completion did not start a session: no inline completion provider is enabled for this editor. " +
+              "Check the provider settings, the file language and the hardware compatibility of the provider.")
+      }
+    }
   }
 }
