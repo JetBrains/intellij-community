@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.Static
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
@@ -13,7 +9,11 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflectiveGetter
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameter
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.net.URLClassLoader
 
 class CallReflectiveTest {
@@ -59,10 +59,10 @@ class CallReflectiveTest {
 
         val instance = Tested("abc")
         assertNull(instance.callReflective("getMyProperty", parameters(), returnType<Int>(), logger))
-        assertEquals("Expected single issue being reported", 1, logger.messages.size)
+        assertEquals(1, logger.messages.size, "Expected single issue being reported")
         val message = logger.messages.single()
-        assertTrue("Expected logged message to mention 'String'", "String" in message)
-        assertTrue("Expected logged message to mention 'Int'", "Int" in message)
+        assertTrue("String" in message, "Expected logged message to mention 'String'")
+        assertTrue("Int" in message, "Expected logged message to mention 'Int'")
     }
 
     @Test
@@ -119,13 +119,13 @@ class CallReflectiveTest {
     fun `call static method - non-existing className`() {
         val static = Static("this.does.not.exist", logger)
         assertNull(static)
-        assertEquals("Expected single issue being reported", 1, logger.messages.size)
+        assertEquals(1, logger.messages.size, "Expected single issue being reported")
     }
 
     @Test
     fun `call static method - using className`() {
         val static = Static(StaticTestObject.javaClass.name, logger)
-        assertNotNull(logger.messages.joinToString(), static)
+        assertNotNull(static, logger.messages.joinToString())
         static!!
 
         assertEquals(
@@ -139,7 +139,7 @@ class CallReflectiveTest {
         val customClassLoader = URLClassLoader.newInstance(emptyArray(), thisClassLoader)
 
         val static = Static(StaticTestObject.javaClass.name, customClassLoader, logger)
-        assertNotNull(logger.messages.joinToString(), static)
+        assertNotNull(static, logger.messages.joinToString())
         static!!
 
         assertEquals(
