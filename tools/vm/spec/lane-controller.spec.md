@@ -1298,6 +1298,16 @@ The daemon's half and the IDE's half of supervision are in
   worker whose record is gone or names another nonce. It never starts a server that is down.
   [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
 
+- The detached `pool idle-stop` process runs in the directory of its worker, and never in the directory of the
+  release. So it holds no checkout and no lease slot for the grace.
+  [@test] ../crates/avl-host-sys/src/proc/tests.rs
+
+- A release also stops each other worker whose record passed its deadline more than one poll (30 s) ago. No
+  process waits for that record. It keeps a worker whose record passed its deadline by less, and a leased worker.
+  It also keeps a worker whose lifecycle lock another operation holds, and a worker without a record. A failure is a
+  note, and the release still succeeds.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
 - An acquisition ranks the free slots. The first choice is a running slot whose daemon serves the build that asks.
   Then come a running slot, a stopped slot and an absent slot. Within one class the pool order stays, and a slot without a running
   state keeps its place. The probes start nothing. The holder recovery comes first. The reply names the class in

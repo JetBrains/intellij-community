@@ -196,6 +196,31 @@ async fn checked_quietly_withholds_guest_output() {
     assert_eq!(refusal.details(), Some(json!({ "exitCode": 1 })));
 }
 
+// A child in a session of its own runs in the directory that the caller names, and not in the directory of the
+// caller. A relative path of the child then lands in that directory.
+#[test]
+fn a_session_child_runs_in_the_directory_it_was_given() {
+    let runner = Runner::new(std::iter::empty::<(String, String)>(), Interrupts::detached());
+    let directory = tempfile::tempdir().expect("a directory");
+    let log = File::create(directory.path().join("detached.log")).expect("the log");
+    let mut child = runner
+        .spawn_session(
+            &["/bin/sh", "-c", "echo here > session-directory.marker"],
+            directory.path(),
+            log.try_clone().expect("the log is shared"),
+            log,
+        )
+        .expect("the child starts");
+    assert!(child.wait().expect("the child is reaped").success());
+    assert!(directory.path().join("session-directory.marker").exists());
+    let caller = std::env::current_dir().expect("the directory of the test");
+    assert!(
+        !caller.join("session-directory.marker").exists(),
+        "the child ran in {}",
+        caller.display()
+    );
+}
+
 // A spawn in a session of its own answers at once, before its child has done anything, and the child's output lands
 // in the files it was given. It is a host child like any other, so the bridge credentials do not reach it either.
 #[test]
@@ -211,7 +236,7 @@ fn a_session_spawn_does_not_wait_and_is_scrubbed_too() {
     let mut child = runner
         .spawn_session(
             &["/bin/sh", "-c", "sleep 1; /usr/bin/env; echo done"],
-            Some(directory.path()),
+            directory.path(),
             log.try_clone().expect("the log is shared"),
             log,
         )

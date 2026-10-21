@@ -132,7 +132,8 @@ impl Manager {
     /// is what makes that true of a Ctrl-C as well - a run process in the controller's own process group would take
     /// the terminal's SIGINT with it - and it is deliberately not registered with the interrupt service: the stop
     /// path brings it down with `tart stop` and identity polling instead. It is never reaped, so a run process that
-    /// died at once is still there for the identity probe and the host-limit retry to read.
+    /// died at once is still there for the identity probe and the host-limit retry to read. It runs in the directory
+    /// of the worker, which holds its log, so it pins no checkout of the caller.
     async fn spawn_run(&self, ctx: &Ctx, worker: &str, argv: &[String]) -> Result<PidReceipt, Refusal> {
         let log_path = self.settings.tart_log_path(worker);
         let log = OpenOptions::new()
@@ -150,7 +151,7 @@ impl Manager {
         let program = argv.first().map(String::as_str).unwrap_or_default();
         let pid = self
             .runner
-            .spawn_detached(argv, None, log, log_for_stderr)
+            .spawn_detached(argv, &self.settings.worker_dir(worker), log, log_for_stderr)
             .or_refuse("spawn_failed", Exit::UNAVAILABLE, || {
                 format!("cannot start {} for {worker}", program.rsplit('/').next().unwrap_or(program))
             })?;

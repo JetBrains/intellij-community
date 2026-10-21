@@ -82,12 +82,12 @@ impl ProcessGroup {
 /// On Unix the child calls `setsid` before it runs the program, so it leads a new session and a new process group.
 /// On Windows the child has no console and leads a console process group of its own, and it breaks away from the
 /// job of the controller when that job permits it. A job that forbids the breakaway refuses the spawn with "access
-/// denied", and then the child starts in that job.
+/// denied", and then the child starts in that job. The child runs in `directory`.
 pub(crate) fn spawn_session(
     program: &OsStr,
     arguments: &[impl AsRef<OsStr>],
     environment: &[(String, String)],
-    directory: Option<&Path>,
+    directory: &Path,
     stdout: File,
     stderr: File,
 ) -> io::Result<std::process::Child> {
@@ -96,12 +96,10 @@ pub(crate) fn spawn_session(
         .args(arguments)
         .env_clear()
         .envs(environment.iter().map(|(name, value)| (name, value)))
+        .current_dir(directory)
         .stdin(Stdio::null())
         .stdout(stdout)
         .stderr(stderr);
-    if let Some(directory) = directory {
-        command.current_dir(directory);
-    }
     imp::spawn_session(command)
 }
 

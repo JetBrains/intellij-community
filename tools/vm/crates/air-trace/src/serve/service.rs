@@ -166,7 +166,16 @@ fn find_or_start(
             format!("the controller's runtime root is unknown: {}", refused.message),
         )
     })?;
-    let Started { mut child, log_path } = start_detached(runner, command, None, request, &root)
+    // Without `BUILD_WORKSPACE_DIRECTORY` the server finds its checkout from its directory, so it runs where the caller
+    // runs.
+    let directory = std::env::current_dir().map_err(|error| {
+        Refusal::new(
+            "viewer_start_failed",
+            Exit::Broken,
+            format!("cannot name the current directory: {error}"),
+        )
+    })?;
+    let Started { mut child, log_path } = start_detached(runner, command, &directory, request, &root)
         .map_err(|refused| Refusal::new(refused.code, Exit::Broken, refused.message))?;
     let deadline = Instant::now() + DETACH_WAIT;
     loop {

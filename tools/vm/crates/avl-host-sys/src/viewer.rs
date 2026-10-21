@@ -170,11 +170,12 @@ pub struct Started {
 /// not, because the wrapper's `bazel run` can take longer than the run's own build. A session of its own, so the
 /// terminal that started it can close and its interrupt does not reach the server; through the runner, so a
 /// server left running for half an hour inherits no bridge credential. The directory is private and the log is the
-/// owner's alone, because the log names the checkout and the bundles.
+/// owner's alone, because the log names the checkout and the bundles. The server runs in `directory` for its whole
+/// life ([`Runner::spawn_session`]).
 pub fn start_detached(
     runner: &Runner,
     command: &[OsString],
-    directory: Option<&Path>,
+    directory: &Path,
     request: &DetachRequest,
     runtime_root: &Path,
 ) -> Result<Started, Refusal> {
