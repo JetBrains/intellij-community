@@ -29,7 +29,7 @@ There are two frameworks for tests that need an Eel. Pick the one that matches y
 | `@TestApplicationWithEel` | Eel API users. The code under test calls Eel. | `intellij.platform.testFramework.junit5.eel` (community) | A class annotation and an `EelHolder` parameter. |
 | `EelFixture` | Eel and IJent developers. The code under test is Eel or IJent itself. | `intellij.platform.ijent.testFramework` (ultimate) | A JUnit 5 `@TestFactory` that returns `eelFixtures.eelTestFactory { }`. |
 
-Both frameworks read `EelFixtureFilter` from the system property `eel.test.fixtures`. The labels are `local`, `local-eel`, `local-ijent`, `docker`, and `wsl`. An empty value enables all of them. The annotations `EelFixtureFilter.OnlyWhenDockerEnabled`, `OnlyWhenWslEnabled`, `OnlyWhenLocalEelEnabled`, and `OnlyWhenLocalIjentEnabled` skip a single test or class.
+Both frameworks read `EelFixtureFilter` from the system property `eel.test.fixtures`. The labels are `local`, `local-eel`, `local-ijent`, `docker`, `wsl`, and `ssh`. An empty value enables all of them. An unknown label makes every test that reads the filter fail. No fixture uses `ssh` yet, so with `ssh` alone `eelTestFactory` skips every test. The annotations `EelFixtureFilter.OnlyWhenDockerEnabled`, `OnlyWhenWslEnabled`, `OnlyWhenLocalEelEnabled`, and `OnlyWhenLocalIjentEnabled` skip a single test or class.
 
 Do not use `eelFixture()` and `IsolatedFileSystem` from `intellij.platform.testFramework.junit5.eel`. They are deprecated, and they use mocks. They are not related to `EelFixture`.
 

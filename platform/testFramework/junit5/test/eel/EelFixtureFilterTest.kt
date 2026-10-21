@@ -11,7 +11,8 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = true,
       isLocalIjentEnabled = true,
       isDockerEnabled = true,
-      isWslEnabled = true
+      isWslEnabled = true,
+      isSshEnabled = true,
     ))
   }
 
@@ -21,7 +22,8 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = true,
       isLocalIjentEnabled = false,
       isDockerEnabled = false,
-      isWslEnabled = false
+      isWslEnabled = false,
+      isSshEnabled = false,
     ))
   }
 
@@ -31,7 +33,8 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = false,
       isLocalIjentEnabled = true,
       isDockerEnabled = false,
-      isWslEnabled = false
+      isWslEnabled = false,
+      isSshEnabled = false,
     ))
   }
 
@@ -41,7 +44,8 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = false,
       isLocalIjentEnabled = false,
       isDockerEnabled = true,
-      isWslEnabled = false
+      isWslEnabled = false,
+      isSshEnabled = false,
     ))
   }
 
@@ -51,7 +55,19 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = false,
       isLocalIjentEnabled = false,
       isDockerEnabled = false,
-      isWslEnabled = true
+      isWslEnabled = true,
+      isSshEnabled = false,
+    ))
+  }
+
+  @Test
+  fun ssh() {
+    assertEquals(EelFixtureFilter.parse("ssh"), EelFixtureFilter(
+      isLocalEelEnabled = false,
+      isLocalIjentEnabled = false,
+      isDockerEnabled = false,
+      isWslEnabled = false,
+      isSshEnabled = true,
     ))
   }
 
@@ -61,7 +77,8 @@ class EelFixtureFilterTest {
       isLocalEelEnabled = false,
       isLocalIjentEnabled = false,
       isDockerEnabled = true,
-      isWslEnabled = true
+      isWslEnabled = true,
+      isSshEnabled = false,
     ))
   }
 }

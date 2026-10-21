@@ -21,12 +21,14 @@ class EelFixtureFilter(
   val isLocalIjentEnabled: Boolean = true,
   val isDockerEnabled: Boolean = true,
   val isWslEnabled: Boolean = true,
+  /** No fixture reads this flag yet. With `ssh` alone in `eel.test.fixtures`, every fixture is filtered out. */
+  val isSshEnabled: Boolean = true,
 ) {
   /**
    * The default case is optimized for local runs, where it's convenient to verify everything at once.
    * It can be not the best solution for CI, but can be OK for configurations with a few tests.
    */
-  val isDefault: Boolean = isLocalEelEnabled && isLocalIjentEnabled && isDockerEnabled && isWslEnabled
+  val isDefault: Boolean = isLocalEelEnabled && isLocalIjentEnabled && isDockerEnabled && isWslEnabled && isSshEnabled
 
   @TestOnly
   @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
@@ -59,13 +61,15 @@ class EelFixtureFilter(
     isLocalEelEnabled == other.isLocalEelEnabled &&
     isLocalIjentEnabled == other.isLocalIjentEnabled &&
     isDockerEnabled == other.isDockerEnabled &&
-    isWslEnabled == other.isWslEnabled
+    isWslEnabled == other.isWslEnabled &&
+    isSshEnabled == other.isSshEnabled
 
   override fun hashCode(): Int =
     (if (isLocalIjentEnabled) 1 else 0) +
     (if (isLocalEelEnabled) 2 else 0) +
     (if (isDockerEnabled) 4 else 0) +
-    (if (isWslEnabled) 8 else 0)
+    (if (isWslEnabled) 8 else 0) +
+    (if (isSshEnabled) 16 else 0)
 
   override fun toString(): String {
     return "EelFixtureFilter" +
@@ -73,6 +77,7 @@ class EelFixtureFilter(
            ", isLocalIjentEnabled=$isLocalIjentEnabled" +
            ", isDockerEnabled=$isDockerEnabled" +
            ", isWslEnabled=$isWslEnabled" +
+           ", isSshEnabled=$isSshEnabled" +
            ", isDefault=$isDefault" +
            ")"
   }
@@ -104,6 +109,7 @@ class EelFixtureFilter(
       var isLocalIjentEnabled = labels.isEmpty()
       var isDockerEnabled = labels.isEmpty()
       var isWslEnabled = labels.isEmpty()
+      var isSshEnabled = labels.isEmpty()
 
       val setters: Map<String, () -> Unit> = mapOf(
         "local" to { isLocalIjentEnabled = true; isLocalEelEnabled = true },
@@ -111,6 +117,7 @@ class EelFixtureFilter(
         "local-ijent" to { isLocalIjentEnabled = true },
         "docker" to { isDockerEnabled = true },
         "wsl" to { isWslEnabled = true },
+        "ssh" to { isSshEnabled = true },
       )
       for ((label, setter) in setters) {
         if (labels.remove(label)) {
@@ -130,6 +137,7 @@ class EelFixtureFilter(
         isLocalIjentEnabled = isLocalIjentEnabled,
         isDockerEnabled = isDockerEnabled,
         isWslEnabled = isWslEnabled,
+        isSshEnabled = isSshEnabled,
       )
     }
   }
