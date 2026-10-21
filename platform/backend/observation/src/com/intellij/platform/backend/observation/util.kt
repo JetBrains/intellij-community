@@ -57,7 +57,7 @@ fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineConte
   // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `ObservationTracker`
   val childJob = Job(tracker?.currentJob)
   traceObservedComputation(childJob)
-  return launch(context + (tracker ?: EmptyCoroutineContext), CoroutineStart.DEFAULT) {
+  val job = launch(context + (tracker ?: EmptyCoroutineContext), CoroutineStart.DEFAULT) {
     try {
       block()
     }
@@ -66,6 +66,12 @@ fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineConte
       childJob.complete()
     }
   }
+  // a coroutine canceled before it starts never reaches the `finally` above
+  job.invokeOnCompletion {
+    removeObservedComputation(childJob)
+    childJob.complete()
+  }
+  return job
 }
 
 internal val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
