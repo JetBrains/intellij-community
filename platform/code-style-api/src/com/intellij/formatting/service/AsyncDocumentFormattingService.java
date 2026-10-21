@@ -100,6 +100,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     return DEFAULT_TIMEOUT;
   }
 
+  @ApiStatus.Experimental
+  protected @NotNull Duration getTimeout(@NotNull FormattingContext context) {
+    return getTimeout();
+  }
+
   protected AnAction[] getTimeoutActions(@NotNull FormattingContext context) {
     return AnAction.EMPTY_ARRAY;
   }
@@ -163,6 +168,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   @ApiStatus.Internal
   public static Duration getTimeout(@NotNull AsyncDocumentFormattingService service) {
     return service.getTimeout();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Duration getTimeout(@NotNull AsyncDocumentFormattingService service, @NotNull FormattingContext context) {
+    return service.getTimeout(context);
   }
 
   @ApiStatus.Internal

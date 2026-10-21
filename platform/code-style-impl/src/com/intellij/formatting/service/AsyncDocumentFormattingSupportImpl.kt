@@ -207,7 +207,7 @@ class AsyncDocumentFormattingSupportImpl(
         getNotificationGroupId(service),
         getTimeoutNotificationDisplayId(service), getName(service),
         CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
-                                getTimeout(service).seconds.toString()),
+                                getTimeout(service, _context).seconds.toString()),
         *getTimeoutActions(service, _context)
       )
     }
@@ -241,7 +241,7 @@ class AsyncDocumentFormattingSupportImpl(
       }
       // ATOMIC start is used here to ensure taskJob is properly cleaned up
       launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
-        val timeout = getTimeout(service).toNanos().nanoseconds
+        val timeout = getTimeout(service, _context).toNanos().nanoseconds
         val markStarted = TimeSource.Monotonic.markNow()
         try {
           withContext(NonCancellable) {

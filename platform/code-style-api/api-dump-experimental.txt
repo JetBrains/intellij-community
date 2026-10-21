@@ -6,6 +6,7 @@ f:com.intellij.formatting.Indent$Type
 - *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
 a:com.intellij.formatting.service.AsyncDocumentFormattingService
 - com.intellij.formatting.service.AbstractDocumentFormattingService
+- *p:getTimeout(com.intellij.formatting.FormattingContext):java.time.Duration
 - *p:supportsSynchronousFormatting():Z
 *f:com.intellij.formatting.service.StructuredAsyncDocumentFormatting
 - sf:structuredAsyncDocumentFormattingScope(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
