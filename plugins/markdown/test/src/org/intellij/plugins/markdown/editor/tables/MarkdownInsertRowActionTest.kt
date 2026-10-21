@@ -59,6 +59,45 @@ class MarkdownInsertRowActionTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
+  fun `insert row below in block quote keeps marker`() {
+    doTest(
+      """
+      > | A | B |
+      > | --- | --- |
+      > | 11<caret> | 12 |
+      > | 21 | 22 |
+      """.trimIndent(),
+      """
+      > | A | B |
+      > | --- | --- |
+      > | 11 | 12 |
+      > |    |    |
+      > | 21 | 22 |
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `insert row above in block quote keeps marker`() {
+    doTest(
+      """
+      > | A | B |
+      > | --- | --- |
+      > | 11<caret> | 12 |
+      > | 21 | 22 |
+      """.trimIndent(),
+      """
+      > | A | B |
+      > | --- | --- |
+      > |    |    |
+      > | 11 | 12 |
+      > | 21 | 22 |
+      """.trimIndent(),
+      actionId = "Markdown.Table.InsertRow.InsertAbove",
+    )
+  }
+
+  @Test
   fun `insert row below in compact table`() {
     withTableStyle(project, TableStyle.COMPACT) {
       doTest(

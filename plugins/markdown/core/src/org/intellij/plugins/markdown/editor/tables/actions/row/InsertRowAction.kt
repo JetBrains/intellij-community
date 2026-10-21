@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
@@ -18,13 +19,17 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 internal abstract class InsertRowAction(private val insertAbove: Boolean): RowBasedTableAction(considerSeparatorRow = true) {
   override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
     runWriteAction {
+      val document = editor.document
       val widths = obtainCellWidths(rowElement)
-      val newRow = MarkdownPsiElementFactory.createTableEmptyRow(table.project, widths, getTableStyle(table.containingFile))
+      val rowText = MarkdownPsiElementFactory.createTableEmptyRow(table.project, widths, getTableStyle(table.containingFile)).text
+      val line = document.getLineNumber(rowElement.textRange.startOffset)
+      val linePrefix = document.getText(document.getLineIndentRange(line))
       require(rowElement.parent == table)
       executeCommand(rowElement.project) {
-        when {
-          insertAbove -> table.addRangeBefore(newRow, newRow.nextSibling, rowElement)
-          else -> table.addRangeAfter(newRow.prevSibling, newRow, rowElement)
+        if (insertAbove) {
+          document.insertString(document.getLineStartOffset(line), "$linePrefix$rowText\n")
+        } else {
+          document.insertString(rowElement.textRange.endOffset, "\n$linePrefix$rowText")
         }
       }
     }
