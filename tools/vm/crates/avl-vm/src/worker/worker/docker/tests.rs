@@ -829,7 +829,7 @@ async fn a_release_stops_another_worker_whose_idle_stop_has_no_process() {
     );
     let notes = notes.all();
     let expected = format!(
-        "stopped {stranded}, whose idle stop passed its deadline at {} without its waiter",
+        "stopped {stranded}, whose idle stop passed its deadline at {} without its detached process",
         overdue.deadline
     );
     assert!(notes.contains(&expected), "{notes:#?}");

@@ -186,7 +186,7 @@ impl Manager {
                 Ok(IdleStopVerdict::Stopped) => self.note(
                     worker,
                     format!(
-                        "stopped {worker}, whose idle stop passed its deadline at {} without its waiter",
+                        "stopped {worker}, whose idle stop passed its deadline at {} without its detached process",
                         record.deadline
                     ),
                 ),
@@ -194,7 +194,7 @@ impl Manager {
                 Err(refusal) => self.note(
                     worker,
                     format!(
-                        "cannot stop {worker}, whose idle stop passed its deadline at {} without its waiter: {}",
+                        "cannot stop {worker}, whose idle stop passed its deadline at {} without its detached process: {}",
                         record.deadline, refusal.message
                     ),
                 ),
