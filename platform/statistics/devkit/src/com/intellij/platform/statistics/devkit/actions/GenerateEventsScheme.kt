@@ -3,6 +3,7 @@ package com.intellij.platform.statistics.devkit.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.scratch.ScratchFileCreator
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
@@ -24,7 +25,10 @@ internal class GenerateEventsScheme(private val recorderId: String = StatisticsD
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && StatisticsRecorderUtil.isTestModeEnabled("FUS")
+    // the scheme opens in a scratch file
+    val hasScratchesRoot = ScratchUtil.findScratchesRootType() != null
+    e.presentation.isVisible = hasScratchesRoot
+    e.presentation.isEnabled = hasScratchesRoot && e.project != null && StatisticsRecorderUtil.isTestModeEnabled("FUS")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
