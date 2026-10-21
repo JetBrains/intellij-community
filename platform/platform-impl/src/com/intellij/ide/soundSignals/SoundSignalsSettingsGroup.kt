@@ -42,7 +42,7 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
   }
 }
 
-private fun isShownInSettings(signal: SoundSignal): Boolean =
+internal fun isShownInSettings(signal: SoundSignal): Boolean =
   signal.group !== IdeSoundSignals.EVENTS_GROUP || boundGroupIds(signal.id).isNotEmpty()
 
 private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSignal>, pending: PendingSoundSignals, addTopGap: Boolean) {

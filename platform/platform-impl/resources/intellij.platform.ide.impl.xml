@@ -1017,6 +1017,7 @@
                              bundle="messages.IdeBundle"
                              key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
+    <search.optionContributor implementation="com.intellij.ide.soundSignals.SoundSignalsSearchableOptionContributor"/>
     <!-- Accessibility -->
     <applicationConfigurable groupId="appearance"
                              groupWeight="140"
