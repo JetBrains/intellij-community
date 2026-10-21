@@ -191,6 +191,46 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     }
   }
 
+  fun testRemovedEnvVariableIsDroppedFromParentEnvironment() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val removedName = "TERMINAL_REMOVED_ENV_PROBE_${System.nanoTime()}"
+    val keptName = "TERMINAL_KEPT_ENV_PROBE_${System.nanoTime()}"
+    assertThat(System.getenv()).doesNotContainKeys(removedName, keptName)
+    withEnvVars(removedName to "1", keptName to "1") {
+      val actual = configureNonShellWithRemovedEnv(removedName)
+
+      assertThat(actual.envVariables).doesNotContainKey(removedName)
+      assertThat(actual.envVariables).containsEntry(keptName, "1")
+    }
+  }
+
+  fun testRemovedEnvVariableKeepsExplicitAndUserDefinedValues() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val explicitName = "TERMINAL_REMOVED_EXPLICIT_ENV_PROBE_${System.nanoTime()}"
+    val userDefinedName = "TERMINAL_REMOVED_USER_ENV_PROBE_${System.nanoTime()}"
+    setEnvDataForTest(EnvironmentVariablesData.create(mapOf(userDefinedName to "user"), true))
+    withEnvVars(explicitName to "parent", userDefinedName to "parent") {
+      val actual = configureNonShellWithRemovedEnv(explicitName, userDefinedName, envVariables = mapOf(explicitName to "explicit"))
+
+      assertThat(actual.envVariables).containsEntry(explicitName, "explicit")
+      assertThat(actual.envVariables).containsEntry(userDefinedName, "user")
+    }
+  }
+
+  private fun configureNonShellWithRemovedEnv(vararg removedNames: String, envVariables: Map<String, String> = emptyMap()): ShellStartupOptions {
+    return LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("non-shell"))
+        .processType(TerminalProcessType.NON_SHELL)
+        .envVariables(envVariables)
+        .removedEnvVariables(removedNames.toSet())
+        .build(),
+      project
+    )
+  }
+
   fun testUserDefinedEnvValueIsMacroExpanded() {
     setDefaultStartingDirectory(tempDirectory.pathString)
     setEnvDataForTest(EnvironmentVariablesData.create(mapOf("MY_ENV_WITH_MACRO" to $$"$PROJECT_DIR$/sub"), true))
