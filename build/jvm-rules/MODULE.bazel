@@ -686,7 +686,7 @@ CHROMIUM_HEADLESS_SHELL_PLATFORMS = {
         build_file = "//:BUILD.chromium-headless-shell.bazel",
         sha256 = sha256,
         strip_prefix = archive_root,
-        url = "https://playwright.azureedge.net/builds/chromium/%s/chromium-headless-shell-%s.zip" % (
+        url = "https://cdn.playwright.dev/builds/chromium/%s/chromium-headless-shell-%s.zip" % (
             CHROMIUM_HEADLESS_SHELL_REVISION,
             archive,
         ),
