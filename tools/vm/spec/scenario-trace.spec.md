@@ -494,15 +494,30 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - `air-trace teamcity-publish` is the step after `bazel test` on TeamCity. It reads each `test.xml` under the
   testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
-  becomes `<lane>/<runId>/<TestClass>/<scenario>.zip`, where the lane is the Bazel target with its shard directory.
-  The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the test.
-  The metadata are the trace, the viewer link, the video, and the last picture of a failed scenario. The test name is
+  becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive `air-traces.zip`. The lane is the Bazel
+  target with its shard directory. The step prints the `testMetadata` of the test: the viewer link, and the
+  `artifact` named `trace`, `air-traces.zip!/<lane>/<runId>/<TestClass>/<scenario>.zip`. The test name is
   `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
   to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print nothing
   and write nothing.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)
+
+- The step publishes one archive artifact, `air-traces.zip`, with no target, so TeamCity keeps it as it is. TeamCity
+  redirects a loose artifact to a signed address, where a sibling file is refused. It serves an entry of an archive
+  itself, with byte ranges. The archive holds `index.html`, the viewer page, then `runs.json`, then each bundle zip in
+  the order of the metadata. The page and the listing are deflated, and the zips are stored. Each entry has one time
+  and one mode, so two publishes of one testlogs tree write one archive. No bundle zip is a loose artifact.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`an_archive_keeps_its_order_and_stores_its_zips`)
+
+- For a failed scenario only, the step also publishes two loose files, so the Tests tab of TeamCity shows them. They
+  are `air-traces-failed/<lane>/<runId>/<TestClass>/<scenario>/failure.webp`, the last picture, and `…/video.mp4`,
+  when the bundle has a video. The `image` named `failure` and the `video` named `video` of the test name them. A file
+  that does not copy out of the bundle zip is a warning.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
 
 - The step never turns a build red. Each problem is a line on stderr and a `message` with the status `WARNING` on
   stdout. A problem is no testlogs, a missing testlogs directory, or an output that does not read. A bundle that does
@@ -538,12 +553,11 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   `bazel run` ran. It is not taken from the runfiles tree that the program starts in.
   [@test] ../crates/air-trace/src/publish/tests.rs (`a_relative_path_is_taken_from_the_directory_where_bazel_run_ran`)
 
-- Beside the zips, the step publishes `air-traces/runs.json`. It is the listing of `GET /__air/runs`, written with
-  the server's own types. Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is
-  that zip, and its id is the id of that zip. `controllerRuns` is empty. Each testlogs directory is one
-  `bazel-testlogs` root. The root counts its published bundles, and its problems name each output that did not
-  read and each bundle that did not pack.
-  A `zip` is a relative path with no `.` or `..` segment, so it stays in the directory of `runs.json`. Each zip holds
+- The listing `runs.json` of the archive is the listing of `GET /__air/runs`, written with the server's own types.
+  Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is that zip, and its id is
+  the id of that zip. `controllerRuns` is empty. Each testlogs directory is one `bazel-testlogs` root. The root counts
+  its published bundles, and its problems name each output that did not read and each bundle that did not pack. A
+  `zip` is a relative path with no `.` or `..` segment, so it stays in the directory of `runs.json`. Each zip holds
   its bundle at its top.
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
 
@@ -555,12 +569,13 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - The viewer is the directory of `--viewer`. Without it, the step builds the viewer in the checkout that
   `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm of the site build. It runs `pnpm install
   --frozen-lockfile` in the kernel and in `plugins/air/docs`, also over an existing `node_modules`, so a changed
-  lockfile takes effect. Then it runs `pnpm run build:viewer`, which writes `out/air-trace-viewer`. A viewer there that
-  is newer than its sources is not built again. Its sources are the sources of the site and the UI primitives of the
-  genui catalog. The configuration files and the lockfiles of the docs project and of the kernel count too. The output
-  of the build goes to stderr, and stderr says how long the build took. Each step runs in a process group of its own.
-  A build that fails, or that does not end within 10 minutes, is stopped with every process that it started. It is
-  then the reason for no viewer. Without a checkout, or in a checkout without the docs project, there is no viewer.
+  lockfile takes effect. Then it runs `pnpm run build:viewer`, which writes `out/air-trace-viewer/index.html`. A
+  viewer there that is newer than its sources is not built again. Its sources are the sources of the site and the UI
+  primitives of the genui catalog. The configuration files and the lockfiles of the docs project and of the kernel
+  count too. The output of the build goes to stderr, and stderr says how long the build took. Each step runs in a
+  process group of its own. A build that fails, or that does not end within 10 minutes, is stopped with every process
+  that it started. It is then the reason for no viewer. Without a checkout, or in a checkout without the docs project,
+  there is no viewer.
   [@test] ../crates/air-trace/src/publish/viewer/tests.rs
   [@test] ../crates/air-trace/src/serve/tests/service.rs (`the_kernel_is_installed_before_the_project_that_links_it`)
 
@@ -572,9 +587,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/src/publish/teamcity/tests.rs
 
 - With the build and the viewer, each test gets a `link` named `trace viewer`:
-  `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces/index.html#/trace?zip=<zip>`. The zip path is
-  encoded as the viewer's `traceHash` writes it: as `URLSearchParams` writes a value, with each `/` kept. Without the
-  build or the viewer, no test gets a link.
+  `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces.zip!/index.html#/trace?zip=<zip>`. The zip path
+  is encoded as the viewer's `traceHash` writes it: as `URLSearchParams` writes a value, with each `/` kept. Without
+  the build or the viewer, no test gets a link.
   [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_build_of_a_step_comes_from_the_agent_files`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)

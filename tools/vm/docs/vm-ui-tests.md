@@ -925,18 +925,19 @@ uses the login of `teamcity auth login`. A server is `https`, or `http` on a loo
 with `--detach`, so pick a free `--port` when a detached server runs.
 
 **On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
-zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip` and publishes the
-zips as artifacts. Beside them it publishes `air-traces/runs.json` and the trace viewer. The listing has the form of
-`/__air/runs`, and each scenario names its zip. So `air-traces/index.html` in the artifacts of the build opens its
-traces with no server. Each test of the Tests tab gets its trace, a `trace viewer` link into that page, its video
-and, for a failed scenario, its last picture.
+writes one archive and publishes it as the artifact `air-traces.zip`. The archive holds `index.html`, the trace viewer
+in one file, then `runs.json`, then one zip for each bundle at `<lane>/<runId>/<TestClass>/<scenario>.zip`. TeamCity
+serves an entry of an archive artifact itself, with byte ranges, so `air-traces.zip!/index.html` in the artifacts of the
+build opens its traces with no server. A loose artifact would not work: TeamCity redirects it to a signed address, where
+its siblings are refused. Each test of the Tests tab gets its trace and a `trace viewer` link into that page. A failed
+scenario also gets its last picture and its video as loose files in `air-traces-failed/`, which the Tests tab shows.
 
-`--viewer DIR` names a built viewer. Without it, the step builds the viewer in the checkout, as `serve` builds the site:
-with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then `pnpm run
-build:viewer` there, which writes `out/air-trace-viewer`. A viewer there that is newer than its sources is not built
-again: the site's sources, the Vite and site configuration, the lockfiles, and the UI primitives of the genui catalog.
-The build has 10 minutes, and stderr says how long it took. A build that does not end in time is stopped with every
-process that it started.
+`--viewer DIR` names a built viewer, a directory with `index.html`. Without it, the step builds the viewer in the
+checkout, as `serve` builds the site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and
+in `plugins/air/docs`, then `pnpm run build:viewer` there, which writes `out/air-trace-viewer/index.html`. A viewer
+there that is newer than its sources is not built again: the site's sources, the Vite and site configuration, the
+lockfiles, and the UI primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A
+build that does not end in time is stopped with every process that it started.
 
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration file
 that it names. `bazel run` passes the environment of the step to the program. The listing then names the build of each
