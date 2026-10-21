@@ -3,6 +3,8 @@ package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -55,12 +57,29 @@ public abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigura
       RunnerAndConfigurationSettings snapshot = getSnapshot();
       Element originalXml = ((SerializableScheme)original).writeScheme();
       Element snapshotXml = ((SerializableScheme)snapshot).writeScheme();
-      return !JDOMUtil.areElementsEqual(originalXml, snapshotXml);
+      return !JDOMUtil.areElementsEqual(originalXml, snapshotXml) || isNonPersistentStateModified(original, snapshot);
     }
     catch (ConfigurationException e) {
       //ignore
     }
     return super.isModified();
+  }
+
+  /**
+   * A {@link PersistentAwareRunConfiguration} keeps a part of its state, such as a password, out of the scheme.
+   * Its full state comes from {@link RunConfiguration#writeExternal}, so a change of only that part is found there.
+   */
+  private static boolean isNonPersistentStateModified(@NotNull RunnerAndConfigurationSettings original,
+                                                      @NotNull RunnerAndConfigurationSettings snapshot) {
+    if (!(original.getConfiguration() instanceof PersistentAwareRunConfiguration originalConfiguration)) {
+      return false;
+    }
+
+    Element originalState = new Element("configuration");
+    originalConfiguration.writeExternal(originalState);
+    Element snapshotState = new Element("configuration");
+    snapshot.getConfiguration().writeExternal(snapshotState);
+    return !JDOMUtil.areElementsEqual(originalState, snapshotState);
   }
 
   protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
