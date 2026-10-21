@@ -562,8 +562,9 @@ private class AbstractProjectViewPaneStateManager(
     val isLeaf = withContext(Dispatchers.UI) {
       treeModel.isLeaf(node)
     }
+    val modelNode = requireNotNull(TreeUtil.getUserObject(node)) { "The node has a null user object: $node" }
     return readAction {
-      buildProjectViewNodeModel(id, LegacyProjectViewNodeUserObject(nodeByModelNode)) { nodeBuilder ->
+      buildProjectViewNodeModel(id, LegacyProjectViewNodeUserObject(modelNode)) { nodeBuilder ->
         nodeBuilder.buildPresentation { presentationBuilder ->
           buildNodePresentation(node, presentationBuilder, isLeaf)
         }
