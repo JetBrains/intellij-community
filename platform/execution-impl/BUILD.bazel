@@ -289,6 +289,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/eel-nioFs",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.tests` end
