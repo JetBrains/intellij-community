@@ -4,20 +4,20 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.jetbrains.python.sdk.appxProduct
 import com.jetbrains.python.sdk.getAppxFiles
 import com.jetbrains.python.sdk.parseAppExecLink
-import org.junit.Assert
-import org.junit.Assume
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 internal class WinAppxTest {
   @Test
   fun testAppx() {
-    Assume.assumeTrue("Win only", SystemInfoRt.isWindows)
+    Assumptions.assumeTrue(SystemInfoRt.isWindows, "Win only")
     val appxFiles = getAppxFiles(null, Regex(".+"))
-    Assume.assumeTrue("No appx apps found", appxFiles.isNotEmpty())
+    Assumptions.assumeTrue(appxFiles.isNotEmpty(), "No appx apps found")
     for (appxFile in appxFiles) {
-      Assert.assertNotNull("No appx product product for $appxFile", appxFile.appxProduct)
+      Assertions.assertNotNull(appxFile.appxProduct, "No appx product product for $appxFile")
     }
   }
 
@@ -28,37 +28,37 @@ internal class WinAppxTest {
       "PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0!Python",
       """C:\Program Files\WindowsApps\python3.12.exe""",
       "0")
-    Assert.assertEquals("PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0", parseAppExecLink(payload))
+    Assertions.assertEquals("PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0", parseAppExecLink(payload))
   }
 
   @Test
   fun testPayloadGivesTheStoreName() {
     val payload = appExecLink("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe", "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe!App")
-    Assert.assertEquals("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe", parseAppExecLink(payload))
+    Assertions.assertEquals("Microsoft.DesktopAppInstaller_8wekyb3d8bbwe", parseAppExecLink(payload))
   }
 
   @Test
   fun testAnUnknownVersionStillParses() {
     val payload = appExecLink("Some.Package_abc", version = 4)
-    Assert.assertEquals("Some.Package_abc", parseAppExecLink(payload))
+    Assertions.assertEquals("Some.Package_abc", parseAppExecLink(payload))
   }
 
   @Test
   fun testAShortPayloadGivesNull() {
     for (size in 0..5) {
-      Assert.assertNull("A payload of $size bytes must give null", parseAppExecLink(ByteArray(size)))
+      Assertions.assertNull(parseAppExecLink(ByteArray(size)), "A payload of $size bytes must give null")
     }
   }
 
   @Test
   fun testAnEmptyFirstStringGivesNull() {
-    Assert.assertNull(parseAppExecLink(appExecLink("", "Some.Package_abc!App")))
+    Assertions.assertNull(parseAppExecLink(appExecLink("", "Some.Package_abc!App")))
   }
 
   @Test
   fun testAnOddByteCountGivesTheName() {
     val payload = appExecLink("Some.Package_abc")
-    Assert.assertEquals("Some.Package_abc", parseAppExecLink(payload + 0x41.toByte()))
+    Assertions.assertEquals("Some.Package_abc", parseAppExecLink(payload + 0x41.toByte()))
   }
 
   /**

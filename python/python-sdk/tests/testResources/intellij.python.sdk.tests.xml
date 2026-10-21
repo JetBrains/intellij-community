@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.python.sdk.backend"/>
-    <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>

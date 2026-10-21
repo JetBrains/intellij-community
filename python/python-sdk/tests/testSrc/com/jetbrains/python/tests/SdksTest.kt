@@ -5,7 +5,7 @@ import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.SdksKeeper
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class SdksTest {
   @Test

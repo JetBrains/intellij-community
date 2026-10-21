@@ -72,8 +72,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
         "//platform/eel-provider",
