@@ -712,7 +712,7 @@ private class CoroutineDispatcherWatcher(
         while (true) {
           val beforeSleep = System.nanoTime()
           delay(pooledSamplingInterval.milliseconds)
-          val oversleptMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSleep) - pooledSamplingInterval
+          val oversleptMs = (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSleep) - pooledSamplingInterval).coerceAtLeast(0)
           threadDumper.dumpThreadsIfNeeded(lastSampleNs, oversleptMs)
         }
       }
@@ -877,7 +877,7 @@ internal class DefaultCompensatablePool(
     val beforeSleep = clock.nanoTime()
     clock.sleep(timeMs)
     val now = clock.nanoTime()
-    val overslept = TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs
+    val overslept = (TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs).coerceAtLeast(0)
     // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
     return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept
   }
