@@ -205,7 +205,7 @@ public final class MacUtil {
 
     // The native calls can block for an unpredictable duration. Keep these calls off the EDT and preserve their order.
     private static final ExecutorService executor =
-      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("macOS App Nap Activity");
+      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MacOS App Nap Activity");
     private static final int MAX_PENDING_ACTIVITIES = 10_000;
     private static final AtomicInteger pendingActivities = new AtomicInteger();
 
