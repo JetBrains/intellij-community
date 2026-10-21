@@ -42,6 +42,7 @@ import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createFile
@@ -129,6 +130,17 @@ class DirtyFilesQueueTest {
   @Test
   fun `test dirty file is indexed after FileBasedIndex is restarted (with full scanning)`() {
     testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning = false)
+  }
+
+  @Test
+  @RegistryKey(key = "run.index.rescanning.on.plugin.load.unload", value = "true")
+  fun `lightweight restart restores dirty files without full scanning`() {
+    testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning = true, lightweight = true)
+  }
+
+  @Test
+  fun `lightweight restart recovers discarded indexing work with full scanning`() {
+    testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning = false, lightweight = true, queueIndexing = true)
   }
 
   /** Verifies that project cursors bound repeated filtering of a stale foreign request. */
@@ -862,7 +874,11 @@ class DirtyFilesQueueTest {
     return workspaceModel.currentSnapshot.resolve(ModuleId(TEST_MODULE_NAME))!!
   }
 
-  private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {
+  private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(
+    skipFullScanning: Boolean,
+    lightweight: Boolean = false,
+    queueIndexing: Boolean = false,
+  ) {
     runBlocking {
       openProject(testNameRule.methodName) { project, module ->
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
@@ -877,7 +893,11 @@ class DirtyFilesQueueTest {
         }
         fileBasedIndex.changedFilesCollector.ensureUpToDate()
         assertThat(fileBasedIndex.getAllDirtyFiles(project)).contains((file as VirtualFileWithId).id)
-        restart(skipFullScanning, project)
+        if (queueIndexing) {
+          // This queue is cleared during shutdown, so the restart must recover the discarded work
+          project.getService(PerProjectIndexingQueue::class.java).addFile(file, 0)
+        }
+        restart(skipFullScanning, project, lightweight)
         assertFullScanning(project, !skipFullScanning, ReopeningType.TUMBLER)
         smartReadAction(project) {
           val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
@@ -950,15 +970,25 @@ class DirtyFilesQueueTest {
     }
   }
 
-  private fun restart(skipFullScanning: Boolean, project: Project? = null) {
+  private fun restart(skipFullScanning: Boolean, project: Project? = null, lightweight: Boolean = false) {
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
         val tumbler = FileBasedIndexTumbler("DirtyFilesQueueTest")
-        if (skipFullScanning) {
-          tumbler.allowSkippingFullScanning()
+        if (lightweight) {
+          try {
+            tumbler.turnOffLightweight()
+          }
+          finally {
+            tumbler.turnOnLightweight()
+          }
         }
-        tumbler.turnOff()
-        tumbler.turnOn()
+        else {
+          if (skipFullScanning) {
+            tumbler.allowSkippingFullScanning()
+          }
+          tumbler.turnOff()
+          tumbler.turnOn()
+        }
       }
       if (project != null) {
         IndexingTestUtil.suspendUntilIndexesAreReady(project)

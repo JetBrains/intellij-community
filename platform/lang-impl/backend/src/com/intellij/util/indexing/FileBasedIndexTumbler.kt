@@ -38,6 +38,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private val dumbModeSemaphore = Semaphore()
 
   private var nestedLevelCount = 0
+  private var lightweightMode = false
   private var snapshot: FbiSnapshot? = null
   private var fileTypeTracker: FileTypeTracker? = null
   private var allowSkippingFullScanning: Boolean = false
@@ -48,23 +49,52 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     allowSkippingFullScanning = true
   }
 
+  /** Closes storage without checking for plugin changes. Pair with [turnOnLightweight] in `finally` */
+  @ApiStatus.Internal
+  fun turnOffLightweight() {
+    turnOff(lightweight = true)
+  }
+
+  /** Restores pending work and permits partial scanning when the index state allows it */
+  @ApiStatus.Internal
+  fun turnOnLightweight() {
+    turnOn(beforeIndexTasksStarted = null, lightweight = true)
+  }
+
   fun turnOff() {
+    turnOff(lightweight = false)
+  }
+
+  private fun turnOff(lightweight: Boolean) {
     LOG.info("Turning off file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount + 1}")
     val app = ApplicationManager.getApplication()
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!app.isWriteAccessAllowed)
+    check(nestedLevelCount == 0 || lightweightMode == lightweight) { "Cannot mix index restart modes" }
     try {
       if (nestedLevelCount == 0) {
+          lightweightMode = lightweight
+          var interruptedWork = false
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
             for (project in ProjectUtil.getOpenProjects()) {
               val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
               scannerExecutor.suspendQueue()
+              if (lightweight) {
+                interruptedWork = interruptedWork || scannerExecutor.isRunning.value || scannerExecutor.hasQueuedTasks ||
+                                  DumbService.isDumb(project)
+              }
               scannerExecutor.cancelAllTasksAndWait()
 
               val perProjectIndexingQueue = project.getService(PerProjectIndexingQueue::class.java)
-              perProjectIndexingQueue.clear()
+              if (lightweight) {
+                val queuedFiles = perProjectIndexingQueue.getAndResetQueuedFiles()
+                interruptedWork = interruptedWork || !queuedFiles.isEmpty
+              }
+              else {
+                perProjectIndexingQueue.clear()
+              }
 
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
@@ -73,19 +103,24 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           }
 
         LOG.assertTrue(fileTypeTracker == null)
-        fileTypeTracker = FileTypeTracker()
+        if (!lightweight) {
+          fileTypeTracker = FileTypeTracker()
+        }
         fileBasedIndex.waitUntilIndicesAreInitialized()
+        if (lightweight) {
+          // Shutdown clears the in-memory queues; partial scanning needs their contents after reopening
+          fileBasedIndex.persistOpenProjectsDirtyFiles()
+        }
         fileBasedIndex.performShutdown(/*keepConnection: */ true, reason)
         fileBasedIndex.dropRegisteredIndexes()
         val indexesAreOk = RebuildStatus.isOk()
         RebuildStatus.reset()
         IndexingStamp.dropTimestampMemoryCaches()
         LOG.assertTrue(snapshot == null)
-        snapshot = if (indexesAreOk) {
-          FbiSnapshot.Impl.capture()
-        }
-        else {
-          FbiSnapshot.RebuildRequired
+        snapshot = when {
+          !indexesAreOk || interruptedWork -> FbiSnapshot.RebuildRequired
+          lightweight -> null
+          else -> FbiSnapshot.Impl.capture()
         }
       }
     }
@@ -96,8 +131,13 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   @JvmOverloads
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
+    turnOn(beforeIndexTasksStarted, lightweight = false)
+  }
+
+  private fun turnOn(beforeIndexTasksStarted: Runnable?, lightweight: Boolean) {
     LOG.info("Turning on file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount - 1}")
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
+    check(lightweightMode == lightweight) { "Cannot mix lightweight/!lightweight index restart modes" }
     nestedLevelCount--
     LOG.assertTrue(nestedLevelCount >= 0, "nestedLevelCount is less than 0: $nestedLevelCount. " +
                                           "This probably means that DynamicPluginListener.plugin[Un]Loaded event was fired without corresponding 'before' event")
@@ -113,13 +153,19 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         }
         dumbModeSemaphore.up()
 
-        val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
+        val runRescanning = lightweight || CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
           val registeredIndexes = fileBasedIndex.registeredIndexes
+          val skipFullScanning = if (lightweight) {
+            snapshot !is FbiSnapshot.RebuildRequired && !registeredIndexes.wasCorrupted
+          }
+          else {
+            allowSkippingFullScanning
+          }
           beforeIndexTasksStarted?.run()
-          if (!allowSkippingFullScanning) {
+          if (!skipFullScanning) {
             cleanupProcessedFlag(reason)
           }
           for (project in ProjectUtil.getOpenProjects()) {
@@ -135,8 +181,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               additionalOrphanDirtyFiles = emptySet(),
               projectDirtyFilesQueue = projectDirtyFilesQueue,
 
-              allowSkippingFullScanning = allowSkippingFullScanning && !indexesWereCorrupted,
-              requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
+              allowSkippingFullScanning = skipFullScanning && !indexesWereCorrupted,
+              requireReadingIndexableFilesIndexFromDisk = !skipFullScanning,
               coroutineScope = (project as ComponentManagerEx).getCoroutineScope(),
               indexingReason = "On FileBasedIndexTumbler.turnOn (reason=$reason)",
               fullScanningType = FULL_ON_INDEX_RESTART,

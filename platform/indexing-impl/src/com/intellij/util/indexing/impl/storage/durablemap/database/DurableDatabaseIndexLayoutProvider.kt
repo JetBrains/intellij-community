@@ -18,6 +18,7 @@ import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetri
 import com.intellij.util.ExceptionUtil.runAllAndRethrowAllExceptions
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+import com.intellij.util.indexing.impl.storage.IndexMaintenance
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
@@ -51,14 +52,15 @@ private val LOG = logger<DurableDatabaseIndexLayoutProvider>()
  * [invertedMapImplementation] and [forwardMapImplementation] select the formats for the two map roles.
  */
 @ApiStatus.Internal
-class DurableDatabaseIndexLayoutProvider(
+class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
   private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME),
   private val forwardMapImplementation: DurableMapImplementation = DurableMapImplementation.getProperty(
     "DurableDatabaseIndexLayoutProvider.forwardMapImplementation", KEY_VALUE_TOGETHER
   ),
   private val invertedMapImplementation: DurableMapImplementation = DurableMapImplementation.getProperty(
     "DurableDatabaseIndexLayoutProvider.invertedMapImplementation", KEY_VALUE_SEPARATELY
-  )
+  ),
+  private val maintenanceService: () -> IndexMaintenance<DurableDatabaseIndexLayoutProvider>? = { IndexMaintenance.getInstance() },
 ) : FileBasedIndexLayoutProvider {
 
   private object OTelReporterHolder {
@@ -71,6 +73,9 @@ class DurableDatabaseIndexLayoutProvider(
 
   //@GuardedBy(this)
   private var closed = false
+
+  //@GuardedBy(this)
+  private var maintenanceRegistration: AutoCloseable? = null
 
   private fun newExecutorHolder(): Lazy<ScheduledExecutorService> = lazy {
     Executors.newSingleThreadScheduledExecutor(
@@ -142,8 +147,9 @@ class DurableDatabaseIndexLayoutProvider(
     otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>,
   ): VfsAwareIndexStorageLayout<K, V> {
     check(!closed) { "Provider is closed [$databasePath]" }
+
     val database = lazyDatabaseHolder.value
-    return when (extension) {
+    val layout: VfsAwareIndexStorageLayout<K, V> = when (extension) {
       is SingleEntryFileBasedIndexExtension<V> -> {
         @Suppress("UNCHECKED_CAST")
         DurableDatabaseSingleEntryStorageLayout(database, extension, invertedMapImplementation) as VfsAwareIndexStorageLayout<K, V>
@@ -158,6 +164,11 @@ class DurableDatabaseIndexLayoutProvider(
       }
       else -> DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     }
+
+    if (maintenanceRegistration == null) {
+      maintenanceRegistration = maintenanceService()?.registerForMaintenance(this)
+    }
+    return layout
   }
 
   @Synchronized
@@ -182,6 +193,11 @@ class DurableDatabaseIndexLayoutProvider(
   private fun closeDatabase() {
     runAllAndRethrowAllExceptions(
       IOException::class.java, { IOException("Failed to close database at [$databasePath]") },
+
+      {
+        maintenanceRegistration?.close()
+        maintenanceRegistration = null
+      },
 
       {
         if (lazyDatabaseHolder.isInitialized()) {

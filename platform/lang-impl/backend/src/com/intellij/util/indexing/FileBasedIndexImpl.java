@@ -730,6 +730,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  /// Preserves pending changes and orphan queue positions before maintenance clears the in-memory queues
+  void persistOpenProjectsDirtyFiles() {
+    for (var projects = ProjectUtil.getOpenedProjects().iterator(); projects.hasNext(); ) {
+      Project project = projects.next();
+      Ref<Long> lastSeenIndex = myLastSeenIndexesInOrphanQueue.get(project);
+      persistDirtyFiles(project, lastSeenIndex == null || lastSeenIndex.isNull() ? 0 : lastSeenIndex.get());
+    }
+  }
+
   @TestOnly
   private void persistProjectsDirtyFiles() {
     Set<Project> projects = new HashSet<>();

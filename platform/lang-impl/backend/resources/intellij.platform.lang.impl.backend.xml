@@ -54,6 +54,8 @@
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
                         serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
+    <applicationService serviceInterface="com.intellij.util.indexing.impl.storage.IndexMaintenance"
+                        serviceImplementation="com.intellij.util.indexing.IndexMaintenanceService"/>
     <applicationInitializedListener implementation="com.intellij.util.indexing.FileBasedIndexLoader" order="first"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup"/>
     <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>
