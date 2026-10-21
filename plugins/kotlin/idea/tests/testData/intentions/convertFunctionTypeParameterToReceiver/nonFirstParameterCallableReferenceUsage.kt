@@ -1,4 +1,4 @@
-// SHOULD_FAIL_WITH: Callable reference transformation is not supported: ::foo
+// SHOULD_FAIL_WITH: Callable reference '::foo' will no longer match the expected function type, Callable reference transformation is not supported: ::foo
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Variable 'x' is never used

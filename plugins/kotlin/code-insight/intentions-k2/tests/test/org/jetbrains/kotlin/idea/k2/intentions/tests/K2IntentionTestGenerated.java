@@ -16141,11 +16141,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/singleParameter.kt");
             }
 
-            @TestMetadata("withAnnotation.kt")
-            public void testWithAnnotation() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/withAnnotation.kt");
-            }
-
             @TestMetadata("suspendFunction.kt")
             public void testSuspendFunction() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/suspendFunction.kt");
@@ -16169,6 +16164,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("varargParameter.kt")
             public void testVarargParameter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/varargParameter.kt");
+            }
+
+            @TestMetadata("withAnnotation.kt")
+            public void testWithAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/withAnnotation.kt");
             }
         }
     }
