@@ -33,7 +33,7 @@ import com.intellij.platform.icons.rendering.ScalingContext
 import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 
 class IconTester {
   private val rendererManager = TestIconRendererManager()
@@ -144,17 +144,17 @@ class TestRenderResult(
   }
 
   fun assertSize(width: Int, height: Int) {
-    Assert.assertEquals("Width of the icon should be $width, but was ${expectedSize.width}", width, expectedSize.width)
-    Assert.assertEquals("Height of the icon should be $height, but was ${expectedSize.height}", height, expectedSize.height)
+    Assertions.assertEquals(width, expectedSize.width, "Width of the icon should be $width, but was ${expectedSize.width}")
+    Assertions.assertEquals(height, expectedSize.height, "Height of the icon should be $height, but was ${expectedSize.height}")
   }
 
   fun assertImage(x: Int, y: Int, width: Int, height: Int, img: ImageResourceLocation) {
-    Assert.assertTrue("Image was not rendered at all.", images.containsKey(img))
+    Assertions.assertTrue(images.containsKey(img), "Image was not rendered at all.")
     val places = images[img]!!
 
-    Assert.assertTrue(
-      "Image should render at ($x, $y) with size ($width, $height), but was at:\n${places.joinToString(",\n") { "(${it.x}, ${it.y}) with size (${it.width}, ${it.height})" }}",
-                  places.any { it.x == x && it.y == y && it.width == width && it.height == height }
+    Assertions.assertTrue(
+      places.any { it.x == x && it.y == y && it.width == width && it.height == height },
+      "Image should render at ($x, $y) with size ($width, $height), but was at:\n${places.joinToString(",\n") { "(${it.x}, ${it.y}) with size (${it.width}, ${it.height})" }}"
     )
   }
 
